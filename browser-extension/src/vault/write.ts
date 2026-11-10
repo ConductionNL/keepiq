@@ -291,62 +291,143 @@ export function createItem(draft: ItemDraft, accountId?: string): Promise<WriteR
 	}, 'sync', accountId)
 }
 
+/** One sparse save of an item, as `updateItem` was asked for it. */
+interface ItemUpdate {
+	id: string
+	patch: ItemPatch
+	baseUpdatedAt?: string
+	recordId?: string
+	withoutUnreachable: readonly string[]
+}
+
+/** The state of one item save: who saves, what was asked, and the cached row its limits and type come from. */
+interface ItemSaveRun {
+	ctx: Context
+	update: ItemUpdate
+	cached: StoredSecretRow
+	moveOnly: boolean
+}
+
+/** What a value change sends through share-save: the request body, the values as typed, and the grade read for the save. */
+interface ItemValues {
+	body: Record<string, unknown>
+	plain: Values
+	writeContext: WriteContext | undefined
+}
+
 /**
  * A sparse save: only what the patch holds is encrypted and sent. A changed password, username or field goes through share-save, which writes every copy in the same request or nothing (`share-save.ts`);
  * anything else is a plain `PUT`.
  */
 export function updateItem(id: string, patch: ItemPatch, baseUpdatedAt?: string, accountId?: string, recordId?: string, withoutUnreachable: readonly string[] = []): Promise<WriteResult<{ id: string; shareSave?: ShareSaveNote }>> {
-	return run(async (ctx) => {
-		const { account, client, privateKey } = ctx
-		const cached = await cachedRow(account.id, id)
-		// Its limits and type decide what may be written, so an item the cache does not hold is not.
-		if (!cached) throw new WriteFailure({ code: 'not_found' })
-		// What the server enforces too, refused here so no ciphertext is made for it.
-		if (cached.useOnly) throw new WriteFailure({ code: 'restricted' })
-		const moveOnly = Object.keys(patch).every((field) => field === 'folderId')
-		if (cached.readOnly && !moveOnly) throw new WriteFailure({ code: 'restricted' })
-		const body: Record<string, unknown> = {}
-		if (patch.name !== undefined) {
-			if (typeof patch.name !== 'string' || !patch.name.trim()) throw new WriteFailure({ code: 'invalid' })
-			body.name = patch.name
-		}
-		if (patch.typeId) body.typeId = patch.typeId
-		if (patch.url !== undefined) body.url = patch.url || null
-		if (patch.folderId !== undefined) body.folderId = patch.folderId || null
-		// Kept as typed for the copies, which get it encrypted to each holder.
-		const plain: Values = {}
-		// A passkey's credential is only ever written by a passkey ceremony.
-		const passkey = await typeNameOf(account.id, cached.typeId) === 'passkey'
-		if (typeof patch.key === 'string' && !passkey) plain.key = patch.key
-		if (patch.login !== undefined) plain.login = patch.login || null
-		if (patch.additionalFields) plain.additionalFields = JSON.stringify(patch.additionalFields)
-		// `''` removes the saved key, on any type.
-		if (patch.totp !== undefined) plain.totp = await authenticatorKey(account.id, patch.totp, cached.typeId)
-		const valueChange = VALUE_FIELDS.some((field) => plain[field] !== undefined)
-		// share-save refuses a save without the version it was made from.
-		if (valueChange && !baseUpdatedAt) throw new WriteFailure({ code: 'invalid' })
-		// The grade may have been lowered since the form opened; a move files the holder's own copy, so it needs none.
-		let writeContext: WriteContext | undefined
-		if (!moveOnly) {
-			writeContext = await readWriteContext(client, id)
-			if (isViewOnly(id, writeContext)) throw new WriteFailure({ code: 'view_only' })
-		}
-		let key: Promise<CryptoKey> | undefined
-		for (const field of VALUE_FIELDS) {
-			const value = plain[field]
-			if (value !== undefined) body[field] = await sealValue(field, value, await (key ??= publicKey(ctx)))
-		}
-		let note: ShareSaveNote | undefined
-		if (valueChange) {
-			const opened = recordId ? await findRecord(account.id, id, recordId) : undefined
-			note = await shareSave(client, privateKey, { accountId: account.id, id, patch: body, plain, baseUpdatedAt: baseUpdatedAt!, context: writeContext!, opened, withoutUnreachable: new Set(withoutUnreachable) })
-		} else {
-			await client.keepiq('PUT', secretPath(id), baseUpdatedAt ? { ...body, baseUpdatedAt } : body)
-		}
-		// Its form closes; a failed save keeps it, so saving again still sends what the form showed.
-		if (recordId) await swapRecord(account.id, id, recordId, undefined).catch(unrecorded)
-		return note ? { id, shareSave: note } : { id }
-	}, 'sync', accountId)
+	return run((ctx) => saveItem(ctx, { id, patch, baseUpdatedAt, recordId, withoutUnreachable }), 'sync', accountId)
+}
+
+async function saveItem(ctx: Context, update: ItemUpdate): Promise<{ id: string; shareSave?: ShareSaveNote }> {
+	const save = await startItemSave(ctx, update)
+	const body = metadataBody(update.patch)
+	// Kept as typed for the copies, which get it encrypted to each holder.
+	const plain = await plainValues(save)
+	const valueChange = VALUE_FIELDS.some((field) => plain[field] !== undefined)
+	// share-save refuses a save without the version it was made from.
+	if (valueChange && !update.baseUpdatedAt) throw new WriteFailure({ code: 'invalid' })
+	const writeContext = await writableContext(save)
+	Object.assign(body, await sealedValues(ctx, plain))
+	const note = valueChange ? await saveThroughCopies(save, { body, plain, writeContext }) : await putItem(save, body)
+	return finishItemSave(save, note)
+}
+
+/** Its limits and type decide what may be written, so an item the cache does not hold is not. */
+async function startItemSave(ctx: Context, update: ItemUpdate): Promise<ItemSaveRun> {
+	const cached = await cachedRow(ctx.account.id, update.id)
+	if (!cached) throw new WriteFailure({ code: 'not_found' })
+	// What the server enforces too, refused here so no ciphertext is made for it.
+	if (cached.useOnly) throw new WriteFailure({ code: 'restricted' })
+	const moveOnly = Object.keys(update.patch).every((field) => field === 'folderId')
+	if (cached.readOnly && !moveOnly) throw new WriteFailure({ code: 'restricted' })
+	return { ctx, update, cached, moveOnly }
+}
+
+/** The fields sent as they are: the name, type, address and folder. */
+function metadataBody(patch: ItemPatch): Record<string, unknown> {
+	return { ...namingFields(patch), ...placementFields(patch) }
+}
+
+function namingFields(patch: ItemPatch): Record<string, unknown> {
+	const body: Record<string, unknown> = {}
+	if (patch.name !== undefined) body.name = checkedName(patch.name)
+	if (patch.typeId) body.typeId = patch.typeId
+	return body
+}
+
+function checkedName(name: unknown): string {
+	if (typeof name !== 'string' || !name.trim()) throw new WriteFailure({ code: 'invalid' })
+	return name
+}
+
+function placementFields(patch: ItemPatch): Record<string, unknown> {
+	const body: Record<string, unknown> = {}
+	if (patch.url !== undefined) body.url = patch.url || null
+	if (patch.folderId !== undefined) body.folderId = patch.folderId || null
+	return body
+}
+
+async function plainValues(save: ItemSaveRun): Promise<Values> {
+	const { patch } = save.update
+	const plain: Values = await keyValue(save)
+	if (patch.login !== undefined) plain.login = patch.login || null
+	if (patch.additionalFields) plain.additionalFields = JSON.stringify(patch.additionalFields)
+	// `''` removes the saved key, on any type.
+	if (patch.totp !== undefined) plain.totp = await authenticatorKey(save.ctx.account.id, patch.totp, save.cached.typeId)
+	return plain
+}
+
+/** A passkey's credential is only ever written by a passkey ceremony. */
+async function keyValue(save: ItemSaveRun): Promise<Values> {
+	const passkey = await typeNameOf(save.ctx.account.id, save.cached.typeId) === 'passkey'
+	const { key } = save.update.patch
+	return typeof key === 'string' && !passkey ? { key } : {}
+}
+
+/** The grade may have been lowered since the form opened; a move files the holder's own copy, so it needs none. */
+async function writableContext(save: ItemSaveRun): Promise<WriteContext | undefined> {
+	if (save.moveOnly) return undefined
+	const writeContext = await readWriteContext(save.ctx.client, save.update.id)
+	if (isViewOnly(save.update.id, writeContext)) throw new WriteFailure({ code: 'view_only' })
+	return writeContext
+}
+
+/** Each value the patch holds, encrypted to the account's own key, which is fetched once and only when there is one. */
+async function sealedValues(ctx: Context, plain: Values): Promise<Record<string, unknown>> {
+	const sealed: Record<string, unknown> = {}
+	let key: Promise<CryptoKey> | undefined
+	for (const field of VALUE_FIELDS) {
+		const value = plain[field]
+		if (value !== undefined) sealed[field] = await sealValue(field, value, await (key ??= publicKey(ctx)))
+	}
+	return sealed
+}
+
+async function saveThroughCopies(save: ItemSaveRun, values: ItemValues): Promise<ShareSaveNote | undefined> {
+	const { ctx: { account, client, privateKey }, update } = save
+	const opened = update.recordId ? await findRecord(account.id, update.id, update.recordId) : undefined
+	return shareSave(client, privateKey, {
+		accountId: account.id, id: update.id, patch: values.body, plain: values.plain, baseUpdatedAt: update.baseUpdatedAt!, context: values.writeContext!, opened,
+		withoutUnreachable: new Set(update.withoutUnreachable),
+	})
+}
+
+async function putItem(save: ItemSaveRun, body: Record<string, unknown>): Promise<undefined> {
+	const { baseUpdatedAt, id } = save.update
+	await save.ctx.client.keepiq('PUT', secretPath(id), baseUpdatedAt ? { ...body, baseUpdatedAt } : body)
+	return undefined
+}
+
+/** Its form closes; a failed save keeps it, so saving again still sends what the form showed. */
+async function finishItemSave(save: ItemSaveRun, note: ShareSaveNote | undefined): Promise<{ id: string; shareSave?: ShareSaveNote }> {
+	const { ctx, update: { id, recordId } } = save
+	if (recordId) await swapRecord(ctx.account.id, id, recordId, undefined).catch(unrecorded)
+	return note ? { id, shareSave: note } : { id }
 }
 
 /** For the item's detail to show Edit as unavailable up front; `fetchItem` and `updateItem` check again. */
