@@ -65,7 +65,8 @@ class EntryMetadataTools {
 		idempotentHint: true,
 		scope: 'read',
 		subject: 'entry',
-		action: 'list'
+		action: 'list',
+		reach: 'user'
 	)]
 	/**
 	 * List the entries in your Keepiq vault: names, URLs, types, folders and
