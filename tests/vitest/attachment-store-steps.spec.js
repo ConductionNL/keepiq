@@ -221,5 +221,10 @@ describe('attachment key re-grant for a recipient copy', () => {
  * @return {Promise<number>} Grants created.
  */
 function regrant(store, certificate) {
-	return store.regrantForRecipient('src-1', 'copy-1', 'bob', certificate)
+	return store.regrantForRecipient({
+		sourceSecretId: 'src-1',
+		copySecretId: 'copy-1',
+		recipientId: 'bob',
+		recipientCertificate: certificate,
+	})
 }

@@ -305,12 +305,12 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					continue
 				}
 				try {
-					await attachmentStore.regrantForRecipient(
-						row.sourceSecretId,
-						row.recipientSecretId,
-						row.targetUserId,
-						certificate,
-					)
+					await attachmentStore.regrantForRecipient({
+						sourceSecretId: row.sourceSecretId,
+						copySecretId: row.recipientSecretId,
+						recipientId: row.targetUserId,
+						recipientCertificate: certificate,
+					})
 				} catch {
 					// Best-effort — surfaced by the attachment list for the recipient.
 				}
