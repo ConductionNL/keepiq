@@ -230,6 +230,84 @@ class TeamFolderContributionServiceTest extends TestCase {
 	}//end testWriteMemberContributes()
 
 	/**
+	 * The owner row carries every field the member sent, empty optional ones
+	 * as null, the owner's suite and the resolved type; the audit event names
+	 * the type and the folder.
+	 *
+	 * @return void
+	 */
+	public function testTheOwnerRowAndItsAuditEvent(): void {
+		$data = $this->request();
+		$data['name']             = '  db-root  ';
+		$data['url']              = 'https://db';
+		$data['login']            = '';
+		$data['additionalFields'] = 'RSA-EXTRA';
+		$data['folderId']         = 'folder-ops';
+		$this->service->contribute(teamFolderId: 'tf-ops', data: $data, userId: 'hank');
+
+		$owner = $this->inserted[0];
+		$this->assertSame(
+			[
+				'name'             => 'db-root',
+				'url'              => 'https://db',
+				'typeId'           => 'type-login',
+				'folderId'         => 'folder-ops',
+				'key'              => 'RSA-FOR-IRIS',
+				'login'            => null,
+				'additionalFields' => 'RSA-EXTRA',
+				'totp'             => null,
+				'passkeys'         => null,
+				'suite'            => 'suite',
+				'ownerType'        => 'user',
+				'ownerId'          => 'iris',
+			],
+			[
+				'name'             => $owner->getName(),
+				'url'              => $owner->getUrl(),
+				'typeId'           => $owner->getTypeId(),
+				'folderId'         => $owner->getFolderId(),
+				'key'              => $owner->getKey(),
+				'login'            => $owner->getLogin(),
+				'additionalFields' => $owner->getAdditionalFields(),
+				'totp'             => $owner->getTotp(),
+				'passkeys'         => $owner->getPasskeys(),
+				'suite'            => $owner->getEncryptionSuiteId(),
+				'ownerType'        => $owner->getOwnerType(),
+				'ownerId'          => $owner->getOwnerId(),
+			]
+		);
+		$this->assertMatchesRegularExpression('/^[0-9a-f-]{36}$/', (string)$owner->getId());
+		$this->assertNotNull($owner->getCreatedAt());
+		$this->assertEquals($owner->getCreatedAt(), $owner->getUpdatedAt());
+		$this->assertEquals($owner->getCreatedAt(), $owner->getKeyUpdatedAt());
+		$this->assertSame('secret', $this->events[0]->getObjectType());
+		$this->assertSame($owner->getId(), $this->events[0]->getObjectId());
+		$this->assertSame('db-root', $this->events[0]->getObjectName());
+		$this->assertSame(['typeId' => 'type-login', 'folderId' => 'folder-ops'], $this->events[0]->getMetadata());
+	}//end testTheOwnerRowAndItsAuditEvent()
+
+	/**
+	 * A contribution without a name or a key stores nothing.
+	 *
+	 * @return void
+	 */
+	public function testANamelessOrKeylessContributionStoresNothing(): void {
+		foreach (['name' => '   ', 'key' => ''] as $field => $value) {
+			$data         = $this->request();
+			$data[$field] = $value;
+			try {
+				$this->service->contribute(teamFolderId: 'tf-ops', data: $data, userId: 'hank');
+				$this->fail('A contribution without a '.$field.' was stored');
+			} catch (\InvalidArgumentException $e) {
+				$this->assertSame('A secret requires a name and a key', $e->getMessage());
+			}
+		}
+
+		$this->assertSame([], $this->inserted);
+		$this->assertSame([], $this->events);
+	}//end testANamelessOrKeylessContributionStoresNothing()
+
+	/**
 	 * The TOTP seed and passkeys land on the owner row and on each member's
 	 * copy; an older client that leaves them out stores none.
 	 *
