@@ -14,11 +14,17 @@ import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
 import {
 	assertNoPendingOfflineChanges,
+	assertResumable,
+	assertSessionOnSuite,
 	bindSessionToNewSuite,
 	bindSessionToSuite,
 	carriedContacts,
 	evictOfflineSnapshot,
+	migrationSuites,
 	postCompromiseRecovery,
+	resumeCompletion,
+	resumedMigration,
+	rotationCompletion,
 	rotationMigration,
 	showRotationStarting,
 	wrappedKeyPair,
@@ -56,28 +62,28 @@ function boundParam(value) {
 }
 
 /**
- * The completion proof of a rotation that finalises a clean run. Completion
- * is guarded too, and its proof is over the OLD key — the suite being
- * retired — not the new one. That is the key both the initiate path and the
- * resume path already hold the password for (oldPassword), so completion
- * needs no extra prompt on either. It binds every parameter
- * finaliseMigration will send to complete — the id, hasErrors and the
- * (here absent) acceptUnrecoverable — so a captured proof cannot be replayed
- * to finalise with an acknowledged loss it never carried.
+ * The completion proof of a migration run that finalises without an
+ * acknowledged loss. Completion is guarded, and its proof is over the OLD
+ * key — the suite being retired — not the new one. That is the key both the
+ * initiate path and the resume path already hold the password for
+ * (oldPassword), so completion needs no extra prompt on either. It binds
+ * every parameter finaliseMigration will send to complete — the id,
+ * hasErrors and the (here absent) acceptUnrecoverable — so a captured proof
+ * cannot be replayed to finalise with an acknowledged loss it never carried.
  *
- * @param {object} rotation The started rotation.
+ * @param {{suiteId: string, encryptedPrivateKey: string, masterPassword: string, migrationId: string}} completion The old suite, its wrapped key, the old password and the migration.
  * @param {{failed: number}} outcome The migration outcome.
  * @return {Promise<object>} The proof headers.
  * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
  */
-async function cleanCompletionProof(rotation, outcome) {
+async function completionProof(completion, outcome) {
 	return buildKeyProofHeaders({
-		suiteId: rotation.started.migration.oldSuiteId,
+		suiteId: completion.suiteId,
 		purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
-		encryptedPrivateKey: rotation.started.oldEncryptedPrivateKey,
-		masterPassword: rotation.oldPassword,
+		encryptedPrivateKey: completion.encryptedPrivateKey,
+		masterPassword: completion.masterPassword,
 		boundValues: [
-			rotation.started.migration.id,
+			completion.migrationId,
 			boundParam(outcome.failed > 0),
 			boundParam(null),
 		],
@@ -441,7 +447,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			await this.finaliseMigration(
 				rotation.started.migration.id,
 				outcome,
-				await cleanCompletionProof(rotation, outcome),
+				await completionProof(rotationCompletion(rotation), outcome),
 			)
 
 			return outcome
@@ -1186,20 +1192,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 */
 		async resumeMigration(oldPassword) {
 			await this.fetchMigrationStatus()
-			if (this.migrationStatus === null) {
-				throw new Error('There is no migration to resume')
-			}
-
 			const session = useSessionStore()
-			if (session.cryptoKey === null) {
-				throw new Error('Unlock the vault before resuming the migration')
+			assertResumable(this.migrationStatus, session)
+			// The old suite is read now: completion refreshes the status, which
+			// is null once the migration has ended, and the read-back below
+			// needs it.
+			const resume = {
+				oldPassword,
+				migrationId: this.migrationStatus.id,
+				oldSuiteId: this.migrationStatus.oldSuiteId,
 			}
-
-			const migrationId = this.migrationStatus.id
-			// Read now: completion refreshes the status, which is null once the
-			// migration has ended, and the read-back below needs the old suite.
-			const oldSuiteId = this.migrationStatus.oldSuiteId
-
 			// Both suites are resolved from the MIGRATION, never from the session.
 			// During a migration two suites are active, and the session binds to
 			// whichever one the suite list yielded first — historically the OLD
@@ -1207,66 +1209,23 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// handing the pipeline the old private key as its verification key, so
 			// every single record would fail its round-trip and the run would look
 			// like a vault full of corrupt data instead of one mis-wired resume.
-			const { data: oldSuite } = await axios.get(
-				generateUrl(
-					`/apps/keepiq/api/v1/suites/${this.migrationStatus.oldSuiteId}`,
-				),
-			)
-			const { data: newSuite } = await axios.get(
-				generateUrl(
-					`/apps/keepiq/api/v1/suites/${this.migrationStatus.newSuiteId}`,
-				),
-			)
-
-			// The session must be bound to the migration's NEW suite, because
-			// session.cryptoKey is the verification key the pipeline will use.
-			// Bound to the old suite it would verify new ciphertext against the
-			// OLD private key: every record would fail its round-trip and the run
-			// would look like a vault full of corrupt data rather than one
-			// mis-wired resume. Suite resolution now deterministically prefers the
-			// newest active suite, so this is a transient state at worst — say so
-			// instead of guessing at a key.
-			if (session.suiteId !== newSuite.id) {
-				throw new Error(
-					'Your session is unlocked against the previous encryption suite. '
-						+ 'Lock and unlock the vault, then resume the migration.',
-				)
-			}
+			Object.assign(resume, await migrationSuites(this.migrationStatus))
+			assertSessionOnSuite(session, resume.newSuite)
 
 			this.migrationFailures = []
 			this.migrationDroppedVersions = 0
+			const outcome = await this.runMigration(resumedMigration(resume, session))
 
-			const outcome = await this.runMigration({
-				migrationId,
-				oldEncryptedPrivateKey: oldSuite.privateKey,
-				oldPassword,
-				// Taken from the migration's own new suite, not from the session.
-				newPublicKeyPem: newSuite.certificate ?? newSuite.publicKey,
-				newPrivateKey: session.cryptoKey,
-			})
-
-			// Completion's proof is over the OLD key, which resume already holds
-			// the password for — so a resumed run finalises without any extra
-			// prompt, exactly like the initiate path.
-			// Bind every parameter finaliseMigration sends to complete (id,
-			// hasErrors, and the absent acceptUnrecoverable), matching the initiate
-			// path — a proof that commits only to the id could be re-aimed to
-			// acknowledge a loss.
-			const completeProof = await buildKeyProofHeaders({
-				suiteId: this.migrationStatus.oldSuiteId,
-				purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
-				encryptedPrivateKey: oldSuite.privateKey,
-				masterPassword: oldPassword,
-				boundValues: [
-					migrationId,
-					boundParam(outcome.failed > 0),
-					boundParam(null),
-				],
-			})
+			// A resumed run finalises without any extra prompt, exactly like the
+			// initiate path: completion's proof is over the OLD key, which resume
+			// already holds the password for.
 			const completion = await this.finaliseMigration(
-				migrationId,
+				resume.migrationId,
 				outcome,
-				completeProof,
+				await completionProof(
+					resumeCompletion(resume, this.migrationStatus),
+					outcome,
+				),
 			)
 
 			// A resumed run never carries an emergency contact: that step belongs
@@ -1279,7 +1238,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// acceptMigrationLosses reads back once the owner finishes.
 			outcome.residualContacts =
 				completion?.finalised === true
-					? await this.rotationRemovedContacts(oldSuiteId)
+					? await this.rotationRemovedContacts(resume.oldSuiteId)
 					: []
 
 			return outcome

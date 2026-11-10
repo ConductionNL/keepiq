@@ -203,3 +203,116 @@ export function carriedContacts(rotation) {
 		carryContactIds: rotation.carryContactIds,
 	}
 }
+
+/**
+ * The old and the new suite of a migration, both resolved from the
+ * MIGRATION, never from the session.
+ *
+ * @param {{oldSuiteId: string, newSuiteId: string}} migration The migration status.
+ * @return {Promise<{oldSuite: object, newSuite: object}>}
+ * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+ */
+export async function migrationSuites(migration) {
+	const { data: oldSuite } = await axios.get(
+		generateUrl(`/apps/keepiq/api/v1/suites/${migration.oldSuiteId}`),
+	)
+	const { data: newSuite } = await axios.get(
+		generateUrl(`/apps/keepiq/api/v1/suites/${migration.newSuiteId}`),
+	)
+	return { oldSuite, newSuite }
+}
+
+/**
+ * The session must be bound to the migration's NEW suite, because
+ * session.cryptoKey is the verification key the pipeline will use. Bound to
+ * the old suite it would verify new ciphertext against the OLD private key:
+ * every record would fail its round-trip and the run would look like a vault
+ * full of corrupt data rather than one mis-wired resume. Suite resolution
+ * deterministically prefers the newest active suite, so this is a transient
+ * state at worst — say so instead of guessing at a key.
+ *
+ * @param {object} session The session store.
+ * @param {{id: string}} newSuite The migration's new suite.
+ * @return {void}
+ * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+ */
+export function assertSessionOnSuite(session, newSuite) {
+	if (session.suiteId !== newSuite.id) {
+		throw new Error(
+			'Your session is unlocked against the previous encryption suite. '
+				+ 'Lock and unlock the vault, then resume the migration.',
+		)
+	}
+}
+
+/**
+ * The re-encryption loop's parameters for a resumed run: the old key from the
+ * migration's old suite, the new public key from its new suite, not from the
+ * session, and the session's key, bound to that new suite, to verify with.
+ *
+ * @param {object} resume The resumed run.
+ * @param {object} session The session store.
+ * @return {object}
+ * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+ */
+export function resumedMigration(resume, session) {
+	return {
+		migrationId: resume.migrationId,
+		oldEncryptedPrivateKey: resume.oldSuite.privateKey,
+		oldPassword: resume.oldPassword,
+		newPublicKeyPem: resume.newSuite.certificate ?? resume.newSuite.publicKey,
+		newPrivateKey: session.cryptoKey,
+	}
+}
+
+/**
+ * What a rotation's completion proof is made over: the old suite, its wrapped
+ * key and the old password.
+ *
+ * @param {object} rotation The started rotation.
+ * @return {{suiteId: string, encryptedPrivateKey: string, masterPassword: string, migrationId: string}}
+ * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+ */
+export function rotationCompletion(rotation) {
+	return {
+		suiteId: rotation.started.migration.oldSuiteId,
+		encryptedPrivateKey: rotation.started.oldEncryptedPrivateKey,
+		masterPassword: rotation.oldPassword,
+		migrationId: rotation.started.migration.id,
+	}
+}
+
+/**
+ * What a resumed run's completion proof is made over: the migration's old
+ * suite as the status names it now, its wrapped key and the old password.
+ *
+ * @param {object} resume The resumed run.
+ * @param {{oldSuiteId: string}} migration The migration status.
+ * @return {{suiteId: string, encryptedPrivateKey: string, masterPassword: string, migrationId: string}}
+ * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+ */
+export function resumeCompletion(resume, migration) {
+	return {
+		suiteId: migration.oldSuiteId,
+		encryptedPrivateKey: resume.oldSuite.privateKey,
+		masterPassword: resume.oldPassword,
+		migrationId: resume.migrationId,
+	}
+}
+
+/**
+ * Refuse to resume without a migration, or while the vault is locked.
+ *
+ * @param {object|null} migration The migration status.
+ * @param {object} session The session store.
+ * @return {void}
+ * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+ */
+export function assertResumable(migration, session) {
+	if (migration === null) {
+		throw new Error('There is no migration to resume')
+	}
+	if (session.cryptoKey === null) {
+		throw new Error('Unlock the vault before resuming the migration')
+	}
+}
