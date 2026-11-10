@@ -24,6 +24,7 @@ use OCA\Keepiq\Db\DeviceApproval;
 use OCA\Keepiq\Db\DeviceApprovalMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\DeviceApprovalRequest;
 use OCA\Keepiq\Service\DeviceApprovalService;
 use OCA\Keepiq\Service\NotificationService;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -112,7 +113,7 @@ class DeviceApprovalCreateTest extends TestCase {
 	private function create(array $args): array {
 		$this->calls = [];
 		try {
-			$result = $this->service()->create(...$args);
+			$result = $this->service()->create(new DeviceApprovalRequest(...$args));
 			$this->calls[] = ['returned', strlen($result['id']), $result['requestSecret'], strlen($result['expiresAt'])];
 		} catch (Throwable $e) {
 			$this->calls[] = ['threw', get_class($e), $e->getMessage()];
