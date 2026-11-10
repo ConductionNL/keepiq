@@ -270,7 +270,7 @@ function certificateFailure(error: unknown): PartnerOutcome {
 export async function shareSave(client: Client, privateKey: CryptoKey, input: ShareSaveInput): Promise<ShareSaveNote | undefined> {
 	const partners = verifiedPartners(input.accountId)
 	try {
-		const note = await save(client, privateKey, input, partners)
+		const note = await save({ client, privateKey, partners }, input)
 		partners.succeeded()
 		return note
 	} catch (error) {
@@ -279,177 +279,309 @@ export async function shareSave(client: Client, privateKey: CryptoKey, input: Sh
 	}
 }
 
-async function save(client: Client, privateKey: CryptoKey, { id, patch, plain, baseUpdatedAt, context, opened, withoutUnreachable }: ShareSaveInput, partners: ReturnType<typeof verifiedPartners>): Promise<ShareSaveNote | undefined> {
-	if (isViewOnly(id, context)) throw new WriteFailure({ code: 'view_only' })
-	const copyPath = !context.ownRow && context.sourceSecretId !== id
-	const sourceBaseUpdatedAt = sourceBaseOf(context, opened, copyPath)
-	let ownerCertificate = context.ownerCertificate
+/** Who saves: the client, the editor's private key, and the partners verified for the account. */
+interface ShareSaveSession {
+	client: Client
+	privateKey: CryptoKey
+	partners: ReturnType<typeof verifiedPartners>
+}
 
-	const copies = new Map<string, Values & { secretId: string }>()
-	const skipped = new Map<string, { secretId: string; reason: 'no_vault_key' }>()
-	const federated = new Map<string, Awaited<ReturnType<typeof sealWhole>> & { shareId: string; certFingerprint: string }>()
-	const suspend = new Map<string, { shareId: string; reason: string }>()
-	const cloudIds = new Map<string, string>()
-	const certificates = new Map<string, string | null>()
-	const keys = new Map<string, Promise<CryptoKey>>()
+async function save(session: ShareSaveSession, input: ShareSaveInput): Promise<ShareSaveNote | undefined> {
+	if (isViewOnly(input.id, input.context)) throw new WriteFailure({ code: 'view_only' })
+	return new ShareSaveRun(session, input).run()
+}
+
+/** One entry of a list the save sends, keyed by its list's prefix and its own key. */
+interface Pending {
+	key: string
+	entry: object
+}
+
+/** One list of the save, by key; `prefix` names the list in what was already staged. */
+class Staged<T extends object> {
+	readonly entries = new Map<string, T>()
+
+	constructor(private readonly prefix: string) {}
+
+	unsent(sent: ReadonlySet<string>): Pending[] {
+		return [...this.entries].filter(([key]) => !sent.has(this.prefix + key)).map(([key, entry]) => ({ key: this.prefix + key, entry }))
+	}
+
+	/** Drops every entry `keep` refuses; `true` when one of them was already staged. */
+	drop(keep: (key: string) => boolean, sent: ReadonlySet<string>): boolean {
+		let restage = false
+		for (const key of [...this.entries.keys()]) {
+			if (keep(key)) continue
+			this.entries.delete(key)
+			restage ||= sent.has(this.prefix + key)
+		}
+		return restage
+	}
+}
+
+const pick = (part: Pending[], prefix: string) => part.filter(({ key }) => key.startsWith(prefix)).map(({ entry }) => entry)
+
+/** What one round of partner shares found: the whole value they get, the fields they must be able to store, and who could not take it. */
+interface PartnerRound {
+	value: Values
+	adds: ReadonlyArray<typeof PARTNER_OPTIONAL[number]>
+	unreachable: RequiredShare[]
+	tooOld: RequiredShare[]
+}
+
+/** A partner recipient with a verified certificate, and whether it was already verified for the account. */
+interface FoundPartner {
+	share: RequiredShare
+	partner: VerifiedPartner
+	kept: boolean
+}
+
+const isStageUnknown = (error: unknown) => error instanceof ApiError && error.status === 404 && error.code === 'stage_unknown'
+
+const isIncomplete = (error: unknown) => error instanceof ApiError && error.status === 409 && error.code === 'incomplete'
+
+const copyNote = (answer: unknown): ShareSaveNote | undefined => ((answer as { federated?: { ownerOnly?: unknown } } | null)?.federated?.ownerOnly === true ? { ownerOnly: true } : undefined)
+
+/** A certificate row of the recipient lookup, for a user who can be shared with. */
+function certificateRow(row: unknown): { userId: string; certificate: string } | null {
+	const r = row as { userId?: unknown; shareable?: unknown; certificate?: unknown } | null
+	return isString(r?.userId) && r.shareable === true && isString(r.certificate) ? { userId: r.userId, certificate: r.certificate } : null
+}
+
+function refuseTooOld(tooOld: RequiredShare[]): void {
+	if (tooOld.length === 0) return
+	const partners = tooOld.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId }))
+	throw new WriteFailure({ code: 'partner_upgrade_required', partners, requiredVersion: TOTP_PASSKEYS_FIELDS_SINCE })
+}
+
+/** Only shares the user agreed to leave out are suspended; naming every unreachable one lets one Save without them cover them all. */
+function refuseUnreachable(unreachable: RequiredShare[], withoutUnreachable: ReadonlySet<string>): void {
+	if (unreachable.some((share) => !withoutUnreachable.has(share.shareId))) {
+		throw new WriteFailure({ code: 'partner_unreachable', partners: unreachable.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId })) })
+	}
+}
+
+/** One share-save: the lists sent so far, the certificates read for them, and the stage the server holds. */
+class ShareSaveRun {
+	private readonly copyPath: boolean
+	private readonly sourceBaseUpdatedAt: string | null
+	private ownerCertificate: string | null
+	private readonly copies = new Staged<Values & { secretId: string }>('c:')
+	private readonly skipped = new Staged<{ secretId: string; reason: 'no_vault_key' }>('s:')
+	private readonly federated = new Staged<Awaited<ReturnType<typeof sealWhole>> & { shareId: string; certFingerprint: string }>('f:')
+	private readonly suspend = new Staged<{ shareId: string; reason: string }>('p:')
+	private readonly cloudIds = new Map<string, string>()
+	private readonly certificates = new Map<string, string | null>()
+	private readonly keys = new Map<string, Promise<CryptoKey>>()
 	/** Holders whose skip the server refused and whose certificate was read again; once each. */
-	const reread = new Set<string>()
-	let whole: Values | undefined
-	let stage: { id: string | null; sent: Set<string> } = { id: null, sent: new Set() }
+	private readonly reread = new Set<string>()
+	private whole: Values | undefined
+	private stage: { id: string | null; sent: Set<string> } = { id: null, sent: new Set() }
+	private rounds = 0
+	/** Set when a fill dropped an entry already staged, which cannot be taken back, so a new stage starts. */
+	private restage = false
 
-	const keyOf = (certificate: string) => {
-		let key = keys.get(certificate)
-		if (!key) keys.set(certificate, key = importPublicKey(certificate).catch(() => {
+	constructor(private readonly session: ShareSaveSession, private readonly input: ShareSaveInput) {
+		this.copyPath = !input.context.ownRow && input.context.sourceSecretId !== input.id
+		this.sourceBaseUpdatedAt = sourceBaseOf(input.context, input.opened, this.copyPath)
+		this.ownerCertificate = input.context.ownerCertificate
+	}
+
+	async run(): Promise<ShareSaveNote | undefined> {
+		const answer = await this.sendUntilComplete()
+		return this.copyPath ? copyNote(answer) : this.partnerNote()
+	}
+
+	private async sendUntilComplete(): Promise<unknown> {
+		for (;;) {
+			try {
+				return await this.send()
+			} catch (error) {
+				await this.recover(error)
+			}
+		}
+	}
+
+	/** The server forgot a stage this save started, so the save starts over. */
+	private restartable(error: unknown): boolean {
+		return isStageUnknown(error) && this.stage.id !== null
+	}
+
+	private async recover(error: unknown): Promise<void> {
+		const restart = this.restartable(error)
+		if (!restart && !isIncomplete(error)) throw await saveRefusal(this.session.client, this.input.id, this.input.context, refusalOf(error, this.cloudIds))
+		if (++this.rounds >= MAX_ROUNDS) throw new WriteFailure({ code: 'incomplete' })
+		if (restart) this.stage = { id: null, sent: new Set() }
+		else await this.fill((error as ApiError).body)
+	}
+
+	/** Those the user left out through Save without them get their own line, worded for a pause, not a verdict on the recipient. */
+	private partnerNote(): ShareSaveNote | undefined {
+		const named = (paused: boolean) => [...this.suspend.entries.values()].filter((entry) => (entry.reason === 'partner_unreachable') === paused).map((entry) => this.cloudIds.get(entry.shareId)!)
+		const suspended = named(false)
+		const paused = named(true)
+		if (suspended.length === 0 && paused.length === 0) return undefined
+		return { ...(suspended.length > 0 && { suspended }), ...(paused.length > 0 && { paused }) }
+	}
+
+	private keyOf(certificate: string): Promise<CryptoKey> {
+		let key = this.keys.get(certificate)
+		if (!key) this.keys.set(certificate, key = importPublicKey(certificate).catch(() => {
 			throw new WriteFailure({ code: 'bad_certificate' })
 		}))
 		return key
 	}
 
 	/** The typed fields plus every other one as the form opened it in full; the server's rows are never decrypted for it (ADR-002). */
-	const wholeValue = async (): Promise<Values> => {
-		const value: Values = {}
+	private async wholeValue(): Promise<Values> {
+		const { opened, baseUpdatedAt } = this.input
 		// The form's ciphertext is the item's only at the version the save is checked against.
-		const current = opened && Date.parse(opened.updatedAt) === Date.parse(baseUpdatedAt)
-		for (const field of VALUE_FIELDS) {
-			if (plain[field] !== undefined) {
-				value[field] = plain[field]
-				continue
-			}
-			if (!current || !(field in opened.shown)) throw new WriteFailure({ code: 'unverified' })
-			const ciphertext = opened.shown[field]
-			try {
-				value[field] = ciphertext ? await rsaDecrypt(ciphertext, privateKey) : null
-			} catch (error) {
-				console.error('[keepiq] could not open', id, 'for its partner shares', error)
-				throw new WriteFailure({ code: 'unreadable' })
-			}
-		}
+		const shown = opened && Date.parse(opened.updatedAt) === Date.parse(baseUpdatedAt) ? opened.shown : null
+		const value: Values = {}
+		for (const field of VALUE_FIELDS) value[field] = await this.wholeField(field, shown)
 		return value
 	}
 
-	const send = async (): Promise<unknown> => {
-		const unsent = <T>(map: Map<string, T>, prefix: string) => [...map].filter(([key]) => !stage.sent.has(prefix + key)).map(([key, entry]) => ({ key: prefix + key, entry }))
-		let local = [...unsent(copies, 'c:'), ...unsent(skipped, 's:')]
-		let remote = [...unsent(federated, 'f:'), ...unsent(suspend, 'p:')]
-		const pick = (part: Array<{ key: string; entry: object }>, prefix: string) => part.filter(({ key }) => key.startsWith(prefix)).map(({ entry }) => entry)
-		const lists = (localPart: typeof local, remotePart: typeof remote) => ({
+	private async wholeField(field: ValueField, shown: Opened['shown'] | null): Promise<string | null | undefined> {
+		if (this.input.plain[field] !== undefined) return this.input.plain[field]
+		if (!shown || !(field in shown)) throw new WriteFailure({ code: 'unverified' })
+		return this.decryptShown(shown[field])
+	}
+
+	private async decryptShown(ciphertext: string | null | undefined): Promise<string | null> {
+		try {
+			return ciphertext ? await rsaDecrypt(ciphertext, this.session.privateKey) : null
+		} catch (error) {
+			console.error('[keepiq] could not open', this.input.id, 'for its partner shares', error)
+			throw new WriteFailure({ code: 'unreadable' })
+		}
+	}
+
+	private get url(): string {
+		return `${secretPath(this.input.id)}/share-save`
+	}
+
+	private envelope(): Record<string, unknown> {
+		return { baseUpdatedAt: this.input.baseUpdatedAt, ...(this.copyPath ? { sourceBaseUpdatedAt: this.sourceBaseUpdatedAt } : {}) }
+	}
+
+	private lists(localPart: Pending[], remotePart: Pending[]): Record<string, object[]> {
+		return {
 			copies: pick(localPart, 'c:'),
 			skipped: pick(localPart, 's:'),
-			...(copyPath ? {} : { federated: pick(remotePart, 'f:'), suspend: pick(remotePart, 'p:') }),
-		})
-		const envelope = { baseUpdatedAt, ...(copyPath ? { sourceBaseUpdatedAt } : {}) }
-		const url = `${secretPath(id)}/share-save`
+			...(this.copyPath ? {} : { federated: pick(remotePart, 'f:'), suspend: pick(remotePart, 'p:') }),
+		}
+	}
+
+	private async send(): Promise<unknown> {
+		const sent = this.stage.sent
+		let parts = { local: [...this.copies.unsent(sent), ...this.skipped.unsent(sent)], remote: [...this.federated.unsent(sent), ...this.suspend.unsent(sent)] }
 		// A chunk goes only while a list holds more than the bound, so each is full on that list and never empty.
-		while (local.length > BATCH || remote.length > BATCH) {
-			const localPart = local.slice(0, BATCH)
-			const remotePart = remote.slice(0, BATCH)
-			const answer = await client.keepiq<{ stageId?: unknown } | null>('PUT', url, { ...envelope, ...lists(localPart, remotePart), stage: stage.id ? { id: stage.id, final: false } : { final: false } })
-			if (!isString(answer?.stageId)) throw new WriteFailure({ code: 'unknown' })
-			stage.id = answer.stageId
-			for (const { key } of [...localPart, ...remotePart]) stage.sent.add(key)
-			local = local.slice(BATCH)
-			remote = remote.slice(BATCH)
-		}
-		return client.keepiq('PUT', url, { ...envelope, patch, ...lists(local, remote), ...(stage.id ? { stage: { id: stage.id, final: true } } : {}) })
+		while (parts.local.length > BATCH || parts.remote.length > BATCH) parts = await this.sendChunk(parts)
+		const stage = this.stage.id ? { stage: { id: this.stage.id, final: true } } : {}
+		return this.session.client.keepiq('PUT', this.url, { ...this.envelope(), patch: this.input.patch, ...this.lists(parts.local, parts.remote), ...stage })
 	}
 
-	type Drop = <T>(map: Map<string, T>, prefix: string, keep: (key: string) => boolean) => void
-
-	const fillPartners = async (required: RequiredShare[], drop: Drop) => {
-		const shareIds = new Set(required.map((share) => share.shareId))
-		drop(federated, 'f:', (key) => shareIds.has(key))
-		drop(suspend, 'p:', (key) => shareIds.has(key))
-		const todo = required.filter((share) => !federated.has(share.shareId) && !suspend.has(share.shareId))
-		if (todo.length === 0) return
-		const value = whole ??= await wholeValue()
-		// A replaced or removed key or passkey reaches a partner that cannot store it as null, since it never held one; only a field the item did not hold stops the save, as in the web app.
-		const adds = PARTNER_OPTIONAL.filter((field) => !!plain[field] && !opened?.shown[field])
-		const unreachable: RequiredShare[] = []
-		const tooOld: RequiredShare[] = []
-		for (const share of todo) {
-			const kept = partners.get(share)
-			const outcome = kept ? { verified: kept } : await lookUp(client, share)
-			cloudIds.set(share.shareId, share.recipientCloudId)
-			if (outcome === 'unreachable') unreachable.push(share)
-			else if ('suspend' in outcome) suspend.set(share.shareId, { shareId: share.shareId, reason: outcome.suspend })
-			else {
-				const key = await importSpki(outcome.verified.spki).catch(() => {
-					throw new WriteFailure({ code: 'bad_certificate' })
-				})
-				if (!kept) partners.add(share, outcome.verified)
-				if (adds.some((field) => !outcome.verified.valueFields.includes(field))) tooOld.push(share)
-				else federated.set(share.shareId, { shareId: share.shareId, certFingerprint: outcome.verified.fingerprint, ...await sealWhole(value, key, outcome.verified.valueFields) })
-			}
-		}
-		if (tooOld.length > 0) {
-			const partners = tooOld.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId }))
-			throw new WriteFailure({ code: 'partner_upgrade_required', partners, requiredVersion: TOTP_PASSKEYS_FIELDS_SINCE })
-		}
-		// Only shares the user agreed to leave out are suspended; naming every unreachable one lets one Save without them cover them all.
-		if (unreachable.some((share) => !withoutUnreachable.has(share.shareId))) {
-			throw new WriteFailure({ code: 'partner_unreachable', partners: unreachable.map((share) => ({ shareId: share.shareId, cloudId: share.recipientCloudId })) })
-		}
-		for (const share of unreachable) suspend.set(share.shareId, { shareId: share.shareId, reason: 'partner_unreachable' })
+	private async sendChunk(parts: { local: Pending[]; remote: Pending[] }): Promise<{ local: Pending[]; remote: Pending[] }> {
+		const localPart = parts.local.slice(0, BATCH)
+		const remotePart = parts.remote.slice(0, BATCH)
+		const stage = this.stage.id ? { id: this.stage.id, final: false } : { final: false }
+		const answer = await this.session.client.keepiq<{ stageId?: unknown } | null>('PUT', this.url, { ...this.envelope(), ...this.lists(localPart, remotePart), stage })
+		if (!isString(answer?.stageId)) throw new WriteFailure({ code: 'unknown' })
+		this.stage.id = answer.stageId
+		for (const { key } of [...localPart, ...remotePart]) this.stage.sent.add(key)
+		return { local: parts.local.slice(BATCH), remote: parts.remote.slice(BATCH) }
 	}
 
-	const fill = async (body: unknown) => {
+	private dropFrom<T extends object>(staged: Staged<T>, keep: (key: string) => boolean): void {
+		if (staged.drop(keep, this.stage.sent)) this.restage = true
+	}
+
+	private async fill(body: unknown): Promise<void> {
 		const required = incompleteOf(body)
-		let restage = false
-		// An entry already staged cannot be taken back, so dropping one starts a new stage.
-		const drop: Drop = (map, prefix, keep) => {
-			for (const key of [...map.keys()]) {
-				if (keep(key)) continue
-				map.delete(key)
-				restage ||= stage.sent.has(prefix + key)
-			}
-		}
+		this.restage = false
 		const copyIds = new Set(required.copies.map((copy) => copy.secretId))
-		drop(copies, 'c:', (key) => copyIds.has(key))
-		drop(skipped, 's:', (key) => copyIds.has(key) && !required.skipRefused.has(key))
-		for (const holder of required.copies.filter((copy) => required.skipRefused.has(copy.secretId) && !reread.has(copy.secretId))) {
-			reread.add(holder.secretId)
-			if (holder.holder === 'owner') ownerCertificate = (await readWriteContext(client, id)).ownerCertificate
-			else if (holder.targetUserId) certificates.delete(holder.targetUserId)
-		}
-		const todo = required.copies.filter((copy) => !copies.has(copy.secretId) && !skipped.has(copy.secretId))
-		const lookups = [...new Set(todo.flatMap((copy) => (copy.holder !== 'owner' && copy.targetUserId && !certificates.has(copy.targetUserId) ? [copy.targetUserId] : [])))]
-		for (let i = 0; i < lookups.length; i += BATCH) {
-			const batch = lookups.slice(i, i + BATCH)
-			const answer = await client.keepiq<{ recipients?: unknown } | null>('POST', '/api/v1/shares/recipient-certificates', { userIds: batch })
-			for (const userId of batch) certificates.set(userId, null)
-			for (const row of listOf(answer?.recipients)) {
-				const r = row as { userId?: unknown; shareable?: unknown; certificate?: unknown } | null
-				if (isString(r?.userId) && r.shareable === true && isString(r.certificate)) certificates.set(r.userId, r.certificate)
-			}
-		}
-		for (const holder of todo) {
-			const certificate = holder.holder === 'owner' ? ownerCertificate : holder.targetUserId ? certificates.get(holder.targetUserId) : null
-			if (certificate) copies.set(holder.secretId, { secretId: holder.secretId, ...await sealSparse(plain, await keyOf(certificate)) })
-			else skipped.set(holder.secretId, { secretId: holder.secretId, reason: 'no_vault_key' })
-		}
-		if (!copyPath) await fillPartners(required.shares, drop)
-		if (restage) stage = { id: null, sent: new Set() }
+		this.dropFrom(this.copies, (key) => copyIds.has(key))
+		this.dropFrom(this.skipped, (key) => copyIds.has(key) && !required.skipRefused.has(key))
+		await this.rereadRefused(required)
+		const todo = required.copies.filter((copy) => !this.copies.entries.has(copy.secretId) && !this.skipped.entries.has(copy.secretId))
+		await this.lookUpCertificates(todo)
+		await this.sealCopies(todo)
+		if (!this.copyPath) await this.fillPartners(required.shares)
+		if (this.restage) this.stage = { id: null, sent: new Set() }
 	}
 
-	let rounds = 0
-	let answer: unknown
-	for (;;) {
-		try {
-			answer = await send()
-			break
-		} catch (error) {
-			const restart = error instanceof ApiError && error.status === 404 && error.code === 'stage_unknown' && stage.id !== null
-			if (!restart && !(error instanceof ApiError && error.status === 409 && error.code === 'incomplete')) throw await saveRefusal(client, id, context, refusalOf(error, cloudIds))
-			if (++rounds >= MAX_ROUNDS) throw new WriteFailure({ code: 'incomplete' })
-			if (restart) stage = { id: null, sent: new Set() }
-			else await fill(error.body)
+	private async rereadRefused(required: ReturnType<typeof incompleteOf>): Promise<void> {
+		for (const holder of required.copies.filter((copy) => required.skipRefused.has(copy.secretId) && !this.reread.has(copy.secretId))) {
+			this.reread.add(holder.secretId)
+			if (holder.holder === 'owner') this.ownerCertificate = (await readWriteContext(this.session.client, this.input.id)).ownerCertificate
+			else if (holder.targetUserId) this.certificates.delete(holder.targetUserId)
 		}
 	}
-	if (copyPath) return (answer as { federated?: { ownerOnly?: unknown } } | null)?.federated?.ownerOnly === true ? { ownerOnly: true } : undefined
-	// Those the user left out through Save without them get their own line, worded for a pause, not a verdict on the recipient.
-	const named = (paused: boolean) => [...suspend.values()].filter((entry) => (entry.reason === 'partner_unreachable') === paused).map((entry) => cloudIds.get(entry.shareId)!)
-	const suspended = named(false)
-	const paused = named(true)
-	if (suspended.length === 0 && paused.length === 0) return undefined
-	return { ...(suspended.length > 0 && { suspended }), ...(paused.length > 0 && { paused }) }
+
+	private async lookUpCertificates(todo: RequiredCopy[]): Promise<void> {
+		const lookups = [...new Set(todo.flatMap((copy) => (copy.holder !== 'owner' && copy.targetUserId && !this.certificates.has(copy.targetUserId) ? [copy.targetUserId] : [])))]
+		for (let i = 0; i < lookups.length; i += BATCH) await this.lookUpBatch(lookups.slice(i, i + BATCH))
+	}
+
+	private async lookUpBatch(batch: string[]): Promise<void> {
+		const answer = await this.session.client.keepiq<{ recipients?: unknown } | null>('POST', '/api/v1/shares/recipient-certificates', { userIds: batch })
+		for (const userId of batch) this.certificates.set(userId, null)
+		for (const row of listOf(answer?.recipients)) {
+			const found = certificateRow(row)
+			if (found) this.certificates.set(found.userId, found.certificate)
+		}
+	}
+
+	private certificateOf(holder: RequiredCopy): string | null | undefined {
+		if (holder.holder === 'owner') return this.ownerCertificate
+		return holder.targetUserId ? this.certificates.get(holder.targetUserId) : null
+	}
+
+	private async sealCopies(todo: RequiredCopy[]): Promise<void> {
+		for (const holder of todo) {
+			const certificate = this.certificateOf(holder)
+			if (certificate) this.copies.entries.set(holder.secretId, { secretId: holder.secretId, ...await sealSparse(this.input.plain, await this.keyOf(certificate)) })
+			else this.skipped.entries.set(holder.secretId, { secretId: holder.secretId, reason: 'no_vault_key' })
+		}
+	}
+
+	private async fillPartners(required: RequiredShare[]): Promise<void> {
+		const shareIds = new Set(required.map((share) => share.shareId))
+		this.dropFrom(this.federated, (key) => shareIds.has(key))
+		this.dropFrom(this.suspend, (key) => shareIds.has(key))
+		const todo = required.filter((share) => !this.federated.entries.has(share.shareId) && !this.suspend.entries.has(share.shareId))
+		if (todo.length === 0) return
+		const round = await this.partnerRound()
+		for (const share of todo) await this.fillPartner(share, round)
+		refuseTooOld(round.tooOld)
+		refuseUnreachable(round.unreachable, this.input.withoutUnreachable)
+		for (const share of round.unreachable) this.suspend.entries.set(share.shareId, { shareId: share.shareId, reason: 'partner_unreachable' })
+	}
+
+	/** A replaced or removed key or passkey reaches a partner that cannot store it as null, since it never held one; only a field the item did not hold stops the save, as in the web app. */
+	private async partnerRound(): Promise<PartnerRound> {
+		const value = this.whole ??= await this.wholeValue()
+		const { plain, opened } = this.input
+		const adds = PARTNER_OPTIONAL.filter((field) => !!plain[field] && !opened?.shown[field])
+		return { value, adds, unreachable: [], tooOld: [] }
+	}
+
+	private async fillPartner(share: RequiredShare, round: PartnerRound): Promise<void> {
+		const kept = this.session.partners.get(share)
+		const outcome = kept ? { verified: kept } : await lookUp(this.session.client, share)
+		this.cloudIds.set(share.shareId, share.recipientCloudId)
+		if (outcome === 'unreachable') round.unreachable.push(share)
+		else if ('suspend' in outcome) this.suspend.entries.set(share.shareId, { shareId: share.shareId, reason: outcome.suspend })
+		else await this.fillVerified({ share, partner: outcome.verified, kept: !!kept }, round)
+	}
+
+	private async fillVerified({ share, partner, kept }: FoundPartner, round: PartnerRound): Promise<void> {
+		const key = await importSpki(partner.spki).catch(() => {
+			throw new WriteFailure({ code: 'bad_certificate' })
+		})
+		if (!kept) this.session.partners.add(share, partner)
+		if (round.adds.some((field) => !partner.valueFields.includes(field))) round.tooOld.push(share)
+		else this.federated.entries.set(share.shareId, { shareId: share.shareId, certFingerprint: partner.fingerprint, ...await sealWhole(round.value, key, partner.valueFields) })
+	}
 }
