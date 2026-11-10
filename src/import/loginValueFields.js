@@ -45,7 +45,17 @@ export function attachTotp(row, seed) {
 	if (error !== '') {
 		return error
 	}
-	const key = normaliseAuthenticatorKey(seed)
+	return placeTotp(row, normaliseAuthenticatorKey(seed))
+}
+
+/**
+ * Put a normalised key on a row that holds none yet.
+ *
+ * @param {object} row The normalized row (mutated).
+ * @param {string} key The normalised authenticator key.
+ * @return {string|null} null when the key is on the row; why not when the row holds a different one.
+ */
+function placeTotp(row, key) {
 	if (typeof row.totp !== 'string' || row.totp === '') {
 		row.totp = key
 		return null
@@ -85,21 +95,30 @@ export function attachPasskeys(row, credentials) {
 	const list = passkeyEntries(row.passkeys ?? '').map(
 		({ credential }) => credential,
 	)
-	const clashes = []
-	for (const credential of credentials) {
-		const known = list.find(
-			(entry) =>
-				entry.credentialId === credential.credentialId
-				&& entry.rpId === credential.rpId,
-		)
-		if (!known) {
-			list.push(credential)
-		} else if (known.privateKey !== credential.privateKey) {
-			clashes.push(credential)
-		}
-	}
+	const clashes = credentials.filter((credential) => !addPasskey(list, credential))
 	if (list.length > 0) {
 		row.passkeys = JSON.stringify(list)
 	}
 	return clashes
+}
+
+/**
+ * Add a credential to the list unless one with its credential id and RP id
+ * is there: the same private key folds into it, another one clashes.
+ *
+ * @param {Array<object>} list The row's credentials (mutated).
+ * @param {object} credential The credential to add.
+ * @return {boolean} False when the credential clashes with one already there.
+ */
+function addPasskey(list, credential) {
+	const known = list.find(
+		(entry) =>
+			entry.credentialId === credential.credentialId
+			&& entry.rpId === credential.rpId,
+	)
+	if (!known) {
+		list.push(credential)
+		return true
+	}
+	return known.privateKey === credential.privateKey
 }
