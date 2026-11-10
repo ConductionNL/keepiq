@@ -197,6 +197,23 @@ class McpSurfaceTest extends TestCase {
 	}//end testScannableSurfaceIsExactlyThreeReadTools()
 
 	/**
+	 * #[McpTool] takes openregister's constructor parameters, in its order.
+	 *
+	 * @return void
+	 */
+	public function testMcpToolTakesOpenRegistersParameters(): void {
+		$parameters = array_map(
+			static fn ($parameter) => $parameter->getName(),
+			(new ReflectionClass(McpTool::class))->getConstructor()->getParameters()
+		);
+
+		$this->assertSame(
+			['name', 'description', 'readOnlyHint', 'destructiveHint', 'idempotentHint', 'scope', 'subject', 'action', 'reach', 'annotations'],
+			$parameters
+		);
+	}//end testMcpToolTakesOpenRegistersParameters()
+
+	/**
 	 * The alias is registered unconditionally, as two strings, and is inert
 	 * without OpenRegister (standalone-app-shell D5).
 	 *
