@@ -28,6 +28,7 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Service\EmergencyAccessAuditTrail;
 use OCA\Keepiq\Service\EmergencyAccessService;
+use OCA\Keepiq\Service\EmergencyDesignation;
 use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -150,7 +151,7 @@ class EmergencyAccessDesignateTest extends TestCase {
 	private function designate(array $args): array {
 		$this->calls = [];
 		try {
-			$this->service()->designate(...$args);
+			$this->service()->designate(new EmergencyDesignation(...$args));
 			$this->calls[] = ['returned'];
 		} catch (Throwable $e) {
 			$this->calls[] = ['threw', get_class($e), $e->getMessage()];
