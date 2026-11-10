@@ -22,6 +22,7 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Service\CertificateIssuanceService;
 use OCA\Keepiq\Service\X509CertificateAssembler;
@@ -42,6 +43,10 @@ class CertificateIssuancePathsTest extends TestCase {
 
 	private X509CertificateAssembler&MockObject $assembler;
 
+	private EncryptionSuiteMapper&MockObject $suites;
+
+	private LoggerInterface&MockObject $logger;
+
 	/**
 	 * Set up a self-signed intermediate and the service over it.
 	 *
@@ -58,6 +63,8 @@ class CertificateIssuancePathsTest extends TestCase {
 		$csr = openssl_csr_new(array_merge(CertificateIssuanceService::DEFAULT_DN, ['commonName' => 'Test CA']), $key, ['digest_alg' => 'sha256']);
 		openssl_x509_export(openssl_csr_sign($csr, null, $key, 3650, ['digest_alg' => 'sha256'], 1), $this->caCert);
 		$this->assembler = $this->createMock(X509CertificateAssembler::class);
+		$this->suites = $this->createMock(EncryptionSuiteMapper::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 	}//end setUp()
 
 	/**
@@ -99,9 +106,9 @@ class CertificateIssuancePathsTest extends TestCase {
 
 		return new CertificateIssuanceService(
 			$mapper,
-			$this->createMock(EncryptionSuiteMapper::class),
+			$this->suites,
 			$crypto,
-			$this->createMock(LoggerInterface::class),
+			$this->logger,
 			$this->assembler,
 		);
 	}//end service()
@@ -184,4 +191,86 @@ class CertificateIssuancePathsTest extends TestCase {
 
 		$this->assertSame(['Invalid public key PEM', 'Invalid private key PEM'], $messages);
 	}//end testMalformedKeysAreRefusedByName()
+
+	/**
+	 * A suite whose certificate the test intermediate issued for a fresh key.
+	 *
+	 * @param string $id The suite id
+	 *
+	 * @return EncryptionSuite
+	 */
+	private function issuedSuite(string $id): EncryptionSuite {
+		[$priv, $key] = $this->keypair();
+		$csr = openssl_csr_new(['commonName' => $id], $key);
+		openssl_x509_export(openssl_csr_sign($csr, $this->caCert, $this->caKey, 30), $cert);
+
+		$suite = new EncryptionSuite();
+		$suite->setId($id);
+		$suite->setOwnerId('owner-' . $id);
+		$suite->setCertificate($cert);
+
+		return $suite;
+	}//end issuedSuite()
+
+	/**
+	 * Re-signing all suites skips one without a certificate, keeps one it
+	 * cannot re-sign and stores the rest, in one page.
+	 *
+	 * @return void
+	 */
+	public function testResignAllActiveSuitesCountsOnlyTheStoredOnes(): void {
+		$good = $this->issuedSuite(id: 'good');
+		$kept = $this->issuedSuite(id: 'kept');
+		$bare = new EncryptionSuite();
+		$bare->setId('bare');
+		$goodCert = $good->getCertificate();
+
+		$this->suites->expects($this->once())->method('findAllActiveWithLimit')->with(100, 0)->willReturn([$bare, $good, $kept]);
+		$real = new X509CertificateAssembler($this->createMock(LoggerInterface::class));
+		$calls = [];
+		$this->assembler->method('resignPreservingSubject')->willReturnCallback(
+			static function (string $oldCert, string $intermediateCert, string $intermediateKeyPem, string $fallbackCn) use ($real, $goodCert, &$calls): string {
+				$calls[] = $fallbackCn;
+				if ($oldCert !== $goodCert) {
+					return '';
+				}
+
+				return $real->resignPreservingSubject(oldCert: $oldCert, intermediateCert: $intermediateCert, intermediateKeyPem: $intermediateKeyPem, fallbackCn: $fallbackCn);
+			}
+		);
+		$updated = [];
+		$this->suites->method('update')->willReturnCallback(static function (EncryptionSuite $suite) use (&$updated): EncryptionSuite {
+			$updated[] = $suite->getId();
+			return $suite;
+		});
+		$this->logger->expects($this->once())->method('warning')
+			->with('Keepiq: kept existing certificate for suite kept — could not re-sign while preserving its public key');
+
+		$this->assertSame(1, $this->service()->resignAllActiveSuites());
+		$this->assertSame(['owner-good', 'owner-kept'], $calls);
+		$this->assertSame(['good'], $updated);
+		$this->assertNotSame($goodCert, $good->getCertificate());
+	}//end testResignAllActiveSuitesCountsOnlyTheStoredOnes()
+
+	/**
+	 * A full page is followed by the next one.
+	 *
+	 * @return void
+	 */
+	public function testResignAllActiveSuitesPagesUntilAShortPage(): void {
+		$offsets = [];
+		$this->suites->method('findAllActiveWithLimit')->willReturnCallback(
+			static function (int $limit, int $offset) use (&$offsets): array {
+				$offsets[] = [$limit, $offset];
+				if ($offset === 0) {
+					return array_fill(0, 100, new EncryptionSuite());
+				}
+
+				return [];
+			}
+		);
+
+		$this->assertSame(0, $this->service()->resignAllActiveSuites());
+		$this->assertSame([[100, 0], [100, 100]], $offsets);
+	}//end testResignAllActiveSuitesPagesUntilAShortPage()
 }//end class
