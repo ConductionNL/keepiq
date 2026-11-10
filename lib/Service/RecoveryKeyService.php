@@ -135,25 +135,10 @@ class RecoveryKeyService {
 	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
 	 */
 	public function createKey(string $officerUid, string $publicKeyPem, array $copies): RecoveryKey {
-		if ($this->policy->isOfficer(userId: $officerUid) === false) {
-			throw new ForbiddenException(message: 'Only a recovery officer can create the recovery key');
-		}
-
-		$officers = $this->policy->officers();
-		$given    = array_keys($copies);
-		sort($officers);
-		sort($given);
-		if ($given !== $officers) {
-			throw new InvalidArgumentException(message: 'Send exactly one wrapped copy for each named officer');
-		}
-
+		$this->assertMayCreateKey(officerUid: $officerUid, copies: $copies);
 		$certificate = $this->issuance->signPublicKey(publicKeyPem: $publicKeyPem, commonName: 'Keepiq organisation recovery');
 
-		foreach ($this->keyMapper->findByStatus(self::STATUS_ACTIVE) as $previous) {
-			$previous->setStatus(self::STATUS_RETIRING);
-			$this->keyMapper->update($previous);
-		}
-
+		$this->retireActiveKeys();
 		$key = new RecoveryKey();
 		$key->setId(Uuid::uuid4()->toString());
 		$key->setCertificate($certificate);
@@ -172,6 +157,49 @@ class RecoveryKeyService {
 
 		return $key;
 	}//end createKey()
+
+	/**
+	 * Refuse a key creation by anyone but an officer, or without exactly one
+	 * wrapped copy for each named officer.
+	 *
+	 * @param string               $officerUid The officer creating it
+	 * @param array<string,string> $copies     Officer uid => wrapped private key
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenException       When the caller is not an officer
+	 * @throws InvalidArgumentException When a copy is missing or one is for a non-officer
+	 *
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+	 */
+	private function assertMayCreateKey(string $officerUid, array $copies): void {
+		if ($this->policy->isOfficer(userId: $officerUid) === false) {
+			throw new ForbiddenException(message: 'Only a recovery officer can create the recovery key');
+		}
+
+		$officers = $this->policy->officers();
+		$given    = array_keys($copies);
+		sort($officers);
+		sort($given);
+		if ($given !== $officers) {
+			throw new InvalidArgumentException(message: 'Send exactly one wrapped copy for each named officer');
+		}
+	}//end assertMayCreateKey()
+
+	/**
+	 * An existing active key becomes `retiring`, so enrolled users re-enrol at
+	 * their next unlock.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+	 */
+	private function retireActiveKeys(): void {
+		foreach ($this->keyMapper->findByStatus(self::STATUS_ACTIVE) as $previous) {
+			$previous->setStatus(self::STATUS_RETIRING);
+			$this->keyMapper->update($previous);
+		}
+	}//end retireActiveKeys()
 
 	/**
 	 * An officer's own copy of a recovery key (the active one by default).
