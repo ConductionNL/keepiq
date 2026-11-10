@@ -306,4 +306,58 @@ class LinkShareControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 	}//end testDestroyNotFound()
+
+	/**
+	 * Create hands every field to the service, and answers 400 without an
+	 * active suite and 403 for a copy from another organisation.
+	 *
+	 * @return void
+	 */
+	public function testCreatePassesTheFieldsAndMapsTheSuiteAndForbiddenRefusals(): void {
+		$this->suiteService->method('getActiveSuite')->willReturnOnConsecutiveCalls(
+			$this->throwException(new \OCP\AppFramework\Db\DoesNotExistException('none')),
+			$this->makeSuite(),
+			$this->makeSuite()
+		);
+		$passed = [];
+		$this->linkShareService->method('create')->willReturnCallback(
+			function (...$args) use (&$passed): LinkShare {
+				$passed[] = $args;
+				if (count($passed) === 1) {
+					return $this->makeShare();
+				}
+
+				throw new \OCA\Keepiq\Exception\ForbiddenException('A copy from another organisation cannot be shared');
+			}
+		);
+
+		$noSuite = $this->controller->create(secretId: 'secret-1', encryptedSecretSnapshot: 'blob', argon2idSalt: 'salt');
+		$created = $this->controller->create(secretId: 'secret-2', encryptedSecretSnapshot: 'blob2', argon2idSalt: 'salt2', usageLimit: 4, expiresAt: '2099-01-02T03:04:05+00:00');
+		$forbidden = $this->controller->create(secretId: 'secret-3', encryptedSecretSnapshot: 'blob3', argon2idSalt: 'salt3');
+
+		$this->assertSame([Http::STATUS_BAD_REQUEST, ['message' => 'No active encryption suite for the current user']], [$noSuite->getStatus(), $noSuite->getData()]);
+		$this->assertSame(Http::STATUS_CREATED, $created->getStatus());
+		$this->assertSame([Http::STATUS_FORBIDDEN, ['message' => 'A copy from another organisation cannot be shared']], [$forbidden->getStatus(), $forbidden->getData()]);
+		$this->assertSame($this->describedCreateCalls(calls: $passed), [
+			['secret-2', 'blob2', 'salt2', 'suite-1', 4, '2099-01-02T03:04:05+00:00', 'alice'],
+			['secret-3', 'blob3', 'salt3', 'suite-1', 1, null, 'alice'],
+		]);
+	}//end testCreatePassesTheFieldsAndMapsTheSuiteAndForbiddenRefusals()
+
+	/**
+	 * The fields each service create call received, in order.
+	 *
+	 * @param array<int,array<int,mixed>> $calls The recorded calls
+	 *
+	 * @return array<int,array<int,mixed>>
+	 */
+	private function describedCreateCalls(array $calls): array {
+		return array_map(
+			static function (array $args): array {
+				[$secretId, $snapshot, $salt, $suiteId, $limit, $expiresAt, $userId] = $args;
+				return [$secretId, $snapshot, $salt, $suiteId, $limit, $expiresAt?->format(DATE_ATOM), $userId];
+			},
+			$calls
+		);
+	}//end describedCreateCalls()
 }//end class
