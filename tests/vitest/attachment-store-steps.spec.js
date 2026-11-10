@@ -164,3 +164,62 @@ describe('attachment store steps', () => {
 		global.document = previous
 	}, 30000)
 })
+
+describe('attachment key re-grant for a recipient copy', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+	})
+
+	it('re-wraps every file key for the recipient and posts one grant each', async () => {
+		const { rsaDecrypt, rsaEncrypt, importPublicKey } =
+			await import('../../src/crypto/index.js')
+		const keys = await sharedKeyPair()
+		const session = useSessionStore()
+		session.cryptoKey = keys.privateKey
+		const ownerKey = await importPublicKey(keys.publicKeyPem)
+		const get = vi.spyOn(axios, 'get').mockResolvedValue({
+			data: [
+				{ id: 'a1', wrappedFileKey: await rsaEncrypt('KEY-ONE', ownerKey) },
+				{ id: 'a2', wrappedFileKey: await rsaEncrypt('KEY-TWO', ownerKey) },
+			],
+		})
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
+		const created = await regrant(useAttachmentStore(), keys.publicKeyPem)
+		expect(created).toBe(2)
+		expect(get).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/src-1/attachments')
+		expect(post.mock.calls.map(([url, body]) => [url, { ...body, wrappedFileKey: typeof body.wrappedFileKey }])).toEqual([
+			['/apps/keepiq/api/v1/attachments/a1/grants', { copySecretId: 'copy-1', recipientId: 'bob', wrappedFileKey: 'string', recipientType: 'user' }],
+			['/apps/keepiq/api/v1/attachments/a2/grants', { copySecretId: 'copy-1', recipientId: 'bob', wrappedFileKey: 'string', recipientType: 'user' }],
+		])
+		const unwrapped = await Promise.all(
+			post.mock.calls.map(([, body]) => rsaDecrypt(body.wrappedFileKey, keys.privateKey)),
+		)
+		expect(unwrapped).toEqual(['KEY-ONE', 'KEY-TWO'])
+	}, 30000)
+
+	it('creates nothing for a secret without attachments, and refuses while locked', async () => {
+		const keys = await sharedKeyPair()
+		const session = useSessionStore()
+		session.cryptoKey = keys.privateKey
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: null })
+		const post = vi.spyOn(axios, 'post')
+		await expect(regrant(useAttachmentStore(), keys.publicKeyPem)).resolves.toBe(0)
+		session.cryptoKey = null
+		await expect(regrant(useAttachmentStore(), keys.publicKeyPem)).rejects.toThrow(
+			'Vault is locked',
+		)
+		expect(post).not.toHaveBeenCalled()
+	}, 30000)
+})
+
+/**
+ * Re-grant src-1's attachments to bob's copy-1.
+ *
+ * @param {object} store The attachment store.
+ * @param {string} certificate Bob's certificate (PEM).
+ * @return {Promise<number>} Grants created.
+ */
+function regrant(store, certificate) {
+	return store.regrantForRecipient('src-1', 'copy-1', 'bob', certificate)
+}
