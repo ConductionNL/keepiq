@@ -116,6 +116,133 @@ function conflictSource(answer) {
 }
 
 /**
+ * @param {Error|object} e The error.
+ * @return {Array<string>} The cloud ids of the partners it names.
+ */
+function partnerIdsOf(e) {
+	return (e.partners ?? []).map((p) => p.recipientCloudId)
+}
+
+/**
+ * @param {Error|object} e The error.
+ * @return {boolean} Whether a share save found a partner unreachable.
+ */
+function isUnreachablePartner(e) {
+	return e instanceof ShareSaveError && e.code === 'partner_unreachable'
+}
+
+/**
+ * @param {Error|object} e The error.
+ * @return {boolean} Whether a share save stopped at the partner lookup
+ *   limit or at a view-only copy.
+ */
+function isLookupLimitOrViewOnly(e) {
+	return (
+		e instanceof ShareSaveError
+		&& ['partner_lookup_limit', 'view_only'].includes(e.code)
+	)
+}
+
+/**
+ * @param {Error|object} e The error.
+ * @return {boolean} Whether a partner must upgrade before it can store this.
+ */
+function needsPartnerUpgrade(e) {
+	return (
+		e?.code === 'partner_upgrade_required'
+		|| e?.response?.data?.error === 'partner_upgrade_required'
+	)
+}
+
+/**
+ * @param {Error|object} e The error.
+ * @return {boolean} Whether the server refused the share save as malformed.
+ */
+function isRefusedShareSave(e) {
+	return e?.fromShareSave === true && e.response?.status === 400
+}
+
+/**
+ * @param {Error|object} e The error.
+ * @return {boolean} Whether the write waits for the share quarantine scan.
+ */
+function isScanPending(e) {
+	return e?.response?.data?.error === 'share_scan_pending'
+}
+
+/**
+ * @param {Error|object} e The error.
+ * @return {boolean} Whether the share save has its own words for it.
+ */
+function hasShareSaveText(e) {
+	return shareSaveErrorText(e) !== null
+}
+
+/**
+ * @param {Error|object} e A share save error naming unreachable partners.
+ * @return {object} Its stored failure.
+ */
+function unreachableFailure(e) {
+	return { code: 'partner_unreachable', partners: partnerIdsOf(e) }
+}
+
+/**
+ * @param {Error|object} e A share save error whose code is its reason.
+ * @return {object} Its stored failure.
+ */
+function codeFailure(e) {
+	return { code: e.code }
+}
+
+/**
+ * @param {Error|object} e An error naming partners that must upgrade.
+ * @return {object} Its stored failure, with the version they need.
+ */
+function upgradeFailure(e) {
+	return {
+		code: 'partner_upgrade_required',
+		partners: partnerIdsOf(e),
+		requiredVersion: e.response?.data?.requiredVersion ?? null,
+	}
+}
+
+/**
+ * @param {Error|object} e A share save the server refused as malformed.
+ * @return {object} Its stored failure, with the server's code.
+ */
+function refusedFailure(e) {
+	return { code: 'refused', reason: e.response.data?.error ?? '' }
+}
+
+/**
+ * @param {Error|object} e A write the share quarantine scan holds back.
+ * @return {object} Its stored failure, with the server's words.
+ */
+function scanPendingFailure(e) {
+	return {
+		code: 'share_scan_pending',
+		message: e.response.data.message ?? null,
+	}
+}
+
+/**
+ * @return {object} The stored failure of a write the share save refused.
+ */
+function notAllowedFailure() {
+	return { code: 'not_allowed' }
+}
+
+/** The failure each kind of replay error is stored as, first match wins. */
+const FAILURE_RULES = [
+	[isUnreachablePartner, unreachableFailure],
+	[isLookupLimitOrViewOnly, codeFailure],
+	[needsPartnerUpgrade, upgradeFailure],
+	[isRefusedShareSave, refusedFailure],
+	[isScanPending, scanPendingFailure],
+	[hasShareSaveText, notAllowedFailure],
+]
+
+/**
  * Why a replayed entry failed, as a code with its details, so it is stored
  * with the entry and translated only when shown.
  *
@@ -124,42 +251,184 @@ function conflictSource(answer) {
  * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
  */
 function failureOf(e) {
-	if (e instanceof ShareSaveError && e.code === 'partner_unreachable') {
-		return {
-			code: 'partner_unreachable',
-			partners: (e.partners ?? []).map((p) => p.recipientCloudId),
-		}
-	}
-	if (
-		e instanceof ShareSaveError
-		&& ['partner_lookup_limit', 'view_only'].includes(e.code)
-	) {
-		return { code: e.code }
-	}
-	if (
-		e?.code === 'partner_upgrade_required'
-		|| e?.response?.data?.error === 'partner_upgrade_required'
-	) {
-		return {
-			code: 'partner_upgrade_required',
-			partners: (e.partners ?? []).map((p) => p.recipientCloudId),
-			requiredVersion: e.response?.data?.requiredVersion ?? null,
-		}
-	}
-	if (e?.fromShareSave === true && e.response?.status === 400) {
-		return { code: 'refused', reason: e.response.data?.error ?? '' }
-	}
-	if (e?.response?.data?.error === 'share_scan_pending') {
-		return {
-			code: 'share_scan_pending',
-			message: e.response.data.message ?? null,
-		}
-	}
-	if (shareSaveErrorText(e) !== null) {
-		return { code: 'not_allowed' }
-	}
+	const rule = FAILURE_RULES.find(([matches]) => matches(e))
 	// The server's own words, already in the user's language.
-	return { code: 'server', message: e?.response?.data?.message ?? null }
+	return rule
+		? rule[1](e)
+		: { code: 'server', message: e?.response?.data?.message ?? null }
+}
+
+/**
+ * Whether a replay must wait: one already runs, Keepiq is offline, the
+ * vault was opened from the cache, or it is locked.
+ *
+ * @param {object} store The offline store.
+ * @return {boolean}
+ */
+function replayBlocked(store) {
+	const session = useSessionStore()
+	return (
+		store.replaying
+		|| !store.online
+		|| store.servedFromCache
+		|| session.isLocked
+	)
+}
+
+/**
+ * @param {object} entry A queued entry.
+ * @return {boolean} Whether it waits for the user: failed or in conflict.
+ */
+function awaitsUser(entry) {
+	return entry.status === 'failed' || entry.status === 'conflict'
+}
+
+/**
+ * Replay the loaded queue oldest first, passing over entries that wait for
+ * the user; a retry stops the replay and keeps the rest.
+ *
+ * @param {object} store The offline store.
+ * @return {Promise<{synced: number, stopped: boolean}>}
+ */
+async function replayInOrder(store) {
+	let synced = 0
+	for (const entry of replayOrder(store.entries)) {
+		if (awaitsUser(entry)) {
+			continue
+		}
+		const outcome = await store.replayOne(entry)
+		if (outcome === 'done') {
+			synced++
+		} else if (outcome === 'retry') {
+			return { synced, stopped: true }
+		}
+	}
+	return { synced, stopped: false }
+}
+
+/**
+ * Fetch the manifest and write it as an encrypted snapshot; a manifest the
+ * two-factor vault policy blocks drops any stored snapshot instead, so it
+ * cannot open offline either.
+ *
+ * @param {object} store The offline store.
+ * @param {object} session The session store, whose key seals the snapshot.
+ * @return {Promise<boolean>} Whether a snapshot was written.
+ */
+async function writeThroughSnapshot(store, session) {
+	const response = await axios.get(
+		generateUrl('/apps/keepiq/api/v1/offline/manifest'),
+	)
+	if (response.data?.unlockBlocked) {
+		await purge().catch(() => {})
+		return false
+	}
+	const snapshot = await encryptSnapshot(session.aesKey, response.data)
+	const written = await writeSnapshot(snapshot)
+	if (written) {
+		store.servedFromCache = false
+		store.syncedAt = response.data.syncedAt
+	}
+	return written
+}
+
+/**
+ * Admin disabled offline caching org-wide: purge the snapshot, and the queue
+ * when nothing in it is still pending. Any other failure keeps both.
+ *
+ * @param {object} store The offline store.
+ * @param {Error|object} e Why the refresh failed.
+ * @return {Promise<void>}
+ */
+async function evictWhenRefused(store, e) {
+	if (!isRefusal(e)) {
+		return
+	}
+	await purge().catch(() => {})
+	if (store.pendingCount === 0) {
+		await clearQueue().catch(() => {})
+	}
+}
+
+/**
+ * The entry a change is queued as, before it is merged with the one queued
+ * for the same secret.
+ *
+ * @param {object} change { op, secretId, body, baseUpdatedAt, sourceBaseUpdatedAt }
+ * @param {string} suiteId The suite the entry is sealed under.
+ * @return {object}
+ */
+function incomingEntry(change, suiteId) {
+	return {
+		op: change.op,
+		secretId: change.secretId,
+		baseUpdatedAt: change.baseUpdatedAt ?? null,
+		sourceBaseUpdatedAt: change.sourceBaseUpdatedAt ?? null,
+		suiteId,
+		status: 'queued',
+		body: change.body || {},
+	}
+}
+
+/**
+ * Merge a change into the entry queued for its secret, store what is kept
+ * sealed, and drop the entry it replaced.
+ *
+ * @param {object} store The offline store.
+ * @param {object} change The change.
+ * @return {Promise<object|null>} The kept entry, or null when it cancelled out.
+ */
+async function queueChange(store, change) {
+	const session = useSessionStore()
+	const existing = store.entries.find(
+		(e) => e.secretId === change.secretId && e.status !== 'failed',
+	)
+	const kept = coalesce(
+		existing || null,
+		incomingEntry(change, session.suiteId),
+	)
+	if (existing && (!kept || kept.entryId !== existing.entryId)) {
+		await deleteQueueEntry(existing.entryId)
+	}
+	store.entries = store.entries.filter((e) => e !== existing)
+	if (kept) {
+		await storeQueued(store, kept)
+	}
+	return kept
+}
+
+/**
+ * Seal and store a kept entry, and list it with its stored id and time.
+ *
+ * @param {object} store The offline store.
+ * @param {object} kept The kept entry.
+ * @return {Promise<void>}
+ */
+async function storeQueued(store, kept) {
+	const stored = await sealEntry(kept, useSessionStore().certificate)
+	await putQueueEntry(stored)
+	store.entries.push({
+		...kept,
+		entryId: stored.entryId,
+		queuedAt: stored.queuedAt,
+	})
+}
+
+/**
+ * The vault's rows with a queued change shown on its secret's row: the row
+ * as the kept entry leaves it, or none when the change cancelled out.
+ *
+ * @param {Array<object>} secrets The vault's rows.
+ * @param {{secretId: string, kept: ?object}} queued The secret and what was kept.
+ * @return {Array<object>}
+ */
+function secretsWithQueued(secrets, queued) {
+	const base = secrets.filter((s) => s.id !== queued.secretId)
+	const current = secrets.find((s) => s.id === queued.secretId)
+	const withThis = queued.kept
+		? applyQueue(current ? [current] : [], [queued.kept])
+		: []
+	return [...base, ...withThis]
 }
 
 /**
@@ -420,31 +689,10 @@ export const useOfflineStore = defineStore('offline', {
 				return false
 			}
 			try {
-				const response = await axios.get(
-					generateUrl('/apps/keepiq/api/v1/offline/manifest'),
-				)
-				// The two-factor vault policy leaves the suite out: drop any
-				// stored snapshot so it cannot open offline either.
-				if (response.data?.unlockBlocked) {
-					await purge().catch(() => {})
-					return false
-				}
-				const snapshot = await encryptSnapshot(session.aesKey, response.data)
-				const written = await writeSnapshot(snapshot)
-				if (written) {
-					this.servedFromCache = false
-					this.syncedAt = response.data.syncedAt
-				}
-				return written
+				return await writeThroughSnapshot(this, session)
 			} catch (e) {
-				if (isRefusal(e)) {
-					// Admin disabled offline caching org-wide: the queue was
-					// replayed above; purge the snapshot and what is left.
-					await purge().catch(() => {})
-					if (this.pendingCount === 0) {
-						await clearQueue().catch(() => {})
-					}
-				}
+				// The queue was replayed above.
+				await evictWhenRefused(this, e)
 				return false
 			}
 		},
@@ -523,44 +771,12 @@ export const useOfflineStore = defineStore('offline', {
 					),
 				)
 			}
-			const session = useSessionStore()
-			const existing = this.entries.find(
-				(e) => e.secretId === change.secretId && e.status !== 'failed',
-			)
-			const incoming = {
-				op: change.op,
-				secretId: change.secretId,
-				baseUpdatedAt: change.baseUpdatedAt ?? null,
-				sourceBaseUpdatedAt: change.sourceBaseUpdatedAt ?? null,
-				suiteId: session.suiteId,
-				status: 'queued',
-				body: change.body || {},
-			}
-			const kept = coalesce(existing || null, incoming)
-			if (existing && (!kept || kept.entryId !== existing.entryId)) {
-				await deleteQueueEntry(existing.entryId)
-			}
-			this.entries = this.entries.filter((e) => e !== existing)
-			if (kept) {
-				const stored = await sealEntry(kept, session.certificate)
-				await putQueueEntry(stored)
-				this.entries.push({
-					...kept,
-					entryId: stored.entryId,
-					queuedAt: stored.queuedAt,
-				})
-			}
+			const kept = await queueChange(this, change)
 			if (this.vault) {
-				const base = this.vault.secrets.filter(
-					(s) => s.id !== change.secretId,
-				)
-				const current = this.vault.secrets.find(
-					(s) => s.id === change.secretId,
-				)
-				const withThis = kept
-					? applyQueue(current ? [current] : [], [kept])
-					: []
-				this.vault.secrets = [...base, ...withThis]
+				this.vault.secrets = secretsWithQueued(this.vault.secrets, {
+					secretId: change.secretId,
+					kept,
+				})
 			}
 			return kept
 		},
@@ -602,33 +818,13 @@ export const useOfflineStore = defineStore('offline', {
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
 		 */
 		async replayQueue() {
-			const session = useSessionStore()
-			if (
-				this.replaying
-				|| !this.online
-				|| this.servedFromCache
-				|| session.isLocked
-			) {
+			if (replayBlocked(this)) {
 				return { synced: 0, stopped: true }
 			}
 			this.replaying = true
-			let synced = 0
 			try {
 				await this.loadQueue()
-				for (const entry of replayOrder(this.entries)) {
-					if (entry.status === 'failed' || entry.status === 'conflict') {
-						continue
-					}
-					const outcome = await this.replayOne(entry)
-					if (outcome === 'done') {
-						synced++
-						continue
-					}
-					if (outcome === 'retry') {
-						return { synced, stopped: true }
-					}
-				}
-				return { synced, stopped: false }
+				return await replayInOrder(this)
 			} finally {
 				this.replaying = false
 			}
