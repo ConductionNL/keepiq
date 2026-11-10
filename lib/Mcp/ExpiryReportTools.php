@@ -65,7 +65,8 @@ class ExpiryReportTools {
 		idempotentHint: true,
 		scope: 'read',
 		subject: 'entry',
-		action: 'list'
+		action: 'list',
+		reach: 'user'
 	)]
 	/**
 	 * Report what expires within withinDays, plus what already expired.

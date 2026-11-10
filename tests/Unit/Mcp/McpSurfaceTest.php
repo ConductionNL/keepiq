@@ -52,6 +52,7 @@ use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
+use ReflectionMethod;
 
 /**
  * The MCP metadata surface.
@@ -195,6 +196,28 @@ class McpSurfaceTest extends TestCase {
 			(new KeepiqScannableServices())->getScannableServiceClasses()
 		);
 	}//end testScannableSurfaceIsExactlyThreeReadTools()
+
+	/**
+	 * Each tool declares its reach. All three read only the session user's own
+	 * vault metadata and return it to that user, so each reaches `user`; an
+	 * omitted reach would resolve to `external` in openregister.
+	 *
+	 * @return void
+	 */
+	public function testEachToolDeclaresItsReach(): void {
+		$expected = [
+			EntryMetadataTools::class . '::listEntries' => 'user',
+			ExpiryReportTools::class . '::expiryReport' => 'user',
+			RotationStatusTools::class . '::rotationStatus' => 'user',
+		];
+
+		foreach ($expected as $where => $reach) {
+			[$class, $method] = explode('::', $where);
+			$attributes = (new ReflectionMethod($class, $method))->getAttributes(McpTool::class);
+			$this->assertCount(expectedCount: 1, haystack: $attributes, message: $where);
+			$this->assertSame(expected: $reach, actual: $attributes[0]->newInstance()->reach, message: $where);
+		}
+	}//end testEachToolDeclaresItsReach()
 
 	/**
 	 * #[McpTool] takes openregister's constructor parameters, in its order.
