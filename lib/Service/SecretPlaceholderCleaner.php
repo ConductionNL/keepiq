@@ -124,6 +124,20 @@ class SecretPlaceholderCleaner {
 			return;
 		}
 
+		$this->deleteFailSoft(request: $request, secret: $secret);
+	}//end removeIfUnfilled()
+
+	/**
+	 * Delete the placeholder, logging a failure instead of throwing it.
+	 *
+	 * @param SecretRequest $request The request whose placeholder goes
+	 * @param Secret        $secret  The placeholder
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+	 */
+	private function deleteFailSoft(SecretRequest $request, Secret $secret): void {
 		try {
 			$this->deleteOwned(secret: $secret, ownerId: (string)$secret->getOwnerId());
 		} catch (Throwable $exception) {
@@ -133,7 +147,7 @@ class SecretPlaceholderCleaner {
 				['exception' => $exception]
 			);
 		}
-	}//end removeIfUnfilled()
+	}//end deleteFailSoft()
 
 	/**
 	 * The request's Secret, when it still exists and never held a value.
