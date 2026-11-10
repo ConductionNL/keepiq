@@ -30,7 +30,9 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Exception\WriteLockedException;
+use OCA\Keepiq\Service\AttachmentGrantRequest;
 use OCA\Keepiq\Service\AttachmentService;
+use OCA\Keepiq\Service\AttachmentUpload;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -246,7 +248,7 @@ class AttachmentServiceWriteTest extends TestCase {
 	 * @return callable
 	 */
 	private static function upload(string $blob, string $secretId = 'sec-1', string $userId = 'alice'): callable {
-		return static fn (AttachmentService $s) => $s->upload(secretId: $secretId, userId: $userId, blob: $blob, encryptedMetadata: 'META', wrappedFileKey: 'WRAPPED');
+		return static fn (AttachmentService $s) => $s->upload(upload: new AttachmentUpload(secretId: $secretId, userId: $userId, blob: $blob, encryptedMetadata: 'META', wrappedFileKey: 'WRAPPED'));
 	}//end upload()
 
 	/**
@@ -337,12 +339,14 @@ class AttachmentServiceWriteTest extends TestCase {
 	 */
 	private static function grant(string $recipientType = 'user', string $copySecretId = 'copy-1', string $userId = 'alice'): callable {
 		return static fn (AttachmentService $s) => $s->addGrant(
-			attachmentId: 'att-1',
-			userId: $userId,
-			copySecretId: $copySecretId,
-			recipientId: 'bob',
-			wrappedFileKey: 'REWRAPPED',
-			recipientType: $recipientType,
+			request: new AttachmentGrantRequest(
+				attachmentId: 'att-1',
+				userId: $userId,
+				copySecretId: $copySecretId,
+				recipientId: 'bob',
+				wrappedFileKey: 'REWRAPPED',
+				recipientType: $recipientType,
+			)
 		);
 	}//end grant()
 
