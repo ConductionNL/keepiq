@@ -27,6 +27,58 @@ import {
 	toBase64,
 } from '../../send/sendCrypto.js'
 
+/**
+ * @param {string} token The URL token.
+ * @param {string} action access, confirm or failure.
+ * @return {string} The public send endpoint for the action.
+ */
+function publicSendUrl(token, action) {
+	return generateUrl(
+		`/apps/keepiq/api/v1/public/sends/${encodeURIComponent(token)}/${action}`,
+	)
+}
+
+/**
+ * The send's content key: unwrapped with a key derived from the password in
+ * password mode, else the key the link's fragment carries.
+ *
+ * @param {object} data The access answer.
+ * @param {{fragmentKey: string, password: string}} secret What the recipient holds.
+ * @return {Promise<CryptoKey>}
+ * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
+ */
+async function contentKeyOf(data, secret) {
+	let rawKey
+	if (data.hasPassword) {
+		const kek = await deriveAesKeyArgon2id(
+			secret.password,
+			fromBase64(data.argon2idSalt),
+		)
+		rawKey = await aesDecrypt(kek, data.wrappedKey)
+	} else {
+		rawKey = fromBase64Url(secret.fragmentKey)
+	}
+	return crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM' }, false, [
+		'decrypt',
+	])
+}
+
+/**
+ * Report the failed password attempt (burns at 5); the caller surfaces
+ * attemptsLeft.
+ *
+ * @param {string} token The URL token.
+ * @return {Promise<Error>} The wrong-password error, with the attempts left.
+ * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
+ */
+async function wrongPasswordError(token) {
+	const failure = await axios.post(publicSendUrl(token, 'failure'))
+	const err = new Error('wrong-password')
+	err.attemptsLeft = failure.data?.attemptsLeft ?? 0
+	err.burned = failure.data?.burned === true
+	return err
+}
+
 export const useEphemeralSendStore = defineStore('ephemeralSend', {
 	state: () => ({
 		/** @type {Array<object>} The caller's sends (metadata only). */
@@ -129,38 +181,12 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
 		 */
 		async accessSend(token, fragmentKey, password) {
-			const response = await axios.post(
-				generateUrl(
-					`/apps/keepiq/api/v1/public/sends/${encodeURIComponent(token)}/access`,
-				),
-			)
+			const response = await axios.post(publicSendUrl(token, 'access'))
 			const data = response.data
-
-			let contentKey
 			try {
-				let rawKey
-				if (data.hasPassword) {
-					const kek = await deriveAesKeyArgon2id(
-						password,
-						fromBase64(data.argon2idSalt),
-					)
-					rawKey = await aesDecrypt(kek, data.wrappedKey)
-				} else {
-					rawKey = fromBase64Url(fragmentKey)
-				}
-				contentKey = await crypto.subtle.importKey(
-					'raw',
-					rawKey,
-					{ name: 'AES-GCM' },
-					false,
-					['decrypt'],
-				)
+				const contentKey = await contentKeyOf(data, { fragmentKey, password })
 				const plaintext = await aesDecrypt(contentKey, data.encryptedPayload)
-				const confirm = await axios.post(
-					generateUrl(
-						`/apps/keepiq/api/v1/public/sends/${encodeURIComponent(token)}/confirm`,
-					),
-				)
+				const confirm = await axios.post(publicSendUrl(token, 'confirm'))
 				return {
 					payload: new TextDecoder().decode(plaintext),
 					payloadType: data.payloadType,
@@ -168,17 +194,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 				}
 			} catch (e) {
 				if (data.hasPassword) {
-					// Report the failed password attempt (burns at 5); the
-					// caller surfaces attemptsLeft.
-					const failure = await axios.post(
-						generateUrl(
-							`/apps/keepiq/api/v1/public/sends/${encodeURIComponent(token)}/failure`,
-						),
-					)
-					const err = new Error('wrong-password')
-					err.attemptsLeft = failure.data?.attemptsLeft ?? 0
-					err.burned = failure.data?.burned === true
-					throw err
+					throw await wrongPasswordError(token)
 				}
 				throw e
 			}
