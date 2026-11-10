@@ -320,31 +320,57 @@ async function pickItem(tabId: number, session: InlineSession, message: PickMess
 	return { filled: result.filled, code: result.code }
 }
 
+type InlineReply = InlineStateReply | InlinePickReply | undefined
+type InlineOf<K extends InlineListToBackground['kind']> = Extract<InlineListToBackground, { kind: K }>
+
+/** The tab a list page message came from, and the list session it belongs to. */
+interface InlineCall {
+	tabId: number
+	session: InlineSession
+}
+
 /** A list page message, routed by sender page. Only `inline.state` and `inline.pick` reply. */
-export async function handleInlineList(message: InlineListToBackground, sender: Browser.runtime.MessageSender): Promise<InlineStateReply | InlinePickReply | undefined> {
+export async function handleInlineList(message: InlineListToBackground, sender: Browser.runtime.MessageSender): Promise<InlineReply | null> {
 	const session = await accept(message, sender)
 	const tabId = sender.tab?.id
-	if (!session || tabId === undefined) return message.kind === 'inline.state' || message.kind === 'inline.pick' ? null : undefined
-	switch (message.kind) {
-		case 'inline.state': return state(tabId, session)
-		case 'inline.pick': return pick(tabId, session, message)
-		case 'inline.refocus':
-			void toHost(tabId, session, { kind: 'inline.refocus', key: session.key })
-			return undefined
-		case 'inline.close':
-			await drop(tabId, { key: session.key, refocus: message.refocus === true })
-			return undefined
-		case 'inline.unlock':
-			// The list page tried `action.openPopup()` from its click already; this is the fallback.
-			await drop(tabId, { key: session.key })
-			await popout(tabId).catch((error: unknown) => console.error('[keepiq] inline unlock', error))
-			return undefined
-		case 'inline.resize': {
-			const height = inlineClampHeight(message.height)
-			if (height !== null) void toHost(tabId, session, { kind: 'inline.resize', key: session.key, height })
-			return undefined
-		}
-	}
+	if (!session || tabId === undefined) return refusedReply(message)
+	// A kind this background does not know gets no reply.
+	if (!Object.hasOwn(INLINE_HANDLERS, message.kind)) return undefined
+	const handle = INLINE_HANDLERS[message.kind] as (message: InlineListToBackground, call: InlineCall) => Promise<InlineReply>
+	return handle(message, { tabId, session })
+}
+
+/** A refused message that expects a reply gets `null`; the fire-and-forget ones get none. */
+const refusedReply = (message: InlineListToBackground) => (message.kind === 'inline.state' || message.kind === 'inline.pick' ? null : undefined)
+
+async function closeList(message: InlineOf<'inline.close'>, { tabId, session }: InlineCall): Promise<undefined> {
+	await drop(tabId, { key: session.key, refocus: message.refocus === true })
+	return undefined
+}
+
+/** The list page tried `action.openPopup()` from its click already; this is the fallback. */
+async function unlockFromList(_: InlineOf<'inline.unlock'>, { tabId, session }: InlineCall): Promise<undefined> {
+	await drop(tabId, { key: session.key })
+	await popout(tabId).catch((error: unknown) => console.error('[keepiq] inline unlock', error))
+	return undefined
+}
+
+async function resizeList(message: InlineOf<'inline.resize'>, { tabId, session }: InlineCall): Promise<undefined> {
+	const height = inlineClampHeight(message.height)
+	if (height !== null) void toHost(tabId, session, { kind: 'inline.resize', key: session.key, height })
+	return undefined
+}
+
+const INLINE_HANDLERS: { [K in InlineListToBackground['kind']]: (message: InlineOf<K>, call: InlineCall) => Promise<InlineReply> } = {
+	'inline.state': (_, { tabId, session }) => state(tabId, session),
+	'inline.pick': (message, { tabId, session }) => pick(tabId, session, message),
+	'inline.refocus': async (_, { tabId, session }) => {
+		void toHost(tabId, session, { kind: 'inline.refocus', key: session.key })
+		return undefined
+	},
+	'inline.close': closeList,
+	'inline.unlock': unlockFromList,
+	'inline.resize': resizeList,
 }
 
 /** Lock, logout and account switch close every list. */
