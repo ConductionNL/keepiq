@@ -90,37 +90,58 @@ async function openWithMasterPassword(account: AccountRecord, masterPassword: st
 /** Every read-modify-write of an account's PIN record runs here; a forget is caught by the generation instead. */
 const pinQueue = createKeyedQueue()
 
+/** One PIN unlock: the account, the PIN typed, its stored record, and the PIN generation the try read first. */
+interface PinTry {
+	accountId: string
+	pin: string
+	record: NonNullable<Awaited<ReturnType<typeof readPin>>>
+	generation: number
+}
+
 /** The cached suite and its key as PKCS#8. No stale-suite refetch: a failed unwrap is a wrong PIN, and a changed suite forgets the PIN. */
 function openWithPin(accountId: string, pin: string): Promise<{ suite: CachedSuite; key: Uint8Array<ArrayBuffer> }> {
 	return pinQueue(accountId, async () => {
 		const generation = pinGeneration(accountId)
 		const record = await readPin(accountId)
 		if (!record) throw new Failure('pin_forgotten')
-		const suite = await cachedSuite(accountId)
-		if (!suite || !sameSuite(suite, { id: record.suiteId, unlockKeyEpoch: record.unlockKeyEpoch })) {
-			await forgetPin(accountId)
-			throw new Failure('pin_key_changed')
-		}
-		// A worker killed during the fifth attempt counted it but never forgot the PIN.
-		if (record.failures >= PIN_ATTEMPTS) {
-			await forgetPin(accountId)
-			throw new Failure('pin_forgotten')
-		}
+		const pinTry: PinTry = { accountId, pin, record, generation }
+		const suite = await pinSuite(pinTry)
+		await refuseSpentPin(pinTry)
 		const failures = record.failures + 1
 		// Counted before the unwrap, so a worker restart mid-attempt still counts it.
 		if (!(await storePin(accountId, { ...record, failures }, generation))) throw new Failure('pin_forgotten')
-		let key: Uint8Array<ArrayBuffer>
-		try {
-			key = await unwrapPin(record, pin)
-		} catch (error) {
-			if (error instanceof WrongPin && failures < PIN_ATTEMPTS) throw new Failure('invalid_pin', 'Wrong PIN', PIN_ATTEMPTS - failures)
-			// A record that does not open is as good as gone.
-			await forgetPin(accountId)
-			throw new Failure('pin_forgotten')
-		}
+		const key = await unwrapCounted(pinTry, failures)
 		await storePin(accountId, { ...record, failures: 0 }, generation)
 		return { suite, key }
 	})
+}
+
+/** The cached suite, when it is still the one the PIN wraps a key of; otherwise the PIN is forgotten. */
+async function pinSuite({ accountId, record }: PinTry): Promise<CachedSuite> {
+	const suite = await cachedSuite(accountId)
+	if (!suite || !sameSuite(suite, { id: record.suiteId, unlockKeyEpoch: record.unlockKeyEpoch })) {
+		await forgetPin(accountId)
+		throw new Failure('pin_key_changed')
+	}
+	return suite
+}
+
+/** A worker killed during the fifth attempt counted it but never forgot the PIN. */
+async function refuseSpentPin({ accountId, record }: PinTry): Promise<void> {
+	if (record.failures < PIN_ATTEMPTS) return
+	await forgetPin(accountId)
+	throw new Failure('pin_forgotten')
+}
+
+async function unwrapCounted({ accountId, record, pin }: PinTry, failures: number): Promise<Uint8Array<ArrayBuffer>> {
+	try {
+		return await unwrapPin(record, pin)
+	} catch (error) {
+		if (error instanceof WrongPin && failures < PIN_ATTEMPTS) throw new Failure('invalid_pin', 'Wrong PIN', PIN_ATTEMPTS - failures)
+		// A record that does not open is as good as gone.
+		await forgetPin(accountId)
+		throw new Failure('pin_forgotten')
+	}
 }
 
 /**
@@ -147,47 +168,86 @@ function afterMasterPassword(accountId: string, pkcs8: Uint8Array<ArrayBuffer>, 
 	})
 }
 
+/** One unlock try: the account, how it unlocks, and whether this is the one retry after a suite change. */
+interface UnlockRun {
+	accountId: string
+	method: UnlockMethod
+	retried: boolean
+}
+
+/** The private key an unlock opened, imported, with the suite it belongs to. */
+interface OpenedKey {
+	pkcs8: Uint8Array<ArrayBuffer>
+	privateKey: CryptoKey
+	suite: CachedSuite
+}
+
 async function attempt(accountId: string, method: UnlockMethod, retried: boolean): Promise<void> {
+	const run: UnlockRun = { accountId, method, retried }
+	const account = await unlockableAccount(accountId, retried)
+	const { suite, key } = await openVault(run, account)
+	const opened: OpenedKey = { ...await importedKey(key), suite }
+	await storeKey(accountId, opened)
+	await refuseAfterLogout(accountId)
+	// A sync stored a new suite while this unlock decrypted the old one, so this key opens nothing.
+	// A missing suite means the two-factor block dropped it, and the certificate this unlock proved goes too; the retry asks the server, which refuses.
+	const current = await cachedSuite(accountId)
+	if (!current || !sameSuite(current, suite)) return retryAfterSuiteChange(run, current)
+	rebuildPinLater(run, opened)
+}
+
+async function unlockableAccount(accountId: string, retried: boolean): Promise<AccountRecord> {
 	const account = await getAccount(accountId)
 	if (!account) throw new Failure('unknown', 'Unknown account')
 	if (account.appPassword === null) throw new Failure('session_revoked')
 	if (!retried) await checkServer(account)
-	const { suite, key } = method.type === 'pin' ? await openWithPin(accountId, method.pin) : await openWithMasterPassword(account, method.masterPassword)
-	// Imported once here so a corrupt key fails the unlock, not the first decrypt.
-	let pkcs8: Uint8Array<ArrayBuffer>
-	let privateKey: CryptoKey
+	return account
+}
+
+function openVault({ accountId, method }: UnlockRun, account: AccountRecord): Promise<{ suite: CachedSuite; key: string | Uint8Array<ArrayBuffer> }> {
+	return method.type === 'pin' ? openWithPin(accountId, method.pin) : openWithMasterPassword(account, method.masterPassword)
+}
+
+/** Imported once here so a corrupt key fails the unlock, not the first decrypt. */
+async function importedKey(key: string | Uint8Array<ArrayBuffer>): Promise<Omit<OpenedKey, 'suite'>> {
 	try {
-		pkcs8 = typeof key === 'string' ? pemToPkcs8(key) : key
-		privateKey = await importPrivateKey(pkcs8)
+		const pkcs8 = typeof key === 'string' ? pemToPkcs8(key) : key
+		return { pkcs8, privateKey: await importPrivateKey(pkcs8) }
 	} catch {
 		throw new Failure('key_unreadable')
 	}
+}
+
+async function storeKey(accountId: string, { pkcs8, privateKey, suite }: OpenedKey): Promise<void> {
 	// Cleared before the key is stored, so a suite change landing after this keeps its notice.
 	if ((await getAccount(accountId))?.keyChanged) await updateAccount(accountId, { keyChanged: false })
 	await putKey(accountId, toBase64(pkcs8))
 	await proveCertificate(accountId, suite.certificate, privateKey)
-	// A logout during the unlock marked the account before purging; take back what this unlock wrote.
+}
+
+/** A logout during the unlock marked the account before purging; take back what this unlock wrote. */
+async function refuseAfterLogout(accountId: string): Promise<void> {
 	const after = await getAccount(accountId)
-	if (typeof after?.appPassword !== 'string') {
-		await clearKey(accountId, { sealed: 'drop' })
-		await browser.storage.local.remove([suiteKey(accountId), provenCertificateKey(accountId)])
-		throw new Failure('session_revoked')
-	}
-	// A sync stored a new suite while this unlock decrypted the old one, so this key opens nothing.
-	// A missing suite means the two-factor block dropped it, and the certificate this unlock proved goes too; the retry asks the server, which refuses.
-	const current = await cachedSuite(accountId)
-	if (!current || !sameSuite(current, suite)) {
-		// No one used this key, so it does not take what was sealed before this unlock.
-		await clearKey(accountId, { sealed: 'keep' })
-		if (current) await updateAccount(accountId, { keyChanged: true })
-		else await browser.storage.local.remove(provenCertificateKey(accountId))
-		// Either change also forgot the PIN, so only the master password can retry.
-		if (method.type === 'pin') throw new Failure(current ? 'pin_key_changed' : 'unlock_blocked')
-		if (retried) throw new Failure('unknown')
-		return attempt(accountId, method, true)
-	}
+	if (typeof after?.appPassword === 'string') return
+	await clearKey(accountId, { sealed: 'drop' })
+	await browser.storage.local.remove([suiteKey(accountId), provenCertificateKey(accountId)])
+	throw new Failure('session_revoked')
+}
+
+async function retryAfterSuiteChange(run: UnlockRun, current: CachedSuite | undefined): Promise<void> {
+	// No one used this key, so it does not take what was sealed before this unlock.
+	await clearKey(run.accountId, { sealed: 'keep' })
+	if (current) await updateAccount(run.accountId, { keyChanged: true })
+	else await browser.storage.local.remove(provenCertificateKey(run.accountId))
+	// Either change also forgot the PIN, so only the master password can retry.
+	if (run.method.type === 'pin') throw new Failure(current ? 'pin_key_changed' : 'unlock_blocked')
+	if (run.retried) throw new Failure('unknown')
+	return attempt(run.accountId, run.method, true)
+}
+
+/** Not awaited, so the 600 000-iteration PBKDF2 of a rebuild does not hold up the unlock reply. */
+function rebuildPinLater({ accountId, method }: UnlockRun, { pkcs8, suite }: OpenedKey): void {
 	const generation = pinGeneration(accountId)
-	// Not awaited, so the 600 000-iteration PBKDF2 of a rebuild does not hold up the unlock reply.
 	if (method.type === 'masterPassword') {
 		void afterMasterPassword(accountId, pkcs8, suite, generation).catch((error: unknown) => console.error('[keepiq] PIN rebuild failed', error))
 	}
@@ -198,18 +258,42 @@ export async function enablePin(accountId: string, pin: string, masterPassword: 
 	// Read before the status, so a lock landing while it is read still counts.
 	const epoch = sessionEpoch(accountId)
 	const generation = pinGeneration(accountId)
+	const refusal = await pinRefusal(accountId, pin)
+	if (refusal) return refusal
+	const suite = await cachedSuite(accountId)
+	if (!suite) return { ok: false, code: 'locked' }
+	const pem = await masterPem(suite, masterPassword)
+	if (pem === null) return { ok: false, code: 'invalid_master_password' }
+	return storeNewPin({ accountId, pin, epoch, generation, suite }, pem)
+}
+
+/** A new PIN for an unlocked account: the session it was set in, the PIN generation then, and the suite it wraps a key of. */
+interface NewPin {
+	accountId: string
+	pin: string
+	epoch: number
+	generation: number
+	suite: CachedSuite
+}
+
+async function pinRefusal(accountId: string, pin: string): Promise<PinSetReply | null> {
 	const account = await getAccount(accountId)
 	if (!account || await accountStatus(account) !== 'unlocked') return { ok: false, code: 'locked' }
 	if (typeof pin !== 'string' || [...pin].length < PIN_MIN_LENGTH) return { ok: false, code: 'pin_too_short' }
-	const suite = await cachedSuite(accountId)
-	if (!suite) return { ok: false, code: 'locked' }
-	let pem: string
+	return null
+}
+
+/** The key as PEM, or `null` for a wrong master password. */
+async function masterPem(suite: CachedSuite, masterPassword: string): Promise<string | null> {
 	try {
-		pem = await decrypt(suite, masterPassword)
+		return await decrypt(suite, masterPassword)
 	} catch (error) {
-		if (error instanceof Failure && error.code === 'invalid_master_password') return { ok: false, code: 'invalid_master_password' }
+		if (error instanceof Failure && error.code === 'invalid_master_password') return null
 		throw error
 	}
+}
+
+async function storeNewPin({ accountId, pin, epoch, generation, suite }: NewPin, pem: string): Promise<PinSetReply> {
 	const pkcs8 = pemToPkcs8(pem)
 	const [record, seal] = await Promise.all([wrapPin(pin, pkcs8, suite), sealPin(accountId, pin, pkcs8, suite)])
 	// A lock or logout meanwhile ends what the user unlocked, so the PIN must not outlast it.
