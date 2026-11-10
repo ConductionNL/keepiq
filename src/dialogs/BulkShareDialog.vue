@@ -68,8 +68,8 @@ import { NcButton, NcDialog } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
 import RecipientPicker from '../components/share/RecipientPicker.vue'
 import ShareRestrictionFields from '../components/share/ShareRestrictionFields.vue'
+import bulkRunDialog from '../mixins/bulkRunDialog.js'
 import { copyCiphertext, recipientFields } from '../services/recipientCopy.js'
-import { useBulkStore } from '../store/modules/bulk.js'
 import { useKeyProofPromptStore } from '../store/modules/keyProofPrompt.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useShareStore } from '../store/modules/share.js'
@@ -85,12 +85,7 @@ export default {
 		ShareRestrictionFields,
 	},
 
-	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
-	},
+	mixins: [bulkRunDialog],
 
 	emits: ['close', 'done'],
 	data() {
@@ -100,8 +95,6 @@ export default {
 			/** Use-only and end date for every share of this run. */
 			restriction: { useOnly: false, endDate: '' },
 			error: null,
-			/** Whether a run was started FROM THIS DIALOG (the store's report outlives it). */
-			ran: false,
 			/**
 			 * The master password for this run's vault-key proofs (keepiq#818):
 			 * asked once before the fan-out, cleared when the run ends.
@@ -112,23 +105,6 @@ export default {
 
 	computed: {
 		/**
-		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
-		 */
-		bulk() {
-			return useBulkStore()
-		},
-
-		/**
-		 * Whether the dialog has switched from asking to reporting.
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
-		 */
-		finished() {
-			return this.ran && !this.bulk.progress.running
-		},
-
-		/**
 		 * The dialog title: a command while it asks, an outcome once it
 		 * reports — counted off the report, never off the selection, which
 		 * the host's post-run reload empties.
@@ -138,10 +114,7 @@ export default {
 		 */
 		title() {
 			if (this.finished) {
-				return this.t('keepiq', 'Shared {ok} of {total} secrets', {
-					ok: this.bulk.report.filter((r) => r.status === 'ok').length,
-					total: this.bulk.report.length,
-				})
+				return this.t('keepiq', 'Shared {ok} of {total} secrets', this.reportCounts)
 			}
 			return this.t('keepiq', 'Share {count} secrets', {
 				count: this.bulk.selectionCount,
