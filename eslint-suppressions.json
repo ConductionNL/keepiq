@@ -172,7 +172,7 @@
   },
   "src/passkey/passkey.js": {
     "eqeqeq": {
-      "count": 5
+      "count": 2
     }
   },
   "src/router/guards.js": {
