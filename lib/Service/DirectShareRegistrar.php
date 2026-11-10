@@ -178,114 +178,84 @@ class DirectShareRegistrar {
 	 * @return array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}
 	 */
 	private function registerDirectShare(string $userId, array $row): array {
-		$sourceSecretId = (string)($row['sourceSecretId'] ?? '');
-		$targetUserId = (string)($row['targetUserId'] ?? '');
-		$encryptedKey = (string)($row['encryptedKey'] ?? '');
-		if ($sourceSecretId === '' || $targetUserId === '' || $encryptedKey === '') {
-			return [
-				'sourceSecretId' => $sourceSecretId,
-				'targetUserId' => $targetUserId,
-				'status' => 'invalid',
-			];
-		}
-
-		if ($targetUserId === $userId) {
-			return [
-				'sourceSecretId' => $sourceSecretId,
-				'targetUserId' => $targetUserId,
-				'status' => 'self',
-			];
-		}
-
-		return $this->createDirectShare(
+		$share = new DirectShareRow(
 			userId: $userId,
-			sourceSecretId: $sourceSecretId,
-			targetUserId: $targetUserId,
-			encryptedKey: $encryptedKey,
-			row: $row
+			sourceSecretId: (string)($row['sourceSecretId'] ?? ''),
+			targetUserId: (string)($row['targetUserId'] ?? ''),
+			encryptedKey: (string)($row['encryptedKey'] ?? ''),
+			row: $row,
 		);
+		if ($share->isIncomplete() === true) {
+			return $share->outcome(status: 'invalid');
+		}
+
+		if ($share->targetUserId === $userId) {
+			return $share->outcome(status: 'self');
+		}
+
+		return $this->createDirectShare(share: $share);
 	}//end registerDirectShare()
 
 	/**
 	 * Create the recipient copy and the ShareTarget row for one validated
 	 * bulk-share row, enforcing the owner guard and idempotency.
 	 *
-	 * @param string $userId The sharing owner
-	 * @param string $sourceSecretId The owner's source secret
-	 * @param string $targetUserId The recipient
-	 * @param string $encryptedKey Recipient-encrypted key blob
-	 * @param array<string,mixed> $row The original row (optional blobs)
+	 * @param DirectShareRow $share The validated row
 	 *
 	 * @return array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}
 	 */
-	private function createDirectShare(
-		string $userId,
-		string $sourceSecretId,
-		string $targetUserId,
-		string $encryptedKey,
-		array $row,
-	): array {
+	private function createDirectShare(DirectShareRow $share): array {
 		// Per-item owner guard: a foreign secret is skipped, never a
 		// whole-batch failure and never an oracle. A use-only or expiring
 		// copy is never a share source (D4), and a malformed restriction is
 		// reported, not guessed.
-		$source = $this->loadOwnedSource(sourceSecretId: $sourceSecretId, userId: $userId);
-		$restriction = $this->parseRestriction(row: $row);
-		$refusal = $this->refusalFor(source: $source, restriction: $restriction, userId: $userId, row: $row);
+		$source = $this->loadOwnedSource(sourceSecretId: $share->sourceSecretId, userId: $share->userId);
+		$restriction = $this->parseRestriction(row: $share->row);
+		$refusal = $this->refusalFor(source: $source, restriction: $restriction, userId: $share->userId, row: $share->row);
 		if ($refusal !== null || $source === null || $restriction === null) {
-			return [
-				'sourceSecretId' => $sourceSecretId,
-				'targetUserId' => $targetUserId,
-				'status' => ($refusal ?? 'invalid'),
-			];
+			return $share->outcome(status: ($refusal ?? 'invalid'));
 		}
 
-		// Idempotency: a live share of the source with this recipient, of any
-		// provenance, is `exists`; a quarantined row does not count.
-		try {
-			$this->mapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $source->getId(),
-				targetUserId: $targetUserId
-			);
-			return [
-				'sourceSecretId' => $sourceSecretId,
-				'targetUserId' => $targetUserId,
-				'status' => 'exists',
-			];
-		} catch (DoesNotExistException) {
-			// No existing share — create below.
+		$mint = new DirectShareMint(share: $share, source: $source, restriction: $restriction);
+		if ($this->alreadyShared(mint: $mint) === true) {
+			return $share->outcome(status: 'exists');
 		}
 
-		$copy = $this->mintAndLink(
-			source: $source,
-			restriction: $restriction,
-			userId: $userId,
-			targetUserId: $targetUserId,
-			encryptedKey: $encryptedKey,
-			row: $row
-		);
+		$copy = $this->mintAndLink(mint: $mint);
 		if (is_string($copy) === true) {
-			return [
-				'sourceSecretId' => $sourceSecretId,
-				'targetUserId' => $targetUserId,
-				'status' => $copy,
-			];
+			return $share->outcome(status: $copy);
 		}
 
 		$this->auditTrail->recordBulkShareGranted(
-			userId: $userId,
+			userId: $share->userId,
 			sourceSecretId: $source->getId(),
 			secretName: $source->getName(),
-			recipientId: $targetUserId,
+			recipientId: $share->targetUserId,
 		);
 
-		return [
-			'sourceSecretId' => $sourceSecretId,
-			'targetUserId' => $targetUserId,
-			'status' => 'created',
-			'recipientSecretId' => $copy->getId(),
-		];
+		return $share->created(copy: $copy);
 	}//end createDirectShare()
+
+	/**
+	 * Idempotency: a live share of the source with this recipient, of any
+	 * provenance, is `exists`; a quarantined row does not count.
+	 *
+	 * @param DirectShareMint $mint The row and its resolved source
+	 *
+	 * @return bool
+	 */
+	private function alreadyShared(DirectShareMint $mint): bool {
+		try {
+			$this->mapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $mint->source->getId(),
+				targetUserId: $mint->share->targetUserId
+			);
+			return true;
+		} catch (DoesNotExistException) {
+			// No existing share — create below.
+			return false;
+		}
+	}//end alreadyShared()
 
 	/**
 	 * Mint the recipient copy, link it and give it its restriction in one
@@ -294,62 +264,27 @@ class DirectShareRegistrar {
 	 * revoke it, and a use-only or expiring share never commits a full copy
 	 * (GHSA-m5p9-6pw7-pf3g).
 	 *
-	 * @param Secret $source The source secret
-	 * @param ShareRestriction $restriction The restriction of a direct row
-	 * @param string $userId The sharer
-	 * @param string $targetUserId The recipient
-	 * @param string $encryptedKey Recipient-encrypted key blob
-	 * @param array<string,mixed> $row The original row (optional blobs)
+	 * @param DirectShareMint $mint The row, its resolved source and its restriction
 	 *
 	 * @return Secret|string The copy, or the status when neither it nor its row was written:
 	 *   `copy_fields_mismatch` when the row's totp or passkeys does not mirror the source's, `no_suite`, `exists`
 	 */
-	private function mintAndLink(
-		Secret $source,
-		ShareRestriction $restriction,
-		string $userId,
-		string $targetUserId,
-		string $encryptedKey,
-		array $row,
-	): Secret|string {
+	private function mintAndLink(DirectShareMint $mint): Secret|string {
 		// A copy without the source's TOTP seed or passkeys, or with ones it
 		// does not hold, would show the recipient another value.
-		$carried = ['totp' => ($row['encryptedTotp'] ?? null), 'passkeys' => ($row['encryptedPasskeys'] ?? null)];
-		if ((new CredentialFields())->notMirrored(source: $source, copy: $carried) !== []) {
+		if ((new CredentialFields())->notMirrored(source: $mint->source, copy: $mint->share->carriedFields()) !== []) {
 			return 'copy_fields_mismatch';
 		}
 
 		$this->connection?->beginTransaction();
 		try {
-			$copy = $this->copyFactory->create(
-				source: $source,
-				targetUserId: $targetUserId,
-				encryptedKey: $encryptedKey,
-				encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
-				encryptedExtras: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
-				encryptedTotp: $this->optionalString(value: ($row['encryptedTotp'] ?? null)),
-				encryptedPasskeys: $this->optionalString(value: ($row['encryptedPasskeys'] ?? null)),
-			);
+			$copy = $this->mintCopy(mint: $mint);
 			if ($copy === null) {
 				$this->connection?->rollBack();
 				return 'no_suite';
 			}
 
-			$entity = new ShareTarget();
-			$entity->setId(Uuid::uuid4()->toString());
-			$entity->setSourceSecretId($source->getId());
-			$entity->setTargetUserId($targetUserId);
-			$entity->setSecretId($copy->getId());
-			$entity->setGroupShareId($this->optionalString(value: ($row['groupShareId'] ?? null)));
-			$entity->setCreatedBy($userId);
-			$entity->setCreatedAt(new DateTime());
-			if ($entity->getGroupShareId() === null) {
-				// A group-linked row takes its restriction from the group share.
-				$entity->setUseOnly($restriction->useOnly);
-				$entity->setExpiresAt($restriction->expiresAt);
-			}
-
-			$persisted = $this->mapper->insert($entity);
+			$persisted = $this->mapper->insert($this->shareTargetFor(mint: $mint, copy: $copy));
 			$this->restrictions?->resolveMinted(target: $persisted);
 			$this->connection?->commit();
 		} catch (Throwable $exception) {
@@ -368,6 +303,53 @@ class DirectShareRegistrar {
 
 		return $copy;
 	}//end mintAndLink()
+
+	/**
+	 * Mint the recipient's copy of the source from the row's ciphertexts.
+	 *
+	 * @param DirectShareMint $mint The row and its resolved source
+	 *
+	 * @return Secret|null The copy, or null when the recipient has no active suite
+	 */
+	private function mintCopy(DirectShareMint $mint): ?Secret {
+		$row = $mint->share->row;
+
+		return $this->copyFactory->create(
+			source: $mint->source,
+			targetUserId: $mint->share->targetUserId,
+			encryptedKey: $mint->share->encryptedKey,
+			encryptedLogin: $this->optionalString(value: ($row['encryptedLogin'] ?? null)),
+			encryptedExtras: $this->optionalString(value: ($row['encryptedAdditionalFields'] ?? null)),
+			encryptedTotp: $this->optionalString(value: ($row['encryptedTotp'] ?? null)),
+			encryptedPasskeys: $this->optionalString(value: ($row['encryptedPasskeys'] ?? null)),
+		);
+	}//end mintCopy()
+
+	/**
+	 * The ShareTarget row linking the source to the recipient's copy. A
+	 * group-linked row takes its restriction from the group share.
+	 *
+	 * @param DirectShareMint $mint The row, its resolved source and its restriction
+	 * @param Secret $copy The recipient's copy
+	 *
+	 * @return ShareTarget
+	 */
+	private function shareTargetFor(DirectShareMint $mint, Secret $copy): ShareTarget {
+		$entity = new ShareTarget();
+		$entity->setId(Uuid::uuid4()->toString());
+		$entity->setSourceSecretId($mint->source->getId());
+		$entity->setTargetUserId($mint->share->targetUserId);
+		$entity->setSecretId($copy->getId());
+		$entity->setGroupShareId($this->optionalString(value: ($mint->share->row['groupShareId'] ?? null)));
+		$entity->setCreatedBy($mint->share->userId);
+		$entity->setCreatedAt(new DateTime());
+		if ($entity->getGroupShareId() === null) {
+			$entity->setUseOnly($mint->restriction->useOnly);
+			$entity->setExpiresAt($mint->restriction->expiresAt);
+		}
+
+		return $entity;
+	}//end shareTargetFor()
 
 	/**
 	 * The source secret the caller may share — one they own or hold an active
