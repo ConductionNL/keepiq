@@ -161,7 +161,35 @@ class ShareSyncGuards {
 
 		$required = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $live['copies'];
 
-		$named = [];
+		[$named, $valueless] = $this->namedRows(updates: $updates);
+		if (array_diff_key($required, $named) !== [] || array_diff_key($named, $required, $live['ignored']) !== []) {
+			throw new InvalidArgumentException(
+				message: 'Name the source and every copy whose access has not ended, and nothing else'
+			);
+		}
+
+		foreach (array_keys(array_intersect_key($valueless, $required)) as $copyId) {
+			$this->assertHolderHasNoVaultKey(source: $source, copy: $required[$copyId]);
+			// No vault key to encrypt for: the row keeps its value. A copy keeps
+			// its version too; the source's version already moved with the lock.
+			unset($required[$copyId]);
+		}
+
+		return [$writesOn, array_fill_keys(array_keys($required), true)];
+	}//end assertGroupWrite()
+
+	/**
+	 * The rows a group write's body names, and of those the ones that carry
+	 * no value, both keyed by id.
+	 *
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 *
+	 * @return array{0:array<string,bool>,1:array<string,bool>}
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	private function namedRows(array $updates): array {
+		$named     = [];
 		$valueless = [];
 		foreach ($updates as $update) {
 			$named[(string)($update['secretId'] ?? '')] = true;
@@ -170,26 +198,29 @@ class ShareSyncGuards {
 			}
 		}
 
-		if (array_diff_key($required, $named) !== [] || array_diff_key($named, $required, $live['ignored']) !== []) {
+		return [$named, $valueless];
+	}//end namedRows()
+
+	/**
+	 * Refuse leaving a valueless row out when its holder has a vault key: every
+	 * holder with one must get the new value.
+	 *
+	 * @param Secret                                                       $source The source secret being synced
+	 * @param array{secretId:string,holder:string,targetUserId:?string}   $copy   The row named without a value
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the holder has a vault key
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 */
+	private function assertHolderHasNoVaultKey(Secret $source, array $copy): void {
+		if ($this->holderHasVaultKey(source: $source, copy: $copy) === true) {
 			throw new InvalidArgumentException(
-				message: 'Name the source and every copy whose access has not ended, and nothing else'
+				message: 'Every holder with a vault key must get the new value'
 			);
 		}
-
-		foreach (array_keys(array_intersect_key($valueless, $required)) as $copyId) {
-			if ($this->holderHasVaultKey(source: $source, copy: $required[$copyId]) === true) {
-				throw new InvalidArgumentException(
-					message: 'Every holder with a vault key must get the new value'
-				);
-			}
-
-			// No vault key to encrypt for: the row keeps its value. A copy keeps
-			// its version too; the source's version already moved with the lock.
-			unset($required[$copyId]);
-		}
-
-		return [$writesOn, array_fill_keys(array_keys($required), true)];
-	}//end assertGroupWrite()
+	}//end assertHolderHasNoVaultKey()
 
 	/**
 	 * The share rows of a source, judged once for a whole sync: the check
