@@ -73,6 +73,7 @@ import History from 'vue-material-design-icons/History.vue'
 import VersionDetailsDialog from '../dialogs/VersionDetailsDialog.vue'
 import VersionRestoreDialog from '../dialogs/VersionRestoreDialog.vue'
 import { useSecretVersionStore } from '../store/modules/secretVersion.js'
+import { localDateTime } from '../utils/dateTime.js'
 
 export default {
 	name: 'VersionHistoryPanel',
@@ -167,20 +168,8 @@ export default {
 			}
 		},
 
-		/**
-		 * Locale date-time display.
-		 *
-		 * @param {string} iso The ISO timestamp.
-		 * @return {string}
-		 *
-		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
-		 */
-		formatDate(iso) {
-			const parsed = Date.parse(iso ?? '')
-			return Number.isNaN(parsed)
-				? (iso ?? '')
-				: new Date(parsed).toLocaleString()
-		},
+		/** Locale date-time display of an ISO timestamp. */
+		formatDate: localDateTime,
 	},
 }
 </script>
