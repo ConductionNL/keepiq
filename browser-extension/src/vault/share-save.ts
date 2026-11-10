@@ -148,19 +148,26 @@ function refusalOf(error: unknown, cloudIds: ReadonlyMap<string, string>): unkno
 	if (!(error instanceof ApiError)) return error
 	// Nextcloud's page for a route this Keepiq doesn't have, as an `-unstable` build from before share-save.
 	if (error instanceof KeepiqNotInstalled) return new WriteFailure({ code: 'keepiq_outdated' })
-	if (error.status === 409 && error.code === 'stale_source') return new WriteFailure({ code: 'stale_source' })
-	if (error.status === 409 && error.code === 'partner_upgrade_required') {
-		const body = error.body as { shareId?: unknown; requiredVersion?: unknown } | null
-		const shareId = isString(body?.shareId) ? body.shareId : null
-		const cloudId = shareId && cloudIds.get(shareId)
-		return new WriteFailure({
-			code: 'partner_upgrade_required',
-			partners: shareId && cloudId ? [{ shareId, cloudId }] : [],
-			...(isString(body?.requiredVersion) && { requiredVersion: body.requiredVersion }),
-		})
-	}
+	if (error.status === 409) return conflictRefusal(error, cloudIds)
 	if (error.refused && error.code === 'not_allowed') return new WriteFailure({ code: 'forbidden' })
 	return error
+}
+
+function conflictRefusal(error: ApiError, cloudIds: ReadonlyMap<string, string>): unknown {
+	if (error.code === 'stale_source') return new WriteFailure({ code: 'stale_source' })
+	if (error.code === 'partner_upgrade_required') return partnerUpgradeRefusal(error, cloudIds)
+	return error.refused && error.code === 'not_allowed' ? new WriteFailure({ code: 'forbidden' }) : error
+}
+
+function partnerUpgradeRefusal(error: ApiError, cloudIds: ReadonlyMap<string, string>): WriteFailure {
+	const body = error.body as { shareId?: unknown; requiredVersion?: unknown } | null
+	const shareId = isString(body?.shareId) ? body.shareId : null
+	const cloudId = shareId && cloudIds.get(shareId)
+	return new WriteFailure({
+		code: 'partner_upgrade_required',
+		partners: shareId && cloudId ? [{ shareId, cloudId }] : [],
+		...(isString(body?.requiredVersion) && { requiredVersion: body.requiredVersion }),
+	})
 }
 
 /** Exactly the fields the patch carries, with the same null-ness, or the server refuses it (`copy_fields_mismatch`). */
@@ -190,36 +197,73 @@ async function sealWhole(value: Values, key: CryptoKey, valueFields: readonly st
 
 type PartnerOutcome = { verified: VerifiedPartner } | { suspend: string } | 'unreachable'
 
+/** A lookup answer in the shape `FederatedCertificateService::parseAnswer` guarantees. */
+interface CertificateAnswer {
+	certificate: string
+	chain: string[]
+	pin: string
+	valueFields: unknown
+}
+
 /** Looks the partner recipient up and verifies the answer against the share's own cloud id, not the lookup's echo of it. */
 async function lookUp(client: Client, share: RequiredShare): Promise<PartnerOutcome> {
 	let answer: Record<string, unknown> | null
 	try {
 		answer = await client.keepiq('POST', '/api/v1/federation/recipient-certificate', { cloudId: share.recipientCloudId })
 	} catch (error) {
-		if (!(error instanceof ApiError)) throw error
-		if (error.status === 429) throw new WriteFailure({ code: 'partner_lookup_limit' })
-		if (error.status === 502 && error.message === 'partner_unreachable') return 'unreachable'
-		if (PARTNER_GONE.get(error.message) === error.status) return { suspend: error.message }
-		// This server failed, not the partner, so nothing is suspended; its 409 is its own refusal, as a Nextcloud too old for partner sharing, not a newer version.
-		if (error.status === 409) throw new WriteFailure({ code: error.message === 'federation_unavailable' ? 'federation_unavailable' : 'server_error' })
-		throw error
+		return lookupFailure(error)
 	}
-	// `FederatedCertificateService::parseAnswer` guarantees this shape, and `FederationPartnerService::add` the pin's, so another is this server's fault, and a suspension can't be undone.
+	return verifiedOutcome(share, checkedAnswer(answer))
+}
+
+function lookupFailure(error: unknown): PartnerOutcome {
+	if (!(error instanceof ApiError)) throw error
+	if (error.status === 429) throw new WriteFailure({ code: 'partner_lookup_limit' })
+	const outcome = partnerGone(error)
+	if (outcome) return outcome
+	throw serverFailure(error)
+}
+
+/** The partner did not answer, or answered that the recipient or the partnership is gone. */
+function partnerGone(error: ApiError): PartnerOutcome | null {
+	if (error.status === 502 && error.message === 'partner_unreachable') return 'unreachable'
+	return PARTNER_GONE.get(error.message) === error.status ? { suspend: error.message } : null
+}
+
+/** This server failed, not the partner, so nothing is suspended; its 409 is its own refusal, as a Nextcloud too old for partner sharing, not a newer version. */
+function serverFailure(error: ApiError): unknown {
+	if (error.status !== 409) return error
+	return new WriteFailure({ code: error.message === 'federation_unavailable' ? 'federation_unavailable' : 'server_error' })
+}
+
+const isChain = (chain: unknown): chain is string[] => Array.isArray(chain) && chain.length === 2 && chain.every((pem) => typeof pem === 'string')
+
+const isPin = (pin: unknown): pin is string => typeof pin === 'string' && /^[0-9a-f]{64}$/i.test(pin)
+
+/** `FederatedCertificateService::parseAnswer` guarantees this shape, and `FederationPartnerService::add` the pin's, so another is this server's fault, and a suspension can't be undone. */
+function checkedAnswer(answer: Record<string, unknown> | null): CertificateAnswer {
+	const certificate = answer?.certificate
 	const chain = answer?.chain
 	const pin = answer?.partnerRootFingerprint
-	if (typeof answer?.certificate !== 'string' || !Array.isArray(chain) || chain.length !== 2 || !chain.every((pem) => typeof pem === 'string') || typeof pin !== 'string' || !/^[0-9a-f]{64}$/i.test(pin)) {
-		throw new WriteFailure({ code: 'server_error' })
-	}
+	if (typeof certificate !== 'string' || !isChain(chain) || !isPin(pin)) throw new WriteFailure({ code: 'server_error' })
+	return { certificate, chain, pin, valueFields: answer?.valueFields }
+}
+
+async function verifiedOutcome(share: RequiredShare, answer: CertificateAnswer): Promise<PartnerOutcome> {
 	// An older partner sends none, and stores none of those fields.
 	const valueFields = listOf(answer.valueFields).filter(isString)
 	try {
-		return { verified: { ...await verifyFederatedCertificate({ certificate: answer.certificate, chain, partnerRootFingerprint: pin, cloudId: share.recipientCloudId }), valueFields } }
+		return { verified: { ...await verifyFederatedCertificate({ certificate: answer.certificate, chain: answer.chain, partnerRootFingerprint: answer.pin, cloudId: share.recipientCloudId }), valueFields } }
 	} catch (error) {
-		// Validity is judged by this machine's clock, which may be wrong, so it stops the save instead of suspending for good.
-		if (error instanceof FederatedCertificateError && error.reason === 'not_valid_now') throw new WriteFailure({ code: 'partner_clock' })
-		if (error instanceof FederatedCertificateError) return { suspend: error.reason }
-		throw error
+		return certificateFailure(error)
 	}
+}
+
+/** Validity is judged by this machine's clock, which may be wrong, so it stops the save instead of suspending for good. */
+function certificateFailure(error: unknown): PartnerOutcome {
+	if (error instanceof FederatedCertificateError && error.reason === 'not_valid_now') throw new WriteFailure({ code: 'partner_clock' })
+	if (error instanceof FederatedCertificateError) return { suspend: error.reason }
+	throw error
 }
 
 /** Resolves with the note the item's detail shows, or `undefined` when everyone got the change; a rejection wrote nothing, unless the reply to the final call was lost. */
