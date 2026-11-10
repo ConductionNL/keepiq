@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Non impostata
   shortcutChange: Cambia
   shortcutFirefox: Apri about:addons, scegli il menu a forma di ingranaggio, poi Gestisci scorciatoie estensioni
+  shortcutSafari: Apri le impostazioni di Safari, scegli Estensioni, poi seleziona Keepiq per cambiarne la scorciatoia
+  websiteAccess: Accesso ai siti web
+  websiteAccessAll: Tutti i siti web
+  websiteAccessSome: Solo i siti web che hai consentito
+  websiteAccessServer: Senza il tuo server Keepiq
   clearClipboard: Svuota appunti
   clipboardSeconds:
     1: 1 secondo
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Informativa sulla privacy
   webApp: App web di Keepiq
   rate: Valuta l’estensione
+
+websiteAccess:
+  title: Lascia che Keepiq funzioni sui siti web
+  body: Safari esegue Keepiq solo sui siti web che consenti. Consentilo su tutti i siti web per compilare i login, salvarne di nuovi e usare le passkey ovunque accedi.
+  allow: Consenti su tutti i siti web
+  dismiss: Non ora
+  steps: In Safari, scegli Safari > Impostazioni, poi Siti web. Seleziona Keepiq nell’elenco e imposta “Quando visito altri siti web” su Consenti.
+  perSite: Per consentire un sito alla volta, fai clic sul pulsante di Keepiq su quel sito e scegli di consentirlo sempre.
+  serverTitle: Keepiq non riesce a raggiungere {host}
+  serverBody: Safari non consente a Keepiq di raggiungere il tuo server, quindi la cassaforte non può sincronizzarsi.
+  serverAllow: Consenti {host}
 
 generator:
   kinds: Cosa generare

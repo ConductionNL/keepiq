@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Inte inställt
   shortcutChange: Ändra
   shortcutFirefox: Öppna about:addons, välj kugghjulsmenyn och sedan Hantera kortkommandon för tillägg
+  shortcutSafari: Öppna Safari-inställningarna, välj Tillägg och markera sedan Keepiq för att ändra kortkommandot
+  websiteAccess: Åtkomst till webbplatser
+  websiteAccessAll: Alla webbplatser
+  websiteAccessSome: Bara webbplatser du har tillåtit
+  websiteAccessServer: Inte din Keepiq-server
   clearClipboard: Rensa urklipp
   clipboardSeconds:
     1: 1 sekund
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Integritetspolicy
   webApp: Keepiqs webbapp
   rate: Betygsätt tillägget
+
+websiteAccess:
+  title: Låt Keepiq fungera på webbplatser
+  body: Safari kör bara Keepiq på webbplatser du tillåter. Tillåt det på alla webbplatser för att fylla i inloggningar, spara nya och använda lösennycklar överallt där du loggar in.
+  allow: Tillåt på alla webbplatser
+  dismiss: Inte nu
+  steps: Välj Safari > Inställningar i Safari och sedan Webbplatser. Markera Keepiq i listan och ställ in ”Vid besök på andra webbplatser” på Tillåt.
+  perSite: Om du vill tillåta en webbplats i taget klickar du på Keepiq-knappen på webbplatsen och väljer att alltid tillåta den.
+  serverTitle: Keepiq kan inte nå {host}
+  serverBody: Safari låter inte Keepiq nå din server, så ditt valv kan inte synkroniseras.
+  serverAllow: Tillåt {host}
 
 generator:
   kinds: Vad ska genereras

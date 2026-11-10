@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { patchAccountPolicy } from '@/src/accounts/policy'
 import { addAccount, folderNoticeKey, markLoggedOut, removeAccount, updateAccount } from '@/src/accounts/store'
 import { DEFAULT_SETTINGS, readSettings, settingsKey, writeSettings } from '@/src/accounts/settings'
 import { setIntent } from '@/src/add-intent'
-import { CLIPBOARD_ALARM } from '@/src/clipboard'
+import { CLIPBOARD_ALARM, CLIPBOARD_COUNT_KEY } from '@/src/clipboard'
 import { importPublicKey, pemToPkcs8, rsaEncrypt, toBase64 } from '@/src/crypto'
 import { addHistory } from '@/src/generator/history'
 import { defaultOptions, type GeneratorPolicy } from '@/src/generator/options'
@@ -512,6 +512,19 @@ describe('account settings', () => {
 		expect((await browser.storage.local.get(neverLockKey(accountId)))[neverLockKey(accountId)]).toBe(toBase64(pemToPkcs8(envelope.privateKeyPem)))
 	})
 
+	it.each([
+		['with the idle API', { onStateChanged: {} }, 'onSystemLock'],
+		['without it, as on Safari, keeping the rest of the patch', undefined, 15],
+	])('takes On system lock only %s', async (_, idle, stored) => {
+		const before = (browser as { idle?: unknown }).idle
+		Object.assign(browser, { idle })
+		onTestFinished(() => {
+			Object.assign(browser, { idle: before })
+		})
+		await send({ kind: 'account.settings.set', accountId, patch: { vaultTimeout: 'onSystemLock', askToAdd: false } })
+		expect(await readSettings(accountId)).toMatchObject({ vaultTimeout: stored, askToAdd: false })
+	})
+
 	it.each<[string, () => Promise<unknown>]>([
 		['locked', () => lock(accountId)],
 		['logged out', () => markLoggedOut(accountId)],
@@ -673,6 +686,24 @@ describe('clipboard.copied', () => {
 		await browser.storage.local.set({ [settingsKey(accountId)]: { vaultTimeout: 15, vaultTimeoutAction: 'lock', clearClipboardMs: 0 } })
 		await send({ kind: 'clipboard.copied' })
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeUndefined()
+	})
+
+	it.each<[string, unknown, number | undefined]>([
+		['a count', 8, 8],
+		['zero', 0, 0],
+		['a negative count', -1, undefined],
+		['a fraction', 1.5, undefined],
+		['text', '8', undefined],
+		['no count', undefined, undefined],
+	])('keeps Safari\'s count only when it is a non-negative integer: %s', async (_, changeCount, kept) => {
+		vi.stubEnv('BROWSER', 'safari')
+		onTestFinished(() => {
+			vi.unstubAllEnvs()
+		})
+		await browser.storage.session.set({ [CLIPBOARD_COUNT_KEY]: 3 })
+		await send({ kind: 'clipboard.copied', changeCount } as never)
+		expect((await browser.storage.session.get(CLIPBOARD_COUNT_KEY))[CLIPBOARD_COUNT_KEY]).toBe(kept)
+		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeDefined()
 	})
 })
 

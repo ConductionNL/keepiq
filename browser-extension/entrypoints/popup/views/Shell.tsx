@@ -121,7 +121,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 			<>
 				{/* Hidden rather than unmounted, so back keeps search, filters and decrypted subtitles. */}
 				<div hidden={detail !== undefined || form !== null}>
-					<VaultList snapshot={snapshot} tab={tab} syncNow={() => void syncNow()} onOpen={open} />
+					<VaultList snapshot={snapshot} tab={tab} serverUrl={active.serverUrl} syncNow={() => void syncNow()} onOpen={open} />
 				</div>
 				{form && (
 					// Hidden under the generator, so pick mode keeps the draft.

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { setLocale } from '@/src/testing/i18n'
 import { DEFAULT_SHELL, ShellContext } from '../../shell-context'
-import { fakeBackground, fakeClipboard, mounts, sentOf } from '../../testing'
+import { fakeBackground, fakeClipboard, fakePermissions, mounts, sentOf } from '../../testing'
 import { Autofill } from './Autofill'
 
 afterEach(() => {
@@ -196,10 +196,56 @@ describe('Autofill', () => {
 		expect(writeText).toHaveBeenCalledWith('about:addons')
 	})
 
+	it('shows the steps on Safari, with nothing to copy', async () => {
+		vi.stubEnv('BROWSER', 'safari')
+		fakePermissions([])
+		const { shell, user } = renderView({ accountSettings: { shortcut: 'Ctrl+Shift+L' } })
+		await loaded()
+		await user.click(screen.getByRole('button', { name: 'Change' }))
+		expect(shell.launch).not.toHaveBeenCalled()
+		expect(screen.getByText('Open Safari Settings, choose Extensions, then select Keepiq to change its shortcut')).toBeTruthy()
+		expect(screen.queryByRole('button', { name: 'Copy about:addons' })).toBeNull()
+	})
+
+	it('words the Safari steps in Dutch', async () => {
+		setLocale('nl')
+		vi.stubEnv('BROWSER', 'safari')
+		fakePermissions([])
+		const { user } = renderView({ accountSettings: { shortcut: 'Ctrl+Shift+L' } })
+		await user.click(await screen.findByRole('button', { name: 'Wijzigen' }))
+		expect(screen.getByText('Open de Safari-instellingen, kies Extensies en selecteer Keepiq om de sneltoets te wijzigen')).toBeTruthy()
+	})
+
+	it('opens the shortcut page on Edge, a Chromium build', async () => {
+		vi.stubEnv('BROWSER', 'edge')
+		const { shell, user } = renderView({ accountSettings: { shortcut: 'Ctrl+Shift+L' } })
+		await loaded()
+		await user.click(screen.getByRole('button', { name: 'Change' }))
+		expect(shell.launch).toHaveBeenCalledWith('chrome://extensions/shortcuts')
+	})
+
 	it('says Not set without a shortcut', async () => {
 		renderView()
 		await loaded()
 		expect(screen.getByText('Not set')).toBeTruthy()
+	})
+
+	it('shows Website access after the shortcut on Safari', async () => {
+		vi.stubEnv('BROWSER', 'safari')
+		fakePermissions(['https://cloud.example.org/*'])
+		renderView()
+		const allow = await screen.findByRole('button', { name: 'Allow on every website' })
+		expect(described(allow)).toEqual(['Website access', 'Only websites you allowed'])
+		expect(screen.getByRole('button', { name: 'Change' }).compareDocumentPosition(allow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+	})
+
+	it.each(['chrome', 'firefox'])('has no Website access on %s', async (target) => {
+		vi.stubEnv('BROWSER', target)
+		const { contains } = fakePermissions([])
+		renderView()
+		await loaded()
+		expect(screen.queryByText('Website access')).toBeNull()
+		expect(contains).not.toHaveBeenCalled()
 	})
 })
 
@@ -209,6 +255,12 @@ describe('Make Keepiq your default password manager', () => {
 	const MANAGED = 'Your organisation or another extension manages this browser setting.'
 	const entry = () => screen.findByRole<HTMLInputElement>('checkbox', { name: NAME })
 	const grant = (granted: boolean) => vi.spyOn(browser.permissions, 'request').mockImplementation(async () => granted)
+
+	it('is shown on Edge, a Chromium build', async () => {
+		vi.stubEnv('BROWSER', 'edge')
+		renderView()
+		expect((await entry()).checked).toBe(false)
+	})
 
 	it('shows off with its description on a fresh install', async () => {
 		const { sent } = renderView()
@@ -300,8 +352,8 @@ describe('Make Keepiq your default password manager', () => {
 		expect(screen.getByText('Keepiq is not responding. Reload the extension and reopen this popup.')).toBeTruthy()
 	})
 
-	it('is not shown on Firefox', async () => {
-		vi.stubEnv('BROWSER', 'firefox')
+	it.each(['firefox', 'safari'])('is not shown on %s', async (target) => {
+		vi.stubEnv('BROWSER', target)
 		const { sent } = renderView()
 		await loaded()
 		expect(screen.queryByRole('checkbox', { name: NAME })).toBeNull()

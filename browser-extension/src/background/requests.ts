@@ -19,6 +19,8 @@ import { createSendFor, deleteSendFor, listSendsFor } from '@/src/send/handlers'
 import { readLastUsed } from '@/src/last-used'
 import { buildPasskeyCredential, storedArray } from '@/src/passkey/credential'
 import { forgetOfferedPasskeys } from '@/src/passkey/offered'
+import { hasIdle } from '@/src/platform'
+import { isChangeCount } from '@/src/safari-native'
 import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { forgetPin, hasPin, hasSeal } from '@/src/vault/pin'
@@ -214,9 +216,9 @@ async function syncActiveAccount(): Promise<SyncStatus> {
 	return account ? sync(account.id, 'full') : { syncing: false, syncedAt: null, offline: false, lastError: null }
 }
 
-async function scheduleActiveClipboardClear(): Promise<null> {
+async function scheduleActiveClipboardClear(changeCount: unknown): Promise<null> {
 	const accountId = await getActiveAccountId()
-	if (accountId) await scheduleClipboardClear((await readSettings(accountId)).clearClipboardMs)
+	if (accountId) await scheduleClipboardClear((await readSettings(accountId)).clearClipboardMs, Date.now(), isChangeCount(changeCount) ? changeCount : undefined)
 	return null
 }
 
@@ -240,7 +242,7 @@ const UNSCOPED_REQUESTS: { [K in UnscopedKind]: (message: Extract<UnscopedReques
 	'vault.snapshot': (message) => snapshot(message.tabUrl, message.opened === true),
 	'item.decrypt': (message) => decrypt(message.ids, message.fields),
 	'item.passkeys': (message) => loginPasskeys(message.id),
-	'clipboard.copied': () => scheduleActiveClipboardClear(),
+	'clipboard.copied': (message) => scheduleActiveClipboardClear(message.changeCount),
 	'popup.popout': (message) => popout(message.tabId),
 	'popup.lastTab.set': (message) => rememberLastTab(message.tab),
 	'popup.intent': () => addIntent(),
@@ -403,8 +405,9 @@ async function performAccountSettings(message: AccountSettingsRequest): Promise<
 			if (!account) return null
 			// Settings are out of reach while locked, and Never set then would put the key on disk at the next unlock.
 			if (await accountStatus(account) !== 'unlocked') return 'locked'
-			// `writeSettings` drops what fails validation.
-			await updateSettings(accountId, message.patch)
+			// `writeSettings` drops what fails validation. Without `idle` nothing tells a system lock, so that one would never lock.
+			const unsupported = message.patch?.vaultTimeout === 'onSystemLock' && !hasIdle()
+			await updateSettings(accountId, unsupported ? { ...message.patch, vaultTimeout: undefined } : message.patch)
 			if (message.patch?.askPasskeys === false) forgetOfferedPasskeys()
 			return accountSettings(accountId)
 		}

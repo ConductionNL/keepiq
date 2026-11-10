@@ -183,10 +183,16 @@ describe('registerDefaultManager', () => {
 		expect(held).toBe(true)
 	})
 
-	it('listens for nothing on Firefox', () => {
-		vi.stubEnv('BROWSER', 'firefox')
+	it.each(['firefox', 'safari'])('listens for nothing on %s', (target) => {
+		vi.stubEnv('BROWSER', target)
 		registerDefaultManager()
 		expect(listeners).toEqual([])
+	})
+
+	it('listens on Edge, a Chromium build', () => {
+		vi.stubEnv('BROWSER', 'edge')
+		registerDefaultManager()
+		expect(listeners).toHaveLength(1)
 	})
 })
 

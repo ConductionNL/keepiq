@@ -466,6 +466,11 @@ settings:
   shortcutNotSet: Not set
   shortcutChange: Change
   shortcutFirefox: Open about:addons, choose the gear menu, then Manage Extension Shortcuts
+  shortcutSafari: Open Safari Settings, choose Extensions, then select Keepiq to change its shortcut
+  websiteAccess: Website access
+  websiteAccessAll: Every website
+  websiteAccessSome: Only websites you allowed
+  websiteAccessServer: Not your Keepiq server
   clearClipboard: Clear clipboard
   clipboardSeconds:
     1: 1 second
@@ -509,6 +514,17 @@ settings:
   privacyPolicy: Privacy policy
   webApp: Keepiq web app
   rate: Rate the extension
+
+websiteAccess:
+  title: Let Keepiq work on websites
+  body: Safari runs Keepiq only on websites you allow. Allow it on every website to fill in logins, save new ones and use passkeys wherever you sign in.
+  allow: Allow on every website
+  dismiss: Not now
+  steps: 'In Safari, choose Safari > Settings, then Websites. Select Keepiq in the list and set "When visiting other websites" to Allow.'
+  perSite: To allow one site at a time, click the Keepiq button on that site and choose to always allow it.
+  serverTitle: Keepiq can't reach {host}
+  serverBody: Safari doesn't let Keepiq reach your server, so your vault can't sync.
+  serverAllow: Allow {host}
 
 generator:
   kinds: What to generate

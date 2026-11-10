@@ -6,5 +6,5 @@ export const ABOUT_LINKS = {
 	// Published from ../docs/browser-extension/privacy.md.
 	privacyPolicy: 'https://keepiq.conduction.nl/docs/browser-extension/privacy/',
 	/** Per store; `null` hides Rate the extension until the listing is published. */
-	rate: { chrome: null, firefox: null } as Record<'chrome' | 'firefox', string | null>,
+	rate: { chrome: null, firefox: null, safari: null } as Record<'chrome' | 'firefox' | 'safari', string | null>,
 }

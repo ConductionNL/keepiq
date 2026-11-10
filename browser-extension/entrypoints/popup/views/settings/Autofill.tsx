@@ -2,11 +2,13 @@ import { useEffect, useId, useState } from 'react'
 import { i18n } from '#i18n'
 import type { AccountSettings, DefaultAutofill } from '@/src/accounts/settings'
 import { CLEAR_CLIPBOARD_OPTIONS, URI_MATCHES, type AutofillFeature, type DefaultManagerState, type UriMatch } from '@/src/messages'
+import { isChromium, isSafari } from '@/src/platform'
 import { Button, IconButton } from '../../components/Button'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { Loading } from '../../components/Loading'
 import { OptionCheckbox } from '../../components/OptionCheckbox'
 import { Select } from '../../components/Select'
+import { WebsiteAccessEntry } from '../../components/WebsiteAccess'
 import { errorText } from '../../errors'
 import { useAccountSettings } from '../../hooks/useAccountSettings'
 import { useClipboard } from '../../hooks/useClipboard'
@@ -85,11 +87,13 @@ export function Autofill({ reload }: { reload: () => void }) {
 				/>
 				<OptionCheckbox label={i18n.t('settings.inlineSuggestions')} checked={values.inlineSuggestions} onChange={(inlineSuggestions) => void update({ inlineSuggestions })} lockedBy={later('inlineSuggestions')} />
 				<FormEntries values={values} later={later} update={update} reload={reload} />
-				{import.meta.env.BROWSER !== 'firefox' && <DefaultPasswordManager />}
+				{isChromium() && <DefaultPasswordManager />}
 				<OptionCheckbox label={i18n.t('settings.contextMenu')} checked={values.contextMenu} onChange={(contextMenu) => void update({ contextMenu })} lockedBy={later('contextMenu')} />
 			</div>
 			<div className="card form-card">
 				<Shortcut shortcut={snapshot.shortcut} />
+				{/* Inline, not isSafari(), so other builds drop the entry. */}
+				{import.meta.env.BROWSER === 'safari' && <WebsiteAccessEntry serverUrl={snapshot.serverUrl} />}
 				<Select<string>
 					label={i18n.t('settings.clearClipboard')}
 					value={String(values.clearClipboardMs)}
@@ -191,17 +195,17 @@ function DefaultPasswordManager() {
 
 const ADDONS = 'about:addons'
 
-/** Firefox refuses to open its shortcut page from an extension, so it gets the steps instead. */
+/** Only Chromium opens its shortcut page from an extension; Firefox and Safari get the steps instead. */
 function Shortcut({ shortcut }: { shortcut: string | null }) {
 	const id = useId()
 	const { launch } = useShell()
 	const copy = useClipboard()
 	const [steps, setSteps] = useState(false)
+	const safari = isSafari()
 
 	function change() {
-		// `BROWSER` rather than `FIREFOX`, which tests can only set as a string.
-		if (import.meta.env.BROWSER === 'firefox') setSteps(true)
-		else launch('chrome://extensions/shortcuts')
+		if (isChromium()) launch('chrome://extensions/shortcuts')
+		else setSteps(true)
 	}
 
 	return (
@@ -213,8 +217,8 @@ function Shortcut({ shortcut }: { shortcut: string | null }) {
 			</div>
 			{steps && (
 				<div className="shortcut__steps" role="status">
-					<p className="field__hint">{i18n.t('settings.shortcutFirefox')}</p>
-					<IconButton icon="copy" label={fieldAction('field.copy', ADDONS)} onClick={() => void copy(ADDONS, ADDONS)} />
+					<p className="field__hint">{safari ? i18n.t('settings.shortcutSafari') : i18n.t('settings.shortcutFirefox')}</p>
+					{!safari && <IconButton icon="copy" label={fieldAction('field.copy', ADDONS)} onClick={() => void copy(ADDONS, ADDONS)} />}
 				</div>
 			)}
 		</div>

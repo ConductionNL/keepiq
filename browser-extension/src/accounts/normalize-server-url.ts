@@ -6,6 +6,9 @@ function allowsHttp(hostname: string): boolean {
 	return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.endsWith('.test')
 }
 
+/** The host permission for a server: its origin, which the popup requests and the background and popup check. */
+export const serverOrigins = (serverUrl: string): string[] => [`${new URL(serverUrl).origin}/*`]
+
 /** Where a pasted Nextcloud page URL stops being the install path. */
 const NEXTCLOUD_ROUTE = /\/(index\.php|remote\.php|ocs|apps|settings|login|core|s|f|call)(\/|$)/
 

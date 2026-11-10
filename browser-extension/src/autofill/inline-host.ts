@@ -25,8 +25,8 @@ export interface InlineHostOptions {
 	/** `inline.open`; resolves to the reply, or anything else when the background cannot be reached. */
 	request: (message: ContentToBackground) => Promise<unknown>
 	send: (message: ContentToBackground) => void
-	/** Firefox has no occlusion report (`trackVisibility`). */
-	firefox: boolean
+	/** See `drawnUntouched`. */
+	rootFilterReachesTopLayer: boolean
 	/** The frame elements above this frame, nearest first, or `null` when one is cross-origin. */
 	ancestors?: () => HTMLElement[] | null
 }
@@ -134,7 +134,7 @@ export interface InlineHost {
 }
 
 export function createInlineHost(options: InlineHostOptions): InlineHost {
-	const { request, send, firefox } = options
+	const { request, send, rootFilterReachesTopLayer } = options
 	let ancestors: HTMLElement[] | null = []
 	let allowed = false
 	let open: Open | null = null
@@ -219,7 +219,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		const rect = host.getBoundingClientRect()
 		if (!sameBox({ top: rect.top, left: rect.left, width: rect.width, height: rect.height }, list.box)) return false
 		if (list.reportedVisible === false) return false
-		if (!drawnUntouched(host, list.popover, firefox)) return false
+		if (!drawnUntouched(host, list.popover, rootFilterReachesTopLayer)) return false
 		for (const frameElement of ancestors ?? []) {
 			for (const element of composedAncestors(frameElement)) {
 				if (!untouched(element, true)) return false
@@ -258,7 +258,8 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 	}
 
 	function watchIntersection(list: Open): void {
-		if (firefox || typeof IntersectionObserverEntry === 'undefined' || !('isVisible' in IntersectionObserverEntry.prototype)) return
+		// Firefox and Safari have no occlusion report (`trackVisibility`).
+		if (typeof IntersectionObserverEntry === 'undefined' || !('isVisible' in IntersectionObserverEntry.prototype)) return
 		list.reportedVisible = false
 		const init = { threshold: [1], trackVisibility: true, delay: 100 } as IntersectionObserverInit
 		list.intersection = new IntersectionObserver((entries) => {

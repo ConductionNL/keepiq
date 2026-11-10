@@ -3,7 +3,7 @@ schema: spec-driven
 context: |
   Project: Keepiq browser extension
   Repo: keepiq-extension (this repo). The Keepiq Nextcloud app lives in a separate repo and is the backend.
-  Type: WebExtension built with WXT. One TypeScript source builds Chromium MV3 and Firefox MV2.
+  Type: WebExtension built with WXT. One TypeScript source builds Chromium MV3, Firefox MV2 and Safari 26 MV3 (macOS, inside a generated containing app).
   Description: Bitwarden-style browser extension for Keepiq, the encrypted secrets manager for Nextcloud.
     Fill logins, passkeys and one-time codes, browse and edit the vault, generate credentials, send secrets.
 
@@ -42,10 +42,10 @@ rules:
     - Content scripts never receive vault state beyond the single credential being filled
   design:
     - Any API the design relies on must exist in the Keepiq app; cite the controller or route
-    - Every extension API used must exist on both Chrome MV3 and Firefox MV2, or be shimmed
+    - Every extension API used must exist on Chrome MV3, Firefox MV2 and Safari 26 MV3, or be shimmed or feature-detected (src/platform.ts)
     - Key material lives in storage.session or memory only; ciphertext may live in storage.local
     - Runtime message kinds are dotted domain.action strings (accounts.list, item.decrypt), declared in src/messages.ts
     - Popup code is React components and hooks (.tsx); no component imports src/api or src/crypto directly (ADR-004)
   tasks:
     - At most 20 top-level "- [ ]" lines; acceptance criteria are plain bullets
-    - Every browser-facing task ends with building both targets, not only typecheck
+    - Every browser-facing task ends with building all three targets, not only typecheck

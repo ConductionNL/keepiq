@@ -1,6 +1,6 @@
 # Browser extension privacy policy
 
-This page is the privacy policy for the Keepiq browser extension on Chrome, other Chromium browsers and Firefox. It covers the builds from the Keepiq source and the coming store versions.
+This page is the privacy policy for the Keepiq browser extension on Chrome, other Chromium browsers, Firefox and Safari. It covers the builds from the Keepiq source and the coming store versions.
 
 ## What the extension does
 
@@ -37,7 +37,9 @@ When you set a PIN, the browser keeps your vault key encrypted under that PIN in
 
 Your master password and your decrypted secrets are never stored. Decrypted values stay in memory while you look at them and are gone when you close the item or the extension.
 
-Your theme and appearance choices, for every account. They stay when you log out.
+Your theme and appearance choices, for every account, and in Safari whether you chose **Not now** on the website access card. They stay when you log out.
+
+In Safari, after a copy, the number macOS gives that change of the clipboard, never what was copied, so the clear removes only what Keepiq copied. It goes with the clear, with the next copy, or when the browser closes.
 
 Per account, your organisation's lock maximum and whether it turned vault export off, and whether you dismissed the notice that folder names are not encrypted, until you remove the account. The lock maximum stays when your app password stops working or the timeout logs you out, so logging in again never lifts it.
 
@@ -67,7 +69,7 @@ When you are halfway through adding an account, the extension remembers the serv
 - **The pages you visit:** the extension's page script runs on every site, to find login fields, fill in a login and offer to save one. It never receives your vault: a fill gives the page one login, or one card or identity, after you chose it. The list under a field and the save bar are extension frames the site can't read. A site can see how tall the list is: for logins that is how many of that site's logins you have, and for cards and identities how many you keep in Keepiq (up to five), on every site alike.
 - **The passkey requests of the pages you visit:** on every site the extension takes over the page's passkey requests, so it can offer your Keepiq passkeys. A site learns nothing about your vault until you pick a passkey, and then gets only the signed answer. With **Ask to save and use passkeys** off, every request goes to your browser.
 - **The user name and password you submit on a website,** to offer to save or update them. They stay in the extension, and reach your server only encrypted, when you choose **Save** or **Update**.
-- **Whether your computer is locked,** for the **On system lock** lock option.
+- **Whether your computer is locked,** for the **On system lock** lock option. Not in Safari, which doesn't offer that option.
 - **Your browser's language,** to show the extension in it. It stays in the extension.
 - **Whether your browser is set to light or dark,** for the **System default** theme. It stays in the extension.
 
@@ -81,9 +83,11 @@ When you are halfway through adding an account, the extension remembers the serv
 | Tabs | Reads the current tab's address for suggestions, and opens an item's website in a new tab. |
 | Active tab | Takes a picture of the page under the toolbar button when you choose **Scan QR code on page**, to read a two-step setup QR code. The picture is read in your browser and dropped. |
 | Alarms | Locks the vault on time and checks for changes every 15 minutes. |
-| Idle | Locks the vault when your computer locks, if you choose that. |
+| Idle | Locks the vault when your computer locks, if you choose that. Not in Safari. |
 | Clipboard write | Copies from the right-click menu, and clears a copied password after 30 seconds, or after the delay you choose in the settings. |
 | Offscreen document (Chrome) | Chrome needs a hidden page to write and clear the clipboard. |
+| Native messaging (Safari) | Writes and clears the clipboard through the Keepiq app that installs the extension in Safari, and nothing else. |
+| Website access (Safari) | Safari lets you choose the websites Keepiq runs on and whether it may reach your server. Keepiq asks for every website, and for your server when you add an account; you can allow fewer, see [Website access in Safari](using.md#website-access-in-safari). |
 | Context menus | Adds the Keepiq menu when you right-click a field. |
 
 ## What the extension does not do

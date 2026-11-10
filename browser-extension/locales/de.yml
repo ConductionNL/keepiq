@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Nicht festgelegt
   shortcutChange: Ändern
   shortcutFirefox: Öffne about:addons, wähle das Zahnradmenü und dann Tastenkombinationen für Erweiterungen verwalten
+  shortcutSafari: Öffne die Safari-Einstellungen, wähle Erweiterungen und dann Keepiq, um das Tastenkürzel zu ändern
+  websiteAccess: Zugriff auf Websites
+  websiteAccessAll: Alle Websites
+  websiteAccessSome: Nur Websites, die du erlaubt hast
+  websiteAccessServer: Nicht dein Keepiq-Server
   clearClipboard: Zwischenablage leeren
   clipboardSeconds:
     1: 1 Sekunde
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Datenschutzerklärung
   webApp: Keepiq-Web-App
   rate: Erweiterung bewerten
+
+websiteAccess:
+  title: Lass Keepiq auf Websites arbeiten
+  body: Safari führt Keepiq nur auf Websites aus, die du erlaubst. Erlaube es auf allen Websites, um überall, wo du dich anmeldest, Logins auszufüllen, neue zu speichern und Passkeys zu verwenden.
+  allow: Auf allen Websites erlauben
+  dismiss: Jetzt nicht
+  steps: Wähle in Safari Safari > Einstellungen und dann Websites. Wähle Keepiq in der Liste aus und setze „Beim Besuch anderer Websites“ auf Erlauben.
+  perSite: Um einzelne Websites zu erlauben, klicke auf der Website auf die Keepiq-Schaltfläche und wähle, Keepiq dort immer zu erlauben.
+  serverTitle: Keepiq erreicht {host} nicht
+  serverBody: Safari lässt Keepiq deinen Server nicht erreichen, daher kann dein Tresor nicht synchronisiert werden.
+  serverAllow: "{host} erlauben"
 
 generator:
   kinds: Was generieren?

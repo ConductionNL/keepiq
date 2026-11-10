@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Nenustatyta
   shortcutChange: Keisti
   shortcutFirefox: Atidarykite about:addons, pasirinkite krumpliaračio meniu, tada Tvarkyti plėtinių sparčiuosius klavišus
+  shortcutSafari: Atidarykite Safari nustatymus, pasirinkite Plėtiniai, tada pažymėkite Keepiq, kad pakeistumėte jo spartųjį klavišą
+  websiteAccess: Prieiga prie svetainių
+  websiteAccessAll: Visos svetainės
+  websiteAccessSome: Tik jūsų leistos svetainės
+  websiteAccessServer: Be jūsų Keepiq serverio
   clearClipboard: Išvalyti iškarpinę
   clipboardSeconds:
     1: 1 sekundė
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Privatumo politika
   webApp: Keepiq žiniatinklio programėlė
   rate: Įvertinti plėtinį
+
+websiteAccess:
+  title: Leiskite Keepiq veikti svetainėse
+  body: Safari leidžia Keepiq veikti tik jūsų leistose svetainėse. Leiskite jį visose svetainėse, kad galėtumėte užpildyti prisijungimus, įrašyti naujus ir naudoti prieigos raktus visur, kur prisijungiate.
+  allow: Leisti visose svetainėse
+  dismiss: Ne dabar
+  steps: Naršyklėje Safari pasirinkite Safari > Nustatymai, tada Svetainės. Sąraše pažymėkite Keepiq ir nustatykite „Lankantis kitose svetainėse“ į Leisti.
+  perSite: Norėdami leisti svetaines po vieną, toje svetainėje spustelėkite Keepiq mygtuką ir pasirinkite visada leisti.
+  serverTitle: Keepiq negali pasiekti {host}
+  serverBody: Safari neleidžia Keepiq pasiekti jūsų serverio, todėl saugykla negali sinchronizuotis.
+  serverAllow: Leisti {host}
 
 generator:
   kinds: Ką generuoti

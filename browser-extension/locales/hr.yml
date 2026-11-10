@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Nije postavljeno
   shortcutChange: Promijeni
   shortcutFirefox: Otvorite about:addons, odaberite izbornik sa zupčanikom, zatim Upravljanje prečacima proširenja
+  shortcutSafari: Otvorite postavke Safarija, odaberite Ekstenzije, zatim odaberite Keepiq da biste promijenili njegov prečac
+  websiteAccess: Pristup web-stranicama
+  websiteAccessAll: Sve web-stranice
+  websiteAccessSome: Samo web-stranice koje ste dopustili
+  websiteAccessServer: Bez vašeg Keepiq poslužitelja
   clearClipboard: Očisti međuspremnik
   clipboardSeconds:
     1: 1 sekunda
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Pravila o privatnosti
   webApp: Web-aplikacija Keepiq
   rate: Ocijeni proširenje
+
+websiteAccess:
+  title: Dopustite Keepiqu rad na web-stranicama
+  body: Safari pokreće Keepiq samo na web-stranicama koje dopustite. Dopustite ga na svim web-stranicama kako biste posvuda gdje se prijavljujete mogli ispunjavati prijave, spremati nove i koristiti pristupne ključeve.
+  allow: Dopusti na svim web-stranicama
+  dismiss: Ne sada
+  steps: U Safariju odaberite Safari > Postavke, zatim Web stranice. Odaberite Keepiq na popisu i postavite „Pri posjećivanju drugih internetskih stranica” na Dozvoli.
+  perSite: Da biste dopuštali stranice jednu po jednu, kliknite gumb Keepiq na toj stranici i odaberite da se uvijek dopušta.
+  serverTitle: Keepiq ne može doći do {host}
+  serverBody: Safari ne dopušta Keepiqu pristup vašem poslužitelju pa se trezor ne može sinkronizirati.
+  serverAllow: Dopusti {host}
 
 generator:
   kinds: Što generirati

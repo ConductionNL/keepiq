@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Ei asetettu
   shortcutChange: Muuta
   shortcutFirefox: Avaa about:addons, valitse rataskuvakkeen valikko ja sitten Hallitse laajennusten pikanäppäimiä
+  shortcutSafari: Avaa Safarin asetukset, valitse Laajennukset ja valitse sitten Keepiq, niin voit muuttaa sen pikanäppäintä
+  websiteAccess: Pääsy sivustoille
+  websiteAccessAll: Kaikki sivustot
+  websiteAccessSome: Vain sallimasi sivustot
+  websiteAccessServer: Keepiq-palvelintasi ei ole sallittu
   clearClipboard: Tyhjennä leikepöytä
   clipboardSeconds:
     1: 1 sekunti
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Tietosuojakäytäntö
   webApp: Keepiq-verkkosovellus
   rate: Arvioi laajennus
+
+websiteAccess:
+  title: Anna Keepiqin toimia sivustoilla
+  body: Safari suorittaa Keepiqiä vain sallimillasi sivustoilla. Salli se kaikilla sivustoilla, niin voit täyttää kirjautumistietoja, tallentaa uusia ja käyttää pääsyavaimia kaikkialla, missä kirjaudut sisään.
+  allow: Salli kaikilla sivustoilla
+  dismiss: Ei nyt
+  steps: Valitse Safarissa Safari > Asetukset ja sitten Sivustot. Valitse luettelosta Keepiq ja aseta ”Vierailtaessa muilla sivustoilla” arvoon Salli.
+  perSite: Jos haluat sallia sivustot yksi kerrallaan, klikkaa sivustolla Keepiq-painiketta ja valitse, että se sallitaan aina.
+  serverTitle: Keepiq ei saa yhteyttä palvelimeen {host}
+  serverBody: Safari ei anna Keepiqin muodostaa yhteyttä palvelimeesi, joten holviasi ei voi synkronoida.
+  serverAllow: Salli {host}
 
 generator:
   kinds: Mitä luodaan

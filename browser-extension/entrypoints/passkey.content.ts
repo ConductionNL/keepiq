@@ -1,6 +1,6 @@
 /**
  * The passkey relay (src/passkey/relay.ts), in every frame at `document_start`, so it listens before the page calls.
- * It holds no vault state; on Firefox it also injects the page script, which Chrome runs as a `MAIN` world script.
+ * It holds no vault state; on Firefox it also injects the page script, which the other browsers run as a `MAIN` world script.
  */
 
 import type { Browser } from 'wxt/browser'

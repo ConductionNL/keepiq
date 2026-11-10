@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Não definido
   shortcutChange: Alterar
   shortcutFirefox: Abra about:addons, escolha o menu da roda dentada e depois Gerir atalhos de extensões
+  shortcutSafari: Abra as definições do Safari, escolha Extensões e depois selecione o Keepiq para alterar o atalho
+  websiteAccess: Acesso a sites
+  websiteAccessAll: Todos os sites
+  websiteAccessSome: Apenas os sites que permitiu
+  websiteAccessServer: Sem o seu servidor Keepiq
   clearClipboard: Limpar área de transferência
   clipboardSeconds:
     1: 1 segundo
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Política de privacidade
   webApp: Aplicação web do Keepiq
   rate: Avaliar a extensão
+
+websiteAccess:
+  title: Deixe o Keepiq funcionar nos sites
+  body: O Safari só executa o Keepiq nos sites que permitir. Permita-o em todos os sites para preencher credenciais, guardar novas e usar chaves de acesso onde quer que inicie sessão.
+  allow: Permitir em todos os sites
+  dismiss: Agora não
+  steps: No Safari, selecione Safari > Definições e depois Sites. Selecione o Keepiq na lista e defina «Ao visitar outros sites» como Permitir.
+  perSite: Para permitir um site de cada vez, clique no botão do Keepiq nesse site e escolha permitir sempre.
+  serverTitle: O Keepiq não consegue aceder a {host}
+  serverBody: O Safari não deixa o Keepiq aceder ao seu servidor, por isso o seu cofre não pode ser sincronizado.
+  serverAllow: Permitir {host}
 
 generator:
   kinds: O que gerar

@@ -461,6 +461,11 @@ settings:
   shortcutNotSet: Nav iestatīts
   shortcutChange: Mainīt
   shortcutFirefox: Atveriet about:addons, izvēlieties zobrata izvēlni, tad Pārvaldīt paplašinājumu īsinājumtaustiņus
+  shortcutSafari: Atveriet Safari iestatījumus, izvēlieties Paplašinājumi un pēc tam atlasiet Keepiq, lai mainītu tā īsinājumtaustiņu
+  websiteAccess: Piekļuve tīmekļvietnēm
+  websiteAccessAll: Visas tīmekļvietnes
+  websiteAccessSome: Tikai jūsu atļautās tīmekļvietnes
+  websiteAccessServer: Bez jūsu Keepiq servera
   clearClipboard: Notīrīt starpliktuvi
   clipboardSeconds:
     1: 1 sekunde
@@ -504,6 +509,17 @@ settings:
   privacyPolicy: Privātuma politika
   webApp: Keepiq tīmekļa lietotne
   rate: Novērtēt paplašinājumu
+
+websiteAccess:
+  title: Ļaujiet Keepiq darboties tīmekļvietnēs
+  body: Safari palaiž Keepiq tikai tīmekļvietnēs, kuras atļaujat. Atļaujiet to visās tīmekļvietnēs, lai visur, kur piesakāties, aizpildītu pieteikšanās datus, saglabātu jaunus un izmantotu piekļuves atslēgas.
+  allow: Atļaut visās tīmekļvietnēs
+  dismiss: Ne tagad
+  steps: Pārlūkā Safari izvēlieties Safari > Iestatījumi un pēc tam Tīmekļvietnes. Sarakstā atlasiet Keepiq un iestatiet „Apmeklējot citas tīmekļvietnes“ uz Atļaut.
+  perSite: Lai atļautu pa vienai vietnei, šajā vietnē noklikšķiniet uz Keepiq pogas un izvēlieties vienmēr atļaut.
+  serverTitle: Keepiq nevar sasniegt {host}
+  serverBody: Safari neļauj Keepiq sasniegt jūsu serveri, tāpēc glabātavu nevar sinhronizēt.
+  serverAllow: Atļaut {host}
 
 generator:
   kinds: Ko ģenerēt

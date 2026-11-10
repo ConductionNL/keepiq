@@ -1,4 +1,4 @@
-import { normalizeServerUrl } from '@/src/accounts/normalize-server-url'
+import { normalizeServerUrl, serverOrigins } from '@/src/accounts/normalize-server-url'
 import {
 	accountStatus, addAccount, AccountLimitReached, DuplicateAccount, getAccount, getActiveAccountId,
 	listAccounts, MAX_ACCOUNTS, removeAccount, removeAllAccounts, setActive, updateAccount, type AccountRecord,
@@ -51,7 +51,7 @@ async function add(serverUrl: string, username: string, appPassword: string): Pr
 	const normalized = normalizeServerUrl(serverUrl)
 	if (!normalized.ok) throw new Failure(normalized.code)
 	// The popup asks for the permission; nothing is sent to a server the user declined.
-	if (!(await browser.permissions.contains({ origins: [`${normalized.origin}/*`] }))) throw new Failure('permission_denied')
+	if (!(await browser.permissions.contains({ origins: serverOrigins(normalized.origin) }))) throw new Failure('permission_denied')
 	// Checked again by `addAccount`; this one saves the round trip.
 	if ((await listAccounts()).length >= MAX_ACCOUNTS) throw new Failure('limit_reached')
 	const { suite, ...identity } = await verifyCredentials(normalized.serverUrl, username.trim(), appPassword)

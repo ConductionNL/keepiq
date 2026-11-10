@@ -6,14 +6,15 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 
 | Entrypoint | Runs as | Job |
 | --- | --- | --- |
-| `entrypoints/background.ts` | MV3 service worker (Chrome), MV2 background page (Firefox) | Owns every account, key, request and timer, and the toolbar icon. Routes messages, alarms, idle and popup ports. |
+| `entrypoints/background.ts` | MV3 service worker (Chrome, Safari), MV2 background page (Firefox) | Owns every account, key, request and timer, and the toolbar icon. Routes messages, alarms, idle and popup ports. |
 | `entrypoints/popup/` | Toolbar popup, a pop-out window (`?popout=1&tabId=`), or a passkey window (`?passkey=<ceremonyId>`) | React UI ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Renders what the background returns; holds decrypted values only while shown. |
 | `entrypoints/content.ts` | Every frame of every `http(s)` page | Sends `page_ready`, fills the one item a fill sends (a login's credential, or a card's or identity's members for its own fields), hosts the inline list and the save bar, reports submitted logins. Holds no vault state. |
 | `entrypoints/passkey.content.ts` | Every frame of every `http(s)` page, at `document_start` | The passkey relay (`src/passkey/relay.ts`) between the page script and the background; on Firefox it injects the page script. Holds no vault state. |
-| `entrypoints/passkey-page-main.content.ts` (Chrome), `entrypoints/passkey-page.ts` (Firefox) | The page's own world of every `http(s)` frame: a `world: 'MAIN'` content script on Chrome, a web-accessible script the relay injects on Firefox | The page script (`src/passkey/page.ts`): replaces `navigator.credentials.create` and `.get`. Trusted for nothing, since the page can change it. |
+| `entrypoints/passkey-page-main.content.ts` (Chrome, Safari), `entrypoints/passkey-page.ts` (Firefox) | The page's own world of every `http(s)` frame: a `world: 'MAIN'` content script on Chrome and Safari, a web-accessible script the relay injects on Firefox | The page script (`src/passkey/page.ts`): replaces `navigator.credentials.create` and `.get`. Trusted for nothing, since the page can change it. |
 | `entrypoints/inline-list/` | Extension page in an iframe under a login, code, card or identity field | The inline list, vanilla DOM ([ADR-004](openspec/architecture/adr-004-popup-ui-react.md)). Gets its key from the host, its rows from the background. |
 | `entrypoints/notification/` | Extension page in an iframe, a card in the top-right corner of the page | The save and update card, vanilla DOM. Never gets the password. |
 | `entrypoints/offscreen/` | Chrome offscreen document | Writes and clears the clipboard for the background, created on first use and kept open so no close drops a write. |
+| `safari/SafariWebExtensionHandler.swift` | The native extension of the Safari containing app; `npm run package:safari` generates the app around it | Writes `NSPasteboard` for the popup and the background on Safari, and clears it for the background; keeps no state. |
 
 ## Modules
 
@@ -24,7 +25,7 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
   - `settings.ts`: every per-account setting with its default and validator, patch writes, and the clamp to the organisation's maximum.
   - `policy.ts`: the organisation's idle maximum and export switch, as last read.
   - `verify.ts`: checks credentials before an account is stored.
-  - `normalize-server-url.ts`: turns whatever was typed into a server URL.
+  - `normalize-server-url.ts`: turns whatever was typed into a server URL; `serverOrigins` is its host permission pattern.
 - `src/settings/`:
   - `global.ts`: settings that apply before an account is chosen: the theme and the appearance switches.
   - `pick-valid.ts`: keeps the keys of a stored record or patch that pass their validator, for both settings records.
@@ -88,6 +89,9 @@ How the extension is put together. Decisions live in the ADRs under [openspec/ar
 - `src/messages.ts`: every message type, in one place.
 - `src/failure.ts`: `Failure`, the error with an `ErrorCode` that the router turns into `{ ok: false, code }`. Its message is for logs only.
 - `src/clipboard.ts`: copy in the popup; write and clear from the background, and clear a copied code on its account's lock.
+- `src/safari-native.ts`: `clipboard.write` and `clipboard.clear` to the Safari containing app over native messaging; on Safari the clear clears only while the pasteboard's `changeCount` is still Keepiq's.
+- `src/platform.ts`: `isChromium()`, `isSafari()` and `hasIdle()`; "is this Chrome?" goes through these, never through `BROWSER !== 'firefox'`.
+- `src/website-access.ts`: popup side, Safari only; whether the active server and every website are granted, for the website access card.
 - `src/totp/`: RFC 6238 codes, a port of the web app's TOTP module; the popup and the background both use it.
   - `authenticator-key.ts`: a login's authenticator key as typed or read from a QR code, normalised and checked as the web app does.
   - `qr-scan.ts`: Scan QR code on page; a picture of the tab under the popup, read with jsQR in the popup (`openspec/changes/ext-totp-capture/`).
@@ -147,7 +151,7 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | `accounts` | local | Account records, app passwords included |
 | `activeAccountId` | local | The active account; heals itself when it points nowhere |
 | `settings.<id>` | local | Every account-scoped setting: vault timeout and action, clipboard delay, autofill and notification entries, excluded domains, default item type; kept through a logout |
-| `settings.global` | local | Theme, compact mode, animations, quick copy and the badge counter; survives logout |
+| `settings.global` | local | Theme, compact mode, animations, quick copy, the badge counter and, on Safari, the website access card's Not now (`websiteAccessDismissed`); survives logout |
 | `accountPolicy.<id>` | local | The organisation's idle maximum and export switch, from the last successful read; kept through a logout |
 | `keepiq.theme` | popup `localStorage` | A mirror of the theme for the first frame, never read by the background |
 | `keepiq.appearance` | popup `localStorage` | A mirror of compact mode and animations for the first frame, never read by the background |
@@ -172,6 +176,7 @@ All types are in `src/messages.ts`. The background answers each sender only its 
 | `inlineSession.<tabId>` | session | The tab's open inline list: its random key, account, frame, frame URL, list frame, mode (login, code, card or identity) and offered item ids, and during a conditional passkey request its ceremony id and offered login and credential ids; no plaintext; gone when the list closes, the next list opens, the tab closes or loads, on lock, logout and account switch |
 | `passkeyCeremony.<tabId>` | session | The tab's passkey ceremony, as the [passkey spec](openspec/changes/ext-passkey-provider/specs/passkey-provider/spec.md) lists it under "Where ceremony data lives": ids, origin, frame URL, RP ID, challenge, the page's `rp.name` and `user`, requirements, deadline, window, verified flag, and after a failed step what Retry needs; no ciphertext, key or decrypted value; gone when the ceremony ends (see [Passkeys](#passkeys)), kept through a lock |
 | `clipboardCode` | session | The account whose one-time code the background copied, never the code; gone when the clear runs, on any other copy, and at that account's lock or logout, which clears the clipboard at once |
+| `clipboardChangeCount` | session | Safari only: the pasteboard's `changeCount` after Keepiq's last write, never the value; gone when the clear runs and on a copy without one |
 
 Where `storage.session` is missing (Firefox below 115), session values live in background memory instead, and the draft is not kept.
 
@@ -250,7 +255,7 @@ The behaviour is in `openspec/changes/ext-autofill/`, the threat model in [ADR-0
 
 The behaviour is in `openspec/changes/ext-passkey-provider/`, the threat model in [ADR-002](openspec/architecture/adr-002-key-lifetime-and-vault-cache.md#content-scripts).
 
-- **Page script:** hands each `publicKey` call to the relay; any other call, any throw, no ack within 500 ms and every `fallback` go to the browser's own method with the page's arguments. It is on every page while "Ask to save and use passkeys" is off, and the background then answers every call with the fallback.
+- **Page script:** hands each `publicKey` call to the relay; any other call, any throw, no ack within 500 ms and every `fallback` go to the browser's own method with the page's arguments. It is on every page while "Ask to save and use passkeys" is off, and the background then answers every call with the fallback. On Safari a fallback the relay answered waits until the page's window has focus, since WebKit starts WebAuthn only then.
 - **Start:** `passkey.start` answers from the settings, the account's logged-in state and the request only (`request.ts`), never the vault or its lock: `{ fallback: true }`, or `{ ceremonyId }` with the ceremony in `passkeyCeremony.<tabId>`. A new one in the tab ends the previous with `NotAllowedError`.
 - **Window:** every handled `create` and modal `get` opens the popup page at `popup.html?passkey=<ceremonyId>`, locked or not; a new ceremony in the tab reloads it. Only that window's tab may answer the ceremony.
 - **Conditional `get`:** no window; the inline list offers the passkeys on a focus, none when the request names credentials, while the browser's own conditional request runs beside it. Verification or a failed counter save opens the window on that step.
@@ -264,6 +269,7 @@ The behaviour is in `openspec/changes/ext-passkey-provider/`, the threat model i
 
 - `enforce()` runs on the `vault-timeout` alarm and before every popup request and passkey message, and locks or logs out each account past its timeout.
 - The timeout is read through `effectiveSettings`, capped at the organisation's stored maximum; Immediately and On system lock also lock at that maximum.
+- On system lock listens to `idle`, only where `hasIdle()`; Safari has no `idle` and does not offer it.
 - `syncAlarm()` keeps both alarms only while something is unlocked.
 
 ### Lock and logout
@@ -278,7 +284,7 @@ The behaviour is in `openspec/changes/ext-passkey-provider/`, the threat model i
 The specs are in `openspec/changes/ext-i18n/`.
 
 - **Catalogs:** `locales/<lang>.yml`, English the source, built into `_locales/` by `@wxt-dev/i18n`. Each names its own `language`.
-- **Language:** the browser's UI language picks the catalog, with English as the fallback. There is no picker.
+- **Language:** the browser's UI language picks the catalog, with English as the fallback; Safari uses macOS's preferred languages. There is no picker.
 - **Use:** `i18n.t('group.key', { name })` from `#i18n`. Helpers for a link inside a sentence, field actions and formatting are in `entrypoints/popup/i18n.tsx`.
 - **Codes, not text:** the background sends error, notice and blocked-reason codes; `entrypoints/popup/errors.ts` words them. A blocked row stores its reason as a code too. The inline list page likewise words data the background sends, such as a card's brand and last four.
 - **Formatting:** dates, relative times, numbers and `<html lang>` use the catalog's `language`, not the browser's.
@@ -292,5 +298,6 @@ The specs are in `openspec/changes/ext-i18n/`.
 - Popup tests (`*.test.tsx`) run twice: project `popup-prod` as built, `popup-dev` under StrictMode as `npm run dev` renders; count mount effects with `mounts()`.
 - Tests render in English from the real catalogs; `setLocale('nl')` from `src/testing/i18n.ts` switches one to Dutch.
 - `test-site/` holds mock pages for manual checks, one per fill and capture case.
-- `e2e/` drives the inline lists and the save bar of the built Chrome extension on the test site with Playwright, for what only a real browser shows (Chrome's occlusion report, the top layer, modals, hidden and covered fields, cross-site frames); it seeds a fake unlocked account with cards and identities from the test vectors, maps `shop.test` to `127.0.0.1` for the insecure-page question and resolves `*.localhost` itself. Playwright cannot load extensions into Firefox or open browser context menus.
+- `e2e/` drives the inline lists and the save bar of the built Chrome extension on the test site with Playwright, for what only a real browser shows (Chrome's occlusion report, the top layer, modals, hidden and covered fields, cross-site frames); it seeds a fake unlocked account with cards and identities from the test vectors, maps `shop.test` to `127.0.0.1` for the insecure-page question and resolves `*.localhost` itself. Playwright cannot load extensions into Firefox or Safari, or open browser context menus.
+- Safari runs on macOS only, in CI's `safari` job: `safari/tests/main.swift` tests the Swift handler, and `scripts/safari-smoke.ts` installs the build in Safari through `safaridriver`. Content scripts are checked by hand on a Mac: Safari asks a person for website access first.
 - The commands are in the [README](README.md#checks--builds). Read [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md) before touching `entrypoints/`.
