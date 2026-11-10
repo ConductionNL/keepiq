@@ -208,11 +208,6 @@
       "count": 1
     }
   },
-  "src/store/modules/health.js": {
-    "no-useless-assignment": {
-      "count": 2
-    }
-  },
   "src/store/modules/import.js": {
     "eqeqeq": {
       "count": 2
