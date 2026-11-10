@@ -260,50 +260,19 @@ class ShareSyncGuards {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function liveCopies(Secret $source, ?string $leaveOut, ?JudgedShareRows $judged = null): array {
-		$copies = [];
-		$ignored = [];
-		$unjudged = [];
 		$judged ??= $this->rowJudge->rowsOfSource(sourceId: $source->getId());
-		$targets = $judged->all();
-		$rows = $this->secrets->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
-		$now = time();
+		$targets  = $judged->all();
+		$run      = new LiveCopiesRun(
+			judged: $judged,
+			rows: $this->secrets->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets))
+		);
 		foreach ($targets as $target) {
-			$copyId = $target->getSecretId();
-			if ($copyId === $leaveOut) {
-				continue;
+			if ($target->getSecretId() !== $leaveOut) {
+				$run->sort(target: $target);
 			}
-
-			// A copy whose access ended, or whose row is gone, is not written.
-			$row = ($rows[$copyId] ?? null);
-			$ends = $row?->getAccessExpiresAt();
-			if ($row === null || ($ends !== null && $ends->getTimestamp() <= $now)) {
-				$ignored[$copyId] = true;
-				continue;
-			}
-
-			// Defence in depth: a copy whose row does not genuinely belong to its
-			// target (a poisoned or drifted `secret_id`) is dropped from the write
-			// set, so a save can never overwrite another user's secret.
-			if ($target->isHeldByTarget(copy: $row) === false) {
-				$ignored[$copyId] = true;
-				continue;
-			}
-
-			// The pending quarantine scan judges the row first, as a sync does.
-			$held = $judged->verdict(row: $target);
-			if ($held !== null) {
-				$ignored[$copyId] = true;
-				if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
-					$unjudged[] = $copyId;
-				}
-
-				continue;
-			}
-
-			$copies[$copyId] = ['secretId' => $copyId, 'holder' => 'recipient', 'targetUserId' => $target->getTargetUserId()];
 		}
 
-		return ['copies' => $copies, 'ignored' => $ignored, 'unjudged' => $unjudged];
+		return $run->result();
 	}//end liveCopies()
 
 	/**
