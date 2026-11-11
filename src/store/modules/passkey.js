@@ -39,17 +39,30 @@ function unlockedSession() {
 }
 
 /**
- * Fetch the enrolment challenge and decode it to bytes.
+ * Decode a server challenge to bytes.
  *
- * @return {Promise<ArrayBuffer>}
+ * @param {string} value base64url (base64 is accepted too).
+ * @return {Uint8Array}
+ */
+function challengeBytes(value) {
+	return fromBase64Url(value.replace(/\+/g, '-').replace(/\//g, '_'))
+}
+
+/**
+ * Fetch the enrolment challenge pair, which the server keeps for this one
+ * enrolment: `challenge` for create(), `assertionChallenge` for the get()
+ * that proves the new passkey holds its key.
+ *
+ * @return {Promise<{challenge: Uint8Array, assertionChallenge: Uint8Array}>}
  */
 async function enrolmentChallenge() {
 	const response = await axios.get(
 		generateUrl('/apps/keepiq/api/v1/passkeys/challenge'),
 	)
-	return fromBase64Url(
-		response.data.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
-	)
+	return {
+		challenge: challengeBytes(response.data.challenge),
+		assertionChallenge: challengeBytes(response.data.assertionChallenge),
+	}
 }
 
 /**
@@ -99,6 +112,7 @@ function creationOptions(label, ceremony) {
 				displayName: label || 'Keepiq vault',
 			},
 			challenge: ceremony.challenge,
+			attestation: 'none',
 			pubKeyCredParams: [
 				{ type: 'public-key', alg: -7 },
 				{ type: 'public-key', alg: -257 },
@@ -141,10 +155,11 @@ async function createPrfPasskey(options) {
 
 /**
  * Draw a fresh 32-byte PRF salt and ask the new passkey for its PRF output.
+ * The assertion is also sent to the server as proof of possession.
  *
  * @param {object} created The created credential.
- * @param {ArrayBuffer} challenge The enrolment challenge.
- * @return {Promise<{prfSaltBytes: Uint8Array, prfOutput: ArrayBuffer}>}
+ * @param {Uint8Array} challenge The enrolment assertion challenge.
+ * @return {Promise<{prfSaltBytes: Uint8Array, prfOutput: ArrayBuffer, assertion: object}>}
  */
 async function prfOutputOf(created, challenge) {
 	const prfSaltBytes = crypto.getRandomValues(new Uint8Array(32))
@@ -161,7 +176,57 @@ async function prfOutputOf(created, challenge) {
 	if (!prfOutput) {
 		throw new Error('Your authenticator did not return a PRF result.')
 	}
-	return { prfSaltBytes, prfOutput }
+	return { prfSaltBytes, prfOutput, assertion }
+}
+
+/**
+ * base64url of an optional buffer.
+ *
+ * @param {ArrayBuffer|null|undefined} buffer The bytes.
+ * @return {string|null}
+ */
+function optionalBase64Url(buffer) {
+	return buffer ? toBase64Url(buffer) : null
+}
+
+/**
+ * The create() credential as the JSON the server verifies.
+ *
+ * @param {object} created The created credential.
+ * @return {object}
+ */
+function attestationJson(created) {
+	const id = toBase64Url(created.rawId)
+	return {
+		id,
+		rawId: id,
+		type: 'public-key',
+		response: {
+			clientDataJSON: optionalBase64Url(created.response?.clientDataJSON),
+			attestationObject: optionalBase64Url(created.response?.attestationObject),
+		},
+	}
+}
+
+/**
+ * The proof get() credential as the JSON the server verifies.
+ *
+ * @param {object} assertion The get() credential.
+ * @return {object}
+ */
+function assertionJson(assertion) {
+	const id = optionalBase64Url(assertion.rawId)
+	return {
+		id,
+		rawId: id,
+		type: 'public-key',
+		response: {
+			clientDataJSON: optionalBase64Url(assertion.response?.clientDataJSON),
+			authenticatorData: optionalBase64Url(assertion.response?.authenticatorData),
+			signature: optionalBase64Url(assertion.response?.signature),
+			userHandle: optionalBase64Url(assertion.response?.userHandle),
+		},
+	}
 }
 
 /**
@@ -180,11 +245,11 @@ async function wrapUnlockKeyForPasskey(masterPassword, passkey) {
 }
 
 /**
- * The enrolment request body: the wrapped envelope, never the raw key or the
- * PRF output.
+ * The enrolment request body: the wrapped envelope and the two ceremony
+ * responses the server verifies, never the raw key or the PRF output.
  *
- * @param {object} enrolment The label, created credential, credentialId,
- *  prfSaltBytes and wrappedUnlockKey.
+ * @param {object} enrolment The label, created credential, proof assertion,
+ *  credentialId, prfSaltBytes and wrappedUnlockKey.
  * @return {object}
  */
 function enrolmentBody(enrolment) {
@@ -192,10 +257,10 @@ function enrolmentBody(enrolment) {
 		credentialId: enrolment.credentialId,
 		wrappedUnlockKey: enrolment.wrappedUnlockKey,
 		prfSalt: btoa(String.fromCharCode(...enrolment.prfSaltBytes)),
-		publicKey: '',
+		attestation: attestationJson(enrolment.created),
+		assertion: assertionJson(enrolment.assertion),
 		label: enrolment.label || 'Passkey',
 		transports: (enrolment.created.response?.getTransports?.() || []).join(','),
-		aaguid: '',
 	}
 }
 
@@ -338,14 +403,17 @@ export const usePasskeyStore = defineStore('passkey', {
 		async enroll(masterPassword, label) {
 			this.error = null
 			const session = unlockedSession()
-			const challenge = await enrolmentChallenge()
+			const { challenge, assertionChallenge } = await enrolmentChallenge()
 			const userId = userHandle()
 			const excludeCredentials = await activePasskeyExclusions()
 			const created = await createPrfPasskey(
 				creationOptions(label, { challenge, userId, excludeCredentials }),
 			)
 			const credentialId = toBase64Url(created.rawId)
-			const { prfSaltBytes, prfOutput } = await prfOutputOf(created, challenge)
+			const { prfSaltBytes, prfOutput, assertion } = await prfOutputOf(
+				created,
+				assertionChallenge,
+			)
 			const wrappedUnlockKey = await wrapUnlockKeyForPasskey(masterPassword, {
 				envelope: session.encryptedPrivateKey,
 				prfOutput,
@@ -357,6 +425,7 @@ export const usePasskeyStore = defineStore('passkey', {
 				enrolmentBody({
 					label,
 					created,
+					assertion,
 					credentialId,
 					prfSaltBytes,
 					wrappedUnlockKey,

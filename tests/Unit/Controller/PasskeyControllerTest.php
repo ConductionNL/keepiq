@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use InvalidArgumentException;
 use OCA\Keepiq\Controller\PasskeyController;
 use OCA\Keepiq\Service\PasskeyService;
 use OCP\AppFramework\Http;
@@ -115,8 +116,9 @@ class PasskeyControllerTest extends TestCase {
 		$controller = $this->controller('alice');
 
 		$this->service->expects($this->once())
-			->method('freshChallenge')
-			->willReturn('T2xLZW5ub3QtcmVwbGF5LXRoaXM');
+			->method('enrolmentChallenge')
+			->with('alice')
+			->willReturn(['challenge' => 'T2xLZW5ub3QtcmVwbGF5LXRoaXM', 'assertionChallenge' => 'c2Vjb25k']);
 
 		$response = $controller->challenge();
 
@@ -126,9 +128,9 @@ class PasskeyControllerTest extends TestCase {
 			'an authenticated caller must be served a challenge'
 		);
 		$this->assertSame(
-			['challenge' => 'T2xLZW5ub3QtcmVwbGF5LXRoaXM'],
+			['challenge' => 'T2xLZW5ub3QtcmVwbGF5LXRoaXM', 'assertionChallenge' => 'c2Vjb25k'],
 			$response->getData(),
-			'the payload must carry the service challenge under the `challenge` key'
+			'the payload must carry the session owner\'s stored challenge pair'
 		);
 	}//end testChallengeReturnsTheServiceMintedChallenge()
 
@@ -143,7 +145,7 @@ class PasskeyControllerTest extends TestCase {
 	public function testChallengeRefusesAnAnonymousCallerWithoutMintingOne(): void {
 		$controller = $this->controller(null);
 
-		$this->service->expects($this->never())->method('freshChallenge');
+		$this->service->expects($this->never())->method('enrolmentChallenge');
 
 		$response = $controller->challenge();
 
@@ -213,4 +215,37 @@ class PasskeyControllerTest extends TestCase {
 		);
 	}//end testUsedRefusesAnAnonymousCallerAndWritesNothing()
 
+	/**
+	 * `passkey#create` hands the ceremony to the service for the session
+	 * owner and answers a refused verification with 400.
+	 *
+	 * @return void
+	 */
+	public function testCreateForwardsTheCeremonyAndRefusesAnUnverifiedOne(): void {
+		$controller = $this->controller('alice');
+
+		$this->service->expects($this->once())
+			->method('enroll')
+			->with(
+				'alice',
+				$this->callback(
+					static fn (array $dto): bool => $dto['attestation'] === ['id' => 'a']
+						&& $dto['assertion'] === ['id' => 'b']
+						&& $dto['credentialId'] === 'c'
+						&& array_key_exists('publicKey', $dto) === false
+				)
+			)
+			->willThrowException(new InvalidArgumentException('The passkey could not be verified'));
+
+		$response = $controller->create(
+			credentialId: 'c',
+			wrappedUnlockKey: 'e',
+			prfSalt: 's',
+			attestation: ['id' => 'a'],
+			assertion: ['id' => 'b'],
+		);
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(['message' => 'The passkey could not be verified'], $response->getData());
+	}//end testCreateForwardsTheCeremonyAndRefusesAnUnverifiedOne()
 }//end class
