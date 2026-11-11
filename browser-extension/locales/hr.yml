@@ -414,8 +414,6 @@ settings:
   pinMismatch: PIN-ovi se ne podudaraju
   pinAdvice: Ne koristite PIN koji već koristite za telefon ili banku.
   pinAfterRestart: Nakon ponovnog pokretanja preglednika jednom unesite glavnu lozinku; nakon toga PIN ponovno radi.
-  biometrics: Otključavanje biometrijom
-  notAvailableYet: Još nije dostupno
   vaultTimeout: Istek trezora
   timeoutImmediately: Odmah
   timeoutMinutes:
@@ -801,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Ništa nije spremljeno: Keepiq na strani {cloudIds} prestar je za spremanje pristupnih ključeva. Zamolite ih da ažuriraju Keepiq ili spremite pristupni ključ u drugu prijavu."
     partnerUpgradeRequiredUnnamed: "Ništa nije spremljeno: partnerska organizacija s kojom se dijeli ova prijava koristi Keepiq koji je prestar za spremanje pristupnih ključeva. Zamolite ih da ažuriraju Keepiq ili spremite pristupni ključ u drugu prijavu."
     shareScanPending: Ova prijava čeka provjeru dijeljenja koja još nije završena. Ništa nije spremljeno; pokušajte ponovno kasnije.
+
+vaultPasskey:
+  unlock: "Otključaj otiskom prsta ili licem"
+  unlockIntro: "Preglednik traži otisak prsta, lice ili PIN uređaja."
+  enrolTitle: "Postavi otključavanje otiskom prsta ili licem"
+  enrolIntro: "Potvrdite glavnu lozinku. Preglednik zatim dvaput traži otisak prsta, lice ili PIN uređaja."
+  enrolSubmit: "Postavi"
+  enrolDone: "Otključavanje otiskom prsta ili licem postavljeno je za ovaj preglednik."
+  close: "Zatvori"
+  label: "Proširenje preglednika Keepiq"
+  tooOld: "Otključavanje otiskom prsta ili licem traži Chrome ili Edge 122, ili Firefox 150, ili noviji. Upotrijebite glavnu lozinku."
+  unsupported: "Ovaj preglednik ili uređaj ne može otključati Keepiq otiskom prsta ni licem. Upotrijebite glavnu lozinku."
+  revokeInWebApp: "Da biste ga isključili, opozovite ovaj pristupni ključ u web-aplikaciji Keepiq."

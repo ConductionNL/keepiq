@@ -16,6 +16,7 @@ import { errorText } from '../../errors'
 import { useAccountSettings } from '../../hooks/useAccountSettings'
 import { request, sendMessage } from '../../hooks/useMessage'
 import { useShell } from '../../shell-context'
+import { openVaultPasskeyWindow, supportText, usePasskeySupport } from '../../vault-passkey'
 import { formatDuration, timeoutChoice, timeoutOf, timeoutOptions, type TimeoutChoice } from './timeout'
 
 /** Bitwarden's Settings → Account security, without two-step login and the fingerprint phrase (proposal). */
@@ -25,6 +26,7 @@ export function AccountSecurity({ account }: { account: AccountSummary }) {
 	const [pinDialog, setPinDialog] = useState(false)
 	const [actionError, setActionError] = useState<string | null>(null)
 	const logOut = useLogOutConfirm()
+	const support = usePasskeySupport()
 
 	if (!snapshot) return failed ? <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner> : <Loading />
 
@@ -45,7 +47,13 @@ export function AccountSecurity({ account }: { account: AccountSummary }) {
 			{failed && <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner>}
 			<div className="card form-card">
 				<OptionCheckbox label={i18n.t('settings.pin')} checked={snapshot.pin} onChange={(on) => (on ? setPinDialog(true) : void removePin())} hint={i18n.t('settings.pinAfterRestart')} />
-				<OptionCheckbox label={i18n.t('settings.biometrics')} checked={false} onChange={() => {}} lockedBy={i18n.t('settings.notAvailableYet')} />
+				<OptionCheckbox
+					label={i18n.t('vaultPasskey.unlock')}
+					checked={account.passkeyUnlock}
+					onChange={(on) => on && void openVaultPasskeyWindow(accountId, 'enrol')}
+					lockedBy={account.passkeyUnlock ? i18n.t('vaultPasskey.revokeInWebApp') : (support === null ? undefined : supportText(support) ?? undefined)}
+					disabled={support === null}
+				/>
 			</div>
 			<div className="card form-card">
 				<TimeoutControl snapshot={snapshot} update={update} />

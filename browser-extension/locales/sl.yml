@@ -414,8 +414,6 @@ settings:
   pinMismatch: PIN-a se ne ujemata
   pinAdvice: Ne uporabite PIN-a, ki ga že uporabljate za telefon ali banko.
   pinAfterRestart: Po ponovnem zagonu brskalnika enkrat vnesete glavno geslo; nato PIN znova deluje.
-  biometrics: Odklepanje z biometrijo
-  notAvailableYet: Še ni na voljo
   vaultTimeout: Časovna omejitev trezorja
   timeoutImmediately: Takoj
   timeoutMinutes:
@@ -801,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Nič ni bilo shranjeno: Keepiq pri {cloudIds} je prestar za shranjevanje ključev za dostop. Prosite jih, naj posodobijo Keepiq, ali shranite ključ za dostop v drugo prijavo."
     partnerUpgradeRequiredUnnamed: "Nič ni bilo shranjeno: partnerska organizacija, s katero je ta prijava deljena, uporablja Keepiq, ki je prestar za shranjevanje ključev za dostop. Prosite jih, naj posodobijo Keepiq, ali shranite ključ za dostop v drugo prijavo."
     shareScanPending: Ta prijava čaka na preverjanje deljenj, ki še ni končano. Nič ni bilo shranjeno; poskusite znova pozneje.
+
+vaultPasskey:
+  unlock: "Odkleni s prstnim odtisom ali obrazom"
+  unlockIntro: "Brskalnik zahteva prstni odtis, obraz ali PIN naprave."
+  enrolTitle: "Nastavi odklepanje s prstnim odtisom ali obrazom"
+  enrolIntro: "Potrdite glavno geslo. Brskalnik nato dvakrat zahteva prstni odtis, obraz ali PIN naprave."
+  enrolSubmit: "Nastavi"
+  enrolDone: "Odklepanje s prstnim odtisom ali obrazom je nastavljeno za ta brskalnik."
+  close: "Zapri"
+  label: "Razširitev brskalnika Keepiq"
+  tooOld: "Odklepanje s prstnim odtisom ali obrazom zahteva Chrome ali Edge 122 ali Firefox 150 ali novejši. Uporabite glavno geslo."
+  unsupported: "Ta brskalnik ali naprava ne more odkleniti Keepiqa s prstnim odtisom ali obrazom. Uporabite glavno geslo."
+  revokeInWebApp: "Če ga želite izklopiti, prekličite ta ključ za dostop v spletni aplikaciji Keepiq."

@@ -414,8 +414,6 @@ settings:
   pinMismatch: Níl na PIN-anna mar a chéile
   pinAdvice: Ná húsáid PIN atá agat cheana do d'fhón nó do do bhanc.
   pinAfterRestart: Tar éis atosú an bhrabhsálaí cuirfidh tú isteach do mháistirphasfhocal uair amháin; ansin oibreoidh do PIN arís.
-  biometrics: Díghlasáil le bithmhéadracht
-  notAvailableYet: Níl sé ar fáil fós
   vaultTimeout: Teorainn ama an taisceadáin
   timeoutImmediately: Láithreach
   timeoutMinutes:
@@ -801,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Níor sábháladh aon rud: tá an Keepiq atá ag {cloudIds} rósean chun eochracha rochtana a stóráil. Iarr orthu Keepiq a nuashonrú, nó sábháil an eochair rochtana ar logáil isteach eile."
     partnerUpgradeRequiredUnnamed: "Níor sábháladh aon rud: tá Keepiq rósean ag eagraíocht chomhpháirtíochta a bhfuil an logáil isteach seo comhroinnte léi chun eochracha rochtana a stóráil. Iarr orthu Keepiq a nuashonrú, nó sábháil an eochair rochtana ar logáil isteach eile."
     shareScanPending: Tá an logáil isteach seo ag fanacht ar sheiceáil dá comhroinntí nach bhfuil críochnaithe. Níor sábháladh aon rud; bain triail eile as ar ball.
+
+vaultPasskey:
+  unlock: "Díghlasáil le méarlorg nó aghaidh"
+  unlockIntro: "Iarrann do bhrabhsálaí do mhéarlorg, d'aghaidh nó UAP an ghléis."
+  enrolTitle: "Socraigh díghlasáil le méarlorg nó aghaidh"
+  enrolIntro: "Deimhnigh do mháistirphasfhocal. Ansin iarrann do bhrabhsálaí do mhéarlorg, d'aghaidh nó UAP an ghléis faoi dhó."
+  enrolSubmit: "Socraigh"
+  enrolDone: "Tá díghlasáil le méarlorg nó aghaidh socraithe don bhrabhsálaí seo."
+  close: "Dún"
+  label: "Breiseán brabhsálaí Keepiq"
+  tooOld: "Teastaíonn Chrome nó Edge 122, nó Firefox 150, nó níos déanaí le díghlasáil le méarlorg nó aghaidh. Úsáid do mháistirphasfhocal."
+  unsupported: "Ní féidir leis an mbrabhsálaí nó an gléas seo Keepiq a dhíghlasáil le méarlorg nó aghaidh. Úsáid do mháistirphasfhocal."
+  revokeInWebApp: "Chun é a mhúchadh, cúlghair an eochair phasfhocail seo san aip ghréasáin Keepiq."

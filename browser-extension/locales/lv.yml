@@ -414,8 +414,6 @@ settings:
   pinMismatch: PIN nesakrīt
   pinAdvice: Neizmantojiet atkārtoti tālruņa vai bankas PIN.
   pinAfterRestart: Pēc pārlūka pārsāknēšanas vienreiz ievadiet galveno paroli; pēc tam PIN atkal darbosies.
-  biometrics: Atslēgt ar biometriju
-  notAvailableYet: Vēl nav pieejams
   vaultTimeout: Glabātavas noildze
   timeoutImmediately: Uzreiz
   timeoutMinutes:
@@ -801,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Nekas netika saglabāts: saņēmēju {cloudIds} Keepiq ir pārāk vecs, lai glabātu piekļuves atslēgas. Lūdziet viņiem atjaunināt Keepiq vai saglabājiet piekļuves atslēgu citā pieteikšanās vienumā."
     partnerUpgradeRequiredUnnamed: "Nekas netika saglabāts: partnera organizācijai, ar kuru šis pieteikšanās vienums ir kopīgots, ir pārāk vecs Keepiq, lai glabātu piekļuves atslēgas. Lūdziet viņiem atjaunināt Keepiq vai saglabājiet piekļuves atslēgu citā pieteikšanās vienumā."
     shareScanPending: Šis pieteikšanās vienums gaida kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vēlreiz.
+
+vaultPasskey:
+  unlock: "Atbloķēt ar pirksta nospiedumu vai seju"
+  unlockIntro: "Pārlūks prasīs pirksta nospiedumu, seju vai ierīces PIN."
+  enrolTitle: "Iestatīt atbloķēšanu ar pirksta nospiedumu vai seju"
+  enrolIntro: "Apstipriniet galveno paroli. Pēc tam pārlūks divreiz prasīs pirksta nospiedumu, seju vai ierīces PIN."
+  enrolSubmit: "Iestatīt"
+  enrolDone: "Atbloķēšana ar pirksta nospiedumu vai seju šim pārlūkam ir iestatīta."
+  close: "Aizvērt"
+  label: "Keepiq pārlūka paplašinājums"
+  tooOld: "Atbloķēšanai ar pirksta nospiedumu vai seju vajag Chrome vai Edge 122, vai Firefox 150, vai jaunāku. Izmantojiet galveno paroli."
+  unsupported: "Šis pārlūks vai ierīce nevar atbloķēt Keepiq ar pirksta nospiedumu vai seju. Izmantojiet galveno paroli."
+  revokeInWebApp: "Lai to izslēgtu, atsauciet šo piekļuves atslēgu Keepiq tīmekļa lietotnē."

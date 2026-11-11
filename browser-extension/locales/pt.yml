@@ -414,8 +414,6 @@ settings:
   pinMismatch: Os PIN não coincidem
   pinAdvice: Não reutilize o PIN do seu telemóvel ou do seu banco.
   pinAfterRestart: Depois de reiniciar o navegador, introduz uma vez a palavra-passe mestra; a seguir, o PIN volta a funcionar.
-  biometrics: Desbloquear com biometria
-  notAvailableYet: Ainda não disponível
   vaultTimeout: Tempo limite do cofre
   timeoutImmediately: Imediatamente
   timeoutMinutes:
@@ -801,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Nada foi guardado: o Keepiq de {cloudIds} é demasiado antigo para armazenar chaves de acesso. Peça-lhes que atualizem o Keepiq ou guarde a chave de acesso noutra credencial."
     partnerUpgradeRequiredUnnamed: "Nada foi guardado: uma organização parceira com quem esta credencial é partilhada usa um Keepiq demasiado antigo para armazenar chaves de acesso. Peça-lhe que atualize o Keepiq ou guarde a chave de acesso noutra credencial."
     shareScanPending: Está a ser verificado com quem esta credencial é partilhada. Nada foi guardado; tente novamente mais tarde.
+
+vaultPasskey:
+  unlock: "Desbloquear com impressão digital ou rosto"
+  unlockIntro: "O navegador pede a impressão digital, o rosto ou o PIN do dispositivo."
+  enrolTitle: "Configurar o desbloqueio com impressão digital ou rosto"
+  enrolIntro: "Confirme a palavra-passe mestra. Depois o navegador pede duas vezes a impressão digital, o rosto ou o PIN do dispositivo."
+  enrolSubmit: "Configurar"
+  enrolDone: "O desbloqueio com impressão digital ou rosto está configurado para este navegador."
+  close: "Fechar"
+  label: "Extensão de navegador Keepiq"
+  tooOld: "O desbloqueio com impressão digital ou rosto requer Chrome ou Edge 122, ou Firefox 150, ou mais recente. Use a palavra-passe mestra."
+  unsupported: "Este navegador ou dispositivo não consegue desbloquear o Keepiq com impressão digital ou rosto. Use a palavra-passe mestra."
+  revokeInWebApp: "Para o desativar, revogue esta chave de acesso na aplicação web Keepiq."
