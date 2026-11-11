@@ -97,12 +97,19 @@ function withinDomain(rpId: string, host: string, domain: string | null): boolea
  */
 export function rpIdAllowed(rpId: string, host: string): boolean {
 	if (!/^[a-z0-9-]+(\.[a-z0-9-]+)*$/.test(rpId)) return false
+	const names = parsedNames(rpId, host)
+	if (!names || isListedSuffix(names.own, rpId)) return false
+	return rpId === host || withinDomain(rpId, host, names.origin.domain)
+}
+
+/** Both names parsed, unless either is an IP address, which is never a site. */
+function parsedNames(rpId: string, host: string) {
 	const origin = parse(host, { allowPrivateDomains: true })
 	const own = parse(rpId, { allowPrivateDomains: true })
-	if (origin.isIp || own.isIp) return false
-	if (own.publicSuffix === rpId && (own.isIcann || own.isPrivate)) return false
-	return rpId === host || withinDomain(rpId, host, origin.domain)
+	return origin.isIp || own.isIp ? null : { origin, own }
 }
+
+const isListedSuffix = (own: ReturnType<typeof parse>, rpId: string) => own.publicSuffix === rpId && (own.isIcann || own.isPrivate)
 
 /** An unknown value is ignored, as WebAuthn does with an enum member it does not know. */
 const userVerification = (value: string | undefined): UserVerification => (value === 'required' || value === 'discouraged' ? value : 'preferred')
@@ -126,37 +133,59 @@ function createFallback(create: PasskeyCreateOptions): FallbackReason | null {
 	return null
 }
 
+/** The RP ID first, then a create's own gates. */
+function startRefusal(rpId: string, { hostname, create }: { hostname: string; create: PasskeyCreateOptions | null }): FallbackReason | null {
+	if (!rpIdAllowed(rpId, hostname)) return 'rp_id'
+	return create && createFallback(create)
+}
+
+/** A request the gates let through, with what the frame and the page's options say about it. */
+interface Started {
+	input: StartInput
+	parsed: PasskeyRequest
+	frame: Frame
+	members: ReturnType<typeof kindMembers>
+	rpId: string
+}
+
+/** A modal ceremony ends at the page's timeout; a conditional one waits. */
+function deadlineOf({ input, parsed }: Started, verification: UserVerification): number | null {
+	if (parsed.mediation === 'conditional') return null
+	return (input.now ?? Date.now()) + ceremonyTimeout(parsed.options.timeout, verification)
+}
+
+/** What only a `create` carries: the RP's name, the user and `credProps`. */
+function createMembers(create: PasskeyCreateOptions | null) {
+	return { rpName: create?.rp.name ?? '', user: create ? { ...create.user } : null, credProps: create?.extensions?.credProps === true }
+}
+
+function ceremonyRequest(started: Started): CeremonyRequest {
+	const { input, parsed, frame, members, rpId } = started
+	const verification = userVerification(members.userVerification)
+	return {
+		kind: parsed.type,
+		tabId: frame.tabId,
+		frameId: frame.frameId,
+		origin: frame.origin.origin,
+		url: frameUrl(input.sender, frame.origin),
+		rpId,
+		conditional: parsed.mediation === 'conditional',
+		challenge: parsed.options.challenge,
+		userVerification: verification,
+		deadline: deadlineOf(started, verification),
+		credentialIds: members.descriptors.filter((descriptor) => descriptor.type === 'public-key').map((descriptor) => descriptor.id),
+		...createMembers(members.create),
+	}
+}
+
 export function readStart(input: StartInput): { request: CeremonyRequest } | { fallback: FallbackReason } {
 	const parsed = parsePasskeyRequest(input.request)
 	if (!parsed) return { fallback: 'malformed' }
 	const frame = frameGate(input)
 	if ('fallback' in frame) return frame
 	const members = kindMembers(parsed)
-	const { create } = members
-	const { options } = parsed
 	const rpId = members.rpId ?? frame.origin.hostname
-	if (!rpIdAllowed(rpId, frame.origin.hostname)) return { fallback: 'rp_id' }
-	const refused = create && createFallback(create)
+	const refused = startRefusal(rpId, { hostname: frame.origin.hostname, create: members.create })
 	if (refused) return { fallback: refused }
-
-	const verification = userVerification(members.userVerification)
-	const conditional = parsed.mediation === 'conditional'
-	return {
-		request: {
-			kind: parsed.type,
-			tabId: frame.tabId,
-			frameId: frame.frameId,
-			origin: frame.origin.origin,
-			url: frameUrl(input.sender, frame.origin),
-			rpId,
-			conditional,
-			challenge: options.challenge,
-			userVerification: verification,
-			deadline: conditional ? null : (input.now ?? Date.now()) + ceremonyTimeout(options.timeout, verification),
-			credentialIds: members.descriptors.filter((descriptor) => descriptor.type === 'public-key').map((descriptor) => descriptor.id),
-			rpName: create?.rp.name ?? '',
-			user: create ? { ...create.user } : null,
-			credProps: create?.extensions?.credProps === true,
-		},
-	}
+	return { request: ceremonyRequest({ input, parsed, frame, members, rpId }) }
 }
