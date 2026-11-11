@@ -737,6 +737,18 @@ describe('errors', () => {
 			expect(error()!.textContent).toBe('This folder no longer exists')
 			expect(buttonNames()).toEqual(['Never for this site', 'Save', 'Close'])
 		})
+
+		it('on Save, keeps the folder chosen and the focus, as the bar is not built anew', async () => {
+			await open()
+			writeReply = failure('not_found')
+			select()!.value = 'f-work'
+			button('Save').focus()
+			key(button('Save'), 'Enter')
+			await flush()
+			expect(error()!.textContent).toBe('This folder no longer exists')
+			expect(select()!.value).toBe('f-work')
+			expect(document.activeElement).toBe(button('Save'))
+		})
 	})
 })
 
