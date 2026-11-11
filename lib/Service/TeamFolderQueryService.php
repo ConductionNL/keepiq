@@ -183,22 +183,7 @@ class TeamFolderQueryService {
 				continue;
 			}
 
-			// Recipients see the folder identity, never the member list
-			// (share-visibility rule, user-sharing spec); a manager sees the
-			// list it manages (sharing-team-folder-manager-role D5).
-			$grade = $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId);
-			$entry = $this->describe(teamFolder: $teamFolder, includeMembers: $grade === 'manage');
-			$entry['grade'] = $grade;
-			if ($grade === 'manage') {
-				// The rows only the owner may change, so the manager's
-				// browser does not offer controls the server refuses.
-				$entry['ownerOnlyMemberIds'] = $this->ownerOnlyMemberIds(
-					teamFolder: $teamFolder,
-					members: $entry['members'],
-					userId: $userId
-				);
-			}
-			$memberOf[] = $entry;
+			$memberOf[] = $this->memberEntry(teamFolder: $teamFolder, userId: $userId);
 		}
 
 		return [
@@ -206,6 +191,37 @@ class TeamFolderQueryService {
 			'memberOf' => $memberOf,
 		];
 	}//end listForUser()
+
+	/**
+	 * A shared team folder as its member sees it.
+	 *
+	 * Recipients see the folder identity, never the member list
+	 * (share-visibility rule, user-sharing spec); a manager sees the list it
+	 * manages (sharing-team-folder-manager-role D5) and the rows only the
+	 * owner may change, so its browser does not offer controls the server
+	 * refuses.
+	 *
+	 * @param TeamFolder $teamFolder The shared team folder
+	 * @param string     $userId     The member
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#4.1
+	 */
+	private function memberEntry(TeamFolder $teamFolder, string $userId): array {
+		$grade = $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId);
+		$entry = $this->describe(teamFolder: $teamFolder, includeMembers: $grade === 'manage');
+		$entry['grade'] = $grade;
+		if ($grade === 'manage') {
+			$entry['ownerOnlyMemberIds'] = $this->ownerOnlyMemberIds(
+				teamFolder: $teamFolder,
+				members: $entry['members'],
+				userId: $userId
+			);
+		}
+
+		return $entry;
+	}//end memberEntry()
 
 	/**
 	 * List the members of a team folder — full list for the owner only.
