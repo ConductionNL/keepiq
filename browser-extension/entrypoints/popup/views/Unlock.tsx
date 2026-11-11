@@ -9,6 +9,7 @@ import { TextField } from '../components/TextField'
 import { noticeText } from '../errors'
 import type { Dispatch } from '../hooks/usePopupState'
 import { useSecretEntry } from '../hooks/useSecretEntry'
+import { openVaultPasskeyWindow, usePasskeySupport } from '../vault-passkey'
 
 interface Props {
 	account: AccountSummary
@@ -23,6 +24,7 @@ interface Props {
 export function Unlock({ account, notice = null, dispatch, onGenerate, focusGenerate = false }: Props) {
 	const { secret, setSecret, switched, withPin, afterRestart, error, busy, field, switchToMasterPassword, submit: unlock } = useSecretEntry(account)
 	const logOut = useLogOutConfirm()
+	const support = usePasskeySupport()
 
 	function submit(event: FormEvent) {
 		event.preventDefault()
@@ -39,6 +41,9 @@ export function Unlock({ account, notice = null, dispatch, onGenerate, focusGene
 			<ErrorBanner>{error}</ErrorBanner>
 			{withPin && <Button variant="link" onClick={switchToMasterPassword}>{i18n.t('unlock.useMasterPassword')}</Button>}
 			<Button type="submit" busy={busy} disabled={!secret}>{i18n.t('unlock.submit')}</Button>
+			{account.passkeyUnlock && support === 'supported' && (
+				<Button variant="secondary" onClick={() => void openVaultPasskeyWindow(account.id, 'unlock')}>{i18n.t('vaultPasskey.unlock')}</Button>
+			)}
 			{onGenerate && <Button variant="link" onClick={onGenerate} autoFocus={focusGenerate}>{i18n.t('generator.generatePasswordLink')}</Button>}
 			{logOut.confirming
 				? <LogOutConfirm account={account} onConfirm={() => void dispatch({ kind: 'accounts.remove', accountId: account.id })} onCancel={logOut.cancel} />

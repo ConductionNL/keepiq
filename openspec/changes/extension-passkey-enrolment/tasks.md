@@ -27,14 +27,17 @@ Nothing here starts before Ruben approved the design. Each decision in design.md
 
 - [x] 2.1 Pairing through Login Flow v2 with the manual app password fallback and the file access note (D3). Verify: `tests/extension/pairing.spec.js` (flow success, closed tab, 20 minute timeout, verified before stored).
   - The tests sit next to the code, as the extension's convention is: `src/accounts/login-flow.test.ts` (flow, closed tab, 20 minute timeout, foreign poll origin) and `src/background/router.test.ts` (verified before stored, an app password that does not verify is deleted again). The file access note shows on the unlock screen until the first unlock.
-- [ ] 2.2 Enrolment in an extension tab: server options, `create()` and proof `get()` with the server host as relying party, random user handle, `residentKey` `discouraged`, PRF wrap, post (D1). Verify: vitest for the request shape, including that no master password, raw unlock key or PRF output is sent.
-- [ ] 2.3 Unlock in an extension tab: options, `get()`, post the assertion, unwrap only from the server's answer, hand the raw key to the worker, never to storage (D5). Verify: vitest.
-- [ ] 2.4 Feature detection: offer the option only where the extension page exposes WebAuthn, a user-verifying platform authenticator is available and PRF is reported; Safari shows the master password only. Verify: vitest.
+- [x] 2.2 Enrolment in an extension tab: server options, `create()` and proof `get()` with the server host as relying party, random user handle, `residentKey` `discouraged`, PRF wrap, post (D1). Verify: vitest for the request shape, including that no master password, raw unlock key or PRF output is sent.
+  - Built in keepiq#1644 (`src/vault/passkey-unlock.ts`, `src/vault/passkey-api.ts`) and the window in `entrypoints/popup/views/VaultPasskeyWindow.tsx`, opened from Settings, Account security. The ceremony runs in an extension popup window. The tests run over a software authenticator; a real browser ceremony is task 0.3.
+- [x] 2.3 Unlock in an extension tab: options, `get()`, post the assertion, unwrap only from the server's answer, hand the raw key to the worker, never to storage (D5). Verify: vitest.
+  - The unlock screen offers the window once this browser enrolled a passkey; the account forgets that once the server offers none. A suspended passkey can only be revoked in the web app and enrolled again (Ruben, 11 Nov 2026), so the extension has no confirm path.
+- [x] 2.4 Feature detection: offer the option only where the extension page exposes WebAuthn, a user-verifying platform authenticator is available and PRF is reported; Safari shows the master password only. Verify: vitest.
+  - `src/vault/passkey-support.ts`: Chrome and Edge before 122 and Firefox before 150 are named as too old, with the master password as the way in. A browser without `getClientCapabilities` is checked for PRF at enrolment.
 
 ## 3. Web app
 
 - [x] 3.1 Passkey list: label extension credentials with the browser and show `suspended` with revoke and confirm actions. Verify: store tests.
-  - The list shows `suspended` with a warning and keeps Revoke. Extension credentials are labelled "Browser extension" and carry the label the extension gives at enrolment; the server stores no browser name. Confirming a suspended credential is not built: the server cannot check the master password, so a confirm route needs its own design (open question).
+  - The list shows `suspended` with a warning and keeps Revoke. Extension credentials are labelled "Browser extension" and carry the label the extension gives at enrolment; the server stores no browser name. Ruben decided on 11 Nov 2026 that a suspended credential can only be revoked and enrolled again, so there is no confirm action.
 
 ## 4. Verification and docs
 

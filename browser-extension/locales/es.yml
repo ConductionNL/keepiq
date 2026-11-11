@@ -414,8 +414,6 @@ settings:
   pinMismatch: Los PIN no coinciden
   pinAdvice: No reutilices el PIN de tu teléfono o de tu banco.
   pinAfterRestart: Tras reiniciar el navegador, introduces una vez tu contraseña maestra; después, el PIN vuelve a funcionar.
-  biometrics: Desbloquear con biometría
-  notAvailableYet: Aún no disponible
   vaultTimeout: Tiempo de espera de la caja fuerte
   timeoutImmediately: Inmediatamente
   timeoutMinutes:
@@ -801,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "No se ha guardado nada: el Keepiq de {cloudIds} es demasiado antiguo para almacenar llaves de acceso. Pídeles que actualicen Keepiq o guarda la llave de acceso en otro inicio de sesión."
     partnerUpgradeRequiredUnnamed: "No se ha guardado nada: una organización asociada con la que se comparte este inicio de sesión usa un Keepiq demasiado antiguo para almacenar llaves de acceso. Pídele que actualice Keepiq o guarda la llave de acceso en otro inicio de sesión."
     shareScanPending: Se está comprobando con quién se comparte este inicio de sesión. No se ha guardado nada; inténtalo más tarde.
+
+vaultPasskey:
+  unlock: "Desbloquear con huella o rostro"
+  unlockIntro: "Tu navegador pide tu huella, tu rostro o el PIN del dispositivo."
+  enrolTitle: "Configurar el desbloqueo con huella o rostro"
+  enrolIntro: "Confirma tu contraseña maestra. Después tu navegador pide dos veces tu huella, tu rostro o el PIN del dispositivo."
+  enrolSubmit: "Configurar"
+  enrolDone: "El desbloqueo con huella o rostro está configurado para este navegador."
+  close: "Cerrar"
+  label: "Extensión de navegador de Keepiq"
+  tooOld: "El desbloqueo con huella o rostro necesita Chrome o Edge 122, o Firefox 150, o posterior. Usa tu contraseña maestra."
+  unsupported: "Este navegador o dispositivo no puede desbloquear Keepiq con huella o rostro. Usa tu contraseña maestra."
+  revokeInWebApp: "Para desactivarlo, revoca esta llave de acceso en la aplicación web de Keepiq."
