@@ -584,4 +584,21 @@ class ConnectionReporterTest extends TestCase {
 		$this->assertFalse(condition: $this->reporter(appConfig: $appConfig)->reportBreachLookup(httpStatus: 200));
 		$this->assertSame(expected: [], actual: $this->sent);
 	}//end testAFailingAppConfigNeverEscapes()
+
+	/**
+	 * A report that fails logs the exact text, the key and the exception class, nothing else.
+	 *
+	 * @return void
+	 */
+	public function testAFailedReportLogsOnlyTheKeyAndTheExceptionClass(): void {
+		$appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$appConfig->method('getValueString')->willThrowException(new RuntimeException('type conflict'));
+		$this->logger->expects($this->once())->method('warning')
+			->with(
+				'Keepiq: could not report a connection to integriq',
+				['key' => 'hibp', 'exception' => RuntimeException::class]
+			);
+
+		$this->assertFalse(condition: $this->reporter(appConfig: $appConfig)->reportBreachLookup(httpStatus: 200));
+	}//end testAFailedReportLogsOnlyTheKeyAndTheExceptionClass()
 }//end class
