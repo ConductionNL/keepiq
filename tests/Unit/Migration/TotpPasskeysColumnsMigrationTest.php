@@ -22,6 +22,10 @@ namespace OCA\Keepiq\Tests\Unit\Migration;
 use OCA\Keepiq\Migration\Version001016Date20261028120000;
 use OCA\Keepiq\Migration\Version001017Date20261028130000;
 use OCA\Keepiq\Migration\Version001018Date20261111120000;
+use OCA\Keepiq\Migration\Version001019Date20261111130000;
+use OCP\DB\QueryBuilder\IExpressionBuilder;
+use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\IDBConnection;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -107,6 +111,70 @@ class TotpPasskeysColumnsMigrationTest extends TestCase {
 		$this->assertNull($step->changeSchema($this->createMock(IOutput::class), fn () => $this->schemaDouble(added: $added, exists: true), []));
 		$this->assertSame([], $added);
 	}//end testAddsTheSignCounterToThePasskeys()
+
+	/**
+	 * The credentials get `token_id` and `user_handle`, and the challenge
+	 * table is created with its binding index; a second run changes nothing.
+	 *
+	 * @return void
+	 */
+	public function testAddsTheExtensionChallengeTableAndBinding(): void {
+		$added = [];
+		$wrapper = $this->createMock(ISchemaWrapper::class);
+		$wrapper->method('hasTable')->willReturnCallback(
+			static fn (string $name): bool => $name === Version001019Date20261111130000::CREDENTIALS
+		);
+		$table = function (string $name) use (&$added): object {
+			return $this->tableDouble(name: $name, added: $added, exists: false);
+		};
+		$wrapper->method('getTable')->willReturnCallback($table);
+		$wrapper->method('createTable')->willReturnCallback($table);
+
+		$step = new Version001019Date20261111130000(db: $this->createMock(IDBConnection::class));
+		$this->assertSame($wrapper, $step->changeSchema($this->createMock(IOutput::class), fn () => $wrapper, []));
+		$this->assertSame(
+			['token_id' => ['notnull' => false], 'user_handle' => ['notnull' => false, 'length' => 128]],
+			$added[Version001019Date20261111130000::CREDENTIALS]
+		);
+		$this->assertSame(
+			['id', 'uid', 'token_id', 'purpose', 'challenge', 'assertion_challenge', 'expires_at'],
+			array_keys($added[Version001019Date20261111130000::CHALLENGES])
+		);
+	}//end testAddsTheExtensionChallengeTableAndBinding()
+
+	/**
+	 * After the schema change, active extension credentials without an app
+	 * password binding are marked stale; web credentials are not touched.
+	 *
+	 * @return void
+	 */
+	public function testMarksUnboundExtensionCredentialsStale(): void {
+		$conditions = [];
+		$expr = $this->createMock(IExpressionBuilder::class);
+		$expr->method('eq')->willReturnCallback(static function (string $column, mixed $value) use (&$conditions): string {
+			$conditions[] = $column . '=' . $value;
+			return $column;
+		});
+		$expr->method('isNull')->willReturnCallback(static function (string $column) use (&$conditions): string {
+			$conditions[] = $column . ' IS NULL';
+			return $column;
+		});
+		$qb = $this->createMock(IQueryBuilder::class);
+		$qb->method('expr')->willReturn($expr);
+		$qb->method('createNamedParameter')->willReturnArgument(0);
+		$qb->expects($this->once())->method('update')->with(Version001019Date20261111130000::CREDENTIALS)->willReturnSelf();
+		$qb->expects($this->once())->method('set')->with('status', 'stale')->willReturnSelf();
+		$qb->method('where')->willReturnSelf();
+		$qb->method('andWhere')->willReturnSelf();
+		$qb->expects($this->once())->method('executeStatement')->willReturn(0);
+		$db = $this->createMock(IDBConnection::class);
+		$db->method('tableExists')->willReturn(true);
+		$db->method('getQueryBuilder')->willReturn($qb);
+
+		(new Version001019Date20261111130000(db: $db))->postSchemaChange($this->createMock(IOutput::class), fn () => null, []);
+
+		$this->assertSame(['client_kind=extension', 'status=active', 'token_id IS NULL'], $conditions);
+	}//end testMarksUnboundExtensionCredentialsStale()
 
 	/**
 	 * Missing tables are skipped, and with none present nothing changes.
