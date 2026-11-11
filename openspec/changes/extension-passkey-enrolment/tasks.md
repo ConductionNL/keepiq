@@ -32,7 +32,8 @@ Nothing here starts before Ruben approved the design. Each decision in design.md
 
 ## 3. Web app
 
-- [ ] 3.1 Passkey list: label extension credentials with the browser and show `suspended` with revoke and confirm actions. Verify: store tests.
+- [x] 3.1 Passkey list: label extension credentials with the browser and show `suspended` with revoke and confirm actions. Verify: store tests.
+  - The list shows `suspended` with a warning and keeps Revoke. Extension credentials are labelled "Browser extension" and carry the label the extension gives at enrolment; the server stores no browser name. Confirming a suspended credential is not built: the server cannot check the master password, so a confirm route needs its own design (open question).
 
 ## 4. Verification and docs
 
