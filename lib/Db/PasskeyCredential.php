@@ -57,10 +57,14 @@ use OCP\AppFramework\Db\Entity;
  * @method void setRpId(?string $rpId)
  * @method string getStatus()
  * @method void setStatus(string $status)
+ * @method int getSignCount()
+ * @method void setSignCount(int $signCount)
  * @method DateTime|null getLastUsedAt()
  * @method void setLastUsedAt(?DateTime $lastUsedAt)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
+ *
+ * @SuppressWarnings(PHPMD.TooManyFields) One field per column of the credential row.
  */
 class PasskeyCredential extends Entity implements JsonSerializable {
 
@@ -152,6 +156,13 @@ class PasskeyCredential extends Entity implements JsonSerializable {
 	protected string $status = 'active';
 
 	/**
+	 * The WebAuthn signature counter of the last verified assertion.
+	 *
+	 * @var integer
+	 */
+	protected int $signCount = 0;
+
+	/**
 	 * Last successful unlock.
 	 *
 	 * @var DateTime|null
@@ -191,6 +202,7 @@ class PasskeyCredential extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'clientKind', type: 'string');
 		$this->addType(fieldName: 'rpId', type: 'string');
 		$this->addType(fieldName: 'status', type: 'string');
+		$this->addType(fieldName: 'signCount', type: 'integer');
 		$this->addType(fieldName: 'lastUsedAt', type: 'datetime');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 	}//end __construct()

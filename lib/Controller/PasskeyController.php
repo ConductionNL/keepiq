@@ -4,7 +4,8 @@
  * Keepiq Passkey Controller
  *
  * Passkey vault-login endpoints (passkey-vault-login §2.4): list,
- * enrollment challenge, enroll, unlock options, record-use, and revoke.
+ * enrollment challenge, enroll, unlock options, unlock, record-use, and
+ * revoke.
  * All methods are `#[NoAdminRequired]` and owner-scoped — the lock
  * screen runs while the Nextcloud session is valid, only the VAULT is
  * locked (§D3). No `#[PublicPage]`, so no public rate-limit surface.
@@ -185,8 +186,9 @@ class PasskeyController extends OCSController {
 	}//end create()
 
 	/**
-	 * The unlock options for the lock screen (active envelopes + salts +
-	 * a fresh challenge; stale/revoked refused), scoped to the asking client.
+	 * The unlock options for the lock screen (active credential ids + salts
+	 * + a fresh challenge stored in the session; stale/revoked refused),
+	 * scoped to the asking client. No wrapped envelope.
 	 *
 	 * @param string $client web (default) or extension
 	 * @param string $rpId The extension's relying party id
@@ -198,6 +200,7 @@ class PasskeyController extends OCSController {
 	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 	 */
 	#[NoAdminRequired]
+	#[UseSession]
 	public function loginOptions(string $client='web', string $rpId=''): JSONResponse {
 		$uid = $this->uid();
 		if ($uid === null) {
@@ -206,6 +209,38 @@ class PasskeyController extends OCSController {
 
 		return new JSONResponse(data: $this->service->loginOptions(uid: $uid, client: $client, rpId: $rpId));
 	}//end loginOptions()
+
+	/**
+	 * Verify an unlock assertion against the session's unlock challenge and
+	 * return the answering credential's wrapped envelope. Any failure is one
+	 * generic 400 without an envelope.
+	 *
+	 * @param array<string,mixed> $assertion The get() PublicKeyCredential as JSON
+	 * @param string $client web (default) or extension
+	 * @param string $rpId The extension's relying party id
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+	 */
+	#[NoAdminRequired]
+	#[UseSession]
+	public function unlock(array $assertion=[], string $client='web', string $rpId=''): JSONResponse {
+		$uid = $this->uid();
+		if ($uid === null) {
+			return $this->unauth();
+		}
+
+		try {
+			$envelope = $this->service->unlock(uid: $uid, assertion: $assertion, client: $client, rpId: $rpId);
+		} catch (InvalidArgumentException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		return new JSONResponse(data: $envelope);
+	}//end unlock()
 
 	/**
 	 * Record a successful passkey unlock (last-used stamp).

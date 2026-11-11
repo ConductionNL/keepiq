@@ -21,6 +21,7 @@ namespace OCA\Keepiq\Tests\Unit\Migration;
 
 use OCA\Keepiq\Migration\Version001016Date20261028120000;
 use OCA\Keepiq\Migration\Version001017Date20261028130000;
+use OCA\Keepiq\Migration\Version001018Date20261111120000;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -85,6 +86,27 @@ class TotpPasskeysColumnsMigrationTest extends TestCase {
 		$this->assertNull($step->changeSchema($this->createMock(IOutput::class), fn () => $this->schemaDouble(added: $added, exists: true), []));
 		$this->assertSame([], $added);
 	}//end testAddsTheChangeTimesToTheSecrets()
+
+	/**
+	 * The passkey credentials get a `sign_count` starting at 0, once.
+	 *
+	 * @return void
+	 */
+	public function testAddsTheSignCounterToThePasskeys(): void {
+		$added = [];
+		$wrapper = $this->schemaDouble(added: $added);
+
+		$step = new Version001018Date20261111120000();
+		$this->assertSame($wrapper, $step->changeSchema($this->createMock(IOutput::class), fn () => $wrapper, []));
+		$this->assertSame(
+			['keepiq_passkey_credentials' => ['sign_count' => ['notnull' => true, 'default' => 0, 'unsigned' => true]]],
+			$added
+		);
+
+		$added = [];
+		$this->assertNull($step->changeSchema($this->createMock(IOutput::class), fn () => $this->schemaDouble(added: $added, exists: true), []));
+		$this->assertSame([], $added);
+	}//end testAddsTheSignCounterToThePasskeys()
 
 	/**
 	 * Missing tables are skipped, and with none present nothing changes.

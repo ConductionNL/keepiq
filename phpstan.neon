@@ -44,12 +44,13 @@ parameters:
         - '#class Doctrine\\DBAL\\#'
         - '#Class Doctrine\\DBAL\\#'
         - '#Doctrine\\DBAL\\Platforms\\#'
-        # The WebAuthn and COSE libraries come from the Nextcloud server's
-        # 3rdparty at runtime (core's own passkey login uses them); Keepiq does
-        # not bundle a copy, so they are unknown to a standalone analysis.
+        # The WebAuthn and COSE libraries, and the Symfony UID they type their
+        # authenticator ids with, come from the Nextcloud server's 3rdparty at
+        # runtime (core's own passkey login uses them); Keepiq does not bundle
+        # a copy, so they are unknown to a standalone analysis.
         # WebAuthnVerifierTest runs the verifier against the real library.
         -
-            message: '#(Webauthn|Cose)\\#'
+            message: '#(Webauthn|Cose|Symfony\\Component\\Uid)\\#'
             path: lib/Service/WebAuthnVerifier.php
         # nextcloud/ocp declares DataResponse's body bound as
         #   `@psalm-type DataResponseType = array|int|float|string|bool|object|null|…`

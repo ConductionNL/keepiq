@@ -13,7 +13,8 @@
  * proves the client data (type, challenge, origin) and the relying party
  * hash and yields the credential public key, and a get() assertion over a
  * second challenge, whose signature and counter prove the authenticator
- * holds the private key of that public key.
+ * holds the private key of that public key. A passkey unlock carries one
+ * get() assertion, checked against the stored public key and counter.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -35,6 +36,7 @@ use Cose\Algorithm\Manager as AlgorithmManager;
 use Cose\Algorithm\Signature\ECDSA\ES256;
 use Cose\Algorithm\Signature\RSA\RS256;
 use Cose\Algorithms;
+use Symfony\Component\Uid\NilUuid;
 use OCA\Keepiq\Exception\PasskeyVerificationException;
 use Throwable;
 use Webauthn\AttestationStatement\AttestationObjectLoader;
@@ -55,6 +57,7 @@ use Webauthn\PublicKeyCredentialRequestOptions;
 use Webauthn\PublicKeyCredentialRpEntity;
 use Webauthn\PublicKeyCredentialSource;
 use Webauthn\PublicKeyCredentialUserEntity;
+use Webauthn\TrustPath\EmptyTrustPath;
 
 /**
  * Verifies a passkey enrolment's attestation and proof assertion.
@@ -118,6 +121,65 @@ class WebAuthnVerifier {
 			counter: $source->counter,
 		);
 	}//end verifyEnrolment()
+
+	/**
+	 * Verify an unlock: the get() assertion of an enrolled credential
+	 * against the issued challenge, its stored public key and counter.
+	 *
+	 * @param string $uid The unlocking user (the WebAuthn user handle)
+	 * @param string $rpId The relying party id the ceremony must be bound to
+	 * @param string $challenge The raw get() challenge the server issued
+	 * @param array<string,mixed> $assertion The get() PublicKeyCredential as JSON
+	 * @param string $credentialId The enrolled base64url credential id
+	 * @param string $publicKey The enrolled base64url COSE public key
+	 * @param int $counter The stored signature counter
+	 *
+	 * @return int The signature counter the assertion carried
+	 *
+	 * @throws PasskeyVerificationException When any check fails
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+	 */
+	public function verifyUnlock(
+		string $uid,
+		string $rpId,
+		string $challenge,
+		array $assertion,
+		string $credentialId,
+		string $publicKey,
+		int $counter,
+	): int {
+		if (class_exists(AuthenticatorAssertionResponseValidator::class) === false) {
+			throw new PasskeyVerificationException(message: 'The server WebAuthn library is not available');
+		}
+
+		$rawKey = $this->fromB64url(value: $publicKey);
+		if ($rawKey === '') {
+			throw new PasskeyVerificationException(message: 'The passkey has no verified public key');
+		}
+
+		$source = new PublicKeyCredentialSource(
+			publicKeyCredentialId: $this->fromB64url(value: $credentialId),
+			type: PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY,
+			transports: [],
+			attestationType: PublicKeyCredentialCreationOptions::ATTESTATION_CONVEYANCE_PREFERENCE_NONE,
+			trustPath: new EmptyTrustPath(),
+			aaguid: new NilUuid(),
+			credentialPublicKey: $rawKey,
+			userHandle: $uid,
+			counter: $counter,
+		);
+
+		try {
+			$source = $this->verifyAssertion(uid: $uid, rpId: $rpId, challenge: $challenge, assertion: $assertion, source: $source);
+		} catch (PasskeyVerificationException $exception) {
+			throw $exception;
+		} catch (Throwable $throwable) {
+			throw new PasskeyVerificationException(message: $throwable->getMessage(), code: 0, previous: $throwable);
+		}
+
+		return $source->counter;
+	}//end verifyUnlock()
 
 	/**
 	 * Check the create() response: client data type, challenge and origin,
@@ -269,4 +331,20 @@ class WebAuthnVerifier {
 	private function b64url(string $raw): string {
 		return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
 	}//end b64url()
+
+	/**
+	 * Decode unpadded base64url; an empty string when it does not decode.
+	 *
+	 * @param string $value The base64url text
+	 *
+	 * @return string Raw bytes
+	 */
+	private function fromB64url(string $value): string {
+		$raw = base64_decode(strtr($value, '-_', '+/'), true);
+		if ($raw === false) {
+			return '';
+		}
+
+		return $raw;
+	}//end fromB64url()
 }//end class
