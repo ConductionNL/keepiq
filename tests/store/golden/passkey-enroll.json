@@ -46,6 +46,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -77,9 +78,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -184,10 +185,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Laptop",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -243,6 +262,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -274,9 +294,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -381,10 +401,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Passkey",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -440,6 +478,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -471,9 +510,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -578,10 +617,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Passkey",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -639,6 +696,7 @@
 								239
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -670,11 +728,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								107,
-								230,
-								255,
-								115,
-								239
+								119,
+								231,
+								191
 							]
 						},
 						"rpId": "localhost",
@@ -779,10 +835,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -844,6 +918,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -875,9 +950,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -982,10 +1057,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -1047,6 +1140,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -1078,9 +1172,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -1185,10 +1279,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -1250,6 +1362,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -1281,9 +1394,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -1388,10 +1501,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -1447,6 +1578,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -1498,9 +1630,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -1605,10 +1737,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -1664,6 +1814,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -1695,9 +1846,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -1802,10 +1953,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -1861,6 +2030,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -1892,9 +2062,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -1999,10 +2169,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -2115,6 +2303,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -2184,6 +2373,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -2251,6 +2441,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -2320,6 +2511,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -2389,6 +2581,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -2458,6 +2651,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -2527,6 +2721,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -2597,6 +2792,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -2628,9 +2824,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -2735,10 +2931,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": null,
+							"attestationObject": null
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "",
-					"aaguid": ""
+					"transports": ""
 				}
 			],
 			[
@@ -2794,6 +3008,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -2825,9 +3040,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -2932,10 +3147,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": null,
+							"attestationObject": null
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "",
-					"aaguid": ""
+					"transports": ""
 				}
 			],
 			[
@@ -2991,6 +3224,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -3022,9 +3256,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -3129,10 +3363,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": null,
+							"attestationObject": null
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "",
-					"aaguid": ""
+					"transports": ""
 				}
 			],
 			[
@@ -3187,6 +3439,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -3218,9 +3471,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -3330,6 +3583,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -3361,9 +3615,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -3473,6 +3727,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -3504,9 +3759,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -3616,6 +3871,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -3647,9 +3903,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -3763,6 +4019,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -3794,9 +4051,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -3920,6 +4177,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -3951,9 +4209,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -4089,6 +4347,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -4120,9 +4379,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -4268,6 +4527,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -4299,9 +4559,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -4406,10 +4666,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			]
 		]
@@ -4461,6 +4739,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -4492,9 +4771,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -4599,10 +4878,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -4663,6 +4960,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -4694,9 +4992,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -4801,10 +5099,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -4860,6 +5176,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -4891,9 +5208,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -4998,10 +5315,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -5062,6 +5397,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -5093,9 +5429,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -5200,10 +5536,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[
@@ -5259,6 +5613,7 @@
 								3
 							]
 						},
+						"attestation": "none",
 						"pubKeyCredParams": [
 							{
 								"type": "public-key",
@@ -5290,9 +5645,9 @@
 					"publicKey": {
 						"challenge": {
 							"bytes": [
-								1,
-								2,
-								3
+								4,
+								5,
+								6
 							]
 						},
 						"rpId": "localhost",
@@ -5397,10 +5752,28 @@
 					"credentialId": "Bwj6",
 					"wrappedUnlockKey": "WRAPPED",
 					"prfSalt": "AQgPFh0kKzI5QEdOVVxjanF4f4aNlJuiqbC3vsXM09o=",
-					"publicKey": "",
+					"attestation": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "e30",
+							"attestationObject": "oA"
+						}
+					},
+					"assertion": {
+						"id": "Bwj6",
+						"rawId": "Bwj6",
+						"type": "public-key",
+						"response": {
+							"clientDataJSON": "eyJ9",
+							"authenticatorData": "AQI",
+							"signature": "MAY",
+							"userHandle": "YQ"
+						}
+					},
 					"label": "Key",
-					"transports": "usb,nfc",
-					"aaguid": ""
+					"transports": "usb,nfc"
 				}
 			],
 			[

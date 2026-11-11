@@ -32,6 +32,7 @@ use OCA\Keepiq\Service\PasskeyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\UseSession;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
@@ -101,7 +102,8 @@ class PasskeyController extends OCSController {
 	}//end index()
 
 	/**
-	 * A fresh WebAuthn challenge for an enrollment ceremony.
+	 * The challenge pair for an enrollment ceremony, stored in the session:
+	 * `challenge` for create(), `assertionChallenge` for the proof get().
 	 *
 	 * @NoAdminRequired
 	 *
@@ -110,26 +112,29 @@ class PasskeyController extends OCSController {
 	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
 	#[NoAdminRequired]
+	#[UseSession]
 	public function challenge(): JSONResponse {
 		$uid = $this->uid();
 		if ($uid === null) {
 			return $this->unauth();
 		}
 
-		return new JSONResponse(data: ['challenge' => $this->service->freshChallenge()]);
+		return new JSONResponse(data: $this->service->enrolmentChallenge(uid: $uid));
 	}//end challenge()
 
 	/**
 	 * Enroll a passkey unlock envelope (client builds it while the vault
-	 * is unlocked).
+	 * is unlocked). The create() attestation and the proof get() assertion
+	 * are verified against the session's challenge pair; the public key and
+	 * authenticator model are read from them.
 	 *
 	 * @param string $credentialId base64url WebAuthn credential id
 	 * @param string $wrappedUnlockKey AES-GCM envelope of the vault unlock key
 	 * @param string $prfSalt base64 PRF input salt
-	 * @param string $publicKey COSE public key (optional)
+	 * @param array<string,mixed> $attestation The create() PublicKeyCredential as JSON
+	 * @param array<string,mixed> $assertion The proof get() PublicKeyCredential as JSON
 	 * @param string $label User nickname
 	 * @param string $transports Comma-joined transports
-	 * @param string $aaguid Authenticator model id
 	 * @param string $clientKind web (default) or extension
 	 * @param string $rpId The relying party id (required for an extension credential)
 	 *
@@ -140,14 +145,15 @@ class PasskeyController extends OCSController {
 	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
 	#[NoAdminRequired]
+	#[UseSession]
 	public function create(
 		string $credentialId = '',
 		string $wrappedUnlockKey = '',
 		string $prfSalt = '',
-		string $publicKey = '',
+		array $attestation = [],
+		array $assertion = [],
 		string $label = '',
 		string $transports = '',
-		string $aaguid = '',
 		string $clientKind = 'web',
 		string $rpId = '',
 	): JSONResponse {
@@ -163,10 +169,10 @@ class PasskeyController extends OCSController {
 					'credentialId' => $credentialId,
 					'wrappedUnlockKey' => $wrappedUnlockKey,
 					'prfSalt' => $prfSalt,
-					'publicKey' => $publicKey,
+					'attestation' => $attestation,
+					'assertion' => $assertion,
 					'label' => $label,
 					'transports' => $transports,
-					'aaguid' => $aaguid,
 					'clientKind' => $clientKind,
 					'rpId' => $rpId,
 				],

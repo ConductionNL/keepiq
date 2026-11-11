@@ -9,7 +9,9 @@
  * (no-admin-IDOR, ADR-005). The server holds the wrapped unlock-key
  * envelope but never the PRF secret, the master password, or the
  * plaintext unlock key; the unlock's security rests on the client-side
- * unwrap, not a server-side assertion check (§D3).
+ * unwrap, not a server-side assertion check (§D3). Enrolment is verified on
+ * the server: a single-use session challenge pair, the create() attestation
+ * and a get() proof assertion of the same credential (WebAuthnVerifier).
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -33,7 +35,6 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\PasskeyCredential;
 use OCA\Keepiq\Db\PasskeyMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\Security\ISecureRandom;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -51,14 +52,14 @@ class PasskeyService {
 	 *
 	 * @param PasskeyMapper $mapper The passkey mapper
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper (epoch source)
-	 * @param ISecureRandom $secureRandom The challenge source
+	 * @param PasskeyEnrolmentCeremony $ceremony The enrolment challenges and their verification
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private PasskeyMapper $mapper,
 		private EncryptionSuiteMapper $suiteMapper,
-		private ISecureRandom $secureRandom,
+		private PasskeyEnrolmentCeremony $ceremony,
 	) {
 	}//end __construct()
 
@@ -77,15 +78,29 @@ class PasskeyService {
 	}//end listForOwner()
 
 	/**
-	 * A fresh 32-byte base64 WebAuthn challenge.
+	 * A fresh 32-byte base64url WebAuthn challenge.
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 	 */
 	public function freshChallenge(): string {
-		return base64_encode($this->secureRandom->generate(32, ISecureRandom::CHAR_ALPHANUMERIC . '+/='));
+		return $this->ceremony->freshChallenge();
 	}//end freshChallenge()
+
+	/**
+	 * Issue the enrolment challenge pair (base64url) and store it in the
+	 * session as the only one the next enrolment may present.
+	 *
+	 * @param string $uid The calling owner
+	 *
+	 * @return array{challenge: string, assertionChallenge: string}
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
+	 */
+	public function enrolmentChallenge(string $uid): array {
+		return $this->ceremony->issue(uid: $uid);
+	}//end enrolmentChallenge()
 
 	/**
 	 * Enroll a passkey unlock envelope. The vault MUST be unlocked
@@ -93,16 +108,22 @@ class PasskeyService {
 	 * wrapped envelope (§2.5). The envelope is bound to the CURRENT
 	 * suite's unlock-key epoch so a later password change can stale it.
 	 *
+	 * The pending challenge pair is taken first, so it is spent by any
+	 * attempt. The attestation and proof assertion must verify against it;
+	 * the stored public key and authenticator model come from the verified
+	 * data, and the claimed credential id must equal the verified one.
+	 *
 	 * @param string $uid The calling owner
-	 * @param array<string,mixed> $dto {credentialId, publicKey, prfSalt, wrappedUnlockKey, label, transports, aaguid, clientKind, rpId}
+	 * @param array<string,mixed> $dto {credentialId, prfSalt, wrappedUnlockKey, attestation, assertion, label, transports, clientKind, rpId}
 	 *
 	 * @return PasskeyCredential
 	 *
-	 * @throws InvalidArgumentException On a missing envelope / duplicate credential
+	 * @throws InvalidArgumentException On a missing envelope, a failed verification or a duplicate credential
 	 *
 	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
 	public function enroll(string $uid, array $dto): PasskeyCredential {
+		$pending = $this->ceremony->take(uid: $uid);
 		$credentialId = (string)($dto['credentialId'] ?? '');
 		$prfSalt = (string)($dto['prfSalt'] ?? '');
 		$wrappedUnlockKey = (string)($dto['wrappedUnlockKey'] ?? '');
@@ -113,6 +134,12 @@ class PasskeyService {
 		$clientKind = $this->clientKindOf(dto: $dto);
 		$rpId = $this->optionalString(value: $dto['rpId'] ?? null);
 		$this->assertClientBinding(clientKind: $clientKind, rpId: $rpId);
+		$extensionRpId = null;
+		if ($clientKind === 'extension') {
+			$extensionRpId = $rpId;
+		}
+
+		$verified = $this->ceremony->verify(uid: $uid, pending: $pending, clientRpId: $extensionRpId, dto: $dto);
 		if ($this->mapper->findByCredentialId($uid, $credentialId) !== null) {
 			throw new InvalidArgumentException('This passkey is already enrolled');
 		}
@@ -121,13 +148,13 @@ class PasskeyService {
 		$credential->setId(Uuid::uuid4()->toString());
 		$credential->setOwnerId($uid);
 		$credential->setCredentialId($credentialId);
-		$credential->setPublicKey($this->optionalString(value: $dto['publicKey'] ?? null));
+		$credential->setPublicKey($verified->publicKey);
 		$credential->setPrfSalt($prfSalt);
 		$credential->setWrappedUnlockKey($wrappedUnlockKey);
 		$credential->setUnlockKeyEpoch($this->currentEpoch(uid: $uid));
 		$credential->setLabel($this->optionalString(value: $dto['label'] ?? null));
 		$credential->setTransports($this->optionalString(value: $dto['transports'] ?? null));
-		$credential->setAaguid($this->optionalString(value: $dto['aaguid'] ?? null));
+		$credential->setAaguid($verified->aaguid);
 		$credential->setClientKind($clientKind);
 		$credential->setRpId($rpId);
 		$credential->setStatus('active');
