@@ -24,6 +24,116 @@ const MAX_GROUP_RESULTS = 25
  *
  * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
  */
+/**
+ * The group rows of a sharee search answer: the exact matches, then the
+ * others.
+ *
+ * @param {object} response The sharee search response.
+ * @return {Array<object>}
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+ */
+function shareeGroupRows(response) {
+	const data = response.data?.ocs?.data ?? {}
+	return [
+		...(Array.isArray(data.exact?.groups) ? data.exact.groups : []),
+		...(Array.isArray(data.groups) ? data.groups : []),
+	]
+}
+
+/**
+ * Sharee rows as groups, each id once, labelled by its name or else its id;
+ * a row without an id is passed over.
+ *
+ * @param {Array<object>} rows The group rows.
+ * @return {Array<{id: string, label: string}>}
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+ */
+function uniqueGroups(rows) {
+	const groups = []
+	const seen = new Set()
+	for (const row of rows) {
+		const id = String(row?.value?.shareWith ?? '')
+		if (id === '' || seen.has(id)) {
+			continue
+		}
+		seen.add(id)
+		groups.push({ id, label: String(row?.label || id) })
+	}
+	return groups
+}
+
+/**
+ * What the server answered on creating a group share: the share, the
+ * members eligible for a copy, and how many it left out itself.
+ *
+ * @param {object|undefined} data The response body.
+ * @return {{groupShare: ?object, members: Array<object>, skippedByServer: number}}
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+ */
+function createdGroupShare(data) {
+	return {
+		groupShare: data?.groupShare ?? null,
+		members: Array.isArray(data?.members) ? data.members : [],
+		skippedByServer: Number(data?.skipped ?? 0),
+	}
+}
+
+/**
+ * Encrypt a copy for each eligible member and register them. register-batch
+ * needs a vault-key proof (keepiq#818).
+ *
+ * @param {object} store The group share store.
+ * @param {object} share The source secret id and the created group share.
+ * @return {Promise<{received: number, refused: number, mismatched: number}>}
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+ */
+async function registerMemberCopies(store, share) {
+	if (share.groupShare === null || share.members.length === 0) {
+		return { received: 0, refused: 0, mismatched: 0 }
+	}
+	const rows = await store.encryptForMembers(
+		share.secretId,
+		share.groupShare.id,
+		share.members,
+	)
+	const { items } = await useShareStore().registerBatch(rows)
+	return registeredCounts(items, share.members.length)
+}
+
+/**
+ * How the registered copies came out. A copy the server would leave without
+ * the login's one-time code or passkeys is refused for that reason, not for
+ * a missing encryption suite.
+ *
+ * @param {Array<object>} items The register-batch items.
+ * @param {number} memberCount How many members a copy was made for.
+ * @return {{received: number, refused: number, mismatched: number}}
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+ */
+function registeredCounts(items, memberCount) {
+	const received = items.filter(
+		(item) => item.status === 'created' || item.status === 'exists',
+	).length
+	const mismatched = items.filter(
+		(item) => item.status === 'copy_fields_mismatch',
+	).length
+	return { received, refused: memberCount - received - mismatched, mismatched }
+}
+
+/**
+ * List a group share, replacing an older entry of it.
+ *
+ * @param {object} store The group share store.
+ * @param {object} groupShare The group share.
+ * @return {void}
+ */
+function rememberGroupShare(store, groupShare) {
+	store.groupShares = [
+		...store.groupShares.filter((row) => row.id !== groupShare.id),
+		groupShare,
+	]
+}
+
 export const useGroupShareStore = defineStore('groupShare', {
 	state: () => ({
 		/** @type {Array<object>} The group shares of the secret last fetched. */
@@ -83,22 +193,10 @@ export const useGroupShareStore = defineStore('groupShare', {
 				},
 			)
 
-			const data = response.data?.ocs?.data ?? {}
-			const rows = [
-				...(Array.isArray(data.exact?.groups) ? data.exact.groups : []),
-				...(Array.isArray(data.groups) ? data.groups : []),
-			]
-			const groups = []
-			const seen = new Set()
-			for (const row of rows) {
-				const id = String(row?.value?.shareWith ?? '')
-				if (id === '' || seen.has(id)) {
-					continue
-				}
-				seen.add(id)
-				groups.push({ id, label: String(row?.label || id) })
-			}
-			return groups.slice(0, MAX_GROUP_RESULTS)
+			return uniqueGroups(shareeGroupRows(response)).slice(
+				0,
+				MAX_GROUP_RESULTS,
+			)
 		},
 
 		/**
@@ -122,49 +220,15 @@ export const useGroupShareStore = defineStore('groupShare', {
 					),
 					{ groupId, ...restriction },
 				)
-				const groupShare = created.data?.groupShare ?? null
-				const members = Array.isArray(created.data?.members)
-					? created.data.members
-					: []
-				const skippedByServer = Number(created.data?.skipped ?? 0)
-
-				let received = 0
-				let refused = 0
-				let mismatched = 0
-				if (groupShare !== null && members.length > 0) {
-					const rows = await this.encryptForMembers(
-						secretId,
-						groupShare.id,
-						members,
-					)
-					// register-batch needs a vault-key proof (keepiq#818).
-					const { items } = await useShareStore().registerBatch(rows)
-					received = items.filter(
-						(item) =>
-							item.status === 'created' || item.status === 'exists',
-					).length
-					// A copy the server would leave without the login's one-time
-					// code or passkeys is refused for that reason, not for a
-					// missing encryption suite.
-					mismatched = items.filter(
-						(item) => item.status === 'copy_fields_mismatch',
-					).length
-					refused = members.length - received - mismatched
+				const share = { secretId, ...createdGroupShare(created.data) }
+				const counts = await registerMemberCopies(this, share)
+				if (share.groupShare !== null) {
+					rememberGroupShare(this, share.groupShare)
 				}
-
-				if (groupShare !== null) {
-					this.groupShares = [
-						...this.groupShares.filter(
-							(row) => row.id !== groupShare.id,
-						),
-						groupShare,
-					]
-				}
-
 				return {
-					received,
-					skipped: skippedByServer + refused,
-					refused: mismatched,
+					received: counts.received,
+					skipped: share.skippedByServer + counts.refused,
+					refused: counts.mismatched,
 				}
 			} catch (e) {
 				this.error =
