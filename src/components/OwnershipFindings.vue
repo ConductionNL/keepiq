@@ -57,6 +57,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard, NcSelect } from '@nextcloud/vue'
+import { busyRequest } from '../mixins/busyRequest.js'
 import { fetchPolicy } from '../policy/policy.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
@@ -94,6 +95,8 @@ function contributedValues(plain) {
 export default {
 	name: 'OwnershipFindings',
 	components: { NcButton, NcNoteCard, NcSelect },
+
+	mixins: [busyRequest],
 
 	data() {
 		return {
@@ -177,20 +180,14 @@ export default {
 			if (!target) {
 				return
 			}
-			this.busy = true
-			this.error = null
-			try {
+			await this.runBusy(async () => {
 				if (target.kind === 'owner') {
 					await this.moveIntoOwnFolder(finding, target)
 				} else {
 					await this.contributeToFolder(finding, target)
 				}
 				this.findings = this.findings.filter((row) => row.id !== finding.id)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
 		},
 
 		/**
