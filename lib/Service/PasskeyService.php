@@ -110,22 +110,9 @@ class PasskeyService {
 			throw new InvalidArgumentException('credentialId, prfSalt and wrappedUnlockKey are required');
 		}
 
-		// An extension credential is bound to the extension's own relying
-		// party, so the extension's login options can be scoped to it.
-		$clientKind = (string)($dto['clientKind'] ?? 'web');
-		if ($clientKind === '') {
-			$clientKind = 'web';
-		}
-
+		$clientKind = $this->clientKindOf(dto: $dto);
 		$rpId = $this->optionalString(value: $dto['rpId'] ?? null);
-		if (in_array($clientKind, self::CLIENT_KINDS, true) === false) {
-			throw new InvalidArgumentException('clientKind must be web or extension');
-		}
-
-		if ($clientKind === 'extension' && $rpId === null) {
-			throw new InvalidArgumentException('An extension passkey needs its relying party id');
-		}
-
+		$this->assertClientBinding(clientKind: $clientKind, rpId: $rpId);
 		if ($this->mapper->findByCredentialId($uid, $credentialId) !== null) {
 			throw new InvalidArgumentException('This passkey is already enrolled');
 		}
@@ -148,6 +135,48 @@ class PasskeyService {
 
 		return $this->mapper->insert($credential);
 	}//end enroll()
+
+	/**
+	 * The client an enrolment is for, `web` when none is named.
+	 *
+	 * @param array<string,mixed> $dto The enrolment request
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
+	 */
+	private function clientKindOf(array $dto): string {
+		$clientKind = (string)($dto['clientKind'] ?? 'web');
+		if ($clientKind === '') {
+			return 'web';
+		}
+
+		return $clientKind;
+	}//end clientKindOf()
+
+	/**
+	 * Refuse an unknown client, and an extension credential without its
+	 * relying party: an extension credential is bound to the extension's own
+	 * relying party, so the extension's login options can be scoped to it.
+	 *
+	 * @param string      $clientKind The client the credential is for
+	 * @param string|null $rpId       The relying party id, if any
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the client or its binding is wrong
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
+	 */
+	private function assertClientBinding(string $clientKind, ?string $rpId): void {
+		if (in_array($clientKind, self::CLIENT_KINDS, true) === false) {
+			throw new InvalidArgumentException('clientKind must be web or extension');
+		}
+
+		if ($clientKind === 'extension' && $rpId === null) {
+			throw new InvalidArgumentException('An extension passkey needs its relying party id');
+		}
+	}//end assertClientBinding()
 
 	/**
 	 * The unlock options for the lock screen (§2.2): the owner's ACTIVE
