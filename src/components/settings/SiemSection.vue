@@ -261,6 +261,7 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
+import { dateTimeOrDash } from '../../utils/dateTime.js'
 import {
 	connectorOf,
 	fieldsFor,
@@ -659,20 +660,8 @@ export default {
 			return 'siem__muted'
 		},
 
-		/**
-		 * Render an ISO date briefly.
-		 *
-		 * @param {string|null} iso The ISO timestamp.
-		 * @return {string}
-		 *
-		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale string.
-		 */
-		formatDate(iso) {
-			if (!iso) {
-				return '—'
-			}
-			return new Date(iso).toLocaleString()
-		},
+		/** The shown timestamp (see `dateTimeOrDash` in utils/dateTime.js). */
+		formatDate: dateTimeOrDash,
 	},
 }
 </script>
