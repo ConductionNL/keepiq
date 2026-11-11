@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Dein Tresorschlüssel hat sich in Keepiq geändert. Entsperre mit deinem aktuellen Master-Passwort.
+  fileAccess: "Keepiq braucht keinen Dateizugriff. In Nextcloud kannst du unter Einstellungen, Sicherheit, Geräte & Sitzungen den Dateizugriff dieses App-Passworts abschalten oder es widerrufen."
 
 common:
   accountOnHost: "{name} auf {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Erstelle eines unter Nextcloud-Einstellungen, Sicherheit. Gib hier nie dein Nextcloud-Anmeldepasswort ein.
   hintWithLink: "Erstelle eines unter Nextcloud-Einstellungen, Sicherheit: {link}. Gib hier nie dein Nextcloud-Anmeldepasswort ein."
   securityLink: Sicherheitseinstellungen öffnen
+  signInWithBrowser: "Über Nextcloud anmelden"
+  finishInTab: "Schließe die Anmeldung auf der geöffneten Nextcloud-Seite ab. Keepiq fügt das Konto hinzu, sobald du fertig bist."
+  orAppPassword: "Oder gib ein App-Passwort ein:"
 
 accounts:
   active: (aktiv)

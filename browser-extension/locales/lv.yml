@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Jūsu glabātavas atslēga Keepiq mainījās. Atslēdziet ar savu pašreizējo galveno paroli.
+  fileAccess: "Keepiq nav vajadzīga piekļuve failiem. Nextcloud sadaļā Iestatījumi, Drošība, Ierīces un sesijas varat izslēgt šīs lietotnes paroles piekļuvi failiem vai to atsaukt."
 
 common:
   accountOnHost: "{name} serverī {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Izveidojiet to Nextcloud iestatījumu sadaļā Drošība. Nekad neievadiet šeit savu Nextcloud pieteikšanās paroli.
   hintWithLink: "Izveidojiet to Nextcloud iestatījumu sadaļā Drošība: {link}. Nekad neievadiet šeit savu Nextcloud pieteikšanās paroli."
   securityLink: atvērt drošības iestatījumus
+  signInWithBrowser: "Pieteikties ar Nextcloud"
+  finishInTab: "Pabeidziet pieteikšanos atvērtajā Nextcloud lapā. Keepiq pievienos kontu, kad būsiet pabeidzis."
+  orAppPassword: "Vai ievadiet lietotnes paroli:"
 
 accounts:
   active: (aktīvs)

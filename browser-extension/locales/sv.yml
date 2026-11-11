@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Din valvnyckel har ändrats i Keepiq. Lås upp med ditt nuvarande huvudlösenord.
+  fileAccess: "Keepiq behöver ingen filåtkomst. I Nextcloud under Inställningar, Säkerhet, Enheter & sessioner kan du stänga av filåtkomst för detta applösenord eller återkalla det."
 
 common:
   accountOnHost: "{name} på {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Skapa ett under Nextcloud-inställningar, Säkerhet. Ange aldrig ditt Nextcloud-inloggningslösenord här.
   hintWithLink: "Skapa ett under Nextcloud-inställningar, Säkerhet: {link}. Ange aldrig ditt Nextcloud-inloggningslösenord här."
   securityLink: öppna säkerhetsinställningar
+  signInWithBrowser: "Logga in via Nextcloud"
+  finishInTab: "Slutför inloggningen på Nextcloud-sidan som öppnades. Keepiq lägger till kontot när du är klar."
+  orAppPassword: "Eller ange ett applösenord:"
 
 accounts:
   active: (aktivt)

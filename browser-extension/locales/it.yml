@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: La chiave della tua cassaforte è cambiata in Keepiq. Sblocca con la tua password principale attuale.
+  fileAccess: "Keepiq non ha bisogno di accedere ai file. In Nextcloud, in Impostazioni, Sicurezza, Dispositivi e sessioni, puoi disattivare l'accesso ai file di questa password per app o revocarla."
 
 common:
   accountOnHost: "{name} su {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Creane una in Impostazioni di Nextcloud, Sicurezza. Non inserire mai qui la password di accesso a Nextcloud.
   hintWithLink: "Creane una in Impostazioni di Nextcloud, Sicurezza: {link}. Non inserire mai qui la password di accesso a Nextcloud."
   securityLink: apri le impostazioni di sicurezza
+  signInWithBrowser: "Accedi tramite Nextcloud"
+  finishInTab: "Completa l'accesso nella pagina di Nextcloud che si è aperta. Keepiq aggiunge l'account quando hai finito."
+  orAppPassword: "Oppure inserisci una password per app:"
 
 accounts:
   active: (attivo)

@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: A széfkulcsod megváltozott a Keepiqben. Oldd fel a jelenlegi mesterjelszóval.
+  fileAccess: "A Keepiqnek nincs szüksége fájlhozzáférésre. A Nextcloudban a Beállítások, Biztonság, Eszközök és munkamenetek alatt kikapcsolhatod ennek az alkalmazásjelszónak a fájlhozzáférését, vagy visszavonhatod."
 
 common:
   accountOnHost: "{name} itt: {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Hozz létre egyet a Nextcloud Beállítások, Biztonság oldalon. Soha ne add meg itt a Nextcloud bejelentkezési jelszavadat.
   hintWithLink: "Hozz létre egyet a Nextcloud Beállítások, Biztonság oldalon: {link}. Soha ne add meg itt a Nextcloud bejelentkezési jelszavadat."
   securityLink: biztonsági beállítások megnyitása
+  signInWithBrowser: "Bejelentkezés a Nextcloudon keresztül"
+  finishInTab: "Fejezd be a bejelentkezést a megnyílt Nextcloud-oldalon. A Keepiq hozzáadja a fiókot, amint végeztél."
+  orAppPassword: "Vagy adj meg egy alkalmazásjelszót:"
 
 accounts:
   active: (aktív)

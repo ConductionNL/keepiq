@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Cheia seifului s-a schimbat în Keepiq. Deblocați cu parola principală actuală.
+  fileAccess: "Keepiq nu are nevoie de acces la fișiere. În Nextcloud, la Setări, Securitate, Dispozitive și sesiuni, poți opri accesul la fișiere pentru această parolă de aplicație sau o poți revoca."
 
 common:
   accountOnHost: "{name} pe {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Creați una în Setări Nextcloud, Securitate. Nu introduceți niciodată aici parola de autentificare Nextcloud.
   hintWithLink: "Creați una în Setări Nextcloud, Securitate: {link}. Nu introduceți niciodată aici parola de autentificare Nextcloud."
   securityLink: deschideți setările de securitate
+  signInWithBrowser: "Conectează-te prin Nextcloud"
+  finishInTab: "Finalizează conectarea pe pagina Nextcloud care s-a deschis. Keepiq adaugă contul când ai terminat."
+  orAppPassword: "Sau introdu o parolă de aplicație:"
 
 accounts:
   active: (activ)

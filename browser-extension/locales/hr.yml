@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Ključ vašeg trezora promijenjen je u Keepiqu. Otključajte trenutačnom glavnom lozinkom.
+  fileAccess: "Keepiq ne treba pristup datotekama. U Nextcloudu, pod Postavke, Sigurnost, Uređaji i sesije, možete isključiti pristup datotekama za ovu lozinku aplikacije ili je opozvati."
 
 common:
   accountOnHost: "{name} na {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Izradite je u Nextcloudu pod Postavke, Sigurnost. Ovdje nikada ne unosite lozinku za prijavu u Nextcloud.
   hintWithLink: "Izradite je u Nextcloudu pod Postavke, Sigurnost: {link}. Ovdje nikada ne unosite lozinku za prijavu u Nextcloud."
   securityLink: otvori sigurnosne postavke
+  signInWithBrowser: "Prijava putem Nextclouda"
+  finishInTab: "Dovršite prijavu na otvorenoj stranici Nextclouda. Keepiq dodaje račun kada završite."
+  orAppPassword: "Ili unesite lozinku aplikacije:"
 
 accounts:
   active: (aktivan)

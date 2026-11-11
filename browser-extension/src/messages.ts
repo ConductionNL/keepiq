@@ -577,7 +577,8 @@ export type ErrorCode =
 	| 'pin_key_changed'
 
 // Codes, never text: the popup words them in the browser's language (ext-i18n).
-export type NoticeCode = 'session_revoked' | 'key_changed'
+/** `file_access`: shown until the first unlock of an account added through the browser sign-in. */
+export type NoticeCode = 'session_revoked' | 'key_changed' | 'file_access'
 
 export type BlockReason = 'suite_missing' | 'suite_revoked' | 'suite_compromised' | 'migration_failed'
 
@@ -594,6 +595,8 @@ export const PIN_MIN_LENGTH = 6
 export type PopupToBackground =
 	| { kind: 'accounts.list' }
 	| { kind: 'accounts.add'; serverUrl: string; username: string; appPassword: string }
+	/** Starts Nextcloud Login Flow v2; the background adds the account once the user signed in. */
+	| { kind: 'accounts.loginFlow'; serverUrl: string }
 	| { kind: 'accounts.reauthenticate'; accountId: string; appPassword: string }
 	| { kind: 'accounts.remove'; accountId: string }
 	| { kind: 'accounts.removeAll' }
@@ -605,7 +608,7 @@ export type PopupToBackground =
 	| { kind: 'vault.status'; passive?: boolean }
 
 export const POPUP_MESSAGE_KINDS = kindSet<PopupToBackground['kind']>({
-	'accounts.list': true, 'accounts.add': true, 'accounts.reauthenticate': true, 'accounts.remove': true, 'accounts.removeAll': true,
+	'accounts.list': true, 'accounts.add': true, 'accounts.loginFlow': true, 'accounts.reauthenticate': true, 'accounts.remove': true, 'accounts.removeAll': true,
 	'accounts.switch': true, 'vault.unlock': true, 'vault.lock': true, 'vault.lockAll': true, 'vault.status': true,
 })
 

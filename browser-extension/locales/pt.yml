@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: A chave do seu cofre mudou no Keepiq. Desbloqueie com a sua palavra-passe mestra atual.
+  fileAccess: "O Keepiq não precisa de acesso a ficheiros. No Nextcloud, em Definições, Segurança, Dispositivos e sessões, pode desativar o acesso a ficheiros desta palavra-passe de aplicação ou revogá-la."
 
 common:
   accountOnHost: "{name} em {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Crie uma nas Definições do Nextcloud, Segurança. Nunca introduza aqui a palavra-passe com que inicia sessão no Nextcloud.
   hintWithLink: "Crie uma nas Definições do Nextcloud, Segurança: {link}. Nunca introduza aqui a palavra-passe com que inicia sessão no Nextcloud."
   securityLink: abrir as definições de segurança
+  signInWithBrowser: "Iniciar sessão através do Nextcloud"
+  finishInTab: "Conclua o início de sessão na página do Nextcloud que se abriu. O Keepiq adiciona a conta quando terminar."
+  orAppPassword: "Ou introduza uma palavra-passe de aplicação:"
 
 accounts:
   active: (ativa)

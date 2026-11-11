@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Klíč vašeho trezoru se v Keepiq změnil. Odemkněte ho aktuálním hlavním heslem.
+  fileAccess: "Keepiq nepotřebuje přístup k souborům. V Nextcloud v Nastavení, Zabezpečení, Zařízení a relace můžete tomuto heslu aplikace vypnout přístup k souborům nebo ho zneplatnit."
 
 common:
   accountOnHost: "{name} na {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Vytvořte ho v Nextcloud v Nastavení, Zabezpečení. Nikdy sem nezadávejte své přihlašovací heslo do Nextcloud.
   hintWithLink: "Vytvořte ho v Nextcloud v Nastavení, Zabezpečení: {link}. Nikdy sem nezadávejte své přihlašovací heslo do Nextcloud."
   securityLink: otevřít nastavení zabezpečení
+  signInWithBrowser: "Přihlásit se přes Nextcloud"
+  finishInTab: "Dokončete přihlášení na otevřené stránce Nextcloud. Keepiq účet přidá, jakmile budete hotovi."
+  orAppPassword: "Nebo zadejte heslo aplikace:"
 
 accounts:
   active: (aktivní)
