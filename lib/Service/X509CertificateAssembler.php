@@ -94,10 +94,7 @@ class X509CertificateAssembler {
 		// rsaEncryption OID: phpseclib's PSS default would emit an
 		// id-RSASSA-PSS SPKI that WebCrypto/openssl consumers reject.
 		$certificate = new X509($subjectPublic->withPadding(RSA::SIGNATURE_PKCS1));
-		foreach ($subjectDn as $dnProp => $dnValue) {
-			$certificate->addSubjectDNProp($dnProp, $dnValue);
-		}
-
+		$this->addSubjectDn(certificate: $certificate, subjectDn: $subjectDn);
 		$certificate->setSerialNumber((string)random_int(1, PHP_INT_MAX), 10);
 		$certificate->setEndDate('+365 days');
 		$this->signWithIntermediate(
@@ -136,8 +133,8 @@ class X509CertificateAssembler {
 	): ?string {
 		try {
 			$old = $this->keyLoader->loadCertificate($oldCert);
-			$oldPublic = $old->getPublicKey();
-			if ($oldPublic instanceof PublicKey === false) {
+			$certificate = $this->withOldSubject(old: $old, fallbackCn: $fallbackCn);
+			if ($certificate === null) {
 				return null;
 			}
 
@@ -146,17 +143,7 @@ class X509CertificateAssembler {
 				return null;
 			}
 
-			// Same PKCS1 pin as issuance: a key read back from a certificate
-			// carries phpseclib's PSS default, which would rewrite the SPKI.
-			$certificate = new X509($oldPublic->withPadding(RSA::SIGNATURE_PKCS1));
-			$certificate->setSubjectDN($old->getSubjectDN(X509::DN_ARRAY));
-			if ($fallbackCn !== null && $fallbackCn !== '' && $old->hasSubjectDNProp('id-at-commonName') === false) {
-				$certificate->addSubjectDNProp('id-at-commonName', $fallbackCn);
-			}
-
-			$certificate->setStartDate('-1 day');
-			$certificate->setEndDate('+365 days');
-			$certificate->setSerialNumber((string)random_int(1, PHP_INT_MAX), 10);
+			$this->setRenewalWindow(certificate: $certificate);
 			$this->signWithIntermediate(
 				certificate: $certificate,
 				intermediateCertPem: $intermediateCert,
@@ -165,14 +152,89 @@ class X509CertificateAssembler {
 
 			return $certificate->toString();
 		} catch (Throwable $exception) {
-			$this->logger->warning(
-				'Keepiq: phpseclib re-sign failed: ' . $exception->getMessage(),
-				['app' => Application::APP_ID]
-			);
-
+			$this->warnResignFailed(exception: $exception);
 			return null;
 		}//end try
 	}//end resignPreservingSubject()
+
+	/**
+	 * Log why a re-sign failed, under the app.
+	 *
+	 * @param Throwable $exception What stopped the re-sign
+	 *
+	 * @return void
+	 */
+	private function warnResignFailed(Throwable $exception): void {
+		$this->logger->warning(
+			'Keepiq: phpseclib re-sign failed: ' . $exception->getMessage(),
+			['app' => Application::APP_ID]
+		);
+	}//end warnResignFailed()
+
+	/**
+	 * Start a renewal a day back, run it a year and give it a new serial.
+	 *
+	 * @param X509 $certificate The renewal, changed in place
+	 *
+	 * @return void
+	 */
+	private function setRenewalWindow(X509 $certificate): void {
+		$certificate->setStartDate('-1 day');
+		$certificate->setEndDate('+365 days');
+		$certificate->setSerialNumber((string)random_int(1, PHP_INT_MAX), 10);
+	}//end setRenewalWindow()
+
+	/**
+	 * A new certificate over the old one's public key and subject DN, with the
+	 * fallback commonName added only when the old subject has none.
+	 *
+	 * @param X509        $old        The certificate being renewed
+	 * @param string|null $fallbackCn CommonName to add when the old subject has none
+	 *
+	 * @return X509|null Null when the old certificate carries no public key.
+	 */
+	private function withOldSubject(X509 $old, ?string $fallbackCn): ?X509 {
+		$oldPublic = $old->getPublicKey();
+		if ($oldPublic instanceof PublicKey === false) {
+			return null;
+		}
+
+		// Same PKCS1 pin as issuance: a key read back from a certificate
+		// carries phpseclib's PSS default, which would rewrite the SPKI.
+		$certificate = new X509($oldPublic->withPadding(RSA::SIGNATURE_PKCS1));
+		$certificate->setSubjectDN($old->getSubjectDN(X509::DN_ARRAY));
+		if ($this->needsFallbackCn(old: $old, fallbackCn: $fallbackCn) === true) {
+			$certificate->addSubjectDNProp('id-at-commonName', $fallbackCn);
+		}
+
+		return $certificate;
+	}//end withOldSubject()
+
+	/**
+	 * Whether a fallback commonName is given and the old subject has none.
+	 *
+	 * @param X509        $old        The certificate being renewed
+	 * @param string|null $fallbackCn CommonName to add when the old subject has none
+	 *
+	 * @return bool
+	 */
+	private function needsFallbackCn(X509 $old, ?string $fallbackCn): bool {
+		return $fallbackCn !== null && $fallbackCn !== '' && $old->hasSubjectDNProp('id-at-commonName') === false;
+	}//end needsFallbackCn()
+
+	/**
+	 * Add each subject DN property in the given order.
+	 *
+	 * @param X509                 $certificate The certificate, changed in place
+	 * @param array<string,string> $subjectDn   The DN property per name
+	 *
+	 * @return void
+	 */
+	private function addSubjectDn(X509 $certificate, array $subjectDn): void {
+		foreach ($subjectDn as $dnProp => $dnValue) {
+			$certificate->addSubjectDNProp($dnProp, $dnValue);
+		}
+	}//end addSubjectDn()
 
 	/**
 	 * Sign a certificate with the intermediate: copy the intermediate's
