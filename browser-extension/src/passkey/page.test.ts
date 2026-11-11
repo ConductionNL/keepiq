@@ -381,7 +381,7 @@ describe('page script', () => {
 			fail(new Error('browser said no'))
 			await flush()
 			expect(await state(call)).toBe('pending')
-			answer(posted[0]!, { type: 'error', name: 'NoSuchError' })
+			answer(posted[0]!, { type: 'error', name: 'NoSuchError' } as never)
 			const result = await state(call)
 			expect((result as { error: Error }).error.message).toBe('browser said no')
 		})
