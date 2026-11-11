@@ -35,6 +35,7 @@ use OCA\Keepiq\Service\PasskeyEnrolmentCeremony;
 use OCA\Keepiq\Service\PasskeyService;
 use OCA\Keepiq\Service\PasskeyUnlockCeremony;
 use OCA\Keepiq\Service\ExtensionCeremonySteps;
+use OCA\Keepiq\Service\ExtensionPasskeyCeremony;
 use OCA\Keepiq\Service\TrustedExtensionOrigins;
 use OCA\Keepiq\Service\WebAuthnVerifier;
 use OCA\Keepiq\Tests\Support\WebAuthnFixture;
@@ -183,6 +184,7 @@ class PasskeyUnlockTest extends TestCase {
 				enrolment: $enrolment,
 				logger: $this->logger,
 			),
+			extension: $this->createMock(originalClassName: ExtensionPasskeyCeremony::class),
 		);
 	}//end service()
 
@@ -381,32 +383,6 @@ class PasskeyUnlockTest extends TestCase {
 
 		$this->assertRefused(unlock: fn () => $this->unlockWith(), reason: 'the assertion names no offered passkey');
 	}//end testRefusesACredentialOfAnotherClient()
-
-	/**
-	 * An extension credential stays refused: its origin is not https.
-	 *
-	 * @return void
-	 */
-	public function testRefusesAnExtensionOrigin(): void {
-		$this->credential->setClientKind('extension');
-		$this->credential->setRpId('abcdefghijklmnop');
-		$options = $this->service->loginOptions(uid: self::UID, client: 'extension', rpId: 'abcdefghijklmnop');
-		$this->assertCount(1, $options['credentials']);
-
-		$this->assertRefused(
-			unlock: fn () => $this->service->unlock(
-				uid: self::UID,
-				assertion: $this->passkey->assertion(
-					self::challengeOf(options: $options),
-					self::UID,
-					['counter' => 5, 'rpId' => 'abcdefghijklmnop', 'origin' => 'chrome-extension://abcdefghijklmnop']
-				),
-				client: 'extension',
-				rpId: 'abcdefghijklmnop',
-			),
-			reason: 'Invalid scheme. HTTPS required.',
-		);
-	}//end testRefusesAnExtensionOrigin()
 
 	/**
 	 * The verifier refuses a credential stored without a verified public key.

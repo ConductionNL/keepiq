@@ -217,6 +217,10 @@ final class AuditEventTypes {
 
 	// Browser-extension passkeys (extension-passkey-enrolment D3), identifiers only.
 	public const PASSKEY_REVOKED_WITH_APP_PASSWORD = 'passkey.revoked_with_app_password';
+	public const PASSKEY_ENROLLED = 'passkey.enrolled';
+	public const PASSKEY_UNLOCKED = 'passkey.unlocked';
+	public const PASSKEY_REFUSED = 'passkey.refused';
+	public const PASSKEY_SUSPENDED = 'passkey.suspended';
 
 	// Organisation account recovery (crypto-organisation-account-recovery 5.2),
 	// identifiers only: never an envelope, a wrapped copy or a sealed result.
@@ -407,6 +411,10 @@ final class AuditEventTypes {
 		self::DEVICE_APPROVAL_EXPIRED => [],
 		self::DEVICE_APPROVAL_PICKED_UP => [],
 		self::PASSKEY_REVOKED_WITH_APP_PASSWORD => ['credentialCount'],
+		self::PASSKEY_ENROLLED => ['clientKind'],
+		self::PASSKEY_UNLOCKED => ['clientKind'],
+		self::PASSKEY_REFUSED => ['clientKind', 'ceremony'],
+		self::PASSKEY_SUSPENDED => ['clientKind'],
 		self::RECOVERY_SETTINGS_CHANGED => ['policy', 'threshold', 'officerCount'],
 		self::RECOVERY_KEY_CREATED => [],
 		self::RECOVERY_KEY_RETIRED => [],

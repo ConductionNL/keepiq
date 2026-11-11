@@ -27,11 +27,17 @@ use OCA\Keepiq\Db\PasskeyMapper;
 use OCA\Keepiq\Exception\PasskeyVerificationException;
 use OCA\Keepiq\Service\PasskeyChallengeStore;
 use OCA\Keepiq\Service\PasskeyEnrolmentCeremony;
+use OCA\Keepiq\Service\ExtensionAppPassword;
+use OCA\Keepiq\Service\ExtensionChallengeStore;
+use OCA\Keepiq\Service\ExtensionPasskeyCeremony;
 use OCA\Keepiq\Service\PasskeyService;
+use OCA\Keepiq\Service\TrustedExtensionOrigins;
 use OCA\Keepiq\Service\PasskeyUnlockCeremony;
 use OCA\Keepiq\Service\VerifiedPasskey;
 use OCA\Keepiq\Service\WebAuthnVerifier;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IAppConfig;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -54,6 +60,15 @@ class PasskeyServiceTest extends TestCase {
 	private IRequest&MockObject $request;
 
 	private LoggerInterface&MockObject $logger;
+
+	/**
+	 * The token id of the request's app password, or null.
+	 *
+	 * @var int|null
+	 */
+	private ?int $tokenId = null;
+
+	private ExtensionChallengeStore&MockObject $extensionChallenges;
 
 	/**
 	 * Build the service over mocked mappers with a suite at epoch 3, a
@@ -86,6 +101,9 @@ class PasskeyServiceTest extends TestCase {
 		$this->request = $this->createMock(originalClassName: IRequest::class);
 		$this->request->method('getServerHost')->willReturn('cloud.example.com:8443');
 		$this->logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$this->extensionChallenges = $this->createMock(originalClassName: ExtensionChallengeStore::class);
+		$this->extensionChallenges->method('issue')->willReturn(['challenge' => 'X1', 'assertionChallenge' => 'X2']);
+		$this->extensionChallenges->method('take')->willReturn(['challenge' => 'X1', 'assertionChallenge' => 'X2']);
 
 		$this->service = $this->service(challenges: $this->challenges, verifier: $this->verifier);
 	}//end setUp()
@@ -106,6 +124,12 @@ class PasskeyServiceTest extends TestCase {
 			logger: $this->logger,
 		);
 
+		$appPassword = $this->createMock(originalClassName: ExtensionAppPassword::class);
+		$appPassword->method('tokenId')->willReturnCallback(fn (): ?int => $this->tokenId);
+		$appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$appConfig->method('getValueBool')->willReturn(true);
+		$appConfig->method('getValueString')->willReturn('[]');
+
 		return new PasskeyService(
 			mapper: $this->mapper,
 			suiteMapper: $this->suiteMapper,
@@ -114,6 +138,16 @@ class PasskeyServiceTest extends TestCase {
 				challenges: $challenges,
 				verifier: $verifier,
 				enrolment: $enrolment,
+				logger: $this->logger,
+			),
+			extension: new ExtensionPasskeyCeremony(
+				appPassword: $appPassword,
+				challenges: $this->extensionChallenges,
+				origins: new TrustedExtensionOrigins(appConfig: $appConfig),
+				verifier: $verifier,
+				web: $enrolment,
+				mapper: $this->mapper,
+				dispatcher: $this->createMock(originalClassName: IEventDispatcher::class),
 				logger: $this->logger,
 			),
 		);
@@ -304,43 +338,53 @@ class PasskeyServiceTest extends TestCase {
 	 *
 	 * @return PasskeyCredential
 	 */
-	private function makeClientCredential(string $id, string $kind, ?string $rpId): PasskeyCredential {
+	private function makeClientCredential(string $id, string $kind, ?string $rpId, ?int $tokenId = null): PasskeyCredential {
 		$credential = $this->makeCredential($id);
 		$credential->setClientKind($kind);
 		$credential->setRpId($rpId);
+		$credential->setTokenId($tokenId);
 
 		return $credential;
 	}//end makeClientCredential()
 
 	/**
-	 * The web app never receives an extension credential, and the extension
-	 * never receives a web credential or another extension's credential.
+	 * The web app never receives an extension credential. The extension
+	 * receives only the credentials bound to the app password it
+	 * authenticated with and to this server's host, and without an app
+	 * password it receives neither a challenge nor a credential.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/extension-biometric-unlock/spec.md#requirement-extension-credentials-are-visible-and-revocable-in-the-web-app
+	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-credentials-follow-their-app-password
 	 */
 	public function testLoginOptionsSeparatesWebAndExtensionCredentials(): void {
 		$this->mapper->method('findActiveByOwner')->willReturn([
 			$this->makeClientCredential('web1', 'web', null),
-			$this->makeClientCredential('ext1', 'extension', 'abcdefghijklmnop'),
-			$this->makeClientCredential('ext2', 'extension', 'otherextensionid'),
+			$this->makeClientCredential('ext1', 'extension', 'cloud.example.com', 7),
+			$this->makeClientCredential('ext2', 'extension', 'cloud.example.com', 8),
+			$this->makeClientCredential('ext3', 'extension', 'abcdefghijklmnop', 7),
 		]);
 
 		$web = $this->service->loginOptions('alice');
 		$this->assertSame(['web1'], array_column($web['credentials'], 'id'));
 
-		$extension = $this->service->loginOptions(uid: 'alice', client: 'extension', rpId: 'abcdefghijklmnop');
+		$this->tokenId = 7;
+		$extension = $this->service->loginOptions(uid: 'alice', client: 'extension');
 		$this->assertSame(['ext1'], array_column($extension['credentials'], 'id'));
+		$this->assertSame('cloud.example.com', $extension['rpId']);
+		$this->assertSame('WDE', $extension['challenge']);
+		$this->assertStringNotContainsString('envelope', (string)json_encode($extension));
 
-		// An extension request without its relying party gets nothing.
-		$noRp = $this->service->loginOptions(uid: 'alice', client: 'extension', rpId: '');
-		$this->assertSame([], $noRp['credentials']);
+		$this->tokenId = null;
+		$noAppPassword = $this->service->loginOptions(uid: 'alice', client: 'extension');
+		$this->assertSame([], $noAppPassword['credentials']);
+		$this->assertNull($noAppPassword['challenge']);
 	}//end testLoginOptionsSeparatesWebAndExtensionCredentials()
 
 	/**
-	 * Enrolment stores the client kind and relying party; an extension
-	 * credential needs its relying party and an unknown kind is refused.
+	 * Enrolment stores the client kind; an extension enrolment from a request
+	 * without an app password, and an unknown kind, are refused.
 	 *
 	 * @return void
 	 */
@@ -348,16 +392,9 @@ class PasskeyServiceTest extends TestCase {
 		$this->mapper->method('findByCredentialId')->willReturn(null);
 		$this->mapper->method('insert')->willReturnArgument(0);
 
-		$credential = $this->service->enroll(
-			uid: 'alice',
-			dto: self::enrolment(credentialId: 'c', extra: ['clientKind' => 'extension', 'rpId' => 'abcdefghijklmnop']),
-		);
-		$this->assertSame('extension', $credential->getClientKind());
-		$this->assertSame('abcdefghijklmnop', $credential->getRpId());
-		$this->assertSame('extension', $credential->jsonSerialize()['clientKind']);
-
 		$web = $this->service->enroll(uid: 'alice', dto: self::enrolment(credentialId: 'w'));
 		$this->assertSame('web', $web->getClientKind());
+		$this->assertSame('web', $web->jsonSerialize()['clientKind']);
 
 		foreach ([['clientKind' => 'extension'], ['clientKind' => 'desktop']] as $extra) {
 			try {
@@ -384,7 +421,8 @@ class PasskeyServiceTest extends TestCase {
 			[['prfSalt' => ''] + $base, 'credentialId, prfSalt and wrappedUnlockKey are required'],
 			[['credentialId' => '', 'clientKind' => 'desktop'] + $base, 'credentialId, prfSalt and wrappedUnlockKey are required'],
 			[['clientKind' => 'desktop'] + $base, 'clientKind must be web or extension'],
-			[['clientKind' => 'extension', 'rpId' => ''] + $base, 'An extension passkey needs its relying party id'],
+			[['clientKind' => 'extension', 'prfSalt' => ''] + $base, 'credentialId, prfSalt and wrappedUnlockKey are required'],
+			[['clientKind' => 'extension'] + $base, 'The passkey could not be verified'],
 		];
 		foreach ($cases as [$dto, $message]) {
 			try {
@@ -539,24 +577,40 @@ class PasskeyServiceTest extends TestCase {
 	}//end testEnrollRefusesACredentialIdOtherThanTheAttestedOne()
 
 	/**
-	 * An extension credential is verified against its own relying party.
+	 * An extension credential is verified with the extension step list
+	 * against this server's host, whatever rpId the client names, under a
+	 * random user handle, and is bound to the request's app password.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-biometric-unlock/spec.md#requirement-enrol-a-platform-passkey-for-extension-unlock
 	 */
-	public function testEnrollVerifiesAnExtensionAgainstItsRelyingParty(): void {
+	public function testEnrollVerifiesAnExtensionAgainstTheServerHost(): void {
+		$this->tokenId = 7;
 		$verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
 		$verifier->expects($this->once())->method('verifyEnrolment')
-			->with('alice', 'abcdefghijklmnop')
+			->with(
+				$this->logicalNot($this->equalTo('alice')),
+				'cloud.example.com',
+				'X1',
+				'X2',
+				$this->anything(),
+				$this->anything(),
+				true,
+			)
 			->willReturn(new VerifiedPasskey('c', 'PK', 'aaguid', 1));
 		$this->mapper->method('insert')->willReturnArgument(0);
 
-		$credential = $this->serviceWith(pending: ['challenge' => 'C1', 'assertionChallenge' => 'C2'], verifier: $verifier)->enroll(
+		$credential = $this->service(challenges: $this->challenges, verifier: $verifier)->enroll(
 			uid: 'alice',
 			dto: self::enrolment(credentialId: 'c', extra: ['clientKind' => 'extension', 'rpId' => 'abcdefghijklmnop']),
 		);
 
-		$this->assertSame('abcdefghijklmnop', $credential->getRpId());
-	}//end testEnrollVerifiesAnExtensionAgainstItsRelyingParty()
+		$this->assertSame('extension', $credential->getClientKind());
+		$this->assertSame('cloud.example.com', $credential->getRpId());
+		$this->assertSame(7, $credential->getTokenId());
+		$this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{43}$/', (string)$credential->getUserHandle());
+	}//end testEnrollVerifiesAnExtensionAgainstTheServerHost()
 
 	/**
 	 * The challenge pair is spent by a request that fails its field checks,
