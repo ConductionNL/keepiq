@@ -123,6 +123,7 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import { useHoneyStore } from '../store/modules/honey.js'
+import { isSnoozed } from '../utils/honeyAlerts.js'
 
 export default {
 	name: 'HoneyPanel',
@@ -208,20 +209,7 @@ export default {
 			}
 		},
 
-		/**
-		 * Whether the alert's accessor is currently snoozed.
-		 *
-		 * @param {object} alert The alert row.
-		 * @return {boolean}
-		 *
-		 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
-		 */
-		isSnoozed(alert) {
-			return (
-				!!alert.snoozedUntil
-				&& new Date(alert.snoozedUntil).getTime() > Date.now()
-			)
-		},
+		isSnoozed,
 
 		/**
 		 * Render an ISO date briefly.
