@@ -311,4 +311,23 @@ class FederatedShareSendTest extends TestCase {
 		$this->assertSame('bob@cloud.partner.example', $list->getData()[0]['recipientCloudId']);
 		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller([], 'mallory')->index('src')->getStatus());
 	}
+
+	/**
+	 * The stored row's remaining fields, and the messages of the recipient refusals.
+	 *
+	 * @return void
+	 */
+	public function testTheStoredRowAndTheRecipientRefusalsArePinned(): void {
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+		$this->share($controller);
+		$row = array_values($this->rows)[0];
+
+		$this->assertSame(
+			['src', 'alice', 'bob@cloud.partner.example', FederatedShare::STATUS_ACTIVE, 0, null, null, true, 36],
+			[$row->getSourceSecretId(), $row->getOwnerId(), $row->getRecipientCloudId(), $row->getStatus(), $row->getNotifyAttempts(), $row->getTotp(), $row->getPasskeys(), $row->getCreatedAt() == $row->getUpdatedAt(), strlen((string)$row->getId())]
+		);
+
+		$notAPartner = $this->share($controller, 'carol@cloud.stranger.example');
+		$this->assertSame([Http::STATUS_BAD_REQUEST, ['message' => 'not_a_partner']], [$notAPartner->getStatus(), $notAPartner->getData()]);
+	}
 }
