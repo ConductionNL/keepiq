@@ -33,6 +33,7 @@ errors:
   pinKeyChanged: Your vault key changed. Unlock with your master password.
   pinTooShort: Use at least {count} characters
   unknown: Something went wrong
+  passkeyFailed: "The passkey could not unlock your vault. Use your master password."
 
 notices:
   keyChanged: Your vault key changed in Keepiq. Unlock with your current master password.

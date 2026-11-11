@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Athraíodh eochair do thaisceadáin. Díghlasáil le do mháistirphasfhocal.
   pinTooShort: "Róghearr, íosmhéid carachtar: {count}"
   unknown: Tharla earráid
+  passkeyFailed: "Níorbh fhéidir leis an eochair phasfhocail do thaisce a dhíghlasáil. Úsáid do mháistirphasfhocal."
 
 notices:
   keyChanged: Athraíodh eochair do thaisceadáin i Keepiq. Díghlasáil le do mháistirphasfhocal reatha.

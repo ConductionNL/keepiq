@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Jūsų saugyklos raktas pasikeitė. Atrakinkite pagrindiniu slaptažodžiu.
   pinTooShort: "Mažiausias simbolių skaičius: {count}"
   unknown: Kažkas nepavyko
+  passkeyFailed: "Prieigos raktas neatrakino jūsų saugyklos. Naudokite pagrindinį slaptažodį."
 
 notices:
   keyChanged: Jūsų saugyklos raktas Keepiq pasikeitė. Atrakinkite dabartiniu pagrindiniu slaptažodžiu.

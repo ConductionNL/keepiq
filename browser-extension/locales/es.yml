@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: La clave de tu caja fuerte ha cambiado. Desbloquéala con tu contraseña maestra.
   pinTooShort: Usa al menos {count} caracteres
   unknown: Algo ha salido mal
+  passkeyFailed: "La llave de acceso no pudo desbloquear tu caja fuerte. Usa tu contraseña maestra."
 
 notices:
   keyChanged: La clave de tu caja fuerte ha cambiado en Keepiq. Desbloquéala con tu contraseña maestra actual.

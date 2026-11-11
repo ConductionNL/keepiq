@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: A chave do seu cofre mudou. Desbloqueie com a sua palavra-passe mestra.
   pinTooShort: Utilize pelo menos {count} caracteres
   unknown: Ocorreu um erro
+  passkeyFailed: "A chave de acesso não conseguiu desbloquear o seu cofre. Use a sua palavra-passe mestra."
 
 notices:
   keyChanged: A chave do seu cofre mudou no Keepiq. Desbloqueie com a sua palavra-passe mestra atual.

@@ -1,7 +1,7 @@
 import { createClient, KeepiqNotInstalled, Offline, SessionRevoked } from '@/src/api/client'
 import { supportedKeepiq } from '@/src/api/keepiq-version'
 import type { CachedSuite } from '@/src/api/types'
-import { decryptPrivateKeyPem, importPrivateKey, InvalidMasterPassword, pemToPkcs8, toBase64 } from '@/src/crypto'
+import { decryptPrivateKeyPem, decryptPrivateKeyPemWith, fromBase64, importPrivateKey, InvalidMasterPassword, pemToPkcs8, toBase64 } from '@/src/crypto'
 import { activeSuite } from '@/src/accounts/verify'
 import {
 	accountStatus, announceLock, getAccount, getActiveAccountId, listAccounts, markLoggedOut, suiteKey, updateAccount, type AccountRecord,
@@ -205,7 +205,24 @@ async function unlockableAccount(accountId: string, retried: boolean): Promise<A
 }
 
 function openVault({ accountId, method }: UnlockRun, account: AccountRecord): Promise<{ suite: CachedSuite; key: string | Uint8Array<ArrayBuffer> }> {
-	return method.type === 'pin' ? openWithPin(accountId, method.pin) : openWithMasterPassword(account, method.masterPassword)
+	if (method.type === 'pin') return openWithPin(accountId, method.pin)
+	if (method.type === 'unlockKey') return openWithUnlockKey(account, method.unlockKey)
+	return openWithMasterPassword(account, method.masterPassword)
+}
+
+/** The raw key a passkey released opens the current suite; the server offers passkeys of the current epoch only. */
+async function openWithUnlockKey(account: AccountRecord, unlockKey: string): Promise<{ suite: CachedSuite; key: string }> {
+	const raw = fromBase64(unlockKey)
+	try {
+		const key = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt'])
+		const suite = (await cachedSuite(account.id)) ?? (await fetchSuite(account)).suite
+		return { suite, key: await decryptPrivateKeyPemWith(suite.privateKey, key) }
+	} catch (error) {
+		if (error instanceof Failure && error.code !== 'invalid_master_password') throw error
+		throw new Failure('passkey_failed')
+	} finally {
+		raw.fill(0)
+	}
 }
 
 /** Imported once here so a corrupt key fails the unlock, not the first decrypt. */

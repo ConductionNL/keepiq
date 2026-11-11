@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Dein Tresorschlüssel hat sich geändert. Entsperre mit deinem Master-Passwort.
   pinTooShort: Verwende mindestens {count} Zeichen
   unknown: Etwas ist schiefgelaufen
+  passkeyFailed: "Der Passkey konnte deinen Tresor nicht entsperren. Verwende dein Master-Passwort."
 
 notices:
   keyChanged: Dein Tresorschlüssel hat sich in Keepiq geändert. Entsperre mit deinem aktuellen Master-Passwort.

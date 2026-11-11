@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Je kluissleutel is gewijzigd. Ontgrendel met je hoofdwachtwoord.
   pinTooShort: Gebruik minstens {count} tekens
   unknown: Er ging iets mis
+  passkeyFailed: "De passkey kon je kluis niet ontgrendelen. Gebruik je hoofdwachtwoord."
 
 notices:
   keyChanged: Je kluissleutel is gewijzigd in Keepiq. Ontgrendel met je huidige hoofdwachtwoord.

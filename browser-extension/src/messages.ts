@@ -6,6 +6,7 @@
 
 import type { AccountSettings, VaultTimeout } from '@/src/accounts/settings'
 import type { GeneratorHistoryEntry, GeneratorOptions, GeneratorPolicy } from '@/src/generator/options'
+import type { CredentialJson, EnrolmentBody, EnrolOptions, ReleasedKey, UnlockOptions } from '@/src/vault/passkey-unlock'
 
 /** A kind set that must name every kind of the union `K`, and nothing else. */
 export const kindSet = <K extends string>(kinds: Record<K, true>): ReadonlySet<string> => new Set(Object.keys(kinds))
@@ -545,6 +546,8 @@ export interface AccountSummary {
 	pin: boolean
 	/** Only the seal exists, after a restart: the master password once, then the PIN. */
 	pinAfterRestart: boolean
+	/** A passkey was enrolled for this extension and the server still offered it at the last look. */
+	passkeyUnlock: boolean
 }
 
 export type PopupScreen = 'add_account' | 'reauthenticate' | 'unlock' | 'unlocked'
@@ -575,6 +578,8 @@ export type ErrorCode =
 	| 'pin_forgotten'
 	/** The PIN wraps a key from another suite or epoch than the cached one, so it was forgotten. */
 	| 'pin_key_changed'
+	/** A passkey ceremony was refused or its key did not open the vault; the master password still does. */
+	| 'passkey_failed'
 
 // Codes, never text: the popup words them in the browser's language (ext-i18n).
 /** `file_access`: shown until the first unlock of an account added through the browser sign-in. */
@@ -587,6 +592,8 @@ export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorC
 export type UnlockMethod =
 	| { type: 'masterPassword'; masterPassword: string }
 	| { type: 'pin'; pin: string }
+	/** base64 of the raw unlock key a passkey released, unwrapped in the extension window. */
+	| { type: 'unlockKey'; unlockKey: string }
 
 /** In code points, any characters. Here so the popup can name it without importing the PIN code. */
 export const PIN_MIN_LENGTH = 6
@@ -1036,6 +1043,27 @@ export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupRepli
 	'generator.context', 'generator.saveOptions', 'generator.history.list', 'generator.history.add', 'generator.history.clear',
 	'send.list', 'send.create', 'send.delete',
 ])
+
+/** Extension window → background: the server calls of the vault's own passkey unlock (extension-biometric-unlock). */
+export type VaultPasskeyRequest = { accountId: string } & (
+	| { kind: 'vaultPasskey.enrolOptions' }
+	| { kind: 'vaultPasskey.enrol'; body: EnrolmentBody }
+	| { kind: 'vaultPasskey.unlockOptions' }
+	| { kind: 'vaultPasskey.release'; assertion: CredentialJson }
+)
+
+export interface VaultPasskeyReplies {
+	'vaultPasskey.enrolOptions': EnrolOptions
+	'vaultPasskey.enrol': null
+	'vaultPasskey.unlockOptions': UnlockOptions
+	'vaultPasskey.release': ReleasedKey
+}
+
+export type VaultPasskeyReply<K extends VaultPasskeyRequest['kind']> = { ok: true; value: VaultPasskeyReplies[K] } | { ok: false; code: ErrorCode }
+
+export const VAULT_PASSKEY_KINDS = kindSet<VaultPasskeyRequest['kind']>({
+	'vaultPasskey.enrolOptions': true, 'vaultPasskey.enrol': true, 'vaultPasskey.unlockOptions': true, 'vaultPasskey.release': true,
+})
 
 /** Background → popup broadcasts; nobody listens while the popup is closed. */
 export type BackgroundToPopup =

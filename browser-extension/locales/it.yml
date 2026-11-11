@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: La chiave della tua cassaforte è cambiata. Sblocca con la password principale.
   pinTooShort: Usa almeno {count} caratteri
   unknown: Si è verificato un errore
+  passkeyFailed: "La passkey non ha potuto sbloccare la tua cassaforte. Usa la tua password principale."
 
 notices:
   keyChanged: La chiave della tua cassaforte è cambiata in Keepiq. Sblocca con la tua password principale attuale.

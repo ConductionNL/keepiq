@@ -31,6 +31,7 @@ export async function buildState(): Promise<PopupState> {
 			active: account.id === activeId,
 			pin,
 			pinAfterRestart: !pin && await hasSeal(account.id),
+			passkeyUnlock: account.passkeyUnlock === true,
 		})
 	}
 	const active = accounts.find((a) => a.active) ?? null
