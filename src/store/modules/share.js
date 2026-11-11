@@ -24,6 +24,7 @@ import { generateOcsUrl, generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
+import { uniqueSharees } from '../../utils/sharees.js'
 
 /**
  * How many candidates one shareability probe may name.
@@ -97,28 +98,6 @@ function shareeUserRows(response) {
 		...(Array.isArray(data.exact?.users) ? data.exact.users : []),
 		...(Array.isArray(data.users) ? data.users : []),
 	]
-}
-
-/**
- * Sharee rows as users, each id once, labelled by the display name or else
- * the id; a row without an id is passed over.
- *
- * @param {Array<object>} rows The user rows.
- * @return {Array<{id: string, label: string}>}
- * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-shareability-lookup
- */
-function uniqueSharees(rows) {
-	const users = []
-	const seen = new Set()
-	for (const row of rows) {
-		const id = String(row?.value?.shareWith ?? '')
-		if (id === '' || seen.has(id)) {
-			continue
-		}
-		seen.add(id)
-		users.push({ id, label: String(row?.label || id) })
-	}
-	return users
 }
 
 export const useShareStore = defineStore('share', {
