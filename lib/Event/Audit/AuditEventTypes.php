@@ -215,6 +215,9 @@ final class AuditEventTypes {
 	public const DEVICE_APPROVAL_EXPIRED = 'device_approval.expired';
 	public const DEVICE_APPROVAL_PICKED_UP = 'device_approval.picked_up';
 
+	// Browser-extension passkeys (extension-passkey-enrolment D3), identifiers only.
+	public const PASSKEY_REVOKED_WITH_APP_PASSWORD = 'passkey.revoked_with_app_password';
+
 	// Organisation account recovery (crypto-organisation-account-recovery 5.2),
 	// identifiers only: never an envelope, a wrapped copy or a sealed result.
 	public const RECOVERY_SETTINGS_CHANGED = 'recovery.settings_changed';
@@ -403,6 +406,7 @@ final class AuditEventTypes {
 		self::DEVICE_APPROVAL_DENIED => [],
 		self::DEVICE_APPROVAL_EXPIRED => [],
 		self::DEVICE_APPROVAL_PICKED_UP => [],
+		self::PASSKEY_REVOKED_WITH_APP_PASSWORD => ['credentialCount'],
 		self::RECOVERY_SETTINGS_CHANGED => ['policy', 'threshold', 'officerCount'],
 		self::RECOVERY_KEY_CREATED => [],
 		self::RECOVERY_KEY_RETIRED => [],
