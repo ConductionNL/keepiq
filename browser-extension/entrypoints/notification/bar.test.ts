@@ -720,6 +720,16 @@ describe('errors', () => {
 			expect(bar().textContent).toBe('Login saved')
 		})
 
+		it('leaves the focus where it was when the bar had none', async () => {
+			await open(update())
+			writeReply = failure('not_found')
+			await click(button('Update'))
+			expect(buttonNames()).toEqual(['Never for this site', 'Save', 'Close'])
+			expect(document.activeElement).toBe(document.body)
+			await wait(250)
+			expect(status().textContent).toBe('This login no longer exists. Save it as a new login?')
+		})
+
 		it('on Save, names the folder instead', async () => {
 			await open()
 			writeReply = failure('not_found')
