@@ -202,6 +202,68 @@ describe('create dialog save guards', () => {
 	})
 })
 
+describe('create dialog payload', () => {
+	/**
+	 * @param {object} wrapper The filled create dialog.
+	 * @return {Promise<void>}
+	 */
+	async function fillExtras(wrapper) {
+		wrapper.vm.url = 'https://example.org'
+		wrapper.vm.login = 'ada'
+		wrapper.vm.additionalFields = [{ name: 'Pin', value: '1234' }]
+		await wrapper.vm.$nextTick()
+	}
+
+	it('sends the plain fields, in order, into a folder', async () => {
+		const wrapper = await create('type-login')
+		await wrapper.vm.submit()
+		const body = useSecretStore().createSecret.mock.calls[0][0]
+		expect(Object.keys(body)).toEqual(['name', 'typeId', 'folderId', 'url', 'login', 'key'])
+		expect(body).toEqual({
+			name: 'Item',
+			typeId: 'type-login',
+			folderId: 'folder-1',
+			url: null,
+			login: '',
+			key: 'typed-value',
+		})
+	})
+
+	it('adds the additional fields when there are any', async () => {
+		const wrapper = await create('type-login')
+		await fillExtras(wrapper)
+		await wrapper.vm.submit()
+		const body = useSecretStore().createSecret.mock.calls[0][0]
+		expect(Object.keys(body)).toEqual(['name', 'typeId', 'folderId', 'url', 'login', 'key', 'additionalFields'])
+		expect(body.url).toBe('https://example.org')
+		expect(body.login).toBe('ada')
+		expect(body.additionalFields).toEqual({ Pin: '1234' })
+	})
+
+	it('sends the same fields, without a folder, into a team folder', async () => {
+		const contribute = vi
+			.spyOn(useSecretStore(), 'contributeSecret')
+			.mockResolvedValue({ secret: { id: 's2' } })
+		const wrapper = await create('type-login')
+		await fillExtras(wrapper)
+		wrapper.vm.contributeTo = { teamFolderId: 'tf-ops' }
+		await wrapper.vm.submit()
+		const [teamFolderId, body] = contribute.mock.calls[0]
+		expect(teamFolderId).toBe('tf-ops')
+		expect(Object.keys(body)).toEqual(['name', 'typeId', 'url', 'login', 'key', 'additionalFields'])
+		expect(body).toEqual({
+			name: 'Item',
+			typeId: 'type-login',
+			url: 'https://example.org',
+			login: 'ada',
+			key: 'typed-value',
+			additionalFields: { Pin: '1234' },
+		})
+		expect(useSecretStore().createSecret).not.toHaveBeenCalled()
+		expect(wrapper.emitted('saved')).toEqual([[{ id: 's2' }]])
+	})
+})
+
 describe('edit dialog save guards', () => {
 	it('loads the policy, and the types only when none are cached', async () => {
 		const cached = await edit({ typeId: 'type-login', key: 'stored' })
