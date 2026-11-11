@@ -13,23 +13,33 @@ import { applyTheme, followMirror, mirroredTheme } from '../popup/theme'
 const ANNOUNCE_MS = 250
 
 type State = NonNullable<InlineStateReply>
+/** `actions`: every button but Cancel, each answering with the press that chose it. */
+interface Question {
+	row: Row
+	text: HTMLElement
+	cancel: HTMLButtonElement
+	actions: Map<Element, (input: PickInput) => void>
+}
 /** A shown row; with `credentialId` a passkey, whose `id` is its login's. */
 type Row = InlineRow & { credentialId?: string }
 
+const isObject = (value: unknown): value is object => typeof value === 'object' && value !== null
+
 const isPasskeyRow = (row: unknown): row is PasskeyRow => {
 	const r = row as Partial<PasskeyRow> | null
-	return typeof r === 'object' && r !== null && [r.itemId, r.credentialId, r.name, r.userName].every((value) => typeof value === 'string')
+	return isObject(r) && [r.itemId, r.credentialId, r.name, r.userName].every((value) => typeof value === 'string')
 }
+
+const isDigits = (digits: unknown) => typeof digits === 'string' && /^\d{1,10}$/.test(digits)
 
 const isCode = (code: unknown): code is InlineCode => {
 	const c = code as Partial<InlineCode> | null
-	return typeof c === 'object' && c !== null && (c.digits === null || (typeof c.digits === 'string' && /^\d{1,10}$/.test(c.digits)))
-		&& typeof c.period === 'number' && Number.isFinite(c.validUntil)
+	return isObject(c) && (c.digits === null || isDigits(c.digits)) && typeof c.period === 'number' && Number.isFinite(c.validUntil)
 }
 
 const isCard = (card: unknown): card is InlineCard => {
 	const c = card as Partial<InlineCard> | null
-	return typeof c === 'object' && c !== null && (c.brand === null || typeof c.brand === 'string') && typeof c.last4 === 'string' && /^\d{4}$/.test(c.last4)
+	return isObject(c) && (c.brand === null || typeof c.brand === 'string') && typeof c.last4 === 'string' && /^\d{4}$/.test(c.last4)
 }
 
 const isWalletRow = (row: InlineRow) => row.code === undefined && row.username === null
@@ -52,15 +62,37 @@ function hasValidPasskeys({ state, mode, passkeys }: Partial<State>): boolean {
 	return passkeys === undefined || (state === 'unlocked' && mode === 'login' && Array.isArray(passkeys) && passkeys.every(isPasskeyRow))
 }
 
-function isState(reply: unknown): reply is State {
-	const r = reply as Partial<State> | null
-	return typeof r === 'object' && r !== null
-		&& (r.state === 'locked' || r.state === 'unlocked')
+/** A known state, mode and theme, and a host. */
+function hasValidHeader(r: Partial<State>): boolean {
+	return (r.state === 'locked' || r.state === 'unlocked')
 		&& INLINE_MODES.includes(r.mode as InlineMode)
 		&& typeof r.host === 'string'
 		&& THEMES.includes(r.theme as never)
-		&& hasValidRows(r)
-		&& hasValidPasskeys(r)
+}
+
+function isState(reply: unknown): reply is State {
+	const r = reply as Partial<State> | null
+	return isObject(r) && hasValidHeader(r) && hasValidRows(r) && hasValidPasskeys(r)
+}
+
+/** A message from the parent that names a key. */
+type KeyedMessage = Partial<ContentToInlineList> & { key: string }
+
+function isKeyed(message: Partial<ContentToInlineList> | null): message is KeyedMessage {
+	return isObject(message) && typeof message.key === 'string'
+}
+
+const rowIds = (rows: InlineRow[]) => rows.map((row) => row.id).join(' ')
+
+/** When the earliest shown code ends. */
+const earliestCodeEnd = (rows: InlineRow[]) => Math.min(...rows.map((row) => (row.code?.digits ? row.code.validUntil : Infinity)))
+
+/** What the status region says once a state arrives. */
+function statusText(reply: State): string {
+	if (reply.state === 'locked') return i18n.t('inlineList.status.locked')
+	const count = shownRows(reply).length
+	if (reply.passkeys) return count === 0 ? i18n.t('inlineList.status.noMatchPasskeys', { host: reply.host }) : i18n.t('inlineList.status.countPasskeys', count)
+	return count === 0 ? TEXTS[reply.mode].statusNoMatch(reply.host) : TEXTS[reply.mode].count(count)
 }
 
 /** Passkeys above the logins (spec `inline-list`, Passkeys in the list during a conditional request). */
@@ -191,10 +223,30 @@ function secondLine({ username, detail, card }: Row): string | null {
 }
 
 /** `line`: the second line shown. A card's name says "ending in" instead, as screen readers read "*" as "star". */
+function passkeyLabel(name: string, line: string | null): string {
+	return line ? i18n.t('inlineList.passkeyRow', { name, username: line }) : i18n.t('inlineList.passkeyRowNoUser', { name })
+}
+
+function cardLabel(name: string, card: InlineCard): string {
+	return card.brand ? i18n.t('inlineList.card.row', { name, brand: card.brand, last4: card.last4 }) : i18n.t('inlineList.card.rowNoBrand', { name, last4: card.last4 })
+}
+
 function optionLabel({ name, credentialId, card }: Row, line: string | null): string {
-	if (credentialId !== undefined) return line ? i18n.t('inlineList.passkeyRow', { name, username: line }) : i18n.t('inlineList.passkeyRowNoUser', { name })
-	if (card) return card.brand ? i18n.t('inlineList.card.row', { name, brand: card.brand, last4: card.last4 }) : i18n.t('inlineList.card.rowNoBrand', { name, last4: card.last4 })
+	if (credentialId !== undefined) return passkeyLabel(name, line)
+	if (card) return cardLabel(name, card)
 	return line ? i18n.t('inlineList.row', { name, username: line }) : name
+}
+
+/** The frame height the content needs. Locked and no match stay one row whatever their text, so the frame never tells them from one match. */
+function heightFor(content: Element): number | null {
+	const rows = rowsFor(content)
+	return rows !== null ? inlineHeight(rows) : inlineClampHeight(content.getBoundingClientRect().height + 2 * INLINE_INSET_PX)
+}
+
+function rowText(name: string, line: string | null): HTMLElement {
+	const text = element('span', { class: 'row__text' }, element('span', { class: 'row__name' }, name))
+	if (line) text.append(element('span', { class: 'row__user' }, line))
+	return text
 }
 
 const SIZES = { '--row': INLINE_ROW_PX, '--gap': INLINE_GAP_PX, '--inset': INLINE_INSET_PX, '--radius': INLINE_RADIUS_PX }
@@ -251,8 +303,7 @@ export function startInlineList(): () => void {
 	let press: { target: Element; input: PickInput } | null = null
 	/** Set while a pick is pending, and for good once the background answered it, as it then closes the list. */
 	let pickLocked = false
-	/** `actions`: every button but Cancel, each answering with the press that chose it. */
-	let question: { row: Row; text: HTMLElement; cancel: HTMLButtonElement; actions: Map<Element, (input: PickInput) => void> } | null = null
+	let question: Question | null = null
 	let entry: HTMLElement | null = null
 	const rowsByElement = new Map<Element, Row>()
 	let announceTimer: ReturnType<typeof setTimeout> | undefined
@@ -270,21 +321,23 @@ export function startInlineList(): () => void {
 	const notify = (message: InlineListToBackground) => void send(message)
 
 	/** Through the background: a `postMessage` to the parent would reach the page. */
+	function askHeight(listKey: string, height: number | null) {
+		if (height === null || height === requested) return
+		requested = height
+		notify({ kind: 'inline.resize', key: listKey, height })
+	}
+
+	/** Where the frame has no room for the whole question, its warning must still scroll into view from the keyboard. */
+	function keepQuestionReachable(open: Question) {
+		if (root.scrollHeight > root.clientHeight) open.text.tabIndex = 0
+		else open.text.removeAttribute('tabindex')
+	}
+
 	function fit() {
 		const content = root.firstElementChild
 		if (!key || !content) return
-		// Locked and no match stay one row whatever their text, so the frame never tells them from one match.
-		const rows = rowsFor(content)
-		const height = rows !== null ? inlineHeight(rows) : inlineClampHeight(content.getBoundingClientRect().height + 2 * INLINE_INSET_PX)
-		if (height !== null && height !== requested) {
-			requested = height
-			notify({ kind: 'inline.resize', key, height })
-		}
-		// Where the frame has no room for the whole question, its warning must still scroll into view from the keyboard.
-		if (question) {
-			if (root.scrollHeight > root.clientHeight) question.text.tabIndex = 0
-			else question.text.removeAttribute('tabindex')
-		}
+		askHeight(key, heightFor(content))
+		if (question) keepQuestionReachable(question)
 	}
 
 	function keyInput(target: Element): PickInput {
@@ -302,19 +355,21 @@ export function startInlineList(): () => void {
 		]
 	}
 
+	function rowOption(row: Row, mode: InlineMode): HTMLElement {
+		const invalid = row.code?.digits === null
+		const line = invalid ? i18n.t('inlineList.code.invalid') : secondLine(row)
+		return element('li', {
+			class: 'row', role: 'option', tabindex: '-1', 'aria-selected': 'false',
+			'aria-label': optionLabel(row, line),
+			...(invalid && { 'aria-disabled': 'true' }),
+		}, rowIcon(row.credentialId === undefined ? mode : 'passkey'), rowText(row.name, line), ...(row.code ? codeParts(row.code) : []))
+	}
+
 	function renderRows(rows: Row[], host: string, mode: InlineMode) {
 		rowsByElement.clear()
 		const listbox = element('ul', { class: 'listbox', role: 'listbox', 'aria-label': TEXTS[mode].label(host) })
 		for (const row of rows) {
-			const invalid = row.code?.digits === null
-			const line = invalid ? i18n.t('inlineList.code.invalid') : secondLine(row)
-			const text = element('span', { class: 'row__text' }, element('span', { class: 'row__name' }, row.name))
-			if (line) text.append(element('span', { class: 'row__user' }, line))
-			const option = element('li', {
-				class: 'row', role: 'option', tabindex: '-1', 'aria-selected': 'false',
-				'aria-label': optionLabel(row, line),
-				...(invalid && { 'aria-disabled': 'true' }),
-			}, rowIcon(row.credentialId === undefined ? mode : 'passkey'), text, ...(row.code ? codeParts(row.code) : []))
+			const option = rowOption(row, mode)
 			rowsByElement.set(option, row)
 			listbox.append(option)
 		}
@@ -329,12 +384,16 @@ export function startInlineList(): () => void {
 		if (state?.mode !== 'code' || !state.rows.some((row) => row.code?.digits)) return
 		codeTimer = setInterval(() => {
 			const now = Date.now()
-			for (const [option, row] of rowsByElement) {
-				const timer = option.querySelector('.row__timer')
-				if (timer && row.code) timer.textContent = String(secondsLeft(row.code.validUntil, now))
-			}
-			if (!refreshing && state && now >= Math.min(...state.rows.map((row) => (row.code?.digits ? row.code.validUntil : Infinity)))) void refreshCodes()
+			tickCountdowns(now)
+			if (!refreshing && state && now >= earliestCodeEnd(state.rows)) void refreshCodes()
 		}, 1000)
+	}
+
+	function tickCountdowns(now: number) {
+		for (const [option, row] of rowsByElement) {
+			const timer = option.querySelector('.row__timer')
+			if (timer && row.code) timer.textContent = String(secondsLeft(row.code.validUntil, now))
+		}
 	}
 
 	/** Same rows: the codes change in place, so focus and the pick guard stay; other rows: rendered anew with the guard restarted, focus kept by id. */
@@ -343,26 +402,37 @@ export function startInlineList(): () => void {
 		refreshing = true
 		const reply = await send({ kind: 'inline.state', key })
 		refreshing = false
-		if (stopped || question || !isState(reply) || reply.mode !== 'code' || reply.state !== 'unlocked' || !state) return
-		const before = state.rows.map((row) => row.id).join(' ')
+		if (!stillCodes(reply) || !state) return
+		const sameRows = rowIds(state.rows) === rowIds(reply.rows)
 		state = reply
-		if (before === reply.rows.map((row) => row.id).join(' ')) {
-			for (const [option, row] of [...rowsByElement]) {
-				const fresh = reply.rows.find((candidate) => candidate.id === row.id)!
-				rowsByElement.set(option, fresh)
-				option.querySelectorAll('.row__code, .row__timer').forEach((part) => part.remove())
-				option.append(...(fresh.code ? codeParts(fresh.code) : []))
-			}
-		} else {
-			const focused = rowsByElement.get(document.activeElement as Element)?.id
-			if (reply.rows.length) renderRows(reply.rows, reply.host, 'code')
-			else render(reply)
-			fit()
-			restartGuard()
-			const again = [...rowsByElement].find(([, row]) => row.id === focused)?.[0] as HTMLElement | undefined
-			again?.focus()
-		}
+		if (sameRows) updateCodes(reply)
+		else rerenderCodes(reply)
 		watchCodes()
+	}
+
+	/** Whether a refresh reply still applies: nothing stopped the list or asked a question meanwhile, and it holds codes. */
+	function stillCodes(reply: unknown): reply is State {
+		if (stopped || question || !isState(reply)) return false
+		return reply.mode === 'code' && reply.state === 'unlocked'
+	}
+
+	function updateCodes(reply: State) {
+		for (const [option, row] of [...rowsByElement]) {
+			const fresh = reply.rows.find((candidate) => candidate.id === row.id)!
+			rowsByElement.set(option, fresh)
+			option.querySelectorAll('.row__code, .row__timer').forEach((part) => part.remove())
+			option.append(...(fresh.code ? codeParts(fresh.code) : []))
+		}
+	}
+
+	function rerenderCodes(reply: State) {
+		const focused = rowsByElement.get(document.activeElement as Element)?.id
+		if (reply.rows.length) renderRows(reply.rows, reply.host, 'code')
+		else render(reply)
+		fit()
+		restartGuard()
+		const again = [...rowsByElement].find(([, row]) => row.id === focused)?.[0] as HTMLElement | undefined
+		again?.focus()
 	}
 
 	function render(shown: State) {
@@ -411,20 +481,24 @@ export function startInlineList(): () => void {
 		render(reply)
 		fit()
 		watchCodes()
-		const count = shownRows(reply).length
-		announce(reply.state === 'locked' ? i18n.t('inlineList.status.locked')
-			: reply.passkeys ? (count === 0 ? i18n.t('inlineList.status.noMatchPasskeys', { host: reply.host }) : i18n.t('inlineList.status.countPasskeys', count))
-				: count === 0 ? TEXTS[reply.mode].statusNoMatch(reply.host) : TEXTS[reply.mode].count(count))
+		announce(statusText(reply))
 		if (earlyFocusKey === key) focusEntry()
 		earlyFocusKey = null
 	}
 
+	/** The list's key when a pick may go ahead: too soon after showing or moving stays silent, as a second press works. */
+	function pickKey(row: Row, input: PickInput): string | null {
+		if (!key || pickLocked || !settled(input)) return null
+		return row.code?.digits === null ? null : key
+	}
+
 	async function pick(row: Row, input: PickInput, answers: Answers = {}) {
-		// Too soon after showing or moving stays silent, as a second press works; hidden by the page, it says why.
-		if (!key || pickLocked || !settled(input) || row.code?.digits === null) return
+		const listKey = pickKey(row, input)
+		if (listKey === null) return
 		pickLocked = true
+		// Hidden by the page, it says why.
 		if (!visibility.allows(input.at)) return showNotVisible()
-		const reply = await send(pickMessage(key, row, input, answers))
+		const reply = await send(pickMessage(listKey, row, input, answers))
 		if (stopped) return
 		settlePick({ row, answers }, reply as PickAnswer)
 	}
@@ -508,20 +582,29 @@ export function startInlineList(): () => void {
 		option?.focus()
 	}
 
-	function questionKey(event: KeyboardEvent, open: NonNullable<typeof question>) {
+	/** Tab keeps the focus among the question's stops. */
+	function tabInQuestion(event: KeyboardEvent, target: Element) {
+		if (!root.contains(target)) return
+		event.preventDefault()
+		const stops = [...root.querySelectorAll<HTMLElement>('[tabindex="0"], button')]
+		const next = stops.indexOf(target as HTMLElement) + (event.shiftKey ? -1 : 1)
+		stops[(next + stops.length) % stops.length]?.focus()
+	}
+
+	/** Enter or Space on an answer button answers, once for a held key. */
+	function answerByKey(event: KeyboardEvent, open: Question) {
 		const target = event.target as Element
+		if (!(event.key === 'Enter' || event.key === ' ') || !open.actions.has(target)) return
+		event.preventDefault()
+		if (!event.repeat) open.actions.get(target)!(keyInput(target))
+	}
+
+	function questionKey(event: KeyboardEvent, open: Question) {
 		if (event.key === 'Escape') {
 			event.preventDefault()
 			cancelQuestion()
-		} else if (event.key === 'Tab' && root.contains(target)) {
-			event.preventDefault()
-			const stops = [...root.querySelectorAll<HTMLElement>('[tabindex="0"], button')]
-			const next = stops.indexOf(target as HTMLElement) + (event.shiftKey ? -1 : 1)
-			stops[(next + stops.length) % stops.length]?.focus()
-		} else if ((event.key === 'Enter' || event.key === ' ') && open.actions.has(target)) {
-			event.preventDefault()
-			if (!event.repeat) open.actions.get(target)!(keyInput(target))
-		}
+		} else if (event.key === 'Tab') tabInQuestion(event, event.target as Element)
+		else answerByKey(event, open)
 	}
 
 	/** Pick the focused row; held keys pick once. */
@@ -560,17 +643,19 @@ export function startInlineList(): () => void {
 
 	const rowKeyActions = rowKeyActionMap()
 
+	const onRowOrEntry = (target: HTMLElement) => root.contains(target) && (rowsByElement.has(target) || target === entry)
+
+	/** Keys on the body, as after a page focused this window, do nothing but Escape, which cannot pick. */
+	function offListKey(event: KeyboardEvent) {
+		if (event.key !== 'Escape' || !key) return
+		event.preventDefault()
+		notify({ kind: 'inline.close', key, refocus: true })
+	}
+
 	function onKeydown(event: KeyboardEvent) {
 		if (question) return questionKey(event, question)
 		const target = event.target as HTMLElement
-		// Keys on the body, as after a page focused this window, do nothing but Escape, which cannot pick.
-		if (!root.contains(target) || !(rowsByElement.has(target) || target === entry)) {
-			if (event.key === 'Escape' && key) {
-				event.preventDefault()
-				notify({ kind: 'inline.close', key, refocus: true })
-			}
-			return
-		}
+		if (!onRowOrEntry(target)) return offListKey(event)
 		const rows = [...rowsByElement.keys()] as HTMLElement[]
 		rowKeyActions.get(event.key)?.({ event, rows, index: rows.indexOf(target), target })
 	}
@@ -605,18 +690,23 @@ export function startInlineList(): () => void {
 		}
 	}
 
+	/** Before a key is accepted, only an init, or a focus to apply once it is. */
+	function onMessageBeforeKey(message: { kind?: string; key: string }) {
+		if (message.kind === 'inline.init') void present(message.key)
+		else if (message.kind === 'inline.focus') earlyFocusKey = message.key
+	}
+
+	function onMessageForKey(message: { kind?: string }) {
+		if (message.kind === 'inline.focus') focusEntry()
+		else if (message.kind === 'inline.moved') restartGuard()
+	}
+
 	function onMessage(event: MessageEvent) {
 		if (event.source !== window.parent) return
 		const message = event.data as Partial<ContentToInlineList> | null
-		if (typeof message !== 'object' || message === null || typeof message.key !== 'string') return
-		if (key === null) {
-			if (message.kind === 'inline.init') void present(message.key)
-			else if (message.kind === 'inline.focus') earlyFocusKey = message.key
-			return
-		}
-		if (message.key !== key) return
-		if (message.kind === 'inline.focus') focusEntry()
-		else if (message.kind === 'inline.moved') restartGuard()
+		if (!isKeyed(message)) return
+		if (key === null) return onMessageBeforeKey(message)
+		if (message.key === key) onMessageForKey(message)
 	}
 
 	/** So a `frames[n].focus()` by the page lands on no row. */
