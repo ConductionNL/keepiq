@@ -42,19 +42,7 @@
 					v-if="item.type === 'caption'"
 					:name="t('keepiq', item.label)"
 					:data-testid="`cn-nav-caption-${item.id}`" />
-				<NcAppNavigationItem
-					v-else
-					:name="t('keepiq', item.label)"
-					:to="itemTo(item)"
-					:href="itemHref(item)"
-					:active="isActive(item)"
-					:data-testid="`cn-nav-entry-${item.id}`"
-					:data-cn-route="item.route"
-					@click="onItemClick(item, $event)">
-					<template v-if="item.icon" #icon>
-						<CnIcon :name="item.icon" :size="20" />
-					</template>
-				</NcAppNavigationItem>
+				<NavMenuEntry v-else :item="item" />
 			</template>
 			<!-- The Vaults caption + tree are OWNED BY THIS COMPONENT, not
 			     the manifest: buildManifest drops menu entries without
@@ -168,20 +156,10 @@
 			     settings foldout no matter how long the main menu is (same
 			     rationale as CnAppNav). -->
 			<ul v-if="footerItems.length > 0" class="cn-app-nav__footer-list">
-				<NcAppNavigationItem
+				<NavMenuEntry
 					v-for="item in footerItems"
 					:key="item.id"
-					:name="t('keepiq', item.label)"
-					:to="itemTo(item)"
-					:href="itemHref(item)"
-					:active="isActive(item)"
-					:data-testid="`cn-nav-entry-${item.id}`"
-					:data-cn-route="item.route"
-					@click="onItemClick(item, $event)">
-					<template v-if="item.icon" #icon>
-						<CnIcon :name="item.icon" :size="20" />
-					</template>
-				</NcAppNavigationItem>
+					:item="item" />
 			</ul>
 			<NcAppNavigationSettings
 				:name="t('keepiq', 'Settings')"
@@ -208,20 +186,10 @@
 								:title="t('keepiq', 'Opens in a new tab')" />
 						</template>
 					</NcAppNavigationItem>
-					<NcAppNavigationItem
+					<NavMenuEntry
 						v-for="item in settingsItems"
 						:key="item.id"
-						:name="t('keepiq', item.label)"
-						:to="itemTo(item)"
-						:href="itemHref(item)"
-						:active="isActive(item)"
-						:data-testid="`cn-nav-entry-${item.id}`"
-						:data-cn-route="item.route"
-						@click="onItemClick(item, $event)">
-						<template v-if="item.icon" #icon>
-							<CnIcon :name="item.icon" :size="20" />
-						</template>
-					</NcAppNavigationItem>
+						:item="item" />
 				</ul>
 			</NcAppNavigationSettings>
 		</template>
@@ -229,7 +197,6 @@
 </template>
 
 <script>
-import { CnIcon } from '@conduction/nextcloud-vue'
 import { getCurrentUser } from '@nextcloud/auth'
 import { generateUrl } from '@nextcloud/router'
 import {
@@ -248,13 +215,13 @@ import MoveDialog from '../../dialogs/MoveDialog.vue'
 import SubfolderResolutionDialog from '../../modals/SubfolderResolutionDialog.vue'
 import TeamFolderDialog from '../../modals/TeamFolderDialog.vue'
 import NavFolderTree, { NAV_TREE_MAX_DEPTH } from './NavFolderTree.vue'
+import NavMenuEntry from './NavMenuEntry.vue'
 import { useFolderStore } from '../../store/modules/folder.js'
 import { useSessionStore } from '../../store/modules/session.js'
 import { useTeamFolderStore } from '../../store/modules/teamFolder.js'
 import {
 	currentAppsWebRoots,
 	isMenuEntryVisible,
-	menuEntryTo,
 } from '../../utils/navEntries.js'
 
 /**
@@ -264,12 +231,12 @@ export default {
 	name: 'KeepiqAppNav',
 
 	components: {
-		CnIcon,
 		FolderCreateDialog,
 		FolderDeleteConfirmDialog,
 		FolderEditDialog,
 		MoveDialog,
 		NavFolderTree,
+		NavMenuEntry,
 		NcAppNavigation,
 		NcAppNavigationCaption,
 		NcAppNavigationItem,
@@ -279,14 +246,6 @@ export default {
 		ShieldAccountOutline,
 		SubfolderResolutionDialog,
 		TeamFolderDialog,
-	},
-
-	inject: {
-		/**
-		 * Opens the host app's NcAppSettingsDialog (provided by CnAppRoot).
-		 * Defaults to a no-op so the rail still mounts standalone (tests).
-		 */
-		cnOpenUserSettings: { default: () => () => {} },
 	},
 
 	props: {
@@ -569,64 +528,6 @@ export default {
 	},
 
 	methods: {
-		/**
-		 * Router target for a manifest entry (route entries only) — `:to`
-		 * keeps the rendered anchors' `href$` shape the e2e suite selects on.
-		 * An entry's `query` rides along, so the Integrations entry opens its
-		 * page preset to `app=keepiq`.
-		 *
-		 * @param {object} item The menu entry.
-		 * @return {object|null}
-		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
-		 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
-		 */
-		itemTo(item) {
-			return menuEntryTo(item)
-		},
-
-		/**
-		 * Plain href for external entries (e.g. Documentation) — a real
-		 * anchor, which NcAppNavigationItem opens in a new tab for
-		 * scheme-prefixed URLs.
-		 *
-		 * @param {object} item The menu entry.
-		 * @return {string|null}
-		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
-		 */
-		itemHref(item) {
-			return item.href && !item.action ? item.href : null
-		},
-
-		/**
-		 * Whether a route entry matches the current route.
-		 *
-		 * @param {object} item The menu entry.
-		 * @return {boolean}
-		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
-		 */
-		isActive(item) {
-			return Boolean(item.route) && this.$route?.name === item.route
-		},
-
-		/**
-		 * Click dispatch: `action: "user-settings"` opens the host's
-		 * settings dialog via the CnAppRoot inject and prevents default;
-		 * everything else navigates natively through `:to`/`href`.
-		 *
-		 * @param {object} item The clicked entry.
-		 * @param {Event} event The click event.
-		 * @return {void}
-		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
-		 */
-		onItemClick(item, event) {
-			if (item.action === 'user-settings') {
-				if (event && typeof event.preventDefault === 'function') {
-					event.preventDefault()
-				}
-				this.cnOpenUserSettings()
-			}
-		},
-
 		/**
 		 * Fetch the folder list without ever throwing into the rail — a
 		 * failed fetch costs the tree, never the navigation.
