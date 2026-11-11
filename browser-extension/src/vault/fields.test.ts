@@ -297,8 +297,8 @@ describe('diffDraft and validate, field by field', () => {
 	})
 
 	it('sends every change in the draft order, and no totp the after-draft leaves out', () => {
-		const after = { ...draft, login: null, typeId: 't-note', additionalFields: { pin: '1' }, name: 'Other', totp: 'K' }
-		expect(Object.keys(diffDraft(draft, after))).toEqual(['typeId', 'name', 'login', 'additionalFields', 'totp'])
+		const after = { ...draft, login: null, key: 'other', folderId: 'f1', url: null, typeId: 't-note', additionalFields: { pin: '1' }, name: 'Other', totp: 'K' }
+		expect(Object.keys(diffDraft(draft, after))).toEqual(['typeId', 'name', 'url', 'folderId', 'key', 'login', 'additionalFields', 'totp'])
 		expect(diffDraft({ ...draft, totp: 'K' }, { ...draft, totp: undefined })).toEqual({})
 		expect(diffDraft({ ...draft, totp: 'K' }, { ...draft, totp: 'K' })).toEqual({})
 		expect(diffDraft({ ...draft, additionalFields: { a: '1' } }, { ...draft, additionalFields: { b: '1' } })).toEqual({ additionalFields: { b: '1' } })
