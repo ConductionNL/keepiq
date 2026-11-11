@@ -18,7 +18,7 @@ function handlers(): ItemActions {
 
 /** Each action's disabled reason, `null` for an absent action. */
 function refusals(item: ItemMeta, type = login, offline = false, viewOnly = false) {
-	const actions = itemActions(item, type, offline, handlers(), viewOnly)
+	const actions = itemActions({ item, type, offline, actions: handlers(), viewOnly })
 	return Object.fromEntries(Object.entries(actions).map(([key, action]) => [key, action === undefined ? null : action.disabledReason]))
 }
 
@@ -31,7 +31,7 @@ describe('itemActions', () => {
 
 	it('offers Send for logins only', () => {
 		expect(refusals(itemMeta(), note).send).toBeNull()
-		expect(itemActions(itemMeta(), undefined, false, handlers()).send).toBeUndefined()
+		expect(itemActions({ item: itemMeta(), type: undefined, offline: false, actions: handlers() }).send).toBeUndefined()
 	})
 
 	it('refuses all but Edit offline, with Send saying why in its own words', () => {
@@ -77,7 +77,7 @@ describe('itemActions', () => {
 	it('runs each handler with the item or its id', () => {
 		const actions = handlers()
 		const item = itemMeta()
-		const all = itemActions(item, login, false, actions)
+		const all = itemActions({ item, type: login, offline: false, actions })
 		all.edit.onSelect()
 		all.clone.onSelect()
 		all.move.onSelect()
