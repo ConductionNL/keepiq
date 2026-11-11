@@ -24,11 +24,17 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\PasskeyCredential;
 use OCA\Keepiq\Db\PasskeyMapper;
+use OCA\Keepiq\Exception\PasskeyVerificationException;
+use OCA\Keepiq\Service\PasskeyChallengeStore;
+use OCA\Keepiq\Service\PasskeyEnrolmentCeremony;
 use OCA\Keepiq\Service\PasskeyService;
+use OCA\Keepiq\Service\VerifiedPasskey;
+use OCA\Keepiq\Service\WebAuthnVerifier;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\Security\ISecureRandom;
+use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Tests for the passkey vault-login service.
@@ -40,8 +46,18 @@ class PasskeyServiceTest extends TestCase {
 
 	private EncryptionSuiteMapper&MockObject $suiteMapper;
 
+	private PasskeyChallengeStore&MockObject $challenges;
+
+	private WebAuthnVerifier&MockObject $verifier;
+
+	private IRequest&MockObject $request;
+
+	private LoggerInterface&MockObject $logger;
+
 	/**
-	 * Build the service over mocked mappers with a suite at epoch 3.
+	 * Build the service over mocked mappers with a suite at epoch 3, a
+	 * pending challenge pair, and a verifier that accepts the ceremony and
+	 * reports the attestation's own credential id.
 	 *
 	 * @return void
 	 */
@@ -54,15 +70,62 @@ class PasskeyServiceTest extends TestCase {
 		$suite->setUnlockKeyEpoch(3);
 		$this->suiteMapper->method('findActiveByOwner')->willReturn($suite);
 
-		$random = $this->createMock(originalClassName: ISecureRandom::class);
-		$random->method('generate')->willReturn('0123456789012345678901234567890123456789');
+		$this->challenges = $this->createMock(originalClassName: PasskeyChallengeStore::class);
+		$this->challenges->method('take')->willReturn(['challenge' => 'C1', 'assertionChallenge' => 'C2']);
+		$this->verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
+		$this->verifier->method('verifyEnrolment')->willReturnCallback(
+			static fn (string $uid, string $rpId, string $challenge, string $assertionChallenge, array $attestation) => new VerifiedPasskey(
+				credentialId: (string)($attestation['id'] ?? ''),
+				publicKey: 'PK',
+				aaguid: '00112233-4455-6677-8899-aabbccddeeff',
+				counter: 1,
+			)
+		);
+		$this->request = $this->createMock(originalClassName: IRequest::class);
+		$this->request->method('getServerHost')->willReturn('cloud.example.com:8443');
+		$this->logger = $this->createMock(originalClassName: LoggerInterface::class);
 
-		$this->service = new PasskeyService(
+		$this->service = $this->service(challenges: $this->challenges, verifier: $this->verifier);
+	}//end setUp()
+
+	/**
+	 * The service over the given challenge store and verifier.
+	 *
+	 * @param PasskeyChallengeStore $challenges The challenge store
+	 * @param WebAuthnVerifier $verifier The verifier
+	 *
+	 * @return PasskeyService
+	 */
+	private function service(PasskeyChallengeStore $challenges, WebAuthnVerifier $verifier): PasskeyService {
+		return new PasskeyService(
 			mapper: $this->mapper,
 			suiteMapper: $this->suiteMapper,
-			secureRandom: $random,
+			ceremony: new PasskeyEnrolmentCeremony(
+				challenges: $challenges,
+				verifier: $verifier,
+				request: $this->request,
+				logger: $this->logger,
+			),
 		);
-	}//end setUp()
+	}//end service()
+
+	/**
+	 * An enrolment request whose ceremony names the given credential.
+	 *
+	 * @param string $credentialId The credential id
+	 * @param array<string,mixed> $extra Further fields
+	 *
+	 * @return array<string,mixed>
+	 */
+	private static function enrolment(string $credentialId, array $extra = []): array {
+		return $extra + [
+			'credentialId' => $credentialId,
+			'prfSalt' => 's',
+			'wrappedUnlockKey' => 'e',
+			'attestation' => ['id' => $credentialId],
+			'assertion' => ['id' => $credentialId],
+		];
+	}//end enrolment()
 
 	/**
 	 * A credential owned by alice.
@@ -97,12 +160,7 @@ class PasskeyServiceTest extends TestCase {
 
 		$credential = $this->service->enroll(
 			uid: 'alice',
-			dto: [
-				'credentialId' => 'cred-x',
-				'prfSalt' => 'salt',
-				'wrappedUnlockKey' => 'envelope',
-				'label' => 'Touch ID',
-			],
+			dto: self::enrolment(credentialId: 'cred-x', extra: ['label' => 'Touch ID']),
 		);
 
 		$this->assertSame(3, $credential->getUnlockKeyEpoch());
@@ -133,7 +191,7 @@ class PasskeyServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$this->service->enroll(
 			uid: 'alice',
-			dto: ['credentialId' => 'cred-dup', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e'],
+			dto: self::enrolment(credentialId: 'cred-dup'),
 		);
 	}//end testEnrollRejectsDuplicate()
 
@@ -274,18 +332,18 @@ class PasskeyServiceTest extends TestCase {
 
 		$credential = $this->service->enroll(
 			uid: 'alice',
-			dto: ['credentialId' => 'c', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e', 'clientKind' => 'extension', 'rpId' => 'abcdefghijklmnop'],
+			dto: self::enrolment(credentialId: 'c', extra: ['clientKind' => 'extension', 'rpId' => 'abcdefghijklmnop']),
 		);
 		$this->assertSame('extension', $credential->getClientKind());
 		$this->assertSame('abcdefghijklmnop', $credential->getRpId());
 		$this->assertSame('extension', $credential->jsonSerialize()['clientKind']);
 
-		$web = $this->service->enroll(uid: 'alice', dto: ['credentialId' => 'w', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e']);
+		$web = $this->service->enroll(uid: 'alice', dto: self::enrolment(credentialId: 'w'));
 		$this->assertSame('web', $web->getClientKind());
 
 		foreach ([['clientKind' => 'extension'], ['clientKind' => 'desktop']] as $extra) {
 			try {
-				$this->service->enroll(uid: 'alice', dto: ['credentialId' => 'x', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e'] + $extra);
+				$this->service->enroll(uid: 'alice', dto: self::enrolment(credentialId: 'x', extra: $extra));
 				$this->fail('enrol accepted ' . json_encode($extra));
 			} catch (InvalidArgumentException) {
 				$this->addToAssertionCount(1);
@@ -302,7 +360,8 @@ class PasskeyServiceTest extends TestCase {
 	public function testEnrollRefusesInCheckOrder(): void {
 		$this->mapper->expects($this->never())->method('findByCredentialId');
 		$this->mapper->expects($this->never())->method('insert');
-		$base = ['credentialId' => 'c', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e'];
+		$this->verifier->expects($this->never())->method('verifyEnrolment');
+		$base = self::enrolment(credentialId: 'c');
 		$cases = [
 			[['prfSalt' => ''] + $base, 'credentialId, prfSalt and wrappedUnlockKey are required'],
 			[['credentialId' => '', 'clientKind' => 'desktop'] + $base, 'credentialId, prfSalt and wrappedUnlockKey are required'],
@@ -331,20 +390,14 @@ class PasskeyServiceTest extends TestCase {
 
 		$credential = $this->service->enroll(
 			uid: 'alice',
-			dto: [
-				'credentialId' => 'c',
-				'prfSalt' => 's',
-				'wrappedUnlockKey' => 'e',
-				'publicKey' => 'PK',
-				'label' => '',
-				'transports' => 'usb,nfc',
-				'aaguid' => null,
-				'clientKind' => '',
-			],
+			dto: self::enrolment(
+				credentialId: 'c',
+				extra: ['publicKey' => 'CLAIMED', 'aaguid' => 'CLAIMED', 'label' => '', 'transports' => 'usb,nfc', 'clientKind' => ''],
+			),
 		);
 
 		$this->assertSame(
-			['alice', 'c', 'PK', 's', 'e', 3, null, 'usb,nfc', null, 'web', null, 'active'],
+			['alice', 'c', 'PK', 's', 'e', 3, null, 'usb,nfc', '00112233-4455-6677-8899-aabbccddeeff', 'web', null, 'active'],
 			[
 				$credential->getOwnerId(), $credential->getCredentialId(), $credential->getPublicKey(), $credential->getPrfSalt(),
 				$credential->getWrappedUnlockKey(), $credential->getUnlockKeyEpoch(), $credential->getLabel(), $credential->getTransports(),
@@ -354,4 +407,183 @@ class PasskeyServiceTest extends TestCase {
 		$this->assertMatchesRegularExpression('/^[0-9a-f-]{36}$/', $credential->getId());
 		$this->assertNotNull($credential->getCreatedAt());
 	}//end testEnrollStoresEveryField()
+
+	/**
+	 * A service whose challenge store returns the given pending pair and
+	 * whose verifier is the given mock.
+	 *
+	 * @param array{challenge: string, assertionChallenge: string}|null $pending The pending pair
+	 * @param WebAuthnVerifier&MockObject $verifier The verifier
+	 *
+	 * @return PasskeyService
+	 */
+	private function serviceWith(?array $pending, WebAuthnVerifier&MockObject $verifier): PasskeyService {
+		$challenges = $this->createMock(originalClassName: PasskeyChallengeStore::class);
+		$challenges->expects($this->once())->method('take')->with('alice')->willReturn($pending);
+
+		return $this->service(challenges: $challenges, verifier: $verifier);
+	}//end serviceWith()
+
+	/**
+	 * Assert an enrolment is refused with the generic message, logged with
+	 * its reason, and stores nothing.
+	 *
+	 * @param PasskeyService $service The service
+	 * @param array<string,mixed> $dto The enrolment request
+	 * @param string $reason The logged reason
+	 *
+	 * @return void
+	 */
+	private function assertRefused(PasskeyService $service, array $dto, string $reason): void {
+		$this->mapper->expects($this->never())->method('insert');
+		$this->logger->expects($this->once())->method('warning')->with(
+			$this->anything(),
+			$this->callback(static fn (array $context): bool => $context['reason'] === $reason && $context['uid'] === 'alice')
+		);
+
+		try {
+			$service->enroll(uid: 'alice', dto: $dto);
+			$this->fail('enrolled without a verified ceremony');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertSame('The passkey could not be verified', $exception->getMessage());
+		}
+	}//end assertRefused()
+
+	/**
+	 * Without a pending (unexpired, same-user) challenge the enrolment is
+	 * refused before the ceremony is even looked at.
+	 *
+	 * @return void
+	 */
+	public function testEnrollRefusesWithoutAPendingChallenge(): void {
+		$verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
+		$verifier->expects($this->never())->method('verifyEnrolment');
+
+		$this->assertRefused(
+			service: $this->serviceWith(pending: null, verifier: $verifier),
+			dto: self::enrolment(credentialId: 'c'),
+			reason: 'no pending or an expired enrolment challenge',
+		);
+	}//end testEnrollRefusesWithoutAPendingChallenge()
+
+	/**
+	 * An enrolment without its attestation or proof assertion is refused.
+	 *
+	 * @return void
+	 */
+	public function testEnrollRefusesWithoutTheCeremony(): void {
+		$verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
+		$verifier->expects($this->never())->method('verifyEnrolment');
+
+		$this->assertRefused(
+			service: $this->serviceWith(pending: ['challenge' => 'C1', 'assertionChallenge' => 'C2'], verifier: $verifier),
+			dto: ['credentialId' => 'c', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e', 'attestation' => ['id' => 'c']],
+			reason: 'attestation or assertion missing',
+		);
+	}//end testEnrollRefusesWithoutTheCeremony()
+
+	/**
+	 * A ceremony the verifier refuses is refused and logged with the failed
+	 * check; the web relying party is the server host without its port and
+	 * the verifier gets the taken challenge pair.
+	 *
+	 * @return void
+	 */
+	public function testEnrollRefusesAFailedVerification(): void {
+		$verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
+		$verifier->expects($this->once())->method('verifyEnrolment')
+			->with('alice', 'cloud.example.com', 'C1', 'C2', ['id' => 'c'], ['id' => 'c'])
+			->willThrowException(new PasskeyVerificationException('Invalid signature.'));
+
+		$this->assertRefused(
+			service: $this->serviceWith(pending: ['challenge' => 'C1', 'assertionChallenge' => 'C2'], verifier: $verifier),
+			dto: self::enrolment(credentialId: 'c'),
+			reason: 'Invalid signature.',
+		);
+	}//end testEnrollRefusesAFailedVerification()
+
+	/**
+	 * A claimed credential id other than the attested one is refused: the
+	 * envelope would be wrapped for a credential that was never proven.
+	 *
+	 * @return void
+	 */
+	public function testEnrollRefusesACredentialIdOtherThanTheAttestedOne(): void {
+		$verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
+		$verifier->method('verifyEnrolment')->willReturn(new VerifiedPasskey('attested', 'PK', 'aaguid', 1));
+
+		$this->assertRefused(
+			service: $this->serviceWith(pending: ['challenge' => 'C1', 'assertionChallenge' => 'C2'], verifier: $verifier),
+			dto: self::enrolment(credentialId: 'claimed'),
+			reason: 'credential id differs from the attested one',
+		);
+	}//end testEnrollRefusesACredentialIdOtherThanTheAttestedOne()
+
+	/**
+	 * An extension credential is verified against its own relying party.
+	 *
+	 * @return void
+	 */
+	public function testEnrollVerifiesAnExtensionAgainstItsRelyingParty(): void {
+		$verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
+		$verifier->expects($this->once())->method('verifyEnrolment')
+			->with('alice', 'abcdefghijklmnop')
+			->willReturn(new VerifiedPasskey('c', 'PK', 'aaguid', 1));
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$credential = $this->serviceWith(pending: ['challenge' => 'C1', 'assertionChallenge' => 'C2'], verifier: $verifier)->enroll(
+			uid: 'alice',
+			dto: self::enrolment(credentialId: 'c', extra: ['clientKind' => 'extension', 'rpId' => 'abcdefghijklmnop']),
+		);
+
+		$this->assertSame('abcdefghijklmnop', $credential->getRpId());
+	}//end testEnrollVerifiesAnExtensionAgainstItsRelyingParty()
+
+	/**
+	 * The challenge pair is spent by a request that fails its field checks,
+	 * so a refused attempt cannot leave it open for a retry.
+	 *
+	 * @return void
+	 */
+	public function testEnrollSpendsTheChallengeOnARefusedRequest(): void {
+		$verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
+		$service = $this->serviceWith(pending: ['challenge' => 'C1', 'assertionChallenge' => 'C2'], verifier: $verifier);
+
+		$this->expectException(InvalidArgumentException::class);
+		$service->enroll(uid: 'alice', dto: ['credentialId' => 'c']);
+	}//end testEnrollSpendsTheChallengeOnARefusedRequest()
+
+	/**
+	 * The enrolment challenge pair is issued through the store and returned
+	 * base64url-encoded.
+	 *
+	 * @return void
+	 */
+	public function testEnrolmentChallengeIssuesThroughTheStore(): void {
+		$challenges = $this->createMock(originalClassName: PasskeyChallengeStore::class);
+		$challenges->expects($this->once())->method('issue')->with('alice')
+			->willReturn(['challenge' => "\xfb\xff", 'assertionChallenge' => "\x00\x01"]);
+		$service = $this->service(challenges: $challenges, verifier: $this->verifier);
+
+		$this->assertSame(['challenge' => '-_8', 'assertionChallenge' => 'AAE'], $service->enrolmentChallenge(uid: 'alice'));
+	}//end testEnrolmentChallengeIssuesThroughTheStore()
+
+	/**
+	 * A web credential is always verified against the server host, never a
+	 * relying party the client names.
+	 *
+	 * @return void
+	 */
+	public function testEnrollBindsAWebCredentialToTheServerHost(): void {
+		$verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
+		$verifier->expects($this->once())->method('verifyEnrolment')
+			->with('alice', 'cloud.example.com')
+			->willReturn(new VerifiedPasskey('c', 'PK', 'aaguid', 1));
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$this->serviceWith(pending: ['challenge' => 'C1', 'assertionChallenge' => 'C2'], verifier: $verifier)->enroll(
+			uid: 'alice',
+			dto: self::enrolment(credentialId: 'c', extra: ['rpId' => 'evil.test']),
+		);
+	}//end testEnrollBindsAWebCredentialToTheServerHost()
 }//end class

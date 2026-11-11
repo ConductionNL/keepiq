@@ -31,7 +31,7 @@ function mockServer(credentials) {
 		if (url.includes('login-options')) {
 			return { data: { challenge: 'AAAA', credentials } }
 		}
-		return { data: { challenge: 'AAAA' } }
+		return { data: { challenge: 'AAAA', assertionChallenge: 'BBBB' } }
 	})
 }
 
