@@ -274,68 +274,51 @@ class SecretService {
 	public function create(array $data, string $userId, bool $allowUnfilled = false): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
 
-		$name = trim((string)($data['name'] ?? ''));
-		$key = (string)($data['key'] ?? '');
-
 		// A NAME is required in both modes: a nameless empty Secret cannot be
 		// identified in a vault. The key requirement is what the placeholder
 		// exception relaxes, and only when the caller asks for it — a Secret may
 		// be keyless ONLY while a pending request targets it.
-		if ($name === '' || ($key === '' && $allowUnfilled === false)) {
-			throw new InvalidArgumentException('A secret requires a name and a key');
+		$this->requireName(data: $data);
+		if ($allowUnfilled === false) {
+			$this->requireKey(data: $data);
 		}
 
+		$secret = $this->newRow(data: $data, placement: $this->userPlacement(data: $data, userId: $userId));
+		(new CredentialFields())->stampChanges(after: $secret, before: new Secret(), now: $secret->getCreatedAt());
+
+		$this->mapper->insert($secret);
+		$this->logger->info("Keepiq: secret {$secret->getId()} created by {$userId}");
+		$this->dispatchAudit(event: $this->createdEvent(secret: $secret, actor: $this->auditEvents->forUser(...)));
+
+		return $secret;
+	}//end create()
+
+	/**
+	 * Where a user's new secret lives: in a folder the user owns, sealed for
+	 * the user's active suite, with its type resolved under the user, and
+	 * allowed there by the team folder policy (admin-vault-policies D4).
+	 * Import commits through here too.
+	 *
+	 * @param array<string,mixed> $data   The submitted fields
+	 * @param string              $userId The owning Nextcloud user ID
+	 *
+	 * @return SecretPlacement
+	 *
+	 * @throws ForbiddenException When the folder belongs to another user, or the policy refuses the type there
+	 * @throws SuiteBlockedException When the user has no active suite
+	 */
+	private function userPlacement(array $data, string $userId): SecretPlacement {
 		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
 		$this->requireFolderOwnedBy(folderId: $folderId, userId: $userId);
-
 		$suite = $this->getActiveSuiteOrBlock(userId: $userId);
-
 		$typeId = $this->typeService->resolveTypeForSecret(
 			$data['typeId'] ?? null,
 			$userId
 		);
-
-		// Work logins live in team folders when the policy says so
-		// (admin-vault-policies D4). Import commits through here too.
 		$this->orgOwnership?->assertAllowed(userId: $userId, typeId: $typeId, folderId: $folderId);
 
-		$now = new DateTime();
-		$secret = new Secret();
-		$secret->setId(Uuid::uuid4()->toString());
-		$secret->setName($name);
-		$secret->setUrl($this->nullableString(value: $data['url'] ?? null));
-		$secret->setTypeId($typeId);
-		$secret->setFolderId($folderId);
-		$secret->setKey($key);
-		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
-		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
-		$secret->setTotp($this->nullableString(value: $data['totp'] ?? null));
-		$secret->setPasskeys($this->nullableString(value: $data['passkeys'] ?? null));
-		$secret->setEncryptionSuiteId($suite->getId());
-		$secret->setOwnerType('user');
-		$secret->setOwnerId($userId);
-		$secret->setCreatedAt($now);
-		$secret->setUpdatedAt($now);
-		// Ciphertext age starts at creation; never decrypts (password-health D4).
-		$secret->setKeyUpdatedAt($now);
-		(new CredentialFields())->stampChanges(after: $secret, before: new Secret(), now: $now);
-
-		$this->mapper->insert($secret);
-		$this->logger->info("Keepiq: secret {$secret->getId()} created by {$userId}");
-
-		$this->dispatchAudit(
-			event: $this->auditEvents->forUser(
-				actorId: $userId,
-				eventType: AuditEventTypes::SECRET_CREATED,
-				objectType: 'secret',
-				objectId: $secret->getId(),
-				objectName: $secret->getName(),
-				metadata: ['typeId' => $typeId, 'folderId' => $secret->getFolderId()],
-			)
-		);
-
-		return $secret;
-	}//end create()
+		return new SecretPlacement(ownerType: 'user', ownerId: $userId, suiteId: $suite->getId(), typeId: $typeId, folderId: $folderId);
+	}//end userPlacement()
 
 	/**
 	 * Create a secret keyed to an application's EncryptionSuite.
@@ -360,65 +343,26 @@ class SecretService {
 	 * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.4
 	 */
 	public function createForApplication(array $data, string $applicationId, string $writingUserId): Secret {
-		$this->refuseApplicationValueFields(data: $data);
-		if ($applicationId === '') {
-			throw new InvalidArgumentException('applicationId is required');
-		}
-
-		$name = trim((string)($data['name'] ?? ''));
-		$key = (string)($data['key'] ?? '');
-		if ($name === '' || $key === '') {
-			throw new InvalidArgumentException('A secret requires a name and a key');
-		}
+		$this->refuseApplicationCreate(data: $data, applicationId: $applicationId);
+		$this->requireName(data: $data);
+		$this->requireKey(data: $data);
 
 		// Keepiq#873: a secret may only sit in a folder its OWNER owns, because
 		// the folder owner's delete purges every secret in it. The owner here
 		// is the application, which owns no folder, so this path refuses any
 		// folder exactly like the machine paths do. Without this, the writing
 		// user could purge the application's secret by deleting their folder.
-		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
-		if ($folderId !== null) {
-			throw new InvalidArgumentException('An application cannot file a secret in a folder');
-		}
-
-		try {
-			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
-			// No MultipleObjectsReturnedException arm: findActiveByOwner()
-			// sets maxResults(1) precisely so findEntity() can never see two
-			// rows. That bound IS the fix for the bug its docblock describes —
-			// the unbounded version threw mid-migration and this catch then
-			// reported "No active encryption suite" to a user who had two.
-		} catch (DoesNotExistException) {
-			throw new SuiteBlockedException(
-				message: 'No active EncryptionSuite for application ' . $applicationId
-			);
-		}
+		$this->refuseApplicationFolder(data: $data);
+		$suite = $this->activeApplicationSuite(applicationId: $applicationId);
 
 		// Resolve the type under the writing user's namespace so the
 		// SecretType resolver still finds a default; application secrets
 		// do not own a type-namespace yet.
-		$typeId = $this->typeService->resolveTypeForSecret(
-			$data['typeId'] ?? null,
-			$writingUserId
+		$typeId = $this->typeService->resolveTypeForSecret($data['typeId'] ?? null, $writingUserId);
+		$secret = $this->newRow(
+			data: $data,
+			placement: new SecretPlacement(ownerType: 'application', ownerId: $applicationId, suiteId: $suite->getId(), typeId: $typeId, folderId: null)
 		);
-
-		$now = new DateTime();
-		$secret = new Secret();
-		$secret->setId(Uuid::uuid4()->toString());
-		$secret->setName($name);
-		$secret->setUrl($this->nullableString(value: $data['url'] ?? null));
-		$secret->setTypeId($typeId);
-		$secret->setFolderId($folderId);
-		$secret->setKey($key);
-		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
-		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
-		$secret->setEncryptionSuiteId($suite->getId());
-		$secret->setOwnerType('application');
-		$secret->setOwnerId($applicationId);
-		$secret->setCreatedAt($now);
-		$secret->setUpdatedAt($now);
-		// Ciphertext age starts at creation; never decrypts (password-health D4).
-		$secret->setKeyUpdatedAt($now);
 
 		$this->mapper->insert($secret);
 		$this->logger->info(
@@ -464,13 +408,7 @@ class SecretService {
 		string $applicationId,
 		bool $allowUnfilled = false,
 	): Secret {
-		$this->refuseApplicationValueFields(data: $data);
-		if ($applicationId === '') {
-			throw new InvalidArgumentException('applicationId is required');
-		}
-
-		$name = trim((string)($data['name'] ?? ''));
-		$key = (string)($data['key'] ?? '');
+		$this->refuseApplicationCreate(data: $data, applicationId: $applicationId);
 
 		// `$allowUnfilled` exists for ONE caller: the secret-request shell, which
 		// is created before anyone has supplied a value. On the user side the
@@ -483,67 +421,195 @@ class SecretService {
 		// write-back silently store a valueless secret. A missing NAME stays an
 		// error in both modes, and the message is unchanged so existing callers
 		// and their assertions see exactly what they saw before.
-		if ($name === '' || ($key === '' && $allowUnfilled === false)) {
-			throw new InvalidArgumentException('A secret requires a name and a key');
+		$this->requireName(data: $data);
+		if ($allowUnfilled === false) {
+			$this->requireKey(data: $data);
 		}
 
+		$secret = $this->newRow(data: $data, placement: $this->machinePlacement(data: $data, applicationId: $applicationId));
+		$this->mapper->insert($secret);
+		$this->dispatchAudit(event: $this->createdEvent(secret: $secret, actor: $this->auditEvents->forApplication(...)));
+
+		return $secret;
+	}//end createByApplication()
+
+	/**
+	 * Where an application's own new secret lives: sealed for the
+	 * application's active suite, with its type resolved under the
+	 * application, at the vault root. Keepiq#795: folders belong to users and
+	 * a machine write has no user, so an application cannot file a secret in
+	 * a folder.
+	 *
+	 * @param array<string,mixed> $data          The submitted fields
+	 * @param string              $applicationId The owning application ID
+	 *
+	 * @return SecretPlacement
+	 *
+	 * @throws SuiteBlockedException When the application has no active suite
+	 * @throws InvalidArgumentException When a folder is named
+	 */
+	private function machinePlacement(array $data, string $applicationId): SecretPlacement {
+		$suite = $this->activeApplicationSuite(applicationId: $applicationId);
+		$typeId = $this->typeService->resolveTypeForSecret($data['typeId'] ?? null, $applicationId);
+		$this->refuseApplicationFolder(data: $data);
+
+		return new SecretPlacement(ownerType: 'application', ownerId: $applicationId, suiteId: $suite->getId(), typeId: $typeId, folderId: null);
+	}//end machinePlacement()
+
+	/**
+	 * Refuse an application create that sends a totp or passkeys value, or names no application.
+	 *
+	 * @param array<string,mixed> $data          The submitted fields
+	 * @param string              $applicationId The owning application ID
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a value blob is sent or the application ID is empty
+	 */
+	private function refuseApplicationCreate(array $data, string $applicationId): void {
+		$this->refuseApplicationValueFields(data: $data);
+		if ($applicationId === '') {
+			throw new InvalidArgumentException('applicationId is required');
+		}
+	}//end refuseApplicationCreate()
+
+	/**
+	 * Refuse a folder on an application's new secret: an application owns no folder.
+	 *
+	 * @param array<string,mixed> $data The submitted fields
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a folder is named
+	 *
+	 * @spec exclude keepiq#795 security fix, no OpenSpec requirement names this guard yet
+	 */
+	private function refuseApplicationFolder(array $data): void {
+		if ($this->nullableString(value: $data['folderId'] ?? null) !== null) {
+			throw new InvalidArgumentException('An application cannot file a secret in a folder');
+		}
+	}//end refuseApplicationFolder()
+
+	/**
+	 * The application's active encryption suite.
+	 *
+	 * No MultipleObjectsReturnedException arm: findActiveByOwner() sets
+	 * maxResults(1) precisely so findEntity() can never see two rows. That
+	 * bound IS the fix for the bug its docblock describes — the unbounded
+	 * version threw mid-migration and this catch then reported "No active
+	 * encryption suite" to a user who had two.
+	 *
+	 * @param string $applicationId The owning application ID
+	 *
+	 * @return EncryptionSuite
+	 *
+	 * @throws SuiteBlockedException When the application has no active suite
+	 */
+	private function activeApplicationSuite(string $applicationId): EncryptionSuite {
 		try {
-			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
-			// No MultipleObjectsReturnedException arm: findActiveByOwner()
-			// sets maxResults(1) precisely so findEntity() can never see two
-			// rows. That bound IS the fix for the bug its docblock describes —
-			// the unbounded version threw mid-migration and this catch then
-			// reported "No active encryption suite" to a user who had two.
+			return $this->suiteMapper->findActiveByOwner('application', $applicationId);
 		} catch (DoesNotExistException) {
 			throw new SuiteBlockedException(
 				message: 'No active EncryptionSuite for application ' . $applicationId
 			);
 		}
+	}//end activeApplicationSuite()
 
-		$typeId = $this->typeService->resolveTypeForSecret(
-			$data['typeId'] ?? null,
-			$applicationId
-		);
-
-		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
-		// Keepiq#795: folders belong to users and a machine write has no user, so an
-		// application cannot file a secret in a folder. Clearing it stays allowed.
-		if ($folderId !== null) {
-			throw new InvalidArgumentException('An application cannot file a secret in a folder');
+	/**
+	 * Refuse submitted data without a name.
+	 *
+	 * @param array<string,mixed> $data The submitted fields
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the trimmed name is empty
+	 */
+	private function requireName(array $data): void {
+		if (trim((string)($data['name'] ?? '')) === '') {
+			throw new InvalidArgumentException('A secret requires a name and a key');
 		}
+	}//end requireName()
 
+	/**
+	 * Refuse submitted data without a key.
+	 *
+	 * @param array<string,mixed> $data The submitted fields
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the key is empty
+	 */
+	private function requireKey(array $data): void {
+		if ((string)($data['key'] ?? '') === '') {
+			throw new InvalidArgumentException('A secret requires a name and a key');
+		}
+	}//end requireKey()
+
+	/**
+	 * A new secret row from the submitted fields, placed as given and stamped
+	 * now: created, updated and ciphertext age all start at creation (never
+	 * decrypts, password-health D4). A totp or passkeys value the data does
+	 * not carry leaves its column unset.
+	 *
+	 * @param array<string,mixed> $data      The submitted fields
+	 * @param SecretPlacement     $placement Where the row lives
+	 *
+	 * @return Secret
+	 */
+	private function newRow(array $data, SecretPlacement $placement): Secret {
 		$now = new DateTime();
 		$secret = new Secret();
 		$secret->setId(Uuid::uuid4()->toString());
-		$secret->setName($name);
+		$secret->setName(trim((string)($data['name'] ?? '')));
 		$secret->setUrl($this->nullableString(value: $data['url'] ?? null));
-		$secret->setTypeId($typeId);
-		$secret->setFolderId($folderId);
-		$secret->setKey($key);
-		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
-		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
-		$secret->setEncryptionSuiteId($suite->getId());
-		$secret->setOwnerType('application');
-		$secret->setOwnerId($applicationId);
+		$secret->setTypeId($placement->typeId);
+		$secret->setFolderId($placement->folderId);
+		$secret->setKey((string)($data['key'] ?? ''));
+		$this->applyOptionalFields(secret: $secret, data: $data);
+		$secret->setEncryptionSuiteId($placement->suiteId);
+		$secret->setOwnerType($placement->ownerType);
+		$secret->setOwnerId($placement->ownerId);
 		$secret->setCreatedAt($now);
 		$secret->setUpdatedAt($now);
 		$secret->setKeyUpdatedAt($now);
-
-		$this->mapper->insert($secret);
-
-		$this->dispatchAudit(
-			event: $this->auditEvents->forApplication(
-				actorId: $applicationId,
-				eventType: AuditEventTypes::SECRET_CREATED,
-				objectType: 'secret',
-				objectId: $secret->getId(),
-				objectName: $secret->getName(),
-				metadata: ['typeId' => $typeId, 'folderId' => $secret->getFolderId()],
-			)
-		);
-
 		return $secret;
-	}//end createByApplication()
+	}//end newRow()
+
+	/**
+	 * Set the login, additional fields, totp and passkeys of a new row.
+	 *
+	 * @param Secret              $secret The new row
+	 * @param array<string,mixed> $data   The submitted fields
+	 *
+	 * @return void
+	 */
+	private function applyOptionalFields(Secret $secret, array $data): void {
+		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
+		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
+		$secret->setTotp($this->nullableString(value: $data['totp'] ?? null));
+		$secret->setPasskeys($this->nullableString(value: $data['passkeys'] ?? null));
+	}//end applyOptionalFields()
+
+	/**
+	 * The secret.created audit event for a new row, with its owner as actor.
+	 *
+	 * @param Secret   $secret The new row
+	 * @param \Closure $actor  The audit factory method for the owner kind, `forUser` or `forApplication`
+	 *
+	 * @phpstan-param \Closure(string, string, string, ?string, ?string, array<string,mixed>): AuditEvent $actor
+	 *
+	 * @return AuditEvent
+	 */
+	private function createdEvent(Secret $secret, \Closure $actor): AuditEvent {
+		return $actor(
+			$secret->getOwnerId(),
+			AuditEventTypes::SECRET_CREATED,
+			'secret',
+			$secret->getId(),
+			$secret->getName(),
+			['typeId' => $secret->getTypeId(), 'folderId' => $secret->getFolderId()]
+		);
+	}//end createdEvent()
 
 	/**
 	 * Update a secret written by the application itself (machine write-back).
@@ -774,44 +840,16 @@ class SecretService {
 	 * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
 	 */
 	public function deleteByApplication(string $secretId, string $applicationId): void {
-		try {
-			$secret = $this->mapper->findById($secretId);
-		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
-			// Idempotent: a nonexistent id is a silent no-op (design D2).
+		$secret = $this->ownApplicationRow(secretId: $secretId, applicationId: $applicationId);
+		if ($secret === null) {
 			return;
 		}
 
-		// Own-vault scoping: a row owned by another vault (another
-		// application or a user) is indistinguishable from a nonexistent
-		// one — same silent return, no existence oracle (design D2).
-		if ($secret->getOwnerType() !== 'application'
-			|| $secret->getOwnerId() !== $applicationId
-		) {
-			return;
-		}
-
-		// Cascade parity with the user-scoped delete(): link shares +
-		// secret requests + user shares + group shares + delegations.
-		// Structurally a no-op for application-vault secrets today (every
-		// sharing creation path is user-owner scoped) but kept so "a secret
-		// delete leaves no orphan sharing-graph rows" holds unconditionally
-		// (design D4).
-		$this->linkShareService->deleteBySecretId($secretId);
-		if ($this->secretRequestService !== null) {
-			$this->secretRequestService->deleteAllForSecret($secretId);
-		}
-
-		if ($this->shareService !== null) {
-			$this->shareService->deleteAllForSecret($secretId);
-		}
-
-		if ($this->groupShareMapper !== null) {
-			$this->groupShareMapper->deleteBySecret($secretId);
-		}
-
-		if ($this->secretDelegationMapper !== null) {
-			$this->secretDelegationMapper->deleteBySecret($secretId);
-		}
+		// Cascade parity with the user-scoped delete(). Structurally a no-op
+		// for application-vault secrets today (every sharing creation path is
+		// user-owner scoped) but kept so "a secret delete leaves no orphan
+		// sharing-graph rows" holds unconditionally (design D4).
+		$this->deleteSharingGraph(secretId: $secretId);
 
 		$this->mapper->delete($secret);
 		$this->logger->info(
@@ -828,6 +866,36 @@ class SecretService {
 			)
 		);
 	}//end deleteByApplication()
+
+	/**
+	 * The row with this id when it sits in the application's own vault, null
+	 * otherwise. Idempotent: a nonexistent id is a silent no-op (design D2),
+	 * and a row owned by another vault (another application or a user) is
+	 * indistinguishable from a nonexistent one — same silent answer, no
+	 * existence oracle (design D2).
+	 *
+	 * @param string $secretId      The secret ID
+	 * @param string $applicationId The owning application ID
+	 *
+	 * @return Secret|null
+	 *
+	 * @spec openspec/changes/application-secret-delete/specs/secrets/spec.md
+	 */
+	private function ownApplicationRow(string $secretId, string $applicationId): ?Secret {
+		try {
+			$secret = $this->mapper->findById($secretId);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return null;
+		}
+
+		if ($secret->getOwnerType() !== 'application'
+			|| $secret->getOwnerId() !== $applicationId
+		) {
+			return null;
+		}
+
+		return $secret;
+	}//end ownApplicationRow()
 
 	/**
 	 * Resolve a secret by exact name from an application's own vault
@@ -1359,77 +1427,104 @@ class SecretService {
 	public function delete(string $id, string $userId, ?string $purgeReason = null): void {
 		$secret = $this->loadOwned(id: $id, userId: $userId);
 
-		// Cascade to derived link shares + secret requests + user shares
-		// (ShareTargets) + group shares + secret delegations. The mappers
-		// for group shares + delegations are optional dependencies so the
-		// existing constructors without them keep compiling; when wired,
-		// a secret delete leaves no orphan sharing-graph rows behind.
-		$this->linkShareService->deleteBySecretId($id);
-		if ($this->secretRequestService !== null) {
-			$this->secretRequestService->deleteAllForSecret($id);
-		}
-
-		if ($this->shareService !== null) {
-			$this->shareService->deleteAllForSecret($id);
-		}
-
-		if ($this->groupShareMapper !== null) {
-			$this->groupShareMapper->deleteBySecret($id);
-		}
-
-		if ($this->secretDelegationMapper !== null) {
-			$this->secretDelegationMapper->deleteBySecret($id);
-		}
-
-		// Attachments cascade (encrypted-attachments §3.1): remove the
-		// secret's attachments (grants + reference-counted blobs) and any
-		// grants held BY this row as a recipient copy.
-		if ($this->attachmentService !== null) {
-			$this->attachmentService->deleteForSecret($id);
-			$this->attachmentService->deleteGrantsForSecretCopy($id);
-		}
-
-		// Version-history cascade (secret-version-history §5.2).
-		$this->versionService?->deleteForSecret($id);
-
-		// Rotation-flag cascade (rotation-expiry-policies).
-		$this->rotationService?->deleteForSecret($id);
-
-		// The holder's tags (vault-favourites-tags-and-last-used).
-		$this->tagMapper?->deleteBySecret($id);
-
+		$this->deleteSharingGraph(secretId: $id);
+		$this->deleteSecretData(secretId: $id);
 		$this->mapper->delete($secret);
 		$this->logger->info("Keepiq: secret {$id} deleted by {$userId}");
 
-		// A purge from the trash (vault-trash-and-archive) records its own
-		// event: by the owner, or by the system when the retention ran out.
-		$event = match ($purgeReason) {
-			null => $this->auditEvents->forUser(
-				actorId: $userId,
-				eventType: AuditEventTypes::SECRET_DELETED,
-				objectType: 'secret',
-				objectId: $id,
-				objectName: $secret->getName(),
-			),
-			'retention' => $this->auditEvents->forSystem(
-				eventType: AuditEventTypes::SECRET_PURGED,
-				objectType: 'secret',
-				objectId: $id,
-				objectName: $secret->getName(),
-				metadata: ['reason' => $purgeReason],
-			),
-			default => $this->auditEvents->forUser(
-				actorId: $userId,
-				eventType: AuditEventTypes::SECRET_PURGED,
-				objectType: 'secret',
-				objectId: $id,
-				objectName: $secret->getName(),
-				metadata: ['reason' => $purgeReason],
-			),
-		};
-
-		$this->dispatchAudit(event: $event);
+		$this->dispatchAudit(
+			event: $this->deletionEvent(
+				secret: $secret,
+				deletion: new SecretDeletion(userId: $userId, purgeReason: $purgeReason)
+			)
+		);
 	}//end delete()
+
+	/**
+	 * Remove the sharing graph of a secret: derived link shares, secret
+	 * requests, user shares (ShareTargets), group shares and secret
+	 * delegations. The mappers for group shares and delegations are optional
+	 * dependencies so the existing constructors without them keep compiling;
+	 * when wired, a secret delete leaves no orphan sharing-graph rows behind.
+	 *
+	 * @param string $secretId The secret ID
+	 *
+	 * @return void
+	 */
+	private function deleteSharingGraph(string $secretId): void {
+		$this->linkShareService->deleteBySecretId($secretId);
+		if ($this->secretRequestService !== null) {
+			$this->secretRequestService->deleteAllForSecret($secretId);
+		}
+
+		if ($this->shareService !== null) {
+			$this->shareService->deleteAllForSecret($secretId);
+		}
+
+		if ($this->groupShareMapper !== null) {
+			$this->groupShareMapper->deleteBySecret($secretId);
+		}
+
+		if ($this->secretDelegationMapper !== null) {
+			$this->secretDelegationMapper->deleteBySecret($secretId);
+		}
+	}//end deleteSharingGraph()
+
+	/**
+	 * Remove what hangs off a user's secret besides its sharing graph: its
+	 * attachments (grants and reference-counted blobs, encrypted-attachments
+	 * §3.1) and the grants it holds as a recipient copy, its version history
+	 * (secret-version-history §5.2), its rotation flags
+	 * (rotation-expiry-policies) and the holder's tags
+	 * (vault-favourites-tags-and-last-used).
+	 *
+	 * @param string $secretId The secret ID
+	 *
+	 * @return void
+	 */
+	private function deleteSecretData(string $secretId): void {
+		if ($this->attachmentService !== null) {
+			$this->attachmentService->deleteForSecret($secretId);
+			$this->attachmentService->deleteGrantsForSecretCopy($secretId);
+		}
+
+		$this->versionService?->deleteForSecret($secretId);
+		$this->rotationService?->deleteForSecret($secretId);
+		$this->tagMapper?->deleteBySecret($secretId);
+	}//end deleteSecretData()
+
+	/**
+	 * The audit event of a user's delete. A purge from the trash
+	 * (vault-trash-and-archive) records its own event: by the owner, or by
+	 * the system when the retention ran out.
+	 *
+	 * @param Secret         $secret   The deleted row
+	 * @param SecretDeletion $deletion Who deleted it, and why when it was a purge
+	 *
+	 * @return AuditEvent
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+	 */
+	private function deletionEvent(Secret $secret, SecretDeletion $deletion): AuditEvent {
+		if ($deletion->byRetention() === true) {
+			return $this->auditEvents->forSystem(
+				eventType: $deletion->eventType(),
+				objectType: 'secret',
+				objectId: $secret->getId(),
+				objectName: $secret->getName(),
+				metadata: $deletion->metadata(),
+			);
+		}
+
+		return $this->auditEvents->forUser(
+			actorId: $deletion->userId,
+			eventType: $deletion->eventType(),
+			objectType: 'secret',
+			objectId: $secret->getId(),
+			objectName: $secret->getName(),
+			metadata: $deletion->metadata(),
+		);
+	}//end deletionEvent()
 
 	/**
 	 * List a user's secrets, paginated, optionally filtered by folder, sorted.
