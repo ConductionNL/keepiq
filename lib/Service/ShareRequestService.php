@@ -79,14 +79,7 @@ class ShareRequestService {
 		string $targetUserId,
 		string $requesterId,
 	): void {
-		if ($targetUserId === '') {
-			throw new InvalidArgumentException(message: 'targetUserId is required');
-		}
-
-		if ($targetUserId === $requesterId) {
-			throw new InvalidArgumentException(message: 'Cannot request a share to yourself');
-		}
-
+		$this->assertRequestableTarget(targetUserId: $targetUserId, requesterId: $requesterId);
 		$secret = $this->loadSecret(secretId: $sourceSecretId);
 
 		// Requester must already hold a share of the secret OR be the
@@ -98,40 +91,16 @@ class ShareRequestService {
 			);
 		}
 
-		try {
-			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $sourceSecretId,
-				targetUserId: $requesterId
-			);
-		} catch (DoesNotExistException) {
-			throw new InvalidArgumentException(
-				message: 'Only existing share recipients can request additional shares'
-			);
-		}
-
+		$this->assertHoldsShare(sourceSecretId: $sourceSecretId, requesterId: $requesterId);
 		if ($targetUserId === $secret->getOwnerId()) {
 			throw new InvalidArgumentException(
 				message: 'Cannot request to share with the secret owner'
 			);
 		}
 
-		$this->notificationService->notify(
-			subject: 'share_request',
-			recipientId: $secret->getOwnerId(),
-			params: [
-				'sourceSecretId' => $sourceSecretId,
-				'secretName' => $secret->getName(),
-				'requesterId' => $requesterId,
-				'targetUserId' => $targetUserId,
-			],
-			objectType: 'secret',
-			objectId: $sourceSecretId,
-		);
-
-		$this->logger->info(
-			'Share-request submitted by ' . $requesterId
-			. ' for ' . $sourceSecretId . ' -> ' . $targetUserId,
-			['app' => 'keepiq']
+		$this->notifyOwnerOfRequest(
+			secret: $secret,
+			request: ['sourceSecretId' => $sourceSecretId, 'requesterId' => $requesterId, 'targetUserId' => $targetUserId]
 		);
 	}//end submitShareRequest()
 
@@ -151,10 +120,7 @@ class ShareRequestService {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
 	 */
 	public function approveShareRequest(array $params, string $ownerId): array {
-		$sourceSecretId = (string)($params['sourceSecretId'] ?? '');
-		$targetUserId = (string)($params['targetUserId'] ?? '');
-		$requesterId = (string)($params['requesterId'] ?? '');
-
+		[$sourceSecretId, $targetUserId, $requesterId] = $this->requestParts(params: $params);
 		if ($sourceSecretId === '' || $targetUserId === '' || $requesterId === '') {
 			throw new InvalidArgumentException(message: 'Malformed share-request payload');
 		}
@@ -169,28 +135,11 @@ class ShareRequestService {
 		// The browser encrypts and registers the copy first, then confirms
 		// here. The requester hears "approved" only once the share exists, so
 		// a fan-out that failed half way never reads as approved.
-		$shared = true;
-		try {
-			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $sourceSecretId,
-				targetUserId: $targetUserId
-			);
-		} catch (DoesNotExistException) {
-			$shared = false;
-		}
-
+		$shared = $this->isShared(sourceSecretId: $sourceSecretId, targetUserId: $targetUserId);
 		if ($shared === true) {
-			$this->notificationService->notify(
-				subject: 'share_request_result',
-				recipientId: $requesterId,
-				params: [
-					'sourceSecretId' => $sourceSecretId,
-					'secretName' => $secret->getName(),
-					'targetUserId' => $targetUserId,
-					'result' => 'approved',
-				],
-				objectType: 'secret',
-				objectId: $sourceSecretId,
+			$this->notifyRequester(
+				secret: $secret,
+				result: ['sourceSecretId' => $sourceSecretId, 'requesterId' => $requesterId, 'targetUserId' => $targetUserId, 'result' => 'approved']
 			);
 		}
 
@@ -216,10 +165,7 @@ class ShareRequestService {
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#5.3
 	 */
 	public function denyShareRequest(array $params, string $ownerId): void {
-		$sourceSecretId = (string)($params['sourceSecretId'] ?? '');
-		$requesterId = (string)($params['requesterId'] ?? '');
-		$targetUserId = (string)($params['targetUserId'] ?? '');
-
+		[$sourceSecretId, $targetUserId, $requesterId] = $this->requestParts(params: $params);
 		if ($sourceSecretId === '' || $requesterId === '') {
 			throw new InvalidArgumentException(message: 'Malformed share-request payload');
 		}
@@ -231,19 +177,169 @@ class ShareRequestService {
 			);
 		}
 
-		$this->notificationService->notify(
-			subject: 'share_request_result',
-			recipientId: $requesterId,
-			params: [
-				'sourceSecretId' => $sourceSecretId,
-				'secretName' => $secret->getName(),
-				'targetUserId' => $targetUserId,
-				'result' => 'denied',
-			],
-			objectType: 'secret',
-			objectId: $sourceSecretId,
+		$this->notifyRequester(
+			secret: $secret,
+			result: ['sourceSecretId' => $sourceSecretId, 'requesterId' => $requesterId, 'targetUserId' => $targetUserId, 'result' => 'denied']
 		);
 	}//end denyShareRequest()
+
+	/**
+	 * Refuse a request without a target, or for the requester themselves.
+	 *
+	 * @param string $targetUserId The user the requester wants the secret shared with
+	 * @param string $requesterId  The user submitting the request
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the target is missing or the requester
+	 *
+	 * @spec openspec/changes/implement-user-sharing/tasks.md#5.1
+	 */
+	private function assertRequestableTarget(string $targetUserId, string $requesterId): void {
+		if ($targetUserId === '') {
+			throw new InvalidArgumentException(message: 'targetUserId is required');
+		}
+
+		if ($targetUserId === $requesterId) {
+			throw new InvalidArgumentException(message: 'Cannot request a share to yourself');
+		}
+	}//end assertRequestableTarget()
+
+	/**
+	 * Refuse a requester who holds no share of the secret.
+	 *
+	 * @param string $sourceSecretId The owner's source Secret ID
+	 * @param string $requesterId    The user submitting the request
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the requester is no share recipient
+	 *
+	 * @spec openspec/changes/implement-user-sharing/tasks.md#5.1
+	 */
+	private function assertHoldsShare(string $sourceSecretId, string $requesterId): void {
+		try {
+			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $sourceSecretId,
+				targetUserId: $requesterId
+			);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(
+				message: 'Only existing share recipients can request additional shares'
+			);
+		}
+	}//end assertHoldsShare()
+
+	/**
+	 * Tell the owner about a share request, and log it.
+	 *
+	 * @param Secret                $secret  The owner's source Secret
+	 * @param array<string, string> $request sourceSecretId, requesterId and targetUserId
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/implement-user-sharing/tasks.md#5.1
+	 */
+	private function notifyOwnerOfRequest(Secret $secret, array $request): void {
+		$this->notificationService->notify(
+			subject: 'share_request',
+			recipientId: $secret->getOwnerId(),
+			params: [
+				'sourceSecretId' => $request['sourceSecretId'],
+				'secretName' => $secret->getName(),
+				'requesterId' => $request['requesterId'],
+				'targetUserId' => $request['targetUserId'],
+			],
+			objectType: 'secret',
+			objectId: $request['sourceSecretId'],
+		);
+
+		$this->logger->info(
+			'Share-request submitted by ' . $request['requesterId']
+			. ' for ' . $request['sourceSecretId'] . ' -> ' . $request['targetUserId'],
+			['app' => 'keepiq']
+		);
+	}//end notifyOwnerOfRequest()
+
+	/**
+	 * The source secret, target and requester a request's notification names,
+	 * each '' when absent.
+	 *
+	 * @param array<string,mixed> $params The notification parameters
+	 *
+	 * @return array{0:string,1:string,2:string}
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+	 */
+	private function requestParts(array $params): array {
+		return [
+			$this->requestPart(params: $params, key: 'sourceSecretId'),
+			$this->requestPart(params: $params, key: 'targetUserId'),
+			$this->requestPart(params: $params, key: 'requesterId'),
+		];
+	}//end requestParts()
+
+	/**
+	 * One part of a request's notification, '' when absent.
+	 *
+	 * @param array<string,mixed> $params The notification parameters
+	 * @param string              $key    The part
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+	 */
+	private function requestPart(array $params, string $key): string {
+		return (string)($params[$key] ?? '');
+	}//end requestPart()
+
+	/**
+	 * Whether the target already holds a share of the secret.
+	 *
+	 * @param string $sourceSecretId The owner's source Secret ID
+	 * @param string $targetUserId   The user the share is for
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+	 */
+	private function isShared(string $sourceSecretId, string $targetUserId): bool {
+		try {
+			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $sourceSecretId,
+				targetUserId: $targetUserId
+			);
+		} catch (DoesNotExistException) {
+			return false;
+		}
+
+		return true;
+	}//end isShared()
+
+	/**
+	 * Tell the requester how the owner answered their request.
+	 *
+	 * @param Secret                $secret The owner's source Secret
+	 * @param array<string, string> $result sourceSecretId, requesterId, targetUserId and the result
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+	 */
+	private function notifyRequester(Secret $secret, array $result): void {
+		$this->notificationService->notify(
+			subject: 'share_request_result',
+			recipientId: $result['requesterId'],
+			params: [
+				'sourceSecretId' => $result['sourceSecretId'],
+				'secretName' => $secret->getName(),
+				'targetUserId' => $result['targetUserId'],
+				'result' => $result['result'],
+			],
+			objectType: 'secret',
+			objectId: $result['sourceSecretId'],
+		);
+	}//end notifyRequester()
 
 	/**
 	 * Load a Secret by ID — surfaces misses as InvalidArgumentException.

@@ -118,6 +118,54 @@ class ShareRequestServiceTest extends TestCase {
 	}//end testSubmitShareRequestFiresOwnerNotification()
 
 	/**
+	 * The notification a share request sends the owner, in full, and the
+	 * refusals checked before the secret is read.
+	 *
+	 * @return void
+	 */
+	public function testSubmitShareRequestPayloadAndEarlyRefusals(): void {
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn(new ShareTarget());
+		$this->notificationService->expects($this->once())->method('notify')->with(
+			'share_request',
+			'alice',
+			['sourceSecretId' => 'src-1', 'secretName' => 'demo', 'requesterId' => 'bob', 'targetUserId' => 'carol'],
+			'secret',
+			'src-1'
+		);
+		$this->service->submitShareRequest(sourceSecretId: 'src-1', targetUserId: 'carol', requesterId: 'bob');
+
+		foreach (['' => 'targetUserId is required', 'bob' => 'Cannot request a share to yourself'] as $target => $message) {
+			try {
+				$this->service->submitShareRequest(sourceSecretId: 'src-1', targetUserId: (string)$target, requesterId: 'bob');
+				$this->fail('The request must be refused');
+			} catch (\InvalidArgumentException $exception) {
+				$this->assertSame($message, $exception->getMessage());
+			}
+		}
+	}//end testSubmitShareRequestPayloadAndEarlyRefusals()
+
+	/**
+	 * An approval naming no secret, target or requester is malformed.
+	 *
+	 * @return void
+	 */
+	public function testApproveShareRequestRefusesAMalformedPayload(): void {
+		$this->secretMapper->expects($this->never())->method('findById');
+		foreach (['sourceSecretId', 'targetUserId', 'requesterId'] as $missing) {
+			$params = ['sourceSecretId' => 'src-1', 'targetUserId' => 'carol', 'requesterId' => 'bob'];
+			unset($params[$missing]);
+			try {
+				$this->service->approveShareRequest(params: $params, ownerId: 'alice');
+				$this->fail('A payload without '.$missing.' must be refused');
+			} catch (\InvalidArgumentException $exception) {
+				$this->assertSame('Malformed share-request payload', $exception->getMessage());
+			}
+		}
+	}//end testApproveShareRequestRefusesAMalformedPayload()
+
+	/**
 	 * Test submitShareRequest rejects requester who does not hold a share.
 	 *
 	 * @return void
