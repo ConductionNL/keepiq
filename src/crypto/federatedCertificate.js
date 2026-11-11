@@ -26,6 +26,7 @@
  * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 
+import { decodeOid } from './oid.js'
 import { decodePem } from './pem.js'
 
 const OID_COMMON_NAME = '2.5.4.3'
@@ -147,20 +148,7 @@ function oid(bytes, element) {
 	if (element?.tag !== 0x06) {
 		throw new FederatedCertificateError('malformed')
 	}
-	const parts = []
-	let value = 0
-	for (let i = element.start; i < element.end; i++) {
-		value = value * 128 + (bytes[i] & 0x7f)
-		if ((bytes[i] & 0x80) === 0) {
-			if (parts.length === 0) {
-				parts.push(Math.floor(value / 40), value % 40)
-			} else {
-				parts.push(value)
-			}
-			value = 0
-		}
-	}
-	return parts.join('.')
+	return decodeOid(bytes, element)
 }
 
 /**
