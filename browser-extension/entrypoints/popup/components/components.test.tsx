@@ -519,6 +519,42 @@ describe('TextArea', () => {
 	})
 })
 
+describe('TextArea markup', () => {
+	// Tags, sorted attributes and text, so the comparison holds whatever order React sets attributes in.
+	const shape = (node: Node): string => {
+		if (!(node instanceof Element)) return node.textContent ?? ''
+		if (node.tagName.toLowerCase() === 'svg') return '<svg>'
+		const attributes = [...node.attributes].map((a) => `${a.name}=${a.value}`).sort().join(' ')
+		return `<${node.tagName.toLowerCase()} ${attributes}>${[...node.childNodes].map(shape).join('')}</>`
+	}
+	const ids = (html: string) => html.replace(/«[^»]*»|:r[0-9a-z]+:|_r_[0-9a-z]+_/g, 'ID')
+
+	const plain = '<div class=field><label class=field__label for=ID id=ID-label>Notes</><textarea class=field__input field__input--area id=ID rows=4 spellcheck=false>a</></>'
+	const toggle = (action: string, pressed: boolean) => `<button aria-label=${action} key aria-pressed=${pressed} class=icon-btn  title=${action} key type=button><svg></>`
+	it.each([
+		['plain', { label: 'Notes', value: 'a' }, plain],
+		['with an empty error', { label: 'Notes', value: 'a', error: '' }, plain],
+		['mono with rows and an error', { label: 'Key', value: 'k', mono: true, rows: 7, error: 'Bad key', placeholder: 'p' },
+			'<div class=field><label class=field__label for=ID id=ID-label>Key</><textarea aria-describedby=ID-error aria-invalid=true class=field__input field__input--area field__input--mono id=ID placeholder=p rows=7 spellcheck=false>k</><p class=field__error id=ID-error>Bad key</></>'],
+		['concealed', { label: 'Key', value: 'k', concealed: true, error: 'Bad key' },
+			`<div class=field><div class=field__head><label class=field__label id=ID-label>Key</>${toggle('Show', false)}</><div aria-describedby=ID-error aria-labelledby=ID-label class=field__box role=group><span class=field__input field__masked>••••••••</></><p class=field__error id=ID-error>Bad key</></>`],
+		['concealed but empty', { label: 'Key', value: '', concealed: true },
+			`<div class=field><div class=field__head><label class=field__label for=ID id=ID-label>Key</>${toggle('Hide', true)}</><textarea autocapitalize=off autocorrect=off class=field__input field__input--area id=ID rows=4 spellcheck=false></></>`],
+	])('renders %s', (_name, props, expected) => {
+		const { container } = render(<TextArea onChange={vi.fn()} {...props} />)
+		expect(ids(shape(container.firstChild!))).toBe(expected)
+	})
+
+	it('shows the value once revealed and hides it again', async () => {
+		const user = userEvent.setup()
+		const { container } = render(<TextArea label="Key" value="k" onChange={vi.fn()} mono rows={2} concealed />)
+		await user.click(screen.getByRole('button', { name: 'Show key' }))
+		expect(ids(shape(container.firstChild!))).toBe(`<div class=field><div class=field__head><label class=field__label for=ID id=ID-label>Key</>${toggle('Hide', true)}</><textarea autocapitalize=off autocorrect=off class=field__input field__input--area field__input--mono id=ID rows=2 spellcheck=false>k</></>`)
+		await user.click(screen.getByRole('button', { name: 'Hide key' }))
+		expect(ids(shape(container.firstChild!))).toBe(`<div class=field><div class=field__head><label class=field__label id=ID-label>Key</>${toggle('Show', false)}</><div aria-labelledby=ID-label class=field__box role=group><span class=field__input field__masked>••••••••</></></>`)
+	})
+})
+
 describe('TextField', () => {
 	it('never spell-checks or autocorrects a password field, also once revealed', async () => {
 		render(<TextField label="Password" type="password" value="hunter2" onChange={vi.fn()} />)
