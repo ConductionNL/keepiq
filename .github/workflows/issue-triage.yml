@@ -10,6 +10,9 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+
 jobs:
   triage:
     uses: ConductionNL/.github/.github/workflows/issue-triage.yml@main
