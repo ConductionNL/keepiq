@@ -31,6 +31,7 @@ import { decodePem } from './pem.js'
 const OID_COMMON_NAME = '2.5.4.3'
 const OID_BASIC_CONSTRAINTS = '2.5.29.19'
 const OID_KEY_USAGE = '2.5.29.15'
+const OID_NAME_CONSTRAINTS = '2.5.29.30'
 const OID_SHA256_RSA = '1.2.840.113549.1.1.11'
 const OID_RSA_PSS = '1.2.840.113549.1.1.10'
 const OID_MGF1 = '1.2.840.113549.1.1.8'
@@ -377,7 +378,8 @@ function keyCertSignOf(bytes, value) {
 
 /**
  * Read one extension into the run: each at most once, basicConstraints and
- * keyUsage read, any other refused when critical.
+ * keyUsage read, nameConstraints refused (they are not enforced here, and RFC
+ * 5280 4.2.1.10 requires them critical), any other refused when critical.
  *
  * @param {{bytes: Uint8Array, seen: Set<string>, ca: boolean, keyCertSign: boolean, pathLen: number|null}} run
  *   The extensions read so far.
@@ -394,7 +396,7 @@ function readExtension(run, extension) {
 		Object.assign(run, basicConstraintsOf(run.bytes, value))
 	} else if (name === OID_KEY_USAGE) {
 		run.keyCertSign = keyCertSignOf(run.bytes, value)
-	} else if (critical) {
+	} else if (name === OID_NAME_CONSTRAINTS || critical) {
 		throw new FederatedCertificateError('malformed')
 	}
 }
