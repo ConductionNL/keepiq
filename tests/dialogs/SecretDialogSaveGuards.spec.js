@@ -17,7 +17,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretCreateDialog from '../../src/dialogs/SecretCreateDialog.vue'
 import SecretEditDialog from '../../src/dialogs/SecretEditDialog.vue'
-import { evaluateHibp, fetchPolicy } from '../../src/policy/policy.js'
+import { evaluateHibp, evaluateScore, fetchPolicy } from '../../src/policy/policy.js'
 import { useFolderStore } from '../../src/store/modules/folder.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
@@ -47,7 +47,7 @@ const stubs = {
 	NcSelect: { props: ['options', 'modelValue'], template: '<div />' },
 	NcTextField: { props: ['modelValue', 'label'], template: '<input />' },
 	NcPasswordField: { props: ['modelValue', 'label'], template: '<input />' },
-	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
+	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
 	NcLoadingIcon: { template: '<span />' },
 	Plus: { template: '<i />' },
 	ContentSave: { template: '<i />' },
@@ -124,6 +124,7 @@ beforeEach(() => {
 	setActivePinia(createPinia())
 	fetchPolicy.mockReset().mockResolvedValue(POLICY)
 	evaluateHibp.mockReset().mockResolvedValue(null)
+	evaluateScore.mockReset().mockReturnValue({ compliant: true, reason: null })
 	const typeStore = useSecretTypeStore()
 	typeStore.types = TYPES.map((type) => ({ ...type }))
 	typeStore.fetchTypes = vi.fn().mockResolvedValue()
@@ -320,5 +321,32 @@ describe('edit dialog save guards', () => {
 		expect(wrapper.vm.typedMissing).toEqual(['host'])
 		expect(evaluateHibp).not.toHaveBeenCalled()
 		expect(useSecretStore().updateSecret).not.toHaveBeenCalled()
+	})
+})
+
+describe('policy note in both dialogs', () => {
+	const TOO_WEAK = { compliant: false, reason: 'Use at least 16 characters' }
+
+	it('create: shows the policy reason only while the value breaks it', async () => {
+		const wrapper = await create('type-login')
+		expect(wrapper.find('[data-testid="policy-blocked"]').exists()).toBe(false)
+		evaluateScore.mockReturnValue(TOO_WEAK)
+		wrapper.vm.value = 'weak'
+		await wrapper.vm.$nextTick()
+		const note = wrapper.find('[data-testid="policy-blocked"]')
+		expect(note.text()).toBe('Use at least 16 characters')
+		expect(note.attributes('data-type')).toBe('warning')
+		expect(wrapper.vm.canSubmit).toBe(false)
+	})
+
+	it('edit: shows the policy reason only for a changed value that breaks it', async () => {
+		evaluateScore.mockReturnValue(TOO_WEAK)
+		const wrapper = await edit({ typeId: 'type-login', key: 'stored' })
+		expect(wrapper.find('[data-testid="policy-blocked"]').exists()).toBe(false)
+		wrapper.vm.value = 'weak'
+		await wrapper.vm.$nextTick()
+		const note = wrapper.find('[data-testid="policy-blocked"]')
+		expect(note.text()).toBe('Use at least 16 characters')
+		expect(note.attributes('data-type')).toBe('warning')
 	})
 })
