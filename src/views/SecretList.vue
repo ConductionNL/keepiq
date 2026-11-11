@@ -1774,6 +1774,26 @@ export default {
 		},
 
 		/**
+		 * Declare what the list shows to the store — folder, search, sort,
+		 * type, state, favourite and tag — so a bare `fetchSecrets()` from
+		 * elsewhere refreshes the same list.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
+		declareListQuery() {
+			this.secretStore.setListQuery({
+				folderId: this.selectedFolderId,
+				search: this.searchTerm,
+				sort: this.sortField,
+				typeId: this.typeFilter,
+				state: this.listState,
+				favourite: this.favouriteFilter,
+				tag: this.tagFilter,
+			})
+		},
+
+		/**
 		 * Reload the current page of secrets with the active filters.
 		 *
 		 * @return {Promise<void>}
@@ -1786,15 +1806,7 @@ export default {
 			// the query lived only in these call arguments, every such refresh
 			// dropped the folder filter and replaced a folder's contents with
 			// the whole vault.
-			this.secretStore.setListQuery({
-				folderId: this.selectedFolderId,
-				search: this.searchTerm,
-				sort: this.sortField,
-				typeId: this.typeFilter,
-				state: this.listState,
-				favourite: this.favouriteFilter,
-				tag: this.tagFilter,
-			})
+			this.declareListQuery()
 			await this.secretStore.fetchSecrets({ page: 1 })
 		},
 
@@ -1877,15 +1889,7 @@ export default {
 			// Same contract as reload(): the store holds the query, this call
 			// only moves the page. Note this used to omit `typeId`, so paging a
 			// type-filtered list silently un-filtered it.
-			this.secretStore.setListQuery({
-				folderId: this.selectedFolderId,
-				search: this.searchTerm,
-				sort: this.sortField,
-				typeId: this.typeFilter,
-				state: this.listState,
-				favourite: this.favouriteFilter,
-				tag: this.tagFilter,
-			})
+			this.declareListQuery()
 			this.secretStore.fetchSecrets({ page: target })
 		},
 
