@@ -22,7 +22,7 @@ let events
  */
 function sidebar(secret) {
 	events = []
-	const ctx = Object.assign({}, SecretDetailSidebar.methods)
+	const ctx = { ...SecretDetailSidebar.methods }
 	return Object.assign(ctx, {
 		secretId: 's1',
 		secret,
