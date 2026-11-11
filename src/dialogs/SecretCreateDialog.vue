@@ -437,6 +437,33 @@ export default {
 		},
 
 		/**
+		 * What a new secret carries after its name, type and folder: the url,
+		 * login and value, then the additional fields and the authenticator
+		 * key when there are any.
+		 *
+		 * @return {object} The value part of the create body.
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 */
+		valueFields() {
+			return {
+				url: this.url || null,
+				login: this.login || '',
+				key: this.effectiveValue,
+				// Only when there ARE members: the store encrypts whatever it is
+				// handed, so passing {} unconditionally would write an empty
+				// ciphertext blob onto every secret ever created here.
+				// The typed values ride in the same blob, named by field label,
+				// so the server only ever sees their ciphertext (admin-18).
+				...(Object.keys(this.additionalBlob()).length > 0
+					? { additionalFields: this.additionalBlob() }
+					: {}),
+
+				// Only when entered, like the additional fields above.
+				...(this.totpToSave ? { totp: this.totpToSave } : {}),
+			}
+		},
+
+		/**
 		 * Encrypt (in the store) and create the secret.
 		 *
 		 * Additional fields travel as a plain name/value object; the store turns them
@@ -465,13 +492,7 @@ export default {
 						{
 							name: this.name.trim(),
 							typeId: this.typeId,
-							url: this.url || null,
-							login: this.login || '',
-							key: this.effectiveValue,
-							...(Object.keys(this.additionalBlob()).length > 0
-								? { additionalFields: this.additionalBlob() }
-								: {}),
-							...(this.totpToSave ? { totp: this.totpToSave } : {}),
+							...this.valueFields(),
 						},
 					)
 					this.$emit('saved', result.secret)
@@ -482,19 +503,7 @@ export default {
 					name: this.name.trim(),
 					typeId: this.typeId,
 					folderId: this.selectedFolderId,
-					url: this.url || null,
-					login: this.login || '',
-					key: this.effectiveValue,
-					// Only when there ARE members: the store encrypts whatever it is
-					// handed, so passing {} unconditionally would write an empty
-					// ciphertext blob onto every secret ever created here.
-					// The typed values ride in the same blob, named by field label,
-					// so the server only ever sees their ciphertext (admin-18).
-					...(Object.keys(this.additionalBlob()).length > 0
-						? { additionalFields: this.additionalBlob() }
-						: {}),
-					// Only when entered, like the additional fields above.
-					...(this.totpToSave ? { totp: this.totpToSave } : {}),
+					...this.valueFields(),
 				})
 				// Tags are stored apart from the value (vault-favourites-tags-and-last-used).
 				if (this.tags.length > 0 && created?.id) {
