@@ -680,53 +680,97 @@ class LinkShareServiceTest extends TestCase {
 	}//end testGetByTokenThrowsAndDeletesWhenBruteForced()
 
 	/**
-	 * Test confirmAccess increments usage atomically and resets failures.
+	 * Serving the snapshot counts a use and an attempt before the blob is
+	 * returned, and a share with uses left stays.
 	 *
 	 * @return void
 	 */
-	public function testConfirmAccessIncrementsUsage(): void {
-		$updated = $this->makeShare(['usageCount' => 2, 'usageLimit' => 3]);
+	public function testServeCountsTheUseBeforeReturningTheBlob(): void {
+		$before = $this->makeShare(['usageCount' => 1, 'usageLimit' => 3]);
+		$after = $this->makeShare(['usageCount' => 2, 'usageLimit' => 3, 'failedAttempts' => 1]);
 		$this->mapper->expects($this->once())
-			->method('incrementUsageIfBelowLimit')
-			->with('tok')
+			->method('countServeIfAllowed')
+			->with('tok', 5)
 			->willReturn(1);
-		$this->mapper->method('findByToken')->with('tok')->willReturn($updated);
-		// Not yet at the limit, so it must NOT be deleted.
+		$this->mapper->method('findByToken')->willReturnOnConsecutiveCalls($before, $after);
 		$this->mapper->expects($this->never())->method('delete');
+
+		$payload = $this->service->serve('tok');
+
+		$this->assertSame('blob', $payload['encryptedSecretSnapshot']);
+	}//end testServeCountsTheUseBeforeReturningTheBlob()
+
+	/**
+	 * The serve that reaches the usage limit deletes the share, without a
+	 * confirm from the client.
+	 *
+	 * @return void
+	 */
+	public function testServeBurnsAtTheUsageLimitWithoutAConfirm(): void {
+		$before = $this->makeShare(['usageCount' => 0, 'usageLimit' => 1]);
+		$after = $this->makeShare(['usageCount' => 1, 'usageLimit' => 1, 'failedAttempts' => 1]);
+		$this->mapper->method('countServeIfAllowed')->willReturn(1);
+		$this->mapper->method('findByToken')->willReturnOnConsecutiveCalls($before, $after);
+		$this->mapper->expects($this->once())->method('delete')->with($after);
+
+		$this->service->serve('tok');
+	}//end testServeBurnsAtTheUsageLimitWithoutAConfirm()
+
+	/**
+	 * The fifth serve without a confirmed decrypt deletes the share.
+	 *
+	 * @return void
+	 */
+	public function testServeBurnsAtTheAttemptCap(): void {
+		$before = $this->makeShare(['usageCount' => 4, 'usageLimit' => 10, 'failedAttempts' => 4]);
+		$after = $this->makeShare(['usageCount' => 5, 'usageLimit' => 10, 'failedAttempts' => 5]);
+		$this->mapper->method('countServeIfAllowed')->willReturn(1);
+		$this->mapper->method('findByToken')->willReturnOnConsecutiveCalls($before, $after);
+		$this->mapper->expects($this->once())->method('delete')->with($after);
+
+		$this->service->serve('tok');
+	}//end testServeBurnsAtTheAttemptCap()
+
+	/**
+	 * When the atomic count affects no row, no blob is served.
+	 *
+	 * @return void
+	 */
+	public function testServeRefusesWhenTheCountAffectsNoRow(): void {
+		$this->mapper->method('findByToken')->willReturn($this->makeShare());
+		$this->mapper->method('countServeIfAllowed')->willReturn(0);
+
+		$this->expectException(RuntimeException::class);
+		$this->service->serve('tok');
+	}//end testServeRefusesWhenTheCountAffectsNoRow()
+
+	/**
+	 * A confirm resets the attempts and counts no use.
+	 *
+	 * @return void
+	 */
+	public function testConfirmAccessResetsAttemptsAndCountsNoUse(): void {
+		$this->mapper->method('findByToken')->willReturn($this->makeShare(['usageCount' => 2, 'failedAttempts' => 1]));
+		$this->mapper->expects($this->once())->method('resetFailedAttempts')->with('tok');
+		$this->mapper->expects($this->never())->method('incrementUsageIfBelowLimit');
 
 		$result = $this->service->confirmAccess('tok');
 
 		$this->assertSame(2, $result->getUsageCount());
-	}//end testConfirmAccessIncrementsUsage()
+		$this->assertSame(0, $result->getFailedAttempts());
+	}//end testConfirmAccessResetsAttemptsAndCountsNoUse()
 
 	/**
-	 * Test confirmAccess deletes the share when the limit is reached.
+	 * A confirm for a share that is gone throws.
 	 *
 	 * @return void
 	 */
-	public function testConfirmAccessDeletesWhenLimitReached(): void {
-		$updated = $this->makeShare(['usageCount' => 3, 'usageLimit' => 3]);
-		$this->mapper->method('incrementUsageIfBelowLimit')->willReturn(1);
-		$this->mapper->method('findByToken')->willReturn($updated);
-		$this->mapper->expects($this->once())->method('delete')->with($updated);
-
-		$result = $this->service->confirmAccess('tok');
-
-		$this->assertSame(3, $result->getUsageCount());
-	}//end testConfirmAccessDeletesWhenLimitReached()
-
-	/**
-	 * Test confirmAccess throws when the atomic update affects no rows.
-	 *
-	 * @return void
-	 */
-	public function testConfirmAccessThrowsWhenNoRowsAffected(): void {
-		$this->mapper->method('incrementUsageIfBelowLimit')->willReturn(0);
-		$this->mapper->expects($this->never())->method('findByToken');
+	public function testConfirmAccessThrowsWhenTheShareIsGone(): void {
+		$this->mapper->method('findByToken')->willThrowException(new DoesNotExistException('gone'));
 
 		$this->expectException(RuntimeException::class);
 		$this->service->confirmAccess('tok');
-	}//end testConfirmAccessThrowsWhenNoRowsAffected()
+	}//end testConfirmAccessThrowsWhenTheShareIsGone()
 
 	/**
 	 * Test recordFailedAttempt increments the counter below the threshold.

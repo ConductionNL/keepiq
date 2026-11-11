@@ -276,33 +276,57 @@ class EphemeralSendService {
 	}//end peek()
 
 	/**
-	 * The ciphertext (+ wrapped key) for client-side decryption. Does
-	 * NOT consume a view — a wrong password on a one-view send must not
-	 * burn it; the client confirms a successful decrypt separately.
+	 * The ciphertext (+ wrapped key) for client-side decryption, counted
+	 * before it leaves the server.
+	 *
+	 * Every serve consumes one view, and one attempt when the send has a
+	 * password, atomically and only while both remain, so the view limit and
+	 * the attempt cap hold whether or not the client confirms. The send is
+	 * deleted (burned) as soon as the serve that reaches either one is read.
 	 *
 	 * @param string $token The URL token
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @throws DoesNotExistException When missing, expired, or burned
+	 * @throws DoesNotExistException When missing, expired, burned or out of attempts
 	 *
 	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
 	 */
 	public function access(string $token): array {
 		$send = $this->loadLive(token: $token);
+		$counted = $this->mapper->countServeIfAllowed(
+			token: $token,
+			attemptsCap: self::FAILED_ATTEMPTS_CAP,
+			countAttempt: $send->getHasPassword()
+		);
+		if ($counted === 0) {
+			throw new DoesNotExistException('Send not found');
+		}
 
-		return [
+		$send = $this->mapper->findByToken(token: $token);
+		$attemptsLeft = max(0, (self::FAILED_ATTEMPTS_CAP - $send->getFailedAttempts()));
+		$burned = $send->getViewCount() >= $send->getMaxViews() || $attemptsLeft === 0;
+		$served = [
 			'encryptedPayload' => $send->getEncryptedPayload(),
 			'payloadType' => $send->getPayloadType(),
 			'hasPassword' => $send->getHasPassword(),
 			'wrappedKey' => $send->getWrappedKey(),
 			'argon2idSalt' => $send->getArgon2idSalt(),
+			'burned' => $burned,
+			'remainingViews' => max(0, ($send->getMaxViews() - $send->getViewCount())),
+			'attemptsLeft' => $attemptsLeft,
 		];
+
+		if ($burned === true) {
+			$this->mapper->delete($send);
+		}
+
+		return $served;
 	}//end access()
 
 	/**
-	 * Confirm a successful client-side decrypt: consume one view and
-	 * delete the row once the cap is reached (burn).
+	 * Confirm a successful client-side decrypt. The view was counted when
+	 * the ciphertext was served; a confirm only resets the attempts.
 	 *
 	 * @param string $token The URL token
 	 *
@@ -314,18 +338,7 @@ class EphemeralSendService {
 	 */
 	public function confirmView(string $token): array {
 		$send = $this->loadLive(token: $token);
-		$send->setViewCount($send->getViewCount() + 1);
-
-		if ($send->getViewCount() >= $send->getMaxViews()) {
-			$this->mapper->delete($send);
-
-			return [
-				'burned' => true,
-				'remainingViews' => 0,
-			];
-		}
-
-		$this->mapper->update($send);
+		$this->mapper->resetFailedAttempts(token: $token);
 
 		return [
 			'burned' => false,
