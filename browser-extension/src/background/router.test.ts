@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { setUnauthorizedHandler } from '@/src/api/client'
-import { addAccount, getAccount, markLoggedOut } from '@/src/accounts/store'
+import { addAccount, getAccount, markLoggedOut, updateAccount } from '@/src/accounts/store'
 import { pemToPkcs8 } from '@/src/crypto'
 import { readPolicy } from '@/src/generator/store'
 import { forgetPin, pinGeneration, sealPin, storePinCopies, wrapPin } from '@/src/vault/pin'
@@ -288,5 +288,45 @@ describe('sign-in through Nextcloud', () => {
 		loginFlow(new Response(null, { status: 404 }))
 		expect(await send({ kind: 'accounts.loginFlow', serverUrl: 'cloud.example.org' })).toEqual({ ok: false, code: 'permission_denied' })
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
+describe('notices and failures', () => {
+	it.each([
+		['a locked account', {}, null],
+		['a locked account with the file access note', { fileAccessNote: true }, 'file_access'],
+		['a locked account whose key changed', { keyChanged: true }, 'key_changed'],
+		['a locked account whose key changed, over the file access note', { keyChanged: true, fileAccessNote: true }, 'key_changed'],
+		['a locked account marked revoked', { revoked: true }, null],
+	])('shows %s with notice %s', async (_name, patch, notice) => {
+		const account = await stored()
+		await updateAccount(account.id, patch)
+		const s = await state({ kind: 'vault.status' })
+		expect([s.screen, s.notice]).toEqual(['unlock', notice])
+	})
+
+	it('shows a logged-out account with no notice unless revoked, whatever else its record says', async () => {
+		const account = await stored()
+		await markLoggedOut(account.id)
+		await updateAccount(account.id, { keyChanged: true, fileAccessNote: true })
+		const s = await state({ kind: 'vault.status' })
+		expect([s.screen, s.notice]).toEqual(['reauthenticate', null])
+	})
+
+	it('refuses an unknown message as unknown', async () => {
+		expect(await send({ kind: 'vault.wipe' } as never)).toEqual({ ok: false, code: 'unknown' })
+		expect(await send({ kind: 'toString' } as never)).toEqual({ ok: false, code: 'unknown' })
+	})
+
+	it('answers unknown for an error that is no failure, and logs it', async () => {
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+		const account = await stored()
+		vi.spyOn(browser.storage.local, 'get').mockRejectedValue(new Error('disk'))
+		expect(await send({ kind: 'accounts.switch', accountId: account.id })).toEqual({ ok: false, code: 'unknown' })
+		expect(error).toHaveBeenCalledWith('[keepiq]', expect.any(Error))
+	})
+
+	it('passes a failure\'s attempts left only when it has them', async () => {
+		expect(await send({ kind: 'accounts.reauthenticate', accountId: 'nobody', appPassword: 'x' })).toEqual({ ok: false, code: 'unknown' })
 	})
 })
