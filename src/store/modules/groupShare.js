@@ -7,6 +7,7 @@ import axios from '@nextcloud/axios'
 import { generateOcsUrl, generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { copyCiphertext, recipientFields } from '../../services/recipientCopy.js'
+import { uniqueSharees } from '../../utils/sharees.js'
 import { useSecretStore } from './secret.js'
 import { useShareStore } from './share.js'
 
@@ -38,28 +39,6 @@ function shareeGroupRows(response) {
 		...(Array.isArray(data.exact?.groups) ? data.exact.groups : []),
 		...(Array.isArray(data.groups) ? data.groups : []),
 	]
-}
-
-/**
- * Sharee rows as groups, each id once, labelled by its name or else its id;
- * a row without an id is passed over.
- *
- * @param {Array<object>} rows The group rows.
- * @return {Array<{id: string, label: string}>}
- * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
- */
-function uniqueGroups(rows) {
-	const groups = []
-	const seen = new Set()
-	for (const row of rows) {
-		const id = String(row?.value?.shareWith ?? '')
-		if (id === '' || seen.has(id)) {
-			continue
-		}
-		seen.add(id)
-		groups.push({ id, label: String(row?.label || id) })
-	}
-	return groups
 }
 
 /**
@@ -193,7 +172,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 				},
 			)
 
-			return uniqueGroups(shareeGroupRows(response)).slice(
+			return uniqueSharees(shareeGroupRows(response)).slice(
 				0,
 				MAX_GROUP_RESULTS,
 			)

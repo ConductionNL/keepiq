@@ -204,11 +204,10 @@ import {
 import zxcvbn from 'zxcvbn'
 import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
 import exportSourceProps from '../mixins/exportSourceProps.js'
+import exportStoreDialog from '../mixins/exportStoreDialog.js'
 import masterPasswordCheck from '../mixins/masterPasswordCheck.js'
 import { fetchPolicy, resetPolicyCache } from '../policy/policy.js'
-import { useExportStore } from '../store/modules/export.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
-import { useSessionStore } from '../store/modules/session.js'
 
 /** The zxcvbn score floor for a backup passphrase (D1). */
 const PASSPHRASE_FLOOR = 3
@@ -225,22 +224,9 @@ export default {
 		NcCheckboxRadioSwitch,
 	},
 
-	mixins: [exportSourceProps, masterPasswordCheck],
+	mixins: [exportSourceProps, exportStoreDialog, masterPasswordCheck],
 
 	emits: ['update:open'],
-	/**
-	 * Provide the export + session Pinia stores to the component.
-	 *
-	 * @return {object}
-	 * @spec openspec/specs/secret-export/spec.md
-	 */
-	setup() {
-		return {
-			exportStore: useExportStore(),
-			sessionStore: useSessionStore(),
-		}
-	},
-
 	data() {
 		return {
 			mode: 'encrypted-backup',
@@ -269,16 +255,6 @@ export default {
 			return Object.fromEntries(
 				useSecretTypeStore().types.map((type) => [type.id, type.name]),
 			)
-		},
-
-		/**
-		 * Whether an export is in flight (from the store).
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/secret-export/spec.md
-		 */
-		loading() {
-			return this.exportStore.loading
 		},
 
 		/**
@@ -539,19 +515,6 @@ export default {
 			this.cxfReport = null
 		},
 
-		/**
-		 * Handle open-state changes, clearing transient secrets on close.
-		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 * @spec openspec/specs/secret-export/spec.md
-		 */
-		onUpdateOpen(value) {
-			if (!value) {
-				this.reset()
-			}
-			this.$emit('update:open', value)
-		},
 	},
 }
 </script>
