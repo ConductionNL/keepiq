@@ -1,0 +1,33 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`folder dialogs name field (golden) > create, folder level 1`] = `
+{
+  "empty": "<div class="folder-form"><input aria-label="Folder name" data-required="true" value=""><div class="select" modelvalue="v-1" reduce="(opt) => opt.value" clearable="false"></div></div>",
+  "typedName": "Renamed",
+  "withError": "<div class="folder-form"><p class="note" data-type="error">Duplicate name</p><input aria-label="Folder name" data-required="true" value="Renamed"><div class="select" modelvalue="v-1" reduce="(opt) => opt.value" clearable="false"></div></div>",
+}
+`;
+
+exports[`folder dialogs name field (golden) > create, vault level 1`] = `
+{
+  "empty": "<div class="folder-form"><input aria-label="Vault name" data-required="true" value=""><div class="picker" fallbackicon="[object Object]" translate="function () { [native code] }" data-testid="folder-create-style-picker"></div></div>",
+  "typedName": "Renamed",
+  "withError": "<div class="folder-form"><p class="note" data-type="error">Duplicate name</p><input aria-label="Vault name" data-required="true" value="Renamed"><div class="picker" fallbackicon="[object Object]" translate="function () { [native code] }" data-testid="folder-create-style-picker"></div></div>",
+}
+`;
+
+exports[`folder dialogs name field (golden) > edit, folder level 1`] = `
+{
+  "empty": "<div class="folder-form"><input aria-label="Folder name" data-required="true" value="Docs"></div>",
+  "typedName": "Renamed",
+  "withError": "<div class="folder-form"><p class="note" data-type="error">Duplicate name</p><input aria-label="Folder name" data-required="true" value="Renamed"></div>",
+}
+`;
+
+exports[`folder dialogs name field (golden) > edit, vault level 1`] = `
+{
+  "empty": "<div class="folder-form"><input aria-label="Vault name" data-required="true" value="Vault"><div class="picker" fallbackicon="[object Object]" translate="function () { [native code] }" data-testid="folder-edit-style-picker"></div></div>",
+  "typedName": "Renamed",
+  "withError": "<div class="folder-form"><p class="note" data-type="error">Duplicate name</p><input aria-label="Vault name" data-required="true" value="Renamed"><div class="picker" fallbackicon="[object Object]" translate="function () { [native code] }" data-testid="folder-edit-style-picker"></div></div>",
+}
+`;
