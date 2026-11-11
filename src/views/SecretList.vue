@@ -457,15 +457,11 @@
 						     the toggling exactly once (a raw click handler
 						     would double-fire through the label's forwarded
 						     click). -->
-						<NcCheckboxRadioSwitch
+						<SecretRowCheck
 							class="secret-list-view__check"
-							:modelValue="bulkStore.selectedIds.includes(object.id)"
-							:aria-label="
-								t('keepiq', 'Select {name}', { name: object.name })
-							"
-							:data-testid="`bulk-check-${object.id}`"
-							@click.capture="lastShiftKey = $event.shiftKey"
-							@update:modelValue="onRowCheck(object)" />
+							:secret="object"
+							@shift="lastShiftKey = $event"
+							@check="onRowCheck(object)" />
 						<SecretListItem
 							class="secret-list-view__row-item"
 							:class="{
@@ -490,15 +486,11 @@
 						:class="{
 							'secret-list-view__card--selected': selected,
 						}">
-						<NcCheckboxRadioSwitch
+						<SecretRowCheck
 							class="secret-list-view__check"
-							:modelValue="bulkStore.selectedIds.includes(object.id)"
-							:aria-label="
-								t('keepiq', 'Select {name}', { name: object.name })
-							"
-							:data-testid="`bulk-check-${object.id}`"
-							@click.capture="lastShiftKey = $event.shiftKey"
-							@update:modelValue="onRowCheck(object)" />
+							:secret="object"
+							@shift="lastShiftKey = $event"
+							@check="onRowCheck(object)" />
 						<SecretListItem
 							class="secret-list-view__card-item"
 							:secret="object"
@@ -575,7 +567,6 @@ import {
 	NcActions,
 	NcActionSeparator,
 	NcButton,
-	NcCheckboxRadioSwitch,
 	NcEmptyContent,
 } from '@nextcloud/vue'
 import { markRaw } from 'vue'
@@ -597,6 +588,7 @@ import TagOutline from 'vue-material-design-icons/TagOutline.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import LoginExtrasMarkers from '../components/LoginExtrasMarkers.vue'
 import SecretListItem from '../components/SecretListItem.vue'
+import SecretRowCheck from '../components/SecretRowCheck.vue'
 import SecretTypeIcon from '../components/SecretTypeIcon.vue'
 import StrengthBadge from '../components/StrengthBadge.vue'
 import VaultIndicator from '../components/VaultIndicator.vue'
@@ -710,7 +702,6 @@ export default {
 		NcActions,
 		NcActionSeparator,
 		NcButton,
-		NcCheckboxRadioSwitch,
 		NcEmptyContent,
 		AccountGroup,
 		FilterIcon,
@@ -728,6 +719,7 @@ export default {
 		KeyVariant,
 		LoginExtrasMarkers,
 		SecretListItem,
+		SecretRowCheck,
 		SecretTypeIcon,
 		StrengthBadge,
 		VaultIndicator,
