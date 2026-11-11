@@ -564,103 +564,175 @@ class SecretService {
 	 * @throws NotFoundException When the secret does not exist in this vault
 	 * @throws InvalidArgumentException When a submitted field is invalid, or a totp or passkeys value is sent
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
-	 *   independent, flat partial-update branch; every branch is pinned by
-	 *   tests/Unit/Service/SecretServiceMachineWriteTest.php (#152).
-	 * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
-	 *   independent partial-update guards, not nested logic. Extracting them
-	 *   into helpers trips TooManyMethods on this class instead (measured).
-	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
 	public function updateByApplication(string $id, array $data, string $applicationId): Secret {
 		$this->refuseApplicationValueFields(data: $data);
+		$run = new ApplicationSecretUpdateRun(
+			secret: $this->findInApplicationVault(id: $id, applicationId: $applicationId),
+			data: $data,
+			applicationId: $applicationId
+		);
+
+		$this->applyApplicationFields(run: $run);
+		$this->applyApplicationKey(run: $run);
+		$credentials = $this->storeApplicationUpdate(run: $run);
+		$this->auditApplicationUpdate(run: $run, credentials: $credentials);
+
+		return $run->secret;
+	}//end updateByApplication()
+
+	/**
+	 * The secret with this id in the application's own vault. A row owned by
+	 * another vault is indistinguishable from a nonexistent one: the same
+	 * NotFoundException, no existence oracle.
+	 *
+	 * @param string $id            The secret ID
+	 * @param string $applicationId The owning application ID
+	 *
+	 * @return Secret
+	 *
+	 * @throws NotFoundException When the secret does not exist in this vault
+	 *
+	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 */
+	private function findInApplicationVault(string $id, string $applicationId): Secret {
 		try {
 			$secret = $this->mapper->findById($id);
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
-		// Own-vault scoping: a row owned by another vault is indistinguishable
-		// from a nonexistent one — same NotFoundException, no existence oracle.
 		if ($secret->getOwnerType() !== 'application'
 			|| $secret->getOwnerId() !== $applicationId
 		) {
 			throw new NotFoundException(message: 'Secret not found');
 		}
 
-		$now = new DateTime();
-		$keyChanged = false;
+		return $secret;
+	}//end findInApplicationVault()
 
-		// Pre-update snapshot source (secret-version-history §2.2).
-		$preUpdate = clone $secret;
-
-		if (array_key_exists('name', $data) === true) {
-			$name = trim((string)$data['name']);
-			if ($name === '') {
-				throw new InvalidArgumentException('Secret name cannot be empty');
-			}
-
-			$secret->setName($name);
+	/**
+	 * Apply the name, URL, folder, login and additional fields a machine
+	 * write-back sends.
+	 *
+	 * @param ApplicationSecretUpdateRun $run The write-back
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the name is empty or a folder is named
+	 */
+	private function applyApplicationFields(ApplicationSecretUpdateRun $run): void {
+		$secret = $run->secret;
+		$this->applyName(secret: $secret, data: $run->data);
+		if ($run->sends('url') === true) {
+			$secret->setUrl($this->nullableString(value: $run->data['url']));
 		}
 
-		if (array_key_exists('url', $data) === true) {
-			$secret->setUrl($this->nullableString(value: $data['url']));
+		$this->clearApplicationFolder(run: $run);
+		if ($run->sends('login') === true) {
+			$secret->setLogin($this->nullableString(value: $run->data['login']));
 		}
 
-		if (array_key_exists('folderId', $data) === true) {
-			$folderId = $this->nullableString(value: $data['folderId']);
-			// Keepiq#795: folders belong to users and a machine write has no user, so an
-			// application cannot file a secret in a folder. Clearing it stays allowed.
-			if ($folderId !== null) {
-				throw new InvalidArgumentException('An application cannot file a secret in a folder');
-			}
-			$secret->setFolderId($folderId);
+		if ($run->sends('additionalFields') === true) {
+			$secret->setAdditionalFields($this->nullableString(value: $run->data['additionalFields']));
+		}
+	}//end applyApplicationFields()
+
+	/**
+	 * Write a changed key and stamp its ciphertext age with the write-back's
+	 * time; an unchanged key keeps its age.
+	 *
+	 * @param ApplicationSecretUpdateRun $run The write-back
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the key is empty
+	 */
+	private function applyApplicationKey(ApplicationSecretUpdateRun $run): void {
+		$key = $this->changedKey(secret: $run->secret, data: $run->data);
+		if ($key !== null) {
+			$run->secret->setKey($key);
+			$run->secret->setKeyUpdatedAt($run->now);
+		}
+	}//end applyApplicationKey()
+
+	/**
+	 * Apply the folder a machine write-back sends. Keepiq#795: folders belong
+	 * to users and a machine write has no user, so an application cannot
+	 * file a secret in a folder. Clearing it stays allowed.
+	 *
+	 * @param ApplicationSecretUpdateRun $run The write-back
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a folder is named
+	 *
+	 * @spec exclude keepiq#795 security fix, no OpenSpec requirement names this guard yet
+	 */
+	private function clearApplicationFolder(ApplicationSecretUpdateRun $run): void {
+		if ($run->sends('folderId') === false) {
+			return;
 		}
 
-		if (array_key_exists('login', $data) === true) {
-			$secret->setLogin($this->nullableString(value: $data['login']));
+		$folderId = $this->nullableString(value: $run->data['folderId']);
+		if ($folderId !== null) {
+			throw new InvalidArgumentException('An application cannot file a secret in a folder');
 		}
 
-		if (array_key_exists('additionalFields', $data) === true) {
-			$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
-		}
+		$run->secret->setFolderId($folderId);
+	}//end clearApplicationFolder()
 
-		if (array_key_exists('key', $data) === true) {
-			$key = (string)$data['key'];
-			if ($key === '') {
-				throw new InvalidArgumentException('Secret key cannot be empty');
-			}
-
-			if ($key !== $secret->getKey()) {
-				$secret->setKey($key);
-				$secret->setKeyUpdatedAt($now);
-				$keyChanged = true;
-			}
-		}
-
-		// The same rule as the owner path in update().
+	/**
+	 * Clear an answered compromise warning by the same rule as the owner path
+	 * in update(), snapshot the head when a field changed, and write the row
+	 * at the write-back's time.
+	 *
+	 * @param ApplicationSecretUpdateRun $run The write-back
+	 *
+	 * @return CredentialFields
+	 *
+	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 */
+	private function storeApplicationUpdate(ApplicationSecretUpdateRun $run): CredentialFields {
+		$secret = $run->secret;
 		$credentials = new CredentialFields();
-		if ($credentials->answersCompromiseWarning(after: $secret, before: $preUpdate) === true) {
+		if ($credentials->answersCompromiseWarning(after: $secret, before: $run->preUpdate) === true) {
 			$secret->setPossiblyCompromisedAt(null);
 		}
 
-		if ($this->versionService?->fieldsChanged(before: $preUpdate, after: $secret) === true) {
-			$this->versionService->snapshot(preUpdate: $preUpdate, actorType: 'application', actorId: $applicationId);
+		if ($this->versionService?->fieldsChanged(before: $run->preUpdate, after: $secret) === true) {
+			$this->versionService->snapshot(preUpdate: $run->preUpdate, actorType: 'application', actorId: $run->applicationId);
 		}
 
-		$secret->setUpdatedAt($now);
+		$secret->setUpdatedAt($run->now);
 		$this->mapper->update($secret);
 
-		// An accepted empty totp or passkeys changes nothing and is not named.
-		$changedFields = array_values(array_diff(array_keys($data), $credentials->unchanged(after: $secret, before: $preUpdate)));
-		if ($keyChanged === true) {
+		return $credentials;
+	}//end storeApplicationUpdate()
+
+	/**
+	 * Record the write-back with the fields it changed: the key alone when
+	 * the key changed. An accepted empty totp or passkeys changes nothing and
+	 * is not named.
+	 *
+	 * @param ApplicationSecretUpdateRun $run         The write-back
+	 * @param CredentialFields           $credentials The credential rule that checked it
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 */
+	private function auditApplicationUpdate(ApplicationSecretUpdateRun $run, CredentialFields $credentials): void {
+		$secret = $run->secret;
+		$changedFields = array_values(array_diff(array_keys($run->data), $credentials->unchanged(after: $secret, before: $run->preUpdate)));
+		if ($run->keyChanged() === true) {
 			$changedFields = ['key'];
 		}
 
 		$this->dispatchAudit(
 			event: $this->auditEvents->forApplication(
-				actorId: $applicationId,
+				actorId: $run->applicationId,
 				eventType: AuditEventTypes::SECRET_UPDATED,
 				objectType: 'secret',
 				objectId: $secret->getId(),
@@ -668,9 +740,7 @@ class SecretService {
 				metadata: ['changedFields' => $changedFields],
 			)
 		);
-
-		return $secret;
-	}//end updateByApplication()
+	}//end auditApplicationUpdate()
 
 	/**
 	 * Delete a secret from an application's own vault (in-process seam).
@@ -927,18 +997,9 @@ class SecretService {
 	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on after it was read
 	 * @throws ShareScanPendingException When the secret is a copy whose share row waits for the share quarantine scan
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
-	 *   independent, flat partial-update branch.
-	 * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
-	 *   independent partial-update guards, not nested logic.
-	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) One partial-update guard per
-	 *   field, in the order the fields are applied; the vault policy check is one
-	 *   line. Splitting the field guards apart would scatter one update over
-	 *   several methods and the class is at its method limit.
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `$restoring` only tells the
 	 *   compromise rule that the totp and passkeys written are old values; the
 	 *   write itself is the same.
@@ -951,134 +1012,282 @@ class SecretService {
 			userId: $userId
 		);
 
-		// The write is locked against the version just read, whether or not
-		// the client named one; the check below compares a named one. A
-		// share-save locked its own version already.
-		$base = null;
-		if ($savedAt === null) {
-			$base = $secret->getUpdatedAt();
+		// The run locks the write against the version just read, whether or
+		// not the client named one; the edit guard compares a named one. A
+		// share-save locked its own version already. The pre-update snapshot
+		// is captured before any field is applied and persisted only when a
+		// field actually changes (a no-op resubmit creates no version).
+		$run = new SecretUpdateRun(
+			secret: $secret,
+			data: $this->editGuard->checkedUpdate(secret: $secret, data: $data),
+			userId: $userId,
+			savedAt: $savedAt,
+			restoring: $restoring
+		);
+
+		return $this->applyUpdate(run: $run);
+	}//end update()
+
+	/**
+	 * Apply an owner update in order: the metadata fields, the team folder
+	 * policy, the key, the other value fields and their change times, then
+	 * the write, the partner notice and the audit entry.
+	 *
+	 * @param SecretUpdateRun $run The update
+	 *
+	 * @return Secret
+	 *
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 */
+	private function applyUpdate(SecretUpdateRun $run): Secret {
+		$secret = $run->secret;
+		$this->applyDetailFields(run: $run);
+		$this->orgOwnership?->assertKept(secret: $secret, before: $run->preUpdate, userId: $run->userId);
+		$this->applyChangedKey(secret: $secret, data: $run->data);
+		$this->applyValueFields(run: $run);
+		$credentials = $this->stampCredentials(run: $run);
+
+		$this->store(secret: $secret, preUpdate: $run->preUpdate, userId: $run->userId, base: $run->base, savedAt: $run->savedAt);
+		$this->notifyPartnersOfDetails(run: $run);
+		$this->auditUpdate(run: $run, credentials: $credentials);
+
+		return $secret;
+	}//end applyUpdate()
+
+	/**
+	 * Apply the name, URL, folder and type an owner update sends. A folder
+	 * that changes must be one the user owns.
+	 *
+	 * @param SecretUpdateRun $run The update
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the name is empty
+	 * @throws ForbiddenException When the new folder belongs to another user
+	 */
+	private function applyDetailFields(SecretUpdateRun $run): void {
+		$secret = $run->secret;
+		$this->applyName(secret: $secret, data: $run->data);
+		if ($run->sends('url') === true) {
+			$secret->setUrl($this->nullableString(value: $run->data['url']));
 		}
 
-		$data = $this->editGuard->checkedUpdate(secret: $secret, data: $data);
+		$this->applyOwnedFolder(run: $run);
+		if ($run->sends('typeId') === true) {
+			$secret->setTypeId($this->typeService->resolveTypeForSecret($run->data['typeId'], $run->userId));
+		}
+	}//end applyDetailFields()
 
-		// Pre-update snapshot source (secret-version-history §2.2): captured
-		// BEFORE any mutation; persisted below only when a field actually
-		// changes (a no-op resubmit creates no version).
-		$preUpdate = clone $secret;
-
-		if (array_key_exists('name', $data) === true) {
-			$name = trim((string)$data['name']);
-			if ($name === '') {
-				throw new InvalidArgumentException('Secret name cannot be empty');
-			}
-
-			$secret->setName($name);
+	/**
+	 * Apply the folder an owner update sends, checking a changed one is the user's.
+	 *
+	 * @param SecretUpdateRun $run The update
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenException When the new folder belongs to another user
+	 *
+	 * @spec exclude keepiq#795 security fix, no OpenSpec requirement names this guard yet
+	 */
+	private function applyOwnedFolder(SecretUpdateRun $run): void {
+		if ($run->sends('folderId') === false) {
+			return;
 		}
 
-		if (array_key_exists('url', $data) === true) {
-			$secret->setUrl($this->nullableString(value: $data['url']));
+		$folderId = $this->nullableString(value: $run->data['folderId']);
+		if ($folderId !== $run->secret->getFolderId()) {
+			$this->requireFolderOwnedBy(folderId: $folderId, userId: $run->userId);
 		}
 
-		if (array_key_exists('folderId', $data) === true) {
-			$folderId = $this->nullableString(value: $data['folderId']);
-			if ($folderId !== $secret->getFolderId()) {
-				$this->requireFolderOwnedBy(folderId: $folderId, userId: $userId);
-			}
+		$run->secret->setFolderId($folderId);
+	}//end applyOwnedFolder()
 
-			$secret->setFolderId($folderId);
+	/**
+	 * Apply the trimmed name the data sends, refusing an empty one.
+	 *
+	 * @param Secret              $secret The row being changed
+	 * @param array<string,mixed> $data   The submitted fields
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the name is empty
+	 */
+	private function applyName(Secret $secret, array $data): void {
+		if (array_key_exists('name', $data) === false) {
+			return;
 		}
 
-		if (array_key_exists('typeId', $data) === true) {
-			$secret->setTypeId($this->typeService->resolveTypeForSecret($data['typeId'], $userId));
+		$name = trim((string)$data['name']);
+		if ($name === '') {
+			throw new InvalidArgumentException('Secret name cannot be empty');
 		}
 
-		$this->orgOwnership?->assertKept(secret: $secret, before: $preUpdate, userId: $userId);
+		$secret->setName($name);
+	}//end applyName()
 
-		if (array_key_exists('key', $data) === true) {
-			$key = (string)$data['key'];
-			if ($key === '') {
-				throw new InvalidArgumentException('Secret key cannot be empty');
-			}
-
-			// Stamp ciphertext age ONLY when the encrypted key blob actually
-			// changes — a no-op re-submit of the same ciphertext (or a rename
-			// that happens to also resend key) must not un-stale the credential
-			// (password-health design D4). Pure string inequality; no decryption.
-			if ($key !== $secret->getKey()) {
-				$secret->setKey($key);
-				$secret->setKeyUpdatedAt(new DateTime());
-			}
-		}//end if
-
-		if (array_key_exists('login', $data) === true) {
-			$secret->setLogin($this->nullableString(value: $data['login']));
+	/**
+	 * The key ciphertext the data sends when it differs from the stored one,
+	 * null when it sends none or the same. Pure string inequality; no
+	 * decryption (password-health design D4).
+	 *
+	 * @param Secret              $secret The row being changed
+	 * @param array<string,mixed> $data   The submitted fields
+	 *
+	 * @return string|null
+	 *
+	 * @throws InvalidArgumentException When the key is empty
+	 */
+	private function changedKey(Secret $secret, array $data): ?string {
+		if (array_key_exists('key', $data) === false) {
+			return null;
 		}
 
-		if (array_key_exists('additionalFields', $data) === true) {
-			$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
-			// Request-filled blobs the client merged into this one (keepiq#750).
-			$secret->dropMergedPending(count: (int)($data['mergedPending'] ?? 0));
+		$key = (string)$data['key'];
+		if ($key === '') {
+			throw new InvalidArgumentException('Secret key cannot be empty');
 		}
 
-		if (array_key_exists('totp', $data) === true) {
-			$secret->setTotp($this->nullableString(value: $data['totp']));
+		if ($key === $secret->getKey()) {
+			return null;
 		}
 
-		if (array_key_exists('passkeys', $data) === true) {
-			$secret->setPasskeys($this->nullableString(value: $data['passkeys']));
+		return $key;
+	}//end changedKey()
+
+	/**
+	 * Write a changed key and stamp its ciphertext age. A no-op re-submit of
+	 * the same ciphertext (or a rename that also resends the key) must not
+	 * un-stale the credential.
+	 *
+	 * @param Secret              $secret The row being changed
+	 * @param array<string,mixed> $data   The submitted fields
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the key is empty
+	 */
+	private function applyChangedKey(Secret $secret, array $data): void {
+		$key = $this->changedKey(secret: $secret, data: $data);
+		if ($key !== null) {
+			$secret->setKey($key);
+			$secret->setKeyUpdatedAt(new DateTime());
+		}
+	}//end applyChangedKey()
+
+	/**
+	 * Apply the login, additional fields, totp and passkeys an owner update
+	 * sends; request-filled blobs the client merged into the additional
+	 * fields are dropped with them (keepiq#750).
+	 *
+	 * @param SecretUpdateRun $run The update
+	 *
+	 * @return void
+	 */
+	private function applyValueFields(SecretUpdateRun $run): void {
+		$secret = $run->secret;
+		if ($run->sends('login') === true) {
+			$secret->setLogin($this->nullableString(value: $run->data['login']));
 		}
 
-		// A restore writes back old ciphertext: its credentials are no new
-		// values, so they replace nothing and have no change time.
+		if ($run->sends('additionalFields') === true) {
+			$secret->setAdditionalFields($this->nullableString(value: $run->data['additionalFields']));
+			$secret->dropMergedPending(count: (int)($run->data['mergedPending'] ?? 0));
+		}
+
+		if ($run->sends('totp') === true) {
+			$secret->setTotp($this->nullableString(value: $run->data['totp']));
+		}
+
+		if ($run->sends('passkeys') === true) {
+			$secret->setPasskeys($this->nullableString(value: $run->data['passkeys']));
+		}
+	}//end applyValueFields()
+
+	/**
+	 * Stamp the change time of each credential that changed and clear the
+	 * possibly-compromised warning once none is left exposed. A restore
+	 * writes back old ciphertext: its credentials are no new values, so they
+	 * replace nothing and have no change time.
+	 *
+	 * The warning says "replace the exposed values at their source". A login
+	 * can hold three credentials, so it clears only once none of `key`,
+	 * `totp` and `passkeys` is left exposed; a rename, move or other metadata
+	 * edit, or a resent unchanged ciphertext, never clears it.
+	 *
+	 * @param SecretUpdateRun $run The update
+	 *
+	 * @return CredentialFields
+	 *
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 */
+	private function stampCredentials(SecretUpdateRun $run): CredentialFields {
 		$credentials = new CredentialFields();
 		$restored = [];
 		$compromiseFlagOpen = false;
-		if ($restoring === true) {
+		if ($run->restoring === true) {
 			$restored = CredentialFields::CREDENTIALS;
-			$compromiseFlagOpen = ($this->versionService?->compromiseFlagOpen(secretId: $secret->getId()) === true);
+			$compromiseFlagOpen = ($this->versionService?->compromiseFlagOpen(secretId: $run->secret->getId()) === true);
 		}
 
 		$credentials->stamp(
-			after: $secret,
-			before: $preUpdate,
+			after: $run->secret,
+			before: $run->preUpdate,
 			now: new DateTime(),
 			restored: $restored,
 			compromiseFlagOpen: $compromiseFlagOpen
 		);
 
-		// The possibly-compromised warning says "replace the exposed values at
-		// their source". A login can hold three credentials, so it clears only
-		// once none of `key`, `totp` and `passkeys` is left exposed; a rename,
-		// move or other metadata edit, or a resent unchanged ciphertext, never
-		// clears it.
-		if ($credentials->answersCompromiseWarning(after: $secret, before: $preUpdate, restored: $restored) === true) {
-			$secret->setPossiblyCompromisedAt(null);
+		if ($credentials->answersCompromiseWarning(after: $run->secret, before: $run->preUpdate, restored: $restored) === true) {
+			$run->secret->setPossiblyCompromisedAt(null);
 		}
 
-		$this->store(secret: $secret, preUpdate: $preUpdate, userId: $userId, base: $base, savedAt: $savedAt);
+		return $credentials;
+	}//end stampCredentials()
 
-		// Recipients at partner organisations follow a new name or URL
-		// (sharing-federated-recipients 4.5). A new value reaches them through
-		// the share-save, which notifies them itself.
+	/**
+	 * Tell recipients at partner organisations of a new name or URL
+	 * (sharing-federated-recipients 4.5). A new value reaches them through
+	 * the share-save, which notifies them itself.
+	 *
+	 * @param SecretUpdateRun $run The update
+	 *
+	 * @return void
+	 */
+	private function notifyPartnersOfDetails(SecretUpdateRun $run): void {
+		$before = $run->preUpdate;
+		$secret = $run->secret;
 		if ($this->federatedShares !== null
-			&& array_intersect(Secret::VALUE_FIELDS, array_keys($data)) === []
-			&& ($preUpdate->getName() !== $secret->getName() || $preUpdate->getUrl() !== $secret->getUrl())
+			&& array_intersect(Secret::VALUE_FIELDS, array_keys($run->data)) === []
+			&& ($before->getName() !== $secret->getName() || $before->getUrl() !== $secret->getUrl())
 		) {
-			$this->federatedShares->detailsChanged(secretId: $secret->getId(), userId: $userId);
+			$this->federatedShares->detailsChanged(secretId: $secret->getId(), userId: $run->userId);
 		}
+	}//end notifyPartnersOfDetails()
 
+	/**
+	 * Record the update with the fields it changed.
+	 *
+	 * @param SecretUpdateRun  $run         The update
+	 * @param CredentialFields $credentials The credential rule that stamped it
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 */
+	private function auditUpdate(SecretUpdateRun $run, CredentialFields $credentials): void {
+		$secret = $run->secret;
 		$changedFields = array_values(
 			array_diff(
 				array_intersect(
 					['name', 'url', 'folderId', 'typeId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'],
-					array_keys($data)
+					array_keys($run->data)
 				),
-				$credentials->unchanged(after: $secret, before: $preUpdate)
+				$credentials->unchanged(after: $secret, before: $run->preUpdate)
 			)
 		);
 		$this->dispatchAudit(
 			event: $this->auditEvents->forUser(
-				actorId: $userId,
+				actorId: $run->userId,
 				eventType: AuditEventTypes::SECRET_UPDATED,
 				objectType: 'secret',
 				objectId: $secret->getId(),
@@ -1086,9 +1295,7 @@ class SecretService {
 				metadata: ['changedFields' => $changedFields],
 			)
 		);
-
-		return $secret;
-	}//end update()
+	}//end auditUpdate()
 
 	/**
 	 * Snapshot the head and write the updated row. Without a version from a
