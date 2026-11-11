@@ -34,8 +34,11 @@ use OCA\Keepiq\Service\PasskeyChallengeStore;
 use OCA\Keepiq\Service\PasskeyEnrolmentCeremony;
 use OCA\Keepiq\Service\PasskeyService;
 use OCA\Keepiq\Service\PasskeyUnlockCeremony;
+use OCA\Keepiq\Service\ExtensionCeremonySteps;
+use OCA\Keepiq\Service\TrustedExtensionOrigins;
 use OCA\Keepiq\Service\WebAuthnVerifier;
 use OCA\Keepiq\Tests\Support\WebAuthnFixture;
+use OCP\IAppConfig;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IRequest;
 use OCP\ISession;
@@ -89,7 +92,7 @@ class PasskeyUnlockTest extends TestCase {
 			$this->markTestSkipped('Needs the WebAuthn library from the Nextcloud server (3rdparty)');
 		}
 
-		$this->verifier = new WebAuthnVerifier();
+		$this->verifier = new WebAuthnVerifier(extensionSteps: new ExtensionCeremonySteps(origins: new TrustedExtensionOrigins(appConfig: $this->createMock(originalClassName: IAppConfig::class))));
 		$this->passkey = new WebAuthnFixture();
 		$this->credential = $this->enrolled(passkey: $this->passkey);
 
