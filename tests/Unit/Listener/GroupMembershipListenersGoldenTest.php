@@ -38,6 +38,8 @@ use RuntimeException;
  *
  * @covers \OCA\Keepiq\Listener\UserAddedToGroupListener
  * @covers \OCA\Keepiq\Listener\UserRemovedFromGroupListener
+ * @uses   \OCA\Keepiq\Listener\GroupMembershipRelay
+ * @uses   \OCA\Keepiq\Listener\MembershipStep
  */
 final class GroupMembershipListenersGoldenTest extends TestCase {
 	/**

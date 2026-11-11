@@ -42,6 +42,16 @@ use Throwable;
  *
  * @covers \OCA\Keepiq\Service\FolderService
  * @covers \OCA\Keepiq\Service\FolderDeletionService
+ * @uses   \OCA\Keepiq\Db\Folder
+ * @uses   \OCA\Keepiq\Db\StringPrimaryKey
+ * @uses   \OCA\Keepiq\Event\Audit\AuditEvent
+ * @uses   \OCA\Keepiq\Event\Audit\AuditEventFactory
+ * @uses   \OCA\Keepiq\Service\FolderCascadeService
+ * @uses   \OCA\Keepiq\Service\FolderDeletion
+ * @uses   \OCA\Keepiq\Service\FolderNameGuard
+ * @uses   \OCA\Keepiq\Service\FolderOwnershipGuard
+ * @uses   \OCA\Keepiq\Service\FolderTreeService
+ * @uses   \OCA\Keepiq\Service\SecretChildDataCleaner
  */
 final class FolderDeletionGoldenTest extends TestCase {
 	/**
