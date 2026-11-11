@@ -28,6 +28,7 @@ use OCA\Keepiq\Exception\PasskeyVerificationException;
 use OCA\Keepiq\Service\PasskeyChallengeStore;
 use OCA\Keepiq\Service\PasskeyEnrolmentCeremony;
 use OCA\Keepiq\Service\PasskeyService;
+use OCA\Keepiq\Service\PasskeyUnlockCeremony;
 use OCA\Keepiq\Service\VerifiedPasskey;
 use OCA\Keepiq\Service\WebAuthnVerifier;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -72,6 +73,7 @@ class PasskeyServiceTest extends TestCase {
 
 		$this->challenges = $this->createMock(originalClassName: PasskeyChallengeStore::class);
 		$this->challenges->method('take')->willReturn(['challenge' => 'C1', 'assertionChallenge' => 'C2']);
+		$this->challenges->method('issueUnlock')->willReturn('U1');
 		$this->verifier = $this->createMock(originalClassName: WebAuthnVerifier::class);
 		$this->verifier->method('verifyEnrolment')->willReturnCallback(
 			static fn (string $uid, string $rpId, string $challenge, string $assertionChallenge, array $attestation) => new VerifiedPasskey(
@@ -97,13 +99,21 @@ class PasskeyServiceTest extends TestCase {
 	 * @return PasskeyService
 	 */
 	private function service(PasskeyChallengeStore $challenges, WebAuthnVerifier $verifier): PasskeyService {
+		$enrolment = new PasskeyEnrolmentCeremony(
+			challenges: $challenges,
+			verifier: $verifier,
+			request: $this->request,
+			logger: $this->logger,
+		);
+
 		return new PasskeyService(
 			mapper: $this->mapper,
 			suiteMapper: $this->suiteMapper,
-			ceremony: new PasskeyEnrolmentCeremony(
+			ceremony: $enrolment,
+			unlockCeremony: new PasskeyUnlockCeremony(
 				challenges: $challenges,
 				verifier: $verifier,
-				request: $this->request,
+				enrolment: $enrolment,
 				logger: $this->logger,
 			),
 		);
@@ -140,6 +150,7 @@ class PasskeyServiceTest extends TestCase {
 		$credential->setId($id);
 		$credential->setOwnerId('alice');
 		$credential->setCredentialId('cred-' . $id);
+		$credential->setPublicKey('PK');
 		$credential->setPrfSalt('salt');
 		$credential->setWrappedUnlockKey('envelope');
 		$credential->setUnlockKeyEpoch($epoch);
@@ -196,15 +207,18 @@ class PasskeyServiceTest extends TestCase {
 	}//end testEnrollRejectsDuplicate()
 
 	/**
-	 * loginOptions returns only epoch-current envelopes and marks a
-	 * trailing-epoch credential stale (§2.2 / §D4).
+	 * loginOptions returns only epoch-current, verified credentials, without
+	 * any envelope, and marks a trailing-epoch credential and one without a
+	 * verified public key stale (§2.2 / §D4).
 	 *
 	 * @return void
 	 */
 	public function testLoginOptionsRefusesStaleEpoch(): void {
 		$current = $this->makeCredential('cur', 3);
 		$old = $this->makeCredential('old', 2);
-		$this->mapper->method('findActiveByOwner')->willReturn([$current, $old]);
+		$unverified = $this->makeCredential('unv', 3);
+		$unverified->setPublicKey('');
+		$this->mapper->method('findActiveByOwner')->willReturn([$current, $old, $unverified]);
 
 		// The trailing-epoch credential is marked stale (an update).
 		$staled = [];
@@ -217,10 +231,14 @@ class PasskeyServiceTest extends TestCase {
 		$options = $this->service->loginOptions('alice');
 
 		$this->assertCount(1, $options['credentials']);
-		$this->assertSame('cur', $options['credentials'][0]['id']);
-		$this->assertSame([['old', 'stale']], $staled);
+		$this->assertSame(
+			['id' => 'cur', 'credentialId' => 'cred-cur', 'prfSalt' => 'salt', 'unlockKeyEpoch' => 3],
+			$options['credentials'][0]
+		);
+		$this->assertSame([['old', 'stale'], ['unv', 'stale']], $staled);
 		$this->assertSame(3, $options['unlockKeyEpoch']);
-		$this->assertNotEmpty($options['challenge']);
+		$this->assertSame('VTE', $options['challenge']);
+		$this->assertStringNotContainsString('envelope', (string)json_encode($options));
 	}//end testLoginOptionsRefusesStaleEpoch()
 
 	/**
@@ -397,11 +415,12 @@ class PasskeyServiceTest extends TestCase {
 		);
 
 		$this->assertSame(
-			['alice', 'c', 'PK', 's', 'e', 3, null, 'usb,nfc', '00112233-4455-6677-8899-aabbccddeeff', 'web', null, 'active'],
+			['alice', 'c', 'PK', 's', 'e', 3, null, 'usb,nfc', '00112233-4455-6677-8899-aabbccddeeff', 'web', null, 'active', 1],
 			[
 				$credential->getOwnerId(), $credential->getCredentialId(), $credential->getPublicKey(), $credential->getPrfSalt(),
 				$credential->getWrappedUnlockKey(), $credential->getUnlockKeyEpoch(), $credential->getLabel(), $credential->getTransports(),
 				$credential->getAaguid(), $credential->getClientKind(), $credential->getRpId(), $credential->getStatus(),
+				$credential->getSignCount(),
 			]
 		);
 		$this->assertMatchesRegularExpression('/^[0-9a-f-]{36}$/', $credential->getId());
