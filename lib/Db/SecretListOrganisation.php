@@ -118,6 +118,24 @@ class SecretListOrganisation {
 	}//end orderTerms()
 
 	/**
+	 * The SQL direction for a requested sort direction: descending only
+	 * when asked for, in any case.
+	 *
+	 * @param string $requested The requested direction (asc/desc)
+	 *
+	 * @return string ASC or DESC
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
+	 */
+	public function sqlDirection(string $requested): string {
+		if (strtolower($requested) === 'desc') {
+			return 'DESC';
+		}
+
+		return 'ASC';
+	}//end sqlDirection()
+
+	/**
 	 * Apply the order terms to a query.
 	 *
 	 * @param IQueryBuilder $qb        The query to order
