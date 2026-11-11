@@ -19,18 +19,10 @@
 		size="normal"
 		@update:open="onUpdateOpen">
 		<div class="folder-form">
-			<NcNoteCard v-if="error" type="error">
-				{{ error }}
-			</NcNoteCard>
-
-			<NcTextField
+			<FolderNameField
 				v-model="name"
-				:label="
-					isVaultLevel
-						? t('keepiq', 'Vault name')
-						: t('keepiq', 'Folder name')
-				"
-				:required="true" />
+				:vaultLevel="isVaultLevel"
+				:error="error" />
 
 			<!-- Personalization applies to VAULTS (top-level folders) only —
 			     nested folders keep the plain glyph. -->
@@ -58,7 +50,8 @@
 
 <script>
 import { CnDialogActions, CnIconColorPicker } from '@conduction/nextcloud-vue'
-import { NcDialog, NcNoteCard, NcTextField } from '@nextcloud/vue'
+import { NcDialog } from '@nextcloud/vue'
+import FolderNameField from '../components/FolderNameField.vue'
 import folderDialog from '../mixins/folderDialog.js'
 import { useFolderStore } from '../store/modules/folder.js'
 
@@ -73,9 +66,8 @@ export default {
 	components: {
 		CnDialogActions,
 		CnIconColorPicker,
+		FolderNameField,
 		NcDialog,
-		NcNoteCard,
-		NcTextField,
 	},
 
 	mixins: [folderDialog],
@@ -122,9 +114,6 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async submit() {
-			if (!this.canSubmit) {
-				return
-			}
 			await this.saveFolder(
 				() => useFolderStore().updateFolder(this.folder.id, this.changes()),
 				t('keepiq', 'Failed to update folder'),
@@ -155,11 +144,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.folder-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 4px 0;
-}
-</style>
+<style scoped src="./folderForm.css"></style>
