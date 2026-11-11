@@ -938,4 +938,60 @@ class GroupShareServiceTest extends TestCase {
 
 		$this->assertSame([], $this->service->getGroupMembers('ghost'));
 	}//end testGetGroupMembersEmptyForUnknownGroup()
+
+	/**
+	 * A new group share stores the restricted row and answers the members in
+	 * group order, the owner left out and a member without a suite counted.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareStoresTheRestrictedRowAndTheFanOut(): void {
+		$this->secretMapper->method('findById')->willReturn($this->makeOwnerSecret('src-1', 'alice'));
+		$group = $this->createMock(IGroup::class);
+		$group->method('getUsers')->willReturn([$this->mockUser('bob'), $this->mockUser('alice'), $this->mockUser('carol'), $this->mockUser('dan')]);
+		$this->groupManager->method('get')->with('engineering')->willReturn($group);
+		$this->mapper->method('findBySecretAndGroup')->with('src-1', 'engineering')->willThrowException(new DoesNotExistException('no'));
+		$stored = [];
+		$this->mapper->method('insert')->willReturnCallback(static function (GroupShare $row) use (&$stored): GroupShare {
+			$stored = [strlen((string)$row->getId()), $row->getSecretId(), $row->getGroupId(), $row->getCreatedBy(), $row->getCreatedAt() !== null, $row->getUseOnly(), $row->getExpiresAt()?->format('Y-m-d')];
+			return $row;
+		});
+		$this->suiteMapper->method('findActiveByOwner')->willReturnCallback(
+			static function (string $ownerType, string $ownerId): EncryptionSuite {
+				if ($ownerId === 'carol') {
+					throw new DoesNotExistException('no');
+				}
+
+				$suite = new EncryptionSuite();
+				$suite->setCertificate('PEM-' . $ownerType . '-' . $ownerId);
+				return $suite;
+			}
+		);
+
+		$result = $this->service->createGroupShare(
+			secretId: 'src-1',
+			groupId: 'engineering',
+			userId: 'alice',
+			restriction: new ShareRestriction(useOnly: true, expiresAt: new \DateTime('2099-03-04')),
+		);
+
+		$this->assertSame([36, 'src-1', 'engineering', 'alice', true, true, '2099-03-04'], $stored);
+		$this->assertSame(['groupShare', 'members', 'skipped'], array_keys($result));
+		$this->assertSame([['userId' => 'bob', 'certificate' => 'PEM-user-bob'], ['userId' => 'dan', 'certificate' => 'PEM-user-dan']], $result['members']);
+		$this->assertSame(1, $result['skipped']);
+	}//end testCreateGroupShareStoresTheRestrictedRowAndTheFanOut()
+
+	/**
+	 * A group share without a group is refused before the secret is read.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareNeedsAGroupBeforeAnyLookup(): void {
+		$this->secretMapper->expects($this->never())->method('findById');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('groupId is required');
+
+		$this->service->createGroupShare(secretId: 'src-1', groupId: '', userId: 'alice');
+	}//end testCreateGroupShareNeedsAGroupBeforeAnyLookup()
 }//end class

@@ -44,6 +44,7 @@ use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
+use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\Share\IManager as IShareManager;
 use Psr\Log\LoggerInterface;
@@ -141,52 +142,126 @@ class GroupShareService {
 		string $userId,
 		?ShareRestriction $restriction = null,
 	): array {
-		if ($groupId === '') {
+		return $this->shareWithGroup(
+			request: new GroupShareRequest(secretId: $secretId, groupId: $groupId, userId: $userId, restriction: $restriction)
+		);
+	}//end createGroupShare()
+
+	/**
+	 * Share a secret with a group: authorize the source and the group, store
+	 * or update the one GroupShare row, and answer the member fan-out.
+	 *
+	 * @param GroupShareRequest $request The secret, group, initiator and restriction
+	 *
+	 * @return array{groupShare:GroupShare,members:array<int,array{userId:string,certificate:string}>,skipped:int}
+	 *
+	 * @throws InvalidArgumentException On unauthorized / missing secret / empty group
+	 * @throws ShareScanPendingException When a restriction change reaches a row the pending quarantine scan cannot judge
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+	 */
+	public function shareWithGroup(GroupShareRequest $request): array {
+		if ($request->groupId === '') {
 			throw new InvalidArgumentException(message: 'groupId is required');
 		}
 
-		// A delegate names their own copy; the group share hangs on its source.
-		$secret = $this->authorization()->resolveShareSource(
-			secret: $this->loadSecret(secretId: $secretId),
-			userId: $userId
-		);
-		$secretId = $secret->getId();
-		$this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
-		$secret->assertOnwardShareable();
-		$this->assertShareableSource(secret: $secret, userId: $userId);
-
-		$group = $this->groupManager->get($groupId);
+		$secret = $this->authorizedShareSource(request: $request);
+		$group = $this->groupManager->get($request->groupId);
 		if ($group === null) {
 			throw new InvalidArgumentException(message: 'Group not found');
 		}
 
-		$this->assertGroupShareable(groupId: $groupId, userId: $userId);
+		$this->assertGroupShareable(groupId: $request->groupId, userId: $request->userId);
 
+		return ['groupShare' => $this->storeGroupShare(request: $request, secret: $secret)]
+			+ $this->memberFanOut(group: $group, secret: $secret);
+	}//end shareWithGroup()
+
+	/**
+	 * The source secret the request shares, once the initiator may share it
+	 * onward. A delegate names their own copy; the group share hangs on its
+	 * source.
+	 *
+	 * @param GroupShareRequest $request The request
+	 *
+	 * @return Secret
+	 *
+	 * @throws InvalidArgumentException When the initiator may not share it
+	 */
+	private function authorizedShareSource(GroupShareRequest $request): Secret {
+		$secret = $this->authorization()->resolveShareSource(
+			secret: $this->loadSecret(secretId: $request->secretId),
+			userId: $request->userId
+		);
+		$this->assertOwnerOrDelegate(secret: $secret, userId: $request->userId);
+		$secret->assertOnwardShareable();
+		$this->assertShareableSource(secret: $secret, userId: $request->userId);
+
+		return $secret;
+	}//end authorizedShareSource()
+
+	/**
+	 * The one GroupShare per (secret, group): inserted when new, otherwise
+	 * surfaced again, with its restriction changed when the request carries
+	 * one.
+	 *
+	 * @param GroupShareRequest $request The request
+	 * @param Secret $secret The authorized source
+	 *
+	 * @return GroupShare
+	 */
+	private function storeGroupShare(GroupShareRequest $request, Secret $secret): GroupShare {
 		// Idempotency — one GroupShare per (secret, group). Surface the
 		// existing one with a fresh member list rather than persisting a
 		// duplicate.
 		try {
-			$existing = $this->mapper->findBySecretAndGroup(secretId: $secretId, groupId: $groupId);
+			$existing = $this->mapper->findBySecretAndGroup(secretId: $secret->getId(), groupId: $request->groupId);
 		} catch (DoesNotExistException) {
-			$existing = null;
+			return $this->mapper->insert($this->newGroupShare(request: $request, secret: $secret));
 		}
 
-		if ($existing === null) {
-			$row = new GroupShare();
-			$row->setId(Uuid::uuid4()->toString());
-			$row->setSecretId($secretId);
-			$row->setGroupId($groupId);
-			$row->setCreatedBy($userId);
-			$row->setCreatedAt(new DateTime());
-			$row->setUseOnly(($restriction?->useOnly === true));
-			$row->setExpiresAt($restriction?->expiresAt);
-			$existing = $this->mapper->insert($row);
-		} elseif ($restriction !== null) {
-			// Sharing again with the same group changes its restriction.
-			$this->assertMayChangeRestriction(secret: $secret, groupShare: $existing, restriction: $restriction, userId: $userId);
-			$existing = $this->changeRestriction(groupShare: $existing, restriction: $restriction);
+		if ($request->restriction === null) {
+			return $existing;
 		}
 
+		// Sharing again with the same group changes its restriction.
+		$this->assertMayChangeRestriction(secret: $secret, groupShare: $existing, restriction: $request->restriction, userId: $request->userId);
+
+		return $this->changeRestriction(groupShare: $existing, restriction: $request->restriction);
+	}//end storeGroupShare()
+
+	/**
+	 * A new GroupShare row for the request.
+	 *
+	 * @param GroupShareRequest $request The request
+	 * @param Secret $secret The authorized source
+	 *
+	 * @return GroupShare
+	 */
+	private function newGroupShare(GroupShareRequest $request, Secret $secret): GroupShare {
+		$row = new GroupShare();
+		$row->setId(Uuid::uuid4()->toString());
+		$row->setSecretId($secret->getId());
+		$row->setGroupId($request->groupId);
+		$row->setCreatedBy($request->userId);
+		$row->setCreatedAt(new DateTime());
+		$row->setUseOnly(($request->restriction?->useOnly === true));
+		$row->setExpiresAt($request->restriction?->expiresAt);
+
+		return $row;
+	}//end newGroupShare()
+
+	/**
+	 * The members the browser encrypts a copy for: every group member but the
+	 * owner who has an active suite, with its certificate, and how many were
+	 * skipped for want of one.
+	 *
+	 * @param IGroup $group The group
+	 * @param Secret $secret The source, whose owner is left out
+	 *
+	 * @return array{members:array<int,array{userId:string,certificate:string}>,skipped:int}
+	 */
+	private function memberFanOut(IGroup $group, Secret $secret): array {
 		$members = [];
 		$skipped = 0;
 		foreach ($group->getUsers() as $user) {
@@ -209,14 +284,13 @@ class GroupShareService {
 				'userId' => $candidateId,
 				'certificate' => $suite->getCertificate(),
 			];
-		}
+		}//end foreach
 
 		return [
-			'groupShare' => $existing,
 			'members' => $members,
 			'skipped' => $skipped,
 		];
-	}//end createGroupShare()
+	}//end memberFanOut()
 
 	/**
 	 * Apply Nextcloud's own share settings to a group share: group sharing
