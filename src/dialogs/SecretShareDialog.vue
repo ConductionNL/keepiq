@@ -194,6 +194,24 @@ export function expiryTimestamp(date) {
 	return Number.isNaN(end.getTime()) ? null : end.toISOString()
 }
 
+/**
+ * The part of a decrypted secret a link share carries: never a login's
+ * one-time-code seed or passkeys, which anyone with the link could open.
+ *
+ * @param {object} secret The decrypted secret.
+ * @return {{name: string, url: (string|null), login: (string|null), key: string, additionalFields: (object|null)}}
+ * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
+ */
+function linkSnapshot(secret) {
+	return {
+		name: secret.name,
+		url: secret.url || null,
+		login: secret.login || null,
+		key: secret.key || '',
+		additionalFields: secret.additionalFields || null,
+	}
+}
+
 export default {
 	name: 'SecretShareDialog',
 
@@ -343,17 +361,10 @@ export default {
 			this.error = ''
 			try {
 				const secret = await useSecretStore().fetchSecret(this.secretId)
-				const snapshot = {
-					name: secret.name,
-					url: secret.url || null,
-					login: secret.login || null,
-					key: secret.key || '',
-					additionalFields: secret.additionalFields || null,
-				}
 				const linkStore = useLinkShareStore()
 				await linkStore.createLinkShare(
 					this.secretId,
-					snapshot,
+					linkSnapshot(secret),
 					this.usageLimit,
 					expiryTimestamp(this.expiryDate),
 				)
