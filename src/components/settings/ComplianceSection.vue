@@ -138,6 +138,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import ComplianceSnapshotDialog from '../../dialogs/ComplianceSnapshotDialog.vue'
+import { busyRequest } from '../../mixins/busyRequest.js'
 import { localDateTime } from '../../utils/dateTime.js'
 
 export default {
@@ -148,6 +149,8 @@ export default {
 		NcButton,
 		NcNoteCard,
 	},
+
+	mixins: [busyRequest],
 
 	data() {
 		return {
@@ -198,19 +201,13 @@ export default {
 		 * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
 		 */
 		async onGenerate() {
-			this.busy = true
-			this.error = null
-			try {
+			await this.runBusy(async () => {
 				const response = await axios.post(
 					generateUrl('/apps/keepiq/api/v1/compliance/reports'),
 				)
 				this.reports = [response.data, ...this.reports]
 				this.detail = response.data
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
 		},
 
 		/**
