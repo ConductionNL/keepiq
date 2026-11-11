@@ -24,6 +24,7 @@ use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\DeviceApprovalRequest;
 use OCA\Keepiq\Service\DeviceApprovalService;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
@@ -96,12 +97,14 @@ class DeviceApprovalController extends Controller {
 
 		try {
 			$created = $this->approvals->create(
-				userId: $user->getUID(),
-				publicKey: $publicKey,
-				clientKind: $clientKind,
-				label: $deviceLabel,
-				address: $this->request->getRemoteAddress(),
-				agent: (string)$this->request->getHeader('User-Agent'),
+				request: new DeviceApprovalRequest(
+					userId: $user->getUID(),
+					publicKey: $publicKey,
+					clientKind: $clientKind,
+					label: $deviceLabel,
+					address: $this->request->getRemoteAddress(),
+					agent: (string)$this->request->getHeader('User-Agent'),
+				)
 			);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);

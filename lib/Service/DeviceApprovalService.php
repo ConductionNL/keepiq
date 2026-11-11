@@ -19,7 +19,6 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateInterval;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
@@ -33,7 +32,6 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\Security\ISecureRandom;
-use Ramsey\Uuid\Uuid;
 
 /**
  * The server side of new device approval (crypto-new-device-approval):
@@ -105,12 +103,7 @@ class DeviceApprovalService {
 	/**
 	 * Store a request from a locked device and notify the user.
 	 *
-	 * @param string $userId     The signed-in user
-	 * @param string $publicKey  The one-time X25519 public key (base64, 32 bytes)
-	 * @param string $clientKind `web` or `extension`
-	 * @param string $label      The device label
-	 * @param string $address    The caller's IP address
-	 * @param string $agent      The caller's user agent
+	 * @param DeviceApprovalRequest $request The user, the device key, kind and label, and the caller's address and agent
 	 *
 	 * @return array{id:string,requestSecret:string,expiresAt:string}
 	 *
@@ -118,63 +111,33 @@ class DeviceApprovalService {
 	 * @throws InvalidArgumentException When the input is malformed
 	 *
 	 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Each argument is one recorded fact of the request.
 	 */
-	public function create(
-		string $userId,
-		string $publicKey,
-		string $clientKind,
-		string $label,
-		string $address,
-		string $agent,
-	): array {
+	public function create(DeviceApprovalRequest $request): array {
 		if ($this->isEnabled() === false) {
 			throw new ForbiddenException(message: 'Device approval is turned off');
 		}
 
-		$raw = base64_decode($publicKey, true);
-		if ($raw === false || strlen($raw) !== 32) {
-			throw new InvalidArgumentException(message: 'publicKey must be a raw X25519 public key');
-		}
-
-		if (in_array($clientKind, self::CLIENT_KINDS, true) === false) {
-			throw new InvalidArgumentException(message: 'clientKind must be web or extension');
-		}
+		$request->assertValid();
 
 		$secret = $this->random->generate(48, ISecureRandom::CHAR_ALPHANUMERIC);
-		$now    = new DateTime();
-
-		$request = new DeviceApproval();
-		$request->setId(Uuid::uuid4()->toString());
-		$request->setUserId($userId);
-		$request->setClientKind($clientKind);
-		$request->setDeviceLabel(mb_substr(trim($label), 0, 255));
-		$request->setRequesterIp(mb_substr($address, 0, 64));
-		$request->setRequesterAgent(mb_substr($agent, 0, 512));
-		$request->setRequestPublicKey($publicKey);
-		$request->setRequestSecretHash(hash('sha256', $secret));
-		$request->setStatus(DeviceApproval::STATUS_PENDING);
-		$request->setCreatedAt($now);
-		$request->setExpiresAt((clone $now)->add(new DateInterval('PT' . self::TTL_SECONDS . 'S')));
-		$request = $this->mapper->insert($request);
+		$approval = $this->mapper->insert($request->toRow(secretHash: hash('sha256', $secret), now: new DateTime()));
 
 		$this->notifications->notify(
 			subject: 'device_approval_requested',
-			recipientId: $userId,
+			recipientId: $request->userId,
 			params: [
-				'request_id' => $request->getId(),
-				'device_label' => $request->getDeviceLabel(),
+				'request_id' => $approval->getId(),
+				'device_label' => $approval->getDeviceLabel(),
 			],
 			objectType: 'device_approval',
-			objectId: $request->getId(),
+			objectId: $approval->getId(),
 		);
-		$this->audit(request: $request, eventType: AuditEventTypes::DEVICE_APPROVAL_REQUESTED, metadata: ['clientKind' => $clientKind]);
+		$this->audit(request: $approval, eventType: AuditEventTypes::DEVICE_APPROVAL_REQUESTED, metadata: ['clientKind' => $request->clientKind]);
 
 		return [
-			'id' => $request->getId(),
+			'id' => $approval->getId(),
 			'requestSecret' => $secret,
-			'expiresAt' => (string)$request->getExpiresAt()?->format('c'),
+			'expiresAt' => (string)$approval->getExpiresAt()?->format('c'),
 		];
 	}//end create()
 
