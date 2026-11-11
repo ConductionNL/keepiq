@@ -28,7 +28,6 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Group\Events\UserRemovedEvent;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Dispatch GroupShareService::handleMemberLeave on UserRemovedEvent.
@@ -69,45 +68,24 @@ class UserRemovedFromGroupListener implements IEventListener {
 			return;
 		}
 
-		try {
-			$count = $this->groupShareService->handleMemberLeave(
-				userId: $event->getUser()->getUID(),
-				groupId: $event->getGroup()->getGID()
-			);
-			if ($count > 0) {
-				$this->logger->info(
-					'Keepiq: revoked ' . $count . ' group-derived shares for '
-					. $event->getUser()->getUID() . ' leaving ' . $event->getGroup()->getGID(),
-					['app' => 'keepiq']
-				);
-			}
-		} catch (Throwable $exception) {
-			$this->logger->warning(
-				'Keepiq: UserRemovedFromGroupListener failed: ' . $exception->getMessage(),
-				['app' => 'keepiq']
-			);
-		}
+		$relay = new GroupMembershipRelay(logger: $this->logger, event: $event);
+		$relay->run(
+			step: new MembershipStep(
+				done: 'Keepiq: revoked {count} group-derived shares for {user} leaving {group}',
+				failure: 'Keepiq: UserRemovedFromGroupListener failed: '
+			),
+			work: fn (string $userId, string $groupId): int => $this->groupShareService->handleMemberLeave(userId: $userId, groupId: $groupId)
+		);
 
 		// Team-folder branch (team-folder-sharing §3.2): auto-revoke the
 		// departing user's folder-derived shares unless another
 		// membership still covers them. Direct shares stay intact.
-		try {
-			$teamCount = $this->teamFolderService->handleGroupMemberLeave(
-				userId: $event->getUser()->getUID(),
-				groupId: $event->getGroup()->getGID()
-			);
-			if ($teamCount > 0) {
-				$this->logger->info(
-					'Keepiq: revoked ' . $teamCount . ' team-folder-derived shares for '
-					. $event->getUser()->getUID() . ' leaving ' . $event->getGroup()->getGID(),
-					['app' => 'keepiq']
-				);
-			}
-		} catch (Throwable $exception) {
-			$this->logger->warning(
-				'Keepiq: team-folder leave handling failed: ' . $exception->getMessage(),
-				['app' => 'keepiq']
-			);
-		}
+		$relay->run(
+			step: new MembershipStep(
+				done: 'Keepiq: revoked {count} team-folder-derived shares for {user} leaving {group}',
+				failure: 'Keepiq: team-folder leave handling failed: '
+			),
+			work: fn (string $userId, string $groupId): int => $this->teamFolderService->handleGroupMemberLeave(userId: $userId, groupId: $groupId)
+		);
 	}//end handle()
 }//end class

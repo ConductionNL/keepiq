@@ -29,7 +29,6 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Group\Events\UserAddedEvent;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Dispatch GroupShareService::handleNewGroupMember on UserAddedEvent.
@@ -70,44 +69,23 @@ class UserAddedToGroupListener implements IEventListener {
 			return;
 		}
 
-		try {
-			$count = $this->groupShareService->handleNewGroupMember(
-				userId: $event->getUser()->getUID(),
-				groupId: $event->getGroup()->getGID()
-			);
-			if ($count > 0) {
-				$this->logger->info(
-					'Keepiq: dispatched ' . $count . ' new-member notifications for '
-					. $event->getUser()->getUID() . ' joining ' . $event->getGroup()->getGID(),
-					['app' => 'keepiq']
-				);
-			}
-		} catch (Throwable $exception) {
-			$this->logger->warning(
-				'Keepiq: UserAddedToGroupListener failed: ' . $exception->getMessage(),
-				['app' => 'keepiq']
-			);
-		}
+		$relay = new GroupMembershipRelay(logger: $this->logger, event: $event);
+		$relay->run(
+			step: new MembershipStep(
+				done: 'Keepiq: dispatched {count} new-member notifications for {user} joining {group}',
+				failure: 'Keepiq: UserAddedToGroupListener failed: '
+			),
+			work: fn (string $userId, string $groupId): int => $this->groupShareService->handleNewGroupMember(userId: $userId, groupId: $groupId)
+		);
 
 		// Team-folder branch (team-folder-sharing §3.1): notify each
 		// affected team-folder owner so they can approve the join.
-		try {
-			$joinCount = $this->teamFolderService->handleGroupMemberJoin(
-				userId: $event->getUser()->getUID(),
-				groupId: $event->getGroup()->getGID()
-			);
-			if ($joinCount > 0) {
-				$this->logger->info(
-					'Keepiq: dispatched ' . $joinCount . ' team-folder join requests for '
-					. $event->getUser()->getUID() . ' joining ' . $event->getGroup()->getGID(),
-					['app' => 'keepiq']
-				);
-			}
-		} catch (Throwable $exception) {
-			$this->logger->warning(
-				'Keepiq: team-folder join handling failed: ' . $exception->getMessage(),
-				['app' => 'keepiq']
-			);
-		}
+		$relay->run(
+			step: new MembershipStep(
+				done: 'Keepiq: dispatched {count} team-folder join requests for {user} joining {group}',
+				failure: 'Keepiq: team-folder join handling failed: '
+			),
+			work: fn (string $userId, string $groupId): int => $this->teamFolderService->handleGroupMemberJoin(userId: $userId, groupId: $groupId)
+		);
 	}//end handle()
 }//end class
