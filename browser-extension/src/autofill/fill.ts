@@ -141,14 +141,24 @@ interface LoginFill {
 }
 
 /** The frames a login fills once the insecure question is answered; otherwise the result to return. */
-async function loginFrames({ target, row, types, rule }: LoginFill): Promise<FrameRecord[] | FillResult> {
-	const frames = target.only
+async function loginFrames(login: LoginFill): Promise<FrameRecord[] | FillResult> {
+	const frames = await matchingFrames(login)
+	if (!frames.length) return NO_FIELDS
+	if (login.target.confirmedInsecure || !isInsecure(login.row, frames)) return frames
+	return askInsecure(login.target, { url: login.row.url, frames })
+}
+
+/** An inline pick's own frame when it matches, else every frame of the tab that does. */
+async function matchingFrames({ target, row, types, rule }: LoginFill): Promise<FrameRecord[]> {
+	return target.only
 		? [{ frameId: target.only.frameId, url: target.only.url }].filter((frame) => fits(row, types, rule, frame.url))
 		: await framesFor(target.tabId, row, types, rule)
-	if (!frames.length) return NO_FIELDS
-	if (target.confirmedInsecure || !isInsecure(row, frames)) return frames
+}
+
+/** The list asks itself; the menu, shortcut and page load ask in the page. */
+async function askInsecure(target: FillTarget, at: { url: string | null; frames: FrameRecord[] }): Promise<FrameRecord[] | FillResult> {
 	if (target.ask === 'reply') return { ...NONE, needsInsecureConfirm: true }
-	return await confirmInPage(target.tabId, row.url) ? frames : NONE
+	return await confirmInPage(target.tabId, at.url) ? at.frames : NONE
 }
 
 async function credentialOf(row: OpenSecretRow, key: CryptoKey): Promise<{ username: string | null; password: string } | null> {
@@ -262,9 +272,13 @@ async function formFrames(target: FillTarget): Promise<FrameRecord[] | null> {
 	const [top, ...subframes] = await tabFrames(target.tabId)
 	if (!top || !isWebUrl(top.url)) return null
 	const frames = [top, ...subframes.filter((frame) => isWebUrl(frame.url))]
-	const only = target.only
-	if (only && isWebUrl(only.url) && !frames.some((frame) => frame.frameId === only.frameId)) frames.push({ frameId: only.frameId, url: only.url })
+	addPickFrame(frames, target.only)
 	return frames
+}
+
+/** An inline pick's frame the frame list does not hold yet, while it shows a web page. */
+function addPickFrame(frames: FrameRecord[], only: FillTarget['only']): void {
+	if (only && isWebUrl(only.url) && !frames.some((frame) => frame.frameId === only.frameId)) frames.push({ frameId: only.frameId, url: only.url })
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
@@ -307,14 +321,31 @@ async function confirmFormInPage(tabId: number, question: FormQuestion): Promise
 async function fillForm(job: FormFill): Promise<FillResult> {
 	let confirmed = job.target.confirmed
 	for (let round = 0; round < MAX_ROUNDS; round++) {
-		const plan = await planFor(job, confirmed)
-		if (plan?.noRoles) return NO_FIELDS
-		if (!plan?.question) return plan ? await sendForm(job, plan.receivers) : NONE
-		if (job.target.ask === 'reply') return { ...NONE, needsFormConfirm: plan.question }
-		if (!(await confirmFormInPage(job.target.tabId, plan.question))) return NONE
-		confirmed = answered(confirmed, plan.question)
+		const next = await formRound(job, confirmed)
+		if ('result' in next) return next.result
+		confirmed = next.confirmed
 	}
 	return NONE
+}
+
+type Plan = Awaited<ReturnType<typeof planFor>>
+
+/** A plan without a question settles the fill: no fields, nothing, or the send. */
+async function unaskedResult(job: FormFill, plan: Plan): Promise<FillResult | null> {
+	if (plan?.noRoles) return NO_FIELDS
+	if (plan?.question) return null
+	return plan ? await sendForm(job, plan.receivers) : NONE
+}
+
+/** One round: the fill's result, or the answers so far once the page's question is answered. */
+async function formRound(job: FormFill, confirmed: FormConfirmation | undefined): Promise<{ result: FillResult } | { confirmed: FormConfirmation }> {
+	const plan = await planFor(job, confirmed)
+	const result = await unaskedResult(job, plan)
+	if (result) return { result }
+	const question = plan!.question!
+	if (job.target.ask === 'reply') return { result: { ...NONE, needsFormConfirm: question } }
+	if (!(await confirmFormInPage(job.target.tabId, question))) return { result: NONE }
+	return { confirmed: answered(confirmed, question) }
 }
 
 async function decryptPayload(job: FormFill): Promise<Record<string, unknown> | null> {

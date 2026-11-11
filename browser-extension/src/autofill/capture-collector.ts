@@ -18,13 +18,23 @@ const ACTIVATION_EVENTS = ['keydown', 'mousedown', 'pointerdown', 'pointerup', '
 // Checked here too, not only in the classifier, since a card number or security code must never reach the capture queue.
 const isCard = (group: FieldGroup, field: HTMLInputElement | null) => field !== null && isFormRole('card', group.roles.get(field))
 
+/** The password field a key went to, if it went to one. */
+function passwordTarget(event: Event): HTMLInputElement | null {
+	const field = event.composedPath()[0]
+	return isInput(field) && field.type === 'password' ? field : null
+}
+
 /** The password a submission of this group sets, or `null` for a group that has none. */
 function passwordOf(group: FieldGroup): { field: HTMLInputElement; changed: boolean } | null {
 	if (group.kind === 'login' && group.currentPassword) return { field: group.currentPassword, changed: false }
+	return newPasswordOf(group)
+}
+
+/** A password change's new password, or a sign-up's, which is a new login. */
+function newPasswordOf(group: FieldGroup): { field: HTMLInputElement; changed: boolean } | null {
 	const [field] = group.newPasswords
-	// A sign-up is a new login.
-	if (field && (group.kind === 'passwordChange' || group.kind === 'signUp')) return { field, changed: group.kind === 'passwordChange' }
-	return null
+	if (!field || !(group.kind === 'passwordChange' || group.kind === 'signUp')) return null
+	return { field, changed: group.kind === 'passwordChange' }
 }
 
 /** The password a submission reports: never a card field's, nor one beside a card-field username. */
@@ -74,21 +84,35 @@ export function createCaptureCollector(send: (message: CaptureSubmitted) => void
 		return state ? state.isActive : Date.now() - activatedAt < ACTIVATION_MS
 	}
 
-	function submitted(group: FieldGroup, event: Event): void {
-		// A script's `click()` or dispatched event is untrusted; its `requestSubmit()` is trusted but has no activation.
-		if (!event.isTrusted) return
+	/** The password a submission of `group` would report, until the group reported once. */
+	function unreportedPassword(group: FieldGroup) {
 		const password = reportedPassword(group)
-		if (!password || reported.has(group.anchor)) return
-		if (password.field.value === '') {
-			armed.add(group.anchor)
-			window.addEventListener('beforeunload', onUnload)
-			return
-		}
-		if (!userActive() || usedActivation === activation) return
+		return password && !reported.has(group.anchor) ? password : null
+	}
+
+	/** An empty password is reported once filled, before the page unloads. */
+	function armForUnload(anchor: FieldGroup['anchor']): void {
+		armed.add(anchor)
+		window.addEventListener('beforeunload', onUnload)
+	}
+
+	/** One report per activation of the page by the user. */
+	const freshActivation = () => userActive() && usedActivation !== activation
+
+	function report(group: FieldGroup, password: NonNullable<ReturnType<typeof reportedPassword>>): void {
 		usedActivation = activation
 		armed.delete(group.anchor)
 		reported.add(group.anchor)
 		send({ kind: 'capture.submitted', username: group.username?.value || null, password: password.field.value, changed: password.changed })
+	}
+
+	function submitted(group: FieldGroup, event: Event): void {
+		// A script's `click()` or dispatched event is untrusted; its `requestSubmit()` is trusted but has no activation.
+		if (!event.isTrusted) return
+		const password = unreportedPassword(group)
+		if (!password) return
+		if (password.field.value === '') return armForUnload(group.anchor)
+		if (freshActivation()) report(group, password)
 	}
 
 	function onClick(event: Event): void {
@@ -101,9 +125,8 @@ export function createCaptureCollector(send: (message: CaptureSubmitted) => void
 
 	function onKeydown(event: KeyboardEvent): void {
 		if (event.key !== 'Enter' || event.isComposing) return
-		const field = event.composedPath()[0]
-		if (!isInput(field) || field.type !== 'password') return
-		const group = groupOf(field)
+		const field = passwordTarget(event)
+		const group = field && groupOf(field)
 		if (group) submitted(group, event)
 	}
 

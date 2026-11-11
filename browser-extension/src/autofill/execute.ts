@@ -2,7 +2,7 @@
 import { i18n } from '#i18n'
 import {
 	isFormKind, kindSet, type BackgroundToContent, type FillConfirmForm, type FillConfirmInsecure, type FillExecute, type FillExecuteForm, type FillExecuteFormReply,
-	type FillExecuteReply, type FillOutcome, type FillProbe, type FillProbeReply, type FormKind, type FormValues,
+	type FillExecuteReply, type FillOutcome, type FillProbe, type FillProbeReply, type FormKind, type FormRole, type FormValues,
 } from '@/src/messages'
 import {
 	codeGroup, fillField, fillSelect, findCodeGroups, findGroups, findLoginFields, formRolesIn, groupOf, type FieldGroup, type FormControl,
@@ -115,12 +115,16 @@ function anchorFor(anchorKey: string | undefined, list: OpenList | null): Elemen
 function chooseFormGroup(kind: FormKind, anchor: Element | null): FieldGroup | null {
 	if (anchor) return groupOf(anchor)
 	const groups = findGroups(document).filter((group) => formRolesIn(group, kind).size > 0)
+	return focusedGroup(groups) ?? fullerIdentityGroup(kind, groups) ?? groups[0] ?? null
+}
+
+function focusedGroup(groups: FieldGroup[]): FieldGroup | undefined {
 	const focused = deepActiveElement() as FormControl | null
 	return groups.find((group) => focused !== null && group.controls.includes(focused))
-		?? (kind === 'identity' ? groups.find((group) => formRolesIn(group, kind).size >= 2) : undefined)
-		?? groups[0]
-		?? null
 }
+
+const fullerIdentityGroup = (kind: FormKind, groups: FieldGroup[]) =>
+	(kind === 'identity' ? groups.find((group) => formRolesIn(group, kind).size >= 2) : undefined)
 
 function formGroupFor(message: FillProbe | FillExecuteForm, list: OpenList | null): FieldGroup | null {
 	const anchor = anchorFor(message.anchorKey, list)
@@ -148,10 +152,16 @@ function writeForm(group: FieldGroup, message: FillExecuteForm): number {
 	let filled = 0
 	for (const [control, role] of roles) {
 		const part = parts[numbers.indexOf(control as HTMLInputElement)]
-		const candidates = role === 'number' ? (part ? [part] : []) : FORMATTERS[role](control, values)
-		if (writeControl(control, candidates)) filled++
+		if (writeControl(control, candidatesFor(control, { role, values, part }))) filled++
 	}
 	return filled
+}
+
+/** A number field takes its part; any other role what its formatter makes of the values. */
+function candidatesFor(control: FormControl, fill: { role: FormRole; values: FormValues; part: string | undefined }): readonly string[] {
+	const { role, values, part } = fill
+	if (role !== 'number') return FORMATTERS[role](control, values)
+	return part ? [part] : []
 }
 
 export function executeForm(message: FillExecuteForm, list: OpenList | null = null): FillExecuteFormReply {
@@ -172,9 +182,11 @@ export function confirmForm(message: FillConfirmForm): boolean {
 	if (window !== window.top) return false
 	const host = typeof message.host === 'string' ? message.host : ''
 	const hosts = hostsOf(message.frameHosts).join(', ')
-	if (message.insecure === true && !window.confirm(i18n.t('pageFill.cardInsecure'))) return false
+	if (insecureRefused(message)) return false
 	return hosts === '' || window.confirm(i18n.t('pageFill.crossSite', { hosts, host }))
 }
+
+const insecureRefused = (message: FillConfirmForm) => message.insecure === true && !window.confirm(i18n.t('pageFill.cardInsecure'))
 
 /** The insecure-page question of a login fill from the menu, shortcut or page load. */
 function confirmInsecure(message: FillConfirmInsecure): boolean {
