@@ -2,10 +2,8 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:6ffa9cb9-bdea-4094-9539-7306947d978d",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-11-11T17:23:31Z",
     "tools": [
       {
         "name": "composer",
@@ -82,10 +80,10 @@
       }
     ],
     "component": {
-      "bom-ref": "conductionnl/keepiq-dev-development",
+      "bom-ref": "conductionnl/keepiq-0.1.0.0",
       "type": "application",
       "name": "keepiq",
-      "version": "dev-development",
+      "version": "0.1.0",
       "group": "conductionnl",
       "description": "Encrypted secrets manager for Nextcloud",
       "author": "Conduction b.v.",
@@ -96,16 +94,8 @@
           }
         }
       ],
-      "purl": "pkg:composer/conductionnl/keepiq@dev-development",
+      "purl": "pkg:composer/conductionnl/keepiq@0.1.0",
       "properties": [
-        {
-          "name": "cdx:composer:package:distReference",
-          "value": "c90bdde7f3fa61dd6307fa5d9d462cb2ae0508c3"
-        },
-        {
-          "name": "cdx:composer:package:sourceReference",
-          "value": "c90bdde7f3fa61dd6307fa5d9d462cb2ae0508c3"
-        },
         {
           "name": "cdx:composer:package:type",
           "value": "library"
@@ -29045,7 +29035,7 @@
       ]
     },
     {
-      "ref": "conductionnl/keepiq-dev-development",
+      "ref": "conductionnl/keepiq-0.1.0.0",
       "dependsOn": [
         "phpseclib/phpseclib-4.0.2.0",
         "ramsey/uuid-4.9.4.0",
