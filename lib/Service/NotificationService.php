@@ -147,24 +147,10 @@ class NotificationService {
 		?string $objectType = null,
 		?string $objectId = null,
 	): bool {
-		if (array_key_exists($subject, self::SUBJECT_SETTING_MAP) === false) {
-			$this->logger->warning(
-				'Keepiq notify(): unknown subject "' . $subject . '" — dropping',
-				['app' => Application::APP_ID]
-			);
-			return false;
-		}
-
-		if ($recipientId === '') {
-			return false;
-		}
-
-		$settingKey = self::SUBJECT_SETTING_MAP[$subject];
-		if ($settingKey !== null && $this->isOptedOut(userId: $recipientId, settingKey: $settingKey) === true) {
-			$this->logger->debug(
-				'Keepiq notify(): user ' . $recipientId . ' opted out of "' . $subject . '"',
-				['app' => Application::APP_ID]
-			);
+		if ($this->isKnownSubject(subject: $subject) === false
+			|| $recipientId === ''
+			|| $this->optedOutOf(subject: $subject, recipientId: $recipientId) === true
+		) {
 			return false;
 		}
 
@@ -186,6 +172,47 @@ class NotificationService {
 
 		return true;
 	}//end notify()
+
+	/**
+	 * Whether a subject is one this app sends; an unknown one is logged and dropped.
+	 *
+	 * @param string $subject The subject key
+	 *
+	 * @return bool
+	 */
+	private function isKnownSubject(string $subject): bool {
+		if (array_key_exists($subject, self::SUBJECT_SETTING_MAP) === true) {
+			return true;
+		}
+
+		$this->logger->warning(
+			'Keepiq notify(): unknown subject "' . $subject . '" — dropping',
+			['app' => Application::APP_ID]
+		);
+		return false;
+	}//end isKnownSubject()
+
+	/**
+	 * Whether the recipient switched off this subject's category; a drop is
+	 * logged at debug level. A subject without a category is always sent.
+	 *
+	 * @param string $subject     The subject key, one of SUBJECT_SETTING_MAP
+	 * @param string $recipientId The recipient Nextcloud user ID
+	 *
+	 * @return bool
+	 */
+	private function optedOutOf(string $subject, string $recipientId): bool {
+		$settingKey = self::SUBJECT_SETTING_MAP[$subject];
+		if ($settingKey === null || $this->isOptedOut(userId: $recipientId, settingKey: $settingKey) === false) {
+			return false;
+		}
+
+		$this->logger->debug(
+			'Keepiq notify(): user ' . $recipientId . ' opted out of "' . $subject . '"',
+			['app' => Application::APP_ID]
+		);
+		return true;
+	}//end optedOutOf()
 
 	/**
 	 * Check whether a user has opted out of a notification category.
