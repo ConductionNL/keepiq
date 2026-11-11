@@ -143,9 +143,7 @@ class TeamFolderConfirmationService {
 	 */
 	public function registerShares(string $teamFolderId, array $rows, string $userId): array {
 		$teamFolder = $this->loadTeamFolder(teamFolderId: $teamFolderId);
-		if ($teamFolder->getOwnerId() === $userId
-			|| $this->queries->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) === 'manage'
-		) {
+		if ($this->takesPlainFanOut(teamFolder: $teamFolder, userId: $userId) === true) {
 			return $this->teamFolders->registerFanOutShares(teamFolderId: $teamFolderId, shares: $rows, userId: $userId);
 		}
 
@@ -164,23 +162,14 @@ class TeamFolderConfirmationService {
 				continue;
 			}
 
-			$unsafe[] = [
-				'sourceSecretId' => (string)($row['sourceSecretId'] ?? ''),
-				'targetUserId' => (string)($row['targetUserId'] ?? ''),
-				'reason' => 'not_eligible',
-			];
+			$unsafe[] = $this->notEligible(row: $row);
 		}
 
 		if ($accepted === []) {
 			return ['created' => 0, 'rows' => [], 'skipped' => $unsafe];
 		}
 
-		$result = $this->shares->registerFanOutShares(
-			teamFolder: $teamFolder,
-			shares: $accepted,
-			subtreeSecretIds: $subtreeIds,
-			userId: $userId
-		);
+		$result = $this->shares->registerFanOutShares(teamFolder: $teamFolder, shares: $accepted, subtreeSecretIds: $subtreeIds, userId: $userId);
 		$result['skipped'] = array_merge($unsafe, $result['skipped']);
 
 		if ($result['created'] > 0) {
@@ -189,6 +178,39 @@ class TeamFolderConfirmationService {
 
 		return $result;
 	}//end registerShares()
+
+	/**
+	 * Whether the caller registers through the plain fan-out: the owner, or
+	 * a manager (effective grade `manage`).
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 * @param string     $userId     The caller
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 */
+	private function takesPlainFanOut(TeamFolder $teamFolder, string $userId): bool {
+		return $teamFolder->getOwnerId() === $userId
+			|| $this->queries->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) === 'manage';
+	}//end takesPlainFanOut()
+
+	/**
+	 * The skipped entry of a row that failed a check.
+	 *
+	 * @param array<string,mixed> $row The row
+	 *
+	 * @return array{sourceSecretId:string,targetUserId:string,reason:string}
+	 *
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
+	 */
+	private function notEligible(array $row): array {
+		return [
+			'sourceSecretId' => (string)($row['sourceSecretId'] ?? ''),
+			'targetUserId' => (string)($row['targetUserId'] ?? ''),
+			'reason' => 'not_eligible',
+		];
+	}//end notEligible()
 
 	/**
 	 * Team folders the user owns or is covered by a membership row of.
@@ -234,38 +256,18 @@ class TeamFolderConfirmationService {
 	private function pendingForFolder(TeamFolder $teamFolder, string $userId): ?array {
 		$isOwner = $teamFolder->getOwnerId() === $userId;
 		$secrets = $this->memberships->subtreeSecretRefs(teamFolder: $teamFolder);
-		$recipients = $this->memberships->eligibleRecipients(
-			userIds: array_values(
-				array_diff(
-					$this->memberships->effectiveUsers(teamFolderId: $teamFolder->getId()),
-					[$teamFolder->getOwnerId(), $userId]
-				)
-			)
-		);
+		$recipients = $this->otherRecipients(teamFolder: $teamFolder, userId: $userId);
+		$pairs = $this->shares->missingPairs(secrets: $secrets, recipients: $recipients);
 
-		$missing = [];
-		$ownCopies = [];
-		foreach ($this->shares->missingPairs(secrets: $secrets, recipients: $recipients) as $pair) {
-			if ($isOwner === true) {
-				$missing[] = $pair;
-				continue;
-			}
-
-			$sourceId = $pair['secretId'];
-			if (array_key_exists($sourceId, $ownCopies) === false) {
-				$ownCopies[$sourceId] = $this->copies->currentWriteCopy(sourceId: $sourceId, confirmerId: $userId);
-			}
-
-			if ($ownCopies[$sourceId] !== null) {
-				$missing[] = $pair + ['ownCopyId' => $ownCopies[$sourceId]];
-			}
+		$missing = array_values($pairs);
+		if ($isOwner === false) {
+			$missing = $this->pairsWithOwnCopy(pairs: $pairs, confirmerId: $userId);
 		}
 
 		if ($missing === []) {
 			return null;
 		}
 
-		$needed = array_flip(array_column($missing, 'userId'));
 		$role = 'member';
 		if ($isOwner === true) {
 			$role = 'owner';
@@ -275,11 +277,75 @@ class TeamFolderConfirmationService {
 			'teamFolderId' => $teamFolder->getId(),
 			'role' => $role,
 			'missing' => $missing,
-			'recipients' => array_values(
-				array_filter($recipients, static fn (array $recipient): bool => isset($needed[$recipient['userId']]))
-			),
+			'recipients' => $this->neededRecipients(recipients: $recipients, missing: $missing),
 		];
 	}//end pendingForFolder()
+
+	/**
+	 * The eligible recipients of a folder other than its owner and the confirmer.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 * @param string     $userId     The confirmer
+	 *
+	 * @return array<int,array{userId:string,certificate:string}>
+	 *
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
+	 */
+	private function otherRecipients(TeamFolder $teamFolder, string $userId): array {
+		$others = array_diff(
+			$this->memberships->effectiveUsers(teamFolderId: $teamFolder->getId()),
+			[$teamFolder->getOwnerId(), $userId]
+		);
+
+		return $this->memberships->eligibleRecipients(userIds: array_values($others));
+	}//end otherRecipients()
+
+	/**
+	 * The missing pairs a non-owner can hand on: those of a source it holds a
+	 * current write copy of, each with that copy's id. Each source is looked
+	 * up once.
+	 *
+	 * @param array<int,array{secretId:string,userId:string}> $pairs       The missing pairs
+	 * @param string                                          $confirmerId The confirmer
+	 *
+	 * @return list<array{secretId:string,userId:string,ownCopyId:string}>
+	 *
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
+	 */
+	private function pairsWithOwnCopy(array $pairs, string $confirmerId): array {
+		$missing = [];
+		$ownCopies = [];
+		foreach ($pairs as $pair) {
+			$sourceId = $pair['secretId'];
+			if (array_key_exists($sourceId, $ownCopies) === false) {
+				$ownCopies[$sourceId] = $this->copies->currentWriteCopy(sourceId: $sourceId, confirmerId: $confirmerId);
+			}
+
+			if ($ownCopies[$sourceId] !== null) {
+				$missing[] = $pair + ['ownCopyId' => $ownCopies[$sourceId]];
+			}
+		}
+
+		return $missing;
+	}//end pairsWithOwnCopy()
+
+	/**
+	 * The recipients a missing pair names, in their own order.
+	 *
+	 * @param array<int,array{userId:string,certificate:string}> $recipients The eligible recipients
+	 * @param array<int,array{userId:string}>                    $missing    The missing pairs
+	 *
+	 * @return list<array{userId:string,certificate:string}>
+	 *
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
+	 */
+	private function neededRecipients(array $recipients, array $missing): array {
+		$needed = array_flip(array_column($missing, 'userId'));
+
+		return array_values(
+			array_filter($recipients, static fn (array $recipient): bool => isset($needed[$recipient['userId']]))
+		);
+	}//end neededRecipients()
 
 	/**
 	 * Whether one row from a non-owner confirmer may be stored.
