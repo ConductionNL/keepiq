@@ -8,10 +8,11 @@
  * is always loaded by id AND asserted to belong to the calling user
  * (no-admin-IDOR, ADR-005). The server holds the wrapped unlock-key
  * envelope but never the PRF secret, the master password, or the
- * plaintext unlock key; the unlock's security rests on the client-side
- * unwrap, not a server-side assertion check (§D3). Enrolment is verified on
- * the server: a single-use session challenge pair, the create() attestation
- * and a get() proof assertion of the same credential (WebAuthnVerifier).
+ * plaintext unlock key. Enrolment is verified on the server: a single-use
+ * session challenge pair, the create() attestation and a get() proof
+ * assertion of the same credential (WebAuthnVerifier). An unlock releases a
+ * credential's wrapped envelope only after the server verified a get()
+ * assertion of that credential against a single-use session challenge.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -53,6 +54,7 @@ class PasskeyService {
 	 * @param PasskeyMapper $mapper The passkey mapper
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper (epoch source)
 	 * @param PasskeyEnrolmentCeremony $ceremony The enrolment challenges and their verification
+	 * @param PasskeyUnlockCeremony $unlockCeremony The unlock challenge and its verification
 	 *
 	 * @return void
 	 */
@@ -60,6 +62,7 @@ class PasskeyService {
 		private PasskeyMapper $mapper,
 		private EncryptionSuiteMapper $suiteMapper,
 		private PasskeyEnrolmentCeremony $ceremony,
+		private PasskeyUnlockCeremony $unlockCeremony,
 	) {
 	}//end __construct()
 
@@ -76,17 +79,6 @@ class PasskeyService {
 	public function listForOwner(string $uid): array {
 		return $this->mapper->findByOwner($uid);
 	}//end listForOwner()
-
-	/**
-	 * A fresh 32-byte base64url WebAuthn challenge.
-	 *
-	 * @return string
-	 *
-	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
-	 */
-	public function freshChallenge(): string {
-		return $this->ceremony->freshChallenge();
-	}//end freshChallenge()
 
 	/**
 	 * Issue the enrolment challenge pair (base64url) and store it in the
@@ -157,6 +149,7 @@ class PasskeyService {
 		$credential->setAaguid($verified->aaguid);
 		$credential->setClientKind($clientKind);
 		$credential->setRpId($rpId);
+		$credential->setSignCount($verified->counter);
 		$credential->setStatus('active');
 		$credential->setCreatedAt(new DateTime());
 
@@ -207,9 +200,11 @@ class PasskeyService {
 
 	/**
 	 * The unlock options for the lock screen (§2.2): the owner's ACTIVE
-	 * credentials with their PRF salts + wrapped envelopes, the current
-	 * suite epoch, and a fresh challenge. Stale/revoked envelopes are
-	 * refused (not returned).
+	 * credentials with their PRF salts, the current suite epoch, and a fresh
+	 * unlock challenge held in the session. No wrapped envelope: unlock()
+	 * returns one only after a verified assertion. Stale/revoked credentials
+	 * are refused (not returned), and so is a credential enrolled without a
+	 * verified public key, which no assertion can be checked against.
 	 *
 	 * Only the asking client's credentials are offered: the web app never
 	 * gets an extension credential, and the extension only gets the
@@ -225,36 +220,93 @@ class PasskeyService {
 	 * @spec openspec/specs/extension-biometric-unlock/spec.md#requirement-extension-credentials-are-visible-and-revocable-in-the-web-app
 	 */
 	public function loginOptions(string $uid, string $client='web', string $rpId=''): array {
-		$epoch = $this->currentEpoch(uid: $uid);
 		$credentials = [];
-		foreach ($this->mapper->findActiveByOwner($uid) as $credential) {
-			// A credential whose epoch trails the suite wraps a dead key —
-			// refuse it and mark it stale so the UI can prompt re-enrollment.
-			if ($credential->getUnlockKeyEpoch() !== $epoch) {
-				$credential->setStatus('stale');
-				$this->mapper->update($credential);
-				continue;
-			}
-
-			if ($this->offeredTo(credential: $credential, client: $client, rpId: $rpId) === false) {
-				continue;
-			}
-
+		foreach ($this->offeredCredentials(uid: $uid, client: $client, rpId: $rpId) as $credential) {
 			$credentials[] = [
 				'id' => $credential->getId(),
 				'credentialId' => $credential->getCredentialId(),
 				'prfSalt' => $credential->getPrfSalt(),
-				'wrappedUnlockKey' => $credential->getWrappedUnlockKey(),
 				'unlockKeyEpoch' => $credential->getUnlockKeyEpoch(),
 			];
 		}
 
 		return [
-			'unlockKeyEpoch' => $epoch,
-			'challenge' => $this->freshChallenge(),
+			'unlockKeyEpoch' => $this->currentEpoch(uid: $uid),
+			'challenge' => $this->unlockCeremony->issue(uid: $uid),
 			'credentials' => $credentials,
 		];
 	}//end loginOptions()
+
+	/**
+	 * Verify an unlock assertion and release the answering credential's
+	 * wrapped envelope. The pending unlock challenge is taken first, so any
+	 * attempt spends it. The credential must be one loginOptions() offers to
+	 * this client; its counter and last-used stamp are updated.
+	 *
+	 * @param string $uid The calling owner
+	 * @param array<string,mixed> $assertion The get() PublicKeyCredential as JSON
+	 * @param string $client web or extension
+	 * @param string $rpId The extension's relying party id (extension only)
+	 *
+	 * @return array{id: string, credentialId: string, wrappedUnlockKey: string, unlockKeyEpoch: int}
+	 *
+	 * @throws InvalidArgumentException When the assertion does not verify
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+	 */
+	public function unlock(string $uid, array $assertion, string $client='web', string $rpId=''): array {
+		$challenge = $this->unlockCeremony->take(uid: $uid);
+		$credentialId = $this->unlockCeremony->credentialIdOf(assertion: $assertion);
+		$answering = null;
+		foreach ($this->offeredCredentials(uid: $uid, client: $client, rpId: $rpId) as $credential) {
+			if ($credentialId !== '' && hash_equals($credential->getCredentialId(), $credentialId) === true) {
+				$answering = $credential;
+			}
+		}
+
+		$counter = $this->unlockCeremony->verify(uid: $uid, challenge: $challenge, credential: $answering, assertion: $assertion);
+
+		$answering->setSignCount($counter);
+		$answering->setLastUsedAt(new DateTime());
+		$this->mapper->update($answering);
+
+		return [
+			'id' => $answering->getId(),
+			'credentialId' => $answering->getCredentialId(),
+			'wrappedUnlockKey' => $answering->getWrappedUnlockKey(),
+			'unlockKeyEpoch' => $answering->getUnlockKeyEpoch(),
+		];
+	}//end unlock()
+
+	/**
+	 * The owner's active, epoch-current, verified credentials of the asking
+	 * client. A credential whose epoch trails the suite wraps a dead key, and
+	 * one without a verified public key cannot be checked: both are marked
+	 * stale so the UI can prompt re-enrollment.
+	 *
+	 * @param string $uid The calling owner
+	 * @param string $client web or extension
+	 * @param string $rpId The extension's relying party id (extension only)
+	 *
+	 * @return PasskeyCredential[]
+	 */
+	private function offeredCredentials(string $uid, string $client, string $rpId): array {
+		$epoch = $this->currentEpoch(uid: $uid);
+		$offered = [];
+		foreach ($this->mapper->findActiveByOwner($uid) as $credential) {
+			if ($credential->getUnlockKeyEpoch() !== $epoch || (string)$credential->getPublicKey() === '') {
+				$credential->setStatus('stale');
+				$this->mapper->update($credential);
+				continue;
+			}
+
+			if ($this->offeredTo(credential: $credential, client: $client, rpId: $rpId) === true) {
+				$offered[] = $credential;
+			}
+		}
+
+		return $offered;
+	}//end offeredCredentials()
 
 	/**
 	 * Record a successful unlock (last-used stamp).

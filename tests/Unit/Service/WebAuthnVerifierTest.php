@@ -23,10 +23,14 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Exception\PasskeyCounterException;
 use OCA\Keepiq\Exception\PasskeyVerificationException;
 use OCA\Keepiq\Service\VerifiedPasskey;
+use OCA\Keepiq\Service\ExtensionCeremonySteps;
+use OCA\Keepiq\Service\TrustedExtensionOrigins;
 use OCA\Keepiq\Service\WebAuthnVerifier;
 use OCA\Keepiq\Tests\Support\WebAuthnFixture;
+use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Webauthn\AuthenticatorAttestationResponseValidator;
@@ -36,6 +40,8 @@ use Webauthn\AuthenticatorAttestationResponseValidator;
  */
 class WebAuthnVerifierTest extends TestCase {
 	private const UID = 'alice';
+
+	private const EXTENSION_ORIGIN = 'chrome-extension://abcdefghijklmnopabcdefghijklmnop';
 
 	private WebAuthnVerifier $verifier;
 
@@ -56,7 +62,7 @@ class WebAuthnVerifierTest extends TestCase {
 			$this->markTestSkipped('Needs the WebAuthn library from the Nextcloud server (3rdparty)');
 		}
 
-		$this->verifier = new WebAuthnVerifier();
+		$this->verifier = new WebAuthnVerifier(extensionSteps: new ExtensionCeremonySteps(origins: new TrustedExtensionOrigins(appConfig: $this->createMock(originalClassName: IAppConfig::class))));
 		$this->passkey = new WebAuthnFixture();
 		$this->challenge = random_bytes(32);
 		$this->assertionChallenge = random_bytes(32);
@@ -193,4 +199,129 @@ class WebAuthnVerifierTest extends TestCase {
 			assertion: [],
 		);
 	}//end testRefusesMalformedInput()
+
+	/**
+	 * A verifier whose extension ceremonies read the given settings.
+	 *
+	 * @param bool $enabled The extension passkey switch
+	 * @param string $origins The stored admin origins
+	 *
+	 * @return WebAuthnVerifier
+	 */
+	private function extensionVerifier(bool $enabled = true, string $origins = '["' . self::EXTENSION_ORIGIN . '"]'): WebAuthnVerifier {
+		$appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$appConfig->method('getValueBool')->willReturn($enabled);
+		$appConfig->method('getValueString')->willReturn($origins);
+
+		return new WebAuthnVerifier(extensionSteps: new ExtensionCeremonySteps(origins: new TrustedExtensionOrigins(appConfig: $appConfig)));
+	}//end extensionVerifier()
+
+	/**
+	 * An extension enrolment from the given origin and flags.
+	 *
+	 * @param WebAuthnVerifier $verifier The verifier
+	 * @param array<string,mixed> $override Overrides for both ceremonies
+	 *
+	 * @return VerifiedPasskey
+	 */
+	private function verifyExtension(WebAuthnVerifier $verifier, array $override = []): VerifiedPasskey {
+		$override += ['origin' => self::EXTENSION_ORIGIN];
+
+		return $verifier->verifyEnrolment(
+			uid: self::UID,
+			rpId: WebAuthnFixture::RP_ID,
+			challenge: $this->challenge,
+			assertionChallenge: $this->assertionChallenge,
+			attestation: $this->passkey->attestation($this->challenge, $override),
+			assertion: $this->passkey->assertion($this->assertionChallenge, self::UID, $override),
+			extension: true,
+		);
+	}//end verifyExtension()
+
+	/**
+	 * An extension ceremony from a trusted origin, bound to the server host,
+	 * verifies.
+	 *
+	 * @return void
+	 */
+	public function testAcceptsAnExtensionCeremonyFromATrustedOrigin(): void {
+		$verified = $this->verifyExtension(verifier: $this->extensionVerifier());
+
+		$this->assertSame($this->passkey->credentialIdB64(), $verified->credentialId);
+	}//end testAcceptsAnExtensionCeremonyFromATrustedOrigin()
+
+	/**
+	 * Each refusal of an extension ceremony.
+	 *
+	 * @return array<string,array{0: bool, 1: string, 2: array<string,mixed>, 3: string}>
+	 */
+	public static function refusedExtensionCeremonies(): array {
+		$trusted = '["' . self::EXTENSION_ORIGIN . '"]';
+		return [
+			'origin is another extension' => [true, $trusted, ['origin' => 'chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba'], 'The extension origin is not trusted'],
+			'origin is the web origin' => [true, $trusted, ['origin' => WebAuthnFixture::ORIGIN], 'The extension origin is not trusted'],
+			'origin has a trailing slash' => [true, $trusted, ['origin' => self::EXTENSION_ORIGIN . '/'], 'The extension origin is not trusted'],
+			'extension passkeys are off' => [false, $trusted, [], 'Extension passkeys are switched off'],
+			'the origin setting is broken' => [true, '{not json', [], 'The trusted extension origins setting is unreadable'],
+			'the origin setting holds a wildcard' => [true, '["chrome-extension://*"]', [], 'The trusted extension origins setting is unreadable'],
+			'the user was not verified' => [true, $trusted, ['flags' => 0x41], 'User authentication required.'],
+			'rpId hash is another relying party' => [true, $trusted, ['rpId' => 'evil.test'], 'rpId hash mismatch.'],
+		];
+	}//end refusedExtensionCeremonies()
+
+	/**
+	 * A refused extension ceremony.
+	 *
+	 * @param bool $enabled The extension passkey switch
+	 * @param string $origins The stored admin origins
+	 * @param array<string,mixed> $override The broken field
+	 * @param string $reason The check that must refuse it
+	 *
+	 * @return void
+	 */
+	#[DataProvider('refusedExtensionCeremonies')]
+	public function testRefusesAnExtensionCeremony(bool $enabled, string $origins, array $override, string $reason): void {
+		$this->expectException(PasskeyVerificationException::class);
+		$this->expectExceptionMessage($reason);
+		$this->verifyExtension(verifier: $this->extensionVerifier(enabled: $enabled, origins: $origins), override: $override);
+	}//end testRefusesAnExtensionCeremony()
+
+	/**
+	 * A web ceremony never accepts an extension origin, even a trusted one.
+	 *
+	 * @return void
+	 */
+	public function testAWebCeremonyRefusesATrustedExtensionOrigin(): void {
+		$this->expectException(PasskeyVerificationException::class);
+		$this->expectExceptionMessage('Invalid scheme. HTTPS required.');
+		$this->extensionVerifier()->verifyEnrolment(
+			uid: self::UID,
+			rpId: WebAuthnFixture::RP_ID,
+			challenge: $this->challenge,
+			assertionChallenge: $this->assertionChallenge,
+			attestation: $this->passkey->attestation($this->challenge, ['origin' => self::EXTENSION_ORIGIN]),
+			assertion: $this->passkey->assertion($this->assertionChallenge, self::UID, ['origin' => self::EXTENSION_ORIGIN]),
+		);
+	}//end testAWebCeremonyRefusesATrustedExtensionOrigin()
+
+	/**
+	 * A counter that did not increase is reported apart from other refusals.
+	 *
+	 * @return void
+	 */
+	public function testACounterThatDidNotIncreaseIsToldApart(): void {
+		$verified = $this->verify(attestation: ['counter' => 1], assertion: ['counter' => 2]);
+		$challenge = random_bytes(32);
+
+		$this->expectException(PasskeyCounterException::class);
+		$this->verifier->verifyUnlock(
+			uid: self::UID,
+			rpId: WebAuthnFixture::RP_ID,
+			challenge: $challenge,
+			assertion: $this->passkey->assertion($challenge, self::UID, ['counter' => 2]),
+			credentialId: $verified->credentialId,
+			publicKey: $verified->publicKey,
+			counter: 2,
+		);
+	}//end testACounterThatDidNotIncreaseIsToldApart()
 }//end class

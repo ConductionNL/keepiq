@@ -20,6 +20,9 @@ parameters:
         # by string behind class_exists in ConnectionReporter (ADR-041).
         - tests/stubs/Integriq/Event/ConnectionStatusReportedEvent.php
         - tests/stubs/Integriq/Event/ConnectionRefreshRequestedEvent.php
+        # The WebAuthn ceremony step interface from the server's 3rdparty, which
+        # TrustedExtensionOrigin implements.
+        - tests/stubs/Webauthn/CeremonyStep.php
 
     ignoreErrors:
         # `OCP\DB\Schema\IColumn` / `ITable` arrived in Nextcloud 35. This app
@@ -44,13 +47,17 @@ parameters:
         - '#class Doctrine\\DBAL\\#'
         - '#Class Doctrine\\DBAL\\#'
         - '#Doctrine\\DBAL\\Platforms\\#'
-        # The WebAuthn and COSE libraries come from the Nextcloud server's
-        # 3rdparty at runtime (core's own passkey login uses them); Keepiq does
-        # not bundle a copy, so they are unknown to a standalone analysis.
+        # The WebAuthn and COSE libraries, and the Symfony UID they type their
+        # authenticator ids with, come from the Nextcloud server's 3rdparty at
+        # runtime (core's own passkey login uses them); Keepiq does not bundle
+        # a copy, so they are unknown to a standalone analysis.
         # WebAuthnVerifierTest runs the verifier against the real library.
         -
-            message: '#(Webauthn|Cose)\\#'
-            path: lib/Service/WebAuthnVerifier.php
+            message: '#(Webauthn|Cose|Symfony\\Component\\Uid)\\#'
+            paths:
+                - lib/Service/WebAuthnVerifier.php
+                - lib/Service/ExtensionCeremonySteps.php
+                - lib/Service/TrustedExtensionOrigin.php
         # nextcloud/ocp declares DataResponse's body bound as
         #   `@psalm-type DataResponseType = array|int|float|string|bool|object|null|…`
         #   `@template-covariant T of DataResponseType`

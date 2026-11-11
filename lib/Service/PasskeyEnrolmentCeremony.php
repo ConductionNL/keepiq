@@ -55,17 +55,6 @@ class PasskeyEnrolmentCeremony {
 	}//end __construct()
 
 	/**
-	 * A fresh 32-byte base64url challenge.
-	 *
-	 * @return string
-	 *
-	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
-	 */
-	public function freshChallenge(): string {
-		return $this->b64url(raw: random_bytes(32));
-	}//end freshChallenge()
-
-	/**
 	 * Issue the enrolment challenge pair (base64url) and store it in the
 	 * session as the only one the next enrolment may present.
 	 *
@@ -127,7 +116,7 @@ class PasskeyEnrolmentCeremony {
 		try {
 			$verified = $this->verifier->verifyEnrolment(
 				uid: $uid,
-				rpId: $clientRpId ?? $this->serverRpId(),
+				rpId: $clientRpId ?? $this->webRpId(),
 				challenge: $pending['challenge'],
 				assertionChallenge: $pending['assertionChallenge'],
 				attestation: $attestation,
@@ -168,10 +157,12 @@ class PasskeyEnrolmentCeremony {
 	 * as core uses for its own passkeys.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
-	private function serverRpId(): string {
+	public function webRpId(): string {
 		return (string)preg_replace('/:\d+$/', '', $this->request->getServerHost());
-	}//end serverRpId()
+	}//end webRpId()
 
 	/**
 	 * Unpadded base64url.
@@ -179,8 +170,10 @@ class PasskeyEnrolmentCeremony {
 	 * @param string $raw Raw bytes
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
-	private function b64url(string $raw): string {
+	public function b64url(string $raw): string {
 		return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
 	}//end b64url()
 }//end class

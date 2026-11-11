@@ -209,7 +209,7 @@ function attestationJson(created) {
 }
 
 /**
- * The proof get() credential as the JSON the server verifies.
+ * A get() credential as the JSON the server verifies.
  *
  * @param {object} assertion The get() credential.
  * @return {object}
@@ -265,7 +265,8 @@ function enrolmentBody(enrolment) {
 }
 
 /**
- * The login options of the user's unlock passkeys; at least one must be
+ * The login options of the user's unlock passkeys: their ids and PRF salts
+ * and the server's unlock challenge, never an envelope. At least one must be
  * enrolled.
  *
  * @return {Promise<{challenge: string, credentials: Array<object>}>}
@@ -317,21 +318,19 @@ function passkeyRequest(options) {
 }
 
 /**
- * The enrolled credential that answered, or the first one when the answer
- * names none of them.
+ * Send the unlock assertion to the server, which verifies it and only then
+ * returns the answering credential's wrapped envelope.
  *
- * @param {Array<object>} credentials The enrolled unlock passkeys.
- * @param {{rawId: ArrayBuffer}} assertion The authenticator's answer.
- * @return {object}
+ * @param {object} assertion The get() credential.
+ * @return {Promise<{id: string, credentialId: string, wrappedUnlockKey: string}>}
  * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
  */
-function answeringCredential(credentials, assertion) {
-	const usedId = toBase64Url(assertion.rawId)
-	return (
-		credentials.find(
-			(c) => toBase64Url(fromBase64Url(c.credentialId)) === usedId,
-		) || credentials[0]
+async function verifiedEnvelope(assertion) {
+	const response = await axios.post(
+		generateUrl('/apps/keepiq/api/v1/passkeys/unlock'),
+		{ assertion: assertionJson(assertion) },
 	)
+	return response.data
 }
 
 export const usePasskeyStore = defineStore('passkey', {
@@ -437,7 +436,8 @@ export const usePasskeyStore = defineStore('passkey', {
 
 		/**
 		 * Unlock the vault with a passkey (no master password). Runs
-		 * login-options → get() with the stored salt → PRF output → KEK →
+		 * login-options → get() with the stored salt → the server verifies
+		 * the assertion and returns the envelope → PRF output → KEK →
 		 * unwrap the raw unlock key → hand it to the session unlock path.
 		 *
 		 * @return {Promise<boolean>} Whether the unlock succeeded.
@@ -449,23 +449,18 @@ export const usePasskeyStore = defineStore('passkey', {
 			const assertion = await navigator.credentials.get({
 				publicKey: passkeyRequest(options),
 			})
-			const cred = answeringCredential(options.credentials, assertion)
 			const prfOutput =
 				assertion.getClientExtensionResults()?.prf?.results?.first
 			if (!prfOutput) {
 				throw new Error('Passkey unlock failed — no PRF result')
 			}
 
+			const cred = await verifiedEnvelope(assertion)
 			const kek = await deriveKekFromPrf(prfOutput, cred.credentialId)
 			const rawUnlockKey = await unwrapUnlockKey(kek, cred.wrappedUnlockKey)
 
 			const session = useSessionStore()
 			await session.unlockWithRawKey(rawUnlockKey)
-
-			// Best-effort last-used stamp.
-			axios
-				.post(generateUrl(`/apps/keepiq/api/v1/passkeys/${cred.id}/used`))
-				.catch(() => {})
 			return true
 		},
 

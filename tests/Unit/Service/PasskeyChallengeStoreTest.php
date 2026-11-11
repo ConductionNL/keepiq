@@ -125,4 +125,40 @@ class PasskeyChallengeStoreTest extends TestCase {
 		$this->data[PasskeyChallengeStore::SESSION_KEY] = ['uid' => 'alice', 'challenge' => '', 'assertionChallenge' => '', 'expiresAt' => 2000];
 		$this->assertNull($this->store->take(uid: 'alice'));
 	}//end testNothingOrAMalformedEntryIsRefused()
+
+	/**
+	 * An unlock challenge is 32 bytes, taken back once, and lives apart from
+	 * the enrolment pair: issuing one does not replace the other.
+	 *
+	 * @return void
+	 */
+	public function testAnUnlockChallengeIsTakenOnceAndKeptApart(): void {
+		$pair = $this->store->issue(uid: 'alice');
+		$challenge = $this->store->issueUnlock(uid: 'alice');
+
+		$this->assertSame(32, strlen($challenge));
+		$this->assertSame($challenge, $this->store->takeUnlock(uid: 'alice'));
+		$this->assertNull($this->store->takeUnlock(uid: 'alice'), 'an unlock challenge must not be usable twice');
+		$this->assertSame($pair, $this->store->take(uid: 'alice'));
+	}//end testAnUnlockChallengeIsTakenOnceAndKeptApart()
+
+	/**
+	 * An unlock challenge of another user, or past its lifetime, is refused
+	 * and spent.
+	 *
+	 * @return void
+	 */
+	public function testAnUnlockChallengeOfAnotherUserOrExpiredIsRefused(): void {
+		$this->store->issueUnlock(uid: 'alice');
+		$this->assertNull($this->store->takeUnlock(uid: 'mallory'));
+		$this->assertNull($this->store->takeUnlock(uid: 'alice'));
+
+		$this->store->issueUnlock(uid: 'alice');
+		$this->now += PasskeyChallengeStore::LIFETIME + 1;
+		$this->assertNull($this->store->takeUnlock(uid: 'alice'));
+		$this->assertArrayNotHasKey(PasskeyChallengeStore::UNLOCK_SESSION_KEY, $this->data);
+
+		$this->data[PasskeyChallengeStore::UNLOCK_SESSION_KEY] = ['uid' => 'alice', 'challenge' => '', 'expiresAt' => 2000];
+		$this->assertNull($this->store->takeUnlock(uid: 'alice'));
+	}//end testAnUnlockChallengeOfAnotherUserOrExpiredIsRefused()
 }//end class
