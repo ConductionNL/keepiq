@@ -22,6 +22,7 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Service\AdminSettingsService;
+use OCA\Keepiq\Service\TrustedExtensionOrigins;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -186,6 +187,47 @@ class AdminSettingsAreaTest extends TestCase {
 		$this->assertFalse($this->written['device_approval_enabled']);
 		$this->assertTrue($this->written['offline_edits_enabled']);
 	}//end testGeneralWritesTheDeviceApprovalAndOfflineEditSwitches()
+
+	/**
+	 * Policies stores the extension passkey switch and exact extension
+	 * origins, and shows the pinned store origins next to them.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-ceremonies-pass-only-for-trusted-extension-origins
+	 */
+	public function testPoliciesStoresTheExtensionPasskeySettings(): void {
+		$origin = 'chrome-extension://abcdefghijklmnopabcdefghijklmnop';
+		$result = $this->service->updateAreaSettings(
+			area: 'policies',
+			data: ['extension_passkeys_enabled' => false, 'extension_passkey_origins' => [$origin, $origin]],
+		);
+
+		$this->assertFalse($this->written['extension_passkeys_enabled']);
+		$this->assertSame('["' . str_replace('/', '\\/', $origin) . '"]', $this->written['extension_passkey_origins']);
+		$this->assertSame(TrustedExtensionOrigins::PINNED_STORE_ORIGINS, $result['extension_passkey_pinned_origins']);
+		$this->assertArrayHasKey('extension_passkey_origins', $result);
+	}//end testPoliciesStoresTheExtensionPasskeySettings()
+
+	/**
+	 * A wildcard or an origin with a path is refused, named, and not saved.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-ceremonies-pass-only-for-trusted-extension-origins
+	 */
+	public function testPoliciesRefusesAnInexactExtensionOrigin(): void {
+		foreach (['chrome-extension://*', 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/popup.html'] as $entry) {
+			try {
+				$this->service->updateAreaSettings(area: 'policies', data: ['extension_passkey_origins' => [$entry]]);
+				$this->fail('saved ' . $entry);
+			} catch (InvalidArgumentException $exception) {
+				$this->assertSame('Not an exact extension origin: ' . $entry, $exception->getMessage());
+			}
+		}
+
+		$this->assertArrayNotHasKey('extension_passkey_origins', $this->written);
+	}//end testPoliciesRefusesAnInexactExtensionOrigin()
 
 	/**
 	 * An unknown area is refused.
