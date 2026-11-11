@@ -557,6 +557,12 @@ describe('card and identity fill', () => {
 		expect(forms().map(([frameId]) => frameId)).toEqual([0, 3])
 	})
 
+	it('never adds an inline list frame that shows no web page', async () => {
+		probes = { 0: { roles: ['cardholder'] }, 5: CARD_FIELDS }
+		await fillCard({ only: { frameId: 5, url: 'about:blank', anchorKey: 'k1' } })
+		expect(sent.some(({ frameId }) => frameId === 5)).toBe(false)
+	})
+
 	describe('from the context menu', () => {
 		beforeEach(() => {
 			recordFrame(TAB, 3, 'https://js.stripe.test/v3')
