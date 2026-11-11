@@ -136,7 +136,8 @@ import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
-import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
+import { secretSaveGuards } from '../mixins/secretSaveGuards.js'
+import { evaluateScore } from '../policy/policy.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -152,7 +153,7 @@ import {
 } from '../totp/authenticatorKey.js'
 import { membersToObject } from '../utils/additionalFields.js'
 import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
-import { mergeTypedValues, missingRequired } from '../utils/typedFields.js'
+import { mergeTypedValues } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 
 /**
@@ -201,7 +202,7 @@ export default {
 		Plus,
 	},
 
-	mixins: [secretPayloadForm],
+	mixins: [secretPayloadForm, secretSaveGuards],
 
 	props: {
 		/** The folder to create the secret in (defaults to the current view). */
@@ -369,11 +370,8 @@ export default {
 	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 	 */
 	async mounted() {
-		this.policy = await fetchPolicy()
+		await this.loadPolicyAndTypes()
 		const typeStore = useSecretTypeStore()
-		if (typeStore.types.length === 0) {
-			await typeStore.fetchTypes()
-		}
 		if (this.typeId === null && typeStore.types.length > 0) {
 			// The user's saved default type; Login when it no longer exists (vault-20).
 			const prefs = useUserPreferencesStore()
@@ -450,30 +448,14 @@ export default {
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
 		async submit() {
-			if (!this.canSubmit) {
-				return
-			}
-			// A required field of the type blocks the save and is marked (admin-18).
-			this.typedMissing = missingRequired(this.typedFields, this.typedValues)
-			if (this.typedMissing.length > 0) {
+			if (this.saveBlocked()) {
 				return
 			}
 			this.saving = true
 			this.error = ''
 			try {
-				// HIBP block (org-password-policies §4.2): k-anonymity check
-				// BEFORE encryption; only the 5-char prefix leaves the browser.
-				if (!this.isCard && !this.isIdentity) {
-					const hibpReason = await evaluateHibp(
-						this.policy,
-						this.selectedTypeName,
-						this.value,
-					)
-					if (hibpReason !== null) {
-						this.error = hibpReason
-						this.saving = false
-						return
-					}
+				if (!this.isCard && !this.isIdentity && (await this.breachBlocked())) {
+					return
 				}
 				if (this.contributeTo) {
 					// A team folder this user can write to but does not own
