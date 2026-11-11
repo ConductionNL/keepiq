@@ -292,10 +292,7 @@ class FolderService {
 		$folder = $this->ownership->requireOwned(id: $id, userId: $userId);
 
 		$this->deletion->delete(
-			folder: $folder,
-			cascade: $cascade,
-			resolution: $resolution,
-			userId: $userId
+			deletion: new FolderDeletion(folder: $folder, cascade: $cascade, resolution: $resolution, userId: $userId)
 		);
 	}//end delete()
 }//end class
