@@ -25,24 +25,49 @@ function toRows(payload) {
 	const secrets = (payload && payload.secrets) || []
 	// Number every row: duplicate choices, preview keys and rejected-row
 	// reports are all keyed by sourceRow (keepiq#749).
-	return secrets.map((s, index) => {
-		const row = {
-			sourceRow: index + 1,
-			name: s.name ?? '',
-			url: s.url ?? null,
-			login: s.login ?? null,
-			password: s.password ?? null,
-			additionalFields: s.additionalFields ?? null,
-			folder: s.folder ?? '',
-			type: s.type ?? 'login',
+	return secrets.map((s, index) => withBlobFields(baseRow(s, index + 1), s))
+}
+
+/** The plain fields of a restored row, with the value each takes when the secret lacks it. */
+const ROW_DEFAULTS = {
+	name: '',
+	url: null,
+	login: null,
+	password: null,
+	additionalFields: null,
+	folder: '',
+	type: 'login',
+}
+
+/**
+ * The plain fields of one restored secret, each defaulted when absent.
+ *
+ * @param {object} s The decrypted secret.
+ * @param {number} sourceRow Its 1-based position in the backup.
+ * @return {object} The row.
+ */
+function baseRow(s, sourceRow) {
+	const row = { sourceRow }
+	for (const [field, fallback] of Object.entries(ROW_DEFAULTS)) {
+		row[field] = s[field] ?? fallback
+	}
+	return row
+}
+
+/**
+ * The row with the secret's non-empty value blobs (code, passkeys) added.
+ *
+ * @param {object} row The row.
+ * @param {object} s The decrypted secret.
+ * @return {object} The same row.
+ */
+function withBlobFields(row, s) {
+	for (const field of BLOB_FIELDS) {
+		if (typeof s[field] === 'string' && s[field] !== '') {
+			row[field] = s[field]
 		}
-		for (const field of BLOB_FIELDS) {
-			if (typeof s[field] === 'string' && s[field] !== '') {
-				row[field] = s[field]
-			}
-		}
-		return row
-	})
+	}
+	return row
 }
 
 /**
