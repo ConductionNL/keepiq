@@ -64,18 +64,16 @@ async function contentKeyOf(data, secret) {
 }
 
 /**
- * Report the failed password attempt (burns at 5); the caller surfaces
- * attemptsLeft.
+ * The wrong-password error, with the fetches the server still allows.
  *
- * @param {string} token The URL token.
- * @return {Promise<Error>} The wrong-password error, with the attempts left.
+ * @param {object} data The served ciphertext envelope.
+ * @return {Error} The wrong-password error.
  * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
  */
-async function wrongPasswordError(token) {
-	const failure = await axios.post(publicSendUrl(token, 'failure'))
+function wrongPasswordError(data) {
 	const err = new Error('wrong-password')
-	err.attemptsLeft = failure.data?.attemptsLeft ?? 0
-	err.burned = failure.data?.burned === true
+	err.attemptsLeft = data?.attemptsLeft ?? 0
+	err.burned = false
 	return err
 }
 
@@ -87,6 +85,14 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		loading: false,
 		/** @type {string|null} The last error message. */
 		error: null,
+		/**
+		 * Ciphertext already served on this page, per token. The server
+		 * counts a view and an attempt for every serve, so a retried password
+		 * is tried against the ciphertext in hand rather than fetched again.
+		 *
+		 * @type {Object<string, object>}
+		 */
+		served: {},
 	}),
 
 	actions: {
@@ -181,20 +187,28 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
 		 */
 		async accessSend(token, fragmentKey, password) {
-			const response = await axios.post(publicSendUrl(token, 'access'))
-			const data = response.data
+			if (!this.served[token]) {
+				const response = await axios.post(publicSendUrl(token, 'access'))
+				this.served[token] = response.data
+			}
+			const data = this.served[token]
 			try {
 				const contentKey = await contentKeyOf(data, { fragmentKey, password })
 				const plaintext = await aesDecrypt(contentKey, data.encryptedPayload)
-				const confirm = await axios.post(publicSendUrl(token, 'confirm'))
+				// The view was counted when the ciphertext was served; a
+				// burned send is already gone, so its confirm is skipped.
+				delete this.served[token]
+				if (!data.burned) {
+					await axios.post(publicSendUrl(token, 'confirm')).catch(() => null)
+				}
 				return {
 					payload: new TextDecoder().decode(plaintext),
 					payloadType: data.payloadType,
-					burned: confirm.data?.burned === true,
+					burned: data.burned === true,
 				}
 			} catch (e) {
 				if (data.hasPassword) {
-					throw await wrongPasswordError(token)
+					throw wrongPasswordError(data)
 				}
 				throw e
 			}
