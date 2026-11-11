@@ -209,14 +209,7 @@ export default {
 				(id) => this.moveOne(id),
 				this.t('keepiq', 'Adding to team folder'),
 			)
-			try {
-				const result = await this.teamFolderStore.runFanOut(this.target.id)
-				this.refused = result?.refused ?? []
-			} catch {
-				// Fan-out errors surface via the team-folder store; the
-				// idempotent reconcile picks up missing pairs on retry.
-			}
-			this.$emit('done')
+			await this.fanOutAndFinish()
 		},
 
 		/**
@@ -231,11 +224,23 @@ export default {
 				(id) => this.moveOne(id),
 				this.t('keepiq', 'Retrying'),
 			)
+			await this.fanOutAndFinish()
+		},
+
+		/**
+		 * Run the membership fan-out once for the target folder, name the
+		 * copies the server refused, and report the dialog done.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
+		 */
+		async fanOutAndFinish() {
 			try {
 				const result = await this.teamFolderStore.runFanOut(this.target.id)
 				this.refused = result?.refused ?? []
 			} catch {
-				// See onRun.
+				// Fan-out errors surface via the team-folder store; the
+				// idempotent reconcile picks up missing pairs on retry.
 			}
 			this.$emit('done')
 		},
