@@ -138,6 +138,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import ComplianceSnapshotDialog from '../../dialogs/ComplianceSnapshotDialog.vue'
+import { localDateTime } from '../../utils/dateTime.js'
 
 export default {
 	name: 'ComplianceSection',
@@ -235,20 +236,8 @@ export default {
 		// serialise: print-to-PDF reads a `ref` that only exists inside the
 		// dialog, and the beacon records the export that component performed.
 
-		/**
-		 * Locale date-time display.
-		 *
-		 * @param {string} iso The ISO timestamp.
-		 * @return {string}
-		 *
-		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
-		 */
-		formatDate(iso) {
-			const parsed = Date.parse(iso ?? '')
-			return Number.isNaN(parsed)
-				? (iso ?? '')
-				: new Date(parsed).toLocaleString()
-		},
+		/** Locale date-time display of an ISO timestamp. */
+		formatDate: localDateTime,
 	},
 }
 </script>
@@ -277,30 +266,5 @@ export default {
 	text-align: start;
 	padding: 4px 8px;
 	border-bottom: 1px solid var(--color-border, #ddd);
-}
-
-.compliance__detail {
-	padding: 4px 12px 12px;
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-}
-
-.compliance__boundary {
-	font-style: italic;
-	color: var(--color-text-maxcontrast, #777);
-}
-
-.compliance__section dl,
-.compliance__detail dl {
-	display: grid;
-	grid-template-columns: max-content 1fr;
-	gap: 2px 16px;
-}
-
-.compliance__section dt,
-.compliance__detail dt {
-	font-weight: 600;
-	font-size: 13px;
 }
 </style>

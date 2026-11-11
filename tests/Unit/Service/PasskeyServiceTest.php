@@ -292,4 +292,66 @@ class PasskeyServiceTest extends TestCase {
 			}
 		}
 	}//end testEnrollStoresClientKindAndRpId()
+
+	/**
+	 * Golden: each refusal of an enrolment, in check order, with its message,
+	 * none of them reaching the duplicate lookup.
+	 *
+	 * @return void
+	 */
+	public function testEnrollRefusesInCheckOrder(): void {
+		$this->mapper->expects($this->never())->method('findByCredentialId');
+		$this->mapper->expects($this->never())->method('insert');
+		$base = ['credentialId' => 'c', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e'];
+		$cases = [
+			[['prfSalt' => ''] + $base, 'credentialId, prfSalt and wrappedUnlockKey are required'],
+			[['credentialId' => '', 'clientKind' => 'desktop'] + $base, 'credentialId, prfSalt and wrappedUnlockKey are required'],
+			[['clientKind' => 'desktop'] + $base, 'clientKind must be web or extension'],
+			[['clientKind' => 'extension', 'rpId' => ''] + $base, 'An extension passkey needs its relying party id'],
+		];
+		foreach ($cases as [$dto, $message]) {
+			try {
+				$this->service->enroll(uid: 'alice', dto: $dto);
+				$this->fail('enrolled ' . json_encode($dto));
+			} catch (InvalidArgumentException $exception) {
+				$this->assertSame($message, $exception->getMessage());
+			}
+		}
+	}//end testEnrollRefusesInCheckOrder()
+
+	/**
+	 * Golden: an enrolment stores every field it was given, an empty client
+	 * kind as web and empty optional fields as null, as an active credential.
+	 *
+	 * @return void
+	 */
+	public function testEnrollStoresEveryField(): void {
+		$this->mapper->expects($this->once())->method('findByCredentialId')->with('alice', 'c')->willReturn(null);
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$credential = $this->service->enroll(
+			uid: 'alice',
+			dto: [
+				'credentialId' => 'c',
+				'prfSalt' => 's',
+				'wrappedUnlockKey' => 'e',
+				'publicKey' => 'PK',
+				'label' => '',
+				'transports' => 'usb,nfc',
+				'aaguid' => null,
+				'clientKind' => '',
+			],
+		);
+
+		$this->assertSame(
+			['alice', 'c', 'PK', 's', 'e', 3, null, 'usb,nfc', null, 'web', null, 'active'],
+			[
+				$credential->getOwnerId(), $credential->getCredentialId(), $credential->getPublicKey(), $credential->getPrfSalt(),
+				$credential->getWrappedUnlockKey(), $credential->getUnlockKeyEpoch(), $credential->getLabel(), $credential->getTransports(),
+				$credential->getAaguid(), $credential->getClientKind(), $credential->getRpId(), $credential->getStatus(),
+			]
+		);
+		$this->assertMatchesRegularExpression('/^[0-9a-f-]{36}$/', $credential->getId());
+		$this->assertNotNull($credential->getCreatedAt());
+	}//end testEnrollStoresEveryField()
 }//end class

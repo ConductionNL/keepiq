@@ -98,4 +98,58 @@ describe('passkey unlock with the second enrolled passkey (keepiq#744)', () => {
 		expect(String.fromCharCode(...derived[0].salt)).toBe('salt-two')
 		expect(unlock).toHaveBeenCalledTimes(1)
 	})
+
+	/**
+	 * An authenticator that answers with the given raw id and PRF output.
+	 *
+	 * @param {Array<number>} rawId The credential that answered.
+	 * @param {ArrayBuffer|undefined} prf Its PRF output.
+	 * @return {object} The get() spy.
+	 */
+	function authenticator(rawId, prf) {
+		const get = vi.fn(async () => ({
+			rawId: Uint8Array.from(rawId).buffer,
+			getClientExtensionResults: () => ({ prf: { results: { first: prf } } }),
+		}))
+		Object.defineProperty(globalThis.navigator, 'credentials', {
+			configurable: true,
+			value: { get },
+		})
+		return get
+	}
+
+	it('asks the authenticator for every passkey, unlocks with the first one when the answer names none, and stamps it used', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { challenge: 'a+b/', credentials: [FIRST, SECOND] },
+		})
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
+		vi.spyOn(useSessionStore(), 'unlockWithRawKey').mockResolvedValue()
+		const get = authenticator([9, 9, 9], new Uint8Array([7]).buffer)
+
+		await expect(usePasskeyStore().unlockWithPasskey()).resolves.toBe(true)
+
+		const { publicKey } = get.mock.calls[0][0]
+		expect(Array.from(new Uint8Array(publicKey.challenge))).toEqual([107, 230, 255])
+		expect(publicKey.allowCredentials.map((c) => [c.type, Array.from(new Uint8Array(c.id))])).toEqual([
+			['public-key', [1, 2, 3]],
+			['public-key', [4, 5, 6]],
+		])
+		expect(publicKey.userVerification).toBe('preferred')
+		expect(typeof publicKey.rpId).toBe('string')
+		expect(derived[0].credentialId).toBe('AQID')
+		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/passkeys/p1/used')
+	})
+
+	it('refuses without an enrolled passkey and without a PRF result', async () => {
+		const get = vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { challenge: 'AAAA', credentials: [] },
+		})
+		const store = usePasskeyStore()
+		await expect(store.unlockWithPasskey()).rejects.toThrow('No passkey enrolled for unlock')
+		get.mockResolvedValue({ data: { challenge: 'AAAA', credentials: [FIRST] } })
+		const unlock = vi.spyOn(useSessionStore(), 'unlockWithRawKey')
+		authenticator([1, 2, 3], undefined)
+		await expect(store.unlockWithPasskey()).rejects.toThrow('Passkey unlock failed — no PRF result')
+		expect(unlock).not.toHaveBeenCalled()
+	})
 })

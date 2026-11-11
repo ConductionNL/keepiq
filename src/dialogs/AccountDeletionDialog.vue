@@ -101,7 +101,7 @@ import {
 	NcPasswordField,
 	NcTextField,
 } from '@nextcloud/vue'
-import { verifyMasterPassword } from '../crypto/reauth.js'
+import masterPasswordCheck from '../mixins/masterPasswordCheck.js'
 import { useExportStore } from '../store/modules/export.js'
 import { useSessionStore } from '../store/modules/session.js'
 
@@ -117,6 +117,8 @@ export default {
 		NcTextField,
 		NcPasswordField,
 	},
+
+	mixins: [masterPasswordCheck],
 
 	props: {
 		open: {
@@ -196,12 +198,7 @@ export default {
 		 */
 		async onDelete() {
 			this.error = null
-			const ok = await verifyMasterPassword(
-				this.sessionStore.encryptedPrivateKey,
-				this.masterPassword,
-			)
-			if (!ok) {
-				this.error = this.t('keepiq', 'Incorrect master password')
+			if (!(await this.masterPasswordVerified())) {
 				return
 			}
 			try {

@@ -252,26 +252,22 @@ export default {
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 		 */
 		messageForReason(reason) {
-			switch (reason) {
-				case 'fulfilled':
-					return t('keepiq', 'This request has already been fulfilled.')
-				case 'declined':
-					return t('keepiq', 'This request was declined.')
-				case 'locked':
-					return t(
-						'keepiq',
-						'This request is temporarily unavailable while a compromise recovery is in progress.',
-					)
-				case 'expired':
-					return t('keepiq', 'This request has expired.')
-				case 'unavailable':
-					// The requester's key was revoked (#809 review).
-					return t('keepiq', 'This request is no longer available.')
-				case 'not-found':
-					return t('keepiq', 'This request could not be found.')
-				default:
-					return null
+			const messages = {
+				fulfilled: t('keepiq', 'This request has already been fulfilled.'),
+				declined: t('keepiq', 'This request was declined.'),
+				locked: t(
+					'keepiq',
+					'This request is temporarily unavailable while a compromise recovery is in progress.',
+				),
+
+				expired: t('keepiq', 'This request has expired.'),
+				// The requester's key was revoked (#809 review).
+				unavailable: t('keepiq', 'This request is no longer available.'),
+				'not-found': t('keepiq', 'This request could not be found.'),
 			}
+			return Object.hasOwn(messages, reason)
+				? messages[reason]
+				: null
 		},
 
 		/**

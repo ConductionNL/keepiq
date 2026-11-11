@@ -33,7 +33,6 @@ use OCA\Keepiq\Db\HoneyAlert;
 use OCA\Keepiq\Db\HoneyAlertMapper;
 use OCA\Keepiq\Db\HoneyFlag;
 use OCP\IAppConfig;
-use Ramsey\Uuid\Uuid;
 
 /**
  * Deduplicated persistence of honey (decoy) access alerts.
@@ -68,33 +67,20 @@ class HoneyAlertRecorder {
 	 * otherwise raise a new alert.
 	 *
 	 * @param HoneyFlag $flag The honey flag of the accessed secret
-	 * @param string $secretId The accessed secret
-	 * @param string $accessorType The accessor type
-	 * @param string|null $accessorId The accessor id, or null when anonymous
-	 * @param string $channel The access channel
-	 * @param string|null $remoteIp The accessor's remote address
-	 * @param string|null $userAgent The accessor's user agent
+	 * @param HoneyAccess $access The observed access
 	 *
 	 * @return bool Whether a NEW alert was raised (the caller should page)
 	 *
 	 * @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md
 	 */
-	public function record(
-		HoneyFlag $flag,
-		string $secretId,
-		string $accessorType,
-		?string $accessorId,
-		string $channel,
-		?string $remoteIp,
-		?string $userAgent,
-	): bool {
+	public function record(HoneyFlag $flag, HoneyAccess $access): bool {
 		$now = new DateTime();
 		$window = $this->appConfig->getValueInt(Application::APP_ID, 'honey_dedup_window_seconds', self::DEFAULT_DEDUP_WINDOW);
 		$existing = $this->alertMapper->findLatestForAccessor(
 			honeyFlagId: $flag->getId(),
-			accessorType: $accessorType,
-			accessorId: $accessorId,
-			channel: $channel,
+			accessorType: $access->accessorType,
+			accessorId: $access->accessorId,
+			channel: $access->channel,
 		);
 
 		$windowStart = (clone $now)->sub(new DateInterval('PT' . max(0, $window) . 'S'));
@@ -107,19 +93,8 @@ class HoneyAlertRecorder {
 		}
 
 		if ($collapse === false) {
-			$alert = new HoneyAlert();
-			$alert->setId(Uuid::uuid4()->toString());
-			$alert->setHoneyFlagId($flag->getId());
-			$alert->setSecretId($secretId);
-			$alert->setAccessorType($accessorType);
-			$alert->setAccessorId($accessorId);
-			$alert->setChannel($channel);
-			$alert->setIp($remoteIp);
-			$alert->setUserAgent($userAgent);
-			$alert->setAccessCount(1);
-			$alert->setAccessedAt($now);
-			$this->alertMapper->insert($alert);
-		}//end if
+			$this->alertMapper->insert($access->alertFor(flag: $flag, now: $now));
+		}
 
 		return ($collapse === false);
 	}//end record()

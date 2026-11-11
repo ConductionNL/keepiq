@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Service\HoneyAccess;
 use OCA\Keepiq\Service\HoneyTripwireService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -140,12 +141,14 @@ class HoneyTripwireListener implements IEventListener {
 		if ($eventType === AuditEventTypes::SECRET_READ && $event->getObjectType() === 'secret') {
 			$secretId = (string)$event->getObjectId();
 			$hit = $this->honeyService->raiseAlert(
-				secretId: $secretId,
-				accessorType: $event->getActorType(),
-				accessorId: $event->getActorId(),
-				channel: 'ui',
-				remoteIp: $remoteIp,
-				userAgent: $userAgent,
+				access: new HoneyAccess(
+					secretId: $secretId,
+					accessorType: $event->getActorType(),
+					accessorId: $event->getActorId(),
+					channel: 'ui',
+					remoteIp: $remoteIp,
+					userAgent: $userAgent,
+				)
 			);
 			if ($hit === false) {
 				// Not flagged directly — a share-recipient copy read
@@ -158,12 +161,14 @@ class HoneyTripwireListener implements IEventListener {
 
 		if ($eventType === AuditEventTypes::APPLICATION_SECRET_RETRIEVED && $event->getObjectType() === 'secret') {
 			$this->honeyService->raiseAlert(
-				secretId: (string)$event->getObjectId(),
-				accessorType: $event->getActorType(),
-				accessorId: $event->getActorId(),
-				channel: 'machine_api',
-				remoteIp: $remoteIp,
-				userAgent: $userAgent,
+				access: new HoneyAccess(
+					secretId: (string)$event->getObjectId(),
+					accessorType: $event->getActorType(),
+					accessorId: $event->getActorId(),
+					channel: 'machine_api',
+					remoteIp: $remoteIp,
+					userAgent: $userAgent,
+				)
 			);
 
 			return;
@@ -172,12 +177,14 @@ class HoneyTripwireListener implements IEventListener {
 		if ($eventType === AuditEventTypes::LINK_SHARE_ACCESSED && $event->getObjectType() === 'link_share') {
 			$linkShare = $this->linkShareMapper->findById((string)$event->getObjectId());
 			$this->honeyService->raiseAlert(
-				secretId: $linkShare->getSecretId(),
-				accessorType: $event->getActorType(),
-				accessorId: $event->getActorId(),
-				channel: 'link',
-				remoteIp: $remoteIp,
-				userAgent: $userAgent,
+				access: new HoneyAccess(
+					secretId: $linkShare->getSecretId(),
+					accessorType: $event->getActorType(),
+					accessorId: $event->getActorId(),
+					channel: 'link',
+					remoteIp: $remoteIp,
+					userAgent: $userAgent,
+				)
 			);
 		}
 	}//end trip()
@@ -202,12 +209,14 @@ class HoneyTripwireListener implements IEventListener {
 		}
 
 		$this->honeyService->raiseAlert(
-			secretId: $shareTarget->getSourceSecretId(),
-			accessorType: $event->getActorType(),
-			accessorId: $event->getActorId(),
-			channel: 'share',
-			remoteIp: $remoteIp,
-			userAgent: $userAgent,
+			access: new HoneyAccess(
+				secretId: $shareTarget->getSourceSecretId(),
+				accessorType: $event->getActorType(),
+				accessorId: $event->getActorId(),
+				channel: 'share',
+				remoteIp: $remoteIp,
+				userAgent: $userAgent,
+			)
 		);
 	}//end tripSourceOfCopy()
 }//end class

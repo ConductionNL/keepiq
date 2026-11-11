@@ -195,6 +195,31 @@ import { objectToMembers } from '../utils/additionalFields.js'
  */
 const MASKED_COMPOSITE_FIELDS = ['number', 'cvv', 'pin', 'bsn']
 
+/**
+ * @param {string|number|boolean|null|undefined} value A composite member's value.
+ * @return {boolean} Whether it holds something to show.
+ */
+function isFilled(value) {
+	return value !== null && value !== undefined && value !== ''
+}
+
+/**
+ * The additional fields as rows. They live in the encrypted blob by design,
+ * so they are treated as sensitive until the recipient reveals them.
+ *
+ * @param {object|undefined} additionalFields The name→value blob.
+ * @return {Array<object>} Display rows.
+ * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
+ */
+function additionalFieldRows(additionalFields) {
+	return objectToMembers(additionalFields).map((member) => ({
+		id: `extra-${member.name}`,
+		label: member.name,
+		value: member.value,
+		secret: true,
+	}))
+}
+
 export default {
 	name: 'LinkShareAccess',
 
@@ -240,68 +265,11 @@ export default {
 			if (!this.snapshot) {
 				return []
 			}
-
-			const fields = []
-			if (this.snapshot.name) {
-				fields.push({
-					id: 'name',
-					label: this.t('keepiq', 'Name'),
-					value: String(this.snapshot.name),
-					secret: false,
-				})
-			}
-			if (this.snapshot.login) {
-				fields.push({
-					id: 'login',
-					label: this.t('keepiq', 'Login'),
-					value: String(this.snapshot.login),
-					secret: false,
-				})
-			}
-			if (this.snapshot.url) {
-				fields.push({
-					id: 'url',
-					label: this.t('keepiq', 'URL'),
-					value: String(this.snapshot.url),
-					secret: false,
-				})
-			}
-
-			const composite = parsePayload(this.snapshot.key ?? '')
-			if (composite !== null) {
-				for (const [member, value] of Object.entries(composite)) {
-					if (value === null || value === undefined || value === '') {
-						continue
-					}
-					fields.push({
-						id: `key-${member}`,
-						label: this.compositeLabel(member),
-						value: String(value),
-						secret: MASKED_COMPOSITE_FIELDS.includes(member),
-					})
-				}
-			} else if (this.snapshot.key) {
-				fields.push({
-					id: 'key',
-					label: this.t('keepiq', 'Secret value'),
-					value: String(this.snapshot.key),
-					secret: true,
-					testid: 'link-share-value',
-				})
-			}
-
-			for (const member of objectToMembers(this.snapshot.additionalFields)) {
-				fields.push({
-					id: `extra-${member.name}`,
-					label: member.name,
-					value: member.value,
-					// Additional fields live in the encrypted blob by design, so
-					// they are treated as sensitive until the recipient reveals them.
-					secret: true,
-				})
-			}
-
-			return fields
+			return [
+				...this.headerFields(),
+				...this.keyFields(),
+				...additionalFieldRows(this.snapshot.additionalFields),
+			]
 		},
 	},
 
@@ -332,6 +300,72 @@ export default {
 				/share\/link\/([^/?#]+)/,
 			)
 			return m ? decodeURIComponent(m[1]) : ''
+		},
+
+		/**
+		 * The name, login and URL rows, each only when the snapshot has it.
+		 *
+		 * @return {Array<object>} Display rows.
+		 * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
+		 */
+		headerFields() {
+			const labels = {
+				name: this.t('keepiq', 'Name'),
+				login: this.t('keepiq', 'Login'),
+				url: this.t('keepiq', 'URL'),
+			}
+			return Object.entries(labels)
+				.filter(([id]) => this.snapshot[id])
+				.map(([id, label]) => ({
+					id,
+					label,
+					value: String(this.snapshot[id]),
+					secret: false,
+				}))
+		},
+
+		/**
+		 * The rows of the secret's value: a card/identity composite member by
+		 * member, else one masked "Secret value" row when there is a value.
+		 *
+		 * @return {Array<object>} Display rows.
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 */
+		keyFields() {
+			const composite = parsePayload(this.snapshot.key ?? '')
+			if (composite !== null) {
+				return this.compositeFields(composite)
+			}
+			if (!this.snapshot.key) {
+				return []
+			}
+			return [
+				{
+					id: 'key',
+					label: this.t('keepiq', 'Secret value'),
+					value: String(this.snapshot.key),
+					secret: true,
+					testid: 'link-share-value',
+				},
+			]
+		},
+
+		/**
+		 * One row per filled composite member, the sensitive ones masked.
+		 *
+		 * @param {object} composite The parsed card/identity composite.
+		 * @return {Array<object>} Display rows.
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 */
+		compositeFields(composite) {
+			return Object.entries(composite)
+				.filter(([, value]) => isFilled(value))
+				.map(([member, value]) => ({
+					id: `key-${member}`,
+					label: this.compositeLabel(member),
+					value: String(value),
+					secret: MASKED_COMPOSITE_FIELDS.includes(member),
+				}))
 		},
 
 		/**

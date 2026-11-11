@@ -114,62 +114,93 @@ class SeedDevelopmentData implements IRepairStep {
 	 *
 	 * @return EncryptionSuite|null The suite, or null when no key or certificate could be made
 	 *
-	 * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_pkey_export populates $privateKeyPem
-	 *   via by-reference output param — PHPMD cannot trace by-ref semantics.
-	 *
 	 * @spec openspec/specs/demo-vault/spec.md#requirement-a-demo-vault-is-minted-only-for-a-named-cast-account
 	 */
 	public function mintSuite(string $userId, string $masterPassword, IOutput $output): ?EncryptionSuite {
-		// Generate RSA key pair.
+		$mint = new SuiteMint(userId: $userId, masterPassword: $masterPassword, output: $output);
+		if ($this->generateKeys(mint: $mint) === false || $this->signCertificate(mint: $mint) === false) {
+			return null;
+		}
+
+		return $this->storeSuite(mint: $mint);
+	}//end mintSuite()
+
+	/**
+	 * Generate the RSA key pair.
+	 *
+	 * @param SuiteMint $mint The suite being minted
+	 *
+	 * @return bool False when no key pair could be made
+	 *
+	 * @SuppressWarnings(PHPMD.UndefinedVariable) openssl_pkey_export populates $privateKeyPem
+	 *   via by-reference output param — PHPMD cannot trace by-ref semantics.
+	 */
+	private function generateKeys(SuiteMint $mint): bool {
 		$keyPair = openssl_pkey_new(
 			options: [
 				'private_key_bits' => 4096,
 				'private_key_type' => OPENSSL_KEYTYPE_RSA,
 			]
 		);
-
 		if ($keyPair === false) {
-			$output->warning('Failed to generate RSA key pair for dev seed');
-			return null;
+			$mint->output->warning('Failed to generate RSA key pair for dev seed');
+			return false;
 		}
 
 		openssl_pkey_export(key: $keyPair, output: $privateKeyPem);
-		$keyDetails = openssl_pkey_get_details(key: $keyPair);
-		$publicKeyPem = $keyDetails['key'];
+		$mint->privateKeyPem = $privateKeyPem;
+		$mint->publicKeyPem = openssl_pkey_get_details(key: $keyPair)['key'];
+		return true;
+	}//end generateKeys()
 
-		// Sign the public key with the CA.
+	/**
+	 * Sign the public key with the CA.
+	 *
+	 * @param SuiteMint $mint The suite being minted
+	 *
+	 * @return bool False when the CA is not available
+	 */
+	private function signCertificate(SuiteMint $mint): bool {
 		try {
-			$certificate = $this->caService->signPublicKey(
-				publicKeyPem: $publicKeyPem,
-				commonName: $userId,
-				privateKeyPem: $privateKeyPem
+			$mint->certificate = $this->caService->signPublicKey(
+				publicKeyPem: $mint->publicKeyPem,
+				commonName: $mint->userId,
+				privateKeyPem: $mint->privateKeyPem
 			);
+			return true;
 		} catch (Exception $e) {
-			$output->warning('CA not available for dev seed: ' . $e->getMessage());
-			return null;
+			$mint->output->warning('CA not available for dev seed: ' . $e->getMessage());
+			return false;
 		}
+	}//end signCertificate()
 
-		// Encrypt the private key with the master password.
+	/**
+	 * Encrypt the private key with the master password, store the active
+	 * suite and report it.
+	 *
+	 * @param SuiteMint $mint The suite being minted
+	 *
+	 * @return EncryptionSuite The stored suite
+	 */
+	private function storeSuite(SuiteMint $mint): EncryptionSuite {
 		$encryptedPrivateKey = $this->encryptService->encryptPrivateKey(
-			pem: $privateKeyPem,
-			password: $masterPassword
+			pem: $mint->privateKeyPem,
+			password: $mint->masterPassword
 		);
-
-		// Create the EncryptionSuite.
 		$suite = new EncryptionSuite();
 		$suite->setId(Uuid::uuid4()->toString());
 		$suite->setOwnerType('user');
-		$suite->setOwnerId($userId);
-		$suite->setCertificate($certificate);
+		$suite->setOwnerId($mint->userId);
+		$suite->setCertificate($mint->certificate);
 		$suite->setPrivateKey($encryptedPrivateKey);
 		$suite->setStatus('active');
 		$suite->setCreatedAt(new DateTime());
 
 		$this->suiteMapper->insert($suite);
 
-		$output->info('Dev EncryptionSuite created for user: ' . $userId);
-		$this->logger->info('Keepiq dev seed: EncryptionSuite created for user: ' . $userId);
+		$mint->output->info('Dev EncryptionSuite created for user: ' . $mint->userId);
+		$this->logger->info('Keepiq dev seed: EncryptionSuite created for user: ' . $mint->userId);
 
 		return $suite;
-	}//end mintSuite()
+	}//end storeSuite()
 }//end class

@@ -203,7 +203,8 @@ import {
 } from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
 import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
-import { verifyMasterPassword } from '../crypto/reauth.js'
+import exportSourceProps from '../mixins/exportSourceProps.js'
+import masterPasswordCheck from '../mixins/masterPasswordCheck.js'
 import { fetchPolicy, resetPolicyCache } from '../policy/policy.js'
 import { useExportStore } from '../store/modules/export.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -224,31 +225,7 @@ export default {
 		NcCheckboxRadioSwitch,
 	},
 
-	props: {
-		/** Whether the dialog is open. */
-		open: {
-			type: Boolean,
-			default: false,
-		},
-
-		/** Already-decrypted secrets to export. */
-		secrets: {
-			type: Array,
-			default: () => [],
-		},
-
-		/** How many secrets could not be decrypted and are not in `secrets`. */
-		skipped: {
-			type: Number,
-			default: 0,
-		},
-
-		/** Folder rows ({ id, name, parentId }). */
-		folders: {
-			type: Array,
-			default: () => [],
-		},
-	},
+	mixins: [exportSourceProps, masterPasswordCheck],
 
 	emits: ['update:open'],
 	/**
@@ -445,68 +422,103 @@ export default {
 				return
 			}
 			try {
-				const scope = this.buildScope()
-				if (this.mode === 'encrypted-backup') {
-					await this.exportStore.exportBackup(
-						this.secrets,
-						this.folders,
-						this.passphrase,
-						scope,
-					)
-				} else {
-					// Fresh master-password re-auth (client-side proof of knowledge).
-					const ok = await verifyMasterPassword(
-						this.sessionStore.encryptedPrivateKey,
-						this.masterPassword,
-					)
-					if (!ok) {
-						this.error = this.t('keepiq', 'Incorrect master password')
-						return
-					}
-					if (this.mode === 'cxf') {
-						// First pass builds and shows the unmapped-item report
-						// BEFORE any download (cxf-import-export D4); the second
-						// pass (or a clean report) proceeds to the download.
-						if (this.cxfReport === null) {
-							const report = await this.exportStore.exportCxf(
-								this.secrets,
-								this.folders,
-								scope,
-								{ typeNamesById: this.typeNamesById, dryRun: true },
-							)
-							if (report.unmapped.length > 0) {
-								this.cxfReport = report
-								return
-							}
-						}
-						await this.exportStore.exportCxf(
-							this.secrets,
-							this.folders,
-							scope,
-							{ typeNamesById: this.typeNamesById },
-						)
-					} else {
-						await this.exportStore.exportCsv(
-							this.secrets,
-							this.folders,
-							scope,
-						)
-					}
+				if (await this.runExport(this.buildScope())) {
+					this.reset()
+					this.$emit('update:open', false)
 				}
-				this.reset()
-				this.$emit('update:open', false)
 			} catch (e) {
-				// The server refuses the report under the export ban, which
-				// aborts the download; show the policy instead of a raw error.
-				if (e?.response?.data?.code === 'export_disabled_by_policy') {
-					this.exportBlocked = true
-					return
-				}
-				this.error =
-					this.exportStore.error
-					|| (e && e.message)
-					|| this.t('keepiq', 'Export failed')
+				this.showExportFailure(e)
 			}
+		},
+
+		/**
+		 * Write the chosen export. A plaintext one first takes a fresh
+		 * master-password re-auth.
+		 *
+		 * @param {object} scope The scope selector.
+		 * @return {Promise<boolean>} Whether the file was written; false when
+		 *   the re-auth failed or the CXF report is shown first.
+		 * @spec openspec/specs/secret-export/spec.md
+		 */
+		async runExport(scope) {
+			if (this.mode === 'encrypted-backup') {
+				await this.exportStore.exportBackup(
+					this.secrets,
+					this.folders,
+					this.passphrase,
+					scope,
+				)
+				return true
+			}
+			if (!(await this.masterPasswordVerified())) {
+				return false
+			}
+			if (this.mode === 'cxf') {
+				return this.exportCxf(scope)
+			}
+			await this.exportStore.exportCsv(this.secrets, this.folders, scope)
+			return true
+		},
+
+		/**
+		 * Write a CXF export. The first pass builds and shows the
+		 * unmapped-item report BEFORE any download (cxf-import-export D4); the
+		 * second pass (or a clean report) proceeds to the download.
+		 *
+		 * @param {object} scope The scope selector.
+		 * @return {Promise<boolean>} Whether the file was written.
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
+		 */
+		async exportCxf(scope) {
+			if (this.cxfReport === null && (await this.showCxfReport(scope))) {
+				return false
+			}
+			await this.exportStore.exportCxf(this.secrets, this.folders, scope, {
+				typeNamesById: this.typeNamesById,
+			})
+			return true
+		},
+
+		/**
+		 * Build the CXF report without downloading, and keep it to show when
+		 * it lists items it cannot map.
+		 *
+		 * @param {object} scope The scope selector.
+		 * @return {Promise<boolean>} Whether the report is shown.
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
+		 */
+		async showCxfReport(scope) {
+			const report = await this.exportStore.exportCxf(
+				this.secrets,
+				this.folders,
+				scope,
+				{ typeNamesById: this.typeNamesById, dryRun: true },
+			)
+			if (report.unmapped.length > 0) {
+				this.cxfReport = report
+				return true
+			}
+			return false
+		},
+
+		/**
+		 * Show why the export failed. The server refuses the report under the
+		 * export ban, which aborts the download; show the policy instead of a
+		 * raw error.
+		 *
+		 * @param {Error|object} e The failure.
+		 * @return {void}
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-personal-vault-export-can-be-blocked
+		 */
+		showExportFailure(e) {
+			if (e?.response?.data?.code === 'export_disabled_by_policy') {
+				this.exportBlocked = true
+				return
+			}
+			this.error =
+				this.exportStore.error
+				|| (e && e.message)
+				|| this.t('keepiq', 'Export failed')
 		},
 
 		/**

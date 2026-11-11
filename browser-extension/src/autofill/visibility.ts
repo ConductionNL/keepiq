@@ -62,17 +62,34 @@ const isTranslation = (transform: string) => /^matrix\(1, 0, 0, 1, -?[\d.e+-]+, 
  */
 export function untouched(element: Element, translation = false): boolean {
 	const style = element.ownerDocument.defaultView!.getComputedStyle(element)
-	const value = (property: string) => style.getPropertyValue(property)
-	const zoom = value('zoom')
-	const transform = value('transform')
-	const translate = value('translate')
-	return (!style.opacity || Number(style.opacity) === 1) && (!value('mix-blend-mode') || value('mix-blend-mode') === 'normal')
-		&& (!zoom || zoom === 'normal' || Number(zoom) === 1)
-		&& style.visibility !== 'hidden' && style.visibility !== 'collapse'
-		&& (none(transform) || (translation && isTranslation(transform)))
-		// Two lengths at most: a third, depth, would scale under a perspective.
-		&& (none(translate) || (translation && translate.trim().split(/\s+/).length <= 2))
-		&& NONE_PROPERTIES.every((property) => none(value(property)))
+	return drawnAsIs(style) && movedAtMost(style, translation) && NONE_PROPERTIES.every((property) => none(style.getPropertyValue(property)))
+}
+
+/** Fully opaque, unblended, unzoomed and shown. */
+const drawnAsIs = (style: CSSStyleDeclaration) => unblended(style) && unzoomed(style) && style.visibility !== 'hidden' && style.visibility !== 'collapse'
+
+function unblended(style: CSSStyleDeclaration): boolean {
+	const blend = style.getPropertyValue('mix-blend-mode')
+	return (!style.opacity || Number(style.opacity) === 1) && (!blend || blend === 'normal')
+}
+
+function unzoomed(style: CSSStyleDeclaration): boolean {
+	const zoom = style.getPropertyValue('zoom')
+	return !zoom || zoom === 'normal' || Number(zoom) === 1
+}
+
+/** No transform or translation, or with `translation` a plain move only. */
+const movedAtMost = (style: CSSStyleDeclaration, translation: boolean) => transformedAtMost(style, translation) && translatedAtMost(style, translation)
+
+function transformedAtMost(style: CSSStyleDeclaration, translation: boolean): boolean {
+	const transform = style.getPropertyValue('transform')
+	return none(transform) || (translation && isTranslation(transform))
+}
+
+/** Two lengths at most: a third, depth, would scale under a perspective. */
+function translatedAtMost(style: CSSStyleDeclaration, translation: boolean): boolean {
+	const translate = style.getPropertyValue('translate')
+	return none(translate) || (translation && translate.trim().split(/\s+/).length <= 2)
 }
 
 /** Generated content the page could draw over the host from inside its own box. */

@@ -46,6 +46,7 @@ use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IConfig;
 use OCP\Security\ISecureRandom;
+use OpenSSLAsymmetricKey;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -188,16 +189,8 @@ class VaultKeyProofService {
 			throw new KeyProofRequiredException(message: 'Challenge has expired');
 		}
 
-		$publicKey = openssl_pkey_get_public($certificatePem);
-		if ($publicKey === false) {
-			throw new KeyProofRequiredException(message: 'Subject public key unreadable');
-		}
-
-		$signature = base64_decode($signatureB64, true);
-		if ($signature === false) {
-			throw new KeyProofRequiredException(message: 'Malformed proof');
-		}
-
+		$publicKey = $this->subjectKey(certificatePem: $certificatePem);
+		$signature = $this->signatureBytes(signatureB64: $signatureB64);
 		$verified = openssl_verify(
 			$this->signedMessage(nonce: $nonce, boundValues: $boundValues),
 			$signature,
@@ -213,6 +206,46 @@ class VaultKeyProofService {
 		// nonce it could not have used.
 		$this->consume(nonce: $nonce, expiresAt: (int)$claims['e']);
 	}//end verify()
+
+	/**
+	 * The subject suite's public key, or a refusal.
+	 *
+	 * @param string $certificatePem The subject suite's certificate
+	 *
+	 * @return OpenSSLAsymmetricKey
+	 *
+	 * @throws KeyProofRequiredException When the key cannot be read
+	 *
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+	 */
+	private function subjectKey(string $certificatePem): OpenSSLAsymmetricKey {
+		$publicKey = openssl_pkey_get_public($certificatePem);
+		if ($publicKey === false) {
+			throw new KeyProofRequiredException(message: 'Subject public key unreadable');
+		}
+
+		return $publicKey;
+	}//end subjectKey()
+
+	/**
+	 * The proof's signature bytes, or a refusal.
+	 *
+	 * @param string $signatureB64 The base64 signature
+	 *
+	 * @return string
+	 *
+	 * @throws KeyProofRequiredException When the signature is not strict base64
+	 *
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+	 */
+	private function signatureBytes(string $signatureB64): string {
+		$signature = base64_decode($signatureB64, true);
+		if ($signature === false) {
+			throw new KeyProofRequiredException(message: 'Malformed proof');
+		}
+
+		return $signature;
+	}//end signatureBytes()
 
 	/**
 	 * Mark a nonce used for the rest of its lifetime, or refuse a reuse.

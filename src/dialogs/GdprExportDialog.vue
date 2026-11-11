@@ -83,6 +83,7 @@
 <script>
 import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
 import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
+import exportSourceProps from '../mixins/exportSourceProps.js'
 import { useExportStore } from '../store/modules/export.js'
 import { useSessionStore } from '../store/modules/session.js'
 
@@ -95,30 +96,7 @@ export default {
 		NcNoteCard,
 	},
 
-	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
-
-		/** Decrypted secrets (empty/ignored when locked). */
-		secrets: {
-			type: Array,
-			default: () => [],
-		},
-
-		/** Folder rows. */
-		folders: {
-			type: Array,
-			default: () => [],
-		},
-
-		/** How many secrets could not be decrypted and are not in `secrets`. */
-		skipped: {
-			type: Number,
-			default: 0,
-		},
-	},
+	mixins: [exportSourceProps],
 
 	emits: ['update:open'],
 	/**

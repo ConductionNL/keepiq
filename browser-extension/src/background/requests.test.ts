@@ -1052,3 +1052,10 @@ describe('send', () => {
 		expect(fetchMock).not.toHaveBeenCalled()
 	})
 })
+
+describe('a request kind this background does not know', () => {
+	it.each(['item.bogus', 'folder.bogus', 'constructor', 'toString', '__proto__', 'generator.bogus', 'generator.constructor'])('answers %s with nothing, sending no request', async (kind) => {
+		expect(await handlePopupRequest({ kind, accountId } as unknown as HandledRequest)).toBeUndefined()
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})

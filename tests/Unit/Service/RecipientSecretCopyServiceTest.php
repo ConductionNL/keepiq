@@ -26,6 +26,7 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Service\RecipientCiphertext;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretTypeService;
@@ -147,8 +148,8 @@ class RecipientSecretCopyServiceTest extends TestCase {
 		);
 		$this->secretMapper->method('insert')->willReturnArgument(0);
 
-		$copy = $service->create('src-1', 'bob', 'K', 'L', 'F', 'T', 'P');
-		$legacy = $service->create('src-2', 'bob', 'K', null, null);
+		$copy = $service->createCopy('src-1', new RecipientCiphertext('bob', 'K', 'L', 'F', 'T', 'P'));
+		$legacy = $service->createCopy('src-2', new RecipientCiphertext('bob', 'K', null, null, null, null));
 
 		$this->assertInstanceOf(Secret::class, $copy);
 		$this->assertInstanceOf(Secret::class, $legacy);
@@ -156,8 +157,8 @@ class RecipientSecretCopyServiceTest extends TestCase {
 		$this->assertSame([null, null], [$legacy->getTotp(), $legacy->getPasskeys()]);
 
 		// A row without the source's fields, or with ones it does not hold, mints nothing and says why.
-		$this->assertSame('copy_fields_mismatch', $service->create('src-1', 'bob', 'K', null, null));
-		$this->assertSame('copy_fields_mismatch', $service->create('src-2', 'bob', 'K', null, null, 'PLANTED'));
+		$this->assertSame('copy_fields_mismatch', $service->createCopy('src-1', new RecipientCiphertext('bob', 'K', null, null, null, null)));
+		$this->assertSame('copy_fields_mismatch', $service->createCopy('src-2', new RecipientCiphertext('bob', 'K', null, null, 'PLANTED', null)));
 	}//end testCreateSetsEveryValueFieldOnTheCopy()
 
 	/**

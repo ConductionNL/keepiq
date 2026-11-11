@@ -156,16 +156,7 @@ export default {
 			const store = useSecretRequestStore()
 			this.busy = true
 			try {
-				const payload = {
-					secretId: this.secretId,
-					encryptionSuiteId: this.encryptionSuiteId,
-					requestedFields: [...this.selectedFields],
-					isReRequest: this.isReRequest,
-					expiresAt: this.expiresAt
-						? new Date(this.expiresAt).toISOString()
-						: null,
-				}
-				const row = await store.createRequest(payload)
+				const row = await store.createRequest(this.requestPayload())
 				if (row && row.token) {
 					this.createdLink = `${this.linkBaseUrl}/${row.token}`
 				}
@@ -177,6 +168,24 @@ export default {
 					|| t('keepiq', 'Failed to create request')
 			} finally {
 				this.busy = false
+			}
+		},
+
+		/**
+		 * The request the form sends: the picked fields and an optional expiry.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-optional-expiry
+		 */
+		requestPayload() {
+			return {
+				secretId: this.secretId,
+				encryptionSuiteId: this.encryptionSuiteId,
+				requestedFields: [...this.selectedFields],
+				isReRequest: this.isReRequest,
+				expiresAt: this.expiresAt
+					? new Date(this.expiresAt).toISOString()
+					: null,
 			}
 		},
 	},

@@ -89,14 +89,9 @@ class TeamSecretTransferService {
 					continue;
 				}
 
-				$delegation = new SecretDelegation();
-				$delegation->setId(Uuid::uuid4()->toString());
-				$delegation->setSecretId($secretRef['id']);
-				$delegation->setOriginalOwnerId($leavingUserId);
+				$delegation = $this->permanentDelegation(secretId: $secretRef['id'], leavingUserId: $leavingUserId);
 				$delegation->setDelegatedTo($successorUserId);
-				$delegation->setDelegatedAt(new DateTime());
 				$delegation->setInitiatedBy($adminId);
-				$delegation->setIsPermanent(true);
 				$this->delegationMapper->insert($delegation);
 
 				$linksTransferred += $this->ownerTransfer->transfer(
@@ -114,4 +109,25 @@ class TeamSecretTransferService {
 			'skipped' => $skipped,
 		];
 	}//end transfer()
+
+	/**
+	 * A permanent delegation of one of the leaver's secrets, made now; the
+	 * caller names who takes it over and who handed it over.
+	 *
+	 * @param string $secretId      The team secret
+	 * @param string $leavingUserId The departing owner
+	 *
+	 * @return SecretDelegation
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
+	 */
+	private function permanentDelegation(string $secretId, string $leavingUserId): SecretDelegation {
+		$delegation = new SecretDelegation();
+		$delegation->setId(Uuid::uuid4()->toString());
+		$delegation->setSecretId($secretId);
+		$delegation->setOriginalOwnerId($leavingUserId);
+		$delegation->setDelegatedAt(new DateTime());
+		$delegation->setIsPermanent(true);
+		return $delegation;
+	}//end permanentDelegation()
 }//end class

@@ -59,8 +59,7 @@
 <script>
 import { CnDialogActions, CnIconColorPicker } from '@conduction/nextcloud-vue'
 import { NcDialog, NcNoteCard, NcTextField } from '@nextcloud/vue'
-import { markRaw } from 'vue'
-import Safe from 'vue-material-design-icons/Safe.vue'
+import folderDialog from '../mixins/folderDialog.js'
 import { useFolderStore } from '../store/modules/folder.js'
 
 /**
@@ -79,6 +78,8 @@ export default {
 		NcTextField,
 	},
 
+	mixins: [folderDialog],
+
 	props: {
 		/** The folder being edited ({id, name, parentId, customIcon, customColor}). */
 		folder: {
@@ -91,14 +92,9 @@ export default {
 
 	data() {
 		return {
-			open: true,
 			name: this.folder.name || '',
 			customIcon: this.folder.customIcon ?? null,
 			customColor: this.folder.customColor ?? null,
-			saving: false,
-			error: '',
-			/** The vaults' default glyph, for the picker's Default cell. */
-			safeIcon: markRaw(Safe),
 		}
 	},
 
@@ -113,47 +109,9 @@ export default {
 		isVaultLevel() {
 			return !this.folder.parentId
 		},
-
-		/**
-		 * Whether Save may run: not already saving, and a name is present.
-		 *
-		 * @return {boolean}
-		 * @spec exclude Form-enablement guard; no domain behaviour.
-		 */
-		canSubmit() {
-			return !this.saving && this.name.trim() !== ''
-		},
 	},
 
 	methods: {
-		t,
-
-		/**
-		 * Translate a picker label through keepiq's catalog (the picker's
-		 * labels are library-side English source strings).
-		 *
-		 * @param {string} label The English source label.
-		 * @return {string} The translated label.
-		 * @spec exclude Pure i18n pass-through.
-		 */
-		translateLabel(label) {
-			return t('keepiq', label)
-		},
-
-		/**
-		 * Forward the open-state change; emit `close` when dismissed.
-		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 * @spec exclude Dialog open-state plumbing; no domain behaviour.
-		 */
-		onUpdateOpen(value) {
-			this.open = value
-			if (!value) {
-				this.$emit('close')
-			}
-		},
-
 		/**
 		 * Save the changes via the store. The name rides along only when it
 		 * changed (the backend renames on any present name); for a vault the
@@ -167,8 +125,21 @@ export default {
 			if (!this.canSubmit) {
 				return
 			}
-			this.saving = true
-			this.error = ''
+			await this.saveFolder(
+				() => useFolderStore().updateFolder(this.folder.id, this.changes()),
+				t('keepiq', 'Failed to update folder'),
+			)
+		},
+
+		/**
+		 * The update to send: the trimmed name only when it changed, and for
+		 * a vault both customization keys, where an explicit null clears a
+		 * stored value.
+		 *
+		 * @return {object} The update.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		changes() {
 			const data = {}
 			const trimmed = this.name.trim()
 			if (trimmed !== this.folder.name) {
@@ -178,21 +149,7 @@ export default {
 				data.customIcon = this.customIcon
 				data.customColor = this.customColor
 			}
-			try {
-				const updated = await useFolderStore().updateFolder(
-					this.folder.id,
-					data,
-				)
-				this.$emit('saved', updated)
-				this.onUpdateOpen(false)
-			} catch (e) {
-				this.error =
-					e?.response?.data?.message
-					|| e?.message
-					|| t('keepiq', 'Failed to update folder')
-			} finally {
-				this.saving = false
-			}
+			return data
 		},
 	},
 }

@@ -16,12 +16,24 @@ export interface SendBody {
 const isString = (value: unknown): value is string => typeof value === 'string'
 const isCount = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 0
 
+type RawSendRow = Partial<Record<keyof SendRow, unknown>>
+type SendRowFields = Pick<SendRow, 'id' | 'token' | 'payloadType' | 'hasPassword' | 'maxViews' | 'viewCount' | 'remainingViews' | 'expiresAt' | 'createdAt'>
+
+const isPayloadType = (value: unknown): value is SendPayloadType => value === 'text' || value === 'credential'
+
+/** The id, the link's token, the type and whether a password guards it. */
+const isIdentified = (row: RawSendRow) => isString(row.id) && isString(row.token) && !!row.token && isPayloadType(row.payloadType) && typeof row.hasPassword === 'boolean'
+
+const isCounted = (row: RawSendRow) => isCount(row.maxViews) && isCount(row.viewCount) && isCount(row.remainingViews)
+
+const isDated = (row: RawSendRow) => (row.expiresAt === null || isString(row.expiresAt)) && isString(row.createdAt)
+
+const isSendRow = (row: RawSendRow): row is SendRowFields => isIdentified(row) && isCounted(row) && isDated(row)
+
 function toRow(value: unknown): SendRow | null {
-	const row = value as Partial<Record<keyof SendRow, unknown>> | null
-	if (typeof row !== 'object' || row === null) return null
+	const row = value as RawSendRow | null
+	if (typeof row !== 'object' || row === null || !isSendRow(row)) return null
 	const { id, token, payloadType, hasPassword, maxViews, viewCount, remainingViews, expiresAt, createdAt } = row
-	if (!isString(id) || !isString(token) || !token || (payloadType !== 'text' && payloadType !== 'credential') || typeof hasPassword !== 'boolean'
-		|| !isCount(maxViews) || !isCount(viewCount) || !isCount(remainingViews) || (expiresAt !== null && !isString(expiresAt)) || !isString(createdAt)) return null
 	return { id, token, payloadType, hasPassword, maxViews, viewCount, remainingViews, expiresAt, createdAt }
 }
 

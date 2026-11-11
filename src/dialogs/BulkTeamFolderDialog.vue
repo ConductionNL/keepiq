@@ -78,7 +78,7 @@
 <script>
 import { NcButton, NcDialog, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
-import { useBulkStore } from '../store/modules/bulk.js'
+import bulkRunDialog from '../mixins/bulkRunDialog.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
@@ -93,32 +93,18 @@ export default {
 		BulkRunPanel,
 	},
 
-	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
-	},
+	mixins: [bulkRunDialog],
 
 	emits: ['close', 'done'],
 	data() {
 		return {
 			target: null,
-			/** Whether a run was started FROM THIS DIALOG (the store's report outlives it). */
-			ran: false,
 			/** Secrets the server would not copy to the members: a one-time code or passkeys it cannot copy yet. */
 			refused: [],
 		}
 	},
 
 	computed: {
-		/**
-		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
-		 */
-		bulk() {
-			return useBulkStore()
-		},
-
 		/**
 		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
 		 */
@@ -158,10 +144,7 @@ export default {
 				return this.t(
 					'keepiq',
 					'Added {ok} of {total} secrets to the team folder',
-					{
-						ok: this.bulk.report.filter((r) => r.status === 'ok').length,
-						total: this.bulk.report.length,
-					},
+					this.reportCounts,
 				)
 			}
 			return this.t('keepiq', 'Add {count} secrets to a team folder', {

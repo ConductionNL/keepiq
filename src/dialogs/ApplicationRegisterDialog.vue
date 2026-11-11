@@ -202,6 +202,27 @@ export default {
 		},
 
 		/**
+		 * The form as it is registered, or null without a name. Every text is
+		 * trimmed: a pasted trailing newline is a spurious 400 on strict
+		 * servers or invisible garbage in storage.
+		 *
+		 * @return {{name: string, description: string, type: string, csr: string|null}|null}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+		 */
+		trimmedRegistration() {
+			const name = this.form.name.trim()
+			if (name === '') {
+				return null
+			}
+			return {
+				name,
+				description: this.form.description.trim(),
+				type: this.form.type,
+				csr: this.form.csr.trim() || null,
+			}
+		},
+
+		/**
 		 * Submit the registration, optionally carrying a PKCS#10 CSR.
 		 *
 		 * @return {Promise<void>}
@@ -217,24 +238,15 @@ export default {
 				return
 			}
 			this.error = null
-			const name = this.form.name.trim()
-			if (name === '') {
+			const registration = this.trimmedRegistration()
+			if (registration === null) {
 				this.error = t('keepiq', 'Name is required')
 				return
 			}
-			// Trimmed like name: a pasted trailing newline is a spurious 400
-			// on strict servers or invisible garbage in storage.
-			const description = this.form.description.trim()
-			const csr = this.form.csr.trim()
 			const store = useApplicationStore()
 			this.busy = true
 			try {
-				const row = await store.registerApplication({
-					name,
-					description,
-					type: this.form.type,
-					csr: csr || null,
-				})
+				const row = await store.registerApplication(registration)
 				this.$emit('registered', row)
 				// Self-sufficient close: a cnOpenModal host that only wires
 				// @registered must not be left with a stuck dialog. The

@@ -28,7 +28,9 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\AttachmentGrantRequest;
 use OCA\Keepiq\Service\AttachmentService;
+use OCA\Keepiq\Service\AttachmentUpload;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -103,11 +105,13 @@ class AttachmentController extends OCSController {
 
 		try {
 			$result = $this->attachmentService->upload(
-				secretId: $secretId,
-				userId: $userId,
-				blob: $raw,
-				encryptedMetadata: $encryptedMetadata,
-				wrappedFileKey: $wrappedFileKey,
+				upload: new AttachmentUpload(
+					secretId: $secretId,
+					userId: $userId,
+					blob: $raw,
+					encryptedMetadata: $encryptedMetadata,
+					wrappedFileKey: $wrappedFileKey,
+				)
 			);
 		} catch (InvalidArgumentException $exception) {
 			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
@@ -199,12 +203,14 @@ class AttachmentController extends OCSController {
 
 		try {
 			$grant = $this->attachmentService->addGrant(
-				attachmentId: $id,
-				userId: $userId,
-				copySecretId: $copySecretId,
-				recipientId: $recipientId,
-				wrappedFileKey: $wrappedFileKey,
-				recipientType: $recipientType,
+				request: new AttachmentGrantRequest(
+					attachmentId: $id,
+					userId: $userId,
+					copySecretId: $copySecretId,
+					recipientId: $recipientId,
+					wrappedFileKey: $wrappedFileKey,
+					recipientType: $recipientType,
+				)
 			);
 		} catch (InvalidArgumentException $exception) {
 			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);

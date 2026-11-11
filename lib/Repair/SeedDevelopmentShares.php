@@ -146,19 +146,28 @@ class SeedDevelopmentShares implements IRepairStep {
 			return;
 		}
 
-		try {
-			$this->suiteMapper->findActiveByOwner('user', self::DEV_USER_ID);
-		} catch (DoesNotExistException) {
-			$output->info('Keepiq: no dev EncryptionSuite, skipping user-share seed');
+		$vault = (new DevVaultLoader(suiteMapper: $this->suiteMapper, secretMapper: $this->secretMapper))
+			->load(output: $output, seedName: 'user-share seed');
+		if ($vault === null) {
 			return;
 		}
 
-		$secrets = $this->secretMapper->findByOwner('user', self::DEV_USER_ID);
-		if ($secrets === []) {
-			$output->info('Keepiq: no dev secrets, skipping user-share seed');
-			return;
-		}
+		$seeded = $this->seedShares(vault: $vault);
 
+		$this->seedGate->markSeeded(key: self::SEED_VERSION_KEY, version: $appVersion);
+		$output->info('Keepiq: seeded ' . $seeded . ' development user shares');
+		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' user share rows');
+	}//end run()
+
+	/**
+	 * Seed the development direct, group and fan-out shares.
+	 *
+	 * @param DevVault $vault The dev user's suite and secrets
+	 *
+	 * @return int Number of rows seeded
+	 */
+	private function seedShares(DevVault $vault): int {
+		$secrets = $vault->secrets;
 		$first = $secrets[0];
 		$seeded = 0;
 
@@ -198,10 +207,8 @@ class SeedDevelopmentShares implements IRepairStep {
 			);
 		}
 
-		$this->seedGate->markSeeded(key: self::SEED_VERSION_KEY, version: $appVersion);
-		$output->info('Keepiq: seeded ' . $seeded . ' development user shares');
-		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' user share rows');
-	}//end run()
+		return $seeded;
+	}//end seedShares()
 
 	/**
 	 * Produce a deterministic UUIDv5 from a seed string.

@@ -573,3 +573,70 @@ describe('SecretRequestCreateDialog', () => {
 		expect(store.createRequest.mock.calls[0][0].expiresAt).toBeNull()
 	})
 })
+
+describe('SecretRequestCreateDialog: submit step by step', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+	})
+
+	/**
+	 * Mount the dialog.
+	 *
+	 * @param {object} props Its props.
+	 * @return {object} The wrapper.
+	 */
+	function dialog(props) {
+		return mount(SecretRequestCreateDialog, {
+			propsData: { open: true, ...props },
+			global: { stubs: ncStubs },
+		})
+	}
+
+	it('sends a plain request for an existing secret with its suite and no expiry', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi.fn().mockResolvedValue({ id: 'r' })
+		const wrapper = dialog({
+			secret: { id: 'secret-1', encryption_suite_id: 'suite-1' },
+		})
+		wrapper.vm.requestedFields = ['key']
+		wrapper.vm.expiresAt = ''
+		await wrapper.vm.submit()
+		expect(store.createRequest.mock.calls[0][0]).toEqual({
+			requestedFields: ['key'],
+			expiresAt: null,
+			isReRequest: false,
+			secretId: 'secret-1',
+			encryptionSuiteId: 'suite-1',
+		})
+		expect(wrapper.vm.fillUrl).toBe('')
+		expect(wrapper.emitted('created')).toEqual([[{ id: 'r' }]])
+	})
+
+	it('files a fresh request in no folder when none is picked, trimming its name', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi.fn().mockResolvedValue(null)
+		const wrapper = dialog({})
+		wrapper.vm.newName = '  Key  '
+		wrapper.vm.newFolderId = ''
+		wrapper.vm.requestedFields = ['key']
+		await wrapper.vm.submit()
+		expect(store.createRequest.mock.calls[0][0]).toMatchObject({
+			name: 'Key',
+			folderId: null,
+		})
+		expect(wrapper.emitted('created')).toEqual([[null]])
+	})
+
+	it("falls back to the error's own message, then to the dialog's text", async () => {
+		const store = useSecretRequestStore()
+		const wrapper = dialog({ secret: { id: 'secret-1' } })
+		wrapper.vm.requestedFields = ['key']
+		store.createRequest = vi.fn().mockRejectedValue(new Error('down'))
+		await wrapper.vm.submit()
+		expect(wrapper.vm.error).toBe('down')
+		store.createRequest = vi.fn().mockRejectedValue({})
+		await wrapper.vm.submit()
+		expect(wrapper.vm.error).toBe('Failed to create request')
+		expect(wrapper.vm.submitting).toBe(false)
+	})
+})

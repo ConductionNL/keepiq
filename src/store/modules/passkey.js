@@ -199,6 +199,76 @@ function enrolmentBody(enrolment) {
 	}
 }
 
+/**
+ * The login options of the user's unlock passkeys; at least one must be
+ * enrolled.
+ *
+ * @return {Promise<{challenge: string, credentials: Array<object>}>}
+ * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+ */
+async function passkeyLoginOptions() {
+	const optResp = await axios.get(
+		generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
+	)
+	const options = optResp.data
+	if (!options.credentials?.length) {
+		throw new Error('No passkey enrolled for unlock')
+	}
+	return options
+}
+
+/**
+ * The WebAuthn request for an unlock: every enrolled passkey, each with its
+ * own PRF salt. Every enrolment drew its own salt, and the authenticator
+ * picks which passkey answers, so each credential gets its salt through
+ * evalByCredential, keyed by its base64url id; a single `eval` salt only fits
+ * the first passkey (keepiq#744).
+ *
+ * @param {{challenge: string, credentials: Array<object>}} options The login options.
+ * @return {object} The `publicKey` request.
+ * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+ */
+function passkeyRequest(options) {
+	const challenge = fromBase64Url(
+		options.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
+	)
+	const allowCredentials = options.credentials.map((c) => ({
+		type: 'public-key',
+		id: fromBase64Url(c.credentialId),
+	}))
+	const evalByCredential = {}
+	for (const credential of options.credentials) {
+		evalByCredential[toBase64Url(fromBase64Url(credential.credentialId))] = {
+			first: Uint8Array.from(atob(credential.prfSalt), (ch) => ch.charCodeAt(0)),
+		}
+	}
+	return {
+		challenge,
+		rpId: RP_ID,
+		allowCredentials,
+		userVerification: 'preferred',
+		extensions: { prf: { evalByCredential } },
+	}
+}
+
+/**
+ * The enrolled credential that answered, or the first one when the answer
+ * names none of them.
+ *
+ * @param {Array<object>} credentials The enrolled unlock passkeys.
+ * @param {{rawId: ArrayBuffer}} assertion The authenticator's answer.
+ * @return {object}
+ * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+ */
+function answeringCredential(credentials, assertion) {
+	const usedId = toBase64Url(assertion.rawId)
+	return (
+		credentials.find(
+			(c) => toBase64Url(fromBase64Url(c.credentialId)) === usedId,
+		) || credentials[0]
+	)
+}
+
 export const usePasskeyStore = defineStore('passkey', {
 	state: () => ({
 		/** @type {Array<object>} Enrolled passkeys (management view). */
@@ -306,48 +376,11 @@ export const usePasskeyStore = defineStore('passkey', {
 		 */
 		async unlockWithPasskey() {
 			this.error = null
-			const optResp = await axios.get(
-				generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
-			)
-			const options = optResp.data
-			if (!options.credentials?.length) {
-				throw new Error('No passkey enrolled for unlock')
-			}
-
-			const challenge = fromBase64Url(
-				options.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
-			)
-			const allowCredentials = options.credentials.map((c) => ({
-				type: 'public-key',
-				id: fromBase64Url(c.credentialId),
-			}))
-			// Every enrolment drew its own PRF salt, and the authenticator
-			// picks which passkey answers. So each credential gets its own salt
-			// through evalByCredential, keyed by its base64url id; a single
-			// `eval` salt only fits the first passkey (keepiq#744).
-			const saltOf = (credential) =>
-				Uint8Array.from(atob(credential.prfSalt), (ch) => ch.charCodeAt(0))
-			const evalByCredential = {}
-			for (const credential of options.credentials) {
-				evalByCredential[
-					toBase64Url(fromBase64Url(credential.credentialId))
-				] = { first: saltOf(credential) }
-			}
-
+			const options = await passkeyLoginOptions()
 			const assertion = await navigator.credentials.get({
-				publicKey: {
-					challenge,
-					rpId: RP_ID,
-					allowCredentials,
-					userVerification: 'preferred',
-					extensions: { prf: { evalByCredential } },
-				},
+				publicKey: passkeyRequest(options),
 			})
-			const usedId = toBase64Url(assertion.rawId)
-			const cred =
-				options.credentials.find(
-					(c) => toBase64Url(fromBase64Url(c.credentialId)) === usedId,
-				) || options.credentials[0]
+			const cred = answeringCredential(options.credentials, assertion)
 			const prfOutput =
 				assertion.getClientExtensionResults()?.prf?.results?.first
 			if (!prfOutput) {
