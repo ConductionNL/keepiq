@@ -15,6 +15,9 @@
  * second challenge, whose signature and counter prove the authenticator
  * holds the private key of that public key. A passkey unlock carries one
  * get() assertion, checked against the stored public key and counter.
+ * Browser-extension ceremonies use ExtensionCeremonySteps, which trusts
+ * only the pinned and admin-added extension origins, and require user
+ * verification.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -37,6 +40,7 @@ use Cose\Algorithm\Signature\ECDSA\ES256;
 use Cose\Algorithm\Signature\RSA\RS256;
 use Cose\Algorithms;
 use Symfony\Component\Uid\NilUuid;
+use OCA\Keepiq\Exception\PasskeyCounterException;
 use OCA\Keepiq\Exception\PasskeyVerificationException;
 use Throwable;
 use Webauthn\AttestationStatement\AttestationObjectLoader;
@@ -57,6 +61,7 @@ use Webauthn\PublicKeyCredentialRequestOptions;
 use Webauthn\PublicKeyCredentialRpEntity;
 use Webauthn\PublicKeyCredentialSource;
 use Webauthn\PublicKeyCredentialUserEntity;
+use Webauthn\Exception\CounterException;
 use Webauthn\TrustPath\EmptyTrustPath;
 
 /**
@@ -76,6 +81,18 @@ class WebAuthnVerifier {
 	private const INSECURE_RP_IDS = ['localhost'];
 
 	/**
+	 * Constructor for WebAuthnVerifier.
+	 *
+	 * @param ExtensionCeremonySteps $extensionSteps The step lists of extension ceremonies
+	 *
+	 * @return void
+	 */
+	public function __construct(
+		private ExtensionCeremonySteps $extensionSteps,
+	) {
+	}//end __construct()
+
+	/**
 	 * Verify an enrolment: the create() attestation against the first
 	 * challenge, then the get() assertion of the same credential against
 	 * the second one.
@@ -86,10 +103,13 @@ class WebAuthnVerifier {
 	 * @param string $assertionChallenge The raw get() challenge the server issued
 	 * @param array<string,mixed> $attestation The create() PublicKeyCredential as JSON
 	 * @param array<string,mixed> $assertion The get() PublicKeyCredential as JSON
+	 * @param bool $extension Whether a browser extension runs the ceremony
 	 *
 	 * @return VerifiedPasskey
 	 *
 	 * @throws PasskeyVerificationException When any check fails
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Selects the extension step list; every other check is shared.
 	 *
 	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
@@ -100,18 +120,24 @@ class WebAuthnVerifier {
 		string $assertionChallenge,
 		array $attestation,
 		array $assertion,
+		bool $extension = false,
 	): VerifiedPasskey {
 		if (class_exists(AuthenticatorAttestationResponseValidator::class) === false) {
 			throw new PasskeyVerificationException(message: 'The server WebAuthn library is not available');
 		}
 
 		try {
-			$source = $this->verifyAttestation(uid: $uid, rpId: $rpId, challenge: $challenge, attestation: $attestation);
-			$source = $this->verifyAssertion(uid: $uid, rpId: $rpId, challenge: $assertionChallenge, assertion: $assertion, source: $source);
-		} catch (PasskeyVerificationException $exception) {
-			throw $exception;
+			$source = $this->verifyAttestation(uid: $uid, rpId: $rpId, challenge: $challenge, attestation: $attestation, extension: $extension);
+			$source = $this->verifyAssertion(
+				uid: $uid,
+				rpId: $rpId,
+				challenge: $assertionChallenge,
+				assertion: $assertion,
+				source: $source,
+				extension: $extension,
+			);
 		} catch (Throwable $throwable) {
-			throw new PasskeyVerificationException(message: $throwable->getMessage(), code: 0, previous: $throwable);
+			throw self::refusal(throwable: $throwable);
 		}
 
 		return new VerifiedPasskey(
@@ -133,10 +159,14 @@ class WebAuthnVerifier {
 	 * @param string $credentialId The enrolled base64url credential id
 	 * @param string $publicKey The enrolled base64url COSE public key
 	 * @param int $counter The stored signature counter
+	 * @param bool $extension Whether a browser extension runs the ceremony
 	 *
 	 * @return int The signature counter the assertion carried
 	 *
-	 * @throws PasskeyVerificationException When any check fails
+	 * @throws PasskeyCounterException When the counter did not increase
+	 * @throws PasskeyVerificationException When any other check fails
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Selects the extension step list; every other check is shared.
 	 *
 	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 	 */
@@ -148,6 +178,7 @@ class WebAuthnVerifier {
 		string $credentialId,
 		string $publicKey,
 		int $counter,
+		bool $extension = false,
 	): int {
 		if (class_exists(AuthenticatorAssertionResponseValidator::class) === false) {
 			throw new PasskeyVerificationException(message: 'The server WebAuthn library is not available');
@@ -171,15 +202,40 @@ class WebAuthnVerifier {
 		);
 
 		try {
-			$source = $this->verifyAssertion(uid: $uid, rpId: $rpId, challenge: $challenge, assertion: $assertion, source: $source);
-		} catch (PasskeyVerificationException $exception) {
-			throw $exception;
+			$source = $this->verifyAssertion(
+				uid: $uid,
+				rpId: $rpId,
+				challenge: $challenge,
+				assertion: $assertion,
+				source: $source,
+				extension: $extension,
+			);
 		} catch (Throwable $throwable) {
-			throw new PasskeyVerificationException(message: $throwable->getMessage(), code: 0, previous: $throwable);
+			throw self::refusal(throwable: $throwable);
 		}
 
 		return $source->counter;
 	}//end verifyUnlock()
+
+	/**
+	 * The refusal a failed check surfaces as: a counter that did not
+	 * increase is told apart, so the caller can suspend the credential.
+	 *
+	 * @param Throwable $throwable The failure
+	 *
+	 * @return PasskeyVerificationException
+	 */
+	private static function refusal(Throwable $throwable): PasskeyVerificationException {
+		if ($throwable instanceof PasskeyVerificationException) {
+			return $throwable;
+		}
+
+		if ($throwable instanceof CounterException) {
+			return new PasskeyCounterException(message: $throwable->getMessage(), code: 0, previous: $throwable);
+		}
+
+		return new PasskeyVerificationException(message: $throwable->getMessage(), code: 0, previous: $throwable);
+	}//end refusal()
 
 	/**
 	 * Check the create() response: client data type, challenge and origin,
@@ -189,10 +245,11 @@ class WebAuthnVerifier {
 	 * @param string $rpId The relying party id
 	 * @param string $challenge The raw create() challenge
 	 * @param array<string,mixed> $attestation The create() PublicKeyCredential
+	 * @param bool $extension Whether a browser extension runs the ceremony
 	 *
 	 * @return PublicKeyCredentialSource The attested credential
 	 */
-	private function verifyAttestation(string $uid, string $rpId, string $challenge, array $attestation): PublicKeyCredentialSource {
+	private function verifyAttestation(string $uid, string $rpId, string $challenge, array $attestation, bool $extension): PublicKeyCredentialSource {
 		$response = $this->load(json: $attestation)->response;
 		if (($response instanceof AuthenticatorAttestationResponse) === false) {
 			throw new PasskeyVerificationException(message: 'Not an attestation response');
@@ -208,12 +265,15 @@ class WebAuthnVerifier {
 				new PublicKeyCredentialParameters(PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY, Algorithms::COSE_ALGORITHM_ES256),
 				new PublicKeyCredentialParameters(PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY, Algorithms::COSE_ALGORITHM_RS256),
 			],
-			authenticatorSelection: new AuthenticatorSelectionCriteria(),
+			authenticatorSelection: new AuthenticatorSelectionCriteria(userVerification: self::userVerification(extension: $extension)),
 			attestation: PublicKeyCredentialCreationOptions::ATTESTATION_CONVEYANCE_PREFERENCE_NONE,
 		);
-		$validator = new AuthenticatorAttestationResponseValidator(
-			ceremonyStepManager: $this->ceremonies()->creationCeremony()
-		);
+		$steps = $this->ceremonies()->creationCeremony();
+		if ($extension === true) {
+			$steps = $this->extensionSteps->creation(attestation: $this->attestationSupport());
+		}
+
+		$validator = new AuthenticatorAttestationResponseValidator(ceremonyStepManager: $steps);
 
 		return $validator->check($response, $options, $rpId);
 	}//end verifyAttestation()
@@ -228,6 +288,7 @@ class WebAuthnVerifier {
 	 * @param string $challenge The raw get() challenge
 	 * @param array<string,mixed> $assertion The get() PublicKeyCredential
 	 * @param PublicKeyCredentialSource $source The attested credential
+	 * @param bool $extension Whether a browser extension runs the ceremony
 	 *
 	 * @return PublicKeyCredentialSource The credential with its new counter
 	 */
@@ -237,6 +298,7 @@ class WebAuthnVerifier {
 		string $challenge,
 		array $assertion,
 		PublicKeyCredentialSource $source,
+		bool $extension,
 	): PublicKeyCredentialSource {
 		$credential = $this->load(json: $assertion);
 		$response = $credential->response;
@@ -259,11 +321,14 @@ class WebAuthnVerifier {
 					$source->publicKeyCredentialId
 				),
 			],
-			userVerification: PublicKeyCredentialRequestOptions::USER_VERIFICATION_REQUIREMENT_PREFERRED,
+			userVerification: self::userVerification(extension: $extension),
 		);
-		$validator = new AuthenticatorAssertionResponseValidator(
-			ceremonyStepManager: $this->ceremonies()->requestCeremony()
-		);
+		$steps = $this->ceremonies()->requestCeremony();
+		if ($extension === true) {
+			$steps = $this->extensionSteps->request(algorithms: $this->algorithms());
+		}
+
+		$validator = new AuthenticatorAssertionResponseValidator(ceremonyStepManager: $steps);
 
 		return $validator->check($source, $response, $options, $rpId, $uid);
 	}//end verifyAssertion()
@@ -307,10 +372,35 @@ class WebAuthnVerifier {
 		$factory = new CeremonyStepManagerFactory();
 		$factory->setSecuredRelyingPartyId(self::INSECURE_RP_IDS);
 		$factory->setAttestationStatementSupportManager($this->attestationSupport());
-		$factory->setAlgorithmManager((new AlgorithmManager())->add(new ES256(), new RS256()));
+		$factory->setAlgorithmManager($this->algorithms());
 
 		return $factory;
 	}//end ceremonies()
+
+	/**
+	 * The accepted signature algorithms, as core accepts them.
+	 *
+	 * @return AlgorithmManager
+	 */
+	private function algorithms(): AlgorithmManager {
+		return (new AlgorithmManager())->add(new ES256(), new RS256());
+	}//end algorithms()
+
+	/**
+	 * The user verification an extension ceremony requires; web
+	 * ceremonies prefer it.
+	 *
+	 * @param bool $extension Whether a browser extension runs the ceremony
+	 *
+	 * @return string
+	 */
+	private static function userVerification(bool $extension): string {
+		if ($extension === true) {
+			return PublicKeyCredentialRequestOptions::USER_VERIFICATION_REQUIREMENT_REQUIRED;
+		}
+
+		return PublicKeyCredentialRequestOptions::USER_VERIFICATION_REQUIREMENT_PREFERRED;
+	}//end userVerification()
 
 	/**
 	 * The accepted attestation statement formats.
