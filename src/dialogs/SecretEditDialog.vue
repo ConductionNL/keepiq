@@ -112,12 +112,7 @@
 				:disabled="saving || loading"
 				@update:modelValue="tags = $event" />
 
-			<NcNoteCard
-				v-if="!policyVerdict.compliant"
-				type="warning"
-				data-testid="policy-blocked">
-				{{ policyVerdict.reason }}
-			</NcNoteCard>
+			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
 
 		<template #actions>
@@ -151,6 +146,7 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
+import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -189,6 +185,7 @@ export default {
 	components: {
 		AdditionalFieldsEditor,
 		AuthenticatorKeyField,
+		PolicyBlockedNote,
 		SecretPayloadFields,
 		SecretTagsField,
 		TypedFieldsForm,
@@ -626,14 +623,9 @@ export default {
 }
 </script>
 
-<style scoped>
-.secret-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 4px 0;
-}
+<style scoped src="./secretForm.css"></style>
 
+<style scoped>
 .secret-form__readonly {
 	display: flex;
 	flex-direction: column;

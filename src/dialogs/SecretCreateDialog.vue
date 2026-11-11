@@ -94,12 +94,7 @@
 				:onlyIds="ownershipApplies ? ownTeamFolderIds : null"
 				:label="t('keepiq', 'Folder')" />
 
-			<NcNoteCard
-				v-if="!policyVerdict.compliant"
-				type="warning"
-				data-testid="policy-blocked">
-				{{ policyVerdict.reason }}
-			</NcNoteCard>
+			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
 
 		<template #actions>
@@ -132,6 +127,7 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
+import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -191,6 +187,7 @@ export default {
 		AuthenticatorKeyField,
 		TypedFieldsForm,
 		DestinationSelect,
+		PolicyBlockedNote,
 		SecretPayloadFields,
 		SecretTagsField,
 		NcButton,
@@ -527,11 +524,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.secret-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 4px 0;
-}
-</style>
+<style scoped src="./secretForm.css"></style>
