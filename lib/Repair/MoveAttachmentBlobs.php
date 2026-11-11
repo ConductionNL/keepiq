@@ -147,20 +147,14 @@ class MoveAttachmentBlobs implements IRepairStep {
 			return;
 		}
 
-		$moved = 0;
-		$skipped = 0;
+		$relocation = new BlobRelocation(target: $target, output: $output);
 		foreach ($listing as $file) {
-			if ($this->moveOne(file: $file, target: $target, output: $output) === true) {
-				$moved++;
-				continue;
-			}
-
-			$skipped++;
+			$relocation->count(moved: $this->moveOne(file: $file, relocation: $relocation));
 		}
 
-		$output->info(sprintf('Moved %d attachment blob(s), skipped %d.', $moved, $skipped));
+		$output->info(sprintf('Moved %d attachment blob(s), skipped %d.', $relocation->moved, $relocation->skipped));
 
-		if ($skipped === 0) {
+		if ($relocation->skipped === 0) {
 			$this->removeEmptySource(source: $source, output: $output);
 			$this->reportEmptyNamespace(output: $output);
 		}
@@ -221,86 +215,108 @@ class MoveAttachmentBlobs implements IRepairStep {
 	/**
 	 * Copy one blob to the target and remove the source once verified.
 	 *
-	 * @param ISimpleFile   $file   The blob to move.
-	 * @param ISimpleFolder $target The destination folder.
-	 * @param IOutput       $output Repair output.
+	 * @param ISimpleFile    $file       The blob to move.
+	 * @param BlobRelocation $relocation The target, the output and the tally.
 	 *
 	 * @return bool True when the blob now lives only in the target.
 	 */
-	private function moveOne(ISimpleFile $file, ISimpleFolder $target, IOutput $output): bool {
+	private function moveOne(ISimpleFile $file, BlobRelocation $relocation): bool {
 		$name = $file->getName();
 
 		try {
-			$expected = $file->getSize();
-
-			if ($target->fileExists($name) === true) {
-				// A name already present is almost always this step having run
-				// before, but "almost always" is not a basis for switching
-				// reads onto it. Compare sizes: equal means already relocated,
-				// and the source is redundant. Different means two distinct
-				// blobs share a ref, which is a data question, not a rename.
-				if ($target->getFile($name)->getSize() === $expected) {
-					$file->delete();
-
-					return true;
-				}
-
-				$output->warning(
-					sprintf(
-						'Blob "%s" exists under BOTH namespaces with different sizes (%s vs %s bytes). '
-						. 'Leaving both untouched: reads resolve the new namespace first, so verify by hand '
-						. 'which is correct before removing either.',
-						$name,
-						(string)$expected,
-						(string)$target->getFile($name)->getSize()
-					)
-				);
-
-				return false;
-			}
-			$written = $this->copy(file: $file, target: $target, name: $name);
-
-			if ($written->getSize() !== $expected) {
-				$output->warning(
-					sprintf(
-						'Blob "%s" copied as %s bytes but the source is %s - keeping the source, remove the partial copy by hand.',
-						$name,
-						(string)$written->getSize(),
-						(string)$expected
-					)
-				);
-				return false;
+			$blob = new SourceBlob(file: $file, name: $name, size: $file->getSize());
+			if ($relocation->target->fileExists($name) === true) {
+				return $this->settleExisting(blob: $blob, relocation: $relocation);
 			}
 
-			$file->delete();
-
-			return true;
+			return $this->copyVerified(blob: $blob, relocation: $relocation);
 		} catch (Throwable $e) {
-			$output->warning(sprintf('Could not move blob "%s": %s', $name, $e->getMessage()));
+			$relocation->output->warning(sprintf('Could not move blob "%s": %s', $name, $e->getMessage()));
 			return false;
 		}
 	}//end moveOne()
 
 	/**
+	 * Settle a blob whose name the target already holds.
+	 *
+	 * A name already present is almost always this step having run before,
+	 * but "almost always" is not a basis for switching reads onto it. Compare
+	 * sizes: equal means already relocated, and the source is redundant.
+	 * Different means two distinct blobs share a ref, which is a data
+	 * question, not a rename.
+	 *
+	 * @param SourceBlob     $blob       The blob to move.
+	 * @param BlobRelocation $relocation The target, the output and the tally.
+	 *
+	 * @return bool True when the source was redundant and is removed.
+	 */
+	private function settleExisting(SourceBlob $blob, BlobRelocation $relocation): bool {
+		if ($relocation->target->getFile($blob->name)->getSize() === $blob->size) {
+			$blob->file->delete();
+
+			return true;
+		}
+
+		$relocation->output->warning(
+			sprintf(
+				'Blob "%s" exists under BOTH namespaces with different sizes (%s vs %s bytes). '
+				. 'Leaving both untouched: reads resolve the new namespace first, so verify by hand '
+				. 'which is correct before removing either.',
+				$blob->name,
+				(string)$blob->size,
+				(string)$relocation->target->getFile($blob->name)->getSize()
+			)
+		);
+
+		return false;
+	}//end settleExisting()
+
+	/**
+	 * Copy a blob and remove the source once the copy has the source's size.
+	 *
+	 * @param SourceBlob     $blob       The blob to move.
+	 * @param BlobRelocation $relocation The target, the output and the tally.
+	 *
+	 * @return bool True when the blob now lives only in the target.
+	 */
+	private function copyVerified(SourceBlob $blob, BlobRelocation $relocation): bool {
+		$written = $this->copy(blob: $blob, target: $relocation->target);
+		if ($written->getSize() !== $blob->size) {
+			$relocation->output->warning(
+				sprintf(
+					'Blob "%s" copied as %s bytes but the source is %s - keeping the source, remove the partial copy by hand.',
+					$blob->name,
+					(string)$written->getSize(),
+					(string)$blob->size
+				)
+			);
+			return false;
+		}
+
+		$blob->file->delete();
+
+		return true;
+	}//end copyVerified()
+
+	/**
 	 * Write a blob into the target folder, streaming where possible.
 	 *
-	 * @param ISimpleFile   $file   The source blob.
+	 * @param SourceBlob    $blob   The source blob.
 	 * @param ISimpleFolder $target The destination folder.
-	 * @param string        $name   The file name to write.
 	 *
 	 * @return ISimpleFile The written file.
 	 */
-	private function copy(ISimpleFile $file, ISimpleFolder $target, string $name): ISimpleFile {
+	private function copy(SourceBlob $blob, ISimpleFolder $target): ISimpleFile {
 		// Streamed so a large attachment never lands in memory whole. Not every
 		// storage backend returns a usable handle, hence the string fallback.
-		$handle = $file->read();
+		$handle = $blob->file->read();
 
 		if (is_resource($handle) === false) {
-			return $target->newFile($name, $file->getContent());
+			return $target->newFile($blob->name, $blob->file->getContent());
 		}
 
 		try {
-			return $target->newFile($name, $handle);
+			return $target->newFile($blob->name, $handle);
 		} finally {
 			// The caller owns this handle: Nextcloud's file_put_contents copies
 			// FROM a passed resource and closes only its own target, never the
