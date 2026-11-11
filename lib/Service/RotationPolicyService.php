@@ -267,23 +267,50 @@ class RotationPolicyService {
 		$policy->setReminderDays($encodedReminders);
 		$policy->setUpdatedAt(new DateTime());
 
-		$policy = match ($isNew) {
+		$policy = $this->storePolicy(policy: $policy, isNew: $isNew);
+		$this->auditPolicyChange(userId: $userId, policy: $policy);
+
+		return $policy;
+	}//end upsertPolicy()
+
+	/**
+	 * Insert a new policy, or update the one found for its scope.
+	 *
+	 * @param ExpiryPolicy $policy The policy to store
+	 * @param bool         $isNew  Whether no policy existed for the scope
+	 *
+	 * @return ExpiryPolicy The stored policy
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The insert-or-update choice upsertPolicy already made.
+	 */
+	private function storePolicy(ExpiryPolicy $policy, bool $isNew): ExpiryPolicy {
+		return match ($isNew) {
 			true => $this->policyMapper->insert($policy),
 			false => $this->policyMapper->update($policy),
 		};
+	}//end storePolicy()
 
+	/**
+	 * Audit a saved expiry policy with its scope.
+	 *
+	 * @param string       $userId The caller
+	 * @param ExpiryPolicy $policy The stored policy
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+	 */
+	private function auditPolicyChange(string $userId, ExpiryPolicy $policy): void {
 		$this->dispatchAudit(
 			actorId: $userId,
 			eventType: AuditEventTypes::POLICY_EXPIRY_CHANGED,
 			objectId: $policy->getId(),
 			metadata: [
-				'scope' => $scope,
-				'scopeId' => $scopeId,
+				'scope' => $policy->getScope(),
+				'scopeId' => $policy->getScopeId(),
 			],
 		);
-
-		return $policy;
-	}//end upsertPolicy()
+	}//end auditPolicyChange()
 
 	/**
 	 * Reject a policy the service cannot store.
