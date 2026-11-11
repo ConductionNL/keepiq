@@ -1281,3 +1281,70 @@ describe('card and identity lists', () => {
 		expect(dialog()).toBeNull()
 	})
 })
+
+describe('reply checks', () => {
+	const shown = () => document.querySelector('#list')!.children.length > 0
+	const base = { state: 'unlocked', mode: 'login', host: 'example.test', theme: 'system', rows: [{ id: 'p', name: 'Personal', username: 'alice' }] }
+	const code = { digits: '123456', period: 30, validUntil: 2_000_000 }
+	const withRow = (mode: string, row: object) => ({ ...base, mode, rows: [{ id: 'p', name: 'Personal', username: null, ...row }] })
+	const passkey = { itemId: 'e', credentialId: 'QQ', name: 'Example', userName: 'alice' }
+
+	it.each([
+		['a login list', base],
+		['a locked list', { ...base, state: 'locked', rows: [] }],
+		['a dark one', { ...base, theme: 'dark' }],
+		['a login row without a username', withRow('login', {})],
+		['a code row', withRow('code', { code })],
+		['a code row with no digits', withRow('code', { code: { ...code, digits: null } })],
+		['a card row', withRow('card', { card: { brand: 'Visa', last4: '4242' } })],
+		['a card row without brand', withRow('card', { card: { brand: null, last4: '4242' } })],
+		['a card row without card', withRow('card', {})],
+		['an identity row', withRow('identity', { detail: 'Main St 1' })],
+		['an identity row without detail', withRow('identity', { detail: null })],
+		['passkeys', { ...base, passkeys: [passkey] }],
+	])('shows %s', async (_name, reply) => {
+		await open(reply as never, { settle: false })
+		expect(shown()).toBe(true)
+	})
+
+	it.each([
+		['a string', 'unlocked'],
+		['an unknown state', { ...base, state: 'open' }],
+		['an unknown mode', { ...base, mode: 'note' }],
+		['no host', { ...base, host: 1 }],
+		['an unknown theme', { ...base, theme: 'neon' }],
+		['rows that are no list', { ...base, rows: {} }],
+		['a row without id', { ...base, rows: [{ name: 'Personal', username: null }] }],
+		['a row without name', { ...base, rows: [{ id: 'p', username: null }] }],
+		['a row with a numeric username', { ...base, rows: [{ id: 'p', name: 'Personal', username: 1 }] }],
+		['a login row with a code', withRow('login', { code })],
+		['a login row with a detail', withRow('login', { detail: 'x' })],
+		['a login row with a card', withRow('login', { card: { brand: null, last4: '4242' } })],
+		['a code row without code', withRow('code', {})],
+		['a code row with an unknown code', withRow('code', { code: null })],
+		['a code row with too many digits', withRow('code', { code: { ...code, digits: '12345678901' } })],
+		['a code row with a numeric code', withRow('code', { code: { ...code, digits: 123456 } })],
+		['a code row without period', withRow('code', { code: { ...code, period: '30' } })],
+		['a code row without end', withRow('code', { code: { ...code, validUntil: Infinity } })],
+		['a code row with a detail', withRow('code', { code, detail: 'x' })],
+		['a code row with a card', withRow('code', { code, card: { brand: null, last4: '4242' } })],
+		['a card row with a username', withRow('card', { username: 'alice' })],
+		['a card row with a code', withRow('card', { code })],
+		['a card row with a detail', withRow('card', { detail: 'x' })],
+		['a card row with an unknown card', withRow('card', { card: null })],
+		['a card row with a numeric brand', withRow('card', { card: { brand: 1, last4: '4242' } })],
+		['a card row with a short last4', withRow('card', { card: { brand: null, last4: '424' } })],
+		['a card row with a numeric last4', withRow('card', { card: { brand: null, last4: 4242 } })],
+		['an identity row with a card', withRow('identity', { detail: null, card: { brand: null, last4: '4242' } })],
+		['an identity row without detail key', withRow('identity', {})],
+		['an identity row with a numeric detail', withRow('identity', { detail: 1 })],
+		['passkeys with a locked list', { ...base, state: 'locked', rows: [], passkeys: [passkey] }],
+		['passkeys with a code list', { ...withRow('code', { code }), passkeys: [passkey] }],
+		['passkeys that are no list', { ...base, passkeys: {} }],
+		['a passkey without credential', { ...base, passkeys: [{ ...passkey, credentialId: 1 }] }],
+		['a passkey that is null', { ...base, passkeys: [null] }],
+	])('refuses %s', async (_name, reply) => {
+		await open(reply as never, { settle: false })
+		expect(shown()).toBe(false)
+	})
+})
