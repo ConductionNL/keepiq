@@ -241,6 +241,74 @@ class MigrateAppConfigKeysTest extends TestCase {
 	}//end testSummaryCountsEveryOutcome()
 
 	/**
+	 * A key that fails is logged once and counted in no bucket, and the keys
+	 * around it are read and written in their stored order.
+	 *
+	 * @return void
+	 */
+	public function testAFailedKeyIsLoggedAndCountedNowhere(): void {
+		$calls = [];
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getKeys')->willReturn(['types', 'boom', 'kept', 'copied', 'blank']);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key) use (&$calls): string {
+				$calls[] = 'get ' . $app . ' ' . $key;
+				if ($key === 'boom') {
+					throw new \RuntimeException('config store unavailable');
+				}
+
+				$values = ['doriath kept' => 'a', 'keepiq kept' => 'b', 'doriath copied' => 'c'];
+				return $values[$app . ' ' . $key] ?? '';
+			}
+		);
+		$appConfig->method('setValueString')->willReturnCallback(
+			static function (string $app, string $key, string $value) use (&$calls): bool {
+				$calls[] = 'set ' . $app . ' ' . $key . ' ' . $value;
+				return true;
+			}
+		);
+		$warnings = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(
+			static function (string $message, array $context = []) use (&$warnings): void {
+				$warnings[] = [$message, $context];
+			}
+		);
+		$lines = [];
+
+		(new MigrateAppConfigKeys(appConfig: $appConfig, logger: $logger))->run($this->recordingOutput($lines));
+
+		$this->assertSame(
+			[
+				'MigrateAppConfigKeys: 1 key(s) migrated, 1 already present, '
+				. '1 had no value to migrate, 1 skipped as Nextcloud-reserved.',
+			],
+			$lines
+		);
+		$this->assertSame(
+			[
+				[
+					'Keepiq: could not migrate one app config key; leaving it under the old namespace',
+					['key' => 'boom', 'exception' => 'config store unavailable'],
+				],
+			],
+			$warnings
+		);
+		$this->assertSame(
+			[
+				'get doriath boom',
+				'get doriath kept',
+				'get keepiq kept',
+				'get doriath copied',
+				'get keepiq copied',
+				'set keepiq copied c',
+				'get doriath blank',
+			],
+			$calls
+		);
+	}//end testAFailedKeyIsLoggedAndCountedNowhere()
+
+	/**
 	 * The reserved-key skip matches the whole key, not a prefix.
 	 *
 	 * `enabled`, `installed_version` and `types` are Nextcloud's; a key that
