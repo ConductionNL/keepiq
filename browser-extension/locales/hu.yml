@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: A széfkulcsod megváltozott. Oldd fel a mesterjelszóval.
   pinTooShort: Legalább {count} karaktert használj
   unknown: Valami hiba történt
+  passkeyFailed: "A jelkulcs nem tudta feloldani a széfedet. Használd a mesterjelszavadat."
 
 notices:
   keyChanged: A széfkulcsod megváltozott a Keepiqben. Oldd fel a jelenlegi mesterjelszóval.

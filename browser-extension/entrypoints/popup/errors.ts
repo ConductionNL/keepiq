@@ -29,6 +29,7 @@ export function errorText(code: ErrorCode, host: string, attemptsLeft?: number):
 		case 'invalid_pin': return attemptsLeft === undefined ? i18n.t('errors.wrongPin') : i18n.t('errors.invalidPin', attemptsLeft)
 		case 'pin_forgotten': return i18n.t('errors.pinForgotten')
 		case 'pin_key_changed': return i18n.t('errors.pinKeyChanged')
+		case 'passkey_failed': return i18n.t('errors.passkeyFailed')
 		// A newer background can send a code this popup does not know yet.
 		case 'unknown':
 		default: return i18n.t('errors.unknown')

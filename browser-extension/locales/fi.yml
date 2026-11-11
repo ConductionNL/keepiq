@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Holviavaimesi on vaihtunut. Avaa lukitus pääsalasanalla.
   pinTooShort: Käytä vähintään {count} merkkiä
   unknown: Jokin meni pieleen
+  passkeyFailed: "Pääsyavain ei avannut holviasi. Käytä pääsalasanaasi."
 
 notices:
   keyChanged: Holviavaimesi on vaihtunut Keepiqissä. Avaa lukitus nykyisellä pääsalasanallasi.

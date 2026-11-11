@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: La clé de votre coffre-fort a changé. Déverrouillez avec votre mot de passe principal.
   pinTooShort: Utilisez au moins {count} caractères
   unknown: Une erreur s’est produite
+  passkeyFailed: "La clé d'accès n'a pas pu déverrouiller votre coffre-fort. Utilisez votre mot de passe principal."
 
 notices:
   keyChanged: La clé de votre coffre-fort a changé dans Keepiq. Déverrouillez avec votre mot de passe principal actuel.

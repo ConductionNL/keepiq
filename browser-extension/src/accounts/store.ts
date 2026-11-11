@@ -27,6 +27,8 @@ export interface AccountRecord {
 	revoked?: boolean
 	/** Set when a sync found a new suite, so the unlock screen can say why. */
 	keyChanged?: boolean
+	/** Set by a passkey enrolment from this extension, cleared once the server offers none. */
+	passkeyUnlock?: boolean
 	/** Added through the browser sign-in: the unlock screen points to Devices & sessions until the first unlock. */
 	fileAccessNote?: boolean
 	/** Keepiq's version as last read; absent on accounts added before it was kept. */

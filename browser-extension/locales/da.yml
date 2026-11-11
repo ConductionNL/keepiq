@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Din boksnøgle er ændret. Lås op med din hovedadgangskode.
   pinTooShort: Brug mindst {count} tegn
   unknown: Noget gik galt
+  passkeyFailed: "Adgangsnøglen kunne ikke låse din boks op. Brug din hovedadgangskode."
 
 notices:
   keyChanged: Din boksnøgle er ændret i Keepiq. Lås op med din nuværende hovedadgangskode.
