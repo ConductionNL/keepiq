@@ -28,7 +28,6 @@ use OCA\Keepiq\Db\SuiteMigrationMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
-use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
@@ -154,17 +153,7 @@ class MigrationService {
 		// ordinary client retry of a POST that timed out is enough to trigger
 		// it. MigrationController::commitRecord already guards this way.
 		if ($migration->getStatus() !== 'in_progress') {
-			$this->logger->info(
-				'Keepiq: completeMigration called on an already-terminated migration; ignoring',
-				['migrationId' => $migrationId, 'status' => $migration->getStatus()]
-			);
-
-			return [
-				'status' => $migration->getStatus(),
-				'droppedVersions' => 0,
-				'unrecoverable' => [],
-				'alreadyCompleted' => true,
-			];
+			return $this->notices()->ignoredCompletion(migration: $migration, migrationId: $migrationId);
 		}
 
 		// Terminal work, moved here from EncryptionSuiteController::compromiseRecovery.
@@ -173,60 +162,17 @@ class MigrationService {
 		// SuiteBlockedException and the browser could not decrypt the very
 		// ciphertext it needed to migrate. None of this can safely happen until
 		// the migration is over.
-		$ownerId = $this->resolveOwnerId(suiteId: $migration->getOldSuiteId());
-
-		// Version history is deliberately lossy: only the head plus the N most
-		// recent snapshots are re-encrypted, and the rest are dropped here so
-		// the count is final and can be stated to the user in one number
-		// (secret-version-history spec). This runs BEFORE the outstanding-row
-		// check so out-of-window rows the client was never asked to migrate
-		// cannot hold the gate shut.
-		[$droppedVersions, $unrecoverable] = $this->prepareTermination(
+		$run = new TerminationRun(
 			migration: $migration,
-			ownerId: $ownerId,
-			acceptUnrecoverable: $acceptUnrecoverable
+			migrationId: $migrationId,
+			ownerId: $this->resolveOwnerId(suiteId: $migration->getOldSuiteId())
 		);
 
-		$status = 'completed';
-		if ($hasErrors === true || $unrecoverable !== []) {
-			$status = 'completed_with_errors';
-		}
+		[$droppedVersions, $unrecoverable] = $this->prepareTermination(run: $run, acceptUnrecoverable: $acceptUnrecoverable);
 
-		$migration->setStatus($status);
-
-		$migration->setCompletedAt(new DateTime());
-
-		$this->mapper->update($migration);
-
-		$this->suiteService->markCompromised(
-			id: $migration->getOldSuiteId(),
-			compromisedBy: ($ownerId ?? '')
-		);
-
-		$this->revokeOwnerKeyMaterial(migration: $migration, ownerId: $ownerId);
-
-		// The failure rows are in-flight accounting, not history. Dropping them
-		// with the run keeps a later migration for the same owner from
-		// inheriting a stale acknowledgement threshold.
-		$this->workService->clearFailureAccounting(migration: $migration);
-
-		// NOT re-implemented here: pending SecretRequests are unlocked and
-		// re-pointed by SuiteMigrationCompletedListener, and emergency-access
-		// envelopes are invalidated by EmergencyAccessSuiteRotationListener.
-		// Both already listen for the event dispatched below.
-		$this->logger->info(
-			"Keepiq: Compromise recovery completed for migration {$migrationId}",
-			['hasErrors' => $hasErrors]
-		);
-
-		$this->eventDispatcher?->dispatchTyped(
-			new SuiteMigrationCompletedEvent(
-				oldSuiteId: $migration->getOldSuiteId(),
-				newSuiteId: $migration->getNewSuiteId(),
-				migrationId: $migration->getId(),
-				hasErrors: $hasErrors,
-			)
-		);
+		$this->markTerminal(run: $run, status: $this->completedStatus(hasErrors: $hasErrors, unrecoverable: $unrecoverable));
+		$this->retireOldSuite(run: $run);
+		$this->notices()->completed(run: $run, hasErrors: $hasErrors);
 
 		return (
 			$migration->jsonSerialize() + [
@@ -235,6 +181,61 @@ class MigrationService {
 			]
 		);
 	}//end completeMigration()
+
+	/**
+	 * The terminal status of a completion: with errors when the caller
+	 * reported any or any record loses access.
+	 *
+	 * @param bool $hasErrors Whether the caller reported errors
+	 * @param array<int,array<string,mixed>> $unrecoverable The records that lose access
+	 *
+	 * @return string
+	 */
+	private function completedStatus(bool $hasErrors, array $unrecoverable): string {
+		if ($hasErrors === true || $unrecoverable !== []) {
+			return 'completed_with_errors';
+		}
+
+		return 'completed';
+	}//end completedStatus()
+
+	/**
+	 * Write the migration's terminal status and end time.
+	 *
+	 * @param TerminationRun $run The migration being terminated
+	 * @param string $status The terminal status
+	 *
+	 * @return void
+	 */
+	private function markTerminal(TerminationRun $run, string $status): void {
+		$run->migration->setStatus($status);
+
+		$run->migration->setCompletedAt(new DateTime());
+
+		$this->mapper->update($run->migration);
+	}//end markTerminal()
+
+	/**
+	 * Mark the old suite compromised, revoke the key material it could still
+	 * open and drop the run's failure accounting.
+	 *
+	 * @param TerminationRun $run The completed migration
+	 *
+	 * @return void
+	 */
+	private function retireOldSuite(TerminationRun $run): void {
+		$this->suiteService->markCompromised(
+			id: $run->migration->getOldSuiteId(),
+			compromisedBy: ($run->ownerId ?? '')
+		);
+
+		$this->revokeOwnerKeyMaterial(run: $run);
+
+		// The failure rows are in-flight accounting, not history. Dropping them
+		// with the run keeps a later migration for the same owner from
+		// inheriting a stale acknowledgement threshold.
+		$this->workService->clearFailureAccounting(migration: $run->migration);
+	}//end retireOldSuite()
 
 	/**
 	 * Abort a compromise-recovery migration, returning the vault to the old suite.
@@ -269,24 +270,49 @@ class MigrationService {
 		$migration = $this->mapper->findById($migrationId);
 
 		if ($migration->getStatus() !== 'in_progress') {
-			$this->logger->info(
-				'Keepiq: abortMigration called on an already-terminated migration; ignoring',
-				['migrationId' => $migrationId, 'status' => $migration->getStatus()]
-			);
-
-			return [
-				'status' => $migration->getStatus(),
-				'aborted' => false,
-				'alreadyTerminated' => true,
-			];
+			return $this->notices()->ignoredAbort(migration: $migration, migrationId: $migrationId);
 		}
 
-		$ownerId = $this->resolveOwnerId(suiteId: $migration->getOldSuiteId());
+		$run = new TerminationRun(
+			migration: $migration,
+			migrationId: $migrationId,
+			ownerId: $this->resolveOwnerId(suiteId: $migration->getOldSuiteId())
+		);
 
 		// The one gate: nothing may have moved to the new suite yet.
+		$this->assertNothingCommitted(run: $run);
+
+		$this->restoreOldSuite(run: $run);
+		$this->notices()->aborted(run: $run);
+
+		// An abort undoes a containment step, so it must reach the audit trail
+		// and the SIEM, not only nextcloud.log (keepiq#859, keepiq#870).
+		$this->dispatchSuiteAudit(
+			actorId: ($actorId ?? $run->ownerId),
+			eventType: AuditEventTypes::SUITE_RECOVERY_ABORTED,
+			migration: $migration,
+		);
+
+		return (
+			$migration->jsonSerialize() + [
+				'aborted' => true,
+			]
+		);
+	}//end abortMigration()
+
+	/**
+	 * Refuse the abort once any record has been committed to the new suite.
+	 *
+	 * @param TerminationRun $run The migration being aborted
+	 *
+	 * @return void
+	 *
+	 * @throws MigrationAbortRefusedException When a record has already been committed
+	 */
+	private function assertNothingCommitted(TerminationRun $run): void {
 		$committed = 0;
-		if ($ownerId !== null) {
-			$committed = $this->workService->countCommitted(migration: $migration, ownerId: $ownerId);
+		if ($run->ownerId !== null) {
+			$committed = $this->workService->countCommitted(migration: $run->migration, ownerId: $run->ownerId);
 		}
 
 		if ($committed > 0) {
@@ -299,64 +325,42 @@ class MigrationService {
 				)
 			))->withCommitted($committed);
 		}
+	}//end assertNothingCommitted()
 
-		// Terminal, but the RESTORATIVE terminal. The old suite is untouched and
-		// stays active; the successor — created empty moments ago and never
-		// written to — is discarded. It is DELETED rather than revoked on
-		// purpose: revoking a user suite runs the lost-identity cascade
-		// (EncryptionSuiteRevokedListener sweeps the owner's incoming
-		// ShareTargets and promotes their delegations), which would destroy real
-		// state over a migration the abort exists to undo.
-		$migration->setStatus('aborted');
-		$migration->setCompletedAt(new DateTime());
-		$this->mapper->update($migration);
+	/**
+	 * Mark the migration aborted, discard the unused successor suite and drop
+	 * the run's failure accounting.
+	 *
+	 * Terminal, but the RESTORATIVE terminal. The old suite is untouched and
+	 * stays active; the successor — created empty moments ago and never
+	 * written to — is discarded. It is DELETED rather than revoked on
+	 * purpose: revoking a user suite runs the lost-identity cascade
+	 * (EncryptionSuiteRevokedListener sweeps the owner's incoming
+	 * ShareTargets and promotes their delegations), which would destroy real
+	 * state over a migration the abort exists to undo.
+	 *
+	 * @param TerminationRun $run The migration being aborted
+	 *
+	 * @return void
+	 */
+	private function restoreOldSuite(TerminationRun $run): void {
+		$run->migration->setStatus('aborted');
+		$run->migration->setCompletedAt(new DateTime());
+		$this->mapper->update($run->migration);
 
 		try {
-			$successor = $this->suiteMapper->findById($migration->getNewSuiteId());
+			$successor = $this->suiteMapper->findById($run->migration->getNewSuiteId());
 			$this->suiteMapper->delete($successor);
 		} catch (DoesNotExistException) {
 			// Already gone — nothing to discard.
 			$this->logger->warning(
 				'Keepiq: successor suite already absent during abort',
-				['migrationId' => $migrationId, 'newSuiteId' => $migration->getNewSuiteId()]
+				['migrationId' => $run->migrationId, 'newSuiteId' => $run->migration->getNewSuiteId()]
 			);
 		}
 
-		$this->workService->clearFailureAccounting(migration: $migration);
-
-		// NOT SuiteMigrationCompletedEvent: that event runs the terminal cascade
-		// (compromise-flagging, link-share revocation, emergency-access
-		// invalidation) which must never fire for an abort. The aborted event
-		// carries the single reaction abort needs — releasing the SecretRequests
-		// that SuiteMigrationStartedListener locked, keeping them on the old
-		// suite — handled by SuiteMigrationAbortedListener.
-		$this->eventDispatcher?->dispatchTyped(
-			new SuiteMigrationAbortedEvent(
-				oldSuiteId: $migration->getOldSuiteId(),
-				newSuiteId: $migration->getNewSuiteId(),
-				migrationId: $migration->getId(),
-			)
-		);
-
-		$this->logger->info(
-			"Keepiq: Compromise recovery aborted for migration {$migrationId}; vault returned to the old suite",
-			['oldSuiteId' => $migration->getOldSuiteId()]
-		);
-
-		// An abort undoes a containment step, so it must reach the audit trail
-		// and the SIEM, not only nextcloud.log (keepiq#859, keepiq#870).
-		$this->dispatchSuiteAudit(
-			actorId: ($actorId ?? $ownerId),
-			eventType: AuditEventTypes::SUITE_RECOVERY_ABORTED,
-			migration: $migration,
-		);
-
-		return (
-			$migration->jsonSerialize() + [
-				'aborted' => true,
-			]
-		);
-	}//end abortMigration()
+		$this->workService->clearFailureAccounting(migration: $run->migration);
+	}//end restoreOldSuite()
 
 	/**
 	 * Run everything that must happen — and must be allowed — before a
@@ -384,8 +388,7 @@ class MigrationService {
 	 * leave the vault write-locked with no way out. Those may be finalised, but
 	 * only against an explicit acknowledgement of how many lose access.
 	 *
-	 * @param SuiteMigration $migration The migration being completed
-	 * @param string|null $ownerId The resolved owner, or null
+	 * @param TerminationRun $run The migration being completed and its owner
 	 * @param int|null $acceptUnrecoverable The client's acknowledged loss count
 	 *
 	 * @return array{0:int,1:array<int,array<string,mixed>>} Dropped-version count
@@ -395,35 +398,9 @@ class MigrationService {
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
 	 */
-	private function prepareTermination(
-		SuiteMigration $migration,
-		?string $ownerId,
-		?int $acceptUnrecoverable,
-	): array {
-		if ($ownerId === null) {
-			// Refuse rather than skip. Returning [0, []] here turned every
-			// safety gate off in exactly the state where it is least safe to
-			// proceed: dropVersionsBeyondWindow, assertNothingUnaccountedFor
-			// and assertLossAcknowledged were all bypassed, the migration went
-			// to `completed`, and markCompromised locked a suite that may still
-			// have held every secret. An unresolvable owner means the gate
-			// cannot be EVALUATED, which is not the same as the gate passing.
-			// revokeOwnerKeyMaterial already refuses to guess in this
-			// situation; this now matches it.
-			$this->logger->error(
-				'Keepiq: refusing to terminate a migration whose owner cannot be resolved',
-				[
-					'migrationId' => $migration->getId(),
-					'oldSuiteId' => $migration->getOldSuiteId(),
-				]
-			);
-
-			throw new MigrationIncompleteException(
-				message: 'The owner of this migration could not be resolved, so it cannot be '
-					. 'verified as complete. The old suite has been left active and nothing has '
-					. 'been locked. This needs manual review.'
-			);
-		}
+	private function prepareTermination(TerminationRun $run, ?int $acceptUnrecoverable): array {
+		$ownerId = $this->requireResolvedOwner(run: $run);
+		$migration = $run->migration;
 
 		$droppedVersions = $this->workService->dropVersionsBeyondWindow(
 			migration: $migration,
@@ -443,6 +420,44 @@ class MigrationService {
 	}//end prepareTermination()
 
 	/**
+	 * The migration's owner, or a refusal when it cannot be resolved.
+	 *
+	 * Refuse rather than skip. Returning [0, []] here turned every safety gate
+	 * off in exactly the state where it is least safe to proceed:
+	 * dropVersionsBeyondWindow, assertNothingUnaccountedFor and
+	 * assertLossAcknowledged were all bypassed, the migration went to
+	 * `completed`, and markCompromised locked a suite that may still have held
+	 * every secret. An unresolvable owner means the gate cannot be EVALUATED,
+	 * which is not the same as the gate passing. revokeOwnerKeyMaterial already
+	 * refuses to guess in this situation; this now matches it.
+	 *
+	 * @param TerminationRun $run The migration being completed
+	 *
+	 * @return string The owner's user id
+	 *
+	 * @throws MigrationIncompleteException When the owner cannot be resolved
+	 */
+	private function requireResolvedOwner(TerminationRun $run): string {
+		if ($run->ownerId !== null) {
+			return $run->ownerId;
+		}
+
+		$this->logger->error(
+			'Keepiq: refusing to terminate a migration whose owner cannot be resolved',
+			[
+				'migrationId' => $run->migration->getId(),
+				'oldSuiteId' => $run->migration->getOldSuiteId(),
+			]
+		);
+
+		throw new MigrationIncompleteException(
+			message: 'The owner of this migration could not be resolved, so it cannot be '
+				. 'verified as complete. The old suite has been left active and nothing has '
+				. 'been locked. This needs manual review.'
+		);
+	}//end requireResolvedOwner()
+
+	/**
 	 * Revoke the key material the rotated-away suite could still open.
 	 *
 	 * Owner-scoped, so it cannot run without a resolved owner: targeting the
@@ -451,14 +466,15 @@ class MigrationService {
 	 * already marked compromised by the caller, which is the security-critical
 	 * half, and the rest needs manual review.
 	 *
-	 * @param SuiteMigration $migration The completed migration
-	 * @param string|null $ownerId The resolved owner, or null
+	 * @param TerminationRun $run The completed migration and its owner
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
 	 */
-	private function revokeOwnerKeyMaterial(SuiteMigration $migration, ?string $ownerId): void {
+	private function revokeOwnerKeyMaterial(TerminationRun $run): void {
+		$migration = $run->migration;
+		$ownerId = $run->ownerId;
 		if ($ownerId === null) {
 			$this->logger->error(
 				'Keepiq: migration completed but owner could not be resolved — '
@@ -615,6 +631,15 @@ class MigrationService {
 			)
 		))->withRequiredAcknowledgement($count);
 	}//end assertLossAcknowledged()
+
+	/**
+	 * The log lines and events that announce how a termination ended.
+	 *
+	 * @return TerminationNotices
+	 */
+	private function notices(): TerminationNotices {
+		return new TerminationNotices(logger: $this->logger, eventDispatcher: $this->eventDispatcher);
+	}//end notices()
 
 	/**
 	 * Resolve the owning user id for a suite.
