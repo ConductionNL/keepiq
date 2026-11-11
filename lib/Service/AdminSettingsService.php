@@ -126,6 +126,9 @@ class AdminSettingsService {
 		'version_retention_days',
 		'trash_retention_days',
 		'extension_max_idle_minutes',
+		'extension_passkeys_enabled',
+		'extension_passkey_origins',
+		'extension_passkey_pinned_origins',
 	];
 
 	/**
@@ -159,6 +162,13 @@ class AdminSettingsService {
 	private PasswordPolicyService $policyService;
 
 	/**
+	 * The trusted browser-extension origins for passkeys.
+	 *
+	 * @var TrustedExtensionOrigins
+	 */
+	private TrustedExtensionOrigins $extensionOrigins;
+
+	/**
 	 * Constructor for the AdminSettingsService.
 	 *
 	 * @param IAppConfig $appConfig The app config interface
@@ -167,6 +177,7 @@ class AdminSettingsService {
 	 * @param LoggerInterface $logger The logger
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param PasswordPolicyService|null $policyService The org password policy
+	 * @param TrustedExtensionOrigins|null $extensionOrigins The trusted extension origins
 	 *
 	 * @return void
 	 *
@@ -179,7 +190,9 @@ class AdminSettingsService {
 		private LoggerInterface $logger,
 		?IEventDispatcher $eventDispatcher = null,
 		?PasswordPolicyService $policyService = null,
+		?TrustedExtensionOrigins $extensionOrigins = null,
 	) {
+		$this->extensionOrigins = ($extensionOrigins ?? new TrustedExtensionOrigins(appConfig: $appConfig));
 		$this->policyService = ($policyService ?? new PasswordPolicyService(
 			appConfig: $appConfig,
 			userSession: $userSession,
@@ -310,6 +323,10 @@ class AdminSettingsService {
 			),
 			// The longest idle lock delay a user may pick in the browser extension.
 			'extension_max_idle_minutes' => $this->extensionMaxIdleMinutes(),
+			// Extension passkeys: the switch, the admin-added origins and the pinned store origins.
+			'extension_passkeys_enabled' => $this->extensionOrigins->isEnabled(),
+			'extension_passkey_origins' => $this->extensionOrigins->adminOrigins(),
+			'extension_passkey_pinned_origins' => TrustedExtensionOrigins::PINNED_STORE_ORIGINS,
 			// New device approval (crypto-new-device-approval D5), default on.
 			'device_approval_enabled' => $this->appConfig->getValueBool($appId, 'device_approval_enabled', true),
 		];
@@ -810,6 +827,7 @@ class AdminSettingsService {
 	 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
 	 */
 	private function updateExtensionSettings(array $data): void {
+		$this->updateExtensionPasskeySettings(data: $data);
 		if (isset($data['extension_max_idle_minutes']) === false) {
 			return;
 		}
@@ -821,4 +839,36 @@ class AdminSettingsService {
 
 		$this->appConfig->setValueInt(Application::APP_ID, 'extension_max_idle_minutes', $minutes);
 	}//end updateExtensionSettings()
+
+	/**
+	 * Persist the extension passkey switch and the admin-added origins. Each
+	 * origin must be one exact extension origin; an invalid entry refuses
+	 * the whole list, naming the entry.
+	 *
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException On an invalid switch or origin entry.
+	 *
+	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-ceremonies-pass-only-for-trusted-extension-origins
+	 */
+	private function updateExtensionPasskeySettings(array $data): void {
+		if (array_key_exists('extension_passkey_origins', $data) === true) {
+			$origins = $this->extensionOrigins->validate(entries: $data['extension_passkey_origins']);
+			$this->appConfig->setValueString(
+				Application::APP_ID,
+				TrustedExtensionOrigins::ORIGINS_KEY,
+				(string)json_encode($origins)
+			);
+		}
+
+		if (array_key_exists('extension_passkeys_enabled', $data) === true) {
+			if (is_bool($data['extension_passkeys_enabled']) === false) {
+				throw new InvalidArgumentException('extension_passkeys_enabled must be true or false');
+			}
+
+			$this->appConfig->setValueBool(Application::APP_ID, TrustedExtensionOrigins::ENABLED_KEY, $data['extension_passkeys_enabled']);
+		}
+	}//end updateExtensionPasskeySettings()
 }//end class
