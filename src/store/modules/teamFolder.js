@@ -41,6 +41,22 @@ export const AUTO_CONFIRM_INTERVAL_MS = 15 * 60 * 1000
  */
 let autoConfirmTimer = null
 
+/**
+ * One posted recipient copy: the pair it is for and the ciphertext
+ * encrypted for that recipient.
+ *
+ * @param {{secretId: string, userId: string}} pair The source secret and recipient.
+ * @param {object} blob The fields encrypted for the recipient.
+ * @return {object} The share row the server stores.
+ */
+function copyRow(pair, blob) {
+	return {
+		sourceSecretId: pair.secretId,
+		targetUserId: pair.userId,
+		...copyCiphertext(blob),
+	}
+}
+
 export const useTeamFolderStore = defineStore('teamFolder', {
 	state: () => ({
 		/** @type {{created: number, members: number, refused: number, at: number}|null} The last automatic confirmation run. */
@@ -381,6 +397,23 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 				const plaintextCache = {}
 				let created = 0
 				let chunk = []
+				// Post one chunk of copies, count what the server created and
+				// re-grant the attachments of the rows it wrote.
+				const flush = async () => {
+					const response = await axios.post(
+						generateUrl(
+							`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`,
+						),
+						{ shares: chunk },
+					)
+					created += response.data?.created ?? 0
+					noteRefused(response.data)
+					await this.regrantAttachments(
+						response.data?.rows ?? [],
+						certByUser,
+					)
+					this.fanOut.done += chunk.length
+				}
 
 				for (const pair of missing) {
 					if (this.fanOutCancelled) {
@@ -414,45 +447,16 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						plaintextCache[pair.secretId],
 						certificate,
 					)
-					chunk.push({
-						sourceSecretId: pair.secretId,
-						targetUserId: pair.userId,
-						...copyCiphertext(blob),
-					})
+					chunk.push(copyRow(pair, blob))
 
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
-						const response = await axios.post(
-							generateUrl(
-								`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`,
-							),
-							{ shares: chunk },
-						)
-						created += response.data?.created ?? 0
-						noteRefused(response.data)
-
-						await this.regrantAttachments(
-							response.data?.rows ?? [],
-							certByUser,
-						)
-						this.fanOut.done += chunk.length
+						await flush()
 						chunk = []
 					}
 				}
 
 				if (chunk.length > 0 && !this.fanOutCancelled) {
-					const response = await axios.post(
-						generateUrl(
-							`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`,
-						),
-						{ shares: chunk },
-					)
-					created += response.data?.created ?? 0
-					noteRefused(response.data)
-					await this.regrantAttachments(
-						response.data?.rows ?? [],
-						certByUser,
-					)
-					this.fanOut.done += chunk.length
+					await flush()
 				}
 
 				return {
@@ -545,11 +549,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						fieldsBySecret[readId],
 						certificate,
 					)
-					chunk.push({
-						sourceSecretId: pair.secretId,
-						targetUserId: pair.userId,
-						...copyCiphertext(blob),
-					})
+					chunk.push(copyRow(pair, blob))
 
 					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
 						await post()
