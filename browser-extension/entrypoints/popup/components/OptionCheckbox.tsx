@@ -18,28 +18,74 @@ interface Props {
 	hint?: string
 }
 
-export function OptionCheckbox({ label, short, checked, onChange, disabled = false, lockedBy, note, reasonId, hint }: Props) {
+/** Refuses changes: disabled, locked by the organisation, or pointing at a row's shared reason. */
+function isInert({ disabled = false, lockedBy, reasonId }: Props): boolean {
+	return disabled || lockedBy !== undefined || reasonId !== undefined
+}
+
+/** The id of the reason shown for this option: the row's shared one, or its own when it has a reason. */
+function reasonRef(id: string, { reasonId, lockedBy, note }: Props): string | undefined {
+	return reasonId ?? ((lockedBy ?? note) ? `${id}-reason` : undefined)
+}
+
+function describedByOf(id: string, props: Props): string | undefined {
+	return [reasonRef(id, props), props.hint ? `${id}-hint` : undefined].filter(Boolean).join(' ') || undefined
+}
+
+interface NotesProps {
+	id: string
+	reason: string | undefined
+	reasonId: string | undefined
+	hint: string | undefined
+}
+
+function OptionNotes({ id, reason, reasonId, hint }: NotesProps) {
+	return (
+		<>
+			{reason && !reasonId && <p className="field__hint" id={`${id}-reason`}>{reason}</p>}
+			{hint && <p className="field__hint" id={`${id}-hint`}>{hint}</p>}
+		</>
+	)
+}
+
+interface InputProps {
+	id: string
+	props: Props
+}
+
+/** The accessible name, refusal and description of the checkbox. */
+function ariaOf(id: string, props: Props) {
+	return {
+		'aria-label': props.short ? props.label : undefined,
+		'aria-disabled': isInert(props) || undefined,
+		'aria-describedby': describedByOf(id, props),
+	}
+}
+
+function CheckboxInput({ id, props }: InputProps) {
+	const inert = isInert(props)
+	return (
+		<input
+			type="checkbox"
+			id={id}
+			className="check__input"
+			checked={props.checked}
+			{...ariaOf(id, props)}
+			onChange={(event) => !inert && props.onChange(event.target.checked)}
+		/>
+	)
+}
+
+export function OptionCheckbox(props: Props) {
+	const { label, short, lockedBy, note, reasonId, hint } = props
 	const id = useId()
-	const inert = disabled || lockedBy !== undefined || reasonId !== undefined
-	const reason = lockedBy ?? note
-	const describedBy = [reasonId ?? (reason ? `${id}-reason` : undefined), hint ? `${id}-hint` : undefined].filter(Boolean).join(' ')
 	return (
 		<>
 			<label className="check">
-				<input
-					type="checkbox"
-					id={id}
-					className="check__input"
-					checked={checked}
-					aria-label={short ? label : undefined}
-					aria-disabled={inert || undefined}
-					aria-describedby={describedBy || undefined}
-					onChange={(event) => !inert && onChange(event.target.checked)}
-				/>
+				<CheckboxInput id={id} props={props} />
 				{short ?? label}
 			</label>
-			{reason && !reasonId && <p className="field__hint" id={`${id}-reason`}>{reason}</p>}
-			{hint && <p className="field__hint" id={`${id}-hint`}>{hint}</p>}
+			<OptionNotes id={id} reason={lockedBy ?? note} reasonId={reasonId} hint={hint} />
 		</>
 	)
 }
