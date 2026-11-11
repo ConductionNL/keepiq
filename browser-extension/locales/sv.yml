@@ -414,8 +414,6 @@ settings:
   pinMismatch: PIN-koderna matchar inte
   pinAdvice: Återanvänd inte en PIN-kod från din telefon eller bank.
   pinAfterRestart: Efter en omstart av webbläsaren anger du ditt huvudlösenord en gång; sedan fungerar din PIN-kod igen.
-  biometrics: Lås upp med biometri
-  notAvailableYet: Inte tillgängligt än
   vaultTimeout: Tidsgräns för valvet
   timeoutImmediately: Omedelbart
   timeoutMinutes:
@@ -801,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Inget sparades: Keepiq hos {cloudIds} är för gammalt för att lagra lösennycklar. Be dem uppdatera Keepiq, eller spara lösennyckeln på en annan inloggning."
     partnerUpgradeRequiredUnnamed: "Inget sparades: en partnerorganisation som den här inloggningen delas med kör ett Keepiq som är för gammalt för att lagra lösennycklar. Be dem uppdatera Keepiq, eller spara lösennyckeln på en annan inloggning."
     shareScanPending: Den här inloggningen väntar på en kontroll av sina delningar som inte är klar. Inget sparades; försök igen senare.
+
+vaultPasskey:
+  unlock: "Lås upp med fingeravtryck eller ansikte"
+  unlockIntro: "Webbläsaren ber om ditt fingeravtryck, ansikte eller enhetens pinkod."
+  enrolTitle: "Ställ in upplåsning med fingeravtryck eller ansikte"
+  enrolIntro: "Bekräfta ditt huvudlösenord. Sedan ber webbläsaren två gånger om fingeravtryck, ansikte eller enhetens pinkod."
+  enrolSubmit: "Ställ in"
+  enrolDone: "Upplåsning med fingeravtryck eller ansikte är inställd för den här webbläsaren."
+  close: "Stäng"
+  label: "Keepiq webbläsartillägg"
+  tooOld: "Upplåsning med fingeravtryck eller ansikte kräver Chrome eller Edge 122, eller Firefox 150, eller senare. Använd ditt huvudlösenord."
+  unsupported: "Den här webbläsaren eller enheten kan inte låsa upp Keepiq med fingeravtryck eller ansikte. Använd ditt huvudlösenord."
+  revokeInWebApp: "Återkalla nyckeln i Keepiqs webbapp för att stänga av det."

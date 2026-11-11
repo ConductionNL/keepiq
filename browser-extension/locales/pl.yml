@@ -414,8 +414,6 @@ settings:
   pinMismatch: Kody PIN się nie zgadzają
   pinAdvice: Nie używaj PIN-u, który już masz do telefonu lub banku.
   pinAfterRestart: Po ponownym uruchomieniu przeglądarki raz wpisujesz hasło główne; potem PIN znowu działa.
-  biometrics: Odblokowywanie biometrią
-  notAvailableYet: Jeszcze niedostępne
   vaultTimeout: Limit czasu sejfu
   timeoutImmediately: Natychmiast
   timeoutMinutes:
@@ -801,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Nic nie zapisano: Keepiq u {cloudIds} jest zbyt stary, aby przechowywać klucze dostępu. Poproś o aktualizację Keepiq lub zapisz klucz dostępu w innych danych logowania."
     partnerUpgradeRequiredUnnamed: "Nic nie zapisano: organizacja partnerska, której udostępniono te dane logowania, ma zbyt starą wersję Keepiq, aby przechowywać klucze dostępu. Poproś ją o aktualizację Keepiq lub zapisz klucz dostępu w innych danych logowania."
     shareScanPending: Te dane logowania czekają na niezakończone sprawdzenie udostępnień. Nic nie zapisano; spróbuj ponownie później.
+
+vaultPasskey:
+  unlock: "Odblokuj odciskiem palca lub twarzą"
+  unlockIntro: "Przeglądarka poprosi o odcisk palca, twarz lub PIN urządzenia."
+  enrolTitle: "Skonfiguruj odblokowanie odciskiem palca lub twarzą"
+  enrolIntro: "Potwierdź hasło główne. Potem przeglądarka dwa razy poprosi o odcisk palca, twarz lub PIN urządzenia."
+  enrolSubmit: "Skonfiguruj"
+  enrolDone: "Odblokowanie odciskiem palca lub twarzą jest skonfigurowane dla tej przeglądarki."
+  close: "Zamknij"
+  label: "Rozszerzenie przeglądarki Keepiq"
+  tooOld: "Odblokowanie odciskiem palca lub twarzą wymaga Chrome lub Edge 122 albo Firefox 150 lub nowszych. Użyj hasła głównego."
+  unsupported: "Ta przeglądarka lub to urządzenie nie może odblokować Keepiq odciskiem palca ani twarzą. Użyj hasła głównego."
+  revokeInWebApp: "Aby to wyłączyć, unieważnij ten klucz dostępu w aplikacji internetowej Keepiq."

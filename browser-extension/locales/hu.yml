@@ -414,8 +414,6 @@ settings:
   pinMismatch: A PIN-kódok nem egyeznek
   pinAdvice: Ne használd újra a telefonod vagy a bankod PIN-kódját.
   pinAfterRestart: A böngésző újraindítása után egyszer meg kell adnod a mesterjelszót; utána a PIN-kód újra működik.
-  biometrics: Feloldás biometrikus azonosítással
-  notAvailableYet: Még nem érhető el
   vaultTimeout: Széf időkorlátja
   timeoutImmediately: Azonnal
   timeoutMinutes:
@@ -801,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Semmi sem lett mentve: a Keepiq túl régi ezeknél az azonosítókulcsok tárolásához: {cloudIds}. Kérd meg őket, hogy frissítsék a Keepiqet, vagy mentsd az azonosítókulcsot egy másik bejelentkezéshez."
     partnerUpgradeRequiredUnnamed: "Semmi sem lett mentve: egy partnerszervezet, amellyel a bejelentkezés meg van osztva, túl régi Keepiqet futtat az azonosítókulcsok tárolásához. Kérd meg őket, hogy frissítsék a Keepiqet, vagy mentsd az azonosítókulcsot egy másik bejelentkezéshez."
     shareScanPending: A bejelentkezés megosztásainak ellenőrzése még nem fejeződött be. Semmi sem lett mentve; próbáld újra később.
+
+vaultPasskey:
+  unlock: "Feloldás ujjlenyomattal vagy arccal"
+  unlockIntro: "A böngésző az ujjlenyomatodat, az arcodat vagy az eszköz PIN-kódját kéri."
+  enrolTitle: "Feloldás beállítása ujjlenyomattal vagy arccal"
+  enrolIntro: "Erősítsd meg a mesterjelszavadat. Ezután a böngésző kétszer kéri az ujjlenyomatodat, az arcodat vagy az eszköz PIN-kódját."
+  enrolSubmit: "Beállítás"
+  enrolDone: "A feloldás ujjlenyomattal vagy arccal be van állítva ehhez a böngészőhöz."
+  close: "Bezárás"
+  label: "Keepiq böngészőbővítmény"
+  tooOld: "A feloldáshoz ujjlenyomattal vagy arccal Chrome vagy Edge 122, illetve Firefox 150 vagy újabb kell. Használd a mesterjelszavadat."
+  unsupported: "Ez a böngésző vagy eszköz nem tudja feloldani a Keepiqet ujjlenyomattal vagy arccal. Használd a mesterjelszavadat."
+  revokeInWebApp: "A kikapcsoláshoz vond vissza ezt a jelkulcsot a Keepiq webalkalmazásban."
