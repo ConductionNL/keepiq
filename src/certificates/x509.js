@@ -15,6 +15,7 @@
  * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-metadata-parsing-split-by-pem-readability
  */
 
+import { decodeOid } from '../crypto/oid.js'
 import { decodePem } from '../crypto/pem.js'
 
 /** Common DN attribute OIDs → short labels. */
@@ -111,30 +112,6 @@ function children(bytes, tlv) {
 		cursor = child.end
 	}
 	return out
-}
-
-/**
- * Decode an OID value to dotted notation.
- *
- * @param {Uint8Array} bytes The DER buffer.
- * @param {{start: number, end: number}} tlv The OID TLV.
- * @return {string} Dotted OID.
- */
-function decodeOid(bytes, tlv) {
-	const parts = []
-	let value = 0
-	for (let i = tlv.start; i < tlv.end; i++) {
-		value = value * 128 + (bytes[i] & 0x7f)
-		if ((bytes[i] & 0x80) === 0) {
-			if (parts.length === 0) {
-				parts.push(Math.floor(value / 40), value % 40)
-			} else {
-				parts.push(value)
-			}
-			value = 0
-		}
-	}
-	return parts.join('.')
 }
 
 /**
