@@ -36,6 +36,7 @@ errors:
 
 notices:
   keyChanged: Your vault key changed in Keepiq. Unlock with your current master password.
+  fileAccess: "Keepiq needs no file access. In Nextcloud, under Settings, Security, Devices & sessions, you can switch off file access for this app password or revoke it."
 
 common:
   accountOnHost: "{name} on {host}"
@@ -89,6 +90,9 @@ addAccount:
   hint: Create one under Nextcloud Settings, Security. Never enter your Nextcloud login password here.
   hintWithLink: "Create one under Nextcloud Settings, Security: {link}. Never enter your Nextcloud login password here."
   securityLink: open security settings
+  signInWithBrowser: "Sign in through Nextcloud"
+  finishInTab: "Finish signing in on the Nextcloud page that opened. Keepiq adds the account when you are done."
+  orAppPassword: "Or enter an app password:"
 
 accounts:
   active: (active)

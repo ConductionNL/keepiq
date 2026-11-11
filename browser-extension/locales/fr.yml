@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: La clé de votre coffre-fort a changé dans Keepiq. Déverrouillez avec votre mot de passe principal actuel.
+  fileAccess: "Keepiq n'a pas besoin d'accéder aux fichiers. Dans Nextcloud, sous Paramètres, Sécurité, Appareils et sessions, vous pouvez couper l'accès aux fichiers de ce mot de passe d'application ou le révoquer."
 
 common:
   accountOnHost: "{name} sur {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Créez-en un dans Paramètres Nextcloud, Sécurité. Ne saisissez jamais ici votre mot de passe de connexion Nextcloud.
   hintWithLink: "Créez-en un dans Paramètres Nextcloud, Sécurité : {link}. Ne saisissez jamais ici votre mot de passe de connexion Nextcloud."
   securityLink: ouvrir les paramètres de sécurité
+  signInWithBrowser: "Se connecter via Nextcloud"
+  finishInTab: "Terminez la connexion sur la page Nextcloud qui s'est ouverte. Keepiq ajoute le compte une fois que vous avez terminé."
+  orAppPassword: "Ou saisissez un mot de passe d'application :"
 
 accounts:
   active: (actif)

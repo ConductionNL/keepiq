@@ -3,6 +3,9 @@ import {
 	accountStatus, addAccount, AccountLimitReached, DuplicateAccount, getAccount, getActiveAccountId,
 	listAccounts, MAX_ACCOUNTS, removeAccount, removeAllAccounts, setActive, updateAccount, type AccountRecord,
 } from '@/src/accounts/store'
+import {
+	awaitLoginFlow, deleteAppPassword, LOGIN_FLOW_FAILURE, startLoginFlow, type LoginFlowCredentials, type LoginFlowStart,
+} from '@/src/accounts/login-flow'
 import { verifyCredentials } from '@/src/accounts/verify'
 import { readLastTab } from '@/src/background/requests'
 import { Failure } from '@/src/failure'
@@ -35,6 +38,7 @@ export async function buildState(): Promise<PopupState> {
 	const record = active ? await getAccount(active.id) : undefined
 	let notice: NoticeCode | null = null
 	if (active?.status === 'logged_out' && record?.revoked) notice = 'session_revoked'
+	if (active?.status === 'locked' && record?.fileAccessNote) notice = 'file_access'
 	if (active?.status === 'locked' && record?.keyChanged) notice = 'key_changed'
 	return {
 		screen: active ? screens[active.status] : 'add_account',
@@ -47,23 +51,59 @@ export async function buildState(): Promise<PopupState> {
 	}
 }
 
-async function add(serverUrl: string, username: string, appPassword: string): Promise<void> {
+/** The server URL an add may go to: valid, granted by the user, and with room for one more account. */
+async function addableServer(serverUrl: string): Promise<string> {
 	const normalized = normalizeServerUrl(serverUrl)
 	if (!normalized.ok) throw new Failure(normalized.code)
 	// The popup asks for the permission; nothing is sent to a server the user declined.
 	if (!(await browser.permissions.contains({ origins: serverOrigins(normalized.origin) }))) throw new Failure('permission_denied')
 	// Checked again by `addAccount`; this one saves the round trip.
 	if ((await listAccounts()).length >= MAX_ACCOUNTS) throw new Failure('limit_reached')
-	const { suite, ...identity } = await verifyCredentials(normalized.serverUrl, username.trim(), appPassword)
+	return normalized.serverUrl
+}
+
+async function add(serverUrl: string, username: string, appPassword: string, fileAccessNote = false): Promise<void> {
+	const server = await addableServer(serverUrl)
+	const { suite, ...identity } = await verifyCredentials(server, username.trim(), appPassword)
 	let added: AccountRecord
 	try {
-		added = await addAccount({ serverUrl: normalized.serverUrl, ...identity, appPassword }, suite)
+		added = await addAccount({ serverUrl: server, ...identity, appPassword, ...(fileAccessNote && { fileAccessNote }) }, suite)
 	} catch (error) {
 		if (error instanceof DuplicateAccount) throw new Failure('duplicate')
 		if (error instanceof AccountLimitReached) throw new Failure('limit_reached')
 		throw error
 	}
 	void refreshPolicy(added.id)
+}
+
+let pendingFlow: AbortController | null = null
+
+/** Opens Nextcloud's login page in a tab; the popup closes then, so the background polls and adds the account. */
+async function startFlow(serverUrl: string): Promise<void> {
+	const server = await addableServer(serverUrl)
+	const flow = await startLoginFlow(server)
+	pendingFlow?.abort()
+	const controller = new AbortController()
+	pendingFlow = controller
+	await browser.storage.session?.remove(LOGIN_FLOW_FAILURE)
+	const tab = await browser.tabs.create({ url: flow.loginUrl })
+	void finishFlow(server, flow, tab.id, controller)
+}
+
+async function finishFlow(server: string, flow: LoginFlowStart, tabId: number | undefined, controller: AbortController): Promise<void> {
+	// Each `tabs.get` is an extension API call, which also keeps an MV3 worker awake while it waits.
+	const tabOpen = () => (tabId === undefined ? Promise.resolve(false) : browser.tabs.get(tabId).then(() => true, () => false))
+	const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+	let credentials: LoginFlowCredentials | null = null
+	try {
+		credentials = await awaitLoginFlow(flow, { tabOpen, wait, now: Date.now, signal: controller.signal })
+		if (credentials) await add(server, credentials.loginName, credentials.appPassword, true)
+	} catch (error) {
+		if (credentials) await deleteAppPassword(server, credentials)
+		await browser.storage.session?.set({ [LOGIN_FLOW_FAILURE]: { code: error instanceof Failure ? error.code : 'unknown', host: new URL(server).host } })
+	} finally {
+		if (pendingFlow === controller) pendingFlow = null
+	}
 }
 
 async function reauthenticate(accountId: string, appPassword: string): Promise<void> {
@@ -91,6 +131,8 @@ async function perform(message: PopupToBackground): Promise<void> {
 			return
 		case 'accounts.add':
 			return add(message.serverUrl, message.username, message.appPassword)
+		case 'accounts.loginFlow':
+			return startFlow(message.serverUrl)
 		case 'accounts.reauthenticate':
 			return reauthenticate(message.accountId, message.appPassword)
 		case 'accounts.remove':

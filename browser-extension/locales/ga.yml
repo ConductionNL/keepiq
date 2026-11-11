@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Athraíodh eochair do thaisceadáin i Keepiq. Díghlasáil le do mháistirphasfhocal reatha.
+  fileAccess: "Ní theastaíonn rochtain ar chomhaid ó Keepiq. In Nextcloud, faoi Socruithe, Slándáil, Gléasanna agus seisiúin, is féidir leat rochtain ar chomhaid a mhúchadh don phasfhocal aipe seo nó é a chúlghairm."
 
 common:
   accountOnHost: "{name} ar {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Cruthaigh ceann faoi Socruithe Nextcloud, Slándáil. Ná cuir isteach do phasfhocal logála isteach Nextcloud anseo choíche.
   hintWithLink: "Cruthaigh ceann faoi Socruithe Nextcloud, Slándáil: {link}. Ná cuir isteach do phasfhocal logála isteach Nextcloud anseo choíche."
   securityLink: oscail na socruithe slándála
+  signInWithBrowser: "Sínigh isteach trí Nextcloud"
+  finishInTab: "Críochnaigh an síniú isteach ar an leathanach Nextcloud a d'oscail. Cuireann Keepiq an cuntas leis nuair a bheidh tú réidh."
+  orAppPassword: "Nó cuir isteach pasfhocal aipe:"
 
 accounts:
   active: (gníomhach)

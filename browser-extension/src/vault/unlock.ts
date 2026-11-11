@@ -220,7 +220,8 @@ async function importedKey(key: string | Uint8Array<ArrayBuffer>): Promise<Omit<
 
 async function storeKey(accountId: string, { pkcs8, privateKey, suite }: OpenedKey): Promise<void> {
 	// Cleared before the key is stored, so a suite change landing after this keeps its notice.
-	if ((await getAccount(accountId))?.keyChanged) await updateAccount(accountId, { keyChanged: false })
+	const record = await getAccount(accountId)
+	if (record?.keyChanged || record?.fileAccessNote) await updateAccount(accountId, { keyChanged: false, fileAccessNote: false })
 	await putKey(accountId, toBase64(pkcs8))
 	await proveCertificate(accountId, suite.certificate, privateKey)
 }

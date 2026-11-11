@@ -39,6 +39,7 @@ export function noticeText(notice: NoticeCode): string {
 	switch (notice) {
 		case 'session_revoked': return i18n.t('errors.sessionRevoked')
 		case 'key_changed': return i18n.t('notices.keyChanged')
+		case 'file_access': return i18n.t('notices.fileAccess')
 	}
 }
 

@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Holviavaimesi on vaihtunut Keepiqissä. Avaa lukitus nykyisellä pääsalasanallasi.
+  fileAccess: "Keepiq ei tarvitse pääsyä tiedostoihin. Nextcloudissa kohdassa Asetukset, Turvallisuus, Laitteet ja istunnot voit poistaa tämän sovellussalasanan tiedostokäytön tai mitätöidä sen."
 
 common:
   accountOnHost: "{name} palvelimella {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Luo sellainen Nextcloudin asetuksissa kohdassa Turvallisuus. Älä koskaan kirjoita tähän Nextcloudin kirjautumissalasanaasi.
   hintWithLink: "Luo sellainen Nextcloudin asetuksissa kohdassa Turvallisuus: {link}. Älä koskaan kirjoita tähän Nextcloudin kirjautumissalasanaasi."
   securityLink: avaa turvallisuusasetukset
+  signInWithBrowser: "Kirjaudu Nextcloudin kautta"
+  finishInTab: "Viimeistele kirjautuminen avautuneella Nextcloud-sivulla. Keepiq lisää tilin, kun olet valmis."
+  orAppPassword: "Tai anna sovellussalasana:"
 
 accounts:
   active: (aktiivinen)

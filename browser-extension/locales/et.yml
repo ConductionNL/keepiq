@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Sinu hoidla võti muutus Keepiqis. Lukusta lahti oma praeguse peasalasõnaga.
+  fileAccess: "Keepiq ei vaja ligipääsu failidele. Nextcloudis saad jaotises Seaded, Turvalisus, Seadmed ja seansid selle rakenduse parooli failiõiguse välja lülitada või parooli tühistada."
 
 common:
   accountOnHost: "{name} serveris {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Loo see Nextcloudi seadetes jaotises Turvalisus. Ära kunagi sisesta siia oma Nextcloudi sisselogimise salasõna.
   hintWithLink: "Loo see Nextcloudi seadetes jaotises Turvalisus: {link}. Ära kunagi sisesta siia oma Nextcloudi sisselogimise salasõna."
   securityLink: ava turvaseaded
+  signInWithBrowser: "Logi sisse Nextcloudi kaudu"
+  finishInTab: "Lõpeta sisselogimine avanenud Nextcloudi lehel. Keepiq lisab konto, kui oled valmis."
+  orAppPassword: "Või sisesta rakenduse parool:"
 
 accounts:
   active: (aktiivne)

@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Klucz Twojego sejfu zmienił się w Keepiq. Odblokuj obecnym hasłem głównym.
+  fileAccess: "Keepiq nie potrzebuje dostępu do plików. W Nextcloud, w Ustawienia, Bezpieczeństwo, Urządzenia i sesje, możesz wyłączyć dostęp do plików dla tego hasła aplikacji lub je unieważnić."
 
 common:
   accountOnHost: "{name} na {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Utwórz je w Nextcloud w Ustawienia, Bezpieczeństwo. Nigdy nie wpisuj tu hasła logowania do Nextcloud.
   hintWithLink: "Utwórz je w Nextcloud w Ustawienia, Bezpieczeństwo: {link}. Nigdy nie wpisuj tu hasła logowania do Nextcloud."
   securityLink: otwórz ustawienia bezpieczeństwa
+  signInWithBrowser: "Zaloguj się przez Nextcloud"
+  finishInTab: "Dokończ logowanie na otwartej stronie Nextcloud. Keepiq doda konto, gdy skończysz."
+  orAppPassword: "Albo wpisz hasło aplikacji:"
 
 accounts:
   active: (aktywne)

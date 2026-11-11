@@ -25,7 +25,8 @@ Nothing here starts before Ruben approved the design. Each decision in design.md
 
 ## 2. Extension
 
-- [ ] 2.1 Pairing through Login Flow v2 with the manual app password fallback and the file access note (D3). Verify: `tests/extension/pairing.spec.js` (flow success, closed tab, 20 minute timeout, verified before stored).
+- [x] 2.1 Pairing through Login Flow v2 with the manual app password fallback and the file access note (D3). Verify: `tests/extension/pairing.spec.js` (flow success, closed tab, 20 minute timeout, verified before stored).
+  - The tests sit next to the code, as the extension's convention is: `src/accounts/login-flow.test.ts` (flow, closed tab, 20 minute timeout, foreign poll origin) and `src/background/router.test.ts` (verified before stored, an app password that does not verify is deleted again). The file access note shows on the unlock screen until the first unlock.
 - [ ] 2.2 Enrolment in an extension tab: server options, `create()` and proof `get()` with the server host as relying party, random user handle, `residentKey` `discouraged`, PRF wrap, post (D1). Verify: vitest for the request shape, including that no master password, raw unlock key or PRF output is sent.
 - [ ] 2.3 Unlock in an extension tab: options, `get()`, post the assertion, unwrap only from the server's answer, hand the raw key to the worker, never to storage (D5). Verify: vitest.
 - [ ] 2.4 Feature detection: offer the option only where the extension page exposes WebAuthn, a user-verifying platform authenticator is available and PRF is reported; Safari shows the master password only. Verify: vitest.

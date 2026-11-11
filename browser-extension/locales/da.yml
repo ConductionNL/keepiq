@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Din boksnøgle er ændret i Keepiq. Lås op med din nuværende hovedadgangskode.
+  fileAccess: "Keepiq behøver ikke adgang til filer. I Nextcloud under Indstillinger, Sikkerhed, Enheder & sessioner kan du slå filadgang fra for denne app-adgangskode eller tilbagekalde den."
 
 common:
   accountOnHost: "{name} på {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Opret en under Nextcloud-indstillinger, Sikkerhed. Indtast aldrig din Nextcloud-adgangskode her.
   hintWithLink: "Opret en under Nextcloud-indstillinger, Sikkerhed: {link}. Indtast aldrig din Nextcloud-adgangskode her."
   securityLink: åbn sikkerhedsindstillinger
+  signInWithBrowser: "Log ind via Nextcloud"
+  finishInTab: "Afslut log ind på den Nextcloud-side, der åbnede. Keepiq tilføjer kontoen, når du er færdig."
+  orAppPassword: "Eller indtast en app-adgangskode:"
 
 accounts:
   active: (aktiv)

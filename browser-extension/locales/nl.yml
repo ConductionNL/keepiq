@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Je kluissleutel is gewijzigd in Keepiq. Ontgrendel met je huidige hoofdwachtwoord.
+  fileAccess: "Keepiq heeft geen toegang tot bestanden nodig. In Nextcloud kun je onder Instellingen, Beveiliging, Apparaten & sessies de bestandstoegang van dit app-wachtwoord uitzetten of het intrekken."
 
 common:
   accountOnHost: "{name} op {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Maak er een aan onder Nextcloud Instellingen, Beveiliging. Voer hier nooit je Nextcloud-inlogwachtwoord in.
   hintWithLink: "Maak er een aan onder Nextcloud Instellingen, Beveiliging: {link}. Voer hier nooit je Nextcloud-inlogwachtwoord in."
   securityLink: beveiligingsinstellingen openen
+  signInWithBrowser: "Inloggen via Nextcloud"
+  finishInTab: "Rond het inloggen af op de Nextcloud-pagina die is geopend. Keepiq voegt het account toe zodra je klaar bent."
+  orAppPassword: "Of voer een app-wachtwoord in:"
 
 accounts:
   active: (actief)

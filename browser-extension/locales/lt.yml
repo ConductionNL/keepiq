@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: Jūsų saugyklos raktas Keepiq pasikeitė. Atrakinkite dabartiniu pagrindiniu slaptažodžiu.
+  fileAccess: "Keepiq nereikia prieigos prie failų. Nextcloud skiltyje Nustatymai, Saugumas, Įrenginiai ir seansai galite išjungti šio programėlės slaptažodžio prieigą prie failų arba jį atšaukti."
 
 common:
   accountOnHost: "{name} serveryje {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Sukurkite jį Nextcloud nustatymų skiltyje Saugumas. Niekada neįveskite čia savo Nextcloud prisijungimo slaptažodžio.
   hintWithLink: "Sukurkite jį Nextcloud nustatymų skiltyje Saugumas: {link}. Niekada neįveskite čia savo Nextcloud prisijungimo slaptažodžio."
   securityLink: atidaryti saugumo nustatymus
+  signInWithBrowser: "Prisijungti per Nextcloud"
+  finishInTab: "Užbaikite prisijungimą atsidariusiame Nextcloud puslapyje. Keepiq pridės paskyrą, kai baigsite."
+  orAppPassword: "Arba įveskite programėlės slaptažodį:"
 
 accounts:
   active: (aktyvi)

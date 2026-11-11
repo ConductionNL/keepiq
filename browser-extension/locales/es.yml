@@ -35,6 +35,7 @@ errors:
 
 notices:
   keyChanged: La clave de tu caja fuerte ha cambiado en Keepiq. Desbloquéala con tu contraseña maestra actual.
+  fileAccess: "Keepiq no necesita acceso a archivos. En Nextcloud, en Ajustes, Seguridad, Dispositivos y sesiones, puedes desactivar el acceso a archivos de esta contraseña de aplicación o revocarla."
 
 common:
   accountOnHost: "{name} en {host}"
@@ -88,6 +89,9 @@ addAccount:
   hint: Crea una en Ajustes de Nextcloud, Seguridad. Nunca introduzcas aquí la contraseña con la que inicias sesión en Nextcloud.
   hintWithLink: "Crea una en Ajustes de Nextcloud, Seguridad: {link}. Nunca introduzcas aquí la contraseña con la que inicias sesión en Nextcloud."
   securityLink: abrir los ajustes de seguridad
+  signInWithBrowser: "Iniciar sesión con Nextcloud"
+  finishInTab: "Termina de iniciar sesión en la página de Nextcloud que se ha abierto. Keepiq añade la cuenta cuando termines."
+  orAppPassword: "O introduce una contraseña de aplicación:"
 
 accounts:
   active: (activa)
