@@ -328,6 +328,7 @@ $extra = [
     ['name' => 'passkey#challenge',    'url' => '/api/v1/passkeys/challenge',     'verb' => 'GET'],
     ['name' => 'passkey#create',       'url' => '/api/v1/passkeys',               'verb' => 'POST'],
     ['name' => 'passkey#loginOptions', 'url' => '/api/v1/passkeys/login-options', 'verb' => 'GET'],
+    ['name' => 'passkey#unlock',       'url' => '/api/v1/passkeys/unlock',        'verb' => 'POST'],
     ['name' => 'passkey#used',         'url' => '/api/v1/passkeys/{id}/used',     'verb' => 'POST'],
     ['name' => 'passkey#destroy',      'url' => '/api/v1/passkeys/{id}',          'verb' => 'DELETE'],
 

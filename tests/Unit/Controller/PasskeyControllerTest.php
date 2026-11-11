@@ -248,4 +248,44 @@ class PasskeyControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 		$this->assertSame(['message' => 'The passkey could not be verified'], $response->getData());
 	}//end testCreateForwardsTheCeremonyAndRefusesAnUnverifiedOne()
+
+	/**
+	 * `passkey#unlock` forwards the assertion for the session owner, returns
+	 * the envelope the service released, and answers a refusal with a
+	 * generic 400 that carries no envelope.
+	 *
+	 * @return void
+	 */
+	public function testUnlockReturnsOnlyAVerifiedEnvelope(): void {
+		$controller = $this->controller('alice');
+		$released = ['id' => 'p1', 'credentialId' => 'c', 'wrappedUnlockKey' => 'W', 'unlockKeyEpoch' => 3];
+
+		$this->service->expects($this->exactly(2))
+			->method('unlock')
+			->with('alice', ['rawId' => 'c'], 'web', '')
+			->willReturnOnConsecutiveCalls(
+				$released,
+				$this->throwException(new InvalidArgumentException('The passkey could not be verified'))
+			);
+
+		$response = $controller->unlock(assertion: ['rawId' => 'c']);
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame($released, $response->getData());
+
+		$refused = $controller->unlock(assertion: ['rawId' => 'c']);
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $refused->getStatus());
+		$this->assertSame(['message' => 'The passkey could not be verified'], $refused->getData());
+	}//end testUnlockReturnsOnlyAVerifiedEnvelope()
+
+	/**
+	 * An anonymous caller is refused before any assertion is looked at.
+	 *
+	 * @return void
+	 */
+	public function testUnlockRefusesAnAnonymousCaller(): void {
+		$controller = $this->controller(null);
+		$this->service->expects($this->never())->method('unlock');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $controller->unlock(assertion: ['rawId' => 'c'])->getStatus());
+	}//end testUnlockRefusesAnAnonymousCaller()
 }//end class
