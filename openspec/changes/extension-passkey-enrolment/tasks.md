@@ -10,13 +10,14 @@ Nothing here starts before Ruben approved the design. Each decision in design.md
 
 ## 1. Server
 
-- [ ] 1.1 Add `keepiq_webauthn_challenges` and an `ExtensionChallengeStore`: issue (replaces a pending one for uid, token and purpose), take by atomic delete, 300 seconds, a background job that removes expired rows (D4). Verify: `ExtensionChallengeStoreTest` (single use, parallel take, other token, expiry, purpose).
+- [x] 1.1 Add `keepiq_webauthn_challenges` and an `ExtensionChallengeStore`: issue (replaces a pending one for uid, token and purpose), take by atomic delete, 300 seconds, a background job that removes expired rows (D4). Verify: `ExtensionChallengeStoreTest` (single use, parallel take, other token, expiry, purpose).
 - [ ] 1.2 Add `TrustedExtensionOrigins` (pinned list plus admin list, switch, fails closed on a broken value) and the `TrustedExtensionOrigin` ceremony step, and give `WebAuthnVerifier` an extension step list with that step in place of `CheckOrigin` (D1, D2). Verify: `WebAuthnVerifierTest` with fixtures for a pinned origin, an admin origin, an untrusted extension origin and an https origin; `TrustedExtensionOriginsTest`.
 - [ ] 1.3 Change `PasskeyService::enroll` and `PasskeyEnrolmentCeremony` for extension credentials: relying party from the request host, ignore a client `rpId`, random user handle, token id binding, store the counter (D1, D3). Verify: `PasskeyServiceTest`.
 - [ ] 1.4 Extension unlock: options without envelope, the unlock route that takes the challenge, verifies and only then returns the wrapped key, counter rule with `suspended`, token binding, epoch, `IThrottler` on both routes, audit events (D5, D6). Verify: `PasskeyServiceTest`, `PasskeyControllerTest`.
 - [ ] 1.5 Admin settings `extension_passkeys_enabled` and `extension_passkey_origins` in `AdminSettingsService` with entry validation, and the admin section showing the pinned list and a Firefox add-on id to origin helper (D2). Verify: `AdminSettingsServiceTest`.
-- [ ] 1.6 Listener for `TokenInvalidatedEvent` that deletes bound extension credentials and challenges and writes an audit event (D3). Verify: `TokenInvalidatedListenerTest`.
-- [ ] 1.7 Migration: `token_id`, `user_handle`, `sign_count` on `keepiq_passkey_credentials`; mark existing extension credentials `stale`. Verify: migration test.
+- [x] 1.6 Listener for `TokenInvalidatedEvent` that deletes bound extension credentials and challenges and writes an audit event (D3). Verify: `TokenInvalidatedListenerTest`.
+- [x] 1.7 Migration: `token_id`, `user_handle`, `sign_count` on `keepiq_passkey_credentials`; mark existing extension credentials `stale`. Verify: migration test.
+  - `sign_count` came with the web unlock change (keepiq#1626); this step adds `token_id` and `user_handle`.
 
 ## 2. Extension
 
