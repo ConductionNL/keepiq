@@ -520,24 +520,9 @@ export default {
 			try {
 				const { type, ...payload } = requestBody(this.form)
 				if (this.editingId) {
-					const response = await axios.put(
-						generateUrl(
-							`/apps/keepiq/api/v1/siem/sinks/${this.editingId}`,
-						),
-						payload,
-					)
-					this.sinks = this.sinks.map((s) =>
-						s.id === this.editingId ? response.data : s,
-					)
+					await this.updateSink(payload)
 				} else {
-					const response = await axios.post(
-						generateUrl('/apps/keepiq/api/v1/siem/sinks'),
-						{
-							...payload,
-							type,
-						},
-					)
-					this.sinks = [response.data, ...this.sinks]
+					await this.addSink({ ...payload, type })
 				}
 				this.formOpen = false
 			} catch (e) {
@@ -545,6 +530,39 @@ export default {
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * Save the sink being edited and swap its row in place. The type of
+		 * a stored sink never changes, so it is not sent.
+		 *
+		 * @param {object} payload The request body without the type.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
+		 */
+		async updateSink(payload) {
+			const response = await axios.put(
+				generateUrl(`/apps/keepiq/api/v1/siem/sinks/${this.editingId}`),
+				payload,
+			)
+			this.sinks = this.sinks.map((s) =>
+				s.id === this.editingId ? response.data : s,
+			)
+		},
+
+		/**
+		 * Create a sink and list it first.
+		 *
+		 * @param {object} body The request body, type included.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
+		 */
+		async addSink(body) {
+			const response = await axios.post(
+				generateUrl('/apps/keepiq/api/v1/siem/sinks'),
+				body,
+			)
+			this.sinks = [response.data, ...this.sinks]
 		},
 
 		/**

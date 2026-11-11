@@ -287,31 +287,47 @@ export default {
 			this.error = null
 
 			try {
-				if (this.mode === 'passphrase' && this.passphraseOffered) {
-					this.generatedKey = generatePassphrase(
-						{
-							words: Number(this.wordsInput),
-							separator: this.separator,
-							capitalise: this.capitalise,
-							includeNumber: this.includeNumber,
-						},
-						this.policy,
-					)
-					return
-				}
-				const options = this.regex
-					? { regex: this.regex }
-					: {
-							length: Number(this.lengthInput),
-							includeSpecialCharacters: this.includeSpecialCharacters,
-							excludedCharacters: this.excludedCharacters,
-						}
-				this.generatedKey = generateKey(options, this.policy)
+				this.generatedKey =
+					this.mode === 'passphrase' && this.passphraseOffered
+						? generatePassphrase(this.passphraseOptions(), this.policy)
+						: generateKey(this.passwordOptions(), this.policy)
 			} catch (e) {
 				this.generatedKey = ''
 				this.error = e?.message || t('keepiq', 'Failed to generate key')
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * The passphrase generator's options from the form.
+		 *
+		 * @return {object}
+		 * @spec openspec/changes/client-side-key-generator/specs/passphrase-generator/spec.md#requirement-generate-a-passphrase
+		 */
+		passphraseOptions() {
+			return {
+				words: Number(this.wordsInput),
+				separator: this.separator,
+				capitalise: this.capitalise,
+				includeNumber: this.includeNumber,
+			}
+		},
+
+		/**
+		 * The password generator's options: the pattern alone when one is set.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/key-generator/spec.md#requirement-default-generation
+		 */
+		passwordOptions() {
+			if (this.regex) {
+				return { regex: this.regex }
+			}
+			return {
+				length: Number(this.lengthInput),
+				includeSpecialCharacters: this.includeSpecialCharacters,
+				excludedCharacters: this.excludedCharacters,
 			}
 		},
 
