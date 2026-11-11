@@ -25,6 +25,12 @@ Securely store and share secrets (passwords, API keys, certificates) for Nextclo
 
 > **Thick backend architecture** — Keepiq owns its own encrypted database tables and does not store secrets in OpenRegister. It needs no other app: OpenRegister and integriq are optional and only add integrations (see Requirements). All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
 
+## Test coverage
+
+<!-- coverage:start -->
+Measured test coverage: 80.2% of statements (PHP 80.2% of 24,971 statements), at commit `47966a3b3` on 2026-11-11. The JavaScript frontend is not in this figure, because it has no coverage measurement yet. The figures come from [`coverage-summary.json`](coverage-summary.json); refresh them with `composer coverage:publish`.
+<!-- coverage:end -->
+
 ## Screenshots
 
 _Add screenshots here once the app has a UI._
