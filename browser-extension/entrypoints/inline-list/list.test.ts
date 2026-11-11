@@ -987,6 +987,20 @@ describe('code mode', () => {
 		expect(picks()).toEqual([expect.objectContaining({ itemId: 'w' })])
 	})
 
+	it('leaves an open question in place when the codes refresh meanwhile', async () => {
+		await open(codes())
+		pickReply = { needsInsecureConfirm: true }
+		post({ kind: 'inline.focus', key: KEY })
+		key(row(0), 'Enter')
+		await flush()
+		expect(document.querySelector('[role="alertdialog"]')).toBeTruthy()
+		stateReply = codes([{ ...CODE_ROWS[1]!, code: code('87654321', NOW + 42_000) }])
+		await wait(12_500)
+		expect(sent.filter((m) => m.kind === 'inline.state').length).toBeGreaterThan(1)
+		expect(document.querySelector('[role="alertdialog"]')).toBeTruthy()
+		expect(listbox()).toBeNull()
+	})
+
 	it('says when no code matches, and asks to unlock while locked', async () => {
 		await open(codes([], 'nothing.test'))
 		expect(message('No verification codes for nothing.test')).toBeTruthy()
