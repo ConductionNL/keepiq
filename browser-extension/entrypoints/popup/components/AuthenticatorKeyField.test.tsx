@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -106,6 +106,44 @@ describe('AuthenticatorKeyField', () => {
 		await user.keyboard('{Enter}')
 		expect(state()).toBe('keep:')
 		expect(document.activeElement).toBe(button('Remove authenticator key'))
+	})
+
+	it('shows its own error when no scan failed, and a scan failure over it', async () => {
+		const user = userEvent.setup()
+		render(<AuthenticatorKeyField saved={false} mode="keep" removeOnly={false} value="" error="Bad key" onMode={vi.fn()} onValue={vi.fn()} scan={async () => ({ failure: 'no_qr' })} popout={false} />)
+		expect(keyInput().getAttribute('aria-invalid')).toBe('true')
+		expect(screen.queryByRole('alert')).toBeNull()
+		expect(screen.getByText('Bad key')).toBeTruthy()
+		await user.click(button('Scan QR code on page'))
+		expect(screen.getByRole('alert').textContent).toBe('No QR code found on the page. Scroll it into view and try again.')
+		expect(screen.queryByText('Bad key')).toBeNull()
+	})
+
+	it('joins the replace help and the pop-out reason in one hint, and keeps Keep next to the input', async () => {
+		const user = userEvent.setup()
+		render(<Harness saved popout leftOut />)
+		await user.click(button('Remove authenticator key'))
+		const hint = document.getElementById(keyInput('New authenticator key').getAttribute('aria-describedby')!.split(' ')[0]!)!
+		expect(hint.textContent).toBe('Paste or scan a new key, or leave this empty to remove the saved one. Open Keepiq from the toolbar on the page with the QR code to scan it.')
+		expect(button('Keep the saved key').closest('.auth-key__actions')).toBeTruthy()
+		expect(screen.getByText('The authenticator key is not cloned.')).toBeTruthy()
+		expect(screen.getByRole('status').className).toBe('sr-only')
+	})
+
+	it('disables the scan while one runs, and clears a read status on a new choice', async () => {
+		const user = userEvent.setup()
+		let finish: (result: ScanResult) => void = () => {}
+		const scan = vi.fn(() => new Promise<ScanResult>((resolve) => { finish = resolve }))
+		render(<Harness saved scan={scan} />)
+		await user.click(button('Remove authenticator key'))
+		await user.click(button('Scan QR code on page'))
+		expect(button('Scan QR code on page').disabled).toBe(true)
+		await act(async () => finish({ key: LINK }))
+		expect(button('Scan QR code on page').disabled).toBe(false)
+		expect([screen.getByRole('status').className, screen.getByRole('status').textContent]).toEqual(['field__hint', 'Authenticator key read from the QR code'])
+		await user.click(button('Keep the saved key'))
+		await user.click(button('Remove authenticator key'))
+		expect([screen.getByRole('status').className, screen.getByRole('status').textContent]).toEqual(['sr-only', ''])
 	})
 
 	it('says a clone leaves the key out', () => {
