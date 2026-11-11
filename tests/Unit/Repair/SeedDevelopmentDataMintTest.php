@@ -35,6 +35,9 @@ use RuntimeException;
  * What mintSuite signs, encrypts, stores and reports, in order.
  *
  * @covers \OCA\Keepiq\Repair\SeedDevelopmentData
+ * @uses   \OCA\Keepiq\Db\EncryptionSuite
+ * @uses   \OCA\Keepiq\Db\StringPrimaryKey
+ * @uses   \OCA\Keepiq\Repair\SuiteMint
  */
 final class SeedDevelopmentDataMintTest extends TestCase {
 	/**

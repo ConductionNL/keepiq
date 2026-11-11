@@ -39,6 +39,10 @@ use RuntimeException;
  * One scan over a page holding every branch, with every call recorded in order.
  *
  * @covers \OCA\Keepiq\BackgroundJob\ScanExpiringSecretsJob
+ * @uses   \OCA\Keepiq\BackgroundJob\ExpiryScan
+ * @uses   \OCA\Keepiq\Db\RotationFlag
+ * @uses   \OCA\Keepiq\Db\Secret
+ * @uses   \OCA\Keepiq\Db\StringPrimaryKey
  */
 final class ScanExpiringSecretsJobSequenceTest extends TestCase {
 	/**

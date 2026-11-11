@@ -40,6 +40,15 @@ use RuntimeException;
  * and what a failure logs, in order.
  *
  * @covers \OCA\Keepiq\Listener\SuiteCompromiseListener
+ * @uses   \OCA\Keepiq\Db\RotationFlag
+ * @uses   \OCA\Keepiq\Db\Secret
+ * @uses   \OCA\Keepiq\Db\ShareTarget
+ * @uses   \OCA\Keepiq\Db\StringPrimaryKey
+ * @uses   \OCA\Keepiq\Event\SuiteMigrationCompletedEvent
+ * @uses   \OCA\Keepiq\Event\SuiteMigrationEvent
+ * @uses   \OCA\Keepiq\Listener\CompromiseNotices
+ * @uses   \OCA\Keepiq\Service\ShareRowJudge
+ * @uses   \OCA\Keepiq\Service\ShareRowVerdict
  */
 final class SuiteCompromiseListenerGoldenTest extends TestCase {
 	use ShareRowJudgeFixture;

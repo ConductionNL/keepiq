@@ -37,6 +37,10 @@ use PHPUnit\Framework\TestCase;
  * submission stores, in the order it reads and writes.
  *
  * @covers \OCA\Keepiq\Service\CertificateMetadataService
+ * @uses   \OCA\Keepiq\Db\CertificateMetadata
+ * @uses   \OCA\Keepiq\Db\Secret
+ * @uses   \OCA\Keepiq\Db\SecretType
+ * @uses   \OCA\Keepiq\Db\StringPrimaryKey
  */
 final class CertificateMetadataSubmitGoldenTest extends TestCase {
 	/**
