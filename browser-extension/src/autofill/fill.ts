@@ -194,25 +194,52 @@ async function afterLoginFill({ tabId, accountId, row, seed, settings }: LoginFi
 	if (copied) await writeFromBackground(copied, settings.clearClipboardMs, { codeOf: accountId })
 }
 
+/** The unlocked account's vault and the row a fill is for. */
+interface FillSource {
+	accountId: string
+	vault: VaultSnapshot
+	row: OpenSecretRow
+}
+
 export async function fill(target: FillTarget): Promise<FillResult> {
+	const source = await fillSource(target)
+	if (!source) return NONE
+	const kind = walletKind(source.row, source.vault.types)
+	if (kind) return await fillForm({ target, accountId: source.accountId, row: source.row, kind })
+	return fillLogin(target, source)
+}
+
+async function fillSource(target: FillTarget): Promise<FillSource | null> {
 	const accountId = await activeUnlockedId()
 	const vault = accountId ? await readSnapshot(accountId) : undefined
-	const row = vault?.secrets.find((secret) => secret.id === target.itemId)
-	if (!accountId || !vault || !row || row.blocked) return NONE
-	const kind = walletKind(row, vault.types)
-	if (kind) return await fillForm({ target, accountId, row, kind })
+	if (!accountId || !vault) return null
+	const row = unblockedRow(vault, target.itemId)
+	return row ? { accountId, vault, row } : null
+}
+
+function unblockedRow(vault: VaultSnapshot, itemId: string): OpenSecretRow | null {
+	const row = vault.secrets.find((secret) => secret.id === itemId)
+	return row && !row.blocked ? row : null
+}
+
+async function fillLogin(target: FillTarget, { accountId, vault, row }: FillSource): Promise<FillResult> {
 	const settings = await readSettings(accountId)
 	const frames = await loginFrames({ target, row, types: vault.types, rule: settings.uriMatch })
 	if (!Array.isArray(frames)) return frames
 	// Read after the question, so a lock while it was open still stops the fill.
 	const key = await getKey(accountId)
-	const credential = key ? await credentialOf(row, key) : null
-	if (!key || !credential) return NONE
+	if (!key) return NONE
+	const credential = await credentialOf(row, key)
+	if (!credential) return NONE
 	const seed = target.code ? await seedOf(row, key) : null
 	const replies = await sendLogin({ target, frames, credential, code: await codeOf(seed) })
+	return loginResult(replies, { tabId: target.tabId, accountId, row, seed, settings })
+}
+
+async function loginResult(replies: Awaited<ReturnType<typeof sendLogin>>, filled: LoginFilled): Promise<FillResult> {
 	if (replies.every(answeredNone)) return NO_FIELDS
 	const result = combine(replies)
-	if (filledSomething(result)) await afterLoginFill({ tabId: target.tabId, accountId, row, seed, settings })
+	if (filledSomething(result)) await afterLoginFill(filled)
 	return result
 }
 

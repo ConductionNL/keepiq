@@ -47,6 +47,11 @@ export interface CaptureCollector {
 	stop(): void
 }
 
+/** Forgets every anchor that holds the field. */
+function dropContaining(anchors: Set<Anchor>, field: Element): void {
+	for (const anchor of anchors) if (contains(anchor, field)) anchors.delete(anchor)
+}
+
 export function createCaptureCollector(send: (message: CaptureSubmitted) => void): CaptureCollector {
 	/** The per-group flag: reported since its fields last changed, so one submission's click, Enter and submit report once. */
 	const reported = new Set<Anchor>()
@@ -111,10 +116,18 @@ export function createCaptureCollector(send: (message: CaptureSubmitted) => void
 	function onInput(event: Event): void {
 		const field = event.composedPath()[0]
 		if (!isElement(field)) return
-		for (const anchor of reported) if (contains(anchor, field)) reported.delete(anchor)
-		for (const anchor of armed) if (contains(anchor, field)) armed.delete(anchor)
+		forgetAnchorsOf(field)
+		watchShadowForm(field)
+	}
+
+	function forgetAnchorsOf(field: Element): void {
+		dropContaining(reported, field)
+		dropContaining(armed, field)
 		if (armed.size === 0) window.removeEventListener('beforeunload', onUnload)
-		// A form in a shadow root sends its submit nowhere near the document.
+	}
+
+	/** A form in a shadow root sends its submit nowhere near the document. */
+	function watchShadowForm(field: Element): void {
 		const form = isInput(field) ? field.form : null
 		if (form && isShadowRoot(form.getRootNode()) && !watchedForms.has(form)) {
 			watchedForms.add(form)
