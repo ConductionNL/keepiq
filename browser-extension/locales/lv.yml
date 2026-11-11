@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Jūsu glabātavas atslēga mainījās. Atslēdziet ar galveno paroli.
   pinTooShort: "Mazākais rakstzīmju skaits: {count}"
   unknown: Kaut kas nogāja greizi
+  passkeyFailed: "Piekļuves atslēga neatbloķēja jūsu glabātuvi. Izmantojiet galveno paroli."
 
 notices:
   keyChanged: Jūsu glabātavas atslēga Keepiq mainījās. Atslēdziet ar savu pašreizējo galveno paroli.

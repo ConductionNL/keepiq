@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Ključ vašega trezorja se je spremenil. Odklenite z glavnim geslom.
   pinTooShort: "Najmanjše število znakov: {count}"
   unknown: Prišlo je do napake
+  passkeyFailed: "Ključ za dostop ni mogel odkleniti vašega trezorja. Uporabite glavno geslo."
 
 notices:
   keyChanged: Ključ vašega trezorja se je v Keepiqu spremenil. Odklenite s trenutnim glavnim geslom.

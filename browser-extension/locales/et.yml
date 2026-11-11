@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Sinu hoidla võti muutus. Lukusta lahti peasalasõnaga.
   pinTooShort: Kasuta vähemalt {count} märki
   unknown: Midagi läks valesti
+  passkeyFailed: "Pääsuvõti ei avanud sinu seifi. Kasuta oma ülemparooli."
 
 notices:
   keyChanged: Sinu hoidla võti muutus Keepiqis. Lukusta lahti oma praeguse peasalasõnaga.

@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Cheia seifului s-a schimbat. Deblocați cu parola principală.
   pinTooShort: Folosiți cel puțin {count} caractere
   unknown: A apărut o eroare
+  passkeyFailed: "Cheia de acces nu a putut debloca seiful. Folosește parola principală."
 
 notices:
   keyChanged: Cheia seifului s-a schimbat în Keepiq. Deblocați cu parola principală actuală.

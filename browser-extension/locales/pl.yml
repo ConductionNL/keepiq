@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Klucz Twojego sejfu się zmienił. Odblokuj hasłem głównym.
   pinTooShort: "Minimalna liczba znaków: {count}"
   unknown: Coś poszło nie tak
+  passkeyFailed: "Klucz dostępu nie odblokował sejfu. Użyj hasła głównego."
 
 notices:
   keyChanged: Klucz Twojego sejfu zmienił się w Keepiq. Odblokuj obecnym hasłem głównym.

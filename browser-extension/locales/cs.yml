@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Klíč trezoru se změnil. Odemkněte ho hlavním heslem.
   pinTooShort: "Minimální počet znaků: {count}"
   unknown: Něco se pokazilo
+  passkeyFailed: "Přístupový klíč trezor neodemkl. Použijte hlavní heslo."
 
 notices:
   keyChanged: Klíč vašeho trezoru se v Keepiq změnil. Odemkněte ho aktuálním hlavním heslem.

@@ -32,6 +32,7 @@ errors:
   pinKeyChanged: Din valvnyckel har ändrats. Lås upp med ditt huvudlösenord.
   pinTooShort: Använd minst {count} tecken
   unknown: Något gick fel
+  passkeyFailed: "Nyckeln kunde inte låsa upp ditt valv. Använd ditt huvudlösenord."
 
 notices:
   keyChanged: Din valvnyckel har ändrats i Keepiq. Lås upp med ditt nuvarande huvudlösenord.
