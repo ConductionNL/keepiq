@@ -1,0 +1,49 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`enqueue > a second update is merged into the first entry, and a failed one is left alone 1`] = `
+[
+  "f",
+  "e3",
+]
+`;
+
+exports[`enqueue > a second update is merged into the first entry, and a failed one is left alone 2`] = `[]`;
+
+exports[`enqueue > a second update is merged into the first entry, and a failed one is left alone 3`] = `
+{
+  "name": "a",
+  "url": "u",
+}
+`;
+
+exports[`the failure a replay error stores > a refusal 1`] = `
+{
+  "call": [
+    {
+      "entryId": "e",
+    },
+    "failed",
+    {
+      "code": "server",
+      "message": "no",
+    },
+  ],
+  "kind": "failed",
+}
+`;
+
+exports[`the failure a replay error stores > not found 1`] = `
+{
+  "call": [
+    {
+      "entryId": "e",
+    },
+    "failed",
+    {
+      "code": "server",
+      "message": "gone",
+    },
+  ],
+  "kind": "failed",
+}
+`;
