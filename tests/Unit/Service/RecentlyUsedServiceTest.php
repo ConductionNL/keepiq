@@ -219,4 +219,37 @@ class RecentlyUsedServiceTest extends TestCase {
 
 		$this->assertSame([], $this->service->forUser('alice'));
 	}//end testNoReadsIsEmpty()
+
+	/**
+	 * A secret held by another owner type under the same id is not listed, an
+	 * entry without a secret id is skipped, and a kept row has exactly four fields.
+	 *
+	 * @return void
+	 */
+	public function testOnlyTheUsersOwnSecretsAreListedWithFourFields(): void {
+		$orgOwned = $this->secret('s-org');
+		$orgOwned->setOwnerType('organisation');
+		$noId = $this->read('unused', '2026-09-29 12:30:00');
+		$noId->setObjectId(null);
+		$this->auditMapper->method('findRecentReadsByActor')->willReturn(
+			[
+				$noId,
+				$this->read('s-org', '2026-09-29 12:00:00'),
+				$this->read('s-kept', '2026-09-29 10:00:00'),
+			]
+		);
+		$this->withSecrets(['s-org' => $orgOwned, 's-kept' => $this->secret('s-kept')]);
+
+		$this->assertSame(
+			[
+				[
+					'id' => 's-kept',
+					'name' => 'Secret s-kept',
+					'typeId' => 'type-login',
+					'lastUsedAt' => (new DateTime('2026-09-29 10:00:00'))->format(DATE_ATOM),
+				],
+			],
+			$this->service->forUser('alice')
+		);
+	}//end testOnlyTheUsersOwnSecretsAreListedWithFourFields()
 }//end class
