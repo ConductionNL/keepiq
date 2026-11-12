@@ -17,7 +17,7 @@ declare(strict_types=1);
  */
 
 $extra = [
-    // The OpenAPI document of keepiq's own API, public, served under /api/v1/ too.
+    // The OpenAPI document of keepiq's own API, for logged-in users, served under /api/v1/ too.
     ['name' => 'openApi#show', 'url' => '/api/openapi.json', 'verb' => 'GET'],
     // Dashboard summary (domain aggregator — DashboardController::summary()).
     ['name' => 'dashboard#summary', 'url' => '/api/dashboard/summary', 'verb' => 'GET'],

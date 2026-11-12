@@ -27,9 +27,8 @@ use OCA\Keepiq\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\Attribute\AnonRateLimit;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
-use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use stdClass;
@@ -63,22 +62,20 @@ class OpenApiController extends Controller {
 	}//end __construct()
 
 	/**
-	 * The OpenAPI document of this app, readable from any origin.
+	 * The OpenAPI document of this app, for any logged-in user.
 	 *
-	 * The document describes the API, not its data, so it is public. Its
-	 * `info.version` is the installed app version, which is also what every
+	 * Its `info.version` is the installed app version, which is also what every
 	 * API response carries in `API-Version`.
 	 *
 	 * @return JSONResponse The document, or 404 when it is not installed.
 	 *
-	 * @PublicPage
+	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/api-contract/spec.md
 	 */
-	#[PublicPage]
+	#[NoAdminRequired]
 	#[NoCSRFRequired]
-	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(): JSONResponse {
 		$document = $this->document();
 		$response = new JSONResponse(
@@ -89,8 +86,6 @@ class OpenApiController extends Controller {
 			$document->info->version = $this->appManager->getAppVersion(appId: Application::APP_ID);
 			$response = new JSONResponse(data: $document);
 		}
-
-		$response->addHeader(name: 'Access-Control-Allow-Origin', value: '*');
 
 		return $response;
 	}//end show()

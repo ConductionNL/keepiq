@@ -12,7 +12,7 @@ How Keepiq's JSON API meets the NL API Design Rules that apply to every endpoint
 
 ### Requirement: Every API response carries the API version
 
-Every response of an endpoint under `/api/v1/` MUST carry an `API-Version` header with the installed app version, which is also the `info.version` of the OpenAPI document (/core/version-header). Responses outside `/api/v1/`, including those of an unversioned path, MUST NOT carry it, so an unversioned path keeps answering exactly as before.
+Every response of an `/api/v1/` alias (a versioned path added by `ApiPathAliases`, whose route name carries the `v1` postfix) MUST carry an `API-Version` header with the installed app version, which is also the `info.version` of the OpenAPI document (/core/version-header). A route the app declares itself, unversioned or already under `/api/v1/`, MUST NOT get it, so every path that existed before keeps answering exactly as before.
 
 #### Scenario: A successful API call names its version
 
@@ -24,42 +24,39 @@ Every response of an endpoint under `/api/v1/` MUST carry an `API-Version` heade
 
 ### Requirement: API errors are problem details
 
-A JSON error response (status 400 or higher) of an endpoint under `/api/v1/` MUST be served as `application/problem+json` with the members `type`, `title` and `status`, plus `detail` when the body already carries a `detail`, `message` or `error` text (/core/error-handling/problem-details). Every member the body already had MUST be kept, so existing callers see no change. A body that already uses `type`, `title` or `status` for something else, or that is a JSON list, MUST be left as it is. An error of an unversioned path MUST keep its body and its content type.
+A JSON error response (status 400 or higher) of an `/api/v1/` alias MUST be served as `application/problem+json` with the members `type`, `title` and `status`, plus `detail` when the body already carries a `detail`, `message` or `error` text (/core/error-handling/problem-details). Every member the body already had MUST be kept, so existing callers see no change. A body that already uses `type`, `title` or `status` for something else, or that is a JSON list, MUST be left as it is. An error of an unversioned path, or of a route the app already declared under `/api/v1/`, MUST keep its body and its content type.
 
 #### Scenario: A not-found error becomes problem details
 
 @e2e exclude a content type and a body shape, not browser behaviour; covered by PHPUnit ApiContractMiddlewareTest.
 
-- GIVEN an endpoint under `/api/v1/` answers `404` with `{"error": "Thing not found"}`
+- GIVEN an `/api/v1/` alias answers `404` with `{"error": "Thing not found"}`
 - WHEN the response leaves the app
 - THEN its content type MUST be `application/problem+json`
 - AND its body MUST be `{"type": "about:blank", "title": "Not Found", "status": 404, "detail": "Thing not found", "error": "Thing not found"}`
 
 ### Requirement: The API publishes its own OpenAPI document
 
-`GET /index.php/apps/keepiq/api/v1/openapi.json` MUST return the OpenAPI document without authentication, with `Access-Control-Allow-Origin: *` and with `info.version` set to the installed app version (/core/publish-openapi). When the document is not installed it MUST answer 404.
+`GET /index.php/apps/keepiq/api/v1/openapi.json` MUST return the OpenAPI document to any logged-in user, with `info.version` set to the installed app version (/core/publish-openapi). When the document is not installed it MUST answer 404.
 
-#### Scenario: Anyone can read the API description
+#### Scenario: A logged-in user can read the API description
 
-@e2e exclude an anonymous JSON endpoint, not browser behaviour; covered by PHPUnit OpenApiControllerTest.
+@e2e exclude a JSON endpoint, not browser behaviour; covered by PHPUnit OpenApiControllerTest.
 
-- GIVEN a client that is not logged in
-- WHEN it requests `/index.php/apps/keepiq/api/v1/openapi.json`
-- THEN it MUST receive the OpenAPI document with status 200
-- AND the response MUST carry `Access-Control-Allow-Origin: *`
+- GIVEN a logged-in user who is not an admin
+- WHEN they request `/index.php/apps/keepiq/api/v1/openapi.json`
+- THEN they MUST receive the OpenAPI document with status 200
 
 ### Requirement: Every API path is served under its major version
 
-Every route under `/api/` MUST also be served under `/api/v1/`, with the same controller, requirements and defaults (/core/uri-version). A route the app already declares under `/api/v1/` keeps its path; an unversioned path whose versioned form such a route answers keeps no successor and is listed in `ApiPathAliases::WITHOUT_SUCCESSOR`. The unversioned path MUST keep answering exactly as before, and its responses MUST carry a `Deprecation` header and a `Link` header naming the `/api/v1/` successor with `rel="successor-version"` (/core/deprecation-schedule). The OpenAPI document MUST name `/index.php/apps/keepiq/api/v1` as its server and MUST describe every versioned path the app routes, and no other path.
+Every route under `/api/` MUST also be served under `/api/v1/`, with the same controller, requirements and defaults (/core/uri-version). A route the app already declares under `/api/v1/` keeps its path; an unversioned path whose versioned form such a route answers keeps no successor and is listed in `ApiPathAliases::WITHOUT_SUCCESSOR`. The unversioned path MUST keep answering exactly as before, with the same body, content type and headers. The OpenAPI document MUST name `/index.php/apps/keepiq/api/v1` as its server and MUST describe every versioned path the app routes, and no other path.
 
-#### Scenario: An unversioned path names its successor
+#### Scenario: An unversioned path keeps its answer
 
 @e2e exclude response headers, not browser behaviour; covered by PHPUnit ApiContractMiddlewareTest and ApiPathAliasesTest.
 
 - GIVEN a client calls `GET /index.php/apps/keepiq/api/settings`
-- THEN it MUST receive the same answer as before
-- AND the response MUST carry `Deprecation: @1794441600`
-- AND the response MUST carry `Link: </index.php/apps/keepiq/api/v1/settings>; rel="successor-version"`
+- THEN it MUST receive the same answer as before, with no `Deprecation`, `Link` or `API-Version` header added
 
 #### Scenario: The versioned path answers the same request
 
@@ -67,11 +64,11 @@ Every route under `/api/` MUST also be served under `/api/v1/`, with the same co
 
 - GIVEN a route `/api/settings`
 - WHEN a client calls `/index.php/apps/keepiq/api/v1/settings`
-- THEN the same controller method MUST answer it, without a `Deprecation` header
+- THEN the same controller method MUST answer it
 
 ### Requirement: Standard protocol paths keep their own formats
 
-Paths that implement a protocol defined elsewhere (Health check, Prometheus metrics) MUST NOT get a `/api/v1/` alias, a `Deprecation` header, an `API-Version` header or a problem details rewrite: their formats belong to their standard. They are listed in `lib/Middleware/Support/StandardProtocolPaths.php` and are not described in the OpenAPI document.
+Paths that implement a protocol defined elsewhere (Health check, Prometheus metrics) MUST NOT get a `/api/v1/` alias, an `API-Version` header or a problem details rewrite: their formats belong to their standard. They are listed in `lib/Middleware/Support/StandardProtocolPaths.php` and are not described in the OpenAPI document.
 
 #### Scenario: A protocol path is left alone
 
@@ -79,4 +76,4 @@ Paths that implement a protocol defined elsewhere (Health check, Prometheus metr
 
 - GIVEN a client calls `/index.php/apps/keepiq/api/health` and it answers `400` with `{"error": "x"}`
 - THEN the body MUST stay `{"error": "x"}`
-- AND the response MUST carry no `API-Version` and no `Deprecation` header
+- AND the response MUST carry no `API-Version` header

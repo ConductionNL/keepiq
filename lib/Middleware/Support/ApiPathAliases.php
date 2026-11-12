@@ -47,6 +47,13 @@ final class ApiPathAliases {
 	public const VERSION_PREFIX = '/api/v1';
 
 	/**
+	 * The route name postfix that marks a route as an `/api/v1/` alias added here.
+	 *
+	 * @var string
+	 */
+	public const ALIAS_POSTFIX = 'v1';
+
+	/**
 	 * The date the unversioned paths were deprecated (2026-11-12), as an RFC 9745 `Deprecation` value.
 	 *
 	 * @var string
@@ -163,7 +170,7 @@ final class ApiPathAliases {
 				$route,
 				[
 					'url'     => self::versioned(path: self::renamed(path: $url)),
-					'postfix' => ($route['postfix'] ?? '').'v1',
+					'postfix' => ($route['postfix'] ?? '').self::ALIAS_POSTFIX,
 				]
 			);
 			if (isset($declared[self::key(route: $alias)]) === false) {

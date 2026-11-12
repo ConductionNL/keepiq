@@ -27,9 +27,9 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
 /**
- * Pins the `API-Version` header and the problem details shape of versioned API
- * errors, and that an unversioned path keeps its answers and only announces
- * its successor.
+ * Pins the `API-Version` header and the problem details shape of the errors of
+ * the `/api/v1/` aliases, and that every route the app declares itself,
+ * unversioned or under `/api/v1/`, keeps its answers exactly.
  *
  * @covers \OCA\Keepiq\Middleware\ApiContractMiddleware
  * @uses   \OCA\Keepiq\Middleware\Support\ApiPathAliases
@@ -42,13 +42,14 @@ class ApiContractMiddlewareTest extends TestCase {
 	 *
 	 * @param string|false $path     The request path info.
 	 * @param Response     $response The controller response.
+	 * @param string|null  $route    The matched route name; an alias carries the `v1` postfix.
 	 *
 	 * @return Response The decorated response.
 	 */
-	private function decorate(string|false $path, Response $response): Response {
+	private function decorate(string|false $path, Response $response, ?string $route='keepiq.things.showv1'): Response {
 		$request = $this->createMock(originalClassName: IRequest::class);
 		$request->method('getPathInfo')->willReturn($path);
-		$request->method('getRequestUri')->willReturn('/index.php'.(string) $path.'?q=1');
+		$request->method('getParam')->willReturnMap([['_route', null, $route]]);
 		$appManager = $this->createMock(originalClassName: IAppManager::class);
 		$appManager->method('getAppVersion')->willReturn('1.2.3');
 
@@ -168,37 +169,71 @@ class ApiContractMiddlewareTest extends TestCase {
 	}//end testNonJsonErrorOnlyGetsTheHeader()
 
 	/**
-	 * An unversioned API path keeps answering and names its `/api/v1/` successor.
+	 * An unversioned API path keeps answering exactly as before: no new headers.
 	 *
 	 * @return void
 	 */
-	public function testUnversionedPathAnnouncesItsSuccessor(): void {
-		$response = $this->decorate(path: '/apps/keepiq/api/things/7/parts', response: new JSONResponse(data: ['id' => 7]));
+	public function testUnversionedPathIsUntouched(): void {
+		$response = $this->decorate(path: '/apps/keepiq/api/things/7/parts', response: new JSONResponse(data: ['id' => 7]), route: 'keepiq.things.parts');
 		$headers  = $this->headersOf(response: $response);
 
 		$this->assertSame(expected: ['id' => 7], actual: $response->getData());
-		$this->assertSame(expected: '@1794441600', actual: $headers['Deprecation']);
-		$this->assertSame(expected: '</index.php/apps/keepiq/api/v1/things/7/parts>; rel="successor-version"', actual: $headers['Link']);
-	}//end testUnversionedPathAnnouncesItsSuccessor()
+		$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
+		$this->assertArrayNotHasKey(key: 'Deprecation', array: $headers);
+		$this->assertArrayNotHasKey(key: 'Link', array: $headers);
+	}//end testUnversionedPathIsUntouched()
 
 	/**
-	 * An error on an unversioned path keeps its body, its content type and
-	 * gets no version header: only the successor is announced.
+	 * An error on an unversioned path keeps its body, its content type and its headers.
 	 *
 	 * @return void
 	 */
 	public function testUnversionedErrorKeepsItsAnswer(): void {
 		$response = $this->decorate(
 			path: '/apps/keepiq/api/things/7',
-			response: new JSONResponse(data: ['error' => 'Thing not found', 'code' => 'x'], statusCode: 404)
+			response: new JSONResponse(data: ['error' => 'Thing not found', 'code' => 'x'], statusCode: 404),
+			route: 'keepiq.things.show'
 		);
 		$headers  = $this->headersOf(response: $response);
 
 		$this->assertSame(expected: ['error' => 'Thing not found', 'code' => 'x'], actual: $response->getData());
 		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $headers['Content-Type']);
 		$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
-		$this->assertSame(expected: '@1794441600', actual: $headers['Deprecation']);
+		$this->assertArrayNotHasKey(key: 'Deprecation', array: $headers);
 	}//end testUnversionedErrorKeepsItsAnswer()
+
+	/**
+	 * A route the app already declared under `/api/v1/` keeps its error body,
+	 * content type and headers, whatever the route name or its absence.
+	 *
+	 * @return void
+	 */
+	public function testDeclaredVersionedRouteIsUntouched(): void {
+		foreach (['keepiq.admin_audit.events', 'keepiq.admin_area_settings.get_policy_settingsAdminApi', null] as $route) {
+			$response = $this->decorate(
+				path: '/apps/keepiq/api/v1/admin/audit',
+				response: new JSONResponse(data: ['error' => 'Forbidden'], statusCode: 403),
+				route: $route
+			);
+			$headers  = $this->headersOf(response: $response);
+
+			$this->assertSame(expected: ['error' => 'Forbidden'], actual: $response->getData());
+			$this->assertSame(expected: 'application/json; charset=utf-8', actual: $headers['Content-Type']);
+			$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
+		}
+	}//end testDeclaredVersionedRouteIsUntouched()
+
+	/**
+	 * An alias postfix on an unversioned path does not make it an alias.
+	 *
+	 * @return void
+	 */
+	public function testAliasNameOutsideTheVersionedPrefixIsUntouched(): void {
+		$response = $this->decorate(path: '/apps/keepiq/api/things', response: new JSONResponse(data: ['error' => 'x'], statusCode: 400));
+
+		$this->assertSame(expected: ['error' => 'x'], actual: $response->getData());
+		$this->assertArrayNotHasKey(key: 'API-Version', array: $this->headersOf(response: $response));
+	}//end testAliasNameOutsideTheVersionedPrefixIsUntouched()
 
 	/**
 	 * A versioned API path is not deprecated, and still carries the version.

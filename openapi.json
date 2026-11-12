@@ -3,7 +3,7 @@
     "info": {
         "title": "Keepiq",
         "version": "0.3.9-unstable.20261111130000",
-        "description": "The JSON API of Keepiq, the password and secrets vault for Nextcloud: vaults, items and shares, encryption suites and key recovery, applications with leased access, audit and compliance reports, backups and the admin settings behind them.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working, are deprecated, and name their `/api/v1/` successor in a `Link` header next to a `Deprecation` header. Errors are RFC 9457 problem details (`application/problem+json`), and every response carries an `API-Version` header. Paths that implement an external standard keep the formats of that standard and are not described here.",
+        "description": "The JSON API of Keepiq, the password and secrets vault for Nextcloud: vaults, items and shares, encryption suites and key recovery, applications with leased access, audit and compliance reports, backups and the admin settings behind them.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working exactly as before. On the `/api/v1/` paths added as aliases of unversioned ones, errors are RFC 9457 problem details (`application/problem+json`) and every response carries an `API-Version` header; routes that were already under `/api/v1/` keep their existing answers. Paths that implement an external standard keep the formats of that standard and are not described here.",
         "contact": {
             "name": "Conduction B.V.",
             "email": "info@conduction.nl",
@@ -6514,26 +6514,16 @@
             "get": {
                 "operationId": "open-api-show",
                 "summary": "The OpenAPI document of this API",
-                "description": "Returns this document, with `info.version` set to the installed version. It needs no login and can be read from any origin.",
+                "description": "Returns this document, with `info.version` set to the installed version, to any logged-in user.",
                 "tags": [
                     "open-api"
                 ],
-                "security": [],
                 "responses": {
                     "200": {
                         "description": "The OpenAPI document.",
                         "headers": {
                             "API-Version": {
                                 "$ref": "#/components/headers/API-Version"
-                            },
-                            "access-control-allow-origin": {
-                                "description": "Always `*`.",
-                                "schema": {
-                                    "type": "string",
-                                    "enum": [
-                                        "*"
-                                    ]
-                                }
                             }
                         },
                         "content": {

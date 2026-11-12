@@ -3,11 +3,11 @@
 /**
  * Keepiq API contract middleware.
  *
- * Applies the NL API Design Rules to the app's JSON API: on a versioned
- * `/api/v1/` path, the `API-Version` header (/core/version-header) and RFC 9457
- * problem details for error responses (/core/error-handling/problem-details);
- * on an unversioned path, only the announcement of its `/api/v1/` successor
- * (/core/uri-version, /core/deprecation-schedule), so its answers are unchanged.
+ * Applies the NL API Design Rules to the `/api/v1/` aliases of the app's JSON
+ * API: the `API-Version` header (/core/version-header) and RFC 9457 problem
+ * details for error responses (/core/error-handling/problem-details). Every
+ * path that existed before the aliases, unversioned or already under
+ * `/api/v1/`, keeps answering exactly as before.
  *
  * @category  Middleware
  * @package   OCA\Keepiq\Middleware
@@ -36,10 +36,9 @@ use OCP\AppFramework\Middleware;
 use OCP\IRequest;
 
 /**
- * Stamps `API-Version` on versioned API responses and turns their JSON error
- * bodies into problem details; marks an unversioned path deprecated in favour
- * of its `/api/v1/` alias and otherwise leaves its answers exactly as before.
- * Paths that speak a protocol defined elsewhere
+ * Stamps `API-Version` on the responses of the `/api/v1/` aliases and turns
+ * their JSON error bodies into problem details. A route the app declares itself,
+ * unversioned or under `/api/v1/`, is left exactly as it is. Paths that speak a protocol defined elsewhere
  * ({@see StandardProtocolPaths}) are left exactly as they are.
  *
  * An error body keeps every member it already had, so existing callers that
@@ -116,7 +115,7 @@ class ApiContractMiddleware extends Middleware {
 	}//end __construct()
 
 	/**
-	 * Add the version header and, for a JSON error, the problem details shape.
+	 * Add the version header and, for a JSON error, the problem details shape, on an alias.
 	 *
 	 * @param mixed    $controller The controller that ran.
 	 * @param string   $methodName The method that ran.
@@ -146,13 +145,10 @@ class ApiContractMiddleware extends Middleware {
 			return $response;
 		}
 
-		$this->announceSuccessor(response: $response);
-
-		// An unversioned path keeps answering exactly as before: its body, its
-		// content type and its other headers are untouched, and the only
-		// addition is the announcement of its successor. The version header
-		// and the problem details shape are part of the /api/v1/ contract.
-		if ($this->isVersionedRequest() === false) {
+		// Only the /api/v1/ aliases follow the contract. A route the app
+		// declares itself, unversioned or already under /api/v1/, keeps its
+		// body, its content type and its headers exactly as before.
+		if ($this->isAliasRequest() === false) {
 			return $response;
 		}
 
@@ -183,64 +179,28 @@ class ApiContractMiddleware extends Middleware {
 	}//end isApiRequest()
 
 	/**
-	 * Whether the request path lies under the versioned `/api/v1/` prefix.
+	 * Whether the request is answered by an `/api/v1/` alias that ApiPathAliases added.
 	 *
-	 * @return bool True for a request on a versioned API path.
+	 * The path must lie under `/api/v1/` and the matched route must carry the
+	 * alias postfix, so a route the app already declared under `/api/v1/`
+	 * is not taken for an alias.
+	 *
+	 * @return bool True for a request on an alias.
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) StandardProtocolPaths is a pure lookup that routes.php shares, outside any container.
 	 *
 	 * @spec openspec/specs/api-contract/spec.md
 	 */
-	private function isVersionedRequest(): bool {
+	private function isAliasRequest(): bool {
 		$relative = StandardProtocolPaths::appRelative(path: (string) $this->request->getPathInfo());
-
-		return $relative === ApiPathAliases::VERSION_PREFIX
-			|| str_starts_with($relative, ApiPathAliases::VERSION_PREFIX.'/') === true;
-	}//end isVersionedRequest()
-
-	/**
-	 * Add the RFC 9745 `Deprecation` header and a `Link` to the successor on an unversioned path.
-	 *
-	 * The path keeps answering exactly as before; only the headers are added.
-	 *
-	 * @param Response $response The response.
-	 *
-	 * @return void
-	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) ApiPathAliases is a pure lookup that routes.php shares, outside any container.
-	 *
-	 * @spec openspec/specs/api-contract/spec.md
-	 */
-	private function announceSuccessor(Response $response): void {
-		$path      = (string) $this->request->getPathInfo();
-		$successor = ApiPathAliases::successorOf(path: $path);
-		if ($successor === null) {
-			return;
+		if (str_starts_with($relative, ApiPathAliases::VERSION_PREFIX.'/') === false) {
+			return false;
 		}
 
-		$response->addHeader(name: 'Deprecation', value: ApiPathAliases::DEPRECATED_SINCE);
-		$response->addHeader(
-			name: 'Link',
-			value: '<'.$this->scriptPrefix(pathInfo: $path).$successor.'>; rel="successor-version"'
-		);
-	}//end announceSuccessor()
+		$route = $this->request->getParam(key: '_route');
 
-	/**
-	 * The front controller that precedes the path info in the request URI, such as `/index.php`.
-	 *
-	 * @param string $pathInfo The request path info.
-	 *
-	 * @return string The prefix, or '' when the URI carries none.
-	 */
-	private function scriptPrefix(string $pathInfo): string {
-		$uri      = $this->request->getRequestUri();
-		$position = strpos($uri, $pathInfo);
-		if ($pathInfo === '' || $position === false) {
-			return '';
-		}
-
-		return substr($uri, 0, $position);
-	}//end scriptPrefix()
+		return is_string($route) === true && str_ends_with($route, ApiPathAliases::ALIAS_POSTFIX) === true;
+	}//end isAliasRequest()
 
 	/**
 	 * Serve a JSON error response as problem details when its body allows it.

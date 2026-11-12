@@ -50,7 +50,7 @@ class OpenApiControllerTest extends TestCase {
 	}//end controller()
 
 	/**
-	 * The shipped document is served with the installed version, readable from any origin.
+	 * The shipped document is served with the installed version and no cross-origin grant.
 	 *
 	 * @return void
 	 */
@@ -59,7 +59,7 @@ class OpenApiControllerTest extends TestCase {
 		$document = json_decode((string) json_encode($response->getData()), true);
 
 		$this->assertSame(expected: 200, actual: $response->getStatus());
-		$this->assertSame(expected: '*', actual: $this->headersOf(response: $response)['Access-Control-Allow-Origin']);
+		$this->assertArrayNotHasKey(key: 'Access-Control-Allow-Origin', array: $this->headersOf(response: $response));
 		$this->assertSame(expected: '9.8.7', actual: $document['info']['version']);
 		$this->assertArrayHasKey(key: '/openapi.json', array: $document['paths']);
 	}//end testServesTheShippedDocument()
@@ -90,7 +90,7 @@ class OpenApiControllerTest extends TestCase {
 		$response = $this->controller(appPath: sys_get_temp_dir().'/no-such-app-'.uniqid())->show();
 
 		$this->assertSame(expected: 404, actual: $response->getStatus());
-		$this->assertSame(expected: '*', actual: $this->headersOf(response: $response)['Access-Control-Allow-Origin']);
+		$this->assertSame(expected: ['error' => 'The OpenAPI document is not installed'], actual: $response->getData());
 	}//end testMissingDocumentIsNotFound()
 
 	/**
