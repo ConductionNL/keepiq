@@ -1059,3 +1059,42 @@ describe('a request kind this background does not know', () => {
 		expect(fetchMock).not.toHaveBeenCalled()
 	})
 })
+
+describe('what counts as interaction', () => {
+	async function touches(message: HandledRequest): Promise<boolean> {
+		await browser.storage.session.remove('lastInteractionAt')
+		await handlePopupRequest(message)
+		return (await browser.storage.session.get('lastInteractionAt')).lastInteractionAt !== undefined
+	}
+
+	it.each<[string, HandledRequest, boolean]>([
+		['settings.get', { kind: 'settings.get' }, false],
+		['account.settings.get', { kind: 'account.settings.get', accountId: 'x' } as HandledRequest, false],
+		['defaultManager.get', { kind: 'defaultManager.get' }, false],
+		['popup.intent', { kind: 'popup.intent' }, false],
+		['vault.snapshot on open', { kind: 'vault.snapshot', opened: true }, true],
+		['vault.snapshot re-read', { kind: 'vault.snapshot' }, false],
+		['item.decrypt', { kind: 'item.decrypt', ids: [], fields: ['key'] }, true],
+		['item.decrypt passive', { kind: 'item.decrypt', ids: [], fields: ['key'], passive: true }, false],
+		['item.passkeys', { kind: 'item.passkeys', id: 'nope' }, true],
+		['item.passkeys passive', { kind: 'item.passkeys', id: 'nope', passive: true }, false],
+		['popup.lastTab.set', { kind: 'popup.lastTab.set', tab: 'vault' } as HandledRequest, true],
+	])('%s → %s', async (_name, message, expected) => {
+		await snapshot([])
+		expect(await touches(message)).toBe(expected)
+	})
+
+	it('counts a copy only while the vault is unlocked', async () => {
+		await snapshot([])
+		expect(await touches({ kind: 'clipboard.copied', changeCount: 1 } as HandledRequest)).toBe(true)
+		await lock(accountId)
+		expect(await touches({ kind: 'clipboard.copied', changeCount: 1 } as HandledRequest)).toBe(false)
+	})
+
+	it('answers undefined and logs a request that throws', async () => {
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+		vi.spyOn(browser.storage.local, 'get').mockRejectedValue(new Error('disk'))
+		expect(await handlePopupRequest({ kind: 'settings.get' })).toBeUndefined()
+		expect(error).toHaveBeenCalledWith('[keepiq]', 'settings.get', expect.any(Error))
+	})
+})

@@ -25,6 +25,7 @@ import { readGlobalSettings, updateGlobalSettings } from '@/src/settings/global'
 import { getKey, LAST_TAB_KEY, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { forgetPin, hasPin, hasSeal } from '@/src/vault/pin'
 import { readSnapshot, toItemMeta } from '@/src/vault/store'
+import type { OpenSecretRow } from '@/src/api/types'
 import type { StoredSecretRow, VaultSnapshot } from '@/src/vault/types'
 import { isStale, sync, syncStatus } from '@/src/vault/sync'
 import { cancelPopout, enforce, expectPopout, touch } from '@/src/vault/timeout'
@@ -80,26 +81,44 @@ async function suggestions({ accountId, tabUrl, vault }: SuggestionInput): Promi
 	}
 }
 
+/**
+ * Only on open: re-reads after `vault.changed` must not retry a failed sync in a loop.
+ * Started before the status is read, so the popup sees `syncing` and waits for `vault.changed`.
+ */
+async function syncOnOpen(accountId: string, cached: VaultSnapshot | undefined): Promise<void> {
+	if (!cached) return void sync(accountId, 'full')
+	if (await isStale(accountId)) void sync(accountId, 'probe')
+}
+
+function folderMetas(cached: VaultSnapshot | undefined) {
+	return cached?.folders.map(({ id, name, parentId }) => ({ id, name, parentId })) ?? []
+}
+
+function typeMetas(cached: VaultSnapshot | undefined) {
+	return cached?.types.map(({ id, name, label }) => ({ id, name, label: typeof label === 'string' && label ? label : name })) ?? []
+}
+
+async function folderNoticeDismissed(accountId: string): Promise<boolean> {
+	return (await browser.storage.local.get(folderNoticeKey(accountId)))[folderNoticeKey(accountId)] === true
+}
+
 async function snapshot(tabUrl: string | undefined, opened: boolean): Promise<VaultSnapshotReply> {
 	const active = await activeAccount()
 	if (active?.status !== 'unlocked') return { state: active?.status === 'locked' ? 'locked' : 'logged_out' }
 	const { account } = active
 	const cached = await readSnapshot(account.id)
-	// Only on open: re-reads after `vault.changed` must not retry a failed sync in a loop.
-	// Started before the status is read, so the popup sees `syncing` and waits for `vault.changed`.
-	if (opened && !cached) void sync(account.id, 'full')
-	else if (opened && await isStale(account.id)) void sync(account.id, 'probe')
+	if (opened) await syncOnOpen(account.id, cached)
 	const items = cached?.secrets.map(toItemMeta) ?? null
 	return {
 		state: 'unlocked',
 		items,
-		folders: cached?.folders.map(({ id, name, parentId }) => ({ id, name, parentId })) ?? [],
-		types: cached?.types.map(({ id, name, label }) => ({ id, name, label: typeof label === 'string' && label ? label : name })) ?? [],
+		folders: folderMetas(cached),
+		types: typeMetas(cached),
 		...await suggestions({ accountId: account.id, tabUrl, vault: cached }),
 		sync: await syncStatus(account.id),
 		webAppUrl: webAppUrl(account),
 		defaultSecretType: await defaultSecretType(account.id, cached),
-		folderNoticeDismissed: (await browser.storage.local.get(folderNoticeKey(account.id)))[folderNoticeKey(account.id)] === true,
+		folderNoticeDismissed: await folderNoticeDismissed(account.id),
 	}
 }
 
@@ -118,37 +137,67 @@ function rowsById(snapshot: VaultSnapshot | undefined): Map<string, StoredSecret
 
 type RowFailure = 'blocked' | 'use_only' | 'decrypt_failed'
 
-async function decrypt(ids: string[], fields: Array<keyof DecryptedItem>): Promise<DecryptReply> {
+/** The active unlocked account and its key, or null while there is none. */
+async function unlockedKey(): Promise<{ account: AccountRecord; key: CryptoKey } | null> {
 	const account = await activeUnlocked()
 	const key = account ? await getKey(account.id) : null
-	if (!account || !key) return { ok: false, error: 'locked' }
-	const rows = rowsById(await readSnapshot(account.id))
-	const results = await Promise.all(ids.map(async (id): Promise<[string, DecryptedItem | RowFailure] | null> => {
-		const row = rows.get(id)
-		if (!row) return null
-		if (row.blocked) return [id, 'blocked']
-		if (row.useOnly === true && fields.some((field) => !USE_ONLY_FIELDS.includes(field))) return [id, 'use_only']
-		try {
-			const item: DecryptedItem = {}
-			for (const field of fields) {
-				const ciphertext = row[field]
-				// `''` is no value, as for a login without a code.
-				if (typeof ciphertext === 'string' && ciphertext !== '') item[field] = await rsaDecrypt(ciphertext, key)
-			}
-			return [id, item]
-		} catch (error) {
-			console.error('[keepiq] decrypt failed for', id, error)
-			return [id, 'decrypt_failed']
-		}
-	}))
+	return account && key ? { account, key } : null
+}
+
+/** One decrypt batch: the vault's rows, the fields asked for and the key. */
+interface DecryptRun {
+	rows: Map<string, StoredSecretRow>
+	fields: Array<keyof DecryptedItem>
+	key: CryptoKey
+}
+
+type RowResult = [string, DecryptedItem | RowFailure] | null
+
+/** A use-only copy gives only the fields it may, and none when asked for more. */
+function asksBeyondUseOnly(row: OpenSecretRow, fields: Array<keyof DecryptedItem>): boolean {
+	return row.useOnly === true && fields.some((field) => !USE_ONLY_FIELDS.includes(field))
+}
+
+async function decryptFields(row: OpenSecretRow, run: DecryptRun): Promise<DecryptedItem> {
+	const item: DecryptedItem = {}
+	for (const field of run.fields) {
+		const ciphertext = row[field]
+		// `''` is no value, as for a login without a code.
+		if (typeof ciphertext === 'string' && ciphertext !== '') item[field] = await rsaDecrypt(ciphertext, run.key)
+	}
+	return item
+}
+
+async function decryptRow(id: string, run: DecryptRun): Promise<RowResult> {
+	const row = run.rows.get(id)
+	if (!row) return null
+	if (row.blocked) return [id, 'blocked']
+	if (asksBeyondUseOnly(row, run.fields)) return [id, 'use_only']
+	try {
+		return [id, await decryptFields(row, run)]
+	} catch (error) {
+		console.error('[keepiq] decrypt failed for', id, error)
+		return [id, 'decrypt_failed']
+	}
+}
+
+/** One bad row must not blank the rest of a batch. */
+function batchReply(ids: string[], results: RowResult[]): DecryptReply {
 	const items: Record<string, DecryptedItem> = {}
 	let failure: RowFailure | null = null
 	for (const [id, result] of results.filter((r) => r !== null)) {
 		if (typeof result === 'string') failure = result
 		else items[id] = result
 	}
-	// One bad row must not blank the rest of a batch.
 	return ids.length === 1 && failure ? { ok: false, error: failure } : { ok: true, items }
+}
+
+async function decrypt(ids: string[], fields: Array<keyof DecryptedItem>): Promise<DecryptReply> {
+	const unlocked = await unlockedKey()
+	if (!unlocked) return { ok: false, error: 'locked' }
+	const run: DecryptRun = { rows: rowsById(await readSnapshot(unlocked.account.id)), fields, key: unlocked.key }
+	const results = await Promise.all(ids.map((id) => decryptRow(id, run)))
+	return batchReply(ids, results)
 }
 
 /** Built field by field, so nothing else of the credential can reach the popup. */
@@ -166,17 +215,26 @@ function passkeyDetail(entry: unknown): PasskeyDetail | null {
 }
 
 /** A login's `passkeys` for the detail, a use-only copy's too, since it shows no key. */
+function isLogin(row: OpenSecretRow, cached: VaultSnapshot | undefined): boolean {
+	return cached?.types.some((type) => type.id === row.typeId && type.name === 'login') === true
+}
+
+/** A login row's stored passkeys, or null when it holds none. */
+function storedPasskeys(row: OpenSecretRow, cached: VaultSnapshot | undefined): string | null {
+	if (!isLogin(row, cached) || typeof row.passkeys !== 'string' || row.passkeys === '') return null
+	return row.passkeys
+}
+
 async function loginPasskeys(id: string): Promise<PasskeysReply> {
-	const account = await activeUnlocked()
-	const key = account ? await getKey(account.id) : null
-	if (!account || !key) return { ok: false, error: 'locked' }
-	const cached = await readSnapshot(account.id)
+	const unlocked = await unlockedKey()
+	if (!unlocked) return { ok: false, error: 'locked' }
+	const cached = await readSnapshot(unlocked.account.id)
 	const row = rowsById(cached).get(id)
 	if (!row) return { ok: false, error: 'not_found' }
 	if (row.blocked) return { ok: false, error: 'blocked' }
-	const login = cached?.types.some((type) => type.id === row.typeId && type.name === 'login') === true
-	if (!login || typeof row.passkeys !== 'string' || row.passkeys === '') return { ok: true, passkeys: [] }
-	return decryptPasskeys(id, row.passkeys, key)
+	const passkeys = storedPasskeys(row, cached)
+	if (passkeys === null) return { ok: true, passkeys: [] }
+	return decryptPasskeys(id, passkeys, unlocked.key)
 }
 
 /** An empty `passkeys` holds none; one that does not decrypt or parse is unreadable. */
@@ -261,21 +319,17 @@ function performUnscoped<K extends UnscopedKind>(message: Extract<UnscopedReques
 	return UNSCOPED_REQUESTS[message.kind](message)
 }
 
+const ACCOUNT_SETTINGS_KINDS: readonly string[] = ['account.settings.get', 'account.settings.set', 'pin.set', 'pin.remove'] satisfies Array<AccountSettingsRequest['kind']>
+const SEND_KINDS: readonly string[] = ['send.list', 'send.create', 'send.delete'] satisfies Array<SendRequest['kind']>
+
+const isAccountSettingsRequest = (message: HandledRequest): message is AccountSettingsRequest => ACCOUNT_SETTINGS_KINDS.includes(message.kind)
+const isSendRequest = (message: HandledRequest): message is SendRequest => SEND_KINDS.includes(message.kind)
+
 async function perform(message: Exclude<HandledRequest, GeneratorRequest>): Promise<PopupReplies[PopupRequest['kind']]> {
 	if (isUnscoped(message)) return performUnscoped(message)
-	switch (message.kind) {
-		case 'account.settings.get':
-		case 'account.settings.set':
-		case 'pin.set':
-		case 'pin.remove':
-			return performAccountSettings(message)
-		case 'send.list':
-		case 'send.create':
-		case 'send.delete':
-			return performSend(message)
-		default:
-			return performWrite(message)
-	}
+	if (isAccountSettingsRequest(message)) return performAccountSettings(message)
+	if (isSendRequest(message)) return performSend(message)
+	return performWrite(message)
 }
 
 const isGeneratorRequest = (message: HandledRequest): message is GeneratorRequest => message.kind.startsWith('generator.')
@@ -429,54 +483,74 @@ async function accountSettings(accountId: string): Promise<AccountSettingsSnapsh
 	}
 }
 
-/** Unlike writes, these act on the account they name whether or not it is active. */
-async function performAccountSettings(message: AccountSettingsRequest): Promise<PopupReplies[AccountSettingsRequest['kind']]> {
+type SettingsOf<K extends AccountSettingsRequest['kind']> = Extract<AccountSettingsRequest, { kind: K }>
+
+/** `writeSettings` drops what fails validation. Without `idle` nothing tells a system lock, so that one would never lock. */
+function supportedPatch(patch: SettingsOf<'account.settings.set'>['patch']) {
+	const unsupported = patch?.vaultTimeout === 'onSystemLock' && !hasIdle()
+	return unsupported ? { ...patch, vaultTimeout: undefined } : patch
+}
+
+async function setAccountSettings(message: SettingsOf<'account.settings.set'>): Promise<PopupReplies['account.settings.set']> {
 	const { accountId } = message
-	switch (message.kind) {
-		case 'account.settings.get':
-			return typeof accountId === 'string' ? accountSettings(accountId) : null
-		case 'account.settings.set': {
-			const account = typeof accountId === 'string' ? await getAccount(accountId) : undefined
-			if (!account) return null
-			// Settings are out of reach while locked, and Never set then would put the key on disk at the next unlock.
-			if (await accountStatus(account) !== 'unlocked') return 'locked'
-			// `writeSettings` drops what fails validation. Without `idle` nothing tells a system lock, so that one would never lock.
-			const unsupported = message.patch?.vaultTimeout === 'onSystemLock' && !hasIdle()
-			await updateSettings(accountId, unsupported ? { ...message.patch, vaultTimeout: undefined } : message.patch)
-			if (message.patch?.askPasskeys === false) forgetOfferedPasskeys()
-			return accountSettings(accountId)
-		}
-		case 'pin.set':
-			return enablePin(accountId, message.pin, message.masterPassword)
-		case 'pin.remove':
-			if (typeof accountId === 'string') await forgetPin(accountId)
-			return null
-	}
+	const account = typeof accountId === 'string' ? await getAccount(accountId) : undefined
+	if (!account) return null
+	// Settings are out of reach while locked, and Never set then would put the key on disk at the next unlock.
+	if (await accountStatus(account) !== 'unlocked') return 'locked'
+	await updateSettings(accountId, supportedPatch(message.patch))
+	if (message.patch?.askPasskeys === false) forgetOfferedPasskeys()
+	return accountSettings(accountId)
+}
+
+async function removePin(message: SettingsOf<'pin.remove'>): Promise<null> {
+	if (typeof message.accountId === 'string') await forgetPin(message.accountId)
+	return null
+}
+
+/** Unlike writes, these act on the account they name whether or not it is active. */
+const ACCOUNT_SETTINGS: { [K in AccountSettingsRequest['kind']]: (message: SettingsOf<K>) => Promise<PopupReplies[K]> } = {
+	'account.settings.get': async (message) => (typeof message.accountId === 'string' ? accountSettings(message.accountId) : null),
+	'account.settings.set': setAccountSettings,
+	'pin.set': (message) => enablePin(message.accountId, message.pin, message.masterPassword),
+	'pin.remove': removePin,
+}
+
+function performAccountSettings<K extends AccountSettingsRequest['kind']>(message: SettingsOf<K>): Promise<PopupReplies[K]> {
+	return ACCOUNT_SETTINGS[message.kind](message)
 }
 
 /** Re-reads and re-decrypts after a broadcast are the popup reacting to the background, not the user. */
+/** Every popup reads these on open, which `vault.status` already counts. */
+const READ_ON_OPEN: readonly string[] = ['settings.get', 'account.settings.get', 'defaultManager.get', 'popup.intent'] satisfies Array<HandledRequest['kind']>
+
 function isInteraction(message: Exclude<HandledRequest, GeneratorRequest>): boolean {
-	// Every popup reads it on open, which `vault.status` already counts.
-	if (message.kind === 'settings.get' || message.kind === 'account.settings.get' || message.kind === 'defaultManager.get' || message.kind === 'popup.intent') return false
+	if (READ_ON_OPEN.includes(message.kind)) return false
 	if (message.kind === 'vault.snapshot') return message.opened === true
 	if (message.kind === 'item.decrypt' || message.kind === 'item.passkeys') return message.passive !== true
 	return true
 }
 
 /** Like account messages, the timeout is enforced first so a sleeping worker can't serve a vault that should be locked. */
+async function handleGenerator(message: GeneratorRequest): Promise<unknown> {
+	// Read before any await, so a lock or logout while this request waits keeps its add from landing.
+	const epoch = sessionEpoch(message.accountId)
+	const target = await generatorTarget(message)
+	// Context is read on open. The lock screen's generator must not keep another account's vault from timing out.
+	if (message.kind !== 'generator.context' && target?.status === 'unlocked') await touch()
+	return performGenerator(message, target, epoch)
+}
+
+/** Copy from the lock screen's generator must not keep another account's vault from timing out either. */
+async function countsAsInteraction(message: Exclude<HandledRequest, GeneratorRequest>): Promise<boolean> {
+	if (message.kind === 'clipboard.copied') return Boolean(await activeUnlocked())
+	return isInteraction(message)
+}
+
 export async function handlePopupRequest(message: HandledRequest): Promise<unknown> {
 	try {
 		await enforce()
-		if (isGeneratorRequest(message)) {
-			// Read before any await, so a lock or logout while this request waits keeps its add from landing.
-			const epoch = sessionEpoch(message.accountId)
-			const target = await generatorTarget(message)
-			// Context is read on open. The lock screen's generator must not keep another account's vault from timing out.
-			if (message.kind !== 'generator.context' && target?.status === 'unlocked') await touch()
-			return await performGenerator(message, target, epoch)
-		}
-		// Copy from the lock screen's generator must not keep another account's vault from timing out either.
-		if (message.kind === 'clipboard.copied' ? await activeUnlocked() : isInteraction(message)) await touch()
+		if (isGeneratorRequest(message)) return await handleGenerator(message)
+		if (await countsAsInteraction(message)) await touch()
 		return await perform(message)
 	} catch (error) {
 		console.error('[keepiq]', message.kind, error)
