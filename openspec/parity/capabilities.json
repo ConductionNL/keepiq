@@ -2540,14 +2540,18 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "src/export/backup.js:14-17 passphrase-encrypted Argon2id backup that is suite-independent 'for a forgotten master password' -> src/store/modules/export.js:24 encryptBackup; src/import/backupParser.js:14 decryptBackup in the Import wizard; src/views/EmergencyAccessView.vue:11 trusted-contact escrow; grep -rni 'recovery code\\|recovery kit' src lib: no hits",
+        "state": "specified",
+        "evidence": "Not built: no recovery code or recovery kit (grep -rni \"recovery code\\|recovery kit\" src lib: no hits). Specified in openspec/changes/crypto-recovery-kit on 2026-11-12 (decision 399). What exists goes around the vault, not back into it: src/export/backup.js:14-17 passphrase-encrypted Argon2id backup that is suite-independent 'for a forgotten master password' -> src/store/modules/export.js:24 encryptBackup; src/import/backupParser.js:14 decryptBackup in the Import wizard; src/views/EmergencyAccessView.vue:11 trusted-contact escrow; grep -rni 'recovery code\\|recovery kit' src lib: no hits",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> Export dialog (encrypted backup); Import wizard (restore); Emergency access page (/emergency-access)",
         "note": "There is no recovery code or kit that reopens the existing vault. A user who kept a passphrase-encrypted backup can restore their secrets into a new vault, but only after an administrator force-revokes the old key, and a trusted emergency contact can regain read access after a wait.",
-        "change": "openspec/changes/archive/2026-06-14-secret-export-gdpr",
-        "spec": "openspec/specs/secret-export",
-        "requirement": "openspec/specs/secret-export :: Encrypted Backup Export"
+        "change": "openspec/changes/crypto-recovery-kit",
+        "spec": "openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit",
+        "requirement": [
+          "openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md :: A user can create a recovery kit that reopens their own vault",
+          "openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md :: The recovery code reopens the vault and sets a new master password"
+        ],
+        "plan": "openspec/changes/crypto-recovery-kit"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
