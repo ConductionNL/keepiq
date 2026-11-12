@@ -1296,7 +1296,11 @@
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: Secure Note",
         "note": "Secure Note is a seeded system type; the create dialog relabels the value field to Note and the detail sidebar shows it as a note. URL and login stay optional.",
         "spec": "openspec/specs/secrets",
-        "requirement": "openspec/specs/secrets :: Create Secret"
+        "requirement": [
+          "openspec/specs/secrets :: Create Secret",
+          "openspec/changes/capability-requirements-from-the-matrix/specs/secrets :: A secure note holds text without a login"
+        ],
+        "plan": "openspec/changes/capability-requirements-from-the-matrix"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2503,8 +2507,9 @@
         "reachedOn": "Lock screen (/lock) -> Forgot master password; officers approve from the recovery panel in the user menu; policy under Administration -> Keepiq - People",
         "readOn": "2026-10-07",
         "requirement": [
-          "openspec/specs/organisation-account-recovery :: Administrators name recovery officers, a threshold and a policy",
-          "openspec/specs/organisation-account-recovery :: Recovery needs a threshold of proven officer approvals"
+          "openspec/specs/organisation-account-recovery :: A recovery request carries a one-time key and a verification phrase",
+          "openspec/specs/organisation-account-recovery :: Recovery needs a threshold of proven officer approvals",
+          "openspec/specs/organisation-account-recovery :: The recovered key reaches only the requesting browser"
         ]
       },
       "rowSource": "competitor",
@@ -5897,21 +5902,7 @@
         "evidence": "src/health/engine.js:98 SHA-256 digest buckets -> engine.js:138 reused flag -> src/views/HealthReportView.vue:97 Reused passwords category (src/components/HealthCategory.vue:38 shared-with count)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Password health page (/password-health), linked from Reports",
-        "note": "Reuse is detected in the browser over digests of all values, and each finding says how many secrets share it.",
-        "defects": [
-          {
-            "at": "src/store/modules/health.js:186",
-            "what": "The health pass fetches one page of GET /api/v1/secrets with limit 100 (server MAX_LIMIT 100, lib/Service/SecretService.php:110) and never pages, so a vault with more than 100 secrets is only partly analysed.",
-            "issue": null,
-            "needsLiveCheck": true
-          },
-          {
-            "at": "src/views/HealthReportView.vue:373",
-            "what": "Findings deep-link to route name SecretDetail, which no manifest page defines (routes are named after page ids, src/main.js:128); the push rejects and the .catch swallows it, so clicking a finding does nothing.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
+        "note": "Reuse is detected in the browser over digests of all values, and each finding says how many secrets share it. Fixed in keepiq#745: the health pass pages through every secret (src/store/modules/health.js fetchEverySecret) and a finding opens the secret through secretDetailLocation (src/views/HealthReportView.vue openSecret).",
         "change": "openspec/changes/archive/2026-06-14-password-health",
         "requirement": "openspec/specs/password-health :: Reuse Detection"
       },
@@ -5949,15 +5940,7 @@
         "evidence": "src/health/engine.js:145 ageInDays from keyUpdatedAt -> stale flag; src/views/HealthReportView.vue:28 staleness threshold select (90/180/365/never) persisted via PUT /api/settings/user; HealthCategory.vue has no age field",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Password health page (/password-health) Old passwords category",
-        "note": "Passwords older than a chosen threshold are listed as old, but the computed age in days (finding.ageDays) is never shown, neither in the report nor on the secret list or detail.",
-        "defects": [
-          {
-            "at": "src/store/modules/health.js:186",
-            "what": "The health pass fetches one page of GET /api/v1/secrets with limit 100 (server MAX_LIMIT 100, lib/Service/SecretService.php:110) and never pages, so a vault with more than 100 secrets is only partly analysed.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
+        "note": "Passwords older than a chosen threshold are listed as old, but the computed age in days (finding.ageDays) is never shown, neither in the report nor on the secret list or detail. Fixed in keepiq#745: the health pass pages through every secret (src/store/modules/health.js fetchEverySecret) and a finding opens the secret through secretDetailLocation (src/views/HealthReportView.vue openSecret).",
         "change": "openspec/changes/archive/2026-06-14-password-health",
         "requirement": "openspec/specs/password-health :: Password Age Tracking"
       },
@@ -6040,21 +6023,7 @@
         "evidence": "src/manifest.json:482 PasswordHealth page /password-health -> src/views/HealthReportView.vue:69 vault score + counts -> src/store/modules/health.js:109 -> src/health/engine.js:202 vaultScore",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Password health page (/password-health), linked from Reports (src/manifest.json:454)",
-        "note": "One report with a 0 to 100 score, per-category counts and lists for weak, reused, old, breached, possibly compromised and rotation due.",
-        "defects": [
-          {
-            "at": "src/store/modules/health.js:186",
-            "what": "The health pass fetches one page of GET /api/v1/secrets with limit 100 (server MAX_LIMIT 100, lib/Service/SecretService.php:110) and never pages, so a vault with more than 100 secrets is only partly analysed.",
-            "issue": null,
-            "needsLiveCheck": true
-          },
-          {
-            "at": "src/views/HealthReportView.vue:373",
-            "what": "Findings deep-link to route name SecretDetail, which no manifest page defines (routes are named after page ids, src/main.js:128); the push rejects and the .catch swallows it, so clicking a finding does nothing.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
+        "note": "One report with a 0 to 100 score, per-category counts and lists for weak, reused, old, breached, possibly compromised and rotation due. Fixed in keepiq#745: the health pass pages through every secret (src/store/modules/health.js fetchEverySecret) and a finding opens the secret through secretDetailLocation (src/views/HealthReportView.vue openSecret).",
         "change": "openspec/changes/archive/2026-06-14-password-health",
         "requirement": "openspec/specs/password-health :: Vault Health Report"
       },
@@ -6133,10 +6102,10 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
-        "evidence": "src/dialogs/SecretCreateDialog.vue:112 and SecretEditDialog.vue:115 open src/dialogs/KeyGeneratorModal.vue:216 POST /api/v1/generate-key -> lib/Controller/KeyGeneratorController -> lib/Service/KeyGeneratorService.php:179 generate (random_int CSPRNG, length, special characters, excluded characters, regex override, org policy clamp :110)",
+        "evidence": "src/dialogs/SecretCreateDialog.vue:112 and SecretEditDialog.vue:115 open src/dialogs/KeyGeneratorModal.vue, which imports generateKey and generatePassphrase from src/generator/generator.js (crypto.getRandomValues, length, special characters, excluded characters, regex override, org policy clamp from src/policy/policy.js fetchPolicy)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> New secret / Edit secret dialog -> Generate",
-        "note": "Length, special characters, excluded characters and an advanced regex pattern. The value is generated on the server and returned over the API, so the server sees a generated password before it is encrypted client-side.",
+        "note": "Length, special characters, excluded characters and an advanced regex pattern. The value is generated in the browser, so the server only ever sees its ciphertext. lib/Service/KeyGeneratorService.php and POST /api/v1/generate-key still exist but the web dialogs no longer call them.",
         "change": "openspec/changes/archive/2026-06-14-implement-key-generator",
         "requirement": [
           "openspec/specs/key-generator :: Configuration Fields",
@@ -6693,15 +6662,7 @@
         "evidence": "src/manifest.json:279 kpi-rotation-due widget reads rotation_due_count <- lib/Service/DashboardSummaryService.php:141; src/views/HealthReportView.vue:144 Rotation due category from rotation.js:56 GET /api/v1/rotation-flags",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Dashboard (/) Rotation due KPI; Password health page Rotation due category",
-        "note": "Both surfaces are wired; the health report lists each flagged secret.",
-        "defects": [
-          {
-            "at": "src/views/HealthReportView.vue:373",
-            "what": "Findings deep-link to route name SecretDetail, which no manifest page defines (routes are named after page ids, src/main.js:128); the push rejects and the .catch swallows it, so clicking a finding does nothing.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
+        "note": "Both surfaces are wired; the health report lists each flagged secret. Fixed in keepiq#745: the health pass pages through every secret (src/store/modules/health.js fetchEverySecret) and a finding opens the secret through secretDetailLocation (src/views/HealthReportView.vue openSecret).",
         "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies",
         "requirement": "openspec/specs/rotation-expiry-policies :: Rotation surfaced on dashboard and health report"
       },
@@ -8572,15 +8533,7 @@
         "evidence": "parsers emit folder paths (src/import/parsers/keepassXml.js:59, src/import/parsers/ncPasswords.js:118, src/cxf/cxf.js:270 collections) -> src/store/modules/import.js:264 folderPath -> import.js:419 folders per chunk -> lib/Service/ImportService.php:258 ensureFolderPath (reuses same-name folders, creates missing) -> summary foldersCreated ImportWizardDialog.vue",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> folders step",
-        "note": "Source folder hierarchies are recreated under the vault and existing same-name folders are reused. The option to import everything under one new folder is shown but does nothing.",
-        "defects": [
-          {
-            "at": "src/dialogs/ImportWizardDialog.vue:125",
-            "what": "The 'Import everything under one new folder' switch sets underOneFolder, but commit() takes no argument and never reads it, so the choice is silently ignored.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
+        "note": "Source folder hierarchies are recreated under the vault and existing same-name folders are reused. The option to import everything under one new folder passes rootFolder to the import store (src/dialogs/ImportWizardDialog.vue:605, src/store/modules/import.js:386).",
         "change": "openspec/changes/archive/2026-06-14-secret-import",
         "spec": "openspec/specs/secret-import",
         "requirement": "openspec/specs/secret-import :: Folder and Collection Mapping"

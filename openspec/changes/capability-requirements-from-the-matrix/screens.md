@@ -8,3 +8,4 @@
 - KqApplicatie https://identity.conduction.nl/screens/board?id=keepiq/KqApplicatie
 - KqApplicaties https://identity.conduction.nl/screens/board?id=keepiq/KqApplicaties
 - KqBeheerAudit https://identity.conduction.nl/screens/board?id=keepiq/KqBeheerAudit
+- KqNieuwGeheim https://identity.conduction.nl/screens/board?id=keepiq/KqNieuwGeheim (a Secure note variant of the new secret dialog is still to be drawn)
