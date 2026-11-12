@@ -96,14 +96,34 @@ export function writeErrorText(error: VaultWriteError | undefined, mode: Mode): 
 	return text(mode)
 }
 
-/** The question, naming the login's own host where the tab shows another site. */
-export function questionText({ mode, host, tabHost, itemName, username }: CaptureStateReply): string {
-	if (mode === 'add') return i18n.t('notificationBar.saveQuestion', { host })
-	const name = itemName ?? ''
+function updateQuestion(name: string, { host, tabHost, username }: CaptureStateReply): string {
 	if (username) {
 		return tabHost ? i18n.t('notificationBar.updateQuestionUserHost', { name, username, host }) : i18n.t('notificationBar.updateQuestionUser', { name, username })
 	}
 	return tabHost ? i18n.t('notificationBar.updateQuestionHost', { name, host }) : i18n.t('notificationBar.updateQuestion', { name })
+}
+
+/** The question, naming the login's own host where the tab shows another site. */
+export function questionText(reply: CaptureStateReply): string {
+	if (reply.mode === 'add') return i18n.t('notificationBar.saveQuestion', { host: reply.host })
+	return updateQuestion(reply.itemName ?? '', reply)
+}
+
+/** `present` announces the question with the shortcut that answers it. */
+function questionAnnouncement(reply: CaptureStateReply): string {
+	const question = questionText(reply)
+	return reply.shortcut ? `${question} ${i18n.t('notificationBar.shortcutHint', { shortcut: reply.shortcut })}` : question
+}
+
+const savingText = (mode: Mode) => (mode === 'add' ? i18n.t('notificationBar.saving') : i18n.t('notificationBar.updating'))
+
+const isPressKey = (event: KeyboardEvent) => event.key === 'Enter' || event.key === ' '
+
+/** A message from the parent that names a key. */
+type KeyedMessage = Partial<ContentToNotification> & { key: string }
+
+function isKeyed(message: Partial<ContentToNotification> | null): message is KeyedMessage {
+	return typeof message === 'object' && message !== null && typeof message.key === 'string'
 }
 
 export function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Record<string, string>, ...children: Array<Node | string>) {
@@ -190,14 +210,17 @@ export function startNotificationBar(): () => void {
 		}, ANNOUNCE_MS)
 	}
 
+	/** The item row only repeats the question, so it gives way to a question that needs its room. */
+	function makeRoomFor(question: HTMLElement) {
+		if (!item) return
+		bar.classList.remove('bar--long-question')
+		bar.classList.toggle('bar--long-question', question.scrollHeight > question.clientHeight)
+	}
+
 	/** Lets a clipped question or error scroll from the keyboard. */
 	function scrollable() {
 		if (!text || text.classList.contains('bar__saved')) return
-		// The item row only repeats the question, so it gives way to a question that needs its room.
-		if (item) {
-			bar.classList.remove('bar--long-question')
-			bar.classList.toggle('bar--long-question', text.scrollHeight > text.clientHeight)
-		}
+		makeRoomFor(text)
 		if (text.scrollHeight > text.clientHeight) text.tabIndex = 0
 		else if (!text.classList.contains('bar__notice')) text.removeAttribute('tabindex')
 	}
@@ -310,36 +333,53 @@ export function startNotificationBar(): () => void {
 		text.focus()
 	}
 
+	/** A decision is pending or made, or the bar has no key yet. */
+	const unavailable = () => busy || stopped || !key
+
 	/** Before sending: too soon after showing or moving stays silent, as a second press works; hidden, it says why. */
 	function cleared(input: PickInput): boolean {
-		if (busy || stopped || !key || !settled(input)) return false
+		if (unavailable() || !settled(input)) return false
 		if (visibility.allows(input.at)) return true
 		showNotVisible()
 		return false
+	}
+
+	function writeMessage(mode: Mode, input: PickInput): NotificationToBackground {
+		return mode === 'add' ? { kind: 'capture.save', key: key!, folderId: folder?.value || null, input } : { kind: 'capture.update', key: key!, input }
+	}
+
+	/** The item went meanwhile, so the bar offers to save the login as new. */
+	function offerSaveAsNew(message: string) {
+		const hadFocus = bar.contains(document.activeElement)
+		render('add', message)
+		if (hadFocus) primary!.focus()
+		announce(message)
+	}
+
+	function settleWriteError(mode: Mode, writeError: VaultWriteError) {
+		const message = writeErrorText(writeError, mode)
+		if (mode === 'update' && writeError.code === 'not_found') offerSaveAsNew(message)
+		else fail(message)
+	}
+
+	function settleWrite(mode: Mode, reply: unknown) {
+		if (isRefusal(reply)) return showNotVisible()
+		if (!isWriteResult(reply)) return fail(reply === UNREACHABLE ? writeErrorText(undefined, mode) : i18n.t('errors.unknown'))
+		if (reply.ok) return renderSaved(mode)
+		settleWriteError(mode, reply.error)
 	}
 
 	async function decide(target: HTMLButtonElement, mode: Mode, input: PickInput) {
 		if (!cleared(input)) return
 		busy = true
 		target.setAttribute('aria-busy', 'true')
-		slowTimer = setTimeout(() => announce(mode === 'add' ? i18n.t('notificationBar.saving') : i18n.t('notificationBar.updating')), SLOW_MS)
-		const reply = await send(mode === 'add' ? { kind: 'capture.save', key: key!, folderId: folder?.value || null, input } : { kind: 'capture.update', key: key!, input })
+		slowTimer = setTimeout(() => announce(savingText(mode)), SLOW_MS)
+		const reply = await send(writeMessage(mode, input))
 		clearTimeout(slowTimer)
 		if (stopped) return
 		busy = false
 		target.removeAttribute('aria-busy')
-		if (isRefusal(reply)) return showNotVisible()
-		if (!isWriteResult(reply)) return fail(reply === UNREACHABLE ? writeErrorText(undefined, mode) : i18n.t('errors.unknown'))
-		if (reply.ok) return renderSaved(mode)
-		const message = writeErrorText(reply.error, mode)
-		if (mode === 'update' && reply.error.code === 'not_found') {
-			// The item went meanwhile, so the bar offers to save the login as new.
-			const hadFocus = bar.contains(document.activeElement)
-			render('add', message)
-			if (hadFocus) primary!.focus()
-			return announce(message)
-		}
-		fail(message)
+		settleWrite(mode, reply)
 	}
 
 	/** The buttons stay, so the user can try again. */
@@ -350,10 +390,14 @@ export function startNotificationBar(): () => void {
 
 	/** Close and Escape need no guard: the worst a page can make of them is a closed bar. */
 	async function dismiss(never: boolean, input?: PickInput) {
-		if (never ? !cleared(input!) : busy || stopped || !key) return
+		if (never ? !cleared(input!) : unavailable()) return
 		busy = true
 		const reply = await send({ kind: 'capture.dismiss', key: key!, never, ...(input ? { input } : {}) })
-		if (stopped) return
+		if (!stopped) settleDismiss(reply)
+	}
+
+	/** An unreached background lets Close be pressed again; a refusal says why. */
+	function settleDismiss(reply: unknown) {
 		if (reply === UNREACHABLE) busy = false
 		else if (isRefusal(reply)) {
 			busy = false
@@ -398,36 +442,42 @@ export function startNotificationBar(): () => void {
 		state = reply
 		applyTheme(reply.theme)
 		render(reply.mode)
-		const question = questionText(reply)
-		announce(reply.shortcut ? `${question} ${i18n.t('notificationBar.shortcutHint', { shortcut: reply.shortcut })}` : question)
+		announce(questionAnnouncement(reply))
 		if (earlyFocusKey === key) focusFirst()
 		earlyFocusKey = null
+	}
+
+	/** Before a key is accepted, only an init, or a focus to apply once it is. */
+	function onMessageBeforeKey(message: KeyedMessage) {
+		if (message.kind === 'capture.init') void present(message.key)
+		else if (message.kind === 'capture.focus') earlyFocusKey = message.key
+	}
+
+	function onMessageForKey(message: KeyedMessage) {
+		if (message.kind === 'capture.focus') focusFirst()
+		else if (message.kind === 'capture.moved') restartGuard()
 	}
 
 	function onMessage(event: MessageEvent) {
 		if (event.source !== window.parent) return
 		const message = event.data as Partial<ContentToNotification> | null
-		if (typeof message !== 'object' || message === null || typeof message.key !== 'string') return
-		if (key === null) {
-			if (message.kind === 'capture.init') void present(message.key)
-			else if (message.kind === 'capture.focus') earlyFocusKey = message.key
-			return
-		}
-		if (message.key !== key) return
-		if (message.kind === 'capture.focus') focusFirst()
-		else if (message.kind === 'capture.moved') restartGuard()
+		if (!isKeyed(message)) return
+		if (key === null) return onMessageBeforeKey(message)
+		if (message.key === key) onMessageForKey(message)
+	}
+
+	/** After a save too: focus then sits on the message, and the background closes such a bar at once on a dismiss. */
+	function onEscape(event: KeyboardEvent) {
+		if (!state) return
+		event.preventDefault()
+		void dismiss(false)
 	}
 
 	function onKeydown(event: KeyboardEvent) {
-		// After a save too: focus then sits on the message, and the background closes such a bar at once on a dismiss.
-		if (event.key === 'Escape') {
-			if (!state) return
-			event.preventDefault()
-			return void dismiss(false)
-		}
+		if (event.key === 'Escape') return onEscape(event)
 		expand()
 		const act = guarded.get(event.target as HTMLButtonElement)
-		if (!act || (event.key !== 'Enter' && event.key !== ' ')) return
+		if (!act || !isPressKey(event)) return
 		// The keydown is the press, so the button's own click from this key must not act again.
 		event.preventDefault()
 		if (!event.repeat) act(keyInput(event.target as Element))
