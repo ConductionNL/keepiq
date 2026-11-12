@@ -155,6 +155,29 @@ npm install && npm run build
 php occ app:enable keepiq
 ```
 
+### Try it with Docker
+
+The repository builds an evaluation image: the official Nextcloud image with keepiq and OpenRegister installed and enabled. It is meant for trying the app out and for test environments. For production, install the app from the Nextcloud App Store.
+
+```bash
+docker compose -f docker/docker-compose.yml up -d --build
+```
+
+Open http://localhost:8080/apps/keepiq/ and sign in as `admin` with password `admin`. The first start takes a minute or two. Set `NEXTCLOUD_ADMIN_PASSWORD` and `APP_PORT` to change the password and the port; `docker/docker-compose.yml` lists every setting. `docker compose -f docker/docker-compose.yml down -v` removes the stack and its data.
+
+Released versions are published as `ghcr.io/conductionnl/keepiq`, so leaving out `--build` uses the published image.
+
+### Run it on Kubernetes
+
+`charts/keepiq` wraps the official [Nextcloud Helm chart](https://github.com/nextcloud/helm) and runs the same image with PostgreSQL:
+
+```bash
+helm dependency build charts/keepiq
+helm install keepiq charts/keepiq --set nextcloud.nextcloud.host=keepiq.example.org
+```
+
+Change the passwords in `charts/keepiq/values.yaml` before you install it anywhere that matters.
+
 ## Monitoring and preferences endpoints
 
 Keepiq serves these itself, with or without OpenRegister. URLs are relative to `/index.php/apps/keepiq`.
