@@ -1296,7 +1296,7 @@
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: Secure Note",
         "note": "Secure Note is a seeded system type; the create dialog relabels the value field to Note and the detail sidebar shows it as a note. URL and login stay optional.",
         "spec": "openspec/specs/secrets",
-        "requirement": "Create Secret"
+        "requirement": "openspec/specs/secrets :: Create Secret"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1898,7 +1898,7 @@
         "note": "Built 2026-09-30. Tests: PHPUnit SecretTrashServiceTest::testArchiveAndUnarchiveKeepShares, SecretStateFilterTest; vitest secretTrashState.spec.js, detail-route.spec.js.",
         "change": "openspec/changes/archive/2026-09-30-vault-trash-and-archive",
         "spec": "openspec/specs/vault-trash-and-archive",
-        "requirement": "Archiving a secret"
+        "requirement": "openspec/specs/vault-trash-and-archive :: Archiving a secret"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -2545,7 +2545,7 @@
         "note": "There is no recovery code or kit that reopens the existing vault. A user who kept a passphrase-encrypted backup can restore their secrets into a new vault, but only after an administrator force-revokes the old key, and a trusted emergency contact can regain read access after a wait.",
         "change": "openspec/changes/archive/2026-06-14-secret-export-gdpr",
         "spec": "openspec/specs/secret-export",
-        "requirement": "Encrypted Backup Export"
+        "requirement": "openspec/specs/secret-export :: Encrypted Backup Export"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -3675,8 +3675,8 @@
         "readOn": "2026-10-07",
         "spec": "openspec/specs/federated-sharing",
         "requirement": [
-          "Administrators approve and pin partner instances",
-          "Federated shares carry only browser-made ciphertext"
+          "openspec/specs/federated-sharing :: Administrators approve and pin partner instances",
+          "openspec/specs/federated-sharing :: Federated shares carry only browser-made ciphertext"
         ]
       },
       "rowSource": "competitor",
@@ -5281,7 +5281,7 @@
         "note": "Built on feat/apps-secret-sync-and-rotation-runner (stacked on #914). Owed: end-to-end rotation on the dev instance (task 4.3) and the first runner-v* release.",
         "change": "openspec/changes/archive/2026-10-02-apps-secret-sync-and-rotation-runner",
         "spec": "openspec/specs/secret-rotation-runner",
-        "requirement": "Rotation proves the new value before Keepiq records it"
+        "requirement": "openspec/specs/secret-rotation-runner :: Rotation proves the new value before Keepiq records it"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5623,7 +5623,7 @@
           }
         ],
         "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings",
-        "requirement": "openspec/specs/admin-settings :: CA Health Display"
+        "requirement": "openspec/specs/admin-settings :: CA Health Display [MVP]"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6900,10 +6900,7 @@
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Password Policy",
         "note": "Admins set minimum length (12 to 20) and zxcvbn score (3 or 4); the setup and change forms block submit below the floor. Enforcement is client-side by design, since the server never sees the master password.",
         "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings",
-        "requirement": [
-          "openspec/specs/admin-settings :: Master Password Policy",
-          "openspec/specs/encryption-suites :: Master Password Strength"
-        ]
+        "requirement": "openspec/specs/admin-settings :: Master Password Policy [MVP]"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6949,7 +6946,7 @@
           }
         ],
         "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings",
-        "requirement": "openspec/specs/admin-settings :: Application Approval Queue"
+        "requirement": "openspec/specs/admin-settings :: Application Approval Queue [MVP]"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7436,7 +7433,7 @@
         "reachedOn": "Nextcloud admin settings -> Keepiq (version card at the top)",
         "note": "The version card, up-to-date check and re-import button come from the shared admin shell and OpenRegister's AppHost settings class, so keepiq depends on OpenRegister being installed for this page.",
         "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings",
-        "requirement": "openspec/specs/admin-settings :: Version Info Card"
+        "requirement": "openspec/specs/admin-settings :: Version Info Card [MVP]"
       },
       "rowSource": "own",
       "provider": "nextcloud-vue",
@@ -8617,7 +8614,7 @@
         ],
         "change": "openspec/changes/archive/2026-06-14-secret-import",
         "spec": "openspec/specs/secret-import",
-        "requirement": "Folder and Collection Mapping"
+        "requirement": "openspec/specs/secret-import :: Folder and Collection Mapping"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9015,7 +9012,10 @@
         "note": "The extension fills a login from the popup, the inline list in the field, the context menu and the shortcut. Owed: the manual walk in both browsers (unticked live-check boxes in the change's tasks.md); the change is not archived yet.",
         "change": "browser-extension/openspec/changes/ext-autofill",
         "readOn": "2026-10-30",
-        "requirement": "Fill from the popup suggestions section"
+        "requirement": [
+          "openspec/specs/browser-extension-autofill :: URL-matched listing, decrypt-on-demand",
+          "openspec/specs/extension-autofill-extras :: Fill from the context menu and a shortcut"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9054,7 +9054,7 @@
         "note": "Fill reaches the top frame and only those embedded frames whose address matches the login; a frame from another site is not filled. The KqExtensie board does not draw a frame state yet. Owed: the manual walk in both browsers (unticked live-check boxes in the change's tasks.md); the change is not archived yet.",
         "change": "browser-extension/openspec/changes/ext-autofill",
         "readOn": "2026-10-30",
-        "requirement": "Fill covers the top frame and matching subframes only"
+        "requirement": "openspec/specs/extension-fill-and-capture :: A fill reaches only frames on the matched site"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9214,7 +9214,10 @@
         "note": "Every account locks 15 minutes after the last interaction, and on browser restart. The user cannot change the timeout yet (browser-extension/openspec/changes/ext-settings), and the extension does not read the administrator maximum from src/components/settings/ExtensionSection.vue (TIMEOUT_POLICY in browser-extension/src/accounts/settings.ts:35 is unset).",
         "change": "browser-extension/openspec/changes/ext-accounts-and-unlock",
         "readOn": "2026-10-16",
-        "requirement": "Idle timeout enforcement"
+        "requirement": [
+          "openspec/specs/browser-extension-autofill :: Auto-lock",
+          "openspec/specs/browser-extension-autofill :: User-chosen idle lock period with an administrator maximum"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9578,7 +9581,10 @@
         ],
         "change": "browser-extension/openspec/changes/ext-accounts-and-unlock",
         "readOn": "2026-10-16",
-        "requirement": "First-run add account screen"
+        "requirement": [
+          "openspec/specs/browser-extension-autofill :: Pairing against the Nextcloud session",
+          "openspec/specs/extension-pairing :: Requests carry the app password and no cookies"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9670,7 +9676,7 @@
           }
         ],
         "change": "openspec/changes/platform-properties",
-        "requirement": "The look comes from the Nextcloud theme"
+        "requirement": "openspec/changes/platform-properties/specs/platform-properties :: The look comes from the Nextcloud theme"
       },
       "rowSource": "own",
       "provider": "thematiq",
@@ -9753,7 +9759,7 @@
           }
         ],
         "spec": "openspec/specs/dashboard",
-        "requirement": "openspec/specs/dashboard :: Vault Summary Cards"
+        "requirement": "openspec/specs/dashboard :: Vault Summary Cards [MVP]"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9867,7 +9873,10 @@
         "note": "Up to five accounts on one or more servers, each with its own key, lock state, vault snapshot and settings; browsing and copying use the active account. Tests: browser-extension/src/accounts/store.test.ts, browser-extension/entrypoints/popup/views/AccountSwitcher.test.tsx.",
         "change": "browser-extension/openspec/changes/ext-accounts-and-unlock",
         "readOn": "2026-10-16",
-        "requirement": "Account switcher panel"
+        "requirement": [
+          "openspec/specs/extension-account-switching :: Up to five paired accounts in one extension",
+          "openspec/specs/extension-account-switching :: Switching and isolation between accounts"
+        ]
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -9939,7 +9948,7 @@
         "note": "Keepiq ships its own translations and follows the per-user Nextcloud language.",
         "spec": "hydra/openspec/specs/i18n-infrastructure",
         "change": "openspec/changes/platform-properties",
-        "requirement": "The language follows the user's Nextcloud setting"
+        "requirement": "openspec/changes/platform-properties/specs/platform-properties :: The language follows the user's Nextcloud setting"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -10012,8 +10021,8 @@
         "change": "browser-extension/openspec/changes/ext-send",
         "readOn": "2026-10-30",
         "requirement": [
-          "New send form",
-          "Remove a send"
+          "openspec/specs/extension-send :: Create a send from the popup",
+          "openspec/specs/extension-send :: List and end my sends"
         ]
       },
       "rowSource": "own",
@@ -10047,10 +10056,9 @@
         "readOn": "2026-10-30",
         "spec": "browser-extension/openspec/specs/item-editing",
         "requirement": [
-          "Search over name and URL",
-          "Folder selector",
-          "Add item form",
-          "Edit re-fetches before showing the form and saves sparsely"
+          "openspec/specs/extension-vault :: Browse and search the vault",
+          "openspec/specs/extension-vault :: Add, edit and delete items",
+          "openspec/specs/extension-vault :: Manage folders"
         ]
       },
       "rowSource": "own",
@@ -10084,7 +10092,10 @@
         "reachedOn": "Extension popup -> Vault tab while offline (offline banner with the last sync time, browser-extension/entrypoints/popup/views/VaultList.tsx:95)",
         "change": "browser-extension/openspec/changes/ext-vault-browse",
         "readOn": "2026-10-16",
-        "requirement": "Offline reads come from the cache"
+        "requirement": [
+          "openspec/specs/extension-vault-sync :: Keep a snapshot of the vault",
+          "openspec/specs/extension-vault-sync :: Work offline from the snapshot"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
