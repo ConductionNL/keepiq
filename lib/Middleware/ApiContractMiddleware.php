@@ -3,11 +3,11 @@
 /**
  * Keepiq API contract middleware.
  *
- * Applies the NL API Design Rules that hold for every response of the app's
- * JSON API: the `API-Version` header (/core/version-header), RFC 9457 problem
- * details for error responses (/core/error-handling/problem-details) and, on an
- * unversioned path, the announcement of its `/api/v1/` successor
- * (/core/uri-version, /core/deprecation-schedule).
+ * Applies the NL API Design Rules to the app's JSON API: on a versioned
+ * `/api/v1/` path, the `API-Version` header (/core/version-header) and RFC 9457
+ * problem details for error responses (/core/error-handling/problem-details);
+ * on an unversioned path, only the announcement of its `/api/v1/` successor
+ * (/core/uri-version, /core/deprecation-schedule), so its answers are unchanged.
  *
  * @category  Middleware
  * @package   OCA\Keepiq\Middleware
@@ -36,9 +36,10 @@ use OCP\AppFramework\Middleware;
 use OCP\IRequest;
 
 /**
- * Stamps `API-Version` on API responses, marks an unversioned path deprecated
- * in favour of its `/api/v1/` alias, and turns JSON error bodies into problem
- * details. Paths that speak a protocol defined elsewhere
+ * Stamps `API-Version` on versioned API responses and turns their JSON error
+ * bodies into problem details; marks an unversioned path deprecated in favour
+ * of its `/api/v1/` alias and otherwise leaves its answers exactly as before.
+ * Paths that speak a protocol defined elsewhere
  * ({@see StandardProtocolPaths}) are left exactly as they are.
  *
  * An error body keeps every member it already had, so existing callers that
@@ -145,8 +146,17 @@ class ApiContractMiddleware extends Middleware {
 			return $response;
 		}
 
-		$response->addHeader(name: 'API-Version', value: $this->appManager->getAppVersion(appId: Application::APP_ID));
 		$this->announceSuccessor(response: $response);
+
+		// An unversioned path keeps answering exactly as before: its body, its
+		// content type and its other headers are untouched, and the only
+		// addition is the announcement of its successor. The version header
+		// and the problem details shape are part of the /api/v1/ contract.
+		if ($this->isVersionedRequest() === false) {
+			return $response;
+		}
+
+		$response->addHeader(name: 'API-Version', value: $this->appManager->getAppVersion(appId: Application::APP_ID));
 		if ($response instanceof JSONResponse) {
 			$this->decorateError(response: $response);
 		}
@@ -171,6 +181,22 @@ class ApiContractMiddleware extends Middleware {
 
 		return StandardProtocolPaths::matches(path: $path) === false;
 	}//end isApiRequest()
+
+	/**
+	 * Whether the request path lies under the versioned `/api/v1/` prefix.
+	 *
+	 * @return bool True for a request on a versioned API path.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) StandardProtocolPaths is a pure lookup that routes.php shares, outside any container.
+	 *
+	 * @spec openspec/specs/api-contract/spec.md
+	 */
+	private function isVersionedRequest(): bool {
+		$relative = StandardProtocolPaths::appRelative(path: (string) $this->request->getPathInfo());
+
+		return $relative === ApiPathAliases::VERSION_PREFIX
+			|| str_starts_with($relative, ApiPathAliases::VERSION_PREFIX.'/') === true;
+	}//end isVersionedRequest()
 
 	/**
 	 * Add the RFC 9745 `Deprecation` header and a `Link` to the successor on an unversioned path.

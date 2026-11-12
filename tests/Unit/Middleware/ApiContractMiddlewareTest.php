@@ -27,8 +27,9 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
 /**
- * Pins the `API-Version` header, the deprecation of unversioned paths and the
- * problem details shape of API errors.
+ * Pins the `API-Version` header and the problem details shape of versioned API
+ * errors, and that an unversioned path keeps its answers and only announces
+ * its successor.
  *
  * @covers \OCA\Keepiq\Middleware\ApiContractMiddleware
  * @uses   \OCA\Keepiq\Middleware\Support\ApiPathAliases
@@ -61,7 +62,7 @@ class ApiContractMiddlewareTest extends TestCase {
 	 * @return void
 	 */
 	public function testApiResponseCarriesTheVersionHeader(): void {
-		$response = $this->decorate(path: '/apps/keepiq/api/things', response: new JSONResponse(data: ['id' => 1]));
+		$response = $this->decorate(path: '/apps/keepiq/api/v1/things', response: new JSONResponse(data: ['id' => 1]));
 
 		$this->assertSame(expected: '1.2.3', actual: $this->headersOf(response: $response)['API-Version']);
 		$this->assertSame(expected: ['id' => 1], actual: $response->getData());
@@ -90,7 +91,7 @@ class ApiContractMiddlewareTest extends TestCase {
 	 */
 	public function testJsonErrorBecomesProblemDetails(): void {
 		$response = $this->decorate(
-			path: '/apps/keepiq/api/things/7',
+			path: '/apps/keepiq/api/v1/things/7',
 			response: new JSONResponse(data: ['error' => 'Thing not found'], statusCode: 404)
 		);
 
@@ -113,7 +114,7 @@ class ApiContractMiddlewareTest extends TestCase {
 	 */
 	public function testMessageIsUsedAsDetailAndUnknownStatusHasATitle(): void {
 		$response = $this->decorate(
-			path: '/apps/keepiq/api/things',
+			path: '/apps/keepiq/api/v1/things',
 			response: new JSONResponse(data: ['message' => 'Teapot', 'error' => 'ignored'], statusCode: 418)
 		);
 
@@ -130,13 +131,13 @@ class ApiContractMiddlewareTest extends TestCase {
 	 */
 	public function testConflictingOrListBodiesAreLeftAlone(): void {
 		$conflict = $this->decorate(
-			path: '/apps/keepiq/api/things',
+			path: '/apps/keepiq/api/v1/things',
 			response: new JSONResponse(data: ['status' => 'error', 'message' => 'No'], statusCode: 400)
 		);
 		$this->assertSame(expected: ['status' => 'error', 'message' => 'No'], actual: $conflict->getData());
 		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $this->headersOf(response: $conflict)['Content-Type']);
 
-		$list = $this->decorate(path: '/apps/keepiq/api/things', response: new JSONResponse(data: ['a', 'b'], statusCode: 400));
+		$list = $this->decorate(path: '/apps/keepiq/api/v1/things', response: new JSONResponse(data: ['a', 'b'], statusCode: 400));
 		$this->assertSame(expected: ['a', 'b'], actual: $list->getData());
 	}//end testConflictingOrListBodiesAreLeftAlone()
 
@@ -147,10 +148,10 @@ class ApiContractMiddlewareTest extends TestCase {
 	 */
 	public function testExistingProblemAndEmptyBodies(): void {
 		$problem = ['type' => 'about:blank', 'title' => 'Forbidden', 'status' => 403, 'detail' => 'No access'];
-		$kept    = $this->decorate(path: '/apps/keepiq/api/things', response: new JSONResponse(data: $problem, statusCode: 403));
+		$kept    = $this->decorate(path: '/apps/keepiq/api/v1/things', response: new JSONResponse(data: $problem, statusCode: 403));
 		$this->assertSame(expected: $problem, actual: $kept->getData());
 
-		$empty = $this->decorate(path: '/apps/keepiq/api/things', response: new JSONResponse(data: [], statusCode: 500));
+		$empty = $this->decorate(path: '/apps/keepiq/api/v1/things', response: new JSONResponse(data: [], statusCode: 500));
 		$this->assertSame(expected: ['type' => 'about:blank', 'title' => 'Internal Server Error', 'status' => 500], actual: $empty->getData());
 	}//end testExistingProblemAndEmptyBodies()
 
@@ -160,7 +161,7 @@ class ApiContractMiddlewareTest extends TestCase {
 	 * @return void
 	 */
 	public function testNonJsonErrorOnlyGetsTheHeader(): void {
-		$response = $this->decorate(path: '/apps/keepiq/api/files', response: new DataDisplayResponse(data: 'gone', statusCode: 410));
+		$response = $this->decorate(path: '/apps/keepiq/api/v1/files', response: new DataDisplayResponse(data: 'gone', statusCode: 410));
 
 		$this->assertSame(expected: '1.2.3', actual: $this->headersOf(response: $response)['API-Version']);
 		$this->assertSame(expected: 'gone', actual: $response->getData());
@@ -179,6 +180,25 @@ class ApiContractMiddlewareTest extends TestCase {
 		$this->assertSame(expected: '@1794441600', actual: $headers['Deprecation']);
 		$this->assertSame(expected: '</index.php/apps/keepiq/api/v1/things/7/parts>; rel="successor-version"', actual: $headers['Link']);
 	}//end testUnversionedPathAnnouncesItsSuccessor()
+
+	/**
+	 * An error on an unversioned path keeps its body, its content type and
+	 * gets no version header: only the successor is announced.
+	 *
+	 * @return void
+	 */
+	public function testUnversionedErrorKeepsItsAnswer(): void {
+		$response = $this->decorate(
+			path: '/apps/keepiq/api/things/7',
+			response: new JSONResponse(data: ['error' => 'Thing not found', 'code' => 'x'], statusCode: 404)
+		);
+		$headers  = $this->headersOf(response: $response);
+
+		$this->assertSame(expected: ['error' => 'Thing not found', 'code' => 'x'], actual: $response->getData());
+		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $headers['Content-Type']);
+		$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
+		$this->assertSame(expected: '@1794441600', actual: $headers['Deprecation']);
+	}//end testUnversionedErrorKeepsItsAnswer()
 
 	/**
 	 * A versioned API path is not deprecated, and still carries the version.
