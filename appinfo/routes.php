@@ -17,6 +17,8 @@ declare(strict_types=1);
  */
 
 $extra = [
+    // The OpenAPI document of keepiq's own API, public, served under /api/v1/ too.
+    ['name' => 'openApi#show', 'url' => '/api/openapi.json', 'verb' => 'GET'],
     // Dashboard summary (domain aggregator — DashboardController::summary()).
     ['name' => 'dashboard#summary', 'url' => '/api/dashboard/summary', 'verb' => 'GET'],
 
@@ -538,7 +540,8 @@ $extra = [
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
 ];
 
-return [
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\Keepiq\Middleware\Support\ApiPathAliases::withVersionedAliases([
     'routes' => array_merge(
         [
             ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
@@ -563,4 +566,4 @@ return [
             ],
         ]
     ),
-];
+]);
