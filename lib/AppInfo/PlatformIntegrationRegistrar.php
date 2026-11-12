@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
+use OCA\Keepiq\Middleware\ApiVersionMiddleware;
 use OCA\Keepiq\Middleware\JwtAuthMiddleware;
 use OCA\Keepiq\Middleware\OcsRefusalMiddleware;
 use OCA\Keepiq\Middleware\ShareScanPendingMiddleware;
@@ -83,6 +84,10 @@ final class PlatformIntegrationRegistrar {
 		// A request that reaches a share row the pending share quarantine scan
 		// cannot judge answers 409 share_scan_pending on every route.
 		$context->registerMiddleware(ShareScanPendingMiddleware::class);
+
+		// Every API response names the Keepiq version that answered it
+		// (NL API Design Rules /core/version-header).
+		$context->registerMiddleware(ApiVersionMiddleware::class);
 
 		// The admin overview warns while the share quarantine scan is pending.
 		$context->registerSetupCheck(ShareQuarantineScanPending::class);
