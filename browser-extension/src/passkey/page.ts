@@ -97,6 +97,18 @@ const getOptions = (o: PublicKeyCredentialRequestOptions): PasskeyGetOptions => 
 })
 
 /** Whether an earlier copy of this script replaced any of the methods it replaces. */
+/** The page's options as the relay reads them, by kind. */
+function ceremonyOf(kind: Kind, publicKey: PublicKeyCredentialCreationOptions | PublicKeyCredentialRequestOptions) {
+	return kind === 'create'
+		? { kind, options: createOptions(publicKey as PublicKeyCredentialCreationOptions) }
+		: { kind, options: getOptions(publicKey as PublicKeyCredentialRequestOptions) }
+}
+
+type PageCeremony = ReturnType<typeof ceremonyOf>
+
+const isConditionalGet = (ceremony: PageCeremony, mediation: string | undefined): ceremony is Extract<PageCeremony, { kind: 'get' }> =>
+	ceremony.kind === 'get' && mediation === 'conditional'
+
 function installedBefore(container: CredentialsContainer, Credential: NonNullable<PageScope['PublicKeyCredential']>): boolean {
 	const methods: unknown[] = [container.create, container.get, Credential.isUserVerifyingPlatformAuthenticatorAvailable, Credential.isConditionalMediationAvailable]
 	return methods.some((method) => typeof method === 'function' && Object.hasOwn(method, INSTALLED))
@@ -164,21 +176,39 @@ function focusWait({ focusFirst = import.meta.env.BROWSER === 'safari', scope, l
 	}
 }
 
-/** `focusFirst`: see {@link FocusWait}. */
-export function installPasskeyPage(scope: PageScope = globalThis as unknown as PageScope, focusFirst?: boolean): void {
+/** The page's WebAuthn API, unless the browser has none or a copy of this script already replaced it. */
+function pageCredentials(scope: PageScope) {
 	const container = scope.navigator?.credentials
 	const Credential = scope.PublicKeyCredential
-	if (!container || !Credential || installedBefore(container, Credential)) return
-	const { MessageChannel, AbortController, DOMException } = scope
-	// Read from the prototype, as the page may set a signal's own members; they throw for anything but a real AbortSignal.
-	// On Firefox a page script that ran before this one may have replaced them, which only harms that page's own calls.
+	if (!container || !Credential || installedBefore(container, Credential)) return null
+	return { container, Credential }
+}
+
+/**
+ * Read from the prototype, as the page may set a signal's own members; they throw for anything but a real AbortSignal.
+ * On Firefox a page script that ran before this one may have replaced them, which only harms that page's own calls.
+ */
+function signalGetters(scope: PageScope) {
 	const isAborted = Object.getOwnPropertyDescriptor(scope.AbortSignal.prototype, 'aborted')?.get
 	const reasonOf = Object.getOwnPropertyDescriptor(scope.AbortSignal.prototype, 'reason')?.get
+	return isAborted && reasonOf ? { isAborted, reasonOf } : null
+}
+
+/** A relay error the page may see: one whose name WebAuthn knows. */
+const isRelayError = (r: RelayToPage | null): r is Extract<RelayToPage, { type: 'error' }> => r?.type === 'error' && Object.hasOwn(MESSAGES, r.name)
+
+/** `focusFirst`: see {@link FocusWait}. */
+export function installPasskeyPage(scope: PageScope = globalThis as unknown as PageScope, focusFirst?: boolean): void {
+	const api = pageCredentials(scope)
+	if (!api) return
+	const { container, Credential } = api
+	const { MessageChannel, AbortController, DOMException } = scope
+	const getters = signalGetters(scope)
 	const listen = scope.EventTarget.prototype.addEventListener as Listener
 	const unlisten = scope.EventTarget.prototype.removeEventListener as Listener
-	if (!isAborted || !reasonOf) return
-	const aborted = (signal: unknown) => isAborted.call(signal) as boolean
-	const reason = (signal: AbortSignal): unknown => reasonOf.call(signal)
+	if (!getters) return
+	const aborted = (signal: unknown) => getters.isAborted.call(signal) as boolean
+	const reason = (signal: AbortSignal): unknown => getters.reasonOf.call(signal)
 	const post = scope.postMessage.bind(scope)
 	const setTimer = scope.setTimeout.bind(scope)
 	const clearTimer = scope.clearTimeout.bind(scope)
@@ -259,13 +289,16 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 	}
 
 	/** The relay's answer as the page receives it; null for anything unexpected, or a throw, which goes to the browser. */
+	/** The page's own abort reason for an `AbortError` on an aborted signal, else the error the relay named. */
+	function rejection(name: keyof typeof MESSAGES, signal: AbortSignal | undefined): Promise<never> {
+		return Promise.reject(name === 'AbortError' && signal && aborted(signal) ? reason(signal) : new DOMException(MESSAGES[name], name))
+	}
+
 	function outcome(kind: Kind, reply: unknown, signal: AbortSignal | undefined): Promise<unknown> | null {
 		try {
 			const r = reply as RelayToPage | null
 			if (r?.type === 'credential') return Promise.resolve(credential(kind, r.credential))
-			if (r?.type === 'error' && Object.hasOwn(MESSAGES, r.name)) {
-				return Promise.reject(r.name === 'AbortError' && signal && aborted(signal) ? reason(signal) : new DOMException(MESSAGES[r.name], r.name))
-			}
+			if (isRelayError(r)) return rejection(r.name, signal)
 		} catch {
 			// Falls back.
 		}
@@ -355,24 +388,29 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 					else browserFailed = { error }
 				},
 			)
+			/** Keepiq's answer settles the call when it is a credential or an error the page may see. */
+			const settledByKeepiq = (reply: unknown): boolean => {
+				const r = reply as RelayToPage | null
+				if (r?.type === 'credential') {
+					const result = credential('get', r.credential)
+					finish(() => {
+						controller.abort()
+						resolve(result)
+					})
+					return true
+				}
+				if (!isRelayError(r)) return false
+				const error = new DOMException(MESSAGES[r.name], r.name)
+				finish(() => {
+					controller.abort()
+					reject(error)
+				})
+				return true
+			}
 			void call.answer.then((reply) => {
 				if (done) return
 				try {
-					const r = reply as RelayToPage | null
-					if (r?.type === 'credential') {
-						const result = credential('get', r.credential)
-						return finish(() => {
-							controller.abort()
-							resolve(result)
-						})
-					}
-					if (r?.type === 'error' && Object.hasOwn(MESSAGES, r.name)) {
-						const error = new DOMException(MESSAGES[r.name], r.name)
-						return finish(() => {
-							controller.abort()
-							reject(error)
-						})
-					}
+					if (settledByKeepiq(reply)) return
 				} catch {
 					// The browser's own request decides alone.
 				}
@@ -382,21 +420,21 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 		})
 	}
 
+	/** Before any ceremony starts: `aborted` throws for anything but a real AbortSignal, which goes to the browser. */
+	const alreadyAborted = (signal: AbortSignal | undefined) => signal !== undefined && aborted(signal)
+
 	function replacement(kind: Kind, method: Method) {
 		return function (this: unknown, ...args: unknown[]): Promise<unknown> {
 			try {
 				const options = args[0] as (CredentialCreationOptions & CredentialRequestOptions) | undefined
 				if (!options?.publicKey) return method.apply(this, args)
 				const fallback = () => method.apply(this, args)
-				const ceremony = kind === 'create'
-					? { kind, options: createOptions(options.publicKey as PublicKeyCredentialCreationOptions) }
-					: { kind, options: getOptions(options.publicKey as PublicKeyCredentialRequestOptions) }
+				const ceremony = ceremonyOf(kind, options.publicKey)
 				const mediation = maybe(options.mediation as string | undefined, String)
 				const signal = options.signal as AbortSignal | undefined
-				// Before any ceremony starts: `aborted` throws for anything but a real AbortSignal, which the catch hands to
-				// the browser; an aborted one the browser rejects with the page's own reason.
-				if (signal !== undefined && aborted(signal)) return fallback()
-				if (ceremony.kind === 'get' && mediation === 'conditional') {
+				// An aborted signal the browser rejects with the page's own reason.
+				if (alreadyAborted(signal)) return fallback()
+				if (isConditionalGet(ceremony, mediation)) {
 					// The browser reads inherited members too, which a spread would drop.
 					const withSignal = (own: AbortSignal) => Object.create(options, { signal: { value: own, enumerable: true } }) as unknown
 					return conditional(ceremony.options, signal, (own) => method.call(this, withSignal(own)))
@@ -418,6 +456,10 @@ export function installPasskeyPage(scope: PageScope = globalThis as unknown as P
 		}
 	}
 
-	for (const kind of ['create', 'get'] as const) replaceMethod(container, kind, (method) => replacement(kind, method))
-	for (const name of ['isUserVerifyingPlatformAuthenticatorAvailable', 'isConditionalMediationAvailable'] as const) replaceMethod(Credential, name, availability)
+	function replaceMethods() {
+		for (const kind of ['create', 'get'] as const) replaceMethod(container, kind, (method) => replacement(kind, method))
+		for (const name of ['isUserVerifyingPlatformAuthenticatorAvailable', 'isConditionalMediationAvailable'] as const) replaceMethod(Credential, name, availability)
+	}
+
+	replaceMethods()
 }

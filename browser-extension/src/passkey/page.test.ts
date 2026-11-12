@@ -359,6 +359,33 @@ describe('page script', () => {
 			expect(posted[0]!.port.other.posted).toContainEqual({ kind: 'abort', id: '1' })
 		})
 
+		it('rejects with Keepiq’s named error and aborts the browser’s own request', async () => {
+			browserGet.mockImplementation((options) => new Promise((_, reject) => {
+				const signal = (options as { signal: AbortSignal }).signal
+				signal.addEventListener('abort', () => reject(signal.reason))
+			}))
+			const call = credentials.get(conditional())
+			await flush()
+			ack(posted[0]!)
+			answer(posted[0]!, { type: 'error', name: 'NotAllowedError' })
+			const result = await state(call)
+			expect((result as { error: DOMException }).error.name).toBe('NotAllowedError')
+			expect((browserGet.mock.calls[0]![0] as { signal: AbortSignal }).signal.aborted).toBe(true)
+		})
+
+		it('rejects with the browser’s error once Keepiq fell back, whichever came first', async () => {
+			let fail!: (error: unknown) => void
+			browserGet.mockImplementation(() => new Promise((_, reject) => (fail = reject)))
+			const call = credentials.get(conditional())
+			await flush()
+			fail(new Error('browser said no'))
+			await flush()
+			expect(await state(call)).toBe('pending')
+			answer(posted[0]!, { type: 'error', name: 'NoSuchError' } as never)
+			const result = await state(call)
+			expect((result as { error: Error }).error.message).toBe('browser said no')
+		})
+
 		it('leaves the browser’s own request alone after a fallback', async () => {
 			let pick!: (value: unknown) => void
 			browserGet.mockImplementation(() => new Promise((resolve) => (pick = resolve)))
