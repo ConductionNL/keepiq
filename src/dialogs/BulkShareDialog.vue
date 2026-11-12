@@ -68,8 +68,8 @@ import { NcButton, NcDialog } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
 import RecipientPicker from '../components/share/RecipientPicker.vue'
 import ShareRestrictionFields from '../components/share/ShareRestrictionFields.vue'
+import bulkRunDialog from '../mixins/bulkRunDialog.js'
 import { copyCiphertext, recipientFields } from '../services/recipientCopy.js'
-import { useBulkStore } from '../store/modules/bulk.js'
 import { useKeyProofPromptStore } from '../store/modules/keyProofPrompt.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useShareStore } from '../store/modules/share.js'
@@ -85,12 +85,7 @@ export default {
 		ShareRestrictionFields,
 	},
 
-	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
-	},
+	mixins: [bulkRunDialog],
 
 	emits: ['close', 'done'],
 	data() {
@@ -100,8 +95,6 @@ export default {
 			/** Use-only and end date for every share of this run. */
 			restriction: { useOnly: false, endDate: '' },
 			error: null,
-			/** Whether a run was started FROM THIS DIALOG (the store's report outlives it). */
-			ran: false,
 			/**
 			 * The master password for this run's vault-key proofs (keepiq#818):
 			 * asked once before the fan-out, cleared when the run ends.
@@ -112,23 +105,6 @@ export default {
 
 	computed: {
 		/**
-		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
-		 */
-		bulk() {
-			return useBulkStore()
-		},
-
-		/**
-		 * Whether the dialog has switched from asking to reporting.
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
-		 */
-		finished() {
-			return this.ran && !this.bulk.progress.running
-		},
-
-		/**
 		 * The dialog title: a command while it asks, an outcome once it
 		 * reports — counted off the report, never off the selection, which
 		 * the host's post-run reload empties.
@@ -138,10 +114,7 @@ export default {
 		 */
 		title() {
 			if (this.finished) {
-				return this.t('keepiq', 'Shared {ok} of {total} secrets', {
-					ok: this.bulk.report.filter((r) => r.status === 'ok').length,
-					total: this.bulk.report.length,
-				})
+				return this.t('keepiq', 'Shared {ok} of {total} secrets', this.reportCounts)
 			}
 			return this.t('keepiq', 'Share {count} secrets', {
 				count: this.bulk.selectionCount,
@@ -160,25 +133,33 @@ export default {
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		async shareOne(secretId) {
-			const secretStore = useSecretStore()
-			const shareStore = useShareStore()
-
 			// fetchSecret decrypts with the session CryptoKey and returns
 			// the PLAINTEXT secret — plaintext stays in this browser tab.
-			const plain = await secretStore.fetchSecret(secretId)
+			const plain = await useSecretStore().fetchSecret(secretId)
 			if (isUseOnly(plain) || plain?.accessExpiresAt) {
 				// A use-only or time-limited copy is never shared onward; the
 				// server refuses it too (sharing-use-only-and-expiring-shares D4).
 				return { status: 'skipped', reason: 'restricted' }
 			}
-			const snapshot = recipientFields(plain)
+			return this.shareOutcome(await this.registerCopy(secretId, plain))
+		},
+
+		/**
+		 * Encrypt the plaintext for the recipient and register the copy.
+		 * register-batch needs a vault-key proof per request (keepiq#818): the
+		 * password is asked once for the run and kept only for it.
+		 *
+		 * @param {string} secretId The secret id.
+		 * @param {object} plain The decrypted secret.
+		 * @return {Promise<object|undefined>} The registration's item.
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
+		async registerCopy(secretId, plain) {
+			const shareStore = useShareStore()
 			const blob = await shareStore.encryptForRecipient(
-				snapshot,
+				recipientFields(plain),
 				this.certificate,
 			)
-
-			// register-batch needs a vault-key proof per request (keepiq#818).
-			// The password is asked once for the run and kept only for it.
 			const { items, masterPassword } = await shareStore.registerBatch(
 				[
 					{
@@ -191,7 +172,19 @@ export default {
 				{ masterPassword: this.runPassword },
 			)
 			this.runPassword = masterPassword
-			const item = items[0]
+			return items[0]
+		},
+
+		/**
+		 * The report entry for a registration: created or existing is done,
+		 * a copy without the source's one-time code or passkeys is skipped
+		 * with the reason in words, anything else is skipped with its status.
+		 *
+		 * @param {object|undefined} item The registration's item.
+		 * @return {object} The per-item outcome.
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
+		 */
+		shareOutcome(item) {
 			if (item?.status === 'created' || item?.status === 'exists') {
 				return {
 					status: 'ok',
@@ -219,20 +212,7 @@ export default {
 		 */
 		async onRun() {
 			this.error = null
-			try {
-				const response = await axios.get(
-					generateUrl('/apps/keepiq/api/v1/shares/recipient-certificate'),
-					{ params: { userId: this.targetUserId } },
-				)
-				this.certificate = response.data?.certificate ?? ''
-			} catch (e) {
-				this.error =
-					e?.response?.status === 404
-						? this.t(
-								'keepiq',
-								'Recipient has no active encryption suite',
-							)
-						: e?.response?.data?.message || e?.message
+			if (!(await this.resolveCertificate())) {
 				return
 			}
 
@@ -254,6 +234,32 @@ export default {
 				this.runPassword = ''
 			}
 			this.$emit('done')
+		},
+
+		/**
+		 * Fetch the recipient's certificate; on failure show why.
+		 *
+		 * @return {Promise<boolean>} Whether the certificate resolved.
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
+		async resolveCertificate() {
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/shares/recipient-certificate'),
+					{ params: { userId: this.targetUserId } },
+				)
+				this.certificate = response.data?.certificate ?? ''
+				return true
+			} catch (e) {
+				this.error =
+					e?.response?.status === 404
+						? this.t(
+								'keepiq',
+								'Recipient has no active encryption suite',
+							)
+						: e?.response?.data?.message || e?.message
+				return false
+			}
 		},
 
 		/**

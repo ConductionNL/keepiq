@@ -39,17 +39,30 @@ function unlockedSession() {
 }
 
 /**
- * Fetch the enrolment challenge and decode it to bytes.
+ * Decode a server challenge to bytes.
  *
- * @return {Promise<ArrayBuffer>}
+ * @param {string} value base64url (base64 is accepted too).
+ * @return {Uint8Array}
+ */
+function challengeBytes(value) {
+	return fromBase64Url(value.replace(/\+/g, '-').replace(/\//g, '_'))
+}
+
+/**
+ * Fetch the enrolment challenge pair, which the server keeps for this one
+ * enrolment: `challenge` for create(), `assertionChallenge` for the get()
+ * that proves the new passkey holds its key.
+ *
+ * @return {Promise<{challenge: Uint8Array, assertionChallenge: Uint8Array}>}
  */
 async function enrolmentChallenge() {
 	const response = await axios.get(
 		generateUrl('/apps/keepiq/api/v1/passkeys/challenge'),
 	)
-	return fromBase64Url(
-		response.data.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
-	)
+	return {
+		challenge: challengeBytes(response.data.challenge),
+		assertionChallenge: challengeBytes(response.data.assertionChallenge),
+	}
 }
 
 /**
@@ -99,6 +112,7 @@ function creationOptions(label, ceremony) {
 				displayName: label || 'Keepiq vault',
 			},
 			challenge: ceremony.challenge,
+			attestation: 'none',
 			pubKeyCredParams: [
 				{ type: 'public-key', alg: -7 },
 				{ type: 'public-key', alg: -257 },
@@ -141,10 +155,11 @@ async function createPrfPasskey(options) {
 
 /**
  * Draw a fresh 32-byte PRF salt and ask the new passkey for its PRF output.
+ * The assertion is also sent to the server as proof of possession.
  *
  * @param {object} created The created credential.
- * @param {ArrayBuffer} challenge The enrolment challenge.
- * @return {Promise<{prfSaltBytes: Uint8Array, prfOutput: ArrayBuffer}>}
+ * @param {Uint8Array} challenge The enrolment assertion challenge.
+ * @return {Promise<{prfSaltBytes: Uint8Array, prfOutput: ArrayBuffer, assertion: object}>}
  */
 async function prfOutputOf(created, challenge) {
 	const prfSaltBytes = crypto.getRandomValues(new Uint8Array(32))
@@ -161,7 +176,57 @@ async function prfOutputOf(created, challenge) {
 	if (!prfOutput) {
 		throw new Error('Your authenticator did not return a PRF result.')
 	}
-	return { prfSaltBytes, prfOutput }
+	return { prfSaltBytes, prfOutput, assertion }
+}
+
+/**
+ * base64url of an optional buffer.
+ *
+ * @param {ArrayBuffer|null|undefined} buffer The bytes.
+ * @return {string|null}
+ */
+function optionalBase64Url(buffer) {
+	return buffer ? toBase64Url(buffer) : null
+}
+
+/**
+ * The create() credential as the JSON the server verifies.
+ *
+ * @param {object} created The created credential.
+ * @return {object}
+ */
+function attestationJson(created) {
+	const id = toBase64Url(created.rawId)
+	return {
+		id,
+		rawId: id,
+		type: 'public-key',
+		response: {
+			clientDataJSON: optionalBase64Url(created.response?.clientDataJSON),
+			attestationObject: optionalBase64Url(created.response?.attestationObject),
+		},
+	}
+}
+
+/**
+ * A get() credential as the JSON the server verifies.
+ *
+ * @param {object} assertion The get() credential.
+ * @return {object}
+ */
+function assertionJson(assertion) {
+	const id = optionalBase64Url(assertion.rawId)
+	return {
+		id,
+		rawId: id,
+		type: 'public-key',
+		response: {
+			clientDataJSON: optionalBase64Url(assertion.response?.clientDataJSON),
+			authenticatorData: optionalBase64Url(assertion.response?.authenticatorData),
+			signature: optionalBase64Url(assertion.response?.signature),
+			userHandle: optionalBase64Url(assertion.response?.userHandle),
+		},
+	}
 }
 
 /**
@@ -180,11 +245,11 @@ async function wrapUnlockKeyForPasskey(masterPassword, passkey) {
 }
 
 /**
- * The enrolment request body: the wrapped envelope, never the raw key or the
- * PRF output.
+ * The enrolment request body: the wrapped envelope and the two ceremony
+ * responses the server verifies, never the raw key or the PRF output.
  *
- * @param {object} enrolment The label, created credential, credentialId,
- *  prfSaltBytes and wrappedUnlockKey.
+ * @param {object} enrolment The label, created credential, proof assertion,
+ *  credentialId, prfSaltBytes and wrappedUnlockKey.
  * @return {object}
  */
 function enrolmentBody(enrolment) {
@@ -192,11 +257,80 @@ function enrolmentBody(enrolment) {
 		credentialId: enrolment.credentialId,
 		wrappedUnlockKey: enrolment.wrappedUnlockKey,
 		prfSalt: btoa(String.fromCharCode(...enrolment.prfSaltBytes)),
-		publicKey: '',
+		attestation: attestationJson(enrolment.created),
+		assertion: assertionJson(enrolment.assertion),
 		label: enrolment.label || 'Passkey',
 		transports: (enrolment.created.response?.getTransports?.() || []).join(','),
-		aaguid: '',
 	}
+}
+
+/**
+ * The login options of the user's unlock passkeys: their ids and PRF salts
+ * and the server's unlock challenge, never an envelope. At least one must be
+ * enrolled.
+ *
+ * @return {Promise<{challenge: string, credentials: Array<object>}>}
+ * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+ */
+async function passkeyLoginOptions() {
+	const optResp = await axios.get(
+		generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
+	)
+	const options = optResp.data
+	if (!options.credentials?.length) {
+		throw new Error('No passkey enrolled for unlock')
+	}
+	return options
+}
+
+/**
+ * The WebAuthn request for an unlock: every enrolled passkey, each with its
+ * own PRF salt. Every enrolment drew its own salt, and the authenticator
+ * picks which passkey answers, so each credential gets its salt through
+ * evalByCredential, keyed by its base64url id; a single `eval` salt only fits
+ * the first passkey (keepiq#744).
+ *
+ * @param {{challenge: string, credentials: Array<object>}} options The login options.
+ * @return {object} The `publicKey` request.
+ * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+ */
+function passkeyRequest(options) {
+	const challenge = fromBase64Url(
+		options.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
+	)
+	const allowCredentials = options.credentials.map((c) => ({
+		type: 'public-key',
+		id: fromBase64Url(c.credentialId),
+	}))
+	const evalByCredential = {}
+	for (const credential of options.credentials) {
+		evalByCredential[toBase64Url(fromBase64Url(credential.credentialId))] = {
+			first: Uint8Array.from(atob(credential.prfSalt), (ch) => ch.charCodeAt(0)),
+		}
+	}
+	return {
+		challenge,
+		rpId: RP_ID,
+		allowCredentials,
+		userVerification: 'preferred',
+		extensions: { prf: { evalByCredential } },
+	}
+}
+
+/**
+ * Send the unlock assertion to the server, which verifies it and only then
+ * returns the answering credential's wrapped envelope.
+ *
+ * @param {object} assertion The get() credential.
+ * @return {Promise<{id: string, credentialId: string, wrappedUnlockKey: string}>}
+ * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+ */
+async function verifiedEnvelope(assertion) {
+	const response = await axios.post(
+		generateUrl('/apps/keepiq/api/v1/passkeys/unlock'),
+		{ assertion: assertionJson(assertion) },
+	)
+	return response.data
 }
 
 export const usePasskeyStore = defineStore('passkey', {
@@ -268,14 +402,17 @@ export const usePasskeyStore = defineStore('passkey', {
 		async enroll(masterPassword, label) {
 			this.error = null
 			const session = unlockedSession()
-			const challenge = await enrolmentChallenge()
+			const { challenge, assertionChallenge } = await enrolmentChallenge()
 			const userId = userHandle()
 			const excludeCredentials = await activePasskeyExclusions()
 			const created = await createPrfPasskey(
 				creationOptions(label, { challenge, userId, excludeCredentials }),
 			)
 			const credentialId = toBase64Url(created.rawId)
-			const { prfSaltBytes, prfOutput } = await prfOutputOf(created, challenge)
+			const { prfSaltBytes, prfOutput, assertion } = await prfOutputOf(
+				created,
+				assertionChallenge,
+			)
 			const wrappedUnlockKey = await wrapUnlockKeyForPasskey(masterPassword, {
 				envelope: session.encryptedPrivateKey,
 				prfOutput,
@@ -287,6 +424,7 @@ export const usePasskeyStore = defineStore('passkey', {
 				enrolmentBody({
 					label,
 					created,
+					assertion,
 					credentialId,
 					prfSaltBytes,
 					wrappedUnlockKey,
@@ -298,7 +436,8 @@ export const usePasskeyStore = defineStore('passkey', {
 
 		/**
 		 * Unlock the vault with a passkey (no master password). Runs
-		 * login-options → get() with the stored salt → PRF output → KEK →
+		 * login-options → get() with the stored salt → the server verifies
+		 * the assertion and returns the envelope → PRF output → KEK →
 		 * unwrap the raw unlock key → hand it to the session unlock path.
 		 *
 		 * @return {Promise<boolean>} Whether the unlock succeeded.
@@ -306,64 +445,22 @@ export const usePasskeyStore = defineStore('passkey', {
 		 */
 		async unlockWithPasskey() {
 			this.error = null
-			const optResp = await axios.get(
-				generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
-			)
-			const options = optResp.data
-			if (!options.credentials?.length) {
-				throw new Error('No passkey enrolled for unlock')
-			}
-
-			const challenge = fromBase64Url(
-				options.challenge.replace(/\+/g, '-').replace(/\//g, '_'),
-			)
-			const allowCredentials = options.credentials.map((c) => ({
-				type: 'public-key',
-				id: fromBase64Url(c.credentialId),
-			}))
-			// Every enrolment drew its own PRF salt, and the authenticator
-			// picks which passkey answers. So each credential gets its own salt
-			// through evalByCredential, keyed by its base64url id; a single
-			// `eval` salt only fits the first passkey (keepiq#744).
-			const saltOf = (credential) =>
-				Uint8Array.from(atob(credential.prfSalt), (ch) => ch.charCodeAt(0))
-			const evalByCredential = {}
-			for (const credential of options.credentials) {
-				evalByCredential[
-					toBase64Url(fromBase64Url(credential.credentialId))
-				] = { first: saltOf(credential) }
-			}
-
+			const options = await passkeyLoginOptions()
 			const assertion = await navigator.credentials.get({
-				publicKey: {
-					challenge,
-					rpId: RP_ID,
-					allowCredentials,
-					userVerification: 'preferred',
-					extensions: { prf: { evalByCredential } },
-				},
+				publicKey: passkeyRequest(options),
 			})
-			const usedId = toBase64Url(assertion.rawId)
-			const cred =
-				options.credentials.find(
-					(c) => toBase64Url(fromBase64Url(c.credentialId)) === usedId,
-				) || options.credentials[0]
 			const prfOutput =
 				assertion.getClientExtensionResults()?.prf?.results?.first
 			if (!prfOutput) {
 				throw new Error('Passkey unlock failed — no PRF result')
 			}
 
+			const cred = await verifiedEnvelope(assertion)
 			const kek = await deriveKekFromPrf(prfOutput, cred.credentialId)
 			const rawUnlockKey = await unwrapUnlockKey(kek, cred.wrappedUnlockKey)
 
 			const session = useSessionStore()
 			await session.unlockWithRawKey(rawUnlockKey)
-
-			// Best-effort last-used stamp.
-			axios
-				.post(generateUrl(`/apps/keepiq/api/v1/passkeys/${cred.id}/used`))
-				.catch(() => {})
 			return true
 		},
 

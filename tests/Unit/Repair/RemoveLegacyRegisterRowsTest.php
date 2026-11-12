@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Repair;
 
+use OCA\Keepiq\Repair\LegacyRegisterPlanner;
 use OCA\Keepiq\Repair\RemoveLegacyRegisterRows;
 use OCP\DB\IResult;
 use OCP\DB\QueryBuilder\IExpressionBuilder;
@@ -44,8 +45,67 @@ use RuntimeException;
  *
  * @covers \OCA\Keepiq\Repair\RemoveLegacyRegisterRows
  * @covers \OCA\Keepiq\Repair\LegacyRegisterPlanner
+ * @uses   \OCA\Keepiq\Repair\LegacyRegisterSweep
+ * @uses   \OCA\Keepiq\Repair\StoredIdList
  */
 final class RemoveLegacyRegisterRowsTest extends TestCase {
+	/**
+	 * The plan testPlansAMixedInstanceExactly expects.
+	 *
+	 * @var array<string,array>
+	 */
+	private const MIXED_PLAN = [
+		'schemas'        => [
+			66 => ['id' => '66', 'slug' => 'example', 'application' => 'keepiq', 'tables' => ['openregister_table_20_66']],
+		],
+		'registers'      => [
+			31 => ['slug' => 'orphan', 'application' => 'keepiq', 'list' => [99], 'ids' => [99]],
+		],
+		'rewrites'       => [
+			20 => [67, 'x'],
+			40 => [70],
+		],
+		'configurations' => [
+			16 => ['id' => '16', 'app' => 'keepiq', 'registers' => '[31]', 'schemas' => '[66]'],
+		],
+		'dropTables'     => ['openregister_table_20_66', 'openregister_table_31_99'],
+	];
+
+	/**
+	 * The warnings testPlansAMixedInstanceExactly expects, as [message, context].
+	 *
+	 * @var array<int,array{0:string,1:array<string,mixed>}>
+	 */
+	private const MIXED_WARNINGS = [
+		[
+			'RemoveLegacyRegisterRows: schema "{slug}" ({id}) still holds {count} row(s); kept.',
+			['slug' => 'held', 'id' => 67, 'count' => 4],
+		],
+		[
+			'RemoveLegacyRegisterRows: register "{slug}" ({id}) still holds {count} row(s); kept.',
+			['slug' => 'keepiq', 'id' => 30, 'count' => 2],
+		],
+	];
+
+	/**
+	 * The statements testPlansAMixedInstanceExactly expects, in order.
+	 *
+	 * @var string[]
+	 */
+	private const MIXED_READS = [
+		'select catalogue',
+		'select openregister_schemas',
+		'select openregister_table_20_66',
+		'select openregister_table_20_67',
+		'select openregister_registers',
+		'select openregister_schemas',
+		'select openregister_table_30_77',
+		'select openregister_schemas',
+		'select openregister_table_31_99',
+		'select openregister_configurations',
+		'select openregister_schemas',
+		'select openregister_schemas',
+	];
 	/**
 	 * Registers, id => [slug, application, schemas as stored].
 	 *
@@ -428,6 +488,37 @@ final class RemoveLegacyRegisterRowsTest extends TestCase {
 	}//end testNeverThrows()
 
 	/**
+	 * The plan for a mixed instance, its warnings and the statements it read,
+	 * pinned exactly: held schemas and registers are kept with a warning,
+	 * registers are rewritten, an empty register whose list names only a
+	 * missing schema goes with its table, and a configuration pointing only
+	 * at removed rows is stale.
+	 *
+	 * @return void
+	 */
+	public function testPlansAMixedInstanceExactly(): void {
+		$this->seedDevInstance();
+		$this->schemas[67] = ['slug' => 'held', 'application' => 'keepiq'];
+		$this->registers[20]['schemas'] = [66, 67, 'x'];
+		$this->registers[31] = ['slug' => 'orphan', 'application' => 'keepiq', 'schemas' => [99]];
+		$this->registers[40]['schemas'] = [70, '66'];
+		$this->configurations[16] = ['app' => 'keepiq', 'registers' => [31], 'schemas' => [66]];
+		$this->dataTables += ['openregister_table_20_67' => 4, 'openregister_table_30_77' => 2, 'openregister_table_31_99' => 0];
+		$warnings = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(function (string $message, array $context = []) use (&$warnings): void {
+			$warnings[] = [$message, $context];
+		});
+		$planner = new LegacyRegisterPlanner($this->db(), $this->config(), $logger);
+
+		$plan = $planner->plan($planner->dataTables());
+
+		self::assertSame(self::MIXED_PLAN, $plan);
+		self::assertSame(self::MIXED_WARNINGS, $warnings);
+		self::assertSame(self::MIXED_READS, $this->touched);
+	}//end testPlansAMixedInstanceExactly()
+
+	/**
 	 * A config reporting the `oc_` table prefix.
 	 *
 	 * @return IConfig
@@ -448,6 +539,15 @@ final class RemoveLegacyRegisterRowsTest extends TestCase {
 	 * @return RemoveLegacyRegisterRows
 	 */
 	private function step(?LoggerInterface $logger = null): RemoveLegacyRegisterRows {
+		return new RemoveLegacyRegisterRows($this->db(), $this->config(), $logger ?? $this->createMock(LoggerInterface::class));
+	}//end step()
+
+	/**
+	 * A database connection over the in-memory tables.
+	 *
+	 * @return IDBConnection
+	 */
+	private function db(): IDBConnection {
 		$db = $this->createMock(IDBConnection::class);
 		$db->method('getDatabaseProvider')->willReturnCallback(fn (): string => $this->provider);
 		$db->method('tableExists')->willReturnCallback(
@@ -486,8 +586,8 @@ final class RemoveLegacyRegisterRowsTest extends TestCase {
 		});
 		$db->method('getQueryBuilder')->willReturnCallback(fn (): IQueryBuilder => $this->queryBuilder());
 
-		return new RemoveLegacyRegisterRows($db, $this->config(), $logger ?? $this->createMock(LoggerInterface::class));
-	}//end step()
+		return $db;
+	}//end db()
 
 	/**
 	 * A query builder that records its table, filter columns and parameters

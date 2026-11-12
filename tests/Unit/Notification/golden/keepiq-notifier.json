@@ -1,0 +1,4444 @@
+{
+    "app_pending camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "an application",
+                []
+            ],
+            [
+                "t",
+                "an external party",
+                []
+            ],
+            [
+                "t",
+                "New application pending approval",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[New application pending approval][]"
+            ],
+            [
+                "t",
+                "Application \"%1$s\" was registered by %2$s and is awaiting approval.",
+                [
+                    "[an application][]",
+                    "[an external party][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Application \"%1$s\" was registered by %2$s and is awaiting approval.][\"[an application][]\",\"[an external party][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "app_pending empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "an application",
+                []
+            ],
+            [
+                "t",
+                "an external party",
+                []
+            ],
+            [
+                "t",
+                "New application pending approval",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[New application pending approval][]"
+            ],
+            [
+                "t",
+                "Application \"%1$s\" was registered by %2$s and is awaiting approval.",
+                [
+                    "[an application][]",
+                    "[an external party][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Application \"%1$s\" was registered by %2$s and is awaiting approval.][\"[an application][]\",\"[an external party][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "app_pending full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "New application pending approval",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[New application pending approval][]"
+            ],
+            [
+                "t",
+                "Application \"%1$s\" was registered by %2$s and is awaiting approval.",
+                [
+                    "Deployer",
+                    "grace"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Application \"%1$s\" was registered by %2$s and is awaiting approval.][\"Deployer\",\"grace\"]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "ca_root_expiring camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Root certificate expiring soon",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Root certificate expiring soon][]"
+            ],
+            [
+                "t",
+                "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.",
+                [
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.][0]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "ca_root_expiring empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Root certificate expiring soon",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Root certificate expiring soon][]"
+            ],
+            [
+                "t",
+                "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.",
+                [
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.][0]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "ca_root_expiring full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Root certificate expiring soon",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Root certificate expiring soon][]"
+            ],
+            [
+                "t",
+                "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.",
+                [
+                    5
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.][5]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "certificate_expiring camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Vault certificate expiring soon",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Vault certificate expiring soon][]"
+            ],
+            [
+                "t",
+                "Your vault encryption certificate expires in %1$d day(s). Re-issue it from the certificate inventory before it expires.",
+                [
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your vault encryption certificate expires in %1$d day(s). Re-issue it from the certificate inventory before it expires.][0]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "certificate_expiring empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Vault certificate expiring soon",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Vault certificate expiring soon][]"
+            ],
+            [
+                "t",
+                "Your vault encryption certificate expires in %1$d day(s). Re-issue it from the certificate inventory before it expires.",
+                [
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your vault encryption certificate expires in %1$d day(s). Re-issue it from the certificate inventory before it expires.][0]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "certificate_expiring full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Vault certificate expiring soon",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Vault certificate expiring soon][]"
+            ],
+            [
+                "t",
+                "Your vault encryption certificate expires in %1$d day(s). Re-issue it from the certificate inventory before it expires.",
+                [
+                    5
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your vault encryption certificate expires in %1$d day(s). Re-issue it from the certificate inventory before it expires.][5]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "device_approval_requested camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "A device",
+                []
+            ],
+            [
+                "t",
+                "A new device asks to open your vault",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A new device asks to open your vault][]"
+            ],
+            [
+                "t",
+                "%s asks to be approved. Only approve a device you are using right now.",
+                [
+                    "[A device][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s asks to be approved. Only approve a device you are using right now.][\"[A device][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "device_approval_requested empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "A device",
+                []
+            ],
+            [
+                "t",
+                "A new device asks to open your vault",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A new device asks to open your vault][]"
+            ],
+            [
+                "t",
+                "%s asks to be approved. Only approve a device you are using right now.",
+                [
+                    "[A device][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s asks to be approved. Only approve a device you are using right now.][\"[A device][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "device_approval_requested full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "A new device asks to open your vault",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A new device asks to open your vault][]"
+            ],
+            [
+                "t",
+                "%s asks to be approved. Only approve a device you are using right now.",
+                [
+                    "Laptop"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s asks to be approved. Only approve a device you are using right now.][\"Laptop\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_access_accessed camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Emergency access used",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency access used][]"
+            ],
+            [
+                "t",
+                "%s accessed your vault through emergency access.",
+                [
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s accessed your vault through emergency access.][\"\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_access_accessed empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a trusted contact",
+                []
+            ],
+            [
+                "t",
+                "Emergency access used",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency access used][]"
+            ],
+            [
+                "t",
+                "%s accessed your vault through emergency access.",
+                [
+                    "[a trusted contact][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s accessed your vault through emergency access.][\"[a trusted contact][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_access_accessed full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Emergency access used",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency access used][]"
+            ],
+            [
+                "t",
+                "%s accessed your vault through emergency access.",
+                [
+                    "Heidi"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s accessed your vault through emergency access.][\"Heidi\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_access_cleared camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Emergency access removed",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency access removed][]"
+            ],
+            [
+                "t",
+                "An administrator revoked your vault key and deleted %d emergency contact(s). Add them again once your vault is set up.",
+                [
+                    1
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[An administrator revoked your vault key and deleted %d emergency contact(s). Add them again once your vault is set up.][1]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_access_cleared empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Emergency access removed",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency access removed][]"
+            ],
+            [
+                "t",
+                "An administrator revoked your vault key and deleted %d emergency contact(s). Add them again once your vault is set up.",
+                [
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[An administrator revoked your vault key and deleted %d emergency contact(s). Add them again once your vault is set up.][0]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_access_cleared full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Emergency access removed",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency access removed][]"
+            ],
+            [
+                "t",
+                "An administrator revoked your vault key and deleted %d emergency contact(s). Add them again once your vault is set up.",
+                [
+                    3
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[An administrator revoked your vault key and deleted %d emergency contact(s). Add them again once your vault is set up.][3]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_access_requested camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Emergency access requested",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency access requested][]"
+            ],
+            [
+                "t",
+                "%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.",
+                [
+                    "",
+                    7
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.][\"\",7]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_access_requested empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a trusted contact",
+                []
+            ],
+            [
+                "t",
+                "Emergency access requested",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency access requested][]"
+            ],
+            [
+                "t",
+                "%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.",
+                [
+                    "[a trusted contact][]",
+                    7
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.][\"[a trusted contact][]\",7]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_access_requested full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Emergency access requested",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency access requested][]"
+            ],
+            [
+                "t",
+                "%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.",
+                [
+                    "Heidi",
+                    7
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.][\"Heidi\",7]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_grantee_compromised camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Emergency contact compromised",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency contact compromised][]"
+            ],
+            [
+                "t",
+                "%s had approved emergency access to your vault. Their encryption key was revoked as compromised, so start a key rotation.",
+                [
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s had approved emergency access to your vault. Their encryption key was revoked as compromised, so start a key rotation.][\"\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_grantee_compromised empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a trusted contact",
+                []
+            ],
+            [
+                "t",
+                "Emergency contact compromised",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency contact compromised][]"
+            ],
+            [
+                "t",
+                "%s had approved emergency access to your vault. Their encryption key was revoked as compromised, so start a key rotation.",
+                [
+                    "[a trusted contact][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s had approved emergency access to your vault. Their encryption key was revoked as compromised, so start a key rotation.][\"[a trusted contact][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "emergency_grantee_compromised full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Emergency contact compromised",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Emergency contact compromised][]"
+            ],
+            [
+                "t",
+                "%s had approved emergency access to your vault. Their encryption key was revoked as compromised, so start a key rotation.",
+                [
+                    "Heidi"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s had approved emergency access to your vault. Their encryption key was revoked as compromised, so start a key rotation.][\"Heidi\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "federated_share_received camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "A secret from another organisation",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A secret from another organisation][]"
+            ],
+            [
+                "t",
+                "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.",
+                [
+                    "[a user][]",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.][\"[a user][]\",\"[a secret][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/incoming"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "federated_share_received empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "A secret from another organisation",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A secret from another organisation][]"
+            ],
+            [
+                "t",
+                "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.",
+                [
+                    "[a user][]",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.][\"[a user][]\",\"[a secret][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/incoming"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "federated_share_received full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "A secret from another organisation",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A secret from another organisation][]"
+            ],
+            [
+                "t",
+                "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.",
+                [
+                    "bob",
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.][\"bob\",\"Bank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/incoming"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "group_member_added camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Group member added",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Group member added][]"
+            ],
+            [
+                "t",
+                "A new member joined the group \"%1$s\" — approve to share \"%2$s\".",
+                [
+                    "ops",
+                    "Mail"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[A new member joined the group \"%1$s\" — approve to share \"%2$s\".][\"ops\",\"Mail\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-2"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "createAction"
+            ],
+            [
+                "action.setLabel",
+                "approve"
+            ],
+            [
+                "t",
+                "Approve",
+                []
+            ],
+            [
+                "action.setParsedLabel",
+                "[Approve][]"
+            ],
+            [
+                "action.setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/approvals/group-member?groupShareId=gs-2&newMemberId=erin&secretId=secret-2",
+                "WEB"
+            ],
+            [
+                "action.setPrimary",
+                true
+            ],
+            [
+                "addParsedAction"
+            ],
+            [
+                "createAction"
+            ],
+            [
+                "action.setLabel",
+                "deny"
+            ],
+            [
+                "t",
+                "Deny",
+                []
+            ],
+            [
+                "action.setParsedLabel",
+                "[Deny][]"
+            ],
+            [
+                "action.setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/api/v1/group-shares/gs-2/deny-new-member?newMemberId=erin",
+                "POST"
+            ],
+            [
+                "action.setPrimary",
+                false
+            ],
+            [
+                "addParsedAction"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "group_member_added empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Group member added",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Group member added][]"
+            ],
+            [
+                "t",
+                "A new member joined the group \"%1$s\" — approve to share \"%2$s\".",
+                [
+                    "",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[A new member joined the group \"%1$s\" — approve to share \"%2$s\".][\"\",\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "group_member_added full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Group member added",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Group member added][]"
+            ],
+            [
+                "t",
+                "A new member joined the group \"%1$s\" — approve to share \"%2$s\".",
+                [
+                    "team",
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[A new member joined the group \"%1$s\" — approve to share \"%2$s\".][\"team\",\"Bank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "createAction"
+            ],
+            [
+                "action.setLabel",
+                "approve"
+            ],
+            [
+                "t",
+                "Approve",
+                []
+            ],
+            [
+                "action.setParsedLabel",
+                "[Approve][]"
+            ],
+            [
+                "action.setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/approvals/group-member?groupShareId=gs-1&newMemberId=erin&secretId=secret-1",
+                "WEB"
+            ],
+            [
+                "action.setPrimary",
+                true
+            ],
+            [
+                "addParsedAction"
+            ],
+            [
+                "createAction"
+            ],
+            [
+                "action.setLabel",
+                "deny"
+            ],
+            [
+                "t",
+                "Deny",
+                []
+            ],
+            [
+                "action.setParsedLabel",
+                "[Deny][]"
+            ],
+            [
+                "action.setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/api/v1/group-shares/gs-1/deny-new-member?newMemberId=erin",
+                "POST"
+            ],
+            [
+                "action.setPrimary",
+                false
+            ],
+            [
+                "addParsedAction"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "group_member_gained_write camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "A group member can now change your secret",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A group member can now change your secret][]"
+            ],
+            [
+                "t",
+                "%1$s joined the group \"%2$s\" and can now change \"%3$s\" for everyone it is shared with. Revoke their share to stop this.",
+                [
+                    "erin",
+                    "ops",
+                    "Mail"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s joined the group \"%2$s\" and can now change \"%3$s\" for everyone it is shared with. Revoke their share to stop this.][\"erin\",\"ops\",\"Mail\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-2"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "group_member_gained_write empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "A group member can now change your secret",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A group member can now change your secret][]"
+            ],
+            [
+                "t",
+                "%1$s joined the group \"%2$s\" and can now change \"%3$s\" for everyone it is shared with. Revoke their share to stop this.",
+                [
+                    "[a user][]",
+                    "",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s joined the group \"%2$s\" and can now change \"%3$s\" for everyone it is shared with. Revoke their share to stop this.][\"[a user][]\",\"\",\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "group_member_gained_write full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "A group member can now change your secret",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[A group member can now change your secret][]"
+            ],
+            [
+                "t",
+                "%1$s joined the group \"%2$s\" and can now change \"%3$s\" for everyone it is shared with. Revoke their share to stop this.",
+                [
+                    "erin",
+                    "team",
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s joined the group \"%2$s\" and can now change \"%3$s\" for everyone it is shared with. Revoke their share to stop this.][\"erin\",\"team\",\"Bank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "honey_access camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "unknown channel",
+                []
+            ],
+            [
+                "t",
+                "an unknown accessor",
+                []
+            ],
+            [
+                "t",
+                "Honey credential accessed",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Honey credential accessed][]"
+            ],
+            [
+                "t",
+                "A decoy secret was accessed by %1$s via %2$s. Review the honey alerts now — this may indicate a compromise.",
+                [
+                    "[an unknown accessor][]",
+                    "[unknown channel][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[A decoy secret was accessed by %1$s via %2$s. Review the honey alerts now — this may indicate a compromise.][\"[an unknown accessor][]\",\"[unknown channel][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "honey_access empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "unknown channel",
+                []
+            ],
+            [
+                "t",
+                "an unknown accessor",
+                []
+            ],
+            [
+                "t",
+                "Honey credential accessed",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Honey credential accessed][]"
+            ],
+            [
+                "t",
+                "A decoy secret was accessed by %1$s via %2$s. Review the honey alerts now — this may indicate a compromise.",
+                [
+                    "[an unknown accessor][]",
+                    "[unknown channel][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[A decoy secret was accessed by %1$s via %2$s. Review the honey alerts now — this may indicate a compromise.][\"[an unknown accessor][]\",\"[unknown channel][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "honey_access full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Honey credential accessed",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Honey credential accessed][]"
+            ],
+            [
+                "t",
+                "A decoy secret was accessed by %1$s via %2$s. Review the honey alerts now — this may indicate a compromise.",
+                [
+                    "mallory",
+                    "api"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[A decoy secret was accessed by %1$s via %2$s. Review the honey alerts now — this may indicate a compromise.][\"mallory\",\"api\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_declined camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Your account recovery request was declined][]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_declined empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Your account recovery request was declined][]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_declined full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "ivan"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Your account recovery request was declined][]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_officer_named camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[You are now an account recovery officer][]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_officer_named empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[You are now an account recovery officer][]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_officer_named full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "ivan"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[You are now an account recovery officer][]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_ready camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Your account recovery is ready. Open Keepiq in the browser you asked from.][]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_ready empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Your account recovery is ready. Open Keepiq in the browser you asked from.][]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_ready full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "ivan"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Your account recovery is ready. Open Keepiq in the browser you asked from.][]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_requested camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[%s asks to recover their account. Compare the words with them before you approve.][\"[A user][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_requested empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[%s asks to recover their account. Compare the words with them before you approve.][\"[A user][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "recovery_requested full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "ivan"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[%s asks to recover their account. Compare the words with them before you approve.][\"ivan\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "request_fulfilled camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Secret request fulfilled",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret request fulfilled][]"
+            ],
+            [
+                "t",
+                "Your request for \"%s\" has been filled in.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your request for \"%s\" has been filled in.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "request_fulfilled empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Secret request fulfilled",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret request fulfilled][]"
+            ],
+            [
+                "t",
+                "Your request for \"%s\" has been filled in.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your request for \"%s\" has been filled in.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "request_fulfilled full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Secret request fulfilled",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret request fulfilled][]"
+            ],
+            [
+                "t",
+                "Your request for \"%s\" has been filled in.",
+                [
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your request for \"%s\" has been filled in.][\"Bank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_compromised camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Secret may be compromised",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret may be compromised][]"
+            ],
+            [
+                "t",
+                "Your secret \"%s\" may be compromised and requires migration.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your secret \"%s\" may be compromised and requires migration.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_compromised empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Secret may be compromised",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret may be compromised][]"
+            ],
+            [
+                "t",
+                "Your secret \"%s\" may be compromised and requires migration.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your secret \"%s\" may be compromised and requires migration.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_compromised full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Secret may be compromised",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret may be compromised][]"
+            ],
+            [
+                "t",
+                "Your secret \"%s\" may be compromised and requires migration.",
+                [
+                    "Bank"
+                ]
+            ],
+            [
+                "t",
+                "Your secret \"%1$s\" and %2$d other secret(s) may be compromised and require migration.",
+                [
+                    "Bank",
+                    2
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your secret \"%1$s\" and %2$d other secret(s) may be compromised and require migration.][\"Bank\",2]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_expiring camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Secret expiring soon",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret expiring soon][]"
+            ],
+            [
+                "t",
+                "Your secret \"%1$s\" expires in %2$d day(s). Rotate it before then.",
+                [
+                    "[a secret][]",
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your secret \"%1$s\" expires in %2$d day(s). Rotate it before then.][\"[a secret][]\",0]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_expiring empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Secret expiring soon",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret expiring soon][]"
+            ],
+            [
+                "t",
+                "Your secret \"%1$s\" expires in %2$d day(s). Rotate it before then.",
+                [
+                    "[a secret][]",
+                    0
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your secret \"%1$s\" expires in %2$d day(s). Rotate it before then.][\"[a secret][]\",0]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_expiring full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Secret expiring soon",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret expiring soon][]"
+            ],
+            [
+                "t",
+                "Your secret \"%1$s\" expires in %2$d day(s). Rotate it before then.",
+                [
+                    "Bank",
+                    5
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your secret \"%1$s\" expires in %2$d day(s). Rotate it before then.][\"Bank\",5]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_rotation_due camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Secret rotation due",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret rotation due][]"
+            ],
+            [
+                "t",
+                "Your secret \"%s\" is past its expiry and has been flagged for rotation.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your secret \"%s\" is past its expiry and has been flagged for rotation.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_rotation_due empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Secret rotation due",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret rotation due][]"
+            ],
+            [
+                "t",
+                "Your secret \"%s\" is past its expiry and has been flagged for rotation.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your secret \"%s\" is past its expiry and has been flagged for rotation.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_rotation_due full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Secret rotation due",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret rotation due][]"
+            ],
+            [
+                "t",
+                "Your secret \"%s\" is past its expiry and has been flagged for rotation.",
+                [
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your secret \"%s\" is past its expiry and has been flagged for rotation.][\"Bank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_shared camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "Secret shared with you",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret shared with you][]"
+            ],
+            [
+                "t",
+                "%1$s shared the secret \"%2$s\" with you.",
+                [
+                    "[a user][]",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s shared the secret \"%2$s\" with you.][\"[a user][]\",\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_shared empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "Secret shared with you",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret shared with you][]"
+            ],
+            [
+                "t",
+                "%1$s shared the secret \"%2$s\" with you.",
+                [
+                    "[a user][]",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s shared the secret \"%2$s\" with you.][\"[a user][]\",\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "secret_shared full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Secret shared with you",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Secret shared with you][]"
+            ],
+            [
+                "t",
+                "%1$s shared the secret \"%2$s\" with you.",
+                [
+                    "bob",
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s shared the secret \"%2$s\" with you.][\"bob\",\"Bank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_access_ended camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Your access to \"%s\" has ended",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access to \"%s\" has ended][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_access_ended empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Your access to \"%s\" has ended",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access to \"%s\" has ended][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_access_ended full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "ivan"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "t",
+                "Your access to \"%s\" has ended",
+                [
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access to \"%s\" has ended][\"Bank\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_access_ended_owner camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "%1$s no longer has access to \"%2$s\"",
+                [
+                    "[a user][]",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[%1$s no longer has access to \"%2$s\"][\"[a user][]\",\"[a secret][]\"]"
+            ],
+            [
+                "t",
+                "%1$s could see this password. Rotate it if %1$s should no longer know it.",
+                [
+                    "[a user][]"
+                ]
+            ],
+            [
+                "t",
+                "%s could not view this password in Keepiq.",
+                [
+                    "[a user][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s could not view this password in Keepiq.][\"[a user][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_access_ended_owner empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "%1$s no longer has access to \"%2$s\"",
+                [
+                    "[a user][]",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[%1$s no longer has access to \"%2$s\"][\"[a user][]\",\"[a secret][]\"]"
+            ],
+            [
+                "t",
+                "%1$s could see this password. Rotate it if %1$s should no longer know it.",
+                [
+                    "[a user][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s could see this password. Rotate it if %1$s should no longer know it.][\"[a user][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_access_ended_owner full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "ivan"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "t",
+                "%1$s no longer has access to \"%2$s\"",
+                [
+                    "frank",
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[%1$s no longer has access to \"%2$s\"][\"frank\",\"Bank\"]"
+            ],
+            [
+                "t",
+                "%1$s could see this password. Rotate it if %1$s should no longer know it.",
+                [
+                    "frank"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s could see this password. Rotate it if %1$s should no longer know it.][\"frank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_access_ending camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Your access to \"%s\" ends tomorrow",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access to \"%s\" ends tomorrow][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_access_ending empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "A user",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "[A user][]"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Your access to \"%s\" ends tomorrow",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access to \"%s\" ends tomorrow][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_access_ending full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "You are now an account recovery officer",
+                []
+            ],
+            [
+                "t",
+                "%s asks to recover their account. Compare the words with them before you approve.",
+                [
+                    "ivan"
+                ]
+            ],
+            [
+                "t",
+                "Your account recovery request was declined",
+                []
+            ],
+            [
+                "t",
+                "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+                []
+            ],
+            [
+                "t",
+                "Your access to \"%s\" ends tomorrow",
+                [
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access to \"%s\" ends tomorrow][\"Bank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_request camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Share request",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Share request][]"
+            ],
+            [
+                "t",
+                "%1$s requested access to the secret \"%2$s\".",
+                [
+                    "carol",
+                    "Mail"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s requested access to the secret \"%2$s\".][\"carol\",\"Mail\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-2"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "createAction"
+            ],
+            [
+                "action.setLabel",
+                "approve"
+            ],
+            [
+                "t",
+                "Approve",
+                []
+            ],
+            [
+                "action.setParsedLabel",
+                "[Approve][]"
+            ],
+            [
+                "action.setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/approvals/share-request?sourceSecretId=secret-2&requesterId=carol&targetUserId=carol",
+                "WEB"
+            ],
+            [
+                "action.setPrimary",
+                true
+            ],
+            [
+                "addParsedAction"
+            ],
+            [
+                "createAction"
+            ],
+            [
+                "action.setLabel",
+                "deny"
+            ],
+            [
+                "t",
+                "Deny",
+                []
+            ],
+            [
+                "action.setParsedLabel",
+                "[Deny][]"
+            ],
+            [
+                "action.setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/api/v1/share-requests/deny?sourceSecretId=secret-2&requesterId=carol&targetUserId=carol",
+                "POST"
+            ],
+            [
+                "action.setPrimary",
+                false
+            ],
+            [
+                "addParsedAction"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_request empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Share request",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Share request][]"
+            ],
+            [
+                "t",
+                "%1$s requested access to the secret \"%2$s\".",
+                [
+                    "[a user][]",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s requested access to the secret \"%2$s\".][\"[a user][]\",\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_request full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Share request",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Share request][]"
+            ],
+            [
+                "t",
+                "%1$s requested access to the secret \"%2$s\".",
+                [
+                    "carol",
+                    "Bank"
+                ]
+            ],
+            [
+                "t",
+                "%1$s asks you to share the secret \"%2$s\" with %3$s.",
+                [
+                    "carol",
+                    "Bank",
+                    "dave"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s asks you to share the secret \"%2$s\" with %3$s.][\"carol\",\"Bank\",\"dave\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "createAction"
+            ],
+            [
+                "action.setLabel",
+                "approve"
+            ],
+            [
+                "t",
+                "Approve",
+                []
+            ],
+            [
+                "action.setParsedLabel",
+                "[Approve][]"
+            ],
+            [
+                "action.setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/approvals/share-request?sourceSecretId=secret-1&requesterId=carol&targetUserId=dave",
+                "WEB"
+            ],
+            [
+                "action.setPrimary",
+                true
+            ],
+            [
+                "addParsedAction"
+            ],
+            [
+                "createAction"
+            ],
+            [
+                "action.setLabel",
+                "deny"
+            ],
+            [
+                "t",
+                "Deny",
+                []
+            ],
+            [
+                "action.setParsedLabel",
+                "[Deny][]"
+            ],
+            [
+                "action.setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/api/v1/share-requests/deny?sourceSecretId=secret-1&requesterId=carol&targetUserId=dave",
+                "POST"
+            ],
+            [
+                "action.setPrimary",
+                false
+            ],
+            [
+                "addParsedAction"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_request_result camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Share request result",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Share request result][]"
+            ],
+            [
+                "t",
+                "Your share request for \"%s\" was denied.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "t",
+                "Your share request for \"%s\" was approved.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your share request for \"%s\" was approved.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_request_result empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Share request result",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Share request result][]"
+            ],
+            [
+                "t",
+                "Your share request for \"%s\" was denied.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your share request for \"%s\" was denied.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "share_request_result full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Share request result",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Share request result][]"
+            ],
+            [
+                "t",
+                "Your share request for \"%s\" was denied.",
+                [
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Your share request for \"%s\" was denied.][\"Bank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "shared_secret_compromised camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Shared secret may be compromised",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Shared secret may be compromised][]"
+            ],
+            [
+                "t",
+                "The secret \"%s\" shared with you may be compromised. Change it where it is used.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[The secret \"%s\" shared with you may be compromised. Change it where it is used.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "shared_secret_compromised empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Shared secret may be compromised",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Shared secret may be compromised][]"
+            ],
+            [
+                "t",
+                "The secret \"%s\" shared with you may be compromised. Change it where it is used.",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[The secret \"%s\" shared with you may be compromised. Change it where it is used.][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "shared_secret_compromised full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Shared secret may be compromised",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Shared secret may be compromised][]"
+            ],
+            [
+                "t",
+                "The secret \"%s\" shared with you may be compromised. Change it where it is used.",
+                [
+                    "Bank"
+                ]
+            ],
+            [
+                "t",
+                "The secret \"%1$s\" and %2$d other secret(s) shared with you may be compromised. Change them where they are used.",
+                [
+                    "Bank",
+                    2
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[The secret \"%1$s\" and %2$d other secret(s) shared with you may be compromised. Change them where they are used.][\"Bank\",2]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "siem_dead_letter camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a SIEM sink",
+                []
+            ],
+            [
+                "t",
+                "SIEM delivery failing",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[SIEM delivery failing][]"
+            ],
+            [
+                "t",
+                "Audit events for SIEM sink \"%1$s\" could not be delivered and were dead-lettered. Check the sink configuration.",
+                [
+                    "[a SIEM sink][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Audit events for SIEM sink \"%1$s\" could not be delivered and were dead-lettered. Check the sink configuration.][\"[a SIEM sink][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "siem_dead_letter empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a SIEM sink",
+                []
+            ],
+            [
+                "t",
+                "SIEM delivery failing",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[SIEM delivery failing][]"
+            ],
+            [
+                "t",
+                "Audit events for SIEM sink \"%1$s\" could not be delivered and were dead-lettered. Check the sink configuration.",
+                [
+                    "[a SIEM sink][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Audit events for SIEM sink \"%1$s\" could not be delivered and were dead-lettered. Check the sink configuration.][\"[a SIEM sink][]\"]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "siem_dead_letter full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "SIEM delivery failing",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[SIEM delivery failing][]"
+            ],
+            [
+                "t",
+                "Audit events for SIEM sink \"%1$s\" could not be delivered and were dead-lettered. Check the sink configuration.",
+                [
+                    "Splunk"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[Audit events for SIEM sink \"%1$s\" could not be delivered and were dead-lettered. Check the sink configuration.][\"Splunk\"]"
+            ],
+            [
+                "linkToRoute",
+                "settings.AdminSettings.index",
+                {
+                    "section": "keepiq"
+                }
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/settings.AdminSettings.index/"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "team_folder_join_request camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Team folder join request",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Team folder join request][]"
+            ],
+            [
+                "t",
+                "%1$s joined the group \"%2$s\" — approve to share your team folder with them.",
+                [
+                    "erin",
+                    "ops"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s joined the group \"%2$s\" — approve to share your team folder with them.][\"erin\",\"ops\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "team_folder_join_request empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "Team folder join request",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Team folder join request][]"
+            ],
+            [
+                "t",
+                "%1$s joined the group \"%2$s\" — approve to share your team folder with them.",
+                [
+                    "[a user][]",
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s joined the group \"%2$s\" — approve to share your team folder with them.][\"[a user][]\",\"\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "team_folder_join_request full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "Team folder join request",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Team folder join request][]"
+            ],
+            [
+                "t",
+                "%1$s joined the group \"%2$s\" — approve to share your team folder with them.",
+                [
+                    "[a user][]",
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s joined the group \"%2$s\" — approve to share your team folder with them.][\"[a user][]\",\"\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "team_folder_member_confirmed camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a member",
+                []
+            ],
+            [
+                "t",
+                "New team folder members confirmed",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[New team folder members confirmed][]"
+            ],
+            [
+                "t",
+                "%1$s gave %2$s access to your team folder.",
+                [
+                    "[a member][]",
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s gave %2$s access to your team folder.][\"[a member][]\",\"\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "team_folder_member_confirmed empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a member",
+                []
+            ],
+            [
+                "t",
+                "New team folder members confirmed",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[New team folder members confirmed][]"
+            ],
+            [
+                "t",
+                "%1$s gave %2$s access to your team folder.",
+                [
+                    "[a member][]",
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s gave %2$s access to your team folder.][\"[a member][]\",\"\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "team_folder_member_confirmed full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "New team folder members confirmed",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[New team folder members confirmed][]"
+            ],
+            [
+                "t",
+                "%1$s gave %2$s access to your team folder.",
+                [
+                    "judy",
+                    "kim, lee"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%1$s gave %2$s access to your team folder.][\"judy\",\"kim, lee\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "team_folder_shared camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Team folder shared with you",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Team folder shared with you][]"
+            ],
+            [
+                "t",
+                "%s shared a team folder with you. Its secrets are now in your vault.",
+                [
+                    "bob"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s shared a team folder with you. Its secrets are now in your vault.][\"bob\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "team_folder_shared empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "Team folder shared with you",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Team folder shared with you][]"
+            ],
+            [
+                "t",
+                "%s shared a team folder with you. Its secrets are now in your vault.",
+                [
+                    "[a user][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s shared a team folder with you. Its secrets are now in your vault.][\"[a user][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "team_folder_shared full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "Team folder shared with you",
+                []
+            ],
+            [
+                "setParsedSubject",
+                "[Team folder shared with you][]"
+            ],
+            [
+                "t",
+                "%s shared a team folder with you. Its secrets are now in your vault.",
+                [
+                    "[a user][]"
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[%s shared a team folder with you. Its secrets are now in your vault.][\"[a user][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    }
+}

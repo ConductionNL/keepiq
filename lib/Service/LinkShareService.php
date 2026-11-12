@@ -101,13 +101,7 @@ class LinkShareService {
 	 * is the sole authority used by delete()/listBySecret() — this keeps the
 	 * feature self-contained and IDOR-safe.
 	 *
-	 * @param string $secretId The secret ID the snapshot is taken from
-	 * @param string $encryptedSnapshot The AES-256-GCM encrypted snapshot blob (base64)
-	 * @param string $salt The base64-encoded Argon2id salt
-	 * @param string $encryptionSuiteId The active encryption suite ID at creation
-	 * @param int $usageLimit The usage limit (1-10)
-	 * @param DateTime|null $expiresAt Optional expiry timestamp
-	 * @param string $userId The owning Nextcloud user ID
+	 * @param NewLinkShare $link The secret, snapshot, salt, suite, limit, expiry and creator
 	 *
 	 * @return LinkShare
 	 *
@@ -120,67 +114,50 @@ class LinkShareService {
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
 	 */
-	public function create(
-		string $secretId,
-		string $encryptedSnapshot,
-		string $salt,
-		string $encryptionSuiteId,
-		int $usageLimit,
-		?DateTime $expiresAt,
-		string $userId,
-	): LinkShare {
+	public function create(NewLinkShare $link): LinkShare {
 		// A link share bakes an encrypted snapshot against a specific suite, and
 		// completing a migration cascade-revokes every link share anyway. One
 		// created mid-migration would be destroyed moments later, so refuse it
 		// rather than take the user's time.
-		$this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+		$this->writeLockService->assertNotWriteLocked(ownerId: $link->userId);
 
-		if ($secretId === '' || $encryptedSnapshot === '' || $salt === '') {
-			throw new InvalidArgumentException('Missing required link share fields');
-		}
+		$link->assertValid();
 
-		if ($usageLimit < self::MIN_USAGE_LIMIT || $usageLimit > self::MAX_USAGE_LIMIT) {
-			throw new InvalidArgumentException(
-				'Usage limit must be between ' . self::MIN_USAGE_LIMIT . ' and ' . self::MAX_USAGE_LIMIT
-			);
-		}
+		$this->shareAuth->assertMayReshare(secretId: $link->secretId, userId: $link->userId);
 
-		$this->shareAuth->assertMayReshare(secretId: $secretId, userId: $userId);
-
-		$linkShare = new LinkShare();
-		$linkShare->setId(Uuid::uuid4()->toString());
-		$linkShare->setSecretId($secretId);
-		$linkShare->setToken($this->generateToken());
-		$linkShare->setEncryptedSecretSnapshot($encryptedSnapshot);
-		$linkShare->setArgon2idSalt($salt);
-		$linkShare->setEncryptionSuiteId($encryptionSuiteId);
-		$linkShare->setUsageLimit($usageLimit);
-		$linkShare->setUsageCount(0);
-		$linkShare->setFailedAttempts(0);
-		$linkShare->setCreatedBy($userId);
-		$linkShare->setCreatedAt(new DateTime());
-		$linkShare->setExpiresAt($expiresAt);
-
+		$linkShare = $link->toRow(token: $this->generateToken());
 		$this->mapper->insert($linkShare);
 
-		$this->logger->info("Keepiq: link share created for secret {$secretId} by {$userId}");
+		$this->logger->info("Keepiq: link share created for secret {$link->secretId} by {$link->userId}");
 
-		$expiresAtIso = null;
-		if ($expiresAt !== null) {
-			$expiresAtIso = $expiresAt->format(DateTime::ATOM);
-		}
-
-		$this->auditTrail->recordCreated(
-			userId: $userId,
-			linkShareId: $linkShare->getId(),
-			// Always true here: the guard above throws when $salt === '', so a
-			// link share cannot reach this point without one.
-			hasPassword: true,
-			expiresAtIso: $expiresAtIso,
-		);
+		$this->auditCreated(link: $link, linkShare: $linkShare);
 
 		return $linkShare;
 	}//end create()
+
+	/**
+	 * Audit a created link share with its expiry.
+	 *
+	 * @param NewLinkShare $link The request it was created from
+	 * @param LinkShare $linkShare The stored link share
+	 *
+	 * @return void
+	 */
+	private function auditCreated(NewLinkShare $link, LinkShare $linkShare): void {
+		$expiresAtIso = null;
+		if ($link->expiresAt !== null) {
+			$expiresAtIso = $link->expiresAt->format(DateTime::ATOM);
+		}
+
+		$this->auditTrail->recordCreated(
+			userId: $link->userId,
+			linkShareId: $linkShare->getId(),
+			// Always true here: the guard in NewLinkShare::assertValid throws when
+			// the salt is empty, so a link share cannot reach this point without one.
+			hasPassword: true,
+			expiresAtIso: $expiresAtIso,
+		);
+	}//end auditCreated()
 
 	/**
 	 * Fetch a valid link share by token for public access (Phase 1).
@@ -226,36 +203,76 @@ class LinkShareService {
 	}//end getByToken()
 
 	/**
-	 * Confirm a successful client-side decryption (Phase 2).
+	 * Serve the encrypted snapshot for a token (Phase 1), counting the serve
+	 * before the snapshot leaves the server.
 	 *
-	 * Atomically increments the usage count (only while below the limit),
-	 * resets failed_attempts to 0, and deletes the link share when the
-	 * usage limit is reached. The atomic update guards against the
-	 * concurrent-tab race where two confirms could exceed the limit.
+	 * Every serve consumes one use and one attempt, atomically and only
+	 * while uses and attempts remain, so the usage limit and the attempt cap
+	 * hold whether or not the client ever confirms. The share is deleted as
+	 * soon as the serve that reaches either one has been read.
 	 *
 	 * @param string $token The access token
 	 *
-	 * @return LinkShare The updated (or, when exhausted, last-known) link share
+	 * @return array<string, mixed> The public payload
 	 *
-	 * @throws RuntimeException When the token is invalid or the limit was already reached
+	 * @throws RuntimeException When the token is invalid, expired, used up or out of attempts
 	 *
-	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-access-via-link
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-auto-deletion
 	 */
-	public function confirmAccess(string $token): LinkShare {
-		$affected = $this->mapper->incrementUsageIfBelowLimit($token);
-		if ($affected === 0) {
-			// Either the token does not exist or the limit was already reached.
+	public function serve(string $token): array {
+		$this->getByToken(token: $token);
+
+		if ($this->mapper->countServeIfAllowed($token, self::MAX_FAILED_ATTEMPTS) === 0) {
 			throw new RuntimeException('Link not found or expired');
 		}
 
 		$linkShare = $this->mapper->findByToken($token);
-
+		$payload = $linkShare->jsonSerializePublic();
 		$this->auditTrail->recordAccessed(linkShareId: $linkShare->getId());
 
 		if ($linkShare->getUsageCount() >= $linkShare->getUsageLimit()) {
 			$this->mapper->delete($linkShare);
 			$this->logger->info("Keepiq: link share {$linkShare->getId()} auto-deleted (usage limit reached)");
+			return $payload;
 		}
+
+		if ($linkShare->getFailedAttempts() >= self::MAX_FAILED_ATTEMPTS) {
+			$this->mapper->delete($linkShare);
+			$this->auditTrail->recordAutoDeleted(linkShareId: $linkShare->getId());
+			$this->logger->warning(
+				"Keepiq: link share {$linkShare->getId()} permanently deleted after "
+				. self::MAX_FAILED_ATTEMPTS . ' unconfirmed attempts'
+			);
+		}
+
+		return $payload;
+	}//end serve()
+
+	/**
+	 * Confirm a successful client-side decryption (Phase 2).
+	 *
+	 * The use was already counted when the snapshot was served; a confirm
+	 * only resets the attempts, so a recipient who decrypted is not pushed
+	 * towards the attempt cap by later uses.
+	 *
+	 * @param string $token The access token
+	 *
+	 * @return LinkShare The link share
+	 *
+	 * @throws RuntimeException When the token is invalid or the share is gone
+	 *
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
+	 */
+	public function confirmAccess(string $token): LinkShare {
+		try {
+			$linkShare = $this->mapper->findByToken($token);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			throw new RuntimeException('Link not found or expired');
+		}
+
+		$this->mapper->resetFailedAttempts($token);
+		$linkShare->setFailedAttempts(0);
 
 		return $linkShare;
 	}//end confirmAccess()

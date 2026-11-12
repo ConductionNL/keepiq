@@ -34,6 +34,7 @@ use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\EmergencyAccessService;
+use OCA\Keepiq\Service\EmergencyDesignation;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -177,11 +178,13 @@ class EmergencyAccessController extends OCSController {
 
 		try {
 			$contact = $this->service->designate(
-				grantorUserId: $userId,
-				granteeUserId: $granteeUserId,
-				waitPeriodDays: $waitPeriodDays,
-				accessLevel: $accessLevel,
-				recoveryEnvelope: $recoveryEnvelope,
+				designation: new EmergencyDesignation(
+					grantorUserId: $userId,
+					granteeUserId: $granteeUserId,
+					waitPeriodDays: $waitPeriodDays,
+					accessLevel: $accessLevel,
+					recoveryEnvelope: $recoveryEnvelope,
+				)
 			);
 			return new JSONResponse(data: $contact->jsonSerialize(), statusCode: Http::STATUS_CREATED);
 		} catch (InvalidArgumentException $e) {

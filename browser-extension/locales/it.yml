@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: La chiave della tua cassaforte è cambiata. Sblocca con la password principale.
   pinTooShort: Usa almeno {count} caratteri
   unknown: Si è verificato un errore
+  passkeyFailed: "La passkey non ha potuto sbloccare la tua cassaforte. Usa la tua password principale."
 
 notices:
   keyChanged: La chiave della tua cassaforte è cambiata in Keepiq. Sblocca con la tua password principale attuale.
+  fileAccess: "Keepiq non ha bisogno di accedere ai file. In Nextcloud, in Impostazioni, Sicurezza, Dispositivi e sessioni, puoi disattivare l'accesso ai file di questa password per app o revocarla."
 
 common:
   accountOnHost: "{name} su {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Creane una in Impostazioni di Nextcloud, Sicurezza. Non inserire mai qui la password di accesso a Nextcloud.
   hintWithLink: "Creane una in Impostazioni di Nextcloud, Sicurezza: {link}. Non inserire mai qui la password di accesso a Nextcloud."
   securityLink: apri le impostazioni di sicurezza
+  signInWithBrowser: "Accedi tramite Nextcloud"
+  finishInTab: "Completa l'accesso nella pagina di Nextcloud che si è aperta. Keepiq aggiunge l'account quando hai finito."
+  orAppPassword: "Oppure inserisci una password per app:"
 
 accounts:
   active: (attivo)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: I PIN non corrispondono
   pinAdvice: Non riutilizzare il PIN del telefono o della banca.
   pinAfterRestart: Dopo un riavvio del browser inserisci una volta la password principale; poi il PIN funziona di nuovo.
-  biometrics: Sblocca con la biometria
-  notAvailableYet: Non ancora disponibile
   vaultTimeout: Timeout della cassaforte
   timeoutImmediately: Immediatamente
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Non è stato salvato nulla: il Keepiq di {cloudIds} è troppo vecchio per memorizzare passkey. Chiedi loro di aggiornare Keepiq oppure salva la passkey in un altro login."
     partnerUpgradeRequiredUnnamed: "Non è stato salvato nulla: un’organizzazione partner con cui è condiviso questo login usa un Keepiq troppo vecchio per memorizzare passkey. Chiedi di aggiornare Keepiq oppure salva la passkey in un altro login."
     shareScanPending: Questo login è in attesa di un controllo delle condivisioni non ancora completato. Non è stato salvato nulla; riprova più tardi.
+
+vaultPasskey:
+  unlock: "Sblocca con impronta o volto"
+  unlockIntro: "Il browser chiede impronta, volto o PIN del dispositivo."
+  enrolTitle: "Configura lo sblocco con impronta o volto"
+  enrolIntro: "Conferma la password principale. Poi il browser chiede due volte impronta, volto o PIN del dispositivo."
+  enrolSubmit: "Configura"
+  enrolDone: "Lo sblocco con impronta o volto è configurato per questo browser."
+  close: "Chiudi"
+  label: "Estensione del browser Keepiq"
+  tooOld: "Lo sblocco con impronta o volto richiede Chrome o Edge 122, o Firefox 150, o successivi. Usa la password principale."
+  unsupported: "Questo browser o dispositivo non può sbloccare Keepiq con impronta o volto. Usa la password principale."
+  revokeInWebApp: "Per disattivarlo, revoca questa passkey nell'app web di Keepiq."

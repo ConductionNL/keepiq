@@ -53,6 +53,14 @@ describe('base32Decode', () => {
 	it('rejects an empty secret', () => {
 		expect(() => base32Decode('')).toThrow()
 	})
+
+	it('names each refusal', () => {
+		expect(() => base32Decode(null)).toThrow('Empty base32 secret')
+		expect(() => base32Decode('  ==')).toThrow('Empty base32 secret')
+		expect(() => base32Decode('JB1')).toThrow('Invalid base32 character')
+		expect(() => base32Decode('A')).toThrow('Base32 secret too short')
+		expect(Array.from(base32Decode('ME'))).toEqual([0x61])
+	})
 })
 
 describe('parseOtpauth', () => {

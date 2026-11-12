@@ -87,6 +87,7 @@
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import ApplicationLeasePolicyForm from './ApplicationLeasePolicyForm.vue'
 import { useLeaseStore } from '../../store/modules/lease.js'
+import { localDateTime } from '../../utils/dateTime.js'
 
 export default {
 	name: 'ApplicationLeasesPanel',
@@ -165,20 +166,8 @@ export default {
 			}
 		},
 
-		/**
-		 * Locale date-time display.
-		 *
-		 * @param {string} iso The ISO timestamp.
-		 * @return {string}
-		 *
-		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
-		 */
-		formatDate(iso) {
-			const parsed = Date.parse(iso ?? '')
-			return Number.isNaN(parsed)
-				? (iso ?? '')
-				: new Date(parsed).toLocaleString()
-		},
+		/** Locale date-time display of an ISO timestamp. */
+		formatDate: localDateTime,
 	},
 }
 </script>

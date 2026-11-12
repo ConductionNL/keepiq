@@ -16,8 +16,8 @@
  *  - On unlock — delegates to `decryptPublicSnapshot(share, password)`,
  *    stores the decrypted snapshot, and POSTs Phase 2 via
  *    `confirmPublicLinkShare(token)`.
- *  - A failed decrypt records `priorFailure=true` and re-fetches with
- *    `failed=true` so the server-side brute-force counter ticks.
+ *  - A failed decrypt is retried against the blob already fetched: the
+ *    server counts the use and the attempt when it serves the blob.
  *  - A load failure surfaces a 404-style "not available" message via
  *    `loadError` (the controller emits 404 for not-found / expired /
  *    used-up so this is the recipient-side terminal state).
@@ -68,7 +68,7 @@ describe('LinkShareAccess', () => {
 		const wrapper = mount(LinkShareAccess)
 		await flushPromises()
 
-		expect(store.fetchPublicLinkShare).toHaveBeenCalledWith('tok-abc', false)
+		expect(store.fetchPublicLinkShare).toHaveBeenCalledWith('tok-abc')
 		expect(wrapper.vm.share).toBeTruthy()
 		expect(wrapper.vm.share.encryptedSecretSnapshot).toBe('CIPHERTEXT_B64')
 		// Password form is on screen, snapshot is not yet.
@@ -188,25 +188,14 @@ describe('LinkShareAccess', () => {
 		expect(extra.text()).not.toContain('client-9')
 	})
 
-	it('wrong password: surfaces error and re-fetches with failed=true (brute-force counter)', async () => {
+	it('wrong password: surfaces the error and keeps the fetched blob for a retry', async () => {
 		const store = useLinkShareStore()
-		// First fetch: returns the share.
-		// After a failed decrypt the view calls loadShare again with
-		// priorFailure=true, which translates to failed=true on the API.
-		store.fetchPublicLinkShare = vi
-			.fn()
-			.mockResolvedValueOnce({
-				encryptedSecretSnapshot: 'CIPHERTEXT_B64',
-				argon2idSalt: 'SALT_B64',
-				usageLimit: 3,
-				usageCount: 0,
-			})
-			.mockResolvedValueOnce({
-				encryptedSecretSnapshot: 'CIPHERTEXT_B64',
-				argon2idSalt: 'SALT_B64',
-				usageLimit: 3,
-				usageCount: 0,
-			})
+		store.fetchPublicLinkShare = vi.fn().mockResolvedValue({
+			encryptedSecretSnapshot: 'CIPHERTEXT_B64',
+			argon2idSalt: 'SALT_B64',
+			usageLimit: 3,
+			usageCount: 1,
+		})
 		store.decryptPublicSnapshot = vi
 			.fn()
 			.mockRejectedValue(new Error('OperationError'))
@@ -220,10 +209,31 @@ describe('LinkShareAccess', () => {
 
 		expect(wrapper.vm.unlockError).toContain('Invalid password')
 		expect(store.confirmPublicLinkShare).not.toHaveBeenCalled()
-		// The re-fetch was triggered with failed=true.
-		expect(store.fetchPublicLinkShare).toHaveBeenCalledTimes(2)
-		expect(store.fetchPublicLinkShare.mock.calls[1]).toEqual(['tok-abc', true])
+		// Each fetch is a counted use on the server, so no second fetch.
+		expect(store.fetchPublicLinkShare).toHaveBeenCalledTimes(1)
+		expect(wrapper.vm.share.encryptedSecretSnapshot).toBe('CIPHERTEXT_B64')
 		expect(wrapper.vm.snapshot).toBeNull()
+	})
+
+	it('a share used up by this serve still opens when its confirm answers 404', async () => {
+		const store = useLinkShareStore()
+		store.fetchPublicLinkShare = vi.fn().mockResolvedValue({
+			encryptedSecretSnapshot: 'CIPHERTEXT_B64',
+			argon2idSalt: 'SALT_B64',
+			usageLimit: 1,
+			usageCount: 1,
+		})
+		store.decryptPublicSnapshot = vi.fn().mockResolvedValue({ name: 'Secret' })
+		store.confirmPublicLinkShare = vi.fn().mockRejectedValue({ response: { status: 404 } })
+
+		const wrapper = mount(LinkShareAccess)
+		await flushPromises()
+
+		wrapper.vm.password = 'right-password'
+		await wrapper.vm.onUnlock()
+
+		expect(wrapper.vm.unlockError).toBe('')
+		expect(wrapper.vm.snapshot).toEqual({ name: 'Secret' })
 	})
 
 	it('404 on load: surfaces the not-available message and does not render the form', async () => {

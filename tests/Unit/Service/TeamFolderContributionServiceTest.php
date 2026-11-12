@@ -308,6 +308,40 @@ class TeamFolderContributionServiceTest extends TestCase {
 	}//end testANamelessOrKeylessContributionStoresNothing()
 
 	/**
+	 * The owner row a contribution stores: every column it sets and the value it takes.
+	 *
+	 * @return void
+	 */
+	public function testTheOwnerRowCarriesEveryContributedField(): void {
+		$data = $this->request();
+		$data['name'] = '  db-root  ';
+		$data['url'] = '';
+		$data['login'] = 'LOGIN';
+		$data['additionalFields'] = 'FIELDS';
+		$this->service->contribute(teamFolderId: 'tf-ops', data: $data, userId: 'hank');
+
+		$owner = $this->inserted[0];
+		$this->assertMatchesRegularExpression('/^[0-9a-f-]{36}$/', $owner->getId());
+		$this->assertSame('db-root', $owner->getName());
+		$this->assertNull($owner->getUrl());
+		$this->assertSame('type-login', $owner->getTypeId());
+		$this->assertSame('LOGIN', $owner->getLogin());
+		$this->assertSame('FIELDS', $owner->getAdditionalFields());
+		$this->assertNull($owner->getTotp());
+		$this->assertNull($owner->getPasskeys());
+		$this->assertSame('suite', $owner->getEncryptionSuiteId());
+		$this->assertSame('user', $owner->getOwnerType());
+		$this->assertSame($owner->getCreatedAt(), $owner->getUpdatedAt());
+		$this->assertSame($owner->getCreatedAt(), $owner->getKeyUpdatedAt());
+		$fields = array_keys($owner->getUpdatedFields());
+		sort($fields);
+		$this->assertSame(
+			['additionalFields', 'createdAt', 'encryptionSuiteId', 'folderId', 'id', 'key', 'keyUpdatedAt', 'login', 'name', 'ownerId', 'ownerType', 'typeId', 'updatedAt'],
+			$fields
+		);
+	}//end testTheOwnerRowCarriesEveryContributedField()
+
+	/**
 	 * The TOTP seed and passkeys land on the owner row and on each member's
 	 * copy; an older client that leaves them out stores none.
 	 *

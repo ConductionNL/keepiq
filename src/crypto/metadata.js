@@ -16,31 +16,9 @@
  * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
  */
 
+import { fromBase64, toBase64 } from './base64.js'
+
 const IV_LENGTH = 12
-
-/**
- * Encode bytes to base64.
- *
- * @param {Uint8Array} bytes The bytes.
- * @return {string} Base64.
- */
-function toBase64(bytes) {
-	let binary = ''
-	for (let i = 0; i < bytes.length; i++) {
-		binary += String.fromCharCode(bytes[i])
-	}
-	return btoa(binary)
-}
-
-/**
- * Decode base64 to bytes.
- *
- * @param {string} b64 Base64.
- * @return {Uint8Array} The bytes.
- */
-function fromBase64(b64) {
-	return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
-}
 
 /**
  * Encrypt a JSON-serialisable value under an AES-GCM CryptoKey.

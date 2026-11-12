@@ -56,7 +56,7 @@
 import { NcButton, NcDialog } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
-import { useBulkStore } from '../store/modules/bulk.js'
+import bulkRunDialog from '../mixins/bulkRunDialog.js'
 import { useSecretStore } from '../store/modules/secret.js'
 
 export default {
@@ -68,12 +68,7 @@ export default {
 		NcDialog,
 	},
 
-	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
-	},
+	mixins: [bulkRunDialog],
 
 	emits: ['close', 'done'],
 	data() {
@@ -85,29 +80,10 @@ export default {
 			 * same state and Move can key off the value directly.
 			 */
 			targetFolderId: null,
-			/** Whether a run was started FROM THIS DIALOG (the store's report outlives it). */
-			ran: false,
 		}
 	},
 
 	computed: {
-		/**
-		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
-		 */
-		bulk() {
-			return useBulkStore()
-		},
-
-		/**
-		 * Whether the dialog has switched from asking to reporting.
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
-		 */
-		finished() {
-			return this.ran && !this.bulk.progress.running
-		},
-
 		/**
 		 * The dialog title: a command while it asks, an outcome once it
 		 * reports — counted off the report, never off the selection, which
@@ -118,10 +94,7 @@ export default {
 		 */
 		title() {
 			if (this.finished) {
-				return this.t('keepiq', 'Moved {ok} of {total} secrets', {
-					ok: this.bulk.report.filter((r) => r.status === 'ok').length,
-					total: this.bulk.report.length,
-				})
+				return this.t('keepiq', 'Moved {ok} of {total} secrets', this.reportCounts)
 			}
 			return this.t('keepiq', 'Move {count} secrets', {
 				count: this.bulk.selectionCount,
@@ -152,13 +125,10 @@ export default {
 		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRun() {
-			this.ran = true
-			await this.bulk.run(
-				this.bulk.selectedIds,
+			await this.runOverSelection(
 				(id) => this.moveOne(id),
 				this.t('keepiq', 'Moving secrets'),
 			)
-			this.$emit('done')
 		},
 
 		/**
@@ -168,11 +138,10 @@ export default {
 		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRetry() {
-			await this.bulk.retryFailed(
+			await this.retryFailedWith(
 				(id) => this.moveOne(id),
 				this.t('keepiq', 'Retrying move'),
 			)
-			this.$emit('done')
 		},
 	},
 }

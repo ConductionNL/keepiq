@@ -15,6 +15,8 @@
  *   memory 64 MiB (65536 KiB), iterations 3, parallelism 1, output 32 bytes.
  */
 
+import { fromBase64, toBase64 } from './base64.js'
+
 /** Argon2id memory cost in KiB (64 MiB). */
 const ARGON2_MEMORY_KIB = 65536
 
@@ -34,35 +36,6 @@ const IV_LENGTH = 12
 const SALT_LENGTH = 16
 
 /**
- * Encode a Uint8Array as a base64 string.
- *
- * @param {Uint8Array} bytes The bytes to encode
- * @return {string} Base64 string
- */
-function toBase64(bytes) {
-	let binary = ''
-	for (let i = 0; i < bytes.length; i++) {
-		binary += String.fromCharCode(bytes[i])
-	}
-	return btoa(binary)
-}
-
-/**
- * Decode a base64 string into a Uint8Array.
- *
- * @param {string} base64 The base64 string
- * @return {Uint8Array} Decoded bytes
- */
-function fromBase64(base64) {
-	const binary = atob(base64)
-	const bytes = new Uint8Array(binary.length)
-	for (let i = 0; i < binary.length; i++) {
-		bytes[i] = binary.charCodeAt(i)
-	}
-	return bytes
-}
-
-/**
  * Whether the runtime supports WebAssembly (required for Argon2id).
  *
  * @return {boolean} True when WASM is available
@@ -72,6 +45,30 @@ export function isArgon2Supported() {
 		typeof WebAssembly === 'object'
 		&& typeof WebAssembly.instantiate === 'function'
 	)
+}
+
+/**
+ * Resolve the webpack-emitted argon2.wasm URL. The webpack `asset/resource`
+ * rule turns `require('argon2.wasm')` into the hashed asset URL (served from
+ * `/custom_apps/keepiq/js/argon2.wasm`). argon2-browser's own loader would
+ * otherwise `atob()` that URL string as if it were embedded base64 and throw
+ * "string to be decoded is not correctly encoded". Provide a binary loader so
+ * it fetches the real .wasm bytes instead, once.
+ *
+ * @return {Promise<void>}
+ */
+async function provideWasmBinaryLoader() {
+	const globalScope =
+		(typeof globalThis !== 'undefined' && globalThis)
+		|| (typeof window !== 'undefined' && window)
+		|| null
+	if (globalScope && !globalScope.loadArgon2WasmBinary) {
+		const wasmUrl = (await import('argon2-browser/dist/argon2.wasm')).default
+		globalScope.loadArgon2WasmBinary = () =>
+			fetch(wasmUrl)
+				.then((res) => res.arrayBuffer())
+				.then((ab) => new Uint8Array(ab))
+	}
 }
 
 /**
@@ -86,23 +83,7 @@ export async function deriveAesKeyArgon2id(password, salt) {
 		throw new Error('WebAssembly is required for Argon2id but is not available')
 	}
 
-	// Resolve the webpack-emitted argon2.wasm URL. The webpack `asset/resource`
-	// rule turns `require('argon2.wasm')` into the hashed asset URL (served from
-	// `/custom_apps/keepiq/js/argon2.wasm`). argon2-browser's own loader would
-	// otherwise `atob()` that URL string as if it were embedded base64 and throw
-	// "string to be decoded is not correctly encoded". Provide a binary loader so
-	// it fetches the real .wasm bytes instead.
-	const globalScope =
-		(typeof globalThis !== 'undefined' && globalThis)
-		|| (typeof window !== 'undefined' && window)
-		|| null
-	if (globalScope && !globalScope.loadArgon2WasmBinary) {
-		const wasmUrl = (await import('argon2-browser/dist/argon2.wasm')).default
-		globalScope.loadArgon2WasmBinary = () =>
-			fetch(wasmUrl)
-				.then((res) => res.arrayBuffer())
-				.then((ab) => new Uint8Array(ab))
-	}
+	await provideWasmBinaryLoader()
 
 	// Lazy-load the WASM KDF so it is excluded from the initial vault bundle.
 	// argon2-browser is installed with the secrets-feature wiring (tasks.md §6.1);

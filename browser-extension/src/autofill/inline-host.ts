@@ -125,6 +125,23 @@ const isPickInput = (input: unknown): input is PickInput => {
 	return (value?.kind === 'pointer' || value?.kind === 'key') && [value.at, value.x, value.y].every((n) => typeof n === 'number' && Number.isFinite(n))
 }
 
+const withoutCommand = (event: KeyboardEvent) => !event.altKey && !event.ctrlKey && !event.metaKey
+
+/** ArrowDown alone, not held down, on a list that is ready, moves into the list. */
+const isListDown = (list: Open, event: KeyboardEvent) => event.key === 'ArrowDown' && withoutCommand(event) && !event.shiftKey && !event.repeat && list.ready
+
+const insideBox = (box: Box, input: PickInput) => input.x >= 0 && input.y >= 0 && input.x < box.width && input.y < box.height
+
+/** A point in a frame's document, in the coordinates of the document that holds the frame element. */
+function throughFrame(frameElement: Element, point: { x: number; y: number }): { x: number; y: number } {
+	const rect = frameElement.getBoundingClientRect()
+	const style = frameElement.ownerDocument.defaultView!.getComputedStyle(frameElement)
+	return {
+		x: point.x + rect.left + (frameElement.clientLeft || 0) + (Number.parseFloat(style.paddingLeft) || 0),
+		y: point.y + rect.top + (frameElement.clientTop || 0) + (Number.parseFloat(style.paddingTop) || 0),
+	}
+}
+
 export interface InlineHost {
 	start(): void
 	/** For `fill.execute`'s `anchorKey`. */
@@ -375,21 +392,27 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		if (event.key === 'Tab') tabEvent = event
 		const list = open
 		if (!list || deepTarget(event) !== list.field) return
-		const noCommand = !event.altKey && !event.ctrlKey && !event.metaKey
+		onListFieldKey(list, event)
+	}
+
+	function onListFieldKey(list: Open, event: KeyboardEvent): void {
 		// The list comes after the page's controls in tab order, so Tab out of the field must not land in it.
-		if (event.key === 'Tab' && noCommand) return close()
-		if (event.key === 'ArrowDown' && noCommand && !event.shiftKey && !event.repeat && list.ready) {
-			const held = focused?.field === list.field && (byUser(focused) || Date.now() - focused.at >= GUARD_MS)
-			if (!held) return
-			event.preventDefault()
-			event.stopImmediatePropagation()
-			list.host.frame.focus()
-			list.host.post({ kind: 'inline.focus', key: list.key } satisfies ContentToInlineList)
-		} else if (event.key === 'Escape') {
+		if (event.key === 'Tab' && withoutCommand(event)) return close()
+		if (isListDown(list, event)) return focusList(list, event)
+		if (event.key === 'Escape') {
 			event.preventDefault()
 			event.stopImmediatePropagation()
 			close()
 		}
+	}
+
+	function focusList(list: Open, event: KeyboardEvent): void {
+		const held = focused?.field === list.field && (byUser(focused) || Date.now() - focused.at >= GUARD_MS)
+		if (!held) return
+		event.preventDefault()
+		event.stopImmediatePropagation()
+		list.host.frame.focus()
+		list.host.post({ kind: 'inline.focus', key: list.key } satisfies ContentToInlineList)
 	}
 
 	function onPointerDown(event: PointerEvent): void {
@@ -412,22 +435,28 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 	}
 
 	function verify(key: string, input: unknown): boolean {
-		const list = open
-		if (!list || list.key !== key || !list.ready || !isPickInput(input)) return false
+		const list = readyList(key)
+		if (!list || !isPickInput(input)) return false
 		sample(list)
 		if (open !== list) return false
+		return landsOn(list, input)
+	}
+
+	const readyList = (key: string) => (open && open.key === key && open.ready ? open : null)
+
+	function landsOn(list: Open, input: PickInput): boolean {
 		const at = Math.min(input.at, Date.now())
 		if (list.lastNotVisibleAt >= at - GUARD_MS) return false
-		if (input.x < 0 || input.y < 0 || input.x >= list.box.width || input.y >= list.box.height) return false
-		let x = list.box.left + input.x
-		let y = list.box.top + input.y
-		if (!hits(list.host.element, x, y)) return false
+		if (!insideBox(list.box, input)) return false
+		return hitsThroughFrames(list, input)
+	}
+
+	function hitsThroughFrames(list: Open, input: PickInput): boolean {
+		let point = { x: list.box.left + input.x, y: list.box.top + input.y }
+		if (!hits(list.host.element, point.x, point.y)) return false
 		for (const frameElement of ancestors ?? []) {
-			const rect = frameElement.getBoundingClientRect()
-			const style = frameElement.ownerDocument.defaultView!.getComputedStyle(frameElement)
-			x += rect.left + (frameElement.clientLeft || 0) + (Number.parseFloat(style.paddingLeft) || 0)
-			y += rect.top + (frameElement.clientTop || 0) + (Number.parseFloat(style.paddingTop) || 0)
-			if (!hits(frameElement, x, y)) return false
+			point = throughFrame(frameElement, point)
+			if (!hits(frameElement, point.x, point.y)) return false
 		}
 		return true
 	}

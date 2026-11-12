@@ -216,3 +216,80 @@ describe('OwnershipFindings', () => {
 		expect(wrapper.vm.findings).toHaveLength(1)
 	})
 })
+
+describe('OwnershipFindings: a move step by step', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		resetPolicyCache()
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
+	})
+
+	it('does nothing for a finding without a chosen target', async () => {
+		const wrapper = await mountWith(true)
+		const update = vi.spyOn(useSecretStore(), 'updateSecret')
+		wrapper.vm.error = 'old'
+		await wrapper.vm.move({ id: 'old-login' })
+		expect(update).not.toHaveBeenCalled()
+		expect(wrapper.vm.error).toBe('old')
+		expect(wrapper.vm.busy).toBe(false)
+	})
+
+	it('contributes the whole payload with its defaults and drops the finding', async () => {
+		const wrapper = await mountWith(true)
+		const secretStore = useSecretStore()
+		vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({
+			name: 'Bank',
+			typeId: 't',
+		})
+		vi.spyOn(secretStore, 'contributeSecret').mockResolvedValue({})
+		vi.spyOn(secretStore, 'deleteSecret').mockResolvedValue()
+		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[1]
+		await wrapper.vm.move({ id: 'old-login' })
+		expect(axios.get).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/old-login')
+		expect(secretStore.contributeSecret).toHaveBeenCalledWith('tf-ops', {
+			name: 'Bank',
+			url: null,
+			typeId: 't',
+			key: '',
+			login: '',
+			additionalFields: null,
+			totp: '',
+			passkeys: '',
+		})
+		expect(secretStore.deleteSecret).toHaveBeenCalledWith('old-login')
+		expect(wrapper.vm.findings).toEqual([])
+		expect(wrapper.vm.error).toBe(null)
+		expect(wrapper.vm.busy).toBe(false)
+	})
+
+	it('an owner move without refusals moves, fans out and drops the finding', async () => {
+		const wrapper = await mountWith(true)
+		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue()
+		const fanOut = vi
+			.spyOn(useTeamFolderStore(), 'runFanOut')
+			.mockResolvedValue({ refused: [] })
+		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[0]
+		await wrapper.vm.move({ id: 'old-login' })
+		expect(update).toHaveBeenCalledWith('old-login', { folderId: 'folder-mine' })
+		expect(fanOut).toHaveBeenCalledWith('tf-mine')
+		expect(wrapper.vm.findings).toEqual([])
+		expect(wrapper.vm.error).toBe(null)
+	})
+
+	it("shows the server's message, else the error's", async () => {
+		const wrapper = await mountWith(true)
+		const update = vi.spyOn(useSecretStore(), 'updateSecret')
+		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[0]
+		update.mockRejectedValueOnce({ response: { data: { message: 'no' } } })
+		await wrapper.vm.move({ id: 'old-login' })
+		expect(wrapper.vm.error).toBe('no')
+		update.mockRejectedValueOnce({})
+		await wrapper.vm.move({ id: 'old-login' })
+		expect(wrapper.vm.error).toBe(undefined)
+		expect(wrapper.vm.findings).toHaveLength(1)
+		expect(wrapper.vm.busy).toBe(false)
+	})
+})

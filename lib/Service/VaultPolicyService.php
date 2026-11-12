@@ -150,6 +150,20 @@ class VaultPolicyService {
 		}
 
 		$before = array_intersect_key($this->read(), array_flip($touched));
+		$this->store(writes: $writes);
+		$after = array_intersect_key($this->read(), array_flip($touched));
+
+		$this->auditUpdate(before: $before, after: $after);
+	}//end update()
+
+	/**
+	 * Write validated policy values: a switch as a bool, anything else as JSON.
+	 *
+	 * @param array<string,mixed> $writes The validated value per key
+	 *
+	 * @return void
+	 */
+	private function store(array $writes): void {
 		foreach ($writes as $key => $value) {
 			if (is_bool($value) === true) {
 				$this->appConfig->setValueBool(Application::APP_ID, $key, $value);
@@ -158,9 +172,17 @@ class VaultPolicyService {
 
 			$this->appConfig->setValueString(Application::APP_ID, $key, (string)json_encode($value));
 		}
+	}//end store()
 
-		$after = array_intersect_key($this->read(), array_flip($touched));
-
+	/**
+	 * Audit one policy save with the touched keys before and after.
+	 *
+	 * @param array<string,mixed> $before The touched keys before the save
+	 * @param array<string,mixed> $after  The touched keys after the save
+	 *
+	 * @return void
+	 */
+	private function auditUpdate(array $before, array $after): void {
 		$this->eventDispatcher?->dispatchTyped(
 			$this->auditEvents->forUser(
 				actorId: ($this->userSession->getUser()?->getUID() ?? 'system'),
@@ -174,7 +196,7 @@ class VaultPolicyService {
 				],
 			)
 		);
-	}//end update()
+	}//end auditUpdate()
 
 	/**
 	 * Whether a policy is on and its group scope covers the user.

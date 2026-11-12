@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * The web app's passkey list shows a browser extension credential as one,
- * and revoking it calls the delete route (keepiq#784).
+ * shows a suspended passkey as suspended, and revoking calls the delete
+ * route (keepiq#784).
  *
  * @spec openspec/specs/extension-biometric-unlock/spec.md#requirement-extension-credentials-are-visible-and-revocable-in-the-web-app
  */
@@ -96,5 +97,25 @@ describe('PasskeyManager', () => {
 		expect(del).toHaveBeenCalledTimes(1)
 		expect(del.mock.calls[0][0]).toContain('/apps/keepiq/api/v1/passkeys/ext-1')
 		expect(wrapper.find('[data-testid="passkey-ext-1"]').exists()).toBe(false)
+	})
+
+	it('shows a suspended passkey as suspended, warns, and keeps it revocable', async () => {
+		axios.get.mockResolvedValue({
+			data: [CREDENTIALS[0], { ...CREDENTIALS[1], status: 'suspended' }],
+		})
+		const wrapper = mountManager()
+		await flush()
+
+		expect(wrapper.find('[data-testid="passkey-status-ext-1"]').text()).toBe('Suspended')
+		expect(wrapper.find('[data-testid="passkey-status-web-1"]').text()).toBe('Active')
+		expect(wrapper.find('[data-testid="passkey-suspended-note"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="passkey-revoke-ext-1"]').exists()).toBe(true)
+	})
+
+	it('shows no suspension warning while every passkey is active', async () => {
+		const wrapper = mountManager()
+		await flush()
+
+		expect(wrapper.find('[data-testid="passkey-suspended-note"]').exists()).toBe(false)
 	})
 })

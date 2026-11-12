@@ -40,7 +40,6 @@ class EncryptService {
 	private const AES_SALT_LENGTH = 16;
 	private const AES_IV_LENGTH = 12;
 	private const AES_TAG_LENGTH = 16;
-	private const PBKDF2_ITERATIONS = 600000;
 
 	/**
 	 * Encrypt plaintext with an RSA public key using OAEP-SHA256 with chunking.
@@ -135,35 +134,15 @@ class EncryptService {
 		$dataBlock = $lHash . str_repeat("\0", $psLen) . "\x01" . $message;
 
 		$seed = random_bytes($hLen);
-		$dbMask = $this->mgf1Sha256(seed: $seed, length: ($blockSize - $hLen - 1));
+		$dbMask = (new CryptoPrimitives())->mgf1Sha256(seed: $seed, length: ($blockSize - $hLen - 1));
 		$maskedDb = $dataBlock ^ $dbMask;
 
-		$seedMask = $this->mgf1Sha256(seed: $maskedDb, length: $hLen);
+		$seedMask = (new CryptoPrimitives())->mgf1Sha256(seed: $maskedDb, length: $hLen);
 		$maskedSeed = $seed ^ $seedMask;
 
 		// EM = 0x00 || maskedSeed || maskedDB.
 		return "\0" . $maskedSeed . $maskedDb;
 	}//end oaepSha256Pad()
-
-	/**
-	 * MGF1 mask generation function (RFC 8017 §B.2.1) using SHA-256.
-	 *
-	 * @param string $seed The seed from which the mask is generated
-	 * @param int $length The intended length in bytes of the mask
-	 *
-	 * @return string The generated mask of $length bytes
-	 */
-	private function mgf1Sha256(string $seed, int $length): string {
-		$output = '';
-		$counter = 0;
-
-		while (strlen($output) < $length) {
-			$output .= hash('sha256', $seed . pack('N', $counter), true);
-			$counter++;
-		}
-
-		return substr($output, 0, $length);
-	}//end mgf1Sha256()
 
 	/**
 	 * Encrypt plaintext with AES-256-GCM using a raw 32-byte key.
@@ -176,6 +155,39 @@ class EncryptService {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
 	 */
 	public function aesEncrypt(string $plaintext, string $key): string {
+		// Salt is empty here — use encryptPrivateKey() for PBKDF2-derived keys.
+		return $this->envelopeOf(
+			salt: str_repeat("\0", self::AES_SALT_LENGTH),
+			sealed: $this->gcmSeal(plaintext: $plaintext, key: $key)
+		);
+	}//end aesEncrypt()
+
+	/**
+	 * Encrypt a PEM private key with an AES key derived from a password via PBKDF2-SHA256.
+	 *
+	 * @param string $pem PEM-encoded private key
+	 * @param string $password The master password (or passphrase)
+	 *
+	 * @return string Base64-encoded envelope with salt embedded
+	 *
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
+	 */
+	public function encryptPrivateKey(string $pem, string $password): string {
+		$salt = random_bytes(self::AES_SALT_LENGTH);
+		$key = $this->deriveKey(password: $password, salt: $salt);
+
+		return $this->envelopeOf(salt: $salt, sealed: $this->gcmSeal(plaintext: $pem, key: $key));
+	}//end encryptPrivateKey()
+
+	/**
+	 * AES-256-GCM encryption under a fresh IV.
+	 *
+	 * @param string $plaintext The data to encrypt
+	 * @param string $key Raw 32-byte AES key
+	 *
+	 * @return array<string,string> The IV, the ciphertext and the tag
+	 */
+	private function gcmSeal(string $plaintext, string $key): array {
 		$ivector = random_bytes(self::AES_IV_LENGTH);
 		$tag = '';
 
@@ -196,59 +208,26 @@ class EncryptService {
 		}
 
 		// @codeCoverageIgnoreEnd
-		// Envelope: version(4) + salt(16) + IV(12) + ciphertext + tag(16)
-		// Salt is empty here — use encryptPrivateKey() for PBKDF2-derived keys.
-		$envelope = pack('N', self::ENVELOPE_VERSION)
-			. str_repeat("\0", self::AES_SALT_LENGTH)
-			. $ivector
-			. $ciphertext
-			. $tag;
-
-		return base64_encode($envelope);
-	}//end aesEncrypt()
+		return ['iv' => $ivector, 'ciphertext' => $ciphertext, 'tag' => $tag];
+	}//end gcmSeal()
 
 	/**
-	 * Encrypt a PEM private key with an AES key derived from a password via PBKDF2-SHA256.
+	 * The base64 envelope: version(4) + salt(16) + IV(12) + ciphertext + tag(16).
 	 *
-	 * @param string $pem PEM-encoded private key
-	 * @param string $password The master password (or passphrase)
+	 * @param string $salt The salt, or 16 zero bytes for a raw key
+	 * @param array<string,string> $sealed The IV, the ciphertext and the tag
 	 *
-	 * @return string Base64-encoded envelope with salt embedded
-	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
+	 * @return string Base64-encoded envelope
 	 */
-	public function encryptPrivateKey(string $pem, string $password): string {
-		$salt = random_bytes(self::AES_SALT_LENGTH);
-		$key = $this->deriveKey(password: $password, salt: $salt);
-
-		$ivector = random_bytes(self::AES_IV_LENGTH);
-		$tag = '';
-
-		$ciphertext = openssl_encrypt(
-			data: $pem,
-			cipher_algo: 'aes-256-gcm',
-			passphrase: $key,
-			options: OPENSSL_RAW_DATA,
-			iv: $ivector,
-			tag: $tag,
-			aad: '',
-			tag_length: self::AES_TAG_LENGTH
-		);
-
-		// @codeCoverageIgnoreStart
-		if ($ciphertext === false) {
-			throw new RuntimeException('AES-256-GCM encryption failed: ' . openssl_error_string());
-		}
-
-		// @codeCoverageIgnoreEnd
+	private function envelopeOf(string $salt, array $sealed): string {
 		$envelope = pack('N', self::ENVELOPE_VERSION)
 			. $salt
-			. $ivector
-			. $ciphertext
-			. $tag;
+			. $sealed['iv']
+			. $sealed['ciphertext']
+			. $sealed['tag'];
 
 		return base64_encode($envelope);
-	}//end encryptPrivateKey()
+	}//end envelopeOf()
 
 	/**
 	 * Derive a 256-bit AES key from a password using PBKDF2-SHA256.
@@ -261,13 +240,6 @@ class EncryptService {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
 	 */
 	public function deriveKey(string $password, string $salt): string {
-		return hash_pbkdf2(
-			'sha256',
-			$password,
-			$salt,
-			self::PBKDF2_ITERATIONS,
-			32,
-			true
-		);
+		return (new CryptoPrimitives())->pbkdf2Sha256(password: $password, salt: $salt);
 	}//end deriveKey()
 }//end class
