@@ -101,9 +101,8 @@ import {
 	NcPasswordField,
 	NcTextField,
 } from '@nextcloud/vue'
+import exportStoreDialog from '../mixins/exportStoreDialog.js'
 import masterPasswordCheck from '../mixins/masterPasswordCheck.js'
-import { useExportStore } from '../store/modules/export.js'
-import { useSessionStore } from '../store/modules/session.js'
 
 /** The exact phrase the user must type (mirrors GdprController). */
 const CONFIRMATION_PHRASE = 'DELETE MY KEEPIQ DATA'
@@ -118,7 +117,7 @@ export default {
 		NcPasswordField,
 	},
 
-	mixins: [masterPasswordCheck],
+	mixins: [exportStoreDialog, masterPasswordCheck],
 
 	props: {
 		open: {
@@ -128,19 +127,6 @@ export default {
 	},
 
 	emits: ['update:open', 'export-first'],
-	/**
-	 * Provide the export + session Pinia stores to the component.
-	 *
-	 * @return {object}
-	 * @spec openspec/specs/gdpr-compliance/spec.md
-	 */
-	setup() {
-		return {
-			exportStore: useExportStore(),
-			sessionStore: useSessionStore(),
-		}
-	},
-
 	data() {
 		return {
 			masterPassword: '',
@@ -151,16 +137,6 @@ export default {
 	},
 
 	computed: {
-		/**
-		 * Whether a deletion is in flight (from the store).
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/gdpr-compliance/spec.md
-		 */
-		loading() {
-			return this.exportStore.loading
-		},
-
 		/**
 		 * The confirmation-field label including the exact required phrase.
 		 *
@@ -229,19 +205,6 @@ export default {
 			this.error = null
 		},
 
-		/**
-		 * Handle open-state changes, clearing state on close.
-		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 * @spec openspec/specs/gdpr-compliance/spec.md
-		 */
-		onUpdateOpen(value) {
-			if (!value) {
-				this.reset()
-			}
-			this.$emit('update:open', value)
-		},
 	},
 }
 </script>

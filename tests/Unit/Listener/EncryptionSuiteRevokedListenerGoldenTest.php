@@ -33,6 +33,7 @@ use RuntimeException;
  * logs, in order.
  *
  * @covers \OCA\Keepiq\Listener\EncryptionSuiteRevokedListener
+ * @uses   \OCA\Keepiq\Event\EncryptionSuiteRevokedEvent
  */
 final class EncryptionSuiteRevokedListenerGoldenTest extends TestCase {
 	/**

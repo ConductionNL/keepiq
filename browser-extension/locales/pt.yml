@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: A chave do seu cofre mudou. Desbloqueie com a sua palavra-passe mestra.
   pinTooShort: Utilize pelo menos {count} caracteres
   unknown: Ocorreu um erro
+  passkeyFailed: "A chave de acesso não conseguiu desbloquear o seu cofre. Use a sua palavra-passe mestra."
 
 notices:
   keyChanged: A chave do seu cofre mudou no Keepiq. Desbloqueie com a sua palavra-passe mestra atual.
+  fileAccess: "O Keepiq não precisa de acesso a ficheiros. No Nextcloud, em Definições, Segurança, Dispositivos e sessões, pode desativar o acesso a ficheiros desta palavra-passe de aplicação ou revogá-la."
 
 common:
   accountOnHost: "{name} em {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Crie uma nas Definições do Nextcloud, Segurança. Nunca introduza aqui a palavra-passe com que inicia sessão no Nextcloud.
   hintWithLink: "Crie uma nas Definições do Nextcloud, Segurança: {link}. Nunca introduza aqui a palavra-passe com que inicia sessão no Nextcloud."
   securityLink: abrir as definições de segurança
+  signInWithBrowser: "Iniciar sessão através do Nextcloud"
+  finishInTab: "Conclua o início de sessão na página do Nextcloud que se abriu. O Keepiq adiciona a conta quando terminar."
+  orAppPassword: "Ou introduza uma palavra-passe de aplicação:"
 
 accounts:
   active: (ativa)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: Os PIN não coincidem
   pinAdvice: Não reutilize o PIN do seu telemóvel ou do seu banco.
   pinAfterRestart: Depois de reiniciar o navegador, introduz uma vez a palavra-passe mestra; a seguir, o PIN volta a funcionar.
-  biometrics: Desbloquear com biometria
-  notAvailableYet: Ainda não disponível
   vaultTimeout: Tempo limite do cofre
   timeoutImmediately: Imediatamente
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Nada foi guardado: o Keepiq de {cloudIds} é demasiado antigo para armazenar chaves de acesso. Peça-lhes que atualizem o Keepiq ou guarde a chave de acesso noutra credencial."
     partnerUpgradeRequiredUnnamed: "Nada foi guardado: uma organização parceira com quem esta credencial é partilhada usa um Keepiq demasiado antigo para armazenar chaves de acesso. Peça-lhe que atualize o Keepiq ou guarde a chave de acesso noutra credencial."
     shareScanPending: Está a ser verificado com quem esta credencial é partilhada. Nada foi guardado; tente novamente mais tarde.
+
+vaultPasskey:
+  unlock: "Desbloquear com impressão digital ou rosto"
+  unlockIntro: "O navegador pede a impressão digital, o rosto ou o PIN do dispositivo."
+  enrolTitle: "Configurar o desbloqueio com impressão digital ou rosto"
+  enrolIntro: "Confirme a palavra-passe mestra. Depois o navegador pede duas vezes a impressão digital, o rosto ou o PIN do dispositivo."
+  enrolSubmit: "Configurar"
+  enrolDone: "O desbloqueio com impressão digital ou rosto está configurado para este navegador."
+  close: "Fechar"
+  label: "Extensão de navegador Keepiq"
+  tooOld: "O desbloqueio com impressão digital ou rosto requer Chrome ou Edge 122, ou Firefox 150, ou mais recente. Use a palavra-passe mestra."
+  unsupported: "Este navegador ou dispositivo não consegue desbloquear o Keepiq com impressão digital ou rosto. Use a palavra-passe mestra."
+  revokeInWebApp: "Para o desativar, revogue esta chave de acesso na aplicação web Keepiq."

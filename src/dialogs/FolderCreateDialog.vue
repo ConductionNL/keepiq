@@ -18,18 +18,10 @@
 		size="normal"
 		@update:open="onUpdateOpen">
 		<div class="folder-form">
-			<NcNoteCard v-if="error" type="error">
-				{{ error }}
-			</NcNoteCard>
-
-			<NcTextField
+			<FolderNameField
 				v-model="name"
-				:label="
-					isVaultLevel
-						? t('keepiq', 'Vault name')
-						: t('keepiq', 'Folder name')
-				"
-				:required="true" />
+				:vaultLevel="isVaultLevel"
+				:error="error" />
 
 			<NcSelect
 				v-if="!isVaultLevel"
@@ -72,7 +64,8 @@
 
 <script>
 import { CnDialogActions, CnIconColorPicker } from '@conduction/nextcloud-vue'
-import { NcDialog, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
+import { NcDialog, NcSelect } from '@nextcloud/vue'
+import FolderNameField from '../components/FolderNameField.vue'
 import folderDialog from '../mixins/folderDialog.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { folderPathLabel } from '../utils/vaultList.js'
@@ -87,10 +80,9 @@ export default {
 	components: {
 		CnDialogActions,
 		CnIconColorPicker,
+		FolderNameField,
 		NcDialog,
-		NcNoteCard,
 		NcSelect,
-		NcTextField,
 	},
 
 	mixins: [folderDialog],
@@ -172,9 +164,6 @@ export default {
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
 		 */
 		async submit() {
-			if (!this.canSubmit) {
-				return
-			}
 			await this.saveFolder(
 				() => useFolderStore().createFolder(
 					this.name.trim(),
@@ -216,11 +205,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.folder-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 4px 0;
-}
-</style>
+<style scoped src="./folderForm.css"></style>

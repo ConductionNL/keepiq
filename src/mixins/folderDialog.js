@@ -87,9 +87,10 @@ export default {
 		},
 
 		/**
-		 * Run one store write while the dialog shows it saving: on success
-		 * report the folder and close; on failure show the server's message,
-		 * the error's own, or the fallback text, and stay open.
+		 * Run one store write while the dialog shows it saving, when Save may
+		 * run (otherwise do nothing): on success report the folder and close;
+		 * on failure show the server's message, the error's own, or the
+		 * fallback text, and stay open.
 		 *
 		 * @param {function(): Promise<object>} write The store write; resolves with the folder.
 		 * @param {string} failure The text to show when the failure carries none.
@@ -97,6 +98,9 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		async saveFolder(write, failure) {
+			if (!this.canSubmit) {
+				return
+			}
 			this.saving = true
 			this.error = ''
 			try {

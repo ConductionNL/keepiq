@@ -112,12 +112,7 @@
 				:disabled="saving || loading"
 				@update:modelValue="tags = $event" />
 
-			<NcNoteCard
-				v-if="!policyVerdict.compliant"
-				type="warning"
-				data-testid="policy-blocked">
-				{{ policyVerdict.reason }}
-			</NcNoteCard>
+			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
 
 		<template #actions>
@@ -151,6 +146,7 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
+import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -160,7 +156,8 @@ import {
 	parsePayload,
 } from '../cardIdentity/cardIdentity.js'
 import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
-import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
+import { secretSaveGuards } from '../mixins/secretSaveGuards.js'
+import { evaluateScore } from '../policy/policy.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
@@ -174,11 +171,7 @@ import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
-import {
-	mergeTypedValues,
-	missingRequired,
-	splitTypedValues,
-} from '../utils/typedFields.js'
+import { mergeTypedValues, splitTypedValues } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 
 /**
@@ -192,6 +185,7 @@ export default {
 	components: {
 		AdditionalFieldsEditor,
 		AuthenticatorKeyField,
+		PolicyBlockedNote,
 		SecretPayloadFields,
 		SecretTagsField,
 		TypedFieldsForm,
@@ -203,7 +197,7 @@ export default {
 		NcTextField,
 	},
 
-	mixins: [secretPayloadForm],
+	mixins: [secretPayloadForm, secretSaveGuards],
 
 	props: {
 		/** The ID of the secret to edit. */
@@ -375,11 +369,7 @@ export default {
 	 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 	 */
 	async mounted() {
-		this.policy = await fetchPolicy()
-		const typeStore = useSecretTypeStore()
-		if (typeStore.types.length === 0) {
-			await typeStore.fetchTypes()
-		}
+		await this.loadPolicyAndTypes()
 		await this.load()
 	},
 
@@ -517,12 +507,7 @@ export default {
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
 		async submit(options = {}) {
-			if (!this.canSubmit) {
-				return
-			}
-			// A required field of the type blocks the save and is marked (admin-18).
-			this.typedMissing = missingRequired(this.typedFields, this.typedValues)
-			if (this.typedMissing.length > 0) {
+			if (this.saveBlocked()) {
 				return
 			}
 			this.saving = true
@@ -535,17 +520,9 @@ export default {
 					!this.isCard
 					&& !this.isIdentity
 					&& this.value !== (this.original?.key || '')
+					&& (await this.breachBlocked())
 				) {
-					const hibpReason = await evaluateHibp(
-						this.policy,
-						this.selectedTypeName,
-						this.value,
-					)
-					if (hibpReason !== null) {
-						this.error = hibpReason
-						this.saving = false
-						return
-					}
+					return
 				}
 				const diff = {}
 				const o = this.original
@@ -646,14 +623,9 @@ export default {
 }
 </script>
 
-<style scoped>
-.secret-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 4px 0;
-}
+<style scoped src="./secretForm.css"></style>
 
+<style scoped>
 .secret-form__readonly {
 	display: flex;
 	flex-direction: column;

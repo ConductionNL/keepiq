@@ -94,6 +94,7 @@
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import { NcButton, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import OffboardingConfirmDialog from '../../dialogs/OffboardingConfirmDialog.vue'
+import { busyRequest } from '../../mixins/busyRequest.js'
 import { useMemberOverviewStore } from '../../store/modules/memberOverview.js'
 import { useTeamFolderStore } from '../../store/modules/teamFolder.js'
 
@@ -106,6 +107,8 @@ export default {
 		NcSelect,
 		OffboardingConfirmDialog,
 	},
+
+	mixins: [busyRequest],
 
 	data() {
 		return {
@@ -288,19 +291,13 @@ export default {
 		 */
 		async run() {
 			this.confirmOpen = false
-			this.busy = true
-			this.error = null
-			this.summary = null
-			try {
+			await this.runBusy(async () => {
+				this.summary = null
 				this.summary = await useTeamFolderStore().offboard(
 					this.leavingUserId,
 					this.successorUserId,
 				)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
 		},
 	},
 }

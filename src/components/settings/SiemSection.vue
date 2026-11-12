@@ -262,6 +262,7 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import { dateTimeOrDash } from '../../utils/dateTime.js'
+import { busyRequest } from '../../mixins/busyRequest.js'
 import {
 	connectorOf,
 	fieldsFor,
@@ -325,6 +326,8 @@ export default {
 		NcSelect,
 		NcTextField,
 	},
+
+	mixins: [busyRequest],
 
 	data() {
 		return {
@@ -516,9 +519,7 @@ export default {
 		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		async onSave() {
-			this.busy = true
-			this.error = null
-			try {
+			await this.runBusy(async () => {
 				const { type, ...payload } = requestBody(this.form)
 				if (this.editingId) {
 					await this.updateSink(payload)
@@ -526,11 +527,7 @@ export default {
 					await this.addSink({ ...payload, type })
 				}
 				this.formOpen = false
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
 		},
 
 		/**
@@ -574,10 +571,8 @@ export default {
 		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-forwarded-payload-carries-no-secret-material
 		 */
 		async onTest(sink) {
-			this.busy = true
-			this.error = null
-			this.notice = null
-			try {
+			await this.runBusy(async () => {
+				this.notice = null
 				const response = await axios.post(
 					generateUrl(`/apps/keepiq/api/v1/siem/sinks/${sink.id}/test`),
 				)
@@ -596,11 +591,7 @@ export default {
 						},
 					)
 				}
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
 		},
 
 		/**
@@ -611,18 +602,12 @@ export default {
 		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		async onDelete(sink) {
-			this.busy = true
-			this.error = null
-			try {
+			await this.runBusy(async () => {
 				await axios.delete(
 					generateUrl(`/apps/keepiq/api/v1/siem/sinks/${sink.id}`),
 				)
 				this.sinks = this.sinks.filter((s) => s.id !== sink.id)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
 		},
 
 		/**

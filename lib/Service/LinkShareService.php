@@ -203,36 +203,76 @@ class LinkShareService {
 	}//end getByToken()
 
 	/**
-	 * Confirm a successful client-side decryption (Phase 2).
+	 * Serve the encrypted snapshot for a token (Phase 1), counting the serve
+	 * before the snapshot leaves the server.
 	 *
-	 * Atomically increments the usage count (only while below the limit),
-	 * resets failed_attempts to 0, and deletes the link share when the
-	 * usage limit is reached. The atomic update guards against the
-	 * concurrent-tab race where two confirms could exceed the limit.
+	 * Every serve consumes one use and one attempt, atomically and only
+	 * while uses and attempts remain, so the usage limit and the attempt cap
+	 * hold whether or not the client ever confirms. The share is deleted as
+	 * soon as the serve that reaches either one has been read.
 	 *
 	 * @param string $token The access token
 	 *
-	 * @return LinkShare The updated (or, when exhausted, last-known) link share
+	 * @return array<string, mixed> The public payload
 	 *
-	 * @throws RuntimeException When the token is invalid or the limit was already reached
+	 * @throws RuntimeException When the token is invalid, expired, used up or out of attempts
 	 *
-	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-access-via-link
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-auto-deletion
 	 */
-	public function confirmAccess(string $token): LinkShare {
-		$affected = $this->mapper->incrementUsageIfBelowLimit($token);
-		if ($affected === 0) {
-			// Either the token does not exist or the limit was already reached.
+	public function serve(string $token): array {
+		$this->getByToken(token: $token);
+
+		if ($this->mapper->countServeIfAllowed($token, self::MAX_FAILED_ATTEMPTS) === 0) {
 			throw new RuntimeException('Link not found or expired');
 		}
 
 		$linkShare = $this->mapper->findByToken($token);
-
+		$payload = $linkShare->jsonSerializePublic();
 		$this->auditTrail->recordAccessed(linkShareId: $linkShare->getId());
 
 		if ($linkShare->getUsageCount() >= $linkShare->getUsageLimit()) {
 			$this->mapper->delete($linkShare);
 			$this->logger->info("Keepiq: link share {$linkShare->getId()} auto-deleted (usage limit reached)");
+			return $payload;
 		}
+
+		if ($linkShare->getFailedAttempts() >= self::MAX_FAILED_ATTEMPTS) {
+			$this->mapper->delete($linkShare);
+			$this->auditTrail->recordAutoDeleted(linkShareId: $linkShare->getId());
+			$this->logger->warning(
+				"Keepiq: link share {$linkShare->getId()} permanently deleted after "
+				. self::MAX_FAILED_ATTEMPTS . ' unconfirmed attempts'
+			);
+		}
+
+		return $payload;
+	}//end serve()
+
+	/**
+	 * Confirm a successful client-side decryption (Phase 2).
+	 *
+	 * The use was already counted when the snapshot was served; a confirm
+	 * only resets the attempts, so a recipient who decrypted is not pushed
+	 * towards the attempt cap by later uses.
+	 *
+	 * @param string $token The access token
+	 *
+	 * @return LinkShare The link share
+	 *
+	 * @throws RuntimeException When the token is invalid or the share is gone
+	 *
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
+	 */
+	public function confirmAccess(string $token): LinkShare {
+		try {
+			$linkShare = $this->mapper->findByToken($token);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			throw new RuntimeException('Link not found or expired');
+		}
+
+		$this->mapper->resetFailedAttempts($token);
+		$linkShare->setFailedAttempts(0);
 
 		return $linkShare;
 	}//end confirmAccess()

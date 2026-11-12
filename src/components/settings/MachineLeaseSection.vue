@@ -67,13 +67,13 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { NcNoteCard } from '@nextcloud/vue'
+import { adminSettingsForm } from '../../mixins/adminSettingsForm.js'
 
 export default {
 	name: 'MachineLeaseSection',
 	components: { CnSettingsSection, NcNoteCard },
+	mixins: [adminSettingsForm('/apps/keepiq/api/settings/admin/applications')],
 
 	data() {
 		return {
@@ -81,52 +81,36 @@ export default {
 			maxTtl: 86400,
 			renewable: true,
 			blockOnRevoke: false,
-			error: null,
-		}
-	},
-
-	/**
-	 * Load the current instance lease policy.
-	 *
-	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
-	 */
-	async created() {
-		try {
-			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin/applications'),
-			)
-			this.defaultTtl = response.data.lease_default_ttl_seconds ?? 900
-			this.maxTtl = response.data.lease_max_ttl_seconds ?? 86400
-			this.renewable = response.data.lease_renewable !== false
-			this.blockOnRevoke =
-				response.data.lease_revocation_blocks_refetch === true
-		} catch (e) {
-			this.error = e?.response?.data?.message || e?.message
 		}
 	},
 
 	methods: {
 		/**
-		 * Persist the policy (server enforces the 60s floor).
+		 * Take the stored lease policy into the form.
 		 *
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+		 * @param {object} data The stored settings.
+		 * @return {void}
 		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
 		 */
-		async save() {
-			this.error = null
-			try {
-				await axios.put(
-					generateUrl('/apps/keepiq/api/settings/admin/applications'),
-					{
-						lease_default_ttl_seconds: this.defaultTtl,
-						lease_max_ttl_seconds: this.maxTtl,
-						lease_renewable: this.renewable,
-						lease_revocation_blocks_refetch: this.blockOnRevoke,
-					},
-				)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+		readSettings(data) {
+			this.defaultTtl = data.lease_default_ttl_seconds ?? 900
+			this.maxTtl = data.lease_max_ttl_seconds ?? 86400
+			this.renewable = data.lease_renewable !== false
+			this.blockOnRevoke = data.lease_revocation_blocks_refetch === true
+		},
+
+		/**
+		 * The lease policy to store.
+		 *
+		 * @return {object} The settings to store.
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+		 */
+		settingsPayload() {
+			return {
+				lease_default_ttl_seconds: this.defaultTtl,
+				lease_max_ttl_seconds: this.maxTtl,
+				lease_renewable: this.renewable,
+				lease_revocation_blocks_refetch: this.blockOnRevoke,
 			}
 		},
 	},

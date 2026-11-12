@@ -24,21 +24,36 @@ async function expire(accountId: string, action: VaultTimeoutAction): Promise<vo
 	else await lock(accountId)
 }
 
+type UnlockedAccount = Awaited<ReturnType<typeof unlockedAccounts>>[number]
+
+/** The event options also lock at the organisation maximum, so a pop-out kept open or a system never locked can't outlast it. */
+function timedMinutes({ vaultTimeout, maxIdleMinutes }: UnlockedAccount['settings']): number | null {
+	if (typeof vaultTimeout === 'number') return vaultTimeout
+	return vaultTimeout === 'onSystemLock' || vaultTimeout === 'immediately' ? maxIdleMinutes : null
+}
+
+/** Unlocking is an interaction too, and it is all a restored "Never" key had. */
+async function activeSince(accountId: string, last: number): Promise<number> {
+	return Math.max(Number.isFinite(last) ? last : 0, Number(await sessionValues.get(unlockedAtKey(accountId))) || 0)
+}
+
+/** Locks or logs out the account when it was idle past its timed option; true when it did. */
+async function expireIdle({ account, settings }: UnlockedAccount, clock: { now: number; last: number }): Promise<boolean> {
+	const minutes = timedMinutes(settings)
+	if (minutes === null) return false
+	if (clock.now - (await activeSince(account.id, clock.last)) >= minutes * 60_000) {
+		await expire(account.id, settings.vaultTimeoutAction)
+		return true
+	}
+	return false
+}
+
 /** Locks or logs out every account past its timed option. Runs on the alarm and before every popup reply. */
 export async function enforce(now = Date.now()): Promise<void> {
 	const last = Number(await sessionValues.get(LAST_INTERACTION))
 	let expired = false
-	for (const { account, settings } of await unlockedAccounts()) {
-		// The event options also lock at the organisation maximum, so a pop-out kept open or a system never locked can't outlast it.
-		const minutes = typeof settings.vaultTimeout === 'number' ? settings.vaultTimeout
-			: settings.vaultTimeout === 'onSystemLock' || settings.vaultTimeout === 'immediately' ? settings.maxIdleMinutes : null
-		if (minutes === null) continue
-		// Unlocking is an interaction too, and it is all a restored "Never" key had.
-		const since = Math.max(Number.isFinite(last) ? last : 0, Number(await sessionValues.get(unlockedAtKey(account.id))) || 0)
-		if (now - since >= minutes * 60_000) {
-			await expire(account.id, settings.vaultTimeoutAction)
-			expired = true
-		}
+	for (const unlocked of await unlockedAccounts()) {
+		if (await expireIdle(unlocked, { now, last })) expired = true
 	}
 	// Runs before every popup request, so the alarms are only touched when something changed.
 	if (expired) await syncAlarm()

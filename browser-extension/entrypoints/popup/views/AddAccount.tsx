@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { i18n } from '#i18n'
+import { LOGIN_FLOW_FAILURE } from '@/src/accounts/login-flow'
 import { normalizeServerUrl, serverOrigins } from '@/src/accounts/normalize-server-url'
 import type { ErrorCode } from '@/src/messages'
 import { Button } from '../components/Button'
-import { ErrorBanner } from '../components/ErrorBanner'
+import { Banner, ErrorBanner } from '../components/ErrorBanner'
 import { TextField } from '../components/TextField'
 import { errorText } from '../errors'
 import type { Dispatch } from '../hooks/usePopupState'
@@ -38,6 +39,20 @@ function useDraft(): [Draft, (patch: Partial<Draft>) => void, () => void] {
 	return [draft, update, forget]
 }
 
+/** A browser sign-in that failed after the popup closed, once. */
+function useFlowFailure(show: (code: ErrorCode, host: string) => void): void {
+	useEffect(() => {
+		browser.storage.session?.get(LOGIN_FLOW_FAILURE).then((stored) => {
+			const failure = stored[LOGIN_FLOW_FAILURE] as { code: ErrorCode; host: string } | undefined
+			if (!failure) return
+			show(failure.code, failure.host)
+			return browser.storage.session.remove(LOGIN_FLOW_FAILURE)
+		}).catch(() => {})
+		// Once on mount; `show` only sets state.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
+}
+
 /** The field the user has to change after each failure. */
 function fieldFor(code: ErrorCode): Field {
 	if (code === 'unauthorized') return 'appPassword'
@@ -59,6 +74,8 @@ export function AddAccount({ dispatch, onAdded }: Props) {
 	const [securityUrl, setSecurityUrl] = useState<string | null>(null)
 	const [error, setError] = useState<string | null>(null)
 	const [busy, setBusy] = useState(false)
+	const [flowStarted, setFlowStarted] = useState(false)
+	useFlowFailure((code, host) => setError(errorText(code, host)))
 
 	function updateSecurityLink() {
 		const normalized = normalizeServerUrl(serverUrl)
@@ -71,19 +88,35 @@ export function AddAccount({ dispatch, onAdded }: Props) {
 		field.current?.focus()
 	}
 
-	async function submit(event: FormEvent) {
-		event.preventDefault()
+	/** The normalized server, once the user granted it; `null` after showing why not. */
+	async function grantedServer() {
 		const normalized = normalizeServerUrl(serverUrl)
 		if (!normalized.ok) {
 			fail(normalized.code, '')
-			return
+			return null
 		}
 		// Must be the first await: the browser only prompts inside the click's user gesture.
 		const granted = await browser.permissions.request({ origins: serverOrigins(normalized.origin) }).catch(() => false)
 		if (!granted) {
 			fail('permission_denied', normalized.host)
-			return
+			return null
 		}
+		return normalized
+	}
+
+	async function signInWithBrowser() {
+		const normalized = await grantedServer()
+		if (!normalized) return
+		setError(null)
+		const result = await dispatch({ kind: 'accounts.loginFlow', serverUrl: normalized.serverUrl })
+		if (result.ok) setFlowStarted(true)
+		else fail(result.code, normalized.host)
+	}
+
+	async function submit(event: FormEvent) {
+		event.preventDefault()
+		const normalized = await grantedServer()
+		if (!normalized) return
 		setBusy(true)
 		setError(null)
 		const result = await dispatch({ kind: 'accounts.add', serverUrl: normalized.serverUrl, username, appPassword })
@@ -100,6 +133,9 @@ export function AddAccount({ dispatch, onAdded }: Props) {
 	return (
 		<form className="stack" onSubmit={submit} noValidate>
 			<TextField ref={serverUrlField} label={i18n.t('addAccount.serverUrl')} value={serverUrl} onChange={(value) => setDraft({ serverUrl: value })} onBlur={updateSecurityLink} placeholder={i18n.t('addAccount.serverUrlPlaceholder')} autoFocus autoComplete="url" inputMode="url" verbatim />
+			<Button variant="secondary" onClick={() => void signInWithBrowser()} disabled={!serverUrl.trim()}>{i18n.t('addAccount.signInWithBrowser')}</Button>
+			{flowStarted && <Banner tone="warning" role="status">{i18n.t('addAccount.finishInTab')}</Banner>}
+			<p className="hint">{i18n.t('addAccount.orAppPassword')}</p>
 			<TextField ref={usernameField} label={i18n.t('addAccount.username')} value={username} onChange={(value) => setDraft({ username: value })} autoComplete="username" verbatim />
 			<TextField
 				ref={appPasswordField}

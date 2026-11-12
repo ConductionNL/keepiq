@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: La clé de votre coffre-fort a changé. Déverrouillez avec votre mot de passe principal.
   pinTooShort: Utilisez au moins {count} caractères
   unknown: Une erreur s’est produite
+  passkeyFailed: "La clé d'accès n'a pas pu déverrouiller votre coffre-fort. Utilisez votre mot de passe principal."
 
 notices:
   keyChanged: La clé de votre coffre-fort a changé dans Keepiq. Déverrouillez avec votre mot de passe principal actuel.
+  fileAccess: "Keepiq n'a pas besoin d'accéder aux fichiers. Dans Nextcloud, sous Paramètres, Sécurité, Appareils et sessions, vous pouvez couper l'accès aux fichiers de ce mot de passe d'application ou le révoquer."
 
 common:
   accountOnHost: "{name} sur {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Créez-en un dans Paramètres Nextcloud, Sécurité. Ne saisissez jamais ici votre mot de passe de connexion Nextcloud.
   hintWithLink: "Créez-en un dans Paramètres Nextcloud, Sécurité : {link}. Ne saisissez jamais ici votre mot de passe de connexion Nextcloud."
   securityLink: ouvrir les paramètres de sécurité
+  signInWithBrowser: "Se connecter via Nextcloud"
+  finishInTab: "Terminez la connexion sur la page Nextcloud qui s'est ouverte. Keepiq ajoute le compte une fois que vous avez terminé."
+  orAppPassword: "Ou saisissez un mot de passe d'application :"
 
 accounts:
   active: (actif)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: Les codes PIN ne correspondent pas
   pinAdvice: Ne réutilisez pas le code PIN de votre téléphone ou de votre banque.
   pinAfterRestart: Après un redémarrage du navigateur, saisissez une fois votre mot de passe principal ; votre code PIN fonctionnera ensuite à nouveau.
-  biometrics: Déverrouiller par biométrie
-  notAvailableYet: Pas encore disponible
   vaultTimeout: Délai de verrouillage du coffre-fort
   timeoutImmediately: Immédiatement
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Rien n’a été enregistré : le Keepiq de {cloudIds} est trop ancien pour stocker des clés d’accès. Demandez-leur de mettre Keepiq à jour, ou enregistrez la clé d’accès dans un autre identifiant."
     partnerUpgradeRequiredUnnamed: "Rien n’a été enregistré : une organisation partenaire avec qui cet identifiant est partagé utilise une version de Keepiq trop ancienne pour stocker des clés d’accès. Demandez-lui de mettre Keepiq à jour, ou enregistrez la clé d’accès dans un autre identifiant."
     shareScanPending: Cet identifiant attend une vérification de ses partages qui n’est pas terminée. Rien n’a été enregistré ; réessayez plus tard.
+
+vaultPasskey:
+  unlock: "Déverrouiller par empreinte ou visage"
+  unlockIntro: "Votre navigateur demande votre empreinte, votre visage ou le code PIN de l'appareil."
+  enrolTitle: "Configurer le déverrouillage par empreinte ou visage"
+  enrolIntro: "Confirmez votre mot de passe principal. Votre navigateur demande ensuite deux fois votre empreinte, votre visage ou le code PIN de l'appareil."
+  enrolSubmit: "Configurer"
+  enrolDone: "Le déverrouillage par empreinte ou visage est configuré pour ce navigateur."
+  close: "Fermer"
+  label: "Extension de navigateur Keepiq"
+  tooOld: "Le déverrouillage par empreinte ou visage nécessite Chrome ou Edge 122, ou Firefox 150, ou plus récent. Utilisez votre mot de passe principal."
+  unsupported: "Ce navigateur ou cet appareil ne peut pas déverrouiller Keepiq par empreinte ou visage. Utilisez votre mot de passe principal."
+  revokeInWebApp: "Pour le désactiver, révoquez cette clé d'accès dans l'application web Keepiq."

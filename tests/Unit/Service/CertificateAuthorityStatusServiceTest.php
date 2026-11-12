@@ -35,6 +35,9 @@ use PHPUnit\Framework\TestCase;
  * Every status the CA can report, and the counts that come with it.
  *
  * @covers \OCA\Keepiq\Service\CertificateAuthorityStatusService
+ * @uses   \OCA\Keepiq\Db\CACertificate
+ * @uses   \OCA\Keepiq\Db\SecretType
+ * @uses   \OCA\Keepiq\Db\StringPrimaryKey
  */
 final class CertificateAuthorityStatusServiceTest extends TestCase {
 	/**

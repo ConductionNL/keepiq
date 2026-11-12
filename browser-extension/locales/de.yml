@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: Dein Tresorschlüssel hat sich geändert. Entsperre mit deinem Master-Passwort.
   pinTooShort: Verwende mindestens {count} Zeichen
   unknown: Etwas ist schiefgelaufen
+  passkeyFailed: "Der Passkey konnte deinen Tresor nicht entsperren. Verwende dein Master-Passwort."
 
 notices:
   keyChanged: Dein Tresorschlüssel hat sich in Keepiq geändert. Entsperre mit deinem aktuellen Master-Passwort.
+  fileAccess: "Keepiq braucht keinen Dateizugriff. In Nextcloud kannst du unter Einstellungen, Sicherheit, Geräte & Sitzungen den Dateizugriff dieses App-Passworts abschalten oder es widerrufen."
 
 common:
   accountOnHost: "{name} auf {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Erstelle eines unter Nextcloud-Einstellungen, Sicherheit. Gib hier nie dein Nextcloud-Anmeldepasswort ein.
   hintWithLink: "Erstelle eines unter Nextcloud-Einstellungen, Sicherheit: {link}. Gib hier nie dein Nextcloud-Anmeldepasswort ein."
   securityLink: Sicherheitseinstellungen öffnen
+  signInWithBrowser: "Über Nextcloud anmelden"
+  finishInTab: "Schließe die Anmeldung auf der geöffneten Nextcloud-Seite ab. Keepiq fügt das Konto hinzu, sobald du fertig bist."
+  orAppPassword: "Oder gib ein App-Passwort ein:"
 
 accounts:
   active: (aktiv)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: Die PINs stimmen nicht überein
   pinAdvice: Verwende keine PIN, die du schon für dein Handy oder deine Bank nutzt.
   pinAfterRestart: Nach einem Neustart des Browsers gibst du einmal dein Master-Passwort ein; danach funktioniert deine PIN wieder.
-  biometrics: Mit Biometrie entsperren
-  notAvailableYet: Noch nicht verfügbar
   vaultTimeout: Tresor-Timeout
   timeoutImmediately: Sofort
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Es wurde nichts gespeichert: Das Keepiq von {cloudIds} ist zu alt, um Passkeys zu speichern. Bitte sie, Keepiq zu aktualisieren, oder speichere den Passkey in einem anderen Login."
     partnerUpgradeRequiredUnnamed: "Es wurde nichts gespeichert: Eine Partnerorganisation, mit der dieses Login geteilt ist, nutzt ein Keepiq, das zu alt ist, um Passkeys zu speichern. Bitte sie, Keepiq zu aktualisieren, oder speichere den Passkey in einem anderen Login."
     shareScanPending: Dieses Login wartet auf eine noch nicht abgeschlossene Prüfung seiner Freigaben. Es wurde nichts gespeichert; versuche es später erneut.
+
+vaultPasskey:
+  unlock: "Mit Fingerabdruck oder Gesicht entsperren"
+  unlockIntro: "Dein Browser fragt nach Fingerabdruck, Gesicht oder Geräte-PIN."
+  enrolTitle: "Entsperren mit Fingerabdruck oder Gesicht einrichten"
+  enrolIntro: "Bestätige dein Master-Passwort. Danach fragt dein Browser zweimal nach Fingerabdruck, Gesicht oder Geräte-PIN."
+  enrolSubmit: "Einrichten"
+  enrolDone: "Entsperren mit Fingerabdruck oder Gesicht ist für diesen Browser eingerichtet."
+  close: "Schließen"
+  label: "Keepiq-Browsererweiterung"
+  tooOld: "Entsperren mit Fingerabdruck oder Gesicht braucht Chrome oder Edge 122 oder Firefox 150 oder neuer. Verwende dein Master-Passwort."
+  unsupported: "Dieser Browser oder dieses Gerät kann Keepiq nicht mit Fingerabdruck oder Gesicht entsperren. Verwende dein Master-Passwort."
+  revokeInWebApp: "Zum Abschalten widerrufe diesen Passkey in der Keepiq-Web-App."

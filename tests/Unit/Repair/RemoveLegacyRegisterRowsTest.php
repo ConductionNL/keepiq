@@ -45,6 +45,8 @@ use RuntimeException;
  *
  * @covers \OCA\Keepiq\Repair\RemoveLegacyRegisterRows
  * @covers \OCA\Keepiq\Repair\LegacyRegisterPlanner
+ * @uses   \OCA\Keepiq\Repair\LegacyRegisterSweep
+ * @uses   \OCA\Keepiq\Repair\StoredIdList
  */
 final class RemoveLegacyRegisterRowsTest extends TestCase {
 	/**

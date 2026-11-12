@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: Sinu hoidla võti muutus. Lukusta lahti peasalasõnaga.
   pinTooShort: Kasuta vähemalt {count} märki
   unknown: Midagi läks valesti
+  passkeyFailed: "Pääsuvõti ei avanud sinu seifi. Kasuta oma ülemparooli."
 
 notices:
   keyChanged: Sinu hoidla võti muutus Keepiqis. Lukusta lahti oma praeguse peasalasõnaga.
+  fileAccess: "Keepiq ei vaja ligipääsu failidele. Nextcloudis saad jaotises Seaded, Turvalisus, Seadmed ja seansid selle rakenduse parooli failiõiguse välja lülitada või parooli tühistada."
 
 common:
   accountOnHost: "{name} serveris {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Loo see Nextcloudi seadetes jaotises Turvalisus. Ära kunagi sisesta siia oma Nextcloudi sisselogimise salasõna.
   hintWithLink: "Loo see Nextcloudi seadetes jaotises Turvalisus: {link}. Ära kunagi sisesta siia oma Nextcloudi sisselogimise salasõna."
   securityLink: ava turvaseaded
+  signInWithBrowser: "Logi sisse Nextcloudi kaudu"
+  finishInTab: "Lõpeta sisselogimine avanenud Nextcloudi lehel. Keepiq lisab konto, kui oled valmis."
+  orAppPassword: "Või sisesta rakenduse parool:"
 
 accounts:
   active: (aktiivne)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: PIN-koodid ei kattu
   pinAdvice: Ära kasuta uuesti oma telefoni või panga PIN-koodi.
   pinAfterRestart: Pärast brauseri taaskäivitamist sisestad korra peasalasõna; seejärel töötab PIN-kood jälle.
-  biometrics: Lukusta lahti biomeetriaga
-  notAvailableYet: Pole veel saadaval
   vaultTimeout: Hoidla ajalõpp
   timeoutImmediately: Kohe
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Midagi ei salvestatud: saajate {cloudIds} Keepiq on pääsuvõtmete salvestamiseks liiga vana. Palu neil Keepiq uuendada või salvesta pääsuvõti teisele kasutajakontole."
     partnerUpgradeRequiredUnnamed: "Midagi ei salvestatud: partnerorganisatsiooni, kellega see kasutajakonto on jagatud, Keepiq on pääsuvõtmete salvestamiseks liiga vana. Palu neil Keepiq uuendada või salvesta pääsuvõti teisele kasutajakontole."
     shareScanPending: See kasutajakonto ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei salvestatud; proovi hiljem uuesti.
+
+vaultPasskey:
+  unlock: "Ava sõrmejälje või näoga"
+  unlockIntro: "Brauser küsib sõrmejälge, nägu või seadme PIN-koodi."
+  enrolTitle: "Seadista avamine sõrmejälje või näoga"
+  enrolIntro: "Kinnita oma ülemparool. Seejärel küsib brauser kaks korda sõrmejälge, nägu või seadme PIN-koodi."
+  enrolSubmit: "Seadista"
+  enrolDone: "Avamine sõrmejälje või näoga on selles brauseris seadistatud."
+  close: "Sulge"
+  label: "Keepiqi brauserilaiendus"
+  tooOld: "Avamine sõrmejälje või näoga vajab Chrome'i või Edge'i 122 või Firefox 150 või uuemat. Kasuta oma ülemparooli."
+  unsupported: "See brauser või seade ei saa Keepiqi sõrmejälje ega näoga avada. Kasuta oma ülemparooli."
+  revokeInWebApp: "Väljalülitamiseks tühista see pääsuvõti Keepiqi veebirakenduses."

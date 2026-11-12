@@ -33,9 +33,11 @@ errors:
   pinKeyChanged: Your vault key changed. Unlock with your master password.
   pinTooShort: Use at least {count} characters
   unknown: Something went wrong
+  passkeyFailed: "The passkey could not unlock your vault. Use your master password."
 
 notices:
   keyChanged: Your vault key changed in Keepiq. Unlock with your current master password.
+  fileAccess: "Keepiq needs no file access. In Nextcloud, under Settings, Security, Devices & sessions, you can switch off file access for this app password or revoke it."
 
 common:
   accountOnHost: "{name} on {host}"
@@ -89,6 +91,9 @@ addAccount:
   hint: Create one under Nextcloud Settings, Security. Never enter your Nextcloud login password here.
   hintWithLink: "Create one under Nextcloud Settings, Security: {link}. Never enter your Nextcloud login password here."
   securityLink: open security settings
+  signInWithBrowser: "Sign in through Nextcloud"
+  finishInTab: "Finish signing in on the Nextcloud page that opened. Keepiq adds the account when you are done."
+  orAppPassword: "Or enter an app password:"
 
 accounts:
   active: (active)
@@ -414,8 +419,6 @@ settings:
   pinMismatch: PINs don't match
   pinAdvice: Don't reuse a PIN from your phone or bank.
   pinAfterRestart: After a browser restart you enter your master password once; then your PIN works again.
-  biometrics: Unlock with biometrics
-  notAvailableYet: Not available yet
   vaultTimeout: Vault timeout
   timeoutImmediately: Immediately
   timeoutMinutes:
@@ -817,3 +820,16 @@ passkey:
     partnerUpgradeRequired: "Nothing was saved: the Keepiq of {cloudIds} is too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."
     partnerUpgradeRequiredUnnamed: "Nothing was saved: a partner organisation this login is shared with runs a Keepiq too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."
     shareScanPending: This login is waiting for a check of its shares that has not finished. Nothing was saved; try again later.
+
+vaultPasskey:
+  unlock: "Unlock with fingerprint or face"
+  unlockIntro: "Your browser asks for your fingerprint, face or device PIN."
+  enrolTitle: "Set up fingerprint or face unlock"
+  enrolIntro: "Confirm your master password. Your browser then asks for your fingerprint, face or device PIN twice."
+  enrolSubmit: "Set up"
+  enrolDone: "Fingerprint or face unlock is set up for this browser."
+  close: "Close"
+  label: "Keepiq browser extension"
+  tooOld: "Fingerprint or face unlock needs Chrome or Edge 122, or Firefox 150, or later. Use your master password."
+  unsupported: "This browser or device cannot unlock Keepiq with fingerprint or face. Use your master password."
+  revokeInWebApp: "To turn it off, revoke this passkey in the Keepiq web app."

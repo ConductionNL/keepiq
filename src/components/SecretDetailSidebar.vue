@@ -1856,6 +1856,17 @@ export default {
 		},
 
 		/**
+		 * Reload the detail, then the list behind it, after a dialog saved.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
+		reloadWithList() {
+			this.load()
+			this.refreshList()
+		},
+
+		/**
 		 * Open the edit dialog for this secret; reload the detail and the
 		 * list behind it on success.
 		 *
@@ -1865,10 +1876,7 @@ export default {
 		openEdit() {
 			this.cnOpenModal('secret-edit', {
 				secretId: this.secretId,
-				onSaved: () => {
-					this.load()
-					this.refreshList()
-				},
+				onSaved: () => this.reloadWithList(),
 			})
 		},
 
@@ -1884,10 +1892,7 @@ export default {
 				subject: 'secret',
 				secretId: this.secretId,
 				currentFolderId: this.secret ? this.secret.folderId || null : null,
-				onSaved: () => {
-					this.load()
-					this.refreshList()
-				},
+				onSaved: () => this.reloadWithList(),
 			})
 		},
 

@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: Holviavaimesi on vaihtunut. Avaa lukitus pääsalasanalla.
   pinTooShort: Käytä vähintään {count} merkkiä
   unknown: Jokin meni pieleen
+  passkeyFailed: "Pääsyavain ei avannut holviasi. Käytä pääsalasanaasi."
 
 notices:
   keyChanged: Holviavaimesi on vaihtunut Keepiqissä. Avaa lukitus nykyisellä pääsalasanallasi.
+  fileAccess: "Keepiq ei tarvitse pääsyä tiedostoihin. Nextcloudissa kohdassa Asetukset, Turvallisuus, Laitteet ja istunnot voit poistaa tämän sovellussalasanan tiedostokäytön tai mitätöidä sen."
 
 common:
   accountOnHost: "{name} palvelimella {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Luo sellainen Nextcloudin asetuksissa kohdassa Turvallisuus. Älä koskaan kirjoita tähän Nextcloudin kirjautumissalasanaasi.
   hintWithLink: "Luo sellainen Nextcloudin asetuksissa kohdassa Turvallisuus: {link}. Älä koskaan kirjoita tähän Nextcloudin kirjautumissalasanaasi."
   securityLink: avaa turvallisuusasetukset
+  signInWithBrowser: "Kirjaudu Nextcloudin kautta"
+  finishInTab: "Viimeistele kirjautuminen avautuneella Nextcloud-sivulla. Keepiq lisää tilin, kun olet valmis."
+  orAppPassword: "Tai anna sovellussalasana:"
 
 accounts:
   active: (aktiivinen)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: PIN-koodit eivät täsmää
   pinAdvice: Älä käytä samaa PIN-koodia kuin puhelimessasi tai pankissasi.
   pinAfterRestart: Selaimen uudelleenkäynnistyksen jälkeen annat pääsalasanasi kerran; sen jälkeen PIN-koodi toimii taas.
-  biometrics: Avaa lukitus biometriikalla
-  notAvailableYet: Ei vielä saatavilla
   vaultTimeout: Holvin aikakatkaisu
   timeoutImmediately: Heti
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Mitään ei tallennettu: vastaanottajien {cloudIds} Keepiq on liian vanha tallentamaan pääsyavaimia. Pyydä heitä päivittämään Keepiq tai tallenna pääsyavain toiseen kirjautumistietoon."
     partnerUpgradeRequiredUnnamed: "Mitään ei tallennettu: kumppaniorganisaatiolla, jonka kanssa tämä kirjautumistieto on jaettu, on liian vanha Keepiq tallentamaan pääsyavaimia. Pyydä heitä päivittämään Keepiq tai tallenna pääsyavain toiseen kirjautumistietoon."
     shareScanPending: Tämä kirjautumistieto odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei tallennettu; yritä myöhemmin uudelleen.
+
+vaultPasskey:
+  unlock: "Avaa sormenjäljellä tai kasvoilla"
+  unlockIntro: "Selain pyytää sormenjälkeä, kasvoja tai laitteen PIN-koodia."
+  enrolTitle: "Ota käyttöön avaus sormenjäljellä tai kasvoilla"
+  enrolIntro: "Vahvista pääsalasanasi. Sen jälkeen selain pyytää kahdesti sormenjälkeä, kasvoja tai laitteen PIN-koodia."
+  enrolSubmit: "Ota käyttöön"
+  enrolDone: "Avaus sormenjäljellä tai kasvoilla on käytössä tässä selaimessa."
+  close: "Sulje"
+  label: "Keepiq-selainlaajennus"
+  tooOld: "Avaus sormenjäljellä tai kasvoilla vaatii Chromen tai Edgen 122 tai Firefoxin 150 tai uudemman. Käytä pääsalasanaasi."
+  unsupported: "Tämä selain tai laite ei voi avata Keepiqiä sormenjäljellä tai kasvoilla. Käytä pääsalasanaasi."
+  revokeInWebApp: "Poista se käytöstä mitätöimällä tämä pääsyavain Keepiq-verkkosovelluksessa."

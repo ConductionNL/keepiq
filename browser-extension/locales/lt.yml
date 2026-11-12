@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: Jūsų saugyklos raktas pasikeitė. Atrakinkite pagrindiniu slaptažodžiu.
   pinTooShort: "Mažiausias simbolių skaičius: {count}"
   unknown: Kažkas nepavyko
+  passkeyFailed: "Prieigos raktas neatrakino jūsų saugyklos. Naudokite pagrindinį slaptažodį."
 
 notices:
   keyChanged: Jūsų saugyklos raktas Keepiq pasikeitė. Atrakinkite dabartiniu pagrindiniu slaptažodžiu.
+  fileAccess: "Keepiq nereikia prieigos prie failų. Nextcloud skiltyje Nustatymai, Saugumas, Įrenginiai ir seansai galite išjungti šio programėlės slaptažodžio prieigą prie failų arba jį atšaukti."
 
 common:
   accountOnHost: "{name} serveryje {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Sukurkite jį Nextcloud nustatymų skiltyje Saugumas. Niekada neįveskite čia savo Nextcloud prisijungimo slaptažodžio.
   hintWithLink: "Sukurkite jį Nextcloud nustatymų skiltyje Saugumas: {link}. Niekada neįveskite čia savo Nextcloud prisijungimo slaptažodžio."
   securityLink: atidaryti saugumo nustatymus
+  signInWithBrowser: "Prisijungti per Nextcloud"
+  finishInTab: "Užbaikite prisijungimą atsidariusiame Nextcloud puslapyje. Keepiq pridės paskyrą, kai baigsite."
+  orAppPassword: "Arba įveskite programėlės slaptažodį:"
 
 accounts:
   active: (aktyvi)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: PIN kodai nesutampa
   pinAdvice: Nenaudokite to paties PIN kodo kaip telefone ar banke.
   pinAfterRestart: Paleidę naršyklę iš naujo vieną kartą įvesite pagrindinį slaptažodį; tada PIN kodas vėl veiks.
-  biometrics: Atrakinti biometriniais duomenimis
-  notAvailableYet: Dar negalima
   vaultTimeout: Saugyklos skirtasis laikas
   timeoutImmediately: Iš karto
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Niekas neįrašyta: gavėjų {cloudIds} Keepiq versija per sena prieigos raktams saugoti. Paprašykite jų atnaujinti Keepiq arba įrašykite prieigos raktą į kitą prisijungimą."
     partnerUpgradeRequiredUnnamed: "Niekas neįrašyta: partnerio organizacija, su kuria bendrinamas šis prisijungimas, naudoja per seną Keepiq versiją prieigos raktams saugoti. Paprašykite jų atnaujinti Keepiq arba įrašykite prieigos raktą į kitą prisijungimą."
     shareScanPending: Šis prisijungimas laukia bendrinimo patikros, kuri dar nebaigta. Niekas neįrašyta; bandykite vėliau.
+
+vaultPasskey:
+  unlock: "Atrakinti piršto atspaudu arba veidu"
+  unlockIntro: "Naršyklė paprašys piršto atspaudo, veido arba įrenginio PIN kodo."
+  enrolTitle: "Nustatyti atrakinimą piršto atspaudu arba veidu"
+  enrolIntro: "Patvirtinkite pagrindinį slaptažodį. Tada naršyklė du kartus paprašys piršto atspaudo, veido arba įrenginio PIN kodo."
+  enrolSubmit: "Nustatyti"
+  enrolDone: "Atrakinimas piršto atspaudu arba veidu šioje naršyklėje nustatytas."
+  close: "Uždaryti"
+  label: "Keepiq naršyklės plėtinys"
+  tooOld: "Atrakinimui piršto atspaudu arba veidu reikia Chrome arba Edge 122, arba Firefox 150, arba naujesnės. Naudokite pagrindinį slaptažodį."
+  unsupported: "Ši naršyklė arba įrenginys negali atrakinti Keepiq piršto atspaudu ar veidu. Naudokite pagrindinį slaptažodį."
+  revokeInWebApp: "Norėdami išjungti, atšaukite šį prieigos raktą Keepiq žiniatinklio programoje."

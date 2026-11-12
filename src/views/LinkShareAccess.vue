@@ -12,12 +12,12 @@
 
    Phase 2 — recipient types the access password; the page derives the
      AES-GCM key via Argon2id, decrypts the snapshot client-side, and
-     POSTs a /confirm so the server can increment the usage count and
-     auto-delete on cap.
+     POSTs a /confirm so the server resets the attempt counter.
 
-  The blob is decrypted in the browser; the password NEVER reaches the
-  server. A wrong password records a failed attempt via the `failed=1`
-  re-fetch so the brute-force counter ticks.
+  The server counts the use and the attempt when it serves the blob in
+  phase 1, and deletes the share once either limit is reached. The blob is
+  decrypted in the browser; the password NEVER reaches the server. A wrong
+  password is retried against the blob already fetched.
 
   The revealed secret renders as labelled FIELD ROWS with a per-field
   copy button — the way the detail sidebar (and Proton Pass/Passwork)
@@ -242,7 +242,6 @@ export default {
 			busy: false,
 			loadError: '',
 			unlockError: '',
-			priorFailure: false,
 			/** @type {Object<string, boolean>} Per-field reveal state. */
 			revealed: {},
 		}
@@ -420,10 +419,7 @@ export default {
 			this.loadError = ''
 			try {
 				const store = useLinkShareStore()
-				this.share = await store.fetchPublicLinkShare(
-					this.token,
-					this.priorFailure,
-				)
+				this.share = await store.fetchPublicLinkShare(this.token)
 			} catch (e) {
 				this.share = null
 				this.loadError =
@@ -439,8 +435,8 @@ export default {
 
 		/**
 		 * Phase 2: derive the Argon2id key from the supplied password,
-		 * decrypt the snapshot in the browser, then confirm the view so the
-		 * server can count (and auto-delete at) the usage cap.
+		 * decrypt the snapshot in the browser, then confirm so the server
+		 * resets the attempts.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/link-sharing/spec.md#requirement-kdf-for-snapshot-encryption
@@ -460,8 +456,10 @@ export default {
 					this.share,
 					this.password,
 				)
-				// Phase 2: confirm so the server can increment usage.
-				await store.confirmPublicLinkShare(this.token)
+				// The use was counted when the blob was served; a share that
+				// reached its limit is already gone, so a failed confirm is
+				// not a failed unlock.
+				await store.confirmPublicLinkShare(this.token).catch(() => null)
 			} catch (e) {
 				// "Invalid password", NOT "does not match": nothing is being
 				// compared against a second entry here — the recipient typed
@@ -470,13 +468,6 @@ export default {
 					'keepiq',
 					'Invalid password. Please try again.',
 				)
-				// Re-fetch with failed=1 so the brute-force counter ticks
-				// server-side. We swallow re-fetch errors so a now-deleted
-				// share simply surfaces as a load error on the next try.
-				this.priorFailure = true
-				try {
-					await this.loadShare()
-				} catch {}
 			} finally {
 				this.busy = false
 			}

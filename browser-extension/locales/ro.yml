@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: Cheia seifului s-a schimbat. Deblocați cu parola principală.
   pinTooShort: Folosiți cel puțin {count} caractere
   unknown: A apărut o eroare
+  passkeyFailed: "Cheia de acces nu a putut debloca seiful. Folosește parola principală."
 
 notices:
   keyChanged: Cheia seifului s-a schimbat în Keepiq. Deblocați cu parola principală actuală.
+  fileAccess: "Keepiq nu are nevoie de acces la fișiere. În Nextcloud, la Setări, Securitate, Dispozitive și sesiuni, poți opri accesul la fișiere pentru această parolă de aplicație sau o poți revoca."
 
 common:
   accountOnHost: "{name} pe {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Creați una în Setări Nextcloud, Securitate. Nu introduceți niciodată aici parola de autentificare Nextcloud.
   hintWithLink: "Creați una în Setări Nextcloud, Securitate: {link}. Nu introduceți niciodată aici parola de autentificare Nextcloud."
   securityLink: deschideți setările de securitate
+  signInWithBrowser: "Conectează-te prin Nextcloud"
+  finishInTab: "Finalizează conectarea pe pagina Nextcloud care s-a deschis. Keepiq adaugă contul când ai terminat."
+  orAppPassword: "Sau introdu o parolă de aplicație:"
 
 accounts:
   active: (activ)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: PIN-urile nu se potrivesc
   pinAdvice: Nu refolosiți PIN-ul telefonului sau al băncii.
   pinAfterRestart: După o repornire a browserului introduceți o dată parola principală; apoi PIN-ul funcționează din nou.
-  biometrics: Deblocare biometrică
-  notAvailableYet: Încă indisponibil
   vaultTimeout: Expirarea seifului
   timeoutImmediately: Imediat
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Nu s-a salvat nimic: Keepiq de la {cloudIds} este prea vechi pentru a stoca chei de acces. Cereți-le să actualizeze Keepiq sau salvați cheia de acces în altă autentificare."
     partnerUpgradeRequiredUnnamed: "Nu s-a salvat nimic: o organizație parteneră cu care este partajată această autentificare folosește o versiune Keepiq prea veche pentru a stoca chei de acces. Cereți-i să actualizeze Keepiq sau salvați cheia de acces în altă autentificare."
     shareScanPending: Această autentificare așteaptă o verificare a partajărilor care nu s-a încheiat. Nu s-a salvat nimic; încercați din nou mai târziu.
+
+vaultPasskey:
+  unlock: "Deblochează cu amprenta sau fața"
+  unlockIntro: "Browserul cere amprenta, fața sau PIN-ul dispozitivului."
+  enrolTitle: "Configurează deblocarea cu amprenta sau fața"
+  enrolIntro: "Confirmă parola principală. Apoi browserul cere de două ori amprenta, fața sau PIN-ul dispozitivului."
+  enrolSubmit: "Configurează"
+  enrolDone: "Deblocarea cu amprenta sau fața este configurată pentru acest browser."
+  close: "Închide"
+  label: "Extensia de browser Keepiq"
+  tooOld: "Deblocarea cu amprenta sau fața necesită Chrome sau Edge 122, ori Firefox 150, sau mai nou. Folosește parola principală."
+  unsupported: "Acest browser sau dispozitiv nu poate debloca Keepiq cu amprenta sau fața. Folosește parola principală."
+  revokeInWebApp: "Pentru a o dezactiva, revocă această cheie de acces în aplicația web Keepiq."
