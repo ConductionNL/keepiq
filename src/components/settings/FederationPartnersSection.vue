@@ -139,18 +139,9 @@ import {
 	NcNoteCard,
 	NcTextField,
 } from '@nextcloud/vue'
+import { confirmPasswordFirst } from '../../utils/passwordConfirmation.js'
 
 const BASE = '/apps/keepiq/api/v1/federation/partners'
-
-/**
- * Ask for the Nextcloud password before a change, as the server requires.
- *
- * @return {Promise<void>}
- */
-async function confirmPasswordFirst() {
-	const { confirmPassword } = await import('@nextcloud/password-confirmation')
-	await confirmPassword()
-}
 
 export default {
 	name: 'FederationPartnersSection',

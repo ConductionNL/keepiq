@@ -11,6 +11,7 @@ import {
 import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../crypto/keyProof.js'
 import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
+import { confirmPasswordFirst } from '../../utils/passwordConfirmation.js'
 import {
 	assertNoPendingOfflineChanges,
 	assertResumable,
@@ -1278,9 +1279,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			// Complete Nextcloud sudo BEFORE issuing the request — the endpoint's
 			// #[PasswordConfirmationRequired] middleware rejects it otherwise.
-			const { confirmPassword } =
-				await import('@nextcloud/password-confirmation')
-			await confirmPassword()
+			await confirmPasswordFirst()
 
 			const data = await postForceRevoke(id, {
 				reason,
@@ -1314,9 +1313,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				}
 			}
 
-			const { confirmPassword } =
-				await import('@nextcloud/password-confirmation')
-			await confirmPassword()
+			await confirmPasswordFirst()
 			return axios.post(
 				generateUrl('/apps/keepiq/api/v1/suites/reenrol'),
 				body,
@@ -1340,9 +1337,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				throw new Error('No suite id to reinstate')
 			}
 
-			const { confirmPassword } =
-				await import('@nextcloud/password-confirmation')
-			await confirmPassword()
+			await confirmPasswordFirst()
 
 			const response = await axios.post(
 				generateUrl(`/apps/keepiq/api/v1/suites/${id}/reinstate`),
