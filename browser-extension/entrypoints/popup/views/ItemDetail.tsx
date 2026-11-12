@@ -286,7 +286,7 @@ export function ItemDetail({ item, type, folders, webAppUrl, shareSave, fillTab 
 			live = false
 		}
 	}, [accountId, item.id, item.blocked, item.useOnly, item.readOnly])
-	const actions = itemActions(item, type, offline, items, viewOnly)
+	const actions = itemActions({ item, type, offline, actions: items, viewOnly })
 	return (
 		<div className="stack">
 			<header className="detail-head">
