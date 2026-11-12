@@ -28,7 +28,8 @@ const STANDARD_KEYS = {
 	Title: 'name',
 	URL: 'url',
 	UserName: 'login',
-	Password: 'password',
+	Password:
+		'password',
 }
 
 /** KeePass's own TOTP parameter strings beside `TimeOtp-Secret-Base32`. */

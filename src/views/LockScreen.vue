@@ -633,8 +633,11 @@ export default {
 
 	watch: {
 		/** Every keystroke restarts the "done typing" debounce. */
-		masterPassword: 'restartMismatchDebounce',
-		confirmPassword: 'restartMismatchDebounce',
+		masterPassword:
+			'restartMismatchDebounce',
+
+		confirmPassword:
+			'restartMismatchDebounce',
 	},
 
 	/**
