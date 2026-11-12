@@ -15,34 +15,50 @@ import { hasPin, hasSeal } from '@/src/vault/pin'
 import { refreshPolicy, sync } from '@/src/vault/sync'
 import { checkSuite, lock, lockAll, unlock } from '@/src/vault/unlock'
 
+const SCREENS: Record<AccountSummary['status'], PopupScreen> = { logged_out: 'reauthenticate', locked: 'unlock', unlocked: 'unlocked' }
+
+/** The record flags that raise a notice in each status, the last one set winning. */
+const NOTICES: Record<AccountSummary['status'], Array<[keyof AccountRecord, NoticeCode]>> = {
+	logged_out: [['revoked', 'session_revoked']],
+	locked: [['fileAccessNote', 'file_access'], ['keyChanged', 'key_changed']],
+	unlocked: [],
+}
+
+async function accountSummary(account: AccountRecord, activeId: string | null): Promise<AccountSummary> {
+	const pin = await hasPin(account.id)
+	return {
+		id: account.id,
+		serverUrl: account.serverUrl,
+		host: new URL(account.serverUrl).host,
+		uid: account.uid,
+		displayName: account.displayName,
+		avatarDataUrl: account.avatarDataUrl,
+		status: await accountStatus(account),
+		active: account.id === activeId,
+		pin,
+		pinAfterRestart: !pin && await hasSeal(account.id),
+		passkeyUnlock: account.passkeyUnlock === true,
+	}
+}
+
+async function noticeFor(active: AccountSummary | null): Promise<NoticeCode | null> {
+	if (!active) return null
+	const record = await getAccount(active.id)
+	let notice: NoticeCode | null = null
+	for (const [flag, code] of NOTICES[active.status]) {
+		if (record?.[flag]) notice = code
+	}
+	return notice
+}
+
 export async function buildState(): Promise<PopupState> {
 	const activeId = await getActiveAccountId()
 	const accounts: AccountSummary[] = []
-	for (const account of await listAccounts()) {
-		const pin = await hasPin(account.id)
-		accounts.push({
-			id: account.id,
-			serverUrl: account.serverUrl,
-			host: new URL(account.serverUrl).host,
-			uid: account.uid,
-			displayName: account.displayName,
-			avatarDataUrl: account.avatarDataUrl,
-			status: await accountStatus(account),
-			active: account.id === activeId,
-			pin,
-			pinAfterRestart: !pin && await hasSeal(account.id),
-			passkeyUnlock: account.passkeyUnlock === true,
-		})
-	}
+	for (const account of await listAccounts()) accounts.push(await accountSummary(account, activeId))
 	const active = accounts.find((a) => a.active) ?? null
-	const screens: Record<AccountSummary['status'], PopupScreen> = { logged_out: 'reauthenticate', locked: 'unlock', unlocked: 'unlocked' }
-	const record = active ? await getAccount(active.id) : undefined
-	let notice: NoticeCode | null = null
-	if (active?.status === 'logged_out' && record?.revoked) notice = 'session_revoked'
-	if (active?.status === 'locked' && record?.fileAccessNote) notice = 'file_access'
-	if (active?.status === 'locked' && record?.keyChanged) notice = 'key_changed'
+	const notice = await noticeFor(active)
 	return {
-		screen: active ? screens[active.status] : 'add_account',
+		screen: active ? SCREENS[active.status] : 'add_account',
 		accounts,
 		active,
 		notice,
@@ -91,6 +107,13 @@ async function startFlow(serverUrl: string): Promise<void> {
 	void finishFlow(server, flow, tab.id, controller)
 }
 
+/** A failed flow leaves no app password behind, and tells the popup why through the session. */
+async function failFlow(server: string, failure: { error: unknown; credentials: LoginFlowCredentials | null }): Promise<void> {
+	if (failure.credentials) await deleteAppPassword(server, failure.credentials)
+	const code = failure.error instanceof Failure ? failure.error.code : 'unknown'
+	await browser.storage.session?.set({ [LOGIN_FLOW_FAILURE]: { code, host: new URL(server).host } })
+}
+
 async function finishFlow(server: string, flow: LoginFlowStart, tabId: number | undefined, controller: AbortController): Promise<void> {
 	// Each `tabs.get` is an extension API call, which also keeps an MV3 worker awake while it waits.
 	const tabOpen = () => (tabId === undefined ? Promise.resolve(false) : browser.tabs.get(tabId).then(() => true, () => false))
@@ -100,8 +123,7 @@ async function finishFlow(server: string, flow: LoginFlowStart, tabId: number | 
 		credentials = await awaitLoginFlow(flow, { tabOpen, wait, now: Date.now, signal: controller.signal })
 		if (credentials) await add(server, credentials.loginName, credentials.appPassword, true)
 	} catch (error) {
-		if (credentials) await deleteAppPassword(server, credentials)
-		await browser.storage.session?.set({ [LOGIN_FLOW_FAILURE]: { code: error instanceof Failure ? error.code : 'unknown', host: new URL(server).host } })
+		await failFlow(server, { error, credentials })
 	} finally {
 		if (pendingFlow === controller) pendingFlow = null
 	}
@@ -125,35 +147,39 @@ async function reauthenticate(accountId: string, appPassword: string): Promise<v
 	void refreshPolicy(accountId)
 }
 
+type PopupMessage<K extends PopupToBackground['kind']> = Extract<PopupToBackground, { kind: K }>
+
+/** What each popup message does before the state is built again; status and list only ask for it. */
+const ACTIONS: { [K in PopupToBackground['kind']]: (message: PopupMessage<K>) => Promise<void> } = {
+	'vault.status': async () => {},
+	'accounts.list': async () => {},
+	'accounts.add': (message) => add(message.serverUrl, message.username, message.appPassword),
+	'accounts.loginFlow': (message) => startFlow(message.serverUrl),
+	'accounts.reauthenticate': (message) => reauthenticate(message.accountId, message.appPassword),
+	'accounts.remove': (message) => removeAccount(message.accountId),
+	'accounts.removeAll': () => removeAllAccounts(),
+	'accounts.switch': (message) => setActive(message.accountId),
+	'vault.unlock': async (message) => {
+		await unlock(message.accountId, message.method)
+		// Not awaited: the vault shows the cached snapshot while this runs.
+		void sync(message.accountId, 'full')
+	},
+	'vault.lock': (message) => lock(message.accountId),
+	'vault.lockAll': () => lockAll(),
+}
+
 async function perform(message: PopupToBackground): Promise<void> {
-	switch (message.kind) {
-		case 'vault.status':
-		case 'accounts.list':
-			return
-		case 'accounts.add':
-			return add(message.serverUrl, message.username, message.appPassword)
-		case 'accounts.loginFlow':
-			return startFlow(message.serverUrl)
-		case 'accounts.reauthenticate':
-			return reauthenticate(message.accountId, message.appPassword)
-		case 'accounts.remove':
-			return removeAccount(message.accountId)
-		case 'accounts.removeAll':
-			return removeAllAccounts()
-		case 'accounts.switch':
-			return setActive(message.accountId)
-		case 'vault.unlock':
-			await unlock(message.accountId, message.method)
-			// Not awaited: the vault shows the cached snapshot while this runs.
-			void sync(message.accountId, 'full')
-			return
-		case 'vault.lock':
-			return lock(message.accountId)
-		case 'vault.lockAll':
-			return lockAll()
-		default:
-			throw new Failure('unknown', `Unknown message ${(message as { kind?: unknown }).kind}`)
+	if (!Object.hasOwn(ACTIONS, message.kind)) throw new Failure('unknown', `Unknown message ${(message as { kind?: unknown }).kind}`)
+	const action = ACTIONS[message.kind] as (message: PopupToBackground) => Promise<void>
+	return action(message)
+}
+
+function failureResult(error: unknown): Result {
+	if (!(error instanceof Failure)) {
+		console.error('[keepiq]', error)
+		return { ok: false, code: 'unknown' }
 	}
+	return error.attemptsLeft === undefined ? { ok: false, code: error.code } : { ok: false, code: error.code, attemptsLeft: error.attemptsLeft }
 }
 
 /** Every popup message: enforce the timeout first, so a sleeping worker can't extend a session, then count it as interaction. */
@@ -165,10 +191,6 @@ export async function handlePopupMessage(message: PopupToBackground): Promise<Re
 		await syncAlarm()
 		return { ok: true, state: await buildState() }
 	} catch (error) {
-		if (error instanceof Failure) {
-			return error.attemptsLeft === undefined ? { ok: false, code: error.code } : { ok: false, code: error.code, attemptsLeft: error.attemptsLeft }
-		}
-		console.error('[keepiq]', error)
-		return { ok: false, code: 'unknown' }
+		return failureResult(error)
 	}
 }
