@@ -6,7 +6,8 @@
 
 ## 2. Link share end date (sharing-14)
 
-- [ ] 2.1 Add an optional end date to the link share dialog and pass it as `expires_at`; refuse a date in the past. Verify: vitest on the dialog and PHPUnit on the access check after the date.
+- [x] 2.1 Add an optional end date to the link share dialog and pass it as `expires_at` (`src/dialogs/SecretShareDialog.vue:78`, `:365`; the server refuses an access after it in `LinkShareService::getByToken`). Verify: `tests/dialogs/SecretShareDialog.createLink.spec.js` and `LinkShareServiceTest::testGetByTokenThrowsAndDeletesWhenExpired`.
+- [ ] 2.2 Refuse an end date in the past: the dialog's create check and `LinkShareService` reject it, not only the date input's `min`. Verify: vitest on the dialog and PHPUnit on the create call.
 
 ## 3. Privileged login access (sharing-26)
 

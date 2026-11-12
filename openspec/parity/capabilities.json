@@ -1337,7 +1337,8 @@
         "requirement": [
           "openspec/specs/card-identity-items :: Payment Card and Identity System Types",
           "openspec/specs/card-identity-items :: Type-Specific Presentation and Masked Reveal"
-        ]
+        ],
+        "plan": "openspec/changes/vault-card-brand-formats"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1971,13 +1972,13 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "src/dialogs/VersionDetailsDialog.vue:4 read-only view of one decrypted historic version; opened from the version history list (openspec/specs/secret-version-history); git grep -i 'diff|compare' src/dialogs src/components: no diff view",
+        "state": "specified",
+        "evidence": "Not built: no compare view. src/dialogs/VersionDetailsDialog.vue shows one decrypted historic version read-only and src/dialogs/VersionRestoreDialog.vue restores one; git grep -i 'diff|compare' src/dialogs src/components finds no side-by-side view. Planned in openspec/changes/capability-requirements-from-the-matrix task 1.1.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretDetailSidebar > version history > Version details dialog",
-        "note": "One old version can be opened and read next to nothing else; there is no side-by-side diff.",
+        "note": "One old version can be opened and read on its own; there is no side-by-side comparison. The KqGeheim board draws the version list with Herstellen, not a compare view.",
         "change": "openspec/changes/archive/2026-07-18-secret-version-history",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history :: Compare two versions side by side"
+        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history :: Compare two versions side by side",
+        "plan": "openspec/changes/capability-requirements-from-the-matrix"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2431,7 +2432,8 @@
         "spec": "openspec/specs/passkey-vault-login",
         "change": "openspec/changes/archive/2026-07-20-passkey-vault-login",
         "readOn": "2026-10-16",
-        "requirement": "openspec/specs/passkey-vault-login :: Passwordless unlock derives the unlock key client-side"
+        "requirement": "openspec/specs/passkey-vault-login :: Passwordless unlock derives the unlock key client-side",
+        "plan": "openspec/changes/extension-passkey-enrolment"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -3110,18 +3112,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "lib/AppInfo/UserLifecycleEventRegistrar.php registers UserAddedToGroupListener on OCP UserAddedEvent -> lib/Listener/UserAddedToGroupListener.php calls TeamFolderService::handleGroupMemberJoin (lib/Service/TeamFolderService.php:451), which sends an NC notification 'team_folder_join_request' to the folder owner. The owner picks this up by reopening src/modals/TeamFolderDialog.vue, whose refresh() (line 449) reconciles and shows a 'N members need re-share' banner (lines 148-181) with a button wired to onRunFanOut -> store.runFanOut -> POST /apps/keepiq/api/v1/team-folders/{id}/shares.",
+        "evidence": "lib/AppInfo/UserLifecycleEventRegistrar.php registers UserAddedToGroupListener on OCP UserAddedEvent -> lib/Listener/UserAddedToGroupListener.php calls TeamFolderService::handleGroupMemberJoin (lib/Service/TeamFolderService.php:451), which sends an NC notification 'team_folder_join_request' to the folder owner. The owner picks this up by reopening src/modals/TeamFolderDialog.vue, whose refresh() (line 449) reconciles and shows a 'N members need re-share' banner (lines 148-181) with Share now (store.runFanOut) for all, and a per-member approve: src/modals/TeamFolderDialog.vue:906 store.approveMember -> approveJoin POST /api/v1/team-folders/{id}/approve-join, then a fan-out for that member only (src/store/modules/teamFolder.js:271).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "TeamFolderDialog (opened from SecretList.vue folder actions) -> reconcile banner -> Share now button",
-        "note": "For team folders this works, but it is a blanket re-share of every pending member, not a per-request approve/deny: the dedicated store action teamFolder.js:202 approveJoin is never called from any component, so the individual-approval gesture the spec and the notification text describe does not exist in the UI. The separate ad-hoc group-share path (GroupShareController) that this row's specHint (user-sharing/spec.md) actually names has no UI at all (see sharing-02), so a GroupShare row is never created and its own owner-notification requirement never fires in practice.",
-        "defects": [
-          {
-            "at": "src/store/modules/teamFolder.js:202",
-            "what": "approveJoin is defined and calls a real backend route but no component ever calls it; the only reachable grant path is the blanket reconcile/Share-now fan-out.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
+        "note": "A member who joins the folder's group waits until the owner approves: one member at a time, or every waiting member with Share now. Group shares outside team folders are listed in GroupShareList (src/components/SecretDetailSidebar.vue:856, see sharing-02).",
         "spec": "openspec/specs/team-folder-sharing",
         "requirement": [
           "openspec/specs/team-folder-sharing :: Membership propagation with group membership",
@@ -3162,7 +3156,7 @@
         "evidence": "lib/AppInfo/UserLifecycleEventRegistrar.php registers UserRemovedFromGroupListener on OCP UserRemovedEvent -> lib/Listener/UserRemovedFromGroupListener.php calls TeamFolderService::handleGroupMemberLeave, which auto-revokes the departing user's folder-derived shares (direct shares are left intact). This fires automatically with no UI action needed, on a team folder that is reachable via src/modals/TeamFolderDialog.vue (opened from SecretList.vue and KeepiqAppNav.vue).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic (server event listener) once a team folder with a group member exists",
-        "note": "The equivalent ad-hoc group-share auto-revocation (GroupShareService::handleMemberLeave, same listener) is also wired at the backend, but since sharing-02's group-share creation path is unreachable from the UI, that branch has nothing to act on in practice; the team-folder branch is what actually delivers this capability to a user.",
+        "note": "Leaving the group revokes the folder-derived copies of a team folder (TeamFolderService::handleGroupMemberLeave) and of a plain group share (GroupShareService::handleMemberLeave, same listener; group shares are created from GroupShareList, see sharing-02). Direct shares stay.",
         "spec": "openspec/specs/user-sharing",
         "requirement": "openspec/specs/user-sharing :: Member Leaves Group — Auto-Revocation"
       },
@@ -3202,7 +3196,8 @@
         "reachedOn": "SecretList -> secret row -> sidebar -> Edit -> save",
         "note": "Sync runs automatically as part of the normal edit flow; no separate user action is needed.",
         "spec": "openspec/specs/user-sharing",
-        "requirement": "openspec/specs/user-sharing :: Sync on Update"
+        "requirement": "openspec/specs/user-sharing :: Sync on Update",
+        "plan": "openspec/changes/sharing-atomic-share-save"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3464,8 +3459,8 @@
         "state": "built",
         "evidence": "lib/Listener/EncryptionSuiteRevokedListener.php is registered (via SuiteLifecycleEventRegistrar) on EncryptionSuiteRevokedEvent and calls DelegationService::makePermanent() to promote a departing owner's temporary SecretDelegation rows to permanent, transferring de-facto ownership to the delegate.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "automatic (server event listener) -- but only over delegations that exist",
-        "note": "The promotion logic is real and wired to a real event, but since sharing-11 shows no delegation can ever be created via the UI today, there is nothing for it to promote in practice. Rated partial rather than no because the mechanism itself is correctly built and would fire the moment delegation creation is wired up.",
+        "reachedOn": "automatic (server event listener) over delegations made in the secret detail sidebar",
+        "note": "When the owner's key is revoked, temporary delegations become permanent, so the delegate keeps the secret. Delegations are created in src/components/share/DelegationManager.vue (mounted in src/components/SecretDetailSidebar.vue:861).",
         "spec": "openspec/specs/user-sharing",
         "requirement": "openspec/specs/user-sharing :: Permanent Transfer on Suite Revocation"
       },
@@ -3531,18 +3526,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "src/dialogs/SecretShareDialog.vue (cnOpenModal('secret-share') from SecretDetailSidebar.vue:1530 openShare) creates a password-protected link via useLinkShareStore.createLinkShare(secretId, snapshot, usageLimit) (SecretShareDialog.vue:276-280) -- only 3 args are passed, so the store's optional 4th `expiresAt` parameter (linkShare.js:68) is always null. lib/Service/LinkShareService.php:148 setExpiresAt(null) confirms the backend supports a real timestamp but the UI never collects one; only usageLimit (1-10) is exposed as a field (SecretShareDialog.vue:73).",
+        "evidence": "src/dialogs/SecretShareDialog.vue:78-84 optional 'Expires on' date (min today) -> createLinkShare(secretId, snapshot, usageLimit, expiryTimestamp(expiryDate)) at :365-370 -> lib/Service/LinkShareService.php stores expires_at and refuses an access after it (:186-187); the share list shows 'Expires {date}' (:106-109)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetailSidebar -> Share -> Create a password-protected link",
-        "note": "Password protection is real and reachable. Time-based expiry is not: the dialog only lets the owner cap the link by number of uses, never by a date, even though the backend field for it exists.",
-        "defects": [
-          {
-            "at": "src/dialogs/SecretShareDialog.vue:276",
-            "what": "createLinkShare is never called with an expiresAt value, so link shares can only self-limit by usage count, not by time.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
+        "note": "The link is password-protected and ends at its usage limit or on its optional end date, whichever comes first.",
         "change": "openspec/changes/archive/2026-06-14-implement-link-sharing",
         "requirement": [
           "openspec/specs/link-sharing :: Create Link Share",
@@ -4024,13 +4011,13 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "appinfo/routes.php:140-142 shareRequest create/approve/deny -> src/components/share/ShareRequestForm.vue:128 POST /api/v1/share-requests, mounted in src/components/SecretDetailSidebar.vue:687; searched 'lease', 'ip allow', 'time window' in lib/Service/ShareRequestService.php: none (machine leases at routes.php:319 are for applications)",
+        "state": "specified",
+        "evidence": "Not built: no approval window on a privileged login. appinfo/routes.php shareRequest create/approve/deny and src/components/share/ShareRequestForm.vue let a recipient ask the owner for a share, but lib/Service/ShareRequestService.php has no time window, address range or approval gate on use. Planned in openspec/changes/capability-requirements-from-the-matrix task 3.1.",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Secret detail sidebar, request access form",
-        "note": "A user can ask the owner for access and the owner approves or denies, but approval is not limited by a time window or IP address and does not gate use of a privileged login.",
+        "note": "A user can ask the owner for access and the owner approves or denies, but approval is not limited by a time window or address range and does not gate use of a privileged login.",
         "spec": "openspec/specs/user-sharing",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing :: Use of a privileged login needs an approved time window"
+        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing :: Use of a privileged login needs an approved time window",
+        "plan": "openspec/changes/capability-requirements-from-the-matrix"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -4686,7 +4673,7 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "cli/internal/client/client.go:148-198 MachineToken() signs an RFC 7523 JWT assertion and POSTs it to the discovery-provided token endpoint -> POST /api/v1/token -> appinfo/routes.php:299 applicationToken#exchange -> lib/Controller/ApplicationTokenController.php:91 exchange()",
+        "evidence": "sdk/go/keepiq.go:663 bearer() signs an RFC 7523 JWT assertion (:724 assertion()) and exchanges it with grant_type jwt-bearer at the discovery-provided token endpoint -> POST /api/v1/token -> appinfo/routes.php applicationToken#exchange -> lib/Controller/ApplicationTokenController.php exchange(); the CLI's ci commands use it through keepiq.New (cli/ci.go)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: POST /api/v1/token (RFC 7523 JWT-Bearer), used by cli ci mode (cli/ci.go:51)",
         "note": "The keepiq CLI's CI mode signs an assertion with the application's private key and exchanges it for a bearer token; no password is ever stored or sent.",
@@ -4724,10 +4711,10 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
-        "evidence": "cli/internal/client/client.go:215-243 FetchByName() -> GET /apps/keepiq/api/v1/app/secrets/by-name/{name} Bearer <token> -> appinfo/routes.php:306 applicationSecrets#byName -> lib/Controller/ApplicationSecretsController.php Corrections round 8 (2026-09-28), keepiq#793: the by-name route answers, but the CLI cannot decrypt what it returns, because cli/internal/client/client.go:201-207 reads a top-level scheme and payload.value while lib/Service/MachineSecretEnvelopeService.php:145-148 sends encryption.scheme and ciphertext.key, so cli/ci.go:65-66 stops every fetch with unexpected envelope scheme \"\", at b5727e0.",
+        "evidence": "cli/ci.go:44 fetchDecrypt -> sdk/go/keepiq.go:250 GetByName -> GET /apps/keepiq/api/v1/app/secrets/by-name/{name} with the bearer token -> appinfo/routes.php applicationSecrets#byName -> lib/Controller/ApplicationSecretsController.php; sdk/go/keepiq.go:414 reads encryption.scheme and :522 open() decrypts ciphertext.key with the application key",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: GET /api/v1/app/secrets/by-name/{name}, used by cli ci fetch/run (cli/ci.go:60-95)",
-        "note": "keepiq ci fetch/run resolve a secret by name and decrypt the returned envelope locally with the application private key. Own rating yes to partial (corrections round 8, 2026-09-28): the server resolves and returns the secret by name, but the shipped CLI cannot decrypt the envelope it gets back, keepiq#793.",
+        "note": "keepiq ci fetch/run resolve a secret by name and decrypt the returned envelope locally with the application private key.",
         "spec": "openspec/specs/secret-store-api",
         "requirement": "openspec/specs/secret-store-api :: Name-Addressable Secret Retrieval"
       },
@@ -4799,7 +4786,7 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
-        "evidence": "cli/internal/client/client.go:218-233 sends If-None-Match with the last observed ETag and returns ErrNotModified on 304; server side lib/Controller/ApplicationSecretsController.php serves the by-name/by-id envelope with a strong ETag",
+        "evidence": "sdk/go/keepiq.go:265 GetByNameIfNoneMatch sends If-None-Match (:610) with the last ETag and reports not modified on 304; server side lib/Controller/ApplicationSecretsController.php serves the by-name/by-id envelope with a strong ETag",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: GET /api/v1/app/secrets/by-name/{name} with If-None-Match, used by cli ci fetch (poll loop)",
         "note": "A consumer that keeps polling the same name gets 304 until the ciphertext actually changes, so it can detect rotation cheaply.",
@@ -4836,18 +4823,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "lib/Controller/DiscoveryController.php serves GET /api/v1/app/.well-known/keepiq (canonical) and GET /api/v1/app/.well-known/doriath (deprecated, same body) with tokenEndpoint/grantType/assertion/secrets/lease fields; cli/internal/client/client.go:139 Discover() calls the deprecated path",
+        "evidence": "lib/Controller/DiscoveryController.php serves GET /api/v1/app/.well-known/keepiq (canonical) and GET /api/v1/app/.well-known/doriath (deprecated, same body) with tokenEndpoint/grantType/assertion/secrets/lease fields; sdk/go/keepiq.go:43 DiscoveryPath and sdk/go/client/client.go:235 Discover() call the canonical path (the client falls back to the old path on 404)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: GET /api/v1/app/.well-known/{keepiq,doriath}, used by cli ci mode (cli/internal/client/client.go:137-143)",
         "note": "Both the renamed canonical path and the pre-rename doriath path are served identically and deliberately, with a documented removal version, so old and new consumers both work.",
-        "defects": [
-          {
-            "at": "cli/internal/client/client.go:139",
-            "what": "The keepiq CLI itself still calls the deprecated .well-known/doriath path rather than the canonical .well-known/keepiq path; not broken (both are served) but the CLI has not been moved to the canonical path.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
         "spec": "openspec/specs/secret-store-api",
         "requirement": "openspec/specs/secret-store-api :: Machine API Discovery Document"
       },
@@ -4881,10 +4860,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "lib/Service/MachineSecretResponseService.php:84-179 grants or reuses a MachineLease on every fetch and adds Doriath-Lease-Id / Doriath-Lease-Expires headers; cli/internal/client/client.go:226-227 captures them and cli/ci.go:84-86 prints the lease id + expiry Corrections round 8 (2026-09-28), keepiq#793: the CLI never prints the lease, because fetchDecrypt fails at cli/ci.go:65-66 before the lease line at cli/ci.go:84-86; the server still grants the lease before it serializes the envelope, lib/Service/MachineSecretResponseService.php:95 and :118, at b5727e0.",
+        "evidence": "lib/Service/MachineSecretResponseService.php grants or reuses a MachineLease on every fetch (:133 grantLease -> lib/Service/LeaseService.php:109 grantOrReuse) and adds Doriath-Lease-Id / Doriath-Lease-Expires headers; sdk/go/keepiq.go:496 reads them and cli/ci.go cmdCIFetch prints the lease id and expiry",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: lease headers on GET /api/v1/app/secrets*, observed by cli ci fetch",
-        "note": "Every machine secret fetch is covered by a lease with an expiry; a revoked lease blocks re-fetch until re-granted per admin policy. Corrections round 8 (2026-09-28): the lease line in the CLI is never printed because the CLI fetch fails first, keepiq#793; rating kept because the server grants the lease and returns its id and expiry headers on every machine fetch, whichever client makes it.",
+        "note": "Every machine secret fetch is covered by a lease with an expiry; a revoked lease blocks re-fetch until re-granted per admin policy.",
         "change": "openspec/changes/archive/2026-07-18-machine-secret-leases",
         "requirement": "openspec/specs/machine-secret-leases :: Lease granted on machine secret fetch"
       },
@@ -4918,18 +4897,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "Revoke: src/components/application/ApplicationLeasesPanel.vue:141 onRevoke() -> useLeaseStore().revoke() -> DELETE /apps/keepiq/api/v1/leases/{id} -> appinfo/routes.php:325 leaseAdmin#revoke. Renew: lib/Controller/MachineLeaseController.php:renew() and appinfo/routes.php:320 POST /api/v1/app/leases/{id}/renew exist and are fully implemented, but nothing in src/, browser-extension/ or cli/ calls it, and the internal fetch path (MachineSecretResponseService::grantLease) reuses an existing lease rather than calling this endpoint",
+        "evidence": "Renew: fetching the secret again renews the lease: lib/Service/MachineSecretResponseService.php:133 grantLease -> lib/Service/LeaseService.php:109 grantOrReuse; there is no renew route (lib/Controller/MachineLeaseController.php header, keepiq#753). Revoke: src/components/application/ApplicationLeasesPanel.vue:157 onRevoke() -> useLeaseStore().revoke() -> DELETE /apps/keepiq/api/v1/leases/{leaseId} -> appinfo/routes.php:437 leaseAdmin#revoke; the application itself revokes with POST /api/v1/app/leases/{id}/revoke (appinfo/routes.php:432 machineLease#revoke)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Admin/registrant revoke: Application detail page -> Machine leases panel. Renew: machine route with no known caller in this repo (routes-unmatched.txt: NO-REF)",
-        "note": "Revoking a lease from the application detail page works end to end. The dedicated self-renew endpoint for a bearer-holding application has a full controller and service but no caller anywhere in this checkout, including the keepiq CLI itself; leases are extended by re-fetch/reuse instead.",
-        "defects": [
-          {
-            "at": "lib/Controller/MachineLeaseController.php (renew), appinfo/routes.php:320",
-            "what": "POST /api/v1/app/leases/{id}/renew has no known consumer in the frontend, extension or CLI; lease extension in practice happens via grantOrReuse on fetch, not via this endpoint.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
+        "reachedOn": "Admin/registrant revoke: Application detail page -> Machine leases panel. Renew: fetch the secret again",
+        "note": "A lease is renewed by fetching the secret again; the administrator, the owner or the application can revoke it.",
         "change": "openspec/changes/archive/2026-07-18-machine-secret-leases",
         "requirement": [
           "openspec/specs/machine-secret-leases :: Fetching again is the one renewal path",
@@ -5092,10 +5063,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "cli/ci.go:97-126 cmdCIRun() fetches+decrypts each named secret and injects it into the child process environment only (runChild in cli/main.go:281-289); no plaintext is written to disk (comment at ci.go:124) Corrections round 8 (2026-09-28), keepiq#793: cmdCIRun calls fetchDecrypt at cli/ci.go:118, which refuses the server envelope at cli/ci.go:65-66 because the server puts the scheme under encryption.scheme (lib/Service/MachineSecretEnvelopeService.php:145), so runChild at cli/ci.go:125 is never reached, at b5727e0.",
+        "evidence": "cli/ci.go cmdCIRun fetches and decrypts each named secret through fetchDecrypt -> sdk/go/keepiq.go GetByName (reads encryption.scheme as the server sends it) and passes it only into the child process environment (runChild); cmdCIFetch prints to stdout; nothing is written to disk",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "keepiq CLI: `keepiq ci run <name> -- <cmd>`",
-        "note": "The CLI is a single static Go binary that fetches, decrypts and injects secrets into a child process's environment for CI use, never touching disk. Own rating yes to no (corrections round 8, 2026-09-28): every ci fetch and ci run stops at the envelope scheme check before decryption, so no secret reaches the child process, keepiq#793.",
+        "note": "The CLI is one static Go binary that fetches, decrypts and injects secrets into a child process's environment for CI use, without touching disk.",
         "spec": "openspec/specs/keepiq-cli",
         "requirement": "openspec/specs/keepiq-cli :: CI-mode output never writes plaintext to disk"
       },
@@ -5356,7 +5327,8 @@
         "change": "openspec/changes/archive/2026-10-04-apps-terraform-provider",
         "reachedOn": "Terraform: build the provider from integrations/terraform-provider-keepiq and use it with dev_overrides; not yet in a registry",
         "readOn": "2026-10-07",
-        "requirement": "openspec/specs/terraform-provider :: Managed secrets use write-only values"
+        "requirement": "openspec/specs/terraform-provider :: Managed secrets use write-only values",
+        "plan": "openspec/changes/apps-terraform-provider-publish"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5393,7 +5365,8 @@
         "reachedOn": "machine: documented for consumption by other Conduction apps (e.g. integriq) via /api/v1/app/*",
         "note": "This checkout only contains keepiq's own code; whether integriq or another Conduction app actually stores its connection credentials in keepiq today cannot be settled from here, only that keepiq ships and documents a ready contract for it.",
         "spec": "openspec/specs/secret-store-api",
-        "requirement": "openspec/specs/secret-store-api :: Secret Reference Format and Consumption Contract"
+        "requirement": "openspec/specs/secret-store-api :: Secret Reference Format and Consumption Contract",
+        "plan": "openspec/changes/connection-certificate-expiry-for-integriq"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5610,18 +5583,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "src/components/settings/CaHealthSection.vue:144 GET /api/v1/ca/status -> lib/Controller/CACertificateController.php:62 -> lib/Service/CertificateAuthorityStatusService.php:76; mounted in src/views/settings/Settings.vue:19 via src/views/settings/AdminRoot.vue:3 from src/settings.js:35 (templates/settings/admin.php); src/components/dashboard/CaHealthCard.vue:77 has no importer and the in-app Dashboard page has no CA widget",
+        "evidence": "src/components/settings/CaHealthSection.vue:144 GET /api/v1/ca/status -> lib/Controller/CACertificateController.php:62 -> lib/Service/CertificateAuthorityStatusService.php:76; mounted in src/views/settings/Settings.vue:19 via src/views/settings/AdminRoot.vue:3 from src/settings.js:35 (templates/settings/admin.php)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> CA health section (with Retry bootstrap and Force renew intermediate)",
-        "note": "CA health (root and intermediate expiry, issued counts, status colour) is shown on the Nextcloud admin settings page, not on the in-app dashboard. The dashboard card component exists but nothing mounts it.",
-        "defects": [
-          {
-            "at": "src/components/dashboard/CaHealthCard.vue:28",
-            "what": "CaHealthCard is imported by no page, registry entry or manifest widget, so the dashboard version of CA health is unreachable.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
+        "note": "CA health (root and intermediate expiry, issued counts, status colour) is shown on the Nextcloud admin settings page. The unmounted dashboard card was removed; the in-app dashboard has no CA widget.",
         "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings",
         "requirement": "openspec/specs/admin-settings :: CA Health Display [MVP]"
       },
@@ -7645,7 +7610,7 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "lib/Service/OrgOwnershipGuard.php (403 org_ownership_required on create, move and import of in-scope types outside an own team folder), POST /api/v1/team-folders/{id}/secrets for write-grade members, src/components/OwnershipFindings.vue; tests/e2e/workflows/vault-policies.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
+        "evidence": "lib/Service/OrgOwnershipGuard.php refuses create, move and import of in-scope types outside an own team folder with code org_ownership_required (403 from lib/Controller/SecretController.php forbidden(), sent as 428 by lib/Middleware/OcsRefusalMiddleware.php because the secrets API runs on OCS controllers); POST /api/v1/team-folders/{id}/secrets for write-grade members, src/components/OwnershipFindings.vue; tests/e2e/workflows/vault-policies.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> Vault policies -> Keep work logins in team folders",
         "note": "Built 2026-10-04 (archived). Default types login, api_key and database; other types stay personal.",
@@ -9125,14 +9090,15 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/specs/extension-totp-autofill for the earlier extension; browser-extension/openspec/README.md:25 lists TOTP autofill as a later slice of the current one, not yet specced. Now: the browser extension fills nothing (clients-01); the popup shows the live code and copies it (browser-extension/entrypoints/popup/components/TotpCode.tsx)",
+        "evidence": "Code present, not yet walked: browser-extension/src/autofill/code-fill.ts pickCode/fillCode (used by src/autofill/inline-session.ts) and src/autofill/execute.ts fillCode fill the one-time code. Left: task 6.4 of browser-extension/openspec/changes/ext-totp-autofill (the manual walk in Chrome and Firefox), after which the row can move to built.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "No one-time code fill. The popup shows the current code of a totp item with its countdown and copies it.",
+        "note": "The extension has code to fill the current one-time code into the code field after a login fill; it stays specified until the manual walk of ext-totp-autofill is done. The popup also shows and copies the live code.",
         "spec": "openspec/specs/extension-totp-autofill",
         "readOn": "2026-10-16",
         "change": "browser-extension/openspec/changes/ext-totp-autofill",
-        "requirement": "openspec/specs/extension-totp-autofill :: Optional OTP-field fill with fallback"
+        "requirement": "openspec/specs/extension-totp-autofill :: Optional OTP-field fill with fallback",
+        "plan": "browser-extension/openspec/changes/ext-totp-autofill"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9165,17 +9131,18 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/specs/extension-passkey-provider for the earlier extension; browser-extension/openspec/README.md:25 lists the passkey provider as a later slice of the current one, not yet specced. Now: the browser extension intercepts no WebAuthn call; the item detail shows a passkey item read-only with a not-supported note (browser-extension/entrypoints/popup/views/ItemDetail.tsx:83)",
+        "evidence": "Code present, not yet walked: browser-extension/entrypoints/passkey-page-main.content.ts installs src/passkey/page.ts in the page, and src/passkey/create.ts and ceremony.ts answer create() and get(). Left: task 6.3 of browser-extension/openspec/changes/ext-passkey-provider (the manual walk in Chrome and Firefox), after which the row can move to built.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "The browser extension does not create or sign with passkeys on websites; it only shows stored passkey items.",
+        "note": "The extension has code to answer WebAuthn create() and get() on websites with vault passkeys; it stays specified until the manual walk of ext-passkey-provider is done.",
         "spec": "openspec/specs/extension-passkey-provider",
         "readOn": "2026-10-16",
         "change": "browser-extension/openspec/changes/ext-passkey-provider",
         "requirement": [
           "openspec/specs/extension-passkey-provider :: Passkey registration interception (create)",
           "openspec/specs/extension-passkey-provider :: Passkey authentication interception (get)"
-        ]
+        ],
+        "plan": "browser-extension/openspec/changes/ext-passkey-provider"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9208,10 +9175,10 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
-        "evidence": "browser-extension/src/accounts/settings.ts:10 default timeout 15 minutes, action Lock -> browser-extension/src/vault/timeout.ts:28 enforce on the vault-timeout alarm and before every popup reply -> browser-extension/src/vault/unlock.ts:90 lock; the key lives in storage.session (browser-extension/src/vault/key-store.ts), so a browser restart locks too; manual Lock and Lock all in browser-extension/entrypoints/popup/views/AccountSwitcher.tsx:34,78",
+        "evidence": "browser-extension/src/accounts/settings.ts:39 DEFAULT_SETTINGS (15 minutes, Lock) and :136 clampTimeout to the administrator maximum read from GET /api/v1/extension/policy (browser-extension/src/vault/sync.ts:117, src/accounts/policy.ts); the user picks the period in browser-extension/entrypoints/popup/views/settings/AccountSecurity.tsx:113 TimeoutControl -> browser-extension/src/vault/timeout.ts enforces it on the vault-timeout alarm -> browser-extension/src/vault/unlock.ts lock; the key lives in storage.session (browser-extension/src/vault/key-store.ts), so a browser restart locks too; manual Lock and Lock all in browser-extension/entrypoints/popup/views/AccountSwitcher.tsx",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Extension popup: unlock, leave it for 15 minutes, and the vault is locked; account menu -> Lock or Lock all",
-        "note": "Every account locks 15 minutes after the last interaction, and on browser restart. The user cannot change the timeout yet (browser-extension/openspec/changes/ext-settings), and the extension does not read the administrator maximum from src/components/settings/ExtensionSection.vue (TIMEOUT_POLICY in browser-extension/src/accounts/settings.ts:35 is unset).",
+        "note": "Each account locks after the idle period the user picks in Account security (15 minutes by default), never later than the administrator maximum, and on browser restart or manual lock.",
         "change": "browser-extension/openspec/changes/ext-accounts-and-unlock",
         "readOn": "2026-10-16",
         "requirement": [
@@ -9420,6 +9387,10 @@
         "requirement": [
           "openspec/changes/clients-mobile-apps/specs/mobile-system-autofill :: Keepiq as the system password provider on iOS",
           "openspec/changes/clients-mobile-apps/specs/mobile-system-autofill :: Keepiq as the autofill service on Android"
+        ],
+        "plan": [
+          "openspec/changes/clients-mobile-apps",
+          "openspec/changes/mobile-login-totp-passkeys"
         ]
       },
       "rowSource": "competitor",
@@ -9749,15 +9720,7 @@
         "evidence": "src/manifest.json:196 Dashboard page (type dashboard, 4 KPI stats, recent activity, admin pending-apps queue, 3 tiles) -> GET /apps/keepiq/api/dashboard/summary -> appinfo/routes.php:24 -> lib/Controller/DashboardController.php:86 -> lib/Service/DashboardSummaryService.php:129 (total_secrets, shared_with_me_count, folders_count, rotation_due_count, pending_apps_count for admins) ; recent activity GET /api/v1/audit/me",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Dashboard menu item (/)",
-        "note": "The dashboard shows total secrets, shared with you, folders and rotation due, a recent activity feed, and for admins the application approval queue. A separate dashboard settings view exists but is unreachable (#208).",
-        "defects": [
-          {
-            "at": "src/views/DashboardSettingsView.vue:1",
-            "what": "The dashboard settings view is in no route, registry entry or bundle, so dashboard personalisation cannot be reached.",
-            "issue": "#208",
-            "needsLiveCheck": false
-          }
-        ],
+        "note": "The dashboard shows total secrets, shared with you, folders and rotation due, a recent activity feed, and for admins the application approval queue. Defaults are set in the user settings dialog (vault-20); the old dashboard settings view was deleted.",
         "spec": "openspec/specs/dashboard",
         "requirement": "openspec/specs/dashboard :: Vault Summary Cards [MVP]"
       },
@@ -9980,7 +9943,7 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "specified",
-        "evidence": "Generator half built: browser-extension/entrypoints/popup/views/Generator.tsx (Password, Passphrase and Username sub-tabs over src/generator/, policy clamp in src/generator/policy.ts, history in GeneratorHistory.tsx) and the context menu Generate password and copy (src/menus.ts:101), per browser-extension/openspec/changes/ext-generator (19/20, only the manual walk left). Missing: no password is suggested in a sign-up field; ext-autofill lists that as out of scope and no browser-extension change specifies it (only openspec/specs/extension-generator for the earlier extension)",
+        "evidence": "Generator half built: browser-extension/entrypoints/popup/views/Generator.tsx (Password, Passphrase and Username sub-tabs over src/generator/, policy clamp in src/generator/policy.ts, history in GeneratorHistory.tsx) and the context menu Generate password and copy (src/menus.ts:101), per browser-extension/openspec/changes/ext-generator (19/20, only the manual walk left). Missing: no password is suggested in a sign-up field; ext-autofill lists that as out of scope and no browser-extension change specifies it (only openspec/specs/extension-generator for the earlier extension) Planned in openspec/changes/extension-sign-up-password-suggestion.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "The extension generates passwords, passphrases and usernames in its Generator tab, but does not yet suggest one in a sign-up field.",
@@ -9989,7 +9952,8 @@
         "requirement": [
           "openspec/specs/extension-generator :: Generator tab in the popup",
           "openspec/specs/extension-generator :: Suggest a strong password in a sign-up field"
-        ]
+        ],
+        "plan": "openspec/changes/extension-sign-up-password-suggestion"
       },
       "rowSource": "own",
       "provider": "keepiq",
