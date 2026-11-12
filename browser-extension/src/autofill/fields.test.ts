@@ -1424,3 +1424,30 @@ describe('fillSelect', () => {
 		expect(select.value).toBe('2026')
 	})
 })
+
+describe('signals that tip a field', () => {
+	it.each([
+		['six characters', '6', 'oneTimeCode'],
+		['four characters', '4', 'oneTimeCode'],
+		['eight characters', '8', 'oneTimeCode'],
+		['nine characters', '9', 'other'],
+		['three characters', '3', 'other'],
+	])('takes a field named as a code of %s as a one-time code only between four and eight', (_name, maxlength, role) => {
+		mount(`<form><label>Verification code <input id="c" maxlength="${maxlength}"></label><button>Verify</button></form>`)
+		expect(classifyField($('#c'))).toBe(role)
+	})
+
+	it.each(['Postal code', 'Zip code'])('never takes "%s" as a one-time code, numeric and short as it is', (label) => {
+		mount(`<form><label>${label} <input id="c" inputmode="numeric" maxlength="6"></label><button>Send</button></form>`)
+		expect(classifyField($('#c'))).toBe('other')
+	})
+
+	it('reads an email token as an identity email outside a login, whatever its label', () => {
+		mount(`<form>
+			<label>Contact <input id="e" autocomplete="email"></label>
+			<label>Voornaam <input id="f"></label>
+			<button>Opslaan</button>
+		</form>`)
+		expect(roles('#e', '#f')).toEqual(['email', 'firstName'])
+	})
+})
