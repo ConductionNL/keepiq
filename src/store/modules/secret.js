@@ -10,6 +10,7 @@ import {
 	saveShared,
 	VALUE_FIELDS,
 } from '../../services/shareSave.js'
+import { secretPlacement } from '../../utils/secretPlacement.js'
 import { isAccessExpired } from '../../utils/shareRestriction.js'
 import { BLOB_FIELDS } from '../../utils/valueFields.js'
 import { useOfflineStore } from './offline.js'
@@ -427,21 +428,6 @@ async function encryptCopies(fields, recipients) {
 		})
 	}
 	return copies
-}
-
-/**
- * The plain name, url, type and folder of a new secret.
- *
- * @param {object} data The new secret.
- * @return {{name: string, url: string|null, typeId: string|null, folderId: string|null}}
- */
-function placementOf(data) {
-	return {
-		name: data.name,
-		url: data.url ?? null,
-		typeId: data.typeId ?? null,
-		folderId: data.folderId ?? null,
-	}
 }
 
 /** The owner row's ciphertext fields, each with its value when absent. */
@@ -1221,7 +1207,7 @@ export const useSecretStore = defineStore('secret', {
 					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/secrets`,
 				),
 				{
-					...placementOf(data),
+					...secretPlacement(data),
 					...ownerCiphertext(owner),
 					copies,
 				},

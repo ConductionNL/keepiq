@@ -2,6 +2,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
+import { secretPlacement } from '../../utils/secretPlacement.js'
 
 /**
  * Pinia store for the registered-application admin queue + user
@@ -13,22 +14,6 @@ import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
  *
  * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.1
  */
-/**
- * The plaintext metadata of a secret written for an application.
- *
- * @param {object} data Plaintext fields.
- * @return {object} name, url, typeId and folderId.
- * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
- */
-function applicationSecretHeader(data) {
-	return {
-		name: data.name,
-		url: data.url ?? null,
-		typeId: data.typeId ?? null,
-		folderId: data.folderId ?? null,
-	}
-}
-
 /**
  * The optional encrypted values of a secret written for an application: the
  * login only when set, and the additional fields as given or as JSON.
@@ -290,7 +275,7 @@ export const useApplicationStore = defineStore('application', {
 			}
 			const publicKey = await importPublicKey(pem)
 			const payload = {
-				...applicationSecretHeader(data),
+				...secretPlacement(data),
 				key: await rsaEncrypt(String(data.key ?? ''), publicKey),
 				ownerType: 'application',
 				ownerId: applicationId,

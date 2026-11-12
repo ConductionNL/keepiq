@@ -868,7 +868,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog (secret-create modal)",
         "note": "Create dialog collects name, type, url, login and key, and posts through the secret store to the secret CRUD endpoint. Login is one of the built-in system types.",
-        "spec": "openspec/specs/secrets"
+        "spec": "openspec/specs/secrets",
+        "requirement": "openspec/specs/secrets :: Create Secret"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -908,7 +909,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> secret detail sidebar -> Edit (secret-edit modal)",
         "note": "Edit dialog diffs the changed fields and updates through the same encrypted-at-rest path as create.",
-        "spec": "openspec/specs/secrets"
+        "spec": "openspec/specs/secrets",
+        "requirement": "openspec/specs/secrets :: Update Secret"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -945,7 +947,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> secret row -> Delete (secret-delete modal)",
         "note": "Deletion is a hard, permanent delete with an explicit irreversible-warning copy in the dialog; there is no trash (see vault-04).",
-        "spec": "openspec/specs/secrets"
+        "spec": "openspec/specs/secrets",
+        "requirement": "openspec/specs/secrets :: Delete Secret"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -982,7 +985,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Keepiq navigation, Trash: select secrets, Restore or Delete for good",
         "note": "Built 2026-09-30. Tests: PHPUnit SecretTrashServiceTest, SecretTrashControllerTest, PurgeTrashedSecretsJobTest, SecretServiceTrashStateTest, TrashRetentionSettingTest, SecretStateFilterTest; vitest secretTrashState.spec.js, BulkStateDialog.spec.js, TrashDeleteCopy.spec.js.",
-        "change": "openspec/changes/archive/2026-09-30-vault-trash-and-archive"
+        "change": "openspec/changes/archive/2026-09-30-vault-trash-and-archive",
+        "requirement": "openspec/specs/vault-trash-and-archive :: Restoring and purging trashed secrets"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1018,7 +1022,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> folder tree in app nav -> New folder",
         "note": "Folders nest via parentId, giving subfolders in the same tree.",
-        "spec": "openspec/specs/secrets"
+        "spec": "openspec/specs/secrets",
+        "requirement": "openspec/specs/secrets :: Folder Management"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1058,7 +1063,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> secret row action -> Move (secret-move modal)",
         "note": "MoveDialog also handles moving a whole folder's contents (updateFolder for subfolders), a superset of the single-secret move asked for here.",
-        "spec": "openspec/specs/secrets-write-ui"
+        "spec": "openspec/specs/secrets-write-ui",
+        "requirement": "openspec/specs/secrets-write-ui :: Create a Folder and Move a Secret"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1095,7 +1101,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page -> inline search field",
         "note": "Server-side two-stage fuzzy match: SQL substring pre-filter plus a paged Levenshtein scan, genuinely typo-tolerant, not just a substring filter.",
-        "change": "openspec/changes/archive/2026-07-18-bound-fuzzy-secret-search"
+        "change": "openspec/changes/archive/2026-07-18-bound-fuzzy-secret-search",
+        "requirement": "openspec/specs/secrets :: Search"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1132,7 +1139,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud unified search bar (server-wide)",
         "note": "Only matches the plaintext name/url columns, so it works without the vault being unlocked; deep-links back into the app.",
-        "spec": "openspec/specs/secrets"
+        "spec": "openspec/specs/secrets",
+        "requirement": "openspec/specs/secrets :: Nextcloud Unified Search Integration"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1169,7 +1177,8 @@
         "owner": "ConductionNL/keepiq",
         "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
         "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used",
-        "reachedOn": "SecretList page (/secrets): the star on a row, Filter menu > Favourites"
+        "reachedOn": "SecretList page (/secrets): the star on a row, Filter menu > Favourites",
+        "requirement": "openspec/specs/vault-list-organisation :: Favourite items per holder"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1205,7 +1214,8 @@
         "owner": "ConductionNL/keepiq",
         "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
         "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used",
-        "reachedOn": "SecretList page (/secrets): Tags field in the create and edit dialogs, Filter menu > tag, selection strip > Tags"
+        "reachedOn": "SecretList page (/secrets): Tags field in the create and edit dialogs, Filter menu > tag, selection strip > Tags",
+        "requirement": "openspec/specs/vault-list-organisation :: Tags per holder"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1244,7 +1254,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret / Edit secret dialog -> Additional fields section",
         "note": "Owners can add, rename and remove named custom fields on create and edit, stored encrypted. There is no hidden or concealed field kind: values are typed in plain text fields and shown unmasked on the detail sidebar.",
-        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key"
+        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key",
+        "requirement": "openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields :: Hidden custom fields"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1322,7 +1333,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: Payment card or Identity",
         "note": "Card and identity types each get their own field set in create and edit, serialized into the encrypted key, and render as per-field rows with sensitive fields masked. The identity type holds personal details and a BSN, not passport or licence document fields.",
-        "change": "openspec/changes/archive/2026-07-18-card-identity-items"
+        "change": "openspec/changes/archive/2026-07-18-card-identity-items",
+        "requirement": [
+          "openspec/specs/card-identity-items :: Payment Card and Identity System Types",
+          "openspec/specs/card-identity-items :: Type-Specific Presentation and Masked Reveal"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1362,7 +1377,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: SSH Key",
         "note": "SSH Key exists as its own type, but it stores a single secret value like any other type: there are no separate private key, public key and fingerprint fields and no key-pair generation. A user can put the public key in an additional field by hand.",
-        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key"
+        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key",
+        "requirement": "openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item :: SSH key item form"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1407,7 +1423,8 @@
           }
         ],
         "change": "openspec/changes/archive/2026-07-18-passkey-item-type",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": "openspec/specs/passkey-item-type :: Passkey system secret type"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1444,7 +1461,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> detail sidebar of an Authenticator (TOTP) item -> One-time code row",
         "note": "A live one-time code works, but only on a separate Authenticator item whose value is the seed. A seed kept on a login (for example imported from Bitwarden into additionalFields.totp) is shown as raw text and never becomes a code.",
-        "change": "openspec/changes/vault-login-totp-codes"
+        "change": "openspec/changes/vault-login-totp-codes",
+        "requirement": "openspec/specs/secrets :: Client-Side TOTP Code Generation"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1481,7 +1499,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets/:id) -> detail sidebar -> Attachments box",
         "note": "Files are encrypted in the browser with a per-file key wrapped to the vault key, then uploaded; the owner can list, download (decrypted client side) and delete them.",
-        "change": "openspec/changes/archive/2026-07-18-encrypted-attachments"
+        "change": "openspec/changes/archive/2026-07-18-encrypted-attachments",
+        "requirement": "openspec/specs/encrypted-attachments :: Client-side encrypted attachment upload"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1518,7 +1537,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets/:id) -> detail sidebar -> Version history panel -> View / Restore",
         "note": "Each update snapshots the prior value; the owner can view an earlier version decrypted in session and restore it after a confirm, with the current value kept as a new version.",
-        "change": "openspec/changes/archive/2026-07-18-secret-version-history"
+        "change": "openspec/changes/archive/2026-07-18-secret-version-history",
+        "requirement": "openspec/specs/secret-version-history :: List, view, and restore versions"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1555,7 +1575,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> row checkboxes -> selection strip",
         "note": "Multi-select with shift-range works and the strip moves, shares, adds to a team folder or deletes the selection with per-item retry. Export is not a bulk action: the export dialog always takes the whole visible list.",
-        "change": "openspec/changes/archive/2026-07-18-bulk-actions"
+        "change": "openspec/changes/archive/2026-07-18-bulk-actions",
+        "requirement": [
+          "openspec/specs/bulk-actions :: The Four Bulk Operations",
+          "openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore :: Choose what an export contains"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1599,7 +1623,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "User settings dialog (app navigation, Settings) -> Defaults; then New secret, and the Secrets list",
         "note": "Built 2026-09-30. Defect #208 (unmounted DashboardSettingsView) closed by deleting the view and mounting DefaultsSection. Tests: vitest tests/components/DefaultsSection.spec.js, tests/dialogs/SecretCreateDialog.defaultType.spec.js, tests/views/SecretList.defaultView.spec.js, tests/store/userPreferences.spec.js.",
-        "change": "openspec/changes/archive/2026-09-30-vault-defaults-and-recently-used-widget"
+        "change": "openspec/changes/archive/2026-09-30-vault-defaults-and-recently-used-widget",
+        "requirement": "openspec/specs/vault-defaults :: Default item type and view"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1636,7 +1661,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Dashboard page (/) -> Recently used widget; a row opens /secrets/:id",
         "note": "Built 2026-09-30. Tests: PHPUnit tests/Unit/Service/RecentlyUsedServiceTest.php (distinct newest first, dropped when no longer held, cap five, empty), tests/Unit/Controller/AuditControllerTest.php.",
-        "change": "openspec/changes/archive/2026-09-30-vault-defaults-and-recently-used-widget"
+        "change": "openspec/changes/archive/2026-09-30-vault-defaults-and-recently-used-widget",
+        "requirement": "openspec/specs/vault-recently-used :: Recently used on the dashboard"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1672,7 +1698,8 @@
         "evidence": "Specified in openspec/changes/vault-item-clone-preview-and-print on 2026-09-27. Before: grep -rni 'clone\\|duplicate\\|make a copy' src --include=*.vue: only import-wizard duplicate handling; no clone action in SecretDetailSidebar.vue or SecretList.vue menus",
         "owner": "ConductionNL/keepiq",
         "note": "There is no clone or duplicate action on a secret.",
-        "change": "openspec/changes/vault-item-clone-preview-and-print"
+        "change": "openspec/changes/vault-item-clone-preview-and-print",
+        "requirement": "openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions :: Clone a secret"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1708,7 +1735,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets)",
         "note": "Rows are Tab-reachable and open with Enter or Space, selection checkboxes and the copy control are independently focusable, and bulk actions are buttons. There are no arrow-key or shortcut bindings, so moving through a long list means tabbing through every control.",
-        "change": "openspec/changes/archive/2026-07-22-keyboard-accessible-secret-rows"
+        "change": "openspec/changes/archive/2026-07-22-keyboard-accessible-secret-rows",
+        "requirement": "openspec/specs/secrets-write-ui :: Secret List Rows MUST Be Keyboard-Operable"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1745,7 +1773,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets), Filter and sort menu",
         "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
-        "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used"
+        "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used",
+        "requirement": [
+          "openspec/specs/secrets :: List and Pagination",
+          "openspec/specs/vault-list-organisation :: Sort by date last used"
+        ]
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1783,7 +1815,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Duplicates are caught only while importing (portability-05); nothing finds or merges duplicates already stored.",
-        "change": "openspec/changes/vault-duplicate-finder"
+        "change": "openspec/changes/vault-duplicate-finder",
+        "requirement": [
+          "openspec/changes/vault-duplicate-finder/specs/vault-duplicates :: Detect duplicates in the browser",
+          "openspec/changes/vault-duplicate-finder/specs/vault-duplicates :: Merge a duplicate group"
+        ]
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1821,7 +1857,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetailSidebar attachment panel (download only)",
         "note": "Attachments decrypt to a download; there is no in-app preview.",
-        "change": "openspec/changes/vault-item-clone-preview-and-print"
+        "change": "openspec/changes/vault-item-clone-preview-and-print",
+        "requirement": "openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions :: Preview an attachment in the browser"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1900,7 +1937,8 @@
         "reachedOn": "nothing",
         "note": "A secret carries one website address.",
         "change": "openspec/changes/vault-website-addresses",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": "openspec/changes/vault-website-addresses/specs/website-addresses :: A login carries several website addresses"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1938,7 +1976,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetailSidebar > version history > Version details dialog",
         "note": "One old version can be opened and read next to nothing else; there is no side-by-side diff.",
-        "change": "openspec/changes/archive/2026-07-18-secret-version-history"
+        "change": "openspec/changes/archive/2026-07-18-secret-version-history",
+        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history :: Compare two versions side by side"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1974,7 +2013,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "A secret cannot be printed or shown as a QR code.",
-        "change": "openspec/changes/vault-item-clone-preview-and-print"
+        "change": "openspec/changes/vault-item-clone-preview-and-print",
+        "requirement": "openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions :: Print a login or show its password as a QR code"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -2013,7 +2053,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret list, favicon beside each login once an admin sets a favicon service",
         "note": "Site icons show when an admin configures a favicon service; there is no screenshot preview.",
-        "change": "openspec/changes/vault-website-addresses"
+        "change": "openspec/changes/vault-website-addresses",
+        "requirement": "openspec/changes/vault-website-addresses/specs/website-addresses :: Site icons and previews are opt-in per instance"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -2049,7 +2090,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret / Edit secret dialogs",
         "note": "The secret value, login, additional fields and attachments are encrypted in the browser to the user's public key and the private key never leaves the browser unencrypted. The name, URL, type and folder stay plaintext on the server so lists and search work.",
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": [
+          "openspec/specs/secrets :: Create Secret",
+          "openspec/specs/encryption-suites :: Session Mechanism"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2086,7 +2131,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Lock page (/lock) -> first-time setup form (shown only when the server confirms no suite exists)",
         "note": "On first use the lock screen asks for a master password with confirmation; the browser derives a key from it and sends only the wrapped private key, so the server never receives the password.",
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": [
+          "openspec/specs/encryption-suites :: Suite Creation on First Login",
+          "openspec/specs/encryption-suites :: Session Mechanism"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2123,7 +2172,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Lock page (/lock) first-time setup; Personal settings -> Security -> change master password",
         "note": "Setup and change are blocked until the password meets the administrator's minimum length and zxcvbn score. The check is client side only, which is inherent since the server never sees the password.",
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": "openspec/specs/encryption-suites :: Master Password Strength"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2163,7 +2213,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "App navigation -> Personal settings -> Security -> Master password form",
         "note": "Changing the master password only re-wraps the private key, so every secret stays readable; the server demands proof of the old key and flags enrolled passkeys for re-enrolment.",
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": "openspec/specs/encryption-suites :: Master Password Change — Routine"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2208,7 +2259,8 @@
             "needsLiveCheck": true
           }
         ],
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": "openspec/specs/encryption-suites :: Master Password Change — Compromise Recovery"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2245,7 +2297,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Any vault page while unlocked; the lock screen appears after the chosen idle period",
         "note": "Built 2026-09-29. Tests: vitest tests/store/session.timeout.spec.js (active user stays unlocked over 25 min, idle user locked, throttle, locked vault ignores activity), tests/components/appSessionWiring.spec.js.",
-        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock"
+        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock",
+        "requirement": [
+          "openspec/specs/vault-session-lock :: Inactivity lock",
+          "openspec/specs/encryption-suites :: Session Mechanism"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2285,7 +2341,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "User settings dialog (app navigation, Settings) -> Session -> Session timeout",
         "note": "Built 2026-09-29. Tests: vitest tests/store/session.timeout.spec.js (load, save, Nextcloud session never locks), PHPUnit SettingsServiceSessionTimeoutTest.",
-        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock"
+        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock",
+        "requirement": "openspec/specs/vault-session-lock :: Saved session timeout"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2330,7 +2387,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-07-20-passkey-vault-login"
+        "change": "openspec/changes/archive/2026-07-20-passkey-vault-login",
+        "requirement": "openspec/specs/passkey-vault-login :: Passwordless unlock derives the unlock key client-side"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2372,7 +2430,8 @@
         "note": "The web app unlocks with a platform passkey (Touch ID, Windows Hello or a security key) through WebAuthn PRF; the server stores only the wrapped unlock key. The browser extension has no fingerprint or face unlock: browser-extension/openspec/changes/ext-accounts-and-unlock keeps it out of scope.",
         "spec": "openspec/specs/passkey-vault-login",
         "change": "openspec/changes/archive/2026-07-20-passkey-vault-login",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": "openspec/specs/passkey-vault-login :: Passwordless unlock derives the unlock key client-side"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2440,7 +2499,11 @@
         "note": "Recovery officers, not one administrator, restore access: a user enrolled under the account recovery policy files a request from the lock screen, a threshold of officers approves after comparing a verification phrase, and the user sets a new master password and keeps their secrets. Users who never enrolled still cannot be recovered, by zero-knowledge design.",
         "change": "openspec/changes/archive/2026-10-04-crypto-organisation-account-recovery",
         "reachedOn": "Lock screen (/lock) -> Forgot master password; officers approve from the recovery panel in the user menu; policy under Administration -> Keepiq - People",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-07",
+        "requirement": [
+          "openspec/specs/organisation-account-recovery :: Administrators name recovery officers, a threshold and a policy",
+          "openspec/specs/organisation-account-recovery :: Recovery needs a threshold of proven officer approvals"
+        ]
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2517,7 +2580,8 @@
         "evidence": "Specified in openspec/changes/crypto-vault-encryption-details on 2026-09-27. Before: src/crypto/rsa.js:8 RSA_KEY_BITS = 4096 and src/crypto/aes.js:15 PBKDF2 600000 are code constants only; grep -rni 'algorithm\\|key size\\|RSA-OAEP' src --include=*.vue: only template comments; src/views/CertificateInventoryView.vue:116-137 shows vault certificate owner, subject and expiry, no algorithm or key size",
         "owner": "ConductionNL/keepiq",
         "note": "No screen tells the user which algorithms or key sizes protect the vault. The certificates page shows the vault certificate's subject and expiry, but not RSA-4096, RSA-OAEP, AES-256-GCM or the key derivation settings.",
-        "change": "openspec/changes/crypto-vault-encryption-details"
+        "change": "openspec/changes/crypto-vault-encryption-details",
+        "requirement": "openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details :: The user sees what protects the vault"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2554,7 +2618,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Certificates page (/certificates) -> Vault encryption certificates / Certificate authority; admin settings -> CA health",
         "note": "Each vault public key is signed by a private CA that keepiq bootstraps on the instance, and suite creation refuses while that CA is unhealthy. The CA is the instance's own, generated by keepiq; there is no path to plug in an existing external organisational CA.",
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": [
+          "openspec/specs/encryption-suites :: CA Bootstrap",
+          "openspec/specs/encryption-suites :: Suite Creation on First Login"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2599,7 +2667,8 @@
             "needsLiveCheck": true
           }
         ],
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": "openspec/specs/encryption-suites :: A Plain Create Refuses To Mint A Second Active Suite"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2635,7 +2704,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Personal settings -> Security -> compromise recovery migration (and resume banner)",
         "note": "During key migration every re-encrypted record is decrypted back with the new key and compared before it is committed, and the old suite stays active until nothing is left bound to it.",
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": "openspec/specs/encryption-suites :: Re-Encrypted Ciphertext Is Verified Before The Original Is Discarded"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2671,7 +2741,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Personal settings -> Security -> Revoke (user); Nextcloud admin settings -> Keepiq -> suite management -> Reinstate (admin)",
         "note": "A user can revoke their own vault key after re-entering the master password, and an administrator can reinstate it by id. Revocation also hard-deletes the shares the user received and warns before destroying emergency access, so a reinstate does not bring those back.",
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": [
+          "openspec/specs/encryption-suites :: Revocation",
+          "openspec/specs/encryption-suites :: Reinstatement"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2708,7 +2782,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Encryption suite management -> Force-revoke",
         "note": "An administrator can force-revoke any suite by id after re-confirming their own password and optionally flag it as compromised, which triggers a listener that flags its secrets for rotation and notifies owners.",
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": "openspec/specs/encryption-suites :: Administrator Force-Revocation"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2776,7 +2851,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Re-entry of the master password guards export only, not viewing or filling a chosen item.",
-        "change": "openspec/changes/crypto-item-reprompt"
+        "change": "openspec/changes/crypto-item-reprompt",
+        "requirement": [
+          "openspec/changes/crypto-item-reprompt/specs/item-master-password-reprompt :: A per-item master password re-prompt",
+          "openspec/changes/crypto-item-reprompt/specs/item-master-password-reprompt :: The web app verifies the master password before revealing a flagged item"
+        ]
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -2916,7 +2995,11 @@
         "reachedOn": "Lock screen (/lock) -> Approve from another device; the approving device gets the approval dialog while unlocked",
         "note": "A new device asks for approval on the lock screen; an unlocked device of the same user compares the phrase and approves, and the new device unlocks without the master password. Administrators approve only through organisation account recovery (crypto-11), for users enrolled in it; there is no plain admin approval. The browser extension does not ask for approval; it unlocks with the master password only.",
         "change": "openspec/changes/archive/2026-10-04-crypto-new-device-approval",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": [
+          "openspec/specs/new-device-approval :: A new device requests approval with a one-time key",
+          "openspec/specs/new-device-approval :: The administrator path goes through organisation account recovery"
+        ]
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -2955,7 +3038,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> select one or more rows -> Share bulk action -> BulkShareDialog",
         "note": "The per-secret sidebar Share button opens SecretShareDialog, which only does link sharing and explicitly disables user-to-user sharing as 'coming soon'. Real user-to-user sharing is reached through the bulk-selection Share action instead, which works for exactly one selected secret too.",
-        "spec": "openspec/specs/user-sharing"
+        "spec": "openspec/specs/user-sharing",
+        "requirement": "openspec/specs/user-sharing :: Share a Secret"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2992,7 +3076,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret sidebar (/secrets, open a secret you own) -> Sharing -> Share with group",
         "note": "Built 2026-09-29. Tests: GroupShareServiceTest (visibility, skipped count, revoke cascade), ShareServiceTest::testRegisterDirectSharesLinksAGroupShareOfTheSameSecret, GroupShareControllerTest create, vitest groupShare store and GroupShareList.",
-        "change": "openspec/changes/archive/2026-09-29-sharing-group-share-entry-point"
+        "change": "openspec/changes/archive/2026-09-29-sharing-group-share-entry-point",
+        "requirement": "openspec/specs/sharing-group :: Share with a group"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3037,7 +3122,11 @@
             "needsLiveCheck": false
           }
         ],
-        "spec": "openspec/specs/team-folder-sharing"
+        "spec": "openspec/specs/team-folder-sharing",
+        "requirement": [
+          "openspec/specs/team-folder-sharing :: Membership propagation with group membership",
+          "openspec/specs/team-folder-sharing :: Approve one waiting member"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3074,7 +3163,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic (server event listener) once a team folder with a group member exists",
         "note": "The equivalent ad-hoc group-share auto-revocation (GroupShareService::handleMemberLeave, same listener) is also wired at the backend, but since sharing-02's group-share creation path is unreachable from the UI, that branch has nothing to act on in practice; the team-folder branch is what actually delivers this capability to a user.",
-        "spec": "openspec/specs/user-sharing"
+        "spec": "openspec/specs/user-sharing",
+        "requirement": "openspec/specs/user-sharing :: Member Leaves Group — Auto-Revocation"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3111,7 +3201,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> secret row -> sidebar -> Edit -> save",
         "note": "Sync runs automatically as part of the normal edit flow; no separate user action is needed.",
-        "spec": "openspec/specs/user-sharing"
+        "spec": "openspec/specs/user-sharing",
+        "requirement": "openspec/specs/user-sharing :: Sync on Update"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3147,7 +3238,8 @@
         "evidence": "src/components/SecretDetailSidebar.vue:675 mounts ShareList for the owner -> src/components/share/ShareList.vue:111 onRevoke -> store.revokeShare -> DELETE /api/v1/shares/{id} (appinfo/routes.php:130 share#destroy).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> secret row -> sidebar -> Sharing section -> revoke",
-        "spec": "openspec/specs/user-sharing"
+        "spec": "openspec/specs/user-sharing",
+        "requirement": "openspec/specs/user-sharing :: Revoke Share"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3183,7 +3275,8 @@
         "evidence": "src/components/SecretDetailSidebar.vue:675 mounts ShareList (owner) which lists store.shares (fetched via GET /api/v1/secrets/{secretId}/shares, share.js:241 fetchShares). Recipients see the same list redacted to their own row per ShareList.vue's header comment.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> secret row -> sidebar -> Sharing section",
-        "spec": "openspec/specs/user-sharing"
+        "spec": "openspec/specs/user-sharing",
+        "requirement": "openspec/specs/user-sharing :: Share Visibility"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3219,7 +3312,8 @@
         "evidence": "src/modals/TeamFolderDialog.vue (opened from SecretList.vue and KeepiqAppNav.vue) -> onShareFolder -> store.shareFolder -> POST /api/v1/team-folders (teamFolder.js:67) -> appinfo/routes.php:362 teamFolder#create -> lib/Service/TeamFolderService.php:109 shareFolder, which fans every secret in the folder subtree out to the folder's members.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> folder actions -> Team folder sharing dialog -> Share this folder",
-        "spec": "openspec/specs/team-folder-sharing"
+        "spec": "openspec/specs/team-folder-sharing",
+        "requirement": "openspec/specs/team-folder-sharing :: Share a folder as a team folder"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3256,7 +3350,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Team folder sharing dialog -> member row -> grade select",
         "note": "Grades are read/write, not a finer-grained set, but that matches the row's own wording.",
-        "spec": "openspec/specs/folder-permission-grades"
+        "spec": "openspec/specs/folder-permission-grades",
+        "requirement": "openspec/specs/folder-permission-grades :: Team-folder membership carries a read, write or manage grade"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3292,7 +3387,8 @@
         "evidence": "lib/Service/TeamFolderMembershipResolver.php:233 subtreeSecretRefs() calls folderMapper->getSubtreeIds() and fans out to secrets in every descendant folder, not just the shared folder itself. Used by shareFolder, reconcile and the approve-join fan-out payload, all reachable from src/modals/TeamFolderDialog.vue.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Team folder sharing dialog (same path as sharing-08)",
-        "spec": "openspec/specs/team-folder-sharing"
+        "spec": "openspec/specs/team-folder-sharing",
+        "requirement": "openspec/specs/team-folder-sharing :: Nested subfolder inheritance"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3370,7 +3466,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic (server event listener) -- but only over delegations that exist",
         "note": "The promotion logic is real and wired to a real event, but since sharing-11 shows no delegation can ever be created via the UI today, there is nothing for it to promote in practice. Rated partial rather than no because the mechanism itself is correctly built and would fire the moment delegation creation is wired up.",
-        "spec": "openspec/specs/user-sharing"
+        "spec": "openspec/specs/user-sharing",
+        "requirement": "openspec/specs/user-sharing :: Permanent Transfer on Suite Revocation"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3446,7 +3543,11 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-implement-link-sharing"
+        "change": "openspec/changes/archive/2026-06-14-implement-link-sharing",
+        "requirement": [
+          "openspec/specs/link-sharing :: Create Link Share",
+          "openspec/changes/capability-requirements-from-the-matrix/specs/link-sharing :: A link share can end on a date"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3485,7 +3586,11 @@
         "evidence": "src/modals/NewSendDialog.vue (mounted in src/views/SecretList.vue) collects maxViews, optional ttlHours and password, then calls useEphemeralSendStore().createSend (NewSendDialog.vue:175) -> POST /api/v1/sends (ephemeralSend.js:160) -> appinfo/routes.php:250 ephemeralSend#create. The recipient views it, no account needed, at src/views/EphemeralSendAccess.vue (manifest.json route /send/:token).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> New send action -> NewSendDialog; recipient opens /send/:token unauthenticated",
-        "change": "openspec/changes/archive/2026-07-18-ephemeral-send"
+        "change": "openspec/changes/archive/2026-07-18-ephemeral-send",
+        "requirement": [
+          "openspec/specs/ephemeral-send :: Create a standalone ephemeral send",
+          "openspec/specs/ephemeral-send :: Burn-after-read and optional expiry"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3525,7 +3630,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> My sends action -> MySendsDialog",
         "note": "Link shares (sharing-14) are also listed and revocable in the same SecretShareDialog, so both link-shares and sends can be reviewed and revoked, just via two different dialogs.",
-        "change": "openspec/changes/archive/2026-07-18-ephemeral-send"
+        "change": "openspec/changes/archive/2026-07-18-ephemeral-send",
+        "requirement": [
+          "openspec/specs/ephemeral-send :: Manage and revoke sends",
+          "openspec/specs/link-sharing :: Manual revocation"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3609,7 +3718,11 @@
         "change": "openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role",
         "reachedOn": "Team folder dialog (folder actions -> Team folder) -> member grade",
         "note": "Team folder members are viewers, editors or managers. A manager adds and removes members and sets viewer or editor; only the owner names managers and deletes or unshares the folder.",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-07",
+        "requirement": [
+          "openspec/specs/folder-permission-grades :: Team-folder membership carries a read, write or manage grade",
+          "openspec/specs/folder-permission-grades :: Managers keep the membership current"
+        ]
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -3644,7 +3757,8 @@
         "evidence": "lib/Service/DirectShareRegistrar.php:99-105 registerDirectShares (the method behind the reachable register-batch path from sharing-01) fires notificationService->notify(subject: 'secret_shared', ...) once per new recipient after creating the shares.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic, part of the sharing-01 flow",
-        "spec": "openspec/specs/user-sharing"
+        "spec": "openspec/specs/user-sharing",
+        "requirement": "openspec/specs/user-sharing :: Notification on Share Received"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3680,7 +3794,8 @@
         "evidence": "src/views/EmergencyAccessView.vue (page route /emergency-access, menu item EmergencyAccessMenu) wires a designate form (line 41 @click=\"designate\") -> store.designate -> POST /api/v1/emergency-access/contacts (appinfo/routes.php:113), building the recovery envelope client-side with a configurable wait period.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Emergency access page -> Designate a contact",
-        "spec": "openspec/specs/emergency-access"
+        "spec": "openspec/specs/emergency-access",
+        "requirement": "openspec/specs/emergency-access :: Designate Emergency Contact"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3719,7 +3834,8 @@
         "evidence": "src/views/EmergencyAccessView.vue:349 onDecline calls store.decline(id) -> POST /api/v1/emergency-access/contacts/{id}/decline (appinfo/routes.php:116), which per the grantor-decline-veto requirement can be called during the wait period.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Emergency access page -> incoming request -> Decline",
-        "spec": "openspec/specs/emergency-access"
+        "spec": "openspec/specs/emergency-access",
+        "requirement": "openspec/specs/emergency-access :: Grantor Decline (Veto)"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3755,7 +3871,8 @@
         "evidence": "lib/BackgroundJob/ApproveElapsedEmergencyRequests.php is registered in appinfo/info.xml:115, runs hourly, and transitions 'requested' relationships to 'approved' once the wait period elapses with no decline; the header also notes a grantee fetch lazily promotes an elapsed request as a safety net.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic (background job + lazy promotion on grantee fetch)",
-        "spec": "openspec/specs/emergency-access"
+        "spec": "openspec/specs/emergency-access",
+        "requirement": "openspec/specs/emergency-access :: Approval by Timeout and Grantee View Access"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3821,7 +3938,11 @@
         "reachedOn": "Share dialog -> Use only (cannot see or copy); the recipient sees the item in the web app and the browser extension; only the mobile preview fills it",
         "note": "A use-only recipient cannot reveal, copy, edit, export or share the password onward in the web app, extension or CLI. Signing in with it needs a fill: the browser extension does not fill yet (clients-01, browser-extension/openspec/changes/ext-autofill), and the mobile apps that do are still a preview (clients-10).",
         "change": "openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": [
+          "openspec/specs/use-only-shares :: Owners can share a secret as use-only",
+          "openspec/specs/use-only-shares :: Keepiq's clients never reveal a use-only value"
+        ]
       },
       "rowSource": "competitor",
       "origin": "tender",
@@ -3863,7 +3984,11 @@
         "reachedOn": "Share dialog -> Access ends on (date)",
         "note": "A share, group share or team folder membership can carry an end date. After it the copy disappears from every read path, a job revokes it, and owner and recipient are notified, with a rotation hint for the owner.",
         "change": "openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-07",
+        "requirement": [
+          "openspec/specs/expiring-shares :: Shares and memberships can carry an end date",
+          "openspec/specs/expiring-shares :: The server stops serving an expired copy at its end date"
+        ]
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -3904,7 +4029,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret detail sidebar, request access form",
         "note": "A user can ask the owner for access and the owner approves or denies, but approval is not limited by a time window or IP address and does not gate use of a privileged login.",
-        "spec": "openspec/specs/user-sharing"
+        "spec": "openspec/specs/user-sharing",
+        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing :: Use of a privileged login needs an approved time window"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -3974,7 +4100,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (vault) -> 'Ask someone for a credential' action, or SecretDetail sidebar -> Requests -> 'Ask someone to fill this in'; recipient uses the anonymous /public/share/request/:token page",
         "note": "Fresh requests create a placeholder secret server side; the fill link points at the anonymous public shell (src/utils/fillLink.js), so a recipient without an account can open it.",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": [
+          "openspec/specs/secret-requests :: Create Secret Request",
+          "openspec/specs/secret-requests :: Fill In via Link"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4022,7 +4152,8 @@
             "needsLiveCheck": true
           }
         ],
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": "openspec/specs/secret-requests :: Requestable Fields"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4059,7 +4190,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Anonymous fill page /public/share/request/:token",
         "note": "Values are encrypted in the recipient's browser to the owner's suite and the token is single-use. The url field is stored plaintext by design and the dialog labels it so.",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": [
+          "openspec/specs/secret-requests :: Fill In via Link",
+          "openspec/specs/secret-requests :: Write-Once"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4096,7 +4231,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Request create dialog; expiry shown per row in the SecretDetail sidebar request list",
         "note": "Expired requests are refused on the fill page and swept by a registered background job, which also removes an unfilled placeholder.",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": "openspec/specs/secret-requests :: Optional Expiry"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4133,7 +4269,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud notification to the requester",
         "note": "A Nextcloud notification goes to the requester when a request is filled; users can opt out through the notify_requests setting.",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": "openspec/specs/secret-requests :: Notification on Fulfillment"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4169,7 +4306,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetail sidebar -> Requests -> Ask for new values",
         "note": "A re-request targets the existing secret and overwrites its values when filled; only the owner may create one and only one pending request per secret is allowed (409).",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": "openspec/specs/secret-requests :: Re-request (Update in Place)"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4206,7 +4344,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetail sidebar -> Requests list -> Revoke; admins also on ApplicationDetail (/applications/:id)",
         "note": "Revoking sets the request to declined and deletes an empty placeholder secret. The row disappears from the list instead of showing as revoked.",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": "openspec/specs/secret-requests :: Revoke Request"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4243,7 +4382,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (row badge) and SecretDetail sidebar -> Requests list",
         "note": "Waiting requests show as a badge on the secret row and in the per-secret list. There is no single page listing all open requests, although the list component's header comment mentions a 'My requests' view that does not exist in the manifest.",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": "openspec/specs/secret-requests :: Outstanding Request Indicator"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4279,7 +4419,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: POST /api/v1/app/secret-requests; admin oversight on ApplicationDetail (src/views/ApplicationDetail.vue:152)",
         "note": "An authenticated application can create a request into its own vault and hand the returned link to a person; admins can see and revoke these requests on the application detail page.",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": "openspec/specs/secret-requests :: Session-less Application-Initiated Request Creation"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4315,7 +4456,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Request create dialog opened from the SecretDetail sidebar",
         "note": "Filled fields are marked and left unticked on a fresh request, but the requester can still tick them. Additional members count as unfilled when the blob is not decrypted in that context.",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": "openspec/specs/secret-requests :: Fresh Requests Do Not Re-ask for Values That Already Exist"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4351,7 +4493,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetail sidebar -> Requests list -> Copy fill link",
         "note": "The requester can copy the fill link again from the request list at any time while the request is pending and not expired.",
-        "spec": "openspec/specs/secret-requests"
+        "spec": "openspec/specs/secret-requests",
+        "requirement": "openspec/specs/secret-requests :: Fill Link Recovery"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4387,7 +4530,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "ApplicationRegister page (/applications) -> ApplicationRegisterDialog",
         "note": "A developer registers an application from the Applications page, optionally with a CSR; an active suite is provisioned if the app auto-activates.",
-        "spec": "openspec/specs/application-mgmt"
+        "spec": "openspec/specs/application-mgmt",
+        "requirement": "openspec/specs/application-mgmt :: Register Application"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4435,7 +4579,8 @@
             "needsLiveCheck": false
           }
         ],
-        "spec": "openspec/specs/application-mgmt"
+        "spec": "openspec/specs/application-mgmt",
+        "requirement": "openspec/specs/application-mgmt :: Approval Queue"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4471,7 +4616,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud bell notification, fired from ApplicationController#create via ApplicationLifecycleService",
         "note": "Every vault admin gets a Nextcloud notification when a non-admin's application registration is pending; admins cannot opt out of this one.",
-        "spec": "openspec/specs/application-mgmt"
+        "spec": "openspec/specs/application-mgmt",
+        "requirement": "openspec/specs/application-mgmt :: Admin Notification on Pending Registration"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4507,7 +4653,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "ApplicationRegister page -> ApplicationRegisterDialog CSR upload",
         "note": "A PKCS#10 CSR can be pasted or uploaded when registering an application; the suite is provisioned from it on activation.",
-        "spec": "openspec/specs/application-mgmt"
+        "spec": "openspec/specs/application-mgmt",
+        "requirement": "openspec/specs/application-mgmt :: EncryptionSuite via CSR"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4543,7 +4690,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: POST /api/v1/token (RFC 7523 JWT-Bearer), used by cli ci mode (cli/ci.go:51)",
         "note": "The keepiq CLI's CI mode signs an assertion with the application's private key and exchanges it for a bearer token; no password is ever stored or sent.",
-        "spec": "openspec/specs/secret-store-api"
+        "spec": "openspec/specs/secret-store-api",
+        "requirement": "openspec/specs/secret-store-api :: Token Endpoint Hardening"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4580,7 +4728,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: GET /api/v1/app/secrets/by-name/{name}, used by cli ci fetch/run (cli/ci.go:60-95)",
         "note": "keepiq ci fetch/run resolve a secret by name and decrypt the returned envelope locally with the application private key. Own rating yes to partial (corrections round 8, 2026-09-28): the server resolves and returns the secret by name, but the shipped CLI cannot decrypt the envelope it gets back, keepiq#793.",
-        "spec": "openspec/specs/secret-store-api"
+        "spec": "openspec/specs/secret-store-api",
+        "requirement": "openspec/specs/secret-store-api :: Name-Addressable Secret Retrieval"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4617,7 +4766,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Application detail page (/applications/:id) -> Write secret dialog",
         "note": "A human writes a secret encrypted under an application's public certificate; the dialog states plainly that the writer cannot read it back, which is the ADR-003 write-without-read property.",
-        "spec": "openspec/specs/secret-store-api"
+        "spec": "openspec/specs/secret-store-api",
+        "requirement": "openspec/specs/application-mgmt :: Attribute Secrets to Application"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4653,7 +4803,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: GET /api/v1/app/secrets/by-name/{name} with If-None-Match, used by cli ci fetch (poll loop)",
         "note": "A consumer that keeps polling the same name gets 304 until the ciphertext actually changes, so it can detect rotation cheaply.",
-        "spec": "openspec/specs/secret-store-api"
+        "spec": "openspec/specs/secret-store-api",
+        "requirement": "openspec/specs/secret-store-api :: Rotation Polling"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4697,7 +4848,8 @@
             "needsLiveCheck": false
           }
         ],
-        "spec": "openspec/specs/secret-store-api"
+        "spec": "openspec/specs/secret-store-api",
+        "requirement": "openspec/specs/secret-store-api :: Machine API Discovery Document"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4733,7 +4885,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: lease headers on GET /api/v1/app/secrets*, observed by cli ci fetch",
         "note": "Every machine secret fetch is covered by a lease with an expiry; a revoked lease blocks re-fetch until re-granted per admin policy. Corrections round 8 (2026-09-28): the lease line in the CLI is never printed because the CLI fetch fails first, keepiq#793; rating kept because the server grants the lease and returns its id and expiry headers on every machine fetch, whichever client makes it.",
-        "change": "openspec/changes/archive/2026-07-18-machine-secret-leases"
+        "change": "openspec/changes/archive/2026-07-18-machine-secret-leases",
+        "requirement": "openspec/specs/machine-secret-leases :: Lease granted on machine secret fetch"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4777,7 +4930,11 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-machine-secret-leases"
+        "change": "openspec/changes/archive/2026-07-18-machine-secret-leases",
+        "requirement": [
+          "openspec/specs/machine-secret-leases :: Fetching again is the one renewal path",
+          "openspec/specs/machine-secret-leases :: Lease revocation by admin, owner, or application"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4821,7 +4978,8 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-machine-secret-leases"
+        "change": "openspec/changes/archive/2026-07-18-machine-secret-leases",
+        "requirement": "openspec/specs/machine-secret-leases :: Admin lease-TTL policy"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4897,7 +5055,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Application detail page -> Secrets panel",
         "note": "An application's detail page lists the (ciphertext) secrets attributed to it by name, type and creation date.",
-        "spec": "openspec/specs/application-mgmt"
+        "spec": "openspec/specs/application-mgmt",
+        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/application-mgmt :: The application page lists the secrets in its vault"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4937,7 +5096,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "keepiq CLI: `keepiq ci run <name> -- <cmd>`",
         "note": "The CLI is a single static Go binary that fetches, decrypts and injects secrets into a child process's environment for CI use, never touching disk. Own rating yes to no (corrections round 8, 2026-09-28): every ci fetch and ci run stops at the envelope scheme check before decryption, so no secret reaches the child process, keepiq#793.",
-        "spec": "openspec/specs/keepiq-cli"
+        "spec": "openspec/specs/keepiq-cli",
+        "requirement": "openspec/specs/keepiq-cli :: CI-mode output never writes plaintext to disk"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4974,7 +5134,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "keepiq CLI: `keepiq list|show|get|copy` (human mode)",
         "note": "v1 of the CLI is deliberately read-only; every decryption happens in the CLI process itself so no key material reaches the server.",
-        "spec": "openspec/specs/keepiq-cli"
+        "spec": "openspec/specs/keepiq-cli",
+        "requirement": "openspec/specs/keepiq-cli :: Human mode preserves zero-knowledge decryption"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5011,7 +5172,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "2026-10-02",
         "note": "Built on feat/apps-kubernetes-injection (stacked on #914). Owed: kind test and release workflow in CI, the first k8s-v* release, and the live sync against the dev instance.",
-        "change": "openspec/changes/archive/2026-10-02-apps-kubernetes-injection"
+        "change": "openspec/changes/archive/2026-10-02-apps-kubernetes-injection",
+        "requirement": "openspec/specs/kubernetes-integration :: Operator syncs application secrets into Kubernetes Secrets"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5047,7 +5209,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "2026-10-02",
         "note": "Built on feat/apps-client-libraries-and-ci. Owed: the first cli-v* release with SHA256SUMS and the ghcr image, and the workflow dry runs in CI.",
-        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci"
+        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci",
+        "requirement": [
+          "openspec/specs/ci-integrations :: GitHub Action runs a step with Keepiq secrets",
+          "openspec/specs/ci-integrations :: GitLab CI template wraps a job command"
+        ]
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5151,7 +5317,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "2026-10-02",
         "note": "Built on feat/apps-client-libraries-and-ci. Owed: publishing to PyPI and npm (sdk-py-v*, sdk-js-v* tags) and the first sdk/go/v* tag.",
-        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci"
+        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci",
+        "requirement": "openspec/specs/client-libraries :: Official libraries for Go, Python and TypeScript"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5188,7 +5355,8 @@
         "owner": "ConductionNL/keepiq",
         "change": "openspec/changes/archive/2026-10-04-apps-terraform-provider",
         "reachedOn": "Terraform: build the provider from integrations/terraform-provider-keepiq and use it with dev_overrides; not yet in a registry",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-07",
+        "requirement": "openspec/specs/terraform-provider :: Managed secrets use write-only values"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5224,7 +5392,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: documented for consumption by other Conduction apps (e.g. integriq) via /api/v1/app/*",
         "note": "This checkout only contains keepiq's own code; whether integriq or another Conduction app actually stores its connection credentials in keepiq today cannot be settled from here, only that keepiq ships and documents a ready contract for it.",
-        "spec": "openspec/specs/secret-store-api"
+        "spec": "openspec/specs/secret-store-api",
+        "requirement": "openspec/specs/secret-store-api :: Secret Reference Format and Consumption Contract"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5290,7 +5459,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "2026-10-02",
         "note": "Built on feat/apps-secret-sync-and-rotation-runner (stacked on #914). Owed: a LocalStack run and live pushes to real cloud accounts.",
-        "change": "openspec/changes/archive/2026-10-02-apps-secret-sync-and-rotation-runner"
+        "change": "openspec/changes/archive/2026-10-02-apps-secret-sync-and-rotation-runner",
+        "requirement": "openspec/specs/secret-rotation-runner :: Sync pushes changed secrets to cloud secret stores"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5325,7 +5495,11 @@
         "evidence": "lib/Mcp/EntryMetadataTools.php, ExpiryReportTools.php:81 expiryReport, RotationStatusTools.php, MetadataAllowList.php; registered through lib/AppInfo/McpRegistrar.php behind the scannable-services opt-in; invocations audited as agent reads",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "An MCP client (Hermiq) with the Keepiq tools enabled",
-        "change": "openspec/changes/archive/2026-10-04-hermiq-ai-tooling"
+        "change": "openspec/changes/archive/2026-10-04-hermiq-ai-tooling",
+        "requirement": [
+          "openspec/specs/mcp-metadata-surface :: Expiry Report Tool",
+          "openspec/specs/mcp-metadata-surface :: Rotation Status Tool"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5354,7 +5528,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: install/upgrade repair step; admin sees it on Nextcloud admin settings -> Keepiq (CaHealthSection)",
         "note": "The app runs its own root and intermediate CA and signs every user and application suite certificate with it. The partial-install recovery that #41 asked for is present in this tree. #444 (phpseclib 4) does not bite yet: composer.json pins phpseclib ^3.0.",
-        "spec": "openspec/specs/encryption-suites"
+        "spec": "openspec/specs/encryption-suites",
+        "requirement": "openspec/specs/encryption-suites :: CA Bootstrap"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5447,7 +5622,8 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings"
+        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings",
+        "requirement": "openspec/specs/admin-settings :: CA Health Display"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5483,7 +5659,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Certificates page (/certificates, CertificatesMenu)",
         "note": "One page lists the user's own certificate-type secrets, their vault suite certificate (all suites for admins) and the root and intermediate for admins. Shared or application-owned certificate secrets are not included.",
-        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle"
+        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle",
+        "requirement": "openspec/specs/certificate-lifecycle :: Certificate inventory across all three sources"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5527,7 +5704,8 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle"
+        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle",
+        "requirement": "openspec/specs/certificate-lifecycle :: Expiry monitoring reuses the rotation-expiry reminder machinery"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5563,7 +5741,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Certificates page -> Renew… on a stored certificate, Re-issue on a suite certificate",
         "note": "Stored certificates get a fixed checklist for externally issued certificates; certificates Keepiq issued itself (suite certificates) can be re-issued with one click. There is no branch for a stored certificate that Keepiq's CA issued, because Keepiq does not issue those.",
-        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle"
+        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle",
+        "requirement": "openspec/specs/certificate-lifecycle :: Guided renewal by certificate origin"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5628,7 +5807,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret create dialog with the Certificate type, then Certificates page -> Parse certificate",
         "note": "Subject, issuer and expiry appear after the user clicks Parse certificate once; parsing happens in the browser so the server never sees the certificate value. Until then the row shows 'not parsed yet'.",
-        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle"
+        "change": "openspec/changes/archive/2026-07-18-certificate-lifecycle",
+        "requirement": "openspec/specs/certificate-lifecycle :: Metadata parsing split by PEM readability"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5711,7 +5891,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-password-health"
+        "change": "openspec/changes/archive/2026-06-14-password-health",
+        "requirement": "openspec/specs/password-health :: Strength Scoring and Badges"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5762,7 +5943,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-password-health"
+        "change": "openspec/changes/archive/2026-06-14-password-health",
+        "requirement": "openspec/specs/password-health :: Reuse Detection"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5807,7 +5989,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-password-health"
+        "change": "openspec/changes/archive/2026-06-14-password-health",
+        "requirement": "openspec/specs/password-health :: Password Age Tracking"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5851,7 +6034,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-password-health"
+        "change": "openspec/changes/archive/2026-06-14-password-health",
+        "requirement": "openspec/specs/password-health :: Opt-In Breach Checking via k-Anonymity"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5902,7 +6086,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-password-health"
+        "change": "openspec/changes/archive/2026-06-14-password-health",
+        "requirement": "openspec/specs/password-health :: Vault Health Report"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5942,7 +6127,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Password health page and SecretList strength pass",
         "note": "Decryption and analysis run in the browser (worker when available), results are held in memory only and cleared on lock. The possibly-compromised flag is the one server-known input.",
-        "change": "openspec/changes/archive/2026-06-14-password-health"
+        "change": "openspec/changes/archive/2026-06-14-password-health",
+        "requirement": [
+          "openspec/specs/password-health :: Client-Side Health Analysis",
+          "openspec/specs/password-health :: No Server-Side Health Knowledge"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5979,7 +6168,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> New secret / Edit secret dialog -> Generate",
         "note": "Length, special characters, excluded characters and an advanced regex pattern. The value is generated on the server and returned over the API, so the server sees a generated password before it is encrypted client-side.",
-        "change": "openspec/changes/archive/2026-06-14-implement-key-generator"
+        "change": "openspec/changes/archive/2026-06-14-implement-key-generator",
+        "requirement": [
+          "openspec/specs/key-generator :: Configuration Fields",
+          "openspec/specs/key-generator :: Default Generation"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6015,7 +6208,8 @@
         "evidence": "src/generator/generator.js generatePassphrase (EFF large word list src/generator/eff-large-wordlist.js, crypto.getRandomValues) <- src/dialogs/KeyGeneratorModal.vue Password/Passphrase switch; policy fit + generator_allow_passphrase (lib/Service/PasswordPolicyService.php). Tests: tests/vitest/generator.spec.js, tests/dialogs/KeyGeneratorModal.spec.js, tests/e2e/workflows/key-generator.spec.ts. Change: openspec/changes/client-side-key-generator (supersedes health-passphrase-generator).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Generate a strong key -> Passphrase",
-        "change": "openspec/changes/archive/2026-10-07-client-side-key-generator"
+        "change": "openspec/changes/archive/2026-10-07-client-side-key-generator",
+        "requirement": "openspec/specs/passphrase-generator :: Generate a passphrase"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6109,7 +6303,8 @@
         "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: grep -rni '2fa.directory|twofactorauth|inactive.*2fa' src lib browser-extension/src: no hits",
         "owner": "ConductionNL/keepiq",
         "note": "No inactive two-factor report; the health engine has no such category (src/health/engine.js:114).",
-        "change": "openspec/changes/health-site-security-checks"
+        "change": "openspec/changes/health-site-security-checks",
+        "requirement": "openspec/changes/health-site-security-checks/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6143,7 +6338,8 @@
         "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: src/health/engine.js flags only weak, reused, stale, compromised, breached; grep for http protocol checks in src and browser-extension/src: no hits",
         "owner": "ConductionNL/keepiq",
         "note": "No insecure-URL (http) finding in the health report or the extension.",
-        "change": "openspec/changes/health-site-security-checks"
+        "change": "openspec/changes/health-site-security-checks",
+        "requirement": "openspec/changes/health-site-security-checks/specs/health-site-checks :: Flag logins saved with an unencrypted address"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6242,7 +6438,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Health report has no passkey-available check.",
-        "change": "openspec/changes/health-site-security-checks"
+        "change": "openspec/changes/health-site-security-checks",
+        "requirement": "openspec/changes/health-site-security-checks/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -6311,7 +6508,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList -> secret detail sidebar -> Rotation & expiry row (src/components/SecretDetailSidebar.vue:798)",
         "note": "Owner picks a date or clears it; the value and its key timestamp are not changed.",
-        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies",
+        "requirement": "openspec/specs/rotation-expiry-policies :: Per-secret expiry without ciphertext change"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6362,7 +6560,8 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies",
+        "requirement": "openspec/specs/rotation-expiry-policies :: Expiry policies with admin default and user override"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6406,7 +6605,8 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies",
+        "requirement": "openspec/specs/rotation-expiry-policies :: Approaching-expiry and overdue reminders"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6443,7 +6643,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret detail sidebar -> Rotation & expiry (owner, when a flag is open; Flag for rotation raises one)",
         "note": "If the value did not change since flagging, the server refuses and the panel tells the owner to update the value first.",
-        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies",
+        "requirement": "openspec/specs/rotation-expiry-policies :: Proven mark-rotated flow"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6483,7 +6684,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Automatic on a compromise revocation; Password health page button for breached passwords",
         "note": "Compromise flagging is automatic. Breach flagging is a one-click user action because breach verdicts never leave the browser.",
-        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies",
+        "requirement": "openspec/specs/rotation-expiry-policies :: Rotate-after-breach and rotate-after-compromise flagging"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6531,7 +6733,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies"
+        "change": "openspec/changes/archive/2026-07-18-rotation-expiry-policies",
+        "requirement": "openspec/specs/rotation-expiry-policies :: Rotation surfaced on dashboard and health report"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6608,7 +6811,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Keepiq stores the website address but never looks up or opens the site's change-password page.",
-        "change": "openspec/changes/vault-website-addresses"
+        "change": "openspec/changes/vault-website-addresses",
+        "requirement": "openspec/changes/vault-website-addresses/specs/website-addresses :: Open the site's change-password page"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -6653,7 +6857,12 @@
           }
         ],
         "change": "openspec/changes/archive/2026-07-18-org-password-policies",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": [
+          "openspec/specs/org-password-policies :: Configurable Org Password Policy",
+          "openspec/specs/org-password-policies :: Generator Locked to Policy",
+          "openspec/specs/org-password-policies :: Client-Side Save Enforcement"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6690,7 +6899,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Password Policy",
         "note": "Admins set minimum length (12 to 20) and zxcvbn score (3 or 4); the setup and change forms block submit below the floor. Enforcement is client-side by design, since the server never sees the master password.",
-        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings"
+        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings",
+        "requirement": [
+          "openspec/specs/admin-settings :: Master Password Policy",
+          "openspec/specs/encryption-suites :: Master Password Strength"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6735,7 +6948,8 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings"
+        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings",
+        "requirement": "openspec/specs/admin-settings :: Application Approval Queue"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6771,7 +6985,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> People and offboarding: Members row \"Offboard\" or Team offboarding",
         "note": "Built 2026-10-04 (archived). Direct memberships are removed; group rows that still cover the leaver stay and are named in the result.",
-        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding"
+        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding",
+        "requirement": "openspec/specs/team-folder-sharing :: Offboarding removes the leaver's direct team folder memberships"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6808,7 +7023,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> offline cache section",
         "note": "Switching it off refuses the offline manifest and clients purge any existing snapshot on their next sync.",
-        "spec": "openspec/specs/offline-readonly-cache"
+        "spec": "openspec/specs/offline-readonly-cache",
+        "requirement": "openspec/specs/offline-readonly-cache :: An admin can disable offline caching org-wide"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6845,7 +7061,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Breach checking",
         "note": "Off by default. Turning it on shows the per-user opt-in on the Password health page; users still have to opt in.",
-        "change": "openspec/changes/archive/2026-06-14-password-health"
+        "change": "openspec/changes/archive/2026-06-14-password-health",
+        "requirement": "openspec/specs/password-health :: Opt-In Breach Checking via k-Anonymity"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6882,7 +7099,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Attachments & version history",
         "note": "Count (default 20) and age in days (default 365, 0 unlimited), pruned nightly.",
-        "change": "openspec/changes/archive/2026-07-18-secret-version-history"
+        "change": "openspec/changes/archive/2026-07-18-secret-version-history",
+        "requirement": "openspec/specs/secret-version-history :: Admin-configurable retention and pruning"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6988,7 +7206,12 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> Vault policies",
         "note": "Built 2026-10-04 (archived). Each policy is off by default and applies to everyone or to chosen groups; the GDPR package stays available under the export ban.",
-        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies"
+        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies",
+        "requirement": [
+          "openspec/specs/vault-policies :: Administrator configures vault policies per group",
+          "openspec/specs/vault-policies :: Personal vault export can be blocked",
+          "openspec/specs/vault-policies :: Vault unlock requires Nextcloud two-factor login"
+        ]
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7026,7 +7249,8 @@
         "note": "An administrator delegates any of five Keepiq admin areas (General, Policies, Applications, People, Audit) to a group, and each area's routes and screens check that delegation. The areas are fixed: there is no custom role with a hand-picked set of permissions. The vault_admin alias for People goes in keepiq#1043.",
         "defects": [],
         "change": "openspec/changes/archive/2026-10-04-admin-scoped-roles",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-07",
+        "requirement": "openspec/specs/admin-scoped-roles :: Keepiq administration is split into delegable areas"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7062,7 +7286,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> People and offboarding -> Members",
         "note": "Built 2026-10-04 (archived). Metadata only: no certificate, key or ciphertext in a row.",
-        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding"
+        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding",
+        "requirement": "openspec/specs/admin-member-overview :: Administrator lists vault status per user"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7098,7 +7323,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "HTTP Basic with a Nextcloud app password of a user whose group holds a Keepiq admin area, GET /index.php/apps/keepiq/api/v1/admin",
         "note": "Built 2026-10-04 (archived). Force revocation and suite reinstatement stay out of the API because both need a fresh password confirmation.",
-        "change": "openspec/changes/archive/2026-10-04-admin-public-api"
+        "change": "openspec/changes/archive/2026-10-04-admin-public-api",
+        "requirement": "openspec/specs/admin-api :: Admin API covers the administration jobs"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7134,7 +7360,8 @@
         "owner": "ConductionNL/integriq",
         "reachedOn": "App navigation -> Integrations (admin, only when integriq is installed)",
         "note": "Keepiq declares two connections (breach check, SIEM) and reports their outcomes; integriq stores and renders the status table. Without integriq installed the menu entry is hidden.",
-        "change": "openspec/changes/archive/2026-10-04-adopt-connection-registry"
+        "change": "openspec/changes/archive/2026-10-04-adopt-connection-registry",
+        "requirement": "openspec/specs/admin-integrations :: REQ-KEEPIQ-CONN-004 An admin reads the connections on an Integrations page"
       },
       "rowSource": "own",
       "provider": "integriq",
@@ -7170,7 +7397,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Attachments & version history",
         "note": "Per-attachment limit (default 25 MiB) and per-user quota (default 100 MiB), counted in stored ciphertext bytes.",
-        "change": "openspec/changes/archive/2026-07-18-encrypted-attachments"
+        "change": "openspec/changes/archive/2026-07-18-encrypted-attachments",
+        "requirement": "openspec/specs/encrypted-attachments :: Per-attachment size limit and per-user quota"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7207,7 +7435,8 @@
         "owner": "ConductionNL/nextcloud-vue",
         "reachedOn": "Nextcloud admin settings -> Keepiq (version card at the top)",
         "note": "The version card, up-to-date check and re-import button come from the shared admin shell and OpenRegister's AppHost settings class, so keepiq depends on OpenRegister being installed for this page.",
-        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings"
+        "change": "openspec/changes/archive/2026-06-14-implement-dashboard-settings",
+        "requirement": "openspec/specs/admin-settings :: Version Info Card"
       },
       "rowSource": "own",
       "provider": "nextcloud-vue",
@@ -7282,7 +7511,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Administration settings -> Keepiq -> Item types; then New secret with that type",
         "note": "Built 2026-09-30. Tests: PHPUnit SecretTypeFieldsTest, SecretTypeControllerTest; vitest SecretTypeEditorDialog, ItemTypesSection, SecretCreateDialog.typedFields, SecretEditDialog.typedFields, tests/vitest/typed-fields.spec.js.",
-        "change": "openspec/changes/archive/2026-09-30-admin-secret-type-editor"
+        "change": "openspec/changes/archive/2026-09-30-admin-secret-type-editor",
+        "requirement": "openspec/specs/admin-secret-types :: Item type definitions"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -7422,7 +7652,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> Vault policies -> Keep work logins in team folders",
         "note": "Built 2026-10-04 (archived). Default types login, api_key and database; other types stay personal.",
-        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies"
+        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies",
+        "requirement": "openspec/specs/vault-policies :: Work logins are kept in team folders"
       },
       "rowSource": "competitor",
       "origin": "tender",
@@ -7522,7 +7753,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> New team folder members; then any unlocked owner or write member",
         "note": "Built 2026-10-04 (archived). The server never sees plaintext: an unlocked owner's or write member's browser encrypts for the newcomer.",
-        "change": "openspec/changes/archive/2026-10-04-admin-auto-confirm-members"
+        "change": "openspec/changes/archive/2026-10-04-admin-auto-confirm-members",
+        "requirement": "openspec/specs/team-folder-auto-confirm :: An unlocked confirmer's browser confirms without a click"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -7590,7 +7822,11 @@
         "reachedOn": "Administration -> Keepiq - General -> Vault backups; occ keepiq:backup:*",
         "note": "Scheduled encrypted backups of every vault table, encrypted for an administrator's public key, with retention, a Back up now action and occ commands to list, verify and restore. Restored vaults unlock with the master passwords that were valid at backup time.",
         "change": "openspec/changes/archive/2026-10-04-admin-scheduled-vault-backups",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-07",
+        "requirement": [
+          "openspec/specs/vault-backups :: Administrator schedules vault backups",
+          "openspec/specs/vault-backups :: Archives are verified and restored from the command line"
+        ]
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -7626,7 +7862,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic: every secret create/read/update/delete, share, link share, rotation, lease and export path records an entry",
         "note": "About 23 services record audit events through one listener; metadata is whitelisted per event type and any secret-material key throws before insert. The listener is fail-soft, so a failed audit write is logged, not blocking.",
-        "spec": "openspec/specs/secret-audit-trail"
+        "spec": "openspec/specs/secret-audit-trail",
+        "requirement": [
+          "openspec/specs/secret-audit-trail :: Server-Observable Operation Capture",
+          "openspec/specs/secret-audit-trail :: No Secret Material in Audit Entries"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7663,7 +7903,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "no update or delete verb exists in any API or UI",
         "note": "Append-only at the application level: only retention purge and account-deletion anonymisation modify rows. There is no database-level protection or tamper evidence (no hash chain), so someone with database access can still alter entries undetected.",
-        "spec": "openspec/specs/secret-audit-trail"
+        "spec": "openspec/specs/secret-audit-trail",
+        "requirement": "openspec/specs/secret-audit-trail :: Append-Only Log"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7700,7 +7941,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings > Keepiq > audit section (retention days input); purge runs as a registered background job",
         "note": "Default 365 days, minimum 30 enforced both on save and in the job.",
-        "spec": "openspec/specs/secret-audit-trail"
+        "spec": "openspec/specs/secret-audit-trail",
+        "requirement": "openspec/specs/secret-audit-trail :: Retention and Automated Purge"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7736,7 +7978,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "My activity page (/my-activity) and the Recent activity dashboard widget",
         "note": "Shows entries where the user is the actor, i.e. what you did. What other people (share recipients, applications) did to your secrets shows only on the per-secret history, not in this feed.",
-        "spec": "openspec/specs/secret-audit-trail"
+        "spec": "openspec/specs/secret-audit-trail",
+        "requirement": "openspec/specs/secret-audit-trail :: Per-Secret and Personal Activity Views"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7775,7 +8018,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret detail sidebar > Activity section (owner only)",
         "note": "Only the owner sees it; share recipients get no history view.",
-        "spec": "openspec/specs/secret-audit-trail"
+        "spec": "openspec/specs/secret-audit-trail",
+        "requirement": "openspec/specs/secret-audit-trail :: Per-Secret and Personal Activity Views"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7812,7 +8056,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings > Keepiq > audit section (filters, paging, client-side CSV export)",
         "note": "Filter by event type, actor, object and date range, with paging and a CSV export of the whole filter result.",
-        "spec": "openspec/specs/secret-audit-trail"
+        "spec": "openspec/specs/secret-audit-trail",
+        "requirement": "openspec/specs/secret-audit-trail :: Admin Audit View"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7857,7 +8102,11 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-siem-audit-export"
+        "change": "openspec/changes/archive/2026-07-18-siem-audit-export",
+        "requirement": [
+          "openspec/specs/siem-audit-export :: Admin-configured syslog and webhook sinks",
+          "openspec/specs/siem-audit-export :: Reliable background delivery"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7894,7 +8143,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings > Keepiq > Compliance section > Generate report > snapshot dialog (Export CSV / Export PDF (print))",
         "note": "Metadata-only aggregates (secrets per user, share hygiene, rotation posture, ciphertext age). The PDF is the browser print dialog over the rendered snapshot, not a server-generated file.",
-        "change": "openspec/changes/archive/2026-07-18-compliance-reporting"
+        "change": "openspec/changes/archive/2026-07-18-compliance-reporting",
+        "requirement": [
+          "openspec/specs/compliance-reporting :: Org-level metadata-only compliance report",
+          "openspec/specs/compliance-reporting :: CSV and PDF export"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7934,7 +8187,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Compliance section report list; snapshots reopen as stored",
         "note": "Immutable at the application level: no edit or delete path. No signature or hash, so the snapshot is not tamper-evident against database access.",
-        "change": "openspec/changes/archive/2026-07-18-compliance-reporting"
+        "change": "openspec/changes/archive/2026-07-18-compliance-reporting",
+        "requirement": "openspec/specs/compliance-reporting :: Immutable timestamped evidence snapshot"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7971,7 +8225,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret detail sidebar > Honey tripwire panel; alerts in the panel and in Nextcloud admin settings > Keepiq > Honey section",
         "note": "You flag an existing secret as a decoy; any server-observed access (UI read, application retrieval, link share, share copy) raises an alert and a notification that bypasses notification preferences. Alerts can be acknowledged or snoozed.",
-        "change": "openspec/changes/archive/2026-07-20-honey-credentials"
+        "change": "openspec/changes/archive/2026-07-20-honey-credentials",
+        "requirement": "openspec/specs/honey-credentials :: Any access to a honey secret raises a high-severity alert"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8010,7 +8265,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret list page > actions menu > GDPR export dialog",
         "note": "Server metadata is combined client-side with the decrypted vault into one package; the export is audited as vault.gdpr_exported.",
-        "spec": "openspec/specs/gdpr-compliance"
+        "spec": "openspec/specs/gdpr-compliance",
+        "requirement": "openspec/specs/gdpr-compliance :: GDPR Personal Data Export"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8047,7 +8303,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret list page > actions menu > Delete account data dialog; automatically when an admin deletes the Nextcloud user",
         "note": "Delegated secrets transfer to the delegate, recipients keep a tombstoned copy with sync severed, received shares and the user's own data are removed. Separately, a normal single-secret delete still leaves recipient copies live (#83), which is outside the account-deletion path.",
-        "spec": "openspec/specs/gdpr-compliance"
+        "spec": "openspec/specs/gdpr-compliance",
+        "requirement": [
+          "openspec/specs/gdpr-compliance :: Account Data Deletion",
+          "openspec/specs/gdpr-compliance :: Shared Secret Semantics on Account Deletion"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8083,7 +8343,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "automatic on in-app account data deletion and on Nextcloud user deletion",
         "note": "Entries are kept with the actor replaced by a deleted-account marker. Object names (secret titles) on the entries are not scrubbed.",
-        "spec": "openspec/specs/secret-audit-trail"
+        "spec": "openspec/specs/secret-audit-trail",
+        "requirement": "openspec/specs/secret-audit-trail :: Account-Deletion Anonymization"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8119,7 +8380,12 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "2026-10-02",
         "note": "Built on feat/audit-siem-vendor-connectors. Owed: the Playwright flow in the E2E job, an az what-if of the template and a Splunk container test-fire.",
-        "change": "openspec/changes/archive/2026-10-02-audit-siem-vendor-connectors"
+        "change": "openspec/changes/archive/2026-10-02-audit-siem-vendor-connectors",
+        "requirement": [
+          "openspec/specs/siem-vendor-connectors :: Named SIEM connectors on a sink",
+          "openspec/specs/siem-vendor-connectors :: Splunk HTTP Event Collector delivery",
+          "openspec/specs/siem-vendor-connectors :: Microsoft Sentinel delivery through the Logs Ingestion API"
+        ]
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -8156,7 +8422,8 @@
         "reachedOn": "Nextcloud notifications for decoy access, emergency access, compromised secrets, new-device and recovery requests",
         "note": "Real-time alerts cover a fixed set of risky events: a decoy touched, emergency access, a compromised secret, a new-device approval request and an account recovery request. Nothing alerts on failed unlocks (the vault unlocks in the browser, so the server does not see a wrong master password) or on admin changes such as policy edits; those reach only the audit trail and the SIEM export. Partial is right, not generous.",
         "change": "openspec/changes/archive/2026-07-20-honey-credentials",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-07",
+        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/secret-audit-trail :: Risky events raise an alert at once"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -8223,7 +8490,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard",
         "note": "Files are read and parsed in the browser and only ciphertext is posted in chunks of 50. Supported sources are generic CSV, Bitwarden JSON/CSV, KeePass XML, Nextcloud Passwords JSON, CXF and the own encrypted backup.",
-        "change": "openspec/changes/archive/2026-06-14-secret-import"
+        "change": "openspec/changes/archive/2026-06-14-secret-import",
+        "requirement": [
+          "openspec/specs/secret-import :: Client-Side Parsing and E2E Guarantee",
+          "openspec/specs/secret-import :: Supported Import Formats"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8260,7 +8531,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard (format 'Nextcloud Passwords (JSON backup)')",
         "note": "File-based migration from the Passwords app's Predefined JSON backup, with folder hierarchy kept. There is no direct server-side migration by design (E2E); an encrypted Passwords backup is not handled.",
-        "change": "openspec/changes/archive/2026-06-14-secret-import"
+        "change": "openspec/changes/archive/2026-06-14-secret-import",
+        "requirement": "openspec/specs/secret-import :: Nextcloud Passwords App Migration"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8297,7 +8569,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Vault (/secrets) -> Import -> Generic CSV -> pick a file -> mapping step",
         "note": "Built 2026-09-29. Tests: vitest tests/store/importMapping.spec.js, tests/dialogs/ImportWizardDialog.mapping.spec.js.",
-        "change": "openspec/changes/archive/2026-09-29-portability-import-field-mapping"
+        "change": "openspec/changes/archive/2026-09-29-portability-import-field-mapping",
+        "requirement": "openspec/specs/portability-import-mapping :: Adjustable CSV mapping"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8389,7 +8662,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-secret-import"
+        "change": "openspec/changes/archive/2026-06-14-secret-import",
+        "requirement": "openspec/specs/secret-import :: Duplicate Detection"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8425,7 +8699,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> summary step",
         "note": "The summary lists counts plus a table of rejected rows with the reason and offers a client-side CSV download of them. The report is transient and not stored.",
-        "change": "openspec/changes/archive/2026-06-14-secret-import"
+        "change": "openspec/changes/archive/2026-06-14-secret-import",
+        "requirement": [
+          "openspec/specs/secret-import :: Import Summary Report",
+          "openspec/specs/secret-import :: Malformed Row Rejection"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8475,7 +8753,11 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-07-18-cxf-import-export"
+        "change": "openspec/changes/archive/2026-07-18-cxf-import-export",
+        "requirement": [
+          "openspec/specs/cxf-import-export :: Client-side CXF import",
+          "openspec/specs/cxf-import-export :: Re-auth-gated client-side CXF export"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8515,7 +8797,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> actions menu 'Encrypted transfer (CXP)' -> CXP transfer dialog",
         "note": "The HPKE-sealed handshake works through a relay on this Nextcloud instance only, so both sides must be Keepiq sessions on the same server. There is no way to transfer to or from a different provider, and the send side always sends the whole vault.",
-        "change": "openspec/changes/portability-cxp-cross-provider-transfer"
+        "change": "openspec/changes/portability-cxp-cross-provider-transfer",
+        "requirement": "openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp :: Cross provider transfer"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8565,7 +8848,11 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/portability-export-choice-and-restore-fidelity"
+        "change": "openspec/changes/portability-export-choice-and-restore-fidelity",
+        "requirement": [
+          "openspec/specs/secret-export :: Encrypted Backup Export",
+          "openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore :: A restored backup keeps types and row positions"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8602,7 +8889,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> actions menu 'Export data' -> Export dialog (Plaintext CSV)",
         "note": "The CSV path requires acknowledging an unencrypted-file warning and re-entering the master password, verified in the browser, before the local download; the export is reported as an event first.",
-        "change": "openspec/changes/archive/2026-06-14-secret-export-gdpr"
+        "change": "openspec/changes/archive/2026-06-14-secret-export-gdpr",
+        "requirement": "openspec/specs/secret-export :: Plaintext CSV Export with Re-Authentication"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8642,7 +8930,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> actions menu 'Export data' -> Export dialog -> Scope select",
         "note": "Scope is either the whole vault or one folder subtree. There is no choice by type, by selected items or of which fields to include, and CXP send is always the whole vault.",
-        "change": "openspec/changes/portability-export-choice-and-restore-fidelity"
+        "change": "openspec/changes/portability-export-choice-and-restore-fidelity",
+        "requirement": "openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore :: Choose what an export contains"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8686,7 +8975,8 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/archive/2026-06-14-secret-import"
+        "change": "openspec/changes/archive/2026-06-14-secret-import",
+        "requirement": "openspec/specs/secret-import :: Supported Import Formats"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8724,7 +9014,8 @@
         "reachedOn": "Extension popup -> Autofill suggestions -> Fill; inline list in a login field; context menu; keyboard shortcut",
         "note": "The extension fills a login from the popup, the inline list in the field, the context menu and the shortcut. Owed: the manual walk in both browsers (unticked live-check boxes in the change's tasks.md); the change is not archived yet.",
         "change": "browser-extension/openspec/changes/ext-autofill",
-        "readOn": "2026-10-30"
+        "readOn": "2026-10-30",
+        "requirement": "Fill from the popup suggestions section"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8762,7 +9053,8 @@
         "reachedOn": "Any fill on a page whose login form sits in an embedded frame of a matching site",
         "note": "Fill reaches the top frame and only those embedded frames whose address matches the login; a frame from another site is not filled. The KqExtensie board does not draw a frame state yet. Owed: the manual walk in both browsers (unticked live-check boxes in the change's tasks.md); the change is not archived yet.",
         "change": "browser-extension/openspec/changes/ext-autofill",
-        "readOn": "2026-10-30"
+        "readOn": "2026-10-30",
+        "requirement": "Fill covers the top frame and matching subframes only"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8799,7 +9091,8 @@
         "reachedOn": "Submit a login form on a site -> save bar (new login) or update bar (changed password)",
         "note": "After a form submit the extension offers to save a new login or update the password of a matching one. Owed: the manual walk in both browsers (unticked live-check boxes in the change's tasks.md); the change is not archived yet.",
         "change": "browser-extension/openspec/changes/ext-autofill",
-        "readOn": "2026-10-30"
+        "readOn": "2026-10-30",
+        "requirement": "openspec/specs/clients-save-prompt :: Save or update prompt"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8838,7 +9131,8 @@
         "note": "No one-time code fill. The popup shows the current code of a totp item with its countdown and copies it.",
         "spec": "openspec/specs/extension-totp-autofill",
         "readOn": "2026-10-16",
-        "change": "browser-extension/openspec/changes/ext-totp-autofill"
+        "change": "browser-extension/openspec/changes/ext-totp-autofill",
+        "requirement": "openspec/specs/extension-totp-autofill :: Optional OTP-field fill with fallback"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8877,7 +9171,11 @@
         "note": "The browser extension does not create or sign with passkeys on websites; it only shows stored passkey items.",
         "spec": "openspec/specs/extension-passkey-provider",
         "readOn": "2026-10-16",
-        "change": "browser-extension/openspec/changes/ext-passkey-provider"
+        "change": "browser-extension/openspec/changes/ext-passkey-provider",
+        "requirement": [
+          "openspec/specs/extension-passkey-provider :: Passkey registration interception (create)",
+          "openspec/specs/extension-passkey-provider :: Passkey authentication interception (get)"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8915,7 +9213,8 @@
         "reachedOn": "Extension popup: unlock, leave it for 15 minutes, and the vault is locked; account menu -> Lock or Lock all",
         "note": "Every account locks 15 minutes after the last interaction, and on browser restart. The user cannot change the timeout yet (browser-extension/openspec/changes/ext-settings), and the extension does not read the administrator maximum from src/components/settings/ExtensionSection.vue (TIMEOUT_POLICY in browser-extension/src/accounts/settings.ts:35 is unset).",
         "change": "browser-extension/openspec/changes/ext-accounts-and-unlock",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": "Idle timeout enforcement"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -8960,7 +9259,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-07-20-mobile-pwa"
+        "change": "openspec/changes/archive/2026-07-20-mobile-pwa",
+        "requirement": "openspec/specs/mobile-pwa :: Installable Web App Manifest"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9004,7 +9304,8 @@
             "needsLiveCheck": true
           }
         ],
-        "change": "openspec/changes/archive/2026-07-20-mobile-pwa"
+        "change": "openspec/changes/archive/2026-07-20-mobile-pwa",
+        "requirement": "openspec/specs/mobile-pwa :: Mobile-First Responsive Core Flows"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9041,7 +9342,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "LockScreen while offline -> SecretList (read-only, stale-data banner src/App.vue:76)",
         "note": "Each online unlock writes an encrypted snapshot to IndexedDB; offline, the lock screen unlocks from it without a network call and the vault is shown read-only with a stale-data banner. Admins can switch caching off, which purges snapshots.",
-        "spec": "openspec/specs/offline-readonly-cache"
+        "spec": "openspec/specs/offline-readonly-cache",
+        "requirement": [
+          "openspec/specs/offline-readonly-cache :: Online sessions write through an encrypted local snapshot",
+          "openspec/specs/offline-readonly-cache :: Offline unlock re-derives the master key locally"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9108,6 +9413,10 @@
             "repo": "ConductionNL/keepiq",
             "number": 1179
           }
+        ],
+        "requirement": [
+          "openspec/changes/clients-mobile-apps/specs/mobile-system-autofill :: Keepiq as the system password provider on iOS",
+          "openspec/changes/clients-mobile-apps/specs/mobile-system-autofill :: Keepiq as the autofill service on Android"
         ]
       },
       "rowSource": "competitor",
@@ -9184,7 +9493,8 @@
           }
         ],
         "change": "openspec/changes/clients-extension-firefox-and-safari-builds",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": "openspec/changes/clients-extension-firefox-and-safari-builds/specs/clients-browser-builds :: One build per browser"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -9221,7 +9531,8 @@
         "reachedOn": "CLI: eval \"$(keepiq ssh-agent)\" then ssh or git over SSH",
         "note": "The CLI runs an SSH agent that serves the user's ssh_key secrets, with optional confirmation per use, an idle lock and a folder filter. Linux and macOS only; Windows prints 'not supported yet'.",
         "change": "openspec/changes/archive/2026-10-04-clients-ssh-agent",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-07",
+        "requirement": "openspec/specs/cli-ssh-agent :: The CLI runs an SSH agent that serves vault SSH keys"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -9304,7 +9615,8 @@
         "owner": "ConductionNL/openregister",
         "reachedOn": "Flows menu item (/flows) -> OpenRegister flow list and canvas",
         "note": "The Flows page and canvas are reachable, but they run on OpenRegister's engine whose triggers fire on OpenRegister objects, schedules or manual runs. Keepiq's vault lives in its own tables and publishes nothing to it, so no vault event can start a flow.",
-        "change": "openspec/changes/clients-vault-event-flow-triggers"
+        "change": "openspec/changes/clients-vault-event-flow-triggers",
+        "requirement": "openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers :: Vault events fire flow triggers"
       },
       "rowSource": "own",
       "provider": "openregister",
@@ -9395,7 +9707,8 @@
         "reachedOn": "First unlocked visit to the app -> Getting started tour",
         "note": "A six-step tour starts on the first unlocked visit and points at Dashboard, All secrets, Features and roadmap, Reports and Flows; it is held back while the vault is locked. Completion is stored per user through Keepiq's own preferences endpoint (lib/Controller/PreferencesController.php), under the key the OpenRegister AppHost used. The tour renderer, CnWalkthrough, comes from @conduction/nextcloud-vue; the tour content, the lock gate and the preference store are Keepiq's.",
         "spec": "openspec/specs/getting-started-walkthrough",
-        "readOn": "2026-10-07"
+        "readOn": "2026-10-07",
+        "requirement": "openspec/specs/getting-started-walkthrough :: The manifest declares a first-visit tour"
       },
       "rowSource": "own",
       "provider": "nextcloud-vue",
@@ -9439,7 +9752,8 @@
             "needsLiveCheck": false
           }
         ],
-        "spec": "openspec/specs/dashboard"
+        "spec": "openspec/specs/dashboard",
+        "requirement": "openspec/specs/dashboard :: Vault Summary Cards"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9476,7 +9790,11 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Offline vault (/secrets served from cache) -> secret sidebar Edit, Move, Delete and New secret; sync panel under the offline banner",
         "note": "Off by default (admin switch). Changes are sealed to the owner's certificate at rest and replayed with a fresh recipient fan-out; a server change since the snapshot answers 409 and the user chooses. Sharing, folders and attachments stay online-only. Playwright flows (shared edit, conflict) are owed.",
-        "change": "openspec/changes/archive/2026-10-02-clients-offline-edits"
+        "change": "openspec/changes/archive/2026-10-02-clients-offline-edits",
+        "requirement": [
+          "openspec/specs/offline-edit-queue :: Offline changes go into a sealed local queue",
+          "openspec/specs/offline-edit-queue :: Replay runs through the online paths with a fresh fan-out"
+        ]
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -9548,7 +9866,8 @@
         "reachedOn": "Extension popup header -> account menu -> switch account or Add account",
         "note": "Up to five accounts on one or more servers, each with its own key, lock state, vault snapshot and settings; browsing and copying use the active account. Tests: browser-extension/src/accounts/store.test.ts, browser-extension/entrypoints/popup/views/AccountSwitcher.test.tsx.",
         "change": "browser-extension/openspec/changes/ext-accounts-and-unlock",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": "Account switcher panel"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -9657,7 +9976,11 @@
         "reachedOn": "nothing",
         "note": "The extension generates passwords, passphrases and usernames in its Generator tab, but does not yet suggest one in a sign-up field.",
         "change": "browser-extension/openspec/changes/ext-generator",
-        "readOn": "2026-10-30"
+        "readOn": "2026-10-30",
+        "requirement": [
+          "openspec/specs/extension-generator :: Generator tab in the popup",
+          "openspec/specs/extension-generator :: Suggest a strong password in a sign-up field"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9687,7 +10010,11 @@
         "reachedOn": "Extension popup -> Send tab -> New send / Remove",
         "note": "The Send tab creates a one-off send, lists the ones the user made and removes them. Owed: the manual checks 5.1 and 5.2 in ext-send tasks.md; the change is not archived yet.",
         "change": "browser-extension/openspec/changes/ext-send",
-        "readOn": "2026-10-30"
+        "readOn": "2026-10-30",
+        "requirement": [
+          "New send form",
+          "Remove a send"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9718,7 +10045,13 @@
         "note": "Browsing, searching, filtering by folder and type, viewing and copying fields, adding, editing, deleting and managing folders work in the extension popup.",
         "change": "browser-extension/openspec/changes/ext-vault-browse",
         "readOn": "2026-10-30",
-        "spec": "browser-extension/openspec/specs/item-editing"
+        "spec": "browser-extension/openspec/specs/item-editing",
+        "requirement": [
+          "Search over name and URL",
+          "Folder selector",
+          "Add item form",
+          "Edit re-fetches before showing the form and saves sparsely"
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -9750,7 +10083,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Extension popup -> Vault tab while offline (offline banner with the last sync time, browser-extension/entrypoints/popup/views/VaultList.tsx:95)",
         "change": "browser-extension/openspec/changes/ext-vault-browse",
-        "readOn": "2026-10-16"
+        "readOn": "2026-10-16",
+        "requirement": "Offline reads come from the cache"
       },
       "rowSource": "own",
       "provider": "keepiq",

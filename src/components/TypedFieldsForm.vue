@@ -14,28 +14,12 @@
 		<template v-for="field in fields" :key="field.key">
 			<NcPasswordField
 				v-if="field.kind === 'hidden'"
-				:modelValue="values[field.key] || ''"
-				:label="fieldLabel(field)"
-				:required="field.required"
-				:disabled="disabled"
-				:error="isMissing(field)"
-				:helperText="
-					isMissing(field) ? t('keepiq', 'This field is required') : ''
-				"
-				:data-testid="`typed-field-${field.key}`"
+				v-bind="fieldProps(field)"
 				@update:modelValue="set(field.key, $event)" />
 			<NcTextField
 				v-else
-				:modelValue="values[field.key] || ''"
+				v-bind="fieldProps(field)"
 				:type="inputType(field.kind)"
-				:label="fieldLabel(field)"
-				:required="field.required"
-				:disabled="disabled"
-				:error="isMissing(field)"
-				:helperText="
-					isMissing(field) ? t('keepiq', 'This field is required') : ''
-				"
-				:data-testid="`typed-field-${field.key}`"
 				@update:modelValue="set(field.key, $event)" />
 		</template>
 	</div>
@@ -90,6 +74,28 @@ export default {
 			return field.required
 				? t('keepiq', '{label} (required)', { label: field.label })
 				: field.label
+		},
+
+		/**
+		 * What every typed field gets, whatever its kind: the value, the
+		 * label with the required marker, required, disabled, the missing
+		 * error with its helper text, and the test id.
+		 *
+		 * @param {object} field The field definition.
+		 * @return {object} The field's props and test id.
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 */
+		fieldProps(field) {
+			const missing = this.isMissing(field)
+			return {
+				modelValue: this.values[field.key] || '',
+				label: this.fieldLabel(field),
+				required: field.required,
+				disabled: this.disabled,
+				error: missing,
+				helperText: missing ? t('keepiq', 'This field is required') : '',
+				'data-testid': `typed-field-${field.key}`,
+			}
 		},
 
 		/**
