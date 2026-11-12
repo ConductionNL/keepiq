@@ -191,60 +191,18 @@ func (r *KeepiqSecretReconciler) sync(ctx context.Context, ks *v1.KeepiqSecret, 
 	var items []v1.ItemStatus
 	now := r.now()
 	for _, item := range ks.Spec.Items {
-		key := itemKey(item.Name, item.Folder)
-		st := prior[key]
-		st.Name, st.Folder = item.Name, item.Folder
-
-		// Send the remembered ETag only when the target still holds the value
-		// it stands for; otherwise read the whole envelope again.
-		etag := st.ETag
-		if !exists || target.Data[item.TargetKey] == nil {
-			etag = ""
+		st, value, err := readItem(kc, item, prior[itemKey(item.Name, item.Folder)], &target, exists, leases, now)
+		if err != nil {
+			return ctrl.Result{}, err
 		}
-
-		// There is no renew route (keepiq#753): a read while the lease is
-		// live reuses it, so once it has lapsed read the whole envelope again
-		// for a fresh lease and the current value.
-		if leases && st.LeaseID != "" && st.LeaseExpires != nil && !now.Before(st.LeaseExpires.Time) {
-			st.LeaseID, st.LeaseExpires, etag = "", nil, ""
-		}
-
-		secret, err := kc.GetByNameIfNoneMatch(item.Name, item.Folder, etag)
-		switch {
-		case errors.Is(err, keepiq.ErrNotModified):
-			data[item.TargetKey] = target.Data[item.TargetKey]
-		case err != nil:
-			return ctrl.Result{}, classify(err, item.Name)
-		default:
-			value, ferr := fieldValue(secret, item.Field)
-			if ferr != nil {
-				return ctrl.Result{}, ferr
-			}
-			data[item.TargetKey] = []byte(value)
-			st.SecretID, st.ETag = secret.ID, secret.ETag
-			if leases && secret.Lease != nil {
-				st.LeaseID, st.LeaseExpires = secret.Lease.ID, leaseTime(secret.Lease)
-			}
-		}
+		data[item.TargetKey] = value
 		items = append(items, st)
 	}
 
 	sum := checksum(data)
 	changed := !exists || sum != checksum(target.Data)
-	if !exists {
-		target = corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: ks.Namespace, Name: ks.Spec.Target.Name}, Type: corev1.SecretTypeOpaque}
-		target.Data = data
-		if err := controllerutil.SetControllerReference(ks, &target, r.Scheme); err != nil {
-			return ctrl.Result{}, err
-		}
-		if err := r.Create(ctx, &target); err != nil {
-			return ctrl.Result{}, err
-		}
-	} else if changed {
-		target.Data = data
-		if err := r.Update(ctx, &target); err != nil {
-			return ctrl.Result{}, err
-		}
+	if err := r.writeTarget(ctx, ks, &target, exists, changed, data); err != nil {
+		return ctrl.Result{}, err
 	}
 
 	// A rotation: the target held other values before this loop.
@@ -270,6 +228,61 @@ func (r *KeepiqSecretReconciler) sync(ctx context.Context, ks *v1.KeepiqSecret, 
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{RequeueAfter: untilLeaseLapses(items, now, interval)}, nil
+}
+
+// readItem reads one item's value from Keepiq and returns its new status and
+// the bytes for the target. A 304 keeps the value the target holds.
+func readItem(kc KeepiqClient, item v1.KeepiqSecretItem, st v1.ItemStatus, target *corev1.Secret, exists, leases bool, now time.Time) (v1.ItemStatus, []byte, error) {
+	st.Name, st.Folder = item.Name, item.Folder
+
+	// Send the remembered ETag only when the target still holds the value
+	// it stands for; otherwise read the whole envelope again.
+	etag := st.ETag
+	if !exists || target.Data[item.TargetKey] == nil {
+		etag = ""
+	}
+
+	// There is no renew route (keepiq#753): a read while the lease is
+	// live reuses it, so once it has lapsed read the whole envelope again
+	// for a fresh lease and the current value.
+	if leases && st.LeaseID != "" && st.LeaseExpires != nil && !now.Before(st.LeaseExpires.Time) {
+		st.LeaseID, st.LeaseExpires, etag = "", nil, ""
+	}
+
+	secret, err := kc.GetByNameIfNoneMatch(item.Name, item.Folder, etag)
+	switch {
+	case errors.Is(err, keepiq.ErrNotModified):
+		return st, target.Data[item.TargetKey], nil
+	case err != nil:
+		return st, nil, classify(err, item.Name)
+	}
+	value, ferr := fieldValue(secret, item.Field)
+	if ferr != nil {
+		return st, nil, ferr
+	}
+	st.SecretID, st.ETag = secret.ID, secret.ETag
+	if leases && secret.Lease != nil {
+		st.LeaseID, st.LeaseExpires = secret.Lease.ID, leaseTime(secret.Lease)
+	}
+	return st, []byte(value), nil
+}
+
+// writeTarget creates the target Secret, owned by ks, or updates it when its
+// values changed.
+func (r *KeepiqSecretReconciler) writeTarget(ctx context.Context, ks *v1.KeepiqSecret, target *corev1.Secret, exists, changed bool, data map[string][]byte) error {
+	if !exists {
+		*target = corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: ks.Namespace, Name: ks.Spec.Target.Name}, Type: corev1.SecretTypeOpaque}
+		target.Data = data
+		if err := controllerutil.SetControllerReference(ks, target, r.Scheme); err != nil {
+			return err
+		}
+		return r.Create(ctx, target)
+	}
+	if changed {
+		target.Data = data
+		return r.Update(ctx, target)
+	}
+	return nil
 }
 
 // untilLeaseLapses shortens the requeue to just after the first lease that
