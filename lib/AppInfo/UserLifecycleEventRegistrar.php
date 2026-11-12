@@ -23,9 +23,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\AppInfo;
 
 use OCA\Keepiq\Listener\UserAddedToGroupListener;
+use OCA\Keepiq\Listener\TokenInvalidatedListener;
 use OCA\Keepiq\Listener\UserDeletedListener;
 use OCA\Keepiq\Listener\UserRemovedFromGroupListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\Authentication\Events\TokenInvalidatedEvent;
 use OCP\Group\Events\UserAddedEvent;
 use OCP\Group\Events\UserRemovedEvent;
 use OCP\User\Events\UserDeletedEvent;
@@ -68,6 +70,13 @@ final class UserLifecycleEventRegistrar {
 		$context->registerEventListener(
 			event: UserDeletedEvent::class,
 			listener: UserDeletedListener::class
+		);
+
+		// Extension-passkey-enrolment D3: an extension passkey cannot outlive
+		// the app password it was enrolled under.
+		$context->registerEventListener(
+			event: TokenInvalidatedEvent::class,
+			listener: TokenInvalidatedListener::class
 		);
 
 	}//end register()

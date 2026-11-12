@@ -142,55 +142,70 @@ class Stub:
                     if body:
                         stub.bodies.append(body)
                     if path == DISCOVERY:
-                        return self._send(200, {
-                            "apiVersion": 1,
-                            "tokenEndpoint": TOKEN,
-                            "grantType": "urn:ietf:params:oauth:grant-type:jwt-bearer",
-                            "assertion": {"alg": "RS256", "audience": "keepiq"},
-                            "secrets": {"list": API, "byId": API + "/{id}", "byName": API + "/by-name/{name}", "create": API, "update": API + "/{id}"},
-                            "lease": {"supported": True},
-                        })
+                        return self._discovery()
                     if path == TOKEN and self.command == "POST":
-                        form = dict(urllib.parse.parse_qsl(body))
-                        if form.get("grant_type") != "urn:ietf:params:oauth:grant-type:jwt-bearer" or not stub.valid_assertion(form.get("assertion", "")):
-                            return self._send(401, {"error": "invalid_grant"})
-                        stub.exchanges += 1
-                        return self._send(200, {"access_token": f"tok-{stub.exchanges}", "token_type": "Bearer", "expires_in": 300})
+                        return self._token(body)
                     if stub.exchanges == 0 or self.headers.get("Authorization") != f"Bearer tok-{stub.exchanges}" or stub.revoke_next:
                         stub.revoke_next = False
                         return self._send(401, {"message": "Bearer token required"})
-                    query = dict(urllib.parse.parse_qsl(url.query))
                     if path == API and self.command == "GET":
-                        since = query.get("updated_since")
-                        items = [e for e in stub.envelopes.values() if not since or e["secret"]["updatedAt"] > since]
-                        return self._send(200, {"format": "doriath-machine-secret-v1", "items": items, "total": len(items)})
+                        return self._list(dict(urllib.parse.parse_qsl(url.query)))
                     if path.startswith(API + "/by-name/"):
-                        name = urllib.parse.unquote(path[len(API + "/by-name/"):])
-                        hits = [e for e in stub.envelopes.values() if e["secret"]["name"] == name]
-                        if not hits:
-                            return self._send(404, {"message": "Secret not found"})
-                        if len(hits) > 1:
-                            cands = [{k: e["secret"][k] for k in ("id", "name", "folderPath", "updatedAt")} for e in hits]
-                            return self._send(409, {"message": "Multiple secrets match this name", "candidates": cands})
-                        return self._envelope(hits[0])
+                        return self._by_name(urllib.parse.unquote(path[len(API + "/by-name/"):]))
                     if path == API and self.command == "POST":
-                        fields = json.loads(body or "{}")
-                        env = stub.new_envelope(f"sec-new-{len(stub.envelopes)}", fields)
-                        stub.envelopes[env["secret"]["id"]] = env
-                        return self._send(201, env)
+                        return self._create(body)
                     if path.startswith(API + "/"):
-                        sid = urllib.parse.unquote(path[len(API) + 1:])
-                        env = stub.envelopes.get(sid)
-                        if env is None:
-                            return self._send(404, {"message": "Secret not found"})
-                        if self.command == "PUT":
-                            fields = json.loads(body or "{}")
-                            for k in ("key", "login", "additionalFields"):
-                                if k in fields:
-                                    env["ciphertext"][k] = fields[k]
-                            env["secret"]["updatedAt"] = "2026-10-02T12:00:00+00:00"
-                        return self._envelope(env)
+                        return self._by_id(urllib.parse.unquote(path[len(API) + 1:]), body)
                     return self._send(404, {"message": "no route " + path})
+
+            def _discovery(self):
+                return self._send(200, {
+                    "apiVersion": 1,
+                    "tokenEndpoint": TOKEN,
+                    "grantType": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                    "assertion": {"alg": "RS256", "audience": "keepiq"},
+                    "secrets": {"list": API, "byId": API + "/{id}", "byName": API + "/by-name/{name}", "create": API, "update": API + "/{id}"},
+                    "lease": {"supported": True},
+                })
+
+            def _token(self, body: str):
+                form = dict(urllib.parse.parse_qsl(body))
+                if form.get("grant_type") != "urn:ietf:params:oauth:grant-type:jwt-bearer" or not stub.valid_assertion(form.get("assertion", "")):
+                    return self._send(401, {"error": "invalid_grant"})
+                stub.exchanges += 1
+                return self._send(200, {"access_token": f"tok-{stub.exchanges}", "token_type": "Bearer", "expires_in": 300})
+
+            def _list(self, query: dict):
+                since = query.get("updated_since")
+                items = [e for e in stub.envelopes.values() if not since or e["secret"]["updatedAt"] > since]
+                return self._send(200, {"format": "doriath-machine-secret-v1", "items": items, "total": len(items)})
+
+            def _by_name(self, name: str):
+                hits = [e for e in stub.envelopes.values() if e["secret"]["name"] == name]
+                if not hits:
+                    return self._send(404, {"message": "Secret not found"})
+                if len(hits) > 1:
+                    cands = [{k: e["secret"][k] for k in ("id", "name", "folderPath", "updatedAt")} for e in hits]
+                    return self._send(409, {"message": "Multiple secrets match this name", "candidates": cands})
+                return self._envelope(hits[0])
+
+            def _create(self, body: str):
+                fields = json.loads(body or "{}")
+                env = stub.new_envelope(f"sec-new-{len(stub.envelopes)}", fields)
+                stub.envelopes[env["secret"]["id"]] = env
+                return self._send(201, env)
+
+            def _by_id(self, sid: str, body: str):
+                env = stub.envelopes.get(sid)
+                if env is None:
+                    return self._send(404, {"message": "Secret not found"})
+                if self.command == "PUT":
+                    fields = json.loads(body or "{}")
+                    for k in ("key", "login", "additionalFields"):
+                        if k in fields:
+                            env["ciphertext"][k] = fields[k]
+                    env["secret"]["updatedAt"] = "2026-10-02T12:00:00+00:00"
+                return self._envelope(env)
 
             do_GET = do_POST = do_PUT = _handle
 

@@ -609,24 +609,7 @@ class ShareSyncService {
 			$copy->setKeyUpdatedAt(clone $savedAt);
 		}
 
-		// An absent field stays as it is; a null one is cleared.
-		if (array_key_exists('login', $update) === true) {
-			$copy->setLogin($this->nullableBlob(value: $update['login']));
-		}
-
-		if (array_key_exists('additionalFields', $update) === true) {
-			$copy->setAdditionalFields($this->nullableBlob(value: $update['additionalFields']));
-		}
-
-		// For these two `''` means "not set" and is stored as null, as on the head.
-		$blobs = new FederatedValueFields();
-		if (array_key_exists('totp', $update) === true) {
-			$copy->setTotp($blobs->blob(value: $update['totp']));
-		}
-
-		if (array_key_exists('passkeys', $update) === true) {
-			$copy->setPasskeys($blobs->blob(value: $update['passkeys']));
-		}
+		$this->writeValueFields(copy: $copy, update: $update);
 
 		$credentials = new CredentialFields();
 		$credentials->stamp(
@@ -645,6 +628,35 @@ class ShareSyncService {
 			$copy->setPossiblyCompromisedAt(null);
 		}
 	}//end applyRecipientBlob()
+
+	/**
+	 * Write the value fields a blob row sends onto a copy. An absent field
+	 * stays as it is; a null one is cleared.
+	 *
+	 * @param Secret                    $copy   The recipient copy to mutate
+	 * @param array<string,string|null> $update The blob row for this recipient
+	 *
+	 * @return void
+	 */
+	private function writeValueFields(Secret $copy, array $update): void {
+		if (array_key_exists('login', $update) === true) {
+			$copy->setLogin($this->nullableBlob(value: $update['login']));
+		}
+
+		if (array_key_exists('additionalFields', $update) === true) {
+			$copy->setAdditionalFields($this->nullableBlob(value: $update['additionalFields']));
+		}
+
+		// For these two `''` means "not set" and is stored as null, as on the head.
+		$blobs = new FederatedValueFields();
+		if (array_key_exists('totp', $update) === true) {
+			$copy->setTotp($blobs->blob(value: $update['totp']));
+		}
+
+		if (array_key_exists('passkeys', $update) === true) {
+			$copy->setPasskeys($blobs->blob(value: $update['passkeys']));
+		}
+	}//end writeValueFields()
 
 	/**
 	 * A blob as a string, or null when it is null.

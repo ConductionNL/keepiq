@@ -9,7 +9,7 @@ import { walletCandidates } from '@/src/autofill/wallet'
 import { scheduleClipboardClear } from '@/src/clipboard'
 import { rsaDecrypt } from '@/src/crypto'
 import { addHistory, clearHistory, openHistory, sealHistory } from '@/src/generator/history'
-import { GENERATOR_KINDS } from '@/src/generator/options'
+import { GENERATOR_KINDS, type GeneratorHistoryEntry } from '@/src/generator/options'
 import { readOptions, readPolicy, saveOptions } from '@/src/generator/store'
 import {
 	USE_ONLY_FIELDS, type AccountSettingsRequest, type AddIntent, type AccountSettingsSnapshot, type AccountStatus, type DecryptReply, type DecryptedItem,
@@ -289,66 +289,101 @@ async function generatorTarget(message: GeneratorRequest): Promise<{ account: Ac
 	return active && active.account.id === message.accountId && active.status !== 'logged_out' ? active : null
 }
 
+/** Who a generator request acts for: the account, and the account whose history may be read, which only an unlocked one may. */
+interface GeneratorRun {
+	account: AccountRecord | null
+	reader: AccountRecord | null
+	epoch: number
+}
+
+type GeneratorOf<K extends GeneratorRequest['kind']> = Extract<GeneratorRequest, { kind: K }>
+type GeneratorHandlers = { [K in GeneratorRequest['kind']]: (message: GeneratorOf<K>, run: GeneratorRun) => Promise<PopupReplies[K]> | PopupReplies[K] }
+
 async function performGenerator(message: GeneratorRequest, target: { account: AccountRecord; status: AccountStatus } | null, epoch: number): Promise<PopupReplies[GeneratorRequest['kind']]> {
-	const account = target?.account ?? null
 	// The lock keeps the history from whoever walks up to the browser (ADR-002): a locked account only adds to it, sealed.
-	const reader = target?.status === 'unlocked' ? target.account : null
-	switch (message.kind) {
-		case 'generator.context':
-			return account ? { options: await readOptions(account.id), policy: await readPolicy(account.id), accountEmail: account.email } : null
-		case 'generator.saveOptions':
-			return account ? saveOptions(account.id, message.options) : null
-		case 'generator.history.list':
-			return reader ? openHistory(reader.id, epoch) : []
-		case 'generator.history.add': {
-			const { value, kind } = message.entry ?? {}
-			if (!account || typeof value !== 'string' || !value || !GENERATOR_KINDS.includes(kind)) return reader ? openHistory(reader.id, epoch) : []
-			if (!reader) {
-				await sealHistory(account.id, { value, kind }, epoch)
-				return []
-			}
-			await openHistory(reader.id, epoch)
-			return addHistory(reader.id, { value, kind }, epoch)
-		}
-		case 'generator.history.clear':
-			if (reader) await clearHistory(reader.id)
-			return null
+	const run: GeneratorRun = { account: target?.account ?? null, reader: target?.status === 'unlocked' ? target.account : null, epoch }
+	// A kind this background does not know gets no reply.
+	if (!Object.hasOwn(GENERATOR_HANDLERS, message.kind)) return undefined as never
+	const handle = GENERATOR_HANDLERS[message.kind] as (message: GeneratorRequest, run: GeneratorRun) => Promise<PopupReplies[GeneratorRequest['kind']]>
+	return handle(message, run)
+}
+
+const listHistory = ({ reader, epoch }: GeneratorRun) => (reader ? openHistory(reader.id, epoch) : [])
+
+/** The entry to add and the account it is for, or `null` for no account or an entry that is not a generated value of a known kind. */
+function historyEntry(message: GeneratorOf<'generator.history.add'>, { account }: GeneratorRun): { accountId: string; entry: Omit<GeneratorHistoryEntry, 'createdAt'> } | null {
+	const entry = generatedEntry(message.entry)
+	return account && entry ? { accountId: account.id, entry } : null
+}
+
+function generatedEntry(entry: GeneratorOf<'generator.history.add'>['entry']): Omit<GeneratorHistoryEntry, 'createdAt'> | null {
+	const { value, kind } = entry ?? {}
+	return typeof value === 'string' && value && GENERATOR_KINDS.includes(kind) ? { value, kind } : null
+}
+
+async function addToHistory(message: GeneratorOf<'generator.history.add'>, run: GeneratorRun): Promise<GeneratorHistoryEntry[]> {
+	const add = historyEntry(message, run)
+	if (!add) return listHistory(run)
+	if (!run.reader) {
+		await sealHistory(add.accountId, add.entry, run.epoch)
+		return []
 	}
+	await openHistory(run.reader.id, run.epoch)
+	return addHistory(run.reader.id, add.entry, run.epoch)
+}
+
+async function clearHistoryOf({ reader }: GeneratorRun): Promise<null> {
+	if (reader) await clearHistory(reader.id)
+	return null
+}
+
+const GENERATOR_HANDLERS: GeneratorHandlers = {
+	'generator.context': async (_, { account }) => (account ? { options: await readOptions(account.id), policy: await readPolicy(account.id), accountEmail: account.email } : null),
+	'generator.saveOptions': (message, { account }) => (account ? saveOptions(account.id, message.options) : null),
+	'generator.history.list': (_, run) => listHistory(run),
+	'generator.history.add': addToHistory,
+	'generator.history.clear': (_, run) => clearHistoryOf(run),
 }
 
 const isString = (value: unknown): value is string => typeof value === 'string'
 const isStrings = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString)
 
+type WriteOf<K extends VaultWrite['kind']> = Extract<VaultWrite, { kind: K }>
+type WriteHandlers = { [K in VaultWrite['kind']]: (message: WriteOf<K>, accountId: string) => Promise<PopupReplies[K]> }
+
 /** A write without the account it was meant for is refused, so a stale window never writes elsewhere. */
 async function performWrite(message: VaultWrite): Promise<PopupReplies[VaultWrite['kind']]> {
 	const accountId = message.accountId
 	if (typeof accountId !== 'string') return message.kind === 'folder.dismissNotice' ? null : { ok: false, error: { code: 'invalid' } }
-	switch (message.kind) {
-		case 'item.fetch':
-			return fetchItem(message.id, message.purpose === 'clone' ? 'clone' : 'edit', accountId)
-		case 'item.create':
-			return createItem(message.draft, accountId)
-		case 'item.update':
-			return updateItem(message.id, message.patch ?? {}, message.baseUpdatedAt, accountId, isString(message.recordId) ? message.recordId : undefined,
-				isStrings(message.withoutUnreachable) ? message.withoutUnreachable : undefined)
-		case 'item.delete':
-			return deleteItem(message.id, accountId)
-		case 'item.editable':
-			return itemEditable(message.id, accountId)
-		case 'folder.create':
-			return createFolder(message.name, message.parentId ?? null, accountId)
-		case 'folder.rename':
-			return renameFolder(message.id, message.name, accountId)
-		case 'folder.children':
-			return folderChildren(message.id, accountId)
-		case 'folder.delete':
-			return deleteFolder(message.id, message.plan ?? { mode: 'plain' }, accountId)
-		case 'folder.dismissNotice': {
-			const account = await activeUnlocked()
-			if (account?.id === accountId) await browser.storage.local.set({ [folderNoticeKey(account.id)]: true })
-			return null
-		}
-	}
+	// A kind this background does not know gets no reply.
+	if (!Object.hasOwn(WRITE_HANDLERS, message.kind)) return undefined as never
+	const handle = WRITE_HANDLERS[message.kind] as (message: VaultWrite, accountId: string) => Promise<PopupReplies[VaultWrite['kind']]>
+	return handle(message, accountId)
+}
+
+function updateFrom(message: WriteOf<'item.update'>, accountId: string): ReturnType<typeof updateItem> {
+	const recordId = isString(message.recordId) ? message.recordId : undefined
+	const withoutUnreachable = isStrings(message.withoutUnreachable) ? message.withoutUnreachable : undefined
+	return updateItem(message.id, message.patch ?? {}, message.baseUpdatedAt, accountId, recordId, withoutUnreachable)
+}
+
+async function dismissFolderNotice(_: WriteOf<'folder.dismissNotice'>, accountId: string): Promise<null> {
+	const account = await activeUnlocked()
+	if (account?.id === accountId) await browser.storage.local.set({ [folderNoticeKey(account.id)]: true })
+	return null
+}
+
+const WRITE_HANDLERS: WriteHandlers = {
+	'item.fetch': (message, accountId) => fetchItem(message.id, message.purpose === 'clone' ? 'clone' : 'edit', accountId),
+	'item.create': (message, accountId) => createItem(message.draft, accountId),
+	'item.update': updateFrom,
+	'item.delete': (message, accountId) => deleteItem(message.id, accountId),
+	'item.editable': (message, accountId) => itemEditable(message.id, accountId),
+	'folder.create': (message, accountId) => createFolder(message.name, message.parentId ?? null, accountId),
+	'folder.rename': (message, accountId) => renameFolder(message.id, message.name, accountId),
+	'folder.children': (message, accountId) => folderChildren(message.id, accountId),
+	'folder.delete': (message, accountId) => deleteFolder(message.id, message.plan ?? { mode: 'plain' }, accountId),
+	'folder.dismissNotice': dismissFolderNotice,
 }
 
 /** Like a write, a send without the account it was meant for is refused. */

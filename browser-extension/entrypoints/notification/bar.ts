@@ -19,15 +19,21 @@ type Mode = CaptureStateReply['mode']
 
 const optional = (value: unknown) => value === undefined || typeof value === 'string'
 
+type StateDraft = Partial<CaptureStateReply>
+
+/** An add, or an update of a login named by text. */
+const hasMode = (r: StateDraft) => r.mode === 'add' || (r.mode === 'update' && typeof r.itemName === 'string')
+
+/** The hosts, and the optional item name, username and shortcut, as text. */
+const hasTexts = (r: StateDraft) => typeof r.host === 'string' && optional(r.tabHost) && optional(r.itemName) && optional(r.username) && optional(r.shortcut)
+
+const hasFolders = (r: StateDraft) => Array.isArray(r.folders) && r.folders.every((folder) => typeof folder?.id === 'string' && typeof folder.name === 'string')
+
+const hasLabels = (r: StateDraft) => hasMode(r) && hasTexts(r)
+
 function isState(reply: unknown): reply is CaptureStateReply {
-	const r = reply as Partial<CaptureStateReply> | null
-	return typeof r === 'object' && r !== null
-		&& (r.mode === 'add' || (r.mode === 'update' && typeof r.itemName === 'string'))
-		&& typeof r.host === 'string'
-		&& optional(r.tabHost) && optional(r.itemName) && optional(r.username) && optional(r.shortcut)
-		&& THEMES.includes(r.theme as never)
-		&& Array.isArray(r.folders)
-		&& r.folders.every((folder) => typeof folder?.id === 'string' && typeof folder.name === 'string')
+	const r = reply as StateDraft | null
+	return typeof r === 'object' && r !== null && hasLabels(r) && THEMES.includes(r.theme as never) && hasFolders(r)
 }
 
 function isWriteResult(reply: unknown): reply is WriteResult<null> {

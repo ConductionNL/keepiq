@@ -2,9 +2,19 @@
 #
 # Documented at https://docs.sigrid-says.com/reference/analysis-scope-configuration.html
 # Sigrid's default excludes (node_modules, vendor, build output, docs, migrations,
-# mocks and stubs) still apply on top of this file, and technologies and
-# components are left to Sigrid's automatic detection. This file only leaves
-# vendored tooling and third-party code out of the analysis.
+# mocks and stubs) still apply on top of this file, and technologies are left to
+# Sigrid's automatic detection.
+
+# Pin the maintainability model, so a yearly recalibration never changes the
+# rating without a deliberate change to this file.
+model: "2026"
+
+# Every top-level directory is a component (lib/, src/, appinfo/, templates/ ...),
+# as SIG's guidance (section 2.2) defines top-level components. See openregister
+# ADR-014.
+component_base_dirs: [""]
+
+# Excluded: vendored tooling, third-party code and the Android client.
 exclude:
   # Developer tooling for Claude Code under .claude/: skills, agents and their
   # configuration, partly copied from upstream (the skill-creator skill carries
@@ -14,3 +24,6 @@ exclude:
   # The Argon2 reference C implementation, vendored unchanged for the mobile
   # cinterop build (CC0-1.0 or Apache-2.0, see its LICENSE).
   - ".*/mobile/shared/src/nativeInterop/argon2/.*"
+  # The Android client (mobile/android): a Kotlin Compose app measured and
+  # reviewed with the Android toolchain, outside the scope of the Nextcloud app.
+  - ".*/mobile/android/.*"

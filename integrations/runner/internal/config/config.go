@@ -128,89 +128,113 @@ func Parse(raw []byte) (*Config, error) {
 	}
 	seen := map[string]bool{}
 	for i := range c.Rotations {
-		r := &c.Rotations[i]
-		at := fmt.Sprintf("rotations[%d]", i)
-		if r.Secret == "" {
-			add("%s.secret is required", at)
-		}
-		key := r.Folder + "/" + r.Secret
-		if seen[key] {
-			add("%s: secret %q is rotated twice", at, r.Secret)
-		}
-		seen[key] = true
-		if !connectors[r.Connector] {
-			add("%s.connector must be postgres, mysql or exec", at)
-		}
-		if r.Connector == "exec" && len(r.Command) == 0 {
-			add("%s.command is required for the exec connector", at)
-		}
-		if (r.Connector == "postgres" || r.Connector == "mysql") && (r.AdminSecret == "" || r.Target["host"] == "") {
-			add("%s needs adminSecret and target.host", at)
-		}
-		if r.Schedule == "" && !r.FollowExpiry {
-			add("%s needs a schedule, followExpiry, or both", at)
-		}
-		if r.Schedule != "" {
-			if _, err := CronParser.Parse(r.Schedule); err != nil {
-				add("%s.schedule: %v", at, err)
-			}
-		}
-		if r.LeadTime.Duration == 0 {
-			r.LeadTime.Duration = 7 * 24 * time.Hour
-		}
-		if r.Generator.Length == 0 {
-			r.Generator.Length = 32
-		}
-		if r.Generator.Length < 16 || r.Generator.Length > 256 {
-			add("%s.generator.length must be between 16 and 256", at)
-		}
-		if len(r.Generator.Classes) == 0 {
-			r.Generator.Classes = []string{"lower", "upper", "digits"}
-		}
-		for _, cl := range r.Generator.Classes {
-			if !classes[cl] {
-				add("%s.generator.classes: unknown class %q", at, cl)
-			}
-		}
+		checkRotation(&c.Rotations[i], fmt.Sprintf("rotations[%d]", i), seen, add)
 	}
 	names := map[string]bool{}
 	for i := range c.Syncs {
-		s := &c.Syncs[i]
-		at := fmt.Sprintf("syncs[%d]", i)
-		if s.Name == "" {
-			s.Name = fmt.Sprintf("%s-%d", s.Destination, i)
-		}
-		if names[s.Name] {
-			add("%s: name %q is used twice", at, s.Name)
-		}
-		names[s.Name] = true
-		if len(s.Secrets) == 0 {
-			add("%s.secrets needs at least one name", at)
-		}
-		if !destinations[s.Destination] {
-			add("%s.destination must be aws-secrets-manager, azure-key-vault, github-actions or exec", at)
-		}
-		if s.Destination == "exec" && len(s.Command) == 0 {
-			add("%s.command is required for the exec destination", at)
-		}
-		if s.Destination == "azure-key-vault" && s.Options["vaultUrl"] == "" {
-			add("%s.options.vaultUrl is required", at)
-		}
-		if s.Destination == "github-actions" && s.Options["repository"] == "" && s.Options["organization"] == "" {
-			add("%s.options needs repository or organization", at)
-		}
-		if s.Destination == "github-actions" && s.CredentialsSecret == "" {
-			add("%s.credentialsSecret is required (a GitHub token)", at)
-		}
-		if s.Interval.Duration == 0 {
-			s.Interval.Duration = 60 * time.Second
-		}
-		if s.Interval.Duration < 10*time.Second {
-			add("%s.interval must be at least 10s", at)
-		}
+		checkSync(&c.Syncs[i], i, names, add)
 	}
 	if len(errs) > 0 {
 		return nil, errors.New("runner.yaml: " + strings.Join(errs, "; "))
 	}
 	return &c, nil
+}
+
+// checkRotation fills a rotation's defaults and reports what is wrong with it.
+// seen holds the folder/secret pairs of the rotations before it.
+func checkRotation(r *Rotation, at string, seen map[string]bool, add func(string, ...any)) {
+	if r.Secret == "" {
+		add("%s.secret is required", at)
+	}
+	key := r.Folder + "/" + r.Secret
+	if seen[key] {
+		add("%s: secret %q is rotated twice", at, r.Secret)
+	}
+	seen[key] = true
+	checkRotationConnector(r, at, add)
+	if r.Schedule == "" && !r.FollowExpiry {
+		add("%s needs a schedule, followExpiry, or both", at)
+	}
+	if r.Schedule != "" {
+		if _, err := CronParser.Parse(r.Schedule); err != nil {
+			add("%s.schedule: %v", at, err)
+		}
+	}
+	if r.LeadTime.Duration == 0 {
+		r.LeadTime.Duration = 7 * 24 * time.Hour
+	}
+	checkGenerator(&r.Generator, at, add)
+}
+
+// checkRotationConnector reports a connector that is unknown or misses what it needs.
+func checkRotationConnector(r *Rotation, at string, add func(string, ...any)) {
+	if !connectors[r.Connector] {
+		add("%s.connector must be postgres, mysql or exec", at)
+	}
+	if r.Connector == "exec" && len(r.Command) == 0 {
+		add("%s.command is required for the exec connector", at)
+	}
+	if (r.Connector == "postgres" || r.Connector == "mysql") && (r.AdminSecret == "" || r.Target["host"] == "") {
+		add("%s needs adminSecret and target.host", at)
+	}
+}
+
+// checkGenerator fills the password generator's defaults and checks its length and classes.
+func checkGenerator(g *Generator, at string, add func(string, ...any)) {
+	if g.Length == 0 {
+		g.Length = 32
+	}
+	if g.Length < 16 || g.Length > 256 {
+		add("%s.generator.length must be between 16 and 256", at)
+	}
+	if len(g.Classes) == 0 {
+		g.Classes = []string{"lower", "upper", "digits"}
+	}
+	for _, cl := range g.Classes {
+		if !classes[cl] {
+			add("%s.generator.classes: unknown class %q", at, cl)
+		}
+	}
+}
+
+// checkSync fills sync i's defaults and reports what is wrong with it.
+// names holds the names of the syncs before it.
+func checkSync(s *Sync, i int, names map[string]bool, add func(string, ...any)) {
+	at := fmt.Sprintf("syncs[%d]", i)
+	if s.Name == "" {
+		s.Name = fmt.Sprintf("%s-%d", s.Destination, i)
+	}
+	if names[s.Name] {
+		add("%s: name %q is used twice", at, s.Name)
+	}
+	names[s.Name] = true
+	if len(s.Secrets) == 0 {
+		add("%s.secrets needs at least one name", at)
+	}
+	checkSyncDestination(s, at, add)
+	if s.Interval.Duration == 0 {
+		s.Interval.Duration = 60 * time.Second
+	}
+	if s.Interval.Duration < 10*time.Second {
+		add("%s.interval must be at least 10s", at)
+	}
+}
+
+// checkSyncDestination reports a destination that is unknown or misses what it needs.
+func checkSyncDestination(s *Sync, at string, add func(string, ...any)) {
+	if !destinations[s.Destination] {
+		add("%s.destination must be aws-secrets-manager, azure-key-vault, github-actions or exec", at)
+	}
+	if s.Destination == "exec" && len(s.Command) == 0 {
+		add("%s.command is required for the exec destination", at)
+	}
+	if s.Destination == "azure-key-vault" && s.Options["vaultUrl"] == "" {
+		add("%s.options.vaultUrl is required", at)
+	}
+	if s.Destination == "github-actions" && s.Options["repository"] == "" && s.Options["organization"] == "" {
+		add("%s.options needs repository or organization", at)
+	}
+	if s.Destination == "github-actions" && s.CredentialsSecret == "" {
+		add("%s.credentialsSecret is required (a GitHub token)", at)
+	}
 }

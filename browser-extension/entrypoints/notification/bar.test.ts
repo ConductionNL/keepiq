@@ -160,7 +160,7 @@ describe('key hand-off', () => {
 	})
 
 	it('shows nothing when the background refuses, answers nonsense or cannot be reached', async () => {
-		for (const reply of [null, { mode: 'add' }, { ...update(), itemName: undefined }, { ...update(), username: 3 }, { ...add(), folders: [{ id: 1 }] }, { ...add(), theme: 'pink' }, 'add']) {
+		for (const reply of [null, { mode: 'add' }, { ...update(), itemName: undefined }, { ...update(), username: 3 }, { ...add(), folders: [{ id: 1 }] }, { ...add(), theme: 'pink' }, { ...add(), host: 3 }, { ...add(), tabHost: 3 }, { ...add(), shortcut: 3 }, { ...add(), folders: 'f1' }, { ...add(), mode: 'remove' }, 'add']) {
 			document.body.innerHTML = BODY
 			await open(reply)
 			expect(bar().children).toHaveLength(0)

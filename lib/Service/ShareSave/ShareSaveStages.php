@@ -69,15 +69,7 @@ class ShareSaveStages {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function load(string $stageId, string $userId, string $secretId, DateTime $base, ?DateTime $sourceBase): array {
-		$chunks = $this->mapper->findLiveByStage(stageId: $stageId, now: new DateTime());
-		if ($chunks === []) {
-			throw new ShareSaveRefusal(
-				error: 'stage_unknown',
-				message: 'The stage does not exist or expired',
-				status: Http::STATUS_NOT_FOUND
-			);
-		}
-
+		$chunks = $this->liveChunks(stageId: $stageId);
 		$entries = new ShareSaveEntries();
 		foreach ($chunks as $chunk) {
 			if ($chunk->getUserId() !== $userId || $chunk->getSecretId() !== $secretId
@@ -91,15 +83,7 @@ class ShareSaveStages {
 				);
 			}
 
-			$lists = json_decode($chunk->getEntries(), true, 16, JSON_THROW_ON_ERROR);
-			$entries = $entries->merge(
-				new ShareSaveEntries(
-					copies: $lists['copies'],
-					skipped: $lists['skipped'],
-					federated: $lists['federated'],
-					suspend: $lists['suspend'],
-				)
-			);
+			$entries = $entries->merge($this->chunkEntries(chunk: $chunk));
 		}
 
 		return [
@@ -108,6 +92,49 @@ class ShareSaveStages {
 			'chunks' => count($chunks),
 		];
 	}//end load()
+
+	/**
+	 * The live chunks of a stage, or a refusal when it does not exist or expired.
+	 *
+	 * @param string $stageId The stage
+	 *
+	 * @return non-empty-list<ShareSaveStage>
+	 *
+	 * @throws ShareSaveRefusal `stage_unknown`
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 */
+	private function liveChunks(string $stageId): array {
+		$chunks = $this->mapper->findLiveByStage(stageId: $stageId, now: new DateTime());
+		if ($chunks === []) {
+			throw new ShareSaveRefusal(
+				error: 'stage_unknown',
+				message: 'The stage does not exist or expired',
+				status: Http::STATUS_NOT_FOUND
+			);
+		}
+
+		return $chunks;
+	}//end liveChunks()
+
+	/**
+	 * The entries one chunk stored.
+	 *
+	 * @param ShareSaveStage $chunk The chunk
+	 *
+	 * @return ShareSaveEntries
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 */
+	private function chunkEntries(ShareSaveStage $chunk): ShareSaveEntries {
+		$lists = json_decode($chunk->getEntries(), true, 16, JSON_THROW_ON_ERROR);
+		return new ShareSaveEntries(
+			copies: $lists['copies'],
+			skipped: $lists['skipped'],
+			federated: $lists['federated'],
+			suspend: $lists['suspend'],
+		);
+	}//end chunkEntries()
 
 	/**
 	 * Store one chunk. Without a stage id it opens a new stage, which

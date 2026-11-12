@@ -405,6 +405,13 @@ describe('one-time codes', () => {
 })
 
 describe('newsletters', () => {
+	it('anchors formless fields at the document when the only loose button is a newsletter Subscribe', () => {
+		mount(`<main><label>Username <input id="u" type="text"></label><label>Password <input id="p" type="password"></label></main>
+			<footer><label>Email <input id="ne" type="email"></label><button type="button">Subscribe</button></footer>`)
+		expect(groupOf($('#u'))?.anchor).toBe(document)
+		expect(groupOf($('#p'))?.anchor).toBe(document)
+	})
+
 	it('does not treat an "Email" + "Subscribe" form as a login', () => {
 		mount(`<form>
 			<label>Email <input id="e" name="email" type="email"></label>

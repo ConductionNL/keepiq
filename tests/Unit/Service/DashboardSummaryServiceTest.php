@@ -176,4 +176,83 @@ class DashboardSummaryServiceTest extends TestCase {
 		$this->assertSame(0, $summary['folders_count']);
 		$this->assertNull($summary['pending_apps_count']);
 	}//end testFetchSummaryWithoutAggregatorDepsReturnsZeroes()
+
+	/**
+	 * The summary's keys come in contract order, every counter is read once
+	 * in that order, and each failing counter is logged under its metric id.
+	 *
+	 * @return void
+	 */
+	public function testTheSummaryKeysAndCountersComeInContractOrder(): void {
+		$calls = [];
+		$secrets = $this->createMock(SecretMapper::class);
+		$secrets->method('countByOwner')->willReturnCallback(static function (...$args) use (&$calls): int {
+			$calls[] = ['secrets', $args[0], $args[1], $args[4] ?? null];
+			return 4;
+		});
+		$shares = $this->createMock(ShareTargetMapper::class);
+		$shares->method('findByTargetUser')->willReturnCallback(static function (string $userId) use (&$calls): array {
+			$calls[] = ['shares', $userId];
+			throw new RuntimeException('shares down');
+		});
+		$folders = $this->createMock(FolderMapper::class);
+		$folders->method('findByOwner')->willReturnCallback(static function (...$args) use (&$calls): array {
+			$calls[] = ['folders', $args[0], $args[1]];
+			return [1, 2];
+		});
+		$flags = $this->createMock(\OCA\Keepiq\Db\RotationFlagMapper::class);
+		$flags->method('findOpenForOwner')->willReturnCallback(static function (string $ownerId) use (&$calls): array {
+			$calls[] = ['flags', $ownerId];
+			return [1];
+		});
+		$apps = $this->createMock(ApplicationMapper::class);
+		$apps->method('countPending')->willReturnCallback(static function () use (&$calls): int {
+			$calls[] = ['apps'];
+			return 2;
+		});
+		$honey = $this->createMock(\OCA\Keepiq\Db\HoneyAlertMapper::class);
+		$honey->method('countUnacknowledged')->willReturnCallback(static function () use (&$calls): int {
+			$calls[] = ['honey'];
+			throw new RuntimeException('honey down');
+		});
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(static function (string $message) use (&$calls): void {
+			$calls[] = ['warning', $message];
+		});
+
+		$service = new DashboardSummaryService(
+			logger: $logger,
+			secretMapper: $secrets,
+			folderMapper: $folders,
+			shareTargetMapper: $shares,
+			applicationMapper: $apps,
+			rotationFlagMapper: $flags,
+			honeyAlertMapper: $honey,
+		);
+
+		$admin = $service->fetchSummary(userId: 'alice', isAdmin: true);
+		$this->assertSame(
+			['total_secrets', 'shared_with_me_count', 'folders_count', 'rotation_due_count', 'pending_apps_count', 'is_admin', 'last_updated', 'ca_health', 'honey_alert_count'],
+			array_keys($admin)
+		);
+		$this->assertSame([4, 0, 2, 1, 2, true, null, 0], [$admin['total_secrets'], $admin['shared_with_me_count'], $admin['folders_count'], $admin['rotation_due_count'], $admin['pending_apps_count'], $admin['is_admin'], $admin['ca_health'], $admin['honey_alert_count']]);
+		$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', $admin['last_updated']);
+		$this->assertSame(
+			[
+				['secrets', 'user', 'alice', SecretMapper::STATE_LIVE],
+				['shares', 'alice'],
+				['warning', 'DashboardSummaryService::fetchSummary() failed to compute shared_with_me_count: shares down'],
+				['folders', 'user', 'alice'],
+				['flags', 'alice'],
+				['apps'],
+				['honey'],
+				['warning', 'DashboardSummaryService::fetchSummary() failed to compute honey_alert_count: honey down'],
+			],
+			$calls
+		);
+
+		$member = $service->fetchSummary(userId: 'bob', isAdmin: false);
+		$this->assertSame(['total_secrets', 'shared_with_me_count', 'folders_count', 'rotation_due_count', 'pending_apps_count', 'is_admin', 'last_updated'], array_keys($member));
+		$this->assertNull($member['pending_apps_count']);
+	}//end testTheSummaryKeysAndCountersComeInContractOrder()
 }//end class

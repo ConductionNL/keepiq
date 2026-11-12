@@ -104,25 +104,10 @@ class OfflineManifestService {
 			$unlockBlocked = TwoFactorGate::CODE;
 		}
 
-		$sourceVersions = $this->sourceVersions(userId: $userId);
-		$secrets = array_map(
-			static fn (Secret $secret) => [
-				...$secret->jsonSerialize(),
-				'sourceUpdatedAt' => $sourceVersions[$secret->getId()] ?? null,
-			],
-			$this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, state: SecretMapper::STATE_LIVE)
-		);
-
-		$folders = array_map(
-			static fn ($folder) => $folder->jsonSerialize(),
-			$this->folderMapper->findByOwner('user', $userId)
-		);
-
+		$secrets = $this->liveSecrets(userId: $userId);
+		$folders = $this->serialised(rows: $this->folderMapper->findByOwner('user', $userId));
 		// Secret types the list schema needs to render type badges offline.
-		$types = array_map(
-			static fn ($type) => $type->jsonSerialize(),
-			$this->typeMapper->findAvailableForUser($userId)
-		);
+		$types = $this->serialised(rows: $this->typeMapper->findAvailableForUser($userId));
 
 		return [
 			'suite' => $suite,
@@ -134,6 +119,40 @@ class OfflineManifestService {
 		];
 
 	}//end buildForUser()
+
+	/**
+	 * The user's live secrets, each with the version of its source when it
+	 * is a copy.
+	 *
+	 * @param string $userId The owning user
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+	 */
+	private function liveSecrets(string $userId): array {
+		$sourceVersions = $this->sourceVersions(userId: $userId);
+		return array_map(
+			static fn (Secret $secret) => [
+				...$secret->jsonSerialize(),
+				'sourceUpdatedAt' => $sourceVersions[$secret->getId()] ?? null,
+			],
+			$this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, state: SecretMapper::STATE_LIVE)
+		);
+	}//end liveSecrets()
+
+	/**
+	 * Each row in its serialised form.
+	 *
+	 * @param array<int,\JsonSerializable> $rows The rows
+	 *
+	 * @return list<mixed>
+	 *
+	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
+	 */
+	private function serialised(array $rows): array {
+		return array_map(static fn ($row) => $row->jsonSerialize(), $rows);
+	}//end serialised()
 
 	/**
 	 * The version of each of the user's copies' sources, keyed by copy id and

@@ -226,18 +226,9 @@ export default {
 					this.error = policyReason
 					return
 				}
-				const store = useApplicationStore()
-				const result = await store.writeSecretForApplication(
+				const result = await useApplicationStore().writeSecretForApplication(
 					this.applicationId,
-					{
-						name: this.name.trim(),
-						url: this.url || null,
-						login: this.login || null,
-						key: this.value,
-						additionalFields: this.additionalFields
-							? this.parseAdditional()
-							: null,
-					},
+					this.plainPayload(),
 				)
 
 				// Wipe the plaintext immediately so a stale dialog
@@ -246,13 +237,41 @@ export default {
 				this.success = true
 				this.$emit('written', result)
 			} catch (e) {
-				this.error =
-					e?.response?.data?.message
-					?? e?.message
-					?? this.t('keepiq', 'Write failed')
+				this.error = this.writeFailureText(e)
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * The plaintext fields the store encrypts for the application.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
+		plainPayload() {
+			return {
+				name: this.name.trim(),
+				url: this.url || null,
+				login: this.login || null,
+				key: this.value,
+				additionalFields: this.additionalFields
+					? this.parseAdditional()
+					: null,
+			}
+		},
+
+		/**
+		 * @param {Error|object} e Why the write failed.
+		 * @return {string} The server's message, else the error's, else the dialog's text.
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
+		writeFailureText(e) {
+			return (
+				e?.response?.data?.message
+				?? e?.message
+				?? this.t('keepiq', 'Write failed')
+			)
 		},
 
 		/**

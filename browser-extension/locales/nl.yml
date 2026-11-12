@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: Je kluissleutel is gewijzigd. Ontgrendel met je hoofdwachtwoord.
   pinTooShort: Gebruik minstens {count} tekens
   unknown: Er ging iets mis
+  passkeyFailed: "De passkey kon je kluis niet ontgrendelen. Gebruik je hoofdwachtwoord."
 
 notices:
   keyChanged: Je kluissleutel is gewijzigd in Keepiq. Ontgrendel met je huidige hoofdwachtwoord.
+  fileAccess: "Keepiq heeft geen toegang tot bestanden nodig. In Nextcloud kun je onder Instellingen, Beveiliging, Apparaten & sessies de bestandstoegang van dit app-wachtwoord uitzetten of het intrekken."
 
 common:
   accountOnHost: "{name} op {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Maak er een aan onder Nextcloud Instellingen, Beveiliging. Voer hier nooit je Nextcloud-inlogwachtwoord in.
   hintWithLink: "Maak er een aan onder Nextcloud Instellingen, Beveiliging: {link}. Voer hier nooit je Nextcloud-inlogwachtwoord in."
   securityLink: beveiligingsinstellingen openen
+  signInWithBrowser: "Inloggen via Nextcloud"
+  finishInTab: "Rond het inloggen af op de Nextcloud-pagina die is geopend. Keepiq voegt het account toe zodra je klaar bent."
+  orAppPassword: "Of voer een app-wachtwoord in:"
 
 accounts:
   active: (actief)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: De pincodes zijn niet gelijk
   pinAdvice: Gebruik geen pincode die je al voor je telefoon of bank gebruikt.
   pinAfterRestart: Na een herstart van de browser vul je één keer je hoofdwachtwoord in; daarna werkt je pincode weer.
-  biometrics: Ontgrendelen met biometrie
-  notAvailableYet: Nog niet beschikbaar
   vaultTimeout: Time-out van de kluis
   timeoutImmediately: Direct
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Er is niets opgeslagen: de Keepiq van {cloudIds} is te oud om passkeys op te slaan. Vraag hen Keepiq bij te werken, of sla de passkey op bij een andere login."
     partnerUpgradeRequiredUnnamed: "Er is niets opgeslagen: een partnerorganisatie waarmee deze login gedeeld is, heeft een Keepiq die te oud is om passkeys op te slaan. Vraag hen Keepiq bij te werken, of sla de passkey op bij een andere login."
     shareScanPending: Deze login wacht op een controle van de delingen ervan die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw.
+
+vaultPasskey:
+  unlock: "Ontgrendelen met vingerafdruk of gezicht"
+  unlockIntro: "Je browser vraagt om je vingerafdruk, gezicht of apparaatpincode."
+  enrolTitle: "Ontgrendelen met vingerafdruk of gezicht instellen"
+  enrolIntro: "Bevestig je hoofdwachtwoord. Je browser vraagt daarna twee keer om je vingerafdruk, gezicht of apparaatpincode."
+  enrolSubmit: "Instellen"
+  enrolDone: "Ontgrendelen met vingerafdruk of gezicht is ingesteld voor deze browser."
+  close: "Sluiten"
+  label: "Keepiq-browserextensie"
+  tooOld: "Ontgrendelen met vingerafdruk of gezicht vraagt Chrome of Edge 122, of Firefox 150, of nieuwer. Gebruik je hoofdwachtwoord."
+  unsupported: "Deze browser of dit apparaat kan Keepiq niet ontgrendelen met vingerafdruk of gezicht. Gebruik je hoofdwachtwoord."
+  revokeInWebApp: "Om het uit te zetten trek je deze passkey in via de Keepiq-webapp."

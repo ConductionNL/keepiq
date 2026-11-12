@@ -63,6 +63,13 @@ use Throwable;
 class ShareService {
 
 	/**
+	 * Why a restriction change is refused while the share quarantine scan holds the row.
+	 *
+	 * @var string
+	 */
+	private const CHANGE_HELD_BACK = 'This share waits for the share quarantine scan and cannot be changed yet';
+
+	/**
 	 * Constructor for ShareService.
 	 *
 	 * @param ShareTargetMapper $mapper The share-target mapper
@@ -140,14 +147,52 @@ class ShareService {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
 	public function updateRestriction(string $shareId, ShareRestriction $restriction, string $userId): ShareTarget {
+		$entity = $this->loadShare(shareId: $shareId);
+		$source = $this->auth->loadSecret(secretId: $entity->getSourceSecretId());
+		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
+		$this->assertDirectShareOfAnother(entity: $entity, userId: $userId);
+		$this->auth->assertMayShareOnward(source: $source, userId: $userId);
+		// As a revoke is refused (GHSA-m5p9-6pw7-pf3g): the row would take the
+		// new restriction while its copy kept the old one. Judged before the
+		// transaction, so a quarantine this makes is not rolled back.
+		$this->quarantineScan->assertNotHeldBack(row: $entity, verb: 'changed');
+
+		return $this->applyRestriction(entity: $entity, restriction: $restriction);
+	}//end updateRestriction()
+
+	/**
+	 * Load a share row by id.
+	 *
+	 * @param string $shareId The share-target row ID
+	 *
+	 * @return ShareTarget
+	 *
+	 * @throws InvalidArgumentException When the share does not exist
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 */
+	private function loadShare(string $shareId): ShareTarget {
 		try {
-			$entity = $this->mapper->findById($shareId);
+			return $this->mapper->findById($shareId);
 		} catch (DoesNotExistException) {
 			throw new InvalidArgumentException(message: 'Share not found');
 		}
+	}//end loadShare()
 
-		$source = $this->auth->loadSecret(secretId: $entity->getSourceSecretId());
-		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
+	/**
+	 * Refuse a share that came from a group share or a team folder, and a
+	 * share made to the caller.
+	 *
+	 * @param ShareTarget $entity The share row
+	 * @param string      $userId The requesting user
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the share is not a direct share to someone else
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 */
+	private function assertDirectShareOfAnother(ShareTarget $entity, string $userId): void {
 		if ($entity->getGroupShareId() !== null || $entity->getTeamFolderId() !== null) {
 			throw new InvalidArgumentException(message: 'Change this share on its group share or team folder');
 		}
@@ -155,24 +200,27 @@ class ShareService {
 		if ($entity->getTargetUserId() === $userId) {
 			throw new InvalidArgumentException(message: 'You cannot change a share made to you');
 		}
+	}//end assertDirectShareOfAnother()
 
-		$this->auth->assertMayShareOnward(source: $source, userId: $userId);
-		// As a revoke is refused (GHSA-m5p9-6pw7-pf3g): the row would take the
-		// new restriction while its copy kept the old one. Judged before the
-		// transaction, so a quarantine this makes is not rolled back.
-		$this->quarantineScan->assertNotHeldBack(row: $entity, verb: 'changed');
-
+	/**
+	 * Store the new restriction and recompute the recipient's copy in one
+	 * transaction. Judging the row again can fail where it just succeeded,
+	 * which rolls the change back.
+	 *
+	 * @param ShareTarget      $entity      The share row
+	 * @param ShareRestriction $restriction The new use-only flag and end date
+	 *
+	 * @return ShareTarget
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 */
+	private function applyRestriction(ShareTarget $entity, ShareRestriction $restriction): ShareTarget {
 		$this->db?->beginTransaction();
 		try {
 			$entity->setUseOnly($restriction->useOnly);
 			$entity->setExpiresAt($restriction->expiresAt);
 			$updated = $this->mapper->update($entity);
-			// Judging the row again can fail where it just succeeded, which
-			// rolls the change back.
-			$this->restrictions?->resolveTargetsOrRefuse(
-				targets: [$updated],
-				refusal: 'This share waits for the share quarantine scan and cannot be changed yet'
-			);
+			$this->restrictions?->resolveTargetsOrRefuse(targets: [$updated], refusal: self::CHANGE_HELD_BACK);
 			$this->db?->commit();
 		} catch (Throwable $exception) {
 			$this->db?->rollBack();
@@ -180,7 +228,7 @@ class ShareService {
 		}
 
 		return $updated;
-	}//end updateRestriction()
+	}//end applyRestriction()
 
 	/**
 	 * List all share targets for a given source secret.

@@ -342,6 +342,49 @@ class ShareSyncServiceTest extends TestCase {
 	}
 
 	/**
+	 * Golden: login and additional fields follow the same rule (sent is set,
+	 * null is cleared, absent is kept), and only a different key moves the
+	 * key's change time.
+	 *
+	 * @return void
+	 */
+	public function testTheLoginAndAdditionalFieldsAreWrittenOnlyWhenSentAndOnlyANewKeyMovesItsAge(): void {
+		$source = $this->secret('src-1', 'alice');
+		$kept = $this->secret('copy-kept', 'bob');
+		$kept->setKey('SAME');
+		$kept->setLogin('OLD-L');
+		$kept->setAdditionalFields('OLD-A');
+		$kept->setKeyUpdatedAt(new DateTime('2026-01-01T00:00:00+00:00'));
+		$moved = $this->secret('copy-moved', 'carol');
+		$moved->setKey('OLD-K');
+		$moved->setLogin('OLD-L');
+		$moved->setAdditionalFields('OLD-A');
+		$moved->setKeyUpdatedAt(new DateTime('2026-01-01T00:00:00+00:00'));
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-kept', $kept], ['copy-moved', $moved]]);
+		$this->mapper->method('findBySourceSecret')->willReturn([$this->row('copy-kept', 'bob'), $this->row('copy-moved', 'carol')]);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+		$savedAt = new DateTime('2026-10-21T00:00:00+00:00');
+
+		$this->sync->writeCopyBlobs(
+			source: $source,
+			updates: [
+				['secretId' => 'copy-kept', 'key' => 'SAME', 'login' => null],
+				['secretId' => 'copy-moved', 'key' => 'NEW-K', 'login' => 'NEW-L', 'additionalFields' => null],
+			],
+			allowedIds: ['copy-kept' => true, 'copy-moved' => true],
+			savedAt: $savedAt,
+			writerId: 'alice'
+		);
+
+		$this->assertSame(['SAME', null, 'OLD-A'], [$kept->getKey(), $kept->getLogin(), $kept->getAdditionalFields()]);
+		$this->assertSame('2026-01-01T00:00:00+00:00', $kept->getKeyUpdatedAt()->format(DATE_ATOM));
+		$this->assertSame(['NEW-K', 'NEW-L', null], [$moved->getKey(), $moved->getLogin(), $moved->getAdditionalFields()]);
+		$this->assertSame('2026-10-21T00:00:00+00:00', $moved->getKeyUpdatedAt()->format(DATE_ATOM));
+		$this->assertNotSame($savedAt, $moved->getKeyUpdatedAt());
+		$this->assertSame('2026-10-21T00:00:00+00:00', $kept->getUpdatedAt()->format(DATE_ATOM));
+	}
+
+	/**
 	 * The TOTP seed and passkeys are written like the other value fields:
 	 * a sent value is set, a null one cleared, an absent one left as it is.
 	 *

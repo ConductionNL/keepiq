@@ -33,14 +33,16 @@ function chooseGroup(): FieldGroup | null {
 
 /** The list's own code group, else one in the list's form, else the focused one, else the first empty one. */
 function chooseCodeGroup(anchor: Element | null): HTMLInputElement[] | null {
-	if (anchor) {
-		const own = codeGroup(anchor)
-		const form = groupOf(anchor)
-		return own ?? (form ? findCodeGroups(document, form).find(isEmpty) ?? null : null)
-	}
+	if (anchor) return anchoredCodeGroup(anchor)
 	const focused = deepActiveElement()
 	const groups = findCodeGroups(document)
 	return groups.find((run) => run.includes(focused as HTMLInputElement)) ?? groups.find(isEmpty) ?? null
+}
+
+function anchoredCodeGroup(anchor: Element): HTMLInputElement[] | null {
+	const own = codeGroup(anchor)
+	const form = groupOf(anchor)
+	return own ?? (form ? findCodeGroups(document, form).find(isEmpty) ?? null : null)
 }
 
 const isEmpty = (run: HTMLInputElement[]) => run.every((input) => input.value === '')
@@ -60,34 +62,46 @@ export function executeFill(message: FillExecute, list: OpenList | null = null):
 	try {
 		// The frame navigated since the background matched it.
 		if (location.origin !== message.origin) return { filled: 'none', code: false }
-		if (message.anchorKey !== undefined && message.anchorKey !== list?.key) return { filled: 'none', code: false }
-		const anchor = message.anchorKey !== undefined ? list!.field : null
+		const anchor = anchorFor(message.anchorKey, list)
+		if (anchor === undefined) return { filled: 'none', code: false }
 		const group = anchor ? groupOf(anchor) : chooseGroup()
-		let user = false
-		let pass = false
-		if (group?.kind === 'login' && group.username && message.username !== null) {
-			fillField(group.username, message.username)
-			user = true
-		}
-		if (group?.kind === 'login' && group.currentPassword && message.password !== null) {
-			fillField(group.currentPassword, message.password)
-			pass = true
-		}
-		let code = false
-		const run = typeof message.code === 'string' && message.code !== '' ? chooseCodeGroup(anchor) : null
-		// A code group that already holds a value is the user's.
-		if (run && isEmpty(run)) {
-			fillCode(run, message.code!)
-			code = true
-		}
-		const filled: FillOutcome = user && pass ? 'both' : user ? 'username' : pass ? 'password' : 'none'
-		return { filled, code }
+		const user = fillUsername(group, message)
+		const pass = fillPassword(group, message)
+		const code = fillLoginCode(message, anchor)
+		return { filled: outcomeOf(user, pass), code }
 	} finally {
-		message.username = null
-		message.password = null
-		message.code = null
+		forgetCredential(message)
 	}
 }
+
+/** Nothing of the credential stays with the message once the fields hold it. */
+function forgetCredential(message: FillExecute): void {
+	message.username = null
+	message.password = null
+	message.code = null
+}
+
+function fillUsername(group: FieldGroup | null, message: FillExecute): boolean {
+	if (group?.kind !== 'login' || !group.username || message.username === null) return false
+	fillField(group.username, message.username)
+	return true
+}
+
+function fillPassword(group: FieldGroup | null, message: FillExecute): boolean {
+	if (group?.kind !== 'login' || !group.currentPassword || message.password === null) return false
+	fillField(group.currentPassword, message.password)
+	return true
+}
+
+/** A code group that already holds a value is the user's. */
+function fillLoginCode(message: FillExecute, anchor: Element | null): boolean {
+	const run = typeof message.code === 'string' && message.code !== '' ? chooseCodeGroup(anchor) : null
+	if (!run || !isEmpty(run)) return false
+	fillCode(run, message.code!)
+	return true
+}
+
+const outcomeOf = (user: boolean, pass: boolean): FillOutcome => (user && pass ? 'both' : user ? 'username' : pass ? 'password' : 'none')
 
 // Cards and identities, spec `card-identity-fill` § Each frame gets only its own members.
 

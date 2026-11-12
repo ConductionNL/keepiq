@@ -167,6 +167,7 @@ const ERROR_KEYS = {
 	invalid_pin: ['errors.wrongPin', false],
 	pin_forgotten: ['errors.pinForgotten', false],
 	pin_key_changed: ['errors.pinKeyChanged', false],
+	passkey_failed: ['errors.passkeyFailed', false],
 	unknown: ['errors.unknown', false],
 } satisfies Record<ErrorCode, readonly [string, boolean]>
 

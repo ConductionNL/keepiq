@@ -160,54 +160,69 @@ class MigrateAppConfigKeys implements IRepairStep {
 			return;
 		}
 
-		$migrated = 0;
-		$alreadyPresent = 0;
-		$emptySource = 0;
-		$skippedReserved = 0;
-
+		$tally = ['migrated' => 0, 'present' => 0, 'empty' => 0, 'reserved' => 0, 'failed' => 0];
 		foreach ($keys as $key) {
-			if (in_array($key, self::RESERVED_KEYS, strict: true) === true) {
-				$skippedReserved++;
-				continue;
-			}
-
-			/* The two READS belong inside the try as much as the write does.
-			   They used to sit outside it, so a read that threw propagated
-			   out of run() and aborted `occ upgrade` — and because this step
-			   also runs under <install>, an app that cannot finish its
-			   repair steps does not enable at all, taking every route with
-			   it. That is the opposite of what this class's docblock
-			   promises ("every failure is logged and the loop continues").
-			   One unreadable key is not worth an install. */
-			try {
-				$old = $this->appConfig->getValueString(self::OLD_APP_ID, $key, '');
-				if ($old === '') {
-					$emptySource++;
-					continue;
-				}
-
-				$existing = $this->appConfig->getValueString(Application::APP_ID, $key, '');
-				if ($existing !== '') {
-					$alreadyPresent++;
-					continue;
-				}
-
-				$this->appConfig->setValueString(Application::APP_ID, $key, $old);
-				$migrated++;
-			} catch (Throwable $e) {
-				$this->logger->warning(
-					'Keepiq: could not migrate one app config key; leaving it under the old namespace',
-					['key' => $key, 'exception' => $e->getMessage()]
-				);
-			}//end try
-		}//end foreach
+			$tally[$this->migrateKey(key: $key)]++;
+		}
 
 		$output->info(
-			'MigrateAppConfigKeys: ' . $migrated . ' key(s) migrated, ' . $alreadyPresent
-			. ' already present, ' . $emptySource . ' had no value to migrate, '
-			. $skippedReserved . ' skipped as Nextcloud-reserved.'
+			'MigrateAppConfigKeys: ' . $tally['migrated'] . ' key(s) migrated, ' . $tally['present']
+			. ' already present, ' . $tally['empty'] . ' had no value to migrate, '
+			. $tally['reserved'] . ' skipped as Nextcloud-reserved.'
 		);
 	}//end run()
+
+	/**
+	 * Migrate one key, logging a failure and carrying on.
+	 *
+	 * @param string $key The stored key name
+	 *
+	 * @return string The outcome: `migrated`, `present`, `empty`, `reserved` or `failed`
+	 */
+	private function migrateKey(string $key): string {
+		if (in_array($key, self::RESERVED_KEYS, strict: true) === true) {
+			return 'reserved';
+		}
+
+		/* The two READS belong inside the try as much as the write does.
+		   They used to sit outside it, so a read that threw propagated
+		   out of run() and aborted `occ upgrade` — and because this step
+		   also runs under <install>, an app that cannot finish its
+		   repair steps does not enable at all, taking every route with
+		   it. That is the opposite of what this class's docblock
+		   promises ("every failure is logged and the loop continues").
+		   One unreadable key is not worth an install. */
+		try {
+			return $this->copyKey(key: $key);
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'Keepiq: could not migrate one app config key; leaving it under the old namespace',
+				['key' => $key, 'exception' => $e->getMessage()]
+			);
+			return 'failed';
+		}
+	}//end migrateKey()
+
+	/**
+	 * Copy one key's old value unless it is empty or the new namespace has one.
+	 *
+	 * @param string $key The stored key name
+	 *
+	 * @return string The outcome: `migrated`, `present` or `empty`
+	 */
+	private function copyKey(string $key): string {
+		$old = $this->appConfig->getValueString(self::OLD_APP_ID, $key, '');
+		if ($old === '') {
+			return 'empty';
+		}
+
+		if ($this->appConfig->getValueString(Application::APP_ID, $key, '') !== '') {
+			return 'present';
+		}
+
+		$this->appConfig->setValueString(Application::APP_ID, $key, $old);
+		return 'migrated';
+	}//end copyKey()
 
 	/**
 	 * Every key currently stored under the old app-config namespace.

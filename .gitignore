@@ -133,5 +133,5 @@ screens/
 /playwright-report-federation/
 /test-results-federation/
 
-# Claude Code agent worktrees.
-/.claude/worktrees/
+# Claude Code: local settings and agent worktrees.
+/.claude/

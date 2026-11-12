@@ -592,60 +592,100 @@ export function formRolesIn(group: FieldGroup, kind: FormKind): Map<FormControl,
 	return found
 }
 
+/** One walk of a composed tree: its rendered order, its usable fields and its buttons that name an action. */
+interface TreeScan {
+	root: Root
+	order: Map<Element, number>
+	fields: FormControl[]
+	buttons: HTMLElement[]
+	follows: Follows
+}
+
+/** Where formless fields are grouped: the tree's root, and every ancestor of a button outside a form. */
+interface AnchorScan {
+	root: Root
+	holders: Set<Node>
+}
+
 /** Groups of `root` and the open shadow roots below it, as one composed tree. */
 function groupsIn(root: Root): FieldGroup[] {
-	const order = new Map<Element, number>()
-	const fields: FormControl[] = []
-	const buttons: HTMLElement[] = []
-	// Rendered order: a host's light children count where their slot is, not after its shadow root.
-	const visit = (elements: Iterable<Element>) => {
-		for (const el of elements) {
-			order.set(el, order.size)
-			if (isControl(el) && isUsable(el)) fields.push(el)
-			else if (el.matches(BUTTONS) && keywordOf(buttonText(el)) && isVisible(el)) buttons.push(el as HTMLElement)
-			if (el.localName === 'slot') {
-				// Assigned text, whitespace too, replaces the fallback.
-				const slot = el as HTMLSlotElement
-				visit(slot.assignedNodes({ flatten: true }).length ? slot.assignedElements({ flatten: true }) : el.children)
-			} else visit((el.shadowRoot ?? el).children)
-		}
-	}
-	visit(root.children)
-	const follows: Follows = (a, b) => order.get(b)! > order.get(a)!
-	const groups: FieldGroup[] = []
+	const scan = scanTree(root)
+	return [...formGroups(scan), ...formlessGroups(scan)]
+}
 
+function scanTree(root: Root): TreeScan {
+	const order = new Map<Element, number>()
+	const scan: TreeScan = { root, order, fields: [], buttons: [], follows: (a, b) => order.get(b)! > order.get(a)! }
+	visitTree(scan, root.children)
+	return scan
+}
+
+/** Rendered order: a host's light children count where their slot is, not after its shadow root. */
+function visitTree(scan: TreeScan, elements: Iterable<Element>): void {
+	for (const el of elements) {
+		scan.order.set(el, scan.order.size)
+		collect(scan, el)
+		visitTree(scan, renderedChildren(el))
+	}
+}
+
+/** Assigned text, whitespace too, replaces a slot's fallback. */
+function renderedChildren(el: Element): Iterable<Element> {
+	if (el.localName !== 'slot') return (el.shadowRoot ?? el).children
+	const slot = el as HTMLSlotElement
+	return slot.assignedNodes({ flatten: true }).length ? slot.assignedElements({ flatten: true }) : el.children
+}
+
+const isUsableControl = (el: Element): el is FormControl => isControl(el) && isUsable(el)
+
+const isActionButton = (el: Element) => el.matches(BUTTONS) && !!keywordOf(buttonText(el)) && isVisible(el)
+
+function collect(scan: TreeScan, el: Element): void {
+	if (isUsableControl(el)) scan.fields.push(el)
+	else if (isActionButton(el)) scan.buttons.push(el as HTMLElement)
+}
+
+function formGroups(scan: TreeScan): FieldGroup[] {
 	const forms = new Map<HTMLFormElement, FormControl[]>()
-	const formless: FormControl[] = []
-	for (const field of fields) {
+	for (const field of scan.fields) {
 		const form = formOf(field)
 		if (form) forms.set(form, [...(forms.get(form) ?? []), field])
-		else formless.push(field)
 	}
-	for (const [form, members] of forms) {
-		groups.push(buildGroup(follows, form, members, buttons.filter((button) => formOf(button) === form)))
-	}
+	return [...forms].map(([form, members]) => buildGroup(scan.follows, form, members, scan.buttons.filter((button) => formOf(button) === form)))
+}
 
-	const loose = buttons.filter((button) => !formOf(button))
+function formlessGroups(scan: TreeScan): FieldGroup[] {
+	const loose = scan.buttons.filter((button) => !formOf(button))
+	const anchors: AnchorScan = { root: scan.root, holders: buttonHolders(loose) }
+	const formless = scan.fields.filter((field) => !formOf(field))
+	const passwordAnchors = new Set(formless.filter((field) => field.type === 'password').map((field) => anchorOf(anchors, field)))
+	const byAnchor = new Map<Element | Root, FormControl[]>()
+	for (const field of formless) {
+		const anchor = deepestContaining(passwordAnchors, field) ?? anchorOf(anchors, field)
+		byAnchor.set(anchor, [...(byAnchor.get(anchor) ?? []), field])
+	}
+	return [...byAnchor].map(([anchor, members]) => buildGroup(scan.follows, anchor, members, loose.filter((button) => contains(anchor, button))))
+}
+
+/** Every ancestor of a button outside a form, but a subscribe button's. */
+function buttonHolders(loose: HTMLElement[]): Set<Node> {
 	const holders = new Set<Node>()
 	for (const button of loose) {
 		if (keywordOf(buttonText(button)) === 'subscribe') continue
 		for (let at = parentOf(button); at; at = parentOf(at)) holders.add(at)
 	}
-	const anchorOf = (field: FormControl): Element | Root => {
-		for (let at = parentOf(field); at && at !== root; at = parentOf(at)) if (holders.has(at)) return at as Element | ShadowRoot
-		return root
-	}
-	const passwordAnchors = new Set(formless.filter((field) => field.type === 'password').map(anchorOf))
-	const byAnchor = new Map<Element | Root, FormControl[]>()
-	for (const field of formless) {
-		const containing = [...passwordAnchors].filter((anchor) => contains(anchor, field))
-		const anchor = containing.length ? containing.reduce((deepest, a) => (contains(deepest, a) ? a : deepest)) : anchorOf(field)
-		byAnchor.set(anchor, [...(byAnchor.get(anchor) ?? []), field])
-	}
-	for (const [anchor, members] of byAnchor) {
-		groups.push(buildGroup(follows, anchor, members, loose.filter((button) => contains(anchor, button))))
-	}
-	return groups
+	return holders
+}
+
+function anchorOf({ root, holders }: AnchorScan, field: FormControl): Element | Root {
+	for (let at = parentOf(field); at && at !== root; at = parentOf(at)) if (holders.has(at)) return at as Element | ShadowRoot
+	return root
+}
+
+/** The deepest of the password fields' anchors that holds `field`, if any does. */
+function deepestContaining(anchors: Set<Element | Root>, field: FormControl): Element | Root | undefined {
+	const containing = [...anchors].filter((anchor) => contains(anchor, field))
+	return containing.length ? containing.reduce((deepest, a) => (contains(deepest, a) ? a : deepest)) : undefined
 }
 
 /** Every group in `root`, open shadow roots included. */
@@ -680,20 +720,40 @@ function splitKind(input: HTMLInputElement): 0 | 1 | 2 {
 
 /** The code group holding `field` in `group`: its run of short inputs, else the field alone when it is a one-time code. */
 function codeGroupIn(group: FieldGroup, field: HTMLInputElement): HTMLInputElement[] | null {
+	const run = splitRunOf(group, field)
+	if (run) return run
+	return group.roles.get(field) === 'oneTimeCode' ? [field] : null
+}
+
+/** Where a split code sits in a group: a field's index and its split kind. */
+interface SplitAt {
+	at: number
+	kind: 1 | 2
+}
+
+function splitRunOf(group: FieldGroup, field: HTMLInputElement): HTMLInputElement[] | null {
 	const kind = splitKind(field)
 	const at = group.fields.indexOf(field)
-	if (kind !== 0 && at >= 0) {
-		let start = at
-		let end = at
-		while (start > 0 && splitKind(group.fields[start - 1]!) === kind) start--
-		while (end < group.fields.length - 1 && splitKind(group.fields[end + 1]!) === kind) end++
-		const run = group.fields.slice(start, end + 1)
-		const total = run.reduce((sum, input) => sum + input.maxLength, 0)
-		// A run of longer inputs needs a one-time-code member, so a birth date in three inputs is no code.
-		if (kind === 1 ? run.length >= 4 && run.length <= 8
-			: run.length >= 2 && run.length <= 4 && total >= 4 && total <= 8 && run.some((input) => group.roles.get(input) === 'oneTimeCode')) return run
-	}
-	return group.roles.get(field) === 'oneTimeCode' ? [field] : null
+	if (kind === 0 || at < 0) return null
+	const run = neighbours(group, { at, kind })
+	return (kind === 1 ? isOneCharRun(run) : isShortRun(group, run)) ? run : null
+}
+
+/** The field's neighbours of the same split kind, the field among them. */
+function neighbours(group: FieldGroup, { at, kind }: SplitAt): HTMLInputElement[] {
+	let start = at
+	let end = at
+	while (start > 0 && splitKind(group.fields[start - 1]!) === kind) start--
+	while (end < group.fields.length - 1 && splitKind(group.fields[end + 1]!) === kind) end++
+	return group.fields.slice(start, end + 1)
+}
+
+const isOneCharRun = (run: HTMLInputElement[]) => run.length >= 4 && run.length <= 8
+
+/** A run of longer inputs needs a one-time-code member, so a birth date in three inputs is no code. */
+function isShortRun(group: FieldGroup, run: HTMLInputElement[]): boolean {
+	const total = run.reduce((sum, input) => sum + input.maxLength, 0)
+	return run.length >= 2 && run.length <= 4 && total >= 4 && total <= 8 && run.some((input) => group.roles.get(input) === 'oneTimeCode')
 }
 
 /** The code group `field` belongs to (spec `totp-autofill`, Code fields), or null. */

@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: Kľúč trezoru sa zmenil. Odomknite ho hlavným heslom.
   pinTooShort: "Minimálny počet znakov: {count}"
   unknown: Niečo sa pokazilo
+  passkeyFailed: "Prístupový kľúč trezor neodomkol. Použite hlavné heslo."
 
 notices:
   keyChanged: Kľúč vášho trezoru sa v Keepiq zmenil. Odomknite ho aktuálnym hlavným heslom.
+  fileAccess: "Keepiq nepotrebuje prístup k súborom. V Nextcloud v Nastavenia, Zabezpečenie, Zariadenia a relácie môžete tomuto heslu aplikácie vypnúť prístup k súborom alebo ho zrušiť."
 
 common:
   accountOnHost: "{name} na {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Vytvorte ho v Nextcloud v Nastavenia, Zabezpečenie. Nikdy sem nezadávajte svoje prihlasovacie heslo do Nextcloud.
   hintWithLink: "Vytvorte ho v Nextcloud v Nastavenia, Zabezpečenie: {link}. Nikdy sem nezadávajte svoje prihlasovacie heslo do Nextcloud."
   securityLink: otvoriť nastavenia zabezpečenia
+  signInWithBrowser: "Prihlásiť sa cez Nextcloud"
+  finishInTab: "Dokončite prihlásenie na otvorenej stránke Nextcloud. Keepiq pridá účet, keď skončíte."
+  orAppPassword: "Alebo zadajte heslo aplikácie:"
 
 accounts:
   active: (aktívny)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: PIN-y sa nezhodujú
   pinAdvice: Nepoužívajte PIN, ktorý už máte k telefónu alebo banke.
   pinAfterRestart: Po reštarte prehliadača raz zadáte hlavné heslo; potom bude PIN znova fungovať.
-  biometrics: Odomykanie biometriou
-  notAvailableYet: Zatiaľ nedostupné
   vaultTimeout: Časový limit trezoru
   timeoutImmediately: Okamžite
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Nič sa neuložilo: Keepiq u {cloudIds} je príliš starý na ukladanie prístupových kľúčov. Požiadajte ich o aktualizáciu Keepiq, alebo uložte prístupový kľúč k iným prihlasovacím údajom."
     partnerUpgradeRequiredUnnamed: "Nič sa neuložilo: partnerská organizácia, s ktorou sú tieto prihlasovacie údaje zdieľané, používa príliš starý Keepiq na ukladanie prístupových kľúčov. Požiadajte ju o aktualizáciu Keepiq, alebo uložte prístupový kľúč k iným prihlasovacím údajom."
     shareScanPending: Tieto prihlasovacie údaje čakajú na dokončenie kontroly svojho zdieľania. Nič sa neuložilo; skúste to neskôr.
+
+vaultPasskey:
+  unlock: "Odomknúť odtlačkom prsta alebo tvárou"
+  unlockIntro: "Prehliadač si vyžiada odtlačok prsta, tvár alebo PIN zariadenia."
+  enrolTitle: "Nastaviť odomykanie odtlačkom prsta alebo tvárou"
+  enrolIntro: "Potvrďte hlavné heslo. Prehliadač si potom dvakrát vyžiada odtlačok prsta, tvár alebo PIN zariadenia."
+  enrolSubmit: "Nastaviť"
+  enrolDone: "Odomykanie odtlačkom prsta alebo tvárou je pre tento prehliadač nastavené."
+  close: "Zavrieť"
+  label: "Rozšírenie prehliadača Keepiq"
+  tooOld: "Odomykanie odtlačkom prsta alebo tvárou vyžaduje Chrome alebo Edge 122, alebo Firefox 150, či novší. Použite hlavné heslo."
+  unsupported: "Tento prehliadač alebo zariadenie nemôže odomknúť Keepiq odtlačkom prsta ani tvárou. Použite hlavné heslo."
+  revokeInWebApp: "Ak to chcete vypnúť, zrušte tento prístupový kľúč vo webovej aplikácii Keepiq."

@@ -32,9 +32,11 @@ errors:
   pinKeyChanged: Din boksnøgle er ændret. Lås op med din hovedadgangskode.
   pinTooShort: Brug mindst {count} tegn
   unknown: Noget gik galt
+  passkeyFailed: "Adgangsnøglen kunne ikke låse din boks op. Brug din hovedadgangskode."
 
 notices:
   keyChanged: Din boksnøgle er ændret i Keepiq. Lås op med din nuværende hovedadgangskode.
+  fileAccess: "Keepiq behøver ikke adgang til filer. I Nextcloud under Indstillinger, Sikkerhed, Enheder & sessioner kan du slå filadgang fra for denne app-adgangskode eller tilbagekalde den."
 
 common:
   accountOnHost: "{name} på {host}"
@@ -88,6 +90,9 @@ addAccount:
   hint: Opret en under Nextcloud-indstillinger, Sikkerhed. Indtast aldrig din Nextcloud-adgangskode her.
   hintWithLink: "Opret en under Nextcloud-indstillinger, Sikkerhed: {link}. Indtast aldrig din Nextcloud-adgangskode her."
   securityLink: åbn sikkerhedsindstillinger
+  signInWithBrowser: "Log ind via Nextcloud"
+  finishInTab: "Afslut log ind på den Nextcloud-side, der åbnede. Keepiq tilføjer kontoen, når du er færdig."
+  orAppPassword: "Eller indtast en app-adgangskode:"
 
 accounts:
   active: (aktiv)
@@ -409,8 +414,6 @@ settings:
   pinMismatch: PIN-koderne stemmer ikke overens
   pinAdvice: Genbrug ikke en PIN fra din telefon eller bank.
   pinAfterRestart: Efter en genstart af browseren indtaster du din hovedadgangskode én gang; derefter virker din PIN igen.
-  biometrics: Lås op med biometri
-  notAvailableYet: Ikke tilgængelig endnu
   vaultTimeout: Timeout for boks
   timeoutImmediately: Med det samme
   timeoutMinutes:
@@ -796,3 +799,16 @@ passkey:
     partnerUpgradeRequired: "Intet blev gemt: Keepiq hos {cloudIds} er for gammel til at gemme adgangsnøgler. Bed dem om at opdatere Keepiq, eller gem adgangsnøglen på et andet login."
     partnerUpgradeRequiredUnnamed: "Intet blev gemt: en partnerorganisation, som dette login er delt med, kører en Keepiq, der er for gammel til at gemme adgangsnøgler. Bed dem om at opdatere Keepiq, eller gem adgangsnøglen på et andet login."
     shareScanPending: Dette login venter på et tjek af dets delinger, som ikke er færdigt. Intet blev gemt; prøv igen senere.
+
+vaultPasskey:
+  unlock: "Lås op med fingeraftryk eller ansigt"
+  unlockIntro: "Din browser beder om dit fingeraftryk, dit ansigt eller enhedens pinkode."
+  enrolTitle: "Konfigurer oplåsning med fingeraftryk eller ansigt"
+  enrolIntro: "Bekræft din hovedadgangskode. Derefter beder din browser to gange om fingeraftryk, ansigt eller enhedens pinkode."
+  enrolSubmit: "Konfigurer"
+  enrolDone: "Oplåsning med fingeraftryk eller ansigt er konfigureret for denne browser."
+  close: "Luk"
+  label: "Keepiq-browserudvidelse"
+  tooOld: "Oplåsning med fingeraftryk eller ansigt kræver Chrome eller Edge 122, eller Firefox 150, eller nyere. Brug din hovedadgangskode."
+  unsupported: "Denne browser eller enhed kan ikke låse Keepiq op med fingeraftryk eller ansigt. Brug din hovedadgangskode."
+  revokeInWebApp: "Tilbagekald denne adgangsnøgle i Keepiq-webappen for at slå det fra."

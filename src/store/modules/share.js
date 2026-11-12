@@ -24,6 +24,7 @@ import { generateOcsUrl, generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
+import { uniqueSharees } from '../../utils/sharees.js'
 
 /**
  * How many candidates one shareability probe may name.
@@ -41,6 +42,63 @@ const MAX_RECIPIENT_PROBE = 100
  * answers at most this many users at once (RecipientStatusService::MAX_USERS).
  */
 const RECIPIENT_PAGE = 25
+
+/**
+ * The shareable options for a search: the sharees it finds, probed for an
+ * active vault, in the probe's order. No probe runs when nobody was found.
+ *
+ * @param {object} store The share store.
+ * @param {string} search The search term.
+ * @return {Promise<Array<{id: string, label: string}>>}
+ * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-shareability-lookup
+ */
+async function shareableOptions(store, search) {
+	const sharees = await store.searchSharees(search)
+	if (sharees.length === 0) {
+		return []
+	}
+	const response = await axios.post(
+		generateUrl('/apps/keepiq/api/v1/shares/recipient-certificates'),
+		{ userIds: sharees.map((sharee) => sharee.id) },
+	)
+	return shareableFrom(response.data?.recipients, sharees)
+}
+
+/**
+ * The recipients the probe marked shareable, labelled. The probe answers ids
+ * only, so the display names come back off the search rows they were asked
+ * about.
+ *
+ * @param {Array<object>|undefined} recipients The probe's answer.
+ * @param {Array<{id: string, label: string}>} sharees The probed sharees.
+ * @return {Array<{id: string, label: string}>}
+ * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-shareability-lookup
+ */
+function shareableFrom(recipients, sharees) {
+	const labels = new Map(sharees.map((sharee) => [sharee.id, sharee.label]))
+	return (Array.isArray(recipients) ? recipients : [])
+		.filter((recipient) => recipient?.shareable === true)
+		.map((recipient) => {
+			const id = String(recipient.userId ?? '')
+			return { id, label: labels.get(id) || id }
+		})
+}
+
+/**
+ * The user rows of a sharee search answer: the exact matches, then the
+ * others.
+ *
+ * @param {object} response The sharee search response.
+ * @return {Array<object>}
+ * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-shareability-lookup
+ */
+function shareeUserRows(response) {
+	const data = response.data?.ocs?.data ?? {}
+	return [
+		...(Array.isArray(data.exact?.users) ? data.exact.users : []),
+		...(Array.isArray(data.users) ? data.users : []),
+	]
+}
 
 export const useShareStore = defineStore('share', {
 	state: () => ({
@@ -130,32 +188,7 @@ export const useShareStore = defineStore('share', {
 			this.candidatesError = null
 			this.candidatesLoading = true
 			try {
-				const sharees = await this.searchSharees(search)
-				if (sharees.length === 0) {
-					if (seq === this.candidatesSeq) {
-						this.shareableRecipients = []
-					}
-					return []
-				}
-
-				const response = await axios.post(
-					generateUrl('/apps/keepiq/api/v1/shares/recipient-certificates'),
-					{ userIds: sharees.map((sharee) => sharee.id) },
-				)
-
-				// The probe answers ids only, so the display names come back
-				// off the search rows they were asked about.
-				const labels = new Map(
-					sharees.map((sharee) => [sharee.id, sharee.label]),
-				)
-				const recipients = response.data?.recipients
-				const options = (Array.isArray(recipients) ? recipients : [])
-					.filter((recipient) => recipient?.shareable === true)
-					.map((recipient) => {
-						const id = String(recipient.userId ?? '')
-						return { id, label: labels.get(id) || id }
-					})
-
+				const options = await shareableOptions(this, search)
 				if (seq === this.candidatesSeq) {
 					this.shareableRecipients = options
 				}
@@ -221,23 +254,7 @@ export const useShareStore = defineStore('share', {
 				},
 			)
 
-			const data = response.data?.ocs?.data ?? {}
-			const rows = [
-				...(Array.isArray(data.exact?.users) ? data.exact.users : []),
-				...(Array.isArray(data.users) ? data.users : []),
-			]
-
-			const users = []
-			const seen = new Set()
-			for (const row of rows) {
-				const id = String(row?.value?.shareWith ?? '')
-				if (id === '' || seen.has(id)) {
-					continue
-				}
-				seen.add(id)
-				users.push({ id, label: String(row?.label || id) })
-			}
-
+			const users = uniqueSharees(shareeUserRows(response))
 			return users.slice(0, perPage)
 		},
 

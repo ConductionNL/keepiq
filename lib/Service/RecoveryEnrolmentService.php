@@ -110,20 +110,7 @@ class RecoveryEnrolmentService {
 	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 	 */
 	public function enrol(string $userId, string $recoveryKeyId, string $envelope): RecoveryEnrolment {
-		if ($this->policy->policy() === 'off') {
-			throw new ForbiddenException(message: 'Account recovery is off');
-		}
-
-		$active = $this->keys->activeKey();
-		if ($active === null || $active->getId() !== $recoveryKeyId) {
-			throw new InvalidArgumentException(message: 'Enrol with the active recovery key');
-		}
-
-		$decoded = json_decode($envelope, true);
-		if (is_array($decoded) === false || isset($decoded['encKey'], $decoded['ct']) === false) {
-			throw new InvalidArgumentException(message: 'envelope is not a recovery envelope');
-		}
-
+		$this->assertEnrolable(recoveryKeyId: $recoveryKeyId, envelope: $envelope);
 		$suiteId = $this->activeSuiteId(userId: $userId);
 		if ($suiteId === '') {
 			throw new InvalidArgumentException(message: 'You have no active encryption suite');
@@ -151,6 +138,52 @@ class RecoveryEnrolmentService {
 
 		return $enrolment;
 	}//end enrol()
+
+	/**
+	 * Refuse an enrolment while recovery is off, to another key than the
+	 * active one, or with something that is no recovery envelope.
+	 *
+	 * @param string $recoveryKeyId The key the envelope is wrapped to
+	 * @param string $envelope      The hybrid envelope of the user's private key
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenException       When recovery is off
+	 * @throws InvalidArgumentException When the key is not the active one or the envelope is malformed
+	 *
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+	 */
+	private function assertEnrolable(string $recoveryKeyId, string $envelope): void {
+		if ($this->policy->policy() === 'off') {
+			throw new ForbiddenException(message: 'Account recovery is off');
+		}
+
+		$active = $this->keys->activeKey();
+		if ($active === null || $active->getId() !== $recoveryKeyId) {
+			throw new InvalidArgumentException(message: 'Enrol with the active recovery key');
+		}
+
+		$this->assertRecoveryEnvelope(envelope: $envelope);
+	}//end assertEnrolable()
+
+	/**
+	 * Refuse anything but a JSON recovery envelope with its wrapped key and
+	 * ciphertext.
+	 *
+	 * @param string $envelope The hybrid envelope
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the envelope is malformed
+	 *
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+	 */
+	private function assertRecoveryEnvelope(string $envelope): void {
+		$decoded = json_decode($envelope, true);
+		if (is_array($decoded) === false || isset($decoded['encKey'], $decoded['ct']) === false) {
+			throw new InvalidArgumentException(message: 'envelope is not a recovery envelope');
+		}
+	}//end assertRecoveryEnvelope()
 
 	/**
 	 * Withdraw, refused under the `required` policy.

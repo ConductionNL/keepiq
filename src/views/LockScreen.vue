@@ -832,30 +832,11 @@ export default {
 			this.error = null
 
 			try {
-				if (this.offlineStore.online) {
-					await this.sessionStore.unlock(this.masterPassword)
-					await this.enrolForRecovery(this.masterPassword)
-				} else {
-					// Offline unlock from the cached snapshot — no server request;
-					// the master password never leaves the browser (offline §4.1).
-					await this.offlineStore.unlockOffline(this.masterPassword)
-				}
-				const returnUrl = this.$route.query.returnUrl || '/'
-				await this.playUnlockAnimation()
-				this.$router.push(returnUrl)
+				await this.unlockWithPassword()
+				await this.enterVault()
 			} catch (e) {
-				// When an online unlock fails on a network error, fall back to the
-				// offline snapshot (covers "online but server unreachable").
-				if (this.offlineStore.online && this.isNetworkError(e)) {
-					try {
-						await this.offlineStore.unlockOffline(this.masterPassword)
-						const returnUrl = this.$route.query.returnUrl || '/'
-						await this.playUnlockAnimation()
-						this.$router.push(returnUrl)
-						return
-					} catch {
-						// fall through to the generic error below
-					}
+				if (await this.unlockedOfflineInstead(e)) {
+					return
 				}
 				if (e?.code === 'two_factor_required') {
 					// Not a wrong password: the policy withholds the key.
@@ -872,6 +853,56 @@ export default {
 			} finally {
 				this.loading = false
 				this.masterPassword = ''
+			}
+		},
+
+		/**
+		 * Unlock with the typed master password: the session online (then
+		 * enrol for recovery), or the cached snapshot offline with no server
+		 * request, so the password never leaves the browser (offline §4.1).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
+		async unlockWithPassword() {
+			if (this.offlineStore.online) {
+				await this.sessionStore.unlock(this.masterPassword)
+				await this.enrolForRecovery(this.masterPassword)
+				return
+			}
+			await this.offlineStore.unlockOffline(this.masterPassword)
+		},
+
+		/**
+		 * Play the unlock, then go to the return URL (or the root).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
+		async enterVault() {
+			const returnUrl = this.$route.query.returnUrl || '/'
+			await this.playUnlockAnimation()
+			this.$router.push(returnUrl)
+		},
+
+		/**
+		 * When an online unlock failed on a network error, open the offline
+		 * snapshot instead (covers "online but server unreachable").
+		 *
+		 * @param {Error|object} e The failure of the online unlock.
+		 * @return {Promise<boolean>} True when the snapshot opened.
+		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 */
+		async unlockedOfflineInstead(e) {
+			if (!(this.offlineStore.online && this.isNetworkError(e))) {
+				return false
+			}
+			try {
+				await this.offlineStore.unlockOffline(this.masterPassword)
+				await this.enterVault()
+				return true
+			} catch {
+				return false
 			}
 		},
 

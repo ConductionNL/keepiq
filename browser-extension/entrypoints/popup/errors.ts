@@ -33,6 +33,7 @@ const ERROR_TEXTS = new Map<ErrorCode, ErrorWording>([
 	['invalid_pin', (_, attemptsLeft) => pinText(attemptsLeft)],
 	['pin_forgotten', () => i18n.t('errors.pinForgotten')],
 	['pin_key_changed', () => i18n.t('errors.pinKeyChanged')],
+	['passkey_failed', () => i18n.t('errors.passkeyFailed')],
 ])
 
 /** What the user reads for each error code; `host` names the server where it matters, `attemptsLeft` comes with `invalid_pin`. */
@@ -46,6 +47,7 @@ export function noticeText(notice: NoticeCode): string {
 	switch (notice) {
 		case 'session_revoked': return i18n.t('errors.sessionRevoked')
 		case 'key_changed': return i18n.t('notices.keyChanged')
+		case 'file_access': return i18n.t('notices.fileAccess')
 	}
 }
 

@@ -77,7 +77,7 @@
 <script>
 import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
-import { useBulkStore } from '../store/modules/bulk.js'
+import bulkRunDialog, { skippingGone } from '../mixins/bulkRunDialog.js'
 import { useSecretStore } from '../store/modules/secret.js'
 
 const TYPED_CONFIRMATION_THRESHOLD = 10
@@ -91,45 +91,16 @@ export default {
 		BulkRunPanel,
 	},
 
-	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
-	},
+	mixins: [bulkRunDialog],
 
 	emits: ['close', 'done'],
 	data() {
 		return {
 			typed: '',
-			/**
-			 * Whether a run was started FROM THIS DIALOG. The store's report
-			 * outlives the dialog (it is cleared with the selection), so the
-			 * phase cannot be read from the report alone.
-			 */
-			ran: false,
 		}
 	},
 
 	computed: {
-		/**
-		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
-		 */
-		bulk() {
-			return useBulkStore()
-		},
-
-		/**
-		 * Whether the dialog has switched from asking to reporting: a run
-		 * happened here and is no longer in flight.
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
-		 */
-		finished() {
-			return this.ran && !this.bulk.progress.running
-		},
-
 		/**
 		 * The dialog title. A command while it still asks, an outcome once it
 		 * reports — counted off the report, never off the selection, which the
@@ -140,10 +111,7 @@ export default {
 		 */
 		title() {
 			if (this.finished) {
-				return this.t('keepiq', 'Deleted {ok} of {total} secrets', {
-					ok: this.bulk.report.filter((r) => r.status === 'ok').length,
-					total: this.bulk.report.length,
-				})
+				return this.t('keepiq', 'Deleted {ok} of {total} secrets', this.reportCounts)
 			}
 			return this.t('keepiq', 'Delete {count} secrets', {
 				count: this.bulk.selectionCount,
@@ -186,15 +154,7 @@ export default {
 		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 		 */
 		async deleteOne(secretId) {
-			try {
-				await useSecretStore().deleteSecret(secretId)
-				return { status: 'ok' }
-			} catch (e) {
-				if (e?.response?.status === 404) {
-					return { status: 'skipped', reason: 'already deleted' }
-				}
-				throw e
-			}
+			return skippingGone(() => useSecretStore().deleteSecret(secretId))
 		},
 
 		/**
@@ -205,13 +165,10 @@ export default {
 		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRun() {
-			this.ran = true
-			await this.bulk.run(
-				this.bulk.selectedIds,
+			await this.runOverSelection(
 				(id) => this.deleteOne(id),
 				this.t('keepiq', 'Deleting secrets'),
 			)
-			this.$emit('done')
 		},
 
 		/**
@@ -221,11 +178,10 @@ export default {
 		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRetry() {
-			await this.bulk.retryFailed(
+			await this.retryFailedWith(
 				(id) => this.deleteOne(id),
 				this.t('keepiq', 'Retrying delete'),
 			)
-			this.$emit('done')
 		},
 	},
 }
