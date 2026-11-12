@@ -14,7 +14,7 @@ model: "2026"
 # ADR-014.
 component_base_dirs: [""]
 
-# Only vendored tooling and third-party code are excluded.
+# Excluded: vendored tooling, third-party code and the Android client.
 exclude:
   # Developer tooling for Claude Code under .claude/: skills, agents and their
   # configuration, partly copied from upstream (the skill-creator skill carries
@@ -24,3 +24,6 @@ exclude:
   # The Argon2 reference C implementation, vendored unchanged for the mobile
   # cinterop build (CC0-1.0 or Apache-2.0, see its LICENSE).
   - ".*/mobile/shared/src/nativeInterop/argon2/.*"
+  # The Android client (mobile/android): a Kotlin Compose app measured and
+  # reviewed with the Android toolchain, outside the scope of the Nextcloud app.
+  - ".*/mobile/android/.*"
