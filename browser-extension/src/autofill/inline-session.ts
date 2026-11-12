@@ -112,12 +112,18 @@ async function passkeysFor(accountId: string, ceremony: ConditionalRequest): Pro
 
 /** The active account and its status, while it is logged in with the list of `mode` on; null otherwise. */
 async function listingAccount(mode: InlineMode): Promise<{ id: string; status: 'locked' | 'unlocked' } | null> {
+	const active = await loggedInAccount()
+	if (!active) return null
+	if (!listsIn(await readSettings(active.id), mode)) return null
+	return active
+}
+
+/** The active account and its status, while it is logged in. */
+async function loggedInAccount(): Promise<{ id: string; status: 'locked' | 'unlocked' } | null> {
 	const accountId = await getActiveAccountId()
 	const account = accountId ? await getAccount(accountId) : undefined
 	const status = account ? await accountStatus(account) : 'logged_out'
-	if (!account || status === 'logged_out') return null
-	if (!listsIn(await readSettings(account.id), mode)) return null
-	return { id: account.id, status }
+	return account && status !== 'logged_out' ? { id: account.id, status } : null
 }
 
 /** The rows an unlocked list shows: its matching logins, cards or identities, and the passkeys a pending conditional request offers. */
@@ -135,29 +141,51 @@ async function openHeight(place: ListPlace, locked: boolean, ceremony: Condition
  * The height counts the logins, cards or identities without decrypting any, and the passkeys of a pending conditional request, which
  * decrypts their logins' `passkeys` once per vault version (design.md § Risks); `inline.state` decides again what the list shows.
  */
-export async function openSession(message: InlineOpen, sender: Browser.runtime.MessageSender): Promise<InlineOpenReply> {
-	// A focus after the worker slept past the timeout must not count passkeys with the overdue key.
-	await enforce()
-	const mode: InlineMode = INLINE_MODES.includes(message.mode) ? message.mode : 'login'
+function senderFrame(sender: Browser.runtime.MessageSender): { tabId: number; frameId: number; frameUrl: string } | null {
 	const tabId = sender.tab?.id
 	const frameId = sender.frameId
 	const frameUrl = sender.url
 	if (tabId === undefined || frameId === undefined || !frameUrl) return null
-	await drop(tabId)
-	if (!isWebUrl(frameUrl)) return null
-	const account = await listingAccount(mode)
-	if (!account) return null
-	const place: ListPlace = { mode, accountId: account.id, frameId, frameUrl }
-	const ceremony = await conditionalFor(tabId, place)
-	if (message.webauthn === true && !ceremony) return null
-	const height = await openHeight(place, account.status === 'locked', ceremony)
-	const session: InlineSession = { key: newKey(), accountId: account.id, frameId, frameUrl, listFrameId: null, mode, itemIds: [], openedAt: Date.now() }
-	// Another frame's open may have written its session since the drop above; its list closes too.
+	return { tabId, frameId, frameUrl }
+}
+
+/** The sender's frame, with the tab's earlier session dropped, while it shows a web page. */
+async function openingFrame(sender: Browser.runtime.MessageSender) {
+	const frame = senderFrame(sender)
+	if (!frame) return null
+	await drop(frame.tabId)
+	return isWebUrl(frame.frameUrl) ? frame : null
+}
+
+/** Another frame's open may have written its session since the drop; its list closes too. */
+async function replaceSession(tabId: number, session: InlineSession): Promise<void> {
 	await queued(String(tabId), async () => {
 		const previous = await read(tabId)
 		await write(tabId, session)
 		if (previous) void toHost(tabId, previous, { kind: 'inline.close', key: previous.key, refocus: false })
 	})
+}
+
+const openMode = (mode: InlineMode): InlineMode => (INLINE_MODES.includes(mode) ? mode : 'login')
+
+/** A `webauthn` field only opens a list while the frame has a conditional request pending. */
+const lacksCeremony = (message: InlineOpen, ceremony: ConditionalRequest | null) => message.webauthn === true && !ceremony
+
+export async function openSession(message: InlineOpen, sender: Browser.runtime.MessageSender): Promise<InlineOpenReply> {
+	// A focus after the worker slept past the timeout must not count passkeys with the overdue key.
+	await enforce()
+	const mode = openMode(message.mode)
+	const frame = await openingFrame(sender)
+	if (!frame) return null
+	const account = await listingAccount(mode)
+	if (!account) return null
+	const { tabId, frameId, frameUrl } = frame
+	const place: ListPlace = { mode, accountId: account.id, frameId, frameUrl }
+	const ceremony = await conditionalFor(tabId, place)
+	if (lacksCeremony(message, ceremony)) return null
+	const height = await openHeight(place, account.status === 'locked', ceremony)
+	const session: InlineSession = { key: newKey(), accountId: account.id, frameId, frameUrl, listFrameId: null, mode, itemIds: [], openedAt: Date.now() }
+	await replaceSession(tabId, session)
 	return { key: session.key, height }
 }
 
@@ -177,13 +205,18 @@ function accept(message: { kind: string; key?: unknown }, sender: Browser.runtim
 	return queued(String(tabId), async () => {
 		const session = await read(tabId)
 		if (!session || session.key !== message.key) return null
-		if (session.listFrameId === null) {
-			if (message.kind !== 'inline.state') return null
-			session.listFrameId = frameId
-			await write(tabId, session)
-		}
-		return session.listFrameId === frameId ? session : null
+		return (await listFrameOf(tabId, { session, kind: message.kind, frameId })) === frameId ? session : null
 	})
+}
+
+/** The session's list frame: the first one to ask for the state takes it, and no other kind may. */
+async function listFrameOf(tabId: number, claim: { session: InlineSession; kind: string; frameId: number }): Promise<number | null> {
+	const { session, kind, frameId } = claim
+	if (session.listFrameId !== null) return session.listFrameId
+	if (kind !== 'inline.state') return null
+	session.listFrameId = frameId
+	await write(tabId, session)
+	return frameId
 }
 
 /** The session's account, while it is still the active one and logged in. */
@@ -278,11 +311,20 @@ async function refuse(tabId: number, session: InlineSession, refused: 'locked' |
 }
 
 /** A passkey row passes only as offered by the last `inline.state`, for the conditional request still pending. */
-async function pickPasskey(tabId: number, session: InlineSession, row: Pick<PasskeyRow, 'itemId' | 'credentialId'>, input: PickInput): Promise<InlinePickReply> {
+type OfferedRow = Pick<PasskeyRow, 'itemId' | 'credentialId'>
+
+/** The pending conditional request, while the last `inline.state` offered `row` for it. */
+async function offeringCeremony(tabId: number, offer: { session: InlineSession; row: OfferedRow }): Promise<ConditionalRequest | null> {
+	const { session, row } = offer
 	const offered = session.passkeys
-	if (!offered?.offered.some(([id, credential]) => id === row.itemId && credential === row.credentialId)) return refuse(tabId, session, 'stale')
+	if (!offered?.offered.some(([id, credential]) => id === row.itemId && credential === row.credentialId)) return null
 	const ceremony = await conditionalCeremony(tabId, session.frameId, session.accountId, session.frameUrl)
-	if (ceremony?.id !== offered.ceremonyId) return refuse(tabId, session, 'stale')
+	return ceremony?.id === offered.ceremonyId ? ceremony : null
+}
+
+async function pickPasskey(tabId: number, session: InlineSession, row: OfferedRow, input: PickInput): Promise<InlinePickReply> {
+	const ceremony = await offeringCeremony(tabId, { session, row })
+	if (!ceremony) return refuse(tabId, session, 'stale')
 	if (await toHost(tabId, session, { kind: 'inline.verify', key: session.key, input }) !== true) return { refused: 'not_visible' }
 	await touch()
 	const outcome = await pickFromList(tabId, ceremony.id, row.itemId, row.credentialId)
@@ -291,19 +333,27 @@ async function pickPasskey(tabId: number, session: InlineSession, row: Pick<Pass
 	return { passkey: outcome }
 }
 
+/** An item id, a press, and a credential id as text when it names one. */
+const isPickMessage = (message: PickMessage) =>
+	typeof message.itemId === 'string' && isPickInput(message.input) && (message.credentialId === undefined || typeof message.credentialId === 'string')
+
 async function pick(tabId: number, session: InlineSession, message: PickMessage): Promise<InlinePickReply> {
-	if (typeof message.itemId !== 'string' || !isPickInput(message.input)) return null
+	if (!isPickMessage(message)) return null
 	const { credentialId } = message
-	if (credentialId !== undefined && typeof credentialId !== 'string') return null
 	if ((await sessionAccount(session)) !== 'unlocked') return refuse(tabId, session, 'locked')
 	if (credentialId !== undefined) return pickPasskey(tabId, session, { itemId: message.itemId, credentialId }, message.input)
 	return pickItem(tabId, session, message)
 }
 
 /** A login, a login's code, or a card or identity, which fills the group the list is open on and other frames by the frame plan. */
-async function pickItem(tabId: number, session: InlineSession, message: PickMessage): Promise<InlinePickReply> {
+/** Listed by the last `inline.state`, and still matching. */
+async function stillListed(session: InlineSession, itemId: string): Promise<boolean> {
 	const { rows } = await matchingFor(session.mode, session.accountId, session.frameUrl)
-	if (!session.itemIds.includes(message.itemId) || !rows.some((row) => row.id === message.itemId)) return refuse(tabId, session, 'stale')
+	return session.itemIds.includes(itemId) && rows.some((row) => row.id === itemId)
+}
+
+async function pickItem(tabId: number, session: InlineSession, message: PickMessage): Promise<InlinePickReply> {
+	if (!(await stillListed(session, message.itemId))) return refuse(tabId, session, 'stale')
 	const verify: BackgroundToContent = { kind: 'inline.verify', key: session.key, input: message.input }
 	// The list stays open to say why: assistive styling on the page (filters, zoom) refuses every pick.
 	if (await toHost(tabId, session, verify) !== true) return { refused: 'not_visible' }
@@ -314,6 +364,12 @@ async function pickItem(tabId: number, session: InlineSession, message: PickMess
 	}
 	const confirmed = parseConfirmation(message.confirmed)
 	const result = session.mode === 'code' ? await pickCode(target) : await fill({ ...target, confirmed, ask: 'reply', code: true })
+	return pickedReply(tabId, { session, result })
+}
+
+/** A question due goes to the list first; a fill closes it with focus back on the field. */
+async function pickedReply(tabId: number, picked: { session: InlineSession; result: Awaited<ReturnType<typeof fill>> }): Promise<InlinePickReply> {
+	const { session, result } = picked
 	if (result.needsInsecureConfirm) return { needsInsecureConfirm: true }
 	if (result.needsFormConfirm) return { needsFormConfirm: result.needsFormConfirm }
 	await drop(tabId, { key: session.key, refocus: true })
