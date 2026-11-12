@@ -1,0 +1,155 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TypedFieldsForm (golden) > renders each kind with its props, marking a missing required field 1`] = `
+[
+  {
+    "attrs": {
+      "data-kind": "NcTextField",
+      "data-testid": "typed-field-host",
+    },
+    "component": "NcTextField",
+    "props": {
+      "disabled": false,
+      "error": false,
+      "helperText": "",
+      "label": "Host (required)",
+      "modelValue": "db1",
+      "required": true,
+      "type": "text",
+    },
+  },
+  {
+    "attrs": {
+      "data-kind": "NcTextField",
+      "data-testid": "typed-field-mail",
+    },
+    "component": "NcTextField",
+    "props": {
+      "disabled": false,
+      "error": false,
+      "helperText": "",
+      "label": "Mail",
+      "modelValue": "",
+      "required": undefined,
+      "type": "email",
+    },
+  },
+  {
+    "attrs": {
+      "data-kind": "NcPasswordField",
+      "data-testid": "typed-field-pin",
+    },
+    "component": "NcPasswordField",
+    "props": {
+      "disabled": false,
+      "error": true,
+      "helperText": "This field is required",
+      "label": "PIN (required)",
+      "modelValue": "",
+      "required": true,
+      "type": undefined,
+    },
+  },
+  {
+    "attrs": {
+      "data-kind": "NcTextField",
+      "data-testid": "typed-field-site",
+    },
+    "component": "NcTextField",
+    "props": {
+      "disabled": false,
+      "error": false,
+      "helperText": "",
+      "label": "Site",
+      "modelValue": "https://x",
+      "required": false,
+      "type": "url",
+    },
+  },
+]
+`;
+
+exports[`TypedFieldsForm (golden) > renders every field disabled, and reports typing by key 1`] = `
+[
+  {
+    "attrs": {
+      "data-kind": "NcTextField",
+      "data-testid": "typed-field-host",
+    },
+    "component": "NcTextField",
+    "props": {
+      "disabled": true,
+      "error": false,
+      "helperText": "",
+      "label": "Host (required)",
+      "modelValue": "",
+      "required": true,
+      "type": "text",
+    },
+  },
+  {
+    "attrs": {
+      "data-kind": "NcTextField",
+      "data-testid": "typed-field-mail",
+    },
+    "component": "NcTextField",
+    "props": {
+      "disabled": true,
+      "error": false,
+      "helperText": "",
+      "label": "Mail",
+      "modelValue": "",
+      "required": undefined,
+      "type": "email",
+    },
+  },
+  {
+    "attrs": {
+      "data-kind": "NcPasswordField",
+      "data-testid": "typed-field-pin",
+    },
+    "component": "NcPasswordField",
+    "props": {
+      "disabled": true,
+      "error": false,
+      "helperText": "",
+      "label": "PIN (required)",
+      "modelValue": "1234",
+      "required": true,
+      "type": undefined,
+    },
+  },
+  {
+    "attrs": {
+      "data-kind": "NcTextField",
+      "data-testid": "typed-field-site",
+    },
+    "component": "NcTextField",
+    "props": {
+      "disabled": true,
+      "error": false,
+      "helperText": "",
+      "label": "Site",
+      "modelValue": "",
+      "required": false,
+      "type": "url",
+    },
+  },
+]
+`;
+
+exports[`TypedFieldsForm (golden) > renders every field disabled, and reports typing by key 2`] = `
+[
+  [
+    {
+      "pin": "9999",
+    },
+  ],
+  [
+    {
+      "mail": "a@b.c",
+      "pin": "1234",
+    },
+  ],
+]
+`;
