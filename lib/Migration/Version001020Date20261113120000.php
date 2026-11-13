@@ -33,7 +33,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
-class Version001018Date20261110120000 extends SimpleMigrationStep {
+class Version001020Date20261113120000 extends SimpleMigrationStep {
 	/**
 	 * The table that gets the column.
 	 *
