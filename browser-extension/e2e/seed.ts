@@ -9,7 +9,11 @@ import { encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import type { VaultSnapshot } from '@/src/vault/types'
 
-export const LOGIN = { username: 'test-user', password: 'test-password' }
+export const LOGIN = {
+	username: 'test-user',
+	password:
+		'test-password',
+}
 /** Every seeded card's `key`; the PIN is there to show it is never filled. */
 export const CARD = { number: '4111 1111 1111 1111', expiry: '03/27', cvv: '123', pin: '0000', cardholder: 'Anna de Vries' }
 /** Every seeded identity's `key`; the BSN is there to show it is never filled. */
@@ -17,7 +21,8 @@ export const IDENTITY = {
 	firstName: 'Anna', lastName: 'de Vries', address: 'Kerkstraat 1\n1234 AB Utrecht', phone: '0600000000', email: 'anna@example.test', bsn: '111222333',
 }
 /** The key `test-site/totp.js` checks codes against. */
-export const TOTP_SECRET = 'JBSWY3DPEHPK3PXP'
+export const TOTP_SECRET =
+	'JBSWY3DPEHPK3PXP'
 
 export interface FakeStorage {
 	local: Record<string, unknown>
@@ -55,7 +60,9 @@ export async function fakeStorage(
 	const now = new Date().toISOString()
 	const account: AccountRecord = {
 		id: 'e2e', serverUrl: 'https://keepiq.invalid', uid: 'tester', loginName: 'tester', displayName: 'Tester',
-		email: null, avatarDataUrl: null, appPassword: 'not-an-app-password', keepiqVersion: null,
+		email: null, avatarDataUrl: null, keepiqVersion: null,
+		appPassword:
+			'not-an-app-password',
 	}
 	const owned = { ownerId: account.uid, createdAt: now, updatedAt: now }
 	const secrets = [

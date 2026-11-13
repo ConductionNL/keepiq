@@ -67,7 +67,8 @@ export function resolveFaviconUrl(url) {
 export function typeIconName(typeName) {
 	const map = {
 		login: 'Key',
-		api_key: 'CodeTags',
+		api_key:
+			'CodeTags',
 		ssh_key: 'Console',
 		certificate: 'ShieldCheck',
 		note: 'NoteText',
