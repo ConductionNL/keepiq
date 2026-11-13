@@ -137,6 +137,23 @@ class SecretRequestService {
 	}//end refusalReason()
 
 	/**
+	 * The system name of the type of the Secret a request fills.
+	 *
+	 * Pass-through to the policy, which holds the Secret and type lookups, so
+	 * the public fill page can show the requested fields with the type's own
+	 * labels and inputs.
+	 *
+	 * @param SecretRequest $request The request being filled
+	 *
+	 * @return string|null The type name, or null when it cannot be resolved
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 */
+	public function secretTypeName(SecretRequest $request): ?string {
+		return $this->policy->secretTypeName(secretId: $request->getSecretId());
+	}//end secretTypeName()
+
+	/**
 	 * Mark a pending request as fulfilled from the public fill endpoint.
 	 *
 	 * Validates the lifecycle / expiry / requested-fields invariants, atomically

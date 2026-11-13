@@ -72,9 +72,9 @@ class SecretRequestFillController extends OCSController {
 	/**
 	 * Phase 1: resolve a token to its public metadata.
 	 *
-	 * Returns the list of requested fields, the public certificate the
-	 * browser must import to encrypt the responses, and the current
-	 * status so the page can render "expired" / "fulfilled" /
+	 * Returns the list of requested fields, the type of the Secret they fill,
+	 * the public certificate the browser must import to encrypt the responses,
+	 * and the current status so the page can render "expired" / "fulfilled" /
 	 * "temporarily unavailable" messages without leaking ownership.
 	 *
 	 * @param string $token The opaque request token from the URL
@@ -82,6 +82,7 @@ class SecretRequestFillController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.2
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -134,6 +135,7 @@ class SecretRequestFillController extends OCSController {
 				'token' => $request->getToken(),
 				'status' => $request->getStatus(),
 				'requested_fields' => $requestedFields,
+				'secret_type' => $this->secretRequestService->secretTypeName(request: $request),
 				'is_re_request' => $request->getIsReRequest(),
 				'expires_at' => $request->getExpiresAt()?->format(\DateTime::ATOM),
 				'public_certificate' => $suite->getCertificate(),

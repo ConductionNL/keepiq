@@ -34,6 +34,8 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Db\SecretType;
@@ -517,6 +519,66 @@ class SecretRequestPolicyTest extends TestCase {
 
 		$this->policy->requireRequestableType(typeId: 'type-1');
 	}//end testANamedTypeWithoutATypeMapperIsRefused()
+
+	/**
+	 * The type name of the Secret a request fills is resolved for the fill page.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 */
+	public function testTheSecretTypeNameIsResolved(): void {
+		$secret = new Secret();
+		$secret->setTypeId('type-1');
+
+		$this->assertSame(
+			expected: 'certificate',
+			actual: $this->policyWithSecret(secret: $secret)->secretTypeName(secretId: 'sec-1')
+		);
+	}//end testTheSecretTypeNameIsResolved()
+
+	/**
+	 * A Secret without a type, a missing Secret, or a policy without its
+	 * mappers answers null, so the fill page falls back to its generic labels.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 */
+	public function testAnUnresolvableSecretTypeIsNull(): void {
+		$this->assertNull($this->policyWithSecret(secret: new Secret())->secretTypeName(secretId: 'sec-1'));
+		$this->assertNull($this->policyWithSecret(secret: null)->secretTypeName(secretId: 'sec-1'));
+		$this->assertNull($this->policy->secretTypeName(secretId: 'sec-1'));
+	}//end testAnUnresolvableSecretTypeIsNull()
+
+	/**
+	 * A policy whose Secret mapper finds this Secret (or none, for null) and
+	 * whose type mapper resolves every id to a certificate.
+	 *
+	 * @param Secret|null $secret The Secret to find
+	 *
+	 * @return SecretRequestPolicy
+	 */
+	private function policyWithSecret(?Secret $secret): SecretRequestPolicy {
+		$secrets = $this->createStub(SecretMapper::class);
+		if ($secret === null) {
+			$secrets->method('findById')->willThrowException(new DoesNotExistException('gone'));
+		} else {
+			$secrets->method('findById')->willReturn($secret);
+		}
+
+		$type = new SecretType();
+		$type->setName('certificate');
+		$types = $this->createStub(SecretTypeMapper::class);
+		$types->method('findById')->willReturn($type);
+
+		return new SecretRequestPolicy(
+			mapper: $this->mapper,
+			suiteMapper: $this->activeSuites(),
+			secretMapper: $secrets,
+			typeMapper: $types
+		);
+	}//end policyWithSecret()
 
 	/**
 	 * A policy whose type mapper resolves every id to a type of this name.

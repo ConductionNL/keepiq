@@ -249,6 +249,37 @@ class SecretRequestPolicy {
 	}//end requireRequestableType()
 
 	/**
+	 * The system name of a Secret's type, for the public fill page.
+	 *
+	 * The type is plaintext metadata on a Secret, and the fill page needs it to
+	 * label and render the requested fields as the type's own form does. A
+	 * Secret or type that cannot be found, or an unwired mapper, answers null
+	 * and the page falls back to its generic labels.
+	 *
+	 * @param string $secretId The Secret the request fills
+	 *
+	 * @return string|null The type name, or null when it cannot be resolved
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 */
+	public function secretTypeName(string $secretId): ?string {
+		if ($this->secretMapper === null || $this->typeMapper === null) {
+			return null;
+		}
+
+		try {
+			$typeId = $this->secretMapper->findById($secretId)->getTypeId();
+			if ($typeId === '') {
+				return null;
+			}
+
+			return $this->typeMapper->findById($typeId)->getName();
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return null;
+		}
+	}//end secretTypeName()
+
+	/**
 	 * Look up a pending, non-expired request by its public access token.
 	 *
 	 * Distinguishes locked / expired / fulfilled / unknown via specific
