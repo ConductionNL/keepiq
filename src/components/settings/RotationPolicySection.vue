@@ -67,6 +67,21 @@ export default {
 		}
 	},
 
+	computed: {
+		/**
+		 * The positive day counts in the thresholds field.
+		 *
+		 * @return {number[]} The thresholds, in the order typed.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
+		 */
+		reminderThresholds() {
+			return this.reminderCsv
+				.split(',')
+				.map((part) => parseInt(part.trim(), 10))
+				.filter((day) => Number.isInteger(day) && day > 0)
+		},
+	},
+
 	methods: {
 		/**
 		 * Show the stored thresholds in their cleaned-up form.
@@ -99,26 +114,31 @@ export default {
 		/**
 		 * The defaults to store (the server validates positivity).
 		 *
-		 * @return {object|null} The settings to store, or null when the form is invalid.
+		 * @return {object} The settings to store.
 		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
 		 */
 		settingsPayload() {
-			const thresholds = this.reminderCsv
-				.split(',')
-				.map((part) => parseInt(part.trim(), 10))
-				.filter((day) => Number.isInteger(day) && day > 0)
-			if (!thresholds.length) {
-				this.error = this.t(
-					'keepiq',
-					'At least one positive reminder threshold is required.',
-				)
-				return null
-			}
 			return {
 				expiry_default_max_age_days: Math.max(0, this.maxAgeDays || 0),
-				expiry_reminder_days: thresholds,
+				expiry_reminder_days: this.reminderThresholds,
 			}
+		},
+
+		/**
+		 * Refuse a thresholds field without a positive day.
+		 *
+		 * @return {string|null} The message to show, or null when the form can be saved.
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
+		 */
+		validateSettings() {
+			if (this.reminderThresholds.length) {
+				return null
+			}
+			return this.t(
+				'keepiq',
+				'At least one positive reminder threshold is required.',
+			)
 		},
 	},
 }

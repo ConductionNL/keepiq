@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { setLocale } from '@/src/testing/i18n'
 import { DEFAULT_SHELL, ShellContext } from '../../shell-context'
-import { fakeBackground, fakeClipboard, mounts, sentOf } from '../../testing'
+import { fakeBackground, fakeClipboard, fakePermissions, mounts, sentOf } from '../../testing'
 import { Autofill } from './Autofill'
 
 afterEach(() => {
@@ -15,8 +15,9 @@ afterEach(() => {
 function renderView(options: Parameters<typeof fakeBackground>[0] = {}) {
 	const sent = fakeBackground(options)
 	const shell = { ...DEFAULT_SHELL, launch: vi.fn(), toast: vi.fn() }
-	render(<ShellContext.Provider value={shell}><Autofill /></ShellContext.Provider>)
-	return { sent, shell, user: userEvent.setup() }
+	const reload = vi.fn()
+	render(<ShellContext.Provider value={shell}><Autofill reload={reload} /></ShellContext.Provider>)
+	return { sent, shell, reload, user: userEvent.setup() }
 }
 
 const checkbox = (name: string) => screen.getByRole<HTMLInputElement>('checkbox', { name })
@@ -24,12 +25,16 @@ const select = (name: string) => screen.getByRole<HTMLSelectElement>('combobox',
 const described = (element: HTMLElement) => (element.getAttribute('aria-describedby') ?? '').split(' ').filter(Boolean).map((id) => document.getElementById(id)!.textContent)
 const patches = (sent: ReturnType<typeof fakeBackground>) => sentOf(sent, 'account.settings.set').map((message) => message.patch)
 const loaded = () => screen.findByRole('checkbox', { name: 'Autofill on page load' })
+const FORM_ENTRIES = [
+	'Display cards as suggestions', 'Display identities as suggestions',
+	'Always show cards as Autofill suggestions on Vault view', 'Always show identities as Autofill suggestions on Vault view',
+]
 
 describe('Autofill', () => {
 	it('shows an entry whose behaviour is not delivered as coming later, with its stored value', async () => {
 		const { sent, user } = renderView({ accountSettings: { autofillFeatures: [], values: { contextMenu: false } } })
 		await loaded()
-		for (const name of ['Autofill on page load', 'Show autofill suggestions on form fields', 'Enable context menu options']) {
+		for (const name of ['Autofill on page load', 'Show autofill suggestions on form fields', 'Enable context menu options', ...FORM_ENTRIES]) {
 			expect(checkbox(name).getAttribute('aria-disabled')).toBe('true')
 			expect(described(checkbox(name))).toEqual(['Coming later'])
 		}
@@ -39,8 +44,82 @@ describe('Autofill', () => {
 		}
 		expect(checkbox('Enable context menu options').checked).toBe(false)
 		await user.click(checkbox('Enable context menu options'))
+		await user.click(checkbox('Display cards as suggestions'))
 		expect(patches(sent)).toEqual([])
-		expect(screen.queryByText('Show identities as suggestions')).toBeNull()
+	})
+
+	it('has the four card and identity entries on by default, after the inline list entry, and stores each change', async () => {
+		const { sent, user } = renderView()
+		await loaded()
+		const all = screen.getAllByRole('checkbox').map((element) => element.getAttribute('aria-label') ?? element.parentElement!.textContent)
+		const at = all.indexOf('Show autofill suggestions on form fields')
+		expect(all.slice(at + 1, at + 5)).toEqual(FORM_ENTRIES)
+		for (const name of FORM_ENTRIES) {
+			expect(checkbox(name).checked).toBe(true)
+			expect(checkbox(name).getAttribute('aria-disabled')).toBeNull()
+		}
+		await user.click(checkbox('Display identities as suggestions'))
+		await user.click(checkbox('Always show cards as Autofill suggestions on Vault view'))
+		await waitFor(() => expect(patches(sent)).toEqual([{ inlineIdentities: false }, { vaultCards: false }]))
+	})
+
+	it('re-reads the vault tab after a vault entry changed, not after an inline one', async () => {
+		const { sent, reload, user } = renderView()
+		await loaded()
+		await user.click(checkbox('Display cards as suggestions'))
+		await waitFor(() => expect(patches(sent)).toHaveLength(1))
+		expect(reload).not.toHaveBeenCalled()
+		await user.click(checkbox('Always show cards as Autofill suggestions on Vault view'))
+		await waitFor(() => expect(reload).toHaveBeenCalledTimes(1))
+		await user.click(checkbox('Always show identities as Autofill suggestions on Vault view'))
+		await waitFor(() => expect(reload).toHaveBeenCalledTimes(2))
+	})
+
+	it('does not re-read the vault tab when the change was not stored', async () => {
+		const { reload, user } = renderView({ unanswered: ['account.settings.set'] })
+		await loaded()
+		await user.click(checkbox('Always show cards as Autofill suggestions on Vault view'))
+		await new Promise((resolve) => setTimeout(resolve, 20))
+		expect(reload).not.toHaveBeenCalled()
+	})
+
+	it('nests the inline card and identity entries under the inline list entry', async () => {
+		renderView()
+		await loaded()
+		const nested = checkbox('Display cards as suggestions').closest('.form-card__nested')!
+		expect(nested.contains(checkbox('Display identities as suggestions'))).toBe(true)
+		expect(nested.contains(checkbox('Show autofill suggestions on form fields'))).toBe(false)
+		expect(nested.contains(checkbox('Always show cards as Autofill suggestions on Vault view'))).toBe(false)
+	})
+
+	it('disables the inline card and identity entries while the inline list is off, keeping their values', async () => {
+		const { sent, user } = renderView({ accountSettings: { values: { inlineSuggestions: false, inlineCards: false } } })
+		await loaded()
+		for (const name of ['Display cards as suggestions', 'Display identities as suggestions']) {
+			expect(checkbox(name).getAttribute('aria-disabled')).toBe('true')
+			expect(described(checkbox(name))).toEqual(['Turn on Show autofill suggestions on form fields first.'])
+		}
+		expect(screen.getAllByText('Turn on Show autofill suggestions on form fields first.')).toHaveLength(1)
+		expect(checkbox('Display cards as suggestions').checked).toBe(false)
+		expect(checkbox('Display identities as suggestions').checked).toBe(true)
+		await user.click(checkbox('Display identities as suggestions'))
+		expect(patches(sent)).toEqual([])
+		await user.click(checkbox('Always show identities as Autofill suggestions on Vault view'))
+		await waitFor(() => expect(patches(sent)).toEqual([{ vaultIdentities: false }]))
+		await user.click(checkbox('Show autofill suggestions on form fields'))
+		await waitFor(() => expect(checkbox('Display identities as suggestions').getAttribute('aria-disabled')).toBeNull())
+		expect(described(checkbox('Display identities as suggestions'))).toEqual([])
+		expect(screen.queryByText('Turn on Show autofill suggestions on form fields first.')).toBeNull()
+	})
+
+	it('words the card and identity entries in Dutch', async () => {
+		setLocale('nl')
+		renderView({ accountSettings: { values: { inlineSuggestions: false } } })
+		await screen.findByRole('checkbox', { name: 'Kaarten als suggesties tonen' })
+		expect(described(screen.getByRole('checkbox', { name: 'Kaarten als suggesties tonen' }))).toEqual(['Zet eerst Invulsuggesties tonen in formuliervelden aan.'])
+		for (const name of ['Identiteiten als suggesties tonen', 'Kaarten altijd als invulsuggesties tonen in de kluisweergave', 'Identiteiten altijd als invulsuggesties tonen in de kluisweergave']) {
+			expect(screen.getByRole('checkbox', { name })).toBeTruthy()
+		}
 	})
 
 	it('enables every entry and stores its change, now that ext-autofill delivered them', async () => {
@@ -117,10 +196,56 @@ describe('Autofill', () => {
 		expect(writeText).toHaveBeenCalledWith('about:addons')
 	})
 
+	it('shows the steps on Safari, with nothing to copy', async () => {
+		vi.stubEnv('BROWSER', 'safari')
+		fakePermissions([])
+		const { shell, user } = renderView({ accountSettings: { shortcut: 'Ctrl+Shift+L' } })
+		await loaded()
+		await user.click(screen.getByRole('button', { name: 'Change' }))
+		expect(shell.launch).not.toHaveBeenCalled()
+		expect(screen.getByText('Open Safari Settings, choose Extensions, then select Keepiq to change its shortcut')).toBeTruthy()
+		expect(screen.queryByRole('button', { name: 'Copy about:addons' })).toBeNull()
+	})
+
+	it('words the Safari steps in Dutch', async () => {
+		setLocale('nl')
+		vi.stubEnv('BROWSER', 'safari')
+		fakePermissions([])
+		const { user } = renderView({ accountSettings: { shortcut: 'Ctrl+Shift+L' } })
+		await user.click(await screen.findByRole('button', { name: 'Wijzigen' }))
+		expect(screen.getByText('Open de Safari-instellingen, kies Extensies en selecteer Keepiq om de sneltoets te wijzigen')).toBeTruthy()
+	})
+
+	it('opens the shortcut page on Edge, a Chromium build', async () => {
+		vi.stubEnv('BROWSER', 'edge')
+		const { shell, user } = renderView({ accountSettings: { shortcut: 'Ctrl+Shift+L' } })
+		await loaded()
+		await user.click(screen.getByRole('button', { name: 'Change' }))
+		expect(shell.launch).toHaveBeenCalledWith('chrome://extensions/shortcuts')
+	})
+
 	it('says Not set without a shortcut', async () => {
 		renderView()
 		await loaded()
 		expect(screen.getByText('Not set')).toBeTruthy()
+	})
+
+	it('shows Website access after the shortcut on Safari', async () => {
+		vi.stubEnv('BROWSER', 'safari')
+		fakePermissions(['https://cloud.example.org/*'])
+		renderView()
+		const allow = await screen.findByRole('button', { name: 'Allow on every website' })
+		expect(described(allow)).toEqual(['Website access', 'Only websites you allowed'])
+		expect(screen.getByRole('button', { name: 'Change' }).compareDocumentPosition(allow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+	})
+
+	it.each(['chrome', 'firefox'])('has no Website access on %s', async (target) => {
+		vi.stubEnv('BROWSER', target)
+		const { contains } = fakePermissions([])
+		renderView()
+		await loaded()
+		expect(screen.queryByText('Website access')).toBeNull()
+		expect(contains).not.toHaveBeenCalled()
 	})
 })
 
@@ -130,6 +255,12 @@ describe('Make Keepiq your default password manager', () => {
 	const MANAGED = 'Your organisation or another extension manages this browser setting.'
 	const entry = () => screen.findByRole<HTMLInputElement>('checkbox', { name: NAME })
 	const grant = (granted: boolean) => vi.spyOn(browser.permissions, 'request').mockImplementation(async () => granted)
+
+	it('is shown on Edge, a Chromium build', async () => {
+		vi.stubEnv('BROWSER', 'edge')
+		renderView()
+		expect((await entry()).checked).toBe(false)
+	})
 
 	it('shows off with its description on a fresh install', async () => {
 		const { sent } = renderView()
@@ -221,8 +352,8 @@ describe('Make Keepiq your default password manager', () => {
 		expect(screen.getByText('Keepiq is not responding. Reload the extension and reopen this popup.')).toBeTruthy()
 	})
 
-	it('is not shown on Firefox', async () => {
-		vi.stubEnv('BROWSER', 'firefox')
+	it.each(['firefox', 'safari'])('is not shown on %s', async (target) => {
+		vi.stubEnv('BROWSER', target)
 		const { sent } = renderView()
 		await loaded()
 		expect(screen.queryByRole('checkbox', { name: NAME })).toBeNull()

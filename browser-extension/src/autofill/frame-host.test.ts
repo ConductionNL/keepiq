@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // @vitest-environment-options {"settings":{"navigation":{"disableChildFrameNavigation":true}}}
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createFrameHost, importantStyle } from './frame-host'
+import { createFrameHost, importantStyle, isOwnHost } from './frame-host'
 
 afterEach(() => {
 	document.documentElement.querySelectorAll(':scope > div').forEach((element) => element.remove())
@@ -53,5 +53,47 @@ describe('createFrameHost', () => {
 		document.documentElement.append(host.element)
 		host.remove()
 		expect(host.element.isConnected).toBe(false)
+	})
+})
+
+describe('isOwnHost', () => {
+	const shown = () => {
+		const host = createFrameHost('/inline-list.html', 'Keepiq logins')
+		host.style({ position: 'fixed', top: '10px' })
+		document.documentElement.append(host.element)
+		return host
+	}
+
+	it('is a host we created, connected and styled as we wrote it', () => {
+		expect(isOwnHost(shown().element)).toBe(true)
+	})
+
+	it('is no element of the page, even one that copies a host', () => {
+		const copy = document.createElement('div')
+		copy.setAttribute('style', shown().written)
+		document.documentElement.append(copy)
+		expect(isOwnHost(copy)).toBe(false)
+	})
+
+	it('is no host before it is styled or appended', () => {
+		const host = createFrameHost('/inline-list.html', 'Keepiq logins')
+		expect(isOwnHost(host.element)).toBe(false)
+		host.style({ position: 'fixed' })
+		expect(isOwnHost(host.element)).toBe(false)
+	})
+
+	it('is no host the page restyled, decorated or kept after we removed it', () => {
+		const restyled = shown()
+		restyled.element.setAttribute('style', `${restyled.written} opacity: 0.5 !important;`)
+		expect(isOwnHost(restyled.element)).toBe(false)
+		const decorated = shown()
+		const pseudo = vi.spyOn(window, 'getComputedStyle').mockReturnValue({ content: '"x"' } as CSSStyleDeclaration)
+		expect(isOwnHost(decorated.element)).toBe(false)
+		pseudo.mockRestore()
+		expect(isOwnHost(decorated.element)).toBe(true)
+		const removed = shown()
+		removed.remove()
+		document.documentElement.append(removed.element)
+		expect(isOwnHost(removed.element)).toBe(false)
 	})
 })

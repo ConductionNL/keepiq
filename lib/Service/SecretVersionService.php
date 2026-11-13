@@ -299,41 +299,13 @@ class SecretVersionService {
 	 * @throws InvalidArgumentException When the head was deleted after it was read
 	 */
 	private function restoreHead(Secret $secret, SecretVersion $version, string $userId): Secret {
-		// Always after the stored version: the column and the stale check
-		// count whole seconds, so a restore must never keep the version an
-		// edit made before it was based on.
-		$stored = $secret->getUpdatedAt();
-		$savedAt = new DateTime('@'.max(time(), ($stored?->getTimestamp() ?? 0) + 1));
-		if ($stored !== null && $this->secretMapper->advanceVersion(id: $secret->getId(), base: $stored, savedAt: $savedAt) === 0) {
-			throw new StaleWriteException(current: $this->reload(id: $secret->getId()));
-		}
+		$savedAt = $this->advancePastStored(secret: $secret);
 
 		// Snapshot the current head so the restore itself is undoable.
 		$this->snapshot(preUpdate: $secret, actorType: 'user', actorId: $userId);
 
 		$beforeRestore = clone $secret;
-		$secret->setName($version->getName());
-		$secret->setUrl($version->getUrl());
-		$secret->setKey($version->getKey());
-		$secret->setLogin($version->getLogin());
-		$secret->setAdditionalFields($version->getAdditionalFields());
-		// A version made before these fields existed holds null and the head
-		// keeps its values; `''` was empty then and clears them.
-		if ($version->getTotp() !== null) {
-			$secret->setTotp($version->getTotp());
-		}
-
-		if ($version->getPasskeys() !== null) {
-			$secret->setPasskeys($version->getPasskeys());
-		}
-
-		if ($secret->getTotp() === '') {
-			$secret->setTotp(null);
-		}
-
-		if ($secret->getPasskeys() === '') {
-			$secret->setPasskeys(null);
-		}
+		$this->writeVersionValues(secret: $secret, version: $version);
 
 		// Old ciphertext is no new value: on a flagged row a credential it
 		// changes has no change time, so it reads as exposed and moves no
@@ -352,6 +324,73 @@ class SecretVersionService {
 
 		return $secret;
 	}//end restoreHead()
+
+	/**
+	 * Move the head's stored version on to the restore's save time, always
+	 * after the stored one: the column and the stale check count whole
+	 * seconds, so a restore must never keep the version an edit made before
+	 * it was based on.
+	 *
+	 * @param Secret $secret The head as read before the transaction
+	 *
+	 * @return DateTime The restore's save time
+	 *
+	 * @throws StaleWriteException When the head moved on after it was read
+	 */
+	private function advancePastStored(Secret $secret): DateTime {
+		$stored = $secret->getUpdatedAt();
+		$savedAt = new DateTime('@'.max(time(), ($stored?->getTimestamp() ?? 0) + 1));
+		if ($stored !== null && $this->secretMapper->advanceVersion(id: $secret->getId(), base: $stored, savedAt: $savedAt) === 0) {
+			throw new StaleWriteException(current: $this->reload(id: $secret->getId()));
+		}
+
+		return $savedAt;
+	}//end advancePastStored()
+
+	/**
+	 * Write a version's values onto the head.
+	 *
+	 * @param Secret        $secret  The head, changed in place
+	 * @param SecretVersion $version The version restored
+	 *
+	 * @return void
+	 */
+	private function writeVersionValues(Secret $secret, SecretVersion $version): void {
+		$secret->setName($version->getName());
+		$secret->setUrl($version->getUrl());
+		$secret->setKey($version->getKey());
+		$secret->setLogin($version->getLogin());
+		$secret->setAdditionalFields($version->getAdditionalFields());
+		$this->writeLaterFields(secret: $secret, version: $version);
+	}//end writeVersionValues()
+
+	/**
+	 * Write the TOTP and passkeys of a version. A version made before these
+	 * fields existed holds null and the head keeps its values; `''` was
+	 * empty then and clears them.
+	 *
+	 * @param Secret        $secret  The head, changed in place
+	 * @param SecretVersion $version The version restored
+	 *
+	 * @return void
+	 */
+	private function writeLaterFields(Secret $secret, SecretVersion $version): void {
+		if ($version->getTotp() !== null) {
+			$secret->setTotp($version->getTotp());
+		}
+
+		if ($version->getPasskeys() !== null) {
+			$secret->setPasskeys($version->getPasskeys());
+		}
+
+		if ($secret->getTotp() === '') {
+			$secret->setTotp(null);
+		}
+
+		if ($secret->getPasskeys() === '') {
+			$secret->setPasskeys(null);
+		}
+	}//end writeLaterFields()
 
 	/**
 	 * The head, read for the base check and again inside the restore's transaction.

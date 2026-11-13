@@ -1,4 +1,5 @@
 import { i18n } from '#i18n'
+import { isChromium } from '@/src/platform'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { Icon, type IconName } from '../../components/Icon'
 import { Loading } from '../../components/Loading'
@@ -10,7 +11,8 @@ import { ABOUT_LINKS } from './about-links'
 export function About() {
 	const { snapshot, failed } = useAccountSettings()
 	if (!snapshot) return failed ? <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner> : <Loading />
-	const rate = import.meta.env.BROWSER === 'firefox' ? ABOUT_LINKS.rate.firefox : ABOUT_LINKS.rate.chrome
+	// Every Chromium browser rates in the Chrome Web Store; the others are Firefox and Safari.
+	const rate = ABOUT_LINKS.rate[isChromium() ? 'chrome' : import.meta.env.BROWSER as 'firefox' | 'safari']
 	const links: { href: string; label: string; icon: IconName }[] = [
 		{ href: ABOUT_LINKS.help, label: i18n.t('settings.help'), icon: 'info' },
 		{ href: ABOUT_LINKS.reportBug, label: i18n.t('settings.reportBug'), icon: 'alert' },

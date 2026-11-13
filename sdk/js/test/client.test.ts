@@ -104,6 +104,23 @@ describe('Client', () => {
 		await expect(client({ certificatePem: FIXTURE.certificatePem }).getById('sec-cli-fixture')).rejects.toBeInstanceOf(KeyMismatchError)
 	})
 
+	it.each([
+		['empty', (enc: Record<string, unknown>) => { enc.certificateFingerprint = '' }],
+		['null', (enc: Record<string, unknown>) => { enc.certificateFingerprint = null }],
+		['missing', (enc: Record<string, unknown>) => { delete enc.certificateFingerprint }],
+		['a number', (enc: Record<string, unknown>) => { enc.certificateFingerprint = 42 }],
+	])('refuses an envelope whose fingerprint is %s when a certificate is pinned', async (_name, change) => {
+		change(stub.envelopes.get('sec-cli-fixture')!.encryption)
+		await expect(client({ certificatePem: FIXTURE.certificatePem }).getById('sec-cli-fixture')).rejects.toBeInstanceOf(KeyMismatchError)
+		expect((await client().getById('sec-cli-fixture')).key).toBe(FIXTURE.plaintext.key)
+	})
+
+	it('accepts the matching certificate fingerprint in upper case', async () => {
+		const enc = stub.envelopes.get('sec-cli-fixture')!.encryption
+		enc.certificateFingerprint = FIXTURE.envelope.encryption.certificateFingerprint.toUpperCase()
+		expect((await client({ certificatePem: FIXTURE.certificatePem }).getById('sec-cli-fixture')).key).toBe(FIXTURE.plaintext.key)
+	})
+
 	it('accepts the matching certificate', async () => {
 		const s = await client({ certificatePem: FIXTURE.certificatePem }).getById('sec-cli-fixture')
 		expect(s.key).toBe(FIXTURE.plaintext.key)

@@ -69,7 +69,9 @@ vi.mock('@nextcloud/axios', () => ({
 				return step('options', { data: { credentials: [] } })
 			}
 			if (url.endsWith('/challenge')) {
-				return step('challenge', { data: { challenge: 'AQID' } })
+				return step('challenge', {
+					data: { challenge: 'AQID', assertionChallenge: 'BAUG' },
+				})
 			}
 			if (script.slowList) {
 				await new Promise((resolve) => setTimeout(resolve, 5))
@@ -128,7 +130,11 @@ function created(over = {}) {
 	return {
 		rawId: new Uint8Array([7, 8, 250]).buffer,
 		getClientExtensionResults: () => ({ prf: { enabled: true } }),
-		response: { getTransports: () => ['usb', 'nfc'] },
+		response: {
+			getTransports: () => ['usb', 'nfc'],
+			clientDataJSON: new Uint8Array([123, 125]).buffer,
+			attestationObject: new Uint8Array([160]).buffer,
+		},
 		...over,
 	}
 }
@@ -141,6 +147,13 @@ function created(over = {}) {
  */
 function assertion(first) {
 	return {
+		rawId: new Uint8Array([7, 8, 250]).buffer,
+		response: {
+			clientDataJSON: new Uint8Array([123, 34, 125]).buffer,
+			authenticatorData: new Uint8Array([1, 2]).buffer,
+			signature: new Uint8Array([48, 6]).buffer,
+			userHandle: new Uint8Array([97]).buffer,
+		},
 		getClientExtensionResults: () => ({ prf: { results: { first } } }),
 	}
 }
@@ -155,7 +168,11 @@ const CASES = {
 	'enrolls with no label': { args: ['pw', ''] },
 	'enrolls with an undefined label': { args: ['pw', undefined] },
 	'challenge with plus and slash': {
-		script: { challenge: { value: { data: { challenge: 'a+b/c+/' } } } },
+		script: {
+			challenge: {
+				value: { data: { challenge: 'a+b/c+/', assertionChallenge: 'd+e/' } },
+			},
+		},
 	},
 	'no current user': { oc: null },
 	'current user without uid': { oc: { getCurrentUser: () => ({}) } },

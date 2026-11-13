@@ -1,5 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { forgetTab, framesOf, recordFrame } from './frames'
+import { forgetTab, framesOf, isWebUrl, recordFrame } from './frames'
+
+describe('isWebUrl', () => {
+	it('takes http and https pages only', () => {
+		expect(['https://shop.test/', 'http://localhost:8100/card.html', 'HTTPS://SHOP.TEST/'].map(isWebUrl)).toEqual([true, true, true])
+		const others = ['about:blank', 'chrome://newtab/', 'file:///tmp/a.html', 'data:text/html,x', 'blob:https://shop.test/1', 'moz-extension://id/popup.html', 'https:shop.test', '', ' https://shop.test/']
+		expect(others.map(isWebUrl)).toEqual(others.map(() => false))
+	})
+})
 
 beforeEach(() => {
 	forgetTab(1)

@@ -172,30 +172,52 @@ export default {
 				this.payload = result.payload
 				this.burned = result.burned
 			} catch (e) {
-				if (e?.message === 'wrong-password') {
-					this.error = e.burned
-						? this.t(
-								'keepiq',
-								'Too many wrong passwords — the message has been destroyed.',
-							)
-						: this.t(
-								'keepiq',
-								'Wrong password — {count} attempt(s) left before the message is destroyed.',
-								{ count: e.attemptsLeft },
-							)
-					if (e.burned) {
-						this.gone = true
-					}
-				} else if (e?.response?.status === 404) {
-					this.gone = true
-				} else {
-					this.error =
-						e?.response?.data?.message
-						|| e?.message
-						|| 'Failed to open the message'
-				}
+				this.showOpenFailure(e)
 			} finally {
 				this.busy = false
+			}
+		},
+
+		/**
+		 * Show why the send did not open: the attempts left after a wrong
+		 * password, the destroyed message after the last one, a send that is
+		 * gone, or the failure's own text.
+		 *
+		 * @param {Error|object} e The failure.
+		 * @return {void}
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
+		 */
+		showOpenFailure(e) {
+			if (e?.message === 'wrong-password') {
+				this.showWrongPassword(e)
+			} else if (e?.response?.status === 404) {
+				this.gone = true
+			} else {
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| 'Failed to open the message'
+			}
+		},
+
+		/**
+		 * @param {{burned: boolean, attemptsLeft: number}} e The wrong-password failure.
+		 * @return {void}
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
+		 */
+		showWrongPassword(e) {
+			this.error = e.burned
+				? this.t(
+						'keepiq',
+						'Too many wrong passwords — the message has been destroyed.',
+					)
+				: this.t(
+						'keepiq',
+						'Wrong password — {count} attempt(s) left before the message is destroyed.',
+						{ count: e.attemptsLeft },
+					)
+			if (e.burned) {
+				this.gone = true
 			}
 		},
 

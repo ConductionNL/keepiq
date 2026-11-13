@@ -900,65 +900,15 @@ export default {
 		 */
 		async submit() {
 			this.error = ''
-
-			if (this.isFreshRequest && this.newName.trim() === '') {
-				this.error = t(
-					'keepiq',
-					'Give the credential a name so you can find it later.',
-				)
-				return
-			}
-
-			// The button is disabled while nothing is ticked, so this is the
-			// second line of defence rather than the first — but it is the one
-			// that keeps a request with no fields from reaching the endpoint,
-			// which rejects it with a message written for API callers.
-			if (this.requestedFields.length === 0) {
-				this.error = t('keepiq', 'Pick at least one field')
+			const problem = this.submitProblem()
+			if (problem !== null) {
+				this.error = problem
 				return
 			}
 
 			this.submitting = true
 			try {
-				const store = useSecretRequestStore()
-				const expires = this.expiresAt
-					? new Date(this.expiresAt).toISOString()
-					: null
-
-				// camelCase, because that is what the store forwards and what the
-				// Nextcloud router binds by parameter name. This used to send
-				// snake_case, which the store read as `undefined` across the board:
-				// the POST went out empty and the endpoint answered 400
-				// "requestedFields cannot be empty". A mocked store in the unit
-				// test hid it, so the plain create path never worked from the UI.
-				const payload = {
-					requestedFields: this.requestedFields,
-					fieldSchemas: this.requestedSchemas,
-					expiresAt: expires,
-					isReRequest: this.isReRequest,
-				}
-
-				if (this.isFreshRequest) {
-					// No secretId: the server creates the placeholder and derives
-					// the suite from it, so the client never supplies either.
-					payload.name = this.newName.trim()
-					payload.folderId = this.newFolderId || null
-					payload.typeId = this.typeId || null
-				} else {
-					payload.secretId = this.secret.id
-					payload.encryptionSuiteId = this.secret.encryption_suite_id
-				}
-
-				const request = this.isReRequest
-					? await store.createReRequest(
-							this.secret.id,
-							this.secret.encryption_suite_id,
-							this.requestedFields,
-							expires,
-							this.requestedSchemas,
-						)
-					: await store.createRequest(payload)
-
+				const request = await this.sendRequest()
 				if (request && request.token) {
 					// The recipient has no Nextcloud account, so this must point at
 					// the ANONYMOUS shell (`publicShell#page`) carrying the router's
@@ -978,6 +928,86 @@ export default {
 			} finally {
 				this.submitting = false
 			}
+		},
+
+		/**
+		 * Why the form cannot be sent yet, or null when it can.
+		 *
+		 * The button is disabled while nothing is ticked, so the field check is
+		 * the second line of defence rather than the first — but it is the one
+		 * that keeps a request with no fields from reaching the endpoint, which
+		 * rejects it with a message written for API callers.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/implement-secret-requests/tasks.md#task-8.2
+		 */
+		submitProblem() {
+			if (this.isFreshRequest && this.newName.trim() === '') {
+				return t(
+					'keepiq',
+					'Give the credential a name so you can find it later.',
+				)
+			}
+			if (this.requestedFields.length === 0) {
+				return t('keepiq', 'Pick at least one field')
+			}
+			return null
+		},
+
+		/**
+		 * Create the request, or the re-request, through the store.
+		 *
+		 * @return {Promise<object|null>} The created request.
+		 * @spec openspec/changes/implement-secret-requests/tasks.md#task-8.2
+		 */
+		async sendRequest() {
+			const store = useSecretRequestStore()
+			const expires = this.expiresAt
+				? new Date(this.expiresAt).toISOString()
+				: null
+			if (this.isReRequest) {
+				return store.createReRequest(
+					this.secret.id,
+					this.secret.encryption_suite_id,
+					this.requestedFields,
+					expires,
+					this.requestedSchemas,
+				)
+			}
+			return store.createRequest(this.requestPayload(expires))
+		},
+
+		/**
+		 * The create payload, in camelCase, because that is what the store
+		 * forwards and what the Nextcloud router binds by parameter name. This
+		 * used to send snake_case, which the store read as `undefined` across
+		 * the board: the POST went out empty and the endpoint answered 400
+		 * "requestedFields cannot be empty". A mocked store in the unit test
+		 * hid it, so the plain create path never worked from the UI.
+		 *
+		 * @param {string|null} expires The expiry, ISO.
+		 * @return {object}
+		 * @spec openspec/changes/implement-secret-requests/tasks.md#task-8.2
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		requestPayload(expires) {
+			const payload = {
+				requestedFields: this.requestedFields,
+				fieldSchemas: this.requestedSchemas,
+				expiresAt: expires,
+				isReRequest: this.isReRequest,
+			}
+			if (this.isFreshRequest) {
+				// No secretId: the server creates the placeholder and derives
+				// the suite from it, so the client never supplies either.
+				payload.name = this.newName.trim()
+				payload.folderId = this.newFolderId || null
+				payload.typeId = this.typeId || null
+			} else {
+				payload.secretId = this.secret.id
+				payload.encryptionSuiteId = this.secret.encryption_suite_id
+			}
+			return payload
 		},
 
 		/**

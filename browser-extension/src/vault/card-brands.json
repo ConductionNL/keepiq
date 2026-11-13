@@ -1,0 +1,223 @@
+{
+	"version": 1,
+	"source": "Payment card brands per openspec/changes/vault-card-brand-formats (design D1, D2, D7). Ranges from Discover's IIN range summary, Mastercard's BIN lookup FAQ and Wikipedia's payment card number table, and seeded from braintree/credit-card-type 10.3.1 (MIT, Copyright Braintree) where those agree. Researched 2026-11-05.",
+	"brands": [
+		{
+			"id": "visa",
+			"label": "Visa",
+			"ranges": ["4"],
+			"lengths": [13, 16, 18, 19],
+			"code": { "name": "CVV", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "13": [4, 8], "19": [4, 8, 12, 16] },
+			"selectCodes": ["visa", "vi"]
+		},
+		{
+			"id": "mastercard",
+			"label": "Mastercard",
+			"ranges": [["51", "55"], ["222100", "272099"]],
+			"lengths": [16],
+			"code": { "name": "CVC", "size": 3 },
+			"gaps": { "default": [4, 8, 12] },
+			"selectCodes": ["mastercard", "master card", "mc"]
+		},
+		{
+			"id": "american-express",
+			"label": "American Express",
+			"ranges": ["34", "37"],
+			"lengths": [15],
+			"code": { "name": "CID", "size": 4 },
+			"gaps": { "default": [4, 10] },
+			"selectCodes": ["american express", "amex", "ae", "ax"]
+		},
+		{
+			"id": "discover",
+			"label": "Discover",
+			"ranges": ["6011", ["644", "649"], ["650", "658"]],
+			"lengths": [16, 17, 18, 19],
+			"code": { "name": "CID", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "19": [4, 8, 12, 16] },
+			"selectCodes": ["discover", "di"]
+		},
+		{
+			"id": "diners-club",
+			"label": "Diners Club",
+			"ranges": [["300", "305"], "3095", "36", ["38", "39"]],
+			"lengths": [14, 15, 16, 17, 18, 19],
+			"code": { "name": "CVV", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "14": [4, 10], "19": [4, 8, 12, 16] },
+			"selectCodes": ["diners club", "diners", "dc", "dn"]
+		},
+		{
+			"id": "jcb",
+			"label": "JCB",
+			"ranges": [["3528", "3589"], ["3088", "3094"], ["3096", "3102"], ["3112", "3120"], ["3158", "3159"], ["3337", "3349"]],
+			"lengths": [16, 17, 18, 19],
+			"code": { "name": "CAV2", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "19": [4, 8, 12, 16] },
+			"selectCodes": ["jcb"]
+		},
+		{
+			"id": "unionpay",
+			"label": "UnionPay",
+			"ranges": ["62", ["8100", "8171"]],
+			"lengths": [16, 17, 18, 19],
+			"code": { "name": "CVN2", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "19": [4, 8, 12, 16] },
+			"luhn": false,
+			"selectCodes": ["unionpay", "union pay", "china unionpay", "cup"]
+		},
+		{
+			"id": "unionpay-discover",
+			"label": "UnionPay",
+			"ranges": [["622126", "622925"]],
+			"lengths": [16, 17, 18, 19],
+			"code": { "name": "CVN2", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "19": [4, 8, 12, 16] },
+			"luhn": false,
+			"selectCodes": [],
+			"networks": ["unionpay", "discover"]
+		},
+		{
+			"id": "maestro",
+			"label": "Maestro",
+			"ranges": ["50", ["56", "59"], "63", "67"],
+			"lengths": [12, 13, 14, 15, 16, 17, 18, 19],
+			"code": { "name": "CVC", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "13": [4, 8], "15": [4, 10], "19": [4, 8, 12, 16] },
+			"selectCodes": ["maestro"]
+		},
+		{
+			"id": "maestro-uk",
+			"label": "Maestro",
+			"ranges": ["6759", "676770", "676774"],
+			"lengths": [16, 18, 19],
+			"code": { "name": "CVC", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "19": [4, 8, 12, 16] },
+			"selectCodes": ["maestro uk", "maestrouk"],
+			"networks": ["maestro"]
+		},
+		{
+			"id": "mir",
+			"label": "Mir",
+			"ranges": [["2200", "2204"]],
+			"lengths": [16, 17, 18, 19],
+			"code": { "name": "CVP2", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "19": [4, 8, 12, 16] },
+			"selectCodes": ["mir"]
+		},
+		{
+			"id": "elo",
+			"label": "Elo",
+			"ranges": [
+				"401178", "401179", "431274", "438935", "451416", "457393", "457631", "457632",
+				"504175", ["506699", "506778"], ["509000", "509999"],
+				"627780", "636297", "636368",
+				["650031", "650033"], ["650035", "650051"], ["650057", "650081"], ["650405", "650439"],
+				["650485", "650538"], ["650541", "650598"], ["650700", "650718"], ["650720", "650727"],
+				["650901", "650978"], ["651652", "651679"], ["651680", "651704"], ["655000", "655019"],
+				["655021", "655058"]
+			],
+			"lengths": [16],
+			"code": { "name": "CVE", "size": 3 },
+			"gaps": { "default": [4, 8, 12] },
+			"selectCodes": ["elo"]
+		},
+		{
+			"id": "hiper",
+			"label": "Hiper",
+			"ranges": ["637095", "637568", "637599", "637609", "637612", "63737423", "63743358"],
+			"lengths": [16],
+			"code": { "name": "CVC", "size": 3 },
+			"gaps": { "default": [4, 8, 12] },
+			"selectCodes": ["hiper"]
+		},
+		{
+			"id": "hipercard",
+			"label": "Hipercard",
+			"ranges": ["606282"],
+			"lengths": [16],
+			"code": { "name": "CVC", "size": 3 },
+			"gaps": { "default": [4, 8, 12] },
+			"selectCodes": ["hipercard", "hc"]
+		},
+		{
+			"id": "troy",
+			"label": "Troy",
+			"ranges": ["9792"],
+			"lengths": [16],
+			"code": { "name": "CVV", "size": 3 },
+			"gaps": { "default": [4, 8, 12] },
+			"selectCodes": ["troy"]
+		},
+		{
+			"id": "verve",
+			"label": "Verve",
+			"ranges": [["506099", "506198"], ["507865", "507964"], ["650002", "650027"]],
+			"lengths": [16, 18, 19],
+			"code": { "name": "CVV", "size": 3 },
+			"gaps": { "default": [4, 8, 12], "19": [4, 8, 12, 16] },
+			"selectCodes": ["verve"]
+		},
+		{
+			"id": "rupay",
+			"label": "RuPay",
+			"ranges": [
+				"5082", ["5085", "5089"], "6069", "607", "608",
+				["65215", "65219"], ["6522", "6525"], ["65285", "65289"], ["653003", "653004"],
+				"81720", "81721", ["81723", "81725"], "81727", "81729", ["81733", "81738"], ["817406", "817410"]
+			],
+			"lengths": [16],
+			"code": { "name": "CVD2", "size": 3 },
+			"gaps": { "default": [4, 8, 12] },
+			"selectCodes": ["rupay"]
+		},
+		{
+			"id": "rupay-jcb",
+			"label": "RuPay",
+			"ranges": [["353800", "353802"], ["353805", "353806"], "353809"],
+			"lengths": [16],
+			"code": { "name": "CVD2", "size": 3 },
+			"gaps": { "default": [4, 8, 12] },
+			"selectCodes": [],
+			"networks": ["rupay", "jcb"]
+		},
+		{
+			"id": "dankort",
+			"label": "Dankort",
+			"ranges": ["5019"],
+			"lengths": [16],
+			"code": { "name": "CVC", "size": 3 },
+			"gaps": { "default": [4, 8, 12] },
+			"selectCodes": ["dankort"]
+		},
+		{
+			"id": "visa-dankort",
+			"label": "Dankort",
+			"ranges": ["4571"],
+			"lengths": [16],
+			"code": { "name": "CVV", "size": 3 },
+			"gaps": { "default": [4, 8, 12] },
+			"selectCodes": ["visa/dankort", "visadankort"],
+			"networks": ["dankort", "visa"]
+		},
+		{
+			"id": "bancontact",
+			"label": "Bancontact",
+			"ranges": ["6703"],
+			"lengths": [16, 17, 18, 19],
+			"code": null,
+			"gaps": { "default": [4, 8, 12], "19": [4, 8, 12, 16] },
+			"selectCodes": ["bancontact", "bcmc"],
+			"networks": ["maestro"]
+		},
+		{
+			"id": "uatp",
+			"label": "UATP",
+			"ranges": ["1"],
+			"lengths": [15],
+			"code": null,
+			"gaps": { "default": [4, 9] },
+			"selectCodes": ["uatp"]
+		}
+	]
+}

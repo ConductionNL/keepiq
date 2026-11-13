@@ -148,7 +148,8 @@ class ShareQuarantineScanner {
 	 *
 	 * @var string
 	 */
-	public const REASON_COPY_CREATED_AS_SECRET = 'GHSA-m5p9-6pw7-pf3g: copy was created as a secret of its own, not minted for its share row';
+	public const REASON_COPY_CREATED_AS_SECRET =
+		'GHSA-m5p9-6pw7-pf3g: copy was created as a secret of its own, not minted for its share row';
 
 	/**
 	 * The reason recorded when the copy predates the row by more than the mint

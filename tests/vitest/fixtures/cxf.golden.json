@@ -441,6 +441,32 @@
 			},
 			{
 				"sourceRow": 48,
+				"name": "Only a bad code",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"Invalid base32 character"
+				]
+			},
+			{
+				"sourceRow": 49,
+				"name": "Only a bad code URL",
+				"url": null,
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": "",
+				"type": "login",
+				"errors": [
+					"This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret."
+				]
+			},
+			{
+				"sourceRow": 50,
 				"name": "Unknown type then login",
 				"url": null,
 				"login": null,
@@ -453,7 +479,7 @@
 				]
 			},
 			{
-				"sourceRow": 49,
+				"sourceRow": 51,
 				"name": "Unknown type then login",
 				"url": null,
 				"login": null,

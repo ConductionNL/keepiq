@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generate } from '@/src/generator/generate'
 import App from '../App'
-import { editableItem, everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentKinds, sentOf, snapshotReply } from '../testing'
+import { accountSettingsSnapshot, editableItem, everythingVisible, fakeBackground, itemMeta, mounts, popupState, sentKinds, sentOf, snapshotReply, types } from '../testing'
 
 vi.mock('@/src/generator/generate', async (original) => ({ ...await original<typeof import('@/src/generator/generate')>(), generate: vi.fn() }))
 
@@ -91,6 +91,95 @@ describe('Shell', () => {
 		await vi.waitFor(() => expect(close).toHaveBeenCalled())
 	})
 
+	describe('Fill on a card\'s or identity\'s detail', () => {
+		const card = (overrides = {}) => itemMeta({ id: 'c1', name: 'Visa', typeId: 't-card', hasLogin: false, url: null, ...overrides })
+		async function openDetail(name: string) {
+			await userEvent.setup().click(within(await screen.findByRole('region', { name: 'Items' })).getByRole('button', { name: new RegExp(`^${name}`) }))
+			expect((await title()).textContent).toBe('View item')
+		}
+
+		it('fills a card the Vault view setting leaves out of the suggestions, and closes the popup', async () => {
+			const sent = fakeBackground({
+				snapshot: snapshotReply({ items: [card()], suggestionIds: [], formIds: ['c1'] }),
+				decrypted: { c1: { key: '{"number":"4111111111111111"}' } },
+				replies: { 'fill.request': { filled: 'form', code: false } },
+			})
+			const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+			render(<App />)
+			await openDetail('Visa')
+			await userEvent.setup().click(await screen.findByRole('button', { name: 'Fill' }))
+			expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'c1', tabId: 7 }])
+			await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		})
+
+		it('fills a use-only identity without showing any of its members', async () => {
+			const sent = fakeBackground({
+				snapshot: snapshotReply({ items: [card({ id: 'p1', name: 'Me', typeId: 't-identity', useOnly: true })], formIds: ['p1'] }),
+				replies: { 'fill.request': { filled: 'form', code: false } },
+			})
+			vi.spyOn(window, 'close').mockImplementation(() => {})
+			render(<App />)
+			await openDetail('Me')
+			await userEvent.setup().click(await screen.findByRole('button', { name: 'Fill' }))
+			expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: 'p1', tabId: 7 }])
+			expect(sentOf(sent, 'item.decrypt').every((message) => !(message.fields as string[]).includes('key'))).toBe(true)
+		})
+
+		it('offers no Fill for a blocked card', async () => {
+			fakeBackground({ snapshot: snapshotReply({ items: [card({ blocked: true, blockedReason: 'suite_revoked' })], formIds: ['c1'] }) })
+			render(<App />)
+			await openDetail('Visa')
+			expect(screen.queryByRole('button', { name: 'Fill' })).toBeNull()
+		})
+
+		it('drops the cards from the suggestions once the Vault view setting is turned off, in the same popup', async () => {
+			const cardsOff = () => sentOf(sent, 'account.settings.set').some((message) => (message.patch as { vaultCards?: boolean }).vaultCards === false)
+			const sent = fakeBackground({ snapshot: () => snapshotReply({ items: [card()], suggestionIds: cardsOff() ? [] : ['c1'], formIds: ['c1'] }) })
+			render(<App />)
+			const user = userEvent.setup()
+			const suggested = async () => within(await screen.findByRole('region', { name: 'Autofill suggestions' })).queryAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)
+			expect(await suggested()).toEqual(['Visa'])
+			await user.click(screen.getByRole('button', { name: 'Settings' }))
+			await user.click(await screen.findByRole('button', { name: /^Autofill/ }))
+			const reads = sentOf(sent, 'vault.snapshot').length
+			await user.click(await screen.findByRole('checkbox', { name: 'Always show cards as Autofill suggestions on Vault view' }))
+			await waitFor(() => expect(sentOf(sent, 'vault.snapshot').length).toBeGreaterThan(reads))
+			await user.click(screen.getByRole('button', { name: 'Back' }))
+			await user.click(within(screen.getByRole('navigation')).getByRole('button', { name: 'Vault' }))
+			expect(await suggested()).toEqual([])
+		})
+
+		it('still drops the cards from the suggestions when Back is pressed before the setting is stored', async () => {
+			let store = () => {}
+			const held = new Promise<void>((resolve) => (store = resolve))
+			const cardsOff = () => sentOf(sent, 'account.settings.set').some((message) => (message.patch as { vaultCards?: boolean }).vaultCards === false)
+			const sent = fakeBackground({
+				snapshot: () => snapshotReply({ items: [card()], suggestionIds: cardsOff() ? [] : ['c1'], formIds: ['c1'] }),
+				replies: { 'account.settings.set': () => held.then(() => accountSettingsSnapshot({ values: { vaultCards: false } })) },
+			})
+			render(<App />)
+			const user = userEvent.setup()
+			const suggested = async () => within(await screen.findByRole('region', { name: 'Autofill suggestions' })).queryAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)
+			expect(await suggested()).toEqual(['Visa'])
+			await user.click(screen.getByRole('button', { name: 'Settings' }))
+			await user.click(await screen.findByRole('button', { name: /^Autofill/ }))
+			await user.click(await screen.findByRole('checkbox', { name: 'Always show cards as Autofill suggestions on Vault view' }))
+			await user.click(screen.getByRole('button', { name: 'Back' }))
+			const reads = sentOf(sent, 'vault.snapshot').length
+			await act(async () => store())
+			await waitFor(() => expect(sentOf(sent, 'vault.snapshot').length).toBeGreaterThan(reads))
+			await user.click(within(screen.getByRole('navigation')).getByRole('button', { name: 'Vault' }))
+			expect(await suggested()).toEqual([])
+		})
+
+		it.each(['about:blank', 'chrome://newtab/'])('offers no Fill on %s, where the background lists none', async (tabUrl) => {
+			fakeBackground({ tabUrl, snapshot: snapshotReply({ items: [card()], formIds: [] }), decrypted: { c1: { key: '{}' } } })
+			render(<App />)
+			await openDetail('Visa')
+			expect(screen.queryByRole('button', { name: 'Fill' })).toBeNull()
+		})
+	})
+
 	it('shows the toast in its live region when a fill finds no login form', async () => {
 		fakeBackground({ snapshot: snapshotReply({ suggestionIds: ['i1'] }), replies: { 'fill.request': { filled: 'none' } } })
 		render(<App />)
@@ -125,7 +214,8 @@ describe('Shell', () => {
 		const sent = fakeBackground({ snapshot: { state: 'locked' } })
 		render(<App />)
 		await title()
-		await vi.waitFor(() => expect(sentKinds(sent).filter((kind) => kind === 'vault.status')).toHaveLength(2))
+		// One read per mount, then one more after the locked snapshot.
+		await vi.waitFor(() => expect(sentKinds(sent).filter((kind) => kind === 'vault.status')).toHaveLength(mounts() + 1))
 	})
 
 	it('re-reads the state when the background broadcasts a lock', async () => {
@@ -239,6 +329,85 @@ describe('item writes', () => {
 		expect(sentKinds(sent)).toContain('item.create')
 	})
 
+	describe('the context menu\'s Add', () => {
+		const intent = (add: string | null, extra: Parameters<typeof fakeBackground>[0] = {}) =>
+			fakeBackground({ ...extra, replies: { 'popup.intent': () => (add ? { add } : null), ...extra.replies } })
+
+		it.each([['identity', 'New identity', 'Email'], ['card', 'New card', 'Number'], ['login', 'New login', 'Username']])(
+			'opens on the %s form without the Type select, asking once', async (add, heading, label) => {
+				const sent = intent(add)
+				render(<App />)
+				await waitFor(async () => expect((await title()).textContent).toBe(heading))
+				expect(within(document.querySelector('form')!).queryByLabelText('Type')).toBeNull()
+				expect(screen.getByLabelText(label)).toBeTruthy()
+				expect(sentOf(sent, 'popup.intent')).toHaveLength(1)
+			})
+
+		it('opens on the form in the pop-out window too, with the page of the tab it came from', async () => {
+			window.history.replaceState({}, '', '/popup.html?popout=1&tabId=9')
+			vi.resetModules()
+			try {
+				const { default: FreshApp } = await import('../App')
+				const sent = intent('login')
+				vi.spyOn(browser.tabs, 'get').mockResolvedValue({ id: 9, windowId: 5, url: 'https://example.test/signin' } as never)
+				render(<FreshApp />)
+				await waitFor(async () => expect((await title()).textContent).toBe('New login'))
+				await waitFor(() => expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://example.test/signin'))
+				expect(sentOf(sent, 'popup.intent')).toHaveLength(1)
+			} finally {
+				window.history.replaceState({}, '', '/')
+				vi.resetModules()
+			}
+		})
+
+		it('takes the page for a new login', async () => {
+			intent('login', { tabUrl: 'https://example.test/login' })
+			render(<App />)
+			await waitFor(() => expect((screen.getByLabelText('Website URL') as HTMLInputElement).value).toBe('https://example.test/login'))
+		})
+
+		it('opens over the Vault tab whatever tab was left open, and Cancel goes to the vault list', async () => {
+			const sent = intent('card', { lastTab: 'generator' })
+			render(<App />)
+			await waitFor(async () => expect((await title()).textContent).toBe('New card'))
+			await userEvent.setup().click(within(footer()).getByRole('button', { name: 'Cancel' }))
+			expect((await title()).textContent).toBe('Vault')
+			expect(sentOf(sent, 'popup.lastTab.set')).toEqual([])
+		})
+
+		it('saves as from New, and opens the new item', async () => {
+			let items = [itemMeta()]
+			const sent = intent('identity', {
+				snapshot: () => snapshotReply({ items }),
+				replies: {
+					'item.create': () => {
+						items = [...items, itemMeta({ id: 'new', name: 'Me', url: null, typeId: 't-identity' })]
+						return { ok: true, value: { id: 'new' } }
+					},
+				},
+			})
+			render(<App />)
+			const user = userEvent.setup()
+			await waitFor(async () => expect((await title()).textContent).toBe('New identity'))
+			await user.type(screen.getByLabelText('Name'), 'Me')
+			await user.type(screen.getByLabelText('Email'), 'me@example.test')
+			await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+			expect((await screen.findByRole('heading', { name: 'Me' })).textContent).toBe('Me')
+			expect(sentOf(sent, 'item.create')[0]!.draft).toMatchObject({ typeId: 't-identity', name: 'Me' })
+		})
+
+		it('opens the vault list when the cached types lack the type, and without an intent', async () => {
+			intent('card', { snapshot: snapshotReply({ types: types.filter((type) => type.name !== 'card') }) })
+			render(<App />)
+			await waitFor(async () => expect((await title()).textContent).toBe('Vault'))
+			cleanup()
+			intent(null)
+			render(<App />)
+			expect((await title()).textContent).toBe('Vault')
+			expect(await screen.findByRole('button', { name: 'New' })).toBeTruthy()
+		})
+	})
+
 	it('prefills only the origin and path of the tab, never its query or fragment', async () => {
 		fakeBackground({ tabUrl: 'https://user:pw@app.example.com/callback?token=abc#access_token=xyz' })
 		render(<App />)
@@ -292,6 +461,22 @@ describe('item writes', () => {
 		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
 		await vi.waitFor(async () => expect((await title()).textContent).toBe('View item'))
 		expect(sentKinds(sent)).toContain('item.update')
+	})
+
+	it('clones from the More menu into a new item, leaving the original as it was', async () => {
+		const sent = fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } }, items: { i1: editableItem() } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(await within(footer()).findByRole('button', { name: 'More, GitHub' }))
+		await user.click(await screen.findByRole('menuitem', { name: 'Clone' }))
+		expect((await title()).textContent).toBe('New item')
+		await waitFor(() => expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe('GitHub - Clone'))
+		expect((screen.getByLabelText('Username') as HTMLInputElement).value).toBe('alice')
+		await user.click(within(footer()).getByRole('button', { name: 'Save' }))
+		await vi.waitFor(() => expect(sentOf(sent, 'item.create')).toHaveLength(1))
+		expect(sentOf(sent, 'item.create')[0]).toMatchObject({ draft: { name: 'GitHub - Clone' } })
+		expect(sentOf(sent, 'item.update')).toEqual([])
 	})
 
 	it('deletes after the confirm dialog and returns to the list', async () => {
@@ -470,7 +655,7 @@ describe('the share-save note after a save', () => {
 		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
 		expect((await title()).textContent).toBe('View item')
 		expect(notes()).toEqual([])
-		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'item.editable', 'popup.lastTab.set'].includes(kind))).toEqual([])
+		expect(sentKinds(sent).filter((kind) => !['vault.status', 'vault.snapshot', 'settings.get', 'item.decrypt', 'item.passkeys', 'item.editable', 'popup.lastTab.set', 'popup.intent'].includes(kind))).toEqual([])
 	})
 
 	it('drops the note once a later save of the item reaches everyone', async () => {
@@ -532,6 +717,7 @@ describe('the generator', () => {
 		await user.type(input('Name'), 'Bank')
 		await user.click(screen.getByRole('button', { name: 'Generate password' }))
 		expect((await title()).textContent).toBe('Generator')
+		expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy()
 		expect(within(screen.getByRole('tablist')).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Password', 'Passphrase'])
 		// The form waits hidden, and its Save and Cancel leave the bar.
 		expect(input('Name').closest('[hidden]')).not.toBeNull()
@@ -620,5 +806,92 @@ describe('the generator', () => {
 		await user.click(await enabled('Use this username'))
 		expect((await title()).textContent).toBe('Edit item')
 		expect(input('Username').value).toBe('username-1')
+	})
+})
+
+describe('pages over the tabs', () => {
+	const body = () => document.querySelector<HTMLElement>('.popup__body')!
+	const footer = () => document.querySelector<HTMLElement>('.popup__footer')!
+	const titled = (text: string) => waitFor(() => expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(text))
+
+	it('opens a page at the top and comes back to the list, and to the form after pick mode, where they were left', async () => {
+		fakeBackground({ decrypted: { i1: { login: 'alice', key: 'pw' } } })
+		render(<App />)
+		const user = userEvent.setup()
+		await screen.findByRole('searchbox')
+		body().scrollTop = 120
+		await user.click(screen.getByRole('button', { name: /^GitHub/ }))
+		await titled('View item')
+		expect(body().scrollTop).toBe(0)
+		body().scrollTop = 15
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await titled('Vault')
+		expect(body().scrollTop).toBe(120)
+
+		await user.click(screen.getByRole('button', { name: 'New' }))
+		await titled('New item')
+		body().scrollTop = 40
+		await user.click(screen.getByRole('button', { name: 'Generate password' }))
+		await titled('Generator')
+		expect(body().scrollTop).toBe(0)
+		body().scrollTop = 7
+		await user.click(screen.getByRole('button', { name: 'Back' }))
+		await titled('New item')
+		expect(body().scrollTop).toBe(40)
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Generate password' }))
+	})
+
+	it('opens a send page at the top', async () => {
+		fakeBackground({ lastTab: 'send' })
+		render(<App />)
+		const user = userEvent.setup()
+		const add = await screen.findByRole('button', { name: 'New' })
+		body().scrollTop = 50
+		await user.click(add)
+		await titled('New send')
+		expect(body().scrollTop).toBe(0)
+	})
+
+	it('re-reads the popup state, and opens no send, when Send from an item finds the vault locked', async () => {
+		let locked = false
+		const sent = fakeBackground({ replies: { 'item.decrypt': () => (locked ? { ok: false, error: 'locked' } : { ok: true, items: {} }) } })
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: 'More, GitHub' }))
+		const statusReads = sentOf(sent, 'vault.status').length
+		locked = true
+		await user.click(screen.getByRole('menuitem', { name: 'Send' }))
+		await waitFor(() => expect(sentOf(sent, 'vault.status').length).toBeGreaterThan(statusReads))
+		expect((await title()).textContent).toBe('Vault')
+		expect(screen.queryByText('Could not read this login')).toBeNull()
+	})
+
+	it('closes both the form and the detail when Edit finds the item deleted elsewhere', async () => {
+		fakeBackground()
+		render(<App />)
+		const user = userEvent.setup()
+		await user.click(await screen.findByRole('button', { name: /^GitHub/ }))
+		await user.click(within(footer()).getByRole('button', { name: 'Edit' }))
+		await titled('Vault')
+		expect(screen.getByRole('status').textContent).toBe('This item no longer exists')
+	})
+
+	it('gives a created send\'s row focus once, not again when the Send tab is picked later', async () => {
+		fakeBackground({ lastTab: 'send' })
+		render(<App />)
+		const user = userEvent.setup()
+		const row = () => screen.findByRole('button', { name: /^Copy link, Text send/ })
+		await user.click(await screen.findByRole('button', { name: 'New' }))
+		await user.type(screen.getByLabelText('Text to share'), 'the secret')
+		await user.click(within(footer()).getByRole('button', { name: 'Create' }))
+		await user.click(await within(footer()).findByRole('button', { name: 'Done' }))
+		const first = await row()
+		await waitFor(() => expect(document.activeElement).toBe(first))
+		await user.click(screen.getByRole('button', { name: 'Vault' }))
+		await screen.findByRole('searchbox')
+		const sendTab = screen.getByRole('button', { name: 'Send' })
+		await user.click(sendTab)
+		await row()
+		expect(document.activeElement).toBe(sendTab)
 	})
 })

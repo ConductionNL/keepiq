@@ -1,12 +1,14 @@
 import { useEffect, useId, useState } from 'react'
 import { i18n } from '#i18n'
-import type { DefaultAutofill } from '@/src/accounts/settings'
+import type { AccountSettings, DefaultAutofill } from '@/src/accounts/settings'
 import { CLEAR_CLIPBOARD_OPTIONS, URI_MATCHES, type AutofillFeature, type DefaultManagerState, type UriMatch } from '@/src/messages'
+import { isChromium, isSafari } from '@/src/platform'
 import { Button, IconButton } from '../../components/Button'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { Loading } from '../../components/Loading'
 import { OptionCheckbox } from '../../components/OptionCheckbox'
 import { Select } from '../../components/Select'
+import { WebsiteAccessEntry } from '../../components/WebsiteAccess'
 import { errorText } from '../../errors'
 import { useAccountSettings } from '../../hooks/useAccountSettings'
 import { useClipboard } from '../../hooks/useClipboard'
@@ -23,13 +25,32 @@ const URI_MATCH_LABELS: Record<UriMatch, () => string> = {
 	never: () => i18n.t('settings.never'),
 }
 
+type FormEntry = 'inlineCards' | 'inlineIdentities' | 'vaultCards' | 'vaultIdentities'
+
+/** `inline`: an inline list entry, which does nothing while the inline list is off. */
+interface FormEntryDef {
+	key: FormEntry
+	feature: AutofillFeature
+	inline: boolean
+	label: () => string
+}
+
+const FORM_ENTRIES: readonly FormEntryDef[] = [
+	{ key: 'inlineCards', feature: 'cards', inline: true, label: () => i18n.t('settings.inlineCards') },
+	{ key: 'inlineIdentities', feature: 'identities', inline: true, label: () => i18n.t('settings.inlineIdentities') },
+	{ key: 'vaultCards', feature: 'cards', inline: false, label: () => i18n.t('settings.vaultCards') },
+	{ key: 'vaultIdentities', feature: 'identities', inline: false, label: () => i18n.t('settings.vaultIdentities') },
+]
+
+const entryPatch = (key: FormEntry, on: boolean): Partial<Record<FormEntry, boolean>> => ({ [key]: on })
+
 function clipboardLabel(ms: number): string {
 	if (ms === 0) return i18n.t('settings.never')
 	return ms < 60_000 ? i18n.t('settings.clipboardSeconds', ms / 1000) : i18n.t('settings.timeoutMinutes', ms / 60_000)
 }
 
-/** Bitwarden's Settings → Autofill; an entry whose behaviour is not delivered only keeps its value. */
-export function Autofill() {
+/** Bitwarden's Settings → Autofill; an entry whose behaviour is not delivered only keeps its value. `reload` re-reads the vault tab's snapshot. */
+export function Autofill({ reload }: { reload: () => void }) {
 	const { snapshot, failed, update } = useAccountSettings()
 	if (!snapshot) return failed ? <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner> : <Loading />
 	const { values } = snapshot
@@ -65,11 +86,14 @@ export function Autofill() {
 					hint={uriLater ?? (values.uriMatch === 'regex' ? i18n.t('settings.uriRegexNote') : undefined)}
 				/>
 				<OptionCheckbox label={i18n.t('settings.inlineSuggestions')} checked={values.inlineSuggestions} onChange={(inlineSuggestions) => void update({ inlineSuggestions })} lockedBy={later('inlineSuggestions')} />
-				{import.meta.env.BROWSER !== 'firefox' && <DefaultPasswordManager />}
+				<FormEntries values={values} later={later} update={update} reload={reload} />
+				{isChromium() && <DefaultPasswordManager />}
 				<OptionCheckbox label={i18n.t('settings.contextMenu')} checked={values.contextMenu} onChange={(contextMenu) => void update({ contextMenu })} lockedBy={later('contextMenu')} />
 			</div>
 			<div className="card form-card">
 				<Shortcut shortcut={snapshot.shortcut} />
+				{/* Inline, not isSafari(), so other builds drop the entry. */}
+				{import.meta.env.BROWSER === 'safari' && <WebsiteAccessEntry serverUrl={snapshot.serverUrl} />}
 				<Select<string>
 					label={i18n.t('settings.clearClipboard')}
 					value={String(values.clearClipboardMs)}
@@ -84,6 +108,32 @@ export function Autofill() {
 				/>
 			</div>
 		</div>
+	)
+}
+
+interface FormEntriesProps {
+	values: AccountSettings
+	later: (feature: AutofillFeature) => string | undefined
+	update: (patch: Partial<AccountSettings>) => Promise<boolean>
+	reload: () => void
+}
+
+/** The inline entries sit beneath Show autofill suggestions on form fields; the vault entries change the vault tab's list, so it is re-read. */
+function FormEntries({ values, later, update, reload }: FormEntriesProps) {
+	const offId = useId()
+	const offFor = (entry: FormEntryDef) => entry.inline && !values.inlineSuggestions && later(entry.feature) === undefined
+	const option = (entry: FormEntryDef) => {
+		const change = (on: boolean) => void update(entryPatch(entry.key, on)).then((stored) => stored && !entry.inline && reload())
+		return <OptionCheckbox key={entry.key} label={entry.label()} checked={values[entry.key]} onChange={change} lockedBy={later(entry.feature)} reasonId={offFor(entry) ? offId : undefined} />
+	}
+	return (
+		<>
+			<div className="form-card__nested">
+				{FORM_ENTRIES.filter((entry) => entry.inline).map(option)}
+				{FORM_ENTRIES.some(offFor) && <p className="field__hint" id={offId}>{i18n.t('settings.inlineKindsOff')}</p>}
+			</div>
+			{FORM_ENTRIES.filter((entry) => !entry.inline).map(option)}
+		</>
 	)
 }
 
@@ -145,17 +195,17 @@ function DefaultPasswordManager() {
 
 const ADDONS = 'about:addons'
 
-/** Firefox refuses to open its shortcut page from an extension, so it gets the steps instead. */
+/** Only Chromium opens its shortcut page from an extension; Firefox and Safari get the steps instead. */
 function Shortcut({ shortcut }: { shortcut: string | null }) {
 	const id = useId()
 	const { launch } = useShell()
 	const copy = useClipboard()
 	const [steps, setSteps] = useState(false)
+	const safari = isSafari()
 
 	function change() {
-		// `BROWSER` rather than `FIREFOX`, which tests can only set as a string.
-		if (import.meta.env.BROWSER === 'firefox') setSteps(true)
-		else launch('chrome://extensions/shortcuts')
+		if (isChromium()) launch('chrome://extensions/shortcuts')
+		else setSteps(true)
 	}
 
 	return (
@@ -167,8 +217,8 @@ function Shortcut({ shortcut }: { shortcut: string | null }) {
 			</div>
 			{steps && (
 				<div className="shortcut__steps" role="status">
-					<p className="field__hint">{i18n.t('settings.shortcutFirefox')}</p>
-					<IconButton icon="copy" label={fieldAction('field.copy', ADDONS)} onClick={() => void copy(ADDONS, ADDONS)} />
+					<p className="field__hint">{safari ? i18n.t('settings.shortcutSafari') : i18n.t('settings.shortcutFirefox')}</p>
+					{!safari && <IconButton icon="copy" label={fieldAction('field.copy', ADDONS)} onClick={() => void copy(ADDONS, ADDONS)} />}
 				</div>
 			)}
 		</div>

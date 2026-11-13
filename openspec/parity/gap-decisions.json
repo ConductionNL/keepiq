@@ -966,5 +966,13 @@
   "reason": "Single competitor, changelog signal only, no demand row",
   "change": null,
   "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "crypto-12",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Decision 399 (12 Nov 2026): not built, there is no recovery code or recovery kit; specified in crypto-recovery-kit.",
+  "change": "crypto-recovery-kit",
+  "decidedOn": "2026-11-12"
  }
 ]

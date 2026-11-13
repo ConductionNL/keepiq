@@ -74,24 +74,50 @@ class ShareGrantReader {
 			);
 		}
 
-		$recipient = $target->getTargetUserId();
+		return [...$grants, ...$this->groupGrants(target: $target), ...$this->folderGrants(target: $target)];
+	}//end grantsFor()
+
+	/**
+	 * The grant of each group share of the source that reaches the recipient:
+	 * the one the row came from, and any of a group the recipient is in.
+	 *
+	 * @param ShareTarget $target The share row
+	 *
+	 * @return list<ShareRestriction>
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+	 */
+	private function groupGrants(ShareTarget $target): array {
+		$grants = [];
 		foreach ($this->groupShareMapper->findBySecret($target->getSourceSecretId()) as $groupShare) {
 			$linked = ($groupShare->getId() === $target->getGroupShareId());
-			if ($linked === true || $this->groupManager->isInGroup($recipient, $groupShare->getGroupId()) === true) {
-				$grants[] = new ShareRestriction(
-					useOnly: ($groupShare->getUseOnly() === true),
-					expiresAt: $groupShare->getExpiresAt()
-				);
+			if ($linked === true || $this->groupManager->isInGroup($target->getTargetUserId(), $groupShare->getGroupId()) === true) {
+				$grants[] = new ShareRestriction(useOnly: ($groupShare->getUseOnly() === true), expiresAt: $groupShare->getExpiresAt());
 			}
 		}
 
+		return $grants;
+	}//end groupGrants()
+
+	/**
+	 * The grant of each team-folder membership covering the recipient for the
+	 * source; none when the source is gone.
+	 *
+	 * @param ShareTarget $target The share row
+	 *
+	 * @return list<ShareRestriction>
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+	 */
+	private function folderGrants(ShareTarget $target): array {
 		try {
 			$source = $this->secretMapper->findById($target->getSourceSecretId());
 		} catch (DoesNotExistException) {
-			return $grants;
+			return [];
 		}
 
-		foreach ($this->teamFolders->coveringMemberships(secret: $source, userId: $recipient) as $membership) {
+		$grants = [];
+		foreach ($this->teamFolders->coveringMemberships(secret: $source, userId: $target->getTargetUserId()) as $membership) {
 			$grants[] = new ShareRestriction(
 				// Use-only is offered on read memberships only; a write row
 				// that somehow carries the flag still lifts it.
@@ -101,7 +127,7 @@ class ShareGrantReader {
 		}
 
 		return $grants;
-	}//end grantsFor()
+	}//end folderGrants()
 
 	/**
 	 * Whether one grant reaching a share row's copy is neither use-only nor

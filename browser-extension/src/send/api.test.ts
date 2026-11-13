@@ -24,6 +24,18 @@ describe('listSends', () => {
 		expect(await listSends(client)).toEqual([row, { ...row, id: 'b2', expiresAt: null }])
 	})
 
+	it.each<[string, Record<string, unknown> | string]>([
+		['an id other than text', { id: 7 }], ['no token', { token: '' }], ['a token other than text', { token: 7 }],
+		['a credential type', { payloadType: 'credential' }], ['an unknown type', { payloadType: 'file' }], ['a password flag other than a boolean', { hasPassword: 'no' }],
+		['a negative view limit', { maxViews: -1 }], ['a fraction of a view', { viewCount: 1.5 }], ['remaining views other than a count', { remainingViews: '2' }],
+		['an expiry other than text or null', { expiresAt: 0 }], ['no creation time', { createdAt: null }], ['a row other than an object', 'b9c1'],
+	])('reads a row with %s as it reads it', async (_name, change) => {
+		const value = typeof change === 'string' ? change : { ...row, ...change }
+		fetchMock.mockResolvedValue(json([value]))
+		const kept = typeof change === 'object' && change.payloadType === 'credential'
+		expect(await listSends(client)).toEqual(kept ? [{ ...row, payloadType: 'credential' }] : [])
+	})
+
 	it('refuses an answer that is not a list', async () => {
 		fetchMock.mockResolvedValue(json({ sends: [] }))
 		await expect(listSends(client)).rejects.toBeInstanceOf(WriteFailure)

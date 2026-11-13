@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EditableItem } from '@/src/messages'
 import { parseTotpSeed } from '@/src/totp/totp'
-import { CARD_FIELDS, customField, diffDraft, emptyValues, formKind, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
+import { CARD_FIELDS, customField, diffDraft, emptyValues, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
 
 function values(overrides: Partial<FormValues> = {}): FormValues {
 	return { ...emptyValues('t-login'), name: 'GitHub', ...overrides }
@@ -18,6 +18,21 @@ describe('formKind', () => {
 	it('gives composite types their own form and everything else a credential', () => {
 		expect(['note', 'totp', 'card', 'identity', 'passkey'].map(formKind)).toEqual(['note', 'totp', 'card', 'identity', 'passkey'])
 		expect(['login', 'database', 'api_key', 'server_access', undefined].map(formKind)).toEqual(Array(5).fill('credential'))
+	})
+})
+
+describe('formSections', () => {
+	const shape = { loginShown: false, plainKey: false }
+
+	// `shownInFull` counts additional fields as shown on this alone.
+	it('shows Notes for every kind but a passkey when the item came with notes', () => {
+		for (const kind of ['credential', 'note', 'totp', 'card', 'identity'] as const) expect(formSections(kind, { ...shape, notesKey: 'Notes' }).notes, kind).toBe(true)
+		expect(formSections('passkey', { ...shape, notesKey: 'Notes' })).toMatchObject({ fields: false, notes: false })
+	})
+
+	it('shows Notes on a note only for the notes it came with, and on a credential always', () => {
+		expect(formSections('note', { ...shape, notesKey: null }).notes).toBe(false)
+		expect(formSections('credential', { ...shape, notesKey: null }).notes).toBe(true)
 	})
 })
 
@@ -262,5 +277,47 @@ describe('shownInFull', () => {
 		for (const fields of ['{"pin":"Y-BANK-PASSWORD","pin":"1234"}', '{"meta":{"a":"Y-BANK-PASSWORD","a":1}}', '{"pin":"Y-BANK-PASSWORD", "p\\u0069n":"1234"}', '{"pin": 12345678901234567890}', '[1]']) {
 			expect(shownUnder('additionalFields', fields)).toEqual([])
 		}
+	})
+})
+
+describe('diffDraft and validate, field by field', () => {
+	const draft = toDraft(values({ url: 'https://a.test', login: 'alice', secret: 'pw' }), 'login')
+
+	it.each([
+		['typeId', { typeId: 't-note' }],
+		['name', { name: 'Other' }],
+		['url', { url: null }],
+		['folderId', { folderId: 'f1' }],
+		['key', { key: 'other' }],
+		['login', { login: null }],
+		['additionalFields', { additionalFields: { pin: '1' } }],
+		['totp', { totp: 'JBSWY3DPEHPK3PXP' }],
+	] as const)('sends a changed %s alone', (_name, change) => {
+		expect(diffDraft(draft, { ...draft, ...change })).toEqual(change)
+	})
+
+	it('sends every change in the draft order, and no totp the after-draft leaves out', () => {
+		const after = { ...draft, login: null, key: 'other', folderId: 'f1', url: null, typeId: 't-note', additionalFields: { pin: '1' }, name: 'Other', totp: 'K' }
+		expect(Object.keys(diffDraft(draft, after))).toEqual(['typeId', 'name', 'url', 'folderId', 'key', 'login', 'additionalFields', 'totp'])
+		expect(diffDraft({ ...draft, totp: 'K' }, { ...draft, totp: undefined })).toEqual({})
+		expect(diffDraft({ ...draft, totp: 'K' }, { ...draft, totp: 'K' })).toEqual({})
+		expect(diffDraft({ ...draft, additionalFields: { a: '1' } }, { ...draft, additionalFields: { b: '1' } })).toEqual({ additionalFields: { b: '1' } })
+	})
+
+	it('reports errors in the order the form is read', () => {
+		const fields = [customField('Login', 'x'.repeat(4097))]
+		const errors = validate(values({ name: '', url: 'x'.repeat(4097), login: 'x'.repeat(4097), loginShown: true, fields, authKey: 'not a key!' }), 'login')
+		expect(Object.keys(errors)).toEqual(['name', 'url', 'login', 'authKey', `field.${fields[0]!.id}.name`, `field.${fields[0]!.id}.value`])
+	})
+
+	it('checks a card\'s members only while they show, and a TOTP seed', () => {
+		const long = 'x'.repeat(4097)
+		const card = fromItem(item({ typeId: 't-card', key: '' }), 'card')
+		expect(Object.keys(validate({ ...card, card: { ...card.card, number: long } }, 'card'))).toEqual(['card.number'])
+		expect(validate({ ...card, plainKey: true, card: { ...card.card, number: long } }, 'card')).toEqual({})
+		const identity = fromItem(item({ typeId: 't-identity', key: '' }), 'identity')
+		expect(Object.keys(validate({ ...identity, identity: { ...identity.identity, address: long } }, 'identity'))).toEqual(['identity.address'])
+		expect(validate(values({ typeId: 't-totp', secret: 'not base32 !' }), 'totp')).toEqual({ secret: { code: 'invalidTotp' } })
+		expect(validate(values({ typeId: 't-passkey', name: '', url: long, login: long }), 'passkey')).toEqual({ name: { code: 'required' }, url: { code: 'tooLong', max: 4096 } })
 	})
 })

@@ -157,6 +157,22 @@ describe('background entrypoint', () => {
 		expect(await browser.storage.local.get('accounts')).toHaveProperty(`accounts.${account.id}`)
 	})
 
+	it('ignores a passkey.start from the popup and a passkey.pick from a content script', async () => {
+		const request = { type: 'get', options: { challenge: 'AAAA', allowCredentials: [] } }
+		expect(await deliver({ kind: 'passkey.start', request, crossOriginAncestor: false }, popupSender)).toBeUndefined()
+		expect(await deliver({ kind: 'passkey.pick', ceremonyId: 'c1', itemId: 'i1', credentialId: 'AAAA' }, pageSender)).toBeUndefined()
+		// A passkey window kind reaches the ceremony, not the account router, which would answer `unknown`.
+		expect(await deliver({ kind: 'passkey.cancel', ceremonyId: 'c1' }, popupSender)).toEqual({ ok: false, code: 'ended' })
+	})
+
+	it('answers passkey.start and passkey.available from a content script, and passkey.abort not at all', async () => {
+		const request = { type: 'get', options: { challenge: 'AAAA', allowCredentials: [] } }
+		// Logged out, and `evil.example` is a page over https with a tab and frame: the gates answer, nothing opens.
+		expect(await deliver({ kind: 'passkey.start', request, crossOriginAncestor: false }, pageSender)).toEqual({ fallback: true })
+		expect(await deliver({ kind: 'passkey.available', crossOriginAncestor: false }, pageSender)).toBe(false)
+		expect(await deliver({ kind: 'passkey.abort', ceremonyId: 'c1' }, pageSender)).toBeUndefined()
+	})
+
 	// Which page may send which kind is `acceptedFrom` in sender.test.ts; these check the listener applies it.
 	describe('routing by sender page', () => {
 		it.each([
@@ -361,6 +377,16 @@ describe('background entrypoint', () => {
 				expect(await deliver({ kind: 'capture.reshow' }, barSender)).toBeUndefined()
 			})
 
+			it('relays the notice page\'s Close to the top frame as notice.hide, from the bar page only', async () => {
+				expect(await deliver({ kind: 'notice.close' }, top)).toBeUndefined()
+				expect(await deliver({ kind: 'notice.close' }, { ...barSender, url: `${barSender.url}?notice=no_login_form` })).toBeUndefined()
+				await vi.waitFor(() => expect(toTab.at(-1)).toEqual({ message: { kind: 'notice.hide' }, frameId: 0 }))
+				expect(toTab.filter(({ message }) => message.kind === 'notice.hide')).toHaveLength(1)
+				// The page opened outside a tab has nowhere to relay to.
+				expect(await deliver({ kind: 'notice.close' }, { ...barSender, tab: undefined })).toBeUndefined()
+				expect(toTab.filter(({ message }) => message.kind === 'notice.hide')).toHaveLength(1)
+			})
+
 			it('relays the focus_notification_bar command to the top frame', async () => {
 				menus.command('focus_notification_bar', tab as never)
 				await vi.waitFor(() => expect(toTab.at(-1)).toEqual({ message: { kind: 'capture.focus' }, frameId: 0 }))
@@ -408,6 +434,11 @@ describe('background entrypoint', () => {
 				await deliver({ kind: 'accounts.switch', accountId: account!.id }, popupSender)
 				await vi.waitFor(() => expect(toTab).toEqual([{ message: { kind: 'inline.close', key, refocus: false }, frameId: 0 }]))
 				expect(await deliver({ kind: 'inline.state', key }, listSender)).toBeNull()
+			})
+
+			it('answers inline.open with null when the session could not be opened', async () => {
+				vi.spyOn(browser.storage.session, 'set').mockRejectedValue(new Error('storage failed'))
+				expect(await deliver({ kind: 'inline.open', mode: 'login' }, top)).toBeNull()
 			})
 
 			it('drops the session on inline.closed', async () => {
@@ -491,5 +522,15 @@ describe('background entrypoint', () => {
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
 		await deliver({ kind: 'vault.lock', accountId: account.id }, popupSender)
 		expect(await browser.alarms.get(SYNC_ALARM)).toBeUndefined()
+	})
+
+	it('listens for the system lock where the browser has the idle API', () => {
+		const onStateChanged = browser.idle.onStateChanged as unknown as ReturnType<typeof fakeEvent<(state: string) => void>>
+		expect(onStateChanged.trigger('active')).toHaveLength(1)
+	})
+
+	it('starts without the idle API, as on Safari', () => {
+		Object.assign(browser, { idle: undefined })
+		expect(() => background.main()).not.toThrow()
 	})
 })

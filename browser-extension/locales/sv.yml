@@ -1,0 +1,814 @@
+# Terms and tone follow Nextcloud's Swedish and Bitwarden (du): valv, huvudlösenord, applösenord, objekt, inloggning, lösennyckel for passkey as Apple does; försändelse for Send, as in the Keepiq web app.
+language: sv
+extensionDescription: Keepiq för din webbläsare. Fyll i inloggningar, lösennycklar och engångskoder från ditt Nextcloud-valv, end-to-end-krypterat.
+commandAutofillLogin: Autofyll den senast använda inloggningen
+commandFocusNotificationBar: Gå till Keepiqs sparfält
+
+errors:
+  insecureUrl: Använd https för den här servern
+  invalidUrl: Ange en giltig server-URL
+  permissionDenied: Keepiq behöver behörighet att nå {host}
+  unreachable: Kunde inte nå {host}
+  notNextcloud: "{host} ser inte ut att vara en Nextcloud-server"
+  serverError: "{host} är inte tillgänglig just nu, försök igen senare"
+  unauthorized: Fel användarnamn eller applösenord
+  keepiqMissing: Keepiq är inte installerat på {host}
+  keepiqOutdated: Keepiq på {host} är för gammalt för det här tillägget, som kräver version {version} eller senare. Be din administratör att uppdatera Keepiq.
+  noActiveSuite: Öppna Keepiqs webbapp en gång och ange ett huvudlösenord, försök sedan igen
+  unlockBlocked: Din organisation kräver tvåfaktorsinloggning. Konfigurera en andra faktor under Nextcloud-inställningar, Säkerhet, och försök sedan igen
+  duplicate: Det här kontot har redan lagts till
+  limitReached: Högst {count} konton har nåtts
+  invalidMasterPassword: Ogiltigt huvudlösenord
+  keyUnreadable: Din valvnyckel i Keepiq kunde inte läsas, så den här webbläsaren kan inte låsa upp valvet. Kontakta din Keepiq-administratör.
+  offlineNoCache: Du är offline och det här valvet har inte synkroniserats än
+  sessionRevoked: Sessionen har återkallats, logga in igen
+  writeLocked: Ditt valv kan inte ändras just nu, försök igen senare
+  notResponding: Keepiq svarar inte. Läs in tillägget igen och öppna det här popup-fönstret på nytt.
+  invalidPin:
+    1: Fel PIN-kod, 1 försök kvar
+    n: Fel PIN-kod, $1 försök kvar
+  wrongPin: Fel PIN-kod
+  pinForgotten: PIN-koden glömdes efter för många försök
+  pinKeyChanged: Din valvnyckel har ändrats. Lås upp med ditt huvudlösenord.
+  pinTooShort: Använd minst {count} tecken
+  unknown: Något gick fel
+  passkeyFailed: "Nyckeln kunde inte låsa upp ditt valv. Använd ditt huvudlösenord."
+
+notices:
+  keyChanged: Din valvnyckel har ändrats i Keepiq. Lås upp med ditt nuvarande huvudlösenord.
+  fileAccess: "Keepiq behöver ingen filåtkomst. I Nextcloud under Inställningar, Säkerhet, Enheter & sessioner kan du stänga av filåtkomst för detta applösenord eller återkalla det."
+
+common:
+  accountOnHost: "{name} på {host}"
+  loading: Läser in…
+  back: Tillbaka
+  cancel: Avbryt
+  logOut: Logga ut
+  appPassword: Applösenord
+  addAccount: Lägg till konto
+  openWebApp: Öppna Keepiqs webbapp
+  justNow: just nu
+
+titles:
+  accounts: Konton
+  logInAgain: Logga in igen
+  unlock: Lås upp
+  viewItem: Visa objekt
+  newItem: Nytt objekt
+  newLogin: Ny inloggning
+  newCard: Nytt kort
+  newIdentity: Ny identitet
+  editItem: Redigera objekt
+  newSend: Ny försändelse
+  sendCreated: Försändelse skapad
+
+tabs:
+  label: Huvudmeny
+  vault: Valv
+  generator: Generator
+  send: Skicka
+  settings: Inställningar
+
+header:
+  popout: Öppna i eget fönster
+  accounts: Konton, inloggad som {name}
+  new: Ny
+
+unlock:
+  masterPassword: Huvudlösenord
+  submit: Lås upp
+  pin: PIN-kod
+  useMasterPassword: Använd huvudlösenord
+
+logInAgain:
+  submit: Logga in
+
+addAccount:
+  serverUrl: Server-URL
+  serverUrlPlaceholder: cloud.example.org
+  username: Användarnamn
+  hint: Skapa ett under Nextcloud-inställningar, Säkerhet. Ange aldrig ditt Nextcloud-inloggningslösenord här.
+  hintWithLink: "Skapa ett under Nextcloud-inställningar, Säkerhet: {link}. Ange aldrig ditt Nextcloud-inloggningslösenord här."
+  securityLink: öppna säkerhetsinställningar
+  signInWithBrowser: "Logga in via Nextcloud"
+  finishInTab: "Slutför inloggningen på Nextcloud-sidan som öppnades. Keepiq lägger till kontot när du är klar."
+  orAppPassword: "Eller ange ett applösenord:"
+
+accounts:
+  active: (aktivt)
+  unlocked: Upplåst
+  locked: Låst
+  loggedOut: Utloggad
+  lock: Lås {account}
+  logOut: Logga ut från {account}
+  lockAll: Lås alla
+  logOutAll: Logga ut från alla
+  logOutAllQuestion: Logga ut från alla konton?
+  logOutAllDetail: Alla konton tas bort från den här webbläsaren. Du behöver varje applösenord igen.
+  logOutQuestion: Logga ut från {account}?
+  logOutDetail: Kontot tas bort från den här webbläsaren. Du behöver ett applösenord för att lägga till det igen.
+
+vault:
+  loadFailed: Kunde inte läsa in ditt valv
+  tryAgain: Försök igen
+  syncing: Synkroniserar ditt valv
+  empty: Inga objekt i ditt valv
+  noMatch: Inga objekt matchar
+  searchCovers: Sökningen omfattar namn och webbplatser.
+  clearFilters: Rensa filter
+  items: Objekt
+  tooMany: Visar de första {count}, förfina din sökning
+  offline: Offline. Senast synkroniserad {time}
+  syncNow: Synkronisera nu
+  busy: Servern är upptagen, försöker igen senare
+  allBlocked: Alla objekt är blockerade.
+  suggestions: Förslag för autofyll
+  noSuggestions: Inga objekt för {host}
+  autofillUnavailable: Autofyll är inte tillgängligt på den här sidan
+  fillFailed: Kan inte autofylla på den här sidan. Kopiera och klistra in i stället.
+  openFailed: Kunde inte öppna webbplatsen
+  popoutFailed: Kunde inte öppna ett nytt fönster
+
+filters:
+  search: Sök
+  searchLabel: Sök i valvet
+  clearSearch: Rensa sökning
+  folder: Mapp
+  allItems: Alla objekt
+  noFolder: Ingen mapp
+  type: Typ
+  all: Alla
+  more: Mer
+  moreTypes: Fler typer
+  login: Inloggning
+  card: Kort
+  identity: Identitet
+  note: Anteckning
+  totp: TOTP
+  passkey: Lösennyckel
+
+item:
+  blocked: Blockerat
+  launch: Öppna {name}
+  fill: Fyll i
+  fillName: Fyll i {name}
+  insecureTitle: Vill du ändå fylla i den här inloggningen?
+  insecureWarning: "Varning: Det här är en osäker HTTP-sida, och all information du skickar kan eventuellt ses och ändras av andra. Den här inloggningen sparades ursprungligen på en säker (HTTPS-)sida."
+  cardInsecureTitle: Fyll i det här kortet på en osäker webbplats?
+  cardInsecureWarning: Den här webbplatsen är inte säker. Vem som helst i nätverket kan läsa kortuppgifterna som fylls i.
+  crossSiteTitle: Fyll även i på {hosts}?
+  crossSiteWarning: En del av det här formuläret kommer från {hosts}, inte från {host}. Keepiq fyller bara i det där om du godkänner det.
+  onlyHost: Endast {host}
+  copyMenu: Kopiera, {name}
+  moreMenu: Mer, {name}
+  copyUsername: Kopiera användarnamn
+  copyPassword: Kopiera lösenord
+  copyCode: Kopiera verifieringskod
+  view: Visa
+  edit: Redigera
+  clone: Klona
+  move: Flytta till mapp
+  delete: Radera
+  send: Skicka
+  cloneName: "{name} - Klon"
+  passkeyNoClone: Lösennycklar kan inte klonas
+  useOnly: Delat med dig endast för inloggning
+  readOnly: Delat från en annan organisation, så det kan bara flyttas
+  viewOnly: Delat med dig endast för visning. Be ägaren om redigeringsrättigheter för att ändra det.
+  expiringNoClone: Din åtkomst upphör {date}, så det kan inte klonas
+  expiringNoSend: Din åtkomst upphör {date}, så det kan inte skickas
+  saved: Objektet sparades
+  deleted: Objektet flyttades till papperskorgen
+  moved: Flyttat till {folder}
+  deleteTitle: Radera objekt
+  deleteConfirm: Flytta {name} till papperskorgen? Det slutar delas, även efter en återställning från papperskorgen i Keepiqs webbapp.
+  gone: Det här objektet finns inte längre
+
+form:
+  itemDetails: Objektdetaljer
+  type: Typ
+  name: Namn
+  cardNumberLength: "{brand} utfärdar inte kortnummer med den här längden. Du kan ändå spara."
+  cardNumberLengthUnknown: Kortnummer har 12 till 19 siffror. Du kan ändå spara.
+  cardNumberChecksum: Det här numret klarar inte kortets kontrollsumma. Kontrollera det; du kan ändå spara.
+  cardCodeLength: "{brand}-kort använder en {name} med {size} siffror. Du kan ändå spara."
+  folder: Mapp
+  chooseFolder: Välj en mapp, nu {folder}
+  website: Webbplatsens URL
+  autofillOptions: Alternativ för autofyll
+  additionalOptions: Fler alternativ
+  authenticator: Autentiserare
+  note: Anteckning
+  secret: Hemlighet
+  advanced: Avancerat
+  algorithm: Algoritm
+  digits: Siffror
+  period: Intervall i sekunder
+  addField: Lägg till fält
+  fieldName: Fältnamn
+  fieldValue: Värde
+  removeField: Ta bort {name}
+  removeUnnamed: Ta bort fält
+  save: Spara
+  passkeyReadOnly: En lösennyckels uppgifter kan bara ändras i Keepiqs webbapp
+  offline: Du är offline. Ändringar kräver en anslutning till Keepiq.
+  unsavedTitle: Osparade ändringar
+  unsaved: Du har osparade ändringar. Vill du förkasta dem?
+  discard: Förkasta
+  keepEditing: Fortsätt redigera
+
+authKey:
+  label: Autentiseringsnyckel
+  optionalLabel: Autentiseringsnyckel (valfri)
+  newLabel: Ny autentiseringsnyckel
+  help: Klistra in otpauth://totp/-länken eller den hemliga nyckeln, eller skanna QR-koden på sidan.
+  scan: Skanna QR-kod på sidan
+  read: Autentiseringsnyckeln lästes från QR-koden
+  noQr: Ingen QR-kod hittades på sidan. Rulla fram den och försök igen.
+  notTotp: Den här QR-koden innehåller ingen autentiseringsnyckel. Använd QR-koden som webbplatsen visar när du konfigurerar tvåfaktorsinloggning.
+  noPicture: Keepiq kan inte ta en bild av den här sidan. Klistra in nyckeln i stället.
+  popout: Öppna Keepiq från verktygsfältet på sidan med QR-koden för att skanna den.
+  saved: Sparad
+  remove: Ta bort autentiseringsnyckel
+  replaceHelp: Klistra in eller skanna en ny nyckel, eller lämna fältet tomt för att ta bort den sparade.
+  keep: Behåll den sparade nyckeln
+  removedOnSave: Autentiseringsnyckeln tas bort när du sparar.
+  notCloned: Autentiseringsnyckeln klonas inte.
+
+fieldErrors:
+  required: Namn krävs
+  tooLong: Högst {max} tecken
+  tooLongBytes: För långt (max {max} byte)
+  reserved: Det här namnet är reserverat
+  duplicate: Det finns redan ett fält med det här namnet
+  invalidTotp: Ingen giltig autentiseringshemlighet
+  slash: Mappnamn får inte innehålla snedstreck
+
+writeErrors:
+  writeLocked: Valvet är tillfälligt låst för en nyckelmigrering, försök igen senare
+  forbidden: Keepiq tillåter inte den här ändringen. Keepiqs webbapp visar varför.
+  policy: Din organisations policy tillåter inte den här ändringen
+  accountChanged: Du bytte till ett annat konto under tiden, så inget sparades. Byt tillbaka för att spara det.
+  accountChangedDelete: Du bytte till ett annat konto under tiden, så inget raderades. Byt tillbaka för att radera det.
+  keepClash: En mapp med namnet {name} finns redan en nivå upp. Välj Flytta objekt till överordnad mapp eller Radera för den, eller byt först namn på en av dem.
+  keepClashAfter: En mapp du valde att behålla har samma namn som en mapp en nivå upp, så inget raderades. Kontrollera valen igen.
+  invalid: Keepiq avvisade den här ändringen
+  stale: Det här objektet ändrades någon annanstans. Gå tillbaka och redigera det igen för att se den senaste versionen.
+  itemGone: Det här objektet finns inte längre
+  folderGone: Den här mappen finns inte längre
+  duplicateFolder: Det finns redan en mapp med det här namnet här
+  folderChanged: Den här mappen har ändrats. Kontrollera valen igen.
+  offline: Kunde inte nå servern
+  serverError: Keepiq är inte tillgängligt just nu, försök igen senare
+  unreadable: Det här objektet kunde inte läsas, så det kan inte redigeras här
+  restricted: Det här objektet delades med dig med begränsningar, så det kan inte ändras eller kopieras här
+  unmatched: Keepiq skickade en version av det här objektet som ditt valv inte har, så det öppnades inte.
+  keyMismatch: Keepiq skickade en krypteringsnyckel som inte matchar ditt valv, så inget sparades. Kontakta din Keepiq-administratör.
+  staleSource: Originalet av det här delade objektet ändrades efter att du öppnade det. Inget sparades; öppna det igen och gör om din ändring.
+  incomplete: De som det här objektet delas med ändrades hela tiden medan det sparades. Inget sparades; försök igen.
+  badCertificate: Keepiq skickade en krypteringsnyckel för någon som det här objektet delas med som den här webbläsaren inte kunde läsa. Inget sparades.
+  unverified: Det här objektet delas med partnerorganisationer, och den här webbläsaren kan inte bekräfta att de skulle få det exakt som du såg det. Inget sparades; gör ändringen i Keepiqs webbapp.
+  partnerUnreachable: "Inget sparades: en partnerorganisation som det här objektet delas med kan inte nås ({cloudIds}). Försök igen senare, eller spara utan dem, vilket pausar delningen av objektet med dem tills du delar det med dem igen."
+  partnerUpgradeRequired: "Inget sparades: Keepiq hos {cloudIds} är för gammalt för att ta emot en autentiseringsnyckel. Ta bort nyckeln, eller be dem uppdatera Keepiq."
+  partnerUpgradeRequiredUnnamed: "Inget sparades: en partnerorganisation som det här objektet delas med kör ett Keepiq som är för gammalt för att ta emot en autentiseringsnyckel. Ta bort nyckeln, eller be dem uppdatera Keepiq."
+  partnerUpgradeVersion: De behöver Keepiq {version} eller senare.
+  partnerLookupLimit: För många partnersökningar. Inget sparades; försök igen om en minut.
+  federationUnavailable: Din Keepiq-server kan inte dela med partnerorganisationer, så det här objektet kan inte sparas här. Inget sparades; fråga din administratör.
+  keepiqOutdated: Din Keepiq-server är för gammal för att spara den här ändringen. Inget sparades; be din administratör att uppdatera Keepiq till version {version} eller senare.
+  partnerClock: Certifikatet för en partnerorganisation som det här objektet delas med är inte giltigt enligt den här datorns klocka. Inget sparades; kontrollera datorns datum och tid, eller gör ändringen i Keepiqs webbapp.
+  shareScanPending: Det här objektet väntar på en kontroll av sina delningar som inte är klar. Inget sparades; försök igen senare.
+  shareScanPendingOpen: Det här objektet väntar på en kontroll av sina delningar och kan inte redigeras än. Försök igen senare.
+  shareScanPendingDelete: Det här objektet väntar på en kontroll av sina delningar som inte är klar. Inget raderades; försök igen senare.
+  sendInvalid: Keepiq godtog inte den här försändelsen. Inget skickades; kontrollera fälten och försök igen.
+  sendOffline: Kunde inte nå servern, inget skickades
+  argon2Unavailable: Lösenordsskydd är inte tillgängligt i den här webbläsaren
+
+shareSave:
+  saveWithout: Spara utan dem
+  ownerOnly: Sparat. Mottagare hos partnerorganisationer får ändringen nästa gång ägaren sparar objektet.
+  suspended: Delningen med {cloudIds} är pausad, eftersom deras certifikat inte kunde verifieras eller deras organisation inte längre godtar det. Keepiqs webbapp visar delningen.
+  paused: Delningen med {cloudIds} är pausad tills du delar det här objektet med dem igen.
+
+folders:
+  add: Lägg till mapp
+  newFolder: Ny mapp
+  rename: Byt namn
+  renameTitle: Byt namn på mapp
+  delete: Radera
+  more: Mer, {name}
+  name: Mappnamn
+  empty: Inga mappar än
+  notice: Mappnamn är inte krypterade
+  dismiss: Stäng
+  current: Nuvarande mapp
+  pickTitle: Välj mapp
+  moveTitle: Flytta till mapp
+  saved: Mappen sparades
+  deleted: Mappen raderades
+  deleteTitle: Radera mapp
+  deleteConfirm: Radera {name}? Det kan inte ångras.
+  cascade:
+    1: Radera {name} och dess objekt, eller flytta det till {parent}?
+    n: Radera {name} och dess $1 objekt, eller flytta dem till {parent}?
+  countsAll: Arkiverade objekt och objekt i papperskorgen räknas också.
+  deleteItems: Radera även objekten
+  moveItems: Flytta objekt till överordnad mapp
+  items:
+    1: 1 objekt
+    n: $1 objekt
+  subfolders:
+    1: 1 undermapp
+    n: $1 undermappar
+  directRow: Objekt i {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Radera
+  actionMove: Flytta objekt till överordnad mapp
+  actionKeep: Behåll
+  directMove: Flytta till överordnad mapp
+
+clipboard:
+  copied: "{what} kopierat"
+  failed: Kunde inte kopiera
+
+field:
+  show: Visa {field}
+  hide: Dölj {field}
+  copy: Kopiera {field}
+
+blocked:
+  generic: Det här objektet är blockerat.
+  suiteMissing: Dess krypteringsnyckel finns inte längre.
+  suiteRevoked: Dess krypteringsnyckel har återkallats.
+  suiteCompromised: Krypterat med en komprometterad nyckel, så det kan inte öppnas här. Keepiqs webbapp visar om det kan återställas.
+  migrationFailed: Det kunde inte flyttas till din nya nyckel under återställningen efter komprometteringen. Det sparade värdet behålls men kan inte öppnas.
+
+detail:
+  item: Objekt
+  decrypting: Dekrypterar…
+  decryptFailed: Kunde inte dekryptera det här objektet
+  unreadablePasskey: Kunde inte läsa den här lösennyckeln
+  unreadableFields: Kunde inte läsa ytterligare fält
+  loginCredentials: Inloggningsuppgifter
+  username: Användarnamn
+  password: Lösenord
+  authenticatorKey: Autentiseringsnyckel
+  website: Webbplats
+  additionalFields: Ytterligare fält
+  notes: Anteckningar
+  history: Objekthistorik
+  created: Skapad
+  updated: Uppdaterad
+  expires: Upphör
+  cardDetails: Kortuppgifter
+  number: Nummer
+  numberWithBrand: Nummer · {brand}
+  cardNumber: Kortnummer
+  cardholder: Kortinnehavare
+  expiry: Utgångsdatum
+  cvv: CVV
+  pin: PIN-kod
+  identity: Identitet
+  firstName: Förnamn
+  lastName: Efternamn
+  address: Adress
+  phone: Telefon
+  email: E-post
+  bsn: BSN
+  passkey: Lösennyckel
+  relyingParty: Webbplats eller app
+  passkeyUser: Användarnamn
+  passkeyOnLogin: Keepiq loggar in med lösennycklar som sparats på en inloggning, inte med det här objektet
+  passkeys: Lösennycklar
+  passkeyCreated: Skapad {date}
+  useOnly: Ägaren låter dig inte visa eller kopiera detta.
+
+totp:
+  code: Verifieringskod
+  invalid: Ogiltig autentiseringsnyckel
+  changesIn:
+    1: Ändras om 1 sekund
+    n: Ändras om $1 sekunder
+
+settings:
+  accountSecurity: Kontosäkerhet
+  autofill: Autofyll
+  notifications: Aviseringar
+  vault: Valv
+  appearance: Utseende
+  about: Om
+  folders: Mappar
+  theme: Tema
+  themeSystem: Systemstandard
+  themeLight: Ljust
+  themeDark: Mörkt
+  comingLater: Kommer senare
+  setByOrganisation: Inställt av din organisation
+  turnedOffByOrganisation: Avstängt av din organisation
+  never: Aldrig
+  durationHours: "{count} h"
+  durationMinutes: "{count} min"
+  pin: Lås upp med PIN-kod
+  pinTurnOn: Slå på
+  masterPasswordRequired: Ange ditt huvudlösenord
+  pinAgain: Bekräfta PIN-kod
+  pinMismatch: PIN-koderna matchar inte
+  pinAdvice: Återanvänd inte en PIN-kod från din telefon eller bank.
+  pinAfterRestart: Efter en omstart av webbläsaren anger du ditt huvudlösenord en gång; sedan fungerar din PIN-kod igen.
+  vaultTimeout: Tidsgräns för valvet
+  timeoutImmediately: Omedelbart
+  timeoutMinutes:
+    1: 1 minut
+    n: $1 minuter
+  timeoutHours:
+    1: 1 timme
+    n: $1 timmar
+  timeoutOnSystemLock: När systemet låses
+  timeoutOnSystemLockCapped: När systemet låses, eller efter {duration} utan aktivitet (inställt av din organisation)
+  timeoutOnRestart: När webbläsaren startas om
+  timeoutCustom: Anpassad
+  hours: Timmar
+  minutes: Minuter
+  customAtLeastOne: Ange minst en minut
+  customWhole: Ange hela timmar och minuter
+  customAtMost: Din organisation tillåter högst {duration}
+  neverTitle: Hålla valvet upplåst?
+  neverWarning: Ditt valv förblir upplåst tills du låser det själv. Nyckeln som öppnar det skrivs till den här webbläsarprofilens disk, där alla som kan läsa profilen kan läsa den.
+  neverConfirm: Håll upplåst
+  timeoutAction: Åtgärd vid tidsgräns
+  actionLock: Lås
+  actionLogOutNote: När tidsgränsen löper ut loggas du ut och behöver applösenordet igen
+  lockNow: Lås nu
+  changeMasterPassword: Byt huvudlösenord
+  autofillOnPageLoad: Autofyll vid sidinläsning
+  autofillOnPageLoadWarning: Komprometterade eller opålitliga webbplatser kan utnyttja autofyll vid sidinläsning
+  defaultAutofill: Standardinställning för autofyll av inloggningar
+  defaultAutofillOnPageLoad: Autofyll vid sidinläsning om det är på
+  uriMatch: Standardidentifiering av URI-matchning
+  uriBaseDomain: Basdomän
+  uriHost: Värd
+  uriStartsWith: Börjar med
+  uriExact: Exakt
+  uriRegex: Reguljärt uttryck
+  uriRegexNote: Reguljära uttryck är ett avancerat alternativ och kan störa matchningen
+  inlineSuggestions: Visa autofyllförslag i formulärfält
+  inlineCards: Visa kort som förslag
+  inlineIdentities: Visa identiteter som förslag
+  inlineKindsOff: Slå först på Visa autofyllförslag i formulärfält.
+  vaultCards: Visa alltid kort som autofyllförslag i valvvyn
+  vaultIdentities: Visa alltid identiteter som autofyllförslag i valvvyn
+  defaultPasswordManager: Gör Keepiq till din standardlösenordshanterare
+  defaultPasswordManagerHint: Stänger av webbläsarens egen lösenordssparning och adressifyllning, så att dess förslag inte täcker Keepiqs.
+  defaultPasswordManagerManaged: Din organisation eller ett annat tillägg hanterar den här webbläsarinställningen.
+  contextMenu: Visa alternativ i snabbmenyn
+  shortcut: Kortkommando för autofyll
+  shortcutNotSet: Inte inställt
+  shortcutChange: Ändra
+  shortcutFirefox: Öppna about:addons, välj kugghjulsmenyn och sedan Hantera kortkommandon för tillägg
+  shortcutSafari: Öppna Safari-inställningarna, välj Tillägg och markera sedan Keepiq för att ändra kortkommandot
+  websiteAccess: Åtkomst till webbplatser
+  websiteAccessAll: Alla webbplatser
+  websiteAccessSome: Bara webbplatser du har tillåtit
+  websiteAccessServer: Inte din Keepiq-server
+  clearClipboard: Rensa urklipp
+  clipboardSeconds:
+    1: 1 sekund
+    n: $1 sekunder
+  autoCopyTotp: Kopiera TOTP automatiskt
+  autoCopyTotpHint: Om en inloggning har en verifieringskod kopieras den till urklipp när du autofyller inloggningen.
+  askToAdd: Fråga om att lägga till inloggning
+  askToUpdate: Fråga om att uppdatera befintlig inloggning
+  askPasskeys: Fråga om att spara och använda lösennycklar
+  excludedDomains: Undantagna domäner
+  addCurrentSite: Lägg till aktuell webbplats
+  domain: Domän
+  addDomain: Lägg till
+  domainEmpty: Ange en domän
+  domainUnreadable: Ange en domän som example.org
+  domainDuplicate: Redan undantagen
+  removeDomain: Ta bort {domain}
+  webTitle: Keepiq på webben
+  webText: Keepiqs egna aviseringar, import och export samt ditt huvudlösenord hanteras i Keepiq på Nextcloud, under Personliga inställningar.
+  openKeepiq: Öppna Keepiq
+  lastSync: "Senaste synkronisering: {time}"
+  lastSyncNever: "Senaste synkronisering: Aldrig"
+  syncOffline: Synkroniseringen misslyckades, du är offline
+  syncFailed: Synkroniseringen misslyckades, försök igen senare
+  importItems: Importera objekt
+  exportVault: Exportera valv
+  defaultItemType: Standardobjekttyp i det här tillägget
+  compactMode: Kompakt läge
+  showAnimations: Visa animationer
+  quickCopy: Visa snabbkopiering i valvet
+  showBadgeCounter: Visa antal inloggningsförslag på tilläggets ikon
+  language: Språk
+  languageFollows: Följer din webbläsare
+  version: Version {version}
+  server: Server {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiq-version okänd
+  help: Hjälp
+  reportBug: Rapportera ett fel
+  contactSupport: Kontakta support
+  privacyPolicy: Integritetspolicy
+  webApp: Keepiqs webbapp
+  rate: Betygsätt tillägget
+
+websiteAccess:
+  title: Låt Keepiq fungera på webbplatser
+  body: Safari kör bara Keepiq på webbplatser du tillåter. Tillåt det på alla webbplatser för att fylla i inloggningar, spara nya och använda lösennycklar överallt där du loggar in.
+  allow: Tillåt på alla webbplatser
+  dismiss: Inte nu
+  steps: Välj Safari > Inställningar i Safari och sedan Webbplatser. Markera Keepiq i listan och ställ in ”Vid besök på andra webbplatser” på Tillåt.
+  perSite: Om du vill tillåta en webbplats i taget klickar du på Keepiq-knappen på webbplatsen och väljer att alltid tillåta den.
+  serverTitle: Keepiq kan inte nå {host}
+  serverBody: Safari låter inte Keepiq nå din server, så ditt valv kan inte synkroniseras.
+  serverAllow: Tillåt {host}
+
+generator:
+  kinds: Vad ska genereras
+  password: Lösenord
+  passphrase: Lösenfras
+  username: Användarnamn
+  length: Längd
+  lengthValue: Längd i tecken
+  uppercase: Versaler (A-Z)
+  lowercase: Gemener (a-z)
+  digits: Siffror (0-9)
+  special: Specialtecken som !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Teckentyper
+  lastClassOn: Minst en typ förblir på
+  minNumbers: Minsta antal siffror
+  minSpecial: Minsta antal specialtecken
+  avoidAmbiguous: Undvik tvetydiga tecken
+  lockedByPolicy: Inställt av din organisation
+  passphraseOff: Avstängt av din organisation
+  words: Antal ord
+  separator: Ordavgränsare
+  capitalizeWords: Inled med versal
+  capitalize: Inled med versal
+  includeNumber: Inkludera siffra
+  usernameType: Typ
+  typeWord: Slumpmässigt ord
+  typePlus: Plusadresserad e-post
+  typeCatchall: Catch-all-e-post
+  email: E-post
+  emailPlaceholder: namn@example.com
+  domain: Domän
+  domainPlaceholder: example.com
+  basedOn: Baserat på
+  random: Slumpmässigt
+  websiteName: Webbplatsens namn
+  noWebsite: Ingen webbplats hittades
+  needsEmail: Ange en e-postadress
+  needsDomain: Ange en domän
+  wordlistUnavailable: Ordlistan är inte tillgänglig
+  regenerate: Generera igen
+  usePassword: Använd det här lösenordet
+  useUsername: Använd det här användarnamnet
+  history: Generatorhistorik
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Inga genererade värden än
+  clearHistory: Rensa
+  clearHistoryTitle: Rensa generatorhistoriken?
+  clearHistoryText: Det här tar bort alla värden i listan från den här webbläsaren.
+  generatePasswordLink: Generera ett lösenord
+  generatePassword: Generera lösenord
+  generateUsername: Generera användarnamn
+
+send:
+  new: Ny försändelse
+  empty: Inga försändelser än
+  emptyText: Dela text eller en inloggning via en länk som raderar sig själv.
+  loadFailed: Kunde inte läsa in dina försändelser
+  retry: Försök igen
+  labelText: "Textförsändelse, {time}"
+  labelCredential: "Inloggningsförsändelse, {time}"
+  viewsLeft:
+    1: "{left} av 1 visning kvar"
+    n: "{left} av $1 visningar kvar"
+  expires: "Upphör {date}"
+  neverExpires: Upphör aldrig
+  expired: Har upphört
+  passwordBadge: Lösenord
+  link: Länk
+  copyLink: Kopiera länk
+  copyLinkOf: "Kopiera länk, {name}"
+  linkGone: Länken är inte längre tillgänglig
+  remove: Ta bort
+  removeOf: "Ta bort, {name}"
+  removeTitle: Ta bort försändelse
+  removeConfirm: Ta bort den här försändelsen? Alla med länken förlorar åtkomsten.
+  removed: Försändelse borttagen
+  contentSection: Innehåll
+  optionsSection: Alternativ
+  type: Typ
+  text: Text
+  credential: Inloggning
+  content: Text att dela
+  maxViews: Max antal visningar
+  maxViewsRange: "Mellan 1 och {max}"
+  expiry: Upphör efter
+  expiry1h: 1 timme
+  expiry1d: 1 dag
+  expiry2d: 2 dagar
+  expiry3d: 3 dagar
+  expiry7d: 7 dagar
+  expiry30d: 30 dagar
+  expiryCustom: Anpassad
+  customHours: Timmar
+  customHoursMin: Minst 1 timme
+  customHoursMax: Högst 720 timmar (30 dagar)
+  accessPassword: Åtkomstlösenord
+  accessPasswordHint: Valfritt. Mottagaren behöver det för att öppna denna försändelse.
+  create: Skapa
+  protecting: Skyddar med lösenord…
+  offline: Försändelser kräver en anslutning till din Keepiq-server
+  prefillFailed: Kunde inte läsa den här inloggningen
+  ready: Din försändelse är klar
+  shownOnce:
+    1: Kopiera länken nu. Den visas bara tills du stänger det här fönstret, och innehållet raderas efter 1 visning.
+    n: Kopiera länken nu. Den visas bara tills du stänger det här fönstret, och innehållet raderas efter $1 visningar.
+  passwordNote: Dela åtkomstlösenordet separat från länken. Efter 5 felaktiga försök raderas denna försändelse.
+  done: Klar
+
+pageFill:
+  insecure: "Varning: Det här är en osäker HTTP-sida, och all information du skickar kan eventuellt ses och ändras av andra. Den här inloggningen sparades ursprungligen på en säker (HTTPS-)sida, {host}.\n\nVill du ändå fylla i den här inloggningen?"
+  insecureNoHost: "Varning: Det här är en osäker HTTP-sida, och all information du skickar kan eventuellt ses och ändras av andra. Den här inloggningen sparades ursprungligen på en säker (HTTPS-)sida.\n\nVill du ändå fylla i den här inloggningen?"
+  cardInsecure: "Fyll i det här kortet på en osäker webbplats?\n\nDen här webbplatsen är inte säker. Vem som helst i nätverket kan läsa kortuppgifterna som fylls i."
+  crossSite: "Fyll även i på {hosts}?\n\nEn del av det här formuläret kommer från {hosts}, inte från {host}. Keepiq fyller bara i det där om du godkänner det."
+
+contextMenu:
+  root: Keepiq
+  autofill: Autofyll inloggning
+  noMatches: Inga inloggningar tillgängliga
+  noUsernames: Inga användarnamn tillgängliga
+  noPasswords: Inga lösenord tillgängliga
+  noCodes: Inga verifieringskoder tillgängliga
+  noIdentities: Inga identiteter tillgängliga
+  noCards: Inga kort tillgängliga
+  addLogin: Lägg till inloggning
+  addIdentity: Lägg till identitet
+  addCard: Lägg till kort
+  openKeepiq: Öppna Keepiq
+  copyUsername: Kopiera användarnamn
+  copyPassword: Kopiera lösenord
+  copyCode: Kopiera verifieringskod
+  autofillCard: Autofyll kort
+  autofillIdentity: Autofyll identitet
+  generatePassword: Generera och kopiera lösenord
+  unlock: Lås upp valvet
+
+pageNotice:
+  label: Keepiq-meddelande
+  noLoginForm: Keepiq hittade inget inloggningsformulär att fylla i på den här sidan.
+  noCardForm: Keepiq hittade inga kortfält att fylla i på den här sidan.
+  noIdentityForm: Keepiq hittade inga fält för adress eller personuppgifter att fylla i på den här sidan.
+
+toolbar:
+  locked: "{name}: Låst"
+  loggedOut: "{name}: Utloggad"
+  count:
+    1: "{name}: 1 inloggning för den här webbplatsen"
+    n: "{name}: $1 inloggningar för den här webbplatsen"
+
+inlineList:
+  frameTitle: Keepiq-inloggningar
+  label: Keepiq-inloggningar för {host}
+  row: "{name}, {username}"
+  noMatch: Inga inloggningar för {host}
+  passkeyRow: "{name}, {username}, lösennyckel"
+  passkeyRowNoUser: "{name}, lösennyckel"
+  noMatchPasskeys: Inga inloggningar eller lösennycklar för {host}
+  locked: Keepiq är låst
+  unlock: Lås upp
+  insecureQuestion: Fyll i på den här osäkra webbplatsen?
+  insecureDetail: Den här webbplatsen är inte säker. Vem som helst i nätverket kan läsa det som fylls i.
+  fill: Fyll i
+  notVisible: Keepiq kan inte fylla i här eftersom den här sidan ändrar hur den visas. Använd Keepiq-knappen i verktygsfältet.
+  status:
+    count:
+      1: 1 Keepiq-inloggning. Tryck på nedåtpil för att välja.
+      n: $1 Keepiq-inloggningar. Tryck på nedåtpil för att välja.
+    noMatch: Inga Keepiq-inloggningar för {host}
+    countPasskeys:
+      1: 1 Keepiq-inloggning eller -lösennyckel. Tryck på nedåtpil för att välja.
+      n: $1 Keepiq-inloggningar och -lösennycklar. Tryck på nedåtpil för att välja.
+    noMatchPasskeys: Inga Keepiq-inloggningar eller -lösennycklar för {host}
+    locked: Keepiq är låst. Tryck på nedåtpil för att låsa upp.
+  code:
+    frameTitle: Keepiq-verifieringskoder
+    label: Keepiq-verifieringskoder för {host}
+    noMatch: Inga verifieringskoder för {host}
+    locked: Lås upp Keepiq för att se dina verifieringskoder
+    invalid: Ingen giltig autentiseringshemlighet
+    status:
+      count:
+        1: 1 Keepiq-verifieringskod. Tryck på nedåtpil för att välja.
+        n: $1 Keepiq-verifieringskoder. Tryck på nedåtpil för att välja.
+      noMatch: Inga Keepiq-verifieringskoder för {host}
+  card:
+    frameTitle: Keepiq-kort
+    noMatch: Inga kort i Keepiq
+    locked: Lås upp Keepiq för att se dina kort
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Kort, *{last4}"
+    row: "{name}, {brand} som slutar på {last4}"
+    rowNoBrand: "{name}, kort som slutar på {last4}"
+    status:
+      count:
+        1: 1 Keepiq-kort. Tryck på nedåtpil för att välja.
+        n: $1 Keepiq-kort. Tryck på nedåtpil för att välja.
+  identity:
+    frameTitle: Keepiq-identiteter
+    noMatch: Inga identiteter i Keepiq
+    locked: Lås upp Keepiq för att se dina identiteter
+    status:
+      count:
+        1: 1 Keepiq-identitet. Tryck på nedåtpil för att välja.
+        n: $1 Keepiq-identiteter. Tryck på nedåtpil för att välja.
+
+notificationBar:
+  label: Keepiq-avisering
+  saveQuestion: Spara inloggning för {host} i Keepiq?
+  updateQuestion: Uppdatera lösenordet för {name}?
+  updateQuestionUser: Uppdatera lösenordet för {name} ({username})?
+  updateQuestionHost: Uppdatera lösenordet för {name} på {host}?
+  updateQuestionUserHost: Uppdatera lösenordet för {name} ({username}) på {host}?
+  folder: Mapp
+  noFolder: Ingen mapp
+  save: Spara
+  never: Aldrig för den här webbplatsen
+  update: Uppdatera
+  close: Stäng
+  expand: Visa alternativ
+  shortcutHint: Tryck på {shortcut} för att svara.
+  saving: Sparar…
+  updating: Uppdaterar…
+  saved: Inloggningen sparades
+  updated: Lösenordet uppdaterades
+  notVisible: Keepiq kan inte göra detta här eftersom den här sidan ändrar hur den visas. Stäng detta och lägg till inloggningen via Keepiq-knappen i verktygsfältet.
+  errors:
+    writeLocked: Valvet är tillfälligt låst för ändringar. Försök igen senare.
+    unverified: Redigera den här inloggningen i Keepiqs popup-fönster eller webbapp för att ändra lösenordet.
+    viewOnly: Den här inloggningen delas med dig endast för visning, så lösenordet kan inte uppdateras här.
+    loginGone: Den här inloggningen finns inte längre. Spara den som en ny inloggning?
+    locked: Keepiq är låst. Lås upp via Keepiq-knappen i verktygsfältet och försök sedan igen.
+    notResponding: Keepiq svarar inte. Försök igen.
+    accountChanged: Du bytte konto, så inget sparades.
+    keyMismatch: Keepiqs nyckel matchar inte ditt valv. Inget sparades; kontakta din administratör.
+    staleSource: Originalet av den här delade inloggningen har ändrats. Inget sparades; försök igen.
+    incomplete: De som den här inloggningen delas med ändrades hela tiden. Inget sparades; försök igen.
+    badCertificate: En mottagares krypteringsnyckel kunde inte läsas. Inget sparades.
+    keepiqOutdated: Din Keepiq-server är för gammal. Inget sparades; be din administratör om Keepiq {version} eller senare.
+    shareScanPending: Den här inloggningen väntar på en kontroll av sina delningar. Inget sparades; försök igen senare.
+
+passkey:
+  unlockGet: Lås upp Keepiq för att använda en lösennyckel för {rpId}
+  unlockCreate: Lås upp Keepiq för att spara en lösennyckel för {rpId}
+  verifyTitle: Bekräfta att det är du
+  verifyPassword: Ange ditt huvudlösenord för att fortsätta.
+  verifyPin: Ange din PIN-kod för att fortsätta.
+  confirm: Bekräfta
+  signInTitle: Logga in med en lösennyckel
+  signInText: Använd en lösennyckel sparad i Keepiq för {rpId}
+  row: "{name}, {userName}"
+  noPasskey: Ingen Keepiq-lösennyckel för {rpId}
+  saveTitle: Spara lösennyckel
+  saveTo: Spara på en inloggning
+  replaces: Ersätter lösennyckeln för {userName}
+  newLogin: Ny inloggning
+  name: Namn
+  folder: Mapp
+  noFolder: Ingen mapp
+  saveNew: Spara som ny inloggning
+  replaceQuestion: Ersätta lösennyckeln för {userName} på {name}?
+  replace: Ersätt
+  alreadySavedTitle: Lösennyckeln är redan sparad
+  alreadySaved: En lösennyckel för det här kontot är redan sparad i Keepiq
+  close: Stäng
+  retry: Försök igen
+  fallback: Använd din enhet eller hårdvarunyckel
+  stalePick: Den här lösennyckeln finns inte längre i ditt valv. Välj en annan.
+  staleSave: Den här inloggningen kan inte längre ta emot lösennyckeln. Välj en annan, eller spara den som en ny inloggning.
+  errors:
+    conflict: Den här inloggningen ändrades medan den sparades. Inget sparades; försök igen.
+    partnerUpgradeRequired: "Inget sparades: Keepiq hos {cloudIds} är för gammalt för att lagra lösennycklar. Be dem uppdatera Keepiq, eller spara lösennyckeln på en annan inloggning."
+    partnerUpgradeRequiredUnnamed: "Inget sparades: en partnerorganisation som den här inloggningen delas med kör ett Keepiq som är för gammalt för att lagra lösennycklar. Be dem uppdatera Keepiq, eller spara lösennyckeln på en annan inloggning."
+    shareScanPending: Den här inloggningen väntar på en kontroll av sina delningar som inte är klar. Inget sparades; försök igen senare.
+
+vaultPasskey:
+  unlock: "Lås upp med fingeravtryck eller ansikte"
+  unlockIntro: "Webbläsaren ber om ditt fingeravtryck, ansikte eller enhetens pinkod."
+  enrolTitle: "Ställ in upplåsning med fingeravtryck eller ansikte"
+  enrolIntro: "Bekräfta ditt huvudlösenord. Sedan ber webbläsaren två gånger om fingeravtryck, ansikte eller enhetens pinkod."
+  enrolSubmit: "Ställ in"
+  enrolDone: "Upplåsning med fingeravtryck eller ansikte är inställd för den här webbläsaren."
+  close: "Stäng"
+  label: "Keepiq webbläsartillägg"
+  tooOld: "Upplåsning med fingeravtryck eller ansikte kräver Chrome eller Edge 122, eller Firefox 150, eller senare. Använd ditt huvudlösenord."
+  unsupported: "Den här webbläsaren eller enheten kan inte låsa upp Keepiq med fingeravtryck eller ansikte. Använd ditt huvudlösenord."
+  revokeInWebApp: "Återkalla nyckeln i Keepiqs webbapp för att stänga av det."

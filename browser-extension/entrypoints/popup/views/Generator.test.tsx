@@ -428,6 +428,22 @@ describe('Generator', () => {
 		expect(footer.childElementCount).toBe(0)
 	})
 
+	it.each([
+		['password', 'passphrase', 'Use this password'],
+		['username', 'username', 'Use this username'],
+	] as const)('keeps Use for a %s off while the value failed to generate', async (target, stored, name) => {
+		vi.mocked(generate).mockResolvedValue({ ok: false, failure: 'wordlist_unavailable' })
+		const { footer } = renderGenerator({ generator: { options: options((o) => (o.tab = stored)) } }, { pick: { target, onUse: vi.fn() } })
+		expect(await screen.findByText('Wordlist unavailable')).toBeTruthy()
+		expect(within(footer).getByRole<HTMLButtonElement>('button', { name }).disabled).toBe(true)
+	})
+
+	it('opens a password pick on Password when the account last used Username', async () => {
+		renderGenerator({ generator: { options: options((o) => (o.tab = 'username')) } }, { pick: { target: 'password', onUse: vi.fn() } })
+		await shows('password-1')
+		expect(tab('Password').getAttribute('aria-selected')).toBe('true')
+	})
+
 	it('links to the history only when asked to', async () => {
 		const onOpenHistory = vi.fn()
 		const { user } = renderGenerator({}, { onOpenHistory })

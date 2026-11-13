@@ -118,6 +118,27 @@ class JwtAuthMiddlewareTest extends TestCase {
 	}//end testInvalidTokenThrows()
 
 	/**
+	 * A Bearer header with only whitespace after the scheme → exception,
+	 * and the token service is never asked.
+	 *
+	 * @return void
+	 */
+	public function testBlankBearerTokenThrowsWithoutValidating(): void {
+		$request = $this->createMock(originalClassName: IRequest::class);
+		$service = $this->createMock(originalClassName: JwtAuthService::class);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$request->method('getHeader')->with('Authorization')->willReturn("Bearer  \t ");
+		$service->expects($this->never())->method('validateAccessToken');
+
+		$middleware = new JwtAuthMiddleware(request: $request, service: $service, logger: $logger);
+		$controller = new ConcreteAppController('keepiq', $request);
+
+		$this->expectException(exception: RuntimeException::class);
+		$this->expectExceptionMessage(message: 'Empty Bearer token');
+		$middleware->beforeController($controller, 'index');
+	}//end testBlankBearerTokenThrowsWithoutValidating()
+
+	/**
 	 * Valid token → application injected.
 	 *
 	 * @return void

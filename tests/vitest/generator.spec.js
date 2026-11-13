@@ -16,7 +16,7 @@
  */
 
 import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { EFF_LARGE_WORDLIST } from '../../src/generator/eff-large-wordlist.js'
 import {
 	generateKey,
@@ -82,6 +82,32 @@ describe('charset generation', () => {
 		)
 		expect(() => generateKey({ length: 129 })).toThrow(
 			'Length must not exceed 128 characters',
+		)
+	})
+
+	it('refuses a length that is not a whole number', () => {
+		expect(() => generateKey({ length: 12.5 })).toThrow(
+			'Length must be at least 8 characters',
+		)
+	})
+
+	it('checks the length before the character set', () => {
+		const every =
+			'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?/'
+		expect(() => generateKey({ length: 0, excludedCharacters: every })).toThrow(
+			'Length must be at least 8 characters',
+		)
+	})
+
+	it('leaves out l, 0 and 1 when avoiding ambiguous characters with upper case off', () => {
+		repeat(() =>
+			expect(
+				generateKey({
+					length: 128,
+					includeUppercase: false,
+					avoidAmbiguous: true,
+				}),
+			).not.toMatch(/[l01]/),
 		)
 	})
 
@@ -211,6 +237,20 @@ describe('org policy', () => {
 		expect(() => generateKey({ regex: '[a-z]{16,32}' }, policy)).toThrow('digit')
 	})
 
+	it.each([
+		['generator_require_upper', 'includeUppercase', /[A-Z]/],
+		['generator_require_lower', 'includeLowercase', /[a-z]/],
+		['generator_require_digit', 'includeDigits', /[0-9]/],
+		['generator_require_symbol', 'includeSpecialCharacters', SPECIAL],
+	])('%s puts that kind in when %s is off', (requirement, option, kind) => {
+		const policy = {
+			policy_enabled: true,
+			generator_min_length: 8,
+			[requirement]: true,
+		}
+		expect(generateKey({ [option]: false }, policy, (min) => min)).toMatch(kind)
+	})
+
 	it('changes nothing when the policy is off', () => {
 		expect(
 			generateKey(
@@ -300,6 +340,13 @@ describe('minimums', () => {
 		}
 	})
 
+	it.each([Number.NaN, -1, 'x'])(
+		'still puts in one digit for a minimum of %s',
+		(minDigits) => {
+			expect(generateKey({ minDigits }, null, (min) => min)).toMatch(/[0-9]/)
+		},
+	)
+
 	it('puts the forced characters at uniformly random positions', () => {
 		// Seven digits and one upper-case letter: the letter must land on
 		// each of the 8 positions about 1 in 8 times.
@@ -338,6 +385,26 @@ describe('randomness', () => {
 		expect(source).toContain('crypto.getRandomValues')
 		expect(source).not.toMatch(/Math\.random/)
 	})
+
+	it.each([
+		['a key', () => generateKey({})],
+		['a key from a pattern', () => generateKey({ regex: '[a-z0-9]{12}' })],
+		['a passphrase', () => generatePassphrase({})],
+	])(
+		'draws %s from crypto.getRandomValues without an injected source',
+		(_, make) => {
+			const secure = vi.spyOn(globalThis.crypto, 'getRandomValues')
+			const weak = vi.spyOn(Math, 'random')
+			try {
+				make()
+				expect(secure).toHaveBeenCalled()
+				expect(weak).not.toHaveBeenCalled()
+			} finally {
+				secure.mockRestore()
+				weak.mockRestore()
+			}
+		},
+	)
 })
 
 describe('passphrase generation', () => {

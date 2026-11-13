@@ -1,0 +1,814 @@
+# Terms and tone follow Nextcloud's Hungarian: informal te, széf, mesterjelszó, alkalmazásjelszó, azonosítókulcs (passkey), webalkalmazás; placeholders never take suffixes.
+language: hu
+extensionDescription: A Keepiq a böngésződben. Töltsd ki a bejelentkezéseket, azonosítókulcsokat és egyszeri kódokat a titkosított Nextcloud-széfedből.
+commandAutofillLogin: A legutóbb használt bejelentkezés kitöltése
+commandFocusNotificationBar: Ugrás a Keepiq mentési sávjára
+
+errors:
+  insecureUrl: Ehhez a kiszolgálóhoz https-t használj
+  invalidUrl: Adj meg egy érvényes kiszolgáló-URL-t
+  permissionDenied: A Keepiqnek engedély kell a(z) {host} kiszolgáló eléréséhez
+  unreachable: "Nem érhető el: {host}"
+  notNextcloud: A(z) {host} nem tűnik Nextcloud-kiszolgálónak
+  serverError: A(z) {host} most nem érhető el, próbáld újra később
+  unauthorized: Hibás felhasználónév vagy alkalmazásjelszó
+  keepiqMissing: A Keepiq nincs telepítve a(z) {host} kiszolgálón
+  keepiqOutdated: A(z) {host} kiszolgálón lévő Keepiq túl régi ehhez a bővítményhez, amelynek {version} vagy újabb verzió kell. Kérd meg a rendszergazdát, hogy frissítse a Keepiqet.
+  noActiveSuite: Nyisd meg egyszer a Keepiq webalkalmazást, állíts be mesterjelszót, majd próbáld újra
+  unlockBlocked: A szervezeted kétlépcsős bejelentkezést követel meg. Állíts be egy második faktort a Nextcloud Beállítások, Biztonság oldalon, majd próbáld újra
+  duplicate: Ez a fiók már hozzá van adva
+  limitReached: Legfeljebb {count} fiók adható hozzá
+  invalidMasterPassword: Érvénytelen mesterjelszó
+  keyUnreadable: A Keepiqben lévő széfkulcsod nem olvasható, ezért ez a böngésző nem tudja feloldani. Szólj a Keepiq rendszergazdájának.
+  offlineNoCache: Offline vagy, és ez a széf még nincs szinkronizálva
+  sessionRevoked: A munkamenet visszavonva, jelentkezz be újra
+  writeLocked: A széfed most nem módosítható, próbáld újra később
+  notResponding: A Keepiq nem válaszol. Töltsd újra a bővítményt, és nyisd meg újra ezt az ablakot.
+  invalidPin:
+    1: Hibás PIN-kód, 1 próbálkozás maradt
+    n: Hibás PIN-kód, $1 próbálkozás maradt
+  wrongPin: Hibás PIN-kód
+  pinForgotten: A PIN-kód törölve a túl sok próbálkozás miatt
+  pinKeyChanged: A széfkulcsod megváltozott. Oldd fel a mesterjelszóval.
+  pinTooShort: Legalább {count} karaktert használj
+  unknown: Valami hiba történt
+  passkeyFailed: "A jelkulcs nem tudta feloldani a széfedet. Használd a mesterjelszavadat."
+
+notices:
+  keyChanged: A széfkulcsod megváltozott a Keepiqben. Oldd fel a jelenlegi mesterjelszóval.
+  fileAccess: "A Keepiqnek nincs szüksége fájlhozzáférésre. A Nextcloudban a Beállítások, Biztonság, Eszközök és munkamenetek alatt kikapcsolhatod ennek az alkalmazásjelszónak a fájlhozzáférését, vagy visszavonhatod."
+
+common:
+  accountOnHost: "{name} itt: {host}"
+  loading: Betöltés…
+  back: Vissza
+  cancel: Mégse
+  logOut: Kijelentkezés
+  appPassword: Alkalmazásjelszó
+  addAccount: Fiók hozzáadása
+  openWebApp: A Keepiq webalkalmazás megnyitása
+  justNow: épp most
+
+titles:
+  accounts: Fiókok
+  logInAgain: Újbóli bejelentkezés
+  unlock: Feloldás
+  viewItem: Elem megtekintése
+  newItem: Új elem
+  newLogin: Új bejelentkezés
+  newCard: Új kártya
+  newIdentity: Új személyazonosság
+  editItem: Elem szerkesztése
+  newSend: Új küldemény
+  sendCreated: Küldemény létrehozva
+
+tabs:
+  label: Fő
+  vault: Széf
+  generator: Generátor
+  send: Küldés
+  settings: Beállítások
+
+header:
+  popout: Külön ablakban
+  accounts: Fiókok, bejelentkezve mint {name}
+  new: Új
+
+unlock:
+  masterPassword: Mesterjelszó
+  submit: Feloldás
+  pin: PIN-kód
+  useMasterPassword: Mesterjelszó használata
+
+logInAgain:
+  submit: Bejelentkezés
+
+addAccount:
+  serverUrl: Kiszolgáló URL-je
+  serverUrlPlaceholder: cloud.example.org
+  username: Felhasználónév
+  hint: Hozz létre egyet a Nextcloud Beállítások, Biztonság oldalon. Soha ne add meg itt a Nextcloud bejelentkezési jelszavadat.
+  hintWithLink: "Hozz létre egyet a Nextcloud Beállítások, Biztonság oldalon: {link}. Soha ne add meg itt a Nextcloud bejelentkezési jelszavadat."
+  securityLink: biztonsági beállítások megnyitása
+  signInWithBrowser: "Bejelentkezés a Nextcloudon keresztül"
+  finishInTab: "Fejezd be a bejelentkezést a megnyílt Nextcloud-oldalon. A Keepiq hozzáadja a fiókot, amint végeztél."
+  orAppPassword: "Vagy adj meg egy alkalmazásjelszót:"
+
+accounts:
+  active: (aktív)
+  unlocked: Feloldva
+  locked: Zárolva
+  loggedOut: Kijelentkezve
+  lock: "{account} zárolása"
+  logOut: "Kijelentkezés: {account}"
+  lockAll: Összes zárolása
+  logOutAll: Kijelentkezés mindenhonnan
+  logOutAllQuestion: Kijelentkezel az összes fiókból?
+  logOutAllDetail: Minden fiók törlődik ebből a böngészőből. Újra szükséged lesz minden alkalmazásjelszóra.
+  logOutQuestion: "Kijelentkezel ebből a fiókból: {account}?"
+  logOutDetail: A fiók törlődik ebből a böngészőből. Az újbóli hozzáadásához alkalmazásjelszó kell.
+
+vault:
+  loadFailed: Nem sikerült betölteni a széfedet
+  tryAgain: Próbáld újra
+  syncing: A széfed szinkronizálása
+  empty: Nincs elem a széfedben
+  noMatch: Nincs találat
+  searchCovers: A keresés a nevekre és a webhelyekre terjed ki.
+  clearFilters: Szűrők törlése
+  items: Elemek
+  tooMany: Az első {count} elem látható, pontosítsd a keresést
+  offline: "Offline. Utolsó szinkronizálás: {time}"
+  syncNow: Szinkronizálás most
+  busy: A kiszolgáló foglalt, később újrapróbálja
+  allBlocked: Minden elem le van tiltva.
+  suggestions: Kitöltési javaslatok
+  noSuggestions: "Nincs elem ehhez: {host}"
+  autofillUnavailable: Az automatikus kitöltés ezen az oldalon nem érhető el
+  fillFailed: Ezen az oldalon nem lehet automatikusan kitölteni. Másold és illeszd be inkább.
+  openFailed: Nem sikerült megnyitni a webhelyet
+  popoutFailed: Nem sikerült új ablakot nyitni
+
+filters:
+  search: Keresés
+  searchLabel: Keresés a széfben
+  clearSearch: Keresés törlése
+  folder: Mappa
+  allItems: Minden elem
+  noFolder: Nincs mappa
+  type: Típus
+  all: Mind
+  more: Továbbiak
+  moreTypes: További típusok
+  login: Bejelentkezés
+  card: Kártya
+  identity: Személyazonosság
+  note: Jegyzet
+  totp: TOTP
+  passkey: Azonosítókulcs
+
+item:
+  blocked: Letiltva
+  launch: "{name} megnyitása"
+  fill: Kitöltés
+  fillName: "{name} kitöltése"
+  insecureTitle: Mégis kitöltöd ezt a bejelentkezést?
+  insecureWarning: "Figyelem: ez egy nem biztonságos HTTP-oldal, az itt elküldött adatokat mások is láthatják és módosíthatják. Ezt a bejelentkezést eredetileg egy biztonságos (HTTPS) oldalon mentetted."
+  cardInsecureTitle: Kitöltöd ezt a kártyát egy nem biztonságos webhelyen?
+  cardInsecureWarning: Ez a webhely nem biztonságos. A hálózaton bárki elolvashatja a kitöltött kártyaadatokat.
+  crossSiteTitle: "Kitöltés itt is: {hosts}?"
+  crossSiteWarning: "Az űrlap egy része nem a(z) {host} webhelyről származik, hanem innen: {hosts}. A Keepiq csak akkor tölti ki ott, ha beleegyezel."
+  onlyHost: Csak {host}
+  copyMenu: Másolás, {name}
+  moreMenu: Továbbiak, {name}
+  copyUsername: Felhasználónév másolása
+  copyPassword: Jelszó másolása
+  copyCode: Ellenőrző kód másolása
+  view: Megtekintés
+  edit: Szerkesztés
+  clone: Klónozás
+  move: Áthelyezés mappába
+  delete: Törlés
+  send: Küldés
+  cloneName: "{name} - másolat"
+  passkeyNoClone: Az azonosítókulcsok nem klónozhatók
+  useOnly: Csak bejelentkezéshez osztották meg veled
+  readOnly: Másik szervezettől megosztva, ezért csak áthelyezhető
+  viewOnly: Csak megtekintésre osztották meg veled. A módosításhoz kérj szerkesztési jogot a tulajdonosától.
+  expiringNoClone: "A hozzáférésed lejár: {date}, ezért nem klónozható"
+  expiringNoSend: "A hozzáférésed lejár: {date}, ezért nem küldhető el"
+  saved: Elem mentve
+  deleted: Elem áthelyezve a kukába
+  moved: "Áthelyezve ide: {folder}"
+  deleteTitle: Elem törlése
+  deleteConfirm: "{name} áthelyezése a kukába? Megszűnik a megosztása, akkor is, ha a Keepiq webalkalmazásban visszaállítod a kukából."
+  gone: Ez az elem már nem létezik
+
+form:
+  itemDetails: Elem adatai
+  type: Típus
+  name: Név
+  cardNumberLength: A(z) {brand} nem ad ki ilyen hosszú kártyaszámot. Így is mentheted.
+  cardNumberLengthUnknown: A kártyaszámok 12–19 számjegyből állnak. Így is mentheted.
+  cardNumberChecksum: Ez a szám nem felel meg a kártya ellenőrzőösszegének. Ellenőrizd; így is mentheted.
+  cardCodeLength: A(z) {brand} kártyák {size} jegyű {name} kódot használnak. Így is mentheted.
+  folder: Mappa
+  chooseFolder: "Válassz mappát, jelenleg: {folder}"
+  website: Webhely URL-je
+  autofillOptions: Kitöltési beállítások
+  additionalOptions: További beállítások
+  authenticator: Hitelesítő
+  note: Jegyzet
+  secret: Titok
+  advanced: Speciális
+  algorithm: Algoritmus
+  digits: Számjegyek
+  period: Időtartam másodpercben
+  addField: Mező hozzáadása
+  fieldName: Mező neve
+  fieldValue: Érték
+  removeField: "{name} eltávolítása"
+  removeUnnamed: Mező eltávolítása
+  save: Mentés
+  passkeyReadOnly: Az azonosítókulcs adatai csak a Keepiq webalkalmazásban módosíthatók
+  offline: Offline vagy. A módosításokhoz kapcsolat kell a Keepiqhez.
+  unsavedTitle: Nem mentett módosítások
+  unsaved: Nem mentett módosításaid vannak. Elveted őket?
+  discard: Elvetés
+  keepEditing: Szerkesztés folytatása
+
+authKey:
+  label: Hitelesítőkulcs
+  optionalLabel: Hitelesítőkulcs (nem kötelező)
+  newLabel: Új hitelesítőkulcs
+  help: Illeszd be az otpauth://totp/ hivatkozást vagy a titkos kulcsot, vagy olvasd be az oldalon lévő QR-kódot.
+  scan: QR-kód beolvasása az oldalon
+  read: A hitelesítőkulcs beolvasva a QR-kódból
+  noQr: Nem található QR-kód az oldalon. Görgesd láthatóvá, és próbáld újra.
+  notTotp: Ez a QR-kód nem tartalmaz hitelesítőkulcsot. Azt a QR-kódot használd, amelyet a webhely a kétlépcsős bejelentkezés beállításakor mutat.
+  noPicture: A Keepiq nem tud képet készíteni erről az oldalról. Illeszd be inkább a kulcsot.
+  popout: A beolvasáshoz nyisd meg a Keepiqet az eszköztárról a QR-kódot tartalmazó oldalon.
+  saved: Mentve
+  remove: Hitelesítőkulcs eltávolítása
+  replaceHelp: Illessz be vagy olvass be egy új kulcsot, vagy hagyd üresen a mentett kulcs eltávolításához.
+  keep: A mentett kulcs megtartása
+  removedOnSave: A hitelesítőkulcs mentéskor törlődik.
+  notCloned: A hitelesítőkulcs nem klónozódik.
+
+fieldErrors:
+  required: A név megadása kötelező
+  tooLong: Legfeljebb {max} karakter
+  tooLongBytes: Túl hosszú (legfeljebb {max} bájt)
+  reserved: Ez a név foglalt
+  duplicate: Már létezik ilyen nevű mező
+  invalidTotp: Érvénytelen hitelesítő titok
+  slash: A mappanevek nem tartalmazhatnak perjelet
+
+writeErrors:
+  writeLocked: A széf kulcsmigráció miatt átmenetileg zárolva van, próbáld újra később
+  forbidden: A Keepiq nem engedélyezi ezt a módosítást. A Keepiq webalkalmazás megmutatja, miért.
+  policy: A szervezeted házirendje nem engedélyezi ezt a módosítást
+  accountChanged: Időközben másik fiókra váltottál, ezért semmi sem lett mentve. A mentéshez válts vissza.
+  accountChangedDelete: Időközben másik fiókra váltottál, ezért semmi sem lett törölve. A törléshez válts vissza.
+  keepClash: Egy szinttel feljebb már van {name} nevű mappa. Válaszd hozzá az Elemek áthelyezése a szülőbe vagy a Törlés lehetőséget, vagy előbb nevezd át valamelyiket.
+  keepClashAfter: Egy megtartásra választott mappa neve megegyezik egy eggyel feljebb lévő mappáéval, ezért semmi sem lett törölve. Ellenőrizd újra a választásokat.
+  invalid: A Keepiq elutasította ezt a módosítást
+  stale: Ezt az elemet máshol módosították. Lépj vissza, és szerkeszd újra a legfrissebb változat megtekintéséhez.
+  itemGone: Ez az elem már nem létezik
+  folderGone: Ez a mappa már nem létezik
+  duplicateFolder: Itt már létezik ilyen nevű mappa
+  folderChanged: Ez a mappa megváltozott. Ellenőrizd újra a választásokat.
+  offline: Nem sikerült elérni a kiszolgálót
+  serverError: A Keepiq most nem érhető el, próbáld újra később
+  unreadable: Ez az elem nem olvasható, ezért itt nem szerkeszthető
+  restricted: Ezt az elemet korlátozásokkal osztották meg veled, ezért itt nem módosítható és nem másolható
+  unmatched: A Keepiq az elem olyan változatát küldte, amely nincs meg a széfedben, ezért nem nyílt meg.
+  keyMismatch: A Keepiq olyan titkosítási kulcsot küldött, amely nem illik a széfedhez, ezért semmi sem lett mentve. Szólj a Keepiq rendszergazdájának.
+  staleSource: A megosztott elem eredetije megváltozott, miután megnyitottad. Semmi sem lett mentve; nyisd meg újra, és végezd el ismét a módosítást.
+  incomplete: Azok köre, akikkel az elem meg van osztva, a mentés közben folyamatosan változott. Semmi sem lett mentve; próbáld újra.
+  badCertificate: A Keepiq egy olyan titkosítási kulcsot küldött az elem egyik címzettjéhez, amelyet ez a böngésző nem tudott beolvasni. Semmi sem lett mentve.
+  unverified: Ez az elem partnerszervezetekkel van megosztva, és ez a böngésző nem tudja megerősíteni, hogy pontosan úgy kapnák meg, ahogy te láttad. Semmi sem lett mentve; ezt a módosítást a Keepiq webalkalmazásban végezd el.
+  partnerUnreachable: "Semmi sem lett mentve: egy partnerszervezet, amellyel az elem meg van osztva, nem érhető el ({cloudIds}). Próbáld újra később, vagy mentsd nélkülük, ami szünetelteti velük a megosztást, amíg újra meg nem osztod velük."
+  partnerUpgradeRequired: "Semmi sem lett mentve: a Keepiq túl régi ezeknél a hitelesítőkulcs fogadásához: {cloudIds}. Távolítsd el a kulcsot, vagy kérd meg őket, hogy frissítsék a Keepiqet."
+  partnerUpgradeRequiredUnnamed: "Semmi sem lett mentve: egy partnerszervezet, amellyel az elem meg van osztva, túl régi Keepiqet futtat a hitelesítőkulcs fogadásához. Távolítsd el a kulcsot, vagy kérd meg őket, hogy frissítsék a Keepiqet."
+  partnerUpgradeVersion: Keepiq {version} vagy újabb kell nekik.
+  partnerLookupLimit: Túl sok partnerkeresés. Semmi sem lett mentve; próbáld újra egy perc múlva.
+  federationUnavailable: A Keepiq-kiszolgálód nem tud partnerszervezetekkel megosztani, ezért ez az elem itt nem menthető. Semmi sem lett mentve; kérdezd meg a rendszergazdát.
+  keepiqOutdated: A Keepiq-kiszolgálód túl régi ennek a módosításnak a mentéséhez. Semmi sem lett mentve; kérd meg a rendszergazdát, hogy frissítse a Keepiqet {version} vagy újabb verzióra.
+  partnerClock: Egy partnerszervezet tanúsítványa, amellyel az elem meg van osztva, a számítógép órája szerint nem érvényes. Semmi sem lett mentve; ellenőrizd a számítógép dátumát és idejét, vagy végezd el a módosítást a Keepiq webalkalmazásban.
+  shareScanPending: Az elem megosztásainak ellenőrzése még nem fejeződött be. Semmi sem lett mentve; próbáld újra később.
+  shareScanPendingOpen: Az elem megosztásainak ellenőrzése folyamatban van, ezért még nem szerkeszthető. Próbáld újra később.
+  shareScanPendingDelete: Az elem megosztásainak ellenőrzése még nem fejeződött be. Semmi sem lett törölve; próbáld újra később.
+  sendInvalid: A Keepiq nem fogadta el ezt a küldeményt. Semmi sem lett elküldve; ellenőrizd a mezőket, és próbáld újra.
+  sendOffline: Nem sikerült elérni a kiszolgálót, semmi sem lett elküldve
+  argon2Unavailable: A jelszavas védelem ebben a böngészőben nem érhető el
+
+shareSave:
+  saveWithout: Mentés nélkülük
+  ownerOnly: Mentve. A partnerszervezeteknél lévő címzettek akkor kapják meg a módosítást, amikor a tulajdonos legközelebb menti.
+  suspended: "A megosztás szünetel velük: {cloudIds}, mert a tanúsítványuk nem ellenőrizhető, vagy a szervezetük már nem fogadja el. A Keepiq webalkalmazás mutatja a megosztást."
+  paused: "A megosztás szünetel velük, amíg újra meg nem osztod velük az elemet: {cloudIds}."
+
+folders:
+  add: Mappa hozzáadása
+  newFolder: Új mappa
+  rename: Átnevezés
+  renameTitle: Mappa átnevezése
+  delete: Törlés
+  more: Továbbiak, {name}
+  name: Mappa neve
+  empty: Még nincsenek mappák
+  notice: A mappanevek nincsenek titkosítva
+  dismiss: Bezárás
+  current: Jelenlegi mappa
+  pickTitle: Mappa kiválasztása
+  moveTitle: Áthelyezés mappába
+  saved: Mappa mentve
+  deleted: Mappa törölve
+  deleteTitle: Mappa törlése
+  deleteConfirm: "{name} törlése? Ez nem vonható vissza."
+  cascade:
+    1: "{name} törlése a benne lévő 1 elemmel együtt, vagy az elem áthelyezése ide: {parent}?"
+    n: "{name} törlése a benne lévő $1 elemmel együtt, vagy az elemek áthelyezése ide: {parent}?"
+  countsAll: Az archivált és a kukában lévő elemek is beleszámítanak.
+  deleteItems: Az elemek törlése is
+  moveItems: Elemek áthelyezése a szülőbe
+  items:
+    1: 1 elem
+    n: $1 elem
+  subfolders:
+    1: 1 almappa
+    n: $1 almappa
+  directRow: "Elemek itt: {name}, {items}"
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Törlés
+  actionMove: Elemek áthelyezése a szülőbe
+  actionKeep: Megtartás
+  directMove: Áthelyezés a szülőbe
+
+clipboard:
+  copied: "{what} másolva"
+  failed: Nem sikerült másolni
+
+field:
+  show: "{field} megjelenítése"
+  hide: "{field} elrejtése"
+  copy: "{field} másolása"
+
+blocked:
+  generic: Ez az elem le van tiltva.
+  suiteMissing: A titkosítási kulcsa már nem létezik.
+  suiteRevoked: A titkosítási kulcsát visszavonták.
+  suiteCompromised: Feltört kulccsal van titkosítva, ezért itt nem nyitható meg. A Keepiq webalkalmazás mutatja, hogy helyreállítható-e.
+  migrationFailed: A feltörés utáni helyreállításkor nem sikerült áttenni az új kulcsodra. A tárolt érték megmarad, de nem nyitható meg.
+
+detail:
+  item: Elem
+  decrypting: Visszafejtés…
+  decryptFailed: Nem sikerült visszafejteni ezt az elemet
+  unreadablePasskey: Ez az azonosítókulcs nem olvasható
+  unreadableFields: A további mezők nem olvashatók
+  loginCredentials: Bejelentkezési adatok
+  username: Felhasználónév
+  password: Jelszó
+  authenticatorKey: Hitelesítőkulcs
+  website: Webhely
+  additionalFields: További mezők
+  notes: Jegyzetek
+  history: Elem előzményei
+  created: Létrehozva
+  updated: Frissítve
+  expires: Lejár
+  cardDetails: Kártyaadatok
+  number: Szám
+  numberWithBrand: Szám · {brand}
+  cardNumber: Kártyaszám
+  cardholder: Kártyabirtokos
+  expiry: Lejárat
+  cvv: CVV
+  pin: PIN-kód
+  identity: Személyazonosság
+  firstName: Utónév
+  lastName: Vezetéknév
+  address: Cím
+  phone: Telefon
+  email: E-mail
+  bsn: BSN
+  passkey: Azonosítókulcs
+  relyingParty: Webhely vagy alkalmazás
+  passkeyUser: Felhasználónév
+  passkeyOnLogin: A Keepiq a bejelentkezésekhez mentett azonosítókulcsokkal lép be, nem ezzel az elemmel
+  passkeys: Azonosítókulcsok
+  passkeyCreated: "Létrehozva: {date}"
+  useOnly: A tulajdonosa nem engedi, hogy megtekintsd vagy másold.
+
+totp:
+  code: Ellenőrző kód
+  invalid: Érvénytelen hitelesítőkulcs
+  changesIn:
+    1: 1 másodperc múlva változik
+    n: $1 másodperc múlva változik
+
+settings:
+  accountSecurity: Fiókbiztonság
+  autofill: Automatikus kitöltés
+  notifications: Értesítések
+  vault: Széf
+  appearance: Megjelenés
+  about: Névjegy
+  folders: Mappák
+  theme: Téma
+  themeSystem: Rendszer alapértelmezése
+  themeLight: Világos
+  themeDark: Sötét
+  comingLater: Hamarosan
+  setByOrganisation: A szervezeted állította be
+  turnedOffByOrganisation: A szervezeted kikapcsolta
+  never: Soha
+  durationHours: "{count} óra"
+  durationMinutes: "{count} perc"
+  pin: Feloldás PIN-kóddal
+  pinTurnOn: Bekapcsolás
+  masterPasswordRequired: Add meg a mesterjelszavadat
+  pinAgain: PIN-kód megerősítése
+  pinMismatch: A PIN-kódok nem egyeznek
+  pinAdvice: Ne használd újra a telefonod vagy a bankod PIN-kódját.
+  pinAfterRestart: A böngésző újraindítása után egyszer meg kell adnod a mesterjelszót; utána a PIN-kód újra működik.
+  vaultTimeout: Széf időkorlátja
+  timeoutImmediately: Azonnal
+  timeoutMinutes:
+    1: 1 perc
+    n: $1 perc
+  timeoutHours:
+    1: 1 óra
+    n: $1 óra
+  timeoutOnSystemLock: A rendszer zárolásakor
+  timeoutOnSystemLockCapped: A rendszer zárolásakor, vagy {duration} tétlenség után (a szervezeted állította be)
+  timeoutOnRestart: A böngésző újraindításakor
+  timeoutCustom: Egyéni
+  hours: Óra
+  minutes: Perc
+  customAtLeastOne: Adj meg legalább egy percet
+  customWhole: Egész órákat és perceket adj meg
+  customAtMost: "A szervezeted legfeljebb ennyit enged: {duration}"
+  neverTitle: Feloldva marad a széf?
+  neverWarning: A széfed feloldva marad, amíg kézzel nem zárolod. A megnyitásához szükséges kulcs a böngészőprofil lemezére kerül, ahol bárki elolvashatja, aki hozzáfér a profilhoz.
+  neverConfirm: Maradjon feloldva
+  timeoutAction: Művelet az időkorlát lejártakor
+  actionLock: Zárolás
+  actionLogOutNote: Az időkorlát lejártakor kijelentkezel, és újra szükséged lesz az alkalmazásjelszóra
+  lockNow: Zárolás most
+  changeMasterPassword: Mesterjelszó módosítása
+  autofillOnPageLoad: Automatikus kitöltés az oldal betöltésekor
+  autofillOnPageLoadWarning: A feltört vagy nem megbízható webhelyek visszaélhetnek az oldalbetöltéskori automatikus kitöltéssel
+  defaultAutofill: Alapértelmezett kitöltési beállítás a bejelentkezésekhez
+  defaultAutofillOnPageLoad: Kitöltés az oldal betöltésekor, ha be van kapcsolva
+  uriMatch: Alapértelmezett URI-egyezésészlelés
+  uriBaseDomain: Alapdomain
+  uriHost: Gazdagép
+  uriStartsWith: Ezzel kezdődik
+  uriExact: Pontos
+  uriRegex: Reguláris kifejezés
+  uriRegexNote: A reguláris kifejezés haladó beállítás, és elronthatja az egyezésészlelést
+  inlineSuggestions: Kitöltési javaslatok megjelenítése az űrlapmezőkön
+  inlineCards: Kártyák megjelenítése javaslatként
+  inlineIdentities: Személyazonosságok megjelenítése javaslatként
+  inlineKindsOff: Előbb kapcsold be a Kitöltési javaslatok megjelenítése az űrlapmezőkön beállítást.
+  vaultCards: Kártyák mindig megjelenjenek kitöltési javaslatként a széf nézetben
+  vaultIdentities: Személyazonosságok mindig megjelenjenek kitöltési javaslatként a széf nézetben
+  defaultPasswordManager: A Keepiq legyen az alapértelmezett jelszókezelőd
+  defaultPasswordManagerHint: Kikapcsolja a böngésző saját jelszómentését és címkitöltését, hogy a javaslatai ne takarják el a Keepiq javaslatait.
+  defaultPasswordManagerManaged: Ezt a böngészőbeállítást a szervezeted vagy egy másik bővítmény kezeli.
+  contextMenu: Helyi menü beállításainak engedélyezése
+  shortcut: Kitöltés billentyűparancsa
+  shortcutNotSet: Nincs beállítva
+  shortcutChange: Módosítás
+  shortcutFirefox: Nyisd meg az about:addons oldalt, válaszd a fogaskerék menüt, majd a Kiegészítők gyorsbillentyűinek kezelése lehetőséget
+  shortcutSafari: Nyisd meg a Safari beállításait, válaszd a Bővítmények lehetőséget, majd jelöld ki a Keepiqet a billentyűparancs módosításához
+  websiteAccess: Webhely-hozzáférés
+  websiteAccessAll: Minden webhely
+  websiteAccessSome: Csak az általad engedélyezett webhelyek
+  websiteAccessServer: Nincs hozzáférés a Keepiq-kiszolgálódhoz
+  clearClipboard: Vágólap törlése
+  clipboardSeconds:
+    1: 1 másodperc
+    n: $1 másodperc
+  autoCopyTotp: TOTP automatikus másolása
+  autoCopyTotpHint: Ha egy bejelentkezéshez ellenőrző kód tartozik, a bejelentkezés kitöltésekor a vágólapra másolja.
+  askToAdd: Rákérdezés a bejelentkezés hozzáadására
+  askToUpdate: Rákérdezés a meglévő bejelentkezés frissítésére
+  askPasskeys: Rákérdezés az azonosítókulcsok mentésére és használatára
+  excludedDomains: Kizárt domainek
+  addCurrentSite: Jelenlegi webhely hozzáadása
+  domain: Domain
+  addDomain: Hozzáadás
+  domainEmpty: Adj meg egy domaint
+  domainUnreadable: Adj meg egy domaint, például example.org
+  domainDuplicate: Már ki van zárva
+  removeDomain: "{domain} eltávolítása"
+  webTitle: A Keepiq a weben
+  webText: A Keepiq saját értesítéseit, az importálást és exportálást, valamint a mesterjelszavadat a Nextcloudban lévő Keepiqben, a Személyes beállítások alatt kezelheted.
+  openKeepiq: Keepiq megnyitása
+  lastSync: "Utolsó szinkronizálás: {time}"
+  lastSyncNever: "Utolsó szinkronizálás: soha"
+  syncOffline: A szinkronizálás nem sikerült, offline vagy
+  syncFailed: A szinkronizálás nem sikerült, próbáld újra később
+  importItems: Elemek importálása
+  exportVault: Széf exportálása
+  defaultItemType: Alapértelmezett elemtípus ebben a bővítményben
+  compactMode: Kompakt mód
+  showAnimations: Animációk megjelenítése
+  quickCopy: Gyors másolási műveletek a széfben
+  showBadgeCounter: A kitöltési javaslatok számának megjelenítése a bővítmény ikonján
+  language: Nyelv
+  languageFollows: A böngésző nyelve
+  version: "Verzió: {version}"
+  server: "Kiszolgáló: {url}"
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Ismeretlen Keepiq-verzió
+  help: Súgó
+  reportBug: Hiba jelentése
+  contactSupport: Kapcsolat a támogatással
+  privacyPolicy: Adatvédelmi irányelvek
+  webApp: Keepiq webalkalmazás
+  rate: A bővítmény értékelése
+
+websiteAccess:
+  title: Hadd működjön a Keepiq a webhelyeken
+  body: A Safari csak az általad engedélyezett webhelyeken futtatja a Keepiqet. Engedélyezd minden webhelyen, hogy bárhol, ahol bejelentkezel, kitölthesd a bejelentkezéseket, újakat menthess és azonosítókulcsokat használhass.
+  allow: Engedélyezés minden webhelyen
+  dismiss: Most nem
+  steps: A Safariban válaszd a Safari > Beállítások, majd a Webhelyek lehetőséget. Jelöld ki a Keepiqet a listában, és állítsd a „Más webhelyek megnyitásakor” beállítást Engedélyezés értékre.
+  perSite: Ha egyenként szeretnéd engedélyezni a webhelyeket, kattints az adott webhelyen a Keepiq gombra, és válaszd a mindig engedélyezést.
+  serverTitle: "A Keepiq nem éri el a következőt: {host}"
+  serverBody: A Safari nem engedi, hogy a Keepiq elérje a kiszolgálódat, ezért a széfed nem tud szinkronizálni.
+  serverAllow: "{host} engedélyezése"
+
+generator:
+  kinds: Mit generáljon
+  password: Jelszó
+  passphrase: Jelmondat
+  username: Felhasználónév
+  length: Hossz
+  lengthValue: Hossz karakterben
+  uppercase: Nagybetűk (A-Z)
+  lowercase: Kisbetűk (a-z)
+  digits: Számok (0-9)
+  special: Speciális karakterek, például !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Karaktertípusok
+  lastClassOn: Legalább egy típus bekapcsolva marad
+  minNumbers: Min. számok
+  minSpecial: Min. speciális
+  avoidAmbiguous: Kétértelmű karakterek kerülése
+  lockedByPolicy: A szervezeted állította be
+  passphraseOff: A szervezeted kikapcsolta
+  words: Szavak száma
+  separator: Szóelválasztó
+  capitalizeWords: Nagy kezdőbetű
+  capitalize: Nagy kezdőbetű
+  includeNumber: Szám hozzáadása
+  usernameType: Típus
+  typeWord: Véletlen szó
+  typePlus: Pluszjeles e-mail-cím
+  typeCatchall: Gyűjtő e-mail-cím
+  email: E-mail
+  emailPlaceholder: nev@example.com
+  domain: Domain
+  domainPlaceholder: example.com
+  basedOn: Alapja
+  random: Véletlen
+  websiteName: Webhely neve
+  noWebsite: Nem észlelhető webhely
+  needsEmail: Adj meg egy e-mail-címet
+  needsDomain: Adj meg egy domaint
+  wordlistUnavailable: A szólista nem érhető el
+  regenerate: Újragenerálás
+  usePassword: Jelszó használata
+  useUsername: Felhasználónév használata
+  history: Generátor előzményei
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Még nincs generált érték
+  clearHistory: Törlés
+  clearHistoryTitle: Törlöd a generátor előzményeit?
+  clearHistoryText: A lista minden értéke törlődik ebből a böngészőből.
+  generatePasswordLink: Jelszó generálása
+  generatePassword: Jelszó generálása
+  generateUsername: Felhasználónév generálása
+
+send:
+  new: Új küldemény
+  empty: Még nincsenek küldemények
+  emptyText: Ossz meg szöveget vagy bejelentkezést egy önmagát törlő hivatkozással.
+  loadFailed: Nem sikerült betölteni a küldeményeidet
+  retry: Újra
+  labelText: "Szöveges küldemény, {time}"
+  labelCredential: "Bejelentkezési küldemény, {time}"
+  viewsLeft:
+    1: "{left}/1 megtekintés maradt"
+    n: "{left}/$1 megtekintés maradt"
+  expires: "Lejár: {date}"
+  neverExpires: Soha nem jár le
+  expired: Lejárt
+  passwordBadge: Jelszó
+  link: Hivatkozás
+  copyLink: Hivatkozás másolása
+  copyLinkOf: "Hivatkozás másolása, {name}"
+  linkGone: A hivatkozás már nem érhető el
+  remove: Eltávolítás
+  removeOf: "Eltávolítás, {name}"
+  removeTitle: Küldemény eltávolítása
+  removeConfirm: Eltávolítod ezt a küldeményt? A hivatkozással rendelkezők elveszítik a hozzáférést.
+  removed: Küldemény eltávolítva
+  contentSection: Tartalom
+  optionsSection: Beállítások
+  type: Típus
+  text: Szöveg
+  credential: Bejelentkezés
+  content: Megosztandó szöveg
+  maxViews: Max. megtekintés
+  maxViewsRange: "1 és {max} között"
+  expiry: Lejárat
+  expiry1h: 1 óra
+  expiry1d: 1 nap
+  expiry2d: 2 nap
+  expiry3d: 3 nap
+  expiry7d: 7 nap
+  expiry30d: 30 nap
+  expiryCustom: Egyéni
+  customHours: Óra
+  customHoursMin: Legalább 1 óra
+  customHoursMax: Legfeljebb 720 óra (30 nap)
+  accessPassword: Hozzáférési jelszó
+  accessPasswordHint: Nem kötelező. A címzettnek erre lesz szüksége a küldemény megnyitásához.
+  create: Létrehozás
+  protecting: Védelem jelszóval…
+  offline: A küldeményekhez kapcsolat kell a Keepiq-kiszolgálódhoz
+  prefillFailed: Ez a bejelentkezés nem olvasható
+  ready: Elkészült a küldeményed
+  shownOnce:
+    1: Másold ki most a hivatkozást. Csak az ablak bezárásáig látható, a tartalom pedig 1 megtekintés után megsemmisül.
+    n: Másold ki most a hivatkozást. Csak az ablak bezárásáig látható, a tartalom pedig $1 megtekintés után megsemmisül.
+  passwordNote: A hozzáférési jelszót a hivatkozástól külön oszd meg. 5 hibás próbálkozás után a küldemény törlődik.
+  done: Kész
+
+pageFill:
+  insecure: "Figyelem: ez egy nem biztonságos HTTP-oldal, az itt elküldött adatokat mások is láthatják és módosíthatják. Ezt a bejelentkezést eredetileg egy biztonságos (HTTPS) oldalon mentetted: {host}.\n\nMégis kitöltöd ezt a bejelentkezést?"
+  insecureNoHost: "Figyelem: ez egy nem biztonságos HTTP-oldal, az itt elküldött adatokat mások is láthatják és módosíthatják. Ezt a bejelentkezést eredetileg egy biztonságos (HTTPS) oldalon mentetted.\n\nMégis kitöltöd ezt a bejelentkezést?"
+  cardInsecure: "Kitöltöd ezt a kártyát egy nem biztonságos webhelyen?\n\nEz a webhely nem biztonságos. A hálózaton bárki elolvashatja a kitöltött kártyaadatokat."
+  crossSite: "Kitöltés itt is: {hosts}?\n\nAz űrlap egy része nem a(z) {host} webhelyről származik, hanem innen: {hosts}. A Keepiq csak akkor tölti ki ott, ha beleegyezel."
+
+contextMenu:
+  root: Keepiq
+  autofill: Bejelentkezés kitöltése
+  noMatches: Nincs elérhető bejelentkezés
+  noUsernames: Nincs elérhető felhasználónév
+  noPasswords: Nincs elérhető jelszó
+  noCodes: Nincs elérhető ellenőrző kód
+  noIdentities: Nincs elérhető személyazonosság
+  noCards: Nincs elérhető kártya
+  addLogin: Bejelentkezés hozzáadása
+  addIdentity: Személyazonosság hozzáadása
+  addCard: Kártya hozzáadása
+  openKeepiq: Keepiq megnyitása
+  copyUsername: Felhasználónév másolása
+  copyPassword: Jelszó másolása
+  copyCode: Ellenőrző kód másolása
+  autofillCard: Kártya kitöltése
+  autofillIdentity: Személyazonosság kitöltése
+  generatePassword: Jelszó generálása és másolása
+  unlock: Széf feloldása
+
+pageNotice:
+  label: Keepiq-értesítés
+  noLoginForm: A Keepiq nem talált kitölthető bejelentkezési űrlapot ezen az oldalon.
+  noCardForm: A Keepiq nem talált kitölthető kártyamezőket ezen az oldalon.
+  noIdentityForm: A Keepiq nem talált kitölthető cím- vagy személyesadat-mezőket ezen az oldalon.
+
+toolbar:
+  locked: "{name}: Zárolva"
+  loggedOut: "{name}: Kijelentkezve"
+  count:
+    1: "{name}: 1 bejelentkezés ehhez a webhelyhez"
+    n: "{name}: $1 bejelentkezés ehhez a webhelyhez"
+
+inlineList:
+  frameTitle: Keepiq-bejelentkezések
+  label: "Keepiq-bejelentkezések ehhez: {host}"
+  row: "{name}, {username}"
+  noMatch: "Nincs bejelentkezés ehhez: {host}"
+  passkeyRow: "{name}, {username}, azonosítókulcs"
+  passkeyRowNoUser: "{name}, azonosítókulcs"
+  noMatchPasskeys: "Nincs bejelentkezés vagy azonosítókulcs ehhez: {host}"
+  locked: A Keepiq zárolva van
+  unlock: Feloldás
+  insecureQuestion: Kitöltöd ezen a nem biztonságos webhelyen?
+  insecureDetail: Ez a webhely nem biztonságos. A hálózaton bárki elolvashatja, amit kitöltesz.
+  fill: Kitöltés
+  notVisible: A Keepiq itt nem tud kitölteni, mert ez az oldal megváltoztatja a megjelenését. Használd a Keepiq gombot az eszköztáron.
+  status:
+    count:
+      1: 1 Keepiq-bejelentkezés. A választáshoz nyomd meg a lefelé nyilat.
+      n: $1 Keepiq-bejelentkezés. A választáshoz nyomd meg a lefelé nyilat.
+    noMatch: "Nincs Keepiq-bejelentkezés ehhez: {host}"
+    countPasskeys:
+      1: 1 Keepiq-bejelentkezés vagy -azonosítókulcs. A választáshoz nyomd meg a lefelé nyilat.
+      n: $1 Keepiq-bejelentkezés és -azonosítókulcs. A választáshoz nyomd meg a lefelé nyilat.
+    noMatchPasskeys: "Nincs Keepiq-bejelentkezés vagy -azonosítókulcs ehhez: {host}"
+    locked: A Keepiq zárolva van. A feloldáshoz nyomd meg a lefelé nyilat.
+  code:
+    frameTitle: Keepiq ellenőrző kódok
+    label: "Keepiq ellenőrző kódok ehhez: {host}"
+    noMatch: "Nincs ellenőrző kód ehhez: {host}"
+    locked: Az ellenőrző kódok megtekintéséhez oldd fel a Keepiqet
+    invalid: Érvénytelen hitelesítő titok
+    status:
+      count:
+        1: 1 Keepiq ellenőrző kód. A választáshoz nyomd meg a lefelé nyilat.
+        n: $1 Keepiq ellenőrző kód. A választáshoz nyomd meg a lefelé nyilat.
+      noMatch: "Nincs Keepiq ellenőrző kód ehhez: {host}"
+  card:
+    frameTitle: Keepiq-kártyák
+    noMatch: Nincs kártya a Keepiqben
+    locked: A kártyáid megtekintéséhez oldd fel a Keepiqet
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Kártya, *{last4}"
+    row: "{name}, {brand}, végződés: {last4}"
+    rowNoBrand: "{name}, kártya, végződés: {last4}"
+    status:
+      count:
+        1: 1 Keepiq-kártya. A választáshoz nyomd meg a lefelé nyilat.
+        n: $1 Keepiq-kártya. A választáshoz nyomd meg a lefelé nyilat.
+  identity:
+    frameTitle: Keepiq-személyazonosságok
+    noMatch: Nincs személyazonosság a Keepiqben
+    locked: A személyazonosságaid megtekintéséhez oldd fel a Keepiqet
+    status:
+      count:
+        1: 1 Keepiq-személyazonosság. A választáshoz nyomd meg a lefelé nyilat.
+        n: $1 Keepiq-személyazonosság. A választáshoz nyomd meg a lefelé nyilat.
+
+notificationBar:
+  label: Keepiq-értesítés
+  saveQuestion: Mented a Keepiqbe a(z) {host} webhely bejelentkezését?
+  updateQuestion: Frissíted a(z) {name} jelszavát?
+  updateQuestionUser: Frissíted a(z) {name} ({username}) jelszavát?
+  updateQuestionHost: Frissíted a(z) {name} jelszavát a(z) {host} webhelyen?
+  updateQuestionUserHost: Frissíted a(z) {name} ({username}) jelszavát a(z) {host} webhelyen?
+  folder: Mappa
+  noFolder: Nincs mappa
+  save: Mentés
+  never: Soha ezen a webhelyen
+  update: Frissítés
+  close: Bezárás
+  expand: Beállítások
+  shortcutHint: "Válasz billentyűvel: {shortcut}"
+  saving: Mentés…
+  updating: Frissítés…
+  saved: Bejelentkezés mentve
+  updated: Jelszó frissítve
+  notVisible: A Keepiq ezt itt nem tudja megtenni, mert ez az oldal megváltoztatja a megjelenését. Zárd be, és add hozzá a bejelentkezést az eszköztár Keepiq gombjával.
+  errors:
+    writeLocked: A széf átmenetileg zárolva van a módosítások elől. Próbáld újra később.
+    unverified: A jelszó módosításához szerkeszd ezt a bejelentkezést a Keepiq felugró ablakában vagy webalkalmazásában.
+    viewOnly: Ezt a bejelentkezést csak megtekintésre osztották meg veled, ezért a jelszava itt nem frissíthető.
+    loginGone: Ez a bejelentkezés már nem létezik. Mented új bejelentkezésként?
+    locked: A Keepiq zárolva van. Oldd fel az eszköztár Keepiq gombjával, majd próbáld újra.
+    notResponding: A Keepiq nem válaszol. Próbáld újra.
+    accountChanged: Fiókot váltottál, ezért semmi sem lett mentve.
+    keyMismatch: A Keepiq kulcsa nem illik a széfedhez. Semmi sem lett mentve; szólj a rendszergazdának.
+    staleSource: A megosztott bejelentkezés eredetije megváltozott. Semmi sem lett mentve; próbáld újra.
+    incomplete: Azok köre, akikkel a bejelentkezés meg van osztva, folyamatosan változott. Semmi sem lett mentve; próbáld újra.
+    badCertificate: Egy címzett titkosítási kulcsa nem olvasható. Semmi sem lett mentve.
+    keepiqOutdated: A Keepiq-kiszolgálód túl régi. Semmi sem lett mentve; kérj a rendszergazdától Keepiq {version} vagy újabb verziót.
+    shareScanPending: A bejelentkezés megosztásainak ellenőrzése folyamatban van. Semmi sem lett mentve; próbáld újra később.
+
+passkey:
+  unlockGet: "Oldd fel a Keepiqet egy azonosítókulcs használatához ezen: {rpId}"
+  unlockCreate: "Oldd fel a Keepiqet egy azonosítókulcs mentéséhez ezen: {rpId}"
+  verifyTitle: Erősítsd meg, hogy te vagy az
+  verifyPassword: A folytatáshoz add meg a mesterjelszavadat.
+  verifyPin: A folytatáshoz add meg a PIN-kódodat.
+  confirm: Megerősítés
+  signInTitle: Belépés azonosítókulccsal
+  signInText: "Használj egy Keepiqben mentett azonosítókulcsot ehhez: {rpId}"
+  row: "{name}, {userName}"
+  noPasskey: "Nincs Keepiq-azonosítókulcs ehhez: {rpId}"
+  saveTitle: Azonosítókulcs mentése
+  saveTo: Mentés egy bejelentkezéshez
+  replaces: "Lecseréli ennek a felhasználónak az azonosítókulcsát: {userName}"
+  newLogin: Új bejelentkezés
+  name: Név
+  folder: Mappa
+  noFolder: Nincs mappa
+  saveNew: Mentés új bejelentkezésként
+  replaceQuestion: "Lecseréled a(z) {name} bejelentkezésben ennek a felhasználónak az azonosítókulcsát: {userName}?"
+  replace: Csere
+  alreadySavedTitle: Az azonosítókulcs már mentve van
+  alreadySaved: Ehhez a fiókhoz már van mentett azonosítókulcs a Keepiqben
+  close: Bezárás
+  retry: Újra
+  fallback: Saját eszköz vagy biztonsági kulcs használata
+  stalePick: Ez az azonosítókulcs már nincs a széfedben. Válassz másikat.
+  staleSave: Ehhez a bejelentkezéshez már nem menthető az azonosítókulcs. Válassz másikat, vagy mentsd új bejelentkezésként.
+  errors:
+    conflict: A bejelentkezés mentés közben megváltozott. Semmi sem lett mentve; próbáld újra.
+    partnerUpgradeRequired: "Semmi sem lett mentve: a Keepiq túl régi ezeknél az azonosítókulcsok tárolásához: {cloudIds}. Kérd meg őket, hogy frissítsék a Keepiqet, vagy mentsd az azonosítókulcsot egy másik bejelentkezéshez."
+    partnerUpgradeRequiredUnnamed: "Semmi sem lett mentve: egy partnerszervezet, amellyel a bejelentkezés meg van osztva, túl régi Keepiqet futtat az azonosítókulcsok tárolásához. Kérd meg őket, hogy frissítsék a Keepiqet, vagy mentsd az azonosítókulcsot egy másik bejelentkezéshez."
+    shareScanPending: A bejelentkezés megosztásainak ellenőrzése még nem fejeződött be. Semmi sem lett mentve; próbáld újra később.
+
+vaultPasskey:
+  unlock: "Feloldás ujjlenyomattal vagy arccal"
+  unlockIntro: "A böngésző az ujjlenyomatodat, az arcodat vagy az eszköz PIN-kódját kéri."
+  enrolTitle: "Feloldás beállítása ujjlenyomattal vagy arccal"
+  enrolIntro: "Erősítsd meg a mesterjelszavadat. Ezután a böngésző kétszer kéri az ujjlenyomatodat, az arcodat vagy az eszköz PIN-kódját."
+  enrolSubmit: "Beállítás"
+  enrolDone: "A feloldás ujjlenyomattal vagy arccal be van állítva ehhez a böngészőhöz."
+  close: "Bezárás"
+  label: "Keepiq böngészőbővítmény"
+  tooOld: "A feloldáshoz ujjlenyomattal vagy arccal Chrome vagy Edge 122, illetve Firefox 150 vagy újabb kell. Használd a mesterjelszavadat."
+  unsupported: "Ez a böngésző vagy eszköz nem tudja feloldani a Keepiqet ujjlenyomattal vagy arccal. Használd a mesterjelszavadat."
+  revokeInWebApp: "A kikapcsoláshoz vond vissza ezt a jelkulcsot a Keepiq webalkalmazásban."

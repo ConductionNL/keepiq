@@ -10,6 +10,8 @@ interface Props {
 	masked?: boolean
 	/** What a masked value shows instead of dots, e.g. a card's last four digits. */
 	maskedText?: string
+	/** What a revealed value shows, e.g. a card number in its brand's groups; copy still takes `value`. */
+	shownText?: string
 	/** What the toast names, when not the label. */
 	what?: string
 	/** Extra actions before copy, e.g. Launch. */
@@ -20,7 +22,7 @@ interface Props {
 /** For display only: `pre-wrap` shows a lone CR as a space, so a CR-separated value would show on one line. */
 export const asLines = (value: string) => value.replace(/\r\n?/g, '\n')
 
-export function MaskedField({ label, value, masked = false, maskedText = '••••••••', what, actions, copyable = true }: Props) {
+export function MaskedField({ label, value, masked = false, maskedText = '••••••••', shownText, what, actions, copyable = true }: Props) {
 	const [revealed, setRevealed] = useState(false)
 	const copy = useClipboard()
 	const hidden = masked && !revealed
@@ -28,7 +30,7 @@ export function MaskedField({ label, value, masked = false, maskedText = '••
 		<div className="field-row">
 			<div className="field-row__text">
 				<span className="field-row__label">{label}</span>
-				<span className={`field-row__value${masked && revealed ? ' field-row__value--mono' : ''}`}>{hidden ? maskedText : asLines(value)}</span>
+				<span className={`field-row__value${masked && revealed ? ' field-row__value--mono' : ''}`}>{hidden ? maskedText : asLines(shownText ?? value)}</span>
 			</div>
 			{masked && <IconButton icon={revealed ? 'eyeOff' : 'eye'} label={fieldAction(revealed ? 'field.hide' : 'field.show', label)} aria-pressed={revealed} onClick={() => setRevealed(!revealed)} />}
 			{actions}

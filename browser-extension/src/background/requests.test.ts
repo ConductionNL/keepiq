@@ -1,14 +1,16 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { patchAccountPolicy } from '@/src/accounts/policy'
 import { addAccount, folderNoticeKey, markLoggedOut, removeAccount, updateAccount } from '@/src/accounts/store'
 import { DEFAULT_SETTINGS, readSettings, settingsKey, writeSettings } from '@/src/accounts/settings'
-import { CLIPBOARD_ALARM } from '@/src/clipboard'
+import { setIntent } from '@/src/add-intent'
+import { CLIPBOARD_ALARM, CLIPBOARD_COUNT_KEY } from '@/src/clipboard'
 import { importPublicKey, pemToPkcs8, rsaEncrypt, toBase64 } from '@/src/crypto'
 import { addHistory } from '@/src/generator/history'
 import { defaultOptions, type GeneratorPolicy } from '@/src/generator/options'
 import { writePolicy } from '@/src/generator/store'
 import type { PopupReplies } from '@/src/messages'
+import { forgetOfferedPasskeys } from '@/src/passkey/offered'
 import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { provenCertificateKey } from '@/src/vault/certificate'
@@ -19,6 +21,8 @@ import type { VaultSnapshot } from '@/src/vault/types'
 import { onPopupClosed, onPopupOpened } from '@/src/vault/timeout'
 import { blockUnlock, checkSuite, lock, lockAll } from '@/src/vault/unlock'
 import { handlePopupRequest, readLastTab, type HandledRequest } from './requests'
+
+vi.mock('@/src/passkey/offered', async (importOriginal) => ({ ...await importOriginal<typeof import('@/src/passkey/offered')>(), forgetOfferedPasskeys: vi.fn() }))
 
 const fetchMock = vi.fn<typeof fetch>()
 
@@ -37,6 +41,7 @@ async function snapshot(secrets: VaultSnapshot['secrets'], syncedAt = new Date()
 
 beforeEach(async () => {
 	fakeBrowser.reset()
+	vi.mocked(forgetOfferedPasskeys).mockClear()
 	vi.stubGlobal('fetch', fetchMock)
 	fetchMock.mockReset()
 	fetchMock.mockResolvedValue(new Response(JSON.stringify({ message: 'Down' }), { status: 503 }))
@@ -88,6 +93,43 @@ describe('vault.snapshot', () => {
 		expect(await ids()).toEqual(['work'])
 	})
 
+	describe('cards and identities', () => {
+		beforeEach(async () => {
+			await snapshot([
+				secretRow({ id: 'id-b', name: 'B identity', url: null, typeId: 't-identity' }),
+				secretRow({ id: 'card-z', name: 'Z card', url: 'https://bank.test', typeId: 't-card' }),
+				secretRow({ id: 'login', name: 'Shop', url: 'https://shop.test' }),
+				secretRow({ id: 'card-a', name: 'A card', url: null, typeId: 't-card', useOnly: true }),
+				secretRow({ id: 'id-a', name: 'A identity', url: null, typeId: 't-identity' }),
+				blockedRow({ id: 'card-blocked', typeId: 't-card' }),
+			])
+		})
+		async function reply(tabUrl?: string) {
+			const { suggestionIds, formIds } = await send({ kind: 'vault.snapshot', tabUrl }) as { suggestionIds: string[]; formIds: string[] }
+			return { suggestionIds, formIds }
+		}
+
+		it('lists the matching logins, then every card, then every identity, each last used first, on any web page', async () => {
+			await browser.storage.local.set({ [`lastUsed.${accountId}`]: { 'card-z': 5, 'id-b': 3 } })
+			expect(await reply('https://shop.test/checkout')).toEqual({
+				suggestionIds: ['login', 'card-z', 'card-a', 'id-b', 'id-a'],
+				formIds: ['card-z', 'card-a', 'id-b', 'id-a'],
+			})
+			expect((await reply('http://localhost:8100/')).suggestionIds).toEqual(['card-z', 'card-a', 'id-b', 'id-a'])
+		})
+
+		it('leaves out the kinds whose Vault view setting is off, but still lets their detail view fill', async () => {
+			await writeSettings(accountId, { vaultCards: false })
+			expect(await reply('https://shop.test/')).toEqual({ suggestionIds: ['login', 'id-a', 'id-b'], formIds: ['card-a', 'card-z', 'id-a', 'id-b'] })
+			await writeSettings(accountId, { vaultCards: true, vaultIdentities: false })
+			expect((await reply('https://shop.test/')).suggestionIds).toEqual(['login', 'card-a', 'card-z'])
+		})
+
+		it.each([undefined, 'about:blank', 'chrome://newtab/', 'moz-extension://abc/popup.html', 'file:///tmp/a.html'])('offers none on %s', async (tabUrl) => {
+			expect(await reply(tabUrl)).toEqual({ suggestionIds: [], formIds: [] })
+		})
+	})
+
 	it('starts a first sync and says so when there is no snapshot', async () => {
 		const reply = await send({ kind: 'vault.snapshot', opened: true })
 		expect(reply).toMatchObject({ state: 'unlocked', items: null, sync: { syncing: true } })
@@ -132,6 +174,20 @@ describe('vault.snapshot', () => {
 		const reply = await send({ kind: 'vault.snapshot', opened: true })
 		expect(reply).toMatchObject({ items: [{ id: 's1' }], sync: { syncing: true } })
 		await vi.waitFor(() => expect(fetchMock.mock.calls.some(([input]) => String(input).includes('sort=updated_at'))).toBe(true))
+	})
+})
+
+describe('vault.sync', () => {
+	it('syncs the unlocked active account and answers its status', async () => {
+		// The server is down in every test here.
+		expect(await send({ kind: 'vault.sync' })).toMatchObject({ syncing: false, lastError: 'server' })
+		expect(fetchMock).toHaveBeenCalled()
+	})
+
+	it('answers a status that is not syncing while locked, reaching no server', async () => {
+		await lock(accountId)
+		expect(await send({ kind: 'vault.sync' })).toEqual({ syncing: false, syncedAt: null, offline: false, lastError: null })
+		expect(fetchMock).not.toHaveBeenCalled()
 	})
 })
 
@@ -209,6 +265,105 @@ describe('item.decrypt', () => {
 	})
 })
 
+describe('item.passkeys', () => {
+	const credential = (rpId: string, overrides: Record<string, unknown> = {}) => ({
+		credentialId: `CRED-${rpId}`, rpId, rpName: `${rpId} site`, userName: `alice@${rpId}`, userDisplayName: 'Alice', userHandle: `HANDLE-${rpId}`,
+		privateKey: `PRIVATE-${rpId}`, algorithm: -7, counter: 3, transports: ['internal'], createdAt: '2026-01-05T10:00:00.000Z', ...overrides,
+	})
+	const passkeysOf = async (entries: unknown) => encrypt(JSON.stringify(entries))
+	const secretsIn = /PRIVATE|CRED-|HANDLE-|"counter"|"algorithm"|"transports"|"userDisplayName"/
+
+	it('answers relying party, user name and date per entry, and nothing else', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com'), credential('example.org', { rpName: '' })]) })])
+		const reply = await send({ kind: 'item.passkeys', id: 'a' })
+		expect(reply).toEqual({
+			ok: true,
+			passkeys: [
+				{ rpId: 'example.com', rpName: 'example.com site', userName: 'alice@example.com', createdAt: '2026-01-05T10:00:00.000Z' },
+				{ rpId: 'example.org', rpName: '', userName: 'alice@example.org', createdAt: '2026-01-05T10:00:00.000Z' },
+			],
+		})
+		expect(JSON.stringify(reply)).not.toMatch(secretsIn)
+	})
+
+	it('falls back to the display name, and answers no date it was not given', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com', { userName: '', createdAt: undefined }), credential('example.org', { createdAt: 'soon' })]) })])
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toMatchObject({
+			ok: true, passkeys: [{ userName: 'Alice', createdAt: null }, { userName: 'alice@example.org', createdAt: null }],
+		})
+	})
+
+	it('answers a use-only copy’s too, as metadata only', async () => {
+		await snapshot([secretRow({ id: 'u', useOnly: true, passkeys: await passkeysOf([credential('example.com')]) })])
+		const reply = await send({ kind: 'item.passkeys', id: 'u' })
+		expect(reply).toMatchObject({ ok: true, passkeys: [{ rpId: 'example.com' }] })
+		expect(JSON.stringify(reply)).not.toMatch(secretsIn)
+	})
+
+	it('marks an entry that does not parse and keeps the others', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf(['junk', { rpId: 'example.net', privateKey: 'PRIVATE-x' }, credential('example.com')]) })])
+		const reply = await send({ kind: 'item.passkeys', id: 'a' })
+		expect(reply).toMatchObject({ ok: true, passkeys: [null, null, { rpId: 'example.com' }] })
+		expect(JSON.stringify(reply)).not.toMatch(secretsIn)
+	})
+
+	it.each([
+		['does not decrypt', async () => 'AAAA'],
+		['is not an array', async () => passkeysOf(credential('example.com'))],
+		['is not JSON', async () => encrypt('{')],
+	])('answers unreadable for a field that %s, and nothing of it', async (_, ciphertext) => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		await snapshot([secretRow({ id: 'a', passkeys: await ciphertext() })])
+		const reply = await send({ kind: 'item.passkeys', id: 'a' })
+		expect(reply).toEqual({ ok: false, error: 'unreadable' })
+	})
+
+	it.each([
+		['null', async () => null],
+		['empty', async () => ''],
+		['absent', async () => undefined],
+		['the encryption of nothing', async () => encrypt('')],
+		['an empty array', async () => passkeysOf([])],
+	])('answers none for a field that is %s', async (_, ciphertext) => {
+		await snapshot([secretRow({ id: 'a', passkeys: await ciphertext() })])
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toEqual({ ok: true, passkeys: [] })
+	})
+
+	it('answers none for a row that is not a login', async () => {
+		await snapshot([secretRow({ id: 'n', typeId: 't-note', passkeys: await passkeysOf([credential('example.com')]) })])
+		expect(await send({ kind: 'item.passkeys', id: 'n' })).toEqual({ ok: true, passkeys: [] })
+	})
+
+	it('refuses a blocked row and one the cache does not hold', async () => {
+		await snapshot([blockedRow({ id: 'x' })])
+		expect(await send({ kind: 'item.passkeys', id: 'x' })).toEqual({ ok: false, error: 'blocked' })
+		expect(await send({ kind: 'item.passkeys', id: 'nope' })).toEqual({ ok: false, error: 'not_found' })
+	})
+
+	it('answers nothing about passkeys while locked or logged out', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com')]) })])
+		await lock(accountId)
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toEqual({ ok: false, error: 'locked' })
+		expect(await send({ kind: 'item.passkeys', id: 'nope' })).toEqual({ ok: false, error: 'locked' })
+		await markLoggedOut(accountId)
+		expect(await send({ kind: 'item.passkeys', id: 'a' })).toEqual({ ok: false, error: 'locked' })
+	})
+
+	it('writes nothing to storage and counts a passive re-read as no interaction', async () => {
+		await snapshot([secretRow({ id: 'a', passkeys: await passkeysOf([credential('example.com')]) })])
+		const set = vi.spyOn(browser.storage.local, 'set')
+		await send({ kind: 'item.passkeys', id: 'a' })
+		const before = await browser.storage.session.get('lastInteractionAt')
+		expect(before.lastInteractionAt).toBeDefined()
+		await new Promise((resolve) => setTimeout(resolve, 5))
+		await send({ kind: 'item.passkeys', id: 'a', passive: true })
+		expect(await browser.storage.session.get('lastInteractionAt')).toEqual(before)
+		expect(set).not.toHaveBeenCalled()
+		const stored = JSON.stringify({ ...await browser.storage.local.get(null), ...await browser.storage.session.get(null) })
+		expect(stored).not.toMatch(/PRIVATE-example|alice@example\.com/)
+	})
+})
+
 describe('last tab', () => {
 	it('defaults to Vault, remembers a tab and forgets it on lock', async () => {
 		expect(await readLastTab()).toBe('vault')
@@ -221,6 +376,23 @@ describe('last tab', () => {
 	it('ignores a tab that does not exist', async () => {
 		await send({ kind: 'popup.lastTab.set', tab: 'nope' as never })
 		expect(await readLastTab()).toBe('vault')
+	})
+})
+
+describe('popup.intent', () => {
+	it('answers the context menu\'s Add once', async () => {
+		setIntent('card')
+		expect(await send({ kind: 'popup.intent' })).toEqual({ add: 'card' })
+		expect(await send({ kind: 'popup.intent' })).toBeNull()
+	})
+
+	it('answers null while locked, and uses the intent up', async () => {
+		setIntent('identity')
+		await lock(accountId)
+		setIntent('identity')
+		expect(await send({ kind: 'popup.intent' })).toBeNull()
+		await putKey(accountId, toBase64(pemToPkcs8(envelope.privateKeyPem)))
+		expect(await send({ kind: 'popup.intent' })).toBeNull()
 	})
 })
 
@@ -283,7 +455,7 @@ describe('account settings', () => {
 			maxIdleMinutes: null,
 			exportDisabled: false,
 			pin: false,
-			autofillFeatures: ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts'],
+			autofillFeatures: ['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys', 'cards', 'identities'],
 			shortcut: null,
 			serverUrl: 'https://cloud.example.org',
 			webAppUrl: 'https://cloud.example.org/index.php/apps/keepiq/',
@@ -328,9 +500,29 @@ describe('account settings', () => {
 		})
 	})
 
+	it('forgets the passkeys the inline list offers when passkeys are turned off', async () => {
+		await send({ kind: 'account.settings.set', accountId, patch: { askPasskeys: true, askToAdd: false } })
+		expect(forgetOfferedPasskeys).not.toHaveBeenCalled()
+		await send({ kind: 'account.settings.set', accountId, patch: { askPasskeys: false } })
+		expect(forgetOfferedPasskeys).toHaveBeenCalledTimes(1)
+	})
+
 	it('moves the Never key onto disk with the timeout', async () => {
 		await send({ kind: 'account.settings.set', accountId, patch: { vaultTimeout: 'never' } })
 		expect((await browser.storage.local.get(neverLockKey(accountId)))[neverLockKey(accountId)]).toBe(toBase64(pemToPkcs8(envelope.privateKeyPem)))
+	})
+
+	it.each([
+		['with the idle API', { onStateChanged: {} }, 'onSystemLock'],
+		['without it, as on Safari, keeping the rest of the patch', undefined, 15],
+	])('takes On system lock only %s', async (_, idle, stored) => {
+		const before = (browser as { idle?: unknown }).idle
+		Object.assign(browser, { idle })
+		onTestFinished(() => {
+			Object.assign(browser, { idle: before })
+		})
+		await send({ kind: 'account.settings.set', accountId, patch: { vaultTimeout: 'onSystemLock', askToAdd: false } })
+		expect(await readSettings(accountId)).toMatchObject({ vaultTimeout: stored, askToAdd: false })
 	})
 
 	it.each<[string, () => Promise<unknown>]>([
@@ -494,6 +686,24 @@ describe('clipboard.copied', () => {
 		await browser.storage.local.set({ [settingsKey(accountId)]: { vaultTimeout: 15, vaultTimeoutAction: 'lock', clearClipboardMs: 0 } })
 		await send({ kind: 'clipboard.copied' })
 		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeUndefined()
+	})
+
+	it.each<[string, unknown, number | undefined]>([
+		['a count', 8, 8],
+		['zero', 0, 0],
+		['a negative count', -1, undefined],
+		['a fraction', 1.5, undefined],
+		['text', '8', undefined],
+		['no count', undefined, undefined],
+	])('keeps Safari\'s count only when it is a non-negative integer: %s', async (_, changeCount, kept) => {
+		vi.stubEnv('BROWSER', 'safari')
+		onTestFinished(() => {
+			vi.unstubAllEnvs()
+		})
+		await browser.storage.session.set({ [CLIPBOARD_COUNT_KEY]: 3 })
+		await send({ kind: 'clipboard.copied', changeCount } as never)
+		expect((await browser.storage.session.get(CLIPBOARD_COUNT_KEY))[CLIPBOARD_COUNT_KEY]).toBe(kept)
+		expect(await browser.alarms.get(CLIPBOARD_ALARM)).toBeDefined()
 	})
 })
 
@@ -840,5 +1050,51 @@ describe('send', () => {
 		expect(await send({ kind: 'send.list' } as never)).toEqual({ ok: false, error: { code: 'invalid' } })
 		expect(await send({ kind: 'send.list', accountId: 'another' })).toEqual({ ok: false, error: { code: 'account_changed' } })
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
+describe('a request kind this background does not know', () => {
+	it.each(['item.bogus', 'folder.bogus', 'constructor', 'toString', '__proto__', 'generator.bogus', 'generator.constructor'])('answers %s with nothing, sending no request', async (kind) => {
+		expect(await handlePopupRequest({ kind, accountId } as unknown as HandledRequest)).toBeUndefined()
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
+describe('what counts as interaction', () => {
+	async function touches(message: HandledRequest): Promise<boolean> {
+		await browser.storage.session.remove('lastInteractionAt')
+		await handlePopupRequest(message)
+		return (await browser.storage.session.get('lastInteractionAt')).lastInteractionAt !== undefined
+	}
+
+	it.each<[string, HandledRequest, boolean]>([
+		['settings.get', { kind: 'settings.get' }, false],
+		['account.settings.get', { kind: 'account.settings.get', accountId: 'x' } as HandledRequest, false],
+		['defaultManager.get', { kind: 'defaultManager.get' }, false],
+		['popup.intent', { kind: 'popup.intent' }, false],
+		['vault.snapshot on open', { kind: 'vault.snapshot', opened: true }, true],
+		['vault.snapshot re-read', { kind: 'vault.snapshot' }, false],
+		['item.decrypt', { kind: 'item.decrypt', ids: [], fields: ['key'] }, true],
+		['item.decrypt passive', { kind: 'item.decrypt', ids: [], fields: ['key'], passive: true }, false],
+		['item.passkeys', { kind: 'item.passkeys', id: 'nope' }, true],
+		['item.passkeys passive', { kind: 'item.passkeys', id: 'nope', passive: true }, false],
+		['popup.lastTab.set', { kind: 'popup.lastTab.set', tab: 'vault' } as HandledRequest, true],
+	])('%s → %s', async (_name, message, expected) => {
+		await snapshot([])
+		expect(await touches(message)).toBe(expected)
+	})
+
+	it('counts a copy only while the vault is unlocked', async () => {
+		await snapshot([])
+		expect(await touches({ kind: 'clipboard.copied', changeCount: 1 } as HandledRequest)).toBe(true)
+		await lock(accountId)
+		expect(await touches({ kind: 'clipboard.copied', changeCount: 1 } as HandledRequest)).toBe(false)
+	})
+
+	it('answers undefined and logs a request that throws', async () => {
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+		vi.spyOn(browser.storage.local, 'get').mockRejectedValue(new Error('disk'))
+		expect(await handlePopupRequest({ kind: 'settings.get' })).toBeUndefined()
+		expect(error).toHaveBeenCalledWith('[keepiq]', 'settings.get', expect.any(Error))
 	})
 })

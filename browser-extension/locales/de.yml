@@ -1,0 +1,814 @@
+# Terms and tone follow Nextcloud's German (du, Administration): Tresor, Master-Passwort, App-Passwort, Eintrag, das Login, Passkey; die Sendung for Send, as in the Keepiq web app.
+language: de
+extensionDescription: Keepiq für deinen Browser. Fülle Logins, Passkeys und Einmalcodes aus deinem Nextcloud-Tresor aus, Ende-zu-Ende-verschlüsselt.
+commandAutofillLogin: Zuletzt verwendetes Login ausfüllen
+commandFocusNotificationBar: Zur Speicherleiste von Keepiq
+
+errors:
+  insecureUrl: Verwende https für diesen Server
+  invalidUrl: Gib eine gültige Server-URL ein
+  permissionDenied: Keepiq braucht die Berechtigung, {host} zu erreichen
+  unreachable: "{host} ist nicht erreichbar"
+  notNextcloud: "{host} scheint kein Nextcloud-Server zu sein"
+  serverError: "{host} ist gerade nicht verfügbar, versuche es später erneut"
+  unauthorized: Falscher Benutzername oder falsches App-Passwort
+  keepiqMissing: Keepiq ist auf {host} nicht installiert
+  keepiqOutdated: Keepiq auf {host} ist zu alt für diese Erweiterung, die Version {version} oder neuer benötigt. Bitte deine Administration, Keepiq zu aktualisieren.
+  noActiveSuite: Öffne einmal die Keepiq-Web-App und lege ein Master-Passwort fest, versuche es dann erneut
+  unlockBlocked: Deine Organisation verlangt eine Zwei-Faktor-Anmeldung. Richte unter Nextcloud-Einstellungen, Sicherheit einen zweiten Faktor ein und versuche es dann erneut
+  duplicate: Dieses Konto wurde bereits hinzugefügt
+  limitReached: Maximal {count} Konten erreicht
+  invalidMasterPassword: Ungültiges Master-Passwort
+  keyUnreadable: Dein Tresorschlüssel in Keepiq konnte nicht gelesen werden, daher kann dieser Browser den Tresor nicht entsperren. Wende dich an deine Keepiq-Administration.
+  offlineNoCache: Du bist offline und dieser Tresor wurde noch nicht synchronisiert
+  sessionRevoked: Sitzung widerrufen, bitte melde dich erneut an
+  writeLocked: Dein Tresor kann gerade nicht geändert werden, versuche es später erneut
+  notResponding: Keepiq antwortet nicht. Lade die Erweiterung neu und öffne dieses Pop-up erneut.
+  invalidPin:
+    1: Falsche PIN, noch 1 Versuch
+    n: Falsche PIN, noch $1 Versuche
+  wrongPin: Falsche PIN
+  pinForgotten: PIN nach zu vielen Versuchen gelöscht
+  pinKeyChanged: Dein Tresorschlüssel hat sich geändert. Entsperre mit deinem Master-Passwort.
+  pinTooShort: Verwende mindestens {count} Zeichen
+  unknown: Etwas ist schiefgelaufen
+  passkeyFailed: "Der Passkey konnte deinen Tresor nicht entsperren. Verwende dein Master-Passwort."
+
+notices:
+  keyChanged: Dein Tresorschlüssel hat sich in Keepiq geändert. Entsperre mit deinem aktuellen Master-Passwort.
+  fileAccess: "Keepiq braucht keinen Dateizugriff. In Nextcloud kannst du unter Einstellungen, Sicherheit, Geräte & Sitzungen den Dateizugriff dieses App-Passworts abschalten oder es widerrufen."
+
+common:
+  accountOnHost: "{name} auf {host}"
+  loading: Wird geladen…
+  back: Zurück
+  cancel: Abbrechen
+  logOut: Abmelden
+  appPassword: App-Passwort
+  addAccount: Konto hinzufügen
+  openWebApp: Keepiq-Web-App öffnen
+  justNow: gerade eben
+
+titles:
+  accounts: Konten
+  logInAgain: Erneut anmelden
+  unlock: Entsperren
+  viewItem: Eintrag anzeigen
+  newItem: Neuer Eintrag
+  newLogin: Neues Login
+  newCard: Neue Karte
+  newIdentity: Neue Identität
+  editItem: Eintrag bearbeiten
+  newSend: Neue Sendung
+  sendCreated: Sendung erstellt
+
+tabs:
+  label: Hauptmenü
+  vault: Tresor
+  generator: Generator
+  send: Senden
+  settings: Einstellungen
+
+header:
+  popout: In eigenem Fenster öffnen
+  accounts: Konten, angemeldet als {name}
+  new: Neu
+
+unlock:
+  masterPassword: Master-Passwort
+  submit: Entsperren
+  pin: PIN
+  useMasterPassword: Master-Passwort verwenden
+
+logInAgain:
+  submit: Anmelden
+
+addAccount:
+  serverUrl: Server-URL
+  serverUrlPlaceholder: cloud.example.org
+  username: Benutzername
+  hint: Erstelle eines unter Nextcloud-Einstellungen, Sicherheit. Gib hier nie dein Nextcloud-Anmeldepasswort ein.
+  hintWithLink: "Erstelle eines unter Nextcloud-Einstellungen, Sicherheit: {link}. Gib hier nie dein Nextcloud-Anmeldepasswort ein."
+  securityLink: Sicherheitseinstellungen öffnen
+  signInWithBrowser: "Über Nextcloud anmelden"
+  finishInTab: "Schließe die Anmeldung auf der geöffneten Nextcloud-Seite ab. Keepiq fügt das Konto hinzu, sobald du fertig bist."
+  orAppPassword: "Oder gib ein App-Passwort ein:"
+
+accounts:
+  active: (aktiv)
+  unlocked: Entsperrt
+  locked: Gesperrt
+  loggedOut: Abgemeldet
+  lock: "{account} sperren"
+  logOut: Von {account} abmelden
+  lockAll: Alle sperren
+  logOutAll: Alle abmelden
+  logOutAllQuestion: Von allen Konten abmelden?
+  logOutAllDetail: Alle Konten werden aus diesem Browser entfernt. Du brauchst danach jedes App-Passwort erneut.
+  logOutQuestion: Von {account} abmelden?
+  logOutDetail: Das Konto wird aus diesem Browser entfernt. Um es erneut hinzuzufügen, brauchst du ein App-Passwort.
+
+vault:
+  loadFailed: Dein Tresor konnte nicht geladen werden
+  tryAgain: Erneut versuchen
+  syncing: Dein Tresor wird synchronisiert
+  empty: Keine Einträge in deinem Tresor
+  noMatch: Keine passenden Einträge
+  searchCovers: Die Suche umfasst Namen und Websites.
+  clearFilters: Filter zurücksetzen
+  items: Einträge
+  tooMany: Die ersten {count} werden angezeigt, verfeinere deine Suche
+  offline: Offline. Zuletzt synchronisiert {time}
+  syncNow: Jetzt synchronisieren
+  busy: Server ausgelastet, neuer Versuch folgt später
+  allBlocked: Alle Einträge sind blockiert.
+  suggestions: Vorschläge zum Ausfüllen
+  noSuggestions: Keine Einträge für {host}
+  autofillUnavailable: Automatisches Ausfüllen ist auf dieser Seite nicht verfügbar
+  fillFailed: Auf dieser Seite kann nicht automatisch ausgefüllt werden. Kopiere die Daten und füge sie selbst ein.
+  openFailed: Die Website konnte nicht geöffnet werden
+  popoutFailed: Es konnte kein neues Fenster geöffnet werden
+
+filters:
+  search: Suchen
+  searchLabel: Tresor durchsuchen
+  clearSearch: Suche löschen
+  folder: Ordner
+  allItems: Alle Einträge
+  noFolder: Kein Ordner
+  type: Typ
+  all: Alle
+  more: Mehr
+  moreTypes: Weitere Typen
+  login: Login
+  card: Karte
+  identity: Identität
+  note: Notiz
+  totp: TOTP
+  passkey: Passkey
+
+item:
+  blocked: Blockiert
+  launch: "{name} öffnen"
+  fill: Ausfüllen
+  fillName: "{name} ausfüllen"
+  insecureTitle: Möchtest du dieses Login trotzdem ausfüllen?
+  insecureWarning: "Warnung: Dies ist eine ungesicherte HTTP-Seite. Alles, was du sendest, können andere möglicherweise sehen und ändern. Dieses Login wurde ursprünglich auf einer sicheren (HTTPS-)Seite gespeichert."
+  cardInsecureTitle: Diese Karte auf einer unsicheren Website ausfüllen?
+  cardInsecureWarning: Diese Website ist nicht sicher. Jeder im Netzwerk könnte die ausgefüllten Kartendaten lesen.
+  crossSiteTitle: Auch auf {hosts} ausfüllen?
+  crossSiteWarning: Ein Teil dieses Formulars stammt von {hosts}, nicht von {host}. Keepiq füllt ihn dort nur aus, wenn du zustimmst.
+  onlyHost: Nur {host}
+  copyMenu: Kopieren, {name}
+  moreMenu: Mehr, {name}
+  copyUsername: Benutzername kopieren
+  copyPassword: Passwort kopieren
+  copyCode: Bestätigungscode kopieren
+  view: Anzeigen
+  edit: Bearbeiten
+  clone: Klonen
+  move: In Ordner verschieben
+  delete: Löschen
+  send: Senden
+  cloneName: "{name} - Klon"
+  passkeyNoClone: Passkeys können nicht geklont werden
+  useOnly: Nur zum Anmelden mit dir geteilt
+  readOnly: Aus einer anderen Organisation geteilt, daher nur verschiebbar
+  viewOnly: Nur zum Ansehen mit dir geteilt. Bitte den Eigentümer um Bearbeitungsrechte, um ihn zu ändern.
+  expiringNoClone: Dein Zugriff endet am {date}, daher kann der Eintrag nicht geklont werden
+  expiringNoSend: Dein Zugriff endet am {date}, daher kann der Eintrag nicht gesendet werden
+  saved: Eintrag gespeichert
+  deleted: Eintrag in den Papierkorb verschoben
+  moved: In {folder} verschoben
+  deleteTitle: Eintrag löschen
+  deleteConfirm: "{name} in den Papierkorb verschieben? Der Eintrag wird nicht mehr geteilt, auch nicht nach einer Wiederherstellung aus dem Papierkorb in der Keepiq-Web-App."
+  gone: Dieser Eintrag existiert nicht mehr
+
+form:
+  itemDetails: Eintragsdetails
+  type: Typ
+  name: Name
+  cardNumberLength: "{brand} gibt keine Kartennummern dieser Länge aus. Du kannst trotzdem speichern."
+  cardNumberLengthUnknown: Kartennummern haben 12 bis 19 Ziffern. Du kannst trotzdem speichern.
+  cardNumberChecksum: Diese Nummer besteht die Prüfsumme der Karte nicht. Prüfe sie; du kannst trotzdem speichern.
+  cardCodeLength: "{brand}-Karten verwenden eine {size}-stellige {name}. Du kannst trotzdem speichern."
+  folder: Ordner
+  chooseFolder: Ordner wählen, aktuell {folder}
+  website: Website-URL
+  autofillOptions: Optionen zum automatischen Ausfüllen
+  additionalOptions: Weitere Optionen
+  authenticator: Authenticator
+  note: Notiz
+  secret: Geheimnis
+  advanced: Erweitert
+  algorithm: Algorithmus
+  digits: Stellen
+  period: Intervall in Sekunden
+  addField: Feld hinzufügen
+  fieldName: Feldname
+  fieldValue: Wert
+  removeField: "{name} entfernen"
+  removeUnnamed: Feld entfernen
+  save: Speichern
+  passkeyReadOnly: Die Daten eines Passkeys können nur in der Keepiq-Web-App geändert werden
+  offline: Du bist offline. Änderungen brauchen eine Verbindung zu Keepiq.
+  unsavedTitle: Ungespeicherte Änderungen
+  unsaved: Du hast ungespeicherte Änderungen. Möchtest du sie verwerfen?
+  discard: Verwerfen
+  keepEditing: Weiter bearbeiten
+
+authKey:
+  label: Authentifizierungsschlüssel
+  optionalLabel: Authentifizierungsschlüssel (optional)
+  newLabel: Neuer Authentifizierungsschlüssel
+  help: Füge den otpauth://totp/-Link oder den geheimen Schlüssel ein, oder scanne den QR-Code auf der Seite.
+  scan: QR-Code auf der Seite scannen
+  read: Authentifizierungsschlüssel aus dem QR-Code gelesen
+  noQr: Kein QR-Code auf der Seite gefunden. Scrolle ihn in den sichtbaren Bereich und versuche es erneut.
+  notTotp: Dieser QR-Code enthält keinen Authentifizierungsschlüssel. Verwende den QR-Code, den die Website beim Einrichten der Zwei-Faktor-Anmeldung zeigt.
+  noPicture: Keepiq kann kein Bild dieser Seite aufnehmen. Füge den Schlüssel stattdessen ein.
+  popout: Öffne Keepiq über die Symbolleiste auf der Seite mit dem QR-Code, um ihn zu scannen.
+  saved: Gespeichert
+  remove: Authentifizierungsschlüssel entfernen
+  replaceHelp: Füge einen neuen Schlüssel ein oder scanne ihn, oder lass das Feld leer, um den gespeicherten zu entfernen.
+  keep: Gespeicherten Schlüssel behalten
+  removedOnSave: Der Authentifizierungsschlüssel wird beim Speichern entfernt.
+  notCloned: Der Authentifizierungsschlüssel wird nicht mitgeklont.
+
+fieldErrors:
+  required: Name ist erforderlich
+  tooLong: Höchstens {max} Zeichen
+  tooLongBytes: Zu lang (max. {max} Bytes)
+  reserved: Dieser Name ist reserviert
+  duplicate: Ein Feld mit diesem Namen existiert bereits
+  invalidTotp: Kein gültiges Authentifizierungsgeheimnis
+  slash: Ordnernamen dürfen keine Schrägstriche enthalten
+
+writeErrors:
+  writeLocked: Der Tresor ist wegen einer Schlüsselmigration vorübergehend gesperrt, versuche es später erneut
+  forbidden: Keepiq erlaubt diese Änderung nicht. Die Keepiq-Web-App zeigt, warum.
+  policy: Die Richtlinie deiner Organisation erlaubt diese Änderung nicht
+  accountChanged: Du hast inzwischen zu einem anderen Konto gewechselt, daher wurde nichts gespeichert. Wechsle zurück, um zu speichern.
+  accountChangedDelete: Du hast inzwischen zu einem anderen Konto gewechselt, daher wurde nichts gelöscht. Wechsle zurück, um zu löschen.
+  keepClash: Ein Ordner namens {name} existiert bereits eine Ebene höher. Wähle dafür Einträge in übergeordneten Ordner oder Löschen, oder benenne zuerst einen der beiden um.
+  keepClashAfter: Ein Ordner, den du behalten wolltest, heißt genauso wie einer eine Ebene höher, daher wurde nichts gelöscht. Prüfe die Auswahl erneut.
+  invalid: Keepiq hat diese Änderung abgelehnt
+  stale: Dieser Eintrag wurde an anderer Stelle geändert. Geh zurück und bearbeite ihn erneut, um die neueste Version zu sehen.
+  itemGone: Dieser Eintrag existiert nicht mehr
+  folderGone: Dieser Ordner existiert nicht mehr
+  duplicateFolder: Hier existiert bereits ein Ordner mit diesem Namen
+  folderChanged: Dieser Ordner hat sich geändert. Prüfe die Auswahl erneut.
+  offline: Der Server ist nicht erreichbar
+  serverError: Keepiq ist gerade nicht verfügbar, versuche es später erneut
+  unreadable: Dieser Eintrag konnte nicht gelesen werden und kann hier daher nicht bearbeitet werden
+  restricted: Dieser Eintrag wurde mit Einschränkungen mit dir geteilt und kann hier daher nicht geändert oder kopiert werden
+  unmatched: Keepiq hat eine Version dieses Eintrags gesendet, die dein Tresor nicht enthält, daher wurde er nicht geöffnet.
+  keyMismatch: Keepiq hat einen Verschlüsselungsschlüssel gesendet, der nicht zu deinem Tresor passt, daher wurde nichts gespeichert. Wende dich an deine Keepiq-Administration.
+  staleSource: Das Original dieses geteilten Eintrags wurde geändert, nachdem du ihn geöffnet hast. Es wurde nichts gespeichert; öffne ihn erneut und wiederhole deine Änderung.
+  incomplete: Die Personen, mit denen dieser Eintrag geteilt ist, haben sich während des Speicherns ständig geändert. Es wurde nichts gespeichert; bitte versuche es erneut.
+  badCertificate: Keepiq hat für eine Person, mit der dieser Eintrag geteilt ist, einen Verschlüsselungsschlüssel gesendet, den dieser Browser nicht lesen konnte. Es wurde nichts gespeichert.
+  unverified: Dieser Eintrag ist mit Partnerorganisationen geteilt, und dieser Browser kann nicht bestätigen, dass sie ihn genau so erhalten, wie du ihn gesehen hast. Es wurde nichts gespeichert; nimm diese Änderung in der Keepiq-Web-App vor.
+  partnerUnreachable: "Es wurde nichts gespeichert: Eine Partnerorganisation, mit der dieser Eintrag geteilt ist, ist nicht erreichbar ({cloudIds}). Versuche es später erneut oder speichere ohne sie. Dann wird das Teilen dieses Eintrags mit ihr pausiert, bis du ihn erneut mit ihr teilst."
+  partnerUpgradeRequired: "Es wurde nichts gespeichert: Das Keepiq von {cloudIds} ist zu alt, um einen Authentifizierungsschlüssel zu empfangen. Entferne den Schlüssel oder bitte sie, Keepiq zu aktualisieren."
+  partnerUpgradeRequiredUnnamed: "Es wurde nichts gespeichert: Eine Partnerorganisation, mit der dieser Eintrag geteilt ist, nutzt ein Keepiq, das zu alt ist, um einen Authentifizierungsschlüssel zu empfangen. Entferne den Schlüssel oder bitte sie, Keepiq zu aktualisieren."
+  partnerUpgradeVersion: Sie brauchen Keepiq {version} oder neuer.
+  partnerLookupLimit: Zu viele Partnerabfragen. Es wurde nichts gespeichert; versuche es in einer Minute erneut.
+  federationUnavailable: Dein Keepiq-Server kann nicht mit Partnerorganisationen teilen, daher kann dieser Eintrag hier nicht gespeichert werden. Es wurde nichts gespeichert; wende dich an deine Administration.
+  keepiqOutdated: Dein Keepiq-Server ist zu alt, um diese Änderung zu speichern. Es wurde nichts gespeichert; bitte deine Administration, Keepiq auf Version {version} oder neuer zu aktualisieren.
+  partnerClock: Das Zertifikat einer Partnerorganisation, mit der dieser Eintrag geteilt ist, ist laut der Uhr dieses Computers nicht gültig. Es wurde nichts gespeichert; prüfe Datum und Uhrzeit dieses Computers oder nimm diese Änderung in der Keepiq-Web-App vor.
+  shareScanPending: Dieser Eintrag wartet auf eine noch nicht abgeschlossene Prüfung seiner Freigaben. Es wurde nichts gespeichert; versuche es später erneut.
+  shareScanPendingOpen: Dieser Eintrag wartet auf eine Prüfung seiner Freigaben und kann noch nicht bearbeitet werden. Versuche es später erneut.
+  shareScanPendingDelete: Dieser Eintrag wartet auf eine noch nicht abgeschlossene Prüfung seiner Freigaben. Es wurde nichts gelöscht; versuche es später erneut.
+  sendInvalid: Keepiq hat diese Sendung nicht akzeptiert. Es wurde nichts gesendet; prüfe die Felder und versuche es erneut.
+  sendOffline: Der Server ist nicht erreichbar, es wurde nichts gesendet
+  argon2Unavailable: Passwortschutz ist in diesem Browser nicht verfügbar
+
+shareSave:
+  saveWithout: Ohne sie speichern
+  ownerOnly: Gespeichert. Empfänger in Partnerorganisationen erhalten diese Änderung, wenn der Eigentümer den Eintrag das nächste Mal speichert.
+  suspended: Das Teilen mit {cloudIds} ist pausiert, weil ihr Zertifikat nicht überprüft werden konnte oder ihre Organisation es nicht mehr akzeptiert. Die Keepiq-Web-App zeigt die Freigabe.
+  paused: Das Teilen mit {cloudIds} ist pausiert, bis du diesen Eintrag erneut mit ihnen teilst.
+
+folders:
+  add: Ordner hinzufügen
+  newFolder: Neuer Ordner
+  rename: Umbenennen
+  renameTitle: Ordner umbenennen
+  delete: Löschen
+  more: Mehr, {name}
+  name: Ordnername
+  empty: Noch keine Ordner
+  notice: Ordnernamen sind nicht verschlüsselt
+  dismiss: Schließen
+  current: Aktueller Ordner
+  pickTitle: Ordner wählen
+  moveTitle: In Ordner verschieben
+  saved: Ordner gespeichert
+  deleted: Ordner gelöscht
+  deleteTitle: Ordner löschen
+  deleteConfirm: "{name} löschen? Dies kann nicht rückgängig gemacht werden."
+  cascade:
+    1: "{name} und den Eintrag darin löschen oder ihn nach {parent} verschieben?"
+    n: "{name} und die $1 Einträge darin löschen oder sie nach {parent} verschieben?"
+  countsAll: Archivierte Einträge und Einträge im Papierkorb zählen mit.
+  deleteItems: Einträge auch löschen
+  moveItems: Einträge in übergeordneten Ordner
+  items:
+    1: 1 Eintrag
+    n: $1 Einträge
+  subfolders:
+    1: 1 Unterordner
+    n: $1 Unterordner
+  directRow: Einträge in {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Löschen
+  actionMove: Einträge in übergeordneten Ordner
+  actionKeep: Behalten
+  directMove: In übergeordneten Ordner
+
+clipboard:
+  copied: "{what} kopiert"
+  failed: Kopieren fehlgeschlagen
+
+field:
+  show: "{field} anzeigen"
+  hide: "{field} verbergen"
+  copy: "{field} kopieren"
+
+blocked:
+  generic: Dieser Eintrag ist blockiert.
+  suiteMissing: Sein Verschlüsselungsschlüssel existiert nicht mehr.
+  suiteRevoked: Sein Verschlüsselungsschlüssel wurde widerrufen.
+  suiteCompromised: Mit einem kompromittierten Schlüssel verschlüsselt, daher kann er hier nicht geöffnet werden. Die Keepiq-Web-App zeigt, ob er wiederhergestellt werden kann.
+  migrationFailed: Er konnte bei der Wiederherstellung nach der Kompromittierung nicht auf deinen neuen Schlüssel übertragen werden. Der gespeicherte Wert bleibt erhalten, kann aber nicht geöffnet werden.
+
+detail:
+  item: Eintrag
+  decrypting: Wird entschlüsselt…
+  decryptFailed: Dieser Eintrag konnte nicht entschlüsselt werden
+  unreadablePasskey: Dieser Passkey konnte nicht gelesen werden
+  unreadableFields: Zusätzliche Felder konnten nicht gelesen werden
+  loginCredentials: Zugangsdaten
+  username: Benutzername
+  password: Passwort
+  authenticatorKey: Authentifizierungsschlüssel
+  website: Website
+  additionalFields: Zusätzliche Felder
+  notes: Notizen
+  history: Eintragsverlauf
+  created: Erstellt
+  updated: Aktualisiert
+  expires: Läuft ab
+  cardDetails: Kartendetails
+  number: Nummer
+  numberWithBrand: Nummer · {brand}
+  cardNumber: Kartennummer
+  cardholder: Karteninhaber
+  expiry: Ablaufdatum
+  cvv: CVV
+  pin: PIN
+  identity: Identität
+  firstName: Vorname
+  lastName: Nachname
+  address: Adresse
+  phone: Telefon
+  email: E-Mail
+  bsn: BSN
+  passkey: Passkey
+  relyingParty: Website oder App
+  passkeyUser: Benutzername
+  passkeyOnLogin: Keepiq meldet sich mit Passkeys an, die in einem Login gespeichert sind, nicht mit diesem Eintrag
+  passkeys: Passkeys
+  passkeyCreated: Erstellt am {date}
+  useOnly: Der Eigentümer erlaubt dir nicht, dies anzusehen oder zu kopieren.
+
+totp:
+  code: Bestätigungscode
+  invalid: Ungültiger Authentifizierungsschlüssel
+  changesIn:
+    1: Ändert sich in 1 Sekunde
+    n: Ändert sich in $1 Sekunden
+
+settings:
+  accountSecurity: Kontosicherheit
+  autofill: Automatisches Ausfüllen
+  notifications: Benachrichtigungen
+  vault: Tresor
+  appearance: Darstellung
+  about: Über
+  folders: Ordner
+  theme: Design
+  themeSystem: Systemstandard
+  themeLight: Hell
+  themeDark: Dunkel
+  comingLater: Folgt später
+  setByOrganisation: Von deiner Organisation festgelegt
+  turnedOffByOrganisation: Von deiner Organisation deaktiviert
+  never: Nie
+  durationHours: "{count} Std."
+  durationMinutes: "{count} Min."
+  pin: Mit PIN entsperren
+  pinTurnOn: Aktivieren
+  masterPasswordRequired: Gib dein Master-Passwort ein
+  pinAgain: PIN bestätigen
+  pinMismatch: Die PINs stimmen nicht überein
+  pinAdvice: Verwende keine PIN, die du schon für dein Handy oder deine Bank nutzt.
+  pinAfterRestart: Nach einem Neustart des Browsers gibst du einmal dein Master-Passwort ein; danach funktioniert deine PIN wieder.
+  vaultTimeout: Tresor-Timeout
+  timeoutImmediately: Sofort
+  timeoutMinutes:
+    1: 1 Minute
+    n: $1 Minuten
+  timeoutHours:
+    1: 1 Stunde
+    n: $1 Stunden
+  timeoutOnSystemLock: Beim Sperren des Systems
+  timeoutOnSystemLockCapped: Beim Sperren des Systems oder nach {duration} Inaktivität (von deiner Organisation festgelegt)
+  timeoutOnRestart: Beim Neustart des Browsers
+  timeoutCustom: Benutzerdefiniert
+  hours: Stunden
+  minutes: Minuten
+  customAtLeastOne: Gib mindestens eine Minute ein
+  customWhole: Gib ganze Stunden und Minuten ein
+  customAtMost: Deine Organisation erlaubt höchstens {duration}
+  neverTitle: Tresor entsperrt lassen?
+  neverWarning: Dein Tresor bleibt entsperrt, bis du ihn selbst sperrst. Der Schlüssel, der ihn öffnet, wird auf die Festplatte dieses Browserprofils geschrieben, wo ihn jeder lesen kann, der das Profil lesen kann.
+  neverConfirm: Entsperrt lassen
+  timeoutAction: Aktion bei Timeout
+  actionLock: Sperren
+  actionLogOutNote: Nach Ablauf des Timeouts wirst du abgemeldet und brauchst das App-Passwort erneut
+  lockNow: Jetzt sperren
+  changeMasterPassword: Master-Passwort ändern
+  autofillOnPageLoad: Beim Laden der Seite automatisch ausfüllen
+  autofillOnPageLoadWarning: Kompromittierte oder nicht vertrauenswürdige Websites können das automatische Ausfüllen beim Laden der Seite missbrauchen
+  defaultAutofill: Standardeinstellung zum automatischen Ausfüllen von Logins
+  defaultAutofillOnPageLoad: Beim Laden der Seite ausfüllen, falls aktiviert
+  uriMatch: Standard-URI-Übereinstimmungserkennung
+  uriBaseDomain: Basisdomain
+  uriHost: Host
+  uriStartsWith: Beginnt mit
+  uriExact: Exakt
+  uriRegex: Regulärer Ausdruck
+  uriRegexNote: Reguläre Ausdrücke sind eine erweiterte Option und können die Erkennung stören
+  inlineSuggestions: Ausfüllvorschläge in Formularfeldern anzeigen
+  inlineCards: Karten als Vorschläge anzeigen
+  inlineIdentities: Identitäten als Vorschläge anzeigen
+  inlineKindsOff: Aktiviere zuerst Ausfüllvorschläge in Formularfeldern anzeigen.
+  vaultCards: Karten in der Tresoransicht immer als Ausfüllvorschläge anzeigen
+  vaultIdentities: Identitäten in der Tresoransicht immer als Ausfüllvorschläge anzeigen
+  defaultPasswordManager: Keepiq zu deinem Standard-Passwortmanager machen
+  defaultPasswordManagerHint: Schaltet das browsereigene Speichern von Passwörtern und Ausfüllen von Adressen aus, damit seine Vorschläge die von Keepiq nicht verdecken.
+  defaultPasswordManagerManaged: Deine Organisation oder eine andere Erweiterung verwaltet diese Browsereinstellung.
+  contextMenu: Optionen im Kontextmenü anzeigen
+  shortcut: Tastenkürzel zum automatischen Ausfüllen
+  shortcutNotSet: Nicht festgelegt
+  shortcutChange: Ändern
+  shortcutFirefox: Öffne about:addons, wähle das Zahnradmenü und dann Tastenkombinationen für Erweiterungen verwalten
+  shortcutSafari: Öffne die Safari-Einstellungen, wähle Erweiterungen und dann Keepiq, um das Tastenkürzel zu ändern
+  websiteAccess: Zugriff auf Websites
+  websiteAccessAll: Alle Websites
+  websiteAccessSome: Nur Websites, die du erlaubt hast
+  websiteAccessServer: Nicht dein Keepiq-Server
+  clearClipboard: Zwischenablage leeren
+  clipboardSeconds:
+    1: 1 Sekunde
+    n: $1 Sekunden
+  autoCopyTotp: TOTP automatisch kopieren
+  autoCopyTotpHint: Hat ein Login einen Bestätigungscode, wird er beim automatischen Ausfüllen des Logins in deine Zwischenablage kopiert.
+  askToAdd: Fragen, ob ein Login hinzugefügt werden soll
+  askToUpdate: Fragen, ob ein bestehendes Login aktualisiert werden soll
+  askPasskeys: Fragen, ob Passkeys gespeichert und verwendet werden sollen
+  excludedDomains: Ausgeschlossene Domains
+  addCurrentSite: Aktuelle Website hinzufügen
+  domain: Domain
+  addDomain: Hinzufügen
+  domainEmpty: Gib eine Domain ein
+  domainUnreadable: Gib eine Domain wie example.org ein
+  domainDuplicate: Bereits ausgeschlossen
+  removeDomain: "{domain} entfernen"
+  webTitle: Keepiq im Web
+  webText: Die eigenen Benachrichtigungen von Keepiq, Import und Export sowie dein Master-Passwort verwaltest du in Keepiq auf Nextcloud unter Persönliche Einstellungen.
+  openKeepiq: Keepiq öffnen
+  lastSync: "Zuletzt synchronisiert: {time}"
+  lastSyncNever: "Zuletzt synchronisiert: Nie"
+  syncOffline: Synchronisierung fehlgeschlagen, du bist offline
+  syncFailed: Synchronisierung fehlgeschlagen, versuche es später erneut
+  importItems: Einträge importieren
+  exportVault: Tresor exportieren
+  defaultItemType: Standard-Eintragstyp in dieser Erweiterung
+  compactMode: Kompakter Modus
+  showAnimations: Animationen anzeigen
+  quickCopy: Schnellkopier-Aktionen im Tresor anzeigen
+  showBadgeCounter: Anzahl der Login-Vorschläge am Erweiterungssymbol anzeigen
+  language: Sprache
+  languageFollows: Folgt deinem Browser
+  version: Version {version}
+  server: Server {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiq-Version unbekannt
+  help: Hilfe
+  reportBug: Fehler melden
+  contactSupport: Support kontaktieren
+  privacyPolicy: Datenschutzerklärung
+  webApp: Keepiq-Web-App
+  rate: Erweiterung bewerten
+
+websiteAccess:
+  title: Lass Keepiq auf Websites arbeiten
+  body: Safari führt Keepiq nur auf Websites aus, die du erlaubst. Erlaube es auf allen Websites, um überall, wo du dich anmeldest, Logins auszufüllen, neue zu speichern und Passkeys zu verwenden.
+  allow: Auf allen Websites erlauben
+  dismiss: Jetzt nicht
+  steps: Wähle in Safari Safari > Einstellungen und dann Websites. Wähle Keepiq in der Liste aus und setze „Beim Besuch anderer Websites“ auf Erlauben.
+  perSite: Um einzelne Websites zu erlauben, klicke auf der Website auf die Keepiq-Schaltfläche und wähle, Keepiq dort immer zu erlauben.
+  serverTitle: Keepiq erreicht {host} nicht
+  serverBody: Safari lässt Keepiq deinen Server nicht erreichen, daher kann dein Tresor nicht synchronisiert werden.
+  serverAllow: "{host} erlauben"
+
+generator:
+  kinds: Was generieren?
+  password: Passwort
+  passphrase: Passphrase
+  username: Benutzername
+  length: Länge
+  lengthValue: Länge in Zeichen
+  uppercase: Großbuchstaben (A-Z)
+  lowercase: Kleinbuchstaben (a-z)
+  digits: Zahlen (0-9)
+  special: Sonderzeichen wie !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Zeichentypen
+  lastClassOn: Mindestens ein Typ bleibt aktiv
+  minNumbers: Min. Zahlen
+  minSpecial: Min. Sonderzeichen
+  avoidAmbiguous: Mehrdeutige Zeichen vermeiden
+  lockedByPolicy: Von deiner Organisation festgelegt
+  passphraseOff: Von deiner Organisation deaktiviert
+  words: Anzahl der Wörter
+  separator: Worttrennzeichen
+  capitalizeWords: Großschreiben
+  capitalize: Großschreiben
+  includeNumber: Zahl hinzufügen
+  usernameType: Typ
+  typeWord: Zufälliges Wort
+  typePlus: Plus-adressierte E-Mail
+  typeCatchall: Catch-all-E-Mail
+  email: E-Mail
+  emailPlaceholder: name@example.com
+  domain: Domain
+  domainPlaceholder: example.com
+  basedOn: Basierend auf
+  random: Zufällig
+  websiteName: Name der Website
+  noWebsite: Keine Website erkannt
+  needsEmail: Gib eine E-Mail-Adresse ein
+  needsDomain: Gib eine Domain ein
+  wordlistUnavailable: Wortliste nicht verfügbar
+  regenerate: Neu generieren
+  usePassword: Dieses Passwort verwenden
+  useUsername: Diesen Benutzernamen verwenden
+  history: Generatorverlauf
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Noch keine generierten Werte
+  clearHistory: Leeren
+  clearHistoryTitle: Generatorverlauf leeren?
+  clearHistoryText: Dadurch werden alle Werte der Liste aus diesem Browser entfernt.
+  generatePasswordLink: Ein Passwort generieren
+  generatePassword: Passwort generieren
+  generateUsername: Benutzernamen generieren
+
+send:
+  new: Neue Sendung
+  empty: Noch keine Sendungen
+  emptyText: Teile Text oder Zugangsdaten über einen Link, der sich selbst löscht.
+  loadFailed: Deine Sendungen konnten nicht geladen werden
+  retry: Erneut versuchen
+  labelText: "Textsendung, {time}"
+  labelCredential: "Zugangsdaten-Sendung, {time}"
+  viewsLeft:
+    1: "Noch {left} von 1 Aufruf"
+    n: "Noch {left} von $1 Aufrufen"
+  expires: "Ablauf: {date}"
+  neverExpires: Läuft nie ab
+  expired: Abgelaufen
+  passwordBadge: Passwort
+  link: Link
+  copyLink: Link kopieren
+  copyLinkOf: "Link kopieren, {name}"
+  linkGone: Link nicht mehr verfügbar
+  remove: Entfernen
+  removeOf: "Entfernen, {name}"
+  removeTitle: Sendung entfernen
+  removeConfirm: Diese Sendung entfernen? Alle mit dem Link verlieren den Zugriff.
+  removed: Sendung entfernt
+  contentSection: Inhalt
+  optionsSection: Optionen
+  type: Typ
+  text: Text
+  credential: Zugangsdaten
+  content: Zu teilender Text
+  maxViews: Max. Aufrufe
+  maxViewsRange: "Zwischen 1 und {max}"
+  expiry: Ablauf
+  expiry1h: 1 Stunde
+  expiry1d: 1 Tag
+  expiry2d: 2 Tage
+  expiry3d: 3 Tage
+  expiry7d: 7 Tage
+  expiry30d: 30 Tage
+  expiryCustom: Benutzerdefiniert
+  customHours: Stunden
+  customHoursMin: Mindestens 1 Stunde
+  customHoursMax: Höchstens 720 Stunden (30 Tage)
+  accessPassword: Zugriffspasswort
+  accessPasswordHint: Optional. Der Empfänger braucht es, um die Sendung zu öffnen.
+  create: Erstellen
+  protecting: Wird mit Passwort geschützt…
+  offline: Sendungen brauchen eine Verbindung zu deinem Keepiq-Server
+  prefillFailed: Dieses Login konnte nicht gelesen werden
+  ready: Deine Sendung ist bereit
+  shownOnce:
+    1: Kopiere diesen Link jetzt. Er wird nur angezeigt, bis du dieses Fenster schließt, und der Inhalt verschwindet nach 1 Aufruf.
+    n: Kopiere diesen Link jetzt. Er wird nur angezeigt, bis du dieses Fenster schließt, und der Inhalt verschwindet nach $1 Aufrufen.
+  passwordNote: Teile das Zugriffspasswort getrennt vom Link. Nach 5 Fehlversuchen wird die Sendung gelöscht.
+  done: Fertig
+
+pageFill:
+  insecure: "Warnung: Dies ist eine ungesicherte HTTP-Seite. Alles, was du sendest, können andere möglicherweise sehen und ändern. Dieses Login wurde ursprünglich auf einer sicheren (HTTPS-)Seite gespeichert, {host}.\n\nMöchtest du dieses Login trotzdem ausfüllen?"
+  insecureNoHost: "Warnung: Dies ist eine ungesicherte HTTP-Seite. Alles, was du sendest, können andere möglicherweise sehen und ändern. Dieses Login wurde ursprünglich auf einer sicheren (HTTPS-)Seite gespeichert.\n\nMöchtest du dieses Login trotzdem ausfüllen?"
+  cardInsecure: "Diese Karte auf einer unsicheren Website ausfüllen?\n\nDiese Website ist nicht sicher. Jeder im Netzwerk könnte die ausgefüllten Kartendaten lesen."
+  crossSite: "Auch auf {hosts} ausfüllen?\n\nEin Teil dieses Formulars stammt von {hosts}, nicht von {host}. Keepiq füllt ihn dort nur aus, wenn du zustimmst."
+
+contextMenu:
+  root: Keepiq
+  autofill: Login ausfüllen
+  noMatches: Keine Logins verfügbar
+  noUsernames: Keine Benutzernamen verfügbar
+  noPasswords: Keine Passwörter verfügbar
+  noCodes: Keine Bestätigungscodes verfügbar
+  noIdentities: Keine Identitäten verfügbar
+  noCards: Keine Karten verfügbar
+  addLogin: Login hinzufügen
+  addIdentity: Identität hinzufügen
+  addCard: Karte hinzufügen
+  openKeepiq: Keepiq öffnen
+  copyUsername: Benutzername kopieren
+  copyPassword: Passwort kopieren
+  copyCode: Bestätigungscode kopieren
+  autofillCard: Karte ausfüllen
+  autofillIdentity: Identität ausfüllen
+  generatePassword: Passwort generieren und kopieren
+  unlock: Tresor entsperren
+
+pageNotice:
+  label: Keepiq-Hinweis
+  noLoginForm: Keepiq hat auf dieser Seite kein Anmeldeformular zum Ausfüllen gefunden.
+  noCardForm: Keepiq hat auf dieser Seite keine Kartenfelder zum Ausfüllen gefunden.
+  noIdentityForm: Keepiq hat auf dieser Seite keine Felder für Adresse oder persönliche Daten zum Ausfüllen gefunden.
+
+toolbar:
+  locked: "{name}: Gesperrt"
+  loggedOut: "{name}: Abgemeldet"
+  count:
+    1: "{name}: 1 Login für diese Website"
+    n: "{name}: $1 Logins für diese Website"
+
+inlineList:
+  frameTitle: Keepiq-Logins
+  label: Keepiq-Logins für {host}
+  row: "{name}, {username}"
+  noMatch: Keine Logins für {host}
+  passkeyRow: "{name}, {username}, Passkey"
+  passkeyRowNoUser: "{name}, Passkey"
+  noMatchPasskeys: Keine Logins oder Passkeys für {host}
+  locked: Keepiq ist gesperrt
+  unlock: Entsperren
+  insecureQuestion: Auf dieser unsicheren Website ausfüllen?
+  insecureDetail: Diese Website ist nicht sicher. Jeder im Netzwerk könnte lesen, was ausgefüllt wird.
+  fill: Ausfüllen
+  notVisible: Keepiq kann hier nicht ausfüllen, weil diese Seite verändert, wie sie angezeigt wird. Verwende die Keepiq-Schaltfläche in der Symbolleiste.
+  status:
+    count:
+      1: 1 Keepiq-Login. Drücke Pfeil nach unten zum Auswählen.
+      n: $1 Keepiq-Logins. Drücke Pfeil nach unten zum Auswählen.
+    noMatch: Keine Keepiq-Logins für {host}
+    countPasskeys:
+      1: 1 Keepiq-Login oder -Passkey. Drücke Pfeil nach unten zum Auswählen.
+      n: $1 Keepiq-Logins und -Passkeys. Drücke Pfeil nach unten zum Auswählen.
+    noMatchPasskeys: Keine Keepiq-Logins oder -Passkeys für {host}
+    locked: Keepiq ist gesperrt. Drücke Pfeil nach unten zum Entsperren.
+  code:
+    frameTitle: Keepiq-Bestätigungscodes
+    label: Keepiq-Bestätigungscodes für {host}
+    noMatch: Keine Bestätigungscodes für {host}
+    locked: Entsperre Keepiq, um deine Bestätigungscodes zu sehen
+    invalid: Kein gültiges Authentifizierungsgeheimnis
+    status:
+      count:
+        1: 1 Keepiq-Bestätigungscode. Drücke Pfeil nach unten zum Auswählen.
+        n: $1 Keepiq-Bestätigungscodes. Drücke Pfeil nach unten zum Auswählen.
+      noMatch: Keine Keepiq-Bestätigungscodes für {host}
+  card:
+    frameTitle: Keepiq-Karten
+    noMatch: Keine Karten in Keepiq
+    locked: Entsperre Keepiq, um deine Karten zu sehen
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Karte, *{last4}"
+    row: "{name}, {brand} mit Endziffern {last4}"
+    rowNoBrand: "{name}, Karte mit Endziffern {last4}"
+    status:
+      count:
+        1: 1 Keepiq-Karte. Drücke Pfeil nach unten zum Auswählen.
+        n: $1 Keepiq-Karten. Drücke Pfeil nach unten zum Auswählen.
+  identity:
+    frameTitle: Keepiq-Identitäten
+    noMatch: Keine Identitäten in Keepiq
+    locked: Entsperre Keepiq, um deine Identitäten zu sehen
+    status:
+      count:
+        1: 1 Keepiq-Identität. Drücke Pfeil nach unten zum Auswählen.
+        n: $1 Keepiq-Identitäten. Drücke Pfeil nach unten zum Auswählen.
+
+notificationBar:
+  label: Keepiq-Benachrichtigung
+  saveQuestion: Login für {host} in Keepiq speichern?
+  updateQuestion: Passwort für {name} aktualisieren?
+  updateQuestionUser: Passwort für {name} ({username}) aktualisieren?
+  updateQuestionHost: Passwort für {name} auf {host} aktualisieren?
+  updateQuestionUserHost: Passwort für {name} ({username}) auf {host} aktualisieren?
+  folder: Ordner
+  noFolder: Kein Ordner
+  save: Speichern
+  never: Nie für diese Website
+  update: Aktualisieren
+  close: Schließen
+  expand: Optionen anzeigen
+  shortcutHint: Drücke {shortcut} zum Antworten.
+  saving: Wird gespeichert…
+  updating: Wird aktualisiert…
+  saved: Login gespeichert
+  updated: Passwort aktualisiert
+  notVisible: Keepiq kann das hier nicht tun, weil diese Seite verändert, wie sie angezeigt wird. Schließe dies und füge das Login über die Keepiq-Schaltfläche in der Symbolleiste hinzu.
+  errors:
+    writeLocked: Der Tresor ist vorübergehend für Änderungen gesperrt. Versuche es später erneut.
+    unverified: Bearbeite dieses Login im Keepiq-Pop-up oder in der Web-App, um sein Passwort zu ändern.
+    viewOnly: Dieses Login ist nur zum Ansehen mit dir geteilt, daher kann sein Passwort hier nicht aktualisiert werden.
+    loginGone: Dieses Login existiert nicht mehr. Als neues Login speichern?
+    locked: Keepiq ist gesperrt. Entsperre es über die Keepiq-Schaltfläche in der Symbolleiste und versuche es dann erneut.
+    notResponding: Keepiq antwortet nicht. Versuche es erneut.
+    accountChanged: Du hast das Konto gewechselt, daher wurde nichts gespeichert.
+    keyMismatch: Der Schlüssel von Keepiq passt nicht zu deinem Tresor. Nichts gespeichert; wende dich an deine Administration.
+    staleSource: Das Original dieses geteilten Logins wurde geändert. Nichts gespeichert; versuche es erneut.
+    incomplete: Die Personen, mit denen dieses Login geteilt ist, haben sich ständig geändert. Nichts gespeichert; versuche es erneut.
+    badCertificate: Der Verschlüsselungsschlüssel eines Empfängers konnte nicht gelesen werden. Nichts gespeichert.
+    keepiqOutdated: Dein Keepiq-Server ist zu alt. Nichts gespeichert; bitte deine Administration um Keepiq {version} oder neuer.
+    shareScanPending: Dieses Login wartet auf eine Prüfung seiner Freigaben. Nichts gespeichert; versuche es später erneut.
+
+passkey:
+  unlockGet: Entsperre Keepiq, um einen Passkey für {rpId} zu verwenden
+  unlockCreate: Entsperre Keepiq, um einen Passkey für {rpId} zu speichern
+  verifyTitle: Bestätige, dass du es bist
+  verifyPassword: Gib dein Master-Passwort ein, um fortzufahren.
+  verifyPin: Gib deine PIN ein, um fortzufahren.
+  confirm: Bestätigen
+  signInTitle: Mit einem Passkey anmelden
+  signInText: Einen in Keepiq gespeicherten Passkey für {rpId} verwenden
+  row: "{name}, {userName}"
+  noPasskey: Kein Keepiq-Passkey für {rpId}
+  saveTitle: Passkey speichern
+  saveTo: In einem Login speichern
+  replaces: Ersetzt den Passkey für {userName}
+  newLogin: Neues Login
+  name: Name
+  folder: Ordner
+  noFolder: Kein Ordner
+  saveNew: Als neues Login speichern
+  replaceQuestion: Den Passkey für {userName} in {name} ersetzen?
+  replace: Ersetzen
+  alreadySavedTitle: Passkey bereits gespeichert
+  alreadySaved: Für dieses Konto ist bereits ein Passkey in Keepiq gespeichert
+  close: Schließen
+  retry: Erneut versuchen
+  fallback: Dein Gerät oder deinen Hardwareschlüssel verwenden
+  stalePick: Dieser Passkey ist nicht mehr in deinem Tresor. Wähle einen anderen.
+  staleSave: Dieses Login kann den Passkey nicht mehr aufnehmen. Wähle ein anderes oder speichere ihn als neues Login.
+  errors:
+    conflict: Dieses Login wurde beim Speichern geändert. Es wurde nichts gespeichert; versuche es erneut.
+    partnerUpgradeRequired: "Es wurde nichts gespeichert: Das Keepiq von {cloudIds} ist zu alt, um Passkeys zu speichern. Bitte sie, Keepiq zu aktualisieren, oder speichere den Passkey in einem anderen Login."
+    partnerUpgradeRequiredUnnamed: "Es wurde nichts gespeichert: Eine Partnerorganisation, mit der dieses Login geteilt ist, nutzt ein Keepiq, das zu alt ist, um Passkeys zu speichern. Bitte sie, Keepiq zu aktualisieren, oder speichere den Passkey in einem anderen Login."
+    shareScanPending: Dieses Login wartet auf eine noch nicht abgeschlossene Prüfung seiner Freigaben. Es wurde nichts gespeichert; versuche es später erneut.
+
+vaultPasskey:
+  unlock: "Mit Fingerabdruck oder Gesicht entsperren"
+  unlockIntro: "Dein Browser fragt nach Fingerabdruck, Gesicht oder Geräte-PIN."
+  enrolTitle: "Entsperren mit Fingerabdruck oder Gesicht einrichten"
+  enrolIntro: "Bestätige dein Master-Passwort. Danach fragt dein Browser zweimal nach Fingerabdruck, Gesicht oder Geräte-PIN."
+  enrolSubmit: "Einrichten"
+  enrolDone: "Entsperren mit Fingerabdruck oder Gesicht ist für diesen Browser eingerichtet."
+  close: "Schließen"
+  label: "Keepiq-Browsererweiterung"
+  tooOld: "Entsperren mit Fingerabdruck oder Gesicht braucht Chrome oder Edge 122 oder Firefox 150 oder neuer. Verwende dein Master-Passwort."
+  unsupported: "Dieser Browser oder dieses Gerät kann Keepiq nicht mit Fingerabdruck oder Gesicht entsperren. Verwende dein Master-Passwort."
+  revokeInWebApp: "Zum Abschalten widerrufe diesen Passkey in der Keepiq-Web-App."

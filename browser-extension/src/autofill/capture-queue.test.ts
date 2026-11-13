@@ -1120,6 +1120,13 @@ describe('capture.update', () => {
 		expect(await state()).toMatchObject({ mode: 'update' })
 	})
 
+	it('fails an item waiting for the share scan as share_scan_pending, once per press, keeping the update', async () => {
+		routes['PUT /api/v1/secrets/a/share-save'] = () => json({ error: 'share_scan_pending', message: 'This secret waits for the share quarantine scan' }, 409)
+		expect(await update()).toEqual({ ok: false, error: { code: 'share_scan_pending' } })
+		expect(writes()).toEqual(['PUT /api/v1/secrets/a/share-save'])
+		expect(await state()).toMatchObject({ mode: 'update' })
+	})
+
 	it('fails a view-only copy as view_only', async () => {
 		routes['GET /api/v1/secrets/a/write-context'] = () => json({ sourceSecretId: 'source', effectiveGrade: 'read', ownerCertificate: null, sourceUpdatedAt: null })
 		expect(await update()).toEqual({ ok: false, error: { code: 'view_only' } })
@@ -1133,6 +1140,63 @@ describe('capture.update', () => {
 		routes['POST /api/v1/secrets'] = () => json(secretRow({ id: 'new' }), 201)
 		expect(await ask({ kind: 'capture.save', folderId: null, input: press() })).toEqual({ ok: true, value: null })
 		expect(await decrypt(bodyOf('POST /api/v1/secrets')!.key)).toBe('hunter2')
+	})
+
+	describe('on a row the server has its holder save alone, whose share-save answers 404', () => {
+		/** The answers to the item's reads, the first before the save and the second after its 404. */
+		const reads = (...answers: Array<() => Response>) => {
+			routes['GET /api/v1/secrets/a'] = () => (answers.shift() ?? (() => json(row)))()
+		}
+
+		beforeEach(() => {
+			routes['GET /api/v1/secrets/a/write-context'] = () => json({ sourceSecretId: null, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null })
+			routes['PUT /api/v1/secrets/a/share-save'] = () => json({ message: 'Secret not found' }, 404)
+		})
+
+		it('keeps the update and offers no add while the row is still there, as for a row two share rows name', async () => {
+			reads(() => json(row), () => json(row))
+			expect(await update()).toEqual({ ok: false, error: { code: 'forbidden' } })
+			expect(await state()).toMatchObject({ mode: 'update' })
+			expect(await ask({ kind: 'capture.save', folderId: null, input: press() })).toEqual({ ok: false, error: { code: 'invalid' } })
+			expect(writes()).toEqual(['PUT /api/v1/secrets/a/share-save'])
+		})
+
+		it('turns into a new login once the row reads as gone', async () => {
+			reads(() => json(row), () => json({ message: 'Not found' }, 404))
+			expect(await update()).toEqual({ ok: false, error: { code: 'not_found' } })
+			expect(await state()).toMatchObject({ mode: 'add' })
+		})
+
+		it.each([
+			['a network failure', (): Response => {
+				throw new TypeError('Failed to fetch')
+			}],
+			['a server error', () => json({ message: 'Internal error' }, 500)],
+		])('keeps the update after %s on the second read', async (_, failed) => {
+			reads(() => json(row), failed)
+			expect((await update() as { error: { code: string } }).error.code).not.toBe('not_found')
+			expect(await state()).toMatchObject({ mode: 'update' })
+		})
+	})
+
+	describe('on a row whose write-context answers 404, as one two share rows name with copies of its own', () => {
+		beforeEach(() => {
+			routes['GET /api/v1/secrets/a/write-context'] = () => json({ message: 'Secret not found' }, 404)
+		})
+
+		it('keeps the update and offers no add while the row is still there', async () => {
+			expect(await update()).toEqual({ ok: false, error: { code: 'forbidden' } })
+			expect(await state()).toMatchObject({ mode: 'update' })
+			expect(await ask({ kind: 'capture.save', folderId: null, input: press() })).toEqual({ ok: false, error: { code: 'invalid' } })
+			expect(writes()).toEqual([])
+		})
+
+		it('turns into a new login once the row reads as gone', async () => {
+			let reads = 0
+			routes['GET /api/v1/secrets/a'] = () => (++reads === 1 ? json(row) : json({ message: 'Not found' }, 404))
+			expect(await update()).toEqual({ ok: false, error: { code: 'not_found' } })
+			expect(await state()).toMatchObject({ mode: 'add' })
+		})
 	})
 
 	it('turns into a new login when a sync dropped the item before the bar asked, always naming the item in update mode', async () => {

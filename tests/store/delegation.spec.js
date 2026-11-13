@@ -144,4 +144,39 @@ describe('useDelegationStore', () => {
 			expect(store.canHandover).toBe(false)
 		})
 	})
+
+	describe('adminHandover', () => {
+		beforeEach(() => {
+			setActivePinia(createPinia())
+			vi.restoreAllMocks()
+		})
+
+		it('posts the takeover with its proof and keeps the delegation', async () => {
+			const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'd-1' } })
+			const store = useDelegationStore()
+			await expect(store.adminHandover('s-1')).resolves.toEqual({ id: 'd-1' })
+			const [url, body, config] = post.mock.calls[0]
+			expect(url).toBe('/apps/keepiq/api/v1/secrets/s-1/delegations/handover')
+			expect(body).toEqual({})
+			expect(config).toHaveProperty('headers')
+			expect(store.delegations).toEqual([{ id: 'd-1' }])
+			expect(store.loading).toBe(false)
+		})
+
+		it("records the server's message, else the error's, else its own text", async () => {
+			const post = vi.spyOn(axios, 'post')
+			const store = useDelegationStore()
+			post.mockRejectedValueOnce({ response: { data: { message: 'no' } } })
+			await expect(store.adminHandover('s-1')).rejects.toBeTruthy()
+			expect(store.error).toBe('no')
+			post.mockRejectedValueOnce(new Error('down'))
+			await expect(store.adminHandover('s-1')).rejects.toBeTruthy()
+			expect(store.error).toBe('down')
+			post.mockRejectedValueOnce({})
+			await expect(store.adminHandover('s-1')).rejects.toBeTruthy()
+			expect(store.error).toBe('Failed to take over the secret')
+			expect(store.delegations).toEqual([])
+			expect(store.loading).toBe(false)
+		})
+	})
 })

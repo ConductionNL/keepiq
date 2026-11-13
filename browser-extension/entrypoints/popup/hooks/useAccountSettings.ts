@@ -30,14 +30,18 @@ export function useAccountSettings() {
 
 	useEffect(() => {
 		live.current = true
-		void reload()
+		void request({ kind: 'account.settings.get', accountId }).then(apply)
 		return () => {
 			live.current = false
 		}
-	}, [reload])
+	}, [accountId, apply])
 
-	/** Resolves whether the patch was stored. */
-	const update = useCallback(async (patch: Partial<AccountSettings>) => apply(await request({ kind: 'account.settings.set', accountId, patch })), [accountId, apply])
+	/** Resolves whether the patch was stored, also once the view is gone, so a caller can still re-read what it changed. */
+	const update = useCallback(async (patch: Partial<AccountSettings>) => {
+		const reply = await request({ kind: 'account.settings.set', accountId, patch })
+		apply(reply)
+		return typeof reply === 'object' && reply !== null
+	}, [accountId, apply])
 
 	return { snapshot, failed, update, reload }
 }

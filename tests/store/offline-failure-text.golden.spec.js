@@ -46,6 +46,11 @@ const FAILURES = {
 		partners: ['a@x', 'b@y'],
 	},
 	'partner unreachable none': { code: 'partner_unreachable' },
+	'partner unreachable empty list': { code: 'partner_unreachable', partners: [] },
+	'partner unreachable with an empty name': {
+		code: 'partner_unreachable',
+		partners: ['', 'b@y'],
+	},
 	'partner lookup limit': { code: 'partner_lookup_limit', message: 'ignored' },
 	'view only': { code: 'view_only' },
 	'upgrade required': {

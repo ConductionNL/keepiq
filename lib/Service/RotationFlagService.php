@@ -75,6 +75,7 @@ class RotationFlagService {
 	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
 	 */
 	public function flag(string $secretId, string $reason, ?string $flaggedBy = null): RotationFlag {
+		$raise = new RotationRaise(reason: $reason, flaggedBy: $flaggedBy);
 		try {
 			$existing = $this->flagMapper->findBySecret(secretId: $secretId);
 			if ($existing->getStatus() === 'open') {
@@ -83,45 +84,81 @@ class RotationFlagService {
 
 			// A resolved flag is re-opened (fresh reason + proof point) —
 			// audited exactly like a first raise.
-			$existing->setReason($reason);
-			$existing->setStatus('open');
-			$existing->setFlaggedAt(new DateTime());
-			$existing->setFlaggedBy($flaggedBy);
-			$existing->setResolvedAt(null);
-			$existing->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId, reason: $reason));
-			$existing = $this->flagMapper->update($existing);
-
-			$this->dispatchAudit(
-				actorId: ($flaggedBy ?? 'system'),
-				eventType: AuditEventTypes::SECRET_ROTATION_FLAGGED,
-				objectId: $secretId,
-				metadata: ['reason' => $reason],
-			);
-
-			return $existing;
+			return $this->reopen(flag: $existing, raise: $raise);
 		} catch (DoesNotExistException) {
 			// No flag yet — create below.
 		}//end try
 
+		return $this->raiseNew(secretId: $secretId, raise: $raise);
+	}//end flag()
+
+	/**
+	 * Reopen a resolved flag with a fresh reason and proof point.
+	 *
+	 * @param RotationFlag  $flag  The resolved flag
+	 * @param RotationRaise $raise Why and by whom
+	 *
+	 * @return RotationFlag
+	 *
+	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
+	 */
+	private function reopen(RotationFlag $flag, RotationRaise $raise): RotationFlag {
+		$secretId = $flag->getSecretId();
+		$flag->setReason($raise->reason);
+		$flag->setStatus('open');
+		$flag->setFlaggedAt(new DateTime());
+		$flag->setFlaggedBy($raise->flaggedBy);
+		$flag->setResolvedAt(null);
+		$flag->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId, reason: $raise->reason));
+		$flag = $this->flagMapper->update($flag);
+
+		$this->auditRaised(secretId: $secretId, raise: $raise);
+		return $flag;
+	}//end reopen()
+
+	/**
+	 * Raise a first open flag for a secret.
+	 *
+	 * @param string        $secretId The secret UUID
+	 * @param RotationRaise $raise    Why and by whom
+	 *
+	 * @return RotationFlag
+	 *
+	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
+	 */
+	private function raiseNew(string $secretId, RotationRaise $raise): RotationFlag {
 		$flagRow = new RotationFlag();
 		$flagRow->setId(Uuid::uuid4()->toString());
 		$flagRow->setSecretId($secretId);
-		$flagRow->setReason($reason);
+		$flagRow->setReason($raise->reason);
 		$flagRow->setStatus('open');
 		$flagRow->setFlaggedAt(new DateTime());
-		$flagRow->setFlaggedBy($flaggedBy);
-		$flagRow->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId, reason: $reason));
+		$flagRow->setFlaggedBy($raise->flaggedBy);
+		$flagRow->setKeyUpdatedAtAtFlag($this->headKeyUpdatedAt(secretId: $secretId, reason: $raise->reason));
 		$flagRow = $this->flagMapper->insert($flagRow);
 
+		$this->auditRaised(secretId: $secretId, raise: $raise);
+		return $flagRow;
+	}//end raiseNew()
+
+	/**
+	 * Audit a raised flag, naming its reason.
+	 *
+	 * @param string        $secretId The secret UUID
+	 * @param RotationRaise $raise    Why and by whom
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
+	 */
+	private function auditRaised(string $secretId, RotationRaise $raise): void {
 		$this->dispatchAudit(
-			actorId: ($flaggedBy ?? 'system'),
+			actorId: $raise->actorId(),
 			eventType: AuditEventTypes::SECRET_ROTATION_FLAGGED,
 			objectId: $secretId,
-			metadata: ['reason' => $reason],
+			metadata: ['reason' => $raise->reason],
 		);
-
-		return $flagRow;
-	}//end flag()
+	}//end auditRaised()
 
 	/**
 	 * Batch-flag secrets the caller owns (client breach findings send IDs

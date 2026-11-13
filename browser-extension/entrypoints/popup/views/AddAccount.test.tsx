@@ -125,3 +125,35 @@ describe('AddAccount', () => {
 		expect(screen.getByLabelText<HTMLInputElement>('App password').value).toBe('')
 	})
 })
+
+describe('sign-in through Nextcloud', () => {
+	it('asks for the server permission, then starts the login flow', async () => {
+		const dispatch = dispatchReturning()
+		render(<AddAccount dispatch={dispatch} />)
+		const user = userEvent.setup()
+		const button = screen.getByRole('button', { name: 'Sign in through Nextcloud' })
+		expect(button).toHaveProperty('disabled', true)
+		await user.type(screen.getByLabelText('Server URL'), 'cloud.example.org')
+		await user.click(button)
+		expect(permissionRequest).toHaveBeenCalledWith({ origins: ['https://cloud.example.org/*'] })
+		expect(dispatch).toHaveBeenCalledWith({ kind: 'accounts.loginFlow', serverUrl: 'https://cloud.example.org' })
+		expect(await screen.findByText(/Finish signing in on the Nextcloud page/)).toBeTruthy()
+	})
+
+	it('starts nothing when the permission is declined', async () => {
+		permissionRequest.mockResolvedValue(false)
+		const dispatch = dispatchReturning()
+		render(<AddAccount dispatch={dispatch} />)
+		const user = userEvent.setup()
+		await user.type(screen.getByLabelText('Server URL'), 'cloud.example.org')
+		await user.click(screen.getByRole('button', { name: 'Sign in through Nextcloud' }))
+		expect(dispatch).not.toHaveBeenCalled()
+	})
+
+	it('shows once why a sign-in that ended after the popup closed failed', async () => {
+		await browser.storage.session.set({ loginFlowFailure: { code: 'keepiq_missing', host: 'cloud.example.org' } })
+		render(<AddAccount dispatch={dispatchReturning()} />)
+		expect(await screen.findByText(/cloud\.example\.org/)).toBeTruthy()
+		await waitFor(async () => expect((await browser.storage.session.get('loginFlowFailure')).loginFlowFailure).toBeUndefined())
+	})
+})

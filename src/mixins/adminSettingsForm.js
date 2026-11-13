@@ -17,16 +17,25 @@ function errorText(e) {
 }
 
 /**
+ * The methods a section using the mixin provides.
+ *
+ * @typedef {object} AdminSettingsFormHost
+ * @property {function(object): void} readSettings Takes the loaded settings into the form.
+ * @property {function(): object} settingsPayload The settings to store.
+ * @property {function(): (string|null)} [validateSettings] The message to show instead of saving, or null when the form can be saved.
+ * @property {function(object): void} [afterSave] Runs after a successful save, with the stored payload.
+ */
+
+/**
  * A mixin for an admin settings section that edits one settings object.
  *
- * On creation it GETs the object and hands it to the host's
- * `readSettings(data)`. `save()` PUTs the host's `settingsPayload()`; a
- * payload of `null` skips the request (the host has set `error`). After a
- * successful PUT it calls the host's optional `afterSave(payload)`. A failed
- * request puts its message in `error`.
+ * On creation it GETs the object and hands it to the host's `readSettings`.
+ * `save()` PUTs the host's `settingsPayload()`, unless `validateSettings()`
+ * returns a message, which then shows in `error`. A failed request puts its
+ * message in `error`.
  *
  * @param {string} path The settings route, e.g. `/apps/keepiq/api/settings/admin/policies`.
- * @return {object} The mixin.
+ * @return {object} The mixin; its host implements {@link AdminSettingsFormHost}.
  */
 export function adminSettingsForm(path) {
 	return {
@@ -50,11 +59,11 @@ export function adminSettingsForm(path) {
 			 * @return {Promise<void>}
 			 */
 			async save() {
-				this.error = null
-				const payload = this.settingsPayload()
-				if (payload === null) {
+				this.error = this.validateSettings?.() || null
+				if (this.error) {
 					return
 				}
+				const payload = this.settingsPayload()
 				try {
 					await axios.put(generateUrl(path), payload)
 					this.afterSave?.(payload)

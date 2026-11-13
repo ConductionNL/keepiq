@@ -2,8 +2,8 @@
 
 Browser extension for Keepiq, the encrypted secrets manager for Nextcloud. Fill in logins, passkeys and one-time codes on any site, and save new ones as you go. Everything is encrypted — your master password and your secrets never reach the server.
 
-A browser extension built with [WXT](https://wxt.dev), shipping to **Chrome (MV3)
-and Firefox (MV2)** from one source.
+A browser extension built with [WXT](https://wxt.dev), shipping to **Chrome (MV3),
+Firefox (MV2) and Safari 26 on macOS (MV3)** from one source.
 
 ## Development
 
@@ -29,16 +29,20 @@ The dev profile lives in `.wxt/chrome-data`, so a paired account survives restar
 
 ```sh
 npm test               # vitest: unit tests, and popup tests in prod and dev (StrictMode) mode
-npm run test:e2e       # Playwright: builds, then drives the inline list and save bar in headless Chromium (port 8200; Chromium only)
+npm run test:e2e       # Playwright: builds, then drives the inline lists (login, code, card, identity) and save bar in headless Chromium (port 8200; Chromium only)
 npm run typecheck      # tsc --noEmit — does NOT build
 npm run lint           # eslint .  (lint:fix to autofix)
 npm run build          # Chrome production → .output/chrome-mv3/
 npm run build:firefox  # Firefox production → .output/firefox-mv2/
-npm run zip            # store-submission zip (zip:firefox for MV2)
+npm run build:safari   # Safari production → .output/safari-mv3/
+npm run zip            # store-submission zip (zip:firefox for MV2, zip:safari for Safari)
+npm run package:safari # macOS only: Keepiq.app around the Safari build → .output/keepiq-safari.zip
+npm run test:safari-smoke # macOS only: installs the Safari build in Safari through safaridriver
 ```
 
-Build **both** targets before calling a browser-facing change done — manifest
+Build **all three** targets before calling a browser-facing change done — manifest
 version and runtime API differences surface at build or runtime, not at typecheck.
+Safari has no dev mode; [WXT-AND-BROWSERS.md § Safari](WXT-AND-BROWSERS.md#safari) covers what differs there.
 
 ## Loading a build
 
@@ -46,41 +50,44 @@ version and runtime API differences surface at build or runtime, not at typechec
   `.output/chrome-mv3/`
 - **Firefox** — `about:debugging#/runtime/this-firefox` → *Load Temporary Add-on…*
   → `.output/firefox-mv2/manifest.json`
+- **Safari** — on a Mac only, through the containing app; see [WXT-AND-BROWSERS.md § 4](WXT-AND-BROWSERS.md#4-build-typecheck-load)
 
 ## Layout
 
 ```
 entrypoints/     one file (or directory) per extension entrypoint
-  background.ts  MV3 service worker / MV2 background page
+  background.ts  MV3 service worker (Chrome, Safari) / MV2 background page (Firefox)
   content.ts     injected into matching pages
   popup/         toolbar popup
   offscreen/     Chrome offscreen document that clears the clipboard
 src/             shared modules, imported as `@/src/…`
 locales/         one message catalog per language
 public/          copied verbatim into the build (icons live here)
+safari/          Swift handler of the Safari containing app, its test and package.sh; the app itself is generated
 scripts/         dev tooling, never bundled
-test-site/       mock login pages for manual testing, never bundled
+test-site/       mock login, card and identity pages for manual testing, never bundled
 ```
 
 ## Adding a language
 
 The extension follows the browser's language; [ARCHITECTURE.md](ARCHITECTURE.md#translations) has the rules.
 
-1. Copy `locales/en.yml` to `locales/<lang>.yml`. The file name must be a [Chrome locale](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales).
-2. Translate every value and set `language` to the language's tag.
-3. Add the tag to `LOCALES` in `src/testing/i18n.ts`.
-4. A language with "few" or "many" plural forms (Polish, Russian) needs a plural helper first.
-5. Run `npm test`; the parity test names missing keys and placeholders.
+1. Copy `locales/en.yml` to `locales/<lang>.yml`. The file name must be a [Chrome locale](https://developer.chrome.com/docs/extensions/reference/api/i18n#locales) or a language Firefox ships in, such as `ga`. `pt` is the one exception: Chrome falls back to it from `pt_BR` and `pt_PT`, so one European Portuguese catalog serves both. The build warns `Unsupported locales: [ga, pt]` for these two; that is expected.
+2. Translate every value and set `language` to the language's tag, with a region when the text is regional (`pt-PT`). Dates and numbers are formatted in it.
+3. Keep `extensionDescription` within 132 characters, Chrome's limit for the manifest description.
+4. Add the tag to `LOCALES` in `src/testing/i18n.ts`.
+5. Plurals have only `1:` and `n:`. In a language with "few" or "many" forms (Polish, Czech), word `n:` so it reads right for every count, such as "Elementy: $1".
+6. Run `npm test`; the parity test names missing keys and placeholders, and a description that is too long.
 
 ## Releasing
 
 Bump `version` in `package.json`; WXT derives the manifest version from it. There
 is no release workflow or store listing yet: `npm run zip` and `npm run zip:firefox`
-build the store zips by hand.
+build the store zips by hand. Safari needs a signed app from the Apple Developer Program, which Conduction does not have yet.
 
 ## Reading
 
 - [ARCHITECTURE.md](ARCHITECTURE.md): entrypoints, modules, messages, storage keys and the main flows.
 - [SECURITY.md](SECURITY.md): how the extension protects the vault, and how to report a vulnerability.
-- [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md): the cross-browser rules (`browser.*` vs `chrome.*`, the MV3/MV2 split, message-passing gotchas). Read it before touching `entrypoints/`.
+- [WXT-AND-BROWSERS.md](WXT-AND-BROWSERS.md): the cross-browser rules (`browser.*` vs `chrome.*`, the MV3/MV2 split, what Safari lacks, message-passing gotchas). Read it before touching `entrypoints/`.
 - [Using the browser extension](../docs/browser-extension/using.md) and its [privacy policy](../docs/browser-extension/privacy.md): the user docs.

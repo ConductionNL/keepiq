@@ -240,6 +240,46 @@ class SiemServiceTest extends TestCase {
 	}//end testDeliverOneDeadLettersAtMaxAttempts()
 
 	/**
+	 * A failure keeps the same description on the row and the sink, backs off
+	 * doubling from the base, and a dead row is not scheduled again.
+	 *
+	 * @return void
+	 */
+	public function testDeliverOneFailureDetails(): void {
+		$sink = $this->makeSink();
+		$sink->setConsecutiveFailures(2);
+		$this->clientService->method('newClient')->willThrowException(new \RuntimeException('down'));
+
+		$item = new SiemQueueItem();
+		$item->setId('item-1');
+		$item->setSinkId('sink-1');
+		$item->setPayload('{}');
+		$item->setStatus('pending');
+		$item->setAttempts(2);
+
+		$before = time();
+		$this->service->deliverOne(sink: $sink, item: $item);
+		$this->assertSame(3, $item->getAttempts());
+		$this->assertNotNull($item->getLastError());
+		$this->assertSame($item->getLastError(), $sink->getLastError());
+		$this->assertSame(3, $sink->getConsecutiveFailures());
+		$delay = $item->getNextAttemptAt()->getTimestamp() - $before;
+		// Base 60 s, doubled per earlier attempt: the third waits 240 s.
+		$expected = 240;
+		$this->assertGreaterThanOrEqual($expected, $delay);
+		$this->assertLessThanOrEqual($expected + 5, $delay);
+		$this->assertNotNull($sink->getLastAttemptAt());
+
+		$dead = new SiemQueueItem();
+		$dead->setId('item-2');
+		$dead->setPayload('{}');
+		$dead->setStatus('pending');
+		$dead->setAttempts(SiemService::MAX_ATTEMPTS - 1);
+		$this->service->deliverOne(sink: $sink, item: $dead);
+		$this->assertNull($dead->getNextAttemptAt());
+	}//end testDeliverOneFailureDetails()
+
+	/**
 	 * Webhook sinks must use https endpoints (§3.2).
 	 *
 	 * @return void

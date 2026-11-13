@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { webUrl } from './url'
+import { isLocalhost, webUrl } from './url'
+
+describe('isLocalhost', () => {
+	it.each([['localhost', true], ['shop.localhost', true], ['localhost.shop.test', false], ['notlocalhost', false], ['127.0.0.1', false]])('%s: %s', (host, local) => {
+		expect(isLocalhost(host)).toBe(local)
+	})
+})
 
 describe('webUrl', () => {
 	it.each([

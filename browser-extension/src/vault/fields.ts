@@ -119,6 +119,10 @@ export const authKeyInput = (values: Pick<FormValues, 'totpSaved' | 'authKeyMode
 function totpOf(values: FormValues, typeName: string | undefined): string | undefined {
 	if (values.totpSaved && values.authKeyMode === 'remove') return ''
 	if (!authKeyInput(values, typeName)) return undefined
+	return enteredKey(values)
+}
+
+function enteredKey(values: FormValues): string | undefined {
 	return normaliseAuthenticatorKey(values.authKey) || (values.totpSaved ? '' : undefined)
 }
 
@@ -151,19 +155,14 @@ function members<K extends string>(raw: string, keys: readonly K[]): Record<K, s
 	return Object.fromEntries(keys.map((key) => [key, text(payload, key)])) as Record<K, string>
 }
 
-export function fromItem(item: EditableItem, typeName: string | undefined): FormValues {
-	const values = emptyValues(item.typeId, item.url ?? '', item.folderId)
-	values.name = item.name
-	values.totpSaved = item.totpSaved
-	values.login = item.login ?? ''
-	values.loginShown = values.login !== ''
-	const kind = formKind(typeName)
-	// An empty key gets the empty member fields to fill in, as in the web app's edit form.
-	values.plainKey = (kind === 'card' || kind === 'identity') && item.key !== '' && !parsePayload(item.key)
-	values.secret = item.key
-	values.card = members(item.key, CARD_FIELDS)
-	values.identity = members(item.key, IDENTITY_FIELDS)
-	for (const [name, value] of Object.entries(item.additionalFields)) {
+/** A card or identity key that is not a member payload; an empty key gets the empty member fields to fill in, as in the web app's edit form. */
+function isPlainKey(kind: FormKind, key: string): boolean {
+	return (kind === 'card' || kind === 'identity') && key !== '' && !parsePayload(key)
+}
+
+/** The first field named Notes, in any case, is the notes; every other one is an additional field. */
+function takeFields(values: FormValues, additionalFields: Record<string, string>): void {
+	for (const [name, value] of Object.entries(additionalFields)) {
 		if (values.notesKey === null && name.toLowerCase() === NOTES) {
 			values.notes = value
 			values.notesKey = name
@@ -171,6 +170,19 @@ export function fromItem(item: EditableItem, typeName: string | undefined): Form
 			values.fields.push(customField(name, value))
 		}
 	}
+}
+
+export function fromItem(item: EditableItem, typeName: string | undefined): FormValues {
+	const values = emptyValues(item.typeId, item.url ?? '', item.folderId)
+	values.name = item.name
+	values.totpSaved = item.totpSaved
+	values.login = item.login ?? ''
+	values.loginShown = values.login !== ''
+	values.plainKey = isPlainKey(formKind(typeName), item.key)
+	values.secret = item.key
+	values.card = members(item.key, CARD_FIELDS)
+	values.identity = members(item.key, IDENTITY_FIELDS)
+	takeFields(values, item.additionalFields)
 	return values
 }
 
@@ -202,24 +214,37 @@ function keyOf(values: FormValues, kind: FormKind): string {
 	}
 }
 
+/** The named fields the form shows, then its notes. */
+function fieldEntries(values: FormValues, sections: FormSections): Array<[string, string]> {
+	const entries = sections.fields ? values.fields.filter((field) => field.name.trim()).map((field): [string, string] => [field.name.trim(), field.value]) : []
+	if (sections.notes && values.notes !== '') entries.push([values.notesKey ?? NOTES, values.notes])
+	return entries
+}
+
+function loginOf(values: FormValues, sections: FormSections): string | null {
+	return sections.login && values.login !== '' ? values.login : null
+}
+
 export function toDraft(values: FormValues, typeName: string | undefined): ItemDraft {
 	const kind = formKind(typeName)
 	const sections = formSections(kind, values)
-	const entries = sections.fields ? values.fields.filter((field) => field.name.trim()).map((field): [string, string] => [field.name.trim(), field.value]) : []
-	if (sections.notes && values.notes !== '') entries.push([values.notesKey ?? NOTES, values.notes])
 	// `fromEntries` defines each name, so a field called `__proto__` is kept rather than setting the prototype.
-	const additionalFields: Record<string, string> = Object.fromEntries(entries)
-	const totp = totpOf(values, typeName)
+	const additionalFields: Record<string, string> = Object.fromEntries(fieldEntries(values, sections))
 	return {
 		typeId: values.typeId,
 		name: values.name,
 		url: values.url.trim() || null,
 		folderId: values.folderId,
 		key: keyOf(values, kind),
-		login: sections.login && values.login !== '' ? values.login : null,
+		login: loginOf(values, sections),
 		additionalFields,
-		...(totp !== undefined && { totp }),
+		...totpPart(values, typeName),
 	}
+}
+
+function totpPart(values: FormValues, typeName: string | undefined): { totp?: string } {
+	const totp = totpOf(values, typeName)
+	return totp !== undefined ? { totp } : {}
 }
 
 function sameRecord(a: Record<string, string>, b: Record<string, string>): boolean {
@@ -228,47 +253,64 @@ function sameRecord(a: Record<string, string>, b: Record<string, string>): boole
 }
 
 /** What changed from `before` to `after`; both come from `toDraft`, so formatting alone never counts as a change. */
+/** The draft's plain values, in the order a patch lists them. */
+const SCALAR_FIELDS = ['typeId', 'name', 'url', 'folderId', 'key', 'login'] as const satisfies ReadonlyArray<keyof ItemDraft & keyof ItemPatch>
+
 export function diffDraft(before: ItemDraft, after: ItemDraft): ItemPatch {
-	const patch: ItemPatch = {}
-	if (before.typeId !== after.typeId) patch.typeId = after.typeId
-	if (before.name !== after.name) patch.name = after.name
-	if (before.url !== after.url) patch.url = after.url
-	if (before.folderId !== after.folderId) patch.folderId = after.folderId
-	if (before.key !== after.key) patch.key = after.key
-	if (before.login !== after.login) patch.login = after.login
+	const patch: Record<string, unknown> = {}
+	for (const field of SCALAR_FIELDS) {
+		if (before[field] !== after[field]) patch[field] = after[field]
+	}
 	if (!sameRecord(before.additionalFields, after.additionalFields)) patch.additionalFields = after.additionalFields
-	if (after.totp !== undefined && after.totp !== before.totp) patch.totp = after.totp
-	return patch
+	if (totpChanged(before, after)) patch.totp = after.totp
+	return patch as ItemPatch
+}
+
+/** A draft without `totp` keeps what the row holds. */
+function totpChanged(before: ItemDraft, after: ItemDraft): boolean {
+	return after.totp !== undefined && after.totp !== before.totp
 }
 
 const unopened: EditableItem = { id: '', typeId: '', name: '', url: null, folderId: null, key: '', login: null, additionalFields: {}, updatedAt: '', totpSaved: false }
 
 /**
- * Whether parsed JSON holds exactly what its text says: no member named twice in one object, which the parse
- * hides behind the last, and no number that reads back otherwise, as one past double precision.
+ * Whether parsed JSON holds exactly what its text says: no member named twice in one object, which the parse hides behind the last,
+ * and no number that reads back otherwise, as one past double precision.
+ * Only for text that parsed.
  */
 function readsAsWritten(raw: string): boolean {
-	const objects: Array<Set<string> | null> = []
+	// The open containers, innermost last: an object's member names so far, or null for an array.
+	const open: Array<Set<string> | null> = []
 	let expectName = false
 	for (const [token] of raw.matchAll(/"(?:[^"\\]|\\.)*"|-?\d[\d.eE+-]*|[{}[\],:]/g)) {
-		const top = objects.at(-1)
-		if (token === '{' || token === '[') {
-			objects.push(token === '{' ? new Set() : null)
-			expectName = token === '{'
-		} else if (token === '}' || token === ']') {
-			objects.pop()
-			expectName = false
-		} else if (token === ',') expectName = top instanceof Set
-		else if (token === ':') expectName = false
-		else if (!token.startsWith('"')) {
-			if (String(Number(token)) !== token) return false
-		} else if (expectName && top) {
-			const name = JSON.parse(token) as string
-			if (top.has(name)) return false
-			top.add(name)
-			expectName = false
-		}
+		if (!bracket(token, open) && !isSeparator(token) && !valueAsWritten(token, open.at(-1), expectName)) return false
+		expectName = startsMember(token)
 	}
+	return true
+}
+
+/** Opens or closes a container for a bracket; false for any other token. */
+function bracket(token: string, open: Array<Set<string> | null>): boolean {
+	if (token === '{') open.push(new Set())
+	else if (token === '[') open.push(null)
+	else if (token === '}' || token === ']') open.pop()
+	else return false
+	return true
+}
+
+const isSeparator = (token: string) => token === ',' || token === ':'
+
+/** After these, an object's next string is a member name. */
+const startsMember = (token: string) => token === '{' || token === ','
+
+/** A number reads back as written; a string in a member name's place is a name its object hasn't had. */
+function valueAsWritten(token: string, names: Set<string> | null | undefined, expectName: boolean): boolean {
+	if (!token.startsWith('"')) return String(Number(token)) === token
+	// After a comma in an array, a string is a value.
+	if (!expectName || !names) return true
+	const name = JSON.parse(token) as string
+	if (names.has(name)) return false
+	names.add(name)
 	return true
 }
 
@@ -287,22 +329,25 @@ export function shownInFull(field: FormField, plaintext: string | null, typeName
 	const kind = formKind(typeName)
 	switch (field) {
 		case 'login': return formSections(kind, fromItem({ ...unopened, login: plaintext }, typeName)).login
-		case 'key': {
-			const values = fromItem({ ...unopened, key: plaintext }, typeName)
-			const shown = formSections(kind, values).key
-			if (shown !== 'members') return shown === 'secret'
-			const fields: Record<string, string> = kind === 'card' ? values.card : values.identity
-			const payload = faithfulObject(plaintext)
-			return !!payload && Object.entries(payload).every(([member, value]) => Object.hasOwn(fields, member) && fields[member] === (typeof value === 'number' ? String(value) : value))
-		}
-		case 'additionalFields': {
-			const payload = faithfulObject(plaintext)
-			if (!payload) return false
-			const values = fromItem({ ...unopened, additionalFields: fieldTexts(payload) }, typeName)
-			const sections = formSections(kind, values)
-			return sections.fields && (sections.notes || values.notesKey === null)
-		}
+		case 'key': return keyShownInFull(plaintext, typeName, kind)
+		case 'additionalFields': return additionalFieldsShownInFull(plaintext, typeName, kind)
 	}
+}
+
+function keyShownInFull(plaintext: string, typeName: string | undefined, kind: FormKind): boolean {
+	const values = fromItem({ ...unopened, key: plaintext }, typeName)
+	const shown = formSections(kind, values).key
+	if (shown !== 'members') return shown === 'secret'
+	const fields: Record<string, string> = kind === 'card' ? values.card : values.identity
+	const payload = faithfulObject(plaintext)
+	return !!payload && Object.entries(payload).every(([member, value]) => Object.hasOwn(fields, member) && fields[member] === (typeof value === 'number' ? String(value) : value))
+}
+
+// `formSections` shows Notes whenever the item came with notes, so the fields section covers them too.
+function additionalFieldsShownInFull(plaintext: string, typeName: string | undefined, kind: FormKind): boolean {
+	const payload = faithfulObject(plaintext)
+	if (!payload) return false
+	return formSections(kind, fromItem({ ...unopened, additionalFields: fieldTexts(payload) }, typeName)).fields
 }
 
 export type FieldError =
@@ -322,45 +367,87 @@ function capChars(errors: FormErrors, path: string, value: string, max = FIELD_M
 	if (length(value) > max) errors[path] = { code: 'tooLong', max }
 }
 
-export function validate(values: FormValues, typeName: string | undefined): FormErrors {
-	const kind = formKind(typeName)
-	const errors: FormErrors = {}
+/** One validation: the values, their type and the errors found so far. */
+interface Check {
+	values: FormValues
+	typeName: string | undefined
+	kind: FormKind
+	errors: FormErrors
+}
+
+function checkName({ values, errors }: Check): void {
 	if (!values.name.trim()) errors.name = { code: 'required' }
 	else capChars(errors, 'name', values.name, NAME_MAX)
-	capChars(errors, 'url', values.url)
-	if (kind === 'passkey') return errors
+}
 
+function checkMembers({ values, kind, errors }: Check): void {
+	if (kind === 'card') for (const member of CARD_FIELDS) capChars(errors, `card.${member}`, values.card[member])
+	else if (kind === 'identity') for (const member of IDENTITY_FIELDS) capChars(errors, `identity.${member}`, values.identity[member])
+}
+
+function checkSeed({ values, errors }: Check): void {
+	try {
+		parseTotpSeed(values.secret)
+	} catch {
+		errors.secret = { code: 'invalidTotp' }
+	}
+}
+
+/** The login, the members of a card or identity while they show, and a TOTP item's seed. */
+function checkSections(check: Check): void {
+	const { values, kind, errors } = check
 	const sections = formSections(kind, values)
 	if (sections.login) capChars(errors, 'login', values.login)
-	if (kind === 'card' && sections.key === 'members') for (const member of CARD_FIELDS) capChars(errors, `card.${member}`, values.card[member])
-	if (kind === 'identity' && sections.key === 'members') for (const member of IDENTITY_FIELDS) capChars(errors, `identity.${member}`, values.identity[member])
-	if (kind === 'totp') {
-		try {
-			parseTotpSeed(values.secret)
-		} catch {
-			errors.secret = { code: 'invalidTotp' }
-		}
-	}
-	if (authKeyInput(values, typeName) && values.authKey.trim() && !isAuthenticatorKey(values.authKey)) errors.authKey = { code: 'invalidTotp' }
-	const draft = toDraft(values, typeName)
-	if (!errors.secret && bytes(draft.key) > BLOB_MAX_BYTES) errors.secret = { code: 'tooLongBytes', max: BLOB_MAX_BYTES }
+	if (sections.key === 'members') checkMembers(check)
+	if (kind === 'totp') checkSeed(check)
+}
 
+function checkAuthKey({ values, typeName, errors }: Check): void {
+	if (authKeyInput(values, typeName) && values.authKey.trim() && !isAuthenticatorKey(values.authKey)) errors.authKey = { code: 'invalidTotp' }
+}
+
+function checkKeySize({ errors }: Check, draft: ItemDraft): void {
+	if (!errors.secret && bytes(draft.key) > BLOB_MAX_BYTES) errors.secret = { code: 'tooLongBytes', max: BLOB_MAX_BYTES }
+}
+
+function fieldNameError(name: string, seen: Set<string>): FieldError | null {
+	const folded = name.toLowerCase()
+	if (!name) return { code: 'required' }
+	if (RESERVED.has(folded)) return { code: 'reserved' }
+	return seen.has(folded) ? { code: 'duplicate' } : null
+}
+
+function checkFields({ values, errors }: Check): void {
 	const seen = new Set<string>()
 	for (const field of values.fields) {
 		const name = field.name.trim()
 		// A row left empty is dropped, not refused.
 		if (!name && !field.value) continue
-		const folded = name.toLowerCase()
-		if (!name) errors[`field.${field.id}.name`] = { code: 'required' }
-		else if (RESERVED.has(folded)) errors[`field.${field.id}.name`] = { code: 'reserved' }
-		else if (seen.has(folded)) errors[`field.${field.id}.name`] = { code: 'duplicate' }
-		seen.add(folded)
+		const error = fieldNameError(name, seen)
+		if (error) errors[`field.${field.id}.name`] = error
+		seen.add(name.toLowerCase())
 		capChars(errors, `field.${field.id}.value`, field.value)
 	}
+}
+
+function checkFieldsSize({ values, errors }: Check, draft: ItemDraft): void {
 	if (bytes(JSON.stringify(draft.additionalFields)) > BLOB_MAX_BYTES) {
 		errors[values.notes ? 'notes' : 'additionalFields'] = { code: 'tooLongBytes', max: BLOB_MAX_BYTES }
 	}
-	return errors
+}
+
+export function validate(values: FormValues, typeName: string | undefined): FormErrors {
+	const check: Check = { values, typeName, kind: formKind(typeName), errors: {} }
+	checkName(check)
+	capChars(check.errors, 'url', values.url)
+	if (check.kind === 'passkey') return check.errors
+	checkSections(check)
+	checkAuthKey(check)
+	const draft = toDraft(values, typeName)
+	checkKeySize(check, draft)
+	checkFields(check)
+	checkFieldsSize(check, draft)
+	return check.errors
 }
 
 /** Errors shown while typing; the rest wait for Save, as in Bitwarden. */

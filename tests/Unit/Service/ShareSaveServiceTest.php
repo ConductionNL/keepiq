@@ -728,6 +728,22 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame(['fs-9'], $body['federated']['unexpected']);
 	}
 
+	/**
+	 * Golden: an incomplete save names its copy and partner lists in a fixed shape.
+	 *
+	 * @return void
+	 */
+	public function testAnIncompleteSaveNamesItsListsInAFixedShape(): void {
+		$body = $this->refusal(
+			fn () => $this->service()->save(id: 'src', request: $this->ownerRequest(['federated' => []]), userId: 'alice')
+		)->getBody();
+
+		$this->assertSame(['required', 'missing', 'unexpected', 'skipRefused'], array_keys($body['copies']));
+		$this->assertSame(['required', 'missing', 'unexpected'], array_keys($body['federated']));
+		$this->assertSame([], $body['copies']['missing']);
+		$this->assertSame([], $body['federated']['unexpected']);
+	}
+
 	public function testAMissingPartnerShareIsRefused(): void {
 		$body = $this->refusal(
 			fn () => $this->service()->save(id: 'src', request: $this->ownerRequest(['federated' => []]), userId: 'alice')

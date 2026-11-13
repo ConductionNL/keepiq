@@ -1,8 +1,9 @@
 name: Browser extension
 
 # Tests, typechecks, lints and builds the WXT extension in browser-extension/
-# for Chromium MV3 and Firefox MV2. The crypto tests read the web app's vectors,
-# so a change to those runs this too.
+# for Chromium MV3, Firefox MV2 and Safari MV3, packages the Safari build in its
+# macOS app and installs it in Safari. The crypto tests read the web app's
+# vectors, so a change to those runs this too.
 
 on:
   push:
@@ -47,6 +48,8 @@ jobs:
       - run: npm run build:firefox
       - name: Lint the Firefox package
         run: npx web-ext lint --source-dir .output/firefox-mv2 --warnings-as-errors=false
+      # Shows a Safari build break here, without waiting for the macOS job.
+      - run: npm run build:safari
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: browser-extension
@@ -78,4 +81,47 @@ jobs:
         with:
           name: browser-extension-e2e
           path: browser-extension/test-results/
+          retention-days: 14
+
+  safari:
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: browser-extension
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: browser-extension/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npx wxt prepare
+      - run: npm run build:safari
+      - name: Native handler tests
+        run: |
+          swiftc -o "$RUNNER_TEMP/handler-tests" safari/SafariWebExtensionHandler.swift safari/tests/main.swift
+          "$RUNNER_TEMP/handler-tests"
+      - run: npm run package:safari
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+      # Install only: Safari asks a person before content scripts run (ext-safari design.md § CI).
+      - name: Install the extension in Safari
+        run: |
+          safaridriver --port 4444 --diagnose &
+          npm run test:safari-smoke
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: browser-extension-safari
+          path: |
+            browser-extension/.output/safari-mv3/
+            browser-extension/.output/keepiq-safari.zip
+          retention-days: 14
+      # What safaridriver saw when the install failed.
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: browser-extension-safari-webdriver-logs
+          path: ~/Library/Logs/com.apple.WebDriver/
           retention-days: 14

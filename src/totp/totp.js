@@ -46,6 +46,22 @@ export function base32Decode(input) {
 	if (clean === '') {
 		throw new Error('Empty base32 secret')
 	}
+	const out = base32Bytes(clean)
+	if (out.length === 0) {
+		throw new Error('Base32 secret too short')
+	}
+	return new Uint8Array(out)
+}
+
+/**
+ * The bytes a cleaned base32 string spells, five bits per character; a
+ * trailing group of fewer than eight bits is dropped.
+ *
+ * @param {string} clean The upper-cased base32 string without padding or spacing.
+ * @return {number[]} The decoded bytes.
+ * @throws {Error} When a character is outside the base32 alphabet.
+ */
+function base32Bytes(clean) {
 	let bits = 0
 	let value = 0
 	const out = []
@@ -61,10 +77,7 @@ export function base32Decode(input) {
 			out.push((value >>> bits) & 0xff)
 		}
 	}
-	if (out.length === 0) {
-		throw new Error('Base32 secret too short')
-	}
-	return new Uint8Array(out)
+	return out
 }
 
 /**

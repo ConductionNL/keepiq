@@ -61,7 +61,8 @@ class RotationStatusTools {
 		idempotentHint: true,
 		scope: 'read',
 		subject: 'rotation_flag',
-		action: 'list'
+		action: 'list',
+		reach: 'user'
 	)]
 	/**
 	 * The caller's open flags and their counts.

@@ -97,7 +97,7 @@ export default {
 		/**
 		 * The retention settings to store (the server validates the bounds).
 		 *
-		 * @return {object|null} The settings to store, or null when the form is invalid.
+		 * @return {object} The settings to store.
 		 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 		 */
 		settingsPayload() {
@@ -111,24 +111,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.attachment-limits {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	max-width: 420px;
-}
-
-.attachment-limits__field {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-}
-
-.attachment-limits__field input {
-	padding: 8px;
-	border: 1px solid var(--color-border-dark, #999);
-	border-radius: var(--border-radius, 4px);
-	width: 160px;
-}
-</style>
+<style scoped src="./limitFields.css"></style>

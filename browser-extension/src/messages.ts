@@ -6,9 +6,10 @@
 
 import type { AccountSettings, VaultTimeout } from '@/src/accounts/settings'
 import type { GeneratorHistoryEntry, GeneratorOptions, GeneratorPolicy } from '@/src/generator/options'
+import type { CredentialJson, EnrolmentBody, EnrolOptions, ReleasedKey, UnlockOptions } from '@/src/vault/passkey-unlock'
 
 /** A kind set that must name every kind of the union `K`, and nothing else. */
-const kindSet = <K extends string>(kinds: Record<K, true>): ReadonlySet<string> => new Set(Object.keys(kinds))
+export const kindSet = <K extends string>(kinds: Record<K, true>): ReadonlySet<string> => new Set(Object.keys(kinds))
 
 /** Content script → background. Tab, frame and URL come from `sender`, never from the message. */
 export type ContentToBackground =
@@ -22,20 +23,248 @@ export type ContentToBackground =
 	 * that cannot move an iframe without reloading it (no `moveBefore`); the background answers with a fresh `capture.show`.
 	 */
 	| { kind: 'capture.reshow' }
+	| PasskeyContentToBackground
 
 /** The only kinds a content script may send. */
 export const CONTENT_KINDS = kindSet<ContentToBackground['kind']>({
 	'page_ready': true, 'inline.open': true, 'inline.closed': true, 'capture.submitted': true, 'capture.reshow': true,
+	'passkey.start': true, 'passkey.abort': true, 'passkey.available': true,
+})
+
+// Passkeys, ext-passkey-provider design.md § Messages. Every byte string is base64url.
+
+/** A `PublicKeyCredentialDescriptor`. */
+export interface PasskeyDescriptor {
+	type: string
+	id: string
+	transports?: string[]
+}
+
+/** The `publicKey` members of `create()` Keepiq reads; other extensions than `credProps` are left out. */
+export interface PasskeyCreateOptions {
+	rp: { id?: string; name: string }
+	user: { id: string; name: string; displayName: string }
+	challenge: string
+	pubKeyCredParams: Array<{ type: string; alg: number }>
+	timeout?: number
+	excludeCredentials: PasskeyDescriptor[]
+	authenticatorSelection?: { authenticatorAttachment?: string; residentKey?: string; requireResidentKey?: boolean; userVerification?: string }
+	attestation?: string
+	extensions?: { credProps?: boolean }
+}
+
+/** The `publicKey` members of `get()` Keepiq reads. */
+export interface PasskeyGetOptions {
+	challenge: string
+	timeout?: number
+	rpId?: string
+	allowCredentials: PasskeyDescriptor[]
+	userVerification?: string
+}
+
+/** `conditional` only with `get`; `silent` and `immediate` go to the browser. */
+export type PasskeyMediation = 'optional' | 'required' | 'conditional'
+
+export type PasskeyRequest =
+	| { type: 'create'; options: PasskeyCreateOptions; mediation?: PasskeyMediation }
+	| { type: 'get'; options: PasskeyGetOptions; mediation?: PasskeyMediation }
+
+/** WebAuthn's `RegistrationResponseJSON` response; `publicKey` is the SPKI. */
+export interface PasskeyAttestationJSON {
+	clientDataJSON: string
+	attestationObject: string
+	authenticatorData: string
+	publicKey: string
+	publicKeyAlgorithm: number
+	transports: string[]
+}
+
+/** WebAuthn's `AuthenticationResponseJSON` response. */
+export interface PasskeyAssertionJSON {
+	clientDataJSON: string
+	authenticatorData: string
+	signature: string
+	userHandle: string | null
+}
+
+export interface PasskeyCredentialJSON {
+	id: string
+	rawId: string
+	type: 'public-key'
+	authenticatorAttachment: 'platform'
+	clientExtensionResults: { credProps?: { rk: boolean } }
+	/** By the ceremony's kind: an attestation for `create`, an assertion for `get`. */
+	response: PasskeyAttestationJSON | PasskeyAssertionJSON
+}
+
+export const PASSKEY_ERRORS = ['NotAllowedError', 'InvalidStateError', 'AbortError'] as const
+export type PasskeyErrorName = typeof PASSKEY_ERRORS[number]
+
+/** `fallback`: the page script calls the browser's own method with the page's arguments. */
+export type PasskeyResult =
+	| { type: 'credential'; credential: PasskeyCredentialJSON }
+	| { type: 'error'; name: PasskeyErrorName }
+	| { type: 'fallback' }
+
+/** `crossOriginAncestor`: from the isolated world; tab, frame and origin come from `sender`. */
+export type PasskeyContentToBackground =
+	/** Request/response, reply `PasskeyStartReply`; the result follows as `passkey.result`. */
+	| { kind: 'passkey.start'; request: PasskeyRequest; crossOriginAncestor: boolean }
+	/** Fire-and-forget: the page aborted, or the frame went away. */
+	| { kind: 'passkey.abort'; ceremonyId: string }
+	/** Request/response, reply `boolean`: whether the provider would handle a request from this frame. */
+	| { kind: 'passkey.available'; crossOriginAncestor: boolean }
+
+export type PasskeyStartReply = { ceremonyId: string } | { fallback: true }
+
+/** Page script → relay, by `window.postMessage` with the call's own `MessageChannel` port. */
+export type PageToRelay =
+	| { channel: 'keepiq.passkey'; kind: 'create'; id: string; options: PasskeyCreateOptions; mediation?: string }
+	| { channel: 'keepiq.passkey'; kind: 'get'; id: string; options: PasskeyGetOptions; mediation?: string }
+	| { channel: 'keepiq.passkey'; kind: 'available'; id: string }
+
+/** Page script → relay over the port. */
+export type PagePortMessage = { kind: 'abort'; id: string }
+
+/** Relay → page script over the port: `ack` at once, then one answer. `available`: answer `true`. */
+export type RelayToPage = { type: 'ack' } | { type: 'available' } | PasskeyResult
+
+/** The passkey window → background. Each names its ceremony, so a stale window cannot answer a newer one. */
+export type PasskeyPopupRequest = { ceremonyId: string } & (
+	| { kind: 'passkey.state' }
+	| { kind: 'passkey.pick'; itemId: string; credentialId: string }
+	/** `replace`: the user confirmed replacing the login's passkey for the same relying party and user. */
+	| { kind: 'passkey.save'; target: { itemId: string; replace?: boolean } | { name: string; folderId: string | null } }
+	/** "Confirm it's you", and the window's unlock: only an unlock through here sets the user-verified flag. */
+	| { kind: 'passkey.verify'; method: UnlockMethod }
+	| { kind: 'passkey.retry' }
+	| { kind: 'passkey.fallback' }
+	| { kind: 'passkey.cancel' }
+)
+
+/** A passkey offered for a sign-in: the login's name and the passkey's user name, nothing secret. */
+export interface PasskeyRow {
+	itemId: string
+	credentialId: string
+	name: string
+	userName: string
+}
+
+/** A login a `create` may save to. `replace`: it holds a passkey for this RP and user, named by that passkey's user name. */
+export interface PasskeySaveTarget {
+	itemId: string
+	name: string
+	username: string
+	replace: { userName: string } | null
+}
+
+/** What the passkey window shows of its ceremony; `rpName` and `userName` are the page's own, to show as text. */
+export interface PasskeyView {
+	kind: 'create' | 'get'
+	/** A conditional `get` opened from the inline list: no "Use your device or hardware key", and Cancel keeps the request. */
+	conditional: boolean
+	rpId: string
+	host: string
+	rpName: string
+	userName: string
+	locked: boolean
+	/** "Confirm it's you" comes before a pick or a save. */
+	verify: boolean
+	/** A `get`'s passkeys; always empty while locked. */
+	rows: PasskeyRow[]
+	/** A `create`'s matching logins, last used first, then "Save as new login" with these folders by path; empty while locked. */
+	targets: PasskeySaveTarget[]
+	folders: Array<{ id: string; name: string }>
+	/** A `create` excluding a passkey the vault holds: "already saved", whose Close (`passkey.cancel`) answers `InvalidStateError`. */
+	alreadySaved: boolean
+	/** The last pick or save failed; `passkey.retry` runs it again. Null while locked. */
+	failure: VaultWriteError | null
+	/** A passkey picked in the inline list, one of `rows`: the window opens on "Confirm it's you" for it. Null while locked. */
+	pending: PasskeyRow | null
+}
+
+/**
+ * `ended`: the ceremony is over or was never this window's. `verify_required`: "Confirm it's you" first.
+ * `stale`: the passkey or login picked is no longer offered. `replace_required`: ask Replace first.
+ * `write_failed`: the counter save or the passkey save failed, as `error` says; the ceremony stays open for Retry.
+ * An `ErrorCode` comes from unlocking at `passkey.verify`.
+ */
+export type PasskeyFailure = 'ended' | 'locked' | 'verify_required' | 'stale' | 'already_saved' | 'replace_required' | 'write_failed' | ErrorCode
+
+export type PasskeyWindowReply =
+	| { ok: true; view?: PasskeyView }
+	| { ok: false; code: PasskeyFailure; attemptsLeft?: number; error?: VaultWriteError }
+
+export const PASSKEY_POPUP_KINDS = kindSet<PasskeyPopupRequest['kind']>({
+	'passkey.state': true, 'passkey.pick': true, 'passkey.save': true, 'passkey.verify': true,
+	'passkey.retry': true, 'passkey.fallback': true, 'passkey.cancel': true,
 })
 
 // Autofill, ext-autofill design.md § Message contract.
 
 export type FillOutcome = 'both' | 'username' | 'password' | 'none'
 
-/** Popup → background, and the menu, command and page-load paths in the background. `tabId` omitted means the active tab. */
-export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number; confirmedInsecure?: boolean }
-/** `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`. */
-export type FillResult = { filled: FillOutcome; code: boolean; needsInsecureConfirm?: boolean }
+/**
+ * Popup → background, and the menu, command and page-load paths in the background. `tabId` omitted means the active tab.
+ * `confirmed`: the answers to a card's or identity's `needsFormConfirm`.
+ */
+export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number; confirmedInsecure?: boolean; confirmed?: FormConfirmation }
+/**
+ * `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`.
+ * `form`: a card or identity filled at least one field. `noFields`: no frame of the tab had a field for the item.
+ */
+export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; needsFormConfirm?: FormQuestion; noFields?: true }
+
+/** What a menu fill without a form says in the page (ext-context-menu). */
+export type PageNoticeCode = 'no_login_form' | 'no_card_form' | 'no_identity_form'
+
+export const PAGE_NOTICE_CODES: readonly PageNoticeCode[] = ['no_login_form', 'no_card_form', 'no_identity_form']
+
+/** The add form the context menu's Add asked for. */
+export type AddIntent = { add: 'login' | 'card' | 'identity' }
+
+// Cards and identities, ext-card-identity-fill design.md § Message contract.
+
+export type FormKind = 'card' | 'identity'
+
+export const FORM_ROLES = {
+	card: ['cardholder', 'number', 'expiry', 'expMonth', 'expYear', 'securityCode', 'brand'],
+	identity: ['fullName', 'firstName', 'lastName', 'email', 'phone', 'streetAddress', 'addressLine1'],
+} as const satisfies Record<FormKind, readonly string[]>
+
+export type CardRole = typeof FORM_ROLES.card[number]
+export type IdentityRole = typeof FORM_ROLES.identity[number]
+export type FormRole = CardRole | IdentityRole
+
+export const isFormRole = (kind: FormKind, role: unknown): role is FormRole => (FORM_ROLES[kind] as readonly unknown[]).includes(role)
+
+export type FormMember =
+	| 'cardholder' | 'number' | 'expMonth' | 'expYear' | 'cvv' | 'brand' | 'brandId'
+	| 'fullName' | 'firstName' | 'lastName' | 'email' | 'phone' | 'streetAddress' | 'addressLine1'
+/**
+ * Only the members the receiving frame's roles need: `number` digits only, `expMonth` "01" to "12", `expYear` four digits, `streetAddress` with its line breaks.
+ * `brand` is the brand's name, `brandId` its `card-brands.json` id, which picks its codes in a `<select>`.
+ * Never a card's PIN or an identity's BSN.
+ */
+export type FormValues = Partial<Record<FormMember, string>>
+
+/**
+ * `frames: 'sameSite'` is "Only {host}". It carries every answer so far, since the background keeps none.
+ * `origin`: the question's, echoed back; the background ignores the answers on any other top origin.
+ */
+export type FormConfirmation = { insecure?: true; frames: 'all' | 'sameSite'; frameHosts: string[]; origin: string }
+/** What is still unanswered: `insecure` the card question, `frameHosts` the cross-site one when not empty. `host` to name, `origin` to echo: the top frame's. */
+export type FormQuestion = { insecure: boolean; host: string; origin: string; frameHosts: string[] }
+
+/** Background → one frame, before anything is decrypted; carries no vault data. Reply `FillProbeReply`. */
+export type FillProbe = { kind: 'fill.probe'; form: FormKind; anchorKey?: string }
+/** `origin`: the frame's own, so roles from a frame that left the recorded origin count for nothing. */
+export type FillProbeReply = { roles: FormRole[]; origin: string }
+/** Background → one frame; with `fill.execute` the only message carrying vault data. Reply `FillExecuteFormReply`. */
+export type FillExecuteForm = { kind: 'fill.executeForm'; form: FormKind; values: FormValues; origin: string; anchorKey?: string }
+export type FillExecuteFormReply = { filled: number }
+/** Background → the top frame, for a context menu fill. Reply: whether the user answered OK to every question. */
+export type FillConfirmForm = { kind: 'fill.confirmForm' } & FormQuestion
 
 /** Background → the top frame. Reply: whether the user accepted. */
 export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: string }
@@ -48,14 +277,26 @@ export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: stri
 export type FillExecute = { kind: 'fill.execute'; username: string | null; password: string | null; code: string | null; origin: string; anchorKey?: string }
 export type FillExecuteReply = { filled: FillOutcome; code: boolean }
 
-/** What the list shows: logins, or logins with a code on a code field. */
-export type InlineMode = 'login' | 'code'
-export const INLINE_MODES: readonly InlineMode[] = ['login', 'code']
-/** Request/response. Without a valid `mode` it reads as `login`. */
-export type InlineOpen = { kind: 'inline.open'; mode: InlineMode }
+/** What the list shows: logins, logins with a code on a code field, or the cards or identities of a card or identity field. */
+export type InlineMode = 'login' | 'code' | FormKind
+export const INLINE_MODES: readonly InlineMode[] = ['login', 'code', 'card', 'identity']
+export const isFormKind = (mode: unknown): mode is FormKind => mode === 'card' || mode === 'identity'
+/** The list frame's title key per mode, for the host's frame and the list page's document alike. */
+export const INLINE_FRAME_TITLES = {
+	login: 'inlineList.frameTitle',
+	code: 'inlineList.code.frameTitle',
+	card: 'inlineList.card.frameTitle',
+	identity: 'inlineList.identity.frameTitle',
+} as const satisfies Record<InlineMode, string>
 /**
- * `null`: no list, for no logged-in account, `inlineSuggestions` off or a page that is not http(s). `height`: the
- * list's, by `inlineHeight`, which the page can read from the host anyway.
+ * Request/response. Without a valid `mode` it reads as `login`. `webauthn`: a field that qualifies only by its
+ * `autocomplete` `webauthn` token, which opens a list only while a conditional passkey request of the frame is pending.
+ */
+export type InlineOpen = { kind: 'inline.open'; mode: InlineMode; webauthn?: boolean }
+/**
+ * `null`: no list, for no logged-in account, `inlineSuggestions` or the kind's setting off, a page that is not http(s) or a `webauthn`
+ * field without a pending conditional request. `height`: the list's, by `inlineHeight`, which the page can read from
+ * the host anyway; passkey rows count as logins do.
  */
 export type InlineOpenReply = { key: string; height: number } | null
 /** Fire-and-forget. `key`: the closed list's, so it never drops a newer session. */
@@ -68,11 +309,11 @@ export type ContentToInlineList =
 	| { kind: 'inline.moved'; key: string }
 
 /**
- * The list's size, shared by the background, the host and the list page. It is as tall as its rows, up to
- * `INLINE_MAX_ROWS`, `INLINE_GAP_PX` apart, with `INLINE_INSET_PX` of edge and padding above and below; the locked
- * and no-match messages are one row, as one match. The insecure-site question and the not-visible notice, shown only
- * after a pick, ask for what they need with `inline.resize`, up to `INLINE_MAX_HEIGHT_PX`. At least
- * `INLINE_MIN_WIDTH_PX` wide.
+ * The list's size, shared by the background, the host and the list page.
+ * It is as tall as its rows, up to `INLINE_MAX_ROWS`, `INLINE_GAP_PX` apart, with `INLINE_INSET_PX` of edge and padding above and below;
+ * the locked and no-match messages are one row, as one match.
+ * The questions and the not-visible notice, shown only after a pick, ask for what they need with `inline.resize`, up to `INLINE_MAX_HEIGHT_PX`.
+ * At least `INLINE_MIN_WIDTH_PX` wide.
  */
 export const INLINE_ROW_PX = 48
 export const INLINE_GAP_PX = 2
@@ -108,6 +349,16 @@ export interface InlineRow {
 	username: string | null
 	/** Code mode only. */
 	code?: InlineCode
+	/** Identity mode: a full name or an email; `null` for a use-only copy or an item without members. */
+	detail?: string | null
+	/** Card mode: what the list page words as "Visa, *1111"; absent for a use-only copy or a number under four digits. */
+	card?: InlineCard
+}
+
+/** `brand`: null where the list says "Card". `last4`: four digits. */
+export interface InlineCard {
+	brand: string | null
+	last4: string
 }
 
 /** `at`: `Date.now()` of the pointerdown or keydown. `x`, `y`: that point, or the focused row's centre, in list coordinates. */
@@ -121,7 +372,8 @@ export interface PickInput {
 /** List page → background. Tab and frame come from `sender`. */
 export type InlineListToBackground =
 	| { kind: 'inline.state'; key: string }
-	| { kind: 'inline.pick'; key: string; itemId: string; input: PickInput; confirmedInsecure?: boolean }
+	/** With `credentialId`, a passkey row: `itemId` is its login's. */
+	| { kind: 'inline.pick'; key: string; itemId: string; credentialId?: string; input: PickInput; confirmedInsecure?: boolean; confirmed?: FormConfirmation }
 	/** These four are fire-and-forget. */
 	| { kind: 'inline.refocus'; key: string }
 	| { kind: 'inline.close'; key: string; refocus: boolean }
@@ -129,13 +381,19 @@ export type InlineListToBackground =
 	/** `height`: what the list's content needs, for the background to pass on to the host. */
 	| { kind: 'inline.resize'; key: string; height: number }
 
-/** `null`: refused, for a wrong key, tab or frame. `host`: of the field's frame. */
-export type InlineStateReply = { state: 'locked' | 'unlocked'; mode: InlineMode; host: string; rows: InlineRow[]; theme: Theme } | null
 /**
- * `filled`, `locked` and `stale` come with the background closing the list; after `needsInsecureConfirm` and
- * `not_visible` it stays open, for the question or the explanation. `null` for a wrong key, tab or frame.
+ * `null`: refused, for a wrong key, tab or frame. `host`: of the field's frame. `passkeys`: only while unlocked and a
+ * conditional passkey request of the frame is pending, the passkeys it offers, shown above the logins.
  */
-export type InlinePickReply = { filled: FillOutcome; code: boolean } | { needsInsecureConfirm: true } | { refused: 'locked' | 'not_visible' | 'stale' } | null
+export type InlineStateReply = { state: 'locked' | 'unlocked'; mode: InlineMode; host: string; rows: InlineRow[]; passkeys?: PasskeyRow[]; theme: Theme } | null
+/**
+ * `filled`, `locked`, `stale` and `passkey` come with the background closing the list; after `needsInsecureConfirm` and
+ * `not_visible` it stays open, for the question or the explanation. `passkey`: `signed`, or `window` when the passkey
+ * window opened on verification or a failed counter save. `null` for a wrong key, tab or frame.
+ */
+export type InlinePickReply =
+	| { filled: FillResult['filled']; code: boolean } | { needsInsecureConfirm: true } | { needsFormConfirm: FormQuestion }
+	| { refused: 'locked' | 'not_visible' | 'stale' } | { passkey: 'signed' | 'window' } | null
 
 export const INLINE_LIST_KINDS = kindSet<InlineListToBackground['kind']>({
 	'inline.state': true, 'inline.pick': true, 'inline.refocus': true, 'inline.close': true, 'inline.unlock': true, 'inline.resize': true,
@@ -164,6 +422,9 @@ export type NotificationToBackground =
 	| { kind: 'capture.dismiss'; key: string; never: boolean; input?: PickInput }
 	/** The user focused or pressed the compact bar: the host grows it to its full height until focus leaves. */
 	| { kind: 'capture.expand'; key: string }
+
+/** The notice mode of the same page → background. Its Close, relayed to the top frame as `notice.hide`; no key or guard, as closing is all it can do. */
+export type NoticeToBackground = { kind: 'notice.close' }
 
 /**
  * `host`: of the submitting frame. `tabHost`: the top frame's at the submit, only where it differs ("on {tabHost}").
@@ -224,8 +485,8 @@ export const barHostHeight = (viewportWidth: number, viewportHeight: number, exp
 	return expanded ? Math.max(BAR_COMPACT_HEIGHT_PX, Math.min(full, viewportHeight - 2 * BAR_INSET_PX)) : BAR_COMPACT_HEIGHT_PX
 }
 
-export const NOTIFICATION_KINDS = kindSet<NotificationToBackground['kind']>({
-	'capture.state': true, 'capture.save': true, 'capture.update': true, 'capture.dismiss': true, 'capture.expand': true,
+export const NOTIFICATION_KINDS = kindSet<NotificationToBackground['kind'] | NoticeToBackground['kind']>({
+	'capture.state': true, 'capture.save': true, 'capture.update': true, 'capture.dismiss': true, 'capture.expand': true, 'notice.close': true,
 })
 
 /** Background → content script, through `tabs.sendMessage` with a `frameId`. */
@@ -234,6 +495,9 @@ export type BackgroundToContent =
 	| FillConfirmInsecure
 	/** Request/response, reply `FillExecuteReply`. */
 	| FillExecute
+	| FillProbe
+	| FillExecuteForm
+	| FillConfirmForm
 	/**
 	 * To the frame hosting the list; `inline.verify` replies `boolean`, the others are fire-and-forget.
 	 * `key`: the session's, so a message meant for a list that has since closed cannot reach the next one.
@@ -258,6 +522,11 @@ export type BackgroundToContent =
 	| { kind: 'capture.focus' }
 	/** From the bar's `capture.expand`, relayed: the host grows to the full height until focus leaves it. */
 	| { kind: 'capture.expand'; key: string }
+	/** Fire-and-forget, to the frame that started the ceremony. `origin`: the ceremony's, which the relay checks. */
+	| { kind: 'passkey.result'; ceremonyId: string; origin: string; result: PasskeyResult }
+	/** Fire-and-forget, to the top frame only; a code, never vault data, so the page learns nothing it could not see. */
+	| { kind: 'notice.show'; notice: PageNoticeCode }
+	| { kind: 'notice.hide' }
 
 export type AccountStatus = 'unlocked' | 'locked' | 'logged_out'
 
@@ -277,6 +546,8 @@ export interface AccountSummary {
 	pin: boolean
 	/** Only the seal exists, after a restart: the master password once, then the PIN. */
 	pinAfterRestart: boolean
+	/** A passkey was enrolled for this extension and the server still offered it at the last look. */
+	passkeyUnlock: boolean
 }
 
 export type PopupScreen = 'add_account' | 'reauthenticate' | 'unlock' | 'unlocked'
@@ -307,9 +578,12 @@ export type ErrorCode =
 	| 'pin_forgotten'
 	/** The PIN wraps a key from another suite or epoch than the cached one, so it was forgotten. */
 	| 'pin_key_changed'
+	/** A passkey ceremony was refused or its key did not open the vault; the master password still does. */
+	| 'passkey_failed'
 
 // Codes, never text: the popup words them in the browser's language (ext-i18n).
-export type NoticeCode = 'session_revoked' | 'key_changed'
+/** `file_access`: shown until the first unlock of an account added through the browser sign-in. */
+export type NoticeCode = 'session_revoked' | 'key_changed' | 'file_access'
 
 export type BlockReason = 'suite_missing' | 'suite_revoked' | 'suite_compromised' | 'migration_failed'
 
@@ -318,6 +592,8 @@ export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorC
 export type UnlockMethod =
 	| { type: 'masterPassword'; masterPassword: string }
 	| { type: 'pin'; pin: string }
+	/** base64 of the raw unlock key a passkey released, unwrapped in the extension window. */
+	| { type: 'unlockKey'; unlockKey: string }
 
 /** In code points, any characters. Here so the popup can name it without importing the PIN code. */
 export const PIN_MIN_LENGTH = 6
@@ -326,6 +602,8 @@ export const PIN_MIN_LENGTH = 6
 export type PopupToBackground =
 	| { kind: 'accounts.list' }
 	| { kind: 'accounts.add'; serverUrl: string; username: string; appPassword: string }
+	/** Starts Nextcloud Login Flow v2; the background adds the account once the user signed in. */
+	| { kind: 'accounts.loginFlow'; serverUrl: string }
 	| { kind: 'accounts.reauthenticate'; accountId: string; appPassword: string }
 	| { kind: 'accounts.remove'; accountId: string }
 	| { kind: 'accounts.removeAll' }
@@ -337,14 +615,14 @@ export type PopupToBackground =
 	| { kind: 'vault.status'; passive?: boolean }
 
 export const POPUP_MESSAGE_KINDS = kindSet<PopupToBackground['kind']>({
-	'accounts.list': true, 'accounts.add': true, 'accounts.reauthenticate': true, 'accounts.remove': true, 'accounts.removeAll': true,
+	'accounts.list': true, 'accounts.add': true, 'accounts.loginFlow': true, 'accounts.reauthenticate': true, 'accounts.remove': true, 'accounts.removeAll': true,
 	'accounts.switch': true, 'vault.unlock': true, 'vault.lock': true, 'vault.lockAll': true, 'vault.status': true,
 })
 
 export type PopupTab = 'vault' | 'generator' | 'send' | 'settings'
 
-/** Autofill behaviours ext-autofill delivers; an entry for one not yet delivered shows "Coming later". */
-export type AutofillFeature = 'pageLoad' | 'uriMatch' | 'inlineSuggestions' | 'contextMenu' | 'savePrompts'
+/** Autofill behaviours ext-autofill and ext-card-identity-fill deliver; an entry for one not yet delivered shows "Coming later". */
+export type AutofillFeature = 'pageLoad' | 'uriMatch' | 'inlineSuggestions' | 'contextMenu' | 'savePrompts' | 'passkeys' | 'cards' | 'identities'
 
 /** Here rather than in the settings module, so the popup can list them without its storage code. */
 export const URI_MATCHES = ['baseDomain', 'host', 'startsWith', 'exact', 'regex', 'never'] as const
@@ -364,6 +642,8 @@ export interface GlobalSettings {
 	quickCopy: boolean
 	/** The login count on the toolbar icon's badge. */
 	showBadgeCounter: boolean
+	/** Not now on the Vault tab's Safari website access card. */
+	websiteAccessDismissed: boolean
 }
 
 export interface SyncStatus {
@@ -418,7 +698,10 @@ export type VaultSnapshotReply =
 		items: ItemMeta[] | null
 		folders: FolderMeta[]
 		types: TypeMeta[]
+		/** The tab's matching logins, then the cards and the identities its Vault view settings show, each last used first. */
 		suggestionIds: string[]
+		/** Every unblocked card and identity on an `http(s)` tab, whatever those settings: the detail view offers each Fill. */
+		formIds: string[]
 		sync: SyncStatus
 		/** The account's Keepiq web app, for "open the web app" links. */
 		webAppUrl: string
@@ -440,6 +723,20 @@ export const USE_ONLY_FIELDS: readonly DecryptField[] = ['login', 'totp']
 export type DecryptReply =
 	| { ok: true; items: Record<string, DecryptedItem> }
 	| { ok: false; error: 'locked' | 'blocked' | 'use_only' | 'decrypt_failed' }
+
+/** All the detail gets of a login's passkey: no key, credential id or user handle. `createdAt` is null when absent or not a date. */
+export interface PasskeyDetail {
+	rpId: string
+	rpName: string
+	/** `userName`, else `userDisplayName`. */
+	userName: string
+	createdAt: string | null
+}
+
+/** In stored order; `null` for an entry that does not parse. `unreadable`: the field does not decrypt or is not an array. */
+export type PasskeysReply =
+	| { ok: true; passkeys: Array<PasskeyDetail | null> }
+	| { ok: false; error: 'locked' | 'not_found' | 'blocked' | 'unreadable' }
 
 /** Plaintext draft. The background encrypts key, login and additionalFields; the popup never does. */
 export interface ItemDraft {
@@ -520,8 +817,10 @@ export type WriteErrorCode =
 	| 'passkey_clone'
 	/** A send password needs Argon2id, whose WebAssembly this browser does not run. */
 	| 'argon2_unavailable'
-	/** `partners` names the partner shares whose Keepiq cannot store an authenticator key the change adds. */
+	/** `partners` names the partner shares whose Keepiq cannot store an authenticator key or passkeys the change adds. */
 	| 'partner_upgrade_required'
+	/** A share row of the item waits for the server's share quarantine scan, which only background jobs finish. */
+	| 'share_scan_pending'
 
 export interface VaultWriteError {
 	code: WriteErrorCode
@@ -529,7 +828,7 @@ export interface VaultWriteError {
 	reason?: BlockReason
 	/** With `partner_unreachable` and `partner_upgrade_required`. */
 	partners?: Array<{ shareId: string; cloudId: string }>
-	/** With `partner_upgrade_required`, when the server named the release the partner needs. */
+	/** With `partner_upgrade_required`: the release the partner needs, as the server or the background named it. */
 	requiredVersion?: string
 }
 
@@ -551,9 +850,13 @@ export type PopupRequest =
 	/** `opened` marks the popup's first read: the one that may start a stale sync and counts as interaction. */
 	| { kind: 'vault.snapshot'; tabUrl?: string; opened?: boolean }
 	| { kind: 'item.decrypt'; ids: string[]; fields: DecryptField[]; passive?: boolean }
-	| { kind: 'clipboard.copied' }
+	| { kind: 'item.passkeys'; id: string; passive?: boolean }
+	/** `changeCount`: Safari's pasteboard count after a write through the containing app. */
+	| { kind: 'clipboard.copied'; changeCount?: number }
 	| { kind: 'popup.popout'; tabId?: number }
 	| { kind: 'popup.lastTab.set'; tab: PopupTab }
+	/** Once on mount: the context menu's Add, which the background then forgets. */
+	| { kind: 'popup.intent' }
 	| { kind: 'settings.get' }
 	| { kind: 'settings.set'; patch: Partial<GlobalSettings> }
 	| DefaultManagerRequest
@@ -689,9 +992,12 @@ export interface PopupReplies {
 	'vault.sync': SyncStatus
 	'vault.snapshot': VaultSnapshotReply
 	'item.decrypt': DecryptReply
+	'item.passkeys': PasskeysReply
 	'clipboard.copied': null
 	'popup.popout': null
 	'popup.lastTab.set': null
+	/** `null` when none is pending, it is older than 10 seconds, or the active account is not unlocked. */
+	'popup.intent': AddIntent | null
 	'settings.get': GlobalSettings
 	'settings.set': GlobalSettings
 	'defaultManager.get': DefaultManagerState
@@ -731,12 +1037,33 @@ export interface PopupReplies {
 }
 
 export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupReplies>([
-	'vault.sync', 'vault.snapshot', 'item.decrypt', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set',
+	'vault.sync', 'vault.snapshot', 'item.decrypt', 'item.passkeys', 'clipboard.copied', 'popup.popout', 'popup.lastTab.set', 'popup.intent',
 	'settings.get', 'settings.set', 'defaultManager.get', 'defaultManager.enable', 'defaultManager.disable', 'fill.request', 'account.settings.get', 'account.settings.set', 'pin.set', 'pin.remove', 'item.fetch', 'item.create', 'item.update', 'item.delete', 'item.editable',
 	'folder.create', 'folder.rename', 'folder.children', 'folder.delete', 'folder.dismissNotice',
 	'generator.context', 'generator.saveOptions', 'generator.history.list', 'generator.history.add', 'generator.history.clear',
 	'send.list', 'send.create', 'send.delete',
 ])
+
+/** Extension window → background: the server calls of the vault's own passkey unlock (extension-biometric-unlock). */
+export type VaultPasskeyRequest = { accountId: string } & (
+	| { kind: 'vaultPasskey.enrolOptions' }
+	| { kind: 'vaultPasskey.enrol'; body: EnrolmentBody }
+	| { kind: 'vaultPasskey.unlockOptions' }
+	| { kind: 'vaultPasskey.release'; assertion: CredentialJson }
+)
+
+export interface VaultPasskeyReplies {
+	'vaultPasskey.enrolOptions': EnrolOptions
+	'vaultPasskey.enrol': null
+	'vaultPasskey.unlockOptions': UnlockOptions
+	'vaultPasskey.release': ReleasedKey
+}
+
+export type VaultPasskeyReply<K extends VaultPasskeyRequest['kind']> = { ok: true; value: VaultPasskeyReplies[K] } | { ok: false; code: ErrorCode }
+
+export const VAULT_PASSKEY_KINDS = kindSet<VaultPasskeyRequest['kind']>({
+	'vaultPasskey.enrolOptions': true, 'vaultPasskey.enrol': true, 'vaultPasskey.unlockOptions': true, 'vaultPasskey.release': true,
+})
 
 /** Background → popup broadcasts; nobody listens while the popup is closed. */
 export type BackgroundToPopup =
@@ -747,6 +1074,12 @@ export type BackgroundToPopup =
 export type BackgroundToOffscreen =
 	| { kind: 'offscreen.clearClipboard' }
 	| { kind: 'offscreen.writeClipboard'; text: string }
+
+/** Background or popup → Safari's containing app (`safari/SafariWebExtensionHandler.swift`). */
+export type ToNativeApp =
+	| { kind: 'clipboard.write'; text: string }
+	/** Without `changeCount` the app clears unconditionally. */
+	| { kind: 'clipboard.clear'; changeCount?: number }
 
 /** Name of the port the popup holds open; its disconnect means the popup closed. */
 export const POPUP_PORT = 'popup'

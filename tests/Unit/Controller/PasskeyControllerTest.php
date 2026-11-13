@@ -22,12 +22,15 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use InvalidArgumentException;
 use OCA\Keepiq\Controller\PasskeyController;
 use OCA\Keepiq\Service\PasskeyService;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\BruteForceProtection;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
+use OCP\Security\Bruteforce\IThrottler;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -98,6 +101,7 @@ class PasskeyControllerTest extends TestCase {
 			request: $this->request,
 			service: $this->service,
 			userSession: $this->userSession,
+			throttler: $this->createMock(originalClassName: IThrottler::class),
 		);
 	}//end controller()
 
@@ -115,8 +119,9 @@ class PasskeyControllerTest extends TestCase {
 		$controller = $this->controller('alice');
 
 		$this->service->expects($this->once())
-			->method('freshChallenge')
-			->willReturn('T2xLZW5ub3QtcmVwbGF5LXRoaXM');
+			->method('enrolmentChallenge')
+			->with('alice')
+			->willReturn(['challenge' => 'T2xLZW5ub3QtcmVwbGF5LXRoaXM', 'assertionChallenge' => 'c2Vjb25k']);
 
 		$response = $controller->challenge();
 
@@ -126,9 +131,9 @@ class PasskeyControllerTest extends TestCase {
 			'an authenticated caller must be served a challenge'
 		);
 		$this->assertSame(
-			['challenge' => 'T2xLZW5ub3QtcmVwbGF5LXRoaXM'],
+			['challenge' => 'T2xLZW5ub3QtcmVwbGF5LXRoaXM', 'assertionChallenge' => 'c2Vjb25k'],
 			$response->getData(),
-			'the payload must carry the service challenge under the `challenge` key'
+			'the payload must carry the session owner\'s stored challenge pair'
 		);
 	}//end testChallengeReturnsTheServiceMintedChallenge()
 
@@ -143,7 +148,7 @@ class PasskeyControllerTest extends TestCase {
 	public function testChallengeRefusesAnAnonymousCallerWithoutMintingOne(): void {
 		$controller = $this->controller(null);
 
-		$this->service->expects($this->never())->method('freshChallenge');
+		$this->service->expects($this->never())->method('enrolmentChallenge');
 
 		$response = $controller->challenge();
 
@@ -213,4 +218,118 @@ class PasskeyControllerTest extends TestCase {
 		);
 	}//end testUsedRefusesAnAnonymousCallerAndWritesNothing()
 
+	/**
+	 * `passkey#create` hands the ceremony to the service for the session
+	 * owner and answers a refused verification with 400.
+	 *
+	 * @return void
+	 */
+	public function testCreateForwardsTheCeremonyAndRefusesAnUnverifiedOne(): void {
+		$controller = $this->controller('alice');
+
+		$this->service->expects($this->once())
+			->method('enroll')
+			->with(
+				'alice',
+				$this->callback(
+					static fn (array $dto): bool => $dto['attestation'] === ['id' => 'a']
+						&& $dto['assertion'] === ['id' => 'b']
+						&& $dto['credentialId'] === 'c'
+						&& array_key_exists('publicKey', $dto) === false
+				)
+			)
+			->willThrowException(new InvalidArgumentException('The passkey could not be verified'));
+
+		$response = $controller->create(
+			credentialId: 'c',
+			wrappedUnlockKey: 'e',
+			prfSalt: 's',
+			attestation: ['id' => 'a'],
+			assertion: ['id' => 'b'],
+		);
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(['message' => 'The passkey could not be verified'], $response->getData());
+	}//end testCreateForwardsTheCeremonyAndRefusesAnUnverifiedOne()
+
+	/**
+	 * `passkey#unlock` forwards the assertion for the session owner, returns
+	 * the envelope the service released, and answers a refusal with a
+	 * generic 400 that carries no envelope.
+	 *
+	 * @return void
+	 */
+	public function testUnlockReturnsOnlyAVerifiedEnvelope(): void {
+		$controller = $this->controller('alice');
+		$released = ['id' => 'p1', 'credentialId' => 'c', 'wrappedUnlockKey' => 'W', 'unlockKeyEpoch' => 3];
+
+		$this->service->expects($this->exactly(2))
+			->method('unlock')
+			->with('alice', ['rawId' => 'c'], 'web')
+			->willReturnOnConsecutiveCalls(
+				$released,
+				$this->throwException(new InvalidArgumentException('The passkey could not be verified'))
+			);
+
+		$response = $controller->unlock(assertion: ['rawId' => 'c']);
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame($released, $response->getData());
+
+		$refused = $controller->unlock(assertion: ['rawId' => 'c']);
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $refused->getStatus());
+		$this->assertSame(['message' => 'The passkey could not be verified'], $refused->getData());
+	}//end testUnlockReturnsOnlyAVerifiedEnvelope()
+
+	/**
+	 * A refused unlock counts as a throttled attempt; a verified unlock
+	 * resets the delay for the caller's address. Both ceremonies declare
+	 * Nextcloud's brute-force protection, so the throttler's delay applies
+	 * before they verify.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-passkey-ceremonies-are-throttled-with-nextclouds-throttler
+	 */
+	public function testPasskeyCeremoniesAreThrottled(): void {
+		$throttler = $this->createMock(originalClassName: IThrottler::class);
+		$throttler->expects($this->once())->method('resetDelay')->with('203.0.113.9', PasskeyController::UNLOCK_ACTION, []);
+		$this->request->method('getRemoteAddress')->willReturn('203.0.113.9');
+		$user = $this->createMock(originalClassName: IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$this->userSession->method('getUser')->willReturn($user);
+		$controller = new PasskeyController(request: $this->request, service: $this->service, userSession: $this->userSession, throttler: $throttler);
+
+		$this->service->method('unlock')->willReturnOnConsecutiveCalls(
+			$this->throwException(new InvalidArgumentException('The passkey could not be verified')),
+			['id' => 'p1', 'credentialId' => 'c', 'wrappedUnlockKey' => 'W', 'unlockKeyEpoch' => 3],
+		);
+		$this->service->method('enroll')->willThrowException(new InvalidArgumentException('The passkey could not be verified'));
+		$this->service->method('enrolmentChallenge')->willThrowException(new InvalidArgumentException('The passkey could not be verified'));
+
+		$refused = $controller->unlock(assertion: ['rawId' => 'c'], client: 'extension');
+		$this->assertTrue($refused->isThrottled());
+		$this->assertSame(['action' => PasskeyController::UNLOCK_ACTION], $refused->getThrottleMetadata());
+		$this->assertSame(Http::STATUS_OK, $controller->unlock(assertion: ['rawId' => 'c'], client: 'extension')->getStatus());
+
+		$this->assertSame(['action' => PasskeyController::ENROL_ACTION], $controller->create(credentialId: 'c')->getThrottleMetadata());
+		$this->assertSame(['action' => PasskeyController::ENROL_ACTION], $controller->challenge(client: 'extension')->getThrottleMetadata());
+
+		foreach (['create' => PasskeyController::ENROL_ACTION, 'challenge' => PasskeyController::ENROL_ACTION, 'unlock' => PasskeyController::UNLOCK_ACTION] as $method => $action) {
+			$attributes = (new \ReflectionMethod(PasskeyController::class, $method))->getAttributes(BruteForceProtection::class);
+			$this->assertCount(1, $attributes, $method);
+			$this->assertSame($action, $attributes[0]->newInstance()->getAction(), $method);
+		}
+	}//end testPasskeyCeremoniesAreThrottled()
+
+	/**
+	 * An anonymous caller is refused before any assertion is looked at.
+	 *
+	 * @return void
+	 */
+	public function testUnlockRefusesAnAnonymousCaller(): void {
+		$controller = $this->controller(null);
+		$this->service->expects($this->never())->method('unlock');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $controller->unlock(assertion: ['rawId' => 'c'])->getStatus());
+	}//end testUnlockRefusesAnAnonymousCaller()
 }//end class

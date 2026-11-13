@@ -1,0 +1,814 @@
+# Terms and tone follow Nextcloud's Danish and Bitwarden (du): boks, hovedadgangskode, app-adgangskode, element, login, adgangsnøgle for passkey; forsendelse for Send, as in the Keepiq web app.
+language: da
+extensionDescription: Keepiq til din browser. Udfyld logins, adgangsnøgler og engangskoder fra din Nextcloud-boks, end-to-end-krypteret.
+commandAutofillLogin: Autoudfyld det senest brugte login
+commandFocusNotificationBar: Gå til Keepiqs gemmebjælke
+
+errors:
+  insecureUrl: Brug https til denne server
+  invalidUrl: Angiv en gyldig server-URL
+  permissionDenied: Keepiq skal have tilladelse til at kontakte {host}
+  unreachable: Kunne ikke kontakte {host}
+  notNextcloud: "{host} ligner ikke en Nextcloud-server"
+  serverError: "{host} er ikke tilgængelig lige nu, prøv igen senere"
+  unauthorized: Forkert brugernavn eller app-adgangskode
+  keepiqMissing: Keepiq er ikke installeret på {host}
+  keepiqOutdated: Keepiq på {host} er for gammel til denne udvidelse, som kræver version {version} eller nyere. Bed din administrator om at opdatere Keepiq.
+  noActiveSuite: Åbn Keepiq-webappen én gang og opret en hovedadgangskode, og prøv så igen
+  unlockBlocked: Din organisation kræver totrinsbekræftelse. Opsæt en ekstra faktor under Nextcloud-indstillinger, Sikkerhed, og prøv så igen
+  duplicate: Denne konto er allerede tilføjet
+  limitReached: Du har nået grænsen på {count} konti
+  invalidMasterPassword: Ugyldig hovedadgangskode
+  keyUnreadable: Din boksnøgle i Keepiq kunne ikke læses, så denne browser kan ikke låse boksen op. Kontakt din Keepiq-administrator.
+  offlineNoCache: Du er offline, og denne boks er ikke synkroniseret endnu
+  sessionRevoked: Sessionen er tilbagekaldt, log ind igen
+  writeLocked: Din boks kan ikke ændres lige nu, prøv igen senere
+  notResponding: Keepiq svarer ikke. Genindlæs udvidelsen og åbn denne pop op igen.
+  invalidPin:
+    1: Forkert PIN, 1 forsøg tilbage
+    n: Forkert PIN, $1 forsøg tilbage
+  wrongPin: Forkert PIN
+  pinForgotten: PIN glemt efter for mange forsøg
+  pinKeyChanged: Din boksnøgle er ændret. Lås op med din hovedadgangskode.
+  pinTooShort: Brug mindst {count} tegn
+  unknown: Noget gik galt
+  passkeyFailed: "Adgangsnøglen kunne ikke låse din boks op. Brug din hovedadgangskode."
+
+notices:
+  keyChanged: Din boksnøgle er ændret i Keepiq. Lås op med din nuværende hovedadgangskode.
+  fileAccess: "Keepiq behøver ikke adgang til filer. I Nextcloud under Indstillinger, Sikkerhed, Enheder & sessioner kan du slå filadgang fra for denne app-adgangskode eller tilbagekalde den."
+
+common:
+  accountOnHost: "{name} på {host}"
+  loading: Indlæser…
+  back: Tilbage
+  cancel: Annuller
+  logOut: Log ud
+  appPassword: App-adgangskode
+  addAccount: Tilføj konto
+  openWebApp: Åbn Keepiq-webappen
+  justNow: lige nu
+
+titles:
+  accounts: Konti
+  logInAgain: Log ind igen
+  unlock: Lås op
+  viewItem: Vis element
+  newItem: Nyt element
+  newLogin: Nyt login
+  newCard: Nyt kort
+  newIdentity: Ny identitet
+  editItem: Redigér element
+  newSend: Ny forsendelse
+  sendCreated: Forsendelse oprettet
+
+tabs:
+  label: Hovedmenu
+  vault: Boks
+  generator: Generator
+  send: Send
+  settings: Indstillinger
+
+header:
+  popout: Åbn i eget vindue
+  accounts: Konti, logget ind som {name}
+  new: Ny
+
+unlock:
+  masterPassword: Hovedadgangskode
+  submit: Lås op
+  pin: PIN
+  useMasterPassword: Brug hovedadgangskode
+
+logInAgain:
+  submit: Log ind
+
+addAccount:
+  serverUrl: Server-URL
+  serverUrlPlaceholder: cloud.example.org
+  username: Brugernavn
+  hint: Opret en under Nextcloud-indstillinger, Sikkerhed. Indtast aldrig din Nextcloud-adgangskode her.
+  hintWithLink: "Opret en under Nextcloud-indstillinger, Sikkerhed: {link}. Indtast aldrig din Nextcloud-adgangskode her."
+  securityLink: åbn sikkerhedsindstillinger
+  signInWithBrowser: "Log ind via Nextcloud"
+  finishInTab: "Afslut log ind på den Nextcloud-side, der åbnede. Keepiq tilføjer kontoen, når du er færdig."
+  orAppPassword: "Eller indtast en app-adgangskode:"
+
+accounts:
+  active: (aktiv)
+  unlocked: Låst op
+  locked: Låst
+  loggedOut: Logget ud
+  lock: Lås {account}
+  logOut: Log ud af {account}
+  lockAll: Lås alle
+  logOutAll: Log ud af alle
+  logOutAllQuestion: Log ud af alle konti?
+  logOutAllDetail: Alle konti fjernes fra denne browser. Du skal bruge hver app-adgangskode igen.
+  logOutQuestion: Log ud af {account}?
+  logOutDetail: Kontoen fjernes fra denne browser. Du skal bruge en app-adgangskode for at tilføje den igen.
+
+vault:
+  loadFailed: Kunne ikke indlæse din boks
+  tryAgain: Prøv igen
+  syncing: Synkroniserer din boks
+  empty: Ingen elementer i din boks
+  noMatch: Ingen elementer passer
+  searchCovers: Søgningen omfatter navne og websteder.
+  clearFilters: Ryd filtre
+  items: Elementer
+  tooMany: Viser de første {count}, forfin din søgning
+  offline: Offline. Senest synkroniseret {time}
+  syncNow: Synkronisér nu
+  busy: Serveren er optaget, prøver igen senere
+  allBlocked: Alle elementer er blokeret.
+  suggestions: Forslag til autoudfyld
+  noSuggestions: Ingen elementer til {host}
+  autofillUnavailable: Autoudfyld er ikke tilgængelig på denne side
+  fillFailed: Kan ikke autoudfylde på denne side. Kopiér og indsæt i stedet.
+  openFailed: Kunne ikke åbne webstedet
+  popoutFailed: Kunne ikke åbne et nyt vindue
+
+filters:
+  search: Søg
+  searchLabel: Søg i boksen
+  clearSearch: Ryd søgning
+  folder: Mappe
+  allItems: Alle elementer
+  noFolder: Ingen mappe
+  type: Type
+  all: Alle
+  more: Mere
+  moreTypes: Flere typer
+  login: Login
+  card: Kort
+  identity: Identitet
+  note: Note
+  totp: TOTP
+  passkey: Adgangsnøgle
+
+item:
+  blocked: Blokeret
+  launch: Åbn {name}
+  fill: Udfyld
+  fillName: Udfyld {name}
+  insecureTitle: Vil du stadig udfylde dette login?
+  insecureWarning: "Advarsel: Dette er en usikret HTTP-side, og alt, hvad du sender, kan muligvis ses og ændres af andre. Dette login blev oprindeligt gemt på en sikker (HTTPS-)side."
+  cardInsecureTitle: Udfyld dette kort på et usikkert websted?
+  cardInsecureWarning: Dette websted er ikke sikkert. Alle på netværket kan læse de kortoplysninger, der udfyldes.
+  crossSiteTitle: Udfyld også på {hosts}?
+  crossSiteWarning: En del af denne formular kommer fra {hosts}, ikke fra {host}. Keepiq udfylder den kun dér, hvis du accepterer det.
+  onlyHost: Kun {host}
+  copyMenu: Kopiér, {name}
+  moreMenu: Mere, {name}
+  copyUsername: Kopiér brugernavn
+  copyPassword: Kopiér adgangskode
+  copyCode: Kopiér bekræftelseskode
+  view: Vis
+  edit: Redigér
+  clone: Klon
+  move: Flyt til mappe
+  delete: Slet
+  send: Send
+  cloneName: "{name} - Klon"
+  passkeyNoClone: Adgangsnøgler kan ikke klones
+  useOnly: Delt med dig kun til at logge ind
+  readOnly: Delt fra en anden organisation, så det kan kun flyttes
+  viewOnly: Kun delt med dig til visning. Bed ejeren om redigeringsrettigheder for at ændre det.
+  expiringNoClone: Din adgang udløber {date}, så det kan ikke klones
+  expiringNoSend: Din adgang udløber {date}, så det kan ikke sendes
+  saved: Element gemt
+  deleted: Element flyttet til papirkurven
+  moved: Flyttet til {folder}
+  deleteTitle: Slet element
+  deleteConfirm: Flyt {name} til papirkurven? Det holder op med at være delt, også efter en gendannelse fra papirkurven i Keepiq-webappen.
+  gone: Dette element findes ikke længere
+
+form:
+  itemDetails: Elementdetaljer
+  type: Type
+  name: Navn
+  cardNumberLength: "{brand} udsteder ikke kortnumre med denne længde. Du kan stadig gemme."
+  cardNumberLengthUnknown: Kortnumre har 12 til 19 cifre. Du kan stadig gemme.
+  cardNumberChecksum: Dette nummer består ikke kortets kontrolsum. Tjek det; du kan stadig gemme.
+  cardCodeLength: "{brand}-kort bruger en {name} på {size} cifre. Du kan stadig gemme."
+  folder: Mappe
+  chooseFolder: Vælg en mappe, nu {folder}
+  website: Webstedets URL
+  autofillOptions: Indstillinger for autoudfyld
+  additionalOptions: Flere indstillinger
+  authenticator: Godkendelsesapp
+  note: Note
+  secret: Hemmelighed
+  advanced: Avanceret
+  algorithm: Algoritme
+  digits: Cifre
+  period: Interval i sekunder
+  addField: Tilføj felt
+  fieldName: Feltnavn
+  fieldValue: Værdi
+  removeField: Fjern {name}
+  removeUnnamed: Fjern felt
+  save: Gem
+  passkeyReadOnly: En adgangsnøgles oplysninger kan kun ændres i Keepiq-webappen
+  offline: Du er offline. Ændringer kræver forbindelse til Keepiq.
+  unsavedTitle: Ikke-gemte ændringer
+  unsaved: Du har ændringer, der ikke er gemt. Vil du kassere dem?
+  discard: Kassér
+  keepEditing: Fortsæt redigering
+
+authKey:
+  label: Godkendelsesnøgle
+  optionalLabel: Godkendelsesnøgle (valgfri)
+  newLabel: Ny godkendelsesnøgle
+  help: Indsæt otpauth://totp/-linket eller den hemmelige nøgle, eller scan QR-koden på siden.
+  scan: Scan QR-kode på siden
+  read: Godkendelsesnøgle læst fra QR-koden
+  noQr: Ingen QR-kode fundet på siden. Rul den frem, og prøv igen.
+  notTotp: Denne QR-kode indeholder ikke en godkendelsesnøgle. Brug den QR-kode, webstedet viser, når du opsætter totrinsbekræftelse.
+  noPicture: Keepiq kan ikke tage et billede af denne side. Indsæt nøglen i stedet.
+  popout: Åbn Keepiq fra værktøjslinjen på siden med QR-koden for at scanne den.
+  saved: Gemt
+  remove: Fjern godkendelsesnøgle
+  replaceHelp: Indsæt eller scan en ny nøgle, eller lad feltet være tomt for at fjerne den gemte.
+  keep: Behold den gemte nøgle
+  removedOnSave: Godkendelsesnøglen fjernes, når du gemmer.
+  notCloned: Godkendelsesnøglen klones ikke.
+
+fieldErrors:
+  required: Navn er påkrævet
+  tooLong: Højst {max} tegn
+  tooLongBytes: For langt (maks. {max} bytes)
+  reserved: Dette navn er reserveret
+  duplicate: Der findes allerede et felt med dette navn
+  invalidTotp: Ikke en gyldig godkendelseshemmelighed
+  slash: Mappenavne må ikke indeholde skråstreger
+
+writeErrors:
+  writeLocked: Boksen er midlertidigt låst på grund af en nøglemigrering, prøv igen senere
+  forbidden: Keepiq tillader ikke denne ændring. Keepiq-webappen viser hvorfor.
+  policy: Din organisations politik tillader ikke denne ændring
+  accountChanged: Du skiftede til en anden konto imens, så intet blev gemt. Skift tilbage for at gemme det.
+  accountChangedDelete: Du skiftede til en anden konto imens, så intet blev slettet. Skift tilbage for at slette det.
+  keepClash: Der findes allerede en mappe ved navn {name} et niveau over. Vælg Flyt elementer til overmappe eller Slet for den, eller omdøb en af dem først.
+  keepClashAfter: En mappe, du valgte at beholde, har samme navn som en et niveau over, så intet blev slettet. Tjek valgene igen.
+  invalid: Keepiq afviste denne ændring
+  stale: Dette element blev ændret et andet sted. Gå tilbage og redigér det igen for at se den nyeste version.
+  itemGone: Dette element findes ikke længere
+  folderGone: Denne mappe findes ikke længere
+  duplicateFolder: Der findes allerede en mappe med dette navn her
+  folderChanged: Denne mappe er ændret. Tjek valgene igen.
+  offline: Kunne ikke kontakte serveren
+  serverError: Keepiq er ikke tilgængelig lige nu, prøv igen senere
+  unreadable: Dette element kunne ikke læses, så det kan ikke redigeres her
+  restricted: Dette element blev delt med dig med begrænsninger, så det kan ikke ændres eller kopieres her
+  unmatched: Keepiq sendte en version af dette element, som din boks ikke har, så det blev ikke åbnet.
+  keyMismatch: Keepiq sendte en krypteringsnøgle, der ikke passer til din boks, så intet blev gemt. Kontakt din Keepiq-administrator.
+  staleSource: Originalen af dette delte element blev ændret, efter du åbnede det. Intet blev gemt; åbn det igen og gentag din ændring.
+  incomplete: Dem, dette element er delt med, blev ved med at ændre sig, mens det blev gemt. Intet blev gemt; prøv igen.
+  badCertificate: Keepiq sendte en krypteringsnøgle for en, som dette element er delt med, som denne browser ikke kunne læse. Intet blev gemt.
+  unverified: Dette element er delt med partnerorganisationer, og denne browser kan ikke bekræfte, at de får det præcis, som du så det. Intet blev gemt; foretag ændringen i Keepiq-webappen.
+  partnerUnreachable: "Intet blev gemt: en partnerorganisation, som dette element er delt med, kan ikke kontaktes ({cloudIds}). Prøv igen senere, eller gem uden dem, hvilket sætter delingen af elementet med dem på pause, indtil du deler det med dem igen."
+  partnerUpgradeRequired: "Intet blev gemt: Keepiq hos {cloudIds} er for gammel til at modtage en godkendelsesnøgle. Fjern nøglen, eller bed dem om at opdatere Keepiq."
+  partnerUpgradeRequiredUnnamed: "Intet blev gemt: en partnerorganisation, som dette element er delt med, kører en Keepiq, der er for gammel til at modtage en godkendelsesnøgle. Fjern nøglen, eller bed dem om at opdatere Keepiq."
+  partnerUpgradeVersion: De skal bruge Keepiq {version} eller nyere.
+  partnerLookupLimit: For mange opslag af partnere. Intet blev gemt; prøv igen om et minut.
+  federationUnavailable: Din Keepiq-server kan ikke dele med partnerorganisationer, så dette element kan ikke gemmes her. Intet blev gemt; spørg din administrator.
+  keepiqOutdated: Din Keepiq-server er for gammel til at gemme denne ændring. Intet blev gemt; bed din administrator om at opdatere Keepiq til version {version} eller nyere.
+  partnerClock: Certifikatet for en partnerorganisation, som dette element er delt med, er ikke gyldigt ifølge denne computers ur. Intet blev gemt; tjek denne computers dato og klokkeslæt, eller foretag ændringen i Keepiq-webappen.
+  shareScanPending: Dette element venter på et tjek af dets delinger, som ikke er færdigt. Intet blev gemt; prøv igen senere.
+  shareScanPendingOpen: Dette element venter på et tjek af dets delinger og kan ikke redigeres endnu. Prøv igen senere.
+  shareScanPendingDelete: Dette element venter på et tjek af dets delinger, som ikke er færdigt. Intet blev slettet; prøv igen senere.
+  sendInvalid: Keepiq accepterede ikke denne forsendelse. Intet blev sendt; tjek felterne og prøv igen.
+  sendOffline: Kunne ikke kontakte serveren, intet blev sendt
+  argon2Unavailable: Adgangskodebeskyttelse er ikke tilgængelig i denne browser
+
+shareSave:
+  saveWithout: Gem uden dem
+  ownerOnly: Gemt. Modtagere hos partnerorganisationer får ændringen, næste gang ejeren gemmer elementet.
+  suspended: Deling med {cloudIds} er sat på pause, fordi deres certifikat ikke kunne bekræftes, eller deres organisation ikke længere accepterer det. Keepiq-webappen viser delingen.
+  paused: Deling med {cloudIds} er sat på pause, indtil du deler dette element med dem igen.
+
+folders:
+  add: Tilføj mappe
+  newFolder: Ny mappe
+  rename: Omdøb
+  renameTitle: Omdøb mappe
+  delete: Slet
+  more: Mere, {name}
+  name: Mappenavn
+  empty: Ingen mapper endnu
+  notice: Mappenavne er ikke krypterede
+  dismiss: Luk
+  current: Nuværende mappe
+  pickTitle: Vælg mappe
+  moveTitle: Flyt til mappe
+  saved: Mappe gemt
+  deleted: Mappe slettet
+  deleteTitle: Slet mappe
+  deleteConfirm: Slet {name}? Det kan ikke fortrydes.
+  cascade:
+    1: Slet {name} og dets ene element, eller flyt det til {parent}?
+    n: Slet {name} og dets $1 elementer, eller flyt dem til {parent}?
+  countsAll: Arkiverede elementer og elementer i papirkurven tæller også med.
+  deleteItems: Slet også elementer
+  moveItems: Flyt elementer til overmappe
+  items:
+    1: 1 element
+    n: $1 elementer
+  subfolders:
+    1: 1 undermappe
+    n: $1 undermapper
+  directRow: Elementer i {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Slet
+  actionMove: Flyt elementer til overmappe
+  actionKeep: Behold
+  directMove: Flyt til overmappe
+
+clipboard:
+  copied: "{what} kopieret"
+  failed: Kunne ikke kopiere
+
+field:
+  show: Vis {field}
+  hide: Skjul {field}
+  copy: Kopiér {field}
+
+blocked:
+  generic: Dette element er blokeret.
+  suiteMissing: Dets krypteringsnøgle findes ikke længere.
+  suiteRevoked: Dets krypteringsnøgle er tilbagekaldt.
+  suiteCompromised: Krypteret med en kompromitteret nøgle, så det kan ikke åbnes her. Keepiq-webappen viser, om det kan gendannes.
+  migrationFailed: Det kunne ikke flyttes til din nye nøgle under gendannelsen efter kompromitteringen. Den gemte værdi bevares, men kan ikke åbnes.
+
+detail:
+  item: Element
+  decrypting: Dekrypterer…
+  decryptFailed: Kunne ikke dekryptere dette element
+  unreadablePasskey: Kunne ikke læse denne adgangsnøgle
+  unreadableFields: Kunne ikke læse ekstra felter
+  loginCredentials: Loginoplysninger
+  username: Brugernavn
+  password: Adgangskode
+  authenticatorKey: Godkendelsesnøgle
+  website: Websted
+  additionalFields: Ekstra felter
+  notes: Noter
+  history: Elementhistorik
+  created: Oprettet
+  updated: Opdateret
+  expires: Udløber
+  cardDetails: Kortoplysninger
+  number: Nummer
+  numberWithBrand: Nummer · {brand}
+  cardNumber: Kortnummer
+  cardholder: Kortindehaver
+  expiry: Udløbsdato
+  cvv: CVV
+  pin: PIN
+  identity: Identitet
+  firstName: Fornavn
+  lastName: Efternavn
+  address: Adresse
+  phone: Telefon
+  email: E-mail
+  bsn: BSN
+  passkey: Adgangsnøgle
+  relyingParty: Websted eller app
+  passkeyUser: Brugernavn
+  passkeyOnLogin: Keepiq logger ind med adgangsnøgler gemt på et login, ikke med dette element
+  passkeys: Adgangsnøgler
+  passkeyCreated: Oprettet {date}
+  useOnly: Ejeren lader dig ikke se eller kopiere dette.
+
+totp:
+  code: Bekræftelseskode
+  invalid: Ugyldig godkendelsesnøgle
+  changesIn:
+    1: Skifter om 1 sekund
+    n: Skifter om $1 sekunder
+
+settings:
+  accountSecurity: Kontosikkerhed
+  autofill: Autoudfyld
+  notifications: Notifikationer
+  vault: Boks
+  appearance: Udseende
+  about: Om
+  folders: Mapper
+  theme: Tema
+  themeSystem: Systemstandard
+  themeLight: Lyst
+  themeDark: Mørkt
+  comingLater: Kommer senere
+  setByOrganisation: Angivet af din organisation
+  turnedOffByOrganisation: Slået fra af din organisation
+  never: Aldrig
+  durationHours: "{count} t"
+  durationMinutes: "{count} min"
+  pin: Lås op med PIN
+  pinTurnOn: Slå til
+  masterPasswordRequired: Indtast din hovedadgangskode
+  pinAgain: Bekræft PIN
+  pinMismatch: PIN-koderne stemmer ikke overens
+  pinAdvice: Genbrug ikke en PIN fra din telefon eller bank.
+  pinAfterRestart: Efter en genstart af browseren indtaster du din hovedadgangskode én gang; derefter virker din PIN igen.
+  vaultTimeout: Timeout for boks
+  timeoutImmediately: Med det samme
+  timeoutMinutes:
+    1: 1 minut
+    n: $1 minutter
+  timeoutHours:
+    1: 1 time
+    n: $1 timer
+  timeoutOnSystemLock: Når systemet låses
+  timeoutOnSystemLockCapped: Når systemet låses, eller efter {duration} uden aktivitet (angivet af din organisation)
+  timeoutOnRestart: Når browseren genstartes
+  timeoutCustom: Tilpasset
+  hours: Timer
+  minutes: Minutter
+  customAtLeastOne: Angiv mindst ét minut
+  customWhole: Angiv hele timer og minutter
+  customAtMost: Din organisation tillader højst {duration}
+  neverTitle: Hold boksen låst op?
+  neverWarning: Din boks forbliver låst op, indtil du selv låser den. Nøglen, der åbner den, skrives til denne browserprofils disk, hvor alle, der kan læse profilen, kan læse den.
+  neverConfirm: Hold låst op
+  timeoutAction: Handling ved timeout
+  actionLock: Lås
+  actionLogOutNote: Når timeouten udløber, bliver du logget ud og skal bruge app-adgangskoden igen
+  lockNow: Lås nu
+  changeMasterPassword: Skift hovedadgangskode
+  autofillOnPageLoad: Autoudfyld ved sideindlæsning
+  autofillOnPageLoadWarning: Kompromitterede eller upålidelige websteder kan misbruge autoudfyld ved sideindlæsning
+  defaultAutofill: Standardindstilling for autoudfyld af logins
+  defaultAutofillOnPageLoad: Autoudfyld ved sideindlæsning, hvis det er slået til
+  uriMatch: Standardregistrering af URI-match
+  uriBaseDomain: Basisdomæne
+  uriHost: Vært
+  uriStartsWith: Starter med
+  uriExact: Præcis
+  uriRegex: Regulært udtryk
+  uriRegexNote: Regulære udtryk er en avanceret indstilling og kan ødelægge genkendelsen
+  inlineSuggestions: Vis forslag til autoudfyld i formularfelter
+  inlineCards: Vis kort som forslag
+  inlineIdentities: Vis identiteter som forslag
+  inlineKindsOff: Slå først Vis forslag til autoudfyld i formularfelter til.
+  vaultCards: Vis altid kort som forslag til autoudfyld i boksvisningen
+  vaultIdentities: Vis altid identiteter som forslag til autoudfyld i boksvisningen
+  defaultPasswordManager: Gør Keepiq til din standardadgangskodemanager
+  defaultPasswordManagerHint: Slår browserens egen gemning af adgangskoder og udfyldning af adresser fra, så dens forslag ikke dækker Keepiqs.
+  defaultPasswordManagerManaged: Din organisation eller en anden udvidelse styrer denne browserindstilling.
+  contextMenu: Vis valgmuligheder i genvejsmenuen
+  shortcut: Tastaturgenvej til autoudfyld
+  shortcutNotSet: Ikke angivet
+  shortcutChange: Skift
+  shortcutFirefox: Åbn about:addons, vælg tandhjulsmenuen og derefter Håndter tastaturgenveje til udvidelser
+  shortcutSafari: Åbn Safari-indstillinger, vælg Udvidelser, og vælg derefter Keepiq for at ændre genvejen
+  websiteAccess: Adgang til websteder
+  websiteAccessAll: Alle websteder
+  websiteAccessSome: Kun websteder, du har tilladt
+  websiteAccessServer: Ikke din Keepiq-server
+  clearClipboard: Ryd udklipsholder
+  clipboardSeconds:
+    1: 1 sekund
+    n: $1 sekunder
+  autoCopyTotp: Kopiér TOTP automatisk
+  autoCopyTotpHint: Hvis et login har en bekræftelseskode, kopieres den til din udklipsholder, når du autoudfylder loginet.
+  askToAdd: Spørg om at tilføje login
+  askToUpdate: Spørg om at opdatere eksisterende login
+  askPasskeys: Spørg om at gemme og bruge adgangsnøgler
+  excludedDomains: Udelukkede domæner
+  addCurrentSite: Tilføj nuværende websted
+  domain: Domæne
+  addDomain: Tilføj
+  domainEmpty: Angiv et domæne
+  domainUnreadable: Angiv et domæne som example.org
+  domainDuplicate: Allerede udelukket
+  removeDomain: Fjern {domain}
+  webTitle: Keepiq på nettet
+  webText: Keepiqs egne notifikationer, import og eksport samt din hovedadgangskode administreres i Keepiq på Nextcloud under Personlige indstillinger.
+  openKeepiq: Åbn Keepiq
+  lastSync: "Senest synkroniseret: {time}"
+  lastSyncNever: "Senest synkroniseret: Aldrig"
+  syncOffline: Synkronisering mislykkedes, du er offline
+  syncFailed: Synkronisering mislykkedes, prøv igen senere
+  importItems: Importér elementer
+  exportVault: Eksportér boks
+  defaultItemType: Standardelementtype i denne udvidelse
+  compactMode: Kompakt tilstand
+  showAnimations: Vis animationer
+  quickCopy: Vis hurtigkopiering i boksen
+  showBadgeCounter: Vis antal loginforslag på udvidelsesikonet
+  language: Sprog
+  languageFollows: Følger din browser
+  version: Version {version}
+  server: Server {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiq-version ukendt
+  help: Hjælp
+  reportBug: Rapportér en fejl
+  contactSupport: Kontakt support
+  privacyPolicy: Privatlivspolitik
+  webApp: Keepiq-webapp
+  rate: Bedøm udvidelsen
+
+websiteAccess:
+  title: Lad Keepiq virke på websteder
+  body: Safari kører kun Keepiq på websteder, du tillader. Tillad det på alle websteder for at udfylde logins, gemme nye og bruge adgangsnøgler overalt, hvor du logger ind.
+  allow: Tillad på alle websteder
+  dismiss: Ikke nu
+  steps: Vælg Safari > Indstillinger i Safari, og klik derefter på Websteder. Vælg Keepiq på listen, og indstil “Ved besøg på andre websteder” til Tillad.
+  perSite: Vil du tillade ét websted ad gangen? Klik på Keepiq-knappen på webstedet, og vælg altid at tillade det.
+  serverTitle: Keepiq kan ikke nå {host}
+  serverBody: Safari giver ikke Keepiq adgang til din server, så din boks kan ikke synkronisere.
+  serverAllow: Tillad {host}
+
+generator:
+  kinds: Hvad skal genereres
+  password: Adgangskode
+  passphrase: Adgangssætning
+  username: Brugernavn
+  length: Længde
+  lengthValue: Længde i tegn
+  uppercase: Store bogstaver (A-Z)
+  lowercase: Små bogstaver (a-z)
+  digits: Tal (0-9)
+  special: Specialtegn som !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Tegntyper
+  lastClassOn: Mindst én type forbliver slået til
+  minNumbers: Min. antal tal
+  minSpecial: Min. antal specialtegn
+  avoidAmbiguous: Undgå tvetydige tegn
+  lockedByPolicy: Angivet af din organisation
+  passphraseOff: Slået fra af din organisation
+  words: Antal ord
+  separator: Ordseparator
+  capitalizeWords: Stort begyndelsesbogstav
+  capitalize: Stort begyndelsesbogstav
+  includeNumber: Inkludér tal
+  usernameType: Type
+  typeWord: Tilfældigt ord
+  typePlus: Plus-adresseret e-mail
+  typeCatchall: Catch-all-e-mail
+  email: E-mail
+  emailPlaceholder: navn@example.com
+  domain: Domæne
+  domainPlaceholder: example.com
+  basedOn: Baseret på
+  random: Tilfældig
+  websiteName: Webstedets navn
+  noWebsite: Intet websted fundet
+  needsEmail: Angiv en e-mailadresse
+  needsDomain: Angiv et domæne
+  wordlistUnavailable: Ordliste ikke tilgængelig
+  regenerate: Generér igen
+  usePassword: Brug denne adgangskode
+  useUsername: Brug dette brugernavn
+  history: Generatorhistorik
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Ingen genererede værdier endnu
+  clearHistory: Ryd
+  clearHistoryTitle: Ryd generatorhistorikken?
+  clearHistoryText: Dette fjerner alle værdier i listen fra denne browser.
+  generatePasswordLink: Generér en adgangskode
+  generatePassword: Generér adgangskode
+  generateUsername: Generér brugernavn
+
+send:
+  new: Ny forsendelse
+  empty: Ingen forsendelser endnu
+  emptyText: Del tekst eller et login via et link, der sletter sig selv.
+  loadFailed: Kunne ikke indlæse dine forsendelser
+  retry: Prøv igen
+  labelText: "Tekstforsendelse, {time}"
+  labelCredential: "Loginforsendelse, {time}"
+  viewsLeft:
+    1: "{left} af 1 visning tilbage"
+    n: "{left} af $1 visninger tilbage"
+  expires: "Udløber {date}"
+  neverExpires: Udløber aldrig
+  expired: Udløbet
+  passwordBadge: Adgangskode
+  link: Link
+  copyLink: Kopiér link
+  copyLinkOf: "Kopiér link, {name}"
+  linkGone: Linket er ikke længere tilgængeligt
+  remove: Fjern
+  removeOf: "Fjern, {name}"
+  removeTitle: Fjern forsendelse
+  removeConfirm: Fjern denne forsendelse? Alle med linket mister adgangen.
+  removed: Forsendelse fjernet
+  contentSection: Indhold
+  optionsSection: Indstillinger
+  type: Type
+  text: Tekst
+  credential: Login
+  content: Tekst, der skal deles
+  maxViews: Maks. visninger
+  maxViewsRange: "Mellem 1 og {max}"
+  expiry: Udløb
+  expiry1h: 1 time
+  expiry1d: 1 dag
+  expiry2d: 2 dage
+  expiry3d: 3 dage
+  expiry7d: 7 dage
+  expiry30d: 30 dage
+  expiryCustom: Tilpasset
+  customHours: Timer
+  customHoursMin: Mindst 1 time
+  customHoursMax: Højst 720 timer (30 dage)
+  accessPassword: Adgangskode til forsendelsen
+  accessPasswordHint: Valgfri. Modtageren skal bruge den for at åbne denne forsendelse.
+  create: Opret
+  protecting: Beskytter med adgangskode…
+  offline: Forsendelser kræver forbindelse til din Keepiq-server
+  prefillFailed: Kunne ikke læse dette login
+  ready: Din forsendelse er klar
+  shownOnce:
+    1: Kopiér dette link nu. Det vises kun, indtil du lukker dette vindue, og indholdet slettes efter 1 visning.
+    n: Kopiér dette link nu. Det vises kun, indtil du lukker dette vindue, og indholdet slettes efter $1 visninger.
+  passwordNote: Del adgangskoden separat fra linket. Efter 5 forkerte forsøg slettes denne forsendelse.
+  done: Færdig
+
+pageFill:
+  insecure: "Advarsel: Dette er en usikret HTTP-side, og alt, hvad du sender, kan muligvis ses og ændres af andre. Dette login blev oprindeligt gemt på en sikker (HTTPS-)side, {host}.\n\nVil du stadig udfylde dette login?"
+  insecureNoHost: "Advarsel: Dette er en usikret HTTP-side, og alt, hvad du sender, kan muligvis ses og ændres af andre. Dette login blev oprindeligt gemt på en sikker (HTTPS-)side.\n\nVil du stadig udfylde dette login?"
+  cardInsecure: "Udfyld dette kort på et usikkert websted?\n\nDette websted er ikke sikkert. Alle på netværket kan læse de kortoplysninger, der udfyldes."
+  crossSite: "Udfyld også på {hosts}?\n\nEn del af denne formular kommer fra {hosts}, ikke fra {host}. Keepiq udfylder den kun dér, hvis du accepterer det."
+
+contextMenu:
+  root: Keepiq
+  autofill: Autoudfyld login
+  noMatches: Ingen logins tilgængelige
+  noUsernames: Ingen brugernavne tilgængelige
+  noPasswords: Ingen adgangskoder tilgængelige
+  noCodes: Ingen bekræftelseskoder tilgængelige
+  noIdentities: Ingen identiteter tilgængelige
+  noCards: Ingen kort tilgængelige
+  addLogin: Tilføj login
+  addIdentity: Tilføj identitet
+  addCard: Tilføj kort
+  openKeepiq: Åbn Keepiq
+  copyUsername: Kopiér brugernavn
+  copyPassword: Kopiér adgangskode
+  copyCode: Kopiér bekræftelseskode
+  autofillCard: Autoudfyld kort
+  autofillIdentity: Autoudfyld identitet
+  generatePassword: Generér og kopiér adgangskode
+  unlock: Lås boks op
+
+pageNotice:
+  label: Keepiq-meddelelse
+  noLoginForm: Keepiq fandt ingen loginformular at udfylde på denne side.
+  noCardForm: Keepiq fandt ingen kortfelter at udfylde på denne side.
+  noIdentityForm: Keepiq fandt ingen felter til adresse eller personlige oplysninger at udfylde på denne side.
+
+toolbar:
+  locked: "{name}: Låst"
+  loggedOut: "{name}: Logget ud"
+  count:
+    1: "{name}: 1 login til dette websted"
+    n: "{name}: $1 logins til dette websted"
+
+inlineList:
+  frameTitle: Keepiq-logins
+  label: Keepiq-logins til {host}
+  row: "{name}, {username}"
+  noMatch: Ingen logins til {host}
+  passkeyRow: "{name}, {username}, adgangsnøgle"
+  passkeyRowNoUser: "{name}, adgangsnøgle"
+  noMatchPasskeys: Ingen logins eller adgangsnøgler til {host}
+  locked: Keepiq er låst
+  unlock: Lås op
+  insecureQuestion: Udfyld på dette usikre websted?
+  insecureDetail: Dette websted er ikke sikkert. Alle på netværket kan læse det, der udfyldes.
+  fill: Udfyld
+  notVisible: Keepiq kan ikke udfylde her, fordi denne side ændrer, hvordan den vises. Brug Keepiq-knappen i værktøjslinjen.
+  status:
+    count:
+      1: 1 Keepiq-login. Tryk på pil ned for at vælge.
+      n: $1 Keepiq-logins. Tryk på pil ned for at vælge.
+    noMatch: Ingen Keepiq-logins til {host}
+    countPasskeys:
+      1: 1 Keepiq-login eller -adgangsnøgle. Tryk på pil ned for at vælge.
+      n: $1 Keepiq-logins og -adgangsnøgler. Tryk på pil ned for at vælge.
+    noMatchPasskeys: Ingen Keepiq-logins eller -adgangsnøgler til {host}
+    locked: Keepiq er låst. Tryk på pil ned for at låse op.
+  code:
+    frameTitle: Keepiq-bekræftelseskoder
+    label: Keepiq-bekræftelseskoder til {host}
+    noMatch: Ingen bekræftelseskoder til {host}
+    locked: Lås Keepiq op for at se dine bekræftelseskoder
+    invalid: Ikke en gyldig godkendelseshemmelighed
+    status:
+      count:
+        1: 1 Keepiq-bekræftelseskode. Tryk på pil ned for at vælge.
+        n: $1 Keepiq-bekræftelseskoder. Tryk på pil ned for at vælge.
+      noMatch: Ingen Keepiq-bekræftelseskoder til {host}
+  card:
+    frameTitle: Keepiq-kort
+    noMatch: Ingen kort i Keepiq
+    locked: Lås Keepiq op for at se dine kort
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Kort, *{last4}"
+    row: "{name}, {brand} der slutter på {last4}"
+    rowNoBrand: "{name}, kort der slutter på {last4}"
+    status:
+      count:
+        1: 1 Keepiq-kort. Tryk på pil ned for at vælge.
+        n: $1 Keepiq-kort. Tryk på pil ned for at vælge.
+  identity:
+    frameTitle: Keepiq-identiteter
+    noMatch: Ingen identiteter i Keepiq
+    locked: Lås Keepiq op for at se dine identiteter
+    status:
+      count:
+        1: 1 Keepiq-identitet. Tryk på pil ned for at vælge.
+        n: $1 Keepiq-identiteter. Tryk på pil ned for at vælge.
+
+notificationBar:
+  label: Keepiq-notifikation
+  saveQuestion: Gem login til {host} i Keepiq?
+  updateQuestion: Opdatér adgangskoden til {name}?
+  updateQuestionUser: Opdatér adgangskoden til {name} ({username})?
+  updateQuestionHost: Opdatér adgangskoden til {name} på {host}?
+  updateQuestionUserHost: Opdatér adgangskoden til {name} ({username}) på {host}?
+  folder: Mappe
+  noFolder: Ingen mappe
+  save: Gem
+  never: Aldrig for dette websted
+  update: Opdatér
+  close: Luk
+  expand: Vis indstillinger
+  shortcutHint: Tryk på {shortcut} for at svare.
+  saving: Gemmer…
+  updating: Opdaterer…
+  saved: Login gemt
+  updated: Adgangskode opdateret
+  notVisible: Keepiq kan ikke gøre dette her, fordi denne side ændrer, hvordan den vises. Luk dette og tilføj loginet fra Keepiq-knappen i værktøjslinjen.
+  errors:
+    writeLocked: Boksen er midlertidigt låst for ændringer. Prøv igen senere.
+    unverified: Redigér dette login i Keepiq-pop op-vinduet eller webappen for at ændre adgangskoden.
+    viewOnly: Dette login er kun delt med dig til visning, så adgangskoden kan ikke opdateres her.
+    loginGone: Dette login findes ikke længere. Gem det som et nyt login?
+    locked: Keepiq er låst. Lås op med Keepiq-knappen i værktøjslinjen, og prøv så igen.
+    notResponding: Keepiq svarer ikke. Prøv igen.
+    accountChanged: Du skiftede konto, så intet blev gemt.
+    keyMismatch: Keepiqs nøgle passer ikke til din boks. Intet blev gemt; kontakt din administrator.
+    staleSource: Originalen af dette delte login er ændret. Intet blev gemt; prøv igen.
+    incomplete: Dem, dette login er delt med, blev ved med at ændre sig. Intet blev gemt; prøv igen.
+    badCertificate: En modtagers krypteringsnøgle kunne ikke læses. Intet blev gemt.
+    keepiqOutdated: Din Keepiq-server er for gammel. Intet blev gemt; bed din administrator om Keepiq {version} eller nyere.
+    shareScanPending: Dette login venter på et tjek af dets delinger. Intet blev gemt; prøv igen senere.
+
+passkey:
+  unlockGet: Lås Keepiq op for at bruge en adgangsnøgle til {rpId}
+  unlockCreate: Lås Keepiq op for at gemme en adgangsnøgle til {rpId}
+  verifyTitle: Bekræft, at det er dig
+  verifyPassword: Indtast din hovedadgangskode for at fortsætte.
+  verifyPin: Indtast din PIN for at fortsætte.
+  confirm: Bekræft
+  signInTitle: Log ind med en adgangsnøgle
+  signInText: Brug en adgangsnøgle gemt i Keepiq til {rpId}
+  row: "{name}, {userName}"
+  noPasskey: Ingen Keepiq-adgangsnøgle til {rpId}
+  saveTitle: Gem adgangsnøgle
+  saveTo: Gem på et login
+  replaces: Erstatter adgangsnøglen til {userName}
+  newLogin: Nyt login
+  name: Navn
+  folder: Mappe
+  noFolder: Ingen mappe
+  saveNew: Gem som nyt login
+  replaceQuestion: Erstat adgangsnøglen til {userName} på {name}?
+  replace: Erstat
+  alreadySavedTitle: Adgangsnøgle allerede gemt
+  alreadySaved: Der er allerede gemt en adgangsnøgle til denne konto i Keepiq
+  close: Luk
+  retry: Prøv igen
+  fallback: Brug din enhed eller hardwarenøgle
+  stalePick: Denne adgangsnøgle er ikke længere i din boks. Vælg en anden.
+  staleSave: Dette login kan ikke længere modtage adgangsnøglen. Vælg et andet, eller gem den som et nyt login.
+  errors:
+    conflict: Dette login blev ændret, mens det blev gemt. Intet blev gemt; prøv igen.
+    partnerUpgradeRequired: "Intet blev gemt: Keepiq hos {cloudIds} er for gammel til at gemme adgangsnøgler. Bed dem om at opdatere Keepiq, eller gem adgangsnøglen på et andet login."
+    partnerUpgradeRequiredUnnamed: "Intet blev gemt: en partnerorganisation, som dette login er delt med, kører en Keepiq, der er for gammel til at gemme adgangsnøgler. Bed dem om at opdatere Keepiq, eller gem adgangsnøglen på et andet login."
+    shareScanPending: Dette login venter på et tjek af dets delinger, som ikke er færdigt. Intet blev gemt; prøv igen senere.
+
+vaultPasskey:
+  unlock: "Lås op med fingeraftryk eller ansigt"
+  unlockIntro: "Din browser beder om dit fingeraftryk, dit ansigt eller enhedens pinkode."
+  enrolTitle: "Konfigurer oplåsning med fingeraftryk eller ansigt"
+  enrolIntro: "Bekræft din hovedadgangskode. Derefter beder din browser to gange om fingeraftryk, ansigt eller enhedens pinkode."
+  enrolSubmit: "Konfigurer"
+  enrolDone: "Oplåsning med fingeraftryk eller ansigt er konfigureret for denne browser."
+  close: "Luk"
+  label: "Keepiq-browserudvidelse"
+  tooOld: "Oplåsning med fingeraftryk eller ansigt kræver Chrome eller Edge 122, eller Firefox 150, eller nyere. Brug din hovedadgangskode."
+  unsupported: "Denne browser eller enhed kan ikke låse Keepiq op med fingeraftryk eller ansigt. Brug din hovedadgangskode."
+  revokeInWebApp: "Tilbagekald denne adgangsnøgle i Keepiq-webappen for at slå det fra."

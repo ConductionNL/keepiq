@@ -33,9 +33,11 @@ errors:
   pinKeyChanged: Your vault key changed. Unlock with your master password.
   pinTooShort: Use at least {count} characters
   unknown: Something went wrong
+  passkeyFailed: "The passkey could not unlock your vault. Use your master password."
 
 notices:
   keyChanged: Your vault key changed in Keepiq. Unlock with your current master password.
+  fileAccess: "Keepiq needs no file access. In Nextcloud, under Settings, Security, Devices & sessions, you can switch off file access for this app password or revoke it."
 
 common:
   accountOnHost: "{name} on {host}"
@@ -54,6 +56,9 @@ titles:
   unlock: Unlock
   viewItem: View item
   newItem: New item
+  newLogin: New login
+  newCard: New card
+  newIdentity: New identity
   editItem: Edit item
   newSend: New send
   sendCreated: Send created
@@ -86,6 +91,9 @@ addAccount:
   hint: Create one under Nextcloud Settings, Security. Never enter your Nextcloud login password here.
   hintWithLink: "Create one under Nextcloud Settings, Security: {link}. Never enter your Nextcloud login password here."
   securityLink: open security settings
+  signInWithBrowser: "Sign in through Nextcloud"
+  finishInTab: "Finish signing in on the Nextcloud page that opened. Keepiq adds the account when you are done."
+  orAppPassword: "Or enter an app password:"
 
 accounts:
   active: (active)
@@ -147,6 +155,13 @@ item:
   fillName: Fill {name}
   insecureTitle: Do you still wish to fill this login?
   insecureWarning: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page."
+  # A card or identity fill's questions; the context menu asks the same with pageFill.cardInsecure and pageFill.crossSite.
+  cardInsecureTitle: Fill this card on an insecure site?
+  cardInsecureWarning: This site is not secure. Anyone on the network could read the card details that are filled in.
+  # {hosts} is a comma-separated list of the other sites' hosts, {host} the page's.
+  crossSiteTitle: Also fill on {hosts}?
+  crossSiteWarning: Part of this form comes from {hosts}, not from {host}. Keepiq fills it there only if you agree.
+  onlyHost: Only {host}
   copyMenu: Copy, {name}
   moreMenu: More, {name}
   copyUsername: Copy username
@@ -176,6 +191,12 @@ form:
   itemDetails: Item details
   type: Type
   name: Name
+  # {brand} is a card brand such as Visa; these hints never block Save.
+  cardNumberLength: "{brand} doesn't issue card numbers of this length. You can still save."
+  cardNumberLengthUnknown: Card numbers have 12 to 19 digits. You can still save.
+  cardNumberChecksum: This number doesn't pass the card checksum. Check it; you can still save.
+  # {name} is a code name such as CVV or CID, {size} 3 or 4.
+  cardCodeLength: "{brand} cards use a {size}-digit {name}. You can still save."
   folder: Folder
   chooseFolder: Choose a folder, now {folder}
   website: Website URL
@@ -233,6 +254,7 @@ writeErrors:
   forbidden: Keepiq does not allow this change. The Keepiq web app shows why.
   policy: Your organisation's policy does not allow this change
   accountChanged: You switched to another account meanwhile, so nothing was saved. Switch back to save it.
+  accountChangedDelete: You switched to another account meanwhile, so nothing was deleted. Switch back to delete it.
   keepClash: A folder named {name} already exists one level up. Choose Move items to parent or Delete for it, or rename one of them first.
   keepClashAfter: A folder you chose to keep has the same name as one a level up, so nothing was deleted. Check the choices again.
   invalid: Keepiq refused this change
@@ -259,6 +281,9 @@ writeErrors:
   federationUnavailable: Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.
   keepiqOutdated: Your Keepiq server is too old to save this change. Nothing was saved; ask your administrator to update Keepiq to version {version} or later.
   partnerClock: The certificate of a partner organisation this item is shared with isn't valid by this computer's clock. Nothing was saved; check this computer's date and time, or make this change in the Keepiq web app.
+  shareScanPending: This item is waiting for a check of its shares that has not finished. Nothing was saved; try again later.
+  shareScanPendingOpen: This item is waiting for a check of its shares and can't be edited yet. Try again later.
+  shareScanPendingDelete: This item is waiting for a check of its shares that has not finished. Nothing was deleted; try again later.
   sendInvalid: Keepiq did not accept this send. Nothing was sent; check the fields and try again.
   sendOffline: Could not reach the server, nothing was sent
   argon2Unavailable: Password protection is not available in this browser
@@ -357,7 +382,9 @@ detail:
   passkey: Passkey
   relyingParty: Relying party
   passkeyUser: User name
-  passkeyUnsupported: Signing in with this passkey is not yet supported in the extension
+  passkeyOnLogin: Keepiq signs in with passkeys saved on a login, not with this item
+  passkeys: Passkeys
+  passkeyCreated: Created {date}
   useOnly: Its owner doesn't let you view or copy this.
 
 totp:
@@ -392,8 +419,6 @@ settings:
   pinMismatch: PINs don't match
   pinAdvice: Don't reuse a PIN from your phone or bank.
   pinAfterRestart: After a browser restart you enter your master password once; then your PIN works again.
-  biometrics: Unlock with biometrics
-  notAvailableYet: Not available yet
   vaultTimeout: Vault timeout
   timeoutImmediately: Immediately
   timeoutMinutes:
@@ -431,6 +456,11 @@ settings:
   uriRegex: Regular expression
   uriRegexNote: Regular expressions are an advanced option and can break matching
   inlineSuggestions: Show autofill suggestions on form fields
+  inlineCards: Display cards as suggestions
+  inlineIdentities: Display identities as suggestions
+  inlineKindsOff: Turn on Show autofill suggestions on form fields first.
+  vaultCards: Always show cards as Autofill suggestions on Vault view
+  vaultIdentities: Always show identities as Autofill suggestions on Vault view
   defaultPasswordManager: Make Keepiq your default password manager
   defaultPasswordManagerHint: Turns off the browser's own password saving and address autofill, so its suggestions don't cover Keepiq's.
   defaultPasswordManagerManaged: Your organisation or another extension manages this browser setting.
@@ -439,6 +469,11 @@ settings:
   shortcutNotSet: Not set
   shortcutChange: Change
   shortcutFirefox: Open about:addons, choose the gear menu, then Manage Extension Shortcuts
+  shortcutSafari: Open Safari Settings, choose Extensions, then select Keepiq to change its shortcut
+  websiteAccess: Website access
+  websiteAccessAll: Every website
+  websiteAccessSome: Only websites you allowed
+  websiteAccessServer: Not your Keepiq server
   clearClipboard: Clear clipboard
   clipboardSeconds:
     1: 1 second
@@ -447,6 +482,7 @@ settings:
   autoCopyTotpHint: If a login has a verification code, copy it to your clipboard when you autofill the login.
   askToAdd: Ask to add login
   askToUpdate: Ask to update existing login
+  askPasskeys: Ask to save and use passkeys
   excludedDomains: Excluded domains
   addCurrentSite: Add current site
   domain: Domain
@@ -481,6 +517,17 @@ settings:
   privacyPolicy: Privacy policy
   webApp: Keepiq web app
   rate: Rate the extension
+
+websiteAccess:
+  title: Let Keepiq work on websites
+  body: Safari runs Keepiq only on websites you allow. Allow it on every website to fill in logins, save new ones and use passkeys wherever you sign in.
+  allow: Allow on every website
+  dismiss: Not now
+  steps: 'In Safari, choose Safari > Settings, then Websites. Select Keepiq in the list and set "When visiting other websites" to Allow.'
+  perSite: To allow one site at a time, click the Keepiq button on that site and choose to always allow it.
+  serverTitle: Keepiq can't reach {host}
+  serverBody: Safari doesn't let Keepiq reach your server, so your vault can't sync.
+  serverAllow: Allow {host}
 
 generator:
   kinds: What to generate
@@ -597,18 +644,39 @@ send:
 pageFill:
   insecure: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page, {host}.\n\nDo you still wish to fill this login?"
   insecureNoHost: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page.\n\nDo you still wish to fill this login?"
+  # A card fill from the context menu into an http page; OK fills.
+  cardInsecure: "Fill this card on an insecure site?\n\nThis site is not secure. Anyone on the network could read the card details that are filled in."
+  # A card or identity fill from the context menu reaching frames of other sites; {hosts} is a comma-separated list, OK fills.
+  crossSite: "Also fill on {hosts}?\n\nPart of this form comes from {hosts}, not from {host}. Keepiq fills it there only if you agree."
 
 # The "Keepiq" right-click menu on editable fields.
 contextMenu:
   root: Keepiq
-  autofill: Autofill
-  noMatches: No matching logins
+  autofill: Autofill login
+  noMatches: No logins available
+  noUsernames: No usernames available
+  noPasswords: No passwords available
+  noCodes: No verification codes available
+  noIdentities: No identities available
+  noCards: No cards available
+  addLogin: Add login
+  addIdentity: Add identity
+  addCard: Add card
   openKeepiq: Open Keepiq
   copyUsername: Copy username
   copyPassword: Copy password
   copyCode: Copy verification code
+  autofillCard: Autofill card
+  autofillIdentity: Autofill identity
   generatePassword: Generate password and copy
   unlock: Unlock vault
+
+# What a context menu fill that found no form says in the page.
+pageNotice:
+  label: Keepiq notice
+  noLoginForm: Keepiq found no login form to fill on this page.
+  noCardForm: Keepiq found no card fields to fill on this page.
+  noIdentityForm: Keepiq found no address or personal details fields to fill on this page.
 
 # The toolbar icon's tooltip; {name} is the extension's name.
 toolbar:
@@ -624,6 +692,10 @@ inlineList:
   label: Keepiq logins for {host}
   row: "{name}, {username}"
   noMatch: No logins for {host}
+  # While the site waits for a passkey sign-in, the list offers passkeys above the logins.
+  passkeyRow: "{name}, {username}, passkey"
+  passkeyRowNoUser: "{name}, passkey"
+  noMatchPasskeys: No logins or passkeys for {host}
   locked: Keepiq is locked
   unlock: Unlock
   insecureQuestion: Fill on this insecure site?
@@ -635,6 +707,10 @@ inlineList:
       1: 1 Keepiq login. Press Down Arrow to choose.
       n: $1 Keepiq logins. Press Down Arrow to choose.
     noMatch: No Keepiq logins for {host}
+    countPasskeys:
+      1: 1 Keepiq login or passkey. Press Down Arrow to choose.
+      n: $1 Keepiq logins and passkeys. Press Down Arrow to choose.
+    noMatchPasskeys: No Keepiq logins or passkeys for {host}
     locked: Keepiq is locked. Press Down Arrow to unlock.
   # The list on a one-time code field, which offers logins with a code.
   code:
@@ -648,6 +724,30 @@ inlineList:
         1: 1 Keepiq verification code. Press Down Arrow to choose.
         n: $1 Keepiq verification codes. Press Down Arrow to choose.
       noMatch: No Keepiq verification codes for {host}
+  # The list on a card field, which offers every card; the questions after a pick are item.cardInsecure* and item.crossSite*.
+  card:
+    frameTitle: Keepiq cards
+    noMatch: No cards in Keepiq
+    locked: Unlock Keepiq to see your cards
+    # {brand} is a card brand such as Visa, {last4} the number's last four digits.
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Card, *{last4}"
+    # A card row's accessible name; screen readers read "*" as "star".
+    row: "{name}, {brand} ending in {last4}"
+    rowNoBrand: "{name}, card ending in {last4}"
+    status:
+      count:
+        1: 1 Keepiq card. Press Down Arrow to choose.
+        n: $1 Keepiq cards. Press Down Arrow to choose.
+  # The list on a personal-details or address field, which offers every identity.
+  identity:
+    frameTitle: Keepiq identities
+    noMatch: No identities in Keepiq
+    locked: Unlock Keepiq to see your identities
+    status:
+      count:
+        1: 1 Keepiq identity. Press Down Arrow to choose.
+        n: $1 Keepiq identities. Press Down Arrow to choose.
 
 # The save and update bar at the top of the web page.
 notificationBar:
@@ -684,3 +784,52 @@ notificationBar:
     incomplete: The people this login is shared with kept changing. Nothing was saved; try again.
     badCertificate: A recipient's encryption key could not be read. Nothing was saved.
     keepiqOutdated: Your Keepiq server is too old. Nothing was saved; ask your administrator for Keepiq {version} or later.
+    shareScanPending: This login is waiting for a check of its shares. Nothing was saved; try again later.
+
+# The window a site's passkey request opens. {rpId} is the site the passkey is for.
+passkey:
+  unlockGet: Unlock Keepiq to use a passkey for {rpId}
+  unlockCreate: Unlock Keepiq to save a passkey for {rpId}
+  verifyTitle: Confirm it's you
+  verifyPassword: Enter your master password to continue.
+  verifyPin: Enter your PIN to continue.
+  confirm: Confirm
+  signInTitle: Sign in with a passkey
+  signInText: Use a passkey saved in Keepiq for {rpId}
+  row: "{name}, {userName}"
+  noPasskey: No Keepiq passkey for {rpId}
+  saveTitle: Save passkey
+  saveTo: Save to a login
+  replaces: Replaces the passkey for {userName}
+  newLogin: New login
+  name: Name
+  folder: Folder
+  noFolder: No folder
+  saveNew: Save as new login
+  replaceQuestion: Replace the passkey for {userName} on {name}?
+  replace: Replace
+  alreadySavedTitle: Passkey already saved
+  alreadySaved: A passkey for this account is already saved in Keepiq
+  close: Close
+  retry: Retry
+  fallback: Use your device or hardware key
+  stalePick: This passkey is no longer in your vault. Choose another one.
+  staleSave: This login can no longer take the passkey. Choose another, or save it as a new login.
+  errors:
+    conflict: This login changed while saving. Nothing was saved; try again.
+    partnerUpgradeRequired: "Nothing was saved: the Keepiq of {cloudIds} is too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."
+    partnerUpgradeRequiredUnnamed: "Nothing was saved: a partner organisation this login is shared with runs a Keepiq too old to store passkeys. Ask them to update Keepiq, or save the passkey to another login."
+    shareScanPending: This login is waiting for a check of its shares that has not finished. Nothing was saved; try again later.
+
+vaultPasskey:
+  unlock: "Unlock with fingerprint or face"
+  unlockIntro: "Your browser asks for your fingerprint, face or device PIN."
+  enrolTitle: "Set up fingerprint or face unlock"
+  enrolIntro: "Confirm your master password. Your browser then asks for your fingerprint, face or device PIN twice."
+  enrolSubmit: "Set up"
+  enrolDone: "Fingerprint or face unlock is set up for this browser."
+  close: "Close"
+  label: "Keepiq browser extension"
+  tooOld: "Fingerprint or face unlock needs Chrome or Edge 122, or Firefox 150, or later. Use your master password."
+  unsupported: "This browser or device cannot unlock Keepiq with fingerprint or face. Use your master password."
+  revokeInWebApp: "To turn it off, revoke this passkey in the Keepiq web app."

@@ -2,10 +2,12 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { GUARD_MS } from '@/src/autofill/visibility'
 import type { DecryptedItem } from '@/src/messages'
 import type { CurrentTab } from '../hooks/useCurrentTab'
+import { SettingsProvider } from '../hooks/useSettings'
 import { DEFAULT_SHELL, ShellContext } from '../shell-context'
-import { everythingVisible, fakeBackground, fakeClipboard, itemMeta, sentKinds, sentOf, snapshotReply, types, type UnlockedSnapshot } from '../testing'
+import { everythingVisible, fakeBackground, fakeClipboard, fakePermissions, itemMeta, sentKinds, sentOf, snapshotReply, types, type UnlockedSnapshot } from '../testing'
 import { VaultList } from './VaultList'
 
 afterEach(cleanup)
@@ -30,7 +32,7 @@ function renderList(snapshot: UnlockedSnapshot, options: ListOptions = {}) {
 	const items = { add: vi.fn(), edit: vi.fn(), clone: vi.fn(), move: vi.fn(), remove: vi.fn(), send: vi.fn() }
 	render(
 		<ShellContext.Provider value={{ ...DEFAULT_SHELL, toast, launch, items, refreshState }}>
-			<VaultList snapshot={snapshot} tab={options.tab ?? { id: 1, windowId: 1, url: undefined, host: null }} syncNow={syncNow} onOpen={onOpen} />
+			<VaultList snapshot={snapshot} tab={options.tab ?? { id: 1, windowId: 1, url: undefined, host: null }} serverUrl="https://cloud.example.org" syncNow={syncNow} onOpen={onOpen} />
 		</ShellContext.Provider>,
 	)
 	return { sent, toast, launch, onOpen, syncNow, items, refreshState }
@@ -49,6 +51,7 @@ describe('layout and sorting', () => {
 		const order = [screen.getByRole('searchbox'), screen.getByRole('combobox', { name: 'Folder' }), screen.getByRole('group', { name: 'Type' }), screen.getByRole('region', { name: 'Items' })]
 		for (let i = 1; i < order.length; i++) expect(order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 		expect(listed()).toEqual(['Amazon', 'apple', 'bank'])
+		expect(screen.queryByText(/^Showing the first/)).toBeNull()
 	})
 
 	it('breaks name ties by id', async () => {
@@ -160,12 +163,48 @@ describe('autofill suggestions', () => {
 		expect(listed()).toEqual(['Amazon', 'Zebra'])
 	})
 
+	it('skips a suggested id the vault no longer has', () => {
+		renderList(snapshotReply({ items: [itemMeta({ id: 'a', name: 'Amazon' }), itemMeta({ id: 'z', name: 'Zebra' })], suggestionIds: ['z', 'gone', 'a'] }), { tab: githubTab })
+		const section = screen.getByRole('region', { name: 'Autofill suggestions' })
+		expect(within(section).getAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)).toEqual(['Zebra', 'Amazon'])
+	})
+
 	it('says autofill is not available on a page that is not http(s), offering no item', () => {
 		renderList(snapshotReply({ suggestionIds: ['i1'] }), { tab: { id: 1, windowId: 1, url: 'chrome://newtab/', host: null } })
 		const section = screen.getByRole('region', { name: 'Autofill suggestions' })
 		expect(within(section).getByText('Autofill is not available on this page')).toBeTruthy()
 		expect(within(section).queryAllByRole('listitem')).toHaveLength(0)
 		expect(screen.queryByRole('button', { name: 'Fill GitHub' })).toBeNull()
+	})
+})
+
+describe('website access', () => {
+	afterEach(() => vi.unstubAllEnvs())
+
+	/** The server granted, every website not. */
+	function renderWithAccess(target: string) {
+		vi.stubEnv('BROWSER', target)
+		const { contains } = fakePermissions(['https://cloud.example.org/*'])
+		fakeBackground()
+		render(
+			<SettingsProvider>
+				<VaultList snapshot={snapshotReply()} tab={githubTab} serverUrl="https://cloud.example.org" syncNow={vi.fn()} onOpen={vi.fn()} />
+			</SettingsProvider>,
+		)
+		return contains
+	}
+
+	it('shows the Safari card above Autofill suggestions', async () => {
+		renderWithAccess('safari')
+		const card = await screen.findByRole('region', { name: 'Let Keepiq work on websites' })
+		expect(card.compareDocumentPosition(screen.getByRole('region', { name: 'Autofill suggestions' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+	})
+
+	it.each(['chrome', 'firefox'])('shows nothing of it on %s', async (target) => {
+		const contains = renderWithAccess(target)
+		await screen.findByRole('region', { name: 'Autofill suggestions' })
+		expect(screen.queryByRole('region', { name: 'Let Keepiq work on websites' })).toBeNull()
+		expect(contains).not.toHaveBeenCalled()
 	})
 })
 
@@ -310,6 +349,173 @@ describe('filling from the suggestions', () => {
 	})
 })
 
+describe('filling a card or identity', () => {
+	const shopTab: CurrentTab = { id: 7, windowId: 1, url: 'http://shop.test/checkout', host: 'shop.test' }
+	const ORIGIN = 'http://shop.test'
+	const snapshot = () => snapshotReply({
+		items: [itemMeta({ id: 'l', name: 'Shop' }), itemMeta({ id: 'c', name: 'Visa', typeId: 't-card', hasLogin: false, url: null }), itemMeta({ id: 'p', name: 'Me', typeId: 't-identity', hasLogin: false, url: null })],
+		suggestionIds: ['l', 'c', 'p'],
+		formIds: ['c', 'p'],
+	})
+	const suggestions = () => screen.getByRole('region', { name: 'Autofill suggestions' })
+	const closeSpy = () => vi.spyOn(window, 'close').mockImplementation(() => {})
+	const question = (insecure: boolean, frameHosts: string[]) => ({ insecure, host: 'shop.test', origin: ORIGIN, frameHosts })
+	// Asks until the request carries an answer for every question, as the background does.
+	const asking = (insecure: boolean, frameHosts: string[]) => (message: { confirmed?: { insecure?: true; frames: string; frameHosts: string[] } }) => {
+		const answer = message.confirmed
+		const open = (insecure && !answer?.insecure) || (frameHosts.length > 0 && !answer)
+		return open ? { filled: 'none', code: false, needsFormConfirm: question(insecure, frameHosts) } : { filled: 'form', code: false }
+	}
+	const requests = (sent: ReturnType<typeof renderList>['sent']) => sentOf(sent, 'fill.request')
+	// The cross-site question ignores Fill and "Only {host}" for `GUARD_MS` after it appears.
+	beforeEach(() => vi.useFakeTimers({ toFake: ['Date'] }))
+	afterEach(() => vi.useRealTimers())
+	const settle = () => vi.setSystemTime(Date.now() + GUARD_MS)
+	const crossSite = async (name: string) => {
+		const dialog = await screen.findByRole('dialog', { name })
+		settle()
+		return dialog
+	}
+
+	it('lists the logins, then the cards, then the identities, in the background\'s order', () => {
+		renderList(snapshot(), { tab: shopTab })
+		expect(within(suggestions()).getAllByRole('listitem').map((row) => row.querySelector('.item__name')!.textContent)).toEqual(['Shop', 'Visa', 'Me'])
+	})
+
+	it('fills without a question and closes the popup', async () => {
+		const close = closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': { filled: 'form', code: false } } })
+		await userEvent.setup().click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		expect(requests(sent)).toEqual([{ kind: 'fill.request', itemId: 'c', tabId: 7 }])
+	})
+
+	it('says so when no frame has a field for it', async () => {
+		const close = closeSpy()
+		const { toast } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': { filled: 'none', code: false } } })
+		await userEvent.setup().click(within(suggestions()).getByRole('button', { name: 'Fill Me' }))
+		await vi.waitFor(() => expect(toast).toHaveBeenCalledWith('Unable to autofill on this page. Copy and paste instead.'))
+		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('asks the insecure question, then the cross-site one, and sends one merged answer echoing the origin', async () => {
+		const close = closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, ['js.stripe.test', 'pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		const insecure = await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })
+		expect(document.getElementById(insecure.getAttribute('aria-describedby')!)!.textContent).toBe('This site is not secure. Anyone on the network could read the card details that are filled in.')
+		expect(document.activeElement).toBe(within(insecure).getByRole('button', { name: 'Cancel' }))
+		await user.click(within(insecure).getByRole('button', { name: 'Fill' }))
+		const hosts = await crossSite('Also fill on js.stripe.test, pay.test?')
+		expect(document.getElementById(hosts.getAttribute('aria-describedby')!)!.textContent)
+			.toBe('Part of this form comes from js.stripe.test, pay.test, not from shop.test. Keepiq fills it there only if you agree.')
+		expect(within(hosts).getAllByRole('button').map((button) => button.textContent)).toEqual(['Fill', 'Only shop.test', 'Cancel'])
+		expect(document.activeElement).toBe(within(hosts).getByRole('button', { name: 'Cancel' }))
+		expect(requests(sent)).toHaveLength(1)
+		await user.click(within(hosts).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(close).toHaveBeenCalled())
+		expect(requests(sent)).toEqual([
+			{ kind: 'fill.request', itemId: 'c', tabId: 7 },
+			{ kind: 'fill.request', itemId: 'c', tabId: 7, confirmed: { insecure: true, frames: 'all', frameHosts: ['js.stripe.test', 'pay.test'], origin: ORIGIN } },
+		])
+	})
+
+	it('fills only the page\'s own site on "Only {host}"', async () => {
+		closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(false, ['js.stripe.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await crossSite('Also fill on js.stripe.test?')).getByRole('button', { name: 'Only shop.test' }))
+		await vi.waitFor(() => expect(requests(sent)).toHaveLength(2))
+		expect(requests(sent)[1]).toEqual({ kind: 'fill.request', itemId: 'c', tabId: 7, confirmed: { frames: 'sameSite', frameHosts: ['js.stripe.test'], origin: ORIGIN } })
+	})
+
+	it.each(['insecure', 'cross-site'])('sends nothing more after Cancel at the %s question', async (at) => {
+		const close = closeSpy()
+		const { sent, toast } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, ['pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		if (at === 'cross-site') await user.click(within(await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })).getByRole('button', { name: 'Fill' }))
+		await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }))
+		expect(screen.queryByRole('dialog')).toBeNull()
+		expect(requests(sent)).toHaveLength(1)
+		expect(toast).not.toHaveBeenCalled()
+		expect(close).not.toHaveBeenCalled()
+	})
+
+	it('sends an insecure-only answer straight away', async () => {
+		closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, []) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(requests(sent)).toHaveLength(2))
+		expect(requests(sent)[1]!.confirmed).toEqual({ insecure: true, frames: 'all', frameHosts: [], origin: ORIGIN })
+	})
+
+	it('ignores Fill and "Only {host}" on the cross-site question for its first moments, so one double click does not answer both', async () => {
+		closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, ['pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })).getByRole('button', { name: 'Fill' }))
+		const hosts = await screen.findByRole('dialog', { name: 'Also fill on pay.test?' })
+		vi.setSystemTime(Date.now() + GUARD_MS - 1)
+		await user.click(within(hosts).getByRole('button', { name: 'Fill' }))
+		await user.click(within(hosts).getByRole('button', { name: 'Only shop.test' }))
+		expect(requests(sent)).toHaveLength(1)
+		expect(screen.getByRole('dialog', { name: 'Also fill on pay.test?' })).toBe(hosts)
+		vi.setSystemTime(Date.now() + 1)
+		await user.click(within(hosts).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(requests(sent)).toHaveLength(2))
+		expect(requests(sent)[1]!.confirmed).toEqual({ insecure: true, frames: 'all', frameHosts: ['pay.test'], origin: ORIGIN })
+	})
+
+	it('counts the cross-site question\'s first moments from when it appears, not from the first question', async () => {
+		closeSpy()
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(true, ['pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		const insecure = await screen.findByRole('dialog', { name: 'Fill this card on an insecure site?' })
+		vi.setSystemTime(Date.now() + GUARD_MS * 4)
+		await user.click(within(insecure).getByRole('button', { name: 'Fill' }))
+		const hosts = await screen.findByRole('dialog', { name: 'Also fill on pay.test?' })
+		vi.setSystemTime(Date.now() + GUARD_MS / 5)
+		await user.click(within(hosts).getByRole('button', { name: 'Fill' }))
+		expect(requests(sent)).toHaveLength(1)
+	})
+
+	it('cancels the cross-site question at once, by Cancel or Escape', async () => {
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': asking(false, ['pay.test']) } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await screen.findByRole('dialog', { name: 'Also fill on pay.test?' })).getByRole('button', { name: 'Cancel' }))
+		expect(screen.queryByRole('dialog')).toBeNull()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await screen.findByRole('dialog', { name: 'Also fill on pay.test?' })
+		await user.keyboard('{Escape}')
+		expect(screen.queryByRole('dialog')).toBeNull()
+		expect(requests(sent)).toHaveLength(2)
+	})
+
+	it('asks again about a host added after the answer, carrying the earlier answers', async () => {
+		closeSpy()
+		const replies = [
+			{ filled: 'none', code: false, needsFormConfirm: question(false, ['js.stripe.test']) },
+			{ filled: 'none', code: false, needsFormConfirm: question(false, ['ads.test']) },
+			{ filled: 'form', code: false },
+		]
+		const { sent } = renderList(snapshot(), { tab: shopTab, replies: { 'fill.request': () => replies.shift() } })
+		const user = userEvent.setup()
+		await user.click(within(suggestions()).getByRole('button', { name: 'Fill Visa' }))
+		await user.click(within(await crossSite('Also fill on js.stripe.test?')).getByRole('button', { name: 'Fill' }))
+		await user.click(within(await crossSite('Also fill on ads.test?')).getByRole('button', { name: 'Fill' }))
+		await vi.waitFor(() => expect(requests(sent)).toHaveLength(3))
+		expect(requests(sent)[2]!.confirmed).toEqual({ frames: 'all', frameHosts: ['js.stripe.test', 'ads.test'], origin: ORIGIN })
+	})
+})
+
 describe('item cards', () => {
 	it('shows the decrypted login, decrypting only rows that have one', async () => {
 		const { sent } = renderList(snapshotReply({ items: [itemMeta({ id: '1', name: 'GitHub' }), itemMeta({ id: '2', name: 'Diary', typeId: 't-note', hasLogin: false, url: null })] }), { decrypted: { 1: { login: 'alice@example.com' } } })
@@ -447,6 +653,23 @@ describe('states', () => {
 		expect(screen.getByRole('status').textContent).toBe('Syncing your vault')
 		expect((screen.getByRole('searchbox') as HTMLInputElement).disabled).toBe(true)
 		expect((screen.getByRole('button', { name: 'All' }) as HTMLButtonElement).disabled).toBe(true)
+		expect((screen.getByRole('combobox', { name: 'Folder' }) as HTMLSelectElement).disabled).toBe(true)
+	})
+
+	it.each([
+		['before it reported anything', { syncing: false, lastError: null }],
+		['while a retry runs after a failure', { syncing: true, lastError: 'network' }],
+	] as const)('shows the first sync as running %s', (_, status) => {
+		renderList(snapshotReply({ items: null, sync: { syncedAt: null, offline: false, ...status } }))
+		expect(screen.getByRole('status').textContent).toBe('Syncing your vault')
+		expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+	})
+
+	it('shows no sync banner before the first sync brought rows', () => {
+		renderList(snapshotReply({ items: null, sync: { syncing: false, syncedAt: new Date().toISOString(), offline: true, lastError: 'busy' } }))
+		expect(screen.getByText('Could not load your vault')).toBeTruthy()
+		expect(screen.queryByText(/^Offline\./)).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Sync now' })).toBeNull()
 	})
 
 	it('offers a retry when the first sync failed', async () => {
@@ -468,6 +691,33 @@ describe('states', () => {
 		expect(listed()).toEqual(['GitHub'])
 	})
 
+	it('gives the reason of the row listed first when everything is blocked', () => {
+		renderList(snapshotReply({ items: [
+			itemMeta({ id: '1', name: 'Bank', blocked: true, hasLogin: false }),
+			itemMeta({ id: '2', name: 'Amazon', blocked: true, hasLogin: false, blockedReason: 'suite_missing' }),
+		] }))
+		expect(screen.getByText('All items are blocked.', { exact: false }).textContent).toBe('All items are blocked. Its encryption key no longer exists. Open the Keepiq web app')
+	})
+
+	it('says only that everything is blocked when the first row gives no reason', () => {
+		renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false })] }))
+		expect(screen.getByText('All items are blocked.', { exact: false }).textContent).toBe('All items are blocked. Open the Keepiq web app')
+	})
+
+	it('says nothing about blocked items while one row is still readable', () => {
+		renderList(snapshotReply({ items: [itemMeta({ id: '1', blocked: true, hasLogin: false }), itemMeta({ id: '2', name: 'Bank', hasLogin: false })] }))
+		expect(screen.queryByText('All items are blocked.', { exact: false })).toBeNull()
+	})
+
+	it('drops the search hint when the filters match nothing without a search', async () => {
+		renderList(snapshotReply({ items: [itemMeta({ id: '1', name: 'Bank', hasLogin: false })] }))
+		const user = userEvent.setup()
+		await user.type(screen.getByRole('searchbox'), '   ')
+		await user.click(screen.getByRole('button', { name: 'Note' }))
+		expect(screen.getByText('No items match')).toBeTruthy()
+		expect(screen.queryByText('Search covers names and websites.')).toBeNull()
+	})
+
 	it('shows the offline banner with the last sync and Sync now', async () => {
 		const syncedAt = new Date(Date.now() - 2 * 3_600_000).toISOString()
 		const { syncNow } = renderList(snapshotReply({ sync: { syncing: false, syncedAt, offline: true, lastError: 'network' } }))
@@ -479,5 +729,28 @@ describe('states', () => {
 	it('says the server is busy on a write lock', () => {
 		renderList(snapshotReply({ sync: { syncing: false, syncedAt: new Date().toISOString(), offline: false, lastError: 'busy' } }))
 		expect(screen.getByText('Server busy, retrying later')).toBeTruthy()
+	})
+
+	it('shows the offline banner rather than busy when both apply', () => {
+		renderList(snapshotReply({ sync: { syncing: false, syncedAt: new Date().toISOString(), offline: true, lastError: 'busy' } }))
+		expect(screen.getByText(/^Offline\. Last synced/)).toBeTruthy()
+		expect(screen.queryByText('Server busy, retrying later')).toBeNull()
+	})
+
+	it('marks Sync now busy while that sync runs', () => {
+		renderList(snapshotReply({ sync: { syncing: true, syncedAt: new Date().toISOString(), offline: true, lastError: null } }))
+		expect(screen.getByRole('button', { name: 'Sync now' }).getAttribute('aria-busy')).toBe('true')
+	})
+
+	it.each([
+		['offline without a known last sync', { offline: true, syncedAt: null, lastError: null }],
+		['busy while offline without a known last sync', { offline: true, syncedAt: null, lastError: 'busy' }],
+		['after a sync error other than busy', { offline: false, syncedAt: new Date().toISOString(), lastError: 'network' }],
+	] as const)('shows no sync banner %s', (_, status) => {
+		renderList(snapshotReply({ sync: { syncing: false, ...status } }))
+		expect(listed()).toEqual(['GitHub'])
+		expect(screen.queryByText(/^Offline\./)).toBeNull()
+		expect(screen.queryByText('Server busy, retrying later')).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Sync now' })).toBeNull()
 	})
 })

@@ -25,6 +25,7 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCA\Keepiq\Middleware\ApiContractMiddleware;
 
 /**
  * Main application class for the Keepiq Nextcloud app.
@@ -97,6 +98,10 @@ class Application extends App implements IBootstrap {
 	 * @spec openspec/specs/app-shell/spec.md#requirement-keepiq-operates-without-any-other-conduction-app
 	 */
 	public function register(IRegistrationContext $context): void {
+		// The API contract (version header, deprecation of unversioned paths,
+		// problem details). Registered first: Nextcloud runs afterController in
+		// reverse order, so it sees the final response of every other middleware.
+		$context->registerMiddleware(class: ApiContractMiddleware::class);
 		include_once __DIR__ . '/../../vendor/autoload.php';
 
 		// Keepiq's own settings stack and the admin areas, as themselves, so a

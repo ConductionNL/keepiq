@@ -160,7 +160,7 @@ describe('key hand-off', () => {
 	})
 
 	it('shows nothing when the background refuses, answers nonsense or cannot be reached', async () => {
-		for (const reply of [null, { mode: 'add' }, { ...update(), itemName: undefined }, { ...update(), username: 3 }, { ...add(), folders: [{ id: 1 }] }, { ...add(), theme: 'pink' }, 'add']) {
+		for (const reply of [null, { mode: 'add' }, { ...update(), itemName: undefined }, { ...update(), username: 3 }, { ...add(), folders: [{ id: 1 }] }, { ...add(), theme: 'pink' }, { ...add(), host: 3 }, { ...add(), tabHost: 3 }, { ...add(), shortcut: 3 }, { ...add(), folders: 'f1' }, { ...add(), mode: 'remove' }, 'add']) {
 			document.body.innerHTML = BODY
 			await open(reply)
 			expect(bar().children).toHaveLength(0)
@@ -651,6 +651,7 @@ describe('errors', () => {
 		['stale_source', 'The original of this shared login changed. Nothing was saved; try again.'],
 		['incomplete', 'The people this login is shared with kept changing. Nothing was saved; try again.'],
 		['bad_certificate', 'A recipient\'s encryption key could not be read. Nothing was saved.'],
+		['share_scan_pending', 'This login is waiting for a check of its shares. Nothing was saved; try again later.'],
 	])('words an update failing with %s', async (code, text) => {
 		await open(update())
 		writeReply = failure(code)
@@ -719,12 +720,34 @@ describe('errors', () => {
 			expect(bar().textContent).toBe('Login saved')
 		})
 
+		it('leaves the focus where it was when the bar had none', async () => {
+			await open(update())
+			writeReply = failure('not_found')
+			await click(button('Update'))
+			expect(buttonNames()).toEqual(['Never for this site', 'Save', 'Close'])
+			expect(document.activeElement).toBe(document.body)
+			await wait(250)
+			expect(status().textContent).toBe('This login no longer exists. Save it as a new login?')
+		})
+
 		it('on Save, names the folder instead', async () => {
 			await open()
 			writeReply = failure('not_found')
 			await click(button('Save'))
 			expect(error()!.textContent).toBe('This folder no longer exists')
 			expect(buttonNames()).toEqual(['Never for this site', 'Save', 'Close'])
+		})
+
+		it('on Save, keeps the folder chosen and the focus, as the bar is not built anew', async () => {
+			await open()
+			writeReply = failure('not_found')
+			select()!.value = 'f-work'
+			button('Save').focus()
+			key(button('Save'), 'Enter')
+			await flush()
+			expect(error()!.textContent).toBe('This folder no longer exists')
+			expect(select()!.value).toBe('f-work')
+			expect(document.activeElement).toBe(button('Save'))
 		})
 	})
 })

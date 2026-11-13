@@ -328,4 +328,53 @@ class VaultKeyProofServiceTest extends TestCase {
 
 		return $store;
 	}//end usedNonces()
+
+	/**
+	 * Golden: each refusal of an otherwise valid proof, in check order, with
+	 * its message, and none of them burns the nonce.
+	 *
+	 * @return void
+	 */
+	public function testEachRefusalNamesItsCheckAndKeepsTheNonce(): void {
+		$cases = [
+			'another user' => [['mallory', self::PURPOSE, null, null], 'Challenge does not match this operation'],
+			'another purpose' => [['alice', 'other', null, null], 'Challenge does not match this operation'],
+			'unreadable key' => [['alice', self::PURPOSE, 'not a pem', null], 'Subject public key unreadable'],
+			'malformed proof' => [['alice', self::PURPOSE, null, '%%%'], 'Malformed proof'],
+			'wrong key' => [['alice', self::PURPOSE, 'other', null], 'Proof does not verify'],
+		];
+		$nonce = $this->service->issueChallenge('alice', self::PURPOSE)['nonce'];
+		$sig = $this->sign($this->service->signedMessage($nonce, ['v']), $this->privateKeyPem);
+		foreach ($cases as $name => [[$user, $purpose, $pem, $signature], $message]) {
+			$pem = match ($pem) {
+				null => $this->publicKeyPem,
+				'other' => $this->otherPublicKeyPem,
+				default => $pem,
+			};
+			try {
+				$this->service->verify($nonce, $signature ?? $sig, $pem, $user, $purpose, ['v']);
+				$this->fail($name . ' verified');
+			} catch (KeyProofRequiredException $exception) {
+				$this->assertSame($message, $exception->getMessage(), $name);
+			}
+		}
+
+		$this->service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, ['v']);
+		$this->expectException(KeyProofRequiredException::class);
+		$this->service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, ['v']);
+	}//end testEachRefusalNamesItsCheckAndKeepsTheNonce()
+
+	/**
+	 * Golden: an expired challenge is refused with its own message.
+	 *
+	 * @return void
+	 */
+	public function testAnExpiredChallengeNamesTheExpiry(): void {
+		$nonce = $this->service->issueChallenge('alice', self::PURPOSE)['nonce'];
+		$sig = $this->sign($this->service->signedMessage($nonce, []), $this->privateKeyPem);
+		$this->now += 10000;
+
+		$this->expectExceptionMessage('Challenge has expired');
+		$this->service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
+	}//end testAnExpiredChallengeNamesTheExpiry()
 }//end class

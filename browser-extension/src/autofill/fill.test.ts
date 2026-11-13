@@ -6,7 +6,7 @@ import { addAccount } from '@/src/accounts/store'
 import { writeFromBackground } from '@/src/clipboard'
 import { pemToPkcs8, rsaDecrypt, toBase64 } from '@/src/crypto'
 import { lastUsedKey } from '@/src/last-used'
-import type { BackgroundToContent } from '@/src/messages'
+import type { BackgroundToContent, FillExecuteForm, FormConfirmation } from '@/src/messages'
 import { blockedRow, encrypt, folderRow, secretRow, typeRows } from '@/src/testing/vault'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { putKey } from '@/src/vault/key-store'
@@ -14,7 +14,7 @@ import { writeSnapshot } from '@/src/vault/store'
 import type { StoredSecretRow } from '@/src/vault/types'
 import { lock } from '@/src/vault/unlock'
 import { fill, handleFillRequest, matchingLogins, preferred } from './fill'
-import { forgetTab, recordFrame } from './frames'
+import { forgetTab, framesOf, recordFrame } from './frames'
 
 vi.mock('@/src/clipboard', () => ({ writeFromBackground: vi.fn(async () => true) }))
 vi.mock('@/src/crypto', async (importOriginal) => {
@@ -87,7 +87,7 @@ describe('fill', () => {
 		await vault([await login()])
 		recordFrame(TAB, 5, 'https://ads.other.test/')
 		answers = { 0: { filled: 'none' }, 5: { filled: 'both' } }
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(sent.map(({ frameId }) => frameId)).toEqual([0])
 	})
 
@@ -95,7 +95,7 @@ describe('fill', () => {
 		await vault([await login()])
 		tabUrl = 'https://other.test/'
 		recordFrame(TAB, 0, 'https://example.test/')
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(sent).toEqual([])
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 	})
@@ -107,10 +107,10 @@ describe('fill', () => {
 		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'both', code: false })
 	})
 
-	it('answers none for a page without login fields and records nothing', async () => {
+	it('answers no fields for a page without login fields and records nothing', async () => {
 		await vault([await login()])
 		answers = { 0: { filled: 'none' } }
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(await browser.storage.local.get(lastUsedKey(accountId))).toEqual({})
 	})
 
@@ -130,9 +130,19 @@ describe('fill', () => {
 		expect(rsaDecrypt).not.toHaveBeenCalled()
 	})
 
+	it('answers plain none, not no fields, when the decrypt fails', async () => {
+		await vault([await login()])
+		vi.mocked(rsaDecrypt).mockRejectedValueOnce(new Error('bad padding'))
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'page', code: true })).toEqual({ filled: 'none', code: false })
+		expect(sent).toEqual([])
+	})
+
 	it('refuses blocked, unknown and non-login items', async () => {
 		await vault([blockedRow({ id: 'b', url: 'https://example.test/' }), await login({ id: 'note', typeId: 't-note' })])
-		for (const itemId of ['b', 'note', 'missing']) expect(await fill({ itemId, tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		for (const itemId of ['b', 'missing']) expect(await fill({ itemId, tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		// A note fits no frame, as a login would on another site.
+		expect(await fill({ itemId: 'note', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(sent).toEqual([])
 	})
 
@@ -164,7 +174,7 @@ describe('fill', () => {
 
 	it('sends nothing to the inline list’s frame when the item no longer matches it', async () => {
 		await vault([await login()])
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true, only: { frameId: 4, url: 'https://other.test/', anchorKey: 'k1' } })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true, only: { frameId: 4, url: 'https://other.test/', anchorKey: 'k1' } })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(executed()).toEqual([])
 	})
 
@@ -301,7 +311,7 @@ describe('fill with a code', () => {
 	it('copies nothing when nothing was filled', async () => {
 		await vault([await withCode()])
 		answers = { 0: { filled: 'none', code: false } }
-		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(writeFromBackground).not.toHaveBeenCalled()
 	})
 
@@ -319,7 +329,7 @@ describe('fill with a code', () => {
 		await vault([await login(), standalone])
 		await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })
 		expect(codes()).toEqual([[0, null]])
-		expect(await fill({ itemId: 't1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false })
+		expect(await fill({ itemId: 't1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, noFields: true })
 		expect(writeFromBackground).not.toHaveBeenCalled()
 	})
 
@@ -359,5 +369,225 @@ describe('matchingLogins and preferred', () => {
 		expect(preferred([{ id: 'a' }], {})?.id).toBe('a')
 		expect(preferred([{ id: 'a' }, { id: 'b' }], {})).toBeNull()
 		expect(preferred([], {})).toBeNull()
+	})
+})
+
+describe('card and identity fill', () => {
+	const CARD = { cardholder: 'Anna de Vries', number: '4111 1111 1111 1111', expiry: '03/27', cvv: '123', pin: '9876' }
+	const IDENTITY = { firstName: 'Anna', lastName: 'de Vries', email: 'anna@example.test', phone: '0612345678', address: 'Kerkstraat 1', bsn: '123456782' }
+	const CARD_FIELDS = { roles: ['number', 'expMonth', 'expYear', 'securityCode'] }
+	const CARD_MEMBERS = { number: '4111111111111111', expMonth: '03', expYear: '2027', cvv: '123' }
+	/** Each frame's reply to `fill.probe`, by frame id. */
+	let probes: Record<number, unknown>
+	let confirmAnswer: boolean
+	/** Runs while the frames are probed. */
+	let duringProbe: () => Promise<void>
+
+	const card = async () => secretRow({ id: 'c1', name: 'Personal', url: 'https://bank.test/', typeId: 't-card', key: await encrypt(JSON.stringify(CARD)) })
+	const identity = async () => secretRow({ id: 'p1', name: 'Me', url: null, typeId: 't-identity', key: await encrypt(JSON.stringify(IDENTITY)) })
+	const forms = () => sent.filter(({ message }) => message.kind === 'fill.executeForm').map(({ message, frameId }) => [frameId, (message as FillExecuteForm).values])
+	const kinds = () => sent.map(({ message, frameId }) => `${message.kind}@${frameId}`)
+	const fillCard = (overrides: Partial<Parameters<typeof fill>[0]> = {}) => fill({ itemId: 'c1', tabId: TAB, ask: 'reply', code: true, ...overrides })
+	/** A probe reply carries the frame's own origin, unless the test gives another. */
+	const originOf = (frameId: number) => new URL(frameId === 0 ? tabUrl : framesOf(TAB).find((frame) => frame.frameId === frameId)!.url).origin
+	const probeReply = (frameId: number) => {
+		const reply = probes[frameId]
+		return reply instanceof Promise || !reply ? reply : { origin: originOf(frameId), ...reply }
+	}
+	const shop = (confirmed: Omit<FormConfirmation, 'origin'>): FormConfirmation => ({ ...confirmed, origin: 'https://shop.test' })
+
+	beforeEach(async () => {
+		tabUrl = 'https://shop.test/checkout'
+		probes = { 0: { roles: ['cardholder'] } }
+		confirmAnswer = true
+		duringProbe = async () => {}
+		await vault([await card(), await identity()])
+		vi.mocked(browser.tabs.sendMessage).mockImplementation(async (_tabId: number, message: unknown, options?: { frameId?: number }) => {
+			const frameId = options?.frameId ?? 0
+			const m = message as BackgroundToContent
+			sent.push({ message: structuredClone(m), frameId })
+			if (m.kind === 'fill.probe') await duringProbe()
+			if (m.kind === 'fill.probe') return probeReply(frameId) as never
+			if (m.kind === 'fill.executeForm') return { filled: Object.keys(m.values).length } as never
+			return (m.kind === 'fill.confirmForm' ? confirmAnswer : undefined) as never
+		})
+	})
+
+	it('fills the name in the page and the card in a same-site frame without a question, decrypting once', async () => {
+		recordFrame(TAB, 3, 'https://pay.shop.test/card')
+		recordFrame(TAB, 4, 'https://shop.test/newsletter')
+		probes = { 0: { roles: ['cardholder'] }, 3: CARD_FIELDS, 4: { roles: [] } }
+		expect(await fillCard()).toEqual({ filled: 'form', code: false })
+		expect(forms()).toEqual([[0, { cardholder: 'Anna de Vries' }], [3, CARD_MEMBERS]])
+		expect(sent.find(({ frameId, message }) => frameId === 3 && message.kind === 'fill.executeForm')?.message).toMatchObject({ form: 'card', origin: 'https://pay.shop.test' })
+		expect(kinds()).not.toContain('fill.confirmForm@0')
+		expect(rsaDecrypt).toHaveBeenCalledTimes(1)
+		expect(Object.keys((await browser.storage.local.get(lastUsedKey(accountId)))[lastUsedKey(accountId)] as object)).toEqual(['c1'])
+	})
+
+	it('probes only the top frame without a frame record', async () => {
+		await fillCard()
+		expect(kinds()).toEqual(['fill.probe@0', 'fill.executeForm@0'])
+	})
+
+	it('asks about a cross-site frame, naming its host, before decrypting anything', async () => {
+		recordFrame(TAB, 3, 'https://js.stripe.test/v3')
+		probes = { 0: { roles: ['cardholder'] }, 3: CARD_FIELDS }
+		expect(await fillCard()).toEqual({ filled: 'none', code: false, needsFormConfirm: { insecure: false, host: 'shop.test', origin: 'https://shop.test', frameHosts: ['js.stripe.test'] } })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+		expect(forms()).toEqual([])
+	})
+
+	it('sends a cross-site frame nothing after "Only {host}", and its members after "Fill"', async () => {
+		recordFrame(TAB, 3, 'https://js.stripe.test/v3')
+		probes = { 0: { roles: ['cardholder'] }, 3: CARD_FIELDS }
+		expect(await fillCard({ confirmed: shop({ frames: 'sameSite', frameHosts: ['js.stripe.test'] }) })).toEqual({ filled: 'form', code: false })
+		expect(forms()).toEqual([[0, { cardholder: 'Anna de Vries' }]])
+		sent = []
+		expect(await fillCard({ confirmed: shop({ frames: 'all', frameHosts: ['js.stripe.test'] }) })).toEqual({ filled: 'form', code: false })
+		expect(forms()).toEqual([[0, { cardholder: 'Anna de Vries' }], [3, CARD_MEMBERS]])
+	})
+
+	it('asks again when the answer was given for another page', async () => {
+		recordFrame(TAB, 3, 'https://js.stripe.test/v3')
+		probes = { 0: { roles: ['cardholder'] }, 3: CARD_FIELDS }
+		const answer = { frames: 'all' as const, frameHosts: ['js.stripe.test'] }
+		tabUrl = 'https://evil.test/checkout'
+		expect((await fillCard({ confirmed: shop(answer) })).needsFormConfirm).toEqual({ insecure: false, host: 'evil.test', origin: 'https://evil.test', frameHosts: ['js.stripe.test'] })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+		expect(forms()).toEqual([])
+	})
+
+	it('asks again when the answer was given on the same host over another scheme or port', async () => {
+		probes = { 0: { roles: ['cardholder'] } }
+		tabUrl = 'http://shop.test/checkout'
+		const answer = { insecure: true as const, frames: 'all' as const, frameHosts: [] }
+		expect((await fillCard({ confirmed: shop(answer) })).needsFormConfirm).toEqual({ insecure: true, host: 'shop.test', origin: 'http://shop.test', frameHosts: [] })
+		expect(await fillCard({ confirmed: { ...answer, origin: 'http://shop.test' } })).toEqual({ filled: 'form', code: false })
+	})
+
+	it('asks about no host whose frame left its recorded origin before the probe', async () => {
+		recordFrame(TAB, 3, 'https://pay.shop.test/card')
+		probes = { 0: { roles: ['cardholder'] }, 3: { ...CARD_FIELDS, origin: 'https://ads.test' } }
+		expect(await fillCard()).toEqual({ filled: 'form', code: false })
+		expect(forms()).toEqual([[0, { cardholder: 'Anna de Vries' }]])
+		sent = []
+		probes = { 0: { roles: ['cardholder'], origin: undefined } }
+		expect(await fillCard()).toEqual({ filled: 'none', code: false, noFields: true })
+		expect(kinds()).toEqual(['fill.probe@0', 'fill.probe@3'])
+	})
+
+	it('asks again, filling nothing, about a frame added after the answer', async () => {
+		recordFrame(TAB, 3, 'https://js.stripe.test/v3')
+		recordFrame(TAB, 5, 'https://ads.test/')
+		probes = { 0: { roles: ['cardholder'] }, 3: CARD_FIELDS, 5: { roles: ['number'] } }
+		const result = await fillCard({ confirmed: shop({ frames: 'all', frameHosts: ['js.stripe.test'] }) })
+		expect(result.needsFormConfirm?.frameHosts).toContain('ads.test')
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+		expect(forms()).toEqual([])
+	})
+
+	it('asks before a card reaches an insecure page, never before an identity', async () => {
+		tabUrl = 'http://shop.test/checkout'
+		expect((await fillCard()).needsFormConfirm).toEqual({ insecure: true, host: 'shop.test', origin: 'http://shop.test', frameHosts: [] })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+		expect(await fillCard({ confirmed: { insecure: true, frames: 'all', frameHosts: [], origin: 'http://shop.test' } })).toEqual({ filled: 'form', code: false })
+		probes = { 0: { roles: ['email'] } }
+		expect(await fillCard({ itemId: 'p1' })).toEqual({ filled: 'form', code: false })
+		tabUrl = 'http://localhost:8100/card.html'
+		probes = { 0: { roles: ['cardholder'] } }
+		expect(await fillCard()).toEqual({ filled: 'form', code: false })
+	})
+
+	it('decrypts nothing when the vault locks between the probe and the fill', async () => {
+		duringProbe = () => lock(accountId)
+		expect(await fillCard()).toEqual({ filled: 'none', code: false })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+		expect(forms()).toEqual([])
+	})
+
+	it('decrypts and sends nothing to a page without fields of the kind, which says so', async () => {
+		probes = { 0: { roles: [] } }
+		expect(await fillCard()).toEqual({ filled: 'none', code: false, noFields: true })
+		expect(rsaDecrypt).not.toHaveBeenCalled()
+		expect(kinds()).toEqual(['fill.probe@0'])
+	})
+
+	it('probes nothing on a page that is not on the web', async () => {
+		tabUrl = 'chrome://newtab/'
+		expect(await fillCard()).toEqual({ filled: 'none', code: false })
+		expect(sent).toEqual([])
+	})
+
+	it('ignores roles of another kind and a frame that does not answer the probe in time', async () => {
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+		try {
+			recordFrame(TAB, 3, 'https://pay.shop.test/')
+			probes = { 0: { roles: ['cardholder', 'email', 'pin'] }, 3: new Promise(() => {}) }
+			const result = fillCard()
+			await vi.advanceTimersByTimeAsync(500)
+			expect(await result).toEqual({ filled: 'form', code: false })
+			expect(forms()).toEqual([[0, { cardholder: 'Anna de Vries' }]])
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it('never sends a content script the PIN, the BSN or another frame’s members', async () => {
+		recordFrame(TAB, 3, 'https://pay.shop.test/')
+		probes = { 0: { roles: ['cardholder', 'fullName', 'email', 'streetAddress'] }, 3: CARD_FIELDS }
+		await fillCard()
+		probes = { 0: { roles: ['fullName', 'email', 'streetAddress', 'phone'] }, 3: { roles: ['cardholder'] } }
+		await fillCard({ itemId: 'p1' })
+		const everything = JSON.stringify(sent)
+		expect(everything).not.toContain(CARD.pin)
+		expect(everything).not.toContain(IDENTITY.bsn)
+		expect(JSON.stringify(sent.filter(({ frameId }) => frameId === 0))).not.toContain(CARD_MEMBERS.number)
+		expect(JSON.stringify(sent.filter(({ message }) => message.kind === 'fill.probe'))).not.toContain('Anna')
+		const stored = JSON.stringify([await browser.storage.local.get(null), await browser.storage.session.get(null)])
+		expect(stored).not.toContain('Anna')
+	})
+
+	it('fills the inline list’s form in its frame and follows the plan in the others', async () => {
+		recordFrame(TAB, 3, 'https://pay.shop.test/')
+		probes = { 0: { roles: ['cardholder'] }, 3: CARD_FIELDS }
+		await fillCard({ only: { frameId: 3, url: 'https://pay.shop.test/', anchorKey: 'k1' } })
+		const withKey = sent.filter(({ message }) => (message as { anchorKey?: string }).anchorKey === 'k1').map(({ message, frameId }) => `${message.kind}@${frameId}`)
+		expect(withKey).toEqual(['fill.probe@3', 'fill.executeForm@3'])
+		expect(forms().map(([frameId]) => frameId)).toEqual([0, 3])
+	})
+
+	describe('from the context menu', () => {
+		beforeEach(() => {
+			recordFrame(TAB, 3, 'https://js.stripe.test/v3')
+			probes = { 0: { roles: ['cardholder'] }, 3: CARD_FIELDS }
+		})
+
+		it('asks in the top frame and fills after OK, probing again first', async () => {
+			expect(await fillCard({ ask: 'page' })).toEqual({ filled: 'form', code: false })
+			expect(sent.find(({ message }) => message.kind === 'fill.confirmForm'))
+				.toEqual({ message: { kind: 'fill.confirmForm', insecure: false, host: 'shop.test', origin: 'https://shop.test', frameHosts: ['js.stripe.test'] }, frameId: 0 })
+			expect(kinds().filter((kind) => kind.startsWith('fill.probe'))).toHaveLength(4)
+			expect(forms().map(([frameId]) => frameId)).toEqual([0, 3])
+		})
+
+		it('fills nothing after Cancel', async () => {
+			confirmAnswer = false
+			expect(await fillCard({ ask: 'page' })).toEqual({ filled: 'none', code: false })
+			expect(rsaDecrypt).not.toHaveBeenCalled()
+			expect(forms()).toEqual([])
+		})
+	})
+
+	it('takes the popup’s confirmation through fill.request', async () => {
+		recordFrame(TAB, 3, 'https://js.stripe.test/v3')
+		probes = { 0: { roles: ['cardholder'] }, 3: CARD_FIELDS }
+		const confirmed = { frames: 'sameSite', frameHosts: ['js.stripe.test'], origin: 'https://shop.test', extra: 'ignored' }
+		expect(await handleFillRequest({ kind: 'fill.request', itemId: 'c1', tabId: TAB, confirmed } as never)).toEqual({ filled: 'form', code: false })
+		expect(forms()).toEqual([[0, { cardholder: 'Anna de Vries' }]])
+		sent = []
+		const withoutOrigin = { ...confirmed, origin: undefined }
+		expect((await handleFillRequest({ kind: 'fill.request', itemId: 'c1', tabId: TAB, confirmed: withoutOrigin } as never)).needsFormConfirm?.frameHosts).toEqual(['js.stripe.test'])
+		expect(forms()).toEqual([])
 	})
 })

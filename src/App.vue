@@ -485,6 +485,17 @@ const ACTIVITY_EVENTS = Object.freeze([
 	'touchstart',
 ])
 
+/**
+ * Whether a revoke was refused because usable emergency access would be lost.
+ *
+ * @param {Error|object} e The failure.
+ * @return {boolean}
+ * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+ */
+function isEmergencyLossRefusal(e) {
+	return e.response?.status === 409 && e.response?.data?.error === 'emergency_access_present'
+}
+
 export default {
 	name: 'App',
 
@@ -1044,29 +1055,33 @@ export default {
 					acceptEmergencyLoss,
 				)
 				this.revokeSuccess = true
-				this.revokeConfirm = false
-				this.revokeReason = ''
-				this.revokePassword = ''
-				this.revokeEmergencyCount = 0
+				this.cancelRevoke()
 			} catch (e) {
-				// The server refuses to silently delete a usable break-glass path.
-				// Surface the count (never identities) and let the user re-confirm
-				// with the loss acknowledged, rather than showing a generic error.
-				if (
-					e.response?.status === 409
-					&& e.response?.data?.error === 'emergency_access_present'
-				) {
-					this.revokeEmergencyCount =
-						e.response.data.usableEmergencyContacts || 1
-				} else {
-					this.revokeError =
-						e.response?.data?.message
-						|| e.message
-						|| ncT('keepiq', 'Failed to revoke suite')
-				}
+				this.showRevokeFailure(e)
 			} finally {
 				this.revoking = false
 			}
+		},
+
+		/**
+		 * Show why a revoke failed. The server refuses to silently delete a
+		 * usable break-glass path: surface the count (never identities) and
+		 * let the user re-confirm with the loss acknowledged, rather than
+		 * showing a generic error.
+		 *
+		 * @param {Error|object} e The failure.
+		 * @return {void}
+		 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+		 */
+		showRevokeFailure(e) {
+			if (isEmergencyLossRefusal(e)) {
+				this.revokeEmergencyCount = e.response.data.usableEmergencyContacts || 1
+				return
+			}
+			this.revokeError =
+				e.response?.data?.message
+				|| e.message
+				|| ncT('keepiq', 'Failed to revoke suite')
 		},
 
 		/**

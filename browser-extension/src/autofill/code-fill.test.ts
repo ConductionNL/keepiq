@@ -94,4 +94,19 @@ describe('pickCode', () => {
 		expect(await pickCode(target())).toEqual({ filled: 'none', code: false })
 		expect(sent).toEqual([])
 	})
+
+	it('sends nothing for an item the vault does not hold, or one on a blocked suite', async () => {
+		await vault()
+		expect(await pickCode(target({ itemId: 'missing' }))).toEqual({ filled: 'none', code: false })
+		await vault({ blocked: true, blockedReason: 'suite_revoked' } as never)
+		expect(await pickCode(target())).toEqual({ filled: 'none', code: false })
+		expect(sent).toEqual([])
+	})
+
+	it('records nothing when the tab does not answer', async () => {
+		await vault()
+		vi.mocked(browser.tabs.sendMessage).mockRejectedValue(new Error('no receiver'))
+		expect(await pickCode(target())).toEqual({ filled: 'none', code: false })
+		expect(await browser.storage.local.get(lastUsedKey(accountId))).toEqual({})
+	})
 })

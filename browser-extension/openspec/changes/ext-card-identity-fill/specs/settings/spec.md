@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Autofill settings entries
-The extension SHALL store per account the entries Autofill on page load (default off, with the warning "Compromised or untrusted websites can exploit autofill on page load"), Default autofill setting for login items (Autofill on page load if enabled, default, or Never), Default URI match detection (Base domain, default; Host; Starts with; Exact; Regular expression; Never), Show autofill suggestions on form fields (default on) with, beneath it, Show cards as suggestions (nl "Kaarten als suggesties tonen", default on) and Show identities as suggestions (nl "Identiteiten als suggesties tonen", default on), Always show cards as Autofill suggestions on Vault view (nl "Kaarten altijd als invulsuggesties tonen in de kluisweergave", default on), Always show identities as Autofill suggestions on Vault view (nl "Identiteiten altijd als invulsuggesties tonen in de kluisweergave", default on) and Enable context menu options (default on). Show cards as suggestions and Show identities as suggestions are disabled, keeping their stored value, while Show autofill suggestions on form fields is off. Each change is stored immediately and read by ext-autofill and ext-card-identity-fill on their next use.
+The extension SHALL store per account the entries Autofill on page load (default off, with the warning "Compromised or untrusted websites can exploit autofill on page load"), Default autofill setting for login items (Autofill on page load if enabled, default, or Never), Default URI match detection (Base domain, default; Host; Starts with; Exact; Regular expression; Never), Show autofill suggestions on form fields (default on) with, beneath it, Display cards as suggestions (nl "Kaarten als suggesties tonen", default on) and Display identities as suggestions (nl "Identiteiten als suggesties tonen", default on), Always show cards as Autofill suggestions on Vault view (nl "Kaarten altijd als invulsuggesties tonen in de kluisweergave", default on), Always show identities as Autofill suggestions on Vault view (nl "Identiteiten altijd als invulsuggesties tonen in de kluisweergave", default on) and Enable context menu options (default on). Display cards as suggestions and Display identities as suggestions are disabled, keeping their stored value, while Show autofill suggestions on form fields is off. Each change is stored immediately and read by ext-autofill and ext-card-identity-fill on their next use.
 
 ext-autofill delivers the behaviour behind these entries and behind Ask to add login, Ask to update existing login and Excluded domains; ext-card-identity-fill delivers the four card and identity entries. Until the background reports an entry's behaviour as delivered, the entry is shown disabled with "Coming later" and its stored value and default are left untouched.
 
@@ -24,9 +24,10 @@ ext-autofill delivers the behaviour behind these entries and behind Ask to add l
 #### Scenario: Card suggestions under the inline list setting
 - **GIVEN** card and identity fill delivered and Show autofill suggestions on form fields turned off
 - **WHEN** the Autofill view renders
-- **THEN** Show cards as suggestions and Show identities as suggestions are disabled and keep their stored values
+- **THEN** Display cards as suggestions and Display identities as suggestions, shown nested beneath it, are disabled and keep their stored values
+- **AND** their reason is announced: "Turn on Show autofill suggestions on form fields first." (nl "Zet eerst Invulsuggesties tonen in formuliervelden aan.")
 
 #### Scenario: Per account
-- **GIVEN** two accounts, Show cards as suggestions off for the first
+- **GIVEN** two accounts, Display cards as suggestions off for the first
 - **WHEN** the user switches to the second
 - **THEN** the second account's own value applies to the inline list

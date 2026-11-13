@@ -35,6 +35,8 @@ namespace OCA\OpenRegister\Mcp\Attribute {
 			public readonly ?string $scope = null,
 			public readonly ?string $subject = null,
 			public readonly ?string $action = null,
+			public readonly ?string $reach = null,
+			public readonly array $annotations = [],
 		) {
 		}
 	}

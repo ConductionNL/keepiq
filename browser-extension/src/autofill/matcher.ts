@@ -43,21 +43,33 @@ function isPattern(url: string): boolean {
  * is ordinary and never runs as a pattern: unanchored, `https://bank.com` would match `https://bank.com.evil.net/`.
  */
 export function matches(itemUrl: string | null, rawPageUrl: string, rule: UriMatch): boolean {
+	const target = matchTarget(itemUrl, rawPageUrl)
+	if (!target) return false
+	if (rule === 'regex' && isPattern(target.url)) return matchesRegex(target.url, target.page.href)
+	const item = webUrl(target.url)
+	if (!item) return false
+	// A rule this version does not know matches nothing, as a `switch` without it did.
+	return RULE_MATCHES.get(rule)?.(item, target.page) as boolean
+}
+
+/** The item's url, trimmed, and the page's, when both are there. */
+function matchTarget(itemUrl: string | null, rawPageUrl: string): { url: string; page: URL } | null {
 	const url = itemUrl?.trim()
 	const page = pageUrl(rawPageUrl)
-	if (!url || !page) return false
-	if (rule === 'regex' && isPattern(url)) return matchesRegex(url, page.href)
-	const item = webUrl(url)
-	if (!item) return false
-	switch (rule) {
-		case 'regex':
-		case 'baseDomain': return baseDomain(item.href) === baseDomain(page.href)
-		case 'host': return item.host === page.host
-		case 'startsWith': return page.href.startsWith(item.href)
-		case 'exact': return page.href === item.href
-		case 'never': return false
-	}
+	return url && page ? { url, page } : null
 }
+
+const sameBaseDomain = (item: URL, page: URL) => baseDomain(item.href) === baseDomain(page.href)
+
+/** How each rule compares an item's url with the page's; under `regex` an ordinary url compares as under `baseDomain`. */
+const RULE_MATCHES = new Map<UriMatch, (item: URL, page: URL) => boolean>([
+	['regex', sameBaseDomain],
+	['baseDomain', sameBaseDomain],
+	['host', (item, page) => item.host === page.host],
+	['startsWith', (item, page) => page.href.startsWith(item.href)],
+	['exact', (item, page) => page.href === item.href],
+	['never', () => false],
+])
 
 export interface CandidateRow {
 	id: string
@@ -77,7 +89,11 @@ export function candidatesFor<T extends CandidateRow>(
 	if (page === undefined) return []
 	const loginTypes = new Set(vault.types.filter((type) => type.name === 'login').map((type) => type.id))
 	const found = vault.secrets.filter((row) => !row.blocked && row.typeId !== null && loginTypes.has(row.typeId) && matches(row.url, page, rule))
+	return byLastUsed(found, lastUsed)
+}
+
+export function byLastUsed<T extends { id: string; name: string }>(rows: T[], lastUsed: Readonly<Record<string, number>>): T[] {
 	const used = (id: string) => (Object.hasOwn(lastUsed, id) ? lastUsed[id]! : 0)
 	// Stable, so rows used equally long ago keep their name order.
-	return sortItems(found).sort((a, b) => used(b.id) - used(a.id))
+	return sortItems(rows).sort((a, b) => used(b.id) - used(a.id))
 }

@@ -321,4 +321,44 @@ class LinkShareMapper extends QBMapper {
 
 		return $qb->executeStatement();
 	}//end incrementUsageIfBelowLimit()
+
+	/**
+	 * Atomically count one serve of the snapshot as a use and an attempt,
+	 * but only while the usage count is below the limit and the attempts
+	 * since the last confirmed decrypt are below the cap. Returns the
+	 * number of rows affected: 1 when the snapshot may be served, 0 when
+	 * the token is unknown, used up, or out of attempts.
+	 *
+	 * @param string $token       The access token
+	 * @param int    $attemptsCap The attempt cap
+	 *
+	 * @return int The number of affected rows
+	 */
+	public function countServeIfAllowed(string $token, int $attemptsCap): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('usage_count', $qb->createFunction('usage_count + 1'))
+			->set('failed_attempts', $qb->createFunction('failed_attempts + 1'))
+			->where($qb->expr()->eq('token', $qb->createNamedParameter($token)))
+			->andWhere($qb->expr()->lt('usage_count', 'usage_limit'))
+			->andWhere($qb->expr()->lt('failed_attempts', $qb->createNamedParameter($attemptsCap, \OCP\DB\QueryBuilder\IQueryBuilder::PARAM_INT)));
+
+		return $qb->executeStatement();
+	}//end countServeIfAllowed()
+
+	/**
+	 * Reset the attempts of a token after a confirmed decrypt.
+	 *
+	 * @param string $token The access token
+	 *
+	 * @return int The number of affected rows
+	 */
+	public function resetFailedAttempts(string $token): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('failed_attempts', $qb->createNamedParameter(0, \OCP\DB\QueryBuilder\IQueryBuilder::PARAM_INT))
+			->where($qb->expr()->eq('token', $qb->createNamedParameter($token)));
+
+		return $qb->executeStatement();
+	}//end resetFailedAttempts()
 }//end class

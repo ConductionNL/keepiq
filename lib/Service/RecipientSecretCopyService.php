@@ -28,15 +28,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateTime;
-use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
 
 /**
  * Creates and deletes recipient copies of shared secrets.
@@ -63,16 +60,11 @@ class RecipientSecretCopyService {
 	}//end __construct()
 
 	/**
-	 * Create the recipient's encrypted Secret copy from browser-supplied
-	 * ciphertext.
+	 * Create the recipient's encrypted Secret copy from the ciphertext their
+	 * sharer's browser encrypted for them.
 	 *
-	 * @param string $sourceSecretId The owner's source secret ID
-	 * @param string $targetUserId The recipient user ID
-	 * @param string $encryptedKey The RSA-encrypted key blob
-	 * @param string|null $encryptedLogin The RSA-encrypted login blob
-	 * @param string|null $encryptedExtras The RSA-encrypted additional-fields blob
-	 * @param string|null $encryptedTotp The RSA-encrypted TOTP seed blob
-	 * @param string|null $encryptedPasskeys The RSA-encrypted passkeys blob
+	 * @param string              $sourceSecretId The owner's source secret ID
+	 * @param RecipientCiphertext $ciphertext     The recipient and their copy's blobs
 	 *
 	 * @return Secret|string The copy, or why none was minted: `not_found` (the source is gone), `no_suite`
 	 *   (the recipient has no active suite) or `copy_fields_mismatch` (the totp or passkeys sent does not
@@ -80,15 +72,7 @@ class RecipientSecretCopyService {
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
-	public function create(
-		string $sourceSecretId,
-		string $targetUserId,
-		string $encryptedKey,
-		?string $encryptedLogin,
-		?string $encryptedExtras,
-		?string $encryptedTotp = null,
-		?string $encryptedPasskeys = null,
-	): Secret|string {
+	public function createCopy(string $sourceSecretId, RecipientCiphertext $ciphertext): Secret|string {
 		try {
 			$source = $this->secretMapper->findById($sourceSecretId);
 		} catch (DoesNotExistException) {
@@ -98,45 +82,13 @@ class RecipientSecretCopyService {
 		// A copy without the source's TOTP seed or passkeys, or with ones it
 		// does not hold, is not minted; the pair stays missing until a row
 		// carries them.
-		if ((new CredentialFields())->notMirrored(source: $source, copy: ['totp' => $encryptedTotp, 'passkeys' => $encryptedPasskeys]) !== []) {
+		if ((new CredentialFields())->notMirrored(source: $source, copy: ['totp' => $ciphertext->totp, 'passkeys' => $ciphertext->passkeys]) !== []) {
 			return 'copy_fields_mismatch';
 		}
 
-		try {
-			$suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $targetUserId);
-		} catch (DoesNotExistException) {
-			return 'no_suite';
-		}
-
-		try {
-			$typeId = $this->typeService->resolveTypeForSecret($source->getTypeId(), $targetUserId);
-		} catch (InvalidArgumentException) {
-			// Owner's custom type is not visible to the recipient — default.
-			$typeId = $this->typeService->resolveTypeForSecret(null, $targetUserId);
-		}
-
-		$now = new DateTime();
-		$copy = new Secret();
-		$copy->setId(Uuid::uuid4()->toString());
-		$copy->setName($source->getName());
-		$copy->setUrl($source->getUrl());
-		$copy->setTypeId($typeId);
-		$copy->setFolderId(null);
-		$copy->setKey($encryptedKey);
-		$copy->setLogin($encryptedLogin);
-		$copy->setAdditionalFields($encryptedExtras);
-		$copy->setTotp($encryptedTotp);
-		$copy->setPasskeys($encryptedPasskeys);
-		$copy->setEncryptionSuiteId($suite->getId());
-		$copy->setOwnerType('user');
-		$copy->setOwnerId($targetUserId);
-		$copy->setCreatedAt($now);
-		$copy->setUpdatedAt($now);
-		$copy->setKeyUpdatedAt($now);
-		$this->secretMapper->insert($copy);
-
-		return $copy;
-	}//end create()
+		$copies = new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
+		return $copies->createCopy(source: $source, ciphertext: $ciphertext) ?? 'no_suite';
+	}//end createCopy()
 
 	/**
 	 * Delete a recipient's encrypted Secret copy (best-effort — a missing

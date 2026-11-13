@@ -1,0 +1,814 @@
+# European Portuguese (Portugal), not Brazilian. Terms and tone follow Nextcloud's pt_PT: formal (o seu, Introduza), cofre, palavra-passe mestra, palavra-passe da aplicação, chave de acesso, credencial, aplicação web.
+language: pt-PT
+extensionDescription: Keepiq para o seu navegador. Preencha credenciais, chaves de acesso e códigos de utilização única do seu cofre Nextcloud encriptado.
+commandAutofillLogin: Preencher a última credencial utilizada
+commandFocusNotificationBar: Ir para a barra do Keepiq para guardar
+
+errors:
+  insecureUrl: Utilize https para este servidor
+  invalidUrl: Introduza um URL de servidor válido
+  permissionDenied: O Keepiq precisa de permissão para aceder a {host}
+  unreachable: Não foi possível contactar {host}
+  notNextcloud: "{host} não parece ser um servidor Nextcloud"
+  serverError: "{host} está indisponível de momento, tente novamente mais tarde"
+  unauthorized: Nome de utilizador ou palavra-passe da aplicação incorretos
+  keepiqMissing: O Keepiq não está instalado em {host}
+  keepiqOutdated: O Keepiq em {host} é demasiado antigo para esta extensão, que precisa da versão {version} ou posterior. Peça ao seu administrador para atualizar o Keepiq.
+  noActiveSuite: Abra uma vez a aplicação web do Keepiq e defina uma palavra-passe mestra; depois, tente novamente
+  unlockBlocked: A sua organização exige autenticação de dois fatores. Configure um segundo fator nas Definições do Nextcloud, Segurança, e tente novamente
+  duplicate: Esta conta já foi adicionada
+  limitReached: Atingiu o máximo de {count} contas
+  invalidMasterPassword: Palavra-passe mestra inválida
+  keyUnreadable: Não foi possível ler a chave do seu cofre no Keepiq, pelo que este navegador não o consegue desbloquear. Informe o seu administrador do Keepiq.
+  offlineNoCache: Está sem ligação e este cofre ainda não foi sincronizado
+  sessionRevoked: Sessão revogada, inicie sessão novamente
+  writeLocked: Não é possível alterar o seu cofre de momento, tente novamente mais tarde
+  notResponding: O Keepiq não está a responder. Recarregue a extensão e volte a abrir esta janela.
+  invalidPin:
+    1: PIN errado, resta 1 tentativa
+    n: PIN errado, restam $1 tentativas
+  wrongPin: PIN errado
+  pinForgotten: PIN apagado após demasiadas tentativas
+  pinKeyChanged: A chave do seu cofre mudou. Desbloqueie com a sua palavra-passe mestra.
+  pinTooShort: Utilize pelo menos {count} caracteres
+  unknown: Ocorreu um erro
+  passkeyFailed: "A chave de acesso não conseguiu desbloquear o seu cofre. Use a sua palavra-passe mestra."
+
+notices:
+  keyChanged: A chave do seu cofre mudou no Keepiq. Desbloqueie com a sua palavra-passe mestra atual.
+  fileAccess: "O Keepiq não precisa de acesso a ficheiros. No Nextcloud, em Definições, Segurança, Dispositivos e sessões, pode desativar o acesso a ficheiros desta palavra-passe de aplicação ou revogá-la."
+
+common:
+  accountOnHost: "{name} em {host}"
+  loading: A carregar…
+  back: Voltar
+  cancel: Cancelar
+  logOut: Terminar sessão
+  appPassword: Palavra-passe da aplicação
+  addAccount: Adicionar conta
+  openWebApp: Abrir a aplicação web do Keepiq
+  justNow: agora mesmo
+
+titles:
+  accounts: Contas
+  logInAgain: Iniciar sessão novamente
+  unlock: Desbloquear
+  viewItem: Ver item
+  newItem: Novo item
+  newLogin: Nova credencial
+  newCard: Novo cartão
+  newIdentity: Nova identidade
+  editItem: Editar item
+  newSend: Novo envio
+  sendCreated: Envio criado
+
+tabs:
+  label: Principal
+  vault: Cofre
+  generator: Gerador
+  send: Enviar
+  settings: Definições
+
+header:
+  popout: Abrir em janela
+  accounts: Contas, sessão iniciada como {name}
+  new: Novo
+
+unlock:
+  masterPassword: Palavra-passe mestra
+  submit: Desbloquear
+  pin: PIN
+  useMasterPassword: Utilizar palavra-passe mestra
+
+logInAgain:
+  submit: Iniciar sessão
+
+addAccount:
+  serverUrl: URL do servidor
+  serverUrlPlaceholder: cloud.example.org
+  username: Nome de utilizador
+  hint: Crie uma nas Definições do Nextcloud, Segurança. Nunca introduza aqui a palavra-passe com que inicia sessão no Nextcloud.
+  hintWithLink: "Crie uma nas Definições do Nextcloud, Segurança: {link}. Nunca introduza aqui a palavra-passe com que inicia sessão no Nextcloud."
+  securityLink: abrir as definições de segurança
+  signInWithBrowser: "Iniciar sessão através do Nextcloud"
+  finishInTab: "Conclua o início de sessão na página do Nextcloud que se abriu. O Keepiq adiciona a conta quando terminar."
+  orAppPassword: "Ou introduza uma palavra-passe de aplicação:"
+
+accounts:
+  active: (ativa)
+  unlocked: Desbloqueada
+  locked: Bloqueada
+  loggedOut: Sessão terminada
+  lock: Bloquear {account}
+  logOut: Terminar sessão de {account}
+  lockAll: Bloquear todas
+  logOutAll: Terminar todas as sessões
+  logOutAllQuestion: Terminar sessão em todas as contas?
+  logOutAllDetail: Todas as contas são removidas deste navegador. Irá precisar novamente de cada palavra-passe da aplicação.
+  logOutQuestion: Terminar sessão de {account}?
+  logOutDetail: A conta é removida deste navegador. Irá precisar de uma palavra-passe da aplicação para a adicionar novamente.
+
+vault:
+  loadFailed: Não foi possível carregar o seu cofre
+  tryAgain: Tentar novamente
+  syncing: A sincronizar o seu cofre
+  empty: Não há itens no seu cofre
+  noMatch: Nenhum item corresponde
+  searchCovers: A pesquisa abrange nomes e sites.
+  clearFilters: Limpar filtros
+  items: Itens
+  tooMany: A mostrar os primeiros {count}, refine a sua pesquisa
+  offline: "Sem ligação. Última sincronização: {time}"
+  syncNow: Sincronizar agora
+  busy: Servidor ocupado, nova tentativa mais tarde
+  allBlocked: Todos os itens estão bloqueados.
+  suggestions: Sugestões de preenchimento automático
+  noSuggestions: Não há itens para {host}
+  autofillUnavailable: O preenchimento automático não está disponível nesta página
+  fillFailed: Não é possível preencher automaticamente nesta página. Copie e cole os dados.
+  openFailed: Não foi possível abrir o site
+  popoutFailed: Não foi possível abrir uma nova janela
+
+filters:
+  search: Pesquisar
+  searchLabel: Pesquisar no cofre
+  clearSearch: Limpar pesquisa
+  folder: Pasta
+  allItems: Todos os itens
+  noFolder: Sem pasta
+  type: Tipo
+  all: Todos
+  more: Mais
+  moreTypes: Mais tipos
+  login: Credencial
+  card: Cartão
+  identity: Identidade
+  note: Nota
+  totp: TOTP
+  passkey: Chave de acesso
+
+item:
+  blocked: Bloqueado
+  launch: Abrir {name}
+  fill: Preencher
+  fillName: Preencher {name}
+  insecureTitle: Pretende mesmo preencher esta credencial?
+  insecureWarning: "Aviso: esta é uma página HTTP não segura e qualquer informação que submeta pode ser vista e alterada por terceiros. Esta credencial foi originalmente guardada numa página segura (HTTPS)."
+  cardInsecureTitle: Preencher este cartão num site não seguro?
+  cardInsecureWarning: Este site não é seguro. Qualquer pessoa na rede pode ler os dados do cartão que forem preenchidos.
+  crossSiteTitle: Preencher também em {hosts}?
+  crossSiteWarning: Parte deste formulário vem de {hosts}, não de {host}. O Keepiq só o preenche aí se concordar.
+  onlyHost: Apenas {host}
+  copyMenu: Copiar, {name}
+  moreMenu: Mais, {name}
+  copyUsername: Copiar nome de utilizador
+  copyPassword: Copiar palavra-passe
+  copyCode: Copiar código de verificação
+  view: Ver
+  edit: Editar
+  clone: Clonar
+  move: Mover para pasta
+  delete: Eliminar
+  send: Enviar
+  cloneName: "{name} - Clone"
+  passkeyNoClone: As chaves de acesso não podem ser clonadas
+  useOnly: Partilhado consigo apenas para iniciar sessão
+  readOnly: Partilhado por outra organização, pelo que só pode ser movido
+  viewOnly: Partilhado consigo apenas para visualização. Peça ao proprietário permissões de edição para o alterar.
+  expiringNoClone: O seu acesso termina a {date}, pelo que não pode ser clonado
+  expiringNoSend: O seu acesso termina a {date}, pelo que não pode ser enviado
+  saved: Item guardado
+  deleted: Item movido para o lixo
+  moved: Movido para {folder}
+  deleteTitle: Eliminar item
+  deleteConfirm: Mover {name} para o lixo? Deixa de ser partilhado, mesmo que seja restaurado do lixo na aplicação web do Keepiq.
+  gone: Este item já não existe
+
+form:
+  itemDetails: Detalhes do item
+  type: Tipo
+  name: Nome
+  cardNumberLength: "{brand} não emite números de cartão com este comprimento. Pode guardar mesmo assim."
+  cardNumberLengthUnknown: Os números de cartão têm entre 12 e 19 dígitos. Pode guardar mesmo assim.
+  cardNumberChecksum: Este número não passa na verificação do cartão. Confirme-o; pode guardar mesmo assim.
+  cardCodeLength: "Os cartões {brand} usam um {name} de {size} dígitos. Pode guardar mesmo assim."
+  folder: Pasta
+  chooseFolder: "Escolher pasta, atual: {folder}"
+  website: URL do site
+  autofillOptions: Opções de preenchimento automático
+  additionalOptions: Opções adicionais
+  authenticator: Autenticador
+  note: Nota
+  secret: Segredo
+  advanced: Avançado
+  algorithm: Algoritmo
+  digits: Dígitos
+  period: Período em segundos
+  addField: Adicionar campo
+  fieldName: Nome do campo
+  fieldValue: Valor
+  removeField: Remover {name}
+  removeUnnamed: Remover campo
+  save: Guardar
+  passkeyReadOnly: Os dados de uma chave de acesso só podem ser alterados na aplicação web do Keepiq
+  offline: Está sem ligação. As alterações precisam de uma ligação ao Keepiq.
+  unsavedTitle: Alterações não guardadas
+  unsaved: Tem alterações não guardadas. Pretende descartá-las?
+  discard: Descartar
+  keepEditing: Continuar a editar
+
+authKey:
+  label: Chave de autenticação
+  optionalLabel: Chave de autenticação (opcional)
+  newLabel: Nova chave de autenticação
+  help: Cole a ligação otpauth://totp/ ou a chave secreta, ou digitalize o código QR na página.
+  scan: Digitalizar código QR na página
+  read: Chave de autenticação lida do código QR
+  noQr: Nenhum código QR encontrado na página. Desloque a página até o código ficar visível e tente novamente.
+  notTotp: Este código QR não contém uma chave de autenticação. Utilize o código QR que o site mostra quando configura a autenticação de dois fatores.
+  noPicture: O Keepiq não consegue capturar esta página. Em vez disso, cole a chave.
+  popout: Abra o Keepiq a partir da barra de ferramentas na página com o código QR para o digitalizar.
+  saved: Guardada
+  remove: Remover chave de autenticação
+  replaceHelp: Cole ou digitalize uma nova chave, ou deixe isto vazio para remover a chave guardada.
+  keep: Manter a chave guardada
+  removedOnSave: A chave de autenticação é removida quando guardar.
+  notCloned: A chave de autenticação não é clonada.
+
+fieldErrors:
+  required: O nome é obrigatório
+  tooLong: No máximo {max} caracteres
+  tooLongBytes: Demasiado longo (máximo {max} bytes)
+  reserved: Este nome está reservado
+  duplicate: Já existe um campo com este nome
+  invalidTotp: Não é um segredo de autenticação válido
+  slash: Os nomes de pastas não podem conter barras
+
+writeErrors:
+  writeLocked: O cofre está temporariamente bloqueado para uma migração de chaves, tente novamente mais tarde
+  forbidden: O Keepiq não permite esta alteração. A aplicação web do Keepiq mostra o motivo.
+  policy: A política da sua organização não permite esta alteração
+  accountChanged: Entretanto mudou para outra conta, pelo que nada foi guardado. Volte a essa conta para guardar.
+  accountChangedDelete: Entretanto mudou para outra conta, pelo que nada foi eliminado. Volte a essa conta para eliminar.
+  keepClash: Já existe uma pasta chamada {name} um nível acima. Escolha para ela Mover itens para a pasta superior ou Eliminar, ou mude primeiro o nome de uma delas.
+  keepClashAfter: Uma pasta que escolheu manter tem o mesmo nome que outra um nível acima, pelo que nada foi eliminado. Verifique novamente as opções.
+  invalid: O Keepiq recusou esta alteração
+  stale: Este item foi alterado noutro local. Volte atrás e edite-o novamente para ver a versão mais recente.
+  itemGone: Este item já não existe
+  folderGone: Esta pasta já não existe
+  duplicateFolder: Já existe aqui uma pasta com este nome
+  folderChanged: Esta pasta foi alterada. Verifique novamente as opções.
+  offline: Não foi possível contactar o servidor
+  serverError: O Keepiq está indisponível de momento, tente novamente mais tarde
+  unreadable: Não foi possível ler este item, pelo que não pode ser editado aqui
+  restricted: Este item foi partilhado consigo com restrições, pelo que não pode ser alterado nem copiado aqui
+  unmatched: O Keepiq enviou uma versão deste item que o seu cofre não tem, pelo que não foi aberto.
+  keyMismatch: O Keepiq enviou uma chave de encriptação que não corresponde ao seu cofre, pelo que nada foi guardado. Informe o seu administrador do Keepiq.
+  staleSource: O original deste item partilhado foi alterado depois de o abrir. Nada foi guardado; abra-o novamente e repita a alteração.
+  incomplete: As pessoas com quem este item é partilhado mudaram enquanto era guardado. Nada foi guardado; tente novamente.
+  badCertificate: O Keepiq enviou, para alguém com quem este item é partilhado, uma chave de encriptação que este navegador não conseguiu ler. Nada foi guardado.
+  unverified: Este item é partilhado com organizações parceiras e este navegador não consegue confirmar que o receberiam exatamente como o viu. Nada foi guardado; faça esta alteração na aplicação web do Keepiq.
+  partnerUnreachable: "Nada foi guardado: não é possível contactar uma organização parceira com quem este item é partilhado ({cloudIds}). Tente novamente mais tarde ou guarde sem elas; a partilha deste item com elas fica em pausa até voltar a partilhá-lo."
+  partnerUpgradeRequired: "Nada foi guardado: o Keepiq de {cloudIds} é demasiado antigo para receber uma chave de autenticação. Remova a chave ou peça-lhes que atualizem o Keepiq."
+  partnerUpgradeRequiredUnnamed: "Nada foi guardado: uma organização parceira com quem este item é partilhado usa um Keepiq demasiado antigo para receber uma chave de autenticação. Remova a chave ou peça-lhe que atualize o Keepiq."
+  partnerUpgradeVersion: Precisam do Keepiq {version} ou posterior.
+  partnerLookupLimit: Demasiadas pesquisas de parceiros. Nada foi guardado; tente novamente dentro de um minuto.
+  federationUnavailable: O seu servidor Keepiq não consegue partilhar com organizações parceiras, pelo que este item não pode ser guardado aqui. Nada foi guardado; contacte o seu administrador.
+  keepiqOutdated: O seu servidor Keepiq é demasiado antigo para guardar esta alteração. Nada foi guardado; peça ao seu administrador para atualizar o Keepiq para a versão {version} ou posterior.
+  partnerClock: O certificado de uma organização parceira com quem este item é partilhado não é válido segundo o relógio deste computador. Nada foi guardado; verifique a data e a hora deste computador ou faça esta alteração na aplicação web do Keepiq.
+  shareScanPending: Está a ser verificado com quem este item é partilhado. Nada foi guardado; tente novamente mais tarde.
+  shareScanPendingOpen: Está a ser verificado com quem este item é partilhado, pelo que ainda não pode ser editado. Tente novamente mais tarde.
+  shareScanPendingDelete: Está a ser verificado com quem este item é partilhado. Nada foi eliminado; tente novamente mais tarde.
+  sendInvalid: O Keepiq não aceitou este envio. Nada foi enviado; verifique os campos e tente novamente.
+  sendOffline: Não foi possível contactar o servidor, nada foi enviado
+  argon2Unavailable: A proteção por palavra-passe não está disponível neste navegador
+
+shareSave:
+  saveWithout: Guardar sem elas
+  ownerOnly: Guardado. Os destinatários em organizações parceiras recebem esta alteração quando o proprietário voltar a guardá-la.
+  suspended: A partilha com {cloudIds} está em pausa, porque não foi possível verificar o respetivo certificado ou a respetiva organização já não o aceita. A aplicação web do Keepiq mostra a partilha.
+  paused: A partilha com {cloudIds} está em pausa até voltar a partilhar este item.
+
+folders:
+  add: Adicionar pasta
+  newFolder: Nova pasta
+  rename: Mudar o nome
+  renameTitle: Mudar o nome da pasta
+  delete: Eliminar
+  more: Mais, {name}
+  name: Nome da pasta
+  empty: Ainda não há pastas
+  notice: Os nomes das pastas não são encriptados
+  dismiss: Fechar
+  current: Pasta atual
+  pickTitle: Escolher pasta
+  moveTitle: Mover para pasta
+  saved: Pasta guardada
+  deleted: Pasta eliminada
+  deleteTitle: Eliminar pasta
+  deleteConfirm: Eliminar {name}? Esta ação não pode ser anulada.
+  cascade:
+    1: Eliminar {name} e o item que contém, ou movê-lo para {parent}?
+    n: Eliminar {name} e os $1 itens que contém, ou movê-los para {parent}?
+  countsAll: Os itens arquivados e no lixo também contam.
+  deleteItems: Eliminar também os itens
+  moveItems: Mover itens para a pasta superior
+  items:
+    1: 1 item
+    n: $1 itens
+  subfolders:
+    1: 1 subpasta
+    n: $1 subpastas
+  directRow: Itens em {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Eliminar
+  actionMove: Mover itens para a pasta superior
+  actionKeep: Manter
+  directMove: Mover para a pasta superior
+
+clipboard:
+  copied: "Copiado: {what}"
+  failed: Não foi possível copiar
+
+field:
+  show: Mostrar {field}
+  hide: Ocultar {field}
+  copy: Copiar {field}
+
+blocked:
+  generic: Este item está bloqueado.
+  suiteMissing: A respetiva chave de encriptação já não existe.
+  suiteRevoked: A respetiva chave de encriptação foi revogada.
+  suiteCompromised: Encriptado com uma chave comprometida, pelo que não pode ser aberto aqui. A aplicação web do Keepiq mostra se pode ser recuperado.
+  migrationFailed: Não foi possível transferi-lo para a sua nova chave durante a recuperação do comprometimento. O valor guardado é mantido, mas não pode ser aberto.
+
+detail:
+  item: Item
+  decrypting: A desencriptar…
+  decryptFailed: Não foi possível desencriptar este item
+  unreadablePasskey: Não foi possível ler esta chave de acesso
+  unreadableFields: Não foi possível ler os campos adicionais
+  loginCredentials: Dados de início de sessão
+  username: Nome de utilizador
+  password: Palavra-passe
+  authenticatorKey: Chave de autenticação
+  website: Site
+  additionalFields: Campos adicionais
+  notes: Notas
+  history: Histórico do item
+  created: Criado
+  updated: Atualizado
+  expires: Expira
+  cardDetails: Dados do cartão
+  number: Número
+  numberWithBrand: Número · {brand}
+  cardNumber: Número do cartão
+  cardholder: Titular
+  expiry: Validade
+  cvv: CVV
+  pin: PIN
+  identity: Identidade
+  firstName: Nome próprio
+  lastName: Apelido
+  address: Morada
+  phone: Telefone
+  email: E-mail
+  bsn: BSN
+  passkey: Chave de acesso
+  relyingParty: Site ou aplicação
+  passkeyUser: Nome de utilizador
+  passkeyOnLogin: O Keepiq inicia sessão com chaves de acesso guardadas numa credencial, não com este item
+  passkeys: Chaves de acesso
+  passkeyCreated: Criada a {date}
+  useOnly: O proprietário não lhe permite ver nem copiar isto.
+
+totp:
+  code: Código de verificação
+  invalid: Chave de autenticação inválida
+  changesIn:
+    1: Muda dentro de 1 segundo
+    n: Muda dentro de $1 segundos
+
+settings:
+  accountSecurity: Segurança da conta
+  autofill: Preenchimento automático
+  notifications: Notificações
+  vault: Cofre
+  appearance: Aspeto
+  about: Acerca de
+  folders: Pastas
+  theme: Tema
+  themeSystem: Predefinição do sistema
+  themeLight: Claro
+  themeDark: Escuro
+  comingLater: Brevemente
+  setByOrganisation: Definido pela sua organização
+  turnedOffByOrganisation: Desativado pela sua organização
+  never: Nunca
+  durationHours: "{count} h"
+  durationMinutes: "{count} min"
+  pin: Desbloquear com PIN
+  pinTurnOn: Ativar
+  masterPasswordRequired: Introduza a sua palavra-passe mestra
+  pinAgain: Confirmar PIN
+  pinMismatch: Os PIN não coincidem
+  pinAdvice: Não reutilize o PIN do seu telemóvel ou do seu banco.
+  pinAfterRestart: Depois de reiniciar o navegador, introduz uma vez a palavra-passe mestra; a seguir, o PIN volta a funcionar.
+  vaultTimeout: Tempo limite do cofre
+  timeoutImmediately: Imediatamente
+  timeoutMinutes:
+    1: 1 minuto
+    n: $1 minutos
+  timeoutHours:
+    1: 1 hora
+    n: $1 horas
+  timeoutOnSystemLock: Ao bloquear o sistema
+  timeoutOnSystemLockCapped: Ao bloquear o sistema ou após {duration} de inatividade (definido pela sua organização)
+  timeoutOnRestart: Ao reiniciar o navegador
+  timeoutCustom: Personalizado
+  hours: Horas
+  minutes: Minutos
+  customAtLeastOne: Introduza pelo menos um minuto
+  customWhole: Introduza horas e minutos inteiros
+  customAtMost: A sua organização permite no máximo {duration}
+  neverTitle: Manter o cofre desbloqueado?
+  neverWarning: O seu cofre fica desbloqueado até o bloquear manualmente. A chave que o abre é gravada no disco deste perfil do navegador, onde qualquer pessoa que consiga ler o perfil a pode ler.
+  neverConfirm: Manter desbloqueado
+  timeoutAction: Ação após o tempo limite
+  actionLock: Bloquear
+  actionLogOutNote: Quando o tempo limite terminar, a sessão é terminada e precisa novamente da palavra-passe da aplicação
+  lockNow: Bloquear agora
+  changeMasterPassword: Alterar palavra-passe mestra
+  autofillOnPageLoad: Preencher automaticamente ao carregar a página
+  autofillOnPageLoadWarning: Sites comprometidos ou não fidedignos podem explorar o preenchimento automático ao carregar a página
+  defaultAutofill: Preenchimento automático predefinido para credenciais
+  defaultAutofillOnPageLoad: Preencher ao carregar a página, se ativado
+  uriMatch: Deteção de correspondência de URI predefinida
+  uriBaseDomain: Domínio base
+  uriHost: Anfitrião
+  uriStartsWith: Começa com
+  uriExact: Exata
+  uriRegex: Expressão regular
+  uriRegexNote: As expressões regulares são uma opção avançada e podem impedir o reconhecimento dos sites
+  inlineSuggestions: Mostrar sugestões de preenchimento nos campos
+  inlineCards: Mostrar cartões como sugestões
+  inlineIdentities: Mostrar identidades como sugestões
+  inlineKindsOff: Ative primeiro «Mostrar sugestões de preenchimento nos campos».
+  vaultCards: Mostrar sempre os cartões como sugestões de preenchimento no cofre
+  vaultIdentities: Mostrar sempre as identidades como sugestões de preenchimento no cofre
+  defaultPasswordManager: Tornar o Keepiq o seu gestor de palavras-passe predefinido
+  defaultPasswordManagerHint: Desativa a gravação de palavras-passe e o preenchimento de moradas do próprio navegador, para que as sugestões dele não tapem as do Keepiq.
+  defaultPasswordManagerManaged: A sua organização ou outra extensão gere esta definição do navegador.
+  contextMenu: Ativar opções do menu de contexto
+  shortcut: Atalho de teclado para preenchimento automático
+  shortcutNotSet: Não definido
+  shortcutChange: Alterar
+  shortcutFirefox: Abra about:addons, escolha o menu da roda dentada e depois Gerir atalhos de extensões
+  shortcutSafari: Abra as definições do Safari, escolha Extensões e depois selecione o Keepiq para alterar o atalho
+  websiteAccess: Acesso a sites
+  websiteAccessAll: Todos os sites
+  websiteAccessSome: Apenas os sites que permitiu
+  websiteAccessServer: Sem o seu servidor Keepiq
+  clearClipboard: Limpar área de transferência
+  clipboardSeconds:
+    1: 1 segundo
+    n: $1 segundos
+  autoCopyTotp: Copiar TOTP automaticamente
+  autoCopyTotpHint: Se uma credencial tiver um código de verificação, este é copiado para a área de transferência quando preencher automaticamente a credencial.
+  askToAdd: Perguntar para adicionar credenciais
+  askToUpdate: Perguntar para atualizar credenciais existentes
+  askPasskeys: Perguntar para guardar e usar chaves de acesso
+  excludedDomains: Domínios excluídos
+  addCurrentSite: Adicionar o site atual
+  domain: Domínio
+  addDomain: Adicionar
+  domainEmpty: Introduza um domínio
+  domainUnreadable: Introduza um domínio, como example.org
+  domainDuplicate: Já excluído
+  removeDomain: Remover {domain}
+  webTitle: Keepiq na web
+  webText: As notificações do próprio Keepiq, a importação e exportação e a sua palavra-passe mestra são geridas no Keepiq no Nextcloud, em Definições pessoais.
+  openKeepiq: Abrir Keepiq
+  lastSync: "Última sincronização: {time}"
+  lastSyncNever: "Última sincronização: nunca"
+  syncOffline: A sincronização falhou, está sem ligação
+  syncFailed: A sincronização falhou, tente novamente mais tarde
+  importItems: Importar itens
+  exportVault: Exportar cofre
+  defaultItemType: Tipo de item predefinido nesta extensão
+  compactMode: Modo compacto
+  showAnimations: Mostrar animações
+  quickCopy: Mostrar ações de cópia rápida no cofre
+  showBadgeCounter: Mostrar o número de sugestões de credenciais no ícone da extensão
+  language: Idioma
+  languageFollows: Segue o navegador
+  version: Versão {version}
+  server: Servidor {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Versão do Keepiq desconhecida
+  help: Ajuda
+  reportBug: Reportar um erro
+  contactSupport: Contactar o suporte
+  privacyPolicy: Política de privacidade
+  webApp: Aplicação web do Keepiq
+  rate: Avaliar a extensão
+
+websiteAccess:
+  title: Deixe o Keepiq funcionar nos sites
+  body: O Safari só executa o Keepiq nos sites que permitir. Permita-o em todos os sites para preencher credenciais, guardar novas e usar chaves de acesso onde quer que inicie sessão.
+  allow: Permitir em todos os sites
+  dismiss: Agora não
+  steps: No Safari, selecione Safari > Definições e depois Sites. Selecione o Keepiq na lista e defina «Ao visitar outros sites» como Permitir.
+  perSite: Para permitir um site de cada vez, clique no botão do Keepiq nesse site e escolha permitir sempre.
+  serverTitle: O Keepiq não consegue aceder a {host}
+  serverBody: O Safari não deixa o Keepiq aceder ao seu servidor, por isso o seu cofre não pode ser sincronizado.
+  serverAllow: Permitir {host}
+
+generator:
+  kinds: O que gerar
+  password: Palavra-passe
+  passphrase: Frase de acesso
+  username: Nome de utilizador
+  length: Comprimento
+  lengthValue: Comprimento em caracteres
+  uppercase: Maiúsculas (A-Z)
+  lowercase: Minúsculas (a-z)
+  digits: Números (0-9)
+  special: Caracteres especiais, como !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Tipos de caracteres
+  lastClassOn: Pelo menos um tipo fica ativo
+  minNumbers: Mínimo de números
+  minSpecial: Mínimo de especiais
+  avoidAmbiguous: Evitar caracteres ambíguos
+  lockedByPolicy: Definido pela sua organização
+  passphraseOff: Desativado pela sua organização
+  words: Número de palavras
+  separator: Separador de palavras
+  capitalizeWords: Iniciais em maiúscula
+  capitalize: Começar com maiúscula
+  includeNumber: Incluir número
+  usernameType: Tipo
+  typeWord: Palavra aleatória
+  typePlus: E-mail com subendereço (+)
+  typeCatchall: E-mail catch-all
+  email: E-mail
+  emailPlaceholder: nome@exemplo.pt
+  domain: Domínio
+  domainPlaceholder: exemplo.pt
+  basedOn: Com base em
+  random: Aleatório
+  websiteName: Nome do site
+  noWebsite: Nenhum site detetado
+  needsEmail: Introduza um endereço de e-mail
+  needsDomain: Introduza um domínio
+  wordlistUnavailable: Lista de palavras indisponível
+  regenerate: Gerar novamente
+  usePassword: Utilizar esta palavra-passe
+  useUsername: Utilizar este nome de utilizador
+  history: Histórico do gerador
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Ainda não há valores gerados
+  clearHistory: Limpar
+  clearHistoryTitle: Limpar o histórico do gerador?
+  clearHistoryText: Isto remove deste navegador todos os valores da lista.
+  generatePasswordLink: Gerar uma palavra-passe
+  generatePassword: Gerar palavra-passe
+  generateUsername: Gerar nome de utilizador
+
+send:
+  new: Novo envio
+  empty: Ainda não há envios
+  emptyText: Partilhe texto ou uma credencial através de uma ligação que se elimina sozinha.
+  loadFailed: Não foi possível carregar os seus envios
+  retry: Tentar novamente
+  labelText: "Envio de texto, {time}"
+  labelCredential: "Envio de credencial, {time}"
+  viewsLeft:
+    1: "Restam {left} de 1 visualização"
+    n: "Restam {left} de $1 visualizações"
+  expires: "Expira: {date}"
+  neverExpires: Nunca expira
+  expired: Expirado
+  passwordBadge: Palavra-passe
+  link: Ligação
+  copyLink: Copiar ligação
+  copyLinkOf: "Copiar ligação, {name}"
+  linkGone: A ligação já não está disponível
+  remove: Remover
+  removeOf: "Remover, {name}"
+  removeTitle: Remover envio
+  removeConfirm: Remover este envio? Quem tiver a ligação perde o acesso.
+  removed: Envio removido
+  contentSection: Conteúdo
+  optionsSection: Opções
+  type: Tipo
+  text: Texto
+  credential: Credencial
+  content: Texto a partilhar
+  maxViews: Máx. de visualizações
+  maxViewsRange: "Entre 1 e {max}"
+  expiry: Validade
+  expiry1h: 1 hora
+  expiry1d: 1 dia
+  expiry2d: 2 dias
+  expiry3d: 3 dias
+  expiry7d: 7 dias
+  expiry30d: 30 dias
+  expiryCustom: Personalizada
+  customHours: Horas
+  customHoursMin: Pelo menos 1 hora
+  customHoursMax: No máximo 720 horas (30 dias)
+  accessPassword: Palavra-passe de acesso
+  accessPasswordHint: Opcional. O destinatário precisa dela para abrir o envio.
+  create: Criar
+  protecting: A proteger com palavra-passe…
+  offline: Os envios precisam de uma ligação ao seu servidor Keepiq
+  prefillFailed: Não foi possível ler esta credencial
+  ready: O seu envio está pronto
+  shownOnce:
+    1: Copie esta ligação agora. Só é mostrada até fechar esta janela, e o conteúdo é destruído após 1 visualização.
+    n: Copie esta ligação agora. Só é mostrada até fechar esta janela, e o conteúdo é destruído após $1 visualizações.
+  passwordNote: Partilhe a palavra-passe de acesso separadamente da ligação. Após 5 tentativas erradas, o envio é eliminado.
+  done: Concluído
+
+pageFill:
+  insecure: "Aviso: esta é uma página HTTP não segura e qualquer informação que submeta pode ser vista e alterada por terceiros. Esta credencial foi originalmente guardada numa página segura (HTTPS), {host}.\n\nPretende mesmo preencher esta credencial?"
+  insecureNoHost: "Aviso: esta é uma página HTTP não segura e qualquer informação que submeta pode ser vista e alterada por terceiros. Esta credencial foi originalmente guardada numa página segura (HTTPS).\n\nPretende mesmo preencher esta credencial?"
+  cardInsecure: "Preencher este cartão num site não seguro?\n\nEste site não é seguro. Qualquer pessoa na rede pode ler os dados do cartão que forem preenchidos."
+  crossSite: "Preencher também em {hosts}?\n\nParte deste formulário vem de {hosts}, não de {host}. O Keepiq só o preenche aí se concordar."
+
+contextMenu:
+  root: Keepiq
+  autofill: Preencher credencial
+  noMatches: Sem credenciais disponíveis
+  noUsernames: Sem nomes de utilizador disponíveis
+  noPasswords: Sem palavras-passe disponíveis
+  noCodes: Sem códigos de verificação disponíveis
+  noIdentities: Sem identidades disponíveis
+  noCards: Sem cartões disponíveis
+  addLogin: Adicionar credencial
+  addIdentity: Adicionar identidade
+  addCard: Adicionar cartão
+  openKeepiq: Abrir Keepiq
+  copyUsername: Copiar nome de utilizador
+  copyPassword: Copiar palavra-passe
+  copyCode: Copiar código de verificação
+  autofillCard: Preencher cartão
+  autofillIdentity: Preencher identidade
+  generatePassword: Gerar palavra-passe e copiar
+  unlock: Desbloquear cofre
+
+pageNotice:
+  label: Aviso do Keepiq
+  noLoginForm: O Keepiq não encontrou nenhum formulário de início de sessão para preencher nesta página.
+  noCardForm: O Keepiq não encontrou campos de cartão para preencher nesta página.
+  noIdentityForm: O Keepiq não encontrou campos de morada ou dados pessoais para preencher nesta página.
+
+toolbar:
+  locked: "{name}: bloqueado"
+  loggedOut: "{name}: sessão terminada"
+  count:
+    1: "{name}: 1 credencial para este site"
+    n: "{name}: $1 credenciais para este site"
+
+inlineList:
+  frameTitle: Credenciais do Keepiq
+  label: Credenciais do Keepiq para {host}
+  row: "{name}, {username}"
+  noMatch: Sem credenciais para {host}
+  passkeyRow: "{name}, {username}, chave de acesso"
+  passkeyRowNoUser: "{name}, chave de acesso"
+  noMatchPasskeys: Sem credenciais nem chaves de acesso para {host}
+  locked: O Keepiq está bloqueado
+  unlock: Desbloquear
+  insecureQuestion: Preencher neste site não seguro?
+  insecureDetail: Este site não é seguro. Qualquer pessoa na rede pode ler o que for preenchido.
+  fill: Preencher
+  notVisible: O Keepiq não consegue preencher aqui porque esta página altera a forma como é apresentada. Utilize o botão do Keepiq na barra de ferramentas.
+  status:
+    count:
+      1: 1 credencial do Keepiq. Prima Seta para baixo para escolher.
+      n: $1 credenciais do Keepiq. Prima Seta para baixo para escolher.
+    noMatch: Sem credenciais do Keepiq para {host}
+    countPasskeys:
+      1: 1 credencial ou chave de acesso do Keepiq. Prima Seta para baixo para escolher.
+      n: $1 credenciais e chaves de acesso do Keepiq. Prima Seta para baixo para escolher.
+    noMatchPasskeys: Sem credenciais nem chaves de acesso do Keepiq para {host}
+    locked: O Keepiq está bloqueado. Prima Seta para baixo para desbloquear.
+  code:
+    frameTitle: Códigos de verificação do Keepiq
+    label: Códigos de verificação do Keepiq para {host}
+    noMatch: Sem códigos de verificação para {host}
+    locked: Desbloqueie o Keepiq para ver os seus códigos de verificação
+    invalid: Não é um segredo de autenticação válido
+    status:
+      count:
+        1: 1 código de verificação do Keepiq. Prima Seta para baixo para escolher.
+        n: $1 códigos de verificação do Keepiq. Prima Seta para baixo para escolher.
+      noMatch: Sem códigos de verificação do Keepiq para {host}
+  card:
+    frameTitle: Cartões do Keepiq
+    noMatch: Sem cartões no Keepiq
+    locked: Desbloqueie o Keepiq para ver os seus cartões
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Cartão, *{last4}"
+    row: "{name}, {brand} terminado em {last4}"
+    rowNoBrand: "{name}, cartão terminado em {last4}"
+    status:
+      count:
+        1: 1 cartão do Keepiq. Prima Seta para baixo para escolher.
+        n: $1 cartões do Keepiq. Prima Seta para baixo para escolher.
+  identity:
+    frameTitle: Identidades do Keepiq
+    noMatch: Sem identidades no Keepiq
+    locked: Desbloqueie o Keepiq para ver as suas identidades
+    status:
+      count:
+        1: 1 identidade do Keepiq. Prima Seta para baixo para escolher.
+        n: $1 identidades do Keepiq. Prima Seta para baixo para escolher.
+
+notificationBar:
+  label: Notificação do Keepiq
+  saveQuestion: Guardar a credencial de {host} no Keepiq?
+  updateQuestion: Atualizar a palavra-passe de {name}?
+  updateQuestionUser: Atualizar a palavra-passe de {name} ({username})?
+  updateQuestionHost: Atualizar a palavra-passe de {name} em {host}?
+  updateQuestionUserHost: Atualizar a palavra-passe de {name} ({username}) em {host}?
+  folder: Pasta
+  noFolder: Sem pasta
+  save: Guardar
+  never: Nunca neste site
+  update: Atualizar
+  close: Fechar
+  expand: Mostrar opções
+  shortcutHint: Prima {shortcut} para responder.
+  saving: A guardar…
+  updating: A atualizar…
+  saved: Credencial guardada
+  updated: Palavra-passe atualizada
+  notVisible: O Keepiq não consegue fazer isto aqui porque esta página altera a forma como é apresentada. Feche isto e adicione a credencial a partir do botão do Keepiq na barra de ferramentas.
+  errors:
+    writeLocked: O cofre está temporariamente bloqueado para alterações. Tente novamente mais tarde.
+    unverified: Edite esta credencial na janela do Keepiq ou na aplicação web para alterar a palavra-passe.
+    viewOnly: Esta credencial foi partilhada consigo apenas para visualização, pelo que a palavra-passe não pode ser atualizada aqui.
+    loginGone: Esta credencial já não existe. Guardar como nova credencial?
+    locked: O Keepiq está bloqueado. Desbloqueie-o a partir do botão do Keepiq na barra de ferramentas e tente novamente.
+    notResponding: O Keepiq não está a responder. Tente novamente.
+    accountChanged: Mudou de conta, pelo que nada foi guardado.
+    keyMismatch: A chave do Keepiq não corresponde ao seu cofre. Nada foi guardado; informe o seu administrador.
+    staleSource: O original desta credencial partilhada foi alterado. Nada foi guardado; tente novamente.
+    incomplete: As pessoas com quem esta credencial é partilhada mudaram. Nada foi guardado; tente novamente.
+    badCertificate: Não foi possível ler a chave de encriptação de um destinatário. Nada foi guardado.
+    keepiqOutdated: O seu servidor Keepiq é demasiado antigo. Nada foi guardado; peça ao seu administrador o Keepiq {version} ou posterior.
+    shareScanPending: Está a ser verificado com quem esta credencial é partilhada. Nada foi guardado; tente mais tarde.
+
+passkey:
+  unlockGet: Desbloqueie o Keepiq para usar uma chave de acesso para {rpId}
+  unlockCreate: Desbloqueie o Keepiq para guardar uma chave de acesso para {rpId}
+  verifyTitle: Confirme a sua identidade
+  verifyPassword: Introduza a sua palavra-passe mestra para continuar.
+  verifyPin: Introduza o seu PIN para continuar.
+  confirm: Confirmar
+  signInTitle: Iniciar sessão com uma chave de acesso
+  signInText: Utilize uma chave de acesso guardada no Keepiq para {rpId}
+  row: "{name}, {userName}"
+  noPasskey: Nenhuma chave de acesso do Keepiq para {rpId}
+  saveTitle: Guardar chave de acesso
+  saveTo: Guardar numa credencial
+  replaces: Substitui a chave de acesso de {userName}
+  newLogin: Nova credencial
+  name: Nome
+  folder: Pasta
+  noFolder: Sem pasta
+  saveNew: Guardar como nova credencial
+  replaceQuestion: Substituir a chave de acesso de {userName} em {name}?
+  replace: Substituir
+  alreadySavedTitle: Chave de acesso já guardada
+  alreadySaved: Já existe uma chave de acesso para esta conta guardada no Keepiq
+  close: Fechar
+  retry: Tentar novamente
+  fallback: Utilizar o seu dispositivo ou chave de segurança
+  stalePick: Esta chave de acesso já não está no seu cofre. Escolha outra.
+  staleSave: Esta credencial já não pode receber a chave de acesso. Escolha outra ou guarde-a como nova credencial.
+  errors:
+    conflict: Esta credencial foi alterada durante a gravação. Nada foi guardado; tente novamente.
+    partnerUpgradeRequired: "Nada foi guardado: o Keepiq de {cloudIds} é demasiado antigo para armazenar chaves de acesso. Peça-lhes que atualizem o Keepiq ou guarde a chave de acesso noutra credencial."
+    partnerUpgradeRequiredUnnamed: "Nada foi guardado: uma organização parceira com quem esta credencial é partilhada usa um Keepiq demasiado antigo para armazenar chaves de acesso. Peça-lhe que atualize o Keepiq ou guarde a chave de acesso noutra credencial."
+    shareScanPending: Está a ser verificado com quem esta credencial é partilhada. Nada foi guardado; tente novamente mais tarde.
+
+vaultPasskey:
+  unlock: "Desbloquear com impressão digital ou rosto"
+  unlockIntro: "O navegador pede a impressão digital, o rosto ou o PIN do dispositivo."
+  enrolTitle: "Configurar o desbloqueio com impressão digital ou rosto"
+  enrolIntro: "Confirme a palavra-passe mestra. Depois o navegador pede duas vezes a impressão digital, o rosto ou o PIN do dispositivo."
+  enrolSubmit: "Configurar"
+  enrolDone: "O desbloqueio com impressão digital ou rosto está configurado para este navegador."
+  close: "Fechar"
+  label: "Extensão de navegador Keepiq"
+  tooOld: "O desbloqueio com impressão digital ou rosto requer Chrome ou Edge 122, ou Firefox 150, ou mais recente. Use a palavra-passe mestra."
+  unsupported: "Este navegador ou dispositivo não consegue desbloquear o Keepiq com impressão digital ou rosto. Use a palavra-passe mestra."
+  revokeInWebApp: "Para o desativar, revogue esta chave de acesso na aplicação web Keepiq."

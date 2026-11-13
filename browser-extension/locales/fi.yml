@@ -1,0 +1,814 @@
+# Terms and tone follow Nextcloud's Finnish translation: informal sinä, holvi, pääsalasana, sovellussalasana, pääsyavain, kirjautumistieto, kohde, verkkosovellus.
+language: fi
+extensionDescription: Keepiq selaimeesi. Täytä kirjautumistiedot, pääsyavaimet ja kertakäyttökoodit Nextcloud-holvistasi, päästä päähän salattuna.
+commandAutofillLogin: Täytä viimeksi käytetty kirjautumistieto
+commandFocusNotificationBar: Siirry Keepiqin tallennuspalkkiin
+
+errors:
+  insecureUrl: Käytä tälle palvelimelle https-yhteyttä
+  invalidUrl: Anna kelvollinen palvelimen URL-osoite
+  permissionDenied: Keepiq tarvitsee luvan yhteyteen palvelimeen {host}
+  unreachable: Palvelimeen {host} ei saatu yhteyttä
+  notNextcloud: "{host} ei näytä olevan Nextcloud-palvelin"
+  serverError: "{host} ei ole nyt käytettävissä, yritä myöhemmin uudelleen"
+  unauthorized: Väärä käyttäjätunnus tai sovellussalasana
+  keepiqMissing: Keepiqiä ei ole asennettu palvelimelle {host}
+  keepiqOutdated: Palvelimen {host} Keepiq on liian vanha tälle laajennukselle, joka vaatii version {version} tai uudemman. Pyydä ylläpitäjää päivittämään Keepiq.
+  noActiveSuite: Avaa Keepiq-verkkosovellus kerran ja aseta pääsalasana, yritä sitten uudelleen
+  unlockBlocked: Organisaatiosi vaatii kaksivaiheisen tunnistautumisen. Ota toinen vaihe käyttöön Nextcloudin asetuksissa kohdassa Turvallisuus ja yritä sitten uudelleen
+  duplicate: Tämä tili on jo lisätty
+  limitReached: Tilejä voi olla enintään {count}
+  invalidMasterPassword: Virheellinen pääsalasana
+  keyUnreadable: Holviavaintasi ei voitu lukea Keepiqistä, joten tämä selain ei voi avata holvin lukitusta. Ilmoita asiasta Keepiqin ylläpitäjälle.
+  offlineNoCache: Olet offline-tilassa, eikä tätä holvia ole vielä synkronoitu
+  sessionRevoked: Istunto on mitätöity, kirjaudu uudelleen
+  writeLocked: Holviasi ei voi nyt muuttaa, yritä myöhemmin uudelleen
+  notResponding: Keepiq ei vastaa. Lataa laajennus uudelleen ja avaa tämä ponnahdusikkuna uudestaan.
+  invalidPin:
+    1: Väärä PIN-koodi, 1 yritys jäljellä
+    n: Väärä PIN-koodi, $1 yritystä jäljellä
+  wrongPin: Väärä PIN-koodi
+  pinForgotten: PIN-koodi unohdettiin liian monen yrityksen jälkeen
+  pinKeyChanged: Holviavaimesi on vaihtunut. Avaa lukitus pääsalasanalla.
+  pinTooShort: Käytä vähintään {count} merkkiä
+  unknown: Jokin meni pieleen
+  passkeyFailed: "Pääsyavain ei avannut holviasi. Käytä pääsalasanaasi."
+
+notices:
+  keyChanged: Holviavaimesi on vaihtunut Keepiqissä. Avaa lukitus nykyisellä pääsalasanallasi.
+  fileAccess: "Keepiq ei tarvitse pääsyä tiedostoihin. Nextcloudissa kohdassa Asetukset, Turvallisuus, Laitteet ja istunnot voit poistaa tämän sovellussalasanan tiedostokäytön tai mitätöidä sen."
+
+common:
+  accountOnHost: "{name} palvelimella {host}"
+  loading: Ladataan…
+  back: Takaisin
+  cancel: Peruuta
+  logOut: Kirjaudu ulos
+  appPassword: Sovellussalasana
+  addAccount: Lisää tili
+  openWebApp: Avaa Keepiq-verkkosovellus
+  justNow: juuri nyt
+
+titles:
+  accounts: Tilit
+  logInAgain: Kirjaudu uudelleen
+  unlock: Avaa lukitus
+  viewItem: Näytä kohde
+  newItem: Uusi kohde
+  newLogin: Uusi kirjautumistieto
+  newCard: Uusi kortti
+  newIdentity: Uusi henkilöllisyys
+  editItem: Muokkaa kohdetta
+  newSend: Uusi lähetys
+  sendCreated: Lähetys luotu
+
+tabs:
+  label: Päävalikko
+  vault: Holvi
+  generator: Generaattori
+  send: Lähetä
+  settings: Asetukset
+
+header:
+  popout: Avaa omaan ikkunaan
+  accounts: Tilit, kirjautuneena käyttäjänä {name}
+  new: Uusi
+
+unlock:
+  masterPassword: Pääsalasana
+  submit: Avaa lukitus
+  pin: PIN-koodi
+  useMasterPassword: Käytä pääsalasanaa
+
+logInAgain:
+  submit: Kirjaudu
+
+addAccount:
+  serverUrl: Palvelimen URL-osoite
+  serverUrlPlaceholder: cloud.example.org
+  username: Käyttäjätunnus
+  hint: Luo sellainen Nextcloudin asetuksissa kohdassa Turvallisuus. Älä koskaan kirjoita tähän Nextcloudin kirjautumissalasanaasi.
+  hintWithLink: "Luo sellainen Nextcloudin asetuksissa kohdassa Turvallisuus: {link}. Älä koskaan kirjoita tähän Nextcloudin kirjautumissalasanaasi."
+  securityLink: avaa turvallisuusasetukset
+  signInWithBrowser: "Kirjaudu Nextcloudin kautta"
+  finishInTab: "Viimeistele kirjautuminen avautuneella Nextcloud-sivulla. Keepiq lisää tilin, kun olet valmis."
+  orAppPassword: "Tai anna sovellussalasana:"
+
+accounts:
+  active: (aktiivinen)
+  unlocked: Lukitus avattu
+  locked: Lukittu
+  loggedOut: Kirjauduttu ulos
+  lock: Lukitse {account}
+  logOut: Kirjaudu ulos tililtä {account}
+  lockAll: Lukitse kaikki
+  logOutAll: Kirjaudu ulos kaikilta
+  logOutAllQuestion: Kirjaudutaanko ulos kaikilta tileiltä?
+  logOutAllDetail: Kaikki tilit poistetaan tästä selaimesta. Tarvitset jokaisen sovellussalasanan uudelleen.
+  logOutQuestion: Kirjaudutaanko ulos tililtä {account}?
+  logOutDetail: Tili poistetaan tästä selaimesta. Tarvitset sovellussalasanan, jos haluat lisätä sen uudelleen.
+
+vault:
+  loadFailed: Holvin lataaminen epäonnistui
+  tryAgain: Yritä uudelleen
+  syncing: Holvia synkronoidaan
+  empty: Holvissa ei ole kohteita
+  noMatch: Ei vastaavia kohteita
+  searchCovers: Haku kattaa nimet ja verkkosivustot.
+  clearFilters: Tyhjennä suodattimet
+  items: Kohteet
+  tooMany: Näytetään ensimmäiset {count}, tarkenna hakua
+  offline: Offline. Synkronoitu viimeksi {time}
+  syncNow: Synkronoi nyt
+  busy: Palvelin on varattu, yritetään myöhemmin uudelleen
+  allBlocked: Kaikki kohteet on estetty.
+  suggestions: Automaattisen täytön ehdotukset
+  noSuggestions: Ei kohteita sivustolle {host}
+  autofillUnavailable: Automaattinen täyttö ei ole käytettävissä tällä sivulla
+  fillFailed: Automaattinen täyttö ei onnistu tällä sivulla. Kopioi ja liitä tiedot itse.
+  openFailed: Verkkosivuston avaaminen epäonnistui
+  popoutFailed: Uuden ikkunan avaaminen epäonnistui
+
+filters:
+  search: Haku
+  searchLabel: Hae holvista
+  clearSearch: Tyhjennä haku
+  folder: Kansio
+  allItems: Kaikki kohteet
+  noFolder: Ei kansiota
+  type: Tyyppi
+  all: Kaikki
+  more: Lisää
+  moreTypes: Lisää tyyppejä
+  login: Kirjautumistieto
+  card: Kortti
+  identity: Henkilöllisyys
+  note: Muistiinpano
+  totp: TOTP
+  passkey: Pääsyavain
+
+item:
+  blocked: Estetty
+  launch: Avaa {name}
+  fill: Täytä
+  fillName: Täytä {name}
+  insecureTitle: Haluatko silti täyttää tämän kirjautumistiedon?
+  insecureWarning: "Varoitus: Tämä on suojaamaton HTTP-sivu, ja muut voivat mahdollisesti nähdä ja muuttaa lähettämiäsi tietoja. Tämä kirjautumistieto tallennettiin alun perin suojatulla (HTTPS) sivulla."
+  cardInsecureTitle: Täytetäänkö tämä kortti suojaamattomalle sivustolle?
+  cardInsecureWarning: Tämä sivusto ei ole suojattu. Kuka tahansa verkossa voi lukea täytetyt korttitiedot.
+  crossSiteTitle: Täytetäänkö myös muualle ({hosts})?
+  crossSiteWarning: Osa tästä lomakkeesta tulee muualta ({hosts}) eikä sivustolta {host}. Keepiq täyttää sen siellä vain, jos hyväksyt.
+  onlyHost: Vain {host}
+  copyMenu: Kopioi, {name}
+  moreMenu: Lisää, {name}
+  copyUsername: Kopioi käyttäjätunnus
+  copyPassword: Kopioi salasana
+  copyCode: Kopioi vahvistuskoodi
+  view: Näytä
+  edit: Muokkaa
+  clone: Kloonaa
+  move: Siirrä kansioon
+  delete: Poista
+  send: Lähetä
+  cloneName: "{name} - Klooni"
+  passkeyNoClone: Pääsyavaimia ei voi kloonata
+  useOnly: Jaettu kanssasi vain kirjautumista varten
+  readOnly: Jaettu toisesta organisaatiosta, joten sen voi vain siirtää
+  viewOnly: Jaettu kanssasi vain katseltavaksi. Pyydä omistajalta muokkausoikeudet, jos haluat muuttaa sitä.
+  expiringNoClone: Käyttöoikeutesi päättyy {date}, joten sitä ei voi kloonata
+  expiringNoSend: Käyttöoikeutesi päättyy {date}, joten sitä ei voi lähettää
+  saved: Kohde tallennettu
+  deleted: Kohde siirretty roskakoriin
+  moved: Siirretty kansioon {folder}
+  deleteTitle: Poista kohde
+  deleteConfirm: Siirretäänkö {name} roskakoriin? Sen jakaminen loppuu, myös jos se palautetaan roskakorista Keepiq-verkkosovelluksessa.
+  gone: Tätä kohdetta ei ole enää olemassa
+
+form:
+  itemDetails: Kohteen tiedot
+  type: Tyyppi
+  name: Nimi
+  cardNumberLength: "{brand} ei myönnä tämän pituisia kortinnumeroita. Voit silti tallentaa."
+  cardNumberLengthUnknown: Kortinnumeroissa on 12–19 numeroa. Voit silti tallentaa.
+  cardNumberChecksum: Tämä numero ei läpäise kortin tarkistussummaa. Tarkista se; voit silti tallentaa.
+  cardCodeLength: "{brand}-korteissa {name} on {size}-numeroinen. Voit silti tallentaa."
+  folder: Kansio
+  chooseFolder: Valitse kansio, nyt {folder}
+  website: Verkkosivuston URL-osoite
+  autofillOptions: Automaattisen täytön asetukset
+  additionalOptions: Lisäasetukset
+  authenticator: Todennus
+  note: Muistiinpano
+  secret: Salaisuus
+  advanced: Edistyneet
+  algorithm: Algoritmi
+  digits: Numerot
+  period: Jakso sekunteina
+  addField: Lisää kenttä
+  fieldName: Kentän nimi
+  fieldValue: Arvo
+  removeField: Poista {name}
+  removeUnnamed: Poista kenttä
+  save: Tallenna
+  passkeyReadOnly: Pääsyavaimen tietoja voi muuttaa vain Keepiq-verkkosovelluksessa
+  offline: Olet offline-tilassa. Muutokset vaativat yhteyden Keepiqiin.
+  unsavedTitle: Tallentamattomia muutoksia
+  unsaved: Sinulla on tallentamattomia muutoksia. Hylätäänkö ne?
+  discard: Hylkää
+  keepEditing: Jatka muokkausta
+
+authKey:
+  label: Todennusavain
+  optionalLabel: Todennusavain (valinnainen)
+  newLabel: Uusi todennusavain
+  help: Liitä otpauth://totp/-linkki tai salainen avain, tai skannaa sivun QR-koodi.
+  scan: Skannaa sivun QR-koodi
+  read: Todennusavain luettu QR-koodista
+  noQr: Sivulta ei löytynyt QR-koodia. Vieritä se näkyviin ja yritä uudelleen.
+  notTotp: Tämä QR-koodi ei sisällä todennusavainta. Käytä QR-koodia, jonka sivusto näyttää, kun otat kaksivaiheisen tunnistautumisen käyttöön.
+  noPicture: Keepiq ei voi ottaa kuvaa tästä sivusta. Liitä avain sen sijaan.
+  popout: Avaa Keepiq työkalupalkista sivulla, jolla QR-koodi on, niin voit skannata sen.
+  saved: Tallennettu
+  remove: Poista todennusavain
+  replaceHelp: Liitä tai skannaa uusi avain, tai jätä tämä tyhjäksi, niin tallennettu avain poistetaan.
+  keep: Säilytä tallennettu avain
+  removedOnSave: Todennusavain poistetaan, kun tallennat.
+  notCloned: Todennusavainta ei kloonata.
+
+fieldErrors:
+  required: Nimi vaaditaan
+  tooLong: Enintään {max} merkkiä
+  tooLongBytes: Liian pitkä (enintään {max} tavua)
+  reserved: Tämä nimi on varattu
+  duplicate: Samanniminen kenttä on jo olemassa
+  invalidTotp: Virheellinen todennussalaisuus
+  slash: Kansion nimessä ei voi olla vinoviivoja
+
+writeErrors:
+  writeLocked: Holvi on tilapäisesti lukittu avaimen siirron vuoksi, yritä myöhemmin uudelleen
+  forbidden: Keepiq ei salli tätä muutosta. Keepiq-verkkosovellus näyttää syyn.
+  policy: Organisaatiosi käytäntö ei salli tätä muutosta
+  accountChanged: Vaihdoit välillä toiseen tiliin, joten mitään ei tallennettu. Vaihda takaisin, niin voit tallentaa.
+  accountChangedDelete: Vaihdoit välillä toiseen tiliin, joten mitään ei poistettu. Vaihda takaisin, niin voit poistaa.
+  keepClash: Tasoa ylempänä on jo kansio {name}. Valitse sille Siirrä kohteet yläkansioon tai Poista, tai nimeä ensin toinen niistä uudelleen.
+  keepClashAfter: Säilytettäväksi valitsemallasi kansiolla on sama nimi kuin tasoa ylempänä olevalla kansiolla, joten mitään ei poistettu. Tarkista valinnat uudelleen.
+  invalid: Keepiq hylkäsi tämän muutoksen
+  stale: Tätä kohdetta muutettiin muualla. Palaa takaisin ja muokkaa sitä uudelleen, niin näet uusimman version.
+  itemGone: Tätä kohdetta ei ole enää olemassa
+  folderGone: Tätä kansiota ei ole enää olemassa
+  duplicateFolder: Täällä on jo samanniminen kansio
+  folderChanged: Tämä kansio muuttui. Tarkista valinnat uudelleen.
+  offline: Palvelimeen ei saatu yhteyttä
+  serverError: Keepiq ei ole nyt käytettävissä, yritä myöhemmin uudelleen
+  unreadable: Tätä kohdetta ei voitu lukea, joten sitä ei voi muokata täällä
+  restricted: Tämä kohde on jaettu kanssasi rajoituksin, joten sitä ei voi muuttaa tai kopioida täällä
+  unmatched: Keepiq lähetti tästä kohteesta version, jota holvissasi ei ole, joten sitä ei avattu.
+  keyMismatch: Keepiq lähetti salausavaimen, joka ei vastaa holviasi, joten mitään ei tallennettu. Ilmoita asiasta Keepiqin ylläpitäjälle.
+  staleSource: Tämän jaetun kohteen alkuperäistä muutettiin sen jälkeen, kun avasit sen. Mitään ei tallennettu; avaa se uudelleen ja tee muutoksesi uudestaan.
+  incomplete: Vastaanottajat, joiden kanssa kohde on jaettu, muuttuivat jatkuvasti tallennuksen aikana. Mitään ei tallennettu; yritä uudelleen.
+  badCertificate: Keepiq lähetti salausavaimen henkilölle, jonka kanssa tämä kohde on jaettu, mutta tämä selain ei voinut lukea sitä. Mitään ei tallennettu.
+  unverified: Tämä kohde on jaettu kumppaniorganisaatioiden kanssa, eikä tämä selain voi varmistaa, että ne saavat sen täsmälleen sellaisena kuin näit sen. Mitään ei tallennettu; tee tämä muutos Keepiq-verkkosovelluksessa.
+  partnerUnreachable: "Mitään ei tallennettu: kumppaniorganisaatioon, jonka kanssa tämä kohde on jaettu, ei saada yhteyttä ({cloudIds}). Yritä myöhemmin uudelleen tai tallenna ilman niitä, jolloin kohteen jakaminen niille keskeytyy, kunnes jaat sen niille uudelleen."
+  partnerUpgradeRequired: "Mitään ei tallennettu: vastaanottajien {cloudIds} Keepiq on liian vanha vastaanottamaan todennusavainta. Poista avain tai pyydä heitä päivittämään Keepiq."
+  partnerUpgradeRequiredUnnamed: "Mitään ei tallennettu: kumppaniorganisaatiolla, jonka kanssa tämä kohde on jaettu, on liian vanha Keepiq vastaanottamaan todennusavainta. Poista avain tai pyydä heitä päivittämään Keepiq."
+  partnerUpgradeVersion: He tarvitsevat Keepiqin version {version} tai uudemman.
+  partnerLookupLimit: Liian monta kumppanihakua. Mitään ei tallennettu; yritä uudelleen minuutin kuluttua.
+  federationUnavailable: Keepiq-palvelimesi ei voi jakaa kumppaniorganisaatioiden kanssa, joten tätä kohdetta ei voi tallentaa täällä. Mitään ei tallennettu; ota yhteyttä ylläpitäjään.
+  keepiqOutdated: Keepiq-palvelimesi on liian vanha tämän muutoksen tallentamiseen. Mitään ei tallennettu; pyydä ylläpitäjää päivittämään Keepiq versioon {version} tai uudempaan.
+  partnerClock: Sen kumppaniorganisaation varmenne, jonka kanssa tämä kohde on jaettu, ei ole voimassa tämän tietokoneen kellon mukaan. Mitään ei tallennettu; tarkista tietokoneen päivämäärä ja aika tai tee muutos Keepiq-verkkosovelluksessa.
+  shareScanPending: Tämä kohde odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei tallennettu; yritä myöhemmin uudelleen.
+  shareScanPendingOpen: Tämä kohde odottaa jakojensa tarkistusta, eikä sitä voi vielä muokata. Yritä myöhemmin uudelleen.
+  shareScanPendingDelete: Tämä kohde odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei poistettu; yritä myöhemmin uudelleen.
+  sendInvalid: Keepiq ei hyväksynyt tätä lähetystä. Mitään ei lähetetty; tarkista kentät ja yritä uudelleen.
+  sendOffline: Palvelimeen ei saatu yhteyttä, mitään ei lähetetty
+  argon2Unavailable: Salasanasuojaus ei ole käytettävissä tässä selaimessa
+
+shareSave:
+  saveWithout: Tallenna ilman niitä
+  ownerOnly: Tallennettu. Kumppaniorganisaatioiden vastaanottajat saavat muutoksen, kun omistaja seuraavan kerran tallentaa kohteen.
+  suspended: Jakaminen vastaanottajille {cloudIds} on keskeytetty, koska heidän varmennettaan ei voitu vahvistaa tai heidän organisaationsa ei enää hyväksy sitä. Keepiq-verkkosovellus näyttää jaon.
+  paused: Jakaminen vastaanottajille {cloudIds} on keskeytetty, kunnes jaat kohteen heille uudelleen.
+
+folders:
+  add: Lisää kansio
+  newFolder: Uusi kansio
+  rename: Nimeä uudelleen
+  renameTitle: Nimeä kansio uudelleen
+  delete: Poista
+  more: Lisää, {name}
+  name: Kansion nimi
+  empty: Ei vielä kansioita
+  notice: Kansioiden nimiä ei salata
+  dismiss: Sulje
+  current: Nykyinen kansio
+  pickTitle: Valitse kansio
+  moveTitle: Siirrä kansioon
+  saved: Kansio tallennettu
+  deleted: Kansio poistettu
+  deleteTitle: Poista kansio
+  deleteConfirm: Poistetaanko {name}? Tätä ei voi kumota.
+  cascade:
+    1: Poistetaanko {name} ja sen 1 kohde vai siirretäänkö kohde kansioon {parent}?
+    n: Poistetaanko {name} ja sen $1 kohdetta vai siirretäänkö kohteet kansioon {parent}?
+  countsAll: Myös arkistoidut ja roskakorissa olevat kohteet lasketaan.
+  deleteItems: Poista myös kohteet
+  moveItems: Siirrä kohteet yläkansioon
+  items:
+    1: 1 kohde
+    n: $1 kohdetta
+  subfolders:
+    1: 1 alikansio
+    n: $1 alikansiota
+  directRow: Kohteet kansiossa {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Poista
+  actionMove: Siirrä kohteet yläkansioon
+  actionKeep: Säilytä
+  directMove: Siirrä yläkansioon
+
+clipboard:
+  copied: "{what} kopioitu"
+  failed: Kopiointi epäonnistui
+
+field:
+  show: Näytä {field}
+  hide: Piilota {field}
+  copy: Kopioi {field}
+
+blocked:
+  generic: Tämä kohde on estetty.
+  suiteMissing: Sen salausavainta ei ole enää olemassa.
+  suiteRevoked: Sen salausavain on mitätöity.
+  suiteCompromised: Salattu vaarantuneella avaimella, joten sitä ei voi avata täällä. Keepiq-verkkosovellus näyttää, voiko sen palauttaa.
+  migrationFailed: Sitä ei voitu siirtää uudelle avaimellesi vaarantumisen jälkeisen palautuksen aikana. Tallennettu arvo säilytetään, mutta sitä ei voi avata.
+
+detail:
+  item: Kohde
+  decrypting: Puretaan salausta…
+  decryptFailed: Kohteen salauksen purkaminen epäonnistui
+  unreadablePasskey: Tätä pääsyavainta ei voitu lukea
+  unreadableFields: Lisäkenttiä ei voitu lukea
+  loginCredentials: Kirjautumistiedot
+  username: Käyttäjätunnus
+  password: Salasana
+  authenticatorKey: Todennusavain
+  website: Verkkosivusto
+  additionalFields: Lisäkentät
+  notes: Muistiinpanot
+  history: Kohteen historia
+  created: Luotu
+  updated: Päivitetty
+  expires: Vanhenee
+  cardDetails: Kortin tiedot
+  number: Numero
+  numberWithBrand: Numero · {brand}
+  cardNumber: Kortin numero
+  cardholder: Kortinhaltija
+  expiry: Voimassa
+  cvv: CVV
+  pin: PIN-koodi
+  identity: Henkilöllisyys
+  firstName: Etunimi
+  lastName: Sukunimi
+  address: Osoite
+  phone: Puhelin
+  email: Sähköposti
+  bsn: BSN
+  passkey: Pääsyavain
+  relyingParty: Sivusto tai sovellus
+  passkeyUser: Käyttäjänimi
+  passkeyOnLogin: Keepiq kirjautuu kirjautumistietoihin tallennetuilla pääsyavaimilla, ei tällä kohteella
+  passkeys: Pääsyavaimet
+  passkeyCreated: Luotu {date}
+  useOnly: Omistaja ei salli sinun nähdä tai kopioida tätä.
+
+totp:
+  code: Vahvistuskoodi
+  invalid: Virheellinen todennusavain
+  changesIn:
+    1: Vaihtuu 1 sekunnin kuluttua
+    n: Vaihtuu $1 sekunnin kuluttua
+
+settings:
+  accountSecurity: Tilin turvallisuus
+  autofill: Automaattinen täyttö
+  notifications: Ilmoitukset
+  vault: Holvi
+  appearance: Ulkoasu
+  about: Tietoja
+  folders: Kansiot
+  theme: Teema
+  themeSystem: Järjestelmän oletus
+  themeLight: Vaalea
+  themeDark: Tumma
+  comingLater: Tulossa myöhemmin
+  setByOrganisation: Organisaatiosi asettama
+  turnedOffByOrganisation: Organisaatiosi poistanut käytöstä
+  never: Ei koskaan
+  durationHours: "{count} t"
+  durationMinutes: "{count} min"
+  pin: Avaa lukitus PIN-koodilla
+  pinTurnOn: Ota käyttöön
+  masterPasswordRequired: Anna pääsalasanasi
+  pinAgain: Vahvista PIN-koodi
+  pinMismatch: PIN-koodit eivät täsmää
+  pinAdvice: Älä käytä samaa PIN-koodia kuin puhelimessasi tai pankissasi.
+  pinAfterRestart: Selaimen uudelleenkäynnistyksen jälkeen annat pääsalasanasi kerran; sen jälkeen PIN-koodi toimii taas.
+  vaultTimeout: Holvin aikakatkaisu
+  timeoutImmediately: Heti
+  timeoutMinutes:
+    1: 1 minuutti
+    n: $1 minuuttia
+  timeoutHours:
+    1: 1 tunti
+    n: $1 tuntia
+  timeoutOnSystemLock: Kun järjestelmä lukitaan
+  timeoutOnSystemLockCapped: Kun järjestelmä lukitaan tai {duration} käyttämättömänä (organisaatiosi asettama)
+  timeoutOnRestart: Kun selain käynnistetään uudelleen
+  timeoutCustom: Mukautettu
+  hours: Tunnit
+  minutes: Minuutit
+  customAtLeastOne: Anna vähintään yksi minuutti
+  customWhole: Anna kokonaiset tunnit ja minuutit
+  customAtMost: Organisaatiosi sallii enintään {duration}
+  neverTitle: Pidetäänkö holvi auki?
+  neverWarning: Holvisi pysyy auki, kunnes lukitset sen itse. Sen avaava avain kirjoitetaan tämän selainprofiilin levylle, josta kuka tahansa profiilia lukemaan pystyvä voi lukea sen.
+  neverConfirm: Pidä auki
+  timeoutAction: Aikakatkaisun toiminto
+  actionLock: Lukitse
+  actionLogOutNote: Kun aikakatkaisu päättyy, sinut kirjataan ulos ja tarvitset sovellussalasanan uudelleen
+  lockNow: Lukitse nyt
+  changeMasterPassword: Vaihda pääsalasana
+  autofillOnPageLoad: Automaattinen täyttö sivun latautuessa
+  autofillOnPageLoadWarning: Vaarantuneet tai epäluotettavat sivustot voivat käyttää väärin automaattista täyttöä sivun latautuessa
+  defaultAutofill: Kirjautumistietojen automaattisen täytön oletusasetus
+  defaultAutofillOnPageLoad: Täytä sivun latautuessa, jos käytössä
+  uriMatch: URI-vastaavuuden oletustunnistus
+  uriBaseDomain: Perusverkkotunnus
+  uriHost: Isäntä
+  uriStartsWith: Alkaa
+  uriExact: Tarkka
+  uriRegex: Säännöllinen lauseke
+  uriRegexNote: Säännölliset lausekkeet ovat edistynyt asetus ja voivat rikkoa vastaavuuden tunnistuksen
+  inlineSuggestions: Näytä täyttöehdotukset lomakekentissä
+  inlineCards: Näytä kortit ehdotuksina
+  inlineIdentities: Näytä henkilöllisyydet ehdotuksina
+  inlineKindsOff: Ota ensin käyttöön Näytä täyttöehdotukset lomakekentissä.
+  vaultCards: Näytä kortit aina täyttöehdotuksina holvinäkymässä
+  vaultIdentities: Näytä henkilöllisyydet aina täyttöehdotuksina holvinäkymässä
+  defaultPasswordManager: Tee Keepiqistä oletussalasanojen hallinta
+  defaultPasswordManagerHint: Poistaa käytöstä selaimen oman salasanojen tallennuksen ja osoitteiden täytön, jotta sen ehdotukset eivät peitä Keepiqin ehdotuksia.
+  defaultPasswordManagerManaged: Organisaatiosi tai toinen laajennus hallitsee tätä selaimen asetusta.
+  contextMenu: Näytä valinnat pikavalikossa
+  shortcut: Automaattisen täytön pikanäppäin
+  shortcutNotSet: Ei asetettu
+  shortcutChange: Muuta
+  shortcutFirefox: Avaa about:addons, valitse rataskuvakkeen valikko ja sitten Hallitse laajennusten pikanäppäimiä
+  shortcutSafari: Avaa Safarin asetukset, valitse Laajennukset ja valitse sitten Keepiq, niin voit muuttaa sen pikanäppäintä
+  websiteAccess: Pääsy sivustoille
+  websiteAccessAll: Kaikki sivustot
+  websiteAccessSome: Vain sallimasi sivustot
+  websiteAccessServer: Keepiq-palvelintasi ei ole sallittu
+  clearClipboard: Tyhjennä leikepöytä
+  clipboardSeconds:
+    1: 1 sekunti
+    n: $1 sekuntia
+  autoCopyTotp: Kopioi TOTP automaattisesti
+  autoCopyTotpHint: Jos kirjautumistiedolla on vahvistuskoodi, se kopioidaan leikepöydälle, kun täytät kirjautumistiedon automaattisesti.
+  askToAdd: Kysy kirjautumistiedon lisäämisestä
+  askToUpdate: Kysy olemassa olevan kirjautumistiedon päivittämisestä
+  askPasskeys: Kysy pääsyavainten tallentamisesta ja käytöstä
+  excludedDomains: Ohitettavat verkkotunnukset
+  addCurrentSite: Lisää nykyinen sivusto
+  domain: Verkkotunnus
+  addDomain: Lisää
+  domainEmpty: Anna verkkotunnus
+  domainUnreadable: Anna verkkotunnus, kuten example.org
+  domainDuplicate: On jo ohitettu
+  removeDomain: Poista {domain}
+  webTitle: Keepiq verkossa
+  webText: Keepiqin omia ilmoituksia, tuontia ja vientiä sekä pääsalasanaasi hallitaan Nextcloudin Keepiqissä kohdassa Henkilökohtaiset asetukset.
+  openKeepiq: Avaa Keepiq
+  lastSync: "Viimeisin synkronointi: {time}"
+  lastSyncNever: "Viimeisin synkronointi: ei koskaan"
+  syncOffline: Synkronointi epäonnistui, olet offline-tilassa
+  syncFailed: Synkronointi epäonnistui, yritä myöhemmin uudelleen
+  importItems: Tuo kohteita
+  exportVault: Vie holvi
+  defaultItemType: Oletuskohdetyyppi tässä laajennuksessa
+  compactMode: Tiivis tila
+  showAnimations: Näytä animaatiot
+  quickCopy: Näytä pikakopiointitoiminnot holvissa
+  showBadgeCounter: Näytä kirjautumistietojen täyttöehdotusten määrä laajennuksen kuvakkeessa
+  language: Kieli
+  languageFollows: Seuraa selaintasi
+  version: Versio {version}
+  server: Palvelin {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiqin versio tuntematon
+  help: Ohje
+  reportBug: Ilmoita virheestä
+  contactSupport: Ota yhteyttä tukeen
+  privacyPolicy: Tietosuojakäytäntö
+  webApp: Keepiq-verkkosovellus
+  rate: Arvioi laajennus
+
+websiteAccess:
+  title: Anna Keepiqin toimia sivustoilla
+  body: Safari suorittaa Keepiqiä vain sallimillasi sivustoilla. Salli se kaikilla sivustoilla, niin voit täyttää kirjautumistietoja, tallentaa uusia ja käyttää pääsyavaimia kaikkialla, missä kirjaudut sisään.
+  allow: Salli kaikilla sivustoilla
+  dismiss: Ei nyt
+  steps: Valitse Safarissa Safari > Asetukset ja sitten Sivustot. Valitse luettelosta Keepiq ja aseta ”Vierailtaessa muilla sivustoilla” arvoon Salli.
+  perSite: Jos haluat sallia sivustot yksi kerrallaan, klikkaa sivustolla Keepiq-painiketta ja valitse, että se sallitaan aina.
+  serverTitle: Keepiq ei saa yhteyttä palvelimeen {host}
+  serverBody: Safari ei anna Keepiqin muodostaa yhteyttä palvelimeesi, joten holviasi ei voi synkronoida.
+  serverAllow: Salli {host}
+
+generator:
+  kinds: Mitä luodaan
+  password: Salasana
+  passphrase: Salalause
+  username: Käyttäjätunnus
+  length: Pituus
+  lengthValue: Pituus merkkeinä
+  uppercase: Isot kirjaimet (A-Z)
+  lowercase: Pienet kirjaimet (a-z)
+  digits: Numerot (0-9)
+  special: Erikoismerkit, kuten !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Merkkityypit
+  lastClassOn: Vähintään yksi tyyppi pysyy käytössä
+  minNumbers: Numeroita vähintään
+  minSpecial: Erikoismerkkejä vähintään
+  avoidAmbiguous: Vältä samannäköisiä merkkejä
+  lockedByPolicy: Organisaatiosi asettama
+  passphraseOff: Organisaatiosi poistanut käytöstä
+  words: Sanojen määrä
+  separator: Sanojen erotin
+  capitalizeWords: Isot alkukirjaimet
+  capitalize: Iso alkukirjain
+  includeNumber: Lisää numero
+  usernameType: Tyyppi
+  typeWord: Satunnainen sana
+  typePlus: Plus-osoitteellinen sähköposti
+  typeCatchall: Catch-all-sähköposti
+  email: Sähköposti
+  emailPlaceholder: nimi@example.com
+  domain: Verkkotunnus
+  domainPlaceholder: example.com
+  basedOn: Perustuu
+  random: Satunnainen
+  websiteName: Sivuston nimi
+  noWebsite: Sivustoa ei tunnistettu
+  needsEmail: Anna sähköpostiosoite
+  needsDomain: Anna verkkotunnus
+  wordlistUnavailable: Sanaluettelo ei ole käytettävissä
+  regenerate: Luo uudelleen
+  usePassword: Käytä tätä salasanaa
+  useUsername: Käytä tätä käyttäjätunnusta
+  history: Generaattorin historia
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Ei vielä luotuja arvoja
+  clearHistory: Tyhjennä
+  clearHistoryTitle: Tyhjennetäänkö generaattorin historia?
+  clearHistoryText: Tämä poistaa kaikki luettelon arvot tästä selaimesta.
+  generatePasswordLink: Luo salasana
+  generatePassword: Luo salasana
+  generateUsername: Luo käyttäjätunnus
+
+send:
+  new: Uusi lähetys
+  empty: Ei vielä lähetyksiä
+  emptyText: Jaa tekstiä tai kirjautumistieto linkillä, joka poistaa itsensä.
+  loadFailed: Lähetysten lataaminen epäonnistui
+  retry: Yritä uudelleen
+  labelText: "Teksti, {time}"
+  labelCredential: "Kirjautumistieto, {time}"
+  viewsLeft:
+    1: "Katseluja jäljellä: {left}/1"
+    n: "Katseluja jäljellä: {left}/$1"
+  expires: "Vanhenee {date}"
+  neverExpires: Ei vanhene
+  expired: Vanhentunut
+  passwordBadge: Salasana
+  link: Linkki
+  copyLink: Kopioi linkki
+  copyLinkOf: "Kopioi linkki, {name}"
+  linkGone: Linkki ei ole enää saatavilla
+  remove: Poista
+  removeOf: "Poista, {name}"
+  removeTitle: Poista lähetys
+  removeConfirm: Poistetaanko tämä lähetys? Kukaan ei enää pääse siihen linkin kautta.
+  removed: Lähetys poistettu
+  contentSection: Sisältö
+  optionsSection: Asetukset
+  type: Tyyppi
+  text: Teksti
+  credential: Kirjautumistieto
+  content: Jaettava teksti
+  maxViews: Katseluja enintään
+  maxViewsRange: "Välillä 1–{max}"
+  expiry: Vanhenee
+  expiry1h: 1 tunti
+  expiry1d: 1 päivä
+  expiry2d: 2 päivää
+  expiry3d: 3 päivää
+  expiry7d: 7 päivää
+  expiry30d: 30 päivää
+  expiryCustom: Mukautettu
+  customHours: Tunnit
+  customHoursMin: Vähintään 1 tunti
+  customHoursMax: Enintään 720 tuntia (30 päivää)
+  accessPassword: Käyttösalasana
+  accessPasswordHint: Valinnainen. Vastaanottaja tarvitsee sen lähetyksen avaamiseen.
+  create: Luo
+  protecting: Suojataan salasanalla…
+  offline: Lähetykset vaativat yhteyden Keepiq-palvelimeesi
+  prefillFailed: Tätä kirjautumistietoa ei voitu lukea
+  ready: Lähetyksesi on valmis
+  shownOnce:
+    1: Kopioi linkki nyt. Se näkyy vain, kunnes suljet tämän ikkunan, ja sisältö tuhoutuu 1 katselun jälkeen.
+    n: Kopioi linkki nyt. Se näkyy vain, kunnes suljet tämän ikkunan, ja sisältö tuhoutuu $1 katselun jälkeen.
+  passwordNote: Jaa käyttösalasana erillään linkistä. 5 väärän yrityksen jälkeen lähetys poistetaan.
+  done: Valmis
+
+pageFill:
+  insecure: "Varoitus: Tämä on suojaamaton HTTP-sivu, ja muut voivat mahdollisesti nähdä ja muuttaa lähettämiäsi tietoja. Tämä kirjautumistieto tallennettiin alun perin suojatulla (HTTPS) sivulla {host}.\n\nHaluatko silti täyttää tämän kirjautumistiedon?"
+  insecureNoHost: "Varoitus: Tämä on suojaamaton HTTP-sivu, ja muut voivat mahdollisesti nähdä ja muuttaa lähettämiäsi tietoja. Tämä kirjautumistieto tallennettiin alun perin suojatulla (HTTPS) sivulla.\n\nHaluatko silti täyttää tämän kirjautumistiedon?"
+  cardInsecure: "Täytetäänkö tämä kortti suojaamattomalle sivustolle?\n\nTämä sivusto ei ole suojattu. Kuka tahansa verkossa voi lukea täytetyt korttitiedot."
+  crossSite: "Täytetäänkö myös muualle ({hosts})?\n\nOsa tästä lomakkeesta tulee muualta ({hosts}) eikä sivustolta {host}. Keepiq täyttää sen siellä vain, jos hyväksyt."
+
+contextMenu:
+  root: Keepiq
+  autofill: Täytä kirjautumistieto
+  noMatches: Ei kirjautumistietoja
+  noUsernames: Ei käyttäjätunnuksia
+  noPasswords: Ei salasanoja
+  noCodes: Ei vahvistuskoodeja
+  noIdentities: Ei henkilöllisyyksiä
+  noCards: Ei kortteja
+  addLogin: Lisää kirjautumistieto
+  addIdentity: Lisää henkilöllisyys
+  addCard: Lisää kortti
+  openKeepiq: Avaa Keepiq
+  copyUsername: Kopioi käyttäjätunnus
+  copyPassword: Kopioi salasana
+  copyCode: Kopioi vahvistuskoodi
+  autofillCard: Täytä kortti
+  autofillIdentity: Täytä henkilöllisyys
+  generatePassword: Luo salasana ja kopioi
+  unlock: Avaa holvin lukitus
+
+pageNotice:
+  label: Keepiq-ilmoitus
+  noLoginForm: Keepiq ei löytänyt tältä sivulta täytettävää kirjautumislomaketta.
+  noCardForm: Keepiq ei löytänyt tältä sivulta täytettäviä korttikenttiä.
+  noIdentityForm: Keepiq ei löytänyt tältä sivulta täytettäviä osoite- tai henkilötietokenttiä.
+
+toolbar:
+  locked: "{name}: lukittu"
+  loggedOut: "{name}: kirjauduttu ulos"
+  count:
+    1: "{name}: 1 kirjautumistieto tälle sivustolle"
+    n: "{name}: $1 kirjautumistietoa tälle sivustolle"
+
+inlineList:
+  frameTitle: Keepiq-kirjautumistiedot
+  label: Keepiq-kirjautumistiedot sivustolle {host}
+  row: "{name}, {username}"
+  noMatch: Ei kirjautumistietoja sivustolle {host}
+  passkeyRow: "{name}, {username}, pääsyavain"
+  passkeyRowNoUser: "{name}, pääsyavain"
+  noMatchPasskeys: Ei kirjautumistietoja tai pääsyavaimia sivustolle {host}
+  locked: Keepiq on lukittu
+  unlock: Avaa lukitus
+  insecureQuestion: Täytetäänkö tälle suojaamattomalle sivustolle?
+  insecureDetail: Tämä sivusto ei ole suojattu. Kuka tahansa verkossa voi lukea täytetyt tiedot.
+  fill: Täytä
+  notVisible: Keepiq ei voi täyttää tässä, koska sivu muuttaa tapaansa näyttää sisältö. Käytä työkalupalkin Keepiq-painiketta.
+  status:
+    count:
+      1: 1 Keepiq-kirjautumistieto. Valitse alanuolella.
+      n: $1 Keepiq-kirjautumistietoa. Valitse alanuolella.
+    noMatch: Ei Keepiq-kirjautumistietoja sivustolle {host}
+    countPasskeys:
+      1: 1 Keepiq-kirjautumistieto tai -pääsyavain. Valitse alanuolella.
+      n: $1 Keepiq-kirjautumistietoa ja -pääsyavainta. Valitse alanuolella.
+    noMatchPasskeys: Ei Keepiq-kirjautumistietoja tai -pääsyavaimia sivustolle {host}
+    locked: Keepiq on lukittu. Avaa lukitus alanuolella.
+  code:
+    frameTitle: Keepiq-vahvistuskoodit
+    label: Keepiq-vahvistuskoodit sivustolle {host}
+    noMatch: Ei vahvistuskoodeja sivustolle {host}
+    locked: Avaa Keepiqin lukitus nähdäksesi vahvistuskoodisi
+    invalid: Virheellinen todennussalaisuus
+    status:
+      count:
+        1: 1 Keepiq-vahvistuskoodi. Valitse alanuolella.
+        n: $1 Keepiq-vahvistuskoodia. Valitse alanuolella.
+      noMatch: Ei Keepiq-vahvistuskoodeja sivustolle {host}
+  card:
+    frameTitle: Keepiq-kortit
+    noMatch: Keepiqissä ei ole kortteja
+    locked: Avaa Keepiqin lukitus nähdäksesi korttisi
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Kortti, *{last4}"
+    row: "{name}, {brand}, päättyy numeroihin {last4}"
+    rowNoBrand: "{name}, kortti, päättyy numeroihin {last4}"
+    status:
+      count:
+        1: 1 Keepiq-kortti. Valitse alanuolella.
+        n: $1 Keepiq-korttia. Valitse alanuolella.
+  identity:
+    frameTitle: Keepiq-henkilöllisyydet
+    noMatch: Keepiqissä ei ole henkilöllisyyksiä
+    locked: Avaa Keepiqin lukitus nähdäksesi henkilöllisyytesi
+    status:
+      count:
+        1: 1 Keepiq-henkilöllisyys. Valitse alanuolella.
+        n: $1 Keepiq-henkilöllisyyttä. Valitse alanuolella.
+
+notificationBar:
+  label: Keepiq-ilmoitus
+  saveQuestion: Tallennetaanko sivuston {host} kirjautumistieto Keepiqiin?
+  updateQuestion: Päivitetäänkö kohteen {name} salasana?
+  updateQuestionUser: Päivitetäänkö kohteen {name} ({username}) salasana?
+  updateQuestionHost: Päivitetäänkö kohteen {name} salasana sivustolla {host}?
+  updateQuestionUserHost: Päivitetäänkö kohteen {name} ({username}) salasana sivustolla {host}?
+  folder: Kansio
+  noFolder: Ei kansiota
+  save: Tallenna
+  never: Ei koskaan tälle sivustolle
+  update: Päivitä
+  close: Sulje
+  expand: Näytä valinnat
+  shortcutHint: Vastaa painamalla {shortcut}.
+  saving: Tallennetaan…
+  updating: Päivitetään…
+  saved: Kirjautumistieto tallennettu
+  updated: Salasana päivitetty
+  notVisible: Keepiq ei voi tehdä tätä tässä, koska sivu muuttaa tapaansa näyttää sisältö. Sulje tämä ja lisää kirjautumistieto työkalupalkin Keepiq-painikkeesta.
+  errors:
+    writeLocked: Holvi on tilapäisesti lukittu muutoksilta. Yritä myöhemmin uudelleen.
+    unverified: Vaihda salasana muokkaamalla kirjautumistietoa Keepiqin ponnahdusikkunassa tai verkkosovelluksessa.
+    viewOnly: Tämä kirjautumistieto on jaettu kanssasi vain katseltavaksi, joten sen salasanaa ei voi päivittää tässä.
+    loginGone: Tätä kirjautumistietoa ei ole enää. Tallennetaanko se uutena?
+    locked: Keepiq on lukittu. Avaa lukitus työkalupalkin Keepiq-painikkeesta ja yritä uudelleen.
+    notResponding: Keepiq ei vastaa. Yritä uudelleen.
+    accountChanged: Vaihdoit tiliä, joten mitään ei tallennettu.
+    keyMismatch: Keepiqin avain ei vastaa holviasi. Mitään ei tallennettu; ilmoita ylläpitäjälle.
+    staleSource: Tämän jaetun kirjautumistiedon alkuperäinen muuttui. Mitään ei tallennettu; yritä uudelleen.
+    incomplete: Jaon vastaanottajat muuttuivat jatkuvasti. Mitään ei tallennettu; yritä uudelleen.
+    badCertificate: Vastaanottajan salausavainta ei voitu lukea. Mitään ei tallennettu.
+    keepiqOutdated: Keepiq-palvelimesi on liian vanha. Mitään ei tallennettu; pyydä ylläpitäjältä Keepiq {version} tai uudempi.
+    shareScanPending: Kirjautumistieto odottaa jakojen tarkistusta. Mitään ei tallennettu; yritä myöhemmin.
+
+passkey:
+  unlockGet: Avaa Keepiqin lukitus käyttääksesi pääsyavainta sivustolle {rpId}
+  unlockCreate: Avaa Keepiqin lukitus tallentaaksesi pääsyavaimen sivustolle {rpId}
+  verifyTitle: Vahvista henkilöllisyytesi
+  verifyPassword: Jatka antamalla pääsalasanasi.
+  verifyPin: Jatka antamalla PIN-koodisi.
+  confirm: Vahvista
+  signInTitle: Kirjaudu pääsyavaimella
+  signInText: Käytä Keepiqiin tallennettua pääsyavainta sivustolle {rpId}
+  row: "{name}, {userName}"
+  noPasskey: Ei Keepiq-pääsyavainta sivustolle {rpId}
+  saveTitle: Tallenna pääsyavain
+  saveTo: Tallenna kirjautumistietoon
+  replaces: Korvaa käyttäjän {userName} pääsyavaimen
+  newLogin: Uusi kirjautumistieto
+  name: Nimi
+  folder: Kansio
+  noFolder: Ei kansiota
+  saveNew: Tallenna uutena kirjautumistietona
+  replaceQuestion: Korvataanko käyttäjän {userName} pääsyavain kohteessa {name}?
+  replace: Korvaa
+  alreadySavedTitle: Pääsyavain on jo tallennettu
+  alreadySaved: Tämän tilin pääsyavain on jo tallennettu Keepiqiin
+  close: Sulje
+  retry: Yritä uudelleen
+  fallback: Käytä laitettasi tai suojausavainta
+  stalePick: Tämä pääsyavain ei ole enää holvissasi. Valitse toinen.
+  staleSave: Tähän kirjautumistietoon ei voi enää tallentaa pääsyavainta. Valitse toinen tai tallenna uutena kirjautumistietona.
+  errors:
+    conflict: Kirjautumistieto muuttui tallennuksen aikana. Mitään ei tallennettu; yritä uudelleen.
+    partnerUpgradeRequired: "Mitään ei tallennettu: vastaanottajien {cloudIds} Keepiq on liian vanha tallentamaan pääsyavaimia. Pyydä heitä päivittämään Keepiq tai tallenna pääsyavain toiseen kirjautumistietoon."
+    partnerUpgradeRequiredUnnamed: "Mitään ei tallennettu: kumppaniorganisaatiolla, jonka kanssa tämä kirjautumistieto on jaettu, on liian vanha Keepiq tallentamaan pääsyavaimia. Pyydä heitä päivittämään Keepiq tai tallenna pääsyavain toiseen kirjautumistietoon."
+    shareScanPending: Tämä kirjautumistieto odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei tallennettu; yritä myöhemmin uudelleen.
+
+vaultPasskey:
+  unlock: "Avaa sormenjäljellä tai kasvoilla"
+  unlockIntro: "Selain pyytää sormenjälkeä, kasvoja tai laitteen PIN-koodia."
+  enrolTitle: "Ota käyttöön avaus sormenjäljellä tai kasvoilla"
+  enrolIntro: "Vahvista pääsalasanasi. Sen jälkeen selain pyytää kahdesti sormenjälkeä, kasvoja tai laitteen PIN-koodia."
+  enrolSubmit: "Ota käyttöön"
+  enrolDone: "Avaus sormenjäljellä tai kasvoilla on käytössä tässä selaimessa."
+  close: "Sulje"
+  label: "Keepiq-selainlaajennus"
+  tooOld: "Avaus sormenjäljellä tai kasvoilla vaatii Chromen tai Edgen 122 tai Firefoxin 150 tai uudemman. Käytä pääsalasanaasi."
+  unsupported: "Tämä selain tai laite ei voi avata Keepiqiä sormenjäljellä tai kasvoilla. Käytä pääsalasanaasi."
+  revokeInWebApp: "Poista se käytöstä mitätöimällä tämä pääsyavain Keepiq-verkkosovelluksessa."

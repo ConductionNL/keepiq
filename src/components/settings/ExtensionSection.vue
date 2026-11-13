@@ -3,10 +3,12 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   Admin section for the browser extension: the longest idle time a user may
-  pick before the extension locks. The extension reads it at every unlock
-  and uses the shorter of the user's choice and this maximum.
+  pick before the extension locks, and which extension builds may use
+  passkeys. The extension reads the idle maximum at every unlock and uses the
+  shorter of the user's choice and this maximum.
 
   @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
+  @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-ceremonies-pass-only-for-trusted-extension-origins
 -->
 <template>
 	<CnSettingsSection
@@ -37,6 +39,37 @@
 					</option>
 				</select>
 			</label>
+			<label class="extension-settings__switch">
+				<input
+					v-model="passkeysEnabled"
+					type="checkbox"
+					data-testid="extension-passkeys-enabled"
+					@change="save">
+				<span>{{ t('keepiq', 'Allow passkey unlock in the extension') }}</span>
+			</label>
+			<div v-if="pinnedOrigins.length" class="extension-settings__field">
+				<span>{{ t('keepiq', 'Official extension builds') }}</span>
+				<ul data-testid="extension-pinned-origins">
+					<li v-for="origin in pinnedOrigins" :key="origin">
+						<code>{{ origin }}</code>
+					</li>
+				</ul>
+			</div>
+			<label class="extension-settings__field">
+				<span>{{ t('keepiq', 'Other extension builds allowed to use passkeys') }}</span>
+				<textarea
+					v-model="originsText"
+					rows="3"
+					data-testid="extension-passkey-origins"
+					placeholder="chrome-extension://…"
+					@change="save" />
+				<small>{{
+					t(
+						'keepiq',
+						'One exact origin per line, such as chrome-extension:// followed by the 32-letter extension id. Wildcards are not accepted.',
+					)
+				}}</small>
+			</label>
 		</div>
 	</CnSettingsSection>
 </template>
@@ -54,6 +87,9 @@ export default {
 	data() {
 		return {
 			maxIdleMinutes: 240,
+			passkeysEnabled: true,
+			originsText: '',
+			pinnedOrigins: [],
 		}
 	},
 
@@ -83,16 +119,29 @@ export default {
 		 */
 		readSettings(data) {
 			this.maxIdleMinutes = data.extension_max_idle_minutes ?? 240
+			this.passkeysEnabled = data.extension_passkeys_enabled ?? true
+			this.originsText = (data.extension_passkey_origins ?? []).join('\n')
+			this.pinnedOrigins = data.extension_passkey_pinned_origins ?? []
 		},
 
 		/**
-		 * The maximum to store (the server accepts only the offered delays).
+		 * The settings to store: the idle maximum (the server accepts only the
+		 * offered delays), the passkey switch and the added origins, one per
+		 * line (the server refuses any origin that is not exact).
 		 *
-		 * @return {object|null} The settings to store, or null when the form is invalid.
+		 * @return {object} The settings to store.
 		 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
+		 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-ceremonies-pass-only-for-trusted-extension-origins
 		 */
 		settingsPayload() {
-			return { extension_max_idle_minutes: this.maxIdleMinutes }
+			return {
+				extension_max_idle_minutes: this.maxIdleMinutes,
+				extension_passkeys_enabled: this.passkeysEnabled,
+				extension_passkey_origins: this.originsText
+					.split('\n')
+					.map((line) => line.trim())
+					.filter((line) => line !== ''),
+			}
 		},
 	},
 }
@@ -114,5 +163,15 @@ export default {
 
 .extension-settings__field select {
 	width: 200px;
+}
+
+.extension-settings__switch {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.extension-settings__field textarea {
+	font-family: monospace;
 }
 </style>

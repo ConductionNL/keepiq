@@ -1,6 +1,6 @@
 import { createPublicKey, X509Certificate } from 'node:crypto'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { caConstraintsChain, FEDERATION_NAMES, federationChain } from '@/src/testing/vectors'
+import { caConstraintsChain, FEDERATION_NAMES, federationChain, phpseclibChain } from '@/src/testing/vectors'
 import { fromBase64, toBase64 } from './base64'
 import { canonicalCloudId, FederatedCertificateError, verifyFederatedCertificate, type FederatedCertificateInput } from './federated-certificate'
 import { extractSpki, importPrivateKey, importSpki, pemToPkcs8, rsaDecrypt, rsaEncrypt } from './rsa'
@@ -340,6 +340,27 @@ describe('verifyFederatedCertificate chain constraints', () => {
 	})
 })
 
+// The leaves Keepiq makes through phpseclib, for a public key alone and as re-signs, under the CAs it makes through openssl.
+describe('verifyFederatedCertificate on a chain Keepiq minted through phpseclib', () => {
+	const P = phpseclibChain()
+	/** Its leaves are valid for a year from minting, so the chain is checked an hour after its newest certificate starts. */
+	const minted = (...pems: string[]) => Math.max(...pems.map((pem) => Date.parse(new X509Certificate(pem).validFrom))) + 3_600_000
+
+	it.each(['leaf', 'leafResigned', 'opensslLeafResigned'] as const)('accepts the %s and returns its fingerprint and key', async (name) => {
+		const verified = await verifyFederatedCertificate({
+			certificate: P[name], chain: [P.intermediate, P.root], partnerRootFingerprint: P.rootFingerprint, cloudId: BOB, now: minted(P[name], P.intermediate, P.root),
+		})
+		expect(verified.fingerprint).toBe(await sha256Hex(P[name]))
+		expect(verified.spki).toEqual(new Uint8Array(createPublicKey(P[name]).export({ type: 'spki', format: 'der' })))
+		// OpenSSL agrees, so the parser and the fixture don't share a wrong reading.
+		expect(new X509Certificate(P[name]).verify(new X509Certificate(P.intermediate).publicKey)).toBe(true)
+	})
+
+	it('reads the fixture without its note', () => {
+		expect(P).not.toHaveProperty('_note')
+	})
+})
+
 // Signed here with one throwaway key, so each certificate differs from a good one only where a test says.
 describe('verifyFederatedCertificate on chains built here', () => {
 	const OID = {
@@ -551,6 +572,110 @@ describe('verifyFederatedCertificate on chains built here', () => {
 
 		it('accepts a leaf whose basicConstraints leaves cA at its default', async () => {
 			await expect(verifyBuilt({ leaf: { extensions: [basicConstraints()] } })).resolves.toMatchObject({ fingerprint: FINGERPRINT })
+		})
+
+		// Every encoding of each rule's input class, so a loosened rule fails here and not only on the examples above.
+		describe('over every input', () => {
+			let base: { root: string; intermediate: string; leaf: string }
+			let pin: string
+			const SPECS = { intermediate: { issuer: ROOT, subject: INTERMEDIATE, extensions: [CA] }, leaf: { issuer: INTERMEDIATE, subject: name(utf8(MALLORY)) } }
+
+			beforeAll(async () => {
+				base = await build()
+				pin = await sha256Hex(base.root)
+			})
+
+			/** The built chain with one certificate replaced, which all share a key, so each case signs only that one. */
+			async function outcome(part: keyof typeof SPECS, spec: Partial<Spec>): Promise<string> {
+				const chain = { ...base, [part]: await certificate({ ...SPECS[part], ...spec }) }
+				try {
+					await verifyFederatedCertificate({ certificate: chain.leaf, chain: [chain.intermediate, chain.root], partnerRootFingerprint: pin, cloudId: MALLORY })
+					return 'accepted'
+				} catch (error) {
+					if (!(error instanceof FederatedCertificateError)) throw error
+					return error.reason
+				}
+			}
+
+			/** The cases whose outcome is not the expected one, by label. */
+			async function mismatches<T>(inputs: T[], label: (input: T) => string, run: (input: T) => Promise<string>, expected: (input: T) => string): Promise<string[]> {
+				const wrong: string[] = []
+				for (const input of inputs) {
+					const got = await run(input)
+					if (got !== expected(input)) wrong.push(`${label(input)}: ${got}, expected ${expected(input)}`)
+				}
+				return wrong
+			}
+
+			const LENGTHS = Array.from({ length: 301 }, (_, n) => n)
+			const hex = (byte: number) => `0x${byte.toString(16).padStart(2, '0')}`
+			/** A length's header in `form`, a short-form byte or a long-form count byte, or null where that form cannot hold it; 0x80 is BER's indefinite length, with no count. */
+			function header(form: 'short' | number, n: number): number[] | null {
+				if (form === 'short') return n < 0x80 ? [n] : null
+				if (form === 0x80) return [0x80]
+				const count = form & 0x7f
+				if (count < 4 && n >= 256 ** count) return null
+				return [form, ...Array.from({ length: count }, (_, i) => Math.floor(n / 256 ** (count - 1 - i)) % 256)]
+			}
+			const minimal = (form: 'short' | number, n: number) => (form === 'short' && n < 0x80) || (form === 0x81 && n >= 0x80 && n < 0x100) || (form === 0x82 && n >= 0x100)
+			/** A non-critical subjectKeyId, whose value is not read, as an OCTET STRING of `n` bytes behind `lengthBytes`. */
+			const keyIdWith = (lengthBytes: number[], n: number) => der(0x30, der(0x06, OID.subjectKeyId), [0x04, ...lengthBytes, ...new Uint8Array(n)])
+
+			it.each<['short' | number, number]>([['short', 128], [0x80, 301], [0x81, 256], [0x82, 301], [0x83, 301], [0x84, 301], [0x85, 301]])('accepts a length of 0 to 300 in form %s only where it is the shortest encoding', async (form, count) => {
+				const encodable = LENGTHS.filter((n) => header(form, n) !== null)
+				expect(encodable).toHaveLength(count)
+				const wrong = await mismatches(encodable, (n) => `${n}`, (n) => outcome('leaf', { extensions: [keyIdWith(header(form, n)!, n)] }), (n) => (minimal(form, n) ? 'accepted' : 'malformed'))
+				expect(wrong).toEqual([])
+			})
+
+			it('refuses every length of 0 to 300 that runs one byte past its parent', async () => {
+				const wrong = await mismatches(LENGTHS, (n) => `${n}`, (n) => outcome('leaf', { extensions: [keyIdWith(header(n + 1 < 0x80 ? 'short' : n + 1 < 0x100 ? 0x81 : 0x82, n + 1)!, n)] }), () => 'malformed')
+				expect(wrong).toEqual([])
+			})
+
+			const BYTES = Array.from({ length: 256 }, (_, byte) => byte)
+			const keyUsageFlagged = (flag: number) => der(0x30, der(0x06, OID.keyUsage), der(0x01, [flag]), der(0x04, der(0x03, [0x01, 0x06])))
+
+			it('accepts a critical flag of 0xFF only, refusing an explicit FALSE and every other byte', async () => {
+				const wrong = await mismatches(BYTES, hex, (flag) => outcome('intermediate', { extensions: [CA, keyUsageFlagged(flag)] }), (flag) => (flag === 0xff ? 'accepted' : 'malformed'))
+				expect(wrong).toEqual([])
+			})
+
+			it('accepts a cA flag of 0xFF only, refusing an explicit FALSE and every other byte', async () => {
+				const wrong = await mismatches(BYTES, hex, (flag) => outcome('intermediate', { extensions: [basicConstraints(der(0x01, [flag]))] }), (flag) => (flag === 0xff ? 'accepted' : 'malformed'))
+				expect(wrong).toEqual([])
+			})
+
+			const pathLen = (value: number[]) => outcome('intermediate', { extensions: [basicConstraints(der(0x01, [0xff]), der(0x02, value))] })
+
+			it.each<[string, string, number[]]>([
+				['zero length', 'malformed', []],
+				['0', 'accepted', [0x00]],
+				['127', 'accepted', [0x7f]],
+				['128 with its needed leading zero', 'accepted', [0x00, 0x80]],
+				['256', 'accepted', [0x01, 0x00]],
+				['the largest the parser reads, 2^31 - 1', 'accepted', [0x7f, 0xff, 0xff, 0xff]],
+				['0 with a redundant leading zero', 'malformed', [0x00, 0x00]],
+				['5 with a redundant leading zero', 'malformed', [0x00, 0x05]],
+				['128 with two leading zeros', 'malformed', [0x00, 0x00, 0x80]],
+				['-1', 'malformed', [0xff]],
+				['-128', 'malformed', [0x80]],
+				['-1 with a redundant leading 0xFF', 'malformed', [0xff, 0xff]],
+				['-128 with a redundant leading 0xFF', 'malformed', [0xff, 0x80]],
+				['-129', 'malformed', [0xff, 0x7f]],
+				['2^31, past what the parser reads', 'malformed', [0x00, 0x80, 0x00, 0x00, 0x00]],
+			])('reads a pathLenConstraint of %s as %s', async (_, expected, value) => {
+				expect(await pathLen(value)).toBe(expected)
+			})
+
+			it.each<[string, (byte: number) => number[], (byte: number) => boolean]>([
+				['one byte', (byte) => [byte], (byte) => byte < 0x80],
+				['two bytes after 0x00', (byte) => [0x00, byte], (byte) => byte >= 0x80],
+				['two bytes after 0xFF', (byte) => [0xff, byte], () => false],
+			])('accepts a pathLenConstraint of %s only where it is a non-negative INTEGER without a redundant leading byte', async (_, value, accepted) => {
+				const wrong = await mismatches(BYTES, hex, (byte) => pathLen(value(byte)), (byte) => (accepted(byte) ? 'accepted' : 'malformed'))
+				expect(wrong).toEqual([])
+			})
 		})
 	})
 })

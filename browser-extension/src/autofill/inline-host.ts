@@ -4,12 +4,12 @@
  */
 import { i18n } from '#i18n'
 import {
-	INLINE_MIN_HEIGHT_PX, INLINE_MIN_WIDTH_PX, INLINE_RADIUS_PX, inlineClampHeight,
+	INLINE_FRAME_TITLES, INLINE_MIN_HEIGHT_PX, INLINE_MIN_WIDTH_PX, INLINE_RADIUS_PX, inlineClampHeight,
 	type BackgroundToContent, type ContentToBackground, type ContentToInlineList, type InlineMode, type PickInput,
 } from '@/src/messages'
 import { deepActiveElement, type OpenList } from './execute'
-import { isQualifying } from './fields'
-import { createFrameHost, type FrameHost } from './frame-host'
+import { isQualifying, isWebauthnField } from './fields'
+import { createFrameHost, type FrameHost, viewport } from './frame-host'
 import { composedAncestors, drawnUntouched, GUARD_MS, hits, modalOf, untouched } from './visibility'
 
 /** Also how long focus must have stayed before Down. */
@@ -25,8 +25,8 @@ export interface InlineHostOptions {
 	/** `inline.open`; resolves to the reply, or anything else when the background cannot be reached. */
 	request: (message: ContentToBackground) => Promise<unknown>
 	send: (message: ContentToBackground) => void
-	/** Firefox has no occlusion report (`trackVisibility`). */
-	firefox: boolean
+	/** See `drawnUntouched`. */
+	rootFilterReachesTopLayer: boolean
 	/** The frame elements above this frame, nearest first, or `null` when one is cross-origin. */
 	ancestors?: () => HTMLElement[] | null
 }
@@ -40,7 +40,7 @@ interface Box {
 
 interface Open {
 	key: string
-	field: HTMLInputElement
+	field: Field
 	host: FrameHost
 	/** `<html>`, or the modal holding the field, outside which everything is inert or focus-trapped. */
 	parent: Element
@@ -59,62 +59,160 @@ interface Open {
 	intersection?: IntersectionObserver
 }
 
+/** The frame element holding `win`, when its document has `origin`. */
+function sameOriginFrame(win: Window, origin: string): HTMLElement | null {
+	const element = win.frameElement as HTMLElement | null
+	return element && element.ownerDocument.defaultView?.location.origin === origin ? element : null
+}
+
+/** The frame elements from `win` up to the top, nearest first, or null at the first of another origin. */
+function framesUpFrom(win: Window, origin: string): HTMLElement[] | null {
+	const frames: HTMLElement[] = []
+	for (let current = win; current !== current.top; current = current.parent) {
+		const element = sameOriginFrame(current, origin)
+		if (!element) return null
+		frames.push(element)
+	}
+	return frames
+}
+
 /**
  * Only where the guard can read every frame above (design.md § Frames): a cross-origin ancestor could
  * mask or fade the list in ways neither browser reports.
  */
 export function sameOriginAncestors(win: Window = window): HTMLElement[] | null {
-	const frames: HTMLElement[] = []
 	try {
 		const origin = win.location.origin
 		if (origin === 'null') return null
-		for (let current = win; current !== current.top; current = current.parent) {
-			const element = current.frameElement as HTMLElement | null
-			if (!element || element.ownerDocument.defaultView?.location.origin !== origin) return null
-			frames.push(element)
-		}
+		return framesUpFrom(win, origin)
 	} catch {
 		return null
 	}
-	return frames
 }
 
-function viewport(): { width: number; height: number } {
-	const root = document.documentElement
-	const standards = document.compatMode === 'CSS1Compat'
-	return { width: (standards && root.clientWidth) || window.innerWidth, height: (standards && root.clientHeight) || window.innerHeight }
+/** A field on screen, and the free height below and above it. */
+interface Room {
+	rect: DOMRect
+	view: { width: number; height: number }
+	below: number
+	above: number
+}
+
+function outsideView(rect: DOMRect, view: Room['view']): boolean {
+	return rect.bottom <= 0 || rect.top >= view.height || rect.right <= 0 || rect.left >= view.width
+}
+
+function roomAround(field: Element): Room | null {
+	const rect = field.getBoundingClientRect()
+	const view = viewport()
+	if (rect.width === 0 && rect.height === 0) return null
+	if (outsideView(rect, view)) return null
+	return { rect, view, below: view.height - rect.bottom - OFFSET_PX, above: rect.top - OFFSET_PX }
+}
+
+function listWidth(room: Room): number {
+	return Math.min(Math.max(room.rect.width, INLINE_MIN_WIDTH_PX), room.view.width - 2 * EDGE_PX)
+}
+
+function fitToRoom(room: Room, height: number): number {
+	return Math.min(height, Math.floor(Math.max(room.below, room.above)))
+}
+
+/** Below the field when `height` fits there, else above, else nowhere. */
+function topIn(room: Room, height: number): number | null {
+	if (room.below >= height) return room.rect.bottom + OFFSET_PX
+	return room.above >= height ? room.rect.top - OFFSET_PX - height : null
+}
+
+function boxIn(room: Room, size: { width: number; height: number }): Box | null {
+	const top = topIn(room, size.height)
+	if (top === null) return null
+	return { top, left: Math.max(0, Math.min(room.rect.left, room.view.width - EDGE_PX - size.width)), ...size }
 }
 
 /**
  * Below the field when `height` fits there, else above. `fit`, when the list opens or asks for a height: shrink to the
  * larger free side, down to one row. Otherwise the height is fixed, and a side that cannot hold it is no place.
  */
-export function placement(field: Element, height: number, fit = false): Box | null {
-	const rect = field.getBoundingClientRect()
-	const view = viewport()
-	if (rect.width === 0 && rect.height === 0) return null
-	if (rect.bottom <= 0 || rect.top >= view.height || rect.right <= 0 || rect.left >= view.width) return null
-	const width = Math.min(Math.max(rect.width, INLINE_MIN_WIDTH_PX), view.width - 2 * EDGE_PX)
+export function placement(field: Element, height: number, fit?: boolean): Box | null {
+	const room = roomAround(field)
+	if (!room) return null
+	const width = listWidth(room)
 	if (width < INLINE_MIN_WIDTH_PX) return null
-	const below = view.height - rect.bottom - OFFSET_PX
-	const above = rect.top - OFFSET_PX
-	const fitted = fit ? Math.min(height, Math.floor(Math.max(below, above))) : height
+	const fitted = fit ? fitToRoom(room, height) : height
 	if (fitted < INLINE_MIN_HEIGHT_PX) return null
-	const top = below >= fitted ? rect.bottom + OFFSET_PX : above >= fitted ? rect.top - OFFSET_PX - fitted : null
-	if (top === null) return null
-	return { top, left: Math.max(0, Math.min(rect.left, view.width - EDGE_PX - width)), width, height: fitted }
+	return boxIn(room, { width, height: fitted })
 }
 
-const isInput = (target: EventTarget | null | undefined): target is HTMLInputElement => target instanceof HTMLInputElement
+/** A `<textarea>` only ever holds a street address, so it opens the identity list alone. */
+type Field = HTMLInputElement | HTMLTextAreaElement
+const isField = (target: EventTarget | null | undefined): target is Field => target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+/** A page's markup may leave whitespace in a textarea it shows as empty. */
+const isBlank = (field: Field) => (field.localName === 'textarea' ? field.value.trim() : field.value) === ''
 const deepTarget = (event: Event) => event.composedPath()[0] ?? event.target
 const sameBox = (a: Box, b: Box) =>
 	Math.abs(a.top - b.top) <= TOLERANCE_PX && Math.abs(a.left - b.left) <= TOLERANCE_PX
 	&& Math.abs(a.width - b.width) <= TOLERANCE_PX && Math.abs(a.height - b.height) <= TOLERANCE_PX
 
+/**
+ * The list `field` asks for, or null. A `webauthn` field only asks: the background opens a list on it only while the frame
+ * has a conditional passkey request pending.
+ */
+function listFor(field: Field): { mode: InlineMode; webauthn: boolean } | null {
+	const mode = isQualifying(field)
+	if (field.localName === 'textarea') return mode === 'identity' ? { mode, webauthn: false } : null
+	if (mode) return { mode, webauthn: false }
+	return isWebauthnField(field) ? { mode: 'login', webauthn: true } : null
+}
+
 const isPickInput = (input: unknown): input is PickInput => {
 	const value = input as Partial<PickInput> | null
 	return (value?.kind === 'pointer' || value?.kind === 'key') && [value.at, value.x, value.y].every((n) => typeof n === 'number' && Number.isFinite(n))
 }
+
+/**
+ * Whether the page moved, restyled or detached the host. A popover the page hid while stopping its toggle events
+ * still hit-tests with our `display: block`.
+ */
+function tampered(list: Open): boolean {
+	const host = list.host.element
+	return !host.isConnected || host.parentNode !== list.parent || host.getAttribute('style') !== list.host.written
+		|| (list.popover && !host.matches(':popover-open'))
+}
+
+function frameUntouched(frameElement: HTMLElement): boolean {
+	for (const element of composedAncestors(frameElement)) {
+		if (!untouched(element, true)) return false
+	}
+	return true
+}
+
+const withoutCommand = (event: KeyboardEvent) => !event.altKey && !event.ctrlKey && !event.metaKey
+
+/** ArrowDown alone, not held down, on a list that is ready, moves into the list. */
+const isListDown = (list: Open, event: KeyboardEvent) => event.key === 'ArrowDown' && withoutCommand(event) && !event.shiftKey && !event.repeat && list.ready
+
+const insideBox = (box: Box, input: PickInput) => input.x >= 0 && input.y >= 0 && input.x < box.width && input.y < box.height
+
+/** A point in a frame's document, in the coordinates of the document that holds the frame element. */
+function throughFrame(frameElement: Element, point: { x: number; y: number }): { x: number; y: number } {
+	const rect = frameElement.getBoundingClientRect()
+	const style = frameElement.ownerDocument.defaultView!.getComputedStyle(frameElement)
+	return {
+		x: point.x + rect.left + (frameElement.clientLeft || 0) + (Number.parseFloat(style.paddingLeft) || 0),
+		y: point.y + rect.top + (frameElement.clientTop || 0) + (Number.parseFloat(style.paddingTop) || 0),
+	}
+}
+
+/** One `inline.open` on its way to the background; `token` tells its reply from a later open's. */
+interface OpenAttempt {
+	field: Field
+	how: 'focus' | 'click'
+	mode: InlineMode
+	token: object
+}
+
+type HostMessage = Parameters<InlineHost['handle']>[0]
 
 export interface InlineHost {
 	start(): void
@@ -125,19 +223,19 @@ export interface InlineHost {
 }
 
 export function createInlineHost(options: InlineHostOptions): InlineHost {
-	const { request, send, firefox } = options
+	const { request, send, rootFilterReachesTopLayer } = options
 	let ancestors: HTMLElement[] | null = []
 	let allowed = false
 	let open: Open | null = null
-	let pending: { field: HTMLInputElement; token: object } | null = null
+	let pending: { field: Field; token: object } | null = null
 	/** Focus the content script itself gives back to the field, which must not reopen the list. */
-	let suppress: HTMLInputElement | null = null
+	let suppress: Field | null = null
 	let ownToggle = false
 	/**
 	 * How focus reached the field: `tab` is the user's Tab keydown, which counts only if the page did not
 	 * cancel it (and move focus itself); `own` is our refocus.
 	 */
-	let focused: { field: HTMLInputElement; at: number; pointer: boolean; tab: KeyboardEvent | null; own: boolean } | null = null
+	let focused: { field: Field; at: number; pointer: boolean; tab: KeyboardEvent | null; own: boolean } | null = null
 	let tabEvent: KeyboardEvent | null = null
 	let pointerField: EventTarget | null = null
 
@@ -160,7 +258,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 	}
 
 	/** `focusin` fires synchronously inside `focus()`, so the suppression cannot outlive it. */
-	function refocusField(field: HTMLInputElement): void {
+	function refocusField(field: Field): void {
 		suppress = field
 		try {
 			field.focus()
@@ -198,41 +296,50 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		if (list.loads > 0) list.host.post({ kind: 'inline.moved', key: list.key } satisfies ContentToInlineList)
 	}
 
-	/** Whether the list is drawn as set, now; closes it when the page tampered with the host. */
-	function visibleNow(list: Open): boolean {
+	/** Whether the host is drawn where and as it was set, unhidden by the page and the browser's occlusion report. */
+	function drawnAsSet(list: Open): boolean {
 		const host = list.host.element
-		// A popover the page hid while stopping its toggle events still hit-tests with our `display: block`.
-		if (!host.isConnected || host.parentNode !== list.parent || host.getAttribute('style') !== list.host.written
-			|| (list.popover && !host.matches(':popover-open'))) {
-			close()
-			return false
-		}
 		const rect = host.getBoundingClientRect()
 		if (!sameBox({ top: rect.top, left: rect.left, width: rect.width, height: rect.height }, list.box)) return false
 		if (list.reportedVisible === false) return false
-		if (!drawnUntouched(host, list.popover, firefox)) return false
+		return drawnUntouched(host, list.popover, rootFilterReachesTopLayer)
+	}
+
+	function framesUntouched(): boolean {
 		for (const frameElement of ancestors ?? []) {
-			for (const element of composedAncestors(frameElement)) {
-				if (!untouched(element, true)) return false
-			}
+			if (!frameUntouched(frameElement)) return false
 		}
 		return true
+	}
+
+	/** Whether the list is drawn as set, now; closes it when the page tampered with the host. */
+	function visibleNow(list: Open): boolean {
+		if (tampered(list)) {
+			close()
+			return false
+		}
+		return drawnAsSet(list) && framesUntouched()
 	}
 
 	function sample(list: Open): void {
 		if (!visibleNow(list)) list.lastNotVisibleAt = Date.now()
 	}
 
-	function fieldShown(field: HTMLInputElement): boolean {
+	function fieldShown(field: Field): boolean {
 		const style = getComputedStyle(field)
 		return field.isConnected && style.visibility !== 'hidden' && style.display !== 'none'
+	}
+
+	/** Where the list now goes, while its field still shows. */
+	function placeAgain(list: Open, ask: { height: number; fit?: boolean }): Box | null {
+		return fieldShown(list.field) ? placement(list.field, ask.height, ask.fit) : null
 	}
 
 	function tick(): void {
 		const list = open
 		if (!list) return
 		list.frame = requestAnimationFrame(tick)
-		const box = fieldShown(list.field) ? placement(list.field, list.box.height) : null
+		const box = placeAgain(list, { height: list.box.height })
 		if (!box) return close()
 		if (!sameBox(box, list.box)) move(list, box)
 		if (open === list) sample(list)
@@ -243,13 +350,14 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		const wanted = inlineClampHeight(height)
 		if (wanted === null || wanted === list.wanted) return
 		list.wanted = wanted
-		const box = fieldShown(list.field) ? placement(list.field, wanted, true) : null
+		const box = placeAgain(list, { height: wanted, fit: true })
 		if (!box) return close()
 		if (!sameBox(box, list.box)) move(list, box)
 	}
 
 	function watchIntersection(list: Open): void {
-		if (firefox || typeof IntersectionObserverEntry === 'undefined' || !('isVisible' in IntersectionObserverEntry.prototype)) return
+		// Firefox and Safari have no occlusion report (`trackVisibility`).
+		if (typeof IntersectionObserverEntry === 'undefined' || !('isVisible' in IntersectionObserverEntry.prototype)) return
 		list.reportedVisible = false
 		const init = { threshold: [1], trackVisibility: true, delay: 100 } as IntersectionObserverInit
 		list.intersection = new IntersectionObserver((entries) => {
@@ -259,8 +367,8 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		list.intersection.observe(list.host.element)
 	}
 
-	function show(field: HTMLInputElement, mode: InlineMode, key: string, wanted: number, box: Box): void {
-		const host = createFrameHost('/inline-list.html', i18n.t(mode === 'code' ? 'inlineList.code.frameTitle' : 'inlineList.frameTitle'))
+	function show(field: Field, mode: InlineMode, key: string, wanted: number, box: Box): void {
+		const host = createFrameHost('/inline-list.html', i18n.t(INLINE_FRAME_TITLES[mode]))
 		const popover = typeof host.element.showPopover === 'function'
 		const list: Open = {
 			key, field, host, parent: modalOf(field, popover) ?? document.documentElement, popover,
@@ -300,51 +408,79 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		list.frame = requestAnimationFrame(tick)
 	}
 
-	function maybeOpen(field: HTMLInputElement, how: 'focus' | 'click'): void {
-		if (!allowed || open?.field === field || pending?.field === field) return
-		if (how === 'focus' && field.value !== '') return
-		const mode = isQualifying(field)
-		if (!mode) return
+	/** Whether the field an open waited on still has focus and shows, and for a focus open is still empty. */
+	function stillWanted(field: Field, how: 'focus' | 'click'): boolean {
+		// A split code's fill moves focus box by box, and fills each box before this reply arrives.
+		const stillEmpty = how === 'click' || isBlank(field)
+		return deepActiveElement() === field && fieldShown(field) && stillEmpty
+	}
+
+	function listedOrPending(field: Field): boolean {
+		return open?.field === field || pending?.field === field
+	}
+
+	/** Whether a focus or click on `field` may ask for a list now. */
+	function mayOpen(field: Field, how: OpenAttempt['how']): boolean {
+		if (!allowed || listedOrPending(field)) return false
+		return how === 'click' || isBlank(field)
+	}
+
+	/** Shows the list the background opened, or tells it the list is not wanted after all. */
+	function placeOpened(attempt: OpenAttempt, opened: { key: string; wanted: number | null }): void {
+		const { key, wanted } = opened
+		const box = wanted !== null && stillWanted(attempt.field, attempt.how) ? placement(attempt.field, wanted, true) : null
+		if (box && wanted !== null) show(attempt.field, attempt.mode, key, wanted, box)
+		else send({ kind: 'inline.closed', key })
+	}
+
+	/** A reply for an open no longer pending is closed again, whatever it holds. */
+	function answerOpen(attempt: OpenAttempt, reply: unknown): void {
+		const { key, height } = (reply ?? {}) as { key?: unknown; height?: unknown }
+		const current = pending?.token === attempt.token
+		if (current) pending = null
+		if (typeof key !== 'string') return
+		placeOpened(attempt, { key, wanted: current ? inlineClampHeight(height) : null })
+	}
+
+	function maybeOpen(field: Field, how: OpenAttempt['how']): void {
+		if (!mayOpen(field, how)) return
+		const list = listFor(field)
+		if (!list) return
 		close()
 		// Whatever the list will show, it needs room for one row.
 		if (!placement(field, INLINE_MIN_HEIGHT_PX)) return
-		const token = {}
-		pending = { field, token }
-		void request({ kind: 'inline.open', mode }).then((reply) => {
-			const { key, height } = (reply ?? {}) as { key?: unknown; height?: unknown }
-			if (typeof key !== 'string') {
-				if (pending?.token === token) pending = null
-				return
-			}
-			const wanted = inlineClampHeight(height)
-			// A split code's fill moves focus box by box, and fills each box before this reply arrives.
-			const stillEmpty = how === 'click' || field.value === ''
-			const box = wanted !== null && pending?.token === token && deepActiveElement() === field && fieldShown(field) && stillEmpty
-				? placement(field, wanted, true) : null
-			if (pending?.token === token) pending = null
-			if (box && wanted !== null) show(field, mode, key, wanted, box)
-			else send({ kind: 'inline.closed', key })
-		})
+		const { mode, webauthn } = list
+		const attempt: OpenAttempt = { field, how, mode, token: {} }
+		pending = { field, token: attempt.token }
+		void request({ kind: 'inline.open', mode, ...(webauthn && { webauthn }) }).then((reply) => answerOpen(attempt, reply))
+	}
+
+	/** Focus elsewhere closes the open list and drops a pending open. */
+	function leaveOthers(target: EventTarget | null | undefined): void {
+		if (open && target !== open.field) close()
+		if (pending && target !== pending.field) pending = null
+	}
+
+	function trackFocus(target: EventTarget | null | undefined, how: Pick<NonNullable<typeof focused>, 'pointer' | 'tab'>): void {
+		if (!isField(target)) {
+			focused = null
+			return
+		}
+		focused = { field: target, at: Date.now(), ...how, own: target === suppress }
+		if (target !== suppress) maybeOpen(target, 'focus')
 	}
 
 	function onFocusIn(event: FocusEvent): void {
 		// Script focus is trusted too; only events the page dispatches itself are not.
 		if (!event.isTrusted) return
 		const target = deepTarget(event)
-		const tab = tabEvent
-		const pointer = pointerField === target
+		const how = { pointer: pointerField === target, tab: tabEvent }
 		tabEvent = null
 		pointerField = null
 		// Browsers retarget focus inside the closed shadow root to the host.
 		if (open && (event.target === open.host.element || target === open.host.frame)) return
-		if (open && target !== open.field) close()
-		if (pending && target !== pending.field) pending = null
-		if (!isInput(target)) {
-			focused = null
-			return
-		}
-		focused = { field: target, at: Date.now(), pointer, tab, own: target === suppress }
-		if (target !== suppress) maybeOpen(target, 'focus')
+		leaveOthers(target)
+		trackFocus(target, how)
 	}
 
 	function onFocusOut(event: FocusEvent): void {
@@ -362,21 +498,27 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		if (event.key === 'Tab') tabEvent = event
 		const list = open
 		if (!list || deepTarget(event) !== list.field) return
-		const noCommand = !event.altKey && !event.ctrlKey && !event.metaKey
+		onListFieldKey(list, event)
+	}
+
+	function onListFieldKey(list: Open, event: KeyboardEvent): void {
 		// The list comes after the page's controls in tab order, so Tab out of the field must not land in it.
-		if (event.key === 'Tab' && noCommand) return close()
-		if (event.key === 'ArrowDown' && noCommand && !event.shiftKey && !event.repeat && list.ready) {
-			const held = focused?.field === list.field && (byUser(focused) || Date.now() - focused.at >= GUARD_MS)
-			if (!held) return
-			event.preventDefault()
-			event.stopImmediatePropagation()
-			list.host.frame.focus()
-			list.host.post({ kind: 'inline.focus', key: list.key } satisfies ContentToInlineList)
-		} else if (event.key === 'Escape') {
+		if (event.key === 'Tab' && withoutCommand(event)) return close()
+		if (isListDown(list, event)) return focusList(list, event)
+		if (event.key === 'Escape') {
 			event.preventDefault()
 			event.stopImmediatePropagation()
 			close()
 		}
+	}
+
+	function focusList(list: Open, event: KeyboardEvent): void {
+		const held = focused?.field === list.field && (byUser(focused) || Date.now() - focused.at >= GUARD_MS)
+		if (!held) return
+		event.preventDefault()
+		event.stopImmediatePropagation()
+		list.host.frame.focus()
+		list.host.post({ kind: 'inline.focus', key: list.key } satisfies ContentToInlineList)
 	}
 
 	function onPointerDown(event: PointerEvent): void {
@@ -387,7 +529,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 
 	function onClick(event: MouseEvent): void {
 		const target = deepTarget(event)
-		if (event.isTrusted && isInput(target)) maybeOpen(target, 'click')
+		if (event.isTrusted && isField(target)) maybeOpen(target, 'click')
 	}
 
 	function onInput(event: Event): void {
@@ -399,24 +541,40 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 	}
 
 	function verify(key: string, input: unknown): boolean {
-		const list = open
-		if (!list || list.key !== key || !list.ready || !isPickInput(input)) return false
+		const list = readyList(key)
+		if (!list || !isPickInput(input)) return false
 		sample(list)
 		if (open !== list) return false
+		return landsOn(list, input)
+	}
+
+	const readyList = (key: string) => (open && open.key === key && open.ready ? open : null)
+
+	function landsOn(list: Open, input: PickInput): boolean {
 		const at = Math.min(input.at, Date.now())
 		if (list.lastNotVisibleAt >= at - GUARD_MS) return false
-		if (input.x < 0 || input.y < 0 || input.x >= list.box.width || input.y >= list.box.height) return false
-		let x = list.box.left + input.x
-		let y = list.box.top + input.y
-		if (!hits(list.host.element, x, y)) return false
+		if (!insideBox(list.box, input)) return false
+		return hitsThroughFrames(list, input)
+	}
+
+	function hitsThroughFrames(list: Open, input: PickInput): boolean {
+		let point = { x: list.box.left + input.x, y: list.box.top + input.y }
+		if (!hits(list.host.element, point.x, point.y)) return false
 		for (const frameElement of ancestors ?? []) {
-			const rect = frameElement.getBoundingClientRect()
-			const style = frameElement.ownerDocument.defaultView!.getComputedStyle(frameElement)
-			x += rect.left + (frameElement.clientLeft || 0) + (Number.parseFloat(style.paddingLeft) || 0)
-			y += rect.top + (frameElement.clientTop || 0) + (Number.parseFloat(style.paddingTop) || 0)
-			if (!hits(frameElement, x, y)) return false
+			point = throughFrame(frameElement, point)
+			if (!hits(frameElement, point.x, point.y)) return false
 		}
 		return true
+	}
+
+	/** A message for the open list, from the background. */
+	function onListMessage(list: Open, message: HostMessage): void {
+		if (message.kind === 'inline.ready') {
+			list.ready = true
+			clearTimeout(list.readyTimer)
+		} else if (message.kind === 'inline.refocus') refocusField(list.field)
+		else if (message.kind === 'inline.close') close(message.refocus === true)
+		else if (message.kind === 'inline.resize') resize(list, message.height)
 	}
 
 	return {
@@ -437,7 +595,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 			window.addEventListener('pagehide', () => close())
 			// A field focused before `document_idle`, `autofocus` included.
 			const active = deepActiveElement()
-			if (isInput(active)) {
+			if (isField(active)) {
 				focused = { field: active, at: Date.now(), pointer: false, tab: null, own: false }
 				maybeOpen(active, 'focus')
 			}
@@ -448,13 +606,7 @@ export function createInlineHost(options: InlineHostOptions): InlineHost {
 		handle(message) {
 			const list = open
 			if (message.kind === 'inline.verify') return verify(message.key, message.input)
-			if (!list || message.key !== list.key) return undefined
-			if (message.kind === 'inline.ready') {
-				list.ready = true
-				clearTimeout(list.readyTimer)
-			} else if (message.kind === 'inline.refocus') refocusField(list.field)
-			else if (message.kind === 'inline.close') close(message.refocus === true)
-			else if (message.kind === 'inline.resize') resize(list, message.height)
+			if (list && message.key === list.key) onListMessage(list, message)
 			return undefined
 		},
 	}

@@ -183,29 +183,10 @@ class MigrationWorkService {
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function countOutstanding(SuiteMigration $migration, string $ownerId): array {
-		$oldSuiteId = $migration->getOldSuiteId();
-
-		$secrets = $this->secretMapper->countBySuiteForOwner(
-			encryptionSuiteId: $oldSuiteId,
-			ownerType: 'user',
-			ownerId: $ownerId
-		);
-
-		$versions = $this->versionMapper->countBySuiteForOwner(
-			encryptionSuiteId: $oldSuiteId,
-			ownerType: 'user',
-			ownerId: $ownerId
-		);
-
-		$grants = $this->grantMapper->countBySuiteForRecipient(
-			encryptionSuiteId: $oldSuiteId,
-			recipientType: 'user',
-			recipientId: $ownerId
-		);
-
+		$left = $this->countLeftOnOldSuite(migration: $migration, ownerId: $ownerId);
+		$failed = $this->countFailedByStore(migration: $migration);
 		// "Unaccounted" is what is left on the old suite MINUS what has been
-		// attempted and recorded as failed, computed per store from the
-		// failure table.
+		// attempted and recorded as failed, per store.
 		//
 		// It used to be computed by joining each store to its owning secret and
 		// treating `secrets.migration_error IS NOT NULL` as "accounted for".
@@ -215,48 +196,81 @@ class MigrationWorkService {
 		// (it now sat on the NEW suite), so the row was invisible to both
 		// gates and the migration terminated over it.
 		//
-		// Success clears a record's failure row, so every surviving failure row
-		// belongs to a record still bound to the old suite — which is what
-		// makes the subtraction sound. Clamped at zero so a record deleted
-		// after failing (a version dropped beyond the retention window) cannot
-		// drive the count negative.
-		$migrationId = $migration->getId();
-
-		$failedSecrets = $this->failureMapper->countByMigrationAndStore(
-			migrationId: $migrationId,
-			store: self::STORE_SECRETS
+		// Success clears a
+		// record's failure row, so every surviving failure row belongs to a
+		// record still bound to the old suite — which is what makes the
+		// subtraction sound. Clamped at zero so a record deleted after failing
+		// (a version dropped beyond the retention window) cannot drive the
+		// count negative.
+		$unaccounted = array_combine(
+			array_keys($left),
+			array_map(static fn (int $count, int $lost): int => max(0, ($count - $lost)), $left, $failed)
 		);
-		$failedVersions = $this->failureMapper->countByMigrationAndStore(
-			migrationId: $migrationId,
-			store: self::STORE_VERSIONS
-		);
-		$failedGrants = $this->failureMapper->countByMigrationAndStore(
-			migrationId: $migrationId,
-			store: self::STORE_ATTACHMENT_GRANTS
-		);
-
-		$unaccountedSecrets = max(0, ($secrets - $failedSecrets));
-		$unaccountedVersions = max(0, ($versions - $failedVersions));
-		$unaccountedGrants = max(0, ($grants - $failedGrants));
-
-		$unaccountedTotal = ($unaccountedSecrets + $unaccountedVersions + $unaccountedGrants);
-		$total = ($secrets + $versions + $grants);
 
 		return [
-			'secrets' => $secrets,
-			'versions' => $versions,
-			'attachmentGrants' => $grants,
-			'total' => $total,
-			'unaccountedSecrets' => $unaccountedSecrets,
-			'unaccountedVersions' => $unaccountedVersions,
-			'unaccountedGrants' => $unaccountedGrants,
-			'unaccountedTotal' => $unaccountedTotal,
+			'secrets' => $left[self::STORE_SECRETS],
+			'versions' => $left[self::STORE_VERSIONS],
+			'attachmentGrants' => $left[self::STORE_ATTACHMENT_GRANTS],
+			'total' => array_sum($left),
+			'unaccountedSecrets' => $unaccounted[self::STORE_SECRETS],
+			'unaccountedVersions' => $unaccounted[self::STORE_VERSIONS],
+			'unaccountedGrants' => $unaccounted[self::STORE_ATTACHMENT_GRANTS],
+			'unaccountedTotal' => array_sum($unaccounted),
 			// Attempted and reported unrecoverable. Taken from the failure
 			// table rather than derived as (total - unaccounted), so it stays
 			// correct even when a failed record has since been deleted.
-			'failedTotal' => ($failedSecrets + $failedVersions + $failedGrants),
+			'failedTotal' => array_sum($failed),
 		];
 	}//end countOutstanding()
+
+	/**
+	 * The owner's records of each store still bound to the old suite.
+	 *
+	 * @param SuiteMigration $migration The migration
+	 * @param string         $ownerId   The migration owner's user ID
+	 *
+	 * @return array<string,int> Keyed by store
+	 */
+	private function countLeftOnOldSuite(SuiteMigration $migration, string $ownerId): array {
+		$oldSuiteId = $migration->getOldSuiteId();
+
+		return [
+			self::STORE_SECRETS => $this->secretMapper->countBySuiteForOwner(
+				encryptionSuiteId: $oldSuiteId,
+				ownerType: 'user',
+				ownerId: $ownerId
+			),
+			self::STORE_VERSIONS => $this->versionMapper->countBySuiteForOwner(
+				encryptionSuiteId: $oldSuiteId,
+				ownerType: 'user',
+				ownerId: $ownerId
+			),
+			self::STORE_ATTACHMENT_GRANTS => $this->grantMapper->countBySuiteForRecipient(
+				encryptionSuiteId: $oldSuiteId,
+				recipientType: 'user',
+				recipientId: $ownerId
+			),
+		];
+	}//end countLeftOnOldSuite()
+
+	/**
+	 * The records of each store attempted and recorded as failed in this migration.
+	 *
+	 * @param SuiteMigration $migration The migration
+	 *
+	 * @return array<string,int> Keyed by store
+	 */
+	private function countFailedByStore(SuiteMigration $migration): array {
+		$failed = [];
+		foreach ([self::STORE_SECRETS, self::STORE_VERSIONS, self::STORE_ATTACHMENT_GRANTS] as $store) {
+			$failed[$store] = $this->failureMapper->countByMigrationAndStore(
+				migrationId: $migration->getId(),
+				store: $store
+			);
+		}
+
+		return $failed;
+	}//end countFailedByStore()
 
 	/**
 	 * The owner's secrets left on the old suite with a recorded failure.
@@ -431,41 +445,44 @@ class MigrationWorkService {
 		int $limit = 25,
 		int $offset = 0,
 	): array {
-		$oldSuiteId = $migration->getOldSuiteId();
-		// Capped low: every record in the page carries its RSA ciphertext, so a
-		// large page is a large response for no gain — the client's in-flight
-		// window is 4.
-		$limit = max(1, min(100, $limit));
-		$offset = max(0, $offset);
-
-		$secrets = $this->secretMapper->findBySuiteForOwner(
-			encryptionSuiteId: $oldSuiteId,
-			ownerType: 'user',
-			ownerId: $ownerId,
-			limit: $limit,
-			offset: $offset
-		);
-
-		$grants = $this->grantMapper->findBySuiteForRecipient(
-			encryptionSuiteId: $oldSuiteId,
-			recipientType: 'user',
-			recipientId: $ownerId,
-			limit: $limit,
-			offset: $offset
-		);
-
-		$versionWork = $this->collectVersionWork(
-			oldSuiteId: $oldSuiteId,
-			ownerId: $ownerId,
-			limit: $limit,
-			offset: $offset
-		);
-
+		$page = new MigrationWorkPage(migration: $migration, ownerId: $ownerId, limit: $limit, offset: $offset);
+		$secretRecords = $this->secretWorkRecords(page: $page);
+		$grantRecords = $this->grantWorkRecords(page: $page);
+		$versionWork = $this->collectVersionWork(page: $page);
 		$counts = $this->countOutstanding(migration: $migration, ownerId: $ownerId);
 
-		$secretRecords = [];
+		return [
+			...$page->header(versionWindow: $this->getVersionWindow()),
+			'secrets' => ['records' => $secretRecords, 'remaining' => $counts['secrets']],
+			'versions' => [
+				'records' => $versionWork['records'],
+				'remaining' => $counts['versions'],
+				'dropCandidates' => $versionWork['dropCount'],
+			],
+			'attachmentGrants' => ['records' => $grantRecords, 'remaining' => $counts['attachmentGrants']],
+			'totalRemaining' => $counts['total'],
+		];
+	}//end listWork()
+
+	/**
+	 * The page of the owner's secret heads still on the old suite, ciphertext only.
+	 *
+	 * @param MigrationWorkPage $page The page
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function secretWorkRecords(MigrationWorkPage $page): array {
+		$secrets = $this->secretMapper->findBySuiteForOwner(
+			encryptionSuiteId: $page->oldSuiteId(),
+			ownerType: 'user',
+			ownerId: $page->ownerId,
+			limit: $page->limit,
+			offset: $page->offset
+		);
+
+		$records = [];
 		foreach ($secrets as $secret) {
-			$secretRecords[] = [
+			$records[] = [
 				'id' => $secret->getId(),
 				'name' => $secret->getName(),
 				'key' => $secret->getKey(),
@@ -476,38 +493,36 @@ class MigrationWorkService {
 			];
 		}
 
-		$grantRecords = [];
+		return $records;
+	}//end secretWorkRecords()
+
+	/**
+	 * The page of the owner's attachment grants still on the old suite.
+	 *
+	 * @param MigrationWorkPage $page The page
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function grantWorkRecords(MigrationWorkPage $page): array {
+		$grants = $this->grantMapper->findBySuiteForRecipient(
+			encryptionSuiteId: $page->oldSuiteId(),
+			recipientType: 'user',
+			recipientId: $page->ownerId,
+			limit: $page->limit,
+			offset: $page->offset
+		);
+
+		$records = [];
 		foreach ($grants as $grant) {
-			$grantRecords[] = [
+			$records[] = [
 				'id' => $grant->getId(),
 				'secretId' => $grant->getSecretId(),
 				'wrappedFileKey' => $grant->getWrappedFileKey(),
 			];
 		}
 
-		return [
-			'migrationId' => $migration->getId(),
-			'oldSuiteId' => $oldSuiteId,
-			'newSuiteId' => $migration->getNewSuiteId(),
-			'limit' => $limit,
-			'offset' => $offset,
-			'versionWindow' => $this->getVersionWindow(),
-			'secrets' => [
-				'records' => $secretRecords,
-				'remaining' => $counts['secrets'],
-			],
-			'versions' => [
-				'records' => $versionWork['records'],
-				'remaining' => $counts['versions'],
-				'dropCandidates' => $versionWork['dropCount'],
-			],
-			'attachmentGrants' => [
-				'records' => $grantRecords,
-				'remaining' => $counts['attachmentGrants'],
-			],
-			'totalRemaining' => $counts['total'],
-		];
-	}//end listWork()
+		return $records;
+	}//end grantWorkRecords()
 
 	/**
 	 * Split one page of the owner's outstanding versions into the ids inside
@@ -517,62 +532,34 @@ class MigrationWorkService {
 	 * secret's complete outstanding history — see
 	 * SecretVersionMapper::findSecretIdsWithSuiteVersionsForOwner.
 	 *
-	 * @param string $oldSuiteId The old suite ID
-	 * @param string $ownerId The migration owner's user ID
-	 * @param int $limit Secrets per page
-	 * @param int $offset Secret offset
+	 * @param MigrationWorkPage $page The page
 	 *
 	 * @return array{records:array<int,array<string,mixed>>,dropCount:int}
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-compromise-recovery-migration-re-encrypts-a-bounded-window
 	 */
-	private function collectVersionWork(
-		string $oldSuiteId,
-		string $ownerId,
-		int $limit,
-		int $offset,
-	): array {
+	private function collectVersionWork(MigrationWorkPage $page): array {
 		$window = $this->getVersionWindow();
-
 		$secretIds = $this->versionMapper->findSecretIdsWithSuiteVersionsForOwner(
-			encryptionSuiteId: $oldSuiteId,
+			encryptionSuiteId: $page->oldSuiteId(),
 			ownerType: 'user',
-			ownerId: $ownerId,
-			limit: $limit,
-			offset: $offset
+			ownerId: $page->ownerId,
+			limit: $page->limit,
+			offset: $page->offset
 		);
 
 		$records = [];
 		$dropCount = 0;
 		$blobs = new FederatedValueFields();
-
 		foreach ($secretIds as $secretId) {
 			// Newest first, so the first $window rows are the ones that stay.
-			$versions = $this->versionMapper->findBySecretAndSuite(
-				secretId: $secretId,
-				encryptionSuiteId: $oldSuiteId
-			);
-
-			foreach ($versions as $index => $version) {
-				if ($index < $window) {
-					$records[] = [
-						'id' => $version->getId(),
-						'secretId' => $version->getSecretId(),
-						'versionNumber' => $version->getVersionNumber(),
-						'key' => $version->getKey(),
-						'login' => $version->getLogin(),
-						'additionalFields' => $version->getAdditionalFields(),
-						// A version stores `''` for a field that was empty; the
-						// list says null for it, as it does for a head.
-						'totp' => $blobs->blob(value: $version->getTotp()),
-						'passkeys' => $blobs->blob(value: $version->getPasskeys()),
-					];
-					continue;
-				}
-
-				++$dropCount;
+			$versions = $this->versionMapper->findBySecretAndSuite(secretId: $secretId, encryptionSuiteId: $page->oldSuiteId());
+			foreach (array_slice($versions, 0, $window) as $version) {
+				$records[] = $page->versionRecord(version: $version, blobs: $blobs);
 			}
-		}//end foreach
+
+			$dropCount += max(0, (count($versions) - $window));
+		}
 
 		return [
 			'records' => $records,
@@ -611,48 +598,54 @@ class MigrationWorkService {
 		?string $totp = null,
 		?string $passkeys = null,
 	): Secret {
-		$secret = $this->requireOwnedSecretOnOldSuite(
-			migration: $migration,
-			ownerId: $ownerId,
-			secretId: $secretId
+		return $this->commitResealedSecret(
+			record: new MigrationRecordRef(migration: $migration, ownerId: $ownerId, recordId: $secretId),
+			fields: new ResealedFields(key: $key, login: $login, additionalFields: $additionalFields, totp: $totp, passkeys: $passkeys)
 		);
-
-		$this->requireStoredFieldsReencrypted(record: $secret, totp: $totp, passkeys: $passkeys);
-
-		$this->db->beginTransaction();
-		try {
-			$secret->setKey($key);
-			$secret->setLogin($login);
-			$secret->setAdditionalFields($additionalFields);
-			$this->applyOptionalFields(record: $secret, totp: $totp, passkeys: $passkeys);
-			$secret->setEncryptionSuiteId($migration->getNewSuiteId());
-
-			// The migration re-seals the SAME value under a new key; it does
-			// not replace the value, so keyUpdatedAt is deliberately NOT
-			// touched. Bumping it would reset the staleness clock and tell the
-			// health surface these passwords were just rotated, which is the
-			// opposite of what possiblyCompromisedAt is about to say.
-			$this->raisePossiblyCompromised(secret: $secret);
-
-			$updated = $this->secretMapper->update($secret);
-
-			// Clears THIS head's failure only. A blanket null here would also
-			// have retired the recorded failures of every version and grant the
-			// secret owns.
-			$this->clearRecordFailure(
-				migration: $migration,
-				store: self::STORE_SECRETS,
-				recordId: $secret->getId()
-			);
-
-			$this->db->commit();
-		} catch (Throwable $exception) {
-			$this->db->rollBack();
-			throw $exception;
-		}//end try
-
-		return $updated;
 	}//end commitSecret()
+
+	/**
+	 * Commit one re-encrypted secret head: re-point it to the new suite and
+	 * flag it possibly compromised, in one transaction with clearing its
+	 * recorded failure.
+	 *
+	 * @param MigrationRecordRef $record The secret to re-point
+	 * @param ResealedFields     $fields The re-encrypted fields
+	 *
+	 * @return Secret
+	 *
+	 * @throws NotFoundException When the secret does not exist
+	 * @throws ForbiddenException When the row is not this migration's to touch
+	 * @throws FieldsNotReencryptedException When a stored value field was not re-encrypted
+	 * @throws InvalidArgumentException When a value field the record holds none for is sent one
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function commitResealedSecret(MigrationRecordRef $record, ResealedFields $fields): Secret {
+		$secret = $record->ownedSecret(secrets: $this->secretMapper);
+		$fields->assertCovers(record: $secret);
+
+		return $this->inTransaction(
+			write: function () use ($record, $secret, $fields): Secret {
+				$fields->applyTo(record: $secret);
+				$secret->setEncryptionSuiteId($record->migration->getNewSuiteId());
+
+				// The migration re-seals the SAME value under a new key; it does
+				// not replace the value, so keyUpdatedAt is deliberately NOT
+				// touched. Bumping it would reset the staleness clock and tell the
+				// health surface these passwords were just rotated, which is the
+				// opposite of what possiblyCompromisedAt is about to say.
+				$this->raisePossiblyCompromised(secret: $secret);
+				$updated = $this->secretMapper->update($secret);
+
+				// Clears THIS head's failure only. A blanket null here would also
+				// have retired the recorded failures of every version and grant the
+				// secret owns.
+				$this->clearRecordFailure(record: $record, store: self::STORE_SECRETS);
+				return $updated;
+			}
+		);
+	}//end commitResealedSecret()
 
 	/**
 	 * Commit a re-encrypted secret version.
@@ -685,40 +678,45 @@ class MigrationWorkService {
 		?string $totp = null,
 		?string $passkeys = null,
 	): SecretVersion {
-		$version = $this->requireOwnedVersionOnOldSuite(
-			migration: $migration,
-			ownerId: $ownerId,
-			versionId: $versionId
+		return $this->commitResealedVersion(
+			record: new MigrationRecordRef(migration: $migration, ownerId: $ownerId, recordId: $versionId),
+			fields: new ResealedFields(key: $key, login: $login, additionalFields: $additionalFields, totp: $totp, passkeys: $passkeys)
 		);
-
-		$this->requireStoredFieldsReencrypted(record: $version, totp: $totp, passkeys: $passkeys);
-
-		$this->db->beginTransaction();
-		try {
-			$version->setKey($key);
-			$version->setLogin($login);
-			$version->setAdditionalFields($additionalFields);
-			$this->applyOptionalFields(record: $version, totp: $totp, passkeys: $passkeys);
-			$version->setEncryptionSuiteId($migration->getNewSuiteId());
-
-			$updated = $this->versionMapper->update($version);
-
-			// Scoped to this version. It previously cleared the owning
-			// secret's shared column, which is what erased sibling failures.
-			$this->clearRecordFailure(
-				migration: $migration,
-				store: self::STORE_VERSIONS,
-				recordId: $version->getId()
-			);
-
-			$this->db->commit();
-		} catch (Throwable $exception) {
-			$this->db->rollBack();
-			throw $exception;
-		}//end try
-
-		return $updated;
 	}//end commitVersion()
+
+	/**
+	 * Commit one re-encrypted version: re-point it to the new suite, in one
+	 * transaction with clearing its recorded failure.
+	 *
+	 * @param MigrationRecordRef $record The version to re-point
+	 * @param ResealedFields     $fields The re-encrypted fields
+	 *
+	 * @return SecretVersion
+	 *
+	 * @throws NotFoundException When the version or its secret does not exist
+	 * @throws ForbiddenException When the row is not this migration's to touch
+	 * @throws FieldsNotReencryptedException When a stored value field was not re-encrypted
+	 * @throws InvalidArgumentException When a value field the record holds none for is sent one
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function commitResealedVersion(MigrationRecordRef $record, ResealedFields $fields): SecretVersion {
+		$version = $record->ownedVersion(versions: $this->versionMapper, secrets: $this->secretMapper);
+		$fields->assertCovers(record: $version);
+
+		return $this->inTransaction(
+			write: function () use ($record, $version, $fields): SecretVersion {
+				$fields->applyTo(record: $version);
+				$version->setEncryptionSuiteId($record->migration->getNewSuiteId());
+				$updated = $this->versionMapper->update($version);
+
+				// Scoped to this version. It previously cleared the owning
+				// secret's shared column, which is what erased sibling failures.
+				$this->clearRecordFailure(record: $record, store: self::STORE_VERSIONS);
+				return $updated;
+			}
+		);
+	}//end commitResealedVersion()
 
 	/**
 	 * Commit a re-wrapped attachment grant.
@@ -741,48 +739,75 @@ class MigrationWorkService {
 		string $grantId,
 		string $wrappedFileKey,
 	): AttachmentGrant {
-		$grant = $this->requireOwnedGrantOnOldSuite(
-			migration: $migration,
-			ownerId: $ownerId,
-			grantId: $grantId
-		);
+		$record = new MigrationRecordRef(migration: $migration, ownerId: $ownerId, recordId: $grantId);
+		$grant = $record->ownedGrant(grants: $this->grantMapper);
 
+		return $this->inTransaction(
+			write: function () use ($record, $grant, $wrappedFileKey): AttachmentGrant {
+				$grant->setWrappedFileKey($wrappedFileKey);
+				$grant->setEncryptionSuiteId($record->migration->getNewSuiteId());
+				$updated = $this->grantMapper->update($grant);
+				$this->clearRecordFailure(record: $record, store: self::STORE_ATTACHMENT_GRANTS);
+				$this->flagOwningSecret(grant: $grant);
+				return $updated;
+			}
+		);
+	}//end commitAttachmentGrant()
+
+	/**
+	 * Flag the secret owning a re-wrapped attachment grant possibly
+	 * compromised. An attachment whose file key was wrapped under the
+	 * compromised suite is exposed material, so the owning secret carries the
+	 * warning even when its head migrated in an earlier pass and was
+	 * therefore not flagged then. Idempotent, so an existing timestamp is not
+	 * pushed forward.
+	 *
+	 * @param AttachmentGrant $grant The re-wrapped grant
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	private function flagOwningSecret(AttachmentGrant $grant): void {
+		try {
+			$owningSecret = $this->secretMapper->findById($grant->getSecretId());
+			if ($owningSecret->getPossiblyCompromisedAt() === null) {
+				$this->raisePossiblyCompromised(secret: $owningSecret);
+				$this->secretMapper->update($owningSecret);
+			}
+		} catch (DoesNotExistException) {
+			// The grant outlived its secret; nothing to flag.
+		}
+	}//end flagOwningSecret()
+
+	/**
+	 * Run a write in one database transaction: committed when it returns,
+	 * rolled back and rethrown when it throws.
+	 *
+	 * @param \Closure $write The write; its return value is returned
+	 *
+	 * @phpstan-template T
+	 * @phpstan-param \Closure(): T $write
+	 * @phpstan-return T
+	 *
+	 * @return mixed
+	 *
+	 * @throws Throwable Whatever the write threw, after the rollback
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	private function inTransaction(\Closure $write): mixed {
 		$this->db->beginTransaction();
 		try {
-			$grant->setWrappedFileKey($wrappedFileKey);
-			$grant->setEncryptionSuiteId($migration->getNewSuiteId());
-
-			$updated = $this->grantMapper->update($grant);
-
-			$this->clearRecordFailure(
-				migration: $migration,
-				store: self::STORE_ATTACHMENT_GRANTS,
-				recordId: $grant->getId()
-			);
-
-			// An attachment whose file key was wrapped under the compromised
-			// suite is exposed material, so the owning secret carries the
-			// warning even when its head migrated in an earlier pass and was
-			// therefore not flagged then. Idempotent, so an existing timestamp
-			// is not pushed forward.
-			try {
-				$owningSecret = $this->secretMapper->findById($grant->getSecretId());
-				if ($owningSecret->getPossiblyCompromisedAt() === null) {
-					$this->raisePossiblyCompromised(secret: $owningSecret);
-					$this->secretMapper->update($owningSecret);
-				}
-			} catch (DoesNotExistException) {
-				// The grant outlived its secret; nothing to flag.
-			}
-
+			$result = $write();
 			$this->db->commit();
 		} catch (Throwable $exception) {
 			$this->db->rollBack();
 			throw $exception;
-		}//end try
+		}
 
-		return $updated;
-	}//end commitAttachmentGrant()
+		return $result;
+	}//end inTransaction()
 
 	/**
 	 * Record a per-record migration failure on the owning secret.
@@ -815,10 +840,8 @@ class MigrationWorkService {
 		string $message,
 	): string {
 		$secretId = $this->resolveOwningSecretId(
-			migration: $migration,
-			ownerId: $ownerId,
-			store: $store,
-			recordId: $recordId
+			record: new MigrationRecordRef(migration: $migration, ownerId: $ownerId, recordId: $recordId),
+			store: $store
 		);
 
 		// Recorded against the RECORD, not against its owning secret. One
@@ -932,81 +955,6 @@ class MigrationWorkService {
 	}//end dropVersionsBeyondWindow()
 
 	/**
-	 * Refuse a commit that leaves a stored optional value field behind, or that sends one the record does not hold.
-	 *
-	 * The record is re-pointed to the new suite as a whole, so a field the client did not send would stay readable only under the revoked key.
-	 * A not-sent field is fine when the record holds no value for it, which is what keeps clients that predate these fields working.
-	 * Re-encrypting an empty field never yields a value, so a sent value for one would be a write past the version history and the audit.
-	 * An empty string counts as not sent, and as no value stored.
-	 *
-	 * @param Secret|SecretVersion $record The record about to be committed
-	 * @param string|null $totp The TOTP ciphertext from the commit, null when not sent
-	 * @param string|null $passkeys The passkeys ciphertext from the commit, null when not sent
-	 *
-	 * @return void
-	 *
-	 * @throws FieldsNotReencryptedException When a stored field has no re-encrypted counterpart
-	 * @throws InvalidArgumentException When a field the record holds no value for is sent one
-	 *
-	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
-	 */
-	private function requireStoredFieldsReencrypted(Secret|SecretVersion $record, ?string $totp, ?string $passkeys): void {
-		$checks = [
-			'totp' => [$record->getTotp(), $totp],
-			'passkeys' => [$record->getPasskeys(), $passkeys],
-		];
-
-		$missing = [];
-		$unheld = [];
-		foreach ($checks as $field => [$stored, $sent]) {
-			$holds = (string)$stored !== '';
-			if ($holds === ((string)$sent !== '')) {
-				continue;
-			}
-
-			if ($holds === true) {
-				$missing[] = $field;
-				continue;
-			}
-
-			$unheld[] = $field;
-		}
-
-		if ($unheld !== []) {
-			throw new InvalidArgumentException(
-				'The record holds no value to re-encrypt for: ' . implode(', ', $unheld)
-			);
-		}
-
-		if ($missing !== []) {
-			throw (new FieldsNotReencryptedException(
-				message: 'Stored value fields were not re-encrypted: ' . implode(', ', $missing)
-			))->withFields($missing);
-		}
-	}//end requireStoredFieldsReencrypted()
-
-	/**
-	 * Write the optional value fields the commit carried; leave the others as stored. An empty string counts as not sent.
-	 *
-	 * @param Secret|SecretVersion $record The record being committed
-	 * @param string|null $totp The TOTP ciphertext from the commit, null when not sent
-	 * @param string|null $passkeys The passkeys ciphertext from the commit, null when not sent
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
-	 */
-	private function applyOptionalFields(Secret|SecretVersion $record, ?string $totp, ?string $passkeys): void {
-		if ($totp !== null && $totp !== '') {
-			$record->setTotp($totp);
-		}
-
-		if ($passkeys !== null && $passkeys !== '') {
-			$record->setPasskeys($passkeys);
-		}
-	}//end applyOptionalFields()
-
-	/**
 	 * Raise `possibly_compromised_at`, idempotently.
 	 *
 	 * An already-set timestamp is preserved: it records when the value was
@@ -1037,29 +985,26 @@ class MigrationWorkService {
 	 * record as "not yet attempted" and holding the vault write-locked with no
 	 * route to completion.
 	 *
-	 * @param SuiteMigration $migration The migration
-	 * @param string $store The store the committed record lives in
-	 * @param string $recordId The committed record's ID
+	 * @param MigrationRecordRef $record The committed record
+	 * @param string             $store  The store the committed record lives in
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
-	private function clearRecordFailure(SuiteMigration $migration, string $store, string $recordId): void {
+	private function clearRecordFailure(MigrationRecordRef $record, string $store): void {
 		$this->failureMapper->clearRecord(
-			migrationId: $migration->getId(),
+			migrationId: $record->migration->getId(),
 			store: $store,
-			recordId: $recordId
+			recordId: $record->recordId
 		);
 	}//end clearRecordFailure()
 
 	/**
 	 * Resolve which secret a failure should be recorded against.
 	 *
-	 * @param SuiteMigration $migration The migration
-	 * @param string $ownerId The acting user's ID
-	 * @param string $store The store the failure came from
-	 * @param string $recordId The failing record's ID
+	 * @param MigrationRecordRef $record The failing record
+	 * @param string             $store  The store the failure came from
 	 *
 	 * @return string The owning secret's ID
 	 *
@@ -1068,167 +1013,13 @@ class MigrationWorkService {
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
-	private function resolveOwningSecretId(
-		SuiteMigration $migration,
-		string $ownerId,
-		string $store,
-		string $recordId,
-	): string {
-		if ($store === 'secrets') {
-			return $this->requireOwnedSecretOnOldSuite(
-				migration: $migration,
-				ownerId: $ownerId,
-				secretId: $recordId
-			)->getId();
-		}
-
-		if ($store === 'versions') {
-			return $this->requireOwnedVersionOnOldSuite(
-				migration: $migration,
-				ownerId: $ownerId,
-				versionId: $recordId
-			)->getSecretId();
-		}
-
-		if ($store === 'attachmentGrants') {
-			return $this->requireOwnedGrantOnOldSuite(
-				migration: $migration,
-				ownerId: $ownerId,
-				grantId: $recordId
-			)->getSecretId();
-		}
-
-		throw new ForbiddenException(message: 'Unknown migration store: ' . $store);
+	private function resolveOwningSecretId(MigrationRecordRef $record, string $store): string {
+		return match ($store) {
+			'secrets' => $record->ownedSecret(secrets: $this->secretMapper)->getId(),
+			'versions' => $record->ownedVersion(versions: $this->versionMapper, secrets: $this->secretMapper)->getSecretId(),
+			'attachmentGrants' => $record->ownedGrant(grants: $this->grantMapper)->getSecretId(),
+			default => throw new ForbiddenException(message: 'Unknown migration store: ' . $store),
+		};
 	}//end resolveOwningSecretId()
 
-	/**
-	 * Load a secret, insisting it is the migration owner's and still on the
-	 * old suite.
-	 *
-	 * The suite half of the guard is what makes "process only unmigrated rows"
-	 * a server-side invariant instead of a client promise: a replayed or
-	 * out-of-order request targeting an already-migrated row is refused rather
-	 * than overwriting good new ciphertext with a stale re-encryption.
-	 *
-	 * @param SuiteMigration $migration The migration
-	 * @param string $ownerId The acting user's ID
-	 * @param string $secretId The secret ID
-	 *
-	 * @return Secret
-	 *
-	 * @throws NotFoundException When the secret does not exist
-	 * @throws ForbiddenException When the row fails either half of the guard
-	 *
-	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
-	 */
-	private function requireOwnedSecretOnOldSuite(
-		SuiteMigration $migration,
-		string $ownerId,
-		string $secretId,
-	): Secret {
-		try {
-			$secret = $this->secretMapper->findById($secretId);
-		} catch (DoesNotExistException) {
-			throw new NotFoundException(message: 'Secret not found');
-		}
-
-		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $ownerId) {
-			throw new ForbiddenException(message: 'Secret does not belong to you');
-		}
-
-		if ($secret->getEncryptionSuiteId() !== $migration->getOldSuiteId()) {
-			throw new ForbiddenException(message: 'Secret is not bound to this migration\'s old suite');
-		}
-
-		return $secret;
-	}//end requireOwnedSecretOnOldSuite()
-
-	/**
-	 * Load a version, insisting its secret is the migration owner's and the
-	 * version is still on the old suite.
-	 *
-	 * Ownership is checked on the owning secret, while suite binding is checked
-	 * on the version row: a head that has already migrated still owns versions
-	 * that have not.
-	 *
-	 * @param SuiteMigration $migration The migration
-	 * @param string $ownerId The acting user's ID
-	 * @param string $versionId The version ID
-	 *
-	 * @return SecretVersion
-	 *
-	 * @throws NotFoundException When the version or its secret does not exist
-	 * @throws ForbiddenException When the row fails either half of the guard
-	 *
-	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
-	 */
-	private function requireOwnedVersionOnOldSuite(
-		SuiteMigration $migration,
-		string $ownerId,
-		string $versionId,
-	): SecretVersion {
-		try {
-			$version = $this->versionMapper->findById($versionId);
-		} catch (DoesNotExistException) {
-			throw new NotFoundException(message: 'Secret version not found');
-		}
-
-		if ($version->getEncryptionSuiteId() !== $migration->getOldSuiteId()) {
-			throw new ForbiddenException(message: 'Version is not bound to this migration\'s old suite');
-		}
-
-		try {
-			$secret = $this->secretMapper->findById($version->getSecretId());
-		} catch (DoesNotExistException) {
-			throw new NotFoundException(message: 'Owning secret not found');
-		}
-
-		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $ownerId) {
-			throw new ForbiddenException(message: 'Version does not belong to you');
-		}
-
-		return $version;
-	}//end requireOwnedVersionOnOldSuite()
-
-	/**
-	 * Load an attachment grant, insisting it is addressed to the migration
-	 * owner and still on the old suite.
-	 *
-	 * Scoped by recipient: the rotating user can only re-wrap the file keys
-	 * wrapped to their own certificate. A grant addressed to somebody else is
-	 * refused even when it hangs off a secret this user owns — re-pointing it
-	 * would seal that recipient out of the attachment.
-	 *
-	 * @param SuiteMigration $migration The migration
-	 * @param string $ownerId The acting user's ID
-	 * @param string $grantId The grant ID
-	 *
-	 * @return AttachmentGrant
-	 *
-	 * @throws NotFoundException When the grant does not exist
-	 * @throws ForbiddenException When the row fails either half of the guard
-	 *
-	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
-	 */
-	private function requireOwnedGrantOnOldSuite(
-		SuiteMigration $migration,
-		string $ownerId,
-		string $grantId,
-	): AttachmentGrant {
-		try {
-			$grant = $this->grantMapper->findById($grantId);
-		} catch (DoesNotExistException) {
-			throw new NotFoundException(message: 'Attachment grant not found');
-		}
-
-		if ($grant->getRecipientType() !== 'user' || $grant->getRecipientId() !== $ownerId) {
-			throw new ForbiddenException(message: 'Attachment grant does not belong to you');
-		}
-
-		if ($grant->getEncryptionSuiteId() !== $migration->getOldSuiteId()) {
-			throw new ForbiddenException(message: 'Attachment grant is not bound to this migration\'s old suite');
-		}
-
-		return $grant;
-	}//end requireOwnedGrantOnOldSuite()
 }//end class

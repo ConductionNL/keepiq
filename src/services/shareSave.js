@@ -892,6 +892,7 @@ function shareSaveCode(error) {
 function partnerUnreachableText(error) {
 	const partners = (error.partners ?? [])
 		.map((share) => share.recipientCloudId)
+		.filter(Boolean)
 		.join(', ')
 	if (partners === '') {
 		return t(

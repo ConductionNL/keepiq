@@ -133,6 +133,7 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 			secretMapper: $this->mapper,
 			groupManager: $groupManager,
 			memberships: $this->createMock(TeamFolderMembershipResolver::class),
+			subAdmin: $this->createMock(\OCP\Group\ISubAdmin::class),
 		);
 
 		$this->service = new SecretService(

@@ -76,7 +76,7 @@ function track(target: Document | Window) {
 
 function start(html = LOGIN, options: Partial<InlineHostOptions> = {}) {
 	document.body.innerHTML = html
-	inline = createInlineHost({ request, send: (message) => void sent.push(message), firefox: false, ...options })
+	inline = createInlineHost({ request, send: (message) => void sent.push(message), rootFilterReachesTopLayer: false, ...options })
 	inline.start()
 }
 
@@ -184,7 +184,7 @@ describe('opening', () => {
 	it('opens on the password field too, and on a field focused before the content script started', async () => {
 		document.body.innerHTML = LOGIN
 		$('#p').focus()
-		inline = createInlineHost({ request, send: (message) => void sent.push(message), firefox: false })
+		inline = createInlineHost({ request, send: (message) => void sent.push(message), rootFilterReachesTopLayer: false })
 		inline.start()
 		await settle()
 		expect(isOpen()).toBe(true)
@@ -254,6 +254,97 @@ describe('opening', () => {
 		await settle()
 		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'code' })
 		expect(host().frame.title).toBe('Keepiq verification codes')
+	})
+
+	it.each([
+		['card', '<form><label>Card number <input id="u" autocomplete="cc-number"></label><button>Pay</button></form>', 'Keepiq cards'],
+		['identity', '<form><label>First name <input id="u"></label><label>Last name <input id="p"></label><button>Save</button></form>', 'Keepiq identities'],
+	])('opens in %s mode on its field, titled for that kind', async (mode, html, title) => {
+		start(html)
+		// The hit test that card and identity roles need, which happy-dom lacks.
+		const hitFields = (x: number, y: number) => [$('#u'), $('#p')].filter((field) => {
+			const box = field?.getBoundingClientRect()
+			return box && x >= box.left && x < box.right && y >= box.top && y < box.bottom
+		})
+		Object.defineProperty(document, 'elementsFromPoint', { configurable: true, value: hitFields })
+		try {
+			$('#u').focus()
+			await settle()
+		} finally {
+			delete (document as { elementsFromPoint?: unknown }).elementsFromPoint
+		}
+		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode })
+		expect(host().frame.title).toBe(title)
+	})
+
+	describe('on a textarea', () => {
+		const IDENTITY = '<form><label>First name <input id="u"></label><label>Last name <input id="p"></label><label>Address <textarea id="a" autocomplete="street-address"></textarea></label><button>Save</button></form>'
+		beforeEach(() => {
+			rects.set('a', { top: 180, left: 100, width: 200, height: 60 })
+			// The hit test that identity roles need, which happy-dom lacks.
+			Object.defineProperty(document, 'elementsFromPoint', {
+				configurable: true,
+				value: (x: number, y: number) => ['#u', '#p', '#a'].map((id) => $(id)).filter((field) => {
+					const box = field?.getBoundingClientRect()
+					return box && x >= box.left && x < box.right && y >= box.top && y < box.bottom
+				}),
+			})
+		})
+		afterEach(() => delete (document as { elementsFromPoint?: unknown }).elementsFromPoint)
+
+		it('opens the identity list on a street address textarea, beneath it, and hands Down to the list', async () => {
+			start(IDENTITY)
+			await openOn('#a')
+			expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'identity' })
+			expect(hostBox()).toEqual({ top: 244, left: 100, width: 240, height: FIVE_ROWS })
+			shown()
+			key($('#a'), 'ArrowDown')
+			expect(posted()).toContainEqual({ kind: 'inline.focus', key: KEY })
+		})
+
+		it('counts a textarea holding only whitespace as empty, and one with text as filled', async () => {
+			start(IDENTITY)
+			$<HTMLTextAreaElement>('#a').value = 'Kerkstraat 1'
+			$('#a').focus()
+			await settle()
+			expect(request).not.toHaveBeenCalled()
+			$('#a').blur()
+			$<HTMLTextAreaElement>('#a').value = '  \n '
+			$('#a').focus()
+			await settle()
+			expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'identity' })
+		})
+
+		it.each([
+			['a webauthn textarea', '<div><textarea id="a" autocomplete="webauthn"></textarea></div>'],
+			['a lone address textarea', '<form><label>Address <textarea id="a" autocomplete="street-address"></textarea></label><button>Save</button></form>'],
+			['a comment textarea on a login form', '<form><input id="u" name="username"><input id="p" type="password"><textarea id="a" name="comment"></textarea><button>Log in</button></form>'],
+			['a card number textarea', '<form><label>Card number <textarea id="a" autocomplete="cc-number"></textarea></label><label>CVC <input id="u" autocomplete="cc-csc"></label><button>Pay</button></form>'],
+			['a one-time code textarea', '<form><label>Code <textarea id="a" autocomplete="one-time-code"></textarea></label><button>Verify</button></form>'],
+		])('opens nothing on %s', async (_, html) => {
+			start(html)
+			$('#a').focus()
+			$('#a').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+			await settle()
+			expect(request).not.toHaveBeenCalled()
+		})
+	})
+
+	it('asks for a list on a field that qualifies only by its webauthn token, flagged so the background opens it only for a pending conditional request', async () => {
+		start('<div><input id="u" name="q" autocomplete="WebAuthn"></div><input id="p" name="search">')
+		$('#p').focus()
+		await settle()
+		expect(request).not.toHaveBeenCalled()
+		await openOn('#u')
+		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'login', webauthn: true })
+		expect(isOpen()).toBe(true)
+	})
+
+	it('asks for a plain login list on a login field that also carries the webauthn token', async () => {
+		start('<form><input id="u" name="username" autocomplete="username webauthn"><input id="p" type="password"><button>Log in</button></form>')
+		$('#u').focus()
+		await settle()
+		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'login' })
 	})
 
 	it('opens on a login form with autocomplete off', async () => {
@@ -863,7 +954,10 @@ describe('visibility guard', () => {
 		inline.handle({ kind: 'inline.ready', key: KEY })
 		expect(inline.handle({ kind: 'inline.verify', key: 'b'.repeat(32), input: press() })).toBe(false)
 		expect(verify(press({ x: 240 }))).toBe(false)
+		expect(verify(press({ x: -1 }))).toBe(false)
 		expect(verify(press({ y: -1 }))).toBe(false)
+		expect(verify(press({ y: FIVE_ROWS }))).toBe(false)
+		expect(verify(press({ x: 239, y: FIVE_ROWS - 1 }))).toBe(true)
 		expect(verify({ kind: 'pointer', at: 'now' } as never)).toBe(false)
 		hit = $('#u')
 		expect(verify()).toBe(false)
@@ -893,16 +987,16 @@ describe('visibility guard', () => {
 			expect(verify()).toBe(true)
 		})
 
-		it.each(ROOT_STYLES.filter(([property]) => property !== 'filter'))('accepts a pick on Firefox while the page root has %s', async (property, value) => {
-			start(LOGIN, { firefox: true, ancestors: () => [] })
+		it.each(ROOT_STYLES.filter(([property]) => property !== 'filter'))('accepts a pick where a root filter reaches the top layer while the page root has %s', async (property, value) => {
+			start(LOGIN, { rootFilterReachesTopLayer: true, ancestors: () => [] })
 			await openOn('#u')
 			document.documentElement.style.setProperty(property!, value!)
 			shown()
 			expect(verify()).toBe(true)
 		})
 
-		it.each(['opacity(0)', 'invert(1)'])('refuses a pick on Firefox while the page root has filter: %s, which reaches its top layer', async (filter) => {
-			start(LOGIN, { firefox: true, ancestors: () => [] })
+		it.each(['opacity(0)', 'invert(1)'])('refuses a pick where a root filter reaches the top layer while the page root has filter: %s', async (filter) => {
+			start(LOGIN, { rootFilterReachesTopLayer: true, ancestors: () => [] })
 			await openOn('#u')
 			document.documentElement.style.filter = filter
 			shown()
@@ -1161,11 +1255,11 @@ describe('visibility guard', () => {
 
 	})
 
-	describe.each([['Chrome', false], ['Firefox', true]])('in a subframe on %s', (_, firefox) => {
+	describe.each([['Chrome', false], ['Firefox or Safari', true]])('in a subframe on %s', (_, rootFilterReachesTopLayer) => {
 		let frameElement: HTMLElement
 
 		function startInFrame(ancestors: () => HTMLElement[] | null = () => [$('#frame')]) {
-			start(`${LOGIN}<div id="outer"><div id="inner"><iframe id="frame"></iframe></div></div>`, { firefox, ancestors })
+			start(`${LOGIN}<div id="outer"><div id="inner"><iframe id="frame"></iframe></div></div>`, { rootFilterReachesTopLayer, ancestors })
 			frameElement = $('#frame')
 			rects.set('frame', { top: 10, left: 30, width: 600, height: 600 })
 		}
@@ -1235,7 +1329,7 @@ describe('visibility guard', () => {
 			frameElement = shadow.querySelector('iframe')!
 			rects.set('frame', { top: 10, left: 30, width: 600, height: 600 })
 			Object.defineProperty(shadow, 'elementFromPoint', { value: () => frameElement })
-			inline = createInlineHost({ request, send: (message) => void sent.push(message), firefox, ancestors: () => [frameElement] })
+			inline = createInlineHost({ request, send: (message) => void sent.push(message), rootFilterReachesTopLayer, ancestors: () => [frameElement] })
 			inline.start()
 			await openOn('#u')
 			vi.mocked(document.elementFromPoint).mockImplementation((x) => (x > 140 ? $('#outer') : host().element))
@@ -1270,11 +1364,11 @@ describe('visibility guard', () => {
 		expect(isOpen()).toBe(false)
 	})
 
-	it('misses a pointer-events: none overlay on Firefox, as documented', async () => {
-		start(LOGIN, { firefox: true, ancestors: () => [] })
+	it('misses a pointer-events: none overlay without an occlusion report (Firefox, Safari), as documented', async () => {
+		start(LOGIN, { rootFilterReachesTopLayer: true, ancestors: () => [] })
 		await openOn('#u')
 		shown()
-		// Hit testing skips such an overlay and Firefox has no occlusion report.
+		// Hit testing skips such an overlay.
 		expect(verify()).toBe(true)
 	})
 })

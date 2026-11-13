@@ -121,19 +121,28 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 			return;
 		}
 
-		try {
-			$this->suiteMapper->findActiveByOwner('user', self::DEV_USER_ID);
-		} catch (DoesNotExistException) {
-			$output->info('Keepiq: no dev EncryptionSuite, skipping delegation seed');
+		$vault = (new DevVaultLoader(suiteMapper: $this->suiteMapper, secretMapper: $this->secretMapper))
+			->load(output: $output, seedName: 'delegation seed');
+		if ($vault === null) {
 			return;
 		}
 
-		$secrets = $this->secretMapper->findByOwner('user', self::DEV_USER_ID);
-		if ($secrets === []) {
-			$output->info('Keepiq: no dev secrets, skipping delegation seed');
-			return;
-		}
+		$seeded = $this->seedDelegations(vault: $vault);
 
+		$this->seedGate->markSeeded(key: self::SEED_VERSION_KEY, version: $appVersion);
+		$output->info('Keepiq: seeded ' . $seeded . ' development secret delegation');
+		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' SecretDelegation row');
+	}//end run()
+
+	/**
+	 * Seed the development secret delegation.
+	 *
+	 * @param DevVault $vault The dev user's suite and secrets
+	 *
+	 * @return int Number of rows seeded
+	 */
+	private function seedDelegations(DevVault $vault): int {
+		$secrets = $vault->secrets;
 		$first = $secrets[0];
 		$seeded = $this->seedDelegation(
 			id: $this->deterministicId(seed: 'delegation_temp_01'),
@@ -141,10 +150,8 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 			delegate: self::DEV_DELEGATE,
 		);
 
-		$this->seedGate->markSeeded(key: self::SEED_VERSION_KEY, version: $appVersion);
-		$output->info('Keepiq: seeded ' . $seeded . ' development secret delegation');
-		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' SecretDelegation row');
-	}//end run()
+		return $seeded;
+	}//end seedDelegations()
 
 	/**
 	 * Produce a deterministic UUIDv5 from a seed string.

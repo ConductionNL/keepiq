@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { setLocale } from '@/src/testing/i18n'
 import { formatDuration, timeoutChoice, timeoutOf, timeoutOptions } from './timeout'
 
@@ -41,6 +41,26 @@ describe('timeoutOptions', () => {
 	it('reads a key back as the stored form', () => {
 		expect(timeoutOf('150')).toBe(150)
 		expect(timeoutOf('onSystemLock')).toBe('onSystemLock')
+	})
+
+	describe('without the idle API, as on Safari', () => {
+		const idle = browser.idle
+		beforeEach(() => {
+			Object.assign(browser, { idle: undefined })
+		})
+		afterEach(() => {
+			Object.assign(browser, { idle })
+		})
+
+		it('leaves out On system lock', () => {
+			expect(labels(null)).toEqual([
+				'Immediately', '1 minute', '5 minutes', '15 minutes', '30 minutes', '1 hour', '4 hours', 'On browser restart', 'Never', 'Custom',
+			])
+		})
+
+		it('leaves it out under a maximum too', () => {
+			expect(labels(60)).toEqual(['Immediately', '1 minute', '5 minutes', '15 minutes', '30 minutes', '1 hour', 'Custom'])
+		})
 	})
 
 	it('does the same for a maximum that is no preset', () => {

@@ -60,6 +60,8 @@ describe('verifyCredentials', () => {
 		['unlock_blocked', { identity, suites: json(200, [{ ...suiteRow, privateKey: undefined, unlockBlocked: '2fa' }]) }],
 		['keepiq_outdated', { identity, suites: json(200, [suiteRow]), health: json(200, { status: 'ok', version: '0.3.11' }) }],
 		['keepiq_outdated', { identity, suites: json(200, [suiteRow]), health: new Response('<html/>', { status: 404 }) }],
+		['unknown', { identity, suites: json(400, { message: 'bad request' }) }],
+		['unknown', { identity, suites: json(409, { message: 'conflict' }) }],
 	] as const)('fails with %s', async (code, routes) => {
 		server(routes)
 		await expect(verify()).rejects.toMatchObject({ code })

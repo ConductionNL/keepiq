@@ -13,8 +13,12 @@
 		<p class="tests" id="from">Reached after two redirects. The save or update bar should still be showing.</p>
 	</main>
 	<script>
-		const from = new URLSearchParams(location.search).get('from')
-		if (from) document.getElementById('from').textContent += ` Came from ${from}.`
+		const params = new URLSearchParams(location.search)
+		const line = document.getElementById('from')
+		const passkey = params.get('passkey')
+		if (passkey !== null) line.textContent = `You signed in with a passkey as ${passkey}.`
+		const from = params.get('from')
+		if (from) line.textContent += ` Came from ${from}.`
 	</script>
 </body>
 </html>

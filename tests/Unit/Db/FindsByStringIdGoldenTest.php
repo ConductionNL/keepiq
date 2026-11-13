@@ -176,6 +176,10 @@ class FindsByStringIdGoldenTest extends TestCase {
 
 		$result = $this->createMock(IResult::class);
 		foreach (['fetch', 'fetchAssociative'] as $method) {
+			if (method_exists(IResult::class, $method) === false) {
+				continue;
+			}
+
 			$result->method($method)->willReturnCallback(function () use (&$answers, &$calls) {
 				$calls[] = 'fetch';
 				return array_shift($answers) ?? false;
@@ -202,7 +206,8 @@ class FindsByStringIdGoldenTest extends TestCase {
 
 		$qb->method('expr')->willReturn($expr);
 		$qb->method('createNamedParameter')->willReturnCallback(function (...$args) use (&$calls) {
-			$calls[] = ['createNamedParameter', array_map(static fn ($a) => is_scalar($a) ? $a : gettype($a), $args)];
+			// Only the value: the default type parameter differs between Nextcloud versions.
+			$calls[] = ['createNamedParameter', [$args[0]]];
 			return ':param';
 		});
 		$qb->method('executeQuery')->willReturnCallback(function () use (&$calls, $result) {

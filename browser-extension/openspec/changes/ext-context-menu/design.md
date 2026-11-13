@@ -28,11 +28,12 @@ By the time this change lands, the earlier changes provide:
   - The separators are `autofill-separator`, `card-separator`, `identity-separator`, `separator-1` and `separator-2`.
 - **Card and identity parents always show.** ext-card-identity-fill left them out for an empty vault; here they hold "No cards available" or "No identities available" and still offer Add.
 - **"No field" is its own result.** `fill()` answers `noFields: true` when the item fits no recorded frame of the tab, or every frame it sent `fill.execute` answered `none` without a code. A declined question, a lock, a missing key or a decrypt failure stay plain `NONE`. The card and identity branch answers `noFields: true` when no probed frame reported a role.
-- **The notice is in the page, as a code.** After a menu fill with `noFields`, the background sends `notice.show { notice }` to frame 0 (`no_login_form`, `no_card_form`, `no_identity_form`). `notification-host.ts` hosts `notification.html?notice=<code>`, which words it with `i18n.t()`.
-  - Placement: its own host in the bar's corner, below the save bar when one is open. A later notice replaces it, and navigation removes it with the page.
+- **The notice is in the page, as a code.** After a menu fill with `noFields`, the background sends `notice.show { notice }` to frame 0 (`no_login_form`, `no_card_form`, `no_identity_form`). `notice-host.ts` hosts `notification.html?notice=<code>`, which words it with `i18n.t()`, and asks `notification-host.ts` where the bar is.
+  - Close sends `notice.close` to the background, which relays `notice.hide` to frame 0, so the frame never posts to the page.
+  - Placement: its own host in the bar's corner, below the save bar when one is open. Like the bar, it moves to the bottom corner while the focused element is under it (WCAG 2.4.11), above the bar when that is there. A later notice replaces it, and navigation removes it with the page.
   - Behaviour: `role="status"` and a Close button; it never takes focus. It closes after 8 seconds, timed only while neither pointer nor focus is in it.
   - It offers no action, so it needs no visibility guard. A tab without a content script gets no notice.
-- **The Add entries pass an intent in memory.** Like Open Keepiq, an Add click is handled before any `await`, since Firefox below 149 opens the popup only from the click. It sets `{ add, tabId, at }` in background memory, then calls `openPopupOrPopout(tab.id)`.
+- **The Add entries pass an intent in memory.** Like Open Keepiq, an Add click is handled before any `await`, since Firefox below 149 opens the popup only from the click. It sets `{ add, at }` in background memory (`src/add-intent.ts`, apart from `menus.ts` so `requests.ts` imports it without a cycle), then calls `openPopupOrPopout(tab.id)`. The popup takes the page from its own tab.
   - The popup and the pop-out send `popup.intent` once on mount. The background answers and forgets the intent.
   - The answer is `null` when the intent is older than 10 seconds or the active account is not unlocked. A lock or an account switch clears it.
   - Nothing reaches storage. A worker restart in between opens the vault list.
@@ -52,15 +53,17 @@ By the time this change lands, the earlier changes provide:
 | Datum | Lives in | Cleared by |
 | --- | --- | --- |
 | Menu titles: item names, fixed texts | Chrome's extension state on disk; Firefox memory | The next rebuild |
-| Add intent `{ add, tabId, at }` | Background memory | Read by the popup, 10 seconds, lock, account switch, worker stop |
+| Add intent `{ add, at }` | Background memory | Read by the popup, 10 seconds, lock, account switch, worker stop |
 | Notice code | The notice page's URL | Close, 8 seconds, navigation |
 
 ## Module layout
 
-- `src/menus.ts`: contexts, the tree, the empty lines, `add:*` in `onMenuClicked`, `notice.show` after a fill with `noFields`, the intent.
+- `src/menus.ts`: contexts, the tree, the empty lines, `add:*` in `onMenuClicked`, `notice.show` after a fill with `noFields`.
+- `src/add-intent.ts`: the intent.
 - `src/autofill/fill.ts`: `noFields` on `FillResult`; the card and identity branch likewise.
-- `src/autofill/notification-host.ts`, `entrypoints/content.ts`: the notice host.
-- `entrypoints/notification/`: the notice mode.
+- `src/autofill/notice-host.ts`, `entrypoints/content.ts`: the notice host; `notification-host.ts` tells it where the bar is.
+- `entrypoints/notification/notice.ts`: the notice mode.
+- `entrypoints/background.ts`: relays `notice.close`.
 - `src/background/requests.ts`: `popup.intent`.
 - `entrypoints/popup/views/Shell.tsx`, `ItemForm.tsx`: open the fixed-type form from the intent.
 - `locales/en.yml`, `locales/nl.yml`: every new text; `contextMenu.autofill` and `contextMenu.noMatches` renamed.
@@ -70,12 +73,17 @@ By the time this change lands, the earlier changes provide:
 ```ts
 /** `noFields`: no frame of the tab had a field for the item. */
 type FillResult = { filled: FillOutcome; code: boolean; needsInsecureConfirm?: boolean; noFields?: true }
-type NoticeCode = 'no_login_form' | 'no_card_form' | 'no_identity_form'
+/** `NoticeCode` already names the popup's banner codes. */
+type PageNoticeCode = 'no_login_form' | 'no_card_form' | 'no_identity_form'
 /** Background → the top frame. Fire-and-forget. */
-type NoticeShow = { kind: 'notice.show'; notice: NoticeCode }
+type NoticeShow = { kind: 'notice.show'; notice: PageNoticeCode }
+type NoticeHide = { kind: 'notice.hide' }
+/** The notice page → background, relayed as `notice.hide`. */
+type NoticeToBackground = { kind: 'notice.close' }
 /** Popup → background, once on mount. Reply: the add form to open, or `null`. */
 type PopupIntent = { kind: 'popup.intent' }
-type PopupIntentReply = { add: 'login' | 'card' | 'identity' } | null
+type AddIntent = { add: 'login' | 'card' | 'identity' }
+type PopupIntentReply = AddIntent | null
 ```
 
 ## Risks / Trade-offs

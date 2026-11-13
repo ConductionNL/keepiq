@@ -17,13 +17,22 @@ const withLink = (row: SendRow, serverUrl: string): SendRow => row.hasPassword ?
 const PASSWORD_LINE = '\nPassword: '
 const hasPassword = (body: string) => body.includes(PASSWORD_LINE) && body.slice(body.lastIndexOf(PASSWORD_LINE) + PASSWORD_LINE.length).trim() !== ''
 
-function isCreateInput(input: unknown): input is SendCreateInput {
-	const i = input as Partial<SendCreateInput> | null
+type CreateInputDraft = Partial<SendCreateInput>
+
+/** Text, or a credential body with a password in it; nothing blank. */
+function hasSendContent(i: CreateInputDraft | null): i is CreateInputDraft & Pick<SendCreateInput, 'payloadType' | 'content'> {
 	return (i?.payloadType === 'text' || i?.payloadType === 'credential')
 		&& typeof i.content === 'string' && i.content.trim() !== ''
 		&& (i.payloadType === 'text' || hasPassword(i.content))
+}
+
+const hasValidTtl = (i: CreateInputDraft) => Number.isInteger(i.ttlSeconds) && i.ttlSeconds! >= MIN_TTL_SECONDS && i.ttlSeconds! <= TTL_CAP_SECONDS
+
+function isCreateInput(input: unknown): input is SendCreateInput {
+	const i = input as CreateInputDraft | null
+	return hasSendContent(i)
 		&& isValidMaxViews(i.maxViews as number)
-		&& Number.isInteger(i.ttlSeconds) && i.ttlSeconds! >= MIN_TTL_SECONDS && i.ttlSeconds! <= TTL_CAP_SECONDS
+		&& hasValidTtl(i)
 		&& (i.password === undefined || typeof i.password === 'string')
 }
 

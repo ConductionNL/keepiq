@@ -20,7 +20,8 @@ Methods: `getByName(name, folder?)`, `getById(id)`, `list(updatedSince?)`,
 `KeyMismatchError` and `ApiError`.
 
 Pass `{ certificatePem }` as the fourth argument to refuse any envelope
-encrypted to another certificate before decryption. The application can read
+encrypted to another certificate, or one that names no certificate
+fingerprint, before decryption. The application can read
 its own certificate at `GET /api/v1/app/certificate` (with its access token)
 and pass that PEM here.
 

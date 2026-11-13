@@ -161,18 +161,30 @@ export function Generator({ pick, onOpenHistory, takeFocus = false }: GeneratorP
 					}}
 					onCopied={(copied) => record(copied, kind)}
 				/>
-				<OptionsCard
-					kind={kind}
-					options={options}
-					shownUsername={generated.username}
-					policy={policy}
-					website={website ?? null}
-					update={update}
-					onEmail={(typed) => {
-						setEmailEdited(true)
-						update((current) => ({ ...current, username: { ...current.username, email: typed } }))
-					}}
-				/>
+				<div className="card form-card">
+					{kind === 'password' && (
+						<PasswordPanel
+							stored={options.password}
+							policy={policy}
+							onChange={(password, debounce) => update((current) => ({ ...current, password }), { debounce })}
+						/>
+					)}
+					{kind === 'passphrase' && (
+						<PassphrasePanel options={options.passphrase} onChange={(passphrase) => update((current) => ({ ...current, passphrase }))} />
+					)}
+					{kind === 'username' && (
+						<UsernamePanel
+							stored={options.username}
+							shown={generated.username}
+							website={website ?? null}
+							onChange={(username) => update((current) => ({ ...current, username }))}
+							onEmail={(typed) => {
+								setEmailEdited(true)
+								update((current) => ({ ...current, username: { ...current.username, email: typed } }))
+							}}
+						/>
+					)}
+				</div>
 			</div>
 			{onOpenHistory && <HistoryLink onOpen={onOpenHistory} />}
 			{pick && <PickFooter target={pick.target} value={value} onUse={use} />}
@@ -186,42 +198,6 @@ function offeredKinds(target: GeneratorPick['target'] | undefined, allowed: bool
 	// Pick mode drops a turned-off Passphrase; the tab shows it disabled with the reason.
 	const kinds = target ? offered.filter((kind) => kind !== 'passphrase' || allowed) : offered
 	return { kinds, usable: kinds.filter((kind) => kind !== 'passphrase' || allowed) }
-}
-
-interface OptionsCardProps {
-	kind: GeneratorKind
-	options: GeneratorOptions
-	shownUsername: UsernameOptions
-	policy: GeneratorPolicy | null
-	website: string | null
-	update: ReturnType<typeof useGeneratorOptions>['update']
-	onEmail: (email: string) => void
-}
-
-function OptionsCard({ kind, options, shownUsername, policy, website, update, onEmail }: OptionsCardProps) {
-	return (
-		<div className="card form-card">
-			{kind === 'password' && (
-				<PasswordPanel
-					stored={options.password}
-					policy={policy}
-					onChange={(password, debounce) => update((current) => ({ ...current, password }), { debounce })}
-				/>
-			)}
-			{kind === 'passphrase' && (
-				<PassphrasePanel options={options.passphrase} onChange={(passphrase) => update((current) => ({ ...current, passphrase }))} />
-			)}
-			{kind === 'username' && (
-				<UsernamePanel
-					stored={options.username}
-					shown={shownUsername}
-					website={website}
-					onChange={(username) => update((current) => ({ ...current, username }))}
-					onEmail={onEmail}
-				/>
-			)}
-		</div>
-	)
 }
 
 function HistoryLink({ onOpen }: { onOpen: () => void }) {
@@ -264,16 +240,75 @@ interface PasswordPanelProps {
 	onChange: (options: PasswordOptions, debounce: boolean) => void
 }
 
+/** What the password panel's parts read and write: the options after the policy, what it locks, and the setter. */
+type PasswordPanelState = {
+	options: PasswordOptions
+	locked: ReturnType<typeof applyPolicy>['locked']
+	lockedBy: string
+	set: (patch: Partial<PasswordOptions>, debounce?: boolean) => void
+}
+
+type ClassRow = (typeof CLASSES)[number]
+
+/** The last enabled class stays on; a locked one already says why. */
+function lastClassOn({ options, locked }: PasswordPanelState): ClassRow | undefined {
+	const enabled = CLASSES.filter(([key]) => options[key]).length
+	return enabled === 1 ? CLASSES.find(([key, lock]) => options[key] && !locked[lock]) : undefined
+}
+
+function ClassChecks({ panel }: { panel: PasswordPanelState }) {
+	const { options, locked, lockedBy, set } = panel
+	const lockedHint = useId()
+	const lastHint = useId()
+	const classLocked = CLASSES.some(([, lock]) => locked[lock])
+	const lastOn = lastClassOn(panel)
+	const reasonFor = ([key, lock]: ClassRow) => (locked[lock] ? lockedHint : lastOn?.[0] === key ? lastHint : undefined)
+	return (
+		<div className="field">
+			<div className="check-row" role="group" aria-label={i18n.t('generator.characterTypes')}>
+				{CLASSES.map((row) => (
+					<OptionCheckbox
+						key={row[0]}
+						label={i18n.t(row[2])}
+						short={i18n.t(row[3])}
+						checked={options[row[0]]}
+						reasonId={reasonFor(row)}
+						onChange={(checked) => set({ [row[0]]: checked })}
+					/>
+				))}
+			</div>
+			{classLocked && <p className="field__hint" id={lockedHint}>{lockedBy}</p>}
+			{lastOn && <p className="field__hint" id={lastHint}>{i18n.t('generator.lastClassOn')}</p>}
+		</div>
+	)
+}
+
+const MIN_COUNTS = [
+	{ field: 'minDigits', lock: 'digits', include: 'includeDigits', label: 'generator.minNumbers' },
+	{ field: 'minSpecial', lock: 'special', include: 'includeSpecialCharacters', label: 'generator.minSpecial' },
+] as const
+
+/** A policy that locks a class on asks for at least one of it. */
+function MinCountField({ panel, count }: { panel: PasswordPanelState; count: (typeof MIN_COUNTS)[number] }) {
+	const { options, locked, lockedBy, set } = panel
+	return (
+		<NumberField
+			label={i18n.t(count.label)}
+			value={options[count.field]}
+			min={locked[count.lock] ? 1 : MIN_COUNT.min}
+			max={MIN_COUNT.max}
+			disabled={!options[count.include]}
+			hint={locked[count.lock] ? lockedBy : undefined}
+			onChange={(value) => set({ [count.field]: value })}
+		/>
+	)
+}
+
 function PasswordPanel({ stored, policy, onChange }: PasswordPanelProps) {
 	const { options, minLength, locked } = applyPolicy(stored, policy)
 	const lockedBy = i18n.t('generator.lockedByPolicy')
-	const lockedHint = useId()
-	const lastHint = useId()
 	const set = (patch: Partial<PasswordOptions>, debounce = false) => onChange({ ...stored, ...patch }, debounce)
-	const enabled = CLASSES.filter(([key]) => options[key]).length
-	const classLocked = CLASSES.some(([, lock]) => locked[lock])
-	// The last enabled class stays on; a locked one already says why.
-	const lastOn = enabled === 1 ? CLASSES.find(([key, lock]) => options[key] && !locked[lock]) : undefined
+	const panel: PasswordPanelState = { options, locked, lockedBy, set }
 	return (
 		<>
 			<LengthSlider
@@ -285,41 +320,9 @@ function PasswordPanel({ stored, policy, onChange }: PasswordPanelProps) {
 				onChange={(length) => set({ length })}
 				onSlide={(length) => set({ length }, true)}
 			/>
-			<div className="field">
-				<div className="check-row" role="group" aria-label={i18n.t('generator.characterTypes')}>
-					{CLASSES.map(([key, lock, label, short]) => (
-						<OptionCheckbox
-							key={key}
-							label={i18n.t(label)}
-							short={i18n.t(short)}
-							checked={options[key]}
-							reasonId={locked[lock] ? lockedHint : lastOn?.[0] === key ? lastHint : undefined}
-							onChange={(checked) => set({ [key]: checked })}
-						/>
-					))}
-				</div>
-				{classLocked && <p className="field__hint" id={lockedHint}>{lockedBy}</p>}
-				{lastOn && <p className="field__hint" id={lastHint}>{i18n.t('generator.lastClassOn')}</p>}
-			</div>
+			<ClassChecks panel={panel} />
 			<div className="field-pair">
-				<NumberField
-					label={i18n.t('generator.minNumbers')}
-					value={options.minDigits}
-					min={locked.digits ? 1 : MIN_COUNT.min}
-					max={MIN_COUNT.max}
-					disabled={!options.includeDigits}
-					hint={locked.digits ? lockedBy : undefined}
-					onChange={(minDigits) => set({ minDigits })}
-				/>
-				<NumberField
-					label={i18n.t('generator.minSpecial')}
-					value={options.minSpecial}
-					min={locked.special ? 1 : MIN_COUNT.min}
-					max={MIN_COUNT.max}
-					disabled={!options.includeSpecialCharacters}
-					hint={locked.special ? lockedBy : undefined}
-					onChange={(minSpecial) => set({ minSpecial })}
-				/>
+				{MIN_COUNTS.map((count) => <MinCountField key={count.field} panel={panel} count={count} />)}
 			</div>
 			<OptionCheckbox label={i18n.t('generator.avoidAmbiguous')} checked={options.avoidAmbiguous} onChange={(avoidAmbiguous) => set({ avoidAmbiguous })} />
 		</>

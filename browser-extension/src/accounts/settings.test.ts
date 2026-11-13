@@ -12,9 +12,14 @@ const defaults: AccountSettings = {
 	defaultAutofill: 'onPageLoad',
 	uriMatch: 'baseDomain',
 	inlineSuggestions: true,
+	inlineCards: true,
+	inlineIdentities: true,
+	vaultCards: true,
+	vaultIdentities: true,
 	contextMenu: true,
 	askToAdd: true,
 	askToUpdate: true,
+	askPasskeys: true,
 	excludedDomains: [],
 	defaultItemType: 'login',
 }
@@ -47,9 +52,15 @@ describe('reading', () => {
 		['defaultAutofill', 'always'],
 		['uriMatch', 'fuzzy'],
 		['inlineSuggestions', 1],
+		['inlineCards', 'false'],
+		['inlineIdentities', 0],
+		['vaultCards', null],
+		['vaultIdentities', 'no'],
 		['contextMenu', null],
 		['askToAdd', 'true'],
 		['askToUpdate', 0],
+		['askPasskeys', 'false'],
+		['askPasskeys', null],
 		['excludedDomains', 'example.test'],
 		['excludedDomains', ['example.test', 5]],
 		['excludedDomains', ['example.test', '']],
@@ -74,7 +85,8 @@ describe('reading', () => {
 	it('keeps valid values', async () => {
 		const chosen: AccountSettings = {
 			vaultTimeout: 'onSystemLock', vaultTimeoutAction: 'logout', clearClipboardMs: 0, autoCopyTotp: false, autofillOnPageLoad: true, defaultAutofill: 'never',
-			uriMatch: 'regex', inlineSuggestions: false, contextMenu: false, askToAdd: false, askToUpdate: false,
+			uriMatch: 'regex', inlineSuggestions: false, inlineCards: false, inlineIdentities: false, vaultCards: false, vaultIdentities: false,
+			contextMenu: false, askToAdd: false, askToUpdate: false, askPasskeys: false,
 			excludedDomains: ['example.test', 'example.co.uk', 'user.github.io', '192.168.1.10', 'localhost'], defaultItemType: 'note',
 		}
 		await browser.storage.local.set({ [settingsKey('a')]: chosen })
@@ -86,8 +98,14 @@ describe('reading', () => {
 		expect((await readSettings('a')).excludedDomains).toEqual([])
 	})
 
-	it('lists every autofill behaviour ext-autofill delivered', () => {
-		expect(AUTOFILL_FEATURES).toEqual(['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts'])
+	it('lists every autofill behaviour ext-autofill and ext-card-identity-fill delivered', () => {
+		expect(AUTOFILL_FEATURES).toEqual(['pageLoad', 'uriMatch', 'inlineSuggestions', 'contextMenu', 'savePrompts', 'passkeys', 'cards', 'identities'])
+	})
+
+	it('keeps the card and identity entries per account', async () => {
+		await writeSettings('a', { inlineCards: false, vaultIdentities: false })
+		expect(await readSettings('a')).toMatchObject({ inlineCards: false, inlineIdentities: true, vaultCards: true, vaultIdentities: false })
+		expect(await readSettings('b')).toMatchObject({ inlineCards: true, vaultIdentities: true })
 	})
 })
 
@@ -139,6 +157,14 @@ describe('writing', () => {
 		await writeSettings('a', { vaultTimeout: 5 })
 		await writeSettings('a', { vaultTimeout: 'tomorrow', askToAdd: false, bogus: 1 } as never)
 		expect(await stored()).toEqual({ vaultTimeout: 5, askToAdd: false })
+	})
+
+	it('stores Ask to save and use passkeys in the account\'s record', async () => {
+		await writeSettings('a', { askPasskeys: false })
+		expect(await stored()).toEqual({ askPasskeys: false })
+		expect((await readSettings('a')).askPasskeys).toBe(false)
+		await writeSettings('a', { askPasskeys: true })
+		expect((await readSettings('a')).askPasskeys).toBe(true)
 	})
 
 	it('loses neither of two writes made at once', async () => {

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Listener;
 
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Service\NotificationService;
@@ -79,49 +80,13 @@ class SuiteCompromiseListener implements IEventListener {
 		}
 
 		try {
-			$notified = [];
 			// Walk every Secret that uses the new suite and is flagged
 			// 'possibly compromised'. For shared copies, resolve the
 			// ShareTarget back to the source Secret and notify its owner.
-			$secrets = $this->secretMapper->findByEncryptionSuiteId($event->getNewSuiteId());
-			foreach ($secrets as $secret) {
-				if ($secret->getPossiblyCompromisedAt() === null) {
-					continue;
-				}
-
-				// Auto-raise a rotation flag per compromised secret
-				// (rotation-expiry-policies §3.2; idempotent).
-				$this->stampAndFlag(secret: $secret);
-
-				$target = $this->resolveTarget(secret: $secret);
-				$ownerId = (string)$target->getOwnerId();
-
-				// The SOURCE of a shared copy is not sealed under the new
-				// suite, so nothing else in the migration path marks it: stamp
-				// and flag it here, as the revoke path does (keepiq#802).
-				if ($target !== $secret) {
-					$this->stampAndFlag(secret: $target);
-				}
-
-				if ($ownerId === '' || isset($notified[$ownerId]) === true) {
-					continue;
-				}
-
-				$this->notificationService->notify(
-					subject: 'secret_compromised',
-					recipientId: $ownerId,
-					params: [
-						'oldSuiteId' => $event->getOldSuiteId(),
-						'newSuiteId' => $event->getNewSuiteId(),
-						'migrationId' => $event->getMigrationId(),
-						'secret_id' => $target->getId(),
-						'secret_name' => $target->getName(),
-					],
-					objectType: 'secret',
-					objectId: $target->getId(),
-				);
-				$notified[$ownerId] = true;
-			}//end foreach
+			$notices = new CompromiseNotices(event: $event);
+			foreach ($this->secretMapper->findByEncryptionSuiteId($event->getNewSuiteId()) as $secret) {
+				$this->warnAbout(secret: $secret, notices: $notices);
+			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: SuiteCompromiseListener failed: ' . $exception->getMessage(),
@@ -129,4 +94,64 @@ class SuiteCompromiseListener implements IEventListener {
 			);
 		}//end try
 	}//end handle()
+
+	/**
+	 * Flag one possibly-compromised secret and tell the owner of what it
+	 * resolves to, once per owner.
+	 *
+	 * @param Secret            $secret  A secret sealed under the new suite
+	 * @param CompromiseNotices $notices The migration and the owners told so far
+	 *
+	 * @return void
+	 */
+	private function warnAbout(Secret $secret, CompromiseNotices $notices): void {
+		if ($secret->getPossiblyCompromisedAt() === null) {
+			return;
+		}
+
+		// Auto-raise a rotation flag per compromised secret
+		// (rotation-expiry-policies §3.2; idempotent).
+		$this->stampAndFlag(secret: $secret);
+
+		$target = $this->resolveTarget(secret: $secret);
+		$ownerId = (string)$target->getOwnerId();
+
+		// The SOURCE of a shared copy is not sealed under the new
+		// suite, so nothing else in the migration path marks it: stamp
+		// and flag it here, as the revoke path does (keepiq#802).
+		if ($target !== $secret) {
+			$this->stampAndFlag(secret: $target);
+		}
+
+		if ($notices->skips(ownerId: $ownerId) === true) {
+			return;
+		}
+
+		$this->notifyOwner(target: $target, notices: $notices);
+		$notices->told(ownerId: $ownerId);
+	}//end warnAbout()
+
+	/**
+	 * Tell the owner of a compromised secret.
+	 *
+	 * @param Secret            $target  The secret the owner can open
+	 * @param CompromiseNotices $notices The migration and the owners told so far
+	 *
+	 * @return void
+	 */
+	private function notifyOwner(Secret $target, CompromiseNotices $notices): void {
+		$this->notificationService->notify(
+			subject: 'secret_compromised',
+			recipientId: (string)$target->getOwnerId(),
+			params: [
+				'oldSuiteId' => $notices->event->getOldSuiteId(),
+				'newSuiteId' => $notices->event->getNewSuiteId(),
+				'migrationId' => $notices->event->getMigrationId(),
+				'secret_id' => $target->getId(),
+				'secret_name' => $target->getName(),
+			],
+			objectType: 'secret',
+			objectId: $target->getId(),
+		);
+	}//end notifyOwner()
 }//end class

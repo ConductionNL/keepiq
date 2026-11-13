@@ -20,7 +20,7 @@ import { Generator } from './Generator'
 import { GeneratorHistory } from './GeneratorHistory'
 import { DeleteItemDialog, MoveItemDialog } from './ItemDialogs'
 import { ItemDetail } from './ItemDetail'
-import { ItemForm } from './ItemForm'
+import { ItemForm, type FixedType } from './ItemForm'
 import { NewSend } from './send/NewSend'
 import { SendCreated } from './send/SendCreated'
 import { SendList } from './send/SendList'
@@ -41,13 +41,16 @@ interface Props {
 
 type Pick = { target: GenerateTarget; apply: (value: string) => void }
 
+/** The detail's Fill: a suggestion, or a card or identity, which the Vault view settings only keep out of the suggestions. */
+const offersFill = (snapshot: { suggestionIds: string[]; formIds: string[] }, id: string) => snapshot.suggestionIds.includes(id) || snapshot.formIds.includes(id)
+
 /** The unlocked popup: tabs, and pages such as an item's detail, its form or a settings section opened over them. */
 export function Shell({ active, lastTab, hidden = false, onAccounts, refreshState }: Props) {
 	const tab = useCurrentTab()
 	const { sendPage, setSendPage, sendBusy, setSendBusy, sendFocus, setSendFocus, newSend, created, closeSend } = useSendPages()
-	const { current, detailId, setDetailId, form, setForm, section, setSection, history, setHistory, show, closeForm, gone } = useTabPages(lastTab, closeSend)
+	const { current, detailId, setDetailId, form, setForm, section, setSection, history, setHistory, show, closeForm, openFixedAdd, gone } = useTabPages(lastTab, closeSend)
 	const [pick, setPick] = useState<Pick | null>(null)
-	const { dialog, setDialog, leave, leaveGuard } = useLeave(sendBusy)
+	const { dialog, setDialog, leave, leaveGuardRef } = useLeave(sendBusy)
 	// In memory only, so it is gone once the popup closes (share-sync).
 	const [shareSave, setShareSave] = useState<{ id: string; note: ShareSaveNote } | null>(null)
 	const { message: toast, show: showToast } = useToast()
@@ -62,12 +65,16 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		if (reply && reply.state !== 'unlocked') refreshState()
 	}, [reply, refreshState])
 
+	useAddIntent(openFixedAdd)
+
 	const { leaveList, keepFormPlace } = useBodyScroll(body, { pick, detailId, form, sendPage })
 
 	const sendItem = useSendItem({ refreshState, toast: showToast, show, setSendPage })
 	const items = useItemActions({ leaveList, setForm, setDialog, sendItem })
 
 	const snapshot = reply?.state === 'unlocked' ? reply : undefined
+	// The account's cached types have no such system type: the vault list instead.
+	if (form?.fixedType && snapshot && !snapshot.types.some((type) => type.name === form.fixedType)) setForm(null)
 
 	// The opener, not `document.activeElement`: Firefox on macOS and Safari don't focus a clicked button.
 	const generate = useCallback((target: GenerateTarget, apply: (value: string) => void, opener: HTMLElement | null) => {
@@ -76,7 +83,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	}, [keepFormPlace])
 
 	const parts = { accountId: active.id, refreshState, toast: showToast, windowId: tab?.windowId, footer, offline: snapshot?.sync.offline ?? false, syncNow, items, generate }
-	const { context, hiddenFormContext } = useShellContextValue(parts, leaveGuard)
+	const { context, hiddenFormContext } = useShellContextValue(parts, leaveGuardRef)
 
 	const open = useCallback((id: string) => {
 		leaveList()
@@ -114,13 +121,13 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 			<>
 				{/* Hidden rather than unmounted, so back keeps search, filters and decrypted subtitles. */}
 				<div hidden={detail !== undefined || form !== null}>
-					<VaultList snapshot={snapshot} tab={tab} syncNow={() => void syncNow()} onOpen={open} />
+					<VaultList snapshot={snapshot} tab={tab} serverUrl={active.serverUrl} syncNow={() => void syncNow()} onOpen={open} />
 				</div>
 				{form && (
 					// Hidden under the generator, so pick mode keeps the draft.
 					<div hidden={pick !== null}>
 						<ShellContext.Provider value={pick ? hiddenFormContext : context}>
-							<ItemForm key={`${form.mode}:${form.id ?? ''}`} mode={form.mode} id={form.id} snapshot={snapshot} tabUrl={tabUrl} onSaved={saved} onCancel={() => leave(closeForm)} onGone={gone} />
+							<ItemForm key={`${form.mode}:${form.id ?? ''}:${form.fixedType ?? ''}`} mode={form.mode} id={form.id} fixedType={form.fixedType} snapshot={snapshot} tabUrl={tabUrl} onSaved={saved} onCancel={() => leave(closeForm)} onGone={gone} />
 						</ShellContext.Provider>
 					</div>
 				)}
@@ -144,7 +151,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 						folders={snapshot.folders}
 						webAppUrl={snapshot.webAppUrl}
 						shareSave={shareSave?.id === detail.id ? shareSave.note : undefined}
-						fillTab={snapshot.suggestionIds.includes(detail.id) ? tab : undefined}
+						fillTab={offersFill(snapshot, detail.id) ? tab : undefined}
 					/>
 				)}
 			</>
@@ -189,7 +196,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 							label: i18n.t('form.discard'),
 							variant: 'danger',
 							onClick: () => {
-								leaveGuard.current = null
+								leaveGuardRef.current = null
 								setDialog(null)
 								dialog.then()
 							},
@@ -231,13 +238,13 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 	}
 
 	/** The open page, if any, and the header over it: its title, Back on a page and New on a tab itself. */
-	function chrome() {
+	function pageAndHeader() {
 		const view = { current, form, picking: pick !== null, detail: detail !== undefined, section, history, sendPage }
 		const backs: Record<ShellPage, () => void> = {
 			pick: () => setPick(null),
 			form: () => leave(closeForm),
 			detail: () => setDetailId(null),
-			section: () => setSection(SECTION_PARENT[section!] ?? null),
+			section: () => setSection(section ? SECTION_PARENT[section] ?? null : null),
 			history: () => setHistory(false),
 			send: () => leave(() => setSendPage(null)),
 		}
@@ -247,7 +254,7 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 		return { page, header: { title, active, busy: sendBusy, onAvatarClick: accounts, onBack: back, onAdd: add, onPopout } }
 	}
 
-	const { page, header } = chrome()
+	const { page, header } = pageAndHeader()
 	return (
 		<ShellContext.Provider value={context}>
 			<SendProvider>
@@ -257,6 +264,21 @@ export function Shell({ active, lastTab, hidden = false, onAccounts, refreshStat
 			</SendProvider>
 		</ShellContext.Provider>
 	)
+}
+
+/**
+ * The context menu's Add, asked once per popup. A ref, not an effect cleanup, keeps StrictMode's second mount from
+ * asking again, which the background answers `null` as it already forgot the intent.
+ */
+function useAddIntent(open: (type: FixedType) => void) {
+	const asked = useRef(false)
+	useEffect(() => {
+		if (asked.current) return
+		asked.current = true
+		void request({ kind: 'popup.intent' }).then((intent) => {
+			if (intent) open(intent.add)
+		})
+	}, [open])
 }
 
 /** Opens the popup in a window of its own and closes this one, or says why it stays. */

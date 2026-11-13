@@ -38,6 +38,7 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use Psr\Container\ContainerInterface;
@@ -115,34 +116,83 @@ class ApplicationSecretRequestService {
 		?string $folderId = null,
 		?DateTime $expiresAt = null,
 	): SecretRequest {
-		if ($requestedFields === []) {
+		return $this->createRequest(
+			request: new ApplicationSecretRequest(
+				applicationId: $applicationId,
+				requestedFields: $requestedFields,
+				name: $name,
+				folderId: $folderId,
+				expiresAt: $expiresAt,
+			)
+		);
+	}//end createForApplicationVault()
+
+	/**
+	 * Create a request in an application's own vault: guard the application
+	 * and its lock, write an unfilled shell secret, then the request on it. A
+	 * failure after the shell leaves no orphan shell behind.
+	 *
+	 * @param ApplicationSecretRequest $request The application, fields, name, folder and end date
+	 *
+	 * @return SecretRequest
+	 *
+	 * @throws InvalidArgumentException When no field is requested
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md
+	 */
+	public function createRequest(ApplicationSecretRequest $request): SecretRequest {
+		if ($request->requestedFields === []) {
 			throw new InvalidArgumentException(message: 'requestedFields is required', code: 400);
 		}
 
 		// Guard parity with token issuance: refuses a pending/rejected/deleted
 		// application and a revoked/compromised suite, and yields the suite the
 		// submitted values will be encrypted under.
-		$suiteId = $this->policy->requireApplicationSuiteId(applicationId: $applicationId);
+		$suiteId = $this->policy->requireApplicationSuiteId(applicationId: $request->applicationId);
 
 		// The application's own lock, not a user's: a rotation in the
 		// application's vault must refuse new pending requests for the same
 		// reason it refuses them for a user.
 		$this->writeLockService->assertNotWriteLocked(
-			ownerId: $applicationId,
+			ownerId: $request->applicationId,
 			ownerType: 'application'
 		);
 
 		$secretService = $this->container->get(SecretService::class);
+		$target = new RequestTarget(
+			applicationId: $request->applicationId,
+			secretId: $this->unfilledShell(secretService: $secretService, request: $request)->getId(),
+			encryptionSuiteId: $suiteId,
+		);
 
-		$shell = $secretService->createByApplication(
+		try {
+			return $this->createInApplicationVault(request: $request, target: $target);
+		} catch (Throwable $exception) {
+			// No orphan shell: it exists only to receive this request.
+			$this->removeShell(secretService: $secretService, target: $target);
+
+			throw $exception;
+		}
+	}//end createRequest()
+
+	/**
+	 * Write the unfilled shell secret the request is answered into.
+	 *
+	 * @param SecretService $secretService The secret service
+	 * @param ApplicationSecretRequest $request The request
+	 *
+	 * @return Secret
+	 */
+	private function unfilledShell(SecretService $secretService, ApplicationSecretRequest $request): Secret {
+		return $secretService->createByApplication(
 			data: [
-				'name' => ($name ?? 'Unfilled request'),
-				'folderId' => $folderId,
+				'name' => ($request->name ?? 'Unfilled request'),
+				'folderId' => $request->folderId,
 				// An unfilled shell: the recipient supplies the value, and the
 				// server never holds a plaintext one (ADR-003).
 				'key' => '',
 			],
-			applicationId: $applicationId,
+			applicationId: $request->applicationId,
 			// Without this the create fails with "A secret requires a name and a
 			// key" and the whole machine surface is dead on the happy path. It
 			// was invisible to every controller/service unit test because they
@@ -150,36 +200,33 @@ class ApplicationSecretRequestService {
 			// probe of POST /api/v1/app/secret-requests found it immediately.
 			allowUnfilled: true
 		);
+	}//end unfilledShell()
 
+	/**
+	 * Remove the shell of a failed request, logging when even that fails.
+	 *
+	 * @param SecretService $secretService The secret service
+	 * @param RequestTarget $target The shell and its application
+	 *
+	 * @return void
+	 */
+	private function removeShell(SecretService $secretService, RequestTarget $target): void {
 		try {
-			return $this->createInApplicationVault(
-				secretId: $shell->getId(),
-				applicationId: $applicationId,
-				encryptionSuiteId: $suiteId,
-				requestedFields: $requestedFields,
-				expiresAt: $expiresAt
+			$secretService->deleteByApplication(
+				secretId: $target->secretId,
+				applicationId: $target->applicationId
 			);
-		} catch (Throwable $exception) {
-			// No orphan shell: it exists only to receive this request.
-			try {
-				$secretService->deleteByApplication(
-					secretId: $shell->getId(),
-					applicationId: $applicationId
-				);
-			} catch (Throwable $cleanupFailure) {
-				$this->logger->error(
-					'Keepiq: failed to remove the shell of a failed application request',
-					[
-						'secretId' => $shell->getId(),
-						'applicationId' => $applicationId,
-						'exception' => $cleanupFailure,
-					]
-				);
-			}
-
-			throw $exception;
-		}//end try
-	}//end createForApplicationVault()
+		} catch (Throwable $cleanupFailure) {
+			$this->logger->error(
+				'Keepiq: failed to remove the shell of a failed application request',
+				[
+					'secretId' => $target->secretId,
+					'applicationId' => $target->applicationId,
+					'exception' => $cleanupFailure,
+				]
+			);
+		}
+	}//end removeShell()
 
 	/**
 	 * Create a request in an application's vault, authenticated by signed proof.
@@ -305,35 +352,26 @@ class ApplicationSecretRequestService {
 	 * method's contract is user-session bound: it takes a `userId`, locks
 	 * against a user's vault and records that user as the creator.
 	 *
-	 * @param string $secretId The shell Secret
-	 * @param string $applicationId The owning application
-	 * @param string $encryptionSuiteId The suite values will be encrypted under
-	 * @param array<int,string> $requestedFields Field names being asked for
-	 * @param DateTime|null $expiresAt Optional fill-link expiry
+	 * @param ApplicationSecretRequest $request The fields and end date
+	 * @param RequestTarget $target The shell, its application and suite
 	 *
 	 * @return SecretRequest
 	 *
 	 * @spec openspec/changes/application-secret-request-creation/specs/secret-requests/spec.md#requirement-session-less-application-initiated-request-creation
 	 */
-	private function createInApplicationVault(
-		string $secretId,
-		string $applicationId,
-		string $encryptionSuiteId,
-		array $requestedFields,
-		?DateTime $expiresAt,
-	): SecretRequest {
+	private function createInApplicationVault(ApplicationSecretRequest $request, RequestTarget $target): SecretRequest {
 		$entity = new SecretRequest();
 		$entity->setId(Uuid::uuid4()->toString());
-		$entity->setSecretId($secretId);
-		$entity->setEncryptionSuiteId($encryptionSuiteId);
-		$entity->setRequestedFields((string)json_encode(array_values($requestedFields)));
+		$entity->setSecretId($target->secretId);
+		$entity->setEncryptionSuiteId($target->encryptionSuiteId);
+		$entity->setRequestedFields((string)json_encode(array_values($request->requestedFields)));
 		$entity->setStatus(SecretRequest::STATUS_PENDING);
 		$entity->setIsReRequest(false);
-		$entity->setExpiresAt($expiresAt);
+		$entity->setExpiresAt($request->expiresAt);
 		// The actor is the application, not a user. `created_by` is a plain
 		// string column, so the prefix keeps an application id from being read
 		// as a Nextcloud user id by anything that consumes this field.
-		$entity->setCreatedByApplication(applicationId: $applicationId);
+		$entity->setCreatedByApplication(applicationId: $target->applicationId);
 		$entity->setCreatedAt(new DateTime());
 		$entity->setToken(bin2hex(random_bytes(16)));
 
@@ -344,15 +382,15 @@ class ApplicationSecretRequestService {
 		// nothing, and fail-soft inside the outbox so audit never blocks the
 		// creation it is describing.
 		$this->outbox->recordCreatedByApplication(
-			applicationId: $applicationId,
+			applicationId: $target->applicationId,
 			requestId: $persisted->getId(),
-			secretId: $secretId,
-			requestedFieldCount: count($requestedFields)
+			secretId: $target->secretId,
+			requestedFieldCount: count($request->requestedFields)
 		);
 
 		$this->logger->info(
 			'Created application-initiated secret request ' . $persisted->getId(),
-			['app' => 'keepiq', 'applicationId' => $applicationId]
+			['app' => 'keepiq', 'applicationId' => $target->applicationId]
 		);
 
 		return $persisted;

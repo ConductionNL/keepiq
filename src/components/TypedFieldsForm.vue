@@ -16,43 +16,17 @@
 		<template v-for="field in fields" :key="field.key">
 			<NcPasswordField
 				v-if="field.kind === 'hidden'"
-				:modelValue="values[field.key] || ''"
-				:label="fieldLabel(field)"
-				:required="field.required"
-				:disabled="disabled"
-				:error="isMissing(field)"
-				:helperText="
-					isMissing(field) ? t('keepiq', 'This field is required') : ''
-				"
-				:data-testid="`typed-field-${field.key}`"
+				v-bind="fieldProps(field)"
 				@update:modelValue="set(field.key, $event)" />
 			<NcTextArea
 				v-else-if="field.kind === 'multiline'"
-				:modelValue="values[field.key] || ''"
-				:label="fieldLabel(field)"
-				:required="field.required"
-				:disabled="disabled"
-				:error="isMissing(field)"
-				:helperText="
-					isMissing(field) ? t('keepiq', 'This field is required') : ''
-				"
+				v-bind="fieldProps(field)"
 				rows="4"
-				:data-testid="`typed-field-${field.key}`"
 				@update:modelValue="set(field.key, $event)" />
 			<NcTextField
 				v-else
-				:modelValue="values[field.key] || ''"
+				v-bind="fieldProps(field)"
 				:type="inputType(field)"
-				:label="fieldLabel(field)"
-				:required="field.required"
-				:disabled="disabled"
-				:error="isMissing(field) || fitError(field) !== ''"
-				:helperText="
-					isMissing(field)
-						? t('keepiq', 'This field is required')
-						: fitError(field)
-				"
-				:data-testid="`typed-field-${field.key}`"
 				@update:modelValue="set(field.key, $event)" />
 		</template>
 	</div>
@@ -113,6 +87,31 @@ export default {
 			return field.required
 				? t('keepiq', '{label} (required)', { label })
 				: label
+		},
+
+		/**
+		 * What every typed field gets, whatever its kind: the value, the
+		 * label with the required marker, required, disabled, the missing
+		 * error with its helper text or else the reason the value does not
+		 * fit the field's schema, and the test id.
+		 *
+		 * @param {object} field The field definition.
+		 * @return {object} The field's props and test id.
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 */
+		fieldProps(field) {
+			const missing = this.isMissing(field)
+			const misfit = missing ? '' : this.fitError(field)
+			return {
+				modelValue: this.values[field.key] || '',
+				label: this.fieldLabel(field),
+				required: field.required,
+				disabled: this.disabled,
+				error: missing || misfit !== '',
+				helperText: missing ? t('keepiq', 'This field is required') : misfit,
+				'data-testid': `typed-field-${field.key}`,
+			}
 		},
 
 		/**

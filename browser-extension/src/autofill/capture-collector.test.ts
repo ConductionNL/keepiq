@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CaptureSubmitted } from '@/src/messages'
+import { mockLayout } from '@/src/testing/layout'
 import { ACTIVATION_MS, createCaptureCollector, type CaptureCollector } from './capture-collector'
 
 const $ = <T extends HTMLElement = HTMLInputElement>(selector: string, root: Document | ShadowRoot = document) => root.querySelector(selector) as T
@@ -66,7 +67,7 @@ const MIXED = `<header><span>Shop</span><button type="button" id="header-signup"
 const LOGIN = { kind: 'capture.submitted', username: 'alice', password: 'hunter2', changed: false }
 
 beforeEach(() => {
-	vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({ x: 0, y: 0, top: 0, left: 0, right: 120, bottom: 20, width: 120, height: 20, toJSON: () => ({}) } as DOMRect)
+	mockLayout()
 	document.body.innerHTML = ''
 	sent = []
 	collector = createCaptureCollector((message) => sent.push(message))
@@ -226,6 +227,56 @@ describe('formless groups (test-site/formless-mixed.html)', () => {
 })
 
 describe('forms', () => {
+	it('reports nothing for a submitted checkout with a password-typed CVV', () => {
+		mount(`<form id="f">
+			<label>Email <input id="e" type="email"></label>
+			<label>Card number <input id="n"></label>
+			<label>Expiry <input id="x" placeholder="MM/YY"></label>
+			<label>CVV <input id="c" type="password" maxlength="4"></label>
+			<button id="b" type="submit">Continue</button>
+		</form>`)
+		type($('#e'), 'alice@example.test')
+		type($('#n'), '4111111111111111')
+		type($('#x'), '03/27')
+		type($('#c'), '123')
+		click($('#b'))
+		enter($('#c'))
+		userSubmit($<HTMLFormElement>('#f'))
+		window.dispatchEvent(new Event('beforeunload'))
+		expect(sent).toEqual([])
+	})
+
+	it.each(['Security code', 'Beveiligingscode', 'Controlegetal'])('reports nothing for a saved card\'s password-typed CVC labelled "%s"', (label) => {
+		mount(`<form id="f"><p>Visa ending 1111</p><label>${label} <input id="c" type="password" maxlength="3"></label><button id="b">Pay now</button></form>`)
+		type($('#c'), '123')
+		click($('#b'))
+		enter($('#c'))
+		userSubmit($<HTMLFormElement>('#f'))
+		window.dispatchEvent(new Event('beforeunload'))
+		expect(sent).toEqual([])
+	})
+
+	it('reports only the account of a guest checkout without tokens, never its card fields', () => {
+		mount(`<form id="f">
+			<label>Name on card <input id="h"></label>
+			<label>Card number <input id="n"></label>
+			<label>Expiry (MM/YY) <input id="x"></label>
+			<label>CVV <input id="c" type="password" maxlength="4"></label>
+			<label>Email <input id="e" type="email"></label>
+			<label>Create a password <input id="p" type="password"></label>
+			<button id="b" type="submit">Create account and pay</button>
+		</form>`)
+		type($('#h'), 'Anna de Vries')
+		type($('#n'), '4111111111111111')
+		type($('#x'), '03/27')
+		type($('#c'), '123')
+		type($('#e'), 'alice@example.test')
+		type($('#p'), 'hunter2')
+		click($('#b'))
+		userSubmit($<HTMLFormElement>('#f'))
+		expect(sent).toEqual([{ kind: 'capture.submitted', username: 'alice@example.test', password: 'hunter2', changed: false }])
+	})
+
 	it('reports a login form with autocomplete="off" once, at the click and its submit', () => {
 		mount(`<form id="f" autocomplete="off">
 			<label>Username <input id="u" name="username" autocomplete="off"></label>

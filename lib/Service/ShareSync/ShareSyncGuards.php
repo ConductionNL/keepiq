@@ -161,7 +161,35 @@ class ShareSyncGuards {
 
 		$required = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $live['copies'];
 
-		$named = [];
+		[$named, $valueless] = $this->namedRows(updates: $updates);
+		if (array_diff_key($required, $named) !== [] || array_diff_key($named, $required, $live['ignored']) !== []) {
+			throw new InvalidArgumentException(
+				message: 'Name the source and every copy whose access has not ended, and nothing else'
+			);
+		}
+
+		foreach (array_keys(array_intersect_key($valueless, $required)) as $copyId) {
+			$this->assertHolderHasNoVaultKey(source: $source, copy: $required[$copyId]);
+			// No vault key to encrypt for: the row keeps its value. A copy keeps
+			// its version too; the source's version already moved with the lock.
+			unset($required[$copyId]);
+		}
+
+		return [$writesOn, array_fill_keys(array_keys($required), true)];
+	}//end assertGroupWrite()
+
+	/**
+	 * The rows a group write's body names, and of those the ones that carry
+	 * no value, both keyed by id.
+	 *
+	 * @param array<int,array<string,string|null>> $updates The per-recipient blobs
+	 *
+	 * @return array{0:array<string,bool>,1:array<string,bool>}
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	private function namedRows(array $updates): array {
+		$named     = [];
 		$valueless = [];
 		foreach ($updates as $update) {
 			$named[(string)($update['secretId'] ?? '')] = true;
@@ -170,26 +198,29 @@ class ShareSyncGuards {
 			}
 		}
 
-		if (array_diff_key($required, $named) !== [] || array_diff_key($named, $required, $live['ignored']) !== []) {
+		return [$named, $valueless];
+	}//end namedRows()
+
+	/**
+	 * Refuse leaving a valueless row out when its holder has a vault key: every
+	 * holder with one must get the new value.
+	 *
+	 * @param Secret                                                       $source The source secret being synced
+	 * @param array{secretId:string,holder:string,targetUserId:?string}   $copy   The row named without a value
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the holder has a vault key
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 */
+	private function assertHolderHasNoVaultKey(Secret $source, array $copy): void {
+		if ($this->holderHasVaultKey(source: $source, copy: $copy) === true) {
 			throw new InvalidArgumentException(
-				message: 'Name the source and every copy whose access has not ended, and nothing else'
+				message: 'Every holder with a vault key must get the new value'
 			);
 		}
-
-		foreach (array_keys(array_intersect_key($valueless, $required)) as $copyId) {
-			if ($this->holderHasVaultKey(source: $source, copy: $required[$copyId]) === true) {
-				throw new InvalidArgumentException(
-					message: 'Every holder with a vault key must get the new value'
-				);
-			}
-
-			// No vault key to encrypt for: the row keeps its value. A copy keeps
-			// its version too; the source's version already moved with the lock.
-			unset($required[$copyId]);
-		}
-
-		return [$writesOn, array_fill_keys(array_keys($required), true)];
-	}//end assertGroupWrite()
+	}//end assertHolderHasNoVaultKey()
 
 	/**
 	 * The share rows of a source, judged once for a whole sync: the check
@@ -260,50 +291,19 @@ class ShareSyncGuards {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function liveCopies(Secret $source, ?string $leaveOut, ?JudgedShareRows $judged = null): array {
-		$copies = [];
-		$ignored = [];
-		$unjudged = [];
 		$judged ??= $this->rowJudge->rowsOfSource(sourceId: $source->getId());
-		$targets = $judged->all();
-		$rows = $this->secrets->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets));
-		$now = time();
+		$targets  = $judged->all();
+		$run      = new LiveCopiesRun(
+			judged: $judged,
+			rows: $this->secrets->findByIds(ids: array_map(static fn ($target): string => $target->getSecretId(), $targets))
+		);
 		foreach ($targets as $target) {
-			$copyId = $target->getSecretId();
-			if ($copyId === $leaveOut) {
-				continue;
+			if ($target->getSecretId() !== $leaveOut) {
+				$run->sort(target: $target);
 			}
-
-			// A copy whose access ended, or whose row is gone, is not written.
-			$row = ($rows[$copyId] ?? null);
-			$ends = $row?->getAccessExpiresAt();
-			if ($row === null || ($ends !== null && $ends->getTimestamp() <= $now)) {
-				$ignored[$copyId] = true;
-				continue;
-			}
-
-			// Defence in depth: a copy whose row does not genuinely belong to its
-			// target (a poisoned or drifted `secret_id`) is dropped from the write
-			// set, so a save can never overwrite another user's secret.
-			if ($target->isHeldByTarget(copy: $row) === false) {
-				$ignored[$copyId] = true;
-				continue;
-			}
-
-			// The pending quarantine scan judges the row first, as a sync does.
-			$held = $judged->verdict(row: $target);
-			if ($held !== null) {
-				$ignored[$copyId] = true;
-				if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
-					$unjudged[] = $copyId;
-				}
-
-				continue;
-			}
-
-			$copies[$copyId] = ['secretId' => $copyId, 'holder' => 'recipient', 'targetUserId' => $target->getTargetUserId()];
 		}
 
-		return ['copies' => $copies, 'ignored' => $ignored, 'unjudged' => $unjudged];
+		return $run->result();
 	}//end liveCopies()
 
 	/**

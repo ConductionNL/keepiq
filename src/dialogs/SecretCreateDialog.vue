@@ -34,98 +34,7 @@
 
 			<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
-			<!-- Card / identity composite payloads (card-identity-items §3.1):
-			     per-type field sets serialized to the encrypted key on save. -->
-			<template v-if="isCard">
-				<NcPasswordField
-					v-model="card.number"
-					:label="t('keepiq', 'Card number')"
-					data-testid="card-number" />
-				<NcNoteCard
-					v-if="card.number !== '' && !luhnOk"
-					type="warning"
-					data-testid="card-luhn-hint">
-					{{
-						t(
-							'keepiq',
-							'This number does not pass the card checksum — double-check it (saving is not blocked).',
-						)
-					}}
-				</NcNoteCard>
-				<NcTextField
-					v-model="card.expiry"
-					:label="t('keepiq', 'Expiry (MM/YY)')"
-					data-testid="card-expiry" />
-				<NcPasswordField
-					v-model="card.cvv"
-					:label="t('keepiq', 'CVV')"
-					data-testid="card-cvv" />
-				<NcPasswordField
-					v-model="card.pin"
-					:label="t('keepiq', 'PIN (optional)')"
-					data-testid="card-pin" />
-				<NcTextField
-					v-model="card.cardholder"
-					:label="t('keepiq', 'Cardholder name')"
-					data-testid="card-cardholder" />
-			</template>
-			<template v-else-if="isIdentity">
-				<NcTextField
-					v-model="identity.firstName"
-					:label="t('keepiq', 'First name')"
-					data-testid="identity-first-name" />
-				<NcTextField
-					v-model="identity.lastName"
-					:label="t('keepiq', 'Last name')"
-					data-testid="identity-last-name" />
-				<NcTextField
-					v-model="identity.address"
-					:label="t('keepiq', 'Address')"
-					data-testid="identity-address" />
-				<NcTextField
-					v-model="identity.phone"
-					:label="t('keepiq', 'Phone')"
-					data-testid="identity-phone" />
-				<NcTextField
-					v-model="identity.email"
-					:label="t('keepiq', 'Email')"
-					data-testid="identity-email" />
-				<NcPasswordField
-					v-model="identity.bsn"
-					:label="t('keepiq', 'BSN')"
-					data-testid="identity-bsn" />
-			</template>
-			<!-- A certificate or note is several lines: a password input would
-			     drop the line breaks of a PEM block. -->
-			<NcTextArea
-				v-else-if="valueMultiline"
-				v-model="value"
-				:label="requiredValueLabel"
-				:required="true"
-				rows="6"
-				data-testid="secret-value-multiline" />
-			<div v-else class="secret-form__value-row">
-				<NcPasswordField
-					v-model="value"
-					class="secret-form__value-field"
-					:label="requiredValueLabel"
-					:required="true" />
-				<NcButton
-					variant="tertiary-no-background"
-					:title="t('keepiq', 'Generate a strong key')"
-					:aria-label="t('keepiq', 'Generate a strong key')"
-					@click="openGenerator">
-					<template #icon>
-						<Dice5 :size="20" />
-					</template>
-				</NcButton>
-			</div>
-
-			<KeyGeneratorModal
-				v-if="generatorOpen"
-				:open="generatorOpen"
-				@update:open="generatorOpen = $event"
-				@generated="onGenerated" />
+			<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
 
 			<AuthenticatorKeyField
 				v-if="showAuthenticator"
@@ -188,12 +97,7 @@
 				:onlyIds="ownershipApplies ? ownTeamFolderIds : null"
 				:label="t('keepiq', 'Folder')" />
 
-			<NcNoteCard
-				v-if="!policyVerdict.compliant"
-				type="warning"
-				data-testid="policy-blocked">
-				{{ policyVerdict.reason }}
-			</NcNoteCard>
+			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
 
 		<template #actions>
@@ -213,34 +117,26 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
-	NcPasswordField,
 	NcSelect,
-	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
-import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
+import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
+import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
-import KeyGeneratorModal from './KeyGeneratorModal.vue'
-import {
-	CARD_TYPE_NAME,
-	IDENTITY_TYPE_NAME,
-	luhnValid,
-	serializeCard,
-	serializeIdentity,
-} from '../cardIdentity/cardIdentity.js'
-import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
+import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
+import { secretSaveGuards } from '../mixins/secretSaveGuards.js'
+import { evaluateScore } from '../policy/policy.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -255,15 +151,10 @@ import {
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
 import { membersToObject } from '../utils/additionalFields.js'
-import {
-	leavesOut,
-	loginLabelOf,
-	typeFieldsOf,
-	valueFieldOf,
-} from '../utils/builtinTypeFields.js'
+import { leavesOut } from '../utils/builtinTypeFields.js'
 import { valuesFit } from '../utils/fieldSchema.js'
 import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
-import { mergeTypedValues, missingRequired } from '../utils/typedFields.js'
+import { mergeTypedValues } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 
 /**
@@ -301,19 +192,19 @@ export default {
 		AuthenticatorKeyField,
 		TypedFieldsForm,
 		DestinationSelect,
+		PolicyBlockedNote,
+		SecretPayloadFields,
 		SecretTagsField,
-		Dice5,
-		KeyGeneratorModal,
 		NcButton,
 		NcDialog,
 		NcLoadingIcon,
 		NcNoteCard,
-		NcPasswordField,
 		NcSelect,
-		NcTextArea,
 		NcTextField,
 		Plus,
 	},
+
+	mixins: [secretPayloadForm, secretSaveGuards],
 
 	props: {
 		/** The folder to create the secret in (defaults to the current view). */
@@ -334,15 +225,12 @@ export default {
 			open: true,
 			name: '',
 			typeId: null,
-			value: '',
 			url: '',
 			login: '',
 			/** The authenticator key being entered on a login. */
 			totpInput: '',
 			additionalFields: [],
 			tags: [],
-			typedValues: {},
-			typedMissing: [],
 			selectedFolderId: this.folderId,
 			/** Team folders the user can write to but does not own (admin-vault-policies §4.3). */
 			contributable: [],
@@ -352,17 +240,6 @@ export default {
 			ownTeamFolderIds: [],
 			saving: false,
 			error: '',
-			generatorOpen: false,
-			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
-			identity: {
-				firstName: '',
-				lastName: '',
-				address: '',
-				phone: '',
-				email: '',
-				bsn: '',
-			},
-
 			policy: null,
 		}
 	},
@@ -429,40 +306,14 @@ export default {
 		},
 
 		/**
-		 * The label for the secret-value field: the type's own, such as
-		 * "Note" or "Certificate", else "Secret value".
-		 *
-		 * @return {string}
-		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
-		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
-		 */
-		valueLabel() {
-			return (
-				valueFieldOf(this.selectedTypeName)?.label
-				?? t('keepiq', 'Secret value')
-			)
-		},
-
-		/**
-		 * The value field's label marked as required, as the type's own
-		 * required fields are: Create stays disabled without a value.
-		 *
-		 * @return {string}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
-		 */
-		requiredValueLabel() {
-			return t('keepiq', '{label} (required)', { label: this.valueLabel })
-		},
-
-		/**
-		 * Whether the value is entered in a text area.
+		 * The value is required here: Create stays disabled without it, so
+		 * the value form marks it as the type's own required fields are.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
 		 */
-		valueMultiline() {
-			return valueFieldOf(this.selectedTypeName)?.kind === 'multiline'
+		valueRequired() {
+			return true
 		},
 
 		/**
@@ -483,19 +334,6 @@ export default {
 		 */
 		showUrl() {
 			return !leavesOut(this.selectedTypeName, 'url')
-		},
-
-		/**
-		 * The login field's label: "Username" on a database, else "Login".
-		 *
-		 * @return {string}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
-		 */
-		loginLabel() {
-			return (
-				loginLabelOf(this.selectedTypeName, true)
-				?? t('keepiq', 'Login (optional)')
-			)
 		},
 
 		/**
@@ -520,27 +358,6 @@ export default {
 		},
 
 		/**
-		 * The extra fields of the chosen type: a built-in type's own, or the
-		 * fields an administrator defined on it.
-		 *
-		 * @return {Array<object>} The fields.
-		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
-		 */
-		typedFields() {
-			return typeFieldsOf(useSecretTypeStore().typesById[this.typeId])
-		},
-
-		/**
-		 * The selected type's system name (card-identity-items §3.1).
-		 *
-		 * @spec exclude Trivial lookup: resolves the selected type id to its name.
-		 */
-		selectedTypeName() {
-			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
-		},
-
-		/**
 		 * Whether the team folder ownership policy covers this user and type.
 		 *
 		 * @return {boolean}
@@ -553,38 +370,6 @@ export default {
 					this.selectedTypeName,
 				)
 			)
-		},
-
-		isCard() {
-			return this.selectedTypeName === CARD_TYPE_NAME
-		},
-
-		isIdentity() {
-			return this.selectedTypeName === IDENTITY_TYPE_NAME
-		},
-
-		/**
-		 * Best-effort Luhn hint — never blocks saving (§3.2).
-		 *
-		 * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
-		 */
-		luhnOk() {
-			return luhnValid(this.card.number)
-		},
-
-		/**
-		 * The value serialized for the encrypted key field.
-		 *
-		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
-		 */
-		effectiveValue() {
-			if (this.isCard) {
-				return serializeCard(this.card)
-			}
-			if (this.isIdentity) {
-				return serializeIdentity(this.identity)
-			}
-			return this.value
 		},
 
 		/**
@@ -645,11 +430,8 @@ export default {
 	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 	 */
 	async mounted() {
-		this.policy = await fetchPolicy()
+		await this.loadPolicyAndTypes()
 		const typeStore = useSecretTypeStore()
-		if (typeStore.types.length === 0) {
-			await typeStore.fetchTypes()
-		}
 		if (this.typeId === null && typeStore.types.length > 0) {
 			// The user's saved default type; Login when it no longer exists (vault-20).
 			const prefs = useUserPreferencesStore()
@@ -700,20 +482,6 @@ export default {
 		},
 
 		/**
-		 * Take the typed values and clear the marks of fields now filled.
-		 *
-		 * @param {object} values The values by field key.
-		 * @return {void}
-		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 */
-		onTypedValues(values) {
-			this.typedValues = values
-			this.typedMissing = this.typedMissing.filter((key) =>
-				missingRequired(this.typedFields, values).includes(key),
-			)
-		},
-
-		/**
 		 * The additional-fields object to encrypt: the free members plus the
 		 * typed values.
 		 *
@@ -729,42 +497,30 @@ export default {
 		},
 
 		/**
-		 * Forward the open-state change; emit `close` when dismissed.
+		 * What a new secret carries after its name, type and folder: the url,
+		 * login and value, then the additional fields and the authenticator
+		 * key when there are any.
 		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 *
-		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
+		 * @return {object} The value part of the create body.
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
-		onUpdateOpen(value) {
-			this.open = value
-			if (!value) {
-				this.$emit('close')
-			}
-		},
+		valueFields() {
+			return {
+				url: this.urlToSave,
+				login: this.loginToSave,
+				key: this.effectiveValue,
+				// Only when there ARE members: the store encrypts whatever it is
+				// handed, so passing {} unconditionally would write an empty
+				// ciphertext blob onto every secret ever created here.
+				// The typed values ride in the same blob, named by field label,
+				// so the server only ever sees their ciphertext (admin-18).
+				...(Object.keys(this.additionalBlob()).length > 0
+					? { additionalFields: this.additionalBlob() }
+					: {}),
 
-		/**
-		 * Open the key generator dialog.
-		 *
-		 * @return {void}
-		 *
-		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
-		 */
-		openGenerator() {
-			this.generatorOpen = true
-		},
-
-		/**
-		 * Receive the generated key from the modal and copy it into the value field.
-		 *
-		 * @param {string} key The generated key.
-		 * @return {void}
-		 *
-		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
-		 */
-		onGenerated(key) {
-			if (typeof key === 'string' && key.length > 0) {
-				this.value = key
+				// Only when entered, like the additional fields above.
+				...(this.totpToSave ? { totp: this.totpToSave } : {}),
 			}
 		},
 
@@ -780,30 +536,14 @@ export default {
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
 		async submit() {
-			if (!this.canSubmit) {
-				return
-			}
-			// A required field of the type blocks the save and is marked (admin-18).
-			this.typedMissing = missingRequired(this.typedFields, this.typedValues)
-			if (this.typedMissing.length > 0) {
+			if (this.saveBlocked()) {
 				return
 			}
 			this.saving = true
 			this.error = ''
 			try {
-				// HIBP block (org-password-policies §4.2): k-anonymity check
-				// BEFORE encryption; only the 5-char prefix leaves the browser.
-				if (!this.isCard && !this.isIdentity) {
-					const hibpReason = await evaluateHibp(
-						this.policy,
-						this.selectedTypeName,
-						this.value,
-					)
-					if (hibpReason !== null) {
-						this.error = hibpReason
-						this.saving = false
-						return
-					}
+				if (!this.isCard && !this.isIdentity && (await this.breachBlocked())) {
+					return
 				}
 				if (this.contributeTo) {
 					// A team folder this user can write to but does not own
@@ -813,13 +553,7 @@ export default {
 						{
 							name: this.name.trim(),
 							typeId: this.typeId,
-							url: this.urlToSave,
-							login: this.loginToSave,
-							key: this.effectiveValue,
-							...(Object.keys(this.additionalBlob()).length > 0
-								? { additionalFields: this.additionalBlob() }
-								: {}),
-							...(this.totpToSave ? { totp: this.totpToSave } : {}),
+							...this.valueFields(),
 						},
 					)
 					this.$emit('saved', result.secret)
@@ -830,19 +564,7 @@ export default {
 					name: this.name.trim(),
 					typeId: this.typeId,
 					folderId: this.selectedFolderId,
-					url: this.urlToSave,
-					login: this.loginToSave,
-					key: this.effectiveValue,
-					// Only when there ARE members: the store encrypts whatever it is
-					// handed, so passing {} unconditionally would write an empty
-					// ciphertext blob onto every secret ever created here.
-					// The typed values ride in the same blob, named by field label,
-					// so the server only ever sees their ciphertext (admin-18).
-					...(Object.keys(this.additionalBlob()).length > 0
-						? { additionalFields: this.additionalBlob() }
-						: {}),
-					// Only when entered, like the additional fields above.
-					...(this.totpToSave ? { totp: this.totpToSave } : {}),
+					...this.valueFields(),
 				})
 				// Tags are stored apart from the value (vault-favourites-tags-and-last-used).
 				if (this.tags.length > 0 && created?.id) {
@@ -866,21 +588,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.secret-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 4px 0;
-}
-
-.secret-form__value-row {
-	display: flex;
-	align-items: flex-end;
-	gap: 8px;
-}
-
-.secret-form__value-field {
-	flex: 1 1 auto;
-}
-</style>
+<style scoped src="./secretForm.css"></style>

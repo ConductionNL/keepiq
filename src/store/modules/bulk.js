@@ -15,6 +15,58 @@ import { onVaultLock } from './session.js'
 
 const CHUNK_SIZE = 25
 
+/**
+ * Report the items in the chunks after a cancellation as skipped.
+ *
+ * @param {object} store The bulk store.
+ * @param {Array<string>} secretIds The items not run.
+ * @return {void}
+ * @spec openspec/specs/bulk-actions/spec.md#scenario-nothing-is-dropped-silently
+ */
+function reportCancelled(store, secretIds) {
+	for (const secretId of secretIds) {
+		store.report.push({ secretId, status: 'skipped', reason: 'cancelled' })
+	}
+}
+
+/**
+ * Run one chunk, sequentially within the chunk: that keeps server load and
+ * progress feedback predictable.
+ *
+ * @param {object} store The bulk store.
+ * @param {{chunk: Array<string>, perItem: Function}} step The chunk and the per-item action.
+ * @return {Promise<void>}
+ * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
+ */
+async function runChunk(store, step) {
+	for (const secretId of step.chunk) {
+		store.report.push(await itemOutcome(secretId, step.perItem))
+		store.progress.done++
+	}
+}
+
+/**
+ * One item's report row: what the action answered, ok when it answered
+ * nothing, and a thrown error as a failed row with its reason.
+ *
+ * @param {string} secretId The item.
+ * @param {Function} perItem The per-item action.
+ * @return {Promise<object>}
+ * @spec openspec/specs/bulk-actions/spec.md#scenario-nothing-is-dropped-silently
+ */
+async function itemOutcome(secretId, perItem) {
+	try {
+		const result = await perItem(secretId)
+		return { secretId, ...(result ?? { status: 'ok' }) }
+	} catch (e) {
+		return {
+			secretId,
+			status: 'failed',
+			reason: e?.response?.data?.message || e?.message || 'failed',
+		}
+	}
+}
+
 export const useBulkStore = defineStore('bulk', {
 	state: () => ({
 		/** @type {Array<string>} Selected secret ids (client-only). */
@@ -133,37 +185,13 @@ export const useBulkStore = defineStore('bulk', {
 
 			for (let offset = 0; offset < unique.length; offset += CHUNK_SIZE) {
 				if (this.progress.cancelled) {
-					for (const secretId of unique.slice(offset)) {
-						this.report.push({
-							secretId,
-							status: 'skipped',
-							reason: 'cancelled',
-						})
-					}
+					reportCancelled(this, unique.slice(offset))
 					break
 				}
-
-				const chunk = unique.slice(offset, offset + CHUNK_SIZE)
-				for (const secretId of chunk) {
-					try {
-						// Sequential within the chunk keeps server load and
-						// progress feedback predictable.
-
-						const result = await perItem(secretId)
-						this.report.push({
-							secretId,
-							...(result ?? { status: 'ok' }),
-						})
-					} catch (e) {
-						this.report.push({
-							secretId,
-							status: 'failed',
-							reason:
-								e?.response?.data?.message || e?.message || 'failed',
-						})
-					}
-					this.progress.done++
-				}
+				await runChunk(this, {
+					chunk: unique.slice(offset, offset + CHUNK_SIZE),
+					perItem,
+				})
 			}
 
 			this.progress.running = false

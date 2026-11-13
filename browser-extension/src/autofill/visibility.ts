@@ -33,13 +33,14 @@ export function modalOf(element: Element, aria: boolean): Element | null {
 	return null
 }
 
-/** Whether a press at the point reaches `element`, through every shadow root above it. */
-export function hits(element: Element, x: number, y: number): boolean {
+/** Whether a press at the point reaches `element`, through every shadow root above it, looking through what `skip` names. */
+export function hits(element: Element, x: number, y: number, skip?: (found: Element) => boolean): boolean {
 	let target = element
 	for (;;) {
 		const root = target.getRootNode() as Document | ShadowRoot
 		if (root.nodeType !== Node.DOCUMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) return false
-		if (root.elementFromPoint(x, y) !== target) return false
+		const top = skip ? root.elementsFromPoint?.(x, y).find((found) => !skip(found)) : root.elementFromPoint(x, y)
+		if (top !== target) return false
 		if (root.nodeType === Node.DOCUMENT_NODE) return true
 		target = (root as ShadowRoot).host
 	}
@@ -61,17 +62,34 @@ const isTranslation = (transform: string) => /^matrix\(1, 0, 0, 1, -?[\d.e+-]+, 
  */
 export function untouched(element: Element, translation = false): boolean {
 	const style = element.ownerDocument.defaultView!.getComputedStyle(element)
-	const value = (property: string) => style.getPropertyValue(property)
-	const zoom = value('zoom')
-	const transform = value('transform')
-	const translate = value('translate')
-	return (!style.opacity || Number(style.opacity) === 1) && (!value('mix-blend-mode') || value('mix-blend-mode') === 'normal')
-		&& (!zoom || zoom === 'normal' || Number(zoom) === 1)
-		&& style.visibility !== 'hidden' && style.visibility !== 'collapse'
-		&& (none(transform) || (translation && isTranslation(transform)))
-		// Two lengths at most: a third, depth, would scale under a perspective.
-		&& (none(translate) || (translation && translate.trim().split(/\s+/).length <= 2))
-		&& NONE_PROPERTIES.every((property) => none(value(property)))
+	return drawnAsIs(style) && movedAtMost(style, translation) && NONE_PROPERTIES.every((property) => none(style.getPropertyValue(property)))
+}
+
+/** Fully opaque, unblended, unzoomed and shown. */
+const drawnAsIs = (style: CSSStyleDeclaration) => unblended(style) && unzoomed(style) && style.visibility !== 'hidden' && style.visibility !== 'collapse'
+
+function unblended(style: CSSStyleDeclaration): boolean {
+	const blend = style.getPropertyValue('mix-blend-mode')
+	return (!style.opacity || Number(style.opacity) === 1) && (!blend || blend === 'normal')
+}
+
+function unzoomed(style: CSSStyleDeclaration): boolean {
+	const zoom = style.getPropertyValue('zoom')
+	return !zoom || zoom === 'normal' || Number(zoom) === 1
+}
+
+/** No transform or translation, or with `translation` a plain move only. */
+const movedAtMost = (style: CSSStyleDeclaration, translation: boolean) => transformedAtMost(style, translation) && translatedAtMost(style, translation)
+
+function transformedAtMost(style: CSSStyleDeclaration, translation: boolean): boolean {
+	const transform = style.getPropertyValue('transform')
+	return none(transform) || (translation && isTranslation(transform))
+}
+
+/** Two lengths at most: a third, depth, would scale under a perspective. */
+function translatedAtMost(style: CSSStyleDeclaration, translation: boolean): boolean {
+	const translate = style.getPropertyValue('translate')
+	return none(translate) || (translation && translate.trim().split(/\s+/).length <= 2)
 }
 
 /** Generated content the page could draw over the host from inside its own box. */
@@ -85,12 +103,12 @@ export function noPseudoContent(element: Element): boolean {
 /**
  * Whether a host shown in the top layer (`popover`) or fixed on the page is drawn untouched now. A showing popover
  * paints, and takes clicks, whatever its ancestors' opacity, filter, transform, mask or visibility; what can still
- * hide it shows in the rect or the hit test. Firefox is the exception for a `filter` on the root, which reaches its
- * top layer. Without the popover API (Firefox below 125) every ancestor counts.
+ * hide it shows in the rect or the hit test, except a `filter` on the root where `rootFilterReachesTopLayer`. Without
+ * the popover API (Firefox below 125) every ancestor counts.
  */
-export function drawnUntouched(host: Element, popover: boolean, firefox: boolean): boolean {
+export function drawnUntouched(host: Element, popover: boolean, rootFilterReachesTopLayer: boolean): boolean {
 	if (!noPseudoContent(host) || !untouched(host)) return false
-	if (popover && firefox && !none(getComputedStyle(document.documentElement).filter)) return false
+	if (popover && rootFilterReachesTopLayer && !none(getComputedStyle(document.documentElement).filter)) return false
 	if (!popover) {
 		for (const element of composedAncestors(host)) {
 			if (!untouched(element)) return false

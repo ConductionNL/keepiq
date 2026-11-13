@@ -129,7 +129,7 @@
   },
   "src/import/model.js": {
     "eqeqeq": {
-      "count": 7
+      "count": 2
     }
   },
   "src/import/parsers/bitwarden.js": {
@@ -172,7 +172,7 @@
   },
   "src/passkey/passkey.js": {
     "eqeqeq": {
-      "count": 5
+      "count": 2
     }
   },
   "src/router/guards.js": {
@@ -206,11 +206,6 @@
   "src/store/modules/export.js": {
     "eqeqeq": {
       "count": 1
-    }
-  },
-  "src/store/modules/health.js": {
-    "no-useless-assignment": {
-      "count": 2
     }
   },
   "src/store/modules/import.js": {

@@ -15,6 +15,7 @@
  * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-metadata-parsing-split-by-pem-readability
  */
 
+import { decodeOid } from '../crypto/oid.js'
 import { decodePem } from '../crypto/pem.js'
 
 /** Common DN attribute OIDs → short labels. */
@@ -114,30 +115,6 @@ function children(bytes, tlv) {
 }
 
 /**
- * Decode an OID value to dotted notation.
- *
- * @param {Uint8Array} bytes The DER buffer.
- * @param {{start: number, end: number}} tlv The OID TLV.
- * @return {string} Dotted OID.
- */
-function decodeOid(bytes, tlv) {
-	const parts = []
-	let value = 0
-	for (let i = tlv.start; i < tlv.end; i++) {
-		value = value * 128 + (bytes[i] & 0x7f)
-		if ((bytes[i] & 0x80) === 0) {
-			if (parts.length === 0) {
-				parts.push(Math.floor(value / 40), value % 40)
-			} else {
-				parts.push(value)
-			}
-			value = 0
-		}
-	}
-	return parts.join('.')
-}
-
-/**
  * Decode a printable/UTF8 string TLV.
  *
  * @param {Uint8Array} bytes The DER buffer.
@@ -211,6 +188,29 @@ function decodeSerialHex(bytes, tlv) {
 }
 
 /**
+ * The TLVs of the display fields of a certificate:
+ * Certificate ::= SEQUENCE { tbsCertificate, signatureAlgorithm, signature },
+ * and in the TBS an optional [0] EXPLICIT version, then serial, signature,
+ * issuer, validity and subject.
+ *
+ * @param {Uint8Array} der The certificate (DER).
+ * @return {{serial: object, issuer: object, subject: object, notBefore: object, notAfter: object}}
+ */
+function displayTlvsOf(der) {
+	const [tbs] = children(der, readTlv(der, 0))
+	const tbsChildren = children(der, tbs)
+	const index = tbsChildren[0] && tbsChildren[0].tag === 0xa0 ? 1 : 0
+	const [notBefore, notAfter] = children(der, tbsChildren[index + 3])
+	return {
+		serial: tbsChildren[index],
+		issuer: tbsChildren[index + 2],
+		subject: tbsChildren[index + 4],
+		notBefore,
+		notAfter,
+	}
+}
+
+/**
  * Parse the non-secret display fields of a PEM certificate.
  *
  * @param {string} pem The decrypted PEM text (never sent anywhere by this module).
@@ -223,33 +223,15 @@ export async function parseCertificatePem(pem) {
 		return null
 	}
 	try {
-		// Certificate ::= SEQUENCE { tbsCertificate, signatureAlgorithm, signature }
-		const certificate = readTlv(der, 0)
-		const [tbs] = children(der, certificate)
-		const tbsChildren = children(der, tbs)
-		let index = 0
-		// [0] EXPLICIT version — optional.
-		if (tbsChildren[0] && tbsChildren[0].tag === 0xa0) {
-			index = 1
-		}
-		const serialTlv = tbsChildren[index]
-		const issuerTlv = tbsChildren[index + 2]
-		const validityTlv = tbsChildren[index + 3]
-		const subjectTlv = tbsChildren[index + 4]
-		const [notBeforeTlv, notAfterTlv] = children(der, validityTlv)
-
-		const digest = await crypto.subtle.digest('SHA-256', der)
-		const fingerprint = Array.from(new Uint8Array(digest))
-			.map((b) => b.toString(16).padStart(2, '0'))
-			.join('')
-
+		const tlvs = displayTlvsOf(der)
+		const fingerprint = await sha256Hex(der)
 		return {
-			subject: decodeName(der, subjectTlv),
-			issuer: decodeName(der, issuerTlv),
-			serial: decodeSerialHex(der, serialTlv),
+			subject: decodeName(der, tlvs.subject),
+			issuer: decodeName(der, tlvs.issuer),
+			serial: decodeSerialHex(der, tlvs.serial),
 			fingerprintSha256: `sha256:${fingerprint}`,
-			notBefore: decodeTime(der, notBeforeTlv),
-			notAfter: decodeTime(der, notAfterTlv),
+			notBefore: decodeTime(der, tlvs.notBefore),
+			notAfter: decodeTime(der, tlvs.notAfter),
 		}
 	} catch (e) {
 		return null

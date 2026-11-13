@@ -109,58 +109,99 @@ class DashboardSummaryService {
 	public function fetchSummary(string $userId, bool $isAdmin): array {
 		$this->validateUserId(userId: $userId);
 
-		$sharedWithMeCount = function () use ($userId): int {
-			if ($this->shareTargetMapper === null) {
-				return 0;
-			}
-
-			return count($this->shareTargetMapper->findByTargetUser($userId));
-		};
-
-		$foldersCount = function () use ($userId): int {
-			if ($this->folderMapper === null) {
-				return 0;
-			}
-
-			return count($this->folderMapper->findByOwner('user', $userId));
-		};
-
-		$summary = [
-			'total_secrets' => $this->safeCount(
-				counter: fn () => $this->secretMapper?->countByOwner('user', $userId, null, null, SecretMapper::STATE_LIVE) ?? 0,
-				metricId: 'total_secrets',
-			),
-			'shared_with_me_count' => $this->safeCount(
-				counter: $sharedWithMeCount,
-				metricId: 'shared_with_me_count',
-			),
-			'folders_count' => $this->safeCount(
-				counter: $foldersCount,
-				metricId: 'folders_count',
-			),
-			'rotation_due_count' => $this->safeCount(
-				counter: fn () => count($this->rotationFlagMapper?->findOpenForOwner($userId) ?? []),
-				metricId: 'rotation_due_count',
-			),
+		$summary = $this->userCounts(userId: $userId) + [
 			'pending_apps_count' => null,
 			'is_admin' => $isAdmin,
 			'last_updated' => (new DateTime())->format('c'),
 		];
 
 		if ($isAdmin === true) {
-			$summary['pending_apps_count'] = $this->safeCount(
-				counter: fn () => $this->applicationMapper?->countPending() ?? 0,
-				metricId: 'pending_apps_count',
-			);
-			$summary['ca_health'] = $this->caHealthCard();
-			$summary['honey_alert_count'] = $this->safeCount(
-				counter: fn () => $this->honeyAlertMapper?->countUnacknowledged() ?? 0,
-				metricId: 'honey_alert_count',
-			);
+			foreach ($this->adminCards() as $card => $value) {
+				$summary[$card] = $value;
+			}
 		}
 
 		return $summary;
 	}//end fetchSummary()
+
+	/**
+	 * The counters every user sees: their live secrets, the shares they
+	 * received, their folders and their secrets due for rotation.
+	 *
+	 * @param string $userId The Nextcloud user ID
+	 *
+	 * @return array{total_secrets:int,shared_with_me_count:int,folders_count:int,rotation_due_count:int}
+	 */
+	private function userCounts(string $userId): array {
+		return [
+			'total_secrets' => $this->safeCount(
+				counter: fn () => $this->secretMapper?->countByOwner('user', $userId, null, null, SecretMapper::STATE_LIVE) ?? 0,
+				metricId: 'total_secrets',
+			),
+			'shared_with_me_count' => $this->safeCount(
+				counter: fn (): int => $this->sharedWithMeCount(userId: $userId),
+				metricId: 'shared_with_me_count',
+			),
+			'folders_count' => $this->safeCount(
+				counter: fn (): int => $this->foldersCount(userId: $userId),
+				metricId: 'folders_count',
+			),
+			'rotation_due_count' => $this->safeCount(
+				counter: fn () => count($this->rotationFlagMapper?->findOpenForOwner($userId) ?? []),
+				metricId: 'rotation_due_count',
+			),
+		];
+	}//end userCounts()
+
+	/**
+	 * The admin-only cards: pending applications, CA health and open honey
+	 * alerts, in that order.
+	 *
+	 * @return array{pending_apps_count:int,ca_health:array<string,mixed>|null,honey_alert_count:int}
+	 */
+	private function adminCards(): array {
+		return [
+			'pending_apps_count' => $this->safeCount(
+				counter: fn () => $this->applicationMapper?->countPending() ?? 0,
+				metricId: 'pending_apps_count',
+			),
+			'ca_health' => $this->caHealthCard(),
+			'honey_alert_count' => $this->safeCount(
+				counter: fn () => $this->honeyAlertMapper?->countUnacknowledged() ?? 0,
+				metricId: 'honey_alert_count',
+			),
+		];
+	}//end adminCards()
+
+	/**
+	 * How many shares target the user; none without a share mapper.
+	 *
+	 * @param string $userId The Nextcloud user ID
+	 *
+	 * @return int
+	 */
+	private function sharedWithMeCount(string $userId): int {
+		if ($this->shareTargetMapper === null) {
+			return 0;
+		}
+
+		return count($this->shareTargetMapper->findByTargetUser($userId));
+	}//end sharedWithMeCount()
+
+	/**
+	 * How many folders the user owns; none without a folder mapper.
+	 *
+	 * @param string $userId The Nextcloud user ID
+	 *
+	 * @return int
+	 */
+	private function foldersCount(string $userId): int {
+		if ($this->folderMapper === null) {
+			return 0;
+		}
+
+		return count($this->folderMapper->findByOwner('user', $userId));
+	}//end foldersCount()
 
 	/**
 	 * The admin-only CA-health card (certificate-lifecycle §5.1):

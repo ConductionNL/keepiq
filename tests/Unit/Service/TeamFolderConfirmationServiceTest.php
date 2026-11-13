@@ -270,6 +270,7 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			secretMapper: $secretMapper,
 			groupManager: $groupManager,
 			memberships: $memberships,
+			subAdmin: $this->createMock(\OCP\Group\ISubAdmin::class),
 		);
 		$this->service = new TeamFolderConfirmationService(
 			appConfig: $appConfig,
@@ -535,4 +536,76 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 
 		$this->assertSame(1, $result['created']);
 	}//end testAManagerUsesThePlainFanOut()
+
+	/**
+	 * A batch with an unsafe and a safe row stores the safe one and lists
+	 * the unsafe one first among the skipped, with its exact shape.
+	 *
+	 * @return void
+	 */
+	public function testAMixedBatchStoresTheSafeRowAndNamesTheUnsafeOne(): void {
+		$this->enabled['lee'] = true;
+
+		$result = $this->service->registerShares(
+			teamFolderId: 'tf-ops',
+			rows: [$this->row(target: 'lee'), $this->row(target: 'kim')],
+			userId: 'hank'
+		);
+
+		$this->assertSame(1, $result['created']);
+		$this->assertSame(['kim'], array_map(static fn (Secret $copy): string => $copy->getOwnerId(), $this->insertedCopies));
+		$this->assertSame(
+			['sourceSecretId' => 'db-root', 'targetUserId' => 'lee', 'reason' => 'not_eligible'],
+			$result['skipped'][0]
+		);
+		$this->assertCount(1, $this->auditEvents);
+	}//end testAMixedBatchStoresTheSafeRowAndNamesTheUnsafeOne()
+
+	/**
+	 * A batch with no safe row returns the exact empty result, stores and
+	 * announces nothing, and names a row without ids by empty strings.
+	 *
+	 * @return void
+	 */
+	public function testAnAllUnsafeBatchReturnsTheExactEmptyResult(): void {
+		$this->enabled['lee'] = true;
+
+		$result = $this->service->registerShares(
+			teamFolderId: 'tf-ops',
+			rows: [$this->row(target: 'lee'), ['encryptedKey' => 'X']],
+			userId: 'hank'
+		);
+
+		$this->assertSame(
+			[
+				'created' => 0,
+				'rows' => [],
+				'skipped' => [
+					['sourceSecretId' => 'db-root', 'targetUserId' => 'lee', 'reason' => 'not_eligible'],
+					['sourceSecretId' => '', 'targetUserId' => '', 'reason' => 'not_eligible'],
+				],
+			],
+			$result
+		);
+		$this->assertSame([], $this->insertedCopies);
+		$this->assertSame([], $this->notifications);
+		$this->assertSame([], $this->auditEvents);
+	}//end testAnAllUnsafeBatchReturnsTheExactEmptyResult()
+
+	/**
+	 * A pending entry carries its fields in order, and offers only the
+	 * recipients a missing pair names, never the owner or the confirmer.
+	 *
+	 * @return void
+	 */
+	public function testAPendingEntryOffersOnlyTheNeededRecipients(): void {
+		foreach (['hank', 'iris'] as $confirmer) {
+			$pending = $this->service->pendingConfirmations(userId: $confirmer);
+
+			$this->assertCount(1, $pending);
+			$this->assertSame(['teamFolderId', 'role', 'missing', 'recipients'], array_keys($pending[0]));
+			$this->assertSame(['kim'], array_column($pending[0]['recipients'], 'userId'));
+			$this->assertSame('-----BEGIN CERTIFICATE-----', $pending[0]['recipients'][0]['certificate']);
+		}
+	}//end testAPendingEntryOffersOnlyTheNeededRecipients()
 }//end class

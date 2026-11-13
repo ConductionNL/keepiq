@@ -1,0 +1,24 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`certificate inventory expiry column (golden) > marks the expiry of every table the same way, with each table its own fallback 1`] = `
+{
+  "ca": [
+    "<td><span class="cert-inventory__expiry--critical"><date +3d></span></td>",
+    "<td><span class="cert-inventory__expiry--warning"><date +20d></span></td>",
+    "<td><span class=""><date +90d></span></td>",
+    "<td><span>—</span></td>",
+  ],
+  "stored": [
+    "<td><span class="cert-inventory__expiry--critical"><date +3d></span></td>",
+    "<td><span class="cert-inventory__expiry--warning"><date +20d></span></td>",
+    "<td><span class=""><date +90d></span></td>",
+    "<td><span class="cert-inventory__muted">not parsed yet</span></td>",
+  ],
+  "suites": [
+    "<td><span class="cert-inventory__expiry--critical"><date +3d></span></td>",
+    "<td><span class="cert-inventory__expiry--warning"><date +20d></span></td>",
+    "<td><span class=""><date +90d></span></td>",
+    "<td><span>—</span></td>",
+  ],
+}
+`;

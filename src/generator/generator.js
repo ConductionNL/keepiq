@@ -243,7 +243,12 @@ function shuffle(chars, rand) {
  */
 function generateFromCharset(options, policy, rand) {
 	const spec = readSpec(options, policy)
-	if (!spec.upper && !spec.lower && !spec.digits && !spec.special) {
+	if (
+		!spec.includeUppercase
+		&& !spec.includeLowercase
+		&& !spec.includeDigits
+		&& !spec.includeSpecialCharacters
+	) {
 		throw new GeneratorError('Choose at least one kind of character')
 	}
 	const charset = buildCharset(spec, policy)
@@ -287,25 +292,26 @@ function wholeCount(value) {
 function readSpec(options, policy) {
 	const spec = {
 		length: Number(options.length ?? 16),
-		upper: options.includeUppercase !== false,
-		lower: options.includeLowercase !== false,
-		digits: options.includeDigits !== false,
-		special: options.includeSpecialCharacters !== false,
+		includeUppercase: options.includeUppercase !== false,
+		includeLowercase: options.includeLowercase !== false,
+		includeDigits: options.includeDigits !== false,
+		includeSpecialCharacters: options.includeSpecialCharacters !== false,
 		minDigits: wholeCount(options.minDigits),
 		minSpecial: wholeCount(options.minSpecial),
-		excluded: new Set(options.excludedCharacters ?? ''),
+		excludedCharacters: new Set(options.excludedCharacters ?? ''),
 	}
 	if (options.avoidAmbiguous === true) {
 		for (const char of AMBIGUOUS) {
-			spec.excluded.add(char)
+			spec.excludedCharacters.add(char)
 		}
 	}
 	if (policy !== null) {
 		spec.length = Math.max(spec.length, policy.minLength)
-		spec.upper = spec.upper || policy.requireUpper
-		spec.lower = spec.lower || policy.requireLower
-		spec.digits = spec.digits || policy.requireDigit
-		spec.special = spec.special || policy.requireSymbol
+		spec.includeUppercase = spec.includeUppercase || policy.requireUpper
+		spec.includeLowercase = spec.includeLowercase || policy.requireLower
+		spec.includeDigits = spec.includeDigits || policy.requireDigit
+		spec.includeSpecialCharacters =
+			spec.includeSpecialCharacters || policy.requireSymbol
 	}
 	return spec
 }
@@ -320,11 +326,11 @@ function readSpec(options, policy) {
  */
 function buildCharset(spec, policy) {
 	let charset =
-		(spec.upper ? UPPERCASE : '')
-		+ (spec.lower ? LOWERCASE : '')
-		+ (spec.digits ? DIGITS : '')
-		+ (spec.special ? SPECIAL : '')
-	charset = dedupe([...charset].filter((c) => !spec.excluded.has(c)))
+		(spec.includeUppercase ? UPPERCASE : '')
+		+ (spec.includeLowercase ? LOWERCASE : '')
+		+ (spec.includeDigits ? DIGITS : '')
+		+ (spec.includeSpecialCharacters ? SPECIAL : '')
+	charset = dedupe([...charset].filter((c) => !spec.excludedCharacters.has(c)))
 	if (policy !== null) {
 		for (const [, classSet] of requiredClasses(policy)) {
 			if (!intersects(charset, classSet)) {
@@ -345,10 +351,10 @@ function buildCharset(spec, policy) {
  */
 function classMinimums(spec, charset) {
 	return [
-		[UPPERCASE, spec.upper ? 1 : 0],
-		[LOWERCASE, spec.lower ? 1 : 0],
-		[DIGITS, spec.digits ? Math.max(spec.minDigits, 1) : 0],
-		[SPECIAL, spec.special ? Math.max(spec.minSpecial, 1) : 0],
+		[UPPERCASE, spec.includeUppercase ? 1 : 0],
+		[LOWERCASE, spec.includeLowercase ? 1 : 0],
+		[DIGITS, spec.includeDigits ? Math.max(spec.minDigits, 1) : 0],
+		[SPECIAL, spec.includeSpecialCharacters ? Math.max(spec.minSpecial, 1) : 0],
 	].filter(([classSet, count]) => count > 0 && intersects(charset, classSet))
 }
 
@@ -527,7 +533,7 @@ export function extractCharset(regex) {
  * Refuse a pattern that cannot meet the org policy; it is never weakened.
  *
  * @param {object} policy A normalised policy.
- * @param {{charset: string, maxLength: number}} pattern The pattern's set and longest length.
+ * @param {object} pattern The pattern as generateFromRegex reads it.
  * @return {void}
  */
 function assertPolicyReachable(policy, pattern) {
@@ -555,26 +561,59 @@ function assertPolicyReachable(policy, pattern) {
  * @return {string}
  */
 function generateFromRegex(regex, policy, rand) {
-	const compiled = compilePattern(regex)
-	const [quantifierMin, maxLength] = extractLength(regex)
-	let minLength = quantifierMin
-	const charset = extractCharset(regex)
+	const pattern = regexPattern(regex)
+	if (policy !== null) {
+		assertPolicyReachable(policy, pattern)
+		pattern.minLength = Math.max(
+			pattern.minLength,
+			Math.min(policy.minLength, pattern.maxLength),
+		)
+	}
+	assertCharsetViable(pattern.charset)
+	return matchingCandidate(pattern, rand)
+}
 
-	if (minLength < MIN_LENGTH) {
+/**
+ * A pattern's compiled form, its quantifier's length range and its first
+ * class's characters; a range shorter than the minimum length is refused.
+ *
+ * @param {string} regex The pattern.
+ * @return {{compiled: RegExp, minLength: number, maxLength: number, charset: string}}
+ */
+function regexPattern(regex) {
+	const compiled = compilePattern(regex)
+	const [minLength, maxLength] = extractLength(regex)
+	const pattern = {
+		compiled,
+		minLength,
+		maxLength,
+		charset: extractCharset(regex),
+	}
+	if (pattern.minLength < MIN_LENGTH) {
 		throw new GeneratorError(
 			`The regex length must be at least ${MIN_LENGTH} characters`,
 		)
 	}
-	if (policy !== null) {
-		assertPolicyReachable(policy, { charset, maxLength })
-		minLength = Math.max(minLength, Math.min(policy.minLength, maxLength))
-	}
-	assertCharsetViable(charset)
+	return pattern
+}
 
+/**
+ * A candidate within the pattern's length range that the pattern itself
+ * accepts, after at most MAX_REGEX_ATTEMPTS tries.
+ *
+ * @param {object} pattern The pattern.
+ * @param {(min: number, max: number) => number} rand The random-integer source.
+ * @return {string}
+ */
+function matchingCandidate(pattern, rand) {
 	for (let attempt = 0; attempt < MAX_REGEX_ATTEMPTS; attempt++) {
-		const candidate = buildString(charset, rand(minLength, maxLength), rand)
-		compiled.lastIndex = 0
-		if (compiled.test(candidate)) {
+		const candidate = buildString(
+			pattern.charset,
+			rand(pattern.minLength, pattern.maxLength),
+			rand,
+		)
+		pattern.compiled.lastIndex = 0
+		if (pattern.compiled.test(candidate)) {
 			return candidate
 		}
 	}

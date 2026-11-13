@@ -6,23 +6,28 @@
 	"type": "module",
 	"browserslist": [
 		"Firefox >= 109",
-		"Chrome >= 109"
+		"Chrome >= 109",
+		"Safari >= 26"
 	],
 	"scripts": {
 		"build": "wxt build",
 		"build:firefox": "wxt build -b firefox",
+		"build:safari": "wxt build -b safari --mv3",
 		"dev": "wxt",
 		"dev:firefox": "wxt -b firefox",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
+		"package:safari": "bash safari/package.sh",
 		"postinstall": "wxt prepare",
 		"render-icons": "bash scripts/render-icons.sh",
 		"test-site": "node scripts/test-site.ts",
 		"typecheck": "tsc --noEmit",
 		"zip": "wxt zip",
 		"zip:firefox": "wxt zip -b firefox",
+		"zip:safari": "wxt zip -b safari --mv3",
 		"test": "vitest run",
-		"test:e2e": "playwright test"
+		"test:e2e": "playwright test",
+		"test:safari-smoke": "node scripts/safari-smoke.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

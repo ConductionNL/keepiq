@@ -26,10 +26,12 @@ use DateTime;
 use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\NewLinkShare;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -135,10 +137,8 @@ class LinkShareController extends OCSController {
 
 		$userId = $user->getUID();
 
-		try {
-			$suite = $this->suiteService->getActiveSuite(ownerType: 'user', ownerId: $userId);
-			$encryptionSuiteId = $suite->getId();
-		} catch (DoesNotExistException) {
+		$encryptionSuiteId = $this->activeSuiteId(userId: $userId);
+		if ($encryptionSuiteId === null) {
 			return new JSONResponse(
 				data: ['message' => 'No active encryption suite for the current user'],
 				statusCode: Http::STATUS_BAD_REQUEST
@@ -156,37 +156,85 @@ class LinkShareController extends OCSController {
 
 		try {
 			$linkShare = $this->linkShareService->create(
-				secretId: $secretId,
-				encryptedSnapshot: $encryptedSecretSnapshot,
-				salt: $argon2idSalt,
-				encryptionSuiteId: $encryptionSuiteId,
-				usageLimit: $usageLimit,
-				expiresAt: $expiry,
-				userId: $userId
+				link: new NewLinkShare(
+					secretId: $secretId,
+					encryptedSnapshot: $encryptedSecretSnapshot,
+					salt: $argon2idSalt,
+					encryptionSuiteId: $encryptionSuiteId,
+					usageLimit: $usageLimit,
+					expiresAt: $expiry,
+					userId: $userId
+				)
 			);
+		} catch (DoesNotExistException | ForbiddenException | ShareScanPendingException | InvalidArgumentException $e) {
+			return $this->createRefusal(exception: $e);
+		}
+
+		return new JSONResponse(data: $this->createdPayload(linkShare: $linkShare), statusCode: Http::STATUS_CREATED);
+	}//end create()
+
+	/**
+	 * The caller's active suite id, or null when they have none.
+	 *
+	 * @param string $userId The caller
+	 *
+	 * @return string|null
+	 */
+	private function activeSuiteId(string $userId): ?string {
+		try {
+			return $this->suiteService->getActiveSuite(ownerType: 'user', ownerId: $userId)->getId();
 		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end activeSuiteId()
+
+	/**
+	 * The response to a refused link-share create.
+	 *
+	 * @param DoesNotExistException|ForbiddenException|ShareScanPendingException|InvalidArgumentException $exception The refusal
+	 *
+	 * @return JSONResponse
+	 */
+	private function createRefusal(
+		DoesNotExistException|ForbiddenException|ShareScanPendingException|InvalidArgumentException $exception
+	): JSONResponse {
+		if ($exception instanceof DoesNotExistException) {
 			// Not the owner and not a delegate, or no such secret: the same
 			// answer either way (keepiq#214).
 			return new JSONResponse(data: ['message' => 'Secret not found'], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			// A copy from another organisation (sharing-federated-recipients task 3.4).
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		} catch (ShareScanPendingException $e) {
-			return new JSONResponse(
-				data: ['error' => 'share_scan_pending', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_CONFLICT
-			);
-		} catch (InvalidArgumentException $e) {
-			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
-		// The /public shell serves the SPA as #[PublicPage] — the
-		// authenticated dashboard.page route bounced account-less
-		// recipients to the Nextcloud login (fixed with ephemeral-send).
-		// A PATH under the shell (publicShell.pageCatchAll serves it), not
-		// the retired '#/share/link/' hash form: the SPA routes with
-		// createWebHistory, which never reads the fragment, so the hash
-		// form showed recipients the lock screen.
+		if ($exception instanceof ForbiddenException) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		}
+
+		if ($exception instanceof ShareScanPendingException) {
+			return new JSONResponse(
+				data: ['error' => 'share_scan_pending', 'message' => $exception->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
+		}
+
+		return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
+	}//end createRefusal()
+
+	/**
+	 * The created link share with the URL its recipients open.
+	 *
+	 * The /public shell serves the SPA as #[PublicPage] — the
+	 * authenticated dashboard.page route bounced account-less
+	 * recipients to the Nextcloud login (fixed with ephemeral-send).
+	 * A PATH under the shell (publicShell.pageCatchAll serves it), not
+	 * the retired '#/share/link/' hash form: the SPA routes with
+	 * createWebHistory, which never reads the fragment, so the hash
+	 * form showed recipients the lock screen.
+	 *
+	 * @param LinkShare $linkShare The created link share
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function createdPayload(LinkShare $linkShare): array {
 		$linkUrl = $this->urlGenerator->getAbsoluteURL(
 			$this->urlGenerator->linkToRoute('keepiq.publicShell.page') . '/share/link/' . $linkShare->getToken()
 		);
@@ -194,8 +242,8 @@ class LinkShareController extends OCSController {
 		$payload = $linkShare->jsonSerialize();
 		$payload['linkUrl'] = $linkUrl;
 
-		return new JSONResponse(data: $payload, statusCode: Http::STATUS_CREATED);
-	}//end create()
+		return $payload;
+	}//end createdPayload()
 
 	/**
 	 * The expiry a create request names, or null for none.

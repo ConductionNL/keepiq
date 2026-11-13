@@ -67,12 +67,17 @@ The detail SHALL show a "Notes" section with multi-line, unmasked text when the 
 - **THEN** the Notes section shows the text with line breaks preserved and no Login credentials section is shown
 
 ### Requirement: Card and identity sections
-For type card the detail SHALL parse the decrypted `key` as `{number, expiry, cvv, pin, cardholder}` and render Cardholder and Expiry in plain text, Number, CVV and PIN masked with reveal and copy, and show the brand and last four digits derived in memory from the number. For type identity it SHALL parse `{firstName, lastName, address, phone, email, bsn}` and render all fields in plain text except BSN, which is masked with reveal and copy. A `key` that does not start with `{` or does not parse as a JSON object is shown as one secret, masked with reveal and copy, as the edit form shows it.
+For type card the detail SHALL parse the decrypted `key` as `{number, expiry, cvv, pin, cardholder}` and render Cardholder and Expiry in plain text, Number, CVV and PIN masked with reveal and copy, and show the brand and last four digits derived in memory from the number. The brand comes from `src/vault/cards.ts` (Keepiq's `card-brands.json`); the number is masked and revealed in the brand's digit groups for its length (every four for an unknown brand), and copy takes the number as stored. For type identity it SHALL parse `{firstName, lastName, address, phone, email, bsn}` and render all fields in plain text except BSN, which is masked with reveal and copy. A `key` that does not start with `{` or does not parse as a JSON object is shown as one secret, masked with reveal and copy, as the edit form shows it.
 
 #### Scenario: Card detail
 - **GIVEN** a card item with a Visa number ending 1111
 - **WHEN** the detail opens
 - **THEN** the number shows as `•••• •••• •••• 1111` with "Visa" until revealed, and CVV and PIN are masked
+
+#### Scenario: American Express detail
+- **GIVEN** a card item numbered 378282246310005
+- **WHEN** the detail opens and the user reveals the number
+- **THEN** it shows "American Express", masked as `•••• •••••• •0005` and revealed as `3782 822463 10005`
 
 #### Scenario: Identity detail
 - **GIVEN** an identity item with a BSN

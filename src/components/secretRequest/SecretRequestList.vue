@@ -402,20 +402,16 @@ export default {
 		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
 		 */
 		statusLabel(status) {
-			switch (status) {
-				case 'pending':
-					return t('keepiq', 'Pending')
-				case 'fulfilled':
-					return t('keepiq', 'Fulfilled')
-				case 'declined':
-					return t('keepiq', 'Declined')
-				case 'locked':
-					return t('keepiq', 'Locked')
-				case 'expired':
-					return t('keepiq', 'Expired')
-				default:
-					return status
+			const labels = {
+				pending: t('keepiq', 'Pending'),
+				fulfilled: t('keepiq', 'Fulfilled'),
+				declined: t('keepiq', 'Declined'),
+				locked: t('keepiq', 'Locked'),
+				expired: t('keepiq', 'Expired'),
 			}
+			return Object.hasOwn(labels, status)
+				? labels[status]
+				: status
 		},
 
 		/**

@@ -9,7 +9,8 @@ import {
 	type BackgroundToContent, type ContentToBackground, type ContentToNotification, type PickInput,
 } from '@/src/messages'
 import { deepActiveElement } from './execute'
-import { createFrameHost, type FrameHost } from './frame-host'
+import { createFrameHost, type FrameHost, viewport } from './frame-host'
+import type { BarPlace } from './notice-host'
 import { drawnUntouched, GUARD_MS, hits, modalOf } from './visibility'
 
 const TOLERANCE_PX = 0.5
@@ -43,8 +44,8 @@ interface Bar {
 }
 
 export interface NotificationHostOptions {
-	/** For the `<html>` filter that reaches Firefox's top layer. */
-	firefox: boolean
+	/** See `drawnUntouched`. */
+	rootFilterReachesTopLayer: boolean
 	send: (message: ContentToBackground) => void
 }
 
@@ -53,17 +54,13 @@ type CaptureMessage = Extract<BackgroundToContent, { kind: `capture.${string}` }
 export interface NotificationHost {
 	/** `capture.verify` answers a boolean, `capture.show` the key its bar holds; the other kinds answer nothing. */
 	handle(message: CaptureMessage): boolean | string | undefined
+	/** Where the bar is, for the notice below it; `null` with none. */
+	place(): BarPlace | null
 }
 
 const isPickInput = (input: unknown): input is PickInput => {
 	const value = input as Partial<PickInput> | null
 	return (value?.kind === 'pointer' || value?.kind === 'key') && [value.at, value.x, value.y].every((n) => typeof n === 'number' && Number.isFinite(n))
-}
-
-function viewport(): { width: number; height: number } {
-	const root = document.documentElement
-	const standards = document.compatMode === 'CSS1Compat'
-	return { width: (standards && root.clientWidth) || window.innerWidth, height: (standards && root.clientHeight) || window.innerHeight }
 }
 
 function isOpenModal(element: Element): boolean {
@@ -91,7 +88,7 @@ function modalParent(): Element | null {
 type Movable = Element & { moveBefore?: (node: Node, child: Node | null) => void }
 
 export function createNotificationHost(options: NotificationHostOptions): NotificationHost {
-	const { firefox, send } = options
+	const { rootFilterReachesTopLayer, send } = options
 	let bar: Bar | null = null
 	let ownToggle = false
 	/** The page's last focused element, given focus back when the bar goes while focus is in it. */
@@ -216,7 +213,7 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 		const { top, left, width, height } = current.box
 		if (Math.abs(rect.top - top) > TOLERANCE_PX || Math.abs(rect.left - left) > TOLERANCE_PX
 			|| Math.abs(rect.width - width) > TOLERANCE_PX || Math.abs(rect.height - height) > TOLERANCE_PX) return false
-		return drawnUntouched(element, current.popover, firefox)
+		return drawnUntouched(element, current.popover, rootFilterReachesTopLayer)
 	}
 
 	function sample(current: Bar): void {
@@ -354,6 +351,9 @@ export function createNotificationHost(options: NotificationHostOptions): Notifi
 	})
 
 	return {
+		place() {
+			return bar ? { top: bar.box.top, height: bar.box.height, bottom: bar.bottom } : null
+		},
 		handle(message) {
 			switch (message.kind) {
 				case 'capture.show':

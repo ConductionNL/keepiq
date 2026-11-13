@@ -71,7 +71,7 @@
 <script>
 import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
-import { useBulkStore } from '../store/modules/bulk.js'
+import bulkRunDialog, { skippingGone } from '../mixins/bulkRunDialog.js'
 import { useSecretStore } from '../store/modules/secret.js'
 
 export default {
@@ -83,11 +83,9 @@ export default {
 		BulkRunPanel,
 	},
 
+	mixins: [bulkRunDialog],
+
 	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
 
 		/** One of archive, unarchive, restore, purge. */
 		action: {
@@ -101,8 +99,6 @@ export default {
 	emits: ['close', 'done'],
 	data() {
 		return {
-			/** Whether a run was started from this dialog. */
-			ran: false,
 			/**
 			 * What restored copies from other organisations reported about
 			 * their shares (sharing-federated-recipients).
@@ -112,26 +108,6 @@ export default {
 	},
 
 	computed: {
-		/**
-		 * The shared selection and run state.
-		 *
-		 * @return {object}
-		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
-		 */
-		bulk() {
-			return useBulkStore()
-		},
-
-		/**
-		 * Whether a run started here has ended: the dialog then only reports.
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
-		 */
-		finished() {
-			return this.ran && !this.bulk.progress.running
-		},
-
 		/**
 		 * The button label: what happens to how many secrets.
 		 *
@@ -158,10 +134,7 @@ export default {
 		 */
 		title() {
 			if (this.finished) {
-				return this.t('keepiq', 'Done for {ok} of {total} secrets', {
-					ok: this.bulk.report.filter((r) => r.status === 'ok').length,
-					total: this.bulk.report.length,
-				})
+				return this.t('keepiq', 'Done for {ok} of {total} secrets', this.reportCounts)
 			}
 			return this.command
 		},
@@ -209,21 +182,26 @@ export default {
 		 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
 		 */
 		async changeOne(secretId) {
-			try {
+			return skippingGone(async () => {
 				const answer = await useSecretStore().changeSecretState(
 					secretId,
 					this.action,
 				)
-				const share = answer?.federatedShare
-				if (share === 'ended' || share === 'unreachable') {
-					this.federated = { ...this.federated, [share]: true }
-				}
-				return { status: 'ok' }
-			} catch (e) {
-				if (e?.response?.status === 404) {
-					return { status: 'skipped', reason: 'already deleted' }
-				}
-				throw e
+				this.noteFederatedShare(answer?.federatedShare)
+			})
+		},
+
+		/**
+		 * Remember a restored copy from another organisation whose share
+		 * ended, or whose owner could not be reached, for the note.
+		 *
+		 * @param {string|undefined} share What the restored copy reported about its share.
+		 * @return {void}
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
+		 */
+		noteFederatedShare(share) {
+			if (share === 'ended' || share === 'unreachable') {
+				this.federated = { ...this.federated, [share]: true }
 			}
 		},
 
@@ -234,13 +212,7 @@ export default {
 		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
 		 */
 		async onRun() {
-			this.ran = true
-			await this.bulk.run(
-				this.bulk.selectedIds,
-				(id) => this.changeOne(id),
-				this.command,
-			)
-			this.$emit('done')
+			await this.runOverSelection((id) => this.changeOne(id), this.command)
 		},
 
 		/**
@@ -250,8 +222,7 @@ export default {
 		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
 		 */
 		async onRetry() {
-			await this.bulk.retryFailed((id) => this.changeOne(id), this.command)
-			this.$emit('done')
+			await this.retryFailedWith((id) => this.changeOne(id), this.command)
 		},
 	},
 }
