@@ -108,4 +108,76 @@ describe('SecretRequestCreateDialog field schemas', () => {
 			PIN: { type: 'string', pattern: '^[0-9]{4,6}$', hidden: true },
 		})
 	})
+
+	describe('a name typed but not added', () => {
+		/**
+		 * Mount the dialog with "PIN" typed under "Also ask for another field".
+		 *
+		 * @return {object} The wrapper and the mocked createRequest.
+		 */
+		function mountTyped() {
+			const store = useSecretRequestStore()
+			store.createRequest = vi.fn().mockResolvedValue({ id: 'r', token: 't' })
+			const wrapper = mount(SecretRequestCreateDialog, {
+				propsData: { open: true, secret: { id: 'secret-1' } },
+				global: { stubs: ncStubs },
+			})
+			wrapper.vm.customFieldInput = 'PIN'
+			wrapper.vm.onCustomPreset('password')
+			return { wrapper, createRequest: store.createRequest }
+		}
+
+		it('asks before creating, and Back creates nothing', async () => {
+			const { wrapper, createRequest } = mountTyped()
+
+			wrapper.vm.onCreate()
+			expect(wrapper.vm.unaddedOpen).toBe(true)
+			expect(createRequest).not.toHaveBeenCalled()
+
+			await wrapper.vm.$nextTick()
+			await wrapper
+				.findComponent('[data-testid="secret-request-unadded-back"]')
+				.trigger('click')
+			expect(wrapper.vm.unaddedOpen).toBe(false)
+			expect(wrapper.vm.customFieldInput).toBe('PIN')
+			expect(createRequest).not.toHaveBeenCalled()
+		})
+
+		it('Add and create asks for the field with its kind', async () => {
+			const { wrapper, createRequest } = mountTyped()
+
+			wrapper.vm.onCreate()
+			await wrapper.vm.addAndCreate()
+			await wrapper.vm.$nextTick()
+
+			const sent = createRequest.mock.calls[0][0]
+			expect(sent.requestedFields).toContain('PIN')
+			expect(sent.fieldSchemas).toEqual({
+				PIN: { type: 'string', hidden: true },
+			})
+		})
+
+		it('Create without it leaves the field out', async () => {
+			const { wrapper, createRequest } = mountTyped()
+
+			wrapper.vm.onCreate()
+			await wrapper.vm.createWithout()
+			await wrapper.vm.$nextTick()
+
+			expect(createRequest.mock.calls[0][0].requestedFields).not.toContain(
+				'PIN',
+			)
+		})
+
+		it('does not ask when nothing is typed', async () => {
+			const { wrapper, createRequest } = mountTyped()
+			wrapper.vm.customFieldInput = '  '
+
+			wrapper.vm.onCreate()
+			await wrapper.vm.$nextTick()
+
+			expect(wrapper.vm.unaddedOpen).toBe(false)
+			expect(createRequest).toHaveBeenCalledTimes(1)
+		})
+	})
 })

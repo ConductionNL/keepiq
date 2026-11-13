@@ -232,6 +232,45 @@
 			</div>
 		</div>
 
+		<!-- A name typed under "Also ask for another field" but never added
+		     would silently be left out of the request: ask first. -->
+		<NcDialog
+			:open="unaddedOpen"
+			:name="t('keepiq', 'Field not added')"
+			size="small"
+			data-testid="secret-request-unadded"
+			@update:open="unaddedOpen = $event">
+			<p>
+				{{
+					t(
+						'keepiq',
+						'“{name}” has not been added yet, so the recipient will not be asked for it.',
+						{ name: customFieldInput.trim() },
+					)
+				}}
+			</p>
+			<template #actions>
+				<NcButton
+					variant="tertiary"
+					data-testid="secret-request-unadded-back"
+					@click="unaddedOpen = false">
+					{{ t('keepiq', 'Back') }}
+				</NcButton>
+				<NcButton
+					variant="secondary"
+					data-testid="secret-request-unadded-skip"
+					@click="createWithout">
+					{{ t('keepiq', 'Create without it') }}
+				</NcButton>
+				<NcButton
+					variant="primary"
+					data-testid="secret-request-unadded-add"
+					@click="addAndCreate">
+					{{ t('keepiq', 'Add and create') }}
+				</NcButton>
+			</template>
+		</NcDialog>
+
 		<template #actions>
 			<NcButton variant="tertiary" @click="onClose">
 				{{ t('keepiq', 'Cancel') }}
@@ -240,7 +279,8 @@
 				v-if="!fillUrl"
 				variant="primary"
 				:disabled="!canSubmit"
-				@click="submit">
+				data-testid="secret-request-create"
+				@click="onCreate">
 				{{
 					submitting
 						? t('keepiq', 'Creating…')
@@ -406,6 +446,8 @@ export default {
 			customAdvancedOpen: false,
 			customFieldInput: '',
 			customFieldError: '',
+			// The "Field not added" confirmation on Create.
+			unaddedOpen: false,
 			newName: '',
 			// The type a FRESH request's placeholder is created as, and the one
 			// the dialog starts on (the user's default type, else Login).
@@ -810,6 +852,48 @@ export default {
 		},
 
 		/**
+		 * Create the request, or first ask about a name typed under "Also ask
+		 * for another field" that was never added.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 */
+		onCreate() {
+			if ((this.customFieldInput || '').trim() !== '') {
+				this.unaddedOpen = true
+				return
+			}
+			this.submit()
+		},
+
+		/**
+		 * Add the typed field, then create the request. A name the field
+		 * rules refuse closes the question so its reason shows by the input.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 */
+		addAndCreate() {
+			this.unaddedOpen = false
+			this.addCustomField()
+			if (this.customFieldError === '') {
+				this.submit()
+			}
+		},
+
+		/**
+		 * Drop the typed name and create the request without it.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 */
+		createWithout() {
+			this.unaddedOpen = false
+			this.customFieldInput = ''
+			this.submit()
+		},
+
+		/**
 		 * Submit the create request to the store.
 		 *
 		 * @spec openspec/changes/implement-secret-requests/tasks.md#task-8.2
@@ -1080,6 +1164,7 @@ export default {
 			this.customAdvancedOpen = false
 			this.customFieldInput = ''
 			this.customFieldError = ''
+			this.unaddedOpen = false
 			this.newName = ''
 			this.typeId = this.defaultTypeId
 			// Back to the browsed vault or folder, not to nothing: reopening
