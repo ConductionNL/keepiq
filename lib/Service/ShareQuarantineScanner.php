@@ -59,13 +59,13 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IAppConfig;
 use OCP\IDBConnection;
@@ -228,7 +228,7 @@ class ShareQuarantineScanner {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function isComplete(): bool {
-		return $this->appConfig->getValueString(Application::APP_ID, self::COMPLETED_KEY, '') === $this->generation();
+		return $this->appConfig->getValueString(AppIdentity::APP_ID, self::COMPLETED_KEY, '') === $this->generation();
 	}//end isComplete()
 
 	/**
@@ -240,8 +240,8 @@ class ShareQuarantineScanner {
 	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function reopen(): void {
-		$this->appConfig->setValueString(Application::APP_ID, self::GENERATION_KEY, Uuid::uuid4()->toString());
-		$this->appConfig->deleteKey(Application::APP_ID, self::COMPLETED_KEY);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::GENERATION_KEY, Uuid::uuid4()->toString());
+		$this->appConfig->deleteKey(AppIdentity::APP_ID, self::COMPLETED_KEY);
 	}//end reopen()
 
 	/**
@@ -358,7 +358,7 @@ class ShareQuarantineScanner {
 	public function holdBackResolve(): void {
 		// A cached key another request deleted would turn the write into an update of no row.
 		$this->appConfig->clearCache();
-		$this->appConfig->setValueString(Application::APP_ID, self::RESOLVE_PENDING_KEY, Uuid::uuid4()->toString());
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::RESOLVE_PENDING_KEY, Uuid::uuid4()->toString());
 	}//end holdBackResolve()
 
 	/**
@@ -369,7 +369,7 @@ class ShareQuarantineScanner {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
 	public function heldBackResolve(): ?string {
-		$record = $this->appConfig->getValueString(Application::APP_ID, self::RESOLVE_PENDING_KEY, '');
+		$record = $this->appConfig->getValueString(AppIdentity::APP_ID, self::RESOLVE_PENDING_KEY, '');
 		if ($record === '') {
 			return null;
 		}
@@ -391,7 +391,7 @@ class ShareQuarantineScanner {
 		// Another request may have recorded one meanwhile.
 		$this->appConfig->clearCache();
 		if ($this->heldBackResolve() === $record) {
-			$this->appConfig->deleteKey(Application::APP_ID, self::RESOLVE_PENDING_KEY);
+			$this->appConfig->deleteKey(AppIdentity::APP_ID, self::RESOLVE_PENDING_KEY);
 		}
 	}//end clearHeldBackResolve()
 
@@ -450,7 +450,7 @@ class ShareQuarantineScanner {
 				'GHSA-m5p9-6pw7-pf3g: the share quarantine scan completed and quarantined '.$quarantined.' row(s)',
 				['app' => 'keepiq']
 			);
-			$this->appConfig->setValueString(Application::APP_ID, self::COMPLETED_KEY, $generation);
+			$this->appConfig->setValueString(AppIdentity::APP_ID, self::COMPLETED_KEY, $generation);
 		} catch (Throwable $exception) {
 			$message = 'GHSA-m5p9-6pw7-pf3g: the share quarantine scan failed and will run again from a background job: '
 				.$exception->getMessage();
@@ -493,7 +493,7 @@ class ShareQuarantineScanner {
 	 * @return string
 	 */
 	private function generation(): string {
-		return $this->appConfig->getValueString(Application::APP_ID, self::GENERATION_KEY, self::INITIAL_GENERATION);
+		return $this->appConfig->getValueString(AppIdentity::APP_ID, self::GENERATION_KEY, self::INITIAL_GENERATION);
 	}//end generation()
 
 	/**

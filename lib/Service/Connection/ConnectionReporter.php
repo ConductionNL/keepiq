@@ -29,8 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service\Connection;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -53,7 +53,7 @@ class ConnectionReporter {
 	 *
 	 * @var string
 	 */
-	public const APP_ID = Application::APP_ID;
+	public const APP_ID = AppIdentity::APP_ID;
 
 	/**
 	 * Integriq's report event (ADR-041). Named by string so Keepiq stays

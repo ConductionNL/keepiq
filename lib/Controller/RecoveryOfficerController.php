@@ -20,10 +20,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\RecoveryKeyService;
 use OCA\Keepiq\Service\RecoveryPolicyService;
 use OCA\Keepiq\Service\RecoveryRequestService;
@@ -62,7 +62,7 @@ class RecoveryOfficerController extends Controller {
 		private RecoveryRequestService $requests,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

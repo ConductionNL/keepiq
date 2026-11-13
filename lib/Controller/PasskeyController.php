@@ -27,8 +27,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\PasskeyCredential;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\PasskeyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -75,7 +75,7 @@ class PasskeyController extends OCSController {
 		private IUserSession $userSession,
 		private IThrottler $throttler,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

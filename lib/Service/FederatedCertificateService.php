@@ -34,11 +34,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudIdManager;
 use OCP\IConfig;
@@ -135,7 +135,7 @@ class FederatedCertificateService {
 			return null;
 		}
 
-		$optedIn = $this->config->getUserValue($userId, Application::APP_ID, self::RECEIVE_PREFERENCE, '0');
+		$optedIn = $this->config->getUserValue($userId, AppIdentity::APP_ID, self::RECEIVE_PREFERENCE, '0');
 		if ($optedIn !== '1') {
 			return null;
 		}
@@ -316,7 +316,7 @@ class FederatedCertificateService {
 		if ($chain === null) {
 			$this->logger->warning(
 				'Keepiq: partner ' . $partner . ' answered a certificate lookup with a chain other than its intermediate and root',
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 			throw new RuntimeException('bad_chain');
 		}

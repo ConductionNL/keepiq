@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -76,7 +76,7 @@ class PurgeAuditLogJob extends TimedJob {
 	 */
 	protected function run($argument): void {
 		$retentionDays = $this->appConfig->getValueInt(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'audit_retention_days',
 			SettingsService::AUDIT_RETENTION_DEFAULT
 		);

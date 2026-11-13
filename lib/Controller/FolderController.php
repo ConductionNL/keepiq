@@ -24,11 +24,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\FolderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -55,7 +55,7 @@ class FolderController extends OCSController {
 		private FolderService $folderService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

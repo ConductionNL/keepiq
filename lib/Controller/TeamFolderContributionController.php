@@ -27,9 +27,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\OrgOwnershipGuard;
 use OCA\Keepiq\Service\TeamFolderContributionService;
 use OCP\AppFramework\Controller;
@@ -61,7 +61,7 @@ class TeamFolderContributionController extends Controller {
 		private TeamFolderContributionService $contributions,
 		private OrgOwnershipGuard $ownership,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

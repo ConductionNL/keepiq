@@ -20,8 +20,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\RecoveryAudit;
 use OCA\Keepiq\Service\RecoveryEnrolmentService;
 use OCA\Keepiq\Service\RecoveryKeyService;
@@ -64,7 +64,7 @@ class RecoveryAdminController extends Controller {
 		private RecoveryAudit $audit,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

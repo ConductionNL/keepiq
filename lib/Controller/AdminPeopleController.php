@@ -25,9 +25,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Controller;
@@ -67,7 +67,7 @@ class AdminPeopleController extends Controller {
 		private TeamFolderService $teamFolders,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

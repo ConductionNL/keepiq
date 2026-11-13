@@ -19,8 +19,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\UseOnlyUseRecorder;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -51,7 +51,7 @@ class UseOnlyController extends Controller {
 		private UseOnlyUseRecorder $recorder,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

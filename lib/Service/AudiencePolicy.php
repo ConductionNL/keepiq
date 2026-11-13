@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Kernel\AppIdentity;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -72,7 +72,7 @@ class AudiencePolicy {
 	 *
 	 * @var string
 	 */
-	public const DEPRECATED_AUDIENCE_REMOVED_IN = KeepiqApp::PRE_STABLE_COMPAT_REMOVED_IN;
+	public const DEPRECATED_AUDIENCE_REMOVED_IN = AppIdentity::PRE_STABLE_COMPAT_REMOVED_IN;
 
 	/**
 	 * Every audience value an assertion may carry to reach this instance.

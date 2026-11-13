@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Middleware;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Middleware\Support\ApiPathAliases;
 use OCA\Keepiq\Middleware\Support\StandardProtocolPaths;
 use OCP\App\IAppManager;
@@ -152,7 +152,7 @@ class ApiContractMiddleware extends Middleware {
 			return $response;
 		}
 
-		$response->addHeader(name: 'API-Version', value: $this->appManager->getAppVersion(appId: Application::APP_ID));
+		$response->addHeader(name: 'API-Version', value: $this->appManager->getAppVersion(appId: AppIdentity::APP_ID));
 		if ($response instanceof JSONResponse) {
 			$this->decorateError(response: $response);
 		}

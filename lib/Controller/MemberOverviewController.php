@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\MemberOverviewService;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Controller;
@@ -52,7 +52,7 @@ class MemberOverviewController extends Controller {
 		IRequest $request,
 		private MemberOverviewService $service,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

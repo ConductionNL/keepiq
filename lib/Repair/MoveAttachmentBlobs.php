@@ -65,7 +65,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Repair;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\NotFoundException;
 use OCP\Files\SimpleFS\ISimpleFile;
@@ -182,7 +182,7 @@ class MoveAttachmentBlobs implements IRepairStep {
 	 */
 	private function targetFolder(IOutput $output): ?ISimpleFolder {
 		try {
-			$appData = $this->appDataFactory->get(Application::APP_ID);
+			$appData = $this->appDataFactory->get(AppIdentity::APP_ID);
 
 			try {
 				return $appData->getFolder(self::BLOB_FOLDER);

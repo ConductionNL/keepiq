@@ -32,9 +32,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 
@@ -88,7 +88,7 @@ class TeamFolderConfirmationService {
 	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
 	 */
 	public function isEnabled(): bool {
-		return $this->appConfig->getValueBool(Application::APP_ID, self::SWITCH_KEY, false);
+		return $this->appConfig->getValueBool(AppIdentity::APP_ID, self::SWITCH_KEY, false);
 	}//end isEnabled()
 
 	/**

@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Exception;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use RuntimeException;
 
 /**
@@ -49,7 +49,7 @@ class PartnerUpgradeRequiredException extends RuntimeException {
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private readonly string $requiredVersion = Application::TOTP_PASSKEYS_FIELDS_SINCE,
+		private readonly string $requiredVersion = AppIdentity::TOTP_PASSKEYS_FIELDS_SINCE,
 	) {
 		parent::__construct(
 			message: sprintf(

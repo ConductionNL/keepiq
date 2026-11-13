@@ -25,12 +25,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\Application;
 use OCA\Keepiq\Db\ApplicationMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\ICacheFactory;

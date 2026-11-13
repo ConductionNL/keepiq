@@ -26,7 +26,7 @@ namespace OCA\Keepiq\BackgroundJob;
 
 use DateInterval;
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\ShareExpiryService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -110,14 +110,14 @@ class ExpireSharesJob extends TimedJob {
 	private function warn(DateTime $now): void {
 		$until = (clone $now)->add(new DateInterval('P1D'));
 		$from  = $now;
-		$saved = $this->appConfig->getValueInt(Application::APP_ID, self::WARNED_UNTIL_KEY, 0);
+		$saved = $this->appConfig->getValueInt(AppIdentity::APP_ID, self::WARNED_UNTIL_KEY, 0);
 		if ($saved > $now->getTimestamp()) {
 			$from = (new DateTime())->setTimestamp($saved);
 		}
 
 		try {
 			$this->expiry->warnEnding(from: $from, to: $until);
-			$this->appConfig->setValueInt(Application::APP_ID, self::WARNED_UNTIL_KEY, $until->getTimestamp());
+			$this->appConfig->setValueInt(AppIdentity::APP_ID, self::WARNED_UNTIL_KEY, $until->getTimestamp());
 		} catch (Throwable $exception) {
 			$this->logger->error(
 				'Keepiq: share expiry warning failed: ' . $exception->getMessage(),

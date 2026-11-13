@@ -27,8 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AdminSettingsService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -89,7 +89,7 @@ class ExtensionController extends Controller {
 		private AdminSettingsService $adminSettings,
 		private IAppManager $appManager,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -131,7 +131,7 @@ class ExtensionController extends Controller {
 				'apiVersion' => 1,
 				// The extension compares this with its minimum and asks for a
 				// server update instead of failing on a missing route.
-				'serverVersion' => $this->appManager->getAppVersion(Application::APP_ID),
+				'serverVersion' => $this->appManager->getAppVersion(AppIdentity::APP_ID),
 				'capabilities' => ['match', 'autofill', 'passkey-provider', 'totp', 'totp-field', 'passkeys-field'],
 			]
 		);

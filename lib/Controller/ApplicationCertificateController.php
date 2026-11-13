@@ -26,8 +26,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\MachineSecretEnvelopeService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -57,7 +57,7 @@ class ApplicationCertificateController extends ApplicationApiController {
 		private EncryptionSuiteMapper $suites,
 		private MachineSecretEnvelopeService $envelopes,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IConfig;
 use OCP\Notification\IManager;
 use Psr\Log\LoggerInterface;
@@ -162,7 +162,7 @@ class NotificationService {
 		}
 
 		$notification = $this->notificationManager->createNotification();
-		$notification->setApp(Application::APP_ID)
+		$notification->setApp(AppIdentity::APP_ID)
 			->setUser($recipientId)
 			->setDateTime(new DateTime())
 			->setObject($objectType ?? $subject, $objectId)
@@ -187,7 +187,7 @@ class NotificationService {
 
 		$this->logger->warning(
 			'Keepiq notify(): unknown subject "' . $subject . '" — dropping',
-			['app' => Application::APP_ID]
+			['app' => AppIdentity::APP_ID]
 		);
 		return false;
 	}//end isKnownSubject()
@@ -209,7 +209,7 @@ class NotificationService {
 
 		$this->logger->debug(
 			'Keepiq notify(): user ' . $recipientId . ' opted out of "' . $subject . '"',
-			['app' => Application::APP_ID]
+			['app' => AppIdentity::APP_ID]
 		);
 		return true;
 	}//end optedOutOf()
@@ -226,7 +226,7 @@ class NotificationService {
 	 * @return bool True when the user has explicitly disabled the category.
 	 */
 	private function isOptedOut(string $userId, string $settingKey): bool {
-		$value = $this->config->getUserValue($userId, Application::APP_ID, $settingKey, '1');
+		$value = $this->config->getUserValue($userId, AppIdentity::APP_ID, $settingKey, '1');
 
 		return $value === '0' || $value === 'false' || $value === '';
 	}//end isOptedOut()

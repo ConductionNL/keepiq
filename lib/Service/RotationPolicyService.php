@@ -28,13 +28,13 @@ namespace OCA\Keepiq\Service;
 use DateInterval;
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\ExpiryPolicy;
 use OCA\Keepiq\Db\ExpiryPolicyMapper;
 use OCA\Keepiq\Db\RotationFlag;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -146,7 +146,7 @@ class RotationPolicyService {
 
 		$userMax = (int)($this->config?->getUserValue(
 			$secret->getOwnerId(),
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'expiry_max_age_days',
 			'0'
 		) ?? 0);
@@ -154,7 +154,7 @@ class RotationPolicyService {
 			$candidates[] = (clone $base)->add(new DateInterval('P' . $userMax . 'D'));
 		}
 
-		$adminMax = $this->appConfig->getValueInt(Application::APP_ID, 'expiry_default_max_age_days', 0);
+		$adminMax = $this->appConfig->getValueInt(AppIdentity::APP_ID, 'expiry_default_max_age_days', 0);
 		if ($adminMax > 0) {
 			$candidates[] = (clone $base)->add(new DateInterval('P' . $adminMax . 'D'));
 		}

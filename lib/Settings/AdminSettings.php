@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Settings;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IAppConfig;
@@ -103,10 +103,10 @@ class AdminSettings extends AdminAreaSettings {
 	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
 	 */
 	protected function provideAreaState(): void {
-		$version = $this->appManager->getAppVersion(Application::APP_ID);
+		$version = $this->appManager->getAppVersion(AppIdentity::APP_ID);
 		// 'config_version' is written by this app's InitializeSettings repair step
 		// once the default configuration is seeded (ADR-006).
-		$configuredVersion = $this->appConfig->getValueString(Application::APP_ID, 'config_version', '');
+		$configuredVersion = $this->appConfig->getValueString(AppIdentity::APP_ID, 'config_version', '');
 		$this->initialState->provideInitialState('version', $version);
 		$this->initialState->provideInitialState('configuredVersion', $configuredVersion);
 		$this->initialState->provideInitialState('isUpToDate', ($configuredVersion !== '' && $configuredVersion === $version));

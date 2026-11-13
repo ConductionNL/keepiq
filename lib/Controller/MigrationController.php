@@ -23,7 +23,6 @@ namespace OCA\Keepiq\Controller;
 
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Exception\FieldsNotReencryptedException;
@@ -31,6 +30,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
@@ -91,7 +91,7 @@ class MigrationController extends OCSController {
 		private EmergencyEnvelopeInvalidationService $envelopeService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

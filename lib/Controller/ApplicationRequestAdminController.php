@@ -42,8 +42,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\ApplicationRequestAdminService;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
@@ -77,7 +77,7 @@ class ApplicationRequestAdminController extends Controller {
 		private IUserSession $userSession,
 		private AdminAreaAuthorizer $areas,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

@@ -29,9 +29,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\CertificateLifecycleService;
 use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -105,7 +105,7 @@ class ScanCertificateExpiryJob extends TimedJob {
 					// carry whatever the failing call put in it (keepiq#728).
 					$this->logger->warning(
 						'Keepiq: certificate expiry scan failed for suite '.$suite->getId().': '.$exception::class,
-						['app' => Application::APP_ID]
+						['app' => AppIdentity::APP_ID]
 					);
 				}
 			}

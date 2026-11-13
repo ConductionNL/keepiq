@@ -23,11 +23,11 @@ namespace OCA\Keepiq\Controller;
 
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ReinstateRefusedException;
 use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
-use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AdminSuiteRevocationService;
 use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
@@ -95,7 +95,7 @@ class EncryptionSuiteController extends OCSController {
 		private AdminSuiteRevocationService $adminRevocation,
 		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

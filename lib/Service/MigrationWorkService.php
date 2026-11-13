@@ -28,7 +28,6 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\AttachmentGrant;
 use OCA\Keepiq\Db\AttachmentGrantMapper;
 use OCA\Keepiq\Db\MigrationFailureMapper;
@@ -40,6 +39,7 @@ use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Exception\FieldsNotReencryptedException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IDBConnection;
@@ -147,7 +147,7 @@ class MigrationWorkService {
 		//   guarded here: an unset key simply means DEFAULT_VERSION_WINDOW, so
 		//   there is no work to skip and nothing for a write to close.
 		$window = $this->appConfig->getValueInt(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'migration_version_window',
 			self::DEFAULT_VERSION_WINDOW
 		);

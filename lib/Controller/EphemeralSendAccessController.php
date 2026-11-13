@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\EphemeralSendService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -53,7 +53,7 @@ class EphemeralSendAccessController extends Controller {
 		IRequest $request,
 		private EphemeralSendService $service,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

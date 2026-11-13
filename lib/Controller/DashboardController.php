@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\DashboardSummaryService;
 use OCP\App\IAppManager;
@@ -61,7 +61,7 @@ class DashboardController extends Controller {
 		private IUserSession $userSession,
 		private AdminAreaAuthorizer $areas,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -98,7 +98,7 @@ class DashboardController extends Controller {
 	 */
 	public function page(): TemplateResponse {
 		// Privacy-respecting default: favicons disabled unless an admin opts in.
-		$faviconServiceUrl = $this->appConfig->getValueString(Application::APP_ID, 'favicon_service_url', '');
+		$faviconServiceUrl = $this->appConfig->getValueString(AppIdentity::APP_ID, 'favicon_service_url', '');
 		$this->initialState->provideInitialState(key: 'faviconServiceUrl', data: $faviconServiceUrl);
 
 		// Password-health breach-check admin gate (password-health §1.4). The
@@ -106,7 +106,7 @@ class DashboardController extends Controller {
 		// BOTH gates are on. This is the boolean instance-wide gate only.
 		$this->initialState->provideInitialState(
 			key: 'breachCheckEnabled',
-			data: $this->appConfig->getValueBool(Application::APP_ID, 'breach_check_enabled', false),
+			data: $this->appConfig->getValueBool(AppIdentity::APP_ID, 'breach_check_enabled', false),
 		);
 
 		// The user-settings dialog renders this as its version footer.
@@ -114,17 +114,17 @@ class DashboardController extends Controller {
 		// package.json version is stale and must not be used.
 		$this->initialState->provideInitialState(
 			key: 'appVersion',
-			data: $this->appManager->getAppVersion(Application::APP_ID),
+			data: $this->appManager->getAppVersion(AppIdentity::APP_ID),
 		);
 
 		// A login's `totp` and `passkeys` are stored by this server; the web app reads the release
 		// that first stored them from here, so it keeps no version number of its own (keepiq#1326).
 		$this->initialState->provideInitialState(
 			key: 'loginValueFields',
-			data: ['since' => Application::TOTP_PASSKEYS_FIELDS_SINCE],
+			data: ['since' => AppIdentity::TOTP_PASSKEYS_FIELDS_SINCE],
 		);
 
-		$response = new TemplateResponse(appName: Application::APP_ID, templateName: 'index');
+		$response = new TemplateResponse(appName: AppIdentity::APP_ID, templateName: 'index');
 
 		// Link-share encryption derives its AES key client-side via the Argon2id
 		// WASM module (argon2-browser). Nextcloud's default CSP forbids

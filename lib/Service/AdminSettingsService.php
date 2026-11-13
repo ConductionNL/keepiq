@@ -32,7 +32,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -228,7 +228,7 @@ class AdminSettingsService {
 	 * @return array<string,mixed>
 	 */
 	private function sessionAndAuditSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			'min_password_length' => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
 			'min_password_score' => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
@@ -253,7 +253,7 @@ class AdminSettingsService {
 	 * @return array<string,mixed>
 	 */
 	private function expiryAndVersionSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			'expiry_default_max_age_days' => $this->appConfig->getValueInt(
 				$appId,
@@ -275,7 +275,7 @@ class AdminSettingsService {
 	 * @return array<string,int>
 	 */
 	private function storageSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			// Trash retention (vault-trash-and-archive D4), 1 to 365 days.
 			'trash_retention_days' => $this->appConfig->getValueInt(
@@ -302,7 +302,7 @@ class AdminSettingsService {
 	 * @return array<string,mixed>
 	 */
 	private function leaseAndDeviceSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			// Machine leases (machine-secret-leases §2.4).
 			'lease_default_ttl_seconds' => $this->appConfig->getValueInt(
@@ -364,7 +364,7 @@ class AdminSettingsService {
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-administrators-control-offline-edits
 	 */
 	private function offlineSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			'offline_cache_enabled' => $this->appConfig->getValueBool($appId, 'offline_cache_enabled', true),
 			'offline_edits_enabled' => $this->appConfig->getValueBool($appId, 'offline_edits_enabled', false),
@@ -537,7 +537,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateAuthenticationSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['min_password_length']) === true) {
 			$length = (int)$data['min_password_length'];
@@ -583,7 +583,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateInstanceSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['ca_auto_renew_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'ca_auto_renew_enabled', (bool)$data['ca_auto_renew_enabled']);
@@ -628,7 +628,7 @@ class AdminSettingsService {
 			);
 		}
 
-		$this->appConfig->setValueInt(Application::APP_ID, 'audit_retention_days', $days);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'audit_retention_days', $days);
 	}//end updateAuditSettings()
 
 	/**
@@ -642,7 +642,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateExpirySettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['expiry_default_max_age_days']) === true) {
 			$maxAge = (int)$data['expiry_default_max_age_days'];
@@ -679,7 +679,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateLeaseSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		foreach (['lease_default_ttl_seconds', 'lease_max_ttl_seconds'] as $leaseKey) {
 			if (isset($data[$leaseKey]) === true) {
@@ -716,7 +716,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateRetentionSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['version_retention_count']) === true) {
 			$count = (int)$data['version_retention_count'];
@@ -748,7 +748,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On a non-positive byte count.
 	 */
 	private function updateAttachmentSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['attachment_max_bytes']) === true) {
 			$maxBytes = (int)$data['attachment_max_bytes'];
@@ -790,7 +790,7 @@ class AdminSettingsService {
 			throw new InvalidArgumentException('trash_retention_days must be between 1 and 365');
 		}
 
-		$this->appConfig->setValueInt(Application::APP_ID, 'trash_retention_days', $days);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'trash_retention_days', $days);
 	}//end updateTrashSettings()
 
 	/**
@@ -804,7 +804,7 @@ class AdminSettingsService {
 	 */
 	public function extensionMaxIdleMinutes(): int {
 		$minutes = $this->appConfig->getValueInt(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'extension_max_idle_minutes',
 			self::EXTENSION_MAX_IDLE_DEFAULT
 		);
@@ -837,7 +837,7 @@ class AdminSettingsService {
 			throw new InvalidArgumentException('extension_max_idle_minutes must be one of 1, 5, 15, 30, 60 or 240');
 		}
 
-		$this->appConfig->setValueInt(Application::APP_ID, 'extension_max_idle_minutes', $minutes);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'extension_max_idle_minutes', $minutes);
 	}//end updateExtensionSettings()
 
 	/**
@@ -857,7 +857,7 @@ class AdminSettingsService {
 		if (array_key_exists('extension_passkey_origins', $data) === true) {
 			$origins = $this->extensionOrigins->validate(entries: $data['extension_passkey_origins']);
 			$this->appConfig->setValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				TrustedExtensionOrigins::ORIGINS_KEY,
 				(string)json_encode($origins)
 			);
@@ -868,7 +868,7 @@ class AdminSettingsService {
 				throw new InvalidArgumentException('extension_passkeys_enabled must be true or false');
 			}
 
-			$this->appConfig->setValueBool(Application::APP_ID, TrustedExtensionOrigins::ENABLED_KEY, $data['extension_passkeys_enabled']);
+			$this->appConfig->setValueBool(AppIdentity::APP_ID, TrustedExtensionOrigins::ENABLED_KEY, $data['extension_passkeys_enabled']);
 		}
 	}//end updateExtensionPasskeySettings()
 }//end class

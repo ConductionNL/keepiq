@@ -27,10 +27,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\HoneyFlagMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
@@ -110,7 +110,7 @@ class HoneyTripwireService {
 			// Fail-soft: the tripwire must never break the audited access.
 			$this->logger->error(
 				'Keepiq: honey alert failed for secret ' . $access->secretId . ': ' . $exception->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}//end try
 
@@ -154,7 +154,7 @@ class HoneyTripwireService {
 			} catch (Throwable $exception) {
 				$this->logger->warning(
 					'Keepiq: honey page failed for ' . $recipientId . ': ' . $exception->getMessage(),
-					['app' => Application::APP_ID]
+					['app' => AppIdentity::APP_ID]
 				);
 			}
 		}

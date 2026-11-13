@@ -26,10 +26,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\ApplicationMapper;
 use OCA\Keepiq\Db\MachineLease;
 use OCA\Keepiq\Db\MachineLeaseMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\LeaseService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -64,7 +64,7 @@ class LeaseAdminController extends OCSController {
 		private IUserSession $userSession,
 		private AdminAreaAuthorizer $areas,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

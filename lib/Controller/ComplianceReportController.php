@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\ComplianceReport;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\ComplianceReportService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
@@ -56,7 +56,7 @@ class ComplianceReportController extends OCSController {
 		private IUserSession $userSession,
 		private AdminAreaAuthorizer $areas,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

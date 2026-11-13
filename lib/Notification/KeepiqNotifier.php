@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Notification;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\NotificationService;
 use OCP\IL10N;
 use OCP\IURLGenerator;
@@ -67,7 +67,7 @@ class KeepiqNotifier implements INotifier {
 	 * @return string
 	 */
 	public function getID(): string {
-		return Application::APP_ID;
+		return AppIdentity::APP_ID;
 	}//end getID()
 
 	/**
@@ -90,7 +90,7 @@ class KeepiqNotifier implements INotifier {
 	 * @throws UnknownNotificationException
 	 */
 	public function prepare(INotification $notification, string $languageCode): INotification {
-		if ($notification->getApp() !== Application::APP_ID) {
+		if ($notification->getApp() !== AppIdentity::APP_ID) {
 			throw new UnknownNotificationException();
 		}
 
@@ -99,10 +99,10 @@ class KeepiqNotifier implements INotifier {
 			throw new UnknownNotificationException();
 		}
 
-		$l = $this->l10nFactory->get(app: Application::APP_ID, lang: $languageCode);
+		$l = $this->l10nFactory->get(app: AppIdentity::APP_ID, lang: $languageCode);
 		$params = $notification->getSubjectParameters();
 
-		$notification->setIcon($this->url->getAbsoluteURL($this->url->imagePath(Application::APP_ID, 'app.svg')));
+		$notification->setIcon($this->url->getAbsoluteURL($this->url->imagePath(AppIdentity::APP_ID, 'app.svg')));
 
 		$rendering = new SubjectRendering(notification: $notification, subject: $subj, params: $params, l: $l);
 
@@ -235,7 +235,7 @@ class KeepiqNotifier implements INotifier {
 		$r->notification->setParsedSubject($texts[$r->subject]);
 		try {
 			$r->notification->setLink(
-				$this->url->getAbsoluteURL($this->url->linkToRoute(Application::APP_ID . '.dashboard.page'))
+				$this->url->getAbsoluteURL($this->url->linkToRoute(AppIdentity::APP_ID . '.dashboard.page'))
 			);
 		} catch (InvalidArgumentException) {
 			// The link is optional; the notification still says what happened.
@@ -271,7 +271,7 @@ class KeepiqNotifier implements INotifier {
 		);
 		try {
 			$r->notification->setLink(
-				$this->url->getAbsoluteURL($this->url->linkToRoute(Application::APP_ID . '.dashboard.page'))
+				$this->url->getAbsoluteURL($this->url->linkToRoute(AppIdentity::APP_ID . '.dashboard.page'))
 			);
 		} catch (InvalidArgumentException) {
 			// The link is optional; the notification still says what happened.
@@ -807,7 +807,7 @@ class KeepiqNotifier implements INotifier {
 	 */
 	private function addActions(INotification $notification, IL10N $l, string $approvePage, string $denyApi): void {
 		try {
-			$appRoot = $this->url->linkToRoute(Application::APP_ID . '.dashboard.page');
+			$appRoot = $this->url->linkToRoute(AppIdentity::APP_ID . '.dashboard.page');
 		} catch (InvalidArgumentException) {
 			return;
 		}
@@ -837,7 +837,7 @@ class KeepiqNotifier implements INotifier {
 	 */
 	private function withAppLink(INotification $notification, string $path): void {
 		try {
-			$route = $this->url->linkToRoute(Application::APP_ID . '.dashboard.page') . $path;
+			$route = $this->url->linkToRoute(AppIdentity::APP_ID . '.dashboard.page') . $path;
 			$notification->setLink($this->url->getAbsoluteURL($route));
 		} catch (InvalidArgumentException) {
 			// The link is optional; the notification still says what happened.
@@ -872,7 +872,7 @@ class KeepiqNotifier implements INotifier {
 			   createWebHistory router never reads the fragment. The route is
 			   gated, so the click lands on the lock screen with this path as
 			   returnUrl and resumes here after unlock. */
-			$route = $this->url->linkToRoute(Application::APP_ID . '.dashboard.page')
+			$route = $this->url->linkToRoute(AppIdentity::APP_ID . '.dashboard.page')
 				. 'secrets/' . $secretId;
 			$notification->setLink($this->url->getAbsoluteURL($route));
 		} catch (InvalidArgumentException) {
@@ -896,7 +896,7 @@ class KeepiqNotifier implements INotifier {
 	private function withAdminSectionLink(INotification $notification): void {
 		$notification->setLink(
 			$this->url->getAbsoluteURL(
-				$this->url->linkToRoute('settings.AdminSettings.index', ['section' => Application::APP_ID])
+				$this->url->linkToRoute('settings.AdminSettings.index', ['section' => AppIdentity::APP_ID])
 			)
 		);
 	}//end withAdminSectionLink()

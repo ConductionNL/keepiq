@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Backup;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\NotFoundException;
 use OCP\Files\SimpleFS\ISimpleFolder;
@@ -146,7 +146,7 @@ class ArchiveStore {
 		$dataDir = rtrim((string)$this->config->getSystemValue('datadirectory', ''), '/');
 		$instanceId = (string)$this->config->getSystemValue('instanceid', '');
 
-		return $dataDir . '/appdata_' . $instanceId . '/' . Application::APP_ID . '/' . self::FOLDER . '/' . $name;
+		return $dataDir . '/appdata_' . $instanceId . '/' . AppIdentity::APP_ID . '/' . self::FOLDER . '/' . $name;
 	}//end diskPath()
 
 	/**
@@ -157,7 +157,7 @@ class ArchiveStore {
 	 * @return ISimpleFolder
 	 */
 	private function folder(string $name): ISimpleFolder {
-		$appData = $this->appDataFactory->get(Application::APP_ID);
+		$appData = $this->appDataFactory->get(AppIdentity::APP_ID);
 		try {
 			return $appData->getFolder($name);
 		} catch (NotFoundException) {

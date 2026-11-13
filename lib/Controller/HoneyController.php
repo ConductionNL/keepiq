@@ -27,8 +27,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\HoneyAlert;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\HoneyCredentialService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
@@ -60,7 +60,7 @@ class HoneyController extends OCSController {
 		private IUserSession $userSession,
 		private AdminAreaAuthorizer $areas,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
