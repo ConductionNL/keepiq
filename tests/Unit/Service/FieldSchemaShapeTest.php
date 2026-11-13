@@ -69,6 +69,10 @@ class FieldSchemaShapeTest extends TestCase {
 			'a hidden that is not a boolean' => [['PIN' => ['type' => 'string', 'hidden' => 'yes']]],
 			'an unknown key'            => [['PIN' => ['type' => 'string', 'enum' => ['1']]]],
 			'a schema that is no object' => [['PIN' => 'string']],
+			'a pattern that does not compile' => [['PIN' => ['type' => 'string', 'pattern' => '^[0-9']]],
+			'a nested quantifier'       => [['PIN' => ['type' => 'string', 'pattern' => '^(a+)+$']]],
+			'a nested quantified range' => [['PIN' => ['type' => 'string', 'pattern' => '^(\d{1,3})*$']]],
+			'an empty pattern'          => [['PIN' => ['type' => 'string', 'pattern' => '']]],
 		];
 	}//end malformed()
 
