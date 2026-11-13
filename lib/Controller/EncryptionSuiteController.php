@@ -31,8 +31,8 @@ use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\AdminSuiteRevocationServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\EmergencyEnvelopeInvalidationServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
-use OCA\Keepiq\Service\MigrationService;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\Contracts\MigrationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
@@ -74,9 +74,9 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @param IRequest $request The request object
 	 * @param EncryptionSuiteServiceInterface $suiteService The suite service
-	 * @param MigrationService $migrationService The migration service
+	 * @param MigrationServiceInterface $migrationService The migration service
 	 * @param IUserSession $userSession The user session
-	 * @param VaultKeyProofService $proofService The vault-key-proof service (issues challenges)
+	 * @param VaultKeyProofServiceInterface $proofService The vault-key-proof service (issues challenges)
 	 * @param EmergencyEnvelopeInvalidationServiceInterface $emergencyService The emergency-envelope service (revoke safeguard)
 	 * @param \OCA\Keepiq\Service\TwoFactorGate $twoFactor The two-factor vault policy (admin-vault-policies D3)
 	 * @param AdminSuiteRevocationServiceInterface $adminRevocation The administrator force-revoke, plain and compromise
@@ -87,9 +87,9 @@ class EncryptionSuiteController extends OCSController {
 	public function __construct(
 		IRequest $request,
 		private EncryptionSuiteServiceInterface $suiteService,
-		private MigrationService $migrationService,
+		private MigrationServiceInterface $migrationService,
 		private IUserSession $userSession,
-		private VaultKeyProofService $proofService,
+		private VaultKeyProofServiceInterface $proofService,
 		private EmergencyEnvelopeInvalidationServiceInterface $emergencyService,
 		private \OCA\Keepiq\Service\TwoFactorGate $twoFactor,
 		private AdminSuiteRevocationServiceInterface $adminRevocation,
@@ -376,7 +376,7 @@ class EncryptionSuiteController extends OCSController {
 	#[VaultKeyProofRequired(
 		binds: ['encryptedPrivateKey'],
 		subject: 'routeParam:id',
-		purpose: VaultKeyProofService::PURPOSE_UPDATE_PRIVATE_KEY
+		purpose: VaultKeyProofServiceInterface::PURPOSE_UPDATE_PRIVATE_KEY
 	)]
 	/**
 	 * Update the encrypted private key (routine password change).
@@ -475,7 +475,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['reason', 'acceptEmergencyLoss'], subject: 'routeParam:id', purpose: VaultKeyProofService::PURPOSE_REVOKE_SUITE)]
+	#[VaultKeyProofRequired(binds: ['reason', 'acceptEmergencyLoss'], subject: 'routeParam:id', purpose: VaultKeyProofServiceInterface::PURPOSE_REVOKE_SUITE)]
 	public function revoke(string $id, string $reason, bool $acceptEmergencyLoss = false): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -696,7 +696,7 @@ class EncryptionSuiteController extends OCSController {
 	#[VaultKeyProofRequired(
 		binds: ['publicKey', 'encryptedPrivateKey'],
 		subject: 'active',
-		purpose: VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY
+		purpose: VaultKeyProofServiceInterface::PURPOSE_COMPROMISE_RECOVERY
 	)]
 	/**
 	 * Initiate compromise recovery: create new suite and migration record.
@@ -830,7 +830,7 @@ class EncryptionSuiteController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		if ($purpose === null || in_array($purpose, VaultKeyProofService::ALLOWED_PURPOSES, true) === false) {
+		if ($purpose === null || in_array($purpose, VaultKeyProofServiceInterface::ALLOWED_PURPOSES, true) === false) {
 			return new JSONResponse(
 				data: ['message' => 'Unknown or missing proof purpose'],
 				statusCode: Http::STATUS_BAD_REQUEST

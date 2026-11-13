@@ -23,6 +23,7 @@ use DateInterval;
 use DateTime;
 use OCA\Keepiq\Db\ShareSaveStage;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
+use OCA\Keepiq\Kernel\Contracts\ShareSaveStagesInterface;
 use OCP\AppFramework\Http;
 use Ramsey\Uuid\Uuid;
 
@@ -32,7 +33,7 @@ use Ramsey\Uuid\Uuid;
  *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
  */
-class ShareSaveStages {
+class ShareSaveStages implements ShareSaveStagesInterface {
 	/**
 	 * How long a stage lives after its first chunk.
 	 *

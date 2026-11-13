@@ -35,13 +35,14 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\PasskeyCredential;
 use OCA\Keepiq\Db\PasskeyMapper;
+use OCA\Keepiq\Kernel\Contracts\PasskeyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 
 /**
  * Business logic for passkey vault login.
  */
-class PasskeyService {
+class PasskeyService implements PasskeyServiceInterface {
 	/**
 	 * The clients that enrol their own credentials.
 	 *

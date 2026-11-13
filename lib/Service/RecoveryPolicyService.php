@@ -23,6 +23,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\RecoveryOfficerMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\RecoveryPolicyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 
@@ -31,7 +32,7 @@ use OCP\IAppConfig;
  * (crypto-organisation-account-recovery D2, D5): the policy, the officers and
  * the approval threshold.
  */
-class RecoveryPolicyService {
+class RecoveryPolicyService implements RecoveryPolicyServiceInterface {
 
 	public const POLICY_KEY = 'account_recovery_policy';
 

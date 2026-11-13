@@ -40,6 +40,7 @@ use OCA\Keepiq\Exception\FieldsNotReencryptedException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\MigrationWorkServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IDBConnection;
@@ -75,7 +76,7 @@ use Throwable;
  *
  * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
  */
-class MigrationWorkService {
+class MigrationWorkService implements MigrationWorkServiceInterface {
 	/**
 	 * How many snapshot versions per secret are re-encrypted alongside the
 	 * head. Older versions are dropped when the migration terminates, per

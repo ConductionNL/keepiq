@@ -21,7 +21,7 @@ namespace OCA\Keepiq\Mcp;
 
 use OCA\Keepiq\Db\RotationFlag;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Service\RotationFlagService;
+use OCA\Keepiq\Kernel\Contracts\RotationFlagServiceInterface;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -37,7 +37,7 @@ class RotationStatusTools {
 	/**
 	 * Constructor.
 	 *
-	 * @param RotationFlagService $flags The rotation flags
+	 * @param RotationFlagServiceInterface $flags The rotation flags
 	 * @param SecretMapper $secretMapper For the entry names
 	 * @param McpToolContext $context The principal and the audit
 	 * @param MetadataAllowList $allowList The keys a result may carry
@@ -45,7 +45,7 @@ class RotationStatusTools {
 	 * @return void
 	 */
 	public function __construct(
-		private RotationFlagService $flags,
+		private RotationFlagServiceInterface $flags,
 		private SecretMapper $secretMapper,
 		private McpToolContext $context,
 		private MetadataAllowList $allowList = new MetadataAllowList(),

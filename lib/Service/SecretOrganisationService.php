@@ -30,13 +30,14 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\SecretOrganisationServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
 /**
  * The holder's star, tags and last-used time on their own rows.
  */
-class SecretOrganisationService {
+class SecretOrganisationService implements SecretOrganisationServiceInterface {
 	/**
 	 * Constructor for SecretOrganisationService.
 	 *

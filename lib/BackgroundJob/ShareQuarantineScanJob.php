@@ -25,8 +25,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\Service\ShareQuarantineScanner;
-use OCA\Keepiq\Service\ShareRestrictionResolver;
+use OCA\Keepiq\Kernel\Contracts\ShareQuarantineScannerInterface;
+use OCA\Keepiq\Kernel\Contracts\ShareRestrictionResolverInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -43,8 +43,8 @@ class ShareQuarantineScanJob extends TimedJob {
 	 * Constructor for ShareQuarantineScanJob.
 	 *
 	 * @param ITimeFactory             $time         The time factory
-	 * @param ShareQuarantineScanner   $scanner      The scan
-	 * @param ShareRestrictionResolver $restrictions Resolves the copies the pending scan held back
+	 * @param ShareQuarantineScannerInterface   $scanner      The scan
+	 * @param ShareRestrictionResolverInterface $restrictions Resolves the copies the pending scan held back
 	 * @param LoggerInterface          $logger       Logs a resolve that fails
 	 *
 	 * @return void
@@ -53,8 +53,8 @@ class ShareQuarantineScanJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private ShareQuarantineScanner $scanner,
-		private ShareRestrictionResolver $restrictions,
+		private ShareQuarantineScannerInterface $scanner,
+		private ShareRestrictionResolverInterface $restrictions,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

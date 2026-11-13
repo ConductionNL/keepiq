@@ -25,6 +25,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\UseOnlyUseRecorderInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 
@@ -34,7 +35,7 @@ use OCP\EventDispatcher\IEventDispatcher;
  * activity tab who used the login and when
  * (sharing-use-only-and-expiring-shares D3, task 3.3).
  */
-class UseOnlyUseRecorder {
+class UseOnlyUseRecorder implements UseOnlyUseRecorderInterface {
 
 	/**
 	 * Constructor for UseOnlyUseRecorder.

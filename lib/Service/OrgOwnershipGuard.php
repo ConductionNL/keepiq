@@ -29,12 +29,13 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Exception\PolicyViolationException;
+use OCA\Keepiq\Kernel\Contracts\OrgOwnershipGuardInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
  * Refuses a covered secret outside the user's own team folders.
  */
-class OrgOwnershipGuard {
+class OrgOwnershipGuard implements OrgOwnershipGuardInterface {
 
 	/**
 	 * The code the API returns with the refusal.

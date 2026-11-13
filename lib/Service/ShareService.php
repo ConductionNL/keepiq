@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\Contracts\ShareServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Throwable;
@@ -60,7 +61,7 @@ use Throwable;
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public method per share
  *   operation; the use-only change added the restriction update.
  */
-class ShareService {
+class ShareService implements ShareServiceInterface {
 
 	/**
 	 * Why a restriction change is refused while the share quarantine scan holds the row.

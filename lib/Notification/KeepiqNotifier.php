@@ -24,7 +24,7 @@ namespace OCA\Keepiq\Notification;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
@@ -35,7 +35,7 @@ use OCP\Notification\UnknownNotificationException;
 /**
  * Renders Keepiq notifications.
  *
- * The subject IDs here must match NotificationService::SUBJECT_SETTING_MAP.
+ * The subject IDs here must match NotificationServiceInterface::SUBJECT_SETTING_MAP.
  * Each branch builds a short subject line, a longer message line and a
  * deep-link the user clicks to land on the affected secret / queue.
  *
@@ -95,7 +95,7 @@ class KeepiqNotifier implements INotifier {
 		}
 
 		$subj = $notification->getSubject();
-		if (array_key_exists($subj, NotificationService::SUBJECT_SETTING_MAP) === false) {
+		if (array_key_exists($subj, NotificationServiceInterface::SUBJECT_SETTING_MAP) === false) {
 			throw new UnknownNotificationException();
 		}
 

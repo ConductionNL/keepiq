@@ -30,8 +30,8 @@ use InvalidArgumentException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\OrgOwnershipGuard;
-use OCA\Keepiq\Service\TeamFolderContributionService;
+use OCA\Keepiq\Kernel\Contracts\OrgOwnershipGuardInterface;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderContributionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -48,8 +48,8 @@ class TeamFolderContributionController extends Controller {
 	 *
 	 * @param IRequest $request The request
 	 * @param IUserSession $userSession The user session
-	 * @param TeamFolderContributionService $contributions Write-grade member contributions
-	 * @param OrgOwnershipGuard $ownership The ownership policy findings
+	 * @param TeamFolderContributionServiceInterface $contributions Write-grade member contributions
+	 * @param OrgOwnershipGuardInterface $ownership The ownership policy findings
 	 *
 	 * @return void
 	 *
@@ -58,8 +58,8 @@ class TeamFolderContributionController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private IUserSession $userSession,
-		private TeamFolderContributionService $contributions,
-		private OrgOwnershipGuard $ownership,
+		private TeamFolderContributionServiceInterface $contributions,
+		private OrgOwnershipGuardInterface $ownership,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

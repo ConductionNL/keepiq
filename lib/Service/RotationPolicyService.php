@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\RotationPolicyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -50,7 +51,7 @@ use Ramsey\Uuid\Uuid;
  *   span policy/secret/config sources in one place.
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)   One method per API op.
  */
-class RotationPolicyService {
+class RotationPolicyService implements RotationPolicyServiceInterface {
 	/**
 	 * Constructor for RotationPolicyService.
 	 *

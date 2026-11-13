@@ -46,7 +46,7 @@ use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\AudiencePolicyInterface;
 use OCA\Keepiq\Kernel\Contracts\FederationRootServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\JwtAuthServiceInterface;
-use OCA\Keepiq\Service\MachineSecretEnvelopeService;
+use OCA\Keepiq\Kernel\Contracts\MachineSecretEnvelopeServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -199,12 +199,12 @@ class DiscoveryController extends Controller {
 				// The calling application's own certificate and fingerprint
 				// (app-own-certificate); Bearer-authenticated.
 				'certificate' => $this->urlGenerator->linkToRoute('keepiq.applicationCertificate.show'),
-				'envelopeFormats' => [MachineSecretEnvelopeService::FORMAT],
+				'envelopeFormats' => [MachineSecretEnvelopeServiceInterface::FORMAT],
 				'upcomingEnvelopeFormats' => [
 					[
-						'value' => MachineSecretEnvelopeService::UPCOMING_FORMAT,
-						'replaces' => MachineSecretEnvelopeService::FORMAT,
-						'emittedFromAppVersion' => MachineSecretEnvelopeService::UPCOMING_FORMAT_APP_VERSION,
+						'value' => MachineSecretEnvelopeServiceInterface::UPCOMING_FORMAT,
+						'replaces' => MachineSecretEnvelopeServiceInterface::FORMAT,
+						'emittedFromAppVersion' => MachineSecretEnvelopeServiceInterface::UPCOMING_FORMAT_APP_VERSION,
 					],
 				],
 				// Machine leases (machine-secret-leases §3.3): additive

@@ -21,8 +21,8 @@ namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
-use OCA\Keepiq\Service\RecoveryEnrolmentService;
-use OCA\Keepiq\Service\RecoveryRequestService;
+use OCA\Keepiq\Kernel\Contracts\RecoveryEnrolmentServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RecoveryRequestServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -43,8 +43,8 @@ class RecoverySuiteListener implements IEventListener {
 	/**
 	 * Constructor for RecoverySuiteListener.
 	 *
-	 * @param RecoveryEnrolmentService $enrolments The enrolments
-	 * @param RecoveryRequestService   $requests   The requests
+	 * @param RecoveryEnrolmentServiceInterface $enrolments The enrolments
+	 * @param RecoveryRequestServiceInterface   $requests   The requests
 	 * @param LoggerInterface          $logger     The logger
 	 *
 	 * @return void
@@ -52,8 +52,8 @@ class RecoverySuiteListener implements IEventListener {
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private RecoveryEnrolmentService $enrolments,
-		private RecoveryRequestService $requests,
+		private RecoveryEnrolmentServiceInterface $enrolments,
+		private RecoveryRequestServiceInterface $requests,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

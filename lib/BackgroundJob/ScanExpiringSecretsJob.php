@@ -30,8 +30,8 @@ use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\NotificationService;
-use OCA\Keepiq\Service\RotationPolicyService;
+use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RotationPolicyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -56,8 +56,8 @@ class ScanExpiringSecretsJob extends TimedJob {
 	 * @param ITimeFactory $time The time factory
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param RotationFlagMapper $flagMapper The flag mapper (open-flag check)
-	 * @param RotationPolicyService $rotationService The rotation service
-	 * @param NotificationService $notificationService The notification dispatcher
+	 * @param RotationPolicyServiceInterface $rotationService The rotation service
+	 * @param NotificationServiceInterface $notificationService The notification dispatcher
 	 * @param IAppConfig $appConfig The app config
 	 * @param LoggerInterface $logger The logger
 	 *
@@ -67,8 +67,8 @@ class ScanExpiringSecretsJob extends TimedJob {
 		ITimeFactory $time,
 		private SecretMapper $secretMapper,
 		private RotationFlagMapper $flagMapper,
-		private RotationPolicyService $rotationService,
-		private NotificationService $notificationService,
+		private RotationPolicyServiceInterface $rotationService,
+		private NotificationServiceInterface $notificationService,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 	) {

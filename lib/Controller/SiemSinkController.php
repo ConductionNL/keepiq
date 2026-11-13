@@ -28,8 +28,8 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\SiemSink;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCA\Keepiq\Service\Siem\SiemSinkRequest;
-use OCA\Keepiq\Service\SiemService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -47,7 +47,7 @@ class SiemSinkController extends OCSController {
 	 * Constructor for SiemSinkController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SiemService $service The SIEM service
+	 * @param SiemServiceInterface $service The SIEM service
 	 * @param IUserSession $userSession The user session
 	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Audit admin area
 	 *
@@ -55,7 +55,7 @@ class SiemSinkController extends OCSController {
 	 */
 	public function __construct(
 		IRequest $request,
-		private SiemService $service,
+		private SiemServiceInterface $service,
 		private IUserSession $userSession,
 		private AdminAreaAuthorizerInterface $areas,
 	) {

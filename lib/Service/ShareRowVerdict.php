@@ -28,13 +28,14 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Kernel\Contracts\ShareRowVerdictInterface;
 
 /**
  * The judged state of a share row lookup.
  *
  * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
  */
-final class ShareRowVerdict {
+final class ShareRowVerdict implements ShareRowVerdictInterface {
 
 	/**
 	 * No live share row names the copy or the pair.
@@ -42,13 +43,6 @@ final class ShareRowVerdict {
 	 * @var string
 	 */
 	public const NONE = 'none';
-
-	/**
-	 * More than one live share row names the copy or the pair.
-	 *
-	 * @var string
-	 */
-	public const AMBIGUOUS = 'ambiguous';
 
 	/**
 	 * The row's target does not hold the copy it names, or the copy is gone.
@@ -63,13 +57,6 @@ final class ShareRowVerdict {
 	 * @var string
 	 */
 	public const QUARANTINED = 'quarantined';
-
-	/**
-	 * The pending quarantine scan cannot judge the row.
-	 *
-	 * @var string
-	 */
-	public const UNJUDGED = 'unjudged';
 
 	/**
 	 * The row's target holds the copy, and the scan does not hold the row back.

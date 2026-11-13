@@ -22,10 +22,10 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\RecoveryAudit;
-use OCA\Keepiq\Service\RecoveryEnrolmentService;
-use OCA\Keepiq\Service\RecoveryKeyService;
-use OCA\Keepiq\Service\RecoveryPolicyService;
+use OCA\Keepiq\Kernel\Contracts\RecoveryAuditInterface;
+use OCA\Keepiq\Kernel\Contracts\RecoveryEnrolmentServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RecoveryKeyServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RecoveryPolicyServiceInterface;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -46,10 +46,10 @@ class RecoveryAdminController extends Controller {
 	 * Constructor for RecoveryAdminController.
 	 *
 	 * @param IRequest                 $request     The request
-	 * @param RecoveryPolicyService    $policy      The policy service
-	 * @param RecoveryKeyService       $keys        The recovery keys
-	 * @param RecoveryEnrolmentService $enrolments  The enrolments (suite warning)
-	 * @param RecoveryAudit            $audit       The audit trail
+	 * @param RecoveryPolicyServiceInterface    $policy      The policy service
+	 * @param RecoveryKeyServiceInterface       $keys        The recovery keys
+	 * @param RecoveryEnrolmentServiceInterface $enrolments  The enrolments (suite warning)
+	 * @param RecoveryAuditInterface            $audit       The audit trail
 	 * @param IUserSession             $userSession The user session
 	 *
 	 * @return void
@@ -58,10 +58,10 @@ class RecoveryAdminController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private RecoveryPolicyService $policy,
-		private RecoveryKeyService $keys,
-		private RecoveryEnrolmentService $enrolments,
-		private RecoveryAudit $audit,
+		private RecoveryPolicyServiceInterface $policy,
+		private RecoveryKeyServiceInterface $keys,
+		private RecoveryEnrolmentServiceInterface $enrolments,
+		private RecoveryAuditInterface $audit,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -112,7 +112,7 @@ class RecoveryAdminController extends Controller {
 
 		$this->audit->record(
 			actorId: (string)$this->userSession->getUser()?->getUID(),
-			eventType: RecoveryAudit::SETTINGS_CHANGED,
+			eventType: RecoveryAuditInterface::SETTINGS_CHANGED,
 			objectId: 'settings',
 			metadata: [
 				'policy' => $settings['policy'],

@@ -39,8 +39,8 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCA\Keepiq\Service\VaultKeyProofExemption;
-use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Middleware;
@@ -79,7 +79,7 @@ class VaultKeyProofMiddleware extends Middleware {
 	 * @param IRequest $request The HTTP request
 	 * @param IUserSession $userSession The session, for the acting user
 	 * @param EncryptionSuiteServiceInterface $suiteService Resolves the subject suite
-	 * @param VaultKeyProofService $proofService Verifies the proof
+	 * @param VaultKeyProofServiceInterface $proofService Verifies the proof
 	 * @param SuiteMigrationMapper $migrationMapper Resolves a migration's old suite
 	 * @param LoggerInterface $logger Records every refused proof
 	 * @param IEventDispatcher|null $eventDispatcher Carries the refusal to the audit trail
@@ -93,7 +93,7 @@ class VaultKeyProofMiddleware extends Middleware {
 		private IRequest $request,
 		private IUserSession $userSession,
 		private EncryptionSuiteServiceInterface $suiteService,
-		private VaultKeyProofService $proofService,
+		private VaultKeyProofServiceInterface $proofService,
 		private SuiteMigrationMapper $migrationMapper,
 		private LoggerInterface $logger,
 		private ?IEventDispatcher $eventDispatcher = null,

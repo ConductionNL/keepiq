@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
 use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Kernel\Contracts\ShareSaveServiceInterface;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
 use OCA\Keepiq\Service\ShareSave\ShareSaveHistory;
 use OCA\Keepiq\Service\ShareSave\ShareSavePath;
@@ -53,7 +54,7 @@ use Throwable;
  *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  */
-class ShareSaveService {
+class ShareSaveService implements ShareSaveServiceInterface {
 	use TTransactional;
 
 	/**

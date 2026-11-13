@@ -29,7 +29,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\OfflineManifestService;
+use OCA\Keepiq\Kernel\Contracts\OfflineManifestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -47,7 +47,7 @@ class OfflineController extends OCSController {
 	 * Constructor for OfflineController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param OfflineManifestService $manifestService The snapshot assembler
+	 * @param OfflineManifestServiceInterface $manifestService The snapshot assembler
 	 * @param IAppConfig $appConfig The app config (off switch)
 	 * @param IUserSession $userSession The user session
 	 *
@@ -55,7 +55,7 @@ class OfflineController extends OCSController {
 	 */
 	public function __construct(
 		IRequest $request,
-		private OfflineManifestService $manifestService,
+		private OfflineManifestServiceInterface $manifestService,
 		private IAppConfig $appConfig,
 		private IUserSession $userSession,
 	) {

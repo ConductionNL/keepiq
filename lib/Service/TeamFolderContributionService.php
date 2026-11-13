@@ -44,6 +44,7 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderContributionServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
@@ -55,7 +56,7 @@ use Throwable;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The contribution joins the
  *   team folder, grade, suite, secret and share sides in one write.
  */
-class TeamFolderContributionService {
+class TeamFolderContributionService implements TeamFolderContributionServiceInterface {
 	/**
 	 * Constructor.
 	 *

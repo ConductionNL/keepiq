@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\SetupCheck;
 
-use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Kernel\Contracts\ShareQuarantineScannerInterface;
 use OCP\IL10N;
 use OCP\SetupCheck\ISetupCheck;
 use OCP\SetupCheck\SetupResult;
@@ -40,7 +40,7 @@ class ShareQuarantineScanPending implements ISetupCheck {
 	/**
 	 * Constructor.
 	 *
-	 * @param ShareQuarantineScanner $scanner Knows whether a full pass completed
+	 * @param ShareQuarantineScannerInterface $scanner Knows whether a full pass completed
 	 * @param IL10N $l10n The app's translations
 	 *
 	 * @return void
@@ -48,7 +48,7 @@ class ShareQuarantineScanPending implements ISetupCheck {
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private ShareQuarantineScanner $scanner,
+		private ShareQuarantineScannerInterface $scanner,
 		private IL10N $l10n,
 	) {
 	}//end __construct()

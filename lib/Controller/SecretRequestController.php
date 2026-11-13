@@ -27,7 +27,7 @@ use DateTime;
 use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\SecretRequestService;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestServiceInterface;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -75,14 +75,14 @@ class SecretRequestController extends OCSController {
 	 * Constructor for SecretRequestController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretRequestService $service The secret-request service
+	 * @param SecretRequestServiceInterface $service The secret-request service
 	 * @param IUserSession $session The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretRequestService $service,
+		private SecretRequestServiceInterface $service,
 		private IUserSession $session,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

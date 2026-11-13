@@ -38,7 +38,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
-use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Kernel\Contracts\ShareQuarantineScannerInterface;
 use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\Security\ICrypto;
@@ -70,7 +70,7 @@ class RestoreService {
 	 * @param IUserManager $userManager Owners that no longer exist
 	 * @param ICrypto $crypto The instance secret probe
 	 * @param AuditServiceInterface $audit The audit trail
-	 * @param ShareQuarantineScanner $quarantineScan Reopens and runs the share quarantine scan
+	 * @param ShareQuarantineScannerInterface $quarantineScan Reopens and runs the share quarantine scan
 	 *
 	 * @return void
 	 *
@@ -88,7 +88,7 @@ class RestoreService {
 		private IUserManager $userManager,
 		private ICrypto $crypto,
 		private AuditServiceInterface $audit,
-		private ShareQuarantineScanner $quarantineScan,
+		private ShareQuarantineScannerInterface $quarantineScan,
 	) {
 	}//end __construct()
 

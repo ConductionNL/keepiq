@@ -28,7 +28,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\TeamFolderService;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderServiceInterface;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -54,7 +54,7 @@ class AdminPeopleController extends Controller {
 	 *
 	 * @param IRequest $request The request
 	 * @param EncryptionSuiteMapper $suites The suite rows
-	 * @param TeamFolderService $teamFolders The offboarding entry point the admin screen uses
+	 * @param TeamFolderServiceInterface $teamFolders The offboarding entry point the admin screen uses
 	 * @param IUserSession $userSession The acting administrator
 	 *
 	 * @return void
@@ -64,7 +64,7 @@ class AdminPeopleController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private EncryptionSuiteMapper $suites,
-		private TeamFolderService $teamFolders,
+		private TeamFolderServiceInterface $teamFolders,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
