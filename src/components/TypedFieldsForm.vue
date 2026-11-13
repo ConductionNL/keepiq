@@ -3,7 +3,9 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   The fields an administrator defined on an item type (admin-18), rendered
-  by kind: text, hidden (a password field), url and email. The parent keeps
+  by kind: text, hidden (a password field), url and email, and the extra
+  fields of a built-in type, which add multiline (a text area that keeps the
+  line breaks of a key or certificate). The parent keeps
   the values by field key and stores them in the encrypted additional-fields
   blob; this component only edits them.
 
@@ -24,16 +26,31 @@
 				"
 				:data-testid="`typed-field-${field.key}`"
 				@update:modelValue="set(field.key, $event)" />
-			<NcTextField
-				v-else
+			<NcTextArea
+				v-else-if="field.kind === 'multiline'"
 				:modelValue="values[field.key] || ''"
-				:type="inputType(field.kind)"
 				:label="fieldLabel(field)"
 				:required="field.required"
 				:disabled="disabled"
 				:error="isMissing(field)"
 				:helperText="
 					isMissing(field) ? t('keepiq', 'This field is required') : ''
+				"
+				rows="4"
+				:data-testid="`typed-field-${field.key}`"
+				@update:modelValue="set(field.key, $event)" />
+			<NcTextField
+				v-else
+				:modelValue="values[field.key] || ''"
+				:type="inputType(field)"
+				:label="fieldLabel(field)"
+				:required="field.required"
+				:disabled="disabled"
+				:error="isMissing(field) || fitError(field) !== ''"
+				:helperText="
+					isMissing(field)
+						? t('keepiq', 'This field is required')
+						: fitError(field)
 				"
 				:data-testid="`typed-field-${field.key}`"
 				@update:modelValue="set(field.key, $event)" />
@@ -43,14 +60,18 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
-import { NcPasswordField, NcTextField } from '@nextcloud/vue'
+import { NcPasswordField, NcTextArea, NcTextField } from '@nextcloud/vue'
+import { schemaError } from '../utils/fieldSchema.js'
 
 export default {
 	name: 'TypedFieldsForm',
-	components: { NcPasswordField, NcTextField },
+	components: { NcPasswordField, NcTextArea, NcTextField },
 
 	props: {
-		/** The type's fields: {key, label, kind, required}. */
+		/**
+		 * The type's fields: {key, label, kind, required}, plus a translated
+		 * `displayLabel` on a built-in type's fields.
+		 */
 		fields: {
 			type: Array,
 			required: true,
@@ -82,25 +103,47 @@ export default {
 		/**
 		 * The label shown for a field, with a marker when it is required.
 		 *
-		 * @param {{label: string, required: boolean}} field The field.
+		 * @param {{label: string, displayLabel?: string, required: boolean}} field The field.
 		 * @return {string} The label.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
 		 */
 		fieldLabel(field) {
+			const label = field.displayLabel ?? field.label
 			return field.required
-				? t('keepiq', '{label} (required)', { label: field.label })
-				: field.label
+				? t('keepiq', '{label} (required)', { label })
+				: label
 		},
 
 		/**
-		 * The input type for a field kind.
+		 * The input type for a field: its kind, or a number field when its
+		 * schema asks for a number.
 		 *
-		 * @param {string} kind text, url or email.
+		 * @param {{kind: string, schema?: object}} field The field.
 		 * @return {string} The HTML input type.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
-		inputType(kind) {
-			return kind === 'url' || kind === 'email' ? kind : 'text'
+		inputType(field) {
+			if (['integer', 'number'].includes(field.schema?.type)) {
+				return 'number'
+			}
+			return field.kind === 'url' || field.kind === 'email'
+				? field.kind
+				: 'text'
+		},
+
+		/**
+		 * Why a field's value does not fit the schema the field states, or ''.
+		 *
+		 * @param {{key: string, schema?: object}} field The field.
+		 * @return {string} The reason.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 */
+		fitError(field) {
+			return field.schema
+				? schemaError(this.values[field.key], field.schema)
+				: ''
 		},
 
 		/**

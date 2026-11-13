@@ -32,7 +32,7 @@
 				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
-			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+			<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
 			<!-- Card / identity composite payloads (card-identity-items §3.1):
 			     per-type field sets serialized to the encrypted key on save. -->
@@ -95,11 +95,21 @@
 					:label="t('keepiq', 'BSN')"
 					data-testid="identity-bsn" />
 			</template>
+			<!-- A certificate or note is several lines: a password input would
+			     drop the line breaks of a PEM block. -->
+			<NcTextArea
+				v-else-if="valueMultiline"
+				v-model="value"
+				:label="requiredValueLabel"
+				:required="true"
+				rows="6"
+				data-testid="secret-value-multiline" />
 			<div v-else class="secret-form__value-row">
 				<NcPasswordField
 					v-model="value"
 					class="secret-form__value-field"
-					:label="valueLabel" />
+					:label="requiredValueLabel"
+					:required="true" />
 				<NcButton
 					variant="tertiary-no-background"
 					:title="t('keepiq', 'Generate a strong key')"
@@ -123,7 +133,10 @@
 				mode="replace"
 				:disabled="saving" />
 
-			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
+			<NcTextField
+				v-if="showUrl"
+				v-model="url"
+				:label="t('keepiq', 'URL (optional)')" />
 
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
@@ -200,6 +213,7 @@
 
 <script>
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
@@ -208,6 +222,7 @@ import {
 	NcNoteCard,
 	NcPasswordField,
 	NcSelect,
+	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
@@ -240,12 +255,15 @@ import {
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
 import { membersToObject } from '../utils/additionalFields.js'
-import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
 import {
-	mergeTypedValues,
-	missingRequired,
-	typedFieldsOf,
-} from '../utils/typedFields.js'
+	leavesOut,
+	loginLabelOf,
+	typeFieldsOf,
+	valueFieldOf,
+} from '../utils/builtinTypeFields.js'
+import { valuesFit } from '../utils/fieldSchema.js'
+import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
+import { mergeTypedValues, missingRequired } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 
 /**
@@ -292,6 +310,7 @@ export default {
 		NcNoteCard,
 		NcPasswordField,
 		NcSelect,
+		NcTextArea,
 		NcTextField,
 		Plus,
 	},
@@ -410,29 +429,106 @@ export default {
 		},
 
 		/**
-		 * The label for the secret-value field, which reads "Note" for the
-		 * `note` system type and "Secret value" otherwise.
+		 * The label for the secret-value field: the type's own, such as
+		 * "Note" or "Certificate", else "Secret value".
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valueLabel() {
-			const type = useSecretTypeStore().typesById[this.typeId]
-			return type && type.name === 'note'
-				? t('keepiq', 'Note')
-				: t('keepiq', 'Secret value')
+			return (
+				valueFieldOf(this.selectedTypeName)?.label
+				?? t('keepiq', 'Secret value')
+			)
 		},
 
 		/**
-		 * The fields an administrator defined on the chosen type; empty for
-		 * the built-in types, which keep their own forms.
+		 * The value field's label marked as required, as the type's own
+		 * required fields are: Create stays disabled without a value.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
+		 */
+		requiredValueLabel() {
+			return t('keepiq', '{label} (required)', { label: this.valueLabel })
+		},
+
+		/**
+		 * Whether the value is entered in a text area.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		valueMultiline() {
+			return valueFieldOf(this.selectedTypeName)?.kind === 'multiline'
+		},
+
+		/**
+		 * Whether the chosen type uses the login field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showLogin() {
+			return !leavesOut(this.selectedTypeName, 'login')
+		},
+
+		/**
+		 * Whether the chosen type uses the URL field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showUrl() {
+			return !leavesOut(this.selectedTypeName, 'url')
+		},
+
+		/**
+		 * The login field's label: "Username" on a database, else "Login".
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		loginLabel() {
+			return (
+				loginLabelOf(this.selectedTypeName, true)
+				?? t('keepiq', 'Login (optional)')
+			)
+		},
+
+		/**
+		 * The login to save: none when the type leaves the field out, so one
+		 * typed before switching type is not saved unseen.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		loginToSave() {
+			return this.showLogin ? this.login || '' : ''
+		},
+
+		/**
+		 * The URL to save: none when the type leaves the field out.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		urlToSave() {
+			return this.showUrl ? this.url || null : null
+		},
+
+		/**
+		 * The extra fields of the chosen type: a built-in type's own, or the
+		 * fields an administrator defined on it.
 		 *
 		 * @return {Array<object>} The fields.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		typedFields() {
-			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
+			return typeFieldsOf(useSecretTypeStore().typesById[this.typeId])
 		},
 
 		/**
@@ -510,13 +606,19 @@ export default {
 		/**
 		 * Whether Create may run: not busy, named, a folder chosen (secrets
 		 * cannot live at the vault root), and the type's own required value
-		 * present and policy-compliant.
+		 * present and policy-compliant, and every field value fitting its schema.
 		 *
 		 * @return {boolean}
-		 * @spec exclude Form-enablement guard; no domain behaviour.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		canSubmit() {
 			if (this.saving || this.locked || this.name.trim() === '') {
+				return false
+			}
+			// A value that does not fit its field's schema is never stored.
+			if (
+				!valuesFit(this.additionalFields, this.typedFields, this.typedValues)
+			) {
 				return false
 			}
 			if (!this.selectedFolderId && !this.contributeTo) {
@@ -711,8 +813,8 @@ export default {
 						{
 							name: this.name.trim(),
 							typeId: this.typeId,
-							url: this.url || null,
-							login: this.login || '',
+							url: this.urlToSave,
+							login: this.loginToSave,
 							key: this.effectiveValue,
 							...(Object.keys(this.additionalBlob()).length > 0
 								? { additionalFields: this.additionalBlob() }
@@ -728,8 +830,8 @@ export default {
 					name: this.name.trim(),
 					typeId: this.typeId,
 					folderId: this.selectedFolderId,
-					url: this.url || null,
-					login: this.login || '',
+					url: this.urlToSave,
+					login: this.loginToSave,
 					key: this.effectiveValue,
 					// Only when there ARE members: the store encrypts whatever it is
 					// handed, so passing {} unconditionally would write an empty

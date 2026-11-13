@@ -127,6 +127,14 @@
 					:label="t('keepiq', 'BSN')"
 					data-testid="identity-bsn" />
 			</template>
+			<!-- A certificate or note is several lines: a password input would
+			     drop the line breaks of a PEM block. -->
+			<NcTextArea
+				v-else-if="valueMultiline"
+				v-model="value"
+				:label="valueLabel"
+				rows="6"
+				data-testid="secret-value-multiline" />
 			<div v-else class="secret-form__value-row">
 				<NcPasswordField
 					v-model="value"
@@ -159,9 +167,12 @@
 				:removeOnly="!totpEditable"
 				:disabled="saving || loading || viewOnly" />
 
-			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
+			<NcTextField
+				v-if="showUrl"
+				v-model="url"
+				:label="t('keepiq', 'URL (optional)')" />
 
-			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+			<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
@@ -216,6 +227,7 @@ import {
 	NcLoadingIcon,
 	NcNoteCard,
 	NcPasswordField,
+	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
@@ -245,14 +257,20 @@ import {
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import {
+	leavesOut,
+	loginLabelOf,
+	typeFieldsOf,
+	valueFieldOf,
+} from '../utils/builtinTypeFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
+import { valuesFit } from '../utils/fieldSchema.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
 import {
 	mergeTypedValues,
 	missingRequired,
 	splitTypedValues,
-	typedFieldsOf,
 } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 
@@ -277,6 +295,7 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		NcPasswordField,
+		NcTextArea,
 		NcTextField,
 	},
 
@@ -351,29 +370,82 @@ export default {
 		},
 
 		/**
-		 * The label for the secret-value field, which reads "Note" for the
-		 * `note` system type and "Secret value" otherwise.
+		 * The label for the secret-value field: the type's own, such as
+		 * "Note" or "Certificate", else "Secret value".
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valueLabel() {
-			const type = useSecretTypeStore().typesById[this.typeId]
-			return type && type.name === 'note'
-				? t('keepiq', 'Note')
-				: t('keepiq', 'Secret value')
+			return (
+				valueFieldOf(this.selectedTypeName)?.label
+				?? t('keepiq', 'Secret value')
+			)
 		},
 
 		/**
-		 * The fields an administrator defined on the chosen type; empty for
-		 * the built-in types, which keep their own forms.
+		 * Whether the value is entered in a text area.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		valueMultiline() {
+			return valueFieldOf(this.selectedTypeName)?.kind === 'multiline'
+		},
+
+		/**
+		 * Whether the login field is shown: when the type uses it, or when the
+		 * secret already holds a login, so it never becomes unreachable.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showLogin() {
+			return (
+				!leavesOut(this.selectedTypeName, 'login')
+				|| Boolean(this.original?.login)
+			)
+		},
+
+		/**
+		 * Whether the URL field is shown: when the type uses it, or when the
+		 * secret already holds a URL.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showUrl() {
+			return (
+				!leavesOut(this.selectedTypeName, 'url')
+				|| Boolean(this.original?.url)
+			)
+		},
+
+		/**
+		 * The login field's label: "Username" on a database, else "Login".
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		loginLabel() {
+			return (
+				loginLabelOf(this.selectedTypeName, true)
+				?? t('keepiq', 'Login (optional)')
+			)
+		},
+
+		/**
+		 * The extra fields of the secret's type: a built-in type's own, or the
+		 * fields an administrator defined on it.
 		 *
 		 * @return {Array<object>} The fields.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		typedFields() {
-			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
+			return typeFieldsOf(useSecretTypeStore().typesById[this.typeId])
 		},
 
 		/**
@@ -505,6 +577,7 @@ export default {
 
 		/**
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		canSubmit() {
 			return (
@@ -514,6 +587,11 @@ export default {
 				&& this.name.trim() !== ''
 				&& this.policyVerdict.compliant
 				&& this.totpError === ''
+				&& valuesFit(
+					this.additionalFields,
+					this.typedFields,
+					this.typedValues,
+				)
 			)
 		},
 	},

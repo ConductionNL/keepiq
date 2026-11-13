@@ -18,7 +18,7 @@
  * @spec openspec/changes/implement-secrets/tasks.md#13.3
  */
 
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import PasswordField from '../../src/components/PasswordField.vue'
 
@@ -118,5 +118,51 @@ describe('PasswordField', () => {
 		expect(html).toContain('NcInputField')
 		// And the component data carries the custom label through.
 		expect(wrapper.vm.label).toBe('My API token')
+	})
+
+	// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+	it('reveals a multi-line value in a text area that keeps its line breaks', async () => {
+		const pem = '-----BEGIN KEY-----\nAAAA\n-----END KEY-----'
+		const resolve = vi.fn().mockResolvedValue(pem)
+		const wrapper = mount(PasswordField, {
+			propsData: { resolve, multiline: true },
+		})
+
+		const textArea = () => wrapper.findComponent({ name: 'NcTextArea' })
+		expect(textArea().exists()).toBe(false)
+		await wrapper.vm.toggle()
+		await wrapper.vm.$nextTick()
+
+		expect(textArea().exists()).toBe(true)
+		expect(textArea().props('modelValue')).toBe(pem)
+		// A short value still gets a block of ten rows; a long one grows to
+		// twenty at most.
+		expect(wrapper.vm.rows).toBe(10)
+		wrapper.vm.plain = Array.from({ length: 30 }, () => 'AAAA').join('\n')
+		expect(wrapper.vm.rows).toBe(20)
+	})
+
+	// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+	it('shows an always-shown value at once, without a show/hide toggle', async () => {
+		const resolve = vi.fn().mockResolvedValue('public')
+		const wrapper = mount(PasswordField, {
+			propsData: { resolve, alwaysShown: true },
+		})
+		await flushPromises()
+
+		expect(resolve).toHaveBeenCalledOnce()
+		expect(wrapper.vm.displayValue).toBe('public')
+		expect(wrapper.find('[aria-label="Hide"]').exists()).toBe(false)
+	})
+
+	it('never reveals an always-shown value on a use-only copy', async () => {
+		const resolve = vi.fn().mockResolvedValue('public')
+		const wrapper = mount(PasswordField, {
+			propsData: { resolve, alwaysShown: true, useOnly: true },
+		})
+		await flushPromises()
+
+		expect(resolve).not.toHaveBeenCalled()
+		expect(wrapper.vm.revealed).toBe(false)
 	})
 })
