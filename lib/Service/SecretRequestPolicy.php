@@ -42,7 +42,17 @@ use RuntimeException;
 /**
  * Preconditions and authorization for the SecretRequest lifecycle.
  *
- * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 12 against a threshold of 10.
+ * The eleventh and twelfth are the requestable-type rule and the type name the
+ * fill page reads; both look up the Secret's type, which is a precondition of
+ * the request like the others here, and a class of their own would hold two
+ * methods and the same two mappers.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) 56 against a threshold of
+ * 50, from the same two methods: each is a short chain of lookups that may
+ * miss, and every miss is a branch.
+ *
+ * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
  */
 class SecretRequestPolicy {
 	/**
@@ -74,11 +84,13 @@ class SecretRequestPolicy {
 	 * serve; it is what fraud looks like. Authenticator (TOTP) keys: whoever holds
 	 * the seed can produce that person's codes, so asking for it is how an account
 	 * is taken over, and a one-time code itself would expire before it was used.
-	 * Holders still store these types themselves, only requesting them is refused.
+	 * Passkeys: the credential holds its private key, which signs in as the person
+	 * just as a seed does. Holders still store these types themselves, only
+	 * requesting them is refused.
 	 *
 	 * @var array<int,string>
 	 */
-	public const NOT_REQUESTABLE_TYPE_NAMES = ['card', 'identity', 'totp'];
+	public const NOT_REQUESTABLE_TYPE_NAMES = ['card', 'identity', 'totp', 'passkey'];
 
 	/**
 	 * Machine-readable reasons a fill link can be refused.
@@ -223,7 +235,7 @@ class SecretRequestPolicy {
 	 * @throws InvalidArgumentException With code 403 for a type in NOT_REQUESTABLE_TYPE_NAMES.
 	 * @throws RuntimeException When the type mapper dependency is not wired.
 	 *
-	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function requireRequestableType(?string $typeId): void {
 		if ($typeId === null || $typeId === '') {
@@ -242,7 +254,7 @@ class SecretRequestPolicy {
 
 		if (in_array($type->getName(), self::NOT_REQUESTABLE_TYPE_NAMES, true) === true) {
 			throw new InvalidArgumentException(
-				message: 'Payment cards, identities and authenticator keys cannot be requested',
+				message: 'Payment cards, identities, authenticator keys and passkeys cannot be requested',
 				code: 403
 			);
 		}
@@ -252,9 +264,12 @@ class SecretRequestPolicy {
 	 * The system name of a Secret's type, for the public fill page.
 	 *
 	 * The type is plaintext metadata on a Secret, and the fill page needs it to
-	 * label and render the requested fields as the type's own form does. A
-	 * Secret or type that cannot be found, or an unwired mapper, answers null
-	 * and the page falls back to its generic labels.
+	 * label and render the requested fields as the type's own form does. Only a
+	 * system type's name is given: a custom type's name is free text the owner
+	 * chose, the page has no form for it, and an anonymous recipient has no
+	 * business reading it. A custom type, a Secret or type that cannot be found,
+	 * or an unwired mapper answers null and the page falls back to its generic
+	 * labels.
 	 *
 	 * @param string $secretId The Secret the request fills
 	 *
@@ -273,10 +288,16 @@ class SecretRequestPolicy {
 				return null;
 			}
 
-			return $this->typeMapper->findById($typeId)->getName();
+			$type = $this->typeMapper->findById($typeId);
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			return null;
 		}
+
+		if ($type->getScope() !== 'system') {
+			return null;
+		}
+
+		return $type->getName();
 	}//end secretTypeName()
 
 	/**

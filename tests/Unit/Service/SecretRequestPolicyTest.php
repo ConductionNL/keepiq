@@ -457,13 +457,13 @@ class SecretRequestPolicyTest extends TestCase {
 	}//end testARequestOnAnActiveSuiteIsOpen()
 
 	/**
-	 * Payment cards, identities and authenticator keys cannot be requested.
+	 * Payment cards, identities, authenticator keys and passkeys cannot be requested.
 	 *
 	 * @param string $typeName The system type name
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	#[DataProvider('notRequestableTypeProvider')]
 	public function testANotRequestableTypeIsRefused(string $typeName): void {
@@ -483,6 +483,7 @@ class SecretRequestPolicyTest extends TestCase {
 			'payment card' => ['card'],
 			'identity' => ['identity'],
 			'authenticator (TOTP)' => ['totp'],
+			'passkey' => ['passkey'],
 		];
 	}//end notRequestableTypeProvider()
 
@@ -494,7 +495,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testOtherTypesAndTheDefaultCanBeRequested(): void {
 		$policy = $this->policyWithType(typeName: 'ssh_key');
@@ -512,7 +513,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testANamedTypeWithoutATypeMapperIsRefused(): void {
 		$this->expectException(RuntimeException::class);
@@ -552,14 +553,35 @@ class SecretRequestPolicyTest extends TestCase {
 	}//end testAnUnresolvableSecretTypeIsNull()
 
 	/**
+	 * A custom type's name is free text its owner chose, so the anonymous
+	 * fill page is not told it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 */
+	public function testACustomTypeNameIsNotGiven(): void {
+		$secret = new Secret();
+		$secret->setTypeId('type-1');
+
+		$this->assertNull(
+			$this->policyWithSecret(secret: $secret, scope: 'user')->secretTypeName(secretId: 'sec-1')
+		);
+		$this->assertNull(
+			$this->policyWithSecret(secret: $secret, scope: 'global')->secretTypeName(secretId: 'sec-1')
+		);
+	}//end testACustomTypeNameIsNotGiven()
+
+	/**
 	 * A policy whose Secret mapper finds this Secret (or none, for null) and
 	 * whose type mapper resolves every id to a certificate.
 	 *
 	 * @param Secret|null $secret The Secret to find
+	 * @param string $scope The certificate type's scope
 	 *
 	 * @return SecretRequestPolicy
 	 */
-	private function policyWithSecret(?Secret $secret): SecretRequestPolicy {
+	private function policyWithSecret(?Secret $secret, string $scope = 'system'): SecretRequestPolicy {
 		$secrets = $this->createStub(SecretMapper::class);
 		if ($secret === null) {
 			$secrets->method('findById')->willThrowException(new DoesNotExistException('gone'));
@@ -569,6 +591,7 @@ class SecretRequestPolicyTest extends TestCase {
 
 		$type = new SecretType();
 		$type->setName('certificate');
+		$type->setScope($scope);
 		$types = $this->createStub(SecretTypeMapper::class);
 		$types->method('findById')->willReturn($type);
 
