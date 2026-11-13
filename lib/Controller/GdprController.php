@@ -30,9 +30,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Event\GdprExportPerformedEvent;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AccountDeletionService;
 use OCA\Keepiq\Service\GdprService;
 use OCA\Keepiq\Service\VaultKeyProofService;
@@ -73,7 +73,7 @@ class GdprController extends Controller {
 		private IUserSession $userSession,
 		private IEventDispatcher $dispatcher,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

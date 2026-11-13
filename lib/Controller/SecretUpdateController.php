@@ -27,12 +27,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\WriteLockedException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\SecretService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -68,7 +68,7 @@ class SecretUpdateController extends OCSController {
 		private SecretService $secretService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

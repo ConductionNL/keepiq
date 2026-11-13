@@ -20,9 +20,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\RecoveryEnrolmentService;
 use OCA\Keepiq\Service\RecoveryRequestService;
 use OCP\AppFramework\Controller;
@@ -56,7 +56,7 @@ class RecoveryUserController extends Controller {
 		private RecoveryRequestService $requests,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

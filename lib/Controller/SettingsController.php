@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Settings\PolicyAdminSettings;
@@ -58,7 +58,7 @@ class SettingsController extends Controller {
 		private ?AdminAreaAuthorizer $areas = null,
 		private ?\OCA\Keepiq\Service\TwoFactorGate $twoFactor = null,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

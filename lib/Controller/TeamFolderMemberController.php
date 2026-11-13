@@ -36,10 +36,10 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ManagerOnlyException;
 use OCA\Keepiq\Exception\OwnerOnlyException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\TeamFolderService;
@@ -71,7 +71,7 @@ class TeamFolderMemberController extends OCSController {
 		private TeamFolderService $teamFolderService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

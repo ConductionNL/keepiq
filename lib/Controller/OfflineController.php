@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\OfflineManifestService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -59,7 +59,7 @@ class OfflineController extends OCSController {
 		private IAppConfig $appConfig,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -79,7 +79,7 @@ class OfflineController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthenticated'], statusCode: Http::STATUS_FORBIDDEN);
 		}
 
-		if ($this->appConfig->getValueBool(Application::APP_ID, 'offline_cache_enabled', true) === false) {
+		if ($this->appConfig->getValueBool(AppIdentity::APP_ID, 'offline_cache_enabled', true) === false) {
 			return new JSONResponse(
 				data: ['message' => 'Offline caching is disabled by the administrator'],
 				statusCode: Http::STATUS_FORBIDDEN
@@ -94,7 +94,7 @@ class OfflineController extends OCSController {
 
 		// The offline client needs the edit rule while it has no server to ask
 		// (offline-edit-queue).
-		$manifest['offlineEditsEnabled'] = $this->appConfig->getValueBool(Application::APP_ID, 'offline_edits_enabled', false);
+		$manifest['offlineEditsEnabled'] = $this->appConfig->getValueBool(AppIdentity::APP_ID, 'offline_edits_enabled', false);
 
 		return new JSONResponse(data: $manifest);
 	}//end manifest()

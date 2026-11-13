@@ -24,9 +24,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretTrashMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTrashService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -86,7 +86,7 @@ class PurgeTrashedSecretsJob extends TimedJob {
 	 */
 	public function retentionDays(): int {
 		$days = $this->appConfig->getValueInt(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'trash_retention_days',
 			SecretTrashService::RETENTION_DEFAULT
 		);
@@ -141,13 +141,13 @@ class PurgeTrashedSecretsJob extends TimedJob {
 			if ($purged > 0) {
 				$this->logger->info(
 					'Keepiq: purged '.$purged.' secrets from the trash',
-					['app' => Application::APP_ID]
+					['app' => AppIdentity::APP_ID]
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: trash purge failed: '.$exception->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}
 	}//end run()
@@ -167,7 +167,7 @@ class PurgeTrashedSecretsJob extends TimedJob {
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'Keepiq: trash purge failed for secret '.$secret->getId().': '.$e->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 			return 0;
 		}

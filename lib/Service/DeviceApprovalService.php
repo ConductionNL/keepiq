@@ -21,13 +21,13 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\DeviceApproval;
 use OCA\Keepiq\Db\DeviceApprovalMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -97,7 +97,7 @@ class DeviceApprovalService {
 	 * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 	 */
 	public function isEnabled(): bool {
-		return $this->appConfig->getValueBool(Application::APP_ID, self::ENABLED_KEY, true);
+		return $this->appConfig->getValueBool(AppIdentity::APP_ID, self::ENABLED_KEY, true);
 	}//end isEnabled()
 
 	/**

@@ -26,8 +26,8 @@ namespace OCA\Keepiq\Controller;
 
 use Closure;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\SecretOrganisationService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -57,7 +57,7 @@ class SecretOrganisationController extends Controller {
 		private SecretOrganisationService $organisation,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

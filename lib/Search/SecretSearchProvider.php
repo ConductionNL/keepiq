@@ -25,9 +25,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Search;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUser;
@@ -98,7 +98,7 @@ class SecretSearchProvider implements IProvider {
 	 *   whether $route belongs to this app, never on the route's parameters.
 	 */
 	public function getOrder(string $route, array $routeParameters): int {
-		if (str_starts_with($route, Application::APP_ID . '.') === true) {
+		if (str_starts_with($route, AppIdentity::APP_ID . '.') === true) {
 			return -1;
 		}
 
@@ -151,7 +151,7 @@ class SecretSearchProvider implements IProvider {
 			'keepiq.dashboard.page'
 		) . 'secrets/' . $secret->getId();
 
-		$icon = $this->urlGenerator->imagePath(Application::APP_ID, 'app.svg');
+		$icon = $this->urlGenerator->imagePath(AppIdentity::APP_ID, 'app.svg');
 
 		return new SearchResultEntry(
 			$icon,

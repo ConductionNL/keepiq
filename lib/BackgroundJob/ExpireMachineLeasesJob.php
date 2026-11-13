@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\LeaseService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -71,13 +71,13 @@ class ExpireMachineLeasesJob extends TimedJob {
 			if ($expired > 0) {
 				$this->logger->info(
 					'Keepiq: expired ' . $expired . ' machine leases',
-					['app' => Application::APP_ID]
+					['app' => AppIdentity::APP_ID]
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: lease expiry sweep failed: ' . $exception->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}
 	}//end run()

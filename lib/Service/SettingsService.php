@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -268,7 +268,7 @@ class SettingsService {
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.5
 	 */
 	public function getUserPreferences(string $userId): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		$adminDefault = $this->appConfig->getValueString(
 			$appId,
 			'default_session_timeout',
@@ -299,7 +299,7 @@ class SettingsService {
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.6
 	 */
 	public function updateUserPreferences(string $userId, array $data): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		foreach ($data as $key => $value) {
 			if (array_key_exists($key, self::USER_PREF_KEYS) === false) {
@@ -344,7 +344,7 @@ class SettingsService {
 	public function getSettings(): array {
 		$settings = [];
 		foreach (self::CONFIG_KEYS as $key => $default) {
-			$settings[$key] = $this->appConfig->getValueString(Application::APP_ID, $key, $default);
+			$settings[$key] = $this->appConfig->getValueString(AppIdentity::APP_ID, $key, $default);
 		}
 
 		$user = $this->userSession->getUser();
@@ -377,7 +377,7 @@ class SettingsService {
 			}
 
 			$this->appConfig->setValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				$key,
 				$this->boundedConfigValue(key: $key, value: $data[$key])
 			);

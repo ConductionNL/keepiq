@@ -26,8 +26,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\RecentlyUsedService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
@@ -63,7 +63,7 @@ class AuditController extends Controller {
 		private IUserSession $userSession,
 		private RecentlyUsedService $recentlyUsed,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

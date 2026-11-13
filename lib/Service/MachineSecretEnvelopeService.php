@@ -27,10 +27,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
@@ -85,7 +85,7 @@ class MachineSecretEnvelopeService {
 	 *
 	 * @var string
 	 */
-	public const UPCOMING_FORMAT_APP_VERSION = KeepiqApp::PRE_STABLE_COMPAT_REMOVED_IN;
+	public const UPCOMING_FORMAT_APP_VERSION = AppIdentity::PRE_STABLE_COMPAT_REMOVED_IN;
 
 	/**
 	 * The encryption scheme identifier naming the existing ADR-003 path

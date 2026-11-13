@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Support\PublicKeyLoaderAdapter;
 use phpseclib4\Crypt\RSA;
 use phpseclib4\Crypt\RSA\PrivateKey;
@@ -167,7 +167,7 @@ class X509CertificateAssembler {
 	private function warnResignFailed(Throwable $exception): void {
 		$this->logger->warning(
 			'Keepiq: phpseclib re-sign failed: ' . $exception->getMessage(),
-			['app' => Application::APP_ID]
+			['app' => AppIdentity::APP_ID]
 		);
 	}//end warnResignFailed()
 

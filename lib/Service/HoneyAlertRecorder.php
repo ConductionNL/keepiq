@@ -28,10 +28,10 @@ namespace OCA\Keepiq\Service;
 
 use DateInterval;
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\HoneyAlert;
 use OCA\Keepiq\Db\HoneyAlertMapper;
 use OCA\Keepiq\Db\HoneyFlag;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 
 /**
@@ -75,7 +75,7 @@ class HoneyAlertRecorder {
 	 */
 	public function record(HoneyFlag $flag, HoneyAccess $access): bool {
 		$now = new DateTime();
-		$window = $this->appConfig->getValueInt(Application::APP_ID, 'honey_dedup_window_seconds', self::DEFAULT_DEDUP_WINDOW);
+		$window = $this->appConfig->getValueInt(AppIdentity::APP_ID, 'honey_dedup_window_seconds', self::DEFAULT_DEDUP_WINDOW);
 		$existing = $this->alertMapper->findLatestForAccessor(
 			honeyFlagId: $flag->getId(),
 			accessorType: $access->accessorType,

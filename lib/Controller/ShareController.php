@@ -26,11 +26,11 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ConflictException;
-use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\VaultKeyProofService;
@@ -78,7 +78,7 @@ class ShareController extends OCSController {
 		private ShareService $shareService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

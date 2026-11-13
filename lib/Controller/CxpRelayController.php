@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -87,7 +87,7 @@ class CxpRelayController extends Controller {
 		private ISecureRandom $secureRandom,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 		// Namespace deliberately still `keepiq_` after the doriath -> keepiq
 		// rename: it is an ICache key prefix, not an app id, and a rename would
 		// drop every in-flight CXP handshake mid-transfer. See appinfo/info.xml.

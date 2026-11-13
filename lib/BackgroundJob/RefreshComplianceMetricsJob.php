@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\ComplianceReportService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -69,7 +69,7 @@ class RefreshComplianceMetricsJob extends TimedJob {
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: compliance metrics refresh failed: ' . $exception->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}
 	}//end run()

@@ -38,9 +38,9 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\ApplicationSecretRequestService;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
@@ -71,7 +71,7 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 		private FolderMapper $folderMapper,
 		private IURLGenerator $urlGenerator,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -345,14 +345,14 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 			// the createWebHistory router — it showed recipients the lock
 			// screen.
 			'fillLinkUrl' => $this->urlGenerator->getAbsoluteURL(
-				$this->urlGenerator->linkToRoute(KeepiqApp::APP_ID . '.publicShell.page')
+				$this->urlGenerator->linkToRoute(AppIdentity::APP_ID . '.publicShell.page')
 				. '/share/request/' . $request->getToken()
 			),
 			// Kept alongside it so a machine polling for fulfilment does not
 			// have to parse the human URL.
 			'fillApiUrl' => $this->urlGenerator->getAbsoluteURL(
 				$this->urlGenerator->linkToRoute(
-					KeepiqApp::APP_ID . '.secretRequestFill.show',
+					AppIdentity::APP_ID . '.secretRequestFill.show',
 					['token' => $request->getToken()]
 				)
 			),

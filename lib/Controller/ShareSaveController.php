@@ -23,11 +23,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\WriteLockedException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
 use OCA\Keepiq\Service\ShareSaveService;
@@ -69,7 +69,7 @@ class ShareSaveController extends OCSController {
 		private ShareSaveService $service,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

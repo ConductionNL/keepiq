@@ -26,8 +26,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\MachineLease;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\LeaseService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -53,7 +53,7 @@ class MachineLeaseController extends ApplicationApiController {
 		IRequest $request,
 		private LeaseService $leaseService,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

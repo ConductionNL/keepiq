@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Repair;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use OCP\IConfig;
 
@@ -61,9 +61,9 @@ class SeedVersionGate {
 			return null;
 		}
 
-		$appVersion = $this->appConfig->getValueString(Application::APP_ID, 'installed_version', '');
+		$appVersion = $this->appConfig->getValueString(AppIdentity::APP_ID, 'installed_version', '');
 		if ($appVersion !== ''
-			&& $this->appConfig->getValueString(Application::APP_ID, $key, '') === $appVersion
+			&& $this->appConfig->getValueString(AppIdentity::APP_ID, $key, '') === $appVersion
 		) {
 			return null;
 		}
@@ -82,6 +82,6 @@ class SeedVersionGate {
 	 * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
 	 */
 	public function markSeeded(string $key, string $version): void {
-		$this->appConfig->setValueString(Application::APP_ID, $key, $version);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, $key, $version);
 	}//end markSeeded()
 }//end class

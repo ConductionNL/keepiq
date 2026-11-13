@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Settings\AdminSettings;
@@ -60,7 +60,7 @@ class AdminAreaSettingsController extends Controller {
 		private SettingsService $settingsService,
 		private ?ConnectionReporter $connectionReporter = null,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

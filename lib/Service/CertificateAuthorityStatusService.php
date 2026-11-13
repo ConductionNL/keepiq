@@ -29,12 +29,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 
@@ -86,7 +86,7 @@ class CertificateAuthorityStatusService {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
 	 */
 	public function getStatus(): array {
-		$caStatus = $this->appConfig->getValueString(Application::APP_ID, 'ca_status', 'unknown');
+		$caStatus = $this->appConfig->getValueString(AppIdentity::APP_ID, 'ca_status', 'unknown');
 
 		if ($caStatus === 'degraded') {
 			return self::NOT_CONFIGURED;

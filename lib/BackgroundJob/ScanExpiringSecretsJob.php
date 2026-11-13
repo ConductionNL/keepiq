@@ -26,10 +26,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RotationPolicyService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -102,7 +102,7 @@ class ScanExpiringSecretsJob extends TimedJob {
 					// carry whatever the failing call put in it (keepiq#728).
 					$this->logger->warning(
 						'Keepiq: expiry scan failed for secret '.$secret->getId().': '.$exception::class,
-						['app' => Application::APP_ID]
+						['app' => AppIdentity::APP_ID]
 					);
 				}
 			}
@@ -118,7 +118,7 @@ class ScanExpiringSecretsJob extends TimedJob {
 	 */
 	private function reminderThresholds(): array {
 		$thresholds = json_decode(
-			$this->appConfig->getValueString(Application::APP_ID, 'expiry_reminder_days', '[30,7,1]'),
+			$this->appConfig->getValueString(AppIdentity::APP_ID, 'expiry_reminder_days', '[30,7,1]'),
 			true
 		);
 		if (is_array($thresholds) === false || $thresholds === []) {

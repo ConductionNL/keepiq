@@ -31,9 +31,9 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\IAppConfig;
 use OCP\IUserManager;
@@ -194,7 +194,7 @@ class EncryptionSuiteProvisioningService {
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-creation-on-first-login
 	 */
 	private function signFor(string $ownerType, string $ownerId, string $publicKeyPem): string {
-		$caStatus = $this->appConfig->getValueString(Application::APP_ID, 'ca_status', 'unknown');
+		$caStatus = $this->appConfig->getValueString(AppIdentity::APP_ID, 'ca_status', 'unknown');
 		if ($caStatus !== 'healthy') {
 			throw new RuntimeException('Cannot create EncryptionSuite: CA is not healthy (status: ' . $caStatus . ')');
 		}

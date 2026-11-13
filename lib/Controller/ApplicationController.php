@@ -25,8 +25,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\ApplicationService;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
@@ -64,7 +64,7 @@ class ApplicationController extends OCSController {
 		private AdminAreaAuthorizer $areas,
 		private IAppConfig $appConfig,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -210,7 +210,7 @@ class ApplicationController extends OCSController {
 			// app-config. The flag is read on every call (cheap key
 			// lookup) so toggling it takes effect immediately.
 			$anonEnabled = $this->appConfig->getValueString(
-				KeepiqApp::APP_ID,
+				AppIdentity::APP_ID,
 				'anonymous_application_registration_enabled',
 				'0'
 			);

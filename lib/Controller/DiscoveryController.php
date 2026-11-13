@@ -42,7 +42,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AudiencePolicy;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\JwtAuthService;
@@ -54,8 +54,8 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
-use Psr\Log\LoggerInterface;
 use OCP\IURLGenerator;
+use Psr\Log\LoggerInterface;
 
 /**
  * Public discovery endpoint for the machine secret-store API.
@@ -90,7 +90,7 @@ class DiscoveryController extends Controller {
 	 *
 	 * @var string
 	 */
-	public const DEPRECATED_PATH_REMOVED_IN = KeepiqApp::PRE_STABLE_COMPAT_REMOVED_IN;
+	public const DEPRECATED_PATH_REMOVED_IN = AppIdentity::PRE_STABLE_COMPAT_REMOVED_IN;
 
 	/**
 	 * Constructor for DiscoveryController.
@@ -110,7 +110,7 @@ class DiscoveryController extends Controller {
 		private ?LoggerInterface $logger = null,
 		private ?FederationRootService $federationRoot = null,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -212,9 +212,9 @@ class DiscoveryController extends Controller {
 				// addressing change.
 				'lease' => [
 					'supported' => true,
-					'defaultTtl' => $this->appConfig?->getValueInt(KeepiqApp::APP_ID, 'lease_default_ttl_seconds', 900) ?? 900,
-					'maxTtl' => $this->appConfig?->getValueInt(KeepiqApp::APP_ID, 'lease_max_ttl_seconds', 86400) ?? 86400,
-					'renewable' => $this->appConfig?->getValueBool(KeepiqApp::APP_ID, 'lease_renewable', true) ?? true,
+					'defaultTtl' => $this->appConfig?->getValueInt(AppIdentity::APP_ID, 'lease_default_ttl_seconds', 900) ?? 900,
+					'maxTtl' => $this->appConfig?->getValueInt(AppIdentity::APP_ID, 'lease_max_ttl_seconds', 86400) ?? 86400,
+					'renewable' => $this->appConfig?->getValueBool(AppIdentity::APP_ID, 'lease_renewable', true) ?? true,
 				],
 			]
 		);

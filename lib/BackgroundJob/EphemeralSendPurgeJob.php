@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\EphemeralSendService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -69,13 +69,13 @@ class EphemeralSendPurgeJob extends TimedJob {
 			if ($purged > 0) {
 				$this->logger->info(
 					'Keepiq: purged ' . $purged . ' dead ephemeral sends',
-					['app' => Application::APP_ID]
+					['app' => AppIdentity::APP_ID]
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: ephemeral-send purge failed: ' . $exception->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}
 	}//end run()

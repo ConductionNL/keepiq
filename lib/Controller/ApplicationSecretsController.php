@@ -37,12 +37,12 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\MachineSecretEnvelopeService;
 use OCA\Keepiq\Service\MachineSecretResponseService;
 use OCA\Keepiq\Service\SecretService;
@@ -100,7 +100,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 		private MachineSecretEnvelopeService $envelopeService,
 		private MachineSecretResponseService $responseService,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

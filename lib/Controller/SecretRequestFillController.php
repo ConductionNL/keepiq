@@ -31,10 +31,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
@@ -66,7 +66,7 @@ class SecretRequestFillController extends OCSController {
 		private SecretRequestService $secretRequestService,
 		private EncryptionSuiteService $suiteService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

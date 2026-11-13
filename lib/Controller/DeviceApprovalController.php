@@ -20,10 +20,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\DeviceApprovalRequest;
 use OCA\Keepiq\Service\DeviceApprovalService;
 use OCA\Keepiq\Service\VaultKeyProofService;
@@ -57,7 +57,7 @@ class DeviceApprovalController extends Controller {
 		private DeviceApprovalService $approvals,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

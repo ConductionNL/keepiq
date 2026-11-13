@@ -28,11 +28,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\FederatedInbound;
 use OCA\Keepiq\Db\FederatedInboundMapper;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Federation\Exceptions\ProviderCouldNotAddShareException;
 use OCP\Federation\ICloudFederationShare;
@@ -189,7 +189,7 @@ class FederatedShareReceiver {
 			&& $this->userManager->userExists($userId) === true
 			&& $this->config->getUserValue(
 				$userId,
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				FederatedCertificateService::RECEIVE_PREFERENCE,
 				'0'
 			) === '1';

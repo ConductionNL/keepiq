@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\ComplianceReportService;
 use OCA\Keepiq\Service\Siem\SiemSinkRequest;
@@ -64,7 +64,7 @@ class AdminAuditController extends Controller {
 		private SiemService $siem,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

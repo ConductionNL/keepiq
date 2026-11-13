@@ -25,10 +25,10 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\NewLinkShare;
@@ -69,7 +69,7 @@ class LinkShareController extends OCSController {
 		private IUserSession $userSession,
 		private IURLGenerator $urlGenerator,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

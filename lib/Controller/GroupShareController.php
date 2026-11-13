@@ -30,9 +30,9 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionRules;
@@ -61,7 +61,7 @@ class GroupShareController extends OCSController {
 		private GroupShareService $groupShareService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
