@@ -180,10 +180,6 @@ class SecretRequestController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		// Resolve the three creation paths to one explicit mode here, so the
-		// dispatcher below is a plain lookup rather than a flag-driven branch.
-		// An applicationId wins over the re-request discriminator, matching
-		// the original precedence.
 		// A re-request overwrites values in an existing Secret, so it cannot be
 		// asked for without naming one. Refused explicitly rather than left to
 		// fail deeper with a generic 'secretId is required', because the two
@@ -195,17 +191,9 @@ class SecretRequestController extends OCSController {
 			);
 		}
 
-		$mode = match (true) {
-			($applicationId !== null && $applicationId !== '') => self::MODE_APPLICATION,
-			($isReRequest === true) => self::MODE_RE_REQUEST,
-			// No Secret named and not a re-request: the system creates one.
-			($secretId === '') => self::MODE_FRESH,
-			default => self::MODE_PLAIN,
-		};
-
 		try {
 			$entity = $this->dispatchCreate(
-				mode: $mode,
+				mode: $this->createMode(secretId: $secretId, isReRequest: $isReRequest, applicationId: $applicationId),
 				secretId: $secretId,
 				encryptionSuiteId: $encryptionSuiteId,
 				requestedFields: $requestedFields,
@@ -216,20 +204,52 @@ class SecretRequestController extends OCSController {
 				folderId: $folderId
 			);
 		} catch (InvalidArgumentException $e) {
-			$code = $e->getCode();
-			$status = Http::STATUS_BAD_REQUEST;
-			if ($code === 403 || $code === 404 || $code === 409) {
-				$status = $code;
-			}
-
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
-				statusCode: $status
+				statusCode: $this->refusalStatus(exception: $e)
 			);
 		}//end try
 
 		return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
 	}//end create()
+
+	/**
+	 * Resolve the three creation paths to one explicit mode, so the dispatcher
+	 * is a plain lookup rather than a flag-driven branch. An applicationId wins
+	 * over the re-request discriminator.
+	 *
+	 * @param string $secretId The Secret named in the request, or ''
+	 * @param bool $isReRequest Whether the request is a re-request
+	 * @param string|null $applicationId The owning application ID, if any
+	 *
+	 * @return string One of the MODE_* constants
+	 */
+	private function createMode(string $secretId, bool $isReRequest, ?string $applicationId): string {
+		return match (true) {
+			($applicationId !== null && $applicationId !== '') => self::MODE_APPLICATION,
+			($isReRequest === true) => self::MODE_RE_REQUEST,
+			// No Secret named and not a re-request: the system creates one.
+			($secretId === '') => self::MODE_FRESH,
+			default => self::MODE_PLAIN,
+		};
+	}//end createMode()
+
+	/**
+	 * Map a service refusal to its HTTP status: 403, 404 and 409 pass
+	 * through, anything else is a 400.
+	 *
+	 * @param InvalidArgumentException $exception The service refusal
+	 *
+	 * @return int The HTTP status
+	 */
+	private function refusalStatus(InvalidArgumentException $exception): int {
+		$code = $exception->getCode();
+		if ($code === 403 || $code === 404 || $code === 409) {
+			return $code;
+		}
+
+		return Http::STATUS_BAD_REQUEST;
+	}//end refusalStatus()
 
 	/**
 	 * Parse the optional expiry timestamp. An unparseable value surfaces as

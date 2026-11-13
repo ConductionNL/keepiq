@@ -94,6 +94,132 @@ export function typeIdResolver(types) {
 	}
 }
 
+/**
+ * The single root folder to import beneath, or '' for none. A slash would
+ * split the one folder into a path, so it becomes a dash (keepiq#749).
+ *
+ * @param {object} options The commit() options.
+ * @return {string} The root folder name.
+ */
+function rootFolderName(options) {
+	return typeof options.rootFolder === 'string'
+		? options.rootFolder.replaceAll('/', '-').trim()
+		: ''
+}
+
+/**
+ * Fetch the type list when a row names a type other than the default and the
+ * list is not loaded yet. Best-effort: a failed fetch is not fatal.
+ *
+ * @param {object} typeStore The secret type store.
+ * @param {Array<object>} rows The rows to import.
+ * @return {Promise<void>}
+ */
+async function ensureTypesLoaded(typeStore, rows) {
+	const needsTypes = rows.some(
+		(row) =>
+			typeof row.type === 'string'
+			&& row.type !== ''
+			&& row.type !== DEFAULT_TYPE_NAME,
+	)
+	if (
+		needsTypes
+		&& (!Array.isArray(typeStore.types) || typeStore.types.length === 0)
+	) {
+		try {
+			await typeStore.fetchTypes()
+		} catch {
+			// Non-fatal.
+		}
+	}
+}
+
+/**
+ * Encrypt every row into a commit item, in row order.
+ *
+ * @param {object} store The import store (for encryptRow).
+ * @param {Array<object>} rows The accepted rows.
+ * @param {object} context Encryption context.
+ * @param {CryptoKey} context.publicKey The vault public key.
+ * @param {Set<number>} context.dupRows Source rows to import as a copy.
+ * @param {function((string|null|undefined)): (string|null)} context.typeIdFor Maps a row type to a type id.
+ * @param {string} context.rootFolder Root folder name, or ''.
+ * @return {Promise<Array<object>>} The encrypted items.
+ */
+async function encryptRows(store, rows, { publicKey, dupRows, typeIdFor, rootFolder }) {
+	const items = []
+	for (const row of rows) {
+		const asCopy = dupRows.has(row.sourceRow)
+		const item = await store.encryptRow(
+			row,
+			publicKey,
+			asCopy,
+			typeIdFor(row.type),
+		)
+		if (rootFolder !== '') {
+			item.folderPath = [rootFolder, ...item.folderPath]
+		}
+		items.push(item)
+	}
+	return items
+}
+
+/**
+ * The distinct, non-empty folder paths a chunk's items live in.
+ *
+ * @param {Array<object>} chunk The chunk's items.
+ * @return {Array<Array<string>>} Folder paths as segment arrays.
+ */
+function chunkFolders(chunk) {
+	return [
+		...new Set(
+			chunk
+				.map((it) => it.folderPath.join('/'))
+				.filter((p) => p !== ''),
+		),
+	].map((p) => p.split('/'))
+}
+
+/**
+ * Fold one chunk's server result into the rejected list and the set of
+ * created folders. A null result (the chunk failed twice) rejects all its rows.
+ *
+ * @param {Array<object>} rejected The rejected list, appended to.
+ * @param {Array<object>} chunk The chunk's items.
+ * @param {object|null} result The server result.
+ * @param {Set<string>} foldersCreated Created folders, added to.
+ * @return {number} The number of items created.
+ */
+function foldChunkResult(rejected, chunk, result, foldersCreated) {
+	if (result === null) {
+		for (const it of chunk) {
+			rejected.push({
+				sourceRow: it.sourceRow,
+				reason: 'server error',
+				name: it.name,
+			})
+		}
+		return 0
+	}
+	let created = 0
+	for (const r of result.results || []) {
+		const item = chunk[r.index]
+		if (r.status === 'created') {
+			created += 1
+		} else {
+			rejected.push({
+				sourceRow: item ? item.sourceRow : r.index,
+				reason: r.error || 'rejected by server',
+				name: item ? item.name : '',
+			})
+		}
+	}
+	for (const f of result.foldersCreated || []) {
+		foldersCreated.add(f)
+	}
+	return created
+}
+
 export const useImportStore = defineStore('import', {
 	state: () => ({
 		/** @type {string} The current wizard step. */
@@ -382,11 +508,7 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
 		async commit(options = {}) {
-			// A slash would split the one folder into a path.
-			const rootFolder =
-				typeof options.rootFolder === 'string'
-					? options.rootFolder.replaceAll('/', '-').trim()
-					: ''
+			const rootFolder = rootFolderName(options)
 			const session = useSessionStore()
 			if (!session.certificate || session.isLocked) {
 				throw new Error('Vault is locked')
@@ -402,46 +524,19 @@ export const useImportStore = defineStore('import', {
 			// Resolve every row's type to a type id this vault knows: a type id
 			// from a backup, or a type name from a parser or an older backup
 			// (keepiq#749; add-totp-secrets D6, passkey-item-type D5,
-			// card-identity-items §5.1). The type list is fetched only when a
-			// row names a type other than the default. Best-effort: without the
-			// list every row imports under the default type.
+			// card-identity-items §5.1). Without the type list every row
+			// imports under the default type.
 			const typeStore = useSecretTypeStore()
-			const needsTypes = rows.some(
-				(row) =>
-					typeof row.type === 'string'
-					&& row.type !== ''
-					&& row.type !== DEFAULT_TYPE_NAME,
-			)
-			if (
-				needsTypes
-				&& (!Array.isArray(typeStore.types) || typeStore.types.length === 0)
-			) {
-				try {
-					await typeStore.fetchTypes()
-				} catch {
-					// Non-fatal.
-				}
-			}
+			await ensureTypesLoaded(typeStore, rows)
 			const typeIdFor = typeIdResolver(typeStore.types)
 			await this.dropPolicyRejected(rows, typeStore.types)
 
 			// Encrypt every row client-side BEFORE any request leaves the browser.
-			const items = []
-			const itemRowByIndex = []
-			for (const row of rows) {
-				const asCopy = dupRows.has(row.sourceRow)
-				const item = await this.encryptRow(
-					row,
-					publicKey,
-					asCopy,
-					typeIdFor(row.type),
-				)
-				if (rootFolder !== '') {
-					item.folderPath = [rootFolder, ...item.folderPath]
-				}
-				items.push(item)
-				itemRowByIndex.push(row)
-			}
+			const items = await encryptRows(
+				this,
+				rows,
+				{ publicKey, dupRows, typeIdFor, rootFolder },
+			)
 
 			const chunks = []
 			for (let i = 0; i < items.length; i += COMMIT_CHUNK_SIZE) {
@@ -454,40 +549,11 @@ export const useImportStore = defineStore('import', {
 			const foldersCreated = new Set()
 
 			for (const chunk of chunks) {
-				const folders = [
-					...new Set(
-						chunk
-							.map((it) => it.folderPath.join('/'))
-							.filter((p) => p !== ''),
-					),
-				].map((p) => p.split('/'))
-				const result = await this.postChunk({ folders, items: chunk })
-				if (result === null) {
-					// Chunk failed twice: reject all its rows.
-					for (const it of chunk) {
-						this.rejected.push({
-							sourceRow: it.sourceRow,
-							reason: 'server error',
-							name: it.name,
-						})
-					}
-				} else {
-					for (const r of result.results || []) {
-						const item = chunk[r.index]
-						if (r.status === 'created') {
-							created += 1
-						} else {
-							this.rejected.push({
-								sourceRow: item ? item.sourceRow : r.index,
-								reason: r.error || 'rejected by server',
-								name: item ? item.name : '',
-							})
-						}
-					}
-					for (const f of result.foldersCreated || []) {
-						foldersCreated.add(f)
-					}
-				}
+				const result = await this.postChunk({
+					folders: chunkFolders(chunk),
+					items: chunk,
+				})
+				created += foldChunkResult(this.rejected, chunk, result, foldersCreated)
 				this.committedChunks += 1
 			}
 
