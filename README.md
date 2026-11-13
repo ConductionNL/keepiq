@@ -28,7 +28,7 @@ Securely store and share secrets (passwords, API keys, certificates) for Nextclo
 ## Test coverage
 
 <!-- coverage:start -->
-Measured test coverage: 80.2% of statements (PHP 80.2% of 24,971 statements), at commit `47966a3b3` on 2026-11-11. The JavaScript frontend is not in this figure, because it has no coverage measurement yet. The figures come from [`coverage-summary.json`](coverage-summary.json); refresh them with `composer coverage:publish`.
+Measured test coverage: 82.9% of statements (PHP 82.9% of 25,057 statements), at commit `8420d1798` on 2026-11-13. The JavaScript frontend is not in this figure, because it has no coverage measurement yet. The figures come from [`coverage-summary.json`](coverage-summary.json); refresh them with `composer coverage:publish`.
 <!-- coverage:end -->
 
 ## Screenshots
