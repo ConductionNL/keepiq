@@ -3,7 +3,7 @@
     "info": {
         "title": "Keepiq",
         "version": "0.3.9-unstable.20261111130000",
-        "description": "The versioned JSON API of Keepiq, the password and secrets vault for Nextcloud: secrets, folders, shares, emergency access, recovery, applications and the admin API. Authenticate as a Nextcloud user: a browser session, or an app password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here.",
+        "description": "The versioned JSON API of Keepiq, the password and secrets vault for Nextcloud: secrets, folders, shares, emergency access, recovery, applications and the admin API. Authenticate as a Nextcloud user: a browser session, or an app password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here. Errors on the /api/v1/ paths of the unversioned routes are RFC 9457 problem details (application/problem+json); the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json.",
         "contact": {
             "name": "Conduction B.V.",
             "email": "info@conduction.nl",
@@ -4469,9 +4469,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -8783,9 +8783,9 @@
                     "400": {
                         "description": "The request is invalid",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -8793,9 +8793,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -8853,9 +8853,9 @@
                     "400": {
                         "description": "The request is invalid",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -8863,9 +8863,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13629,9 +13629,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13665,9 +13665,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13701,9 +13701,9 @@
                     "400": {
                         "description": "The request is invalid",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13711,9 +13711,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13749,9 +13749,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13785,9 +13785,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13823,9 +13823,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13859,9 +13859,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13897,9 +13897,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13933,9 +13933,9 @@
                     "400": {
                         "description": "The request is invalid",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13943,9 +13943,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -13981,9 +13981,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -14019,9 +14019,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -14055,9 +14055,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -14093,9 +14093,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -14129,9 +14129,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -14178,9 +14178,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -14188,9 +14188,9 @@
                     "503": {
                         "description": "Service unavailable",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -14226,9 +14226,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -14264,9 +14264,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -14300,9 +14300,9 @@
                     "401": {
                         "description": "Not logged in",
                         "content": {
-                            "application/json": {
+                            "application/problem+json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Error"
+                                    "$ref": "#/components/schemas/Problem"
                                 }
                             }
                         }
@@ -17172,6 +17172,42 @@
             }
         },
         "schemas": {
+            "Problem": {
+                "type": "object",
+                "description": "An RFC 9457 problem detail. The members of the error body the route sent (`message`, `error`) are kept beside these.",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "A URI naming the problem type; `about:blank` when the status says it all."
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "The reason phrase of the HTTP status."
+                    },
+                    "status": {
+                        "type": "integer",
+                        "description": "The HTTP status code."
+                    },
+                    "detail": {
+                        "type": "string",
+                        "description": "A human-readable explanation of this occurrence."
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "The human-readable explanation the route sent."
+                    },
+                    "error": {
+                        "type": "string",
+                        "description": "A machine-readable code, on a refusal."
+                    }
+                },
+                "required": [
+                    "type",
+                    "title",
+                    "status"
+                ],
+                "additionalProperties": true
+            },
             "Error": {
                 "type": "object",
                 "properties": {
