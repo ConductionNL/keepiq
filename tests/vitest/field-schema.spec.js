@@ -9,6 +9,7 @@
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 
 import { describe, expect, it } from 'vitest'
@@ -25,12 +26,14 @@ import {
 	inputOf,
 	isHiddenSchema,
 	mergeBlobs,
+	mergeFilledBlob,
 	presetOf,
 	presetOptions,
 	presetSchema,
 	schemaError,
 	schemasOf,
 	valuesFit,
+	withRequestedFields,
 	withSchemas,
 } from '../../src/utils/fieldSchema.js'
 
@@ -147,7 +150,7 @@ describe('field schemas', () => {
 		})
 	})
 
-	it('merges a filled-in schema into the stored ones', () => {
+	it('merges an imported schema into the stored ones', () => {
 		const own = {
 			Host: 'db',
 			'@schema': { Host: { type: 'string', format: 'hostname' } },
@@ -165,6 +168,58 @@ describe('field schemas', () => {
 				PIN: { type: 'string', hidden: true },
 			},
 		})
+	})
+
+	it('takes only the values from a fill: the stored schemas stay', () => {
+		const own = {
+			Host: 'db',
+			PIN: '',
+			'@schema': {
+				Host: { type: 'string', hidden: true },
+				PIN: { type: 'string', pattern: '^[0-9]{4}$' },
+			},
+		}
+		// A crafted fill trying to unmask Host, retype PIN and add a pattern.
+		const filled = {
+			PIN: '1234',
+			Note: 'hi',
+			'@schema': {
+				Host: { type: 'string' },
+				PIN: { type: 'boolean' },
+				Note: { type: 'string', pattern: '^(a+)+$' },
+			},
+		}
+
+		expect(mergeFilledBlob(own, filled)).toEqual({
+			Host: 'db',
+			PIN: '1234',
+			Note: 'hi',
+			'@schema': {
+				Host: { type: 'string', hidden: true },
+				PIN: { type: 'string', pattern: '^[0-9]{4}$' },
+			},
+		})
+	})
+
+	it('adds the requested fields empty, with their schemas, before a fill', () => {
+		const own = {
+			Host: 'db',
+			'@schema': { Host: { type: 'string', format: 'hostname' } },
+		}
+
+		expect(
+			withRequestedFields(own, ['Host', 'PIN'], {
+				PIN: { type: 'string', hidden: true },
+			}),
+		).toEqual({
+			Host: 'db',
+			PIN: '',
+			'@schema': {
+				Host: { type: 'string', format: 'hostname' },
+				PIN: { type: 'string', hidden: true },
+			},
+		})
+		expect(withRequestedFields(null, ['Note'], {})).toEqual({ Note: '' })
 	})
 
 	it('blocks a form while a value or a built-in field does not fit', () => {

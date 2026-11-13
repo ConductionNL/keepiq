@@ -4,7 +4,8 @@
  *
  * The request dialog sends the schema of each requested custom field: the
  * preset picked for a name typed in the dialog, the one the secret stores for
- * a field it already has, and none for plain text.
+ * a field it already has, and none for plain text. Once the request is made,
+ * it writes the requested fields into the secret with those schemas.
  *
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
@@ -13,6 +14,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretRequestCreateDialog from '../../src/dialogs/SecretRequestCreateDialog.vue'
+import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretRequestStore } from '../../src/store/modules/secretRequest.js'
 
 const ncStubs = {
@@ -28,9 +30,11 @@ describe('SecretRequestCreateDialog field schemas', () => {
 		setActivePinia(createPinia())
 	})
 
-	it('sends the schemas of the requested custom fields', async () => {
+	it('sends the schemas of the requested custom fields, then writes them into the secret', async () => {
 		const store = useSecretRequestStore()
 		store.createRequest = vi.fn().mockResolvedValue({ id: 'r', token: 't' })
+		const secrets = useSecretStore()
+		secrets.prepareRequestedFields = vi.fn().mockResolvedValue()
 
 		const wrapper = mount(SecretRequestCreateDialog, {
 			propsData: {
@@ -62,6 +66,14 @@ describe('SecretRequestCreateDialog field schemas', () => {
 			Account: { type: 'object', hidden: true },
 			PIN: { type: 'string', hidden: true },
 		})
+		expect(secrets.prepareRequestedFields).toHaveBeenCalledWith(
+			'secret-1',
+			['Account', 'Notes', 'PIN'],
+			{
+				Account: { type: 'object', hidden: true },
+				PIN: { type: 'string', hidden: true },
+			},
+		)
 	})
 
 	it('refines a new field under Advanced and lists it as Custom', async () => {

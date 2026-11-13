@@ -306,7 +306,9 @@ import {
 import Delete from 'vue-material-design-icons/Delete.vue'
 import SchemaAdvanced from '../components/SchemaAdvanced.vue'
 import { CARD_TYPE_NAME, IDENTITY_TYPE_NAME } from '../cardIdentity/cardIdentity.js'
+import { PASSKEY_TYPE_NAME } from '../passkey/passkey.js'
 import { useFolderStore } from '../store/modules/folder.js'
+import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import {
@@ -342,11 +344,16 @@ import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
  * link is what a scam looks like, and there is no legitimate use the request
  * flow needs to serve (backend review, 2026-11-04). Their fields also live
  * packed together in the one encrypted `key`, which a fill cannot address part
- * of.
+ * of. A passkey holds its private key, which signs in as its owner, so the
+ * server refuses it as well.
  *
  * @type {Array<string>}
  */
-const NOT_REQUESTABLE_TYPE_NAMES = [CARD_TYPE_NAME, IDENTITY_TYPE_NAME]
+const NOT_REQUESTABLE_TYPE_NAMES = [
+	CARD_TYPE_NAME,
+	IDENTITY_TYPE_NAME,
+	PASSKEY_TYPE_NAME,
+]
 
 /**
  * Whether a request may be asked for as this type.
@@ -909,6 +916,7 @@ export default {
 			this.submitting = true
 			try {
 				const request = await this.sendRequest()
+				await this.prepareFields(request)
 				if (request && request.token) {
 					// The recipient has no Nextcloud account, so this must point at
 					// the ANONYMOUS shell (`publicShell#page`) carrying the router's
@@ -975,6 +983,41 @@ export default {
 				)
 			}
 			return store.createRequest(this.requestPayload(expires))
+		},
+
+		/**
+		 * Write the requested custom fields into the secret, empty, with
+		 * their schemas, so the schemas come from the owner and a fill only
+		 * adds values. A type's own fields are left out: the type gives them
+		 * their schema, and an empty one is not stored. Best effort: the
+		 * request is made either way, and without the schemas the filled
+		 * values arrive as text.
+		 *
+		 * @param {object|null} request The created request.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		async prepareFields(request) {
+			const id = request?.secretId || this.secret?.id
+			const typeLabels = typeFieldsOf(this.targetType).map((f) => f.label)
+			const names = this.requestedFields.filter(
+				(name) =>
+					!['key', 'login', 'url'].includes(name)
+					&& !typeLabels.includes(name),
+			)
+			if (!id || names.length === 0) {
+				return
+			}
+			const schemas = Object.fromEntries(
+				Object.entries(this.requestedSchemas).filter(([name]) =>
+					names.includes(name),
+				),
+			)
+			try {
+				await useSecretStore().prepareRequestedFields(id, names, schemas)
+			} catch {
+				// The request stands; its values then arrive without schemas.
+			}
 		},
 
 		/**

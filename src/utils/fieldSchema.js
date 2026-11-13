@@ -473,18 +473,53 @@ export function fitImportedBlob(blob) {
 }
 
 /**
- * Merge filled-in members into a blob, the schemas member by member, so a
- * request's schema joins the ones already stored rather than replacing them.
+ * Merge imported members into a blob, the schemas member by member, so an
+ * imported schema joins the ones already stored rather than replacing them.
+ *
+ * @param {object} own The stored blob.
+ * @param {object} incoming The imported members.
+ * @return {object} The merged blob.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ */
+export function mergeBlobs(own, incoming) {
+	const fields = { ...fieldsOf(own), ...fieldsOf(incoming) }
+	const schemas = { ...schemasOf(own), ...schemasOf(incoming) }
+	return withSchemas(fields, schemas)
+}
+
+/**
+ * Merge the members a request filled in into a blob. Only the values are
+ * taken: the schemas stay the stored ones, which the owner wrote when asking,
+ * because whoever holds a fill link can put anything in the blob it seals.
  *
  * @param {object} own The stored blob.
  * @param {object} incoming The members a request filled in.
  * @return {object} The merged blob.
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
-export function mergeBlobs(own, incoming) {
-	const fields = { ...fieldsOf(own), ...fieldsOf(incoming) }
-	const schemas = { ...schemasOf(own), ...schemasOf(incoming) }
-	return withSchemas(fields, schemas)
+export function mergeFilledBlob(own, incoming) {
+	return withSchemas({ ...fieldsOf(own), ...fieldsOf(incoming) }, schemasOf(own))
+}
+
+/**
+ * A blob with the fields a request asks for: each name not stored yet as an
+ * empty field, and the requested schemas over the stored ones, so the
+ * schemas are on the secret before anyone fills it in.
+ *
+ * @param {object|null|undefined} own The stored blob.
+ * @param {Array<string>} names The requested custom field names.
+ * @param {object} schemas The requested schemas by field name.
+ * @return {object} The blob.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+export function withRequestedFields(own, names, schemas) {
+	const fields = fieldsOf(own)
+	for (const name of names) {
+		if (!Object.hasOwn(fields, name)) {
+			fields[name] = ''
+		}
+	}
+	return withSchemas(fields, { ...schemasOf(own), ...schemas })
 }
 
 /**
