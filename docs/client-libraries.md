@@ -61,6 +61,7 @@ The three libraries offer the same calls:
 | update | Replaces the fields you name and leaves the others alone. |
 
 Values go in `key`, `login` and `additionalFields`. The library encrypts them with your own key before sending.
+The decrypted `additionalFields` can hold a reserved `@schema` entry with the kind of each field; see [Additional fields](./additional-fields.md) and skip it when you list fields.
 `name`, `url` and `typeId` travel as they are, so keep secrets out of them.
 
 Each library finds the instance through the discovery document and signs the token request with your key.

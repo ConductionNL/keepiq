@@ -31,9 +31,49 @@ Two consequences follow from this, and both are deliberate:
   set — a field added in the other session is lost. The Edit dialog always loads
   the current values first, so the window is small, but it exists.
 
-## Three names you cannot use
+## Saying what a field holds
 
-`key`, `login` and `url` are refused, with a reason shown.
+Each field has a **kind**: Text, Multi-line text, Password, URL, Email, Number,
+Yes/no, Date or JSON object. The kind decides how you enter the value and how the
+detail view shows it: a URL becomes a link, a Password stays hidden until you
+choose Show, and a JSON object opens in a code viewer.
+
+Under **Advanced** you see what the kind means as a JSON Schema property, the same
+words OpenRegister uses: a type (`string`, `integer`, `number`, `boolean`,
+`object`), a format for text (such as `uri`, `email` or `date`), and limits such
+as a minimum and maximum length, a pattern, or a minimum and maximum number. The
+**Hidden** switch works on every type, so a JSON object or a URL with a token in it
+can stay hidden too.
+
+A value that does not fit its field is refused when you save, with the reason. An
+import keeps such a value but drops the field's kind, so it shows as plain text.
+
+## The `@schema` entry, for applications
+
+The kinds are stored in the same encrypted blob as the values, under one reserved
+entry named `@schema`: a map from field name to its schema. A field without an
+entry is plain text, so secrets saved before kinds existed read as before.
+
+```json
+{
+  "Port": "5432",
+  "Service account": "{\"type\": \"service_account\"}",
+  "@schema": {
+    "Port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "Service account": { "type": "object", "hidden": true }
+  }
+}
+```
+
+Every value stays a string: a number as its digits, a yes/no as `"true"` or
+`"false"`, an object as JSON text. An application that reads the decrypted
+additional fields sees `@schema` as an entry of its own, so **skip it when you list
+the fields**.
+
+## Names you cannot use
+
+`key`, `login` and `url` are refused, with a reason shown, and so is `@schema`,
+which holds the kinds.
 
 Those names already belong to the secret's own fields. A field named `url` would
 not be a second field that happens to be called that — it would collide with the
