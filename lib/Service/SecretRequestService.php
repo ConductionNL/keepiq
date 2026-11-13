@@ -105,19 +105,26 @@ class SecretRequestService {
 	 * Look up a pending, non-expired request by its public access token.
 	 *
 	 * Distinguishes locked / expired / fulfilled / unknown via specific
-	 * error codes so the public fill page can render targeted messaging.
+	 * error codes so the public fill page can render targeted messaging. The
+	 * Secret's type is checked again: its owner may have changed it to one
+	 * that cannot be requested since the request was made.
 	 *
 	 * @param string $token The access token
 	 *
 	 * @return SecretRequest
 	 *
 	 * @throws InvalidArgumentException With code 404 (unknown), 410 (fulfilled),
-	 *                                  423 (locked) or 408 (expired).
+	 *                                  423 (locked), 408 (expired) or 403 (a type
+	 *                                  that cannot be requested).
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function getByToken(string $token): SecretRequest {
-		return $this->policy->requireOpenByToken(token: $token);
+		$request = $this->policy->requireOpenByToken(token: $token);
+		$this->requireRequestableSecret(secretId: $request->getSecretId());
+
+		return $request;
 	}//end getByToken()
 
 	/**
@@ -187,6 +194,7 @@ class SecretRequestService {
 	 * @throws \OCA\Keepiq\Exception\ShareScanPendingException When the share row naming the secret waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function fill(string $token, array $encryptedFields, array $plainFields = []): SecretRequest {
 		$entity = $this->policy->requireOpenByToken(token: $token);
@@ -249,9 +257,10 @@ class SecretRequestService {
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException When a field name has nowhere to be stored
+	 * @throws InvalidArgumentException When a field name has nowhere to be stored, or with code 403 for a type that cannot be requested
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	private function persistFilledValues(
 		SecretRequest $request,
@@ -265,7 +274,10 @@ class SecretRequestService {
 			return;
 		}
 
-		$this->writeFilledValues(secret: $this->fillTarget(request: $request), data: $data);
+		$secret = $this->fillTarget(request: $request);
+		// The owner may have changed the Secret's type since the request was made.
+		$this->policy->requireRequestableType(typeId: $secret->getTypeId());
+		$this->writeFilledValues(secret: $secret, data: $data);
 	}//end persistFilledValues()
 
 	/**
@@ -293,14 +305,13 @@ class SecretRequestService {
 	/**
 	 * Write the filled values through the owner's update path: the
 	 * application's, or the user's after holding back a filled extra-field
-	 * blob that would overwrite the owner's own (keepiq#750).
+	 * blob (keepiq#750).
 	 *
 	 * The user's update is refused when the owner's row moves between its read
 	 * and its write. The update is then made once more on the row as it is
-	 * now, which keeps the owner's change as a version, with the hold-back
-	 * decided again on that row: the owner may have saved extra fields
-	 * meanwhile. A second refusal leaves the request pending, but a blob held
-	 * back by then is already in the secret's pending list.
+	 * now, which keeps the owner's change as a version. A second refusal
+	 * leaves the request pending, but the blob held back is already in the
+	 * secret's pending list.
 	 *
 	 * @param Secret $secret The secret the request writes to
 	 * @param array<string,mixed> $data The values to write
@@ -340,12 +351,7 @@ class SecretRequestService {
 		$write = fn (array $values) => $secretService->update(id: $secret->getId(), data: $values, userId: $secret->getOwnerId());
 		try {
 			$write($data);
-		} catch (StaleWriteException $e) {
-			$data = $this->holdBackAdditionalFields(secret: $e->getCurrent(), data: $data);
-			if ($data === []) {
-				return;
-			}
-
+		} catch (StaleWriteException) {
 			try {
 				$write($data);
 			} catch (StaleWriteException) {
@@ -358,12 +364,13 @@ class SecretRequestService {
 	}//end writeFilledValues()
 
 	/**
-	 * Keep a filled extra-field blob apart when the owner already has one
-	 * (keepiq#750). The filler cannot read the owner's blob, so storing the
-	 * filled one in its place wiped every other extra field. It is appended
-	 * to the secret's pending list instead, and the owner's browser merges
-	 * it on the next open. With no stored blob there is nothing to lose and
-	 * the filled blob is written as is.
+	 * Keep a filled extra-field blob apart (keepiq#750). The filler cannot
+	 * read the owner's blob, so storing the filled one in its place wiped
+	 * every other extra field. It is appended to the secret's pending list
+	 * instead, and the owner's browser merges it on the next open. That
+	 * holds with no stored blob too: the merge takes only the values, while
+	 * a blob written as is would also keep whatever `@schema` the filler
+	 * sealed into it.
 	 *
 	 * @param Secret $secret The user-owned secret the request writes to
 	 * @param array<string,mixed> $data The values to write
@@ -371,11 +378,11 @@ class SecretRequestService {
 	 * @return array<string,mixed> The values still to write through update()
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function holdBackAdditionalFields(Secret $secret, array $data): array {
 		$blob = $data[SecretRequestPolicy::ADDITIONAL_BLOB] ?? null;
-		$stored = $secret->getAdditionalFields();
-		if (is_string($blob) === false || $stored === null || $stored === '') {
+		if (is_string($blob) === false) {
 			return $data;
 		}
 
@@ -433,6 +440,10 @@ class SecretRequestService {
 			throw new InvalidArgumentException(message: 'requestedFields cannot be empty');
 		}
 
+		if (in_array(FieldSchemaShape::SCHEMA_MEMBER, $requestedFields, true) === true) {
+			throw new InvalidArgumentException(message: FieldSchemaShape::SCHEMA_MEMBER . ' holds the field schemas and cannot be requested');
+		}
+
 		if ($userId === '') {
 			throw new InvalidArgumentException(message: 'userId is required');
 		}
@@ -483,7 +494,7 @@ class SecretRequestService {
 	 *
 	 * @throws InvalidArgumentException With code 403 for a type that cannot be requested.
 	 *
-	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	private function requireRequestableSecret(string $secretId): void {
 		try {
