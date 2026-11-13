@@ -41,6 +41,7 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\Contracts\GroupShareServiceInterface;
 use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
@@ -65,7 +66,7 @@ use Throwable;
  *   path holding back the rows the pending share quarantine scan judges and refusing a delegate's change of their own
  *   grant (GHSA-m5p9-6pw7-pf3g).
  */
-class GroupShareService {
+class GroupShareService implements GroupShareServiceInterface {
 	/**
 	 * Constructor for GroupShareService.
 	 *

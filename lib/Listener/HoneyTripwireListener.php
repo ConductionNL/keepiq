@@ -27,11 +27,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Db\LinkShareMapper;
-use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\HoneyTripwireServiceInterface;
 use OCA\Keepiq\Service\HoneyAccess;
-use OCA\Keepiq\Service\HoneyTripwireService;
+use OCA\Keepiq\Service\ShareRowJudge;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IRequest;
@@ -47,7 +47,7 @@ class HoneyTripwireListener implements IEventListener {
 	/**
 	 * Constructor for HoneyTripwireListener.
 	 *
-	 * @param HoneyTripwireService $honeyService The honey tripwire service
+	 * @param HoneyTripwireServiceInterface $honeyService The honey tripwire service
 	 * @param LinkShareMapper $linkShareMapper Link → secret resolution
 	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param IRequest $request IP/user-agent source
@@ -56,7 +56,7 @@ class HoneyTripwireListener implements IEventListener {
 	 * @return void
 	 */
 	public function __construct(
-		private HoneyTripwireService $honeyService,
+		private HoneyTripwireServiceInterface $honeyService,
 		private LinkShareMapper $linkShareMapper,
 		private ShareRowJudge $rowJudge,
 		private IRequest $request,

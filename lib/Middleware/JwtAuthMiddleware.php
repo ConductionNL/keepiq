@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Middleware;
 
 use OCA\Keepiq\Controller\ApplicationApiController;
-use OCA\Keepiq\Service\JwtAuthService;
+use OCA\Keepiq\Kernel\Contracts\JwtAuthServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -49,14 +49,14 @@ class JwtAuthMiddleware extends Middleware {
 	 * Constructor for JwtAuthMiddleware.
 	 *
 	 * @param IRequest $request The HTTP request
-	 * @param JwtAuthService $service The JWT auth service
+	 * @param JwtAuthServiceInterface $service The JWT auth service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private IRequest $request,
-		private JwtAuthService $service,
+		private JwtAuthServiceInterface $service,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

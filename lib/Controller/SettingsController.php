@@ -23,7 +23,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Settings\PolicyAdminSettings;
 use OCP\AppFramework\Controller;
@@ -44,7 +44,7 @@ class SettingsController extends Controller {
 	 * @param IRequest $request The request object
 	 * @param SettingsService $settingsService The settings service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer|null $areas The admin areas the session user holds, for the settings payload
+	 * @param AdminAreaAuthorizerInterface|null $areas The admin areas the session user holds, for the settings payload
 	 * @param \OCA\Keepiq\Service\TwoFactorGate|null $twoFactor The two-factor gap count (admin-vault-policies §1.3)
 	 *
 	 * @return void
@@ -55,7 +55,7 @@ class SettingsController extends Controller {
 		IRequest $request,
 		private SettingsService $settingsService,
 		private IUserSession $userSession,
-		private ?AdminAreaAuthorizer $areas = null,
+		private ?AdminAreaAuthorizerInterface $areas = null,
 		private ?\OCA\Keepiq\Service\TwoFactorGate $twoFactor = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

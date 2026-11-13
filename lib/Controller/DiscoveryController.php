@@ -43,9 +43,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AudiencePolicy;
-use OCA\Keepiq\Service\FederationRootService;
-use OCA\Keepiq\Service\JwtAuthService;
+use OCA\Keepiq\Kernel\Contracts\AudiencePolicyInterface;
+use OCA\Keepiq\Kernel\Contracts\FederationRootServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\JwtAuthServiceInterface;
 use OCA\Keepiq\Service\MachineSecretEnvelopeService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -99,7 +99,7 @@ class DiscoveryController extends Controller {
 	 * @param IURLGenerator $urlGenerator The URL generator
 	 * @param IAppConfig|null $appConfig The app config (lease policy advert)
 	 * @param LoggerInterface|null $logger Logger for the deprecated-path warning
-	 * @param FederationRootService|null $federationRoot Root fingerprint and version gate for federation
+	 * @param FederationRootServiceInterface|null $federationRoot Root fingerprint and version gate for federation
 	 *
 	 * @return void
 	 */
@@ -108,7 +108,7 @@ class DiscoveryController extends Controller {
 		private IURLGenerator $urlGenerator,
 		private ?IAppConfig $appConfig = null,
 		private ?LoggerInterface $logger = null,
-		private ?FederationRootService $federationRoot = null,
+		private ?FederationRootServiceInterface $federationRoot = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -156,19 +156,19 @@ class DiscoveryController extends Controller {
 				'grantType' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
 				'assertion' => [
 					'alg' => 'RS256',
-					'maxLifetime' => JwtAuthService::ACCESS_TOKEN_TTL,
+					'maxLifetime' => JwtAuthServiceInterface::ACCESS_TOKEN_TTL,
 					// `audience` is the value to SEND; `acceptedAudiences` is
 					// what this instance will honour. Both are additive within
 					// the current apiVersion: a consumer reading `audience`
 					// converges on the canonical name, and one still sending a
 					// deprecated value keeps working until the version named in
 					// `deprecatedAudiences[].removedInAppVersion`.
-					'audience' => AudiencePolicy::CANONICAL_AUDIENCE,
-					'acceptedAudiences' => AudiencePolicy::ACCEPTED_AUDIENCES,
+					'audience' => AudiencePolicyInterface::CANONICAL_AUDIENCE,
+					'acceptedAudiences' => AudiencePolicyInterface::ACCEPTED_AUDIENCES,
 					'deprecatedAudiences' => [
 						[
-							'value' => AudiencePolicy::DEPRECATED_AUDIENCE,
-							'removedInAppVersion' => AudiencePolicy::DEPRECATED_AUDIENCE_REMOVED_IN,
+							'value' => AudiencePolicyInterface::DEPRECATED_AUDIENCE,
+							'removedInAppVersion' => AudiencePolicyInterface::DEPRECATED_AUDIENCE_REMOVED_IN,
 						],
 					],
 					'audienceUrl' => $tokenAbsolute,

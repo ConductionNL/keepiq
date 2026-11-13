@@ -28,9 +28,9 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ReinstateRefusedException;
 use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AdminSuiteRevocationService;
-use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
-use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Kernel\Contracts\AdminSuiteRevocationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\EmergencyEnvelopeInvalidationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
@@ -73,26 +73,26 @@ class EncryptionSuiteController extends OCSController {
 	 * Constructor for EncryptionSuiteController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param EncryptionSuiteService $suiteService The suite service
+	 * @param EncryptionSuiteServiceInterface $suiteService The suite service
 	 * @param MigrationService $migrationService The migration service
 	 * @param IUserSession $userSession The user session
 	 * @param VaultKeyProofService $proofService The vault-key-proof service (issues challenges)
-	 * @param EmergencyEnvelopeInvalidationService $emergencyService The emergency-envelope service (revoke safeguard)
+	 * @param EmergencyEnvelopeInvalidationServiceInterface $emergencyService The emergency-envelope service (revoke safeguard)
 	 * @param \OCA\Keepiq\Service\TwoFactorGate $twoFactor The two-factor vault policy (admin-vault-policies D3)
-	 * @param AdminSuiteRevocationService $adminRevocation The administrator force-revoke, plain and compromise
+	 * @param AdminSuiteRevocationServiceInterface $adminRevocation The administrator force-revoke, plain and compromise
 	 * @param \OCA\Keepiq\Service\PasskeyService|null $passkeyService The passkey service (passkey vault login; null when unwired)
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private EncryptionSuiteService $suiteService,
+		private EncryptionSuiteServiceInterface $suiteService,
 		private MigrationService $migrationService,
 		private IUserSession $userSession,
 		private VaultKeyProofService $proofService,
-		private EmergencyEnvelopeInvalidationService $emergencyService,
+		private EmergencyEnvelopeInvalidationServiceInterface $emergencyService,
 		private \OCA\Keepiq\Service\TwoFactorGate $twoFactor,
-		private AdminSuiteRevocationService $adminRevocation,
+		private AdminSuiteRevocationServiceInterface $adminRevocation,
 		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -685,7 +685,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 */
 	private function compromiseResponse(array $data): JSONResponse {
-		if (($data['error'] ?? null) === AdminSuiteRevocationService::MIGRATION_END_FAILED) {
+		if (($data['error'] ?? null) === AdminSuiteRevocationServiceInterface::MIGRATION_END_FAILED) {
 			return new JSONResponse(data: $data, statusCode: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 

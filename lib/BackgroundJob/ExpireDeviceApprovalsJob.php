@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Keepiq\Service\DeviceApprovalService;
+use OCA\Keepiq\Kernel\Contracts\DeviceApprovalServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -38,7 +38,7 @@ class ExpireDeviceApprovalsJob extends TimedJob {
 	 * Constructor for ExpireDeviceApprovalsJob.
 	 *
 	 * @param ITimeFactory          $time      The time factory
-	 * @param DeviceApprovalService $approvals The approval service
+	 * @param DeviceApprovalServiceInterface $approvals The approval service
 	 * @param LoggerInterface       $logger    The logger
 	 *
 	 * @return void
@@ -47,7 +47,7 @@ class ExpireDeviceApprovalsJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private DeviceApprovalService $approvals,
+		private DeviceApprovalServiceInterface $approvals,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

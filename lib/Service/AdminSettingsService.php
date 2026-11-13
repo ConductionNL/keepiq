@@ -33,6 +33,7 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminSettingsServiceInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -50,7 +51,7 @@ use Throwable;
  *   removes this; a separate service now would add a dependency to a class
  *   that sits at its coupling limit.
  */
-class AdminSettingsService {
+class AdminSettingsService implements AdminSettingsServiceInterface {
 	/**
 	 * Admin default bounds for validation.
 	 */
@@ -525,7 +526,6 @@ class AdminSettingsService {
 	public function getPolicy(?string $userId = null): array {
 		return $this->policyService->getPolicy(userId: $userId);
 	}//end getPolicy()
-
 
 	/**
 	 * Password-strength and session keys (implement-dashboard-settings §1.4).

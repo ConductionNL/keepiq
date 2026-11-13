@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\Connection\ConnectionReporter;
+use OCA\Keepiq\Kernel\Contracts\ConnectionReporterInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -92,7 +92,7 @@ class BreachProxyController extends Controller {
 	 * @param ICacheFactory $cacheFactory The cache factory
 	 * @param IUserSession $userSession The user session (auth posture)
 	 * @param LoggerInterface $logger The logger
-	 * @param ConnectionReporter|null $connectionReporter Tells integriq what an upstream lookup met, or nothing when absent.
+	 * @param ConnectionReporterInterface|null $connectionReporter Tells integriq what an upstream lookup met, or nothing when absent.
 	 *
 	 * @return void
 	 *
@@ -105,7 +105,7 @@ class BreachProxyController extends Controller {
 		ICacheFactory $cacheFactory,
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
-		private ?ConnectionReporter $connectionReporter = null,
+		private ?ConnectionReporterInterface $connectionReporter = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 		// Namespace deliberately still `keepiq_` after the doriath -> keepiq

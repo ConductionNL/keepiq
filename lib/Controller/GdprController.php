@@ -33,8 +33,8 @@ namespace OCA\Keepiq\Controller;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Event\GdprExportPerformedEvent;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AccountDeletionService;
-use OCA\Keepiq\Service\GdprService;
+use OCA\Keepiq\Kernel\Contracts\AccountDeletionServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\GdprServiceInterface;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -59,8 +59,8 @@ class GdprController extends Controller {
 	 * Constructor for GdprController.
 	 *
 	 * @param IRequest $request The request
-	 * @param GdprService $gdprService The GDPR metadata service
-	 * @param AccountDeletionService $deletionService The deletion-cascade service
+	 * @param GdprServiceInterface $gdprService The GDPR metadata service
+	 * @param AccountDeletionServiceInterface $deletionService The deletion-cascade service
 	 * @param IUserSession $userSession The user session
 	 * @param IEventDispatcher $dispatcher The event dispatcher
 	 *
@@ -68,8 +68,8 @@ class GdprController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private GdprService $gdprService,
-		private AccountDeletionService $deletionService,
+		private GdprServiceInterface $gdprService,
+		private AccountDeletionServiceInterface $deletionService,
 		private IUserSession $userSession,
 		private IEventDispatcher $dispatcher,
 	) {

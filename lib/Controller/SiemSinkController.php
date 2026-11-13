@@ -27,7 +27,7 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\SiemSink;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
 use OCA\Keepiq\Service\Siem\SiemSinkRequest;
 use OCA\Keepiq\Service\SiemService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
@@ -49,7 +49,7 @@ class SiemSinkController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param SiemService $service The SIEM service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Audit admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Audit admin area
 	 *
 	 * @return void
 	 */
@@ -57,7 +57,7 @@ class SiemSinkController extends OCSController {
 		IRequest $request,
 		private SiemService $service,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

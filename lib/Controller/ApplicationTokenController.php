@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\JwtAuthService;
+use OCA\Keepiq\Kernel\Contracts\JwtAuthServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -45,13 +45,13 @@ class ApplicationTokenController extends Controller {
 	 * Constructor for ApplicationTokenController.
 	 *
 	 * @param IRequest $request The HTTP request
-	 * @param JwtAuthService $service The JWT auth service
+	 * @param JwtAuthServiceInterface $service The JWT auth service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private JwtAuthService $service,
+		private JwtAuthServiceInterface $service,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

@@ -36,7 +36,7 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\ImportService;
+use OCA\Keepiq\Kernel\Contracts\ImportServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -66,14 +66,14 @@ class ImportController extends OCSController {
 	 * Constructor for ImportController.
 	 *
 	 * @param IRequest $request The request
-	 * @param ImportService $importService The import service
+	 * @param ImportServiceInterface $importService The import service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private ImportService $importService,
+		private ImportServiceInterface $importService,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -108,9 +108,9 @@ class ImportController extends OCSController {
 			);
 		}
 
-		if (count($items) > ImportService::MAX_ITEMS) {
+		if (count($items) > ImportServiceInterface::MAX_ITEMS) {
 			return new JSONResponse(
-				data: ['message' => 'Chunk exceeds the maximum of ' . ImportService::MAX_ITEMS . ' items'],
+				data: ['message' => 'Chunk exceeds the maximum of ' . ImportServiceInterface::MAX_ITEMS . ' items'],
 				statusCode: self::STATUS_PAYLOAD_TOO_LARGE
 			);
 		}

@@ -26,7 +26,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\DashboardService;
+use OCA\Keepiq\Kernel\Contracts\DashboardServiceInterface;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -43,14 +43,14 @@ class DashboardSettingsController extends OCSController {
 	 * Constructor for DashboardSettingsController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param DashboardService $service The dashboard-settings service
+	 * @param DashboardServiceInterface $service The dashboard-settings service
 	 * @param IUserSession $session The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private DashboardService $service,
+		private DashboardServiceInterface $service,
 		private IUserSession $session,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

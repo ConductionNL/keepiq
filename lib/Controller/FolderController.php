@@ -29,7 +29,7 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\FolderService;
+use OCA\Keepiq\Kernel\Contracts\FolderServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -45,14 +45,14 @@ class FolderController extends OCSController {
 	 * Constructor for FolderController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param FolderService $folderService The folder service
+	 * @param FolderServiceInterface $folderService The folder service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private FolderService $folderService,
+		private FolderServiceInterface $folderService,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

@@ -28,7 +28,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
 use OCA\Keepiq\Service\RecentlyUsedService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Controller;
@@ -49,7 +49,7 @@ class AuditController extends Controller {
 	 * Constructor for AuditController.
 	 *
 	 * @param IRequest $request The request
-	 * @param AuditService $auditService The audit service
+	 * @param AuditServiceInterface $auditService The audit service
 	 * @param SecretMapper $secretMapper The secret mapper (for ownership checks)
 	 * @param IUserSession $userSession The user session
 	 * @param RecentlyUsedService $recentlyUsed The Recently used widget source
@@ -58,7 +58,7 @@ class AuditController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private AuditService $auditService,
+		private AuditServiceInterface $auditService,
 		private SecretMapper $secretMapper,
 		private IUserSession $userSession,
 		private RecentlyUsedService $recentlyUsed,

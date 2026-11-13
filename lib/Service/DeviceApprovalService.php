@@ -28,6 +28,7 @@ use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\DeviceApprovalServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -42,7 +43,7 @@ use OCP\Security\ISecureRandom;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The request lifecycle, its
  *   notification and its audit trail in one place.
  */
-class DeviceApprovalService {
+class DeviceApprovalService implements DeviceApprovalServiceInterface {
 
 	/**
 	 * App config switch; default on (D5).

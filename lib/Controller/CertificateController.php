@@ -29,8 +29,8 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\CertificateLifecycleService;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\CertificateLifecycleServiceInterface;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -48,17 +48,17 @@ class CertificateController extends OCSController {
 	 * Constructor for CertificateController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param CertificateLifecycleService $service The lifecycle service
+	 * @param CertificateLifecycleServiceInterface $service The lifecycle service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the General admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the General admin area
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private CertificateLifecycleService $service,
+		private CertificateLifecycleServiceInterface $service,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

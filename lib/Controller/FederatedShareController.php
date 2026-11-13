@@ -30,7 +30,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -50,7 +50,7 @@ class FederatedShareController extends Controller {
 	 * Constructor for FederatedShareController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param FederatedShareService $shares The outbound federated shares
+	 * @param FederatedShareServiceInterface $shares The outbound federated shares
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
@@ -59,7 +59,7 @@ class FederatedShareController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private FederatedShareService $shares,
+		private FederatedShareServiceInterface $shares,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

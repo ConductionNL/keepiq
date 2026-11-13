@@ -25,8 +25,8 @@ use DateTime;
 use Exception;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
-use OCA\Keepiq\Service\CertificateAuthorityService;
-use OCA\Keepiq\Service\EncryptService;
+use OCA\Keepiq\Kernel\Contracts\CertificateAuthorityServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\EncryptServiceInterface;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -45,8 +45,8 @@ class SeedDevelopmentData implements IRepairStep {
 	 * Constructor for SeedDevelopmentData.
 	 *
 	 * @param EncryptionSuiteMapper $suiteMapper The encryption suite mapper
-	 * @param CertificateAuthorityService $caService The CA service
-	 * @param EncryptService $encryptService The encrypt service
+	 * @param CertificateAuthorityServiceInterface $caService The CA service
+	 * @param EncryptServiceInterface $encryptService The encrypt service
 	 * @param DevSuiteIntegrityGuard $suiteGuard The existing-suite reusability guard
 	 * @param IConfig $config The config interface
 	 * @param LoggerInterface $logger The logger interface
@@ -55,8 +55,8 @@ class SeedDevelopmentData implements IRepairStep {
 	 */
 	public function __construct(
 		private EncryptionSuiteMapper $suiteMapper,
-		private CertificateAuthorityService $caService,
-		private EncryptService $encryptService,
+		private CertificateAuthorityServiceInterface $caService,
+		private EncryptServiceInterface $encryptService,
 		private DevSuiteIntegrityGuard $suiteGuard,
 		private IConfig $config,
 		private LoggerInterface $logger,

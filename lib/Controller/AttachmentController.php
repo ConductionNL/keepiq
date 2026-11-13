@@ -28,8 +28,8 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AttachmentServiceInterface;
 use OCA\Keepiq\Service\AttachmentGrantRequest;
-use OCA\Keepiq\Service\AttachmentService;
 use OCA\Keepiq\Service\AttachmentUpload;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
@@ -47,14 +47,14 @@ class AttachmentController extends OCSController {
 	 * Constructor for AttachmentController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param AttachmentService $attachmentService The attachment service
+	 * @param AttachmentServiceInterface $attachmentService The attachment service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private AttachmentService $attachmentService,
+		private AttachmentServiceInterface $attachmentService,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

@@ -26,8 +26,8 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AuditService;
-use OCA\Keepiq\Service\ComplianceReportService;
+use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\ComplianceReportServiceInterface;
 use OCA\Keepiq\Service\Siem\SiemSinkRequest;
 use OCA\Keepiq\Service\SiemService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
@@ -48,8 +48,8 @@ class AdminAuditController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request
-	 * @param AuditService $audit The audit query the admin screen uses
-	 * @param ComplianceReportService $reports The compliance reports
+	 * @param AuditServiceInterface $audit The audit query the admin screen uses
+	 * @param ComplianceReportServiceInterface $reports The compliance reports
 	 * @param SiemService $siem The SIEM sinks
 	 * @param IUserSession $userSession The acting administrator
 	 *
@@ -59,8 +59,8 @@ class AdminAuditController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private AuditService $audit,
-		private ComplianceReportService $reports,
+		private AuditServiceInterface $audit,
+		private ComplianceReportServiceInterface $reports,
 		private SiemService $siem,
 		private IUserSession $userSession,
 	) {

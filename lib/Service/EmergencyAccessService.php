@@ -37,6 +37,7 @@ use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\EmergencyAccessServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 
@@ -47,7 +48,7 @@ use Psr\Log\LoggerInterface;
  * EmergencyAccessAuditTrail (design D8), and the key-change invalidation
  * paths live in EmergencyEnvelopeInvalidationService.
  */
-class EmergencyAccessService {
+class EmergencyAccessService implements EmergencyAccessServiceInterface {
 	/**
 	 * The object type used for the emergency-access relation.
 	 *

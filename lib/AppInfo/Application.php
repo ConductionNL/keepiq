@@ -27,6 +27,7 @@ use OCA\Keepiq\Listener\UserLifecycleEventRegistrar;
 use OCA\Keepiq\Mcp\McpRegistrar;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Middleware\MiddlewareRegistrar;
+use OCA\Keepiq\Service\ContractBindings;
 use OCA\Keepiq\Settings\AdminAreaRegistrar;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -100,6 +101,9 @@ class Application extends App implements IBootstrap {
 		// Keepiq's own settings stack and the admin areas, as themselves, so a
 		// delegation of an area satisfies the guard that names it
 		// (admin-scoped-roles D1).
+		// Every Kernel contract aliased to its Service implementation.
+		(new ContractBindings())->register(context: $context);
+
 		(new DomainOverrideRegistrar())->register(context: $context);
 		(new AdminAreaRegistrar())->register(context: $context);
 

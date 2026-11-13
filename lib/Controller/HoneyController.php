@@ -29,8 +29,8 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\HoneyAlert;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\HoneyCredentialService;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\HoneyCredentialServiceInterface;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -48,17 +48,17 @@ class HoneyController extends OCSController {
 	 * Constructor for HoneyController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param HoneyCredentialService $service The honey service
+	 * @param HoneyCredentialServiceInterface $service The honey service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Audit admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Audit admin area
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private HoneyCredentialService $service,
+		private HoneyCredentialServiceInterface $service,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

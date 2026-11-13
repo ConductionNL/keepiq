@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
 use OCA\Keepiq\Settings\AdminAreaSettings;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
@@ -40,7 +41,7 @@ use Throwable;
 /**
  * Decides whether a user holds a Keepiq admin area.
  */
-class AdminAreaAuthorizer {
+class AdminAreaAuthorizer implements AdminAreaAuthorizerInterface {
 	/**
 	 * The area classes by name, so a caller can name an area without
 	 * depending on its settings class.
@@ -49,7 +50,6 @@ class AdminAreaAuthorizer {
 	 */
 	public const GENERAL = AdminSettings::class;
 	public const POLICIES = PolicyAdminSettings::class;
-	public const APPLICATIONS = ApplicationAdminSettings::class;
 	public const PEOPLE = PeopleAdminSettings::class;
 	public const AUDIT = AuditAdminSettings::class;
 
