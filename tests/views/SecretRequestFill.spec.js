@@ -135,6 +135,51 @@ describe('SecretRequestFill', () => {
 		expect(key).toContain('Hidden')
 	})
 
+	// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	it('asks for a certificate in text areas that keep its lines', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: {
+				token: 'tok-1',
+				status: 'pending',
+				requested_fields: ['key', 'Private key', 'Passphrase'],
+				secret_type: 'certificate',
+				public_certificate: 'PEM',
+			},
+		})
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { status: 'fulfilled' } })
+		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
+		await flush()
+
+		const certificate = wrapper.find('[data-testid="fill-field-key"]')
+		expect(certificate.element.tagName).toBe('TEXTAREA')
+		expect(certificate.element.closest('label').textContent).toContain(
+			'Certificate',
+		)
+		expect(
+			wrapper.find('[data-testid="fill-field-Private key"]').element.tagName,
+		).toBe('TEXTAREA')
+		expect(
+			wrapper.find('[data-testid="fill-field-Passphrase"]').attributes('type'),
+		).toBe('password')
+
+		const pem = '-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----'
+		await certificate.setValue(pem)
+		await wrapper.find('[data-testid="fill-field-Private key"]').setValue('KEY')
+		await wrapper.find('[data-testid="fill-field-Passphrase"]').setValue('pw')
+		await wrapper.find('[data-testid="fill-form"]').trigger('submit.prevent')
+		await flush()
+		await vi.waitFor(() => expect(post).toHaveBeenCalled())
+		await flush()
+
+		// The certificate is public and shown with its lines; the key is not.
+		expect(wrapper.find('[data-testid="fill-summary-key"]').text()).toBe(pem)
+		const key = wrapper.find('[data-testid="fill-summary-Private key"]').text()
+		expect(key).not.toContain('KEY')
+		expect(key).toContain('Hidden')
+	})
+
 	it('renders the load-error block when the token resolution rejects', async () => {
 		vi.spyOn(axios, 'get').mockRejectedValue({
 			response: { data: { message: 'not found' } },

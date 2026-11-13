@@ -85,18 +85,63 @@
 			data-testid="fill-form"
 			@submit.prevent="onSubmit">
 			<template v-if="!submitted">
-				<label
-					v-for="field in store.publicRequest.requested_fields"
+				<!-- A JSON field is a group, not a label: a click in the editor
+				     would otherwise press its Format button. -->
+				<component
+					:is="inputType(field) === 'json' ? 'div' : 'label'"
+					v-for="(field, index) in store.publicRequest.requested_fields"
 					:key="field"
+					:role="inputType(field) === 'json' ? 'group' : undefined"
+					:aria-labelledby="
+						inputType(field) === 'json'
+							? `fill-label-${index}`
+							: undefined
+					"
 					class="keepiq-secret-request-fill__field">
-					<span>{{ inputLabel(field) }}</span>
+					<span :id="`fill-label-${index}`">{{ inputLabel(field) }}</span>
+					<CnJsonViewer
+						v-if="inputType(field) === 'json'"
+						:value="values[field] ?? ''"
+						language="json"
+						height="200px"
+						errorText=""
+						:data-testid="`fill-field-${field}`"
+						@update:value="values[field] = $event" />
+					<!-- A yes/no field is a box to tick; unticked is "no". -->
 					<input
+						v-else-if="inputType(field) === 'checkbox'"
+						type="checkbox"
+						:checked="values[field] === 'true'"
+						:data-testid="`fill-field-${field}`"
+						@change="
+							values[field] = $event.target.checked ? 'true' : 'false'
+						" />
+					<!-- A certificate or key block is several lines,
+					     which an input would collapse into one. -->
+					<textarea
+						v-else-if="inputType(field) === 'multiline'"
+						v-model="values[field]"
+						rows="6"
+						autocomplete="off"
+						spellcheck="false"
+						required
+						:aria-invalid="fieldError(field) !== '' ? 'true' : 'false'"
+						:data-testid="`fill-field-${field}`" />
+					<input
+						v-else
 						v-model="values[field]"
 						:type="inputType(field)"
 						autocomplete="off"
 						required
+						:aria-invalid="fieldError(field) !== '' ? 'true' : 'false'"
 						:data-testid="`fill-field-${field}`" />
-				</label>
+					<span
+						v-if="fieldError(field) !== ''"
+						class="keepiq-secret-request-fill__field-error"
+						:data-testid="`fill-error-${field}`">
+						{{ fieldError(field) }}
+					</span>
+				</component>
 
 				<p
 					v-if="submitError"
@@ -110,7 +155,7 @@
 					wide
 					type="submit"
 					data-testid="fill-submit"
-					:disabled="busy">
+					:disabled="busy || !allFit">
 					{{ busy ? t('keepiq', 'Encrypting…') : t('keepiq', 'Submit') }}
 				</NcButton>
 			</template>
@@ -139,15 +184,17 @@
 								{{ inputLabel(field) }}
 							</th>
 							<td :data-testid="`fill-summary-${field}`">
-								<template v-if="inputType(field) === 'password'">
+								<template v-if="masksSummary(field)">
 									<span aria-hidden="true">••••••••</span>
 									<span class="hidden-visually">{{
 										t('keepiq', 'Hidden')
 									}}</span>
 								</template>
-								<template v-else>
-									{{ values[field] }}
-								</template>
+								<span
+									v-else
+									class="keepiq-secret-request-fill__summary-value"
+									>{{ values[field] }}</span
+								>
 							</td>
 						</tr>
 					</tbody>
@@ -162,13 +209,40 @@
 </template>
 
 <script>
+import { CnJsonViewer } from '@conduction/nextcloud-vue'
 import { NcButton } from '@nextcloud/vue'
 import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
+import {
+	builtinFieldNamed,
+	loginLabelOf,
+	valueFieldOf,
+} from '../utils/builtinTypeFields.js'
+import {
+	cleanSchema,
+	inputOf,
+	isHiddenSchema,
+	schemaError,
+} from '../utils/fieldSchema.js'
+
+/** The HTML input type for each schema input that uses a plain input. */
+const SCHEMA_INPUT_TYPES = Object.freeze({
+	url: 'url',
+	email: 'email',
+	integer: 'number',
+	number: 'number',
+	date: 'date',
+	datetime: 'datetime-local',
+	time: 'time',
+	boolean: 'checkbox',
+	multiline: 'multiline',
+	json: 'json',
+})
 
 export default {
 	name: 'SecretRequestFill',
 	components: {
+		CnJsonViewer,
 		NcButton,
 		LinkVariantOff,
 	},
@@ -185,6 +259,8 @@ export default {
 			values: {},
 			busy: false,
 			submitted: false,
+			// Set by the first Submit: only then does an empty editor say "Required".
+			triedSubmit: false,
 			submitError: null,
 			loadError: null,
 			loadReason: null,
@@ -256,6 +332,18 @@ export default {
 		 */
 		unavailableMessage() {
 			return this.messageForReason(this.store.publicRequest?.status)
+		},
+
+		/**
+		 * Whether every requested value fits its field's schema.
+		 *
+		 * @return {boolean} False while one does not, which blocks Submit.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		allFit() {
+			return (this.store.publicRequest?.requested_fields ?? []).every(
+				(field) => this.fieldError(field) === '',
+			)
 		},
 	},
 
@@ -329,34 +417,72 @@ export default {
 		 * The label a recipient reads above a requested field.
 		 *
 		 * The three column names get the wording the requester picked them by in
-		 * SecretRequestCreateDialog; an additional member is shown by the name the
-		 * requester typed, which is the only label it has.
+		 * SecretRequestCreateDialog, by the secret's type where it has its own;
+		 * a built-in type's extra field gets its translated label, and any other
+		 * member is shown by the name the requester typed, the only label it has.
 		 *
 		 * @param {string} field The requested field name.
 		 *
 		 * @return {string} The label to render.
 		 *
-		 * @spec exclude Presentation-only: labels the requested field names.
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 		 */
 		inputLabel(field) {
+			const typeName = this.store.publicRequest?.secret_type ?? ''
 			switch (field) {
 				case 'key':
-					return t('keepiq', 'Key / password')
+					return (
+						valueFieldOf(typeName)?.label
+						?? t('keepiq', 'Key / password')
+					)
 				case 'login':
-					return t('keepiq', 'Login')
+					return loginLabelOf(typeName) ?? t('keepiq', 'Login')
 				case 'url':
 					return t('keepiq', 'URL')
 				default:
-					return field
+					return builtinFieldNamed(typeName, field)?.displayLabel ?? field
 			}
 		},
 
 		/**
-		 * @param {object} field The field descriptor.
+		 * The input for a requested field: `json` for the code editor,
+		 * `multiline` for a text area, `password` for a masked input, else
+		 * `text`. The secret's type decides
+		 * for its own fields; any other name is masked when it looks secret.
 		 *
-		 * @spec exclude Presentation-only: masks inputs whose field name looks secret.
+		 * @param {string} field The requested field name.
+		 *
+		 * @return {string} The input kind.
+		 *
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		inputType(field) {
+			const schema = this.schemaOf(field)
+			if (schema !== null) {
+				// An object is edited as code, hidden or not, as in the dialogs.
+				if (
+					isHiddenSchema(schema)
+					&& !['multiline', 'json'].includes(inputOf(schema))
+				) {
+					return 'password'
+				}
+				return SCHEMA_INPUT_TYPES[inputOf(schema)] ?? 'text'
+			}
+			const typeName = this.store.publicRequest?.secret_type ?? ''
+			const kind =
+				field === 'key'
+					? valueFieldOf(typeName)?.kind
+					: builtinFieldNamed(typeName, field)?.kind
+			if (kind === 'multiline') {
+				return 'multiline'
+			}
+			if (kind === 'hidden') {
+				return 'password'
+			}
+			if (kind === 'text') {
+				return 'text'
+			}
 			const name = String(field || '').toLowerCase()
 			if (
 				name.includes('password')
@@ -369,6 +495,61 @@ export default {
 		},
 
 		/**
+		 * Whether the summary after submitting masks a field: every field but
+		 * a plain-text one and a certificate, which is public by design. A
+		 * multi-line private key is not masked while typed, but is here.
+		 *
+		 * @param {string} field The requested field name.
+		 *
+		 * @return {boolean} True when the value is shown as a fixed mask.
+		 *
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 */
+		masksSummary(field) {
+			const schema = this.schemaOf(field)
+			if (schema !== null) {
+				return isHiddenSchema(schema)
+			}
+			const typeName = this.store.publicRequest?.secret_type ?? ''
+			if (field === 'key' && valueFieldOf(typeName)?.public === true) {
+				return false
+			}
+			return this.inputType(field) !== 'text'
+		},
+
+		/**
+		 * The schema the requester gave a field, or null when it has none.
+		 *
+		 * @param {string} field The requested field name.
+		 * @return {object|null} The schema.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		schemaOf(field) {
+			const schema = this.store.publicRequest?.field_schemas?.[field]
+			return schema ? cleanSchema(schema) : null
+		},
+
+		/**
+		 * Why a value does not fit its field's schema, or ''. The JSON editor has
+		 * no `required` of its own, so after a Submit an empty one is reported.
+		 *
+		 * @param {string} field The requested field name.
+		 * @return {string} The reason.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		fieldError(field) {
+			if (
+				this.triedSubmit
+				&& this.inputType(field) === 'json'
+				&& !this.values[field]
+			) {
+				return t('keepiq', 'Required')
+			}
+			const schema = this.schemaOf(field)
+			return schema === null ? '' : schemaError(this.values[field], schema)
+		},
+
+		/**
 		 * Encrypt the filled-in values under the requester's certificate in
 		 * the browser and submit them against the request token.
 		 *
@@ -376,8 +557,19 @@ export default {
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-field-validation
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-write-once
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		async onSubmit() {
+			this.triedSubmit = true
+			if (!this.allFit) {
+				return
+			}
+			// An unticked yes/no box is a "no", not a missing value.
+			for (const field of this.store.publicRequest?.requested_fields ?? []) {
+				if (this.inputType(field) === 'checkbox' && !this.values[field]) {
+					this.values[field] = 'false'
+				}
+			}
 			this.submitError = null
 			this.busy = true
 			try {
@@ -472,7 +664,8 @@ export default {
 	overflow-wrap: anywhere;
 }
 
-.keepiq-secret-request-fill__field input {
+.keepiq-secret-request-fill__field input,
+.keepiq-secret-request-fill__field textarea {
 	box-sizing: border-box;
 	display: block;
 	width: 100%;
@@ -483,7 +676,24 @@ export default {
 	color: var(--color-main-text, #222);
 }
 
-.keepiq-secret-request-fill__field input:focus-visible {
+.keepiq-secret-request-fill__field input[type='checkbox'] {
+	width: auto;
+	padding: 0;
+}
+
+.keepiq-secret-request-fill__field .keepiq-secret-request-fill__field-error {
+	margin: 4px 0 0;
+	color: var(--color-error-text, #c9302c);
+}
+
+.keepiq-secret-request-fill__field textarea {
+	resize: vertical;
+	font-family: var(--font-face-monospace, monospace);
+	font-size: 13px;
+}
+
+.keepiq-secret-request-fill__field input:focus-visible,
+.keepiq-secret-request-fill__field textarea:focus-visible {
 	border-color: var(--color-main-elevated, var(--color-primary-element, #21468b));
 	outline: none;
 }
@@ -520,6 +730,12 @@ export default {
 	border-bottom: 1px solid var(--color-border, #ededed);
 	text-align: start;
 	vertical-align: top;
+}
+
+/* A certificate keeps its lines, and its 64-character lines wrap. */
+.keepiq-secret-request-fill__summary-value {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
 }
 
 .keepiq-secret-request-fill__summary tr:last-child th,

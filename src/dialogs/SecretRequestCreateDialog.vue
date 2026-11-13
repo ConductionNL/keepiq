@@ -113,9 +113,16 @@
 						class="secret-request-create-dialog__field-check"
 						:modelValue="requestedFields"
 						:value="field.key"
+						:disabled="field.locked"
 						name="requested-fields"
 						@update:modelValue="requestedFields = $event">
 						{{ field.label }}
+						<span
+							v-if="field.custom"
+							class="secret-request-create-dialog__kind"
+							:data-testid="`secret-request-kind-${field.key}`">
+							{{ kindLabel(customSchemas[field.key]) }}
+						</span>
 						<span
 							v-if="field.filled && !isReRequest"
 							class="secret-request-create-dialog__filled">
@@ -163,6 +170,20 @@
 						:helperText="customFieldError"
 						data-testid="secret-request-custom-field"
 						@keyup.enter="addCustomField" />
+					<!--
+					  What the recipient must enter, so the fill page can show and
+					  check it. The schema of a field the secret already has comes
+					  from the secret itself.
+					-->
+					<NcSelect
+						:modelValue="presetOf(customFieldSchema)"
+						class="secret-request-create-dialog__custom-kind"
+						:options="presetSelectOptions"
+						:inputLabel="t('keepiq', 'Kind')"
+						:reduce="(opt) => opt.value"
+						:clearable="false"
+						data-testid="secret-request-custom-kind"
+						@update:modelValue="onCustomPreset" />
 					<NcButton
 						class="secret-request-create-dialog__custom-add"
 						variant="secondary"
@@ -170,6 +191,21 @@
 						{{ t('keepiq', 'Add') }}
 					</NcButton>
 				</div>
+				<!-- The limits a preset does not set: a pattern for a PIN, a
+				     maximum length, a number range, or Hidden on any type. -->
+				<NcButton
+					class="secret-request-create-dialog__advanced-toggle"
+					variant="tertiary"
+					:aria-expanded="customAdvancedOpen ? 'true' : 'false'"
+					data-testid="secret-request-custom-advanced"
+					@click="customAdvancedOpen = !customAdvancedOpen">
+					{{ t('keepiq', 'Advanced') }}
+				</NcButton>
+				<SchemaAdvanced
+					v-if="customAdvancedOpen"
+					:schema="customFieldSchema"
+					testid="secret-request-custom-schema"
+					@update:schema="customFieldSchema = $event" />
 			</fieldset>
 
 			<div class="secret-request-create-dialog__row">
@@ -228,6 +264,7 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import SchemaAdvanced from '../components/SchemaAdvanced.vue'
 import { CARD_TYPE_NAME, IDENTITY_TYPE_NAME } from '../cardIdentity/cardIdentity.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
@@ -237,9 +274,26 @@ import {
 	useUserPreferencesStore,
 } from '../store/modules/userPreferences.js'
 import { memberNameError } from '../utils/additionalFields.js'
+import {
+	leavesOut,
+	loginLabelOf,
+	memberLabel,
+	typeFieldsOf,
+	valueFieldOf,
+	valueLockedInRequests,
+} from '../utils/builtinTypeFields.js'
+import {
+	cleanSchema,
+	fieldsOf,
+	isPlainSchema,
+	presetOf,
+	presetOptions,
+	presetSchema,
+	schemasOf,
+	typeFieldSchema,
+} from '../utils/fieldSchema.js'
 import { fillLinkFor } from '../utils/fillLink.js'
 import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
-import { typedFieldsOf } from '../utils/typedFields.js'
 
 /**
  * Types a request is not offered as.
@@ -316,6 +370,7 @@ export default {
 		NcNoteCard,
 		NcSelect,
 		NcTextField,
+		SchemaAdvanced,
 	},
 
 	props: {
@@ -344,6 +399,11 @@ export default {
 			// carry yet. Kept separate from `requestedFields` so unticking a name
 			// does not delete it from the list.
 			customFields: [],
+			// The schema of each name typed here, and the one being set up for
+			// the next name: a preset, refined under Advanced.
+			customSchemas: {},
+			customFieldSchema: { type: 'string' },
+			customAdvancedOpen: false,
 			customFieldInput: '',
 			customFieldError: '',
 			newName: '',
@@ -500,35 +560,48 @@ export default {
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		availableFields() {
-			const valueLabel =
-				this.isFreshRequest && this.selectedType?.name === 'note'
-					? t('keepiq', 'Note')
-					: t('keepiq', 'Key / password')
+			const typeName = this.targetTypeName
 			const fields = [
-				{ key: 'key', label: valueLabel },
-				{ key: 'login', label: t('keepiq', 'Login') },
+				{
+					key: 'key',
+					label:
+						valueFieldOf(typeName)?.label
+						?? t('keepiq', 'Key / password'),
+				},
+			]
+			if (!leavesOut(typeName, 'login')) {
+				fields.push({
+					key: 'login',
+					label: loginLabelOf(typeName) ?? t('keepiq', 'Login'),
+				})
+			}
+			if (!leavesOut(typeName, 'url')) {
 				// Flagged plaintext because it is genuinely different: `url` is
 				// stored searchable, not encrypted, and the recipient deserves to
 				// know that before typing something sensitive into it.
-				{
+				fields.push({
 					key: 'url',
 					label: t('keepiq', 'URL (stored unencrypted)'),
 					plaintext: true,
-				},
-			]
+				})
+			}
 
 			const seen = new Set(fields.map((f) => f.key))
-			// A fresh request has no Secret yet, so its members are the picked
-			// type's fields. Otherwise they come from the explicit key list when
-			// the server sent one, else from the decrypted blob's own keys.
-			const members = this.isFreshRequest
-				? typedFieldsOf(this.selectedType).map((f) => f.label)
-				: this.secret?.additional_fields_keys
-					|| Object.keys(this.secret?.additionalFields || {})
+			// The type's own fields come first, stored under their fixed name.
+			// An existing Secret adds the members it already holds: from the
+			// explicit key list when the server sent one, else from the
+			// decrypted blob's own keys. A fresh request has no Secret yet.
+			const members = typeFieldsOf(this.targetType).map((f) => f.label)
+			if (this.isFreshRequest === false) {
+				members.push(
+					...(this.secret?.additional_fields_keys
+						|| Object.keys(fieldsOf(this.secret?.additionalFields))),
+				)
+			}
 			for (const key of members) {
 				if (seen.has(key) === false) {
 					seen.add(key)
-					fields.push({ key, label: key })
+					fields.push({ key, label: memberLabel(typeName, key) })
 				}
 			}
 			// Names typed in this dialog for fields the secret does not have yet.
@@ -544,7 +617,100 @@ export default {
 			// fields already hold a value is vault metadata about a credential.
 			// The server could not do it anyway — it never decrypts the
 			// additionalFields blob (ADR-003), so only this side can see members.
-			return fields.map((f) => ({ ...f, filled: this.isFieldFilled(f.key) }))
+			return fields.map((f) => ({
+				...f,
+				filled: this.isFieldFilled(f.key),
+				locked: this.lockedFields.includes(f.key),
+			}))
+		},
+
+		/**
+		 * The type the request asks by: the picked type for a fresh request,
+		 * else the Secret's own.
+		 *
+		 * @return {object|null} The type record.
+		 *
+		 * @spec exclude Trivial lookup: picks the fresh or the existing type record.
+		 */
+		targetType() {
+			return this.isFreshRequest
+				? this.selectedType
+				: useSecretTypeStore().typesById[this.secret?.typeId] || null
+		},
+
+		/**
+		 * @spec exclude Trivial lookup: the target type's system name.
+		 */
+		targetTypeName() {
+			return this.targetType?.name ?? ''
+		},
+
+		/**
+		 * The fields the request always asks for: the value of a type that
+		 * requires one. A plain request on a Secret whose value is already
+		 * there leaves it free, so the dialog never compels an overwrite.
+		 *
+		 * @return {Array<string>} The locked field names.
+		 *
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
+		 */
+		lockedFields() {
+			if (!valueLockedInRequests(this.targetTypeName)) {
+				return []
+			}
+			if (!this.isReRequest && this.isFieldFilled('key')) {
+				return []
+			}
+			return ['key']
+		},
+
+		/**
+		 * The preset options for a field typed here, plus Custom while the
+		 * schema set up under Advanced matches none.
+		 *
+		 * @return {Array<{label: string, value: string}>} The options.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		presetSelectOptions() {
+			const options = presetOptions().map((p) => ({
+				label: p.label,
+				value: p.id,
+			}))
+			if (presetOf(this.customFieldSchema) === 'custom') {
+				options.push({ label: t('keepiq', 'Custom'), value: 'custom' })
+			}
+			return options
+		},
+
+		/**
+		 * The schema of each requested custom field that is more than plain
+		 * text: picked here for a name typed here, else the one the secret
+		 * stores, else the one the type's own field states.
+		 *
+		 * @return {object} The schemas by field name.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		requestedSchemas() {
+			const stored = this.isFreshRequest
+				? {}
+				: schemasOf(this.secret?.additionalFields)
+			const typeFields = typeFieldsOf(this.targetType)
+			const schemas = {}
+			for (const name of this.requestedFields) {
+				if (['key', 'login', 'url'].includes(name)) {
+					continue
+				}
+				const typeField = typeFields.find((f) => f.label === name)
+				const schema =
+					this.customSchemas[name]
+					?? stored[name]
+					?? (typeField ? typeFieldSchema(typeField) : null)
+				if (schema && !isPlainSchema(schema)) {
+					schemas[name] = cleanSchema(schema)
+				}
+			}
+			return schemas
 		},
 	},
 
@@ -554,16 +720,23 @@ export default {
 		 *
 		 * The previous type's fields are gone from the list, so a tick on one of
 		 * them would ask for a field the dialog no longer shows. Names typed here
-		 * stay ticked: they belong to the request, not to a type.
+		 * stay ticked: they belong to the request, not to a type. The new type's
+		 * locked fields are ticked.
 		 *
 		 * @return {void}
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
 		 */
 		typeId() {
-			this.requestedFields = this.requestedFields.filter((name) =>
-				this.customFields.includes(name),
-			)
+			this.requestedFields = [
+				...this.lockedFields,
+				...this.requestedFields.filter(
+					(name) =>
+						this.customFields.includes(name)
+						&& !this.lockedFields.includes(name),
+				),
+			]
 		},
 	},
 
@@ -606,6 +779,36 @@ export default {
 	},
 
 	methods: {
+		presetOf,
+
+		/**
+		 * Set up the next field with the schema of the picked preset.
+		 *
+		 * @param {string} id The preset.
+		 * @return {void}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		onCustomPreset(id) {
+			if (id !== 'custom') {
+				this.customFieldSchema = presetSchema(id)
+			}
+		},
+
+		/**
+		 * The kind a field typed here is asked as: its preset's name, or Custom.
+		 *
+		 * @param {object|undefined} schema The field's schema.
+		 * @return {string} The label.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		kindLabel(schema) {
+			const id = presetOf(schema)
+			return (
+				presetOptions().find((p) => p.id === id)?.label
+				?? t('keepiq', 'Custom')
+			)
+		},
+
 		/**
 		 * Submit the create request to the store.
 		 *
@@ -646,6 +849,7 @@ export default {
 				// test hid it, so the plain create path never worked from the UI.
 				const payload = {
 					requestedFields: this.requestedFields,
+					fieldSchemas: this.requestedSchemas,
 					expiresAt: expires,
 					isReRequest: this.isReRequest,
 				}
@@ -667,6 +871,7 @@ export default {
 							this.secret.encryption_suite_id,
 							this.requestedFields,
 							expires,
+							this.requestedSchemas,
 						)
 					: await store.createRequest(payload)
 
@@ -728,13 +933,15 @@ export default {
 		 * rather than merely inviting one. A re-request is exempt — replacing
 		 * existing values is that flow's entire purpose.
 		 *
-		 * A fresh request ticks nothing: the field list follows the picked type,
-		 * and which of its fields to ask for is the requester's choice.
+		 * A fresh request ticks only the fields its type requires: the field list
+		 * follows the picked type, and which of the others to ask for is the
+		 * requester's choice.
 		 *
 		 * @return {Array<string>} Field names to tick initially.
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
 		 */
 		defaultSelection() {
 			if (this.isReRequest) {
@@ -742,7 +949,7 @@ export default {
 			}
 
 			if (this.isFreshRequest) {
-				return []
+				return [...this.lockedFields]
 			}
 
 			return this.isFieldFilled('key') ? [] : ['key']
@@ -759,6 +966,7 @@ export default {
 		 * @return {void}
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		addCustomField() {
 			const name = (this.customFieldInput || '').trim()
@@ -782,6 +990,12 @@ export default {
 			}
 
 			this.customFields.push(name)
+			this.customSchemas = {
+				...this.customSchemas,
+				[name]: cleanSchema(this.customFieldSchema),
+			}
+			this.customFieldSchema = { type: 'string' }
+			this.customAdvancedOpen = false
 			if (this.requestedFields.includes(name) === false) {
 				this.requestedFields.push(name)
 			}
@@ -805,6 +1019,9 @@ export default {
 		 */
 		removeCustomField(name) {
 			this.customFields = this.customFields.filter((f) => f !== name)
+			const kept = { ...this.customSchemas }
+			delete kept[name]
+			this.customSchemas = kept
 			this.requestedFields = this.requestedFields.filter((f) => f !== name)
 			this.customFieldError = ''
 		},
@@ -858,6 +1075,9 @@ export default {
 
 			this.requestedFields = this.defaultSelection()
 			this.customFields = []
+			this.customSchemas = {}
+			this.customFieldSchema = { type: 'string' }
+			this.customAdvancedOpen = false
 			this.customFieldInput = ''
 			this.customFieldError = ''
 			this.newName = ''
@@ -928,8 +1148,18 @@ export default {
 }
 
 .secret-request-create-dialog__filled,
+.secret-request-create-dialog__kind,
 .secret-request-create-dialog__hint {
 	color: var(--color-text-maxcontrast);
+}
+
+.secret-request-create-dialog__kind {
+	margin-inline-start: 6px;
+	font-size: 0.85em;
+}
+
+.secret-request-create-dialog__advanced-toggle {
+	align-self: flex-start;
 }
 
 .secret-request-create-dialog__hint {

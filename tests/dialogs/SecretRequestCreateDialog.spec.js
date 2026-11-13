@@ -156,6 +156,7 @@ describe('SecretRequestCreateDialog', () => {
 			'suite-9',
 			['key'],
 			null, // no expiry → null (not empty string)
+			{}, // no custom field with a schema
 		)
 		expect(wrapper.vm.fillUrl).toContain(
 			'/apps/keepiq/public/share/request/tok-rerequest',
@@ -410,6 +411,8 @@ describe('SecretRequestCreateDialog', () => {
 			{ id: 't-identity', name: 'identity', label: 'Identity' },
 			{ id: 't-totp', name: 'totp', label: 'Authenticator (TOTP)' },
 			{ id: 't-passkey', name: 'passkey', label: 'Passkey' },
+			{ id: 't-certificate', name: 'certificate', label: 'Certificate' },
+			{ id: 't-database', name: 'database', label: 'Database' },
 			{
 				id: 't-server',
 				name: 'server',
@@ -440,6 +443,8 @@ describe('SecretRequestCreateDialog', () => {
 			expect(wrapper.vm.typeOptions.map((o) => o.value)).toEqual([
 				't-login',
 				't-note',
+				't-certificate',
+				't-database',
 				't-server',
 			])
 			expect(wrapper.vm.typeId).toBe('t-login')
@@ -476,6 +481,72 @@ describe('SecretRequestCreateDialog', () => {
 			})
 		})
 
+		// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		it('asks for a certificate with the certificate ticked and locked', async () => {
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-certificate'
+			await wrapper.vm.$nextTick()
+
+			expect(
+				wrapper.vm.availableFields.map((f) => [f.key, f.label, f.locked]),
+			).toEqual([
+				['key', 'Certificate', true],
+				['url', 'URL (stored unencrypted)', false],
+				['Private key', 'Private key', false],
+				['Passphrase', 'Passphrase', false],
+			])
+			expect(wrapper.vm.requestedFields).toEqual(['key'])
+			expect(wrapper.vm.canSubmit).toBe(false)
+
+			wrapper.vm.newName = 'example.org TLS'
+			expect(wrapper.vm.canSubmit).toBe(true)
+		})
+
+		// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		it('asks for a database by username, without a URL', async () => {
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-database'
+			await wrapper.vm.$nextTick()
+
+			expect(wrapper.vm.availableFields.map((f) => [f.key, f.label])).toEqual([
+				['key', 'Password'],
+				['login', 'Username'],
+				['Host', 'Host'],
+				['Port', 'Port'],
+				['Database', 'Database'],
+			])
+			expect(wrapper.vm.requestedFields).toEqual(['key'])
+		})
+
+		// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		it('asks for a login with the password ticked and locked', async () => {
+			const wrapper = await mountFresh()
+
+			expect(wrapper.vm.typeId).toBe('t-login')
+			expect(
+				wrapper.vm.availableFields.map((f) => [f.key, f.label, f.locked]),
+			).toEqual([
+				['key', 'Password', true],
+				['login', 'Login', false],
+				['url', 'URL (stored unencrypted)', false],
+			])
+			expect(wrapper.vm.requestedFields).toEqual(['key'])
+		})
+
+		it('frees the locked field again on a type that does not require it', async () => {
+			const wrapper = await mountFresh()
+
+			wrapper.vm.typeId = 't-certificate'
+			await wrapper.vm.$nextTick()
+			wrapper.vm.typeId = 't-server'
+			await wrapper.vm.$nextTick()
+
+			expect(wrapper.vm.requestedFields).toEqual([])
+			expect(wrapper.vm.availableFields[0].locked).toBe(false)
+		})
+
 		it('drops the previous type ticks on a type change but keeps typed names', async () => {
 			const wrapper = await mountFresh()
 
@@ -488,7 +559,7 @@ describe('SecretRequestCreateDialog', () => {
 			wrapper.vm.typeId = 't-login'
 			await wrapper.vm.$nextTick()
 
-			expect(wrapper.vm.requestedFields).toEqual(['client-id'])
+			expect(wrapper.vm.requestedFields).toEqual(['key', 'client-id'])
 		})
 
 		it('sends the picked type with the request', async () => {
