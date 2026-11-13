@@ -394,4 +394,64 @@ class SecretRequestFillControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_GONE, $response->getStatus());
 	}//end testFillRefusesARequestOnARevokedSuite()
+
+	/**
+	 * A refusal without an HTTP code answers 404, with the message and the reason.
+	 *
+	 * @return void
+	 */
+	public function testShowWithoutACodedRefusalIs404(): void {
+		$this->secretRequestService->method('getByToken')->willThrowException(new InvalidArgumentException(message: 'Unknown token'));
+		$this->secretRequestService->method('refusalReason')->with(token: 'tok-x')->willReturn('not_found');
+
+		$response = $this->controller->show(token: 'tok-x');
+
+		$this->assertSame(expected: Http::STATUS_NOT_FOUND, actual: $response->getStatus());
+		$this->assertSame(expected: ['message' => 'Unknown token', 'reason' => 'not_found'], actual: $response->getData());
+	}//end testShowWithoutACodedRefusalIs404()
+
+	/**
+	 * Requested fields that are not a JSON list read as none.
+	 *
+	 * @return void
+	 */
+	public function testShowReadsUnreadableRequestedFieldsAsNone(): void {
+		$request = $this->makeRequest();
+		$request->setRequestedFields('not json');
+		$this->secretRequestService->method('getByToken')->willReturn($request);
+		$this->encryptionSuiteService->method('getSuite')->willReturn($this->makeSuite());
+
+		$response = $this->controller->show(token: 'tok-1');
+
+		$this->assertSame(expected: [], actual: $response->getData()['requested_fields']);
+	}//end testShowReadsUnreadableRequestedFieldsAsNone()
+
+	/**
+	 * A fill without encrypted fields is a 400 and never reaches the service.
+	 *
+	 * @return void
+	 */
+	public function testFillWithoutFieldsIs400(): void {
+		$this->secretRequestService->expects($this->never())->method('fill');
+
+		foreach ([null, []] as $fields) {
+			$response = $this->controller->fill(token: 'tok-1', encryptedFields: $fields);
+			$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+			$this->assertSame(expected: ['message' => 'encryptedFields is required'], actual: $response->getData());
+		}
+	}//end testFillWithoutFieldsIs400()
+
+	/**
+	 * A validation refusal without an HTTP code answers 400.
+	 *
+	 * @return void
+	 */
+	public function testFillWithAnUncodedRefusalIs400(): void {
+		$this->secretRequestService->method('fill')->willThrowException(new InvalidArgumentException(message: 'Bad field'));
+
+		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'CIPHER']);
+
+		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+		$this->assertSame(expected: ['message' => 'Bad field'], actual: $response->getData());
+	}//end testFillWithAnUncodedRefusalIs400()
 }//end class
