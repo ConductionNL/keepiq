@@ -254,6 +254,23 @@ final class ShareSaveScopeRefusalsTest extends TestCase {
 	}//end testExpiredStagesAreDropped()
 
 	/**
+	 * A copy whose share rows are ambiguous is not found, and its source is
+	 * never read.
+	 *
+	 * @return void
+	 */
+	public function testAnAmbiguousCopyIsNotFound(): void {
+		$this->judge = $this->createMock(ShareRowJudge::class);
+		$this->judge->method('forCopy')->with($this->copy)->willReturn(new ShareRowVerdict(state: ShareRowVerdict::AMBIGUOUS));
+		$this->secrets->expects($this->never())->method('findById');
+
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('Secret not found');
+
+		$this->scope()->resolve($this->copy, 'bob');
+	}//end testAnAmbiguousCopyIsNotFound()
+
+	/**
 	 * A secret with an id.
 	 *
 	 * @param string $id The id.
