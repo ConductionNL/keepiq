@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\AppInfo;
 
 use OCA\Keepiq\Controller\SettingsController;
+use OCA\Keepiq\Controller\SettingsControllerFactory;
 use OCA\Keepiq\Repair\InitializeSettings;
 use OCA\Keepiq\Service\SettingsService;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;

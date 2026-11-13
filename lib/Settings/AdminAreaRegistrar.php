@@ -6,8 +6,8 @@
  * Registers the five admin area settings classes as themselves
  * (admin-scoped-roles D1).
  *
- * @category AppInfo
- * @package  OCA\Keepiq\AppInfo
+ * @category Settings
+ * @package  OCA\Keepiq\Settings
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Keepiq\AppInfo;
+namespace OCA\Keepiq\Settings;
 
 use OCA\Keepiq\Settings\AdminSettings;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;

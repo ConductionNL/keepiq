@@ -22,7 +22,7 @@ namespace OCA\Keepiq\Tests\Unit\Mcp;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\McpRegistrar;
+use OCA\Keepiq\Mcp\McpRegistrar;
 use OCA\Keepiq\Db\AuditEntry;
 use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Db\EncryptionSuite;

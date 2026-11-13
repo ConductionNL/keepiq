@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Settings;
 
-use OCA\Keepiq\AppInfo\AdminAreaRegistrar;
+use OCA\Keepiq\Settings\AdminAreaRegistrar;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Settings\AdminAreaSettings;
 use OCA\Keepiq\Settings\AdminSettings;

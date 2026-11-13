@@ -21,11 +21,16 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
+use OCA\Keepiq\Listener\AuditStreamEventRegistrar;
+use OCA\Keepiq\Listener\SuiteLifecycleEventRegistrar;
+use OCA\Keepiq\Listener\UserLifecycleEventRegistrar;
+use OCA\Keepiq\Mcp\McpRegistrar;
+use OCA\Keepiq\Middleware\MiddlewareRegistrar;
+use OCA\Keepiq\Settings\AdminAreaRegistrar;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
-use OCA\Keepiq\Middleware\ApiContractMiddleware;
 
 /**
  * Main application class for the Keepiq Nextcloud app.
@@ -98,10 +103,7 @@ class Application extends App implements IBootstrap {
 	 * @spec openspec/specs/app-shell/spec.md#requirement-keepiq-operates-without-any-other-conduction-app
 	 */
 	public function register(IRegistrationContext $context): void {
-		// The API contract (version header, deprecation of unversioned paths,
-		// problem details). Registered first: Nextcloud runs afterController in
-		// reverse order, so it sees the final response of every other middleware.
-		$context->registerMiddleware(class: ApiContractMiddleware::class);
+		(new MiddlewareRegistrar())->registerApiContract(context: $context);
 		include_once __DIR__ . '/../../vendor/autoload.php';
 
 		// Keepiq's own settings stack and the admin areas, as themselves, so a

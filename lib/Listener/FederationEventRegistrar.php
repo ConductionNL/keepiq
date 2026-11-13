@@ -7,8 +7,8 @@
  * D2). Both events exist from Nextcloud 33; on 32 they are never dispatched,
  * so the registration is inert there.
  *
- * @category AppInfo
- * @package  OCA\Keepiq\AppInfo
+ * @category Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Keepiq\AppInfo;
+namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;
 use OCA\Keepiq\Listener\FederationOcmDiscoveryListener;

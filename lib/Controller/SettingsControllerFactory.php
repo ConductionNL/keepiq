@@ -8,8 +8,8 @@
  * keeps its coupling under the PHPMD limit now the controller also takes the
  * integriq connection reporter (adopt-connection-registry).
  *
- * @category AppInfo
- * @package  OCA\Keepiq\AppInfo
+ * @category Controller
+ * @package  OCA\Keepiq\Controller
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -25,7 +25,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Keepiq\AppInfo;
+namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
