@@ -76,7 +76,7 @@
 				"login": null,
 				"password": "priv",
 				"additionalFields": {
-					"publicKey": "pub"
+					"Public key": "pub"
 				},
 				"folder": "",
 				"type": "ssh_key",

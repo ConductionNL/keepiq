@@ -236,6 +236,17 @@ function apiKeyFields(credential, title) {
 }
 
 /**
+ * The member an SSH key's public key is stored under: the built-in SSH Key
+ * form's own field.
+ */
+const SSH_PUBLIC_KEY = 'Public key'
+
+/**
+ * The member older imports stored the public key under, still read on export.
+ */
+const SSH_PUBLIC_KEY_ALIAS = 'publicKey'
+
+/**
  * Row fields of an SSH key credential.
  *
  * @param {object} credential The CXF credential entity.
@@ -248,7 +259,7 @@ function sshKeyFields(credential, title) {
 		name: title !== '' ? title : 'SSH key',
 		password: fieldValue(credential.privateKey),
 		type: 'ssh_key',
-		additionalFields: publicKey ? { publicKey } : null,
+		additionalFields: publicKey ? { [SSH_PUBLIC_KEY]: publicKey } : null,
 	}
 }
 
@@ -730,7 +741,9 @@ function apiKeyCredential(row) {
 function sshKeyCredential(row) {
 	const fields = row.additionalFields
 	const publicKey =
-		fields && typeof fields === 'object' ? (fields.publicKey ?? '') : ''
+		fields && typeof fields === 'object'
+			? (fields[SSH_PUBLIC_KEY] ?? fields[SSH_PUBLIC_KEY_ALIAS] ?? '')
+			: ''
 	return {
 		type: 'ssh-key',
 		privateKey: {
@@ -816,7 +829,8 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 	const collections = new Map()
 
 	for (const [index, row] of serializedSecrets.entries()) {
-		const credential = rowToCredential(row, typeNameOf(row, options), unmapped)
+		const typeName = typeNameOf(row, options)
+		const credential = rowToCredential(row, typeName, unmapped)
 		if (credential === null) {
 			continue
 		}
@@ -825,7 +839,10 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 		// The SSH key entity carries the public key itself.
 		const custom = customFieldsCredential(
 			row.additionalFields,
-			credential.type === 'ssh-key' ? ['publicKey'] : [],
+			credential.type === 'ssh-key'
+				? [SSH_PUBLIC_KEY, SSH_PUBLIC_KEY_ALIAS]
+				: [],
+			typeName,
 		)
 		items.push({
 			id: itemId,

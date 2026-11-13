@@ -6,17 +6,28 @@
  * Each field gets the CXF field type closest to its schema (a hidden field is
  * a `concealed-string`), and the full schema rides along in the field's
  * extensions, so a Keepiq-to-Keepiq round trip keeps formats and limits CXF
- * has no words for.
+ * has no words for. A built-in type's own field without a stored schema, such
+ * as an SSH key's Passphrase, goes out with the schema its type gives it.
  */
 
+import { RESERVED_MEMBER_NAMES } from '../utils/additionalFields.js'
+import { builtinFieldNamed } from '../utils/builtinTypeFields.js'
 import {
 	cleanSchema,
 	fieldsOf,
 	isHiddenSchema,
 	isPlainSchema,
+	SCHEMA_MEMBER,
 	schemasOf,
+	typeFieldSchema,
 	withSchemas,
 } from '../utils/fieldSchema.js'
+
+/**
+ * Names an imported field cannot keep: the request columns, and the member
+ * that holds the schemas.
+ */
+const RESERVED_NAMES = Object.freeze([...RESERVED_MEMBER_NAMES, SCHEMA_MEMBER])
 
 /** The extension name the full schema travels under. */
 export const SCHEMA_EXTENSION = 'nl.conduction.keepiq.field-schema'
@@ -59,10 +70,11 @@ export function cxfFieldType(schema) {
  *
  * @param {object|null|undefined} additionalFields The decrypted additional fields.
  * @param {Array<string>} used Field names another credential already carries.
+ * @param {string} typeName The secret's type name, for its built-in fields.
  * @return {object|null} The CXF credential.
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
-export function customFieldsCredential(additionalFields, used = []) {
+export function customFieldsCredential(additionalFields, used = [], typeName = '') {
 	if (additionalFields === null || typeof additionalFields !== 'object') {
 		return null
 	}
@@ -70,7 +82,10 @@ export function customFieldsCredential(additionalFields, used = []) {
 	const fields = Object.entries(fieldsOf(additionalFields))
 		.filter(([name]) => !used.includes(name))
 		.map(([name, value], index) => {
-			const schema = cleanSchema(schemas[name])
+			const builtin = builtinFieldNamed(typeName, name)
+			const schema = cleanSchema(
+				schemas[name] ?? (builtin ? typeFieldSchema(builtin) : null),
+			)
 			const field = {
 				id: `field-${index + 1}`,
 				label: name,
@@ -103,6 +118,26 @@ function schemaOfField(field) {
 }
 
 /**
+ * The name an imported field is stored under: its label, with " (imported)"
+ * added when the label is a reserved name, such as "URL" from another
+ * password manager, so the value is kept without taking the reserved name.
+ *
+ * @param {string} label The field's label.
+ * @param {object} fields The fields read so far.
+ * @return {string} The name.
+ */
+function importedName(label, fields) {
+	if (!RESERVED_NAMES.includes(label.toLowerCase())) {
+		return label
+	}
+	let name = `${label} (imported)`
+	for (let n = 2; Object.hasOwn(fields, name); n++) {
+		name = `${label} (imported ${n})`
+	}
+	return name
+}
+
+/**
  * The additional fields a `custom-fields` credential holds, with their schemas.
  *
  * @param {object} credential The CXF credential.
@@ -113,10 +148,11 @@ export function readCustomFields(credential) {
 	const fields = {}
 	const schemas = {}
 	for (const field of Array.isArray(credential?.fields) ? credential.fields : []) {
-		const name = String(field?.label ?? field?.id ?? '').trim()
-		if (name === '') {
+		const label = String(field?.label ?? field?.id ?? '').trim()
+		if (label === '') {
 			continue
 		}
+		const name = importedName(label, fields)
 		fields[name] =
 			field?.value === null || field?.value === undefined
 				? ''
