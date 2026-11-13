@@ -11,8 +11,12 @@
  * outside /api/v1 (settings, preferences, health, metrics, the SPA) are not
  * part of the versioned API and are left out.
  *
- * Error bodies are described as they are sent today: application/json with
- * a `message` and, on a refusal, an `error` code.
+ * Error bodies are described as they are sent. On a /api/v1/ alias of an
+ * unversioned route, ApiContractMiddleware turns a JSON error body into an
+ * RFC 9457 problem (application/problem+json, schema Problem: type, title,
+ * status, detail, with the original members kept). A route the app declares
+ * under /api/v1/ itself keeps its body as before: application/json with a
+ * `message` and, on a refusal, an `error` code (schema Error).
  *
  * Usage: php scripts/generate-openapi.php [--check]
  *   --check  exit 1 when the committed openapi.json differs from the output
@@ -167,6 +171,15 @@ function docText(string $doc): array
  *
  * @return array<string,mixed>
  */
+function errorContent(bool $alias): array
+{
+	if ($alias === true) {
+		return ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/Problem']]];
+	}
+
+	return ['application/json' => ['schema' => ['$ref' => '#/components/schemas/Error']]];
+}
+
 function schemaOf(string $type): array
 {
 	$type = strtolower(explode('|', $type)[0]);
@@ -200,6 +213,8 @@ foreach ($routes as $route) {
 	}
 
 	[$summary, $description] = docText($method['doc']);
+	// Only the /api/v1/ aliases ApiPathAliases adds answer errors as problem details.
+	$alias = str_ends_with((string) ($route['postfix'] ?? ''), \OCA\Keepiq\Middleware\Support\ApiPathAliases::ALIAS_POSTFIX);
 	$public = str_contains($method['attrs'], 'PublicPage');
 	// Application routes are public pages to Nextcloud and authenticated by JwtAuthMiddleware.
 	$bearer = str_contains((string) file_get_contents($file), 'extends ApplicationApiController');
@@ -302,7 +317,7 @@ foreach ($routes as $route) {
 
 		$responses[(string) $code] = [
 			'description' => DESCRIPTIONS[$code] ?? 'Error',
-			'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/Error']]],
+			'content' => errorContent(alias: $alias),
 		];
 	}
 
@@ -354,7 +369,9 @@ $document = [
 		'description' => 'The versioned JSON API of Keepiq, the password and secrets vault for Nextcloud: secrets, folders, shares, '
 			. 'emergency access, recovery, applications and the admin API. Authenticate as a Nextcloud user: a browser session, or an app '
 			. 'password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by '
-			. 'scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here.',
+			. 'scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here. '
+			. 'Errors on the /api/v1/ paths of the unversioned routes are RFC 9457 problem details (application/problem+json); '
+			. 'the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json.',
 		'contact' => ['name' => 'Conduction B.V.', 'email' => 'info@conduction.nl', 'url' => 'https://conduction.nl'],
 		'license' => ['name' => 'EUPL-1.2', 'url' => 'https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12'],
 	],
@@ -372,7 +389,20 @@ $document = [
 			'bearerAuth' => ['type' => 'http', 'scheme' => 'bearer', 'bearerFormat' => 'JWT', 'description' => 'An application token from POST /token, for the /app routes.'],
 		],
 		'headers' => ['API-Version' => ['description' => 'The full version of the Keepiq app that answered.', 'schema' => ['type' => 'string']]],
-		'schemas' => ['Error' => [
+		'schemas' => ['Problem' => [
+			'type' => 'object',
+			'description' => 'An RFC 9457 problem detail. The members of the error body the route sent (`message`, `error`) are kept beside these.',
+			'properties' => [
+				'type' => ['type' => 'string', 'description' => 'A URI naming the problem type; `about:blank` when the status says it all.'],
+				'title' => ['type' => 'string', 'description' => 'The reason phrase of the HTTP status.'],
+				'status' => ['type' => 'integer', 'description' => 'The HTTP status code.'],
+				'detail' => ['type' => 'string', 'description' => 'A human-readable explanation of this occurrence.'],
+				'message' => ['type' => 'string', 'description' => 'The human-readable explanation the route sent.'],
+				'error' => ['type' => 'string', 'description' => 'A machine-readable code, on a refusal.'],
+			],
+			'required' => ['type', 'title', 'status'],
+			'additionalProperties' => true,
+		], 'Error' => [
 			'type' => 'object',
 			'properties' => [
 				'message' => ['type' => 'string', 'description' => 'A human-readable explanation.'],
