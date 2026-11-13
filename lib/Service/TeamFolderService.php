@@ -48,6 +48,7 @@ use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Exception\OwnerOnlyException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;
@@ -66,7 +67,7 @@ use Throwable;
  *   owner and manager rules (sharing-team-folder-manager-role) and the
  *   membership restrictions (sharing-use-only-and-expiring-shares) in one place.
  */
-class TeamFolderService {
+class TeamFolderService implements TeamFolderServiceInterface {
 	/**
 	 * Constructor for TeamFolderService.
 	 *

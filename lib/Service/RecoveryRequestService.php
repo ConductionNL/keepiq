@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\RecoveryRequest;
 use OCA\Keepiq\Db\RecoveryRequestMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\RecoveryRequestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 
@@ -45,7 +46,7 @@ use Ramsey\Uuid\Uuid;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Every step re-checks who may
  *   act on which state; keeping those checks next to each other is the point.
  */
-class RecoveryRequestService {
+class RecoveryRequestService implements RecoveryRequestServiceInterface {
 
 	public const STATUS_PENDING = 'pending';
 

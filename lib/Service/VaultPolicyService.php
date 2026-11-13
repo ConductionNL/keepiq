@@ -33,6 +33,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\VaultPolicyServiceInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -41,11 +42,7 @@ use OCP\IUserSession;
 /**
  * Reads, writes and evaluates the vault policies.
  */
-class VaultPolicyService {
-	/**
-	 * Policy: block personal vault export.
-	 */
-	public const EXPORT_DISABLED = 'vault_export_disabled';
+class VaultPolicyService implements VaultPolicyServiceInterface {
 
 	/**
 	 * Policy: require Nextcloud two-factor login before the vault unlocks.

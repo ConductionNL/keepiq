@@ -27,8 +27,8 @@ use DateTime;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretTrashMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\SecretService;
-use OCA\Keepiq\Service\SecretTrashService;
+use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\SecretTrashServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -58,7 +58,7 @@ class PurgeTrashedSecretsJob extends TimedJob {
 	 *
 	 * @param ITimeFactory $time The time factory
 	 * @param SecretTrashMapper $trashMapper Reads the trash across users
-	 * @param SecretService $secretService The full delete cascade
+	 * @param SecretServiceInterface $secretService The full delete cascade
 	 * @param IAppConfig $appConfig The app config (retention)
 	 * @param LoggerInterface $logger The logger
 	 *
@@ -69,7 +69,7 @@ class PurgeTrashedSecretsJob extends TimedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private SecretTrashMapper $trashMapper,
-		private SecretService $secretService,
+		private SecretServiceInterface $secretService,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 	) {
@@ -88,10 +88,10 @@ class PurgeTrashedSecretsJob extends TimedJob {
 		$days = $this->appConfig->getValueInt(
 			AppIdentity::APP_ID,
 			'trash_retention_days',
-			SecretTrashService::RETENTION_DEFAULT
+			SecretTrashServiceInterface::RETENTION_DEFAULT
 		);
 
-		return max(SecretTrashService::RETENTION_MIN, min(SecretTrashService::RETENTION_MAX, $days));
+		return max(SecretTrashServiceInterface::RETENTION_MIN, min(SecretTrashServiceInterface::RETENTION_MAX, $days));
 	}//end retentionDays()
 
 	/**

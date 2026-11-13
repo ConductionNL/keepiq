@@ -30,7 +30,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Kernel\Contracts\SecretVersionServiceInterface;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -47,14 +47,14 @@ class SecretVersionController extends OCSController {
 	 * Constructor for SecretVersionController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretVersionService $versionService The version service
+	 * @param SecretVersionServiceInterface $versionService The version service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretVersionService $versionService,
+		private SecretVersionServiceInterface $versionService,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

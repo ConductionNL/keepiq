@@ -28,8 +28,8 @@ use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\ComplianceReportServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCA\Keepiq\Service\Siem\SiemSinkRequest;
-use OCA\Keepiq\Service\SiemService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -50,7 +50,7 @@ class AdminAuditController extends Controller {
 	 * @param IRequest $request The request
 	 * @param AuditServiceInterface $audit The audit query the admin screen uses
 	 * @param ComplianceReportServiceInterface $reports The compliance reports
-	 * @param SiemService $siem The SIEM sinks
+	 * @param SiemServiceInterface $siem The SIEM sinks
 	 * @param IUserSession $userSession The acting administrator
 	 *
 	 * @return void
@@ -61,7 +61,7 @@ class AdminAuditController extends Controller {
 		IRequest $request,
 		private AuditServiceInterface $audit,
 		private ComplianceReportServiceInterface $reports,
-		private SiemService $siem,
+		private SiemServiceInterface $siem,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

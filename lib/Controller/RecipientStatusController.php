@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\RecipientStatusService;
+use OCA\Keepiq\Kernel\Contracts\RecipientStatusServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -43,7 +43,7 @@ class RecipientStatusController extends Controller {
 	 * Constructor for RecipientStatusController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param RecipientStatusService $recipientStatus The recipient status service
+	 * @param RecipientStatusServiceInterface $recipientStatus The recipient status service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
@@ -52,7 +52,7 @@ class RecipientStatusController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private RecipientStatusService $recipientStatus,
+		private RecipientStatusServiceInterface $recipientStatus,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -91,12 +91,12 @@ class RecipientStatusController extends Controller {
 				)
 			)
 		);
-		if (count($requested) > RecipientStatusService::MAX_USERS) {
+		if (count($requested) > RecipientStatusServiceInterface::MAX_USERS) {
 			return new JSONResponse(
 				data: [
 					'message' => sprintf(
 						'At most %d users may be looked up at once, %d given',
-						RecipientStatusService::MAX_USERS,
+						RecipientStatusServiceInterface::MAX_USERS,
 						count($requested)
 					),
 				],

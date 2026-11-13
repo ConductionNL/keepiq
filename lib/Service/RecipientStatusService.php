@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Kernel\Contracts\RecipientStatusServiceInterface;
 use OCP\Collaboration\Collaborators\ISearch;
 use OCP\Share\IShare;
 
@@ -32,13 +33,7 @@ use OCP\Share\IShare;
  *
  * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-search-marks-who-cannot-receive-a-share
  */
-class RecipientStatusService {
-	/**
-	 * The most users one answer covers: one page of the share dialog's search.
-	 *
-	 * @var int
-	 */
-	public const MAX_USERS = 25;
+class RecipientStatusService implements RecipientStatusServiceInterface {
 
 	/**
 	 * Constructor for RecipientStatusService.

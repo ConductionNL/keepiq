@@ -33,8 +33,8 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\TeamFolderConfirmationService;
-use OCA\Keepiq\Service\TeamFolderService;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderConfirmationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderServiceInterface;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -51,17 +51,17 @@ class TeamFolderController extends OCSController {
 	 * Constructor for TeamFolderController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param TeamFolderService $teamFolderService The team-folder service
+	 * @param TeamFolderServiceInterface $teamFolderService The team-folder service
 	 * @param IUserSession $userSession The user session
-	 * @param TeamFolderConfirmationService $confirmations Automatic member confirmation
+	 * @param TeamFolderConfirmationServiceInterface $confirmations Automatic member confirmation
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private TeamFolderService $teamFolderService,
+		private TeamFolderServiceInterface $teamFolderService,
 		private IUserSession $userSession,
-		private TeamFolderConfirmationService $confirmations,
+		private TeamFolderConfirmationServiceInterface $confirmations,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

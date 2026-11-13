@@ -28,7 +28,7 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
-use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Kernel\Contracts\SecretTypeServiceInterface;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -45,7 +45,7 @@ class SecretTypeController extends OCSController {
 	 * Constructor for SecretTypeController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretTypeService $typeService The secret type service
+	 * @param SecretTypeServiceInterface $typeService The secret type service
 	 * @param IUserSession $userSession The user session
 	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the General admin area
 	 *
@@ -53,7 +53,7 @@ class SecretTypeController extends OCSController {
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretTypeService $typeService,
+		private SecretTypeServiceInterface $typeService,
 		private IUserSession $userSession,
 		private AdminAreaAuthorizerInterface $areas,
 	) {

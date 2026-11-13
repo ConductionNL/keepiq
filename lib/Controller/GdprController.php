@@ -35,7 +35,7 @@ use OCA\Keepiq\Event\GdprExportPerformedEvent;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\AccountDeletionServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\GdprServiceInterface;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -131,7 +131,7 @@ class GdprController extends Controller {
 	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['confirmation'], subject: 'active', purpose: VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA)]
+	#[VaultKeyProofRequired(binds: ['confirmation'], subject: 'active', purpose: VaultKeyProofServiceInterface::PURPOSE_DELETE_ACCOUNT_DATA)]
 	public function deleteAccountData(): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

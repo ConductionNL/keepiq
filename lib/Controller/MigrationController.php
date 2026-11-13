@@ -33,9 +33,9 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\EmergencyEnvelopeInvalidationServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
-use OCA\Keepiq\Service\MigrationService;
-use OCA\Keepiq\Service\MigrationWorkService;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\Contracts\MigrationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\MigrationWorkServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -75,8 +75,8 @@ class MigrationController extends OCSController {
 	 * Constructor for MigrationController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param MigrationService $migrationService The migration service
-	 * @param MigrationWorkService $workService The per-record migration work service
+	 * @param MigrationServiceInterface $migrationService The migration service
+	 * @param MigrationWorkServiceInterface $workService The per-record migration work service
 	 * @param EncryptionSuiteServiceInterface $suiteService The suite service (ownership check)
 	 * @param EmergencyEnvelopeInvalidationServiceInterface $envelopeService The emergency-envelope re-point service
 	 * @param IUserSession $userSession The user session
@@ -85,8 +85,8 @@ class MigrationController extends OCSController {
 	 */
 	public function __construct(
 		IRequest $request,
-		private MigrationService $migrationService,
-		private MigrationWorkService $workService,
+		private MigrationServiceInterface $migrationService,
+		private MigrationWorkServiceInterface $workService,
 		private EncryptionSuiteServiceInterface $suiteService,
 		private EmergencyEnvelopeInvalidationServiceInterface $envelopeService,
 		private IUserSession $userSession,
@@ -124,7 +124,7 @@ class MigrationController extends OCSController {
 	#[VaultKeyProofRequired(
 		binds: ['id', 'hasErrors', 'acceptUnrecoverable'],
 		subject: 'migrationOldSuite',
-		purpose: VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION
+		purpose: VaultKeyProofServiceInterface::PURPOSE_COMPLETE_MIGRATION
 	)]
 	/**
 	 * Complete a migration.
@@ -221,7 +221,7 @@ class MigrationController extends OCSController {
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['id'], subject: 'migrationNewSuite', purpose: VaultKeyProofService::PURPOSE_ABORT_MIGRATION)]
+	#[VaultKeyProofRequired(binds: ['id'], subject: 'migrationNewSuite', purpose: VaultKeyProofServiceInterface::PURPOSE_ABORT_MIGRATION)]
 	public function abort(string $id): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -468,7 +468,7 @@ class MigrationController extends OCSController {
 	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(purpose: VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE, binds: self::ENVELOPE_BINDS, subject: 'migrationNewSuite')]
+	#[VaultKeyProofRequired(purpose: VaultKeyProofServiceInterface::PURPOSE_EMERGENCY_RE_ENVELOPE, binds: self::ENVELOPE_BINDS, subject: 'migrationNewSuite')]
 	public function reEnvelopeEmergencyContact(
 		string $id,
 		string $contactId,

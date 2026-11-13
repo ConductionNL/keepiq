@@ -28,7 +28,7 @@ namespace OCA\Keepiq\Listener;
 
 use DateTime;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Service\ShareRowVerdict;
+use OCA\Keepiq\Kernel\Contracts\ShareRowVerdictInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use RuntimeException;
 use Throwable;
@@ -100,8 +100,8 @@ trait MarksCompromisedSecrets {
 	private function resolveTarget(Secret $secret, ?bool &$failed = null, ?bool &$unjudged = null): Secret {
 		try {
 			$verdict = $this->rowJudge->forCopy(copy: $secret);
-			$unjudged = ($verdict->state === ShareRowVerdict::UNJUDGED);
-			if ($verdict->state === ShareRowVerdict::AMBIGUOUS || $unjudged === true) {
+			$unjudged = ($verdict->state === ShareRowVerdictInterface::UNJUDGED);
+			if ($verdict->state === ShareRowVerdictInterface::AMBIGUOUS || $unjudged === true) {
 				throw new RuntimeException(message: 'its share row cannot be followed ('.$verdict->state.')');
 			}
 

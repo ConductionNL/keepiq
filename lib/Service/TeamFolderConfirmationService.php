@@ -35,6 +35,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderConfirmationServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 
@@ -44,7 +45,7 @@ use OCP\IAppConfig;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The confirmation rules join
  *   the team folder, membership, grade, share and secret sides in one place.
  */
-class TeamFolderConfirmationService {
+class TeamFolderConfirmationService implements TeamFolderConfirmationServiceInterface {
 	/**
 	 * The admin policy switch (admin-auto-confirm-members D1).
 	 */

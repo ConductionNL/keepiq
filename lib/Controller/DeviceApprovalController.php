@@ -25,8 +25,8 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\DeviceApprovalServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCA\Keepiq\Service\DeviceApprovalRequest;
-use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -172,7 +172,7 @@ class DeviceApprovalController extends Controller {
 	 * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['id', 'sealedUnlockKey'], subject: 'active', purpose: VaultKeyProofService::PURPOSE_APPROVE_DEVICE)]
+	#[VaultKeyProofRequired(binds: ['id', 'sealedUnlockKey'], subject: 'active', purpose: VaultKeyProofServiceInterface::PURPOSE_APPROVE_DEVICE)]
 	public function approve(string $id, string $sealedUnlockKey = ''): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

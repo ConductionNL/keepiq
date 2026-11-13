@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Kernel\Contracts\GroupShareServiceInterface;
-use OCA\Keepiq\Service\TeamFolderService;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Group\Events\UserAddedEvent;
@@ -42,14 +42,14 @@ class UserAddedToGroupListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param GroupShareServiceInterface $groupShareService The group-share service
-	 * @param TeamFolderService $teamFolderService The team-folder service
+	 * @param TeamFolderServiceInterface $teamFolderService The team-folder service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private GroupShareServiceInterface $groupShareService,
-		private TeamFolderService $teamFolderService,
+		private TeamFolderServiceInterface $teamFolderService,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

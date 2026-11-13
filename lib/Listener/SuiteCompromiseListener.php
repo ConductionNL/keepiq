@@ -26,9 +26,9 @@ namespace OCA\Keepiq\Listener;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
-use OCA\Keepiq\Service\NotificationService;
-use OCA\Keepiq\Service\RotationPolicyService;
-use OCA\Keepiq\Service\ShareRowJudge;
+use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RotationPolicyServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\ShareRowJudgeInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -48,19 +48,19 @@ class SuiteCompromiseListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (lookup recipient copies)
-	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
-	 * @param NotificationService $notificationService The notification dispatcher
+	 * @param ShareRowJudgeInterface $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
+	 * @param NotificationServiceInterface $notificationService The notification dispatcher
 	 * @param LoggerInterface $logger The logger
-	 * @param RotationPolicyService|null $rotationService The rotation service (auto-flag)
+	 * @param RotationPolicyServiceInterface|null $rotationService The rotation service (auto-flag)
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private ShareRowJudge $rowJudge,
-		private NotificationService $notificationService,
+		private ShareRowJudgeInterface $rowJudge,
+		private NotificationServiceInterface $notificationService,
 		private LoggerInterface $logger,
-		private ?RotationPolicyService $rotationService = null,
+		private ?RotationPolicyServiceInterface $rotationService = null,
 	) {
 	}//end __construct()
 

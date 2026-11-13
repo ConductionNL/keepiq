@@ -25,6 +25,7 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\RecoveryEnrolment;
 use OCA\Keepiq\Db\RecoveryEnrolmentMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Kernel\Contracts\RecoveryEnrolmentServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 
@@ -32,7 +33,7 @@ use Ramsey\Uuid\Uuid;
  * A user's enrolment in organisation account recovery (D1, D5): their suite
  * private key wrapped, in their own browser, to the recovery certificate.
  */
-class RecoveryEnrolmentService {
+class RecoveryEnrolmentService implements RecoveryEnrolmentServiceInterface {
 
 	/**
 	 * Constructor for RecoveryEnrolmentService.

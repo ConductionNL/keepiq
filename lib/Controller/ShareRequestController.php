@@ -26,7 +26,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\ShareRequestService;
+use OCA\Keepiq\Kernel\Contracts\ShareRequestServiceInterface;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -43,14 +43,14 @@ class ShareRequestController extends OCSController {
 	 * Constructor for ShareRequestController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param ShareRequestService $shareRequestService The share-request service
+	 * @param ShareRequestServiceInterface $shareRequestService The share-request service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private ShareRequestService $shareRequestService,
+		private ShareRequestServiceInterface $shareRequestService,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

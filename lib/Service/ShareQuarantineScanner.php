@@ -66,6 +66,7 @@ use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ShareQuarantineScannerInterface;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IAppConfig;
 use OCP\IDBConnection;
@@ -86,7 +87,7 @@ use Throwable;
  *   moving the helpers out still leaves the class at the limit, unless the record of a held-back resolve goes with
  *   them, and that record is scan state, read with the completion it waits for.
  */
-class ShareQuarantineScanner {
+class ShareQuarantineScanner implements ShareQuarantineScannerInterface {
 
 	/**
 	 * The app config key that records the generation a full pass completed in.

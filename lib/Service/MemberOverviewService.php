@@ -35,24 +35,20 @@ use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Kernel\Contracts\MemberOverviewServiceInterface;
 use OCP\IUser;
 use OCP\IUserManager;
 
 /**
  * Lists every Nextcloud user with their Keepiq vault status.
  */
-class MemberOverviewService {
+class MemberOverviewService implements MemberOverviewServiceInterface {
 	/**
 	 * The vault statuses a row can carry, and the status filter accepts.
 	 *
 	 * @var string[]
 	 */
 	public const STATUSES = ['none', 'active', 'revoked', 'compromised'];
-
-	/**
-	 * Default page size.
-	 */
-	public const DEFAULT_LIMIT = 50;
 
 	/**
 	 * Largest page size a caller may ask for (design risk: large instances).

@@ -34,8 +34,8 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\EmergencyAccessServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCA\Keepiq\Service\EmergencyDesignation;
-use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -164,7 +164,7 @@ class EmergencyAccessController extends OCSController {
 	 * @spec openspec/specs/emergency-access/spec.md#requirement-designate-emergency-contact
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['granteeUserId', 'waitPeriodDays', 'recoveryEnvelope'], purpose: VaultKeyProofService::PURPOSE_EMERGENCY_DESIGNATE)]
+	#[VaultKeyProofRequired(binds: ['granteeUserId', 'waitPeriodDays', 'recoveryEnvelope'], purpose: VaultKeyProofServiceInterface::PURPOSE_EMERGENCY_DESIGNATE)]
 	public function create(
 		string $granteeUserId,
 		int $waitPeriodDays,
@@ -205,7 +205,7 @@ class EmergencyAccessController extends OCSController {
 	 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(purpose: VaultKeyProofService::PURPOSE_EMERGENCY_DESTROY, binds: ['id'])]
+	#[VaultKeyProofRequired(purpose: VaultKeyProofServiceInterface::PURPOSE_EMERGENCY_DESTROY, binds: ['id'])]
 	public function destroy(string $id): JSONResponse {
 		$userId = $this->requireUserId();
 		if ($userId === null) {

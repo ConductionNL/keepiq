@@ -27,7 +27,7 @@ namespace OCA\Keepiq\BackgroundJob;
 use DateInterval;
 use DateTime;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\ShareExpiryService;
+use OCA\Keepiq\Kernel\Contracts\ShareExpiryServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -51,7 +51,7 @@ class ExpireSharesJob extends TimedJob {
 	 * Constructor for ExpireSharesJob.
 	 *
 	 * @param ITimeFactory       $time      The time factory
-	 * @param ShareExpiryService $expiry    The expiry service
+	 * @param ShareExpiryServiceInterface $expiry    The expiry service
 	 * @param IAppConfig         $appConfig The app config (warning window)
 	 * @param LoggerInterface    $logger    The logger
 	 *
@@ -61,7 +61,7 @@ class ExpireSharesJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private ShareExpiryService $expiry,
+		private ShareExpiryServiceInterface $expiry,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 	) {

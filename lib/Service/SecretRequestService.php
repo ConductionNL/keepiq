@@ -33,6 +33,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerInterface;
@@ -62,7 +63,7 @@ use Throwable;
  * creation paths across classes would scatter the rollback and the
  * fresh-vs-re-request distinction that the spec turns on.
  */
-class SecretRequestService {
+class SecretRequestService implements SecretRequestServiceInterface {
 	/*
 	 * The field model lives on SecretRequestPolicy so validation and persistence
 	 * cannot drift apart: the validator decides which bucket a requested name

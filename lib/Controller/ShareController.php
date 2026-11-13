@@ -31,9 +31,9 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ShareServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCA\Keepiq\Service\ShareRestrictionRules;
-use OCA\Keepiq\Service\ShareService;
-use OCA\Keepiq\Service\VaultKeyProofService;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -68,14 +68,14 @@ class ShareController extends OCSController {
 	 * Constructor for ShareController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param ShareService $shareService The share service
+	 * @param ShareServiceInterface $shareService The share service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private ShareService $shareService,
+		private ShareServiceInterface $shareService,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -272,7 +272,7 @@ class ShareController extends OCSController {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(purpose: VaultKeyProofService::PURPOSE_SHARE_REGISTER_BATCH)]
+	#[VaultKeyProofRequired(purpose: VaultKeyProofServiceInterface::PURPOSE_SHARE_REGISTER_BATCH)]
 	public function registerBatch(array $shares = []): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

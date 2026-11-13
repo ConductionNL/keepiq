@@ -28,7 +28,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\MachineSecretEnvelopeService;
+use OCA\Keepiq\Kernel\Contracts\MachineSecretEnvelopeServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -46,7 +46,7 @@ class ApplicationCertificateController extends ApplicationApiController {
 	 *
 	 * @param IRequest $request The request
 	 * @param EncryptionSuiteMapper $suites The application's suites
-	 * @param MachineSecretEnvelopeService $envelopes The fingerprint the envelopes carry
+	 * @param MachineSecretEnvelopeServiceInterface $envelopes The fingerprint the envelopes carry
 	 *
 	 * @return void
 	 *
@@ -55,7 +55,7 @@ class ApplicationCertificateController extends ApplicationApiController {
 	public function __construct(
 		IRequest $request,
 		private EncryptionSuiteMapper $suites,
-		private MachineSecretEnvelopeService $envelopes,
+		private MachineSecretEnvelopeServiceInterface $envelopes,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

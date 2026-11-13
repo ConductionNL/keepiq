@@ -36,7 +36,7 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
-use OCA\Keepiq\Service\SecretRequestService;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -56,14 +56,14 @@ class SecretRequestFillController extends OCSController {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretRequestService $secretRequestService The secret-request service
+	 * @param SecretRequestServiceInterface $secretRequestService The secret-request service
 	 * @param EncryptionSuiteServiceInterface $suiteService The suite lookup service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretRequestService $secretRequestService,
+		private SecretRequestServiceInterface $secretRequestService,
 		private EncryptionSuiteServiceInterface $suiteService,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

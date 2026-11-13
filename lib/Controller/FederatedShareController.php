@@ -31,7 +31,7 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -89,7 +89,7 @@ class FederatedShareController extends Controller {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['secretId', 'recipientCloudId'], purpose: VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT)]
+	#[VaultKeyProofRequired(binds: ['secretId', 'recipientCloudId'], purpose: VaultKeyProofServiceInterface::PURPOSE_SHARE_NEW_RECIPIENT)]
 	public function create(
 		string $secretId,
 		string $recipientCloudId = '',
