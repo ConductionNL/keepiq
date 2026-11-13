@@ -1109,7 +1109,8 @@ export default {
 .keepiq-public-shell {
 	box-sizing: border-box;
 	display: flex;
-	min-height: 100vh;
+	/* The mount's height, not the window's: #keepiq-app is the scroller. */
+	min-height: 100%;
 	width: 100%;
 	padding: clamp(16px, 4vh, 48px) 16px;
 }
