@@ -172,13 +172,16 @@ final class SeedDevelopmentDataRunTest extends TestCase {
 	public function testWithoutASuiteOneIsMintedForTheDevUser(): void {
 		$this->debug(true);
 		$this->suites->method('findActiveByOwner')->willThrowException(new DoesNotExistException('none'));
+		// The minted private key is checked by parsing it, not by its PEM header:
+		// a literal private-key header in this file reads as a committed secret.
+		$isPrivateKey = $this->callback(static fn (string $pem): bool => openssl_pkey_get_private($pem) !== false);
 		$this->ca->expects($this->once())
 			->method('signPublicKey')
-			->with($this->stringStartsWith('-----BEGIN PUBLIC KEY-----'), 'admin', $this->stringStartsWith('-----BEGIN PRIVATE KEY-----'))
+			->with($this->stringStartsWith('-----BEGIN PUBLIC KEY-----'), 'admin', $isPrivateKey)
 			->willReturn('CERT');
 		$this->encrypt->expects($this->once())
 			->method('encryptPrivateKey')
-			->with($this->stringStartsWith('-----BEGIN PRIVATE KEY-----'), 'Oj')
+			->with($isPrivateKey, 'Oj')
 			->willReturn('ENC');
 		$stored = null;
 		$this->suites->expects($this->once())->method('insert')->willReturnCallback(
