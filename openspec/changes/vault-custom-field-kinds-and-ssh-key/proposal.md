@@ -2,11 +2,11 @@
 kind: code
 ---
 
-# Hidden custom fields and a real SSH key item
+# Custom fields with a schema and a real SSH key item
 
 ## Why
 
-A person can add named custom fields to an item, but every value is a plain text field and is printed unmasked on the detail sidebar (`src/components/AdditionalFieldsEditor.vue:50`, `src/components/SecretDetailSidebar.vue:570-577`). A recovery code or an API pin typed there is readable by anyone looking over a shoulder. The SSH Key type is seeded (`lib/Repair/SeedSecretTypes.php:64`) but the create dialog offers one value field for it (`src/dialogs/SecretCreateDialog.vue:95-108`), so a key pair cannot be stored as a key pair. Both rows sit in the vault area, the core area, with six and three competitors rating yes. They share one form (the create and edit dialogs) and one blob (the encrypted additional fields), so they are one change.
+A person can add named custom fields to an item, but every value is a plain text field and is printed unmasked on the detail sidebar (`src/components/AdditionalFieldsEditor.vue:50`, `src/components/SecretDetailSidebar.vue:570-577`). A recovery code or an API pin typed there is readable by anyone looking over a shoulder, a URL is not a link, a port can hold any text and a JSON service account shows as one long line. The SSH Key type is seeded (`lib/Repair/SeedSecretTypes.php:64`) but the create dialog offers one value field for it (`src/dialogs/SecretCreateDialog.vue:95-108`), so a key pair cannot be stored as a key pair. Both rows sit in the vault area, the core area, with six and three competitors rating yes. They share one form (the create and edit dialogs) and one blob (the encrypted additional fields), so they are one change.
 
 The rows share one screen or service, so they are one change.
 
@@ -36,10 +36,13 @@ The rows share one screen or service, so they are one change.
 
 ## What Changes
 
-- Give each custom field a kind: text, hidden or boolean. Hidden values render masked with a reveal and copy control, in the editor and on the detail sidebar.
+- Give each custom field a schema in JSON Schema terms: a type (string, integer, number, boolean, object), a format for strings (such as `uri`, `email`, `date`) and limits (minimum and maximum length, a pattern, a minimum and maximum). Nine presets (Text, Multi-line text, Password, URL, Email, Number, Yes/no, Date, JSON object) fill it in; an Advanced part shows the rest.
+- Let any custom field be hidden, whatever its type. Hidden values render masked with a reveal and copy control, in the editor and on the detail sidebar.
+- Enter and show each field by its schema: a link for a URL, a switch for yes/no, a date picker, and nextcloud-vue's JSON viewer for an object.
+- Refuse a value that does not fit its schema in the dialogs and on the request fill page. A request carries the schemas of the fields it asks for.
+- Store the schemas in the same encrypted blob under the reserved member `@schema`; a field without one reads as text, so old secrets open as before.
 - Give the SSH Key type its own form: private key, public key and fingerprint, with a Generate key pair action that runs in the browser (WebCrypto Ed25519 where the browser supports it, else RSA 4096) and an Import from file action.
-- Keep the encrypted blob shape backward compatible: a field without a `kind` reads as text.
-- Map the new fields through the CXF export and import in `src/cxf/cxf.js` so a hidden field and an SSH key round trip.
+- Map the schemas and the new SSH fields through the CXF export and import in `src/cxf/cxf.js` so they round trip.
 
 ## Capabilities
 
@@ -54,7 +57,8 @@ The rows share one screen or service, so they are one change.
 
 ## Impact
 
-- **Frontend**: `AdditionalFieldsEditor.vue`, `SecretDetailSidebar.vue`, `SecretCreateDialog.vue`, `SecretEditDialog.vue`, a new SSH key section component, `src/cxf/cxf.js`.
-- **Backend**: none. The blob is opaque to the server; no migration, no route.
-- **Security**: the private key is generated and encrypted in the browser. A hidden field is a display control only; the value is as encrypted as before.
+- **Frontend**: `AdditionalFieldsEditor.vue`, `SecretDetailSidebar.vue`, `SecretCreateDialog.vue`, `SecretEditDialog.vue`, `SecretRequestCreateDialog.vue`, `SecretRequestFill.vue`, `src/utils/additionalFields.js`, `src/utils/builtinTypeFields.js`, the importers, a new SSH key section component, `src/cxf/cxf.js`.
+- **Backend**: the blob stays opaque to the server. One migration adds a nullable `field_schemas` column to `keepiq_secret_requests`; the secret request accepts, stores and returns a schema per requested field there (`FieldSchemaShape`, `SecretRequestService`, `SecretRequestController`, `SecretRequestFillController`), and checks only its shape.
+- **Applications**: the decrypted blob can hold an `@schema` member; the application API docs say so and give its shape.
+- **Security**: the private key is generated and encrypted in the browser. A hidden field is a display control only; the value is as encrypted as before. A request's field schemas are plain text on the server, as its field names already are; values never are.
 - **l10n**: new strings in every locale the app ships.
