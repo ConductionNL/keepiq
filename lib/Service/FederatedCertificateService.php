@@ -39,6 +39,7 @@ use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\FederatedCertificateServiceInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudIdManager;
 use OCP\IConfig;
@@ -56,13 +57,7 @@ use Throwable;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Both sides of the lookup in
  *   one place: partners, the local CA, users, suites, OCM and the log.
  */
-class FederatedCertificateService {
-	/**
-	 * The OCM capability Keepiq advertises and answers under.
-	 *
-	 * @var string
-	 */
-	public const OCM_CAPABILITY = 'keepiq';
+class FederatedCertificateService implements FederatedCertificateServiceInterface {
 
 	/**
 	 * The user preference that opts a user in to receiving from partners.

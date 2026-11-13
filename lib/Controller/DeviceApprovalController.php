@@ -24,8 +24,8 @@ use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\DeviceApprovalServiceInterface;
 use OCA\Keepiq\Service\DeviceApprovalRequest;
-use OCA\Keepiq\Service\DeviceApprovalService;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -45,7 +45,7 @@ class DeviceApprovalController extends Controller {
 	 * Constructor for DeviceApprovalController.
 	 *
 	 * @param IRequest              $request     The request
-	 * @param DeviceApprovalService $approvals   The approval service
+	 * @param DeviceApprovalServiceInterface $approvals   The approval service
 	 * @param IUserSession          $userSession The user session
 	 *
 	 * @return void
@@ -54,7 +54,7 @@ class DeviceApprovalController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private DeviceApprovalService $approvals,
+		private DeviceApprovalServiceInterface $approvals,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

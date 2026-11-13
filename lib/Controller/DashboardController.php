@@ -22,8 +22,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\DashboardSummaryService;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\DashboardSummaryServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -46,9 +46,9 @@ class DashboardController extends Controller {
 	 * @param IInitialState $initialState The initial state service
 	 * @param IAppConfig $appConfig The app config interface
 	 * @param IAppManager $appManager The app manager (version source)
-	 * @param DashboardSummaryService $summaryService The dashboard summary aggregator
+	 * @param DashboardSummaryServiceInterface $summaryService The dashboard summary aggregator
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Applications admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Applications admin area
 	 *
 	 * @return void
 	 */
@@ -57,9 +57,9 @@ class DashboardController extends Controller {
 		private IInitialState $initialState,
 		private IAppConfig $appConfig,
 		private IAppManager $appManager,
-		private DashboardSummaryService $summaryService,
+		private DashboardSummaryServiceInterface $summaryService,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -81,7 +81,7 @@ class DashboardController extends Controller {
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizerInterface::APPLICATIONS);
 
 		return new JSONResponse(data: $this->summaryService->fetchSummary(userId: $userId, isAdmin: $isAdmin));
 	}//end summary()

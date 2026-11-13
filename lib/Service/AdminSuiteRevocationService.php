@@ -28,6 +28,7 @@ use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\AdminSuiteRevocationServiceInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -36,13 +37,7 @@ use Throwable;
  *
  * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
  */
-class AdminSuiteRevocationService {
-	/**
-	 * The `error` of a compromise revoke whose migration end failed.
-	 *
-	 * @var string
-	 */
-	public const MIGRATION_END_FAILED = 'migration_end_failed';
+class AdminSuiteRevocationService implements AdminSuiteRevocationServiceInterface {
 
 	/**
 	 * Constructor.

@@ -30,6 +30,7 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Db\WebAuthnChallengeMapper;
+use OCA\Keepiq\Kernel\Contracts\ExtensionChallengeStoreInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Security\ISecureRandom;
 
@@ -38,7 +39,7 @@ use OCP\Security\ISecureRandom;
  *
  * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-challenges-are-server-side-bound-and-single-use
  */
-class ExtensionChallengeStore {
+class ExtensionChallengeStore implements ExtensionChallengeStoreInterface {
 	/**
 	 * Seconds a challenge stays valid.
 	 *

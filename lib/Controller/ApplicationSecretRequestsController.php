@@ -41,7 +41,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\ApplicationSecretRequestService;
+use OCA\Keepiq\Kernel\Contracts\ApplicationSecretRequestServiceInterface;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -59,7 +59,7 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request
-	 * @param ApplicationSecretRequestService $secretRequestService The machine request service
+	 * @param ApplicationSecretRequestServiceInterface $secretRequestService The machine request service
 	 * @param FolderMapper $folderMapper Resolves an optional folder path
 	 * @param IURLGenerator $urlGenerator Builds the absolute fill-link URL
 	 *
@@ -67,7 +67,7 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 	 */
 	public function __construct(
 		IRequest $request,
-		private ApplicationSecretRequestService $secretRequestService,
+		private ApplicationSecretRequestServiceInterface $secretRequestService,
 		private FolderMapper $folderMapper,
 		private IURLGenerator $urlGenerator,
 	) {

@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\HoneyFlagMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\HoneyTripwireServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
@@ -40,7 +41,7 @@ use Throwable;
 /**
  * Decoy tripwire detection: alert, page and audit a honey access.
  */
-class HoneyTripwireService {
+class HoneyTripwireService implements HoneyTripwireServiceInterface {
 	/**
 	 * Constructor for HoneyTripwireService.
 	 *

@@ -31,8 +31,8 @@ use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
-use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Kernel\Contracts\EmergencyEnvelopeInvalidationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\MigrationWorkService;
 use OCA\Keepiq\Service\VaultKeyProofService;
@@ -77,8 +77,8 @@ class MigrationController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param MigrationService $migrationService The migration service
 	 * @param MigrationWorkService $workService The per-record migration work service
-	 * @param EncryptionSuiteService $suiteService The suite service (ownership check)
-	 * @param EmergencyEnvelopeInvalidationService $envelopeService The emergency-envelope re-point service
+	 * @param EncryptionSuiteServiceInterface $suiteService The suite service (ownership check)
+	 * @param EmergencyEnvelopeInvalidationServiceInterface $envelopeService The emergency-envelope re-point service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
@@ -87,8 +87,8 @@ class MigrationController extends OCSController {
 		IRequest $request,
 		private MigrationService $migrationService,
 		private MigrationWorkService $workService,
-		private EncryptionSuiteService $suiteService,
-		private EmergencyEnvelopeInvalidationService $envelopeService,
+		private EncryptionSuiteServiceInterface $suiteService,
+		private EmergencyEnvelopeInvalidationServiceInterface $envelopeService,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

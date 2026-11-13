@@ -27,7 +27,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
@@ -47,7 +47,7 @@ class SecretTypeController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param SecretTypeService $typeService The secret type service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the General admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the General admin area
 	 *
 	 * @return void
 	 */
@@ -55,7 +55,7 @@ class SecretTypeController extends OCSController {
 		IRequest $request,
 		private SecretTypeService $typeService,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

@@ -31,6 +31,7 @@ namespace OCA\Keepiq\Service\Connection;
 
 use OCA\Keepiq\Db\SiemSink;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ConnectionReporterInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -46,7 +47,7 @@ use Throwable;
  *
  * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
  */
-class ConnectionReporter {
+class ConnectionReporter implements ConnectionReporterInterface {
 
 	/**
 	 * The app id integriq keys the rows by.

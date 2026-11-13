@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\EphemeralSendService;
+use OCA\Keepiq\Kernel\Contracts\EphemeralSendServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -37,14 +37,14 @@ class EphemeralSendPurgeJob extends TimedJob {
 	 * Constructor for EphemeralSendPurgeJob.
 	 *
 	 * @param ITimeFactory $time The time factory
-	 * @param EphemeralSendService $service The send service
+	 * @param EphemeralSendServiceInterface $service The send service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private EphemeralSendService $service,
+		private EphemeralSendServiceInterface $service,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

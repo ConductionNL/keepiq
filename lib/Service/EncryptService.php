@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
+use OCA\Keepiq\Kernel\Contracts\EncryptServiceInterface;
 use RuntimeException;
 
 /**
@@ -33,7 +34,7 @@ use RuntimeException;
  *
  * The envelope is base64-encoded for database storage.
  */
-class EncryptService {
+class EncryptService implements EncryptServiceInterface {
 	private const ENVELOPE_VERSION = 1;
 	private const RSA_CHUNK_SIZE = 446;
 	private const RSA_BLOCK_SIZE = 512;

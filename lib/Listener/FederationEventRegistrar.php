@@ -24,9 +24,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;
+use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCA\Keepiq\Listener\FederationOcmDiscoveryListener;
 use OCA\Keepiq\Listener\FederationOcmRequestListener;
-use OCA\Keepiq\Service\FederatedShareService;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Federation\ICloudFederationProviderManager;
@@ -79,7 +79,7 @@ final class FederationEventRegistrar {
 		$context->injectFn(
 			static function (ICloudFederationProviderManager $manager) use ($container): void {
 				$manager->addCloudFederationProvider(
-					FederatedShareService::RESOURCE_TYPE,
+					FederatedShareServiceInterface::RESOURCE_TYPE,
 					'Keepiq secret',
 					static fn () => $container->get(KeepiqSecretFederationProvider::class)
 				);

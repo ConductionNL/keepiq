@@ -39,6 +39,7 @@ use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AttachmentServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\AppData\IAppDataFactory;
@@ -53,7 +54,7 @@ use Ramsey\Uuid\Uuid;
  *   attachment/grant/secret/suite mappers plus app-data and config so the
  *   blob + grant invariants live in one place.
  */
-class AttachmentService {
+class AttachmentService implements AttachmentServiceInterface {
 	/**
 	 * The IAppData folder holding attachment ciphertext blobs.
 	 */

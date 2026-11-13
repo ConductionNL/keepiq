@@ -37,13 +37,14 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EphemeralSend;
 use OCA\Keepiq\Db\EphemeralSendMapper;
+use OCA\Keepiq\Kernel\Contracts\EphemeralSendServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 
 /**
  * Business logic for the ephemeral-send lifecycle.
  */
-class EphemeralSendService {
+class EphemeralSendService implements EphemeralSendServiceInterface {
 	/**
 	 * Maximum permitted views per send (unlimited is not allowed).
 	 *

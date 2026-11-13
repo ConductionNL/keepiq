@@ -32,7 +32,7 @@ use DateTime;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\CertificateLifecycleService;
+use OCA\Keepiq\Kernel\Contracts\CertificateLifecycleServiceInterface;
 use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -62,7 +62,7 @@ class ScanCertificateExpiryJob extends TimedJob {
 	 *
 	 * @param ITimeFactory $time The time factory
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper
-	 * @param CertificateLifecycleService $lifecycleService The lifecycle service (server parse)
+	 * @param CertificateLifecycleServiceInterface $lifecycleService The lifecycle service (server parse)
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param LoggerInterface $logger The logger
 	 *
@@ -71,7 +71,7 @@ class ScanCertificateExpiryJob extends TimedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private EncryptionSuiteMapper $suiteMapper,
-		private CertificateLifecycleService $lifecycleService,
+		private CertificateLifecycleServiceInterface $lifecycleService,
 		private NotificationService $notificationService,
 		private LoggerInterface $logger,
 	) {

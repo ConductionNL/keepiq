@@ -29,7 +29,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\DelegationService;
+use OCA\Keepiq\Kernel\Contracts\DelegationServiceInterface;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
@@ -47,14 +47,14 @@ class DelegationController extends OCSController {
 	 * Constructor for DelegationController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param DelegationService $delegationService The delegation service
+	 * @param DelegationServiceInterface $delegationService The delegation service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private DelegationService $delegationService,
+		private DelegationServiceInterface $delegationService,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\FederatedInbound;
 use OCA\Keepiq\Db\FederatedInboundMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\FederatedInboundServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
@@ -36,7 +37,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
  *
  * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
  */
-class FederatedInboundService {
+class FederatedInboundService implements FederatedInboundServiceInterface {
 	/**
 	 * Constructor for FederatedInboundService.
 	 *

@@ -27,8 +27,8 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Application;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\ApplicationService;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\ApplicationServiceInterface;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
@@ -50,18 +50,18 @@ class ApplicationController extends OCSController {
 	 * Constructor for ApplicationController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param ApplicationService $service The application service
+	 * @param ApplicationServiceInterface $service The application service
 	 * @param IUserSession $session The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Applications admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Applications admin area
 	 * @param IAppConfig $appConfig The app config
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private ApplicationService $service,
+		private ApplicationServiceInterface $service,
 		private IUserSession $session,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 		private IAppConfig $appConfig,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

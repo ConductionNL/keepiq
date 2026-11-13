@@ -31,7 +31,7 @@ namespace OCA\Keepiq\Backup;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -64,7 +64,7 @@ class BackupService {
 	 * @param ArchiveStore $store Archive storage and scratch files
 	 * @param IAppConfig $appConfig Last-run status
 	 * @param ITimeFactory $time The clock
-	 * @param AuditService $audit The audit trail
+	 * @param AuditServiceInterface $audit The audit trail
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
@@ -78,7 +78,7 @@ class BackupService {
 		private ArchiveStore $store,
 		private IAppConfig $appConfig,
 		private ITimeFactory $time,
-		private AuditService $audit,
+		private AuditServiceInterface $audit,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

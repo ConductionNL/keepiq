@@ -34,8 +34,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Listener;
 
-use OCA\Keepiq\Service\FederatedCertificateService;
-use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Kernel\Contracts\FederatedCertificateServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\EventDispatcher\Event;
@@ -53,16 +53,16 @@ class FederationOcmRequestListener implements IEventListener {
 	/**
 	 * Constructor for FederationOcmRequestListener.
 	 *
-	 * @param FederatedCertificateService $certificates The federated certificate lookup
-	 * @param FederatedShareService $shares The outbound federated shares
+	 * @param FederatedCertificateServiceInterface $certificates The federated certificate lookup
+	 * @param FederatedShareServiceInterface $shares The outbound federated shares
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; no behaviour.
 	 */
 	public function __construct(
-		private FederatedCertificateService $certificates,
-		private FederatedShareService $shares,
+		private FederatedCertificateServiceInterface $certificates,
+		private FederatedShareServiceInterface $shares,
 	) {
 	}//end __construct()
 
@@ -77,7 +77,7 @@ class FederationOcmRequestListener implements IEventListener {
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof OCMEndpointRequestEvent === false
-			|| $event->getRequestedCapability() !== FederatedCertificateService::OCM_CAPABILITY
+			|| $event->getRequestedCapability() !== FederatedCertificateServiceInterface::OCM_CAPABILITY
 		) {
 			return;
 		}

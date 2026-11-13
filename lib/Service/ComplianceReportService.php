@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\ComplianceReportMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ComplianceReportServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -46,7 +47,7 @@ use Throwable;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The aggregator's whole
  *   job is composing counts across the domain tables.
  */
-class ComplianceReportService {
+class ComplianceReportService implements ComplianceReportServiceInterface {
 	/**
 	 * Section keys the aggregate may carry — anything else is rejected
 	 * before persistence (compliance-reporting §2.4).

@@ -34,6 +34,7 @@ use DateTime;
 use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\CertificateAuthorityServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
@@ -44,7 +45,7 @@ use RuntimeException;
 /**
  * Manages the private Certificate Authority (root + intermediate).
  */
-class CertificateAuthorityService {
+class CertificateAuthorityService implements CertificateAuthorityServiceInterface {
 	private const ROOT_LIFETIME_DAYS = 7300;
 	private const INTERMEDIATE_LIFETIME_DAYS = 1095;
 

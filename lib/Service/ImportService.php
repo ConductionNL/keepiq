@@ -36,19 +36,14 @@ namespace OCA\Keepiq\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Kernel\Contracts\ImportServiceInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
  * Server side of the chunked encrypted-import commit.
  */
-class ImportService {
-	/**
-	 * Maximum items accepted in a single batch request.
-	 *
-	 * @var int
-	 */
-	public const MAX_ITEMS = 100;
+class ImportService implements ImportServiceInterface {
 
 	/**
 	 * Maximum byte length of a single plaintext metadata field (name/url).

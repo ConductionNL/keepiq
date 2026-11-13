@@ -41,6 +41,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Kernel\Contracts\ApplicationSecretRequestServiceInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -58,7 +59,7 @@ use Throwable;
  *   would duplicate the shell creation and rollback, which is the part that must
  *   not drift.
  */
-class ApplicationSecretRequestService {
+class ApplicationSecretRequestService implements ApplicationSecretRequestServiceInterface {
 	/**
 	 * Constructor.
 	 *

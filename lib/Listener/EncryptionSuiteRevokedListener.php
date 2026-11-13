@@ -30,7 +30,7 @@ namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
-use OCA\Keepiq\Service\DelegationService;
+use OCA\Keepiq\Kernel\Contracts\DelegationServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -59,14 +59,14 @@ class EncryptionSuiteRevokedListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper
-	 * @param DelegationService $delegationService The delegation service
+	 * @param DelegationServiceInterface $delegationService The delegation service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private ShareTargetMapper $shareTargetMapper,
-		private DelegationService $delegationService,
+		private DelegationServiceInterface $delegationService,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

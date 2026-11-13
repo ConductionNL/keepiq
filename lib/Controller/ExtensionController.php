@@ -29,7 +29,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\AdminSettingsService;
+use OCA\Keepiq\Kernel\Contracts\AdminSettingsServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -77,7 +77,7 @@ class ExtensionController extends Controller {
 	 * @param IRequest $request The request
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param IUserSession $userSession The user session
-	 * @param AdminSettingsService $adminSettings The admin settings (extension idle maximum)
+	 * @param AdminSettingsServiceInterface $adminSettings The admin settings (extension idle maximum)
 	 * @param IAppManager $appManager The app manager (server version for the pairing handshake)
 	 *
 	 * @return void
@@ -86,7 +86,7 @@ class ExtensionController extends Controller {
 		IRequest $request,
 		private SecretMapper $secretMapper,
 		private IUserSession $userSession,
-		private AdminSettingsService $adminSettings,
+		private AdminSettingsServiceInterface $adminSettings,
 		private IAppManager $appManager,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

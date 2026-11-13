@@ -39,6 +39,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\CertificateLifecycleServiceInterface;
 use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -50,7 +51,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The inventory merges
  *   three certificate domains by design — the seams are the mappers.
  */
-class CertificateLifecycleService {
+class CertificateLifecycleService implements CertificateLifecycleServiceInterface {
 	use SuppressesDiagnostics;
 
 	/**

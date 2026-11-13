@@ -38,6 +38,7 @@ use OCA\Keepiq\Db\HoneyAlertMapper;
 use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Kernel\Contracts\DashboardSummaryServiceInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -50,7 +51,7 @@ use Throwable;
  * Every counter is fail-soft — a mapper outage degrades that single
  * metric to zero rather than breaking the whole dashboard render.
  */
-class DashboardSummaryService {
+class DashboardSummaryService implements DashboardSummaryServiceInterface {
 	/**
 	 * Constructor for DashboardSummaryService.
 	 *

@@ -35,7 +35,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -57,14 +57,14 @@ class SecretRequestFillController extends OCSController {
 	 *
 	 * @param IRequest $request The request object
 	 * @param SecretRequestService $secretRequestService The secret-request service
-	 * @param EncryptionSuiteService $suiteService The suite lookup service
+	 * @param EncryptionSuiteServiceInterface $suiteService The suite lookup service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
 		private SecretRequestService $secretRequestService,
-		private EncryptionSuiteService $suiteService,
+		private EncryptionSuiteServiceInterface $suiteService,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()

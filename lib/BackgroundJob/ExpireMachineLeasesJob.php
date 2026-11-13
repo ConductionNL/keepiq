@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\LeaseService;
+use OCA\Keepiq\Kernel\Contracts\LeaseServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -39,14 +39,14 @@ class ExpireMachineLeasesJob extends TimedJob {
 	 * Constructor for ExpireMachineLeasesJob.
 	 *
 	 * @param ITimeFactory $time The time factory
-	 * @param LeaseService $leaseService The lease service
+	 * @param LeaseServiceInterface $leaseService The lease service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private LeaseService $leaseService,
+		private LeaseServiceInterface $leaseService,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

@@ -31,6 +31,7 @@ use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\JwtAuthServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\ICacheFactory;
@@ -48,7 +49,7 @@ use RuntimeException;
  * itself: issuer resolution, jti replay protection, opaque access-token
  * minting and validation.
  */
-class JwtAuthService {
+class JwtAuthService implements JwtAuthServiceInterface {
 	/**
 	 * Distributed cache namespace for jti replay protection.
 	 *
@@ -75,20 +76,11 @@ class JwtAuthService {
 	public const TOKEN_CACHE_NS = 'keepiq_jwt_token';
 
 	/**
-	 * Lifetime of issued access tokens in seconds (5 minutes per spec
-	 * §4.3).
-	 *
-	 * @var int
-	 */
-	public const ACCESS_TOKEN_TTL = 300;
-
-	/**
 	 * Allowed clock skew between issuer (`iat`) and verifier in seconds.
 	 *
 	 * @var int
 	 */
 	public const CLOCK_SKEW_SECONDS = 60;
-
 
 	/**
 	 * Constructor for JwtAuthService.

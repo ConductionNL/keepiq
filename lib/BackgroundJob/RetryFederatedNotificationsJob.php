@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Keepiq\Service\FederatedNotificationDelivery;
+use OCA\Keepiq\Kernel\Contracts\FederatedNotificationDeliveryInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -41,7 +41,7 @@ class RetryFederatedNotificationsJob extends TimedJob {
 	 * Constructor for RetryFederatedNotificationsJob.
 	 *
 	 * @param ITimeFactory $time The time factory
-	 * @param FederatedNotificationDelivery $delivery Delivers with backoff
+	 * @param FederatedNotificationDeliveryInterface $delivery Delivers with backoff
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
@@ -50,7 +50,7 @@ class RetryFederatedNotificationsJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private FederatedNotificationDelivery $delivery,
+		private FederatedNotificationDeliveryInterface $delivery,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

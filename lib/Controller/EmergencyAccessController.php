@@ -33,7 +33,7 @@ use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
-use OCA\Keepiq\Service\EmergencyAccessService;
+use OCA\Keepiq\Kernel\Contracts\EmergencyAccessServiceInterface;
 use OCA\Keepiq\Service\EmergencyDesignation;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Http;
@@ -51,14 +51,14 @@ class EmergencyAccessController extends OCSController {
 	 * Constructor for EmergencyAccessController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param EmergencyAccessService $service The emergency-access service
+	 * @param EmergencyAccessServiceInterface $service The emergency-access service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private EmergencyAccessService $service,
+		private EmergencyAccessServiceInterface $service,
 		private IUserSession $userSession,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
