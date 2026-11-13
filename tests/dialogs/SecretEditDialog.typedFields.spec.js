@@ -111,7 +111,7 @@ describe('SecretEditDialog typed fields', () => {
 
 		expect(wrapper.vm.typedValues).toEqual({ host: 'https://db-01' })
 		expect(wrapper.vm.additionalFields).toEqual([
-			{ name: 'notes', value: 'rack 4' },
+			{ name: 'notes', value: 'rack 4', schema: { type: 'string' } },
 		])
 		expect(wrapper.find('[data-testid="typed-fields"]').exists()).toBe(true)
 	})

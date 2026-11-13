@@ -25,6 +25,7 @@ import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 import { dedupeKey, folderSegments } from '../../import/model.js'
 import { getParser } from '../../import/parserRegistry.js'
 import { evaluateScore, fetchPolicy } from '../../policy/policy.js'
+import { fitImportedBlob } from '../../utils/fieldSchema.js'
 import { BLOB_FIELDS } from '../../utils/valueFields.js'
 import { useSecretStore } from './secret.js'
 import { useSecretTypeStore } from './secretType.js'
@@ -284,6 +285,7 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		async encryptRow(row, publicKey, asCopy, typeId = null) {
 			const name = asCopy ? `${row.name} (imported)` : row.name
@@ -305,10 +307,12 @@ export const useImportStore = defineStore('import', {
 				item.login = await rsaEncrypt(String(row.login), publicKey)
 			}
 			if (row.additionalFields != null) {
+				// A field whose value does not fit its schema keeps the value
+				// and loses the schema, so it reads as text.
 				const json =
 					typeof row.additionalFields === 'string'
 						? row.additionalFields
-						: JSON.stringify(row.additionalFields)
+						: JSON.stringify(fitImportedBlob(row.additionalFields))
 				if (json && json !== '{}' && json !== 'null') {
 					item.additionalFields = await rsaEncrypt(json, publicKey)
 				}

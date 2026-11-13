@@ -104,8 +104,8 @@ describe('additional-field shape conversion', () => {
 
 	it('stringifies non-string member values', () => {
 		expect(objectToMembers({ port: 8080, on: true })).toEqual([
-			{ name: 'port', value: '8080' },
-			{ name: 'on', value: 'true' },
+			{ name: 'port', value: '8080', schema: { type: 'string' } },
+			{ name: 'on', value: 'true', schema: { type: 'string' } },
 		])
 	})
 })

@@ -10,6 +10,7 @@ import {
 	saveShared,
 	VALUE_FIELDS,
 } from '../../services/shareSave.js'
+import { mergeBlobs } from '../../utils/fieldSchema.js'
 import { isAccessExpired } from '../../utils/shareRestriction.js'
 import { BLOB_FIELDS } from '../../utils/valueFields.js'
 import { useOfflineStore } from './offline.js'
@@ -790,15 +791,16 @@ function keepOpenVersion(store, save) {
 /**
  * Merge request-filled extra-field blobs into the owner's own extra fields
  * (keepiq#750). Each pending blob is the JSON object of the members one fill
- * supplied; later fills win for a member they both name. A blob that cannot
- * be decrypted is skipped and makes the merge incomplete, so it is not
- * dropped from the server.
+ * supplied; later fills win for a member they both name, and a fill's field
+ * schemas join the stored ones. A blob that cannot be decrypted is skipped
+ * and makes the merge incomplete, so it is not dropped from the server.
  *
  * @param {object|string|null|undefined} own The owner's decrypted extra fields.
  * @param {Array<string>} pending The pending ciphertexts, oldest first.
  * @param {CryptoKey} cryptoKey The session private key.
  * @return {Promise<{fields: object|string|null, complete: boolean}>}
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 async function mergePendingFields(own, pending, cryptoKey) {
 	if (
@@ -809,13 +811,13 @@ async function mergePendingFields(own, pending, cryptoKey) {
 		// Not a member object: there is nothing to merge into safely.
 		return { fields: own, complete: false }
 	}
-	const fields = { ...(own || {}) }
+	let fields = { ...(own || {}) }
 	let complete = true
 	for (const ciphertext of pending) {
 		try {
 			const members = JSON.parse(await rsaDecrypt(ciphertext, cryptoKey))
 			if (members && typeof members === 'object' && !Array.isArray(members)) {
-				Object.assign(fields, members)
+				fields = mergeBlobs(fields, members)
 			} else {
 				complete = false
 			}
