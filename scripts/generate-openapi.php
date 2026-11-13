@@ -24,6 +24,9 @@
 $root = dirname(__DIR__);
 $check = in_array('--check', $argv, true);
 
+// routes.php adds the /api/v1/ aliases through ApiPathAliases, so load the app's classes first.
+require_once $root . '/vendor/autoload.php';
+
 $routes = (require $root . '/appinfo/routes.php')['routes'];
 $info = simplexml_load_file($root . '/appinfo/info.xml');
 

@@ -72,6 +72,9 @@
             "name": "audit"
         },
         {
+            "name": "backup-admin"
+        },
+        {
             "name": "breach-proxy"
         },
         {
@@ -85,6 +88,9 @@
         },
         {
             "name": "cxp-relay"
+        },
+        {
+            "name": "dashboard"
         },
         {
             "name": "dashboard-settings"
@@ -174,6 +180,9 @@
             "name": "passkey"
         },
         {
+            "name": "preferences"
+        },
+        {
             "name": "recipient-status"
         },
         {
@@ -211,6 +220,9 @@
         },
         {
             "name": "secret-version"
+        },
+        {
+            "name": "settings"
         },
         {
             "name": "share"
@@ -4412,6 +4424,44 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/dashboard/summary": {
+            "get": {
+                "operationId": "dashboard-summary-v1",
+                "summary": "Return the dashboard summary payload for the current user",
+                "description": "Return the dashboard summary payload for the current user.",
+                "tags": [
+                    "dashboard"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
                                 }
                             }
                         }
@@ -8678,6 +8728,134 @@
                                 "schema": {
                                     "type": "object",
                                     "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/preferences/{key}": {
+            "get": {
+                "operationId": "preferences-get-preference-v1",
+                "summary": "Read one of the caller's preferences",
+                "description": "Read one of the caller's preferences.",
+                "tags": [
+                    "preferences"
+                ],
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request is invalid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "preferences-set-preference-v1",
+                "summary": "Store, or with an empty value delete, one of the caller's preferences",
+                "description": "Store, or with an empty value delete, one of the caller's preferences.",
+                "tags": [
+                    "preferences"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "value": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request is invalid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
                                 }
                             }
                         }
@@ -13412,6 +13590,715 @@
                     },
                     "404": {
                         "description": "Not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings": {
+            "get": {
+                "operationId": "settings-index-v1",
+                "summary": "Retrieve all current settings",
+                "description": "Retrieve all current settings.",
+                "tags": [
+                    "settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "settings-create-v1",
+                "summary": "Legacy POST alias for {@see update()} (admin only)",
+                "description": "Legacy POST alias for {@see update()} (admin only). Keepiq's route table still ships `settings#create` (POST /api/settings) for the pre-ADR-066 `index/create` dialect, and two Keepiq callers still use it — `src/components/settings/ PasswordPolicySection.vue::save()` and `src/store/modules/ settings.js::saveSettings()` — so it stays reachable and keeps writing exactly what it wrote before (ADR-029). The `#[AuthorizedAdminSetting]` attribute is repeated deliberately: Nextcloud's SecurityMiddleware only evaluates the attributes of the DISPATCHED method, so delegating to `update()` does not inherit its posture. Both entry points therefore declare the same admin gate.",
+                "tags": [
+                    "settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "settings-update-v1",
+                "summary": "Update settings with provided data (admin only)",
+                "description": "Update settings with provided data (admin only). Routed as `settings#update` (`PUT /api/settings`) in Keepiq's own route table. The write itself delegates to {@see SettingsService::updateSettings()}, which persists the app-scoped `CONFIG_KEYS` via `IAppConfig` and returns the refreshed settings map (stored keys plus the `isAdmin` metadata flag read by the settings UI). It writes the master password floor, so it is guarded by the Policies area (admin-scoped-roles D2). A rejected value answers 400 rather than the `{success: true}` envelope. Before #192 an unwritable value was indistinguishable from a stored one, because the write loop simply never matched and the envelope was unconditional; a bounded key that fails validation must now say so.",
+                "tags": [
+                    "settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request is invalid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/admin/applications": {
+            "get": {
+                "operationId": "admin-area-settings-get-application-settings-v1",
+                "summary": "Read the Applications area settings (admin-scoped-roles D2)",
+                "description": "Read the Applications area settings (admin-scoped-roles D2).",
+                "tags": [
+                    "admin-area-settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "admin-area-settings-update-application-settings-v1",
+                "summary": "Write the Applications area settings (admin-scoped-roles D2)",
+                "description": "Write the Applications area settings (admin-scoped-roles D2).",
+                "tags": [
+                    "admin-area-settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/admin/audit": {
+            "get": {
+                "operationId": "admin-area-settings-get-audit-settings-v1",
+                "summary": "Read the Audit area settings (admin-scoped-roles D2)",
+                "description": "Read the Audit area settings (admin-scoped-roles D2).",
+                "tags": [
+                    "admin-area-settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "admin-area-settings-update-audit-settings-v1",
+                "summary": "Write the Audit area settings (admin-scoped-roles D2)",
+                "description": "Write the Audit area settings (admin-scoped-roles D2).",
+                "tags": [
+                    "admin-area-settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/admin/backups": {
+            "get": {
+                "operationId": "backup-admin-index-v1",
+                "summary": "The last run and the archive list, without the disk paths and never any archive content",
+                "description": "The last run and the archive list, without the disk paths and never any archive content.",
+                "tags": [
+                    "backup-admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "backup-admin-update-v1",
+                "summary": "Save the backup settings; a bad value is refused with 400 and nothing is written",
+                "description": "Save the backup settings; a bad value is refused with 400 and nothing is written.",
+                "tags": [
+                    "backup-admin"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request is invalid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/admin/backups/run": {
+            "post": {
+                "operationId": "backup-admin-run-v1",
+                "summary": "Ask the next cron run to back up",
+                "description": "Ask the next cron run to back up.",
+                "tags": [
+                    "backup-admin"
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/admin/general": {
+            "get": {
+                "operationId": "admin-area-settings-get-general-settings-v1",
+                "summary": "Read the General area settings (admin-scoped-roles D2)",
+                "description": "Read the General area settings (admin-scoped-roles D2).",
+                "tags": [
+                    "admin-area-settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "admin-area-settings-update-general-settings-v1",
+                "summary": "Write the General area settings (admin-scoped-roles D2)",
+                "description": "Write the General area settings (admin-scoped-roles D2). A save that wrote `breach_check_enabled` asks integriq to resolve the breach check connection again (adopt-connection-registry). That never throws, does nothing without integriq, and never changes the response.",
+                "tags": [
+                    "admin-area-settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/admin/policies": {
+            "get": {
+                "operationId": "admin-area-settings-get-policy-settings-v1",
+                "summary": "Read the Policies area settings (admin-scoped-roles D2)",
+                "description": "Read the Policies area settings (admin-scoped-roles D2).",
+                "tags": [
+                    "admin-area-settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "admin-area-settings-update-policy-settings-v1",
+                "summary": "Write the Policies area settings (admin-scoped-roles D2)",
+                "description": "Write the Policies area settings (admin-scoped-roles D2).",
+                "tags": [
+                    "admin-area-settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/admin/two-factor-gaps": {
+            "get": {
+                "operationId": "settings-two-factor-gaps-v1",
+                "summary": "How many users a two-factor vault policy for these groups covers, and how many have no second factor yet (admin-vault-policies §1.3)",
+                "description": "How many users a two-factor vault policy for these groups covers, and how many have no second factor yet (admin-vault-policies §1.3). Counts only, admin only.",
+                "tags": [
+                    "settings"
+                ],
+                "parameters": [
+                    {
+                        "name": "groups",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {}
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/policy": {
+            "get": {
+                "operationId": "settings-get-policy-v1",
+                "summary": "Read-only org password policy for the write dialogs — every authenticated user may read the floor (org-password-policies §1.3)",
+                "description": "Read-only org password policy for the write dialogs — every authenticated user may read the floor (org-password-policies §1.3).",
+                "tags": [
+                    "settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/user": {
+            "get": {
+                "operationId": "settings-get-user-settings-v1",
+                "summary": "Get the current user's preferences (implement-dashboard-settings §2.3)",
+                "description": "Get the current user's preferences (implement-dashboard-settings §2.3).",
+                "tags": [
+                    "settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "settings-update-user-settings-v1",
+                "summary": "Update the current user's preferences (implement-dashboard-settings §2.3)",
+                "description": "Update the current user's preferences (implement-dashboard-settings §2.3).",
+                "tags": [
+                    "settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
                         "content": {
                             "application/json": {
                                 "schema": {

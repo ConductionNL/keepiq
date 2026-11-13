@@ -1,0 +1,278 @@
+<?php
+
+/**
+ * Unit tests for the API contract middleware.
+ *
+ * @category Test
+ * @package  OCA\Keepiq\Tests\Unit\Middleware
+ * @author   Conduction Development Team <info@conduction.nl>
+ * @license  EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @link     https://conduction.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Keepiq\Tests\Unit\Middleware;
+
+use OCA\Keepiq\Middleware\ApiContractMiddleware;
+use OCP\App\IAppManager;
+use OCP\AppFramework\Http\DataDisplayResponse;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
+use OCP\IRequest;
+use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
+
+/**
+ * Pins the `API-Version` header and the problem details shape of the errors of
+ * the `/api/v1/` aliases, and that every route the app declares itself,
+ * unversioned or under `/api/v1/`, keeps its answers exactly.
+ *
+ * @covers \OCA\Keepiq\Middleware\ApiContractMiddleware
+ * @uses   \OCA\Keepiq\Middleware\Support\ApiPathAliases
+ * @uses   \OCA\Keepiq\Middleware\Support\StandardProtocolPaths
+ */
+class ApiContractMiddlewareTest extends TestCase {
+
+	/**
+	 * Run the middleware for a request on the given path.
+	 *
+	 * @param string|false $path     The request path info.
+	 * @param Response     $response The controller response.
+	 * @param string|null  $route    The matched route name; an alias carries the `v1` postfix.
+	 *
+	 * @return Response The decorated response.
+	 */
+	private function decorate(string|false $path, Response $response, ?string $route='keepiq.things.showv1'): Response {
+		$request = $this->createMock(originalClassName: IRequest::class);
+		$request->method('getPathInfo')->willReturn($path);
+		$request->method('getParam')->willReturnMap([['_route', null, $route]]);
+		$appManager = $this->createMock(originalClassName: IAppManager::class);
+		$appManager->method('getAppVersion')->willReturn('1.2.3');
+
+		return (new ApiContractMiddleware(request: $request, appManager: $appManager))
+			->afterController(controller: null, methodName: 'any', response: $response);
+	}//end decorate()
+
+	/**
+	 * A successful API response carries the installed version and keeps its body.
+	 *
+	 * @return void
+	 */
+	public function testApiResponseCarriesTheVersionHeader(): void {
+		$response = $this->decorate(path: '/apps/keepiq/api/v1/things', response: new JSONResponse(data: ['id' => 1]));
+
+		$this->assertSame(expected: '1.2.3', actual: $this->headersOf(response: $response)['API-Version']);
+		$this->assertSame(expected: ['id' => 1], actual: $response->getData());
+		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $this->headersOf(response: $response)['Content-Type']);
+	}//end testApiResponseCarriesTheVersionHeader()
+
+	/**
+	 * A page response outside the API is left alone.
+	 *
+	 * @return void
+	 */
+	public function testNonApiResponseIsUntouched(): void {
+		$response = $this->decorate(path: '/apps/keepiq/', response: new JSONResponse(data: ['error' => 'x'], statusCode: 404));
+
+		$this->assertArrayNotHasKey(key: 'API-Version', array: $this->headersOf(response: $response));
+		$this->assertSame(expected: ['error' => 'x'], actual: $response->getData());
+
+		$missing = $this->decorate(path: false, response: new JSONResponse(data: []));
+		$this->assertArrayNotHasKey(key: 'API-Version', array: $this->headersOf(response: $missing));
+	}//end testNonApiResponseIsUntouched()
+
+	/**
+	 * A JSON error becomes problem details and keeps the members it had.
+	 *
+	 * @return void
+	 */
+	public function testJsonErrorBecomesProblemDetails(): void {
+		$response = $this->decorate(
+			path: '/apps/keepiq/api/v1/things/7',
+			response: new JSONResponse(data: ['error' => 'Thing not found'], statusCode: 404)
+		);
+
+		$expected = [
+			'type'   => 'about:blank',
+			'title'  => 'Not Found',
+			'status' => 404,
+			'detail' => 'Thing not found',
+			'error'  => 'Thing not found',
+		];
+		$this->assertSame(expected: $expected, actual: $response->getData());
+		$this->assertSame(expected: ApiContractMiddleware::PROBLEM_CONTENT_TYPE, actual: $this->headersOf(response: $response)['Content-Type']);
+		$this->assertSame(expected: '1.2.3', actual: $this->headersOf(response: $response)['API-Version']);
+	}//end testJsonErrorBecomesProblemDetails()
+
+	/**
+	 * `message` is used as detail when there is no `detail`, and an unknown status still gets a title.
+	 *
+	 * @return void
+	 */
+	public function testMessageIsUsedAsDetailAndUnknownStatusHasATitle(): void {
+		$response = $this->decorate(
+			path: '/apps/keepiq/api/v1/things',
+			response: new JSONResponse(data: ['message' => 'Teapot', 'error' => 'ignored'], statusCode: 418)
+		);
+
+		$data = $response->getData();
+		$this->assertSame(expected: 'Error', actual: $data['title']);
+		$this->assertSame(expected: 'Teapot', actual: $data['detail']);
+		$this->assertSame(expected: 418, actual: $data['status']);
+	}//end testMessageIsUsedAsDetailAndUnknownStatusHasATitle()
+
+	/**
+	 * A body that uses a problem member for something else, or is a list, keeps its shape.
+	 *
+	 * @return void
+	 */
+	public function testConflictingOrListBodiesAreLeftAlone(): void {
+		$conflict = $this->decorate(
+			path: '/apps/keepiq/api/v1/things',
+			response: new JSONResponse(data: ['status' => 'error', 'message' => 'No'], statusCode: 400)
+		);
+		$this->assertSame(expected: ['status' => 'error', 'message' => 'No'], actual: $conflict->getData());
+		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $this->headersOf(response: $conflict)['Content-Type']);
+
+		$list = $this->decorate(path: '/apps/keepiq/api/v1/things', response: new JSONResponse(data: ['a', 'b'], statusCode: 400));
+		$this->assertSame(expected: ['a', 'b'], actual: $list->getData());
+	}//end testConflictingOrListBodiesAreLeftAlone()
+
+	/**
+	 * A body that already is problem details is kept, and an empty body gets the members.
+	 *
+	 * @return void
+	 */
+	public function testExistingProblemAndEmptyBodies(): void {
+		$problem = ['type' => 'about:blank', 'title' => 'Forbidden', 'status' => 403, 'detail' => 'No access'];
+		$kept    = $this->decorate(path: '/apps/keepiq/api/v1/things', response: new JSONResponse(data: $problem, statusCode: 403));
+		$this->assertSame(expected: $problem, actual: $kept->getData());
+
+		$empty = $this->decorate(path: '/apps/keepiq/api/v1/things', response: new JSONResponse(data: [], statusCode: 500));
+		$this->assertSame(expected: ['type' => 'about:blank', 'title' => 'Internal Server Error', 'status' => 500], actual: $empty->getData());
+	}//end testExistingProblemAndEmptyBodies()
+
+	/**
+	 * A non-JSON error response gets the header but no body rewrite.
+	 *
+	 * @return void
+	 */
+	public function testNonJsonErrorOnlyGetsTheHeader(): void {
+		$response = $this->decorate(path: '/apps/keepiq/api/v1/files', response: new DataDisplayResponse(data: 'gone', statusCode: 410));
+
+		$this->assertSame(expected: '1.2.3', actual: $this->headersOf(response: $response)['API-Version']);
+		$this->assertSame(expected: 'gone', actual: $response->getData());
+	}//end testNonJsonErrorOnlyGetsTheHeader()
+
+	/**
+	 * An unversioned API path keeps answering exactly as before: no new headers.
+	 *
+	 * @return void
+	 */
+	public function testUnversionedPathIsUntouched(): void {
+		$response = $this->decorate(path: '/apps/keepiq/api/things/7/parts', response: new JSONResponse(data: ['id' => 7]), route: 'keepiq.things.parts');
+		$headers  = $this->headersOf(response: $response);
+
+		$this->assertSame(expected: ['id' => 7], actual: $response->getData());
+		$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
+		$this->assertArrayNotHasKey(key: 'Deprecation', array: $headers);
+		$this->assertArrayNotHasKey(key: 'Link', array: $headers);
+	}//end testUnversionedPathIsUntouched()
+
+	/**
+	 * An error on an unversioned path keeps its body, its content type and its headers.
+	 *
+	 * @return void
+	 */
+	public function testUnversionedErrorKeepsItsAnswer(): void {
+		$response = $this->decorate(
+			path: '/apps/keepiq/api/things/7',
+			response: new JSONResponse(data: ['error' => 'Thing not found', 'code' => 'x'], statusCode: 404),
+			route: 'keepiq.things.show'
+		);
+		$headers  = $this->headersOf(response: $response);
+
+		$this->assertSame(expected: ['error' => 'Thing not found', 'code' => 'x'], actual: $response->getData());
+		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $headers['Content-Type']);
+		$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
+		$this->assertArrayNotHasKey(key: 'Deprecation', array: $headers);
+	}//end testUnversionedErrorKeepsItsAnswer()
+
+	/**
+	 * A route the app already declared under `/api/v1/` keeps its error body,
+	 * content type and headers, whatever the route name or its absence.
+	 *
+	 * @return void
+	 */
+	public function testDeclaredVersionedRouteIsUntouched(): void {
+		foreach (['keepiq.admin_audit.events', 'keepiq.admin_area_settings.get_policy_settingsAdminApi', null] as $route) {
+			$response = $this->decorate(
+				path: '/apps/keepiq/api/v1/admin/audit',
+				response: new JSONResponse(data: ['error' => 'Forbidden'], statusCode: 403),
+				route: $route
+			);
+			$headers  = $this->headersOf(response: $response);
+
+			$this->assertSame(expected: ['error' => 'Forbidden'], actual: $response->getData());
+			$this->assertSame(expected: 'application/json; charset=utf-8', actual: $headers['Content-Type']);
+			$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
+		}
+	}//end testDeclaredVersionedRouteIsUntouched()
+
+	/**
+	 * An alias postfix on an unversioned path does not make it an alias.
+	 *
+	 * @return void
+	 */
+	public function testAliasNameOutsideTheVersionedPrefixIsUntouched(): void {
+		$response = $this->decorate(path: '/apps/keepiq/api/things', response: new JSONResponse(data: ['error' => 'x'], statusCode: 400));
+
+		$this->assertSame(expected: ['error' => 'x'], actual: $response->getData());
+		$this->assertArrayNotHasKey(key: 'API-Version', array: $this->headersOf(response: $response));
+	}//end testAliasNameOutsideTheVersionedPrefixIsUntouched()
+
+	/**
+	 * A versioned API path is not deprecated, and still carries the version.
+	 *
+	 * @return void
+	 */
+	public function testVersionedPathIsNotDeprecated(): void {
+		$headers = $this->headersOf(response: $this->decorate(path: '/apps/keepiq/api/v1/things/7', response: new JSONResponse(data: [])));
+
+		$this->assertSame(expected: '1.2.3', actual: $headers['API-Version']);
+		$this->assertArrayNotHasKey(key: 'Deprecation', array: $headers);
+		$this->assertArrayNotHasKey(key: 'Link', array: $headers);
+	}//end testVersionedPathIsNotDeprecated()
+
+	/**
+	 * A path that speaks a protocol defined elsewhere keeps that protocol's formats.
+	 *
+	 * @return void
+	 */
+	public function testStandardProtocolPathIsUntouched(): void {
+		$response = $this->decorate(path: '/apps/keepiq/api/health', response: new JSONResponse(data: ['error' => 'x'], statusCode: 400));
+		$headers  = $this->headersOf(response: $response);
+
+		$this->assertSame(expected: ['error' => 'x'], actual: $response->getData());
+		$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
+		$this->assertArrayNotHasKey(key: 'Deprecation', array: $headers);
+	}//end testStandardProtocolPathIsUntouched()
+
+	/**
+	 * The headers a response set, read without the server container that
+	 * Response::getHeaders() needs.
+	 *
+	 * @param Response $response The response.
+	 *
+	 * @return array<string,string> The headers by name.
+	 */
+	private function headersOf(Response $response): array {
+		$property = new ReflectionProperty(Response::class, 'headers');
+
+		return $property->getValue($response);
+	}//end headersOf()
+}//end class
