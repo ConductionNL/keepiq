@@ -6,8 +6,8 @@
  * Binds every consumer of the typed AuditEvent stream: the append-only audit
  * log, the SIEM forwarder, and the honey-credential tripwire.
  *
- * @category AppInfo
- * @package  OCA\Keepiq\AppInfo
+ * @category Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Keepiq\AppInfo;
+namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Listener\AuditListener;

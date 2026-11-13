@@ -6,8 +6,8 @@
  * Binds the listeners that keep the sharing graph and the vault in step with
  * Nextcloud's own account and group-membership churn.
  *
- * @category AppInfo
- * @package  OCA\Keepiq\AppInfo
+ * @category Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -20,10 +20,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Keepiq\AppInfo;
+namespace OCA\Keepiq\Listener;
 
-use OCA\Keepiq\Listener\UserAddedToGroupListener;
 use OCA\Keepiq\Listener\TokenInvalidatedListener;
+use OCA\Keepiq\Listener\UserAddedToGroupListener;
 use OCA\Keepiq\Listener\UserDeletedListener;
 use OCA\Keepiq\Listener\UserRemovedFromGroupListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;

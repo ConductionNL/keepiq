@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\AppInfo;
 
-use OCA\Keepiq\AppInfo\SuiteLifecycleEventRegistrar;
+use OCA\Keepiq\Listener\SuiteLifecycleEventRegistrar;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
 use OCA\Keepiq\Listener\EmergencyAccessSuiteRevocationListener;
 use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;

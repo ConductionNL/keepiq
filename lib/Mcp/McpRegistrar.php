@@ -3,8 +3,8 @@
 /**
  * Keepiq MCP registrar
  *
- * @category AppInfo
- * @package  OCA\Keepiq\AppInfo
+ * @category Mcp
+ * @package  OCA\Keepiq\Mcp
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
@@ -17,7 +17,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Keepiq\AppInfo;
+namespace OCA\Keepiq\Mcp;
 
 use OCA\Keepiq\Mcp\KeepiqScannableServices;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;

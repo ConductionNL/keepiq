@@ -7,8 +7,8 @@
  * compromise-recovery migration start/finish, suite revocation, and the
  * emergency-access envelopes those two invalidate.
  *
- * @category AppInfo
- * @package  OCA\Keepiq\AppInfo
+ * @category Listener
+ * @package  OCA\Keepiq\Listener
  *
  * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2024 Conduction B.V.
@@ -21,7 +21,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Keepiq\AppInfo;
+namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
