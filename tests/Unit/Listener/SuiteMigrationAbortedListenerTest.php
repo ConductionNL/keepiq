@@ -62,6 +62,24 @@ class SuiteMigrationAbortedListenerTest extends TestCase {
 		));
 	}//end testUnlocksRequestsKeepingTheOldSuite()
 
+	public function testAFailingUnlockIsLoggedAndSwallowed(): void {
+		$failure = new \RuntimeException('lock table gone');
+		$service = $this->createMock(SecretRequestSuiteLockService::class);
+		$service->method('unlockInPlace')->with('old-suite')->willThrowException($failure);
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method('info');
+		$logger->expects($this->once())->method('error')->with(
+			'Keepiq: SuiteMigrationAbortedListener failed: lock table gone',
+			['exception' => $failure]
+		);
+
+		(new SuiteMigrationAbortedListener($service, $logger))->handle(new SuiteMigrationAbortedEvent(
+			oldSuiteId: 'old-suite',
+			newSuiteId: 'new-suite',
+			migrationId: 'migration-1',
+		));
+	}//end testAFailingUnlockIsLoggedAndSwallowed()
+
 	public function testIgnoresOtherEvents(): void {
 		$service = $this->createMock(SecretRequestSuiteLockService::class);
 		$service->expects($this->never())->method('unlockInPlace');
