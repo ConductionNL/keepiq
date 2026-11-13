@@ -425,7 +425,7 @@ describe('CXF import: a code and passkeys in the same item as a login', () => {
 	describe('picks the target from accepted rows, whatever the order', () => {
 		const totp = { type: 'totp', secret: 'JBSWY3DPEHPK3PXP' }
 		const brokenPasskey = { type: 'passkey', rpId: 'partial.example.com' }
-		const unsupported = { type: 'custom-fields', fields: [] }
+		const unsupported = { type: 'drivers-license' }
 		const md5Totp = {
 			type: 'totp',
 			secret: 'JBSWY3DPEHPK3PXP',
