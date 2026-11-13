@@ -97,6 +97,11 @@
 							? `fill-label-${index}`
 							: undefined
 					"
+					:aria-describedby="
+						inputType(field) === 'json'
+							? errorId(field, index)
+							: undefined
+					"
 					class="keepiq-secret-request-fill__field">
 					<span :id="`fill-label-${index}`">{{ inputLabel(field) }}</span>
 					<CnJsonViewer
@@ -126,6 +131,7 @@
 						spellcheck="false"
 						required
 						:aria-invalid="fieldError(field) !== '' ? 'true' : 'false'"
+						:aria-describedby="errorId(field, index)"
 						:data-testid="`fill-field-${field}`" />
 					<input
 						v-else
@@ -134,9 +140,11 @@
 						autocomplete="off"
 						required
 						:aria-invalid="fieldError(field) !== '' ? 'true' : 'false'"
+						:aria-describedby="errorId(field, index)"
 						:data-testid="`fill-field-${field}`" />
 					<span
 						v-if="fieldError(field) !== ''"
+						:id="`fill-error-${index}`"
 						class="keepiq-secret-request-fill__field-error"
 						:data-testid="`fill-error-${field}`">
 						{{ fieldError(field) }}
@@ -443,8 +451,9 @@ export default {
 		/**
 		 * The input for a requested field: `json` for the code editor,
 		 * `multiline` for a text area, `password` for a masked input, else
-		 * `text`. The secret's type decides
-		 * for its own fields; any other name is masked when it looks secret.
+		 * `text`. A schema that says what the field is decides; the secret's
+		 * type decides for its own fields; any other name is masked when it
+		 * looks secret.
 		 *
 		 * @param {string} field The requested field name.
 		 *
@@ -454,16 +463,9 @@ export default {
 		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		inputType(field) {
-			const schema = this.schemaOf(field)
-			if (schema !== null) {
-				// An object is edited as code, hidden or not, as in the dialogs.
-				if (
-					isHiddenSchema(schema)
-					&& !['multiline', 'json'].includes(inputOf(schema))
-				) {
-					return 'password'
-				}
-				return SCHEMA_INPUT_TYPES[inputOf(schema)] ?? 'text'
+			const fromSchema = this.schemaInputType(field)
+			if (fromSchema !== null) {
+				return fromSchema
 			}
 			const typeName = this.store.publicRequest?.secret_type ?? ''
 			const kind =
@@ -491,6 +493,45 @@ export default {
 		},
 
 		/**
+		 * The input a field's schema asks for, or null when the schema does not
+		 * say: a plain string, with limits at most, is not told apart from a
+		 * secret one, so its name decides as it does without a schema.
+		 *
+		 * @param {string} field The requested field name.
+		 * @return {string|null} The input kind.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		schemaInputType(field) {
+			const schema = this.schemaOf(field)
+			if (schema === null) {
+				return null
+			}
+			const input = inputOf(schema)
+			if (!isHiddenSchema(schema)) {
+				return input === 'text'
+					? null
+					: (SCHEMA_INPUT_TYPES[input] ?? 'text')
+			}
+			// An object is edited as code, hidden or not, as in the dialogs.
+			return ['multiline', 'json'].includes(input)
+				? SCHEMA_INPUT_TYPES[input]
+				: 'password'
+		},
+
+		/**
+		 * The id of the error under a field while it shows one, so its input
+		 * names the reason and not only that it is invalid.
+		 *
+		 * @param {string} field The requested field name.
+		 * @param {number} index The field's place in the form.
+		 * @return {string|undefined} The id.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		errorId(field, index) {
+			return this.fieldError(field) !== '' ? `fill-error-${index}` : undefined
+		},
+
+		/**
 		 * Whether the summary after submitting masks a field: every field but
 		 * a plain-text one and a certificate, which is public by design. A
 		 * multi-line private key is not masked while typed, but is here.
@@ -503,7 +544,7 @@ export default {
 		 */
 		masksSummary(field) {
 			const schema = this.schemaOf(field)
-			if (schema !== null) {
+			if (schema !== null && this.schemaInputType(field) !== null) {
 				return isHiddenSchema(schema)
 			}
 			const typeName = this.store.publicRequest?.secret_type ?? ''

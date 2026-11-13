@@ -21,7 +21,6 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
-import { withSchemas } from '../../utils/fieldSchema.js'
 
 // The field model (secret-requests spec, Requestable Fields):
 //   key / login          -> their own ciphertext columns
@@ -38,17 +37,14 @@ const ADDITIONAL_BLOB = 'additionalFields'
 /**
  * The fill's body: url in plain, key and login each encrypted, and every
  * other field a member of one encrypted additionalFields blob. An empty
- * value is refused. The requester's schemas travel inside that blob, so
- * the owner's secret keeps them when the fill is merged.
+ * value is refused.
  *
  * @param {Record<string,string>} fields The plaintext field map.
  * @param {CryptoKey} publicKey The requester's public key.
- * @param {object} schemas The schemas of the requested custom fields, by name.
  * @return {Promise<{encryptedFields: object, plainFields: object}>}
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
-async function sealedFill(fields, publicKey, schemas) {
+async function sealedFill(fields, publicKey) {
 	const fill = {
 		publicKey,
 		encryptedFields: {},
@@ -60,7 +56,7 @@ async function sealedFill(fields, publicKey, schemas) {
 	}
 	if (Object.keys(fill.additionalMembers).length > 0) {
 		fill.encryptedFields[ADDITIONAL_BLOB] = await rsaEncrypt(
-			JSON.stringify(withSchemas(fill.additionalMembers, schemas)),
+			JSON.stringify(fill.additionalMembers),
 			publicKey,
 		)
 	}
@@ -403,7 +399,6 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string}                  token  The opaque request token.
 		 * @param {Record<string,string>}   fields The plaintext field map.
 		 * @return {Promise<object>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
 		async submitFill(token, fields) {
@@ -419,11 +414,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				generateUrl(
 					`/apps/keepiq/api/v1/public/secret-requests/${token}/fill`,
 				),
-				await sealedFill(
-					fields,
-					publicKey,
-					this.publicRequest?.field_schemas || {},
-				),
+				await sealedFill(fields, publicKey),
 			)
 			return response.data
 		},
