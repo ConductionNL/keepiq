@@ -113,13 +113,13 @@ class DecryptedItem(
     val typedValues: List<Pair<TypeField, String>>
         get() = (type?.fields ?: emptyList()).map { f -> f to (additionalFields?.get(f.label)?.asText() ?: "") }
 
-    /** Additional fields that are neither notes nor typed fields. */
+    /** Additional fields that are neither notes, typed fields nor the web app's field schemas. */
     val extraFields: List<Pair<String, String>>
         get() {
             val typed = type?.fields?.map { it.label }?.toSet() ?: emptySet()
             val notes = notesKey()
             return additionalFields?.entries
-                ?.filter { (k, _) -> k != notes && k !in typed }
+                ?.filter { (k, _) -> k != notes && k !in typed && k != ItemCodec.SCHEMA_FIELD }
                 ?.map { (k, v) -> k to v.asText() } ?: emptyList()
         }
 
@@ -219,6 +219,8 @@ enum class DraftProblem { NAME_MISSING, TOO_LONG, FIELD_NAME_MISSING, FIELD_NAME
  */
 object ItemCodec {
     const val NOTES_FIELD = "notes"
+    /** The web app's member holding each field's schema: not a field, kept as it is on save. */
+    const val SCHEMA_FIELD = "@schema"
     const val MAX_NAME_CHARS = 255
     const val MAX_FIELD_CHARS = 4096
     const val MAX_PAYLOAD_BYTES = 65536
