@@ -196,6 +196,59 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testCreateRejectsEmptyFields()
 
 	/**
+	 * Test create stores the schemas of the requested custom fields and returns them.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testCreateStoresTheFieldSchemas(): void {
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$result = $this->service->create(
+			secretId: 'sec-1',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: ['key', 'PIN'],
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'alice',
+			fieldSchemas: ['PIN' => ['type' => 'string', 'pattern' => '^[0-9]{4,6}$', 'hidden' => true]]
+		);
+
+		$this->assertSame(
+			expected: ['PIN' => ['type' => 'string', 'pattern' => '^[0-9]{4,6}$', 'hidden' => true]],
+			actual: json_decode(json: (string)$result->getFieldSchemas(), associative: true)
+		);
+		$this->assertEquals(
+			expected: (object)['PIN' => ['type' => 'string', 'pattern' => '^[0-9]{4,6}$', 'hidden' => true]],
+			actual: $result->jsonSerialize()['fieldSchemas']
+		);
+	}//end testCreateStoresTheFieldSchemas()
+
+	/**
+	 * Test create refuses a schema for a field the request does not ask for.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testCreateRefusesASchemaForAFieldNotRequested(): void {
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(exception: InvalidArgumentException::class);
+
+		$this->service->create(
+			secretId: 'sec-1',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: ['key'],
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'alice',
+			fieldSchemas: ['PIN' => ['type' => 'string']]
+		);
+	}//end testCreateRefusesASchemaForAFieldNotRequested()
+
+	/**
 	 * Test approve flips a pending request to fulfilled and sets the timestamp.
 	 *
 	 * @return void

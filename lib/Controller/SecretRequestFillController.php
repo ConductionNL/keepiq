@@ -50,6 +50,7 @@ use Throwable;
  * Public controller for the SecretRequest fill-in flow.
  *
  * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.2
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequestFillController extends OCSController {
 	/**
@@ -72,10 +73,11 @@ class SecretRequestFillController extends OCSController {
 	/**
 	 * Phase 1: resolve a token to its public metadata.
 	 *
-	 * Returns the list of requested fields, the type of the Secret they fill,
-	 * the public certificate the browser must import to encrypt the responses,
-	 * and the current status so the page can render "expired" / "fulfilled" /
-	 * "temporarily unavailable" messages without leaking ownership.
+	 * Returns the list of requested fields and their schemas, the type of
+	 * the Secret they fill, the public certificate the browser must import to encrypt the
+	 * responses, and the current status so the page can render "expired" /
+	 * "fulfilled" / "temporarily unavailable" messages without leaking
+	 * ownership.
 	 *
 	 * @param string $token The opaque request token from the URL
 	 *
@@ -83,6 +85,7 @@ class SecretRequestFillController extends OCSController {
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.2
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -136,6 +139,7 @@ class SecretRequestFillController extends OCSController {
 				'status' => $request->getStatus(),
 				'requested_fields' => $requestedFields,
 				'secret_type' => $this->secretRequestService->secretTypeName(request: $request),
+				'field_schemas' => $request->decodedFieldSchemas(),
 				'is_re_request' => $request->getIsReRequest(),
 				'expires_at' => $request->getExpiresAt()?->format(\DateTime::ATOM),
 				'public_certificate' => $suite->getCertificate(),

@@ -63,6 +63,7 @@ use Throwable;
  * fresh-vs-re-request distinction that the spec turns on.
  *
  * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequestService {
 	/*
@@ -425,12 +426,14 @@ class SecretRequestService {
 	 * @param bool $isReRequest Whether this is a re-request
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the request
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
 	 * @throws InvalidArgumentException
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function create(
 		string $secretId,
@@ -439,6 +442,7 @@ class SecretRequestService {
 		bool $isReRequest,
 		?DateTime $expiresAt,
 		string $userId,
+		array $fieldSchemas = [],
 	): SecretRequest {
 		// Pending requests are locked for the duration of a migration and
 		// re-pointed to the new suite on completion. A request created now would
@@ -462,6 +466,8 @@ class SecretRequestService {
 		}
 
 		$this->requireRequestableSecret(secretId: $secretId);
+		$shape   = new FieldSchemaShape();
+		$schemas = $shape->normalize(schemas: $fieldSchemas, requestedFields: $requestedFields);
 
 		$entity = new SecretRequest();
 		$entity->setId(Uuid::uuid4()->toString());
@@ -474,6 +480,7 @@ class SecretRequestService {
 		}
 
 		$entity->setRequestedFields($encodedFields);
+		$entity->setFieldSchemas($shape->encode(schemas: $schemas));
 		$entity->setStatus(SecretRequest::STATUS_PENDING);
 		$entity->setIsReRequest($isReRequest);
 		$entity->setExpiresAt($expiresAt);
@@ -540,12 +547,14 @@ class SecretRequestService {
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string|null $typeId Optional type for the created Secret; null
 	 *                            leaves SecretService's default (Login)
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
 	 * @throws InvalidArgumentException When userId or requestedFields are missing
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createForUserVault(
 		string $userId,
@@ -554,6 +563,7 @@ class SecretRequestService {
 		?string $folderId = null,
 		?DateTime $expiresAt = null,
 		?string $typeId = null,
+		array $fieldSchemas = [],
 	): SecretRequest {
 		if ($userId === '') {
 			throw new InvalidArgumentException(message: 'userId is required');
@@ -597,7 +607,8 @@ class SecretRequestService {
 				requestedFields: $requestedFields,
 				isReRequest: false,
 				expiresAt: $expiresAt,
-				userId: $userId
+				userId: $userId,
+				fieldSchemas: $fieldSchemas
 			);
 		} catch (Throwable $exception) {
 			// No orphan shell: it holds no value and exists only for this
@@ -670,6 +681,7 @@ class SecretRequestService {
 	 * @param array<string> $requestedFields Field names to be re-filled
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the re-request
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
@@ -677,12 +689,14 @@ class SecretRequestService {
 	 *                                  or the caller is not the owner.
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.4
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createReRequest(
 		string $secretId,
 		array $requestedFields,
 		?DateTime $expiresAt,
 		string $userId,
+		array $fieldSchemas = [],
 	): SecretRequest {
 		$secret = $this->policy->requireReRequestableSecret(secretId: $secretId, userId: $userId);
 		$this->policy->requireNoPendingRequest(secretId: $secretId);
@@ -694,6 +708,7 @@ class SecretRequestService {
 			isReRequest: true,
 			expiresAt: $expiresAt,
 			userId: $userId,
+			fieldSchemas: $fieldSchemas,
 		);
 
 		$this->outbox->recordReRequested(userId: $userId, requestId: $persisted->getId());

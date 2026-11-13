@@ -40,6 +40,7 @@ use OCP\IUserSession;
  * Authenticated API controller for SecretRequest CRUD.
  *
  * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequestController extends OCSController {
 	/**
@@ -155,12 +156,15 @@ class SecretRequestController extends OCSController {
 	 * @param string|null $folderId Optional folder for that created Secret
 	 * @param string|null $typeId Optional type for that created Secret
 	 *
+	 * The schemas of requested custom fields arrive as `fieldSchemas` in the body.
+	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $isReRequest is a field of the POST
 	 *   body that the Nextcloud router binds by name, not an internal switch a caller
@@ -221,7 +225,8 @@ class SecretRequestController extends OCSController {
 					'name' => $name,
 					'folderId' => $folderId,
 					'typeId' => $typeId,
-				]
+				],
+				fieldSchemas: $this->fieldSchemas()
 			);
 		} catch (InvalidArgumentException $e) {
 			$code = $e->getCode();
@@ -238,6 +243,25 @@ class SecretRequestController extends OCSController {
 
 		return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
 	}//end create()
+
+	/**
+	 * The schemas of the requested custom fields from the body; empty when none were sent.
+	 *
+	 * Read from the request rather than bound as a parameter, so create() stays within the
+	 * parameter limit.
+	 *
+	 * @return array<mixed>
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	private function fieldSchemas(): array {
+		$raw = $this->request->getParam('fieldSchemas');
+		if (is_array($raw) === false) {
+			return [];
+		}
+
+		return $raw;
+	}//end fieldSchemas()
 
 	/**
 	 * Parse the optional expiry timestamp. An unparseable value surfaces as
@@ -274,10 +298,14 @@ class SecretRequestController extends OCSController {
 	 * @param string $userId The requesting user
 	 * @param array{name: ?string, folderId: ?string, typeId: ?string} $placeholder What a
 	 *        FRESH request's created Secret is made from; unused by the other modes
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields; an
+	 *        application request carries none
 	 *
 	 * @return \OCA\Keepiq\Db\SecretRequest
 	 *
 	 * @throws InvalidArgumentException Propagated from the service.
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function dispatchCreate(
 		string $mode,
@@ -288,6 +316,7 @@ class SecretRequestController extends OCSController {
 		string $applicationId,
 		string $userId,
 		array $placeholder,
+		array $fieldSchemas,
 	): \OCA\Keepiq\Db\SecretRequest {
 		if ($mode === self::MODE_APPLICATION) {
 			return $this->service->createForApplication(
@@ -307,6 +336,7 @@ class SecretRequestController extends OCSController {
 				folderId: $placeholder['folderId'],
 				expiresAt: $expiry,
 				typeId: $placeholder['typeId'],
+				fieldSchemas: $fieldSchemas,
 			);
 		}
 
@@ -316,6 +346,7 @@ class SecretRequestController extends OCSController {
 				requestedFields: $requestedFields,
 				expiresAt: $expiry,
 				userId: $userId,
+				fieldSchemas: $fieldSchemas,
 			);
 		}
 
@@ -326,6 +357,7 @@ class SecretRequestController extends OCSController {
 			isReRequest: false,
 			expiresAt: $expiry,
 			userId: $userId,
+			fieldSchemas: $fieldSchemas,
 		);
 	}//end dispatchCreate()
 
