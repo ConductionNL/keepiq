@@ -76,7 +76,7 @@ The request dialog MUST list a type's fields with the type's own labels, for a f
 
 ### Requirement: The fill page shows the fields of the requested type
 
-The public request answer MUST name the type of the secret the request fills, and nothing else about it. The fill page MUST label each requested field as the request dialog did, render a multi-line field as a text area that keeps line breaks, and mask a masked field, in the inputs and in the summary after submitting.
+The public request answer MUST name the type of the secret the request fills when it is a system type, and nothing else about it. A custom type's name is free text its owner chose and the fill page has no form for it, so the answer MUST NOT name it. The fill page MUST label each requested field as the request dialog did, render a multi-line field as a text area that keeps line breaks, and mask a masked field, in the inputs and in the summary after submitting.
 
 #### Scenario: Filling a certificate request
 

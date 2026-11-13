@@ -43,7 +43,7 @@ A schema MUST carry an optional `hidden` flag, on every type. A hidden value MUS
 
 ### Requirement: Each schema has its own input and display
 
-The dialogs and the detail sidebar MUST render a custom field by its schema: a text area for format `text`, a URL field and a link that opens in a new tab for `uri`, an email field for `email`, a whole-number field for `integer`, a number field for `number`, a switch and Yes or No for `boolean`, a date picker and the date in the user's locale for `date`, and nextcloud-vue's `CnJsonViewer` (editable in the dialogs, read-only on the sidebar) for `object`. Every other schema MUST use a plain text field.
+The dialogs and the detail sidebar MUST render a custom field by its schema: a text area for format `text`, a URL field and a link that opens in a new tab for `uri` (only for an `http`, `https` or `mailto` address: any other scheme, such as `javascript:`, MUST show as text), an email field for `email`, a whole-number field for `integer`, a number field for `number`, a switch and Yes or No for `boolean`, a date picker and the date in the user's locale for `date`, and nextcloud-vue's `CnJsonViewer` (editable in the dialogs, read-only on the sidebar) for `object`. Every other schema MUST use a plain text field.
 
 #### Scenario: A JSON object on the sidebar
 
@@ -75,7 +75,9 @@ The system MUST NOT store a value that does not fit its field's schema from any 
 
 ### Requirement: A request carries the schemas of its fields
 
-A secret request MUST store each requested custom field's schema with the request, keyed by the field's name, and the public request answer MUST return it to the fill page. The fill page MUST render and check each field by its schema, as the dialogs do, and MUST NOT submit a value that does not fit. A submitted field MUST keep its schema when it is merged into the secret.
+A secret request MUST store each requested custom field's schema with the request, keyed by the field's name, and the public request answer MUST return it to the fill page. The server MUST refuse a schema whose `pattern` does not compile or has a quantified group with a quantifier inside, such as `(a+)+`, because the fill page runs it on every keystroke. The fill page MUST render and check each field by its schema, as the dialogs do, and MUST NOT submit a value that does not fit; a schema that only gives a string limits leaves a field whose name looks secret masked, as it is without one.
+
+The schemas on the secret MUST come from its owner only, because whoever holds a fill link seals the filled blob and can put anything in it. When the request is made, the owner's browser MUST write each requested custom field that is not one of the type's own fields into the secret, empty, with its schema. The fill page MUST send only the values, the server MUST keep every filled additional-fields blob of a user-owned secret apart as pending, also when the secret has no additional fields yet, and the owner's browser MUST take only the values from it when merging: a `@schema` member in a filled blob MUST be ignored.
 
 #### Scenario: Filling a requested PIN
 
@@ -84,9 +86,16 @@ A secret request MUST store each requested custom field's schema with the reques
 - **THEN** the field is masked and submitting is blocked until the PIN is 4 to 6 digits
 - **AND** after a valid submission the owner's secret holds PIN with the same schema
 
+#### Scenario: A fill tries to change a schema
+
+- **GIVEN** a secret whose Host field is hidden, and a request for its PIN
+- **WHEN** a fill seals a blob whose `@schema` makes Host plain text and PIN a boolean
+- **THEN** the owner's secret keeps Host hidden and PIN with the schema the request gave it
+- **AND** only the PIN value from the fill is merged
+
 ### Requirement: Schemas survive export and import
 
-Export and import through CXF MUST carry each field's schema: a hidden field MUST be exported as a concealed field and imported back with `hidden` set, and the type, format and limits MUST round-trip. Formats without a CXF counterpart MUST be carried in the field's extension data.
+Export and import through CXF MUST carry each field's schema: a hidden field MUST be exported as a concealed field and imported back with `hidden` set, also a built-in type's own masked field without a stored schema, and the type, format and limits MUST round-trip. Formats without a CXF counterpart MUST be carried in the field's extension data. An imported field whose label is a reserved name (`key`, `login`, `url` or `@schema`, in any case) MUST be stored under that label with " (imported)" added, so its value is kept. An SSH key's public key MUST be imported under the SSH Key form's own field, "Public key", and exported from it.
 
 #### Scenario: A schema survives a CXF round trip
 
