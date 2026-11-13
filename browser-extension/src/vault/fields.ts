@@ -10,8 +10,10 @@ export const NAME_MAX = 255
 export const FIELD_MAX = 4096
 export const BLOB_MAX_BYTES = 65536
 
+/** The web app's member holding each field's schema: not a field, but kept as it is on save. */
+export const SCHEMA_MEMBER = '@schema'
 /** Reserved by the server (ADR-003), plus `notes`, which holds the Notes field. */
-const RESERVED = new Set(['key', 'login', 'url', 'notes'])
+const RESERVED = new Set(['key', 'login', 'url', 'notes', SCHEMA_MEMBER])
 const NOTES = 'notes'
 
 /** Member order of the web app's `src/cardIdentity/cardIdentity.js`, so it renders what is written here. */
@@ -94,6 +96,8 @@ export interface FormValues {
 	/** The row holds an authenticator key, which `authKeyMode` keeps, replaces with `authKey` (removes, when that is empty) or, on a type that takes none, removes. */
 	totpSaved: boolean
 	authKeyMode: AuthKeyMode
+	/** The `@schema` member as JSON text, written back with the fields; null when the item has none. */
+	schemas: string | null
 }
 
 export type AuthKeyMode = 'keep' | 'replace' | 'remove'
@@ -107,7 +111,7 @@ export function emptyValues(typeId: string, url = '', folderId: string | null = 
 	return {
 		typeId, name: '', url, folderId, login: '', loginShown: false, plainKey: false, secret: '', totp: {},
 		card: blank(CARD_FIELDS), identity: blank(IDENTITY_FIELDS), notes: '', notesKey: null, fields: [],
-		authKey: '', totpSaved: false, authKeyMode: 'keep',
+		authKey: '', totpSaved: false, authKeyMode: 'keep', schemas: null,
 	}
 }
 
@@ -163,7 +167,9 @@ function isPlainKey(kind: FormKind, key: string): boolean {
 /** The first field named Notes, in any case, is the notes; every other one is an additional field. */
 function takeFields(values: FormValues, additionalFields: Record<string, string>): void {
 	for (const [name, value] of Object.entries(additionalFields)) {
-		if (values.notesKey === null && name.toLowerCase() === NOTES) {
+		if (name === SCHEMA_MEMBER) {
+			values.schemas = value
+		} else if (values.notesKey === null && name.toLowerCase() === NOTES) {
 			values.notes = value
 			values.notesKey = name
 		} else {
@@ -218,7 +224,16 @@ function keyOf(values: FormValues, kind: FormKind): string {
 function fieldEntries(values: FormValues, sections: FormSections): Array<[string, string]> {
 	const entries = sections.fields ? values.fields.filter((field) => field.name.trim()).map((field): [string, string] => [field.name.trim(), field.value]) : []
 	if (sections.notes && values.notes !== '') entries.push([values.notesKey ?? NOTES, values.notes])
+	if (values.schemas !== null) entries.push([SCHEMA_MEMBER, values.schemas])
 	return entries
+}
+
+/** The additional fields as stored: `@schema` back to the object the web app reads, keeping only the schemas of fields still there. */
+export function blobText(additionalFields: Record<string, string>): string {
+	const { [SCHEMA_MEMBER]: schemaText, ...fields } = additionalFields
+	const schemas = schemaText === undefined ? null : parseObject(schemaText)
+	const kept = Object.fromEntries(Object.entries(schemas ?? {}).filter(([name]) => Object.hasOwn(fields, name)))
+	return JSON.stringify(Object.keys(kept).length === 0 ? fields : { ...fields, [SCHEMA_MEMBER]: kept })
 }
 
 function loginOf(values: FormValues, sections: FormSections): string | null {

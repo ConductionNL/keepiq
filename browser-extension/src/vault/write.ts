@@ -5,7 +5,7 @@ import { getAccount, getActiveAccountId, suiteKey, type AccountRecord } from '@/
 import { rsaDecrypt, rsaEncrypt } from '@/src/crypto'
 import type { EditableItem, FolderChildren, FolderDeletePlan, ItemDraft, ItemPatch, ShareSaveNote, WriteResult } from '@/src/messages'
 import { provenKey } from './certificate'
-import { fieldTexts, shownInFull } from './fields'
+import { blobText, fieldTexts, shownInFull } from './fields'
 import { editOpenedKey, getKey, hasKey, sessionValues } from './key-store'
 import { parseObject } from './payloads'
 import { buildPasskeyCredential, passkeyEntries, storedArray, withCounter, withPasskey, type PasskeyCredential } from '@/src/passkey/credential'
@@ -368,7 +368,7 @@ async function sealedBody(draft: ItemDraft, sealing: { key: CryptoKey; totp: str
 		typeId: draft.typeId,
 		folderId: draft.folderId,
 		key: await rsaEncrypt(draft.key, key),
-		additionalFields: await rsaEncrypt(JSON.stringify(draft.additionalFields), key),
+		additionalFields: await rsaEncrypt(blobText(draft.additionalFields), key),
 	}
 	if (draft.login) body.login = await rsaEncrypt(draft.login, key)
 	if (totp) body.totp = await rsaEncrypt(totp, key)
@@ -470,7 +470,7 @@ async function plainValues(save: ItemSaveRun): Promise<Values> {
 	const { patch } = save.update
 	const plain: Values = await keyValue(save)
 	if (patch.login !== undefined) plain.login = patch.login || null
-	if (patch.additionalFields) plain.additionalFields = JSON.stringify(patch.additionalFields)
+	if (patch.additionalFields) plain.additionalFields = blobText(patch.additionalFields)
 	// `''` removes the saved key, on any type.
 	if (patch.totp !== undefined) plain.totp = await authenticatorKey(save.ctx.account.id, patch.totp, save.cached.typeId)
 	return plain
