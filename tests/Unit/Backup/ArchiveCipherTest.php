@@ -23,6 +23,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Backup\ArchiveCipher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 /**
  * Key checks and the refusals of an encrypted archive that is not whole.
@@ -212,4 +213,50 @@ class ArchiveCipherTest extends TestCase {
 		$this->assertSame(1048576, $header['segmentSize']);
 		$this->assertNotFalse(base64_decode($header['wrappedKey'], true));
 	}//end testTheHeaderDescribesTheFormat()
+
+	/**
+	 * Run a call with PHP warnings silenced, as a missing file raises one before it is refused.
+	 *
+	 * @param callable $call The call.
+	 *
+	 * @return mixed What it returned.
+	 */
+	private function quietly(callable $call): mixed {
+		set_error_handler(static fn (): bool => true);
+		try {
+			return $call();
+		} finally {
+			restore_error_handler();
+		}
+	}//end quietly()
+
+	/**
+	 * A file that cannot be opened is not an encrypted archive.
+	 *
+	 * @return void
+	 */
+	public function testAMissingFileIsNotEncrypted(): void {
+		$cipher = new ArchiveCipher();
+
+		$this->assertFalse($this->quietly(fn () => $cipher->isEncrypted(path: $this->dir . '/missing.bin')));
+	}//end testAMissingFileIsNotEncrypted()
+
+	/**
+	 * Encrypting a file that cannot be opened is refused, naming the file, and writes nothing.
+	 *
+	 * @return void
+	 */
+	public function testEncryptingAMissingFileIsRefused(): void {
+		[$public] = $this->rsaPair();
+		$missing = $this->dir . '/missing.zip';
+
+		try {
+			$this->quietly(fn () => (new ArchiveCipher())->encryptFile(plainPath: $missing, outPath: $this->dir . '/enc.bin', publicPem: $public));
+			$this->fail('A missing file was encrypted.');
+		} catch (RuntimeException $e) {
+			$this->assertSame('Cannot open ' . $missing, $e->getMessage());
+		}
+
+		$this->assertFileDoesNotExist($this->dir . '/enc.bin');
+	}//end testEncryptingAMissingFileIsRefused()
 }//end class

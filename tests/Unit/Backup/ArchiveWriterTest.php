@@ -32,6 +32,7 @@ use OCP\IConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZipArchive;
+use RuntimeException;
 
 /**
  * The archive the writer produces when there are no attachment blobs.
@@ -114,4 +115,79 @@ class ArchiveWriterTest extends TestCase {
 		$this->assertSame(hash('sha256', $secrets), $manifest['files']['tables/secrets.jsonl']['sha256']);
 		$this->assertSame($manifest, $stored);
 	}//end testWithoutABlobFolderOnlyTablesAreWritten()
+
+	/**
+	 * A writer whose collaborators answer nothing in particular.
+	 *
+	 * @return ArchiveWriter
+	 */
+	private function quietWriter(): ArchiveWriter {
+		$tables = $this->createMock(TableStore::class);
+		$tables->method('rows')->willReturn([]);
+		$appData = $this->createMock(IAppData::class);
+		$appData->method('getFolder')->willThrowException(new NotFoundException());
+		$factory = $this->createMock(IAppDataFactory::class);
+		$factory->method('get')->willReturn($appData);
+
+		return new ArchiveWriter(
+			tables: $tables,
+			appDataFactory: $factory,
+			appManager: $this->createMock(IAppManager::class),
+			config: $this->createMock(IConfig::class),
+			fingerprint: $this->createMock(SchemaFingerprint::class)
+		);
+	}//end quietWriter()
+
+	/**
+	 * Write with PHP warnings silenced, and return the refusal.
+	 *
+	 * @param string $zipPath The archive path.
+	 * @param string $workDir The work directory.
+	 *
+	 * @return RuntimeException|null The refusal, or null when it wrote.
+	 */
+	private function refusalOf(string $zipPath, string $workDir): ?RuntimeException {
+		set_error_handler(static fn (): bool => true);
+		try {
+			$this->quietWriter()->write(zipPath: $zipPath, workDir: $workDir);
+			return null;
+		} catch (RuntimeException $e) {
+			return $e;
+		} finally {
+			restore_error_handler();
+		}
+	}//end refusalOf()
+
+	/**
+	 * A path the archive cannot be created at is refused.
+	 *
+	 * @return void
+	 */
+	public function testAnArchiveAtADirectoryIsRefused(): void {
+		$refusal = $this->refusalOf(zipPath: $this->dir . '/work', workDir: $this->dir . '/work');
+
+		$this->assertSame('Cannot create the backup archive', $refusal?->getMessage());
+	}//end testAnArchiveAtADirectoryIsRefused()
+
+	/**
+	 * A work directory the table dumps cannot be written to is refused, naming the file.
+	 *
+	 * @return void
+	 */
+	public function testAMissingWorkDirectoryIsRefused(): void {
+		$refusal = $this->refusalOf(zipPath: $this->dir . '/out.zip', workDir: $this->dir . '/missing');
+
+		$this->assertSame('Cannot write ' . $this->dir . '/missing/' . BackupTableRegistry::TABLES[0] . '.jsonl', $refusal?->getMessage());
+	}//end testAMissingWorkDirectoryIsRefused()
+
+	/**
+	 * An archive whose folder does not exist cannot be finished, and that is refused.
+	 *
+	 * @return void
+	 */
+	public function testAnArchiveThatCannotBeFinishedIsRefused(): void {
+		$refusal = $this->refusalOf(zipPath: $this->dir . '/missing/out.zip', workDir: $this->dir . '/work');
+
+		$this->assertSame('Cannot finish the backup archive', $refusal?->getMessage());
+	}//end testAnArchiveThatCannotBeFinishedIsRefused()
 }//end class
