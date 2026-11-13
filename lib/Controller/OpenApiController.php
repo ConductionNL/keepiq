@@ -1,22 +1,23 @@
 <?php
 
 /**
- * Keepiq OpenAPI document controller.
+ * Keepiq OpenAPI controller
  *
- * Publishes the app's OpenAPI document at `/api/openapi.json`, as the NL API
- * Design Rules require (/core/publish-openapi).
+ * Serves the OpenAPI document of the versioned Keepiq API (openapi.json at
+ * the app root) at /api/v1/openapi.json, as the NL API Design Rules require
+ * (/core/doc-openapi). The document describes routes only; it holds no
+ * instance data, so it is public and readable cross-origin.
  *
- * @category  Controller
- * @package   OCA\Keepiq\Controller
- * @author    Conduction Development Team <info@conduction.nl>
+ * @category Controller
+ * @package  OCA\Keepiq\Controller
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- * @link      https://conduction.nl
  *
- * @spec openspec/specs/api-contract/spec.md
+ * @version GIT: <git-id>
  *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
+ * @link https://conduction.nl
  */
 
 declare(strict_types=1);
@@ -27,32 +28,22 @@ use OCA\Keepiq\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use stdClass;
 
 /**
- * GET /api/openapi.json.
- *
- * @category Controller
- * @package  OCA\Keepiq\Controller
- * @author   Conduction Development Team <info@conduction.nl>
- * @license  EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- * @link     https://conduction.nl
- *
- * @spec openspec/specs/api-contract/spec.md
+ * Returns the committed OpenAPI document with the installed app version.
  */
 class OpenApiController extends Controller {
-
 	/**
 	 * Constructor.
 	 *
-	 * @param IRequest    $request    The request.
-	 * @param IAppManager $appManager Resolves the app path and the installed version.
-	 *
-	 * @psalm-suppress PossiblyUnusedMethod Instantiated via Nextcloud dependency injection.
+	 * @param IRequest    $request    The current request
+	 * @param IAppManager $appManager Locates the app and reads its version
 	 */
 	public function __construct(
 		IRequest $request,
@@ -62,24 +53,17 @@ class OpenApiController extends Controller {
 	}//end __construct()
 
 	/**
-	 * The OpenAPI document of this app, for any logged-in user.
+	 * The OpenAPI document, or 404 when it is not installed or unreadable.
 	 *
-	 * Its `info.version` is the installed app version, which is also what every
-	 * API response carries in `API-Version`.
-	 *
-	 * @return JSONResponse The document, or 404 when it is not installed.
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @spec openspec/specs/api-contract/spec.md
+	 * @return JSONResponse
 	 */
-	#[NoAdminRequired]
+	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(): JSONResponse {
 		$document = $this->document();
 		$response = new JSONResponse(
-			data: ['error' => 'The OpenAPI document is not installed'],
+			data: ['message' => 'The OpenAPI document is not installed'],
 			statusCode: Http::STATUS_NOT_FOUND
 		);
 		if ($document !== null) {
@@ -87,15 +71,14 @@ class OpenApiController extends Controller {
 			$response = new JSONResponse(data: $document);
 		}
 
+		$response->addHeader(name: 'Access-Control-Allow-Origin', value: '*');
 		return $response;
 	}//end show()
 
 	/**
-	 * The installed OpenAPI document, decoded with empty JSON objects kept as objects.
+	 * Read openapi.json from the app root.
 	 *
-	 * @return stdClass|null The document, or null when it is missing or not a document.
-	 *
-	 * @spec openspec/specs/api-contract/spec.md
+	 * @return stdClass|null The document, or null when missing or not an OpenAPI object
 	 */
 	private function document(): ?stdClass {
 		$path = $this->appManager->getAppPath(appId: Application::APP_ID).'/openapi.json';
@@ -103,7 +86,7 @@ class OpenApiController extends Controller {
 			return null;
 		}
 
-		$document = json_decode((string) file_get_contents($path), false);
+		$document = json_decode((string)file_get_contents($path), false);
 		if ($document instanceof stdClass && ($document->info ?? null) instanceof stdClass) {
 			return $document;
 		}

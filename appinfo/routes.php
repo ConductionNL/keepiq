@@ -17,8 +17,6 @@ declare(strict_types=1);
  */
 
 $extra = [
-    // The OpenAPI document of keepiq's own API, for logged-in users, served under /api/v1/ too.
-    ['name' => 'openApi#show', 'url' => '/api/openapi.json', 'verb' => 'GET'],
     // Dashboard summary (domain aggregator — DashboardController::summary()).
     ['name' => 'dashboard#summary', 'url' => '/api/dashboard/summary', 'verb' => 'GET'],
 
@@ -554,6 +552,8 @@ return \OCA\Keepiq\Middleware\Support\ApiPathAliases::withVersionedAliases([
             // Observability (hydra ADR-006): health is public, metrics admin-only.
             ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
             ['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
+            // The OpenAPI document of the versioned API (NL API Design Rules /core/doc-openapi).
+            ['name' => 'openApi#show', 'url' => '/api/v1/openapi.json', 'verb' => 'GET'],
         ],
         $extra,
         [
