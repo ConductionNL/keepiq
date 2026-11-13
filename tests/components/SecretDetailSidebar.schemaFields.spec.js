@@ -96,6 +96,16 @@ describe('SecretDetailSidebar custom field schemas', () => {
 		expect(wrapper.text()).toContain('Yes')
 	})
 
+	it('shows a URL of another scheme as text, not as a link', async () => {
+		const wrapper = await mountWith({
+			Webhook: 'javascript:alert(1)',
+			'@schema': { Webhook: { type: 'string', format: 'uri' } },
+		})
+
+		expect(wrapper.find('a[href^="javascript:"]').exists()).toBe(false)
+		expect(wrapper.text()).toContain('javascript:alert(1)')
+	})
+
 	it('keeps a hidden value out of the page until it is revealed', async () => {
 		const wrapper = await mountWith({
 			PIN: '481516',

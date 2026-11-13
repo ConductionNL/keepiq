@@ -712,12 +712,16 @@
 							t('keepiq', 'URL')
 						}}</span>
 						<div class="secret-detail__row-value">
+							<!-- Only a web or mail address is a link: another
+							     scheme, such as javascript:, shows as text. -->
 							<a
-								:href="secret.url"
+								v-if="urlHref"
+								:href="urlHref"
 								target="_blank"
 								rel="noopener noreferrer">
 								{{ secret.url }}
 							</a>
+							<span v-else>{{ secret.url }}</span>
 						</div>
 					</div>
 				</div>
@@ -959,16 +963,17 @@
 								{{ t('keepiq', 'Requests') }}
 							</h3>
 							<div class="secret-detail__row-value">
-								<!-- Not for a payment card, identity or authenticator key:
-								     asking someone for those through a fill link is what fraud
-								     looks like, and the server refuses it. Their request
-								     history still shows. -->
+								<!-- Not for a payment card, identity, authenticator key or
+								     passkey: asking someone for those through a fill link is
+								     what fraud looks like, and the server refuses it. Their
+								     request history still shows. -->
 								<div
 									v-if="
 										!viewOnlyCopy
 										&& !isCard
 										&& !isIdentity
 										&& !isTotp
+										&& !isPasskey
 									"
 									class="secret-detail__requests-actions">
 									<!-- This action always targets THIS Secret, so the label
@@ -1173,6 +1178,7 @@ import {
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { fieldsOf, schemasOf } from '../utils/fieldSchema.js'
 import { isRefusal } from '../utils/refusal.js'
+import { linkHref } from '../utils/safeLink.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
@@ -1687,6 +1693,17 @@ export default {
 			}
 			const type = useSecretTypeStore().typesById[this.secret.typeId]
 			return Boolean(type) && type.name === 'totp'
+		},
+
+		/**
+		 * The link for the secret's URL: only a web or mail address, so a
+		 * `javascript:` or `data:` URL is never a live link.
+		 *
+		 * @return {string|null} The href, or null to show the URL as text.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		urlHref() {
+			return linkHref(this.secret?.url)
 		},
 
 		/**

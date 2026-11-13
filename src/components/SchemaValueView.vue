@@ -3,7 +3,8 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   One custom field's value on the detail sidebar, shown the way its schema
-  says: masked until revealed when hidden, a link for a URL, Yes or No, a
+  says: masked until revealed when hidden, a link for a web or mail address
+  (any other URL as text), Yes or No, a
   date in the user's locale, and the read-only JSON viewer for an object. A
   value that does not fit its schema (written through the API, which cannot
   check) shows as plain text with a warning.
@@ -50,9 +51,10 @@
 			</span>
 		</template>
 		<div v-else-if="input === 'url'" class="schema-value-view__actions">
-			<a :href="value" target="_blank" rel="noopener noreferrer">{{
+			<a v-if="href" :href="href" target="_blank" rel="noopener noreferrer">{{
 				value
 			}}</a>
+			<span v-else class="schema-value-view__text">{{ value }}</span>
 			<CopyButton :value="value" />
 		</div>
 		<template v-else-if="input === 'json'">
@@ -72,6 +74,7 @@ import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import CopyButton from './CopyButton.vue'
 import PasswordField from './PasswordField.vue'
 import { inputOf, isHiddenSchema, schemaError } from '../utils/fieldSchema.js'
+import { linkHref } from '../utils/safeLink.js'
 
 export default {
 	name: 'SchemaValueView',
@@ -140,6 +143,17 @@ export default {
 		 */
 		fits() {
 			return schemaError(this.value, this.schema) === ''
+		},
+
+		/**
+		 * The link for a URL value: only a web or mail address, so a
+		 * `javascript:` or `data:` value is never a live link.
+		 *
+		 * @return {string|null} The href, or null to show the value as text.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		href() {
+			return linkHref(this.value)
 		},
 
 		/**
