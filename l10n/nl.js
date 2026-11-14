@@ -1739,7 +1739,17 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dit is geen authenticator-sleutel. Plak een otpauth://totp/-link of het base32-geheim.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Deze QR-code bevat geen authenticator-sleutel. Gebruik de QR-code die de site toont wanneer je tweestapsaanmelding instelt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dit geheim wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw, of vraag een beheerder te controleren of achtergrondtaken draaien.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat.",
+        "The end date must lie in the future.": "De einddatum moet in de toekomst liggen.",
+        "Compare versions": "Versies vergelijken",
+        "No field changed between these two.": "Tussen deze twee is geen veld veranderd.",
+        "Field": "Veld",
+        "Changed": "Gewijzigd",
+        "Reveal": "Tonen",
+        "Current value": "Huidige waarde",
+        "Compare": "Vergelijken",
+        "Pick two to compare.": "Kies er twee om te vergelijken.",
+        "Pick version {number} to compare": "Versie {number} kiezen om te vergelijken"
     },
     "nplurals=2; plural=(n != 1);"
 )

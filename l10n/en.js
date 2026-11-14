@@ -1734,7 +1734,17 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Only the owner can change a manager, or a membership that covers a manager."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Only the owner can change a manager, or a membership that covers a manager.",
+        "The end date must lie in the future.": "The end date must lie in the future.",
+        "Compare versions": "Compare versions",
+        "No field changed between these two.": "No field changed between these two.",
+        "Field": "Field",
+        "Changed": "Changed",
+        "Reveal": "Reveal",
+        "Current value": "Current value",
+        "Compare": "Compare",
+        "Pick two to compare.": "Pick two to compare.",
+        "Pick version {number} to compare": "Pick version {number} to compare"
     },
     "nplurals=2; plural=(n != 1);"
 )
