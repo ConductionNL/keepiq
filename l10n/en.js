@@ -1759,6 +1759,11 @@ OC.L10N.register(
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.",
         "This is not an OpenSSH public key.": "This is not an OpenSSH public key.",
         "This public key does not belong to the private key.": "This public key does not belong to the private key.",
+        "Clone": "Clone",
+        "{name} (copy)": "{name} (copy)",
+        "This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.": "This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.",
+        "Preview attachment": "Preview attachment",
+        "Attachment": "Attachment",
         "How your vault is protected": "How your vault is protected",
         "Your vault certificate": "Your vault certificate",
         "Loading certificate details…": "Loading certificate details…",
@@ -1772,7 +1777,11 @@ OC.L10N.register(
         "{type}, {bits}-bit": "{type}, {bits}-bit",
         "Signature algorithm": "Signature algorithm",
         "Valid": "Valid",
-        "{from} to {until}": "{from} to {until}"
+        "{from} to {until}": "{from} to {until}",
+        "Unencrypted address": "Unencrypted address",
+        "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.",
+        "Change to https": "Change to https",
+        "Could not save the https address for {name}.": "Could not save the https address for {name}."
     },
     "nplurals=2; plural=(n != 1);"
 )

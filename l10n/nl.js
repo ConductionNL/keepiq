@@ -1764,6 +1764,11 @@ OC.L10N.register(
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dit is geen privésleutel. Plak een OpenSSH- of PEM-privésleutel, of genereer er een.",
         "This is not an OpenSSH public key.": "Dit is geen OpenSSH-publieke sleutel.",
         "This public key does not belong to the private key.": "Deze publieke sleutel hoort niet bij de privésleutel.",
+        "Clone": "Klonen",
+        "{name} (copy)": "{name} (kopie)",
+        "This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.": "Dit is een kopie van een ander geheim. Bijlagen, delingen, geschiedenis, passkeys en de eenmalige code worden niet gekopieerd.",
+        "Preview attachment": "Bijlage bekijken",
+        "Attachment": "Bijlage",
         "How your vault is protected": "Zo is uw kluis beveiligd",
         "Your vault certificate": "Uw kluiscertificaat",
         "Loading certificate details…": "Certificaatgegevens laden…",
@@ -1777,7 +1782,11 @@ OC.L10N.register(
         "{type}, {bits}-bit": "{type}, {bits}-bits",
         "Signature algorithm": "Handtekeningalgoritme",
         "Valid": "Geldig",
-        "{from} to {until}": "{from} tot {until}"
+        "{from} to {until}": "{from} tot {until}",
+        "Unencrypted address": "Onversleuteld adres",
+        "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "Deze logins zijn opgeslagen met een http-adres, dus het wachtwoord wordt onversleuteld verstuurd. Wijzig het adres in https als de site dat aanbiedt.",
+        "Change to https": "Wijzigen in https",
+        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen."
     },
     "nplurals=2; plural=(n != 1);"
 )
