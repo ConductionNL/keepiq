@@ -45,7 +45,7 @@ kotlin {
     val xcframework = XCFramework("KeepiqShared")
     // Argon2id on iOS: the reference C code, compiled per target into a
     // static library that cinterop bundles into the klib (task 1.3.1).
-    val argon2Dir = layout.projectDirectory.dir("src/nativeInterop/argon2")
+    val argon2Dir = layout.projectDirectory.dir("src/nativeInterop/vendor/argon2")
     val argon2Sources = listOf("argon2.c", "core.c", "encoding.c", "ref.c", "thread.c", "blake2/blake2b.c")
     val iosTargets = mapOf(
         iosX64() to ("iphonesimulator" to "x86_64-apple-ios17.0-simulator"),
