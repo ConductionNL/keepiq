@@ -31,6 +31,8 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\StaleWriteException;
 
 /**
  * Status mapping of the trash endpoints.
@@ -152,4 +154,72 @@ class SecretTrashControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $this->controller->archive('s-1')->getStatus());
 		$this->assertSame(Http::STATUS_OK, $this->controller->unarchive('s-1')->getStatus());
 	}//end testArchiveAnswersTheSecret()
+
+	/**
+	 * A purge answers that the secret is purged, for the signed-in owner.
+	 *
+	 * @return void
+	 */
+	public function testPurgeAnswersPurged(): void {
+		$this->trash->expects($this->once())->method('purge')->with('s-1', 'alice');
+
+		$response = $this->controller->purge('s-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['status' => 'purged'], $response->getData());
+	}//end testPurgeAnswersPurged()
+
+	/**
+	 * Without a user nothing is asked of the service and the answer is 401.
+	 *
+	 * @return void
+	 */
+	public function testWithoutAUserEveryActionIs401(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
+		$this->trash->expects($this->never())->method($this->anything());
+		$controller = new SecretTrashController(
+			request: $this->createMock(IRequest::class),
+			trashService: $this->trash,
+			userSession: $session,
+		);
+
+		foreach (['trash', 'restore', 'purge', 'archive', 'unarchive'] as $action) {
+			$response = $controller->$action('s-1');
+			$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus(), $action);
+			$this->assertSame(['message' => 'Unauthorized'], $response->getData(), $action);
+		}
+	}//end testWithoutAUserEveryActionIs401()
+
+	/**
+	 * A secret that does not exist answers 404 with the service's message.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownSecretIs404(): void {
+		$this->trash->method('archive')->willThrowException(new NotFoundException('Secret not found'));
+
+		$response = $this->controller->archive('s-1');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame(['message' => 'Secret not found'], $response->getData());
+	}//end testAnUnknownSecretIs404()
+
+	/**
+	 * A secret that moved on meanwhile answers 409 with the current row.
+	 *
+	 * @return void
+	 */
+	public function testAStaleSecretIs409WithTheCurrentRow(): void {
+		$current = new Secret();
+		$current->setId('s-1');
+		$current->setName('Router');
+		$this->trash->method('unarchive')->willThrowException(new StaleWriteException(current: $current));
+
+		$response = $this->controller->unarchive('s-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame($current->jsonSerialize(), $response->getData()['current']);
+		$this->assertArrayHasKey('message', $response->getData());
+	}//end testAStaleSecretIs409WithTheCurrentRow()
 }//end class
