@@ -878,6 +878,11 @@ OC.L10N.register(
         "Share the folder \"{name}\" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.": "Comparta la carpeta \"{name}\" y todos los secretos que contiene con su equipo. Los miembros reciben sus propias copias cifradas: ningún texto plano llega nunca al servidor.",
         "Share this folder": "Compartir esta carpeta",
         "Sharing secrets": "Compartiendo secretos",
+        "Ask for my master password before showing or filling this item": "Pedir mi contraseña maestra antes de mostrar o rellenar este elemento",
+        "Asks for your master password": "Pide su contraseña maestra",
+        "Enter your master password": "Introduzca su contraseña maestra",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "«{name}» pide su contraseña maestra antes de mostrarse, copiarse o rellenarse.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Su contraseña maestra se comprueba en este dispositivo y nunca se envía. Esto detiene a alguien frente a su pantalla desbloqueada; no protege frente a una aplicación modificada.",
         "Show private key": "Mostrar la clave privada",
         "SIEM audit export": "Exportación de auditoría a SIEM",
         "Site": "Sitio",
@@ -1734,12 +1739,7 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "No es una clave de autenticador. Pegue un enlace otpauth://totp/ o el secreto en base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Este código QR no contiene una clave de autenticador. Use el código QR que muestra el sitio al configurar el inicio de sesión en dos pasos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Este secreto está esperando una comprobación de sus comparticiones que aún no ha terminado. No se ha guardado nada; inténtelo de nuevo más tarde o pida a un administrador que compruebe que se ejecutan las tareas en segundo plano.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Solo el propietario puede cambiar un gestor o una membresía que incluya a un gestor.",
-        "Ask for my master password before showing or filling this item": "Pedir mi contraseña maestra antes de mostrar o rellenar este elemento",
-        "Asks for your master password": "Pide su contraseña maestra",
-        "Enter your master password": "Introduzca su contraseña maestra",
-        "\"{name}\" asks for your master password before it is shown, copied or filled.": "«{name}» pide su contraseña maestra antes de mostrarse, copiarse o rellenarse.",
-        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Su contraseña maestra se comprueba en este dispositivo y nunca se envía. Esto detiene a alguien frente a su pantalla desbloqueada; no protege frente a una aplicación modificada."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Solo el propietario puede cambiar un gestor o una membresía que incluya a un gestor."
     },
     "nplurals=2; plural=(n != 1);"
 )

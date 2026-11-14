@@ -878,6 +878,11 @@ OC.L10N.register(
         "Share the folder \"{name}\" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.": "Споделете ја папката „{name}“ и секоја тајна во неа со вашиот тим. Членовите добиваат свои шифрирани копии — никаков отворен текст никогаш не доаѓа до серверот.",
         "Share this folder": "Сподели ја оваа папка",
         "Sharing secrets": "Споделување на тајните",
+        "Ask for my master password before showing or filling this item": "Барај ја мојата главна лозинка пред да се прикаже или пополни оваа ставка",
+        "Asks for your master password": "Ја бара вашата главна лозинка",
+        "Enter your master password": "Внесете ја вашата главна лозинка",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ ја бара вашата главна лозинка пред да се прикаже, копира или пополни.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Вашата главна лозинка се проверува на овој уред и никогаш не се испраќа. Ова го запира човекот пред вашиот отклучен екран; не штити од изменета апликација.",
         "Show private key": "Прикажи приватен клуч",
         "SIEM audit export": "Извоз на ревизија во SIEM",
         "Site": "Сајт",
@@ -1734,12 +1739,7 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ова не е клуч на автентикатор. Залепете врска otpauth://totp/ или тајната во формат base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Овој QR-код не содржи клуч на автентикатор. Користете го QR-кодот што го прикажува страницата кога ја поставувате најавата во два чекора.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Оваа тајна чека проверка на нејзините споделувања која сè уште не е завршена. Ништо не е зачувано; обидете се повторно подоцна или замолете администратор да провери дали работат позадинските задачи.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само сопственикот може да промени менаџер или членство што опфаќа менаџер.",
-        "Ask for my master password before showing or filling this item": "Барај ја мојата главна лозинка пред да се прикаже или пополни оваа ставка",
-        "Asks for your master password": "Ја бара вашата главна лозинка",
-        "Enter your master password": "Внесете ја вашата главна лозинка",
-        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ ја бара вашата главна лозинка пред да се прикаже, копира или пополни.",
-        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Вашата главна лозинка се проверува на овој уред и никогаш не се испраќа. Ова го запира човекот пред вашиот отклучен екран; не штити од изменета апликација."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само сопственикот може да промени менаџер или членство што опфаќа менаџер."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

@@ -878,6 +878,11 @@ OC.L10N.register(
         "Share the folder \"{name}\" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.": "Поделите фасциклу „{name}“ и сваку тајну у њој са својим тимом. Чланови добијају сопствене шифроване копије — ниједан отворени текст никада не долази на сервер.",
         "Share this folder": "Подели ову фасциклу",
         "Sharing secrets": "Дељење тајни",
+        "Ask for my master password before showing or filling this item": "Тражи моју главну лозинку пре приказивања или попуњавања ове ставке",
+        "Asks for your master password": "Тражи вашу главну лозинку",
+        "Enter your master password": "Унесите своју главну лозинку",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ тражи вашу главну лозинку пре него што се прикаже, копира или попуни.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ваша главна лозинка се проверава на овом уређају и никада се не шаље. То зауставља особу за вашим откључаним екраном; не штити од измењене апликације.",
         "Show private key": "Прикажи приватни кључ",
         "SIEM audit export": "Извоз ревизије у SIEM",
         "Site": "Сајт",
@@ -1734,12 +1739,7 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ово није кључ аутентификатора. Налепите везу otpauth://totp/ или тајну у формату base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Овај QR код не садржи кључ аутентификатора. Користите QR код који сајт приказује када подешавате пријаву у два корака.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ова тајна чека проверу својих дељења која још није завршена. Ништа није сачувано; покушајте поново касније или замолите администратора да провери да ли раде позадински послови.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника.",
-        "Ask for my master password before showing or filling this item": "Тражи моју главну лозинку пре приказивања или попуњавања ове ставке",
-        "Asks for your master password": "Тражи вашу главну лозинку",
-        "Enter your master password": "Унесите своју главну лозинку",
-        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ тражи вашу главну лозинку пре него што се прикаже, копира или попуни.",
-        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ваша главна лозинка се проверава на овом уређају и никада се не шаље. То зауставља особу за вашим откључаним екраном; не штити од измењене апликације."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

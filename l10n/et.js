@@ -878,6 +878,11 @@ OC.L10N.register(
         "Share the folder \"{name}\" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.": "Jaga kausta „{name}“ ja iga selles olevat saladust oma meeskonnaga. Liikmed saavad oma krüptitud koopiad — lihttekst ei jõua kunagi serverisse.",
         "Share this folder": "Jaga seda kausta",
         "Sharing secrets": "Saladuste jagamine",
+        "Ask for my master password before showing or filling this item": "Küsi enne selle kirje näitamist või täitmist minu põhiparooli",
+        "Asks for your master password": "Küsib sinu põhiparooli",
+        "Enter your master password": "Sisesta oma põhiparool",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ küsib sinu põhiparooli, enne kui seda näidatakse, kopeeritakse või täidetakse.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Sinu põhiparooli kontrollitakse selles seadmes ja seda ei saadeta kunagi. See peatab inimese sinu lukustamata ekraani ees; muudetud rakenduse eest see ei kaitse.",
         "Show private key": "Näita privaatvõtit",
         "SIEM audit export": "SIEM-auditieksport",
         "Site": "Sait",
@@ -1734,12 +1739,7 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "See ei ole autentija võti. Kleebi otpauth://totp/-link või base32-saladus.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "See QR-kood ei sisalda autentija võtit. Kasuta QR-koodi, mida sait näitab kaheastmelise sisselogimise seadistamisel.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "See saladus ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei salvestatud; proovige hiljem uuesti või paluge administraatoril kontrollida, kas taustatööd töötavad.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Ainult omanik saab muuta haldurit või liikmesust, mis hõlmab haldurit.",
-        "Ask for my master password before showing or filling this item": "Küsi enne selle kirje näitamist või täitmist minu põhiparooli",
-        "Asks for your master password": "Küsib sinu põhiparooli",
-        "Enter your master password": "Sisesta oma põhiparool",
-        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ küsib sinu põhiparooli, enne kui seda näidatakse, kopeeritakse või täidetakse.",
-        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Sinu põhiparooli kontrollitakse selles seadmes ja seda ei saadeta kunagi. See peatab inimese sinu lukustamata ekraani ees; muudetud rakenduse eest see ei kaitse."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Ainult omanik saab muuta haldurit või liikmesust, mis hõlmab haldurit."
     },
     "nplurals=2; plural=(n != 1);"
 )

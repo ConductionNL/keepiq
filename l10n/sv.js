@@ -878,6 +878,11 @@ OC.L10N.register(
         "Share the folder \"{name}\" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.": "Dela mappen \"{name}\" och varje hemlighet i den med ditt team. Medlemmarna får sina egna krypterade kopior — ingen klartext når någonsin servern.",
         "Share this folder": "Dela den här mappen",
         "Sharing secrets": "Delar hemligheter",
+        "Ask for my master password before showing or filling this item": "Fråga efter mitt huvudlösenord innan objektet visas eller fylls i",
+        "Asks for your master password": "Frågar efter ditt huvudlösenord",
+        "Enter your master password": "Ange ditt huvudlösenord",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "”{name}” frågar efter ditt huvudlösenord innan det visas, kopieras eller fylls i.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ditt huvudlösenord kontrolleras på den här enheten och skickas aldrig. Det stoppar någon vid din olåsta skärm; det skyddar inte mot en ändrad app.",
         "Show private key": "Visa den privata nyckeln",
         "SIEM audit export": "SIEM-granskningsexport",
         "Site": "Webbplats",
@@ -1734,12 +1739,7 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Det här är inte en autentiserarnyckel. Klistra in en otpauth://totp/-länk eller base32-hemligheten.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Den här QR-koden innehåller ingen autentiserarnyckel. Använd den QR-kod som webbplatsen visar när du ställer in tvåstegsinloggning.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Den här hemligheten väntar på en kontroll av sina delningar som inte är klar än. Inget sparades; försök igen senare eller be en administratör kontrollera att bakgrundsjobb körs.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Endast ägaren kan ändra en ansvarig, eller ett medlemskap som omfattar en ansvarig.",
-        "Ask for my master password before showing or filling this item": "Fråga efter mitt huvudlösenord innan objektet visas eller fylls i",
-        "Asks for your master password": "Frågar efter ditt huvudlösenord",
-        "Enter your master password": "Ange ditt huvudlösenord",
-        "\"{name}\" asks for your master password before it is shown, copied or filled.": "”{name}” frågar efter ditt huvudlösenord innan det visas, kopieras eller fylls i.",
-        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ditt huvudlösenord kontrolleras på den här enheten och skickas aldrig. Det stoppar någon vid din olåsta skärm; det skyddar inte mot en ändrad app."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Endast ägaren kan ändra en ansvarig, eller ett medlemskap som omfattar en ansvarig."
     },
     "nplurals=2; plural=(n != 1);"
 )

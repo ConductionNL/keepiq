@@ -878,6 +878,11 @@ OC.L10N.register(
         "Share the folder \"{name}\" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.": "Deildu möppunni „{name}“ og hverju leyndarmáli í henni með hópnum þínum. Meðlimir fá sín eigin dulkóðuðu afrit — enginn ódulkóðaður texti kemst nokkru sinni í netþjóninn.",
         "Share this folder": "Deila þessari möppu",
         "Sharing secrets": "Deili leyndarmálum",
+        "Ask for my master password before showing or filling this item": "Biðja um aðallykilorðið mitt áður en þessi færsla er sýnd eða fyllt út",
+        "Asks for your master password": "Biður um aðallykilorðið þitt",
+        "Enter your master password": "Sláðu inn aðallykilorðið þitt",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ biður um aðallykilorðið þitt áður en það er sýnt, afritað eða fyllt út.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Aðallykilorðið þitt er athugað á þessu tæki og aldrei sent. Þetta stöðvar einhvern við ólæstan skjáinn þinn; það verndar ekki gegn breyttu forriti.",
         "Show private key": "Sýna einkalykil",
         "SIEM audit export": "SIEM-endurskoðunarútflutningur",
         "Site": "Vefsvæði",
@@ -1734,12 +1739,7 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Þetta er ekki lykill auðkennara. Límdu inn otpauth://totp/-tengil eða base32-leyndarmálið.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Þessi QR-kóði inniheldur ekki lykil auðkennara. Notaðu QR-kóðann sem vefsvæðið sýnir þegar þú setur upp tveggja þátta innskráningu.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Þetta leyndarmál bíður eftir athugun á deilingum sínum sem er ekki lokið. Ekkert var vistað; reyndu aftur síðar eða biddu kerfisstjóra að athuga hvort bakgrunnsverk keyri.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Aðeins eigandinn getur breytt stjórnanda, eða aðild sem nær yfir stjórnanda.",
-        "Ask for my master password before showing or filling this item": "Biðja um aðallykilorðið mitt áður en þessi færsla er sýnd eða fyllt út",
-        "Asks for your master password": "Biður um aðallykilorðið þitt",
-        "Enter your master password": "Sláðu inn aðallykilorðið þitt",
-        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ biður um aðallykilorðið þitt áður en það er sýnt, afritað eða fyllt út.",
-        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Aðallykilorðið þitt er athugað á þessu tæki og aldrei sent. Þetta stöðvar einhvern við ólæstan skjáinn þinn; það verndar ekki gegn breyttu forriti."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Aðeins eigandinn getur breytt stjórnanda, eða aðild sem nær yfir stjórnanda."
     },
     "nplurals=2; plural=(n != 1);"
 )

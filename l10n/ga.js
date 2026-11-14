@@ -878,6 +878,11 @@ OC.L10N.register(
         "Share the folder \"{name}\" and every secret in it with your team. Members receive their own encrypted copies — no plaintext ever reaches the server.": "Comhroinn an fillteán \"{name}\" agus gach rún atá ann le d'fhoireann. Faigheann na baill a gcóipeanna criptithe féin — ní shroicheann gnáth-théacs an freastalaí riamh.",
         "Share this folder": "Comhroinn an fillteán seo",
         "Sharing secrets": "Rúin á gcomhroinnt",
+        "Ask for my master password before showing or filling this item": "Iarr mo phríomhphasfhocal sula dtaispeántar nó sula líontar an mhír seo",
+        "Asks for your master password": "Iarrann sé do phríomhphasfhocal",
+        "Enter your master password": "Cuir isteach do phríomhphasfhocal",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "Iarrann “{name}” do phríomhphasfhocal sula dtaispeántar, sula gcóipeáiltear nó sula líontar é.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Seiceáiltear do phríomhphasfhocal ar an ngléas seo agus ní sheoltar riamh é. Stopann sé seo duine ag do scáileán díghlasáilte; ní chosnaíonn sé ar aip athraithe.",
         "Show private key": "Taispeáin an eochair phríobháideach",
         "SIEM audit export": "Easpórtáil iniúchta SIEM",
         "Site": "Suíomh",
@@ -1734,12 +1739,7 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ní eochair fíordheimhnitheora é seo. Greamaigh nasc otpauth://totp/ nó an rún base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Níl eochair fíordheimhnitheora sa chód QR seo. Úsáid an cód QR a thaispeánann an suíomh nuair a shocraíonn tú logáil isteach dhá fhachtóir.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Tá an rún seo ag fanacht ar sheiceáil ar a chomhroinnt nach bhfuil críochnaithe fós. Níor sábháladh aon rud; bain triail eile as ar ball, nó iarr ar riarthóir a sheiceáil go bhfuil na jabanna cúlra ag rith.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Ní féidir ach leis an úinéir bainisteoir a athrú, nó ballraíocht a chuimsíonn bainisteoir.",
-        "Ask for my master password before showing or filling this item": "Iarr mo phríomhphasfhocal sula dtaispeántar nó sula líontar an mhír seo",
-        "Asks for your master password": "Iarrann sé do phríomhphasfhocal",
-        "Enter your master password": "Cuir isteach do phríomhphasfhocal",
-        "\"{name}\" asks for your master password before it is shown, copied or filled.": "Iarrann “{name}” do phríomhphasfhocal sula dtaispeántar, sula gcóipeáiltear nó sula líontar é.",
-        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Seiceáiltear do phríomhphasfhocal ar an ngléas seo agus ní sheoltar riamh é. Stopann sé seo duine ag do scáileán díghlasáilte; ní chosnaíonn sé ar aip athraithe."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Ní féidir ach leis an úinéir bainisteoir a athrú, nó ballraíocht a chuimsíonn bainisteoir."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )
