@@ -59,6 +59,15 @@
 						}}
 					</span>
 				</button>
+				<a
+					v-if="changePassword && changePasswordHref(finding)"
+					:href="changePasswordHref(finding)"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="health-category__change-password"
+					:data-testid="`finding-change-password-${finding.id}`">
+					{{ t('keepiq', 'Change password') }}
+				</a>
 				<NcButton
 					v-if="actionLabel"
 					variant="secondary"
@@ -73,6 +82,7 @@
 
 <script>
 import { NcButton } from '@nextcloud/vue'
+import { changePasswordUrl } from '../utils/siteImages.js'
 
 export default {
 	name: 'HealthCategory',
@@ -107,9 +117,31 @@ export default {
 			type: String,
 			default: '',
 		},
+
+		/**
+		 * Offer each finding with a web address a link to its site's
+		 * change-password page (vault-website-addresses D3).
+		 */
+		changePassword: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
 	emits: ['open', 'action'],
+
+	methods: {
+		/**
+		 * The finding's change-password page, null without a web address.
+		 *
+		 * @param {object} finding The finding.
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+		 */
+		changePasswordHref(finding) {
+			return changePasswordUrl(finding?.url)
+		},
+	},
 }
 </script>
 
@@ -132,6 +164,13 @@ export default {
 		&:hover {
 			background-color: var(--color-background-hover);
 		}
+	}
+
+	&__change-password {
+		align-self: center;
+		margin-inline-end: 8px;
+		white-space: nowrap;
+		color: var(--color-primary-element);
 	}
 
 	&__path,

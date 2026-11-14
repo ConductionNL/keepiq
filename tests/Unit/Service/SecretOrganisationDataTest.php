@@ -28,6 +28,7 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
+use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\GdprService;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
@@ -113,11 +114,54 @@ class SecretOrganisationDataTest extends TestCase {
 					'favourite' => true,
 					'tags' => ['finance', 'on call'],
 					'lastUsedAt' => '2026-10-01T10:00:00+00:00',
+					'additionalUrls' => [],
 				],
 			],
 			$service->collectMetadata('alice')['organisation']
 		);
 	}//end testGdprPackageCarriesTheOrganisation()
+
+	/**
+	 * A login whose only organisation is its extra website addresses is in
+	 * the package with them, in list order.
+	 *
+	 * @return void
+	 */
+	public function testGdprPackageCarriesTheExtraAddresses(): void {
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$secretMapper->method('findByOwner')->willReturn([$this->row('s-1'), $this->row('s-2')]);
+		$urlMapper = $this->createMock(SecretUrlMapper::class);
+		$urlMapper->expects($this->once())->method('findUrlsBySecretIds')->with(['s-1', 's-2'])
+			->willReturn(['s-2' => ['https://login.example.com', 'https://example.net']]);
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+		$suiteMapper->method('findByOwner')->willReturn([]);
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getUserPreferences')->willReturn([]);
+
+		$service = new GdprService(
+			secretMapper: $secretMapper,
+			shareMapper: $this->createMock(ShareTargetMapper::class),
+			delegationMapper: $this->createMock(SecretDelegationMapper::class),
+			linkShareMapper: $this->createMock(LinkShareMapper::class),
+			requestMapper: $this->createMock(SecretRequestMapper::class),
+			suiteMapper: $suiteMapper,
+			settingsService: $settings,
+			urlMapper: $urlMapper,
+		);
+
+		$this->assertSame(
+			[
+				[
+					'secretId' => 's-2',
+					'favourite' => false,
+					'tags' => [],
+					'lastUsedAt' => null,
+					'additionalUrls' => ['https://login.example.com', 'https://example.net'],
+				],
+			],
+			$service->collectMetadata('alice')['organisation']
+		);
+	}//end testGdprPackageCarriesTheExtraAddresses()
 
 	/**
 	 * A secret's child-data purge drops its tags; an account's purge drops

@@ -37,6 +37,8 @@
             "device_approval_enabled",
             "offline_cache_enabled",
             "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url",
             "ca_status"
         ],
         "payload": {
@@ -87,6 +89,8 @@
             "device_approval_enabled": true,
             "offline_cache_enabled": true,
             "offline_edits_enabled": false,
+            "favicon_service_url": "",
+            "site_preview_service_url": "",
             "ca_status": {
                 "status": "active",
                 "expires": "2027-01-01"
@@ -128,6 +132,8 @@
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
             "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url ",
             "container OCA\\Keepiq\\Service\\CertificateAuthorityService"
         ],
         "debug": []
@@ -170,6 +176,8 @@
             "device_approval_enabled",
             "offline_cache_enabled",
             "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url",
             "ca_status"
         ],
         "payload": {
@@ -212,6 +220,8 @@
             "device_approval_enabled": false,
             "offline_cache_enabled": false,
             "offline_edits_enabled": false,
+            "favicon_service_url": "favicon_service_url-5",
+            "site_preview_service_url": "site_preview_service_url-5",
             "ca_status": {
                 "status": "active",
                 "expires": "2027-01-01"
@@ -253,6 +263,8 @@
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
             "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url ",
             "container OCA\\Keepiq\\Service\\CertificateAuthorityService"
         ],
         "debug": []
@@ -294,7 +306,9 @@
             "extension_passkey_pinned_origins",
             "device_approval_enabled",
             "offline_cache_enabled",
-            "offline_edits_enabled"
+            "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url"
         ],
         "payload": {
             "min_password_length": 12,
@@ -343,7 +357,9 @@
             "extension_passkey_pinned_origins": [],
             "device_approval_enabled": true,
             "offline_cache_enabled": true,
-            "offline_edits_enabled": false
+            "offline_edits_enabled": false,
+            "favicon_service_url": "",
+            "site_preview_service_url": ""
         },
         "reads": [
             "int keepiq min_password_length 12",
@@ -380,7 +396,9 @@
             "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
-            "bool keepiq offline_edits_enabled false"
+            "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url "
         ],
         "debug": []
     },
@@ -421,7 +439,9 @@
             "extension_passkey_pinned_origins",
             "device_approval_enabled",
             "offline_cache_enabled",
-            "offline_edits_enabled"
+            "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url"
         ],
         "payload": {
             "min_password_length": 79,
@@ -462,7 +482,9 @@
             "extension_passkey_pinned_origins": [],
             "device_approval_enabled": false,
             "offline_cache_enabled": false,
-            "offline_edits_enabled": false
+            "offline_edits_enabled": false,
+            "favicon_service_url": "favicon_service_url-5",
+            "site_preview_service_url": "site_preview_service_url-5"
         },
         "reads": [
             "int keepiq min_password_length 12",
@@ -499,7 +521,9 @@
             "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
-            "bool keepiq offline_edits_enabled false"
+            "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url "
         ],
         "debug": []
     },
@@ -541,6 +565,8 @@
             "device_approval_enabled",
             "offline_cache_enabled",
             "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url",
             "ca_status"
         ],
         "payload": {
@@ -591,6 +617,8 @@
             "device_approval_enabled": true,
             "offline_cache_enabled": true,
             "offline_edits_enabled": false,
+            "favicon_service_url": "",
+            "site_preview_service_url": "",
             "ca_status": {
                 "status": "unknown"
             }
@@ -630,7 +658,9 @@
             "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
-            "bool keepiq offline_edits_enabled false"
+            "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url "
         ],
         "debug": [
             "Keepiq: CA status unavailable: no CA"
@@ -674,6 +704,8 @@
             "device_approval_enabled",
             "offline_cache_enabled",
             "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url",
             "ca_status"
         ],
         "payload": {
@@ -716,6 +748,8 @@
             "device_approval_enabled": false,
             "offline_cache_enabled": false,
             "offline_edits_enabled": false,
+            "favicon_service_url": "favicon_service_url-5",
+            "site_preview_service_url": "site_preview_service_url-5",
             "ca_status": {
                 "status": "unknown"
             }
@@ -755,7 +789,9 @@
             "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
-            "bool keepiq offline_edits_enabled false"
+            "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url "
         ],
         "debug": [
             "Keepiq: CA status unavailable: no CA"

@@ -48,7 +48,7 @@ class SecretUrlMapper extends QBMapper {
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(IDBConnection $db) {
-		parent::__construct(db: $db, tableName: self::TABLE, entityClass: SecretUrl::class);
+		parent::__construct(db: $db, tableName: 'keepiq_secret_urls', entityClass: SecretUrl::class);
 	}//end __construct()
 
 	/**

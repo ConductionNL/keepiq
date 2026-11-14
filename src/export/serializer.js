@@ -269,7 +269,23 @@ function exportEntry(secret, pathMap) {
 		additionalFields: secret.additionalFields ?? null,
 		folder: folderPath(secret, pathMap),
 		...blobFields(secret),
+		...extraUrls(secret),
 	}
+}
+
+/**
+ * A login's extra website addresses, only when it has any, so a backup of a
+ * vault without them reads as before.
+ *
+ * @param {object} secret A decrypted secret.
+ * @return {object} `{ additionalUrls }` or nothing.
+ * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ */
+function extraUrls(secret) {
+	const urls = Array.isArray(secret.additionalUrls)
+		? secret.additionalUrls.filter((url) => typeof url === 'string' && url !== '')
+		: []
+	return urls.length > 0 ? { additionalUrls: urls } : {}
 }
 
 /**
