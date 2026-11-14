@@ -8,7 +8,8 @@
 
 ## 2. Site directory
 
-- [ ] 2.1 Confirm the directory endpoints and licence, and record them in this design. Verify: the design names both URLs and the licence, reviewed in the PR.
+- [x] 2.1 Confirm the directory endpoints and licence, and record them in this design. Verify: the design names both URLs and the licence, reviewed in the PR.
+  - D2a: one-time codes from `api.2fa.directory/v4/totp.json` (MIT), passkeys from `passkeys-api.2fa.directory/v1/supported.json` (CC BY 4.0, the 2FA Directory itself has no passkey data); both need attribution. Confirmed from the projects' own repositories and API pages.
 - [ ] 2.2 Add `site_directory_enabled` (default off), `RefreshSiteDirectoryJob` (daily, `IClientService`, stored in app data) and `GET /api/v1/site-directory` with an ETag. Verify: PHPUnit with a mocked client for refresh, a failed fetch keeping the old file, and 404 when switched off; hydra route-auth gate.
 - [ ] 2.3 Add the switch with the privacy and attribution text to the admin settings. Verify: Playwright check of the section.
 
