@@ -99,6 +99,7 @@
 					:title="t('keepiq', 'Weak passwords')"
 					:findings="store.weakFindings"
 					testid="category-weak"
+					changePassword
 					@open="openSecret" />
 				<HealthCategory
 					:title="t('keepiq', 'Reused passwords')"
@@ -107,6 +108,7 @@
 					"
 					:findings="store.reusedFindings"
 					testid="category-reused"
+					changePassword
 					@open="openSecret" />
 				<HealthCategory
 					:title="t('keepiq', 'Old passwords')"
@@ -118,6 +120,7 @@
 					:title="t('keepiq', 'Breached passwords')"
 					:findings="store.breachedFindings"
 					testid="category-breached"
+					changePassword
 					@open="openSecret" />
 				<NcButton
 					v-if="breachActive && store.breachedFindings.length"

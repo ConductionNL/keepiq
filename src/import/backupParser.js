@@ -27,7 +27,7 @@ function toRows(payload) {
 	// Number every row: duplicate choices, preview keys and rejected-row
 	// reports are all keyed by sourceRow (keepiq#749).
 	return secrets.map((s, index) =>
-		withPartial(withTypeNames(withBlobFields(baseRow(s, index + 1), s), s), omitted),
+		withPartial(withExtraUrls(withTypeNames(withBlobFields(baseRow(s, index + 1), s), s), s), omitted),
 	)
 }
 
@@ -61,6 +61,24 @@ function withTypeNames(row, s) {
 		if (typeof s[field] === 'string' && s[field] !== '') {
 			row[field] = s[field]
 		}
+	}
+	return row
+}
+
+/**
+ * The row with the login's extra website addresses, when the backup has any.
+ *
+ * @param {object} row The row.
+ * @param {object} s The decrypted secret.
+ * @return {object} The same row.
+ * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ */
+function withExtraUrls(row, s) {
+	const urls = Array.isArray(s.additionalUrls)
+		? s.additionalUrls.filter((url) => typeof url === 'string' && url !== '')
+		: []
+	if (urls.length > 0) {
+		row.additionalUrls = urls
 	}
 	return row
 }

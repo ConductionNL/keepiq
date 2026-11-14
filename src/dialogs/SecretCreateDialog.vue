@@ -55,6 +55,8 @@
 
 			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
+			<AdditionalUrlsField v-model="additionalUrls" :disabled="saving" />
+
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
 				:fields="typedFields"
@@ -136,6 +138,7 @@ import {
 } from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
@@ -211,6 +214,7 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		AdditionalUrlsField,
 		AuthenticatorKeyField,
 		TypedFieldsForm,
 		DestinationSelect,
@@ -259,6 +263,8 @@ export default {
 			name: this.prefill ? cloneName(this.prefill.name) : '',
 			typeId: this.prefill?.typeId || null,
 			url: this.prefill?.url || '',
+			/** The extra website addresses (vault-website-addresses). */
+			additionalUrls: Array.isArray(this.prefill?.additionalUrls) ? [...this.prefill.additionalUrls] : [],
 			login: this.prefill?.login || '',
 			/** The authenticator key being entered on a login. */
 			totpInput: '',
@@ -513,6 +519,7 @@ export default {
 		valueFields() {
 			return {
 				url: this.url || null,
+				...(this.additionalUrls.length > 0 ? { additionalUrls: [...this.additionalUrls] } : {}),
 				login: this.login || '',
 				key: this.effectiveValue,
 				// Only when there ARE members: the store encrypts whatever it is

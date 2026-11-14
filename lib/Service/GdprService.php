@@ -78,6 +78,7 @@ class GdprService implements GdprServiceInterface {
 	 * @param \OCA\Keepiq\Db\AttachmentGrantMapper|null $grantMapper The attachment-grant mapper (export metadata)
 	 * @param \OCA\Keepiq\Db\SecretTagMapper|null $tagMapper The tag mapper (export metadata)
 	 * @param QuarantinedShareTargetMapper|null $quarantinedMapper The quarantined share rows naming the subject
+	 * @param \OCA\Keepiq\Db\SecretUrlMapper|null $urlMapper The extra website addresses (export metadata)
 	 *
 	 * @return void
 	 */
@@ -93,6 +94,7 @@ class GdprService implements GdprServiceInterface {
 		private ?\OCA\Keepiq\Db\AttachmentGrantMapper $grantMapper = null,
 		private ?\OCA\Keepiq\Db\SecretTagMapper $tagMapper = null,
 		private ?QuarantinedShareTargetMapper $quarantinedMapper = null,
+		private ?\OCA\Keepiq\Db\SecretUrlMapper $urlMapper = null,
 	) {
 	}//end __construct()
 
@@ -152,34 +154,66 @@ class GdprService implements GdprServiceInterface {
 	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The subject's secrets
 	 * @param string $userId The subject
 	 *
-	 * @return list<array{secretId: string, favourite: bool, tags: list<string>, lastUsedAt: string|null}>
+	 * @return list<array{secretId: string, favourite: bool, tags: list<string>, lastUsedAt: string|null, additionalUrls: list<string>}>
 	 *
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	private function collectOrganisation(array $ownedSecrets, string $userId): array {
-		$tags = [];
-		if ($this->tagMapper !== null && $ownedSecrets !== []) {
-			$tags = $this->tagMapper->findTagsBySecretIds(
-				$userId,
-				array_map(static fn (\OCA\Keepiq\Db\Secret $secret): string => (string)$secret->getId(), $ownedSecrets)
-			);
-		}
+		$ids  = array_map(static fn (\OCA\Keepiq\Db\Secret $secret): string => (string)$secret->getId(), $ownedSecrets);
+		$tags = $this->tagsOf(secretIds: $ids, userId: $userId);
+		$urls = $this->urlsOf(secretIds: $ids);
 
 		$entries = [];
 		foreach ($ownedSecrets as $secret) {
+			$id    = (string)$secret->getId();
 			$entry = [
-				'secretId' => (string)$secret->getId(),
+				'secretId' => $id,
 				'favourite' => ($secret->getIsFavourite() === true),
-				'tags' => ($tags[(string)$secret->getId()] ?? []),
+				'tags' => ($tags[$id] ?? []),
 				'lastUsedAt' => $secret->getLastUsedAt()?->format('c'),
+				'additionalUrls' => ($urls[$id] ?? []),
 			];
-			if ($entry['favourite'] === true || $entry['tags'] !== [] || $entry['lastUsedAt'] !== null) {
+			if ($entry['favourite'] === true || $entry['tags'] !== [] || $entry['lastUsedAt'] !== null || $entry['additionalUrls'] !== []) {
 				$entries[] = $entry;
 			}
 		}
 
 		return $entries;
 	}//end collectOrganisation()
+
+	/**
+	 * The subject's tags per secret id.
+	 *
+	 * @param list<string> $secretIds The subject's secrets
+	 * @param string       $userId    The subject
+	 *
+	 * @return array<string,list<string>>
+	 */
+	private function tagsOf(array $secretIds, string $userId): array {
+		if ($this->tagMapper === null || $secretIds === []) {
+			return [];
+		}
+
+		return $this->tagMapper->findTagsBySecretIds($userId, $secretIds);
+	}//end tagsOf()
+
+	/**
+	 * The extra website addresses per secret id.
+	 *
+	 * @param list<string> $secretIds The subject's secrets
+	 *
+	 * @return array<string,list<string>>
+	 *
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	private function urlsOf(array $secretIds): array {
+		if ($this->urlMapper === null || $secretIds === []) {
+			return [];
+		}
+
+		return $this->urlMapper->findUrlsBySecretIds(secretIds: $secretIds);
+	}//end urlsOf()
 
 	/**
 	 * Collect attachment records for the subject's own secrets: metadata
