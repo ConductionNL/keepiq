@@ -1759,7 +1759,11 @@ OC.L10N.register(
         "Signature algorithm": "Signature algorithm",
         "Fingerprint": "Fingerprint",
         "Valid": "Valid",
-        "{from} to {until}": "{from} to {until}"
+        "{from} to {until}": "{from} to {until}",
+        "Unencrypted address": "Unencrypted address",
+        "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.",
+        "Change to https": "Change to https",
+        "Could not save the https address for {name}.": "Could not save the https address for {name}."
     },
     "nplurals=2; plural=(n != 1);"
 )

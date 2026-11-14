@@ -195,6 +195,7 @@ export function confirmForm(message: FillConfirmForm): boolean {
 
 /** The insecure-page question of a login fill from the menu, shortcut or page load. */
 function confirmInsecure(message: FillConfirmInsecure): boolean {
+	if (message.savedSecure === false) return window.confirm(`${i18n.t('inlineList.insecureQuestion')}\n\n${i18n.t('inlineList.insecureDetail')}`)
 	const host = typeof message.itemHost === 'string' ? message.itemHost : ''
 	return window.confirm(host ? i18n.t('pageFill.insecure', { host }) : i18n.t('pageFill.insecureNoHost'))
 }

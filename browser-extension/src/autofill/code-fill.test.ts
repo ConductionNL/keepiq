@@ -70,7 +70,7 @@ describe('pickCode', () => {
 	it('asks first for an https login on an http frame, then fills once confirmed', async () => {
 		await vault()
 		const insecure = { frameId: 3, url: 'http://example.test/2fa', anchorKey: 'k1' }
-		expect(await pickCode(target({ only: insecure }))).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true })
+		expect(await pickCode(target({ only: insecure }))).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true, savedSecure: true })
 		expect(sent).toEqual([])
 		expect(await pickCode(target({ only: insecure, confirmedInsecure: true }))).toEqual({ filled: 'none', code: true })
 	})

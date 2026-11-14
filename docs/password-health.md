@@ -45,6 +45,14 @@ oracle ("attack the weak ones first"), so nothing health-related is written to
 - **Possibly compromised** — secrets carrying the `possibly_compromised_at` flag
   from a suite compromise recovery are listed with a rotate-this-value call to
   action. This is the one finding the server already knows about.
+- **Unencrypted address** — logins saved with a plain `http://` address, so
+  the password crosses the network in the clear. Addresses on `localhost`,
+  loopback and private-network hosts (`10.x`, `172.16.x` to `172.31.x`,
+  `192.168.x`, link-local, and the IPv6 equivalents) are not listed. **Change to
+  https** next to a login saves the same address with `https://` and analyses the
+  vault again; only the scheme changes, so check that the site answers on https.
+  The check reads the login's plain-text address in the browser and does not
+  lower the health score.
 - **Breached** — optional; see below.
 
 ## Breach checking (opt-in, k-anonymity)

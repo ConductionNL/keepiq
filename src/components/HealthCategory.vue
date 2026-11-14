@@ -4,8 +4,8 @@
 
   One finding category in the password-health report. Renders a titled list of
   affected secrets (name + folder path) that deep-link to the secret detail, or
-  an "all clear" line when empty. Presentation only — all analysis is upstream in
-  the health store.
+  an "all clear" line when empty, and optionally one action button per finding.
+  Presentation only — all analysis is upstream in the health store.
 
   @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-vault-health-report
 -->
@@ -59,14 +59,24 @@
 						}}
 					</span>
 				</button>
+				<NcButton
+					v-if="actionLabel"
+					variant="secondary"
+					:data-testid="`finding-action-${finding.id}`"
+					@click="$emit('action', finding)">
+					{{ actionLabel }}
+				</NcButton>
 			</li>
 		</ul>
 	</section>
 </template>
 
 <script>
+import { NcButton } from '@nextcloud/vue'
+
 export default {
 	name: 'HealthCategory',
+	components: { NcButton },
 
 	props: {
 		title: {
@@ -88,9 +98,18 @@ export default {
 			type: String,
 			default: 'health-category',
 		},
+
+		/**
+		 * Label of a button beside each finding that emits `action` with the
+		 * finding; no button when empty.
+		 */
+		actionLabel: {
+			type: String,
+			default: '',
+		},
 	},
 
-	emits: ['open'],
+	emits: ['open', 'action'],
 }
 </script>
 

@@ -6,7 +6,7 @@ import type { FillExecute, FillResult } from '@/src/messages'
 import { getKey } from '@/src/vault/key-store'
 import { readSnapshot } from '@/src/vault/store'
 import type { VaultSnapshot } from '@/src/vault/types'
-import { activeUnlockedId, combine, fits, isInsecure, NONE } from './fill'
+import { activeUnlockedId, combine, fits, isInsecure, NONE, savedSecure } from './fill'
 import { currentCode, hasCode, seedOf } from './login-codes'
 
 export interface CodeTarget {
@@ -55,7 +55,7 @@ function codeRowOf(vault: VaultSnapshot, itemId: string): OpenSecretRow | null {
 /** A login that no longer matches the frame fills nothing; an insecure frame asks first. */
 async function refusalOf({ accountId, vault, row, frame, target }: CodePick): Promise<FillResult | null> {
 	if (!fits(row, vault.types, (await readSettings(accountId)).uriMatch, frame.url)) return NONE
-	if (!target.confirmedInsecure && isInsecure(row, [frame])) return { ...NONE, needsInsecureConfirm: true }
+	if (!target.confirmedInsecure && isInsecure(row, [frame])) return { ...NONE, needsInsecureConfirm: true, savedSecure: savedSecure(row) }
 	return null
 }
 

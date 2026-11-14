@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { i18n } from '#i18n'
 import type { FillConfirmForm, FillExecute, FillExecuteForm, FillNewPassword, FillProbeReply, FormRole, FormValues } from '@/src/messages'
 import { mockLayout } from '@/src/testing/layout'
 import { answerFill, confirmForm, executeFill, executeForm, fillNewPassword, isFillMessage, probeForm } from './execute'
@@ -368,6 +369,21 @@ describe('answerFill', () => {
 		expect(answerFill({ kind: 'fill.confirmInsecure', itemHost: 'example.test' }, null)).toBe(true)
 		answerFill({ kind: 'fill.confirmInsecure', itemHost: 7 as never }, null)
 		expect(confirm.mock.calls.map(([text]) => text)).toEqual([expect.stringContaining('example.test'), expect.not.stringContaining('example.test')])
+	})
+
+	// Spec `health-site-checks`: a login saved with http is asked about too, without claiming an https origin.
+	it('asks a generic insecure question for a login saved with http, and fills nothing on No', () => {
+		const confirm = vi.fn<(text?: string) => boolean>(() => false)
+		Object.defineProperty(window, 'confirm', { value: confirm, configurable: true, writable: true })
+		expect(answerFill({ kind: 'fill.confirmInsecure', itemHost: 'example.test', savedSecure: false }, null)).toBe(false)
+		expect(confirm).toHaveBeenCalledTimes(1)
+		const [text] = confirm.mock.calls[0]!
+		expect(text).toContain(i18n.t('inlineList.insecureQuestion'))
+		expect(text).toContain(i18n.t('inlineList.insecureDetail'))
+		expect(text).not.toContain('example.test')
+		confirm.mockReturnValueOnce(true)
+		expect(answerFill({ kind: 'fill.confirmInsecure', itemHost: 'example.test', savedSecure: true }, null)).toBe(true)
+		expect(confirm.mock.calls[1]![0]).toContain('example.test')
 	})
 
 	it('fills a login on fill.execute', () => {

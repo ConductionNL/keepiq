@@ -89,12 +89,25 @@ async function framesFor(tabId: number, row: OpenSecretRow, types: VaultSnapshot
 	return (await tabFrames(tabId)).filter((frame) => fits(row, types, rule, frame.url))
 }
 
-// A bare host reads as https, as everywhere else; a url that does not parse (a regular expression) never warns.
-export const isInsecure = (row: OpenSecretRow, frames: FrameRecord[]) =>
-	webUrl(row.url)?.protocol === 'https:' && frames.some((frame) => new URL(frame.url).protocol === 'http:')
+/**
+ * Any http frame asks first, whatever address the login was saved with (spec `health-site-checks`
+ * § Flag logins saved with an unencrypted address).
+ *
+ * @spec openspec/changes/health-site-security-checks
+ */
+export const isInsecure = (_row: OpenSecretRow, frames: FrameRecord[]) =>
+	frames.some((frame) => new URL(frame.url).protocol === 'http:')
 
-async function confirmInPage(tabId: number, itemUrl: string | null): Promise<boolean> {
-	const message: BackgroundToContent = { kind: 'fill.confirmInsecure', itemHost: webUrl(itemUrl)?.host ?? '' }
+/**
+ * Whether the login was saved on an https page, so the question can say so; a bare host reads as https,
+ * as everywhere else, and a url that does not parse (a regular expression) does not.
+ *
+ * @spec openspec/changes/health-site-security-checks
+ */
+export const savedSecure = (row: OpenSecretRow) => webUrl(row.url)?.protocol === 'https:'
+
+async function confirmInPage(tabId: number, row: OpenSecretRow): Promise<boolean> {
+	const message: BackgroundToContent = { kind: 'fill.confirmInsecure', itemHost: webUrl(row.url)?.host ?? '', savedSecure: savedSecure(row) }
 	return await browser.tabs.sendMessage(tabId, message, { frameId: 0 }).catch(() => false) === true
 }
 
@@ -147,8 +160,8 @@ async function loginFrames({ target, row, types, rule }: LoginFill): Promise<Fra
 		: await framesFor(target.tabId, row, types, rule)
 	if (!frames.length) return NO_FIELDS
 	if (target.confirmedInsecure || !isInsecure(row, frames)) return frames
-	if (target.ask === 'reply') return { ...NONE, needsInsecureConfirm: true }
-	return await confirmInPage(target.tabId, row.url) ? frames : NONE
+	if (target.ask === 'reply') return { ...NONE, needsInsecureConfirm: true, savedSecure: savedSecure(row) }
+	return await confirmInPage(target.tabId, row) ? frames : NONE
 }
 
 async function credentialOf(row: OpenSecretRow, key: CryptoKey): Promise<{ username: string | null; password: string } | null> {
