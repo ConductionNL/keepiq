@@ -19,6 +19,7 @@
 import zxcvbn from 'zxcvbn'
 import { isPasswordBearing } from './classify.js'
 import { isInsecureAddress } from './insecureAddress.js'
+import { directoryEntry } from './siteDirectory.js'
 
 /**
  * zxcvbn score at or below which a password is flagged weak.
@@ -77,13 +78,15 @@ export function ageInDays(keyUpdatedAt, now = Date.now()) {
  * Analyse a set of decrypted secret rows into per-secret findings + a summary.
  *
  * @param {Array<object>} rows Rows of `{id, name, url, folderPath, value,
- *   keyUpdatedAt, possiblyCompromisedAt}`.
+ *   keyUpdatedAt, possiblyCompromisedAt, hasSeed, hasPasskey}`.
  * @param {object} [options] Analysis options.
  * @param {string|number} [options.stalenessThreshold] User threshold.
  * @param {Function} [options.digest] Async value->hex-digest fn (reuse map).
  * @param {Map<string,{status:string,count:number}>} [options.breachResults]
  *   Optional value-digest -> breach verdict map (computed elsewhere via hibp).
  * @param {number} [options.now] Reference time for staleness.
+ * @param {{totp: Object<string,string>, passkeys: Object<string,string>}|null} [options.siteDirectory]
+ *   The site directory copy, null while it is switched off (health-site-security-checks D3).
  * @return {Promise<{findings: Array<object>, summary: object, score: number}>}
  */
 export async function analyse(rows, options = {}) {
@@ -92,6 +95,7 @@ export async function analyse(rows, options = {}) {
 		digest = sha256Hex,
 		breachResults = null,
 		now = Date.now(),
+		siteDirectory = null,
 	} = options
 
 	const cutoff = staleCutoffDays(stalenessThreshold)
@@ -100,6 +104,7 @@ export async function analyse(rows, options = {}) {
 		cutoff,
 		now,
 		breachResults,
+		siteDirectory,
 	}
 	const findings = rows
 		.map((row) => analyseRow(row, ctx))
@@ -138,7 +143,7 @@ async function digestIndex(rows, digest) {
 /**
  * The finding for one row, or null when it has no flag and no strength score.
  * Flags come in a fixed order: weak, reused, stale, compromised, breached,
- * insecure-address.
+ * insecure-address, two-factor-available, passkey-available.
  *
  * @param {object} row One row passed to {@link analyse}.
  * @param {object} ctx The digest index, stale cutoff, reference time and breach verdicts.
@@ -153,6 +158,7 @@ function analyseRow(row, ctx) {
 	// Staleness from server-maintained ciphertext age.
 	const age = ageInDays(row.keyUpdatedAt, ctx.now)
 	const { breach, breached } = breachVerdict(d, ctx.breachResults)
+	const site = siteSuggestions(row, ctx.siteDirectory)
 	const flags = [
 		[score !== null && score <= WEAK_SCORE_THRESHOLD, 'weak'],
 		[shareCount >= 2, 'reused'],
@@ -162,6 +168,9 @@ function analyseRow(row, ctx) {
 		[breached, 'breached'],
 		// A plain-http address sends the password in the clear (health-site-security-checks D1).
 		[isInsecureAddress(row.url), 'insecure-address'],
+		// The site offers what the vault does not hold yet (health-site-security-checks D4).
+		[site.twoFactor !== null, 'two-factor-available'],
+		[site.passkey !== null, 'passkey-available'],
 	]
 		.filter(([on]) => on)
 		.map(([, flag]) => flag)
@@ -169,7 +178,7 @@ function analyseRow(row, ctx) {
 	if (flags.length === 0 && score === null) {
 		return null
 	}
-	return {
+	const finding = {
 		id: row.id,
 		name: row.name,
 		url: row.url ?? null,
@@ -179,6 +188,33 @@ function analyseRow(row, ctx) {
 		shareCount,
 		ageDays: age,
 		breach,
+	}
+	if (site.twoFactor !== null || site.passkey !== null) {
+		// The directory's own page for the site, so the user can check the entry (design, Risks).
+		finding.siteDocs = {
+			twoFactor: site.twoFactor?.documentation ?? null,
+			passkey: site.passkey?.documentation ?? null,
+		}
+	}
+	return finding
+}
+
+/**
+ * The directory entries a row's site has for what the vault lacks: one-time
+ * codes when the row holds no seed, passkeys when it holds no passkey.
+ *
+ * @param {object} row One row passed to {@link analyse}.
+ * @param {object|null} siteDirectory The directory copy, null when off.
+ * @return {{twoFactor: object|null, passkey: object|null}}
+ * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+ */
+function siteSuggestions(row, siteDirectory) {
+	if (!siteDirectory) {
+		return { twoFactor: null, passkey: null }
+	}
+	return {
+		twoFactor: row.hasSeed === true ? null : directoryEntry(siteDirectory.totp, row.url),
+		passkey: row.hasPasskey === true ? null : directoryEntry(siteDirectory.passkeys, row.url),
 	}
 }
 
@@ -243,13 +279,16 @@ function summarise(analysedCount, findings) {
 		breachedCount: count('breached'),
 		compromisedCount: count('compromised'),
 		insecureAddressCount: count('insecure-address'),
+		twoFactorAvailableCount: count('two-factor-available'),
+		passkeyAvailableCount: count('passkey-available'),
 	}
 }
 
 /**
  * Compute the weighted vault health score (0–100) from finding counts. An
  * unencrypted address is a fact about the saved address, not about the
- * secret, so it does not weigh on the score.
+ * secret, and an available second factor or passkey is a suggestion, so
+ * neither weighs on the score.
  *
  * score = 100 × (1 − Σ(weightᵢ × countᵢ) / analysedCount), clamped to [0, 100].
  *

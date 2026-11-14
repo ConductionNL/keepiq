@@ -3,9 +3,10 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   Vault password-health report. Runs the client-side analysis engine over the
-  unlocked vault and renders an overall score plus six finding categories —
+  unlocked vault and renders an overall score plus the finding categories —
   weak, reused, stale, breached (when both breach gates are on),
-  possibly-compromised and unencrypted address — each finding deep-linking to the secret detail. All
+  possibly-compromised, unencrypted address, and two-factor and passkey
+  available (when the site directory is on) — each finding deep-linking to the secret detail. All
   value-bearing computation happens in the browser; nothing value-bearing leaves
   it. Shows an unlock prompt when the vault is locked and an "unavailable" state
   when the breach service is unreachable (password-health design D5/D6/D7).
@@ -93,6 +94,16 @@
 						{{ t('keepiq', 'Unencrypted address') }}:
 						{{ store.summary.insecureAddressCount }}
 					</li>
+					<template v-if="siteDirectoryReady">
+						<li>
+							{{ t('keepiq', 'Two-factor available') }}:
+							{{ store.summary.twoFactorAvailableCount }}
+						</li>
+						<li>
+							{{ t('keepiq', 'Passkey available') }}:
+							{{ store.summary.passkeyAvailableCount }}
+						</li>
+					</template>
 				</ul>
 
 				<HealthCategory
@@ -165,6 +176,31 @@
 					class="health-report__error"
 					data-testid="change-to-https-error">
 					{{ httpsError }}
+				</p>
+				<!-- Site directory categories (health-site-security-checks D3/D4). -->
+				<template v-if="siteDirectoryReady">
+					<HealthCategory
+						:title="t('keepiq', 'Two-factor available')"
+						:description="t('keepiq', 'These sites offer one-time codes, and your vault holds no code for these logins. Turn on two-factor sign-in at the site and save the code with the login.')"
+						:findings="store.twoFactorAvailableFindings"
+						:actionLabel="t('keepiq', 'How to turn it on')"
+						testid="category-two-factor-available"
+						@open="openSecret"
+						@action="openSiteDocs($event, 'twoFactor')" />
+					<HealthCategory
+						:title="t('keepiq', 'Passkey available')"
+						:description="t('keepiq', 'These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.')"
+						:findings="store.passkeyAvailableFindings"
+						:actionLabel="t('keepiq', 'How to add a passkey')"
+						testid="category-passkey-available"
+						@open="openSecret"
+						@action="openSiteDocs($event, 'passkey')" />
+					<p class="health-report__attribution" data-testid="site-directory-attribution">
+						{{ t('keepiq', 'Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.') }}
+					</p>
+				</template>
+				<p v-else data-testid="site-directory-unavailable">
+					{{ siteDirectoryUnavailableText }}
 				</p>
 				<HealthCategory
 					:title="t('keepiq', 'Rotation due')"
@@ -239,6 +275,29 @@ export default {
 		 */
 		breachActive() {
 			return this.breachGateOn && this.breachOptIn
+		},
+
+		/**
+		 * Whether the site directory copy loaded, so its two categories can show.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 */
+		siteDirectoryReady() {
+			return this.store.siteDirectoryStatus === 'ready'
+		},
+
+		/**
+		 * Why the two site directory categories are not shown.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 */
+		siteDirectoryUnavailableText() {
+			if (this.store.siteDirectoryStatus === 'unavailable') {
+				return t('keepiq', 'Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.')
+			}
+			return t('keepiq', 'Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.')
 		},
 
 		/**
@@ -365,6 +424,20 @@ export default {
 		},
 
 		/**
+		 * Open the directory's page for a site in a new tab, or the directory
+		 * itself when the entry links nowhere.
+		 *
+		 * @param {object} finding The finding.
+		 * @param {'twoFactor'|'passkey'} kind Which directory.
+		 * @return {void}
+		 * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+		 */
+		openSiteDocs(finding, kind) {
+			const fallback = kind === 'passkey' ? 'https://passkeys.2fa.directory/' : 'https://2fa.directory/'
+			window.open(finding?.siteDocs?.[kind] || fallback, '_blank', 'noopener,noreferrer')
+		},
+
+		/**
 		 * Batch-flag all breached findings for rotation — secret IDs
 		 * ONLY leave the client (no verdicts, counts, or digests).
 		 *
@@ -434,6 +507,11 @@ export default {
 <style scoped lang="scss">
 .health-report {
 	padding: 1rem;
+
+	&__attribution {
+		font-size: 0.85rem;
+		color: var(--color-text-maxcontrast);
+	}
 
 	&__score {
 		display: flex;

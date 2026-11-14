@@ -1773,7 +1773,16 @@ OC.L10N.register(
         "Show users which of their sites offer one-time codes or passkeys they have not set up.": "Show users which of their sites offer one-time codes or passkeys they have not set up.",
         "Use the site directory in the password health report": "Use the site directory in the password health report",
         "Once a day the server downloads the whole public list from api.2fa.directory and passkeys-api.2fa.directory. Matching happens in each user's browser: no login, address or result is sent to the directories or stored on the server. Leave this off for air-gapped instances.": "Once a day the server downloads the whole public list from api.2fa.directory and passkeys-api.2fa.directory. Matching happens in each user's browser: no login, address or result is sent to the directories or stored on the server. Leave this off for air-gapped instances.",
-        "Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors."
+        "Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.",
+        "Two-factor available": "Two-factor available",
+        "Passkey available": "Passkey available",
+        "How to turn it on": "How to turn it on",
+        "How to add a passkey": "How to add a passkey",
+        "These sites offer one-time codes, and your vault holds no code for these logins. Turn on two-factor sign-in at the site and save the code with the login.": "These sites offer one-time codes, and your vault holds no code for these logins. Turn on two-factor sign-in at the site and save the code with the login.",
+        "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.",
+        "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.",
+        "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.",
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory."
     },
     "nplurals=2; plural=(n != 1);"
 )
