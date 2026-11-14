@@ -1837,7 +1837,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ово није кључ аутентификатора. Налепите везу otpauth://totp/ или тајну у формату base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Овај QR код не садржи кључ аутентификатора. Користите QR код који сајт приказује када подешавате пријаву у два корака.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ова тајна чека проверу својих дељења која још није завршена. Ништа није сачувано; покушајте поново касније или замолите администратора да провери да ли раде позадински послови.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника.",
+        "Additional fields after the merge": "Додатна поља након спајања",
+        "Duplicates": "Дупликати",
+        "Exact duplicates": "Тачни дупликати",
+        "Item to keep": "Ставка која остаје",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Ставке које садрже исту пријаву више пута. Спајање задржава једну и уклања остале.",
+        "Likely duplicates": "Вероватни дупликати",
+        "Merge": "Спој",
+        "Merge duplicates": "Спој дупликате",
+        "People who lose access: {count}": "Особе које губе приступ: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Иста адреса и корисничко име, друга лозинка. Два одвојена налога могу тако да изгледају, па проверите пре спајања.",
+        "The merge did not complete. Check the items of this group in your vault.": "Спајање није довршено. Проверите ставке ове групе у свом трезору.",
+        "The merge failed. Nothing was removed.": "Спајање није успело. Ништа није уклоњено.",
+        "The other items move to the trash, where you can restore them.": "Остале ставке иду у отпад, одакле их можете вратити."
     },
     "plurals": null
 }

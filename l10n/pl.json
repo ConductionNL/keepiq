@@ -1837,7 +1837,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "To nie jest klucz uwierzytelniacza. Wklej link otpauth://totp/ lub sekret w formacie base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ten kod QR nie zawiera klucza uwierzytelniacza. Użyj kodu QR, który strona pokazuje podczas konfigurowania logowania dwuetapowego.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ten sekret czeka na sprawdzenie swoich udostępnień, które jeszcze się nie zakończyło. Nic nie zostało zapisane; spróbuj ponownie później lub poproś administratora o sprawdzenie, czy działają zadania w tle.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Tylko właściciel może zmienić menedżera lub członkostwo obejmujące menedżera."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tylko właściciel może zmienić menedżera lub członkostwo obejmujące menedżera.",
+        "Additional fields after the merge": "Pola dodatkowe po scaleniu",
+        "Duplicates": "Duplikaty",
+        "Exact duplicates": "Dokładne duplikaty",
+        "Item to keep": "Element do zachowania",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementy, które zawierają ten sam login więcej niż raz. Scalenie zachowuje jeden i usuwa pozostałe.",
+        "Likely duplicates": "Prawdopodobne duplikaty",
+        "Merge": "Scal",
+        "Merge duplicates": "Scal duplikaty",
+        "People who lose access: {count}": "Osoby, które stracą dostęp: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Ten sam adres i nazwa użytkownika, inne hasło. Tak mogą wyglądać dwa osobne konta, więc sprawdź przed scaleniem.",
+        "The merge did not complete. Check the items of this group in your vault.": "Scalanie nie zostało ukończone. Sprawdź elementy tej grupy w swoim sejfie.",
+        "The merge failed. Nothing was removed.": "Scalanie nie powiodło się. Nic nie zostało usunięte.",
+        "The other items move to the trash, where you can restore them.": "Pozostałe elementy trafiają do kosza, z którego możesz je przywrócić."
     },
     "plurals": null
 }

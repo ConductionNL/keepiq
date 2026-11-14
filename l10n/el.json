@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Αυτό δεν είναι κλειδί επαληθευτή. Επικολλήστε έναν σύνδεσμο otpauth://totp/ ή το μυστικό base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Αυτός ο κωδικός QR δεν περιέχει κλειδί επαληθευτή. Χρησιμοποιήστε τον κωδικό QR που εμφανίζει ο ιστότοπος όταν ρυθμίζετε τη σύνδεση δύο παραγόντων.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Αυτό το μυστικό περιμένει έναν έλεγχο των κοινοποιήσεών του που δεν έχει ολοκληρωθεί ακόμη. Δεν αποθηκεύτηκε τίποτα· δοκιμάστε ξανά αργότερα ή ζητήστε από έναν διαχειριστή να ελέγξει ότι εκτελούνται οι εργασίες παρασκηνίου.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Μόνο ο κάτοχος μπορεί να αλλάξει έναν διαχειριστή ή μια συμμετοχή που καλύπτει έναν διαχειριστή."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Μόνο ο κάτοχος μπορεί να αλλάξει έναν διαχειριστή ή μια συμμετοχή που καλύπτει έναν διαχειριστή.",
+        "Additional fields after the merge": "Πρόσθετα πεδία μετά τη συγχώνευση",
+        "Duplicates": "Διπλότυπα",
+        "Exact duplicates": "Ακριβή διπλότυπα",
+        "Item to keep": "Στοιχείο προς διατήρηση",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Στοιχεία που περιέχουν την ίδια σύνδεση περισσότερες από μία φορές. Η συγχώνευση κρατά ένα και αφαιρεί τα υπόλοιπα.",
+        "Likely duplicates": "Πιθανά διπλότυπα",
+        "Merge": "Συγχώνευση",
+        "Merge duplicates": "Συγχώνευση διπλοτύπων",
+        "People who lose access: {count}": "Άτομα που χάνουν την πρόσβαση: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Ίδια διεύθυνση και όνομα χρήστη, διαφορετικός κωδικός πρόσβασης. Δύο ξεχωριστοί λογαριασμοί μπορεί να μοιάζουν έτσι, οπότε ελέγξτε πριν από τη συγχώνευση.",
+        "The merge did not complete. Check the items of this group in your vault.": "Η συγχώνευση δεν ολοκληρώθηκε. Ελέγξτε τα στοιχεία αυτής της ομάδας στο θησαυροφυλάκιό σας.",
+        "The merge failed. Nothing was removed.": "Η συγχώνευση απέτυχε. Δεν αφαιρέθηκε τίποτα.",
+        "The other items move to the trash, where you can restore them.": "Τα υπόλοιπα στοιχεία μεταφέρονται στον κάδο, από όπου μπορείτε να τα επαναφέρετε."
     },
     "plurals": null
 }

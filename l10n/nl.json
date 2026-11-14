@@ -1816,7 +1816,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dit is geen authenticator-sleutel. Plak een otpauth://totp/-link of het base32-geheim.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Deze QR-code bevat geen authenticator-sleutel. Gebruik de QR-code die de site toont wanneer je tweestapsaanmelding instelt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dit geheim wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw, of vraag een beheerder te controleren of achtergrondtaken draaien.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat.",
+        "Additional fields after the merge": "Extra velden na het samenvoegen",
+        "Duplicates": "Duplicaten",
+        "Exact duplicates": "Exacte duplicaten",
+        "Item to keep": "Item om te behouden",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Items die dezelfde login meer dan eens bevatten. Samenvoegen behoudt er één en verwijdert de andere.",
+        "Likely duplicates": "Waarschijnlijke duplicaten",
+        "Merge": "Samenvoegen",
+        "Merge duplicates": "Duplicaten samenvoegen",
+        "People who lose access: {count}": "Mensen die toegang verliezen: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Hetzelfde adres en dezelfde gebruikersnaam, een ander wachtwoord. Twee aparte accounts kunnen er zo uitzien, dus controleer dit voordat je samenvoegt.",
+        "The merge did not complete. Check the items of this group in your vault.": "Het samenvoegen is niet afgerond. Controleer de items van deze groep in je kluis.",
+        "The merge failed. Nothing was removed.": "Het samenvoegen is mislukt. Er is niets verwijderd.",
+        "The other items move to the trash, where you can restore them.": "De andere items gaan naar de prullenbak, waar je ze kunt terugzetten."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

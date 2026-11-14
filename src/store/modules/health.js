@@ -21,6 +21,7 @@ import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { rsaDecrypt } from '../../crypto/index.js'
 import { isPasswordBearing } from '../../health/classify.js'
+import { duplicateGroups } from '../../health/duplicates.js'
 import { analyse, sha256Hex } from '../../health/engine.js'
 import { checkValue } from '../../health/hibp.js'
 import { useSecretTypeStore } from './secretType.js'
@@ -131,21 +132,71 @@ async function decryptedRow(secret, session) {
 	} catch {
 		return null
 	}
-	return healthRow(secret, value)
+	return healthRow(secret, value, await decryptedLogin(secret, session))
+}
+
+/**
+ * The decrypted username, or null when there is none or it does not decrypt.
+ *
+ * @param {object} secret A listed secret.
+ * @param {object} session The session store (holds the CryptoKey).
+ * @return {Promise<string|null>}
+ * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ */
+async function decryptedLogin(secret, session) {
+	if (!secret.login) {
+		return null
+	}
+	try {
+		return await rsaDecrypt(secret.login, session.cryptoKey)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * The ids of the user's recipient copies of other people's secrets: rows in
+ * the user's vault whose source lives elsewhere. Read from the vault snapshot
+ * the offline cache already fetches, so no request names a single secret.
+ * Null when it cannot be read: duplicate detection then stays off.
+ *
+ * @return {Promise<Set<string>|null>}
+ * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ */
+async function recipientCopyIds() {
+	try {
+		const response = await axios.get(
+			generateUrl('/apps/keepiq/api/v1/offline/manifest'),
+		)
+		const secrets = response?.data?.secrets
+		if (!Array.isArray(secrets)) {
+			return null
+		}
+		return new Set(
+			secrets
+				.filter((secret) => secret?.sourceUpdatedAt !== null && secret?.sourceUpdatedAt !== undefined)
+				.map((secret) => String(secret.id)),
+		)
+	} catch {
+		return null
+	}
 }
 
 /**
  * @param {object} secret A listed secret.
  * @param {string} value Its decrypted value.
+ * @param {string|null} [login] Its decrypted username.
  * @return {object} The row the engine analyses.
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
  */
-function healthRow(secret, value) {
+function healthRow(secret, value, login = null) {
 	return {
 		id: secret.id,
 		name: secret.name,
 		url: secret.url ?? null,
 		folderPath: secret.folderId ?? null,
+		login,
+		copy: false,
 		value,
 		keyUpdatedAt: keyChangedAt(secret),
 		possiblyCompromisedAt: secret.possiblyCompromisedAt ?? null,
@@ -184,7 +235,7 @@ async function loadRowsOrFail(store, session) {
  * record why it failed; the plaintext rows are dropped either way.
  *
  * @param {object} store The health store.
- * @param {{rows: Array<object>, stalenessThreshold: string|number, breachResults: ?Map}} analysis The rows and the engine's options.
+ * @param {{rows: Array<object>, stalenessThreshold: string|number, breachResults: ?Map, copiesKnown: boolean}} analysis The rows, the engine's options, and whether recipient copies could be told apart.
  * @return {Promise<void>}
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
  */
@@ -197,6 +248,10 @@ async function scoreRows(store, analysis) {
 		store.findings = result.findings
 		store.summary = result.summary
 		store.score = result.score
+		store.duplicates = analysis.copiesKnown
+			? (result.duplicates ?? { exact: [], likely: [] })
+			: { exact: [], likely: [] }
+		store.duplicatesAvailable = analysis.copiesKnown === true
 		store.status = 'ready'
 	} catch (e) {
 		store.status = 'error'
@@ -221,6 +276,10 @@ export const useHealthStore = defineStore('health', {
 		breachStatus: 'off',
 		/** @type {string|null} Last error message. */
 		error: null,
+		/** @type {{exact: Array<object>, likely: Array<object>}} Duplicate groups (memory only, vault-duplicate-finder). */
+		duplicates: { exact: [], likely: [] },
+		/** @type {boolean} Whether duplicate detection ran: recipient copies could be told apart. */
+		duplicatesAvailable: false,
 		/** @type {Worker|null} The analysis worker (never persisted). */
 		worker: null,
 	}),
@@ -306,6 +365,7 @@ export const useHealthStore = defineStore('health', {
 				rows,
 				stalenessThreshold: opts.stalenessThreshold ?? '365',
 				breachResults,
+				copiesKnown: rows.copiesKnown === true,
 			})
 		},
 
@@ -316,10 +376,12 @@ export const useHealthStore = defineStore('health', {
 		 * @return {Promise<Array<object>>} Decrypted rows.
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
+		 * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
 		 */
 		async loadDecryptedRows(session) {
 			const excludedTypeIds = machineMaterialTypeIds(await loadedTypes())
 			const items = await fetchEverySecret()
+			const copies = await recipientCopyIds()
 			const rows = []
 			for (const secret of items) {
 				if (!isAnalysable(secret, excludedTypeIds)) {
@@ -327,9 +389,12 @@ export const useHealthStore = defineStore('health', {
 				}
 				const row = await decryptedRow(secret, session)
 				if (row !== null) {
+					row.copy = copies === null || copies.has(String(secret.id))
 					rows.push(row)
 				}
 			}
+			// Not a row: whether copies could be told apart (duplicate detection needs it).
+			Object.defineProperty(rows, 'copiesKnown', { value: copies !== null })
 			return rows
 		},
 
@@ -377,7 +442,7 @@ export const useHealthStore = defineStore('health', {
 		 */
 		async runEngine(rows, options) {
 			if (typeof Worker === 'undefined') {
-				return analyse(rows, options)
+				return { ...(await analyse(rows, options)), duplicates: duplicateGroups(rows) }
 			}
 			if (!this.worker) {
 				this.worker = new Worker(
@@ -426,6 +491,8 @@ export const useHealthStore = defineStore('health', {
 			this.findings = []
 			this.summary = null
 			this.score = null
+			this.duplicates = { exact: [], likely: [] }
+			this.duplicatesAvailable = false
 			this.status = 'idle'
 			this.breachStatus = 'off'
 			this.error = null

@@ -154,6 +154,13 @@
 					:findings="rotationFindings"
 					testid="category-rotation"
 					@open="openSecret" />
+				<!-- vault-duplicate-finder: grouped in the same browser pass; off when copies could not be told apart. -->
+				<HealthDuplicates
+					v-if="store.duplicatesAvailable"
+					:exact="store.duplicates.exact"
+					:likely="store.duplicates.likely"
+					@open="openSecret"
+					@merged="reanalyse" />
 			</div>
 
 			<div
@@ -172,6 +179,7 @@ import { loadState } from '@nextcloud/initial-state'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcSelect } from '@nextcloud/vue'
 import HealthCategory from '../components/HealthCategory.vue'
+import HealthDuplicates from '../components/HealthDuplicates.vue'
 import OwnershipFindings from '../components/OwnershipFindings.vue'
 import { useHealthStore } from '../store/modules/health.js'
 import { useRotationStore } from '../store/modules/rotation.js'
@@ -180,7 +188,7 @@ import { secretDetailLocation } from '../utils/detailRoute.js'
 
 export default {
 	name: 'HealthReportView',
-	components: { NcSelect, NcButton, HealthCategory, OwnershipFindings },
+	components: { NcSelect, NcButton, HealthCategory, HealthDuplicates, OwnershipFindings },
 
 	data() {
 		return {

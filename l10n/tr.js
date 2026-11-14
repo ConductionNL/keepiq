@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Bu bir kimlik doğrulayıcı anahtarı değil. Bir otpauth://totp/ bağlantısı veya base32 sırrı yapıştırın.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Bu QR kodu bir kimlik doğrulayıcı anahtarı içermiyor. Sitenin iki adımlı girişi kurarken gösterdiği QR kodunu kullanın.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Bu gizli bilgi, paylaşımlarının henüz tamamlanmamış bir denetimini bekliyor. Hiçbir şey kaydedilmedi; daha sonra yeniden deneyin ya da bir yöneticiden arka plan görevlerinin çalıştığını denetlemesini isteyin.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Yalnızca sahip bir yöneticiyi veya bir yöneticiyi kapsayan bir üyeliği değiştirebilir."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Yalnızca sahip bir yöneticiyi veya bir yöneticiyi kapsayan bir üyeliği değiştirebilir.",
+        "Additional fields after the merge": "Birleştirmeden sonraki ek alanlar",
+        "Duplicates": "Yinelemeler",
+        "Exact duplicates": "Tam yinelemeler",
+        "Item to keep": "Tutulacak öğe",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Aynı oturum açma bilgisini birden fazla kez içeren öğeler. Birleştirme birini tutar ve diğerlerini kaldırır.",
+        "Likely duplicates": "Olası yinelemeler",
+        "Merge": "Birleştir",
+        "Merge duplicates": "Yinelemeleri birleştir",
+        "People who lose access: {count}": "Erişimini kaybedecek kişiler: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Aynı adres ve kullanıcı adı, farklı bir parola. İki ayrı hesap böyle görünebilir, bu yüzden birleştirmeden önce kontrol edin.",
+        "The merge did not complete. Check the items of this group in your vault.": "Birleştirme tamamlanmadı. Kasanızda bu gruptaki öğeleri kontrol edin.",
+        "The merge failed. Nothing was removed.": "Birleştirme başarısız oldu. Hiçbir şey kaldırılmadı.",
+        "The other items move to the trash, where you can restore them.": "Diğer öğeler çöp kutusuna taşınır; oradan geri yükleyebilirsiniz."
     },
     "nplurals=1; plural=0;"
 )

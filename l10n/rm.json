@@ -1709,7 +1709,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Quai n'è nagina clav d'autentificatur. Plaza ina colliaziun otpauth://totp/ u il secret base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Quest code QR na cuntegna nagina clav d'autentificatur. Utilisescha il code QR che la website mussa cura che ti configuresch l'annunzia en dus pass.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Quest secret spetga sin ina controlla da ses parts che n'è anc betg terminada. Nagut n'è vegnì memorisà; empruvai pli tard anc ina giada, u dumandai in administratur da controllar sch'ils lavurs en il fund funcziunan.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Mo il possessur po midar in administratur u ina commembranza che cumpiglia in administratur."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Mo il possessur po midar in administratur u ina commembranza che cumpiglia in administratur.",
+        "Additional fields after the merge": "Champs supplementars suenter l'unificaziun",
+        "Duplicates": "Duplicats",
+        "Exact duplicates": "Duplicats exacts",
+        "Item to keep": "Element che resta",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elements che cuntegnan il medem login pliras giadas. L'unificaziun tegna in e allontanescha ils auters.",
+        "Likely duplicates": "Duplicats probabels",
+        "Merge": "Unifitgar",
+        "Merge duplicates": "Unifitgar ils duplicats",
+        "People who lose access: {count}": "Persunas che perdan l'access: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Medema adressa e medem num d'utilisader, in auter pled-clav. Dus contos separads pon guardar ora uschia, controllescha pia avant che unifitgar.",
+        "The merge did not complete. Check the items of this group in your vault.": "L'unificaziun n'è betg vegnida terminada. Controllescha ils elements da questa gruppa en tia chascha forta.",
+        "The merge failed. Nothing was removed.": "L'unificaziun n'è betg reussida. I n'è vegnì allontanà nagut.",
+        "The other items move to the trash, where you can restore them.": "Ils auters elements van en il chanaster da rument, nua che ti als pos restaurar."
     },
     "plurals": null
 }

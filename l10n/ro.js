@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Aceasta nu este o cheie de autentificator. Lipiți un link otpauth://totp/ sau secretul base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Acest cod QR nu conține o cheie de autentificator. Folosiți codul QR pe care îl afișează site-ul când configurați autentificarea cu doi factori.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Acest secret așteaptă o verificare a partajărilor sale care nu s-a încheiat încă. Nu s-a salvat nimic; încercați din nou mai târziu sau cereți unui administrator să verifice dacă rulează sarcinile de fundal.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Doar proprietarul poate modifica un manager sau o apartenență care include un manager."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Doar proprietarul poate modifica un manager sau o apartenență care include un manager.",
+        "Additional fields after the merge": "Câmpuri suplimentare după combinare",
+        "Duplicates": "Duplicate",
+        "Exact duplicates": "Duplicate exacte",
+        "Item to keep": "Elementul păstrat",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elemente care conțin aceeași autentificare de mai multe ori. Combinarea păstrează unul și le elimină pe celelalte.",
+        "Likely duplicates": "Duplicate probabile",
+        "Merge": "Combinați",
+        "Merge duplicates": "Combinați duplicatele",
+        "People who lose access: {count}": "Persoane care pierd accesul: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Aceeași adresă și același nume de utilizator, altă parolă. Două conturi separate pot arăta așa, deci verificați înainte de a combina.",
+        "The merge did not complete. Check the items of this group in your vault.": "Combinarea nu s-a încheiat. Verificați elementele acestui grup în seiful dumneavoastră.",
+        "The merge failed. Nothing was removed.": "Combinarea a eșuat. Nu a fost eliminat nimic.",
+        "The other items move to the trash, where you can restore them.": "Celelalte elemente ajung în coșul de gunoi, de unde le puteți restaura."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

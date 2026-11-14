@@ -1837,7 +1837,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ní eochair fíordheimhnitheora é seo. Greamaigh nasc otpauth://totp/ nó an rún base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Níl eochair fíordheimhnitheora sa chód QR seo. Úsáid an cód QR a thaispeánann an suíomh nuair a shocraíonn tú logáil isteach dhá fhachtóir.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Tá an rún seo ag fanacht ar sheiceáil ar a chomhroinnt nach bhfuil críochnaithe fós. Níor sábháladh aon rud; bain triail eile as ar ball, nó iarr ar riarthóir a sheiceáil go bhfuil na jabanna cúlra ag rith.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Ní féidir ach leis an úinéir bainisteoir a athrú, nó ballraíocht a chuimsíonn bainisteoir."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Ní féidir ach leis an úinéir bainisteoir a athrú, nó ballraíocht a chuimsíonn bainisteoir.",
+        "Additional fields after the merge": "Réimsí breise tar éis an chumaisc",
+        "Duplicates": "Dúblaigh",
+        "Exact duplicates": "Dúblaigh chruinne",
+        "Item to keep": "Mír le coinneáil",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Míreanna a bhfuil an logáil isteach chéanna iontu níos mó ná uair amháin. Coinníonn cumasc ceann amháin agus baintear na cinn eile.",
+        "Likely duplicates": "Dúblaigh dhóchúla",
+        "Merge": "Cumaisc",
+        "Merge duplicates": "Cumaisc dúblaigh",
+        "People who lose access: {count}": "Daoine a chailleann rochtain: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "An seoladh agus an t-ainm úsáideora céanna, pasfhocal eile. Is féidir le dhá chuntas ar leith a bheith mar seo, mar sin seiceáil roimh chumasc.",
+        "The merge did not complete. Check the items of this group in your vault.": "Níor críochnaíodh an cumasc. Seiceáil míreanna an ghrúpa seo i do thaisceadán.",
+        "The merge failed. Nothing was removed.": "Theip ar an gcumasc. Níor baineadh aon rud.",
+        "The other items move to the trash, where you can restore them.": "Téann na míreanna eile chuig an mbruscar, áit ar féidir leat iad a athchóiriú."
     },
     "plurals": null
 }
