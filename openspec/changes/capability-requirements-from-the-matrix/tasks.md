@@ -2,12 +2,12 @@
 
 ## 1. Compare versions (vault-29)
 
-- [ ] 1.1 Add a Compare action to the version history panel that takes two versions, or one version and the current value, decrypts both in the browser and shows them side by side with changed fields marked. Verify: vitest on the field comparison, including additional fields added or removed, and a Playwright flow on a secret with two versions.
+- [x] 1.1 Add a Compare action to the version history panel that takes two versions, or one version and the current value, decrypts both in the browser and shows them side by side with changed fields marked. Verify: vitest on the field comparison, including additional fields added or removed, and a Playwright flow on a secret with two versions.
 
 ## 2. Link share end date (sharing-14)
 
 - [x] 2.1 Add an optional end date to the link share dialog and pass it as `expires_at` (`src/dialogs/SecretShareDialog.vue:78`, `:365`; the server refuses an access after it in `LinkShareService::getByToken`). Verify: `tests/dialogs/SecretShareDialog.createLink.spec.js` and `LinkShareServiceTest::testGetByTokenThrowsAndDeletesWhenExpired`.
-- [ ] 2.2 Refuse an end date in the past: the dialog's create check and `LinkShareService` reject it, not only the date input's `min`. Verify: vitest on the dialog and PHPUnit on the create call.
+- [x] 2.2 Refuse an end date in the past: the dialog's create check and `LinkShareService` reject it, not only the date input's `min`. Verify: vitest on the dialog and PHPUnit on the create call.
 
 ## 3. Privileged login access (sharing-26)
 

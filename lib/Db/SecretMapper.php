@@ -269,12 +269,16 @@ class SecretMapper extends QBMapper {
 	 * @return void
 	 */
 	private function andWhereLiveMatching(IQueryBuilder $qb, string $like): void {
-		$qb->andWhere(
-			$qb->expr()->orX(
-				$qb->expr()->iLike('name', $qb->createNamedParameter($like)),
-				$qb->expr()->iLike('url', $qb->createNamedParameter($like))
-			)
-		)
+		// An extra address of the login matches as its main address does
+		// (vault-website-addresses D1).
+		$byName = $qb->expr()->iLike('name', $qb->createNamedParameter($like));
+		$byUrl = $qb->expr()->iLike('url', $qb->createNamedParameter($like));
+		$extra = $this->db->getQueryBuilder();
+		$extra->select('su.secret_id')
+			->from(SecretUrlMapper::TABLE, 'su')
+			->where($extra->expr()->iLike('su.url', $qb->createNamedParameter($like)));
+
+		$qb->andWhere($qb->expr()->orX($byName, $byUrl, $qb->expr()->in('id', $qb->createFunction($extra->getSQL()))))
 			->andWhere($qb->expr()->isNull('trashed_at'))
 			->andWhere($qb->expr()->isNull('archived_at'));
 	}//end andWhereLiveMatching()

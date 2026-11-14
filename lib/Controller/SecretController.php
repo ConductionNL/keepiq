@@ -29,6 +29,7 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Service\SecretUrlService;
 use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -58,6 +59,7 @@ class SecretController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param SecretServiceInterface $secretService The secret service
 	 * @param IUserSession $userSession The user session
+	 * @param SecretUrlService|null $urls The extra website addresses of a login
 	 *
 	 * @return void
 	 */
@@ -65,6 +67,7 @@ class SecretController extends OCSController {
 		IRequest $request,
 		private SecretServiceInterface $secretService,
 		private IUserSession $userSession,
+		private ?SecretUrlService $urls = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -171,8 +174,12 @@ class SecretController extends OCSController {
 		// The holder's tags ride along for the edit dialog (vault-favourites-tags-and-last-used).
 		$data   = $secret->jsonSerialize();
 		$tagged = $this->secretService->withTags([$data], $userId);
+		$data   = ($tagged[0] ?? $data);
+		if ($this->urls !== null) {
+			$data = $this->urls->withUrls([$data])[0];
+		}
 
-		return new JSONResponse(data: ($tagged[0] ?? $data));
+		return new JSONResponse(data: $data);
 	}//end show()
 
 	/**
@@ -189,6 +196,7 @@ class SecretController extends OCSController {
 	 * @param string|null $ownerId The owner ID (required when ownerType=application)
 	 * @param string|null $totp The RSA-encrypted TOTP seed blob; refused for an application-owned secret
 	 * @param string|null $passkeys The RSA-encrypted passkeys blob; refused for an application-owned secret
+	 * @param mixed $additionalUrls Up to 20 extra plain-text website addresses (vault-website-addresses); not for an application-owned secret
 	 *
 	 * @NoAdminRequired
 	 *
@@ -212,6 +220,7 @@ class SecretController extends OCSController {
 		?string $ownerId = null,
 		?string $totp = null,
 		?string $passkeys = null,
+		mixed $additionalUrls = null,
 	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
@@ -220,6 +229,7 @@ class SecretController extends OCSController {
 
 		try {
 			$this->assertCreatable(name: $name, key: $key, ownerType: $ownerType, ownerId: $ownerId);
+			$extraUrls = $this->extraUrls(urls: $additionalUrls, ownerType: $ownerType);
 
 			$secret = $this->createOwnedSecret(
 				ownerType: $ownerType,
@@ -237,6 +247,10 @@ class SecretController extends OCSController {
 				],
 				userId: $userId
 			);
+			$data = $secret->jsonSerialize();
+			if ($extraUrls !== null && $this->urls !== null) {
+				$data['additionalUrls'] = $this->urls->replace(secret: $secret, userId: $userId, urls: $extraUrls);
+			}
 		} catch (NotFoundException $e) {
 			// The folder named in the request does not exist (keepiq#795).
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
@@ -250,8 +264,32 @@ class SecretController extends OCSController {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}//end try
 
-		return new JSONResponse(data: $secret->jsonSerialize(), statusCode: Http::STATUS_CREATED);
+		return new JSONResponse(data: $data, statusCode: Http::STATUS_CREATED);
 	}//end create()
+
+	/**
+	 * The extra addresses a create carries, normalised, or null when it carries none.
+	 *
+	 * @param mixed       $urls      The `additionalUrls` of the request
+	 * @param string|null $ownerType The owner type ('application' or null/user)
+	 *
+	 * @return list<string>|null
+	 *
+	 * @throws InvalidArgumentException When the list cannot be stored, or names addresses for an application-owned secret
+	 *
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	private function extraUrls(mixed $urls, ?string $ownerType): ?array {
+		if ($urls === null || $this->urls === null) {
+			return null;
+		}
+
+		if ($ownerType === 'application') {
+			throw new InvalidArgumentException(message: 'additionalUrls is not accepted for an application-owned secret');
+		}
+
+		return $this->urls->normalise(urls: $urls);
+	}//end extraUrls()
 
 	/**
 	 * Validate the required create params HERE so a missing body returns 400,

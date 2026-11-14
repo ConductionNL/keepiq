@@ -38,6 +38,7 @@ import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import History from 'vue-material-design-icons/History.vue'
 import { useAuditStore } from '../store/modules/audit.js'
 import { auditActorLabel, auditEventLabel } from '../utils/auditEventLabels.js'
+import { auditTime } from '../utils/dateTime.js'
 
 /**
  * The Activity tab on the secret detail view (add-secret-audit-trail §5.2).
@@ -126,23 +127,8 @@ export default {
 			return auditActorLabel(entry)
 		},
 
-		/**
-		 * Format an ISO timestamp as a localized relative time.
-		 *
-		 * @param {string} iso The ISO-8601 timestamp.
-		 * @return {string} A human-readable relative time.
-		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.2
-		 */
-		relativeTime(iso) {
-			if (!iso) {
-				return ''
-			}
-			try {
-				return new Date(iso).toLocaleString()
-			} catch (e) {
-				return iso
-			}
-		},
+		/** The shown timestamp (see `auditTime` in utils/dateTime.js). */
+		relativeTime: auditTime,
 	},
 }
 </script>

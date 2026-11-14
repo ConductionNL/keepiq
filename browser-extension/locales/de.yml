@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 Keepiq-Identität. Drücke Pfeil nach unten zum Auswählen.
         n: $1 Keepiq-Identitäten. Drücke Pfeil nach unten zum Auswählen.
+  newPassword:
+    frameTitle: Keepiq starkes Passwort
+    offer: Starkes Passwort verwenden
+    locked: Entsperre Keepiq für ein starkes Passwort
+    status: Starkes Passwort verwenden. Drücke Pfeil nach unten zum Auswählen.
 
 notificationBar:
   label: Keepiq-Benachrichtigung
