@@ -185,7 +185,7 @@ describe('fill', () => {
 
 		it('asks the popup to confirm, decrypting and sending nothing', async () => {
 			await vault([await login()])
-			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true })
+			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true, savedSecure: true })
 			expect(sent).toEqual([])
 			expect(rsaDecrypt).not.toHaveBeenCalled()
 		})
@@ -199,7 +199,7 @@ describe('fill', () => {
 			await vault([await login()])
 			answers = { 0: false }
 			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'page', code: true })).toEqual({ filled: 'none', code: false })
-			expect(sent).toEqual([{ message: { kind: 'fill.confirmInsecure', itemHost: 'example.test' }, frameId: 0 }])
+			expect(sent).toEqual([{ message: { kind: 'fill.confirmInsecure', itemHost: 'example.test', savedSecure: true }, frameId: 0 }])
 			expect(rsaDecrypt).not.toHaveBeenCalled()
 		})
 
@@ -212,10 +212,10 @@ describe('fill', () => {
 
 		it('asks for an item saved as a bare host, which means https', async () => {
 			await vault([await login({ url: 'example.test' })])
-			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true })
+			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true, savedSecure: true })
 			answers = { 0: false }
 			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'page', code: true })).toEqual({ filled: 'none', code: false })
-			expect(sent).toEqual([{ message: { kind: 'fill.confirmInsecure', itemHost: 'example.test' }, frameId: 0 }])
+			expect(sent).toEqual([{ message: { kind: 'fill.confirmInsecure', itemHost: 'example.test', savedSecure: true }, frameId: 0 }])
 		})
 
 		it('cancels when no content script answers the question', async () => {
@@ -230,13 +230,34 @@ describe('fill', () => {
 			tabUrl = 'https://example.test/'
 			recordFrame(TAB, 4, 'http://login.example.test/')
 			await vault([await login()])
-			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true })
+			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true, savedSecure: true })
 			expect(sent).toEqual([])
 		})
 
+		// Spec `health-site-checks`: an http page asks first, whatever address the login was saved with.
+		it('asks for an item saved on http, saying it was not saved on https', async () => {
+			await vault([await login({ url: 'http://example.test/' })])
+			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true, savedSecure: false })
+			expect(rsaDecrypt).not.toHaveBeenCalled()
+			answers = { 0: false }
+			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'page', code: true })).toEqual({ filled: 'none', code: false })
+			expect(sent).toEqual([{ message: { kind: 'fill.confirmInsecure', itemHost: 'example.test', savedSecure: false }, frameId: 0 }])
+			expect(executed()).toEqual([])
+		})
+
+		it('fills an item saved on http once the popup confirmed', async () => {
+			await vault([await login({ url: 'http://example.test/' })])
+			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true, confirmedInsecure: true })).toEqual({ filled: 'both', code: false })
+		})
+
+	})
+
+	describe('on an https page', () => {
 		it('does not ask for an item saved on http', async () => {
+			tabUrl = 'https://example.test/login'
 			await vault([await login({ url: 'http://example.test/' })])
 			expect(await fill({ itemId: 'i1', tabId: TAB, ask: 'reply', code: true })).toEqual({ filled: 'both', code: false })
+			expect(sent.map(({ message }) => message.kind)).toEqual(['fill.execute'])
 		})
 	})
 })
