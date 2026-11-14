@@ -46,6 +46,7 @@ class RecipientSecretCopyFactory {
 	 * @param SecretMapper $secretMapper The Secret mapper (copy writes)
 	 * @param EncryptionSuiteMapper $suiteMapper The EncryptionSuite mapper (recipient suite)
 	 * @param SecretTypeService|null $typeService The type service (recipient-copy type resolution)
+	 * @param SecretUrlService|null $urls The extra website addresses a copy carries from its source
 	 *
 	 * @return void
 	 *
@@ -55,6 +56,7 @@ class RecipientSecretCopyFactory {
 		private SecretMapper $secretMapper,
 		private EncryptionSuiteMapper $suiteMapper,
 		private ?SecretTypeService $typeService = null,
+		private ?SecretUrlService $urls = null,
 	) {
 	}//end __construct()
 
@@ -141,8 +143,8 @@ class RecipientSecretCopyFactory {
 	/**
 	 * Create a recipient's Secret copy from the ciphertext encrypted for
 	 * them, or null when the recipient has no active suite (skip, not fail).
-	 * The copy carries the source's name and URL, the source's type as the
-	 * recipient sees it, and no folder.
+	 * The copy carries the source's name, URL and extra addresses, the
+	 * source's type as the recipient sees it, and no folder.
 	 *
 	 * @param Secret              $source     The owner's source secret
 	 * @param RecipientCiphertext $ciphertext The recipient and their copy's blobs
@@ -150,6 +152,7 @@ class RecipientSecretCopyFactory {
 	 * @return Secret|null
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function createCopy(Secret $source, RecipientCiphertext $ciphertext): ?Secret {
 		try {
@@ -166,6 +169,7 @@ class RecipientSecretCopyFactory {
 
 		$copy->setEncryptionSuiteId($suite->getId());
 		$this->secretMapper->insert($copy);
+		$this->urls?->copyOnto(source: $source, copy: $copy);
 
 		return $copy;
 	}//end createCopy()
