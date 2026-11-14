@@ -83,7 +83,7 @@ class SuiteReinstateGuard {
 	 *
 	 * @param string $suiteId The suite
 	 *
-	 * @return bool|null True or false from the last SUITE_REVOKED entry, null when none is found
+	 * @return bool|null True or false from the last SUITE_REVOKED entry, null when none is found or its metadata cannot be read
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
@@ -98,7 +98,11 @@ class SuiteReinstateGuard {
 			}
 
 			$metadata = json_decode((string)$entry->getMetadata(), true);
-			return is_array($metadata) === true && ($metadata['markCompromised'] ?? false) === true;
+			if (is_array($metadata) === false) {
+				return null;
+			}
+
+			return ($metadata['markCompromised'] ?? false) === true;
 		}
 
 		return null;

@@ -125,6 +125,16 @@ class SuiteReinstateGuardTest extends TestCase {
 	}//end testAnUnconfirmedRevocationFailsClosed()
 
 	/**
+	 * A revocation whose metadata cannot be read does not show it was harmless, so it is refused.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableRevocationFailsClosed(): void {
+		$this->assertSame(expected: 'revoked_as_compromised', actual: $this->refusal(entries: [$this->entry(type: 'suite.revoked', metadata: 'not json')]));
+		$this->assertSame(expected: 'revoked_as_compromised', actual: $this->refusal(entries: [$this->entry(type: 'suite.revoked', metadata: null)]));
+	}//end testAnUnreadableRevocationFailsClosed()
+
+	/**
 	 * An owner who already has an active suite cannot get a second one back.
 	 *
 	 * @return void
