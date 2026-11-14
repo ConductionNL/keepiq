@@ -208,6 +208,34 @@ async function decryptedBlob(store, attachment) {
 }
 
 /**
+ * The decrypted content types an attachment may be previewed as, and how.
+ * SVG is left out on purpose: it can carry script.
+ *
+ * @type {Readonly<{[contentType: string]: 'image'|'pdf'|'text'}>}
+ */
+export const PREVIEW_KINDS = Object.freeze({
+	'image/png': 'image',
+	'image/jpeg': 'image',
+	'image/gif': 'image',
+	'image/webp': 'image',
+	'application/pdf': 'pdf',
+	'text/plain': 'text',
+})
+
+/**
+ * How an attachment of this content type is previewed, or null when it is
+ * not: only the types in PREVIEW_KINDS, without parameters, in any case.
+ *
+ * @param {?string} contentType The decrypted content type.
+ * @return {'image'|'pdf'|'text'|null}
+ * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+ */
+export function previewKind(contentType) {
+	const type = String(contentType || '').split(';')[0].trim().toLowerCase()
+	return Object.hasOwn(PREVIEW_KINDS, type) ? PREVIEW_KINDS[type] : null
+}
+
+/**
  * Trigger a local save of decrypted bytes under the attachment's name.
  *
  * @param {Uint8Array} plaintext The plaintext bytes.
@@ -362,6 +390,39 @@ export const useAttachmentStore = defineStore('attachment', {
 				saveLocally(await decryptedBlob(this, attachment), attachment)
 			} catch (e) {
 				this.error = failureText(e, 'Download failed')
+				throw e
+			} finally {
+				this.loading = false
+			}
+		},
+
+		/**
+		 * Decrypt an attachment in the browser for a preview: an object URL
+		 * of the plaintext for an image or a PDF, the text itself for plain
+		 * text. Nothing is saved to the device, and the caller revokes the URL
+		 * when the preview closes. A type that may not be previewed is refused
+		 * before anything is fetched.
+		 *
+		 * @param {object} attachment The listed attachment row.
+		 * @return {Promise<{kind: 'image'|'pdf'|'text', url: ?string, text: ?string}>}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+		 */
+		async preview(attachment) {
+			const kind = previewKind(attachment?.contentType)
+			if (kind === null) {
+				throw new Error('This file type cannot be previewed')
+			}
+			this.loading = true
+			this.error = null
+			try {
+				const plaintext = await decryptedBlob(this, attachment)
+				if (kind === 'text') {
+					return { kind, url: null, text: new TextDecoder().decode(plaintext) }
+				}
+				const type = String(attachment.contentType).split(';')[0].trim().toLowerCase()
+				return { kind, url: URL.createObjectURL(new Blob([plaintext], { type })), text: null }
+			} catch (e) {
+				this.error = failureText(e, 'Preview failed')
 				throw e
 			} finally {
 				this.loading = false
