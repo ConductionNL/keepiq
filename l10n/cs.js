@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Toto není klíč autentikátoru. Vložte odkaz otpauth://totp/ nebo tajemství ve formátu base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tento QR kód neobsahuje klíč autentikátoru. Použijte QR kód, který web zobrazí při nastavování dvoufázového přihlášení.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajemství čeká na kontrolu svých sdílení, která ještě neskončila. Nic nebylo uloženo; zkuste to později, nebo požádejte správce, aby ověřil, že běží úlohy na pozadí.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Správce nebo členství, které zahrnuje správce, může změnit jen vlastník."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Správce nebo členství, které zahrnuje správce, může změnit jen vlastník.",
+        "Other side": "Druhá strana",
+        "Keepiq on this Nextcloud": "Keepiq na tomto Nextcloudu",
+        "Another provider (files)": "Jiný poskytovatel (soubory)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Stáhněte soubor s požadavkem a předejte jej druhému poskytovateli. Sem načtěte zapečetěný soubor, který vrátí; otevřít jej může jen toto okno.",
+        "Download request file": "Stáhnout soubor s požadavkem",
+        "Sealed file from the other provider": "Zapečetěný soubor od druhého poskytovatele",
+        "Request file from the receiving provider": "Soubor s požadavkem od přijímajícího poskytovatele",
+        "Request loaded. The transfer is sealed for that provider only.": "Požadavek načten. Přenos je zapečetěn jen pro tohoto poskytovatele.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Zapečetěný soubor stažen. Otevřít jej může jen poskytovatel, který požadavek vytvořil.",
+        "Selected items ({count})": "Vybrané položky ({count})",
+        "The file could not be verified. Nothing was imported.": "Soubor nelze ověřit. Nic nebylo importováno.",
+        "This is not a transfer request file.": "Toto není soubor s požadavkem na přenos.",
+        "What to send": "Co odeslat"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

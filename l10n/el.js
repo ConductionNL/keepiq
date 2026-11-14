@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Αυτό δεν είναι κλειδί επαληθευτή. Επικολλήστε έναν σύνδεσμο otpauth://totp/ ή το μυστικό base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Αυτός ο κωδικός QR δεν περιέχει κλειδί επαληθευτή. Χρησιμοποιήστε τον κωδικό QR που εμφανίζει ο ιστότοπος όταν ρυθμίζετε τη σύνδεση δύο παραγόντων.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Αυτό το μυστικό περιμένει έναν έλεγχο των κοινοποιήσεών του που δεν έχει ολοκληρωθεί ακόμη. Δεν αποθηκεύτηκε τίποτα· δοκιμάστε ξανά αργότερα ή ζητήστε από έναν διαχειριστή να ελέγξει ότι εκτελούνται οι εργασίες παρασκηνίου.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Μόνο ο κάτοχος μπορεί να αλλάξει έναν διαχειριστή ή μια συμμετοχή που καλύπτει έναν διαχειριστή."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Μόνο ο κάτοχος μπορεί να αλλάξει έναν διαχειριστή ή μια συμμετοχή που καλύπτει έναν διαχειριστή.",
+        "Other side": "Άλλη πλευρά",
+        "Keepiq on this Nextcloud": "Keepiq σε αυτό το Nextcloud",
+        "Another provider (files)": "Άλλος πάροχος (αρχεία)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Κατεβάστε ένα αρχείο αιτήματος και δώστε το στον άλλο πάροχο. Φορτώστε εδώ το σφραγισμένο αρχείο που θα επιστρέψει· μόνο αυτό το παράθυρο μπορεί να το ανοίξει.",
+        "Download request file": "Λήψη αρχείου αιτήματος",
+        "Sealed file from the other provider": "Σφραγισμένο αρχείο από τον άλλο πάροχο",
+        "Request file from the receiving provider": "Αρχείο αιτήματος από τον πάροχο που λαμβάνει",
+        "Request loaded. The transfer is sealed for that provider only.": "Το αίτημα φορτώθηκε. Η μεταφορά σφραγίζεται μόνο για αυτόν τον πάροχο.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Το σφραγισμένο αρχείο λήφθηκε. Μόνο ο πάροχος που δημιούργησε το αίτημα μπορεί να το ανοίξει.",
+        "Selected items ({count})": "Επιλεγμένα στοιχεία ({count})",
+        "The file could not be verified. Nothing was imported.": "Δεν ήταν δυνατή η επαλήθευση του αρχείου. Δεν εισήχθη τίποτα.",
+        "This is not a transfer request file.": "Αυτό δεν είναι αρχείο αιτήματος μεταφοράς.",
+        "What to send": "Τι θα σταλεί"
     },
     "nplurals=2; plural=(n != 1);"
 )

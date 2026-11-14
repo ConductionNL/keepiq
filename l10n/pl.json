@@ -1837,7 +1837,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "To nie jest klucz uwierzytelniacza. Wklej link otpauth://totp/ lub sekret w formacie base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ten kod QR nie zawiera klucza uwierzytelniacza. Użyj kodu QR, który strona pokazuje podczas konfigurowania logowania dwuetapowego.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ten sekret czeka na sprawdzenie swoich udostępnień, które jeszcze się nie zakończyło. Nic nie zostało zapisane; spróbuj ponownie później lub poproś administratora o sprawdzenie, czy działają zadania w tle.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Tylko właściciel może zmienić menedżera lub członkostwo obejmujące menedżera."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tylko właściciel może zmienić menedżera lub członkostwo obejmujące menedżera.",
+        "Other side": "Druga strona",
+        "Keepiq on this Nextcloud": "Keepiq na tym Nextcloud",
+        "Another provider (files)": "Inny dostawca (pliki)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Pobierz plik żądania i przekaż go innemu dostawcy. Wczytaj tutaj zaplombowany plik, który zwróci; tylko to okno może go otworzyć.",
+        "Download request file": "Pobierz plik żądania",
+        "Sealed file from the other provider": "Zaplombowany plik od innego dostawcy",
+        "Request file from the receiving provider": "Plik żądania od dostawcy odbierającego",
+        "Request loaded. The transfer is sealed for that provider only.": "Żądanie wczytane. Transfer jest zaplombowany tylko dla tego dostawcy.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Zaplombowany plik pobrany. Otworzyć go może tylko dostawca, który utworzył żądanie.",
+        "Selected items ({count})": "Wybrane elementy ({count})",
+        "The file could not be verified. Nothing was imported.": "Nie udało się zweryfikować pliku. Nic nie zostało zaimportowane.",
+        "This is not a transfer request file.": "To nie jest plik żądania transferu.",
+        "What to send": "Co wysłać"
     },
     "plurals": null
 }

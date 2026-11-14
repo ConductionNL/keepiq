@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ní eochair fíordheimhnitheora é seo. Greamaigh nasc otpauth://totp/ nó an rún base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Níl eochair fíordheimhnitheora sa chód QR seo. Úsáid an cód QR a thaispeánann an suíomh nuair a shocraíonn tú logáil isteach dhá fhachtóir.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Tá an rún seo ag fanacht ar sheiceáil ar a chomhroinnt nach bhfuil críochnaithe fós. Níor sábháladh aon rud; bain triail eile as ar ball, nó iarr ar riarthóir a sheiceáil go bhfuil na jabanna cúlra ag rith.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Ní féidir ach leis an úinéir bainisteoir a athrú, nó ballraíocht a chuimsíonn bainisteoir."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Ní féidir ach leis an úinéir bainisteoir a athrú, nó ballraíocht a chuimsíonn bainisteoir.",
+        "Other side": "An taobh eile",
+        "Keepiq on this Nextcloud": "Keepiq ar an Nextcloud seo",
+        "Another provider (files)": "Soláthraí eile (comhaid)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Íoslódáil comhad iarratais agus tabhair don soláthraí eile é. Lódáil anseo an comhad séalaithe a sheolann sé ar ais; ní féidir ach leis an bhfuinneog seo é a oscailt.",
+        "Download request file": "Íoslódáil comhad iarratais",
+        "Sealed file from the other provider": "Comhad séalaithe ón soláthraí eile",
+        "Request file from the receiving provider": "Comhad iarratais ón soláthraí glactha",
+        "Request loaded. The transfer is sealed for that provider only.": "Lódáladh an t-iarratas. Séalaítear an t-aistriú don soláthraí sin amháin.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Íoslódáladh an comhad séalaithe. Ní féidir ach leis an soláthraí a rinne an t-iarratas é a oscailt.",
+        "Selected items ({count})": "Míreanna roghnaithe ({count})",
+        "The file could not be verified. Nothing was imported.": "Níorbh fhéidir an comhad a fhíorú. Níor iompórtáladh aon rud.",
+        "This is not a transfer request file.": "Ní comhad iarratais aistrithe é seo.",
+        "What to send": "Cad atá le seoladh"
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

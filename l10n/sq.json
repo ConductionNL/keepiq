@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ky nuk është çelës autentikuesi. Ngjitni një lidhje otpauth://totp/ ose sekretin base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ky kod QR nuk përmban çelës autentikuesi. Përdorni kodin QR që shfaq faqja kur vendosni hyrjen me dy faktorë.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ky sekret po pret një kontroll të ndarjeve të tij që nuk ka përfunduar ende. Asgjë nuk u ruajt; provoni përsëri më vonë ose kërkojini një administratori të kontrollojë që punët në sfond po ekzekutohen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Vetëm pronari mund të ndryshojë një menaxher, ose një anëtarësim që përfshin një menaxher."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Vetëm pronari mund të ndryshojë një menaxher, ose një anëtarësim që përfshin një menaxher.",
+        "Other side": "Pala tjetër",
+        "Keepiq on this Nextcloud": "Keepiq në këtë Nextcloud",
+        "Another provider (files)": "Një ofrues tjetër (skedarë)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Shkarkoni një skedar kërkese dhe jepjani ofruesit tjetër. Ngarkoni këtu skedarin e vulosur që ai kthen; vetëm kjo dritare mund ta hapë.",
+        "Download request file": "Shkarko skedarin e kërkesës",
+        "Sealed file from the other provider": "Skedar i vulosur nga ofruesi tjetër",
+        "Request file from the receiving provider": "Skedar kërkese nga ofruesi marrës",
+        "Request loaded. The transfer is sealed for that provider only.": "Kërkesa u ngarkua. Transferimi vuloset vetëm për atë ofrues.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Skedari i vulosur u shkarkua. Vetëm ofruesi që bëri kërkesën mund ta hapë.",
+        "Selected items ({count})": "Artikujt e zgjedhur ({count})",
+        "The file could not be verified. Nothing was imported.": "Skedari nuk mund të verifikohej. Nuk u importua asgjë.",
+        "This is not a transfer request file.": "Ky nuk është skedar kërkese transferimi.",
+        "What to send": "Çfarë të dërgohet"
     },
     "plurals": null
 }

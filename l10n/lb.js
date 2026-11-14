@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dëst ass kee Authentifikatorschlëssel. Plakt en otpauth://totp/-Link oder dat base32-Geheimnis an.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dëse QR-Code huet keen Authentifikatorschlëssel dran. Benotzt de QR-Code, deen de Site weist, wann Dir d'Zwee-Faktor-Umeldung ariichtt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dëst Geheimnis waart op eng Kontroll vu senge Fräigaben, déi nach net fäerdeg ass. Näischt gouf gespäichert; probéiert méi spéit nach eng Kéier, oder frot en Administrateur ze kontrolléieren, ob d'Hannergrondaufgaben lafen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Nëmmen de Besëtzer kann e Manager änneren, oder eng Memberschaft, déi e Manager ëmfaasst."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Nëmmen de Besëtzer kann e Manager änneren, oder eng Memberschaft, déi e Manager ëmfaasst.",
+        "Other side": "Aner Säit",
+        "Keepiq on this Nextcloud": "Keepiq op dëser Nextcloud",
+        "Another provider (files)": "En anere Fournisseur (Fichieren)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Lued e Fichier mat der Ufro erof a gëff en dem anere Fournisseur. Lued hei de versigelte Fichier, deen e zréckschéckt; nëmmen dës Fënster kann en opmaachen.",
+        "Download request file": "Ufro-Fichier eroflueden",
+        "Sealed file from the other provider": "Versigelte Fichier vum anere Fournisseur",
+        "Request file from the receiving provider": "Ufro-Fichier vum empfaangende Fournisseur",
+        "Request loaded. The transfer is sealed for that provider only.": "Ufro gelueden. Den Transfert gëtt nëmme fir dee Fournisseur versigelt.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Versigelte Fichier erofgelueden. Nëmmen de Fournisseur, deen d'Ufro gemaach huet, kann en opmaachen.",
+        "Selected items ({count})": "Ausgewielten Elementer ({count})",
+        "The file could not be verified. Nothing was imported.": "De Fichier konnt net verifizéiert ginn. Et gouf näischt importéiert.",
+        "This is not a transfer request file.": "Dat ass kee Fichier mat enger Transfert-Ufro.",
+        "What to send": "Wat geschéckt gëtt"
     },
     "nplurals=2; plural=(n != 1);"
 )

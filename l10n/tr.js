@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Bu bir kimlik doğrulayıcı anahtarı değil. Bir otpauth://totp/ bağlantısı veya base32 sırrı yapıştırın.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Bu QR kodu bir kimlik doğrulayıcı anahtarı içermiyor. Sitenin iki adımlı girişi kurarken gösterdiği QR kodunu kullanın.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Bu gizli bilgi, paylaşımlarının henüz tamamlanmamış bir denetimini bekliyor. Hiçbir şey kaydedilmedi; daha sonra yeniden deneyin ya da bir yöneticiden arka plan görevlerinin çalıştığını denetlemesini isteyin.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Yalnızca sahip bir yöneticiyi veya bir yöneticiyi kapsayan bir üyeliği değiştirebilir."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Yalnızca sahip bir yöneticiyi veya bir yöneticiyi kapsayan bir üyeliği değiştirebilir.",
+        "Other side": "Diğer taraf",
+        "Keepiq on this Nextcloud": "Bu Nextcloud'daki Keepiq",
+        "Another provider (files)": "Başka bir sağlayıcı (dosyalar)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Bir istek dosyası indirin ve diğer sağlayıcıya verin. Döndürdüğü mühürlü dosyayı buraya yükleyin; onu yalnızca bu pencere açabilir.",
+        "Download request file": "İstek dosyasını indir",
+        "Sealed file from the other provider": "Diğer sağlayıcıdan gelen mühürlü dosya",
+        "Request file from the receiving provider": "Alıcı sağlayıcıdan gelen istek dosyası",
+        "Request loaded. The transfer is sealed for that provider only.": "İstek yüklendi. Aktarım yalnızca o sağlayıcı için mühürlenir.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Mühürlü dosya indirildi. Onu yalnızca isteği oluşturan sağlayıcı açabilir.",
+        "Selected items ({count})": "Seçili öğeler ({count})",
+        "The file could not be verified. Nothing was imported.": "Dosya doğrulanamadı. Hiçbir şey içe aktarılmadı.",
+        "This is not a transfer request file.": "Bu bir aktarım isteği dosyası değil.",
+        "What to send": "Ne gönderilecek"
     },
     "nplurals=1; plural=0;"
 )

@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ez nem hitelesítőkulcs. Illesszen be egy otpauth://totp/ hivatkozást vagy a base32 titkot.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ez a QR-kód nem tartalmaz hitelesítőkulcsot. Használja azt a QR-kódot, amelyet a webhely a kétlépcsős bejelentkezés beállításakor megjelenít.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ez a titok a megosztásainak ellenőrzésére vár, amely még nem fejeződött be. Semmi sem lett mentve; próbálja újra később, vagy kérje meg a rendszergazdát, hogy ellenőrizze, futnak-e a háttérfeladatok.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Csak a tulajdonos módosíthat kezelőt, vagy olyan tagságot, amely kezelőre is kiterjed."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Csak a tulajdonos módosíthat kezelőt, vagy olyan tagságot, amely kezelőre is kiterjed.",
+        "Other side": "Másik fél",
+        "Keepiq on this Nextcloud": "Keepiq ezen a Nextcloudon",
+        "Another provider (files)": "Másik szolgáltató (fájlok)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Töltsön le egy kérésfájlt, és adja át a másik szolgáltatónak. Itt töltse be a lepecsételt fájlt, amelyet visszaad; csak ez az ablak tudja megnyitni.",
+        "Download request file": "Kérésfájl letöltése",
+        "Sealed file from the other provider": "Lepecsételt fájl a másik szolgáltatótól",
+        "Request file from the receiving provider": "Kérésfájl a fogadó szolgáltatótól",
+        "Request loaded. The transfer is sealed for that provider only.": "Kérés betöltve. Az átvitel csak ennek a szolgáltatónak lesz lepecsételve.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Lepecsételt fájl letöltve. Csak a kérést létrehozó szolgáltató tudja megnyitni.",
+        "Selected items ({count})": "Kijelölt elemek ({count})",
+        "The file could not be verified. Nothing was imported.": "A fájlt nem sikerült ellenőrizni. Semmi sem lett importálva.",
+        "This is not a transfer request file.": "Ez nem átviteli kérésfájl.",
+        "What to send": "Mit küldjön"
     },
     "plurals": null
 }

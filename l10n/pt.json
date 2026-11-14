@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Isto não é uma chave de autenticador. Cole uma ligação otpauth://totp/ ou o segredo base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Este código QR não contém uma chave de autenticador. Utilize o código QR que o site mostra quando configura a autenticação de dois fatores.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Este segredo aguarda uma verificação das suas partilhas que ainda não terminou. Nada foi guardado; tente novamente mais tarde ou peça a um administrador que verifique se as tarefas em segundo plano estão a ser executadas.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Só o proprietário pode alterar um gestor ou uma associação que inclua um gestor."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Só o proprietário pode alterar um gestor ou uma associação que inclua um gestor.",
+        "Other side": "Outra parte",
+        "Keepiq on this Nextcloud": "Keepiq neste Nextcloud",
+        "Another provider (files)": "Outro fornecedor (ficheiros)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Transfira um ficheiro de pedido e entregue-o ao outro fornecedor. Carregue aqui o ficheiro selado que ele devolver; só esta janela o pode abrir.",
+        "Download request file": "Transferir ficheiro de pedido",
+        "Sealed file from the other provider": "Ficheiro selado do outro fornecedor",
+        "Request file from the receiving provider": "Ficheiro de pedido do fornecedor recetor",
+        "Request loaded. The transfer is sealed for that provider only.": "Pedido carregado. A transferência é selada apenas para esse fornecedor.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Ficheiro selado transferido. Só o fornecedor que fez o pedido o pode abrir.",
+        "Selected items ({count})": "Itens selecionados ({count})",
+        "The file could not be verified. Nothing was imported.": "Não foi possível verificar o ficheiro. Nada foi importado.",
+        "This is not a transfer request file.": "Isto não é um ficheiro de pedido de transferência.",
+        "What to send": "O que enviar"
     },
     "plurals": null
 }
