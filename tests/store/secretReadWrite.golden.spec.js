@@ -317,12 +317,15 @@ function updateCase(seed) {
 	if (r() < 0.3) {
 		options.withoutUnreachable = ['f1']
 	}
+	const onWait = r() < 0.5
+	const onSourceSaved = r() < 0.6
+	const locked = r() < 0.1
 	return {
 		run: 'update',
 		data,
 		options,
-		hooks: { onWait: r() < 0.5, onSourceSaved: r() < 0.6 },
-		locked: r() < 0.1,
+		hooks: { onWait, onSourceSaved },
+		locked,
 		offline: pick([
 			{},
 			{},
