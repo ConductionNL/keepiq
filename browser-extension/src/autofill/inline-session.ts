@@ -9,9 +9,12 @@ import { accountStatus, getAccount, getActiveAccountId } from '@/src/accounts/st
 import { onBroadcast } from '@/src/background/broadcast'
 import { popout } from '@/src/background/requests'
 import { rsaDecrypt } from '@/src/crypto'
+import { generate } from '@/src/generator/generate'
+import { addHistory, openHistory } from '@/src/generator/history'
+import { readOptions, readPolicy } from '@/src/generator/store'
 import { readLastUsed } from '@/src/last-used'
 import {
-	INLINE_MODES, inlineClampHeight, inlineHeight, isFormKind,
+	GENERATE_ROW_ID, INLINE_MODES, inlineClampHeight, inlineHeight, isFormKind,
 	type BackgroundToContent, type FormKind, type FormValues, type InlineClosed, type InlineListToBackground, type InlineMode, type InlineOpen, type InlineOpenReply, type InlinePickReply,
 	type InlineRow, type InlineStateReply, type PasskeyRow, type PickInput,
 } from '@/src/messages'
@@ -19,7 +22,7 @@ import { conditionalCeremony, pickFromList, type ConditionalRequest } from '@/sr
 import { offeredPasskeys } from '@/src/passkey/offered'
 import { createKeyedQueue } from '@/src/queue'
 import { readGlobalSettings } from '@/src/settings/global'
-import { getKey, sessionValues } from '@/src/vault/key-store'
+import { getKey, sessionEpoch, sessionValues } from '@/src/vault/key-store'
 import { cardBrand, cardLast4 } from '@/src/vault/cards'
 import { parsePayload, text } from '@/src/vault/payloads'
 import { readSnapshot } from '@/src/vault/store'
@@ -87,6 +90,8 @@ const CANDIDATES: Record<InlineMode, (accountId: string, frameUrl: string) => Pr
 	code: matchingCodes,
 	card: (accountId) => walletRows('card', accountId),
 	identity: (accountId) => walletRows('identity', accountId),
+	// No vault rows: the list page draws its one offer itself.
+	newPassword: async () => ({ rows: [] }),
 }
 
 const matchingFor = (mode: InlineMode, accountId: string, frameUrl: string) => CANDIDATES[mode](accountId, frameUrl)
@@ -265,6 +270,7 @@ const ROWS: Record<InlineMode, (row: OpenSecretRow, key: CryptoKey, now: number)
 	code: async (row, key, now) => ({ ...await loginRow(row, key), code: await inlineCode(row, key, now) }),
 	card: (row, key) => walletRow('card', row, key),
 	identity: (row, key) => walletRow('identity', row, key),
+	newPassword: loginRow,
 }
 
 async function state(tabId: number, session: InlineSession): Promise<InlineStateReply> {
@@ -342,7 +348,32 @@ async function pick(tabId: number, session: InlineSession, message: PickMessage)
 	const { credentialId } = message
 	if ((await sessionAccount(session)) !== 'unlocked') return refuse(tabId, session, 'locked')
 	if (credentialId !== undefined) return pickPasskey(tabId, session, { itemId: message.itemId, credentialId }, message.input)
+	if (session.mode === 'newPassword') return pickGenerated(tabId, session, message)
 	return pickItem(tabId, session, message)
+}
+
+/**
+ * The strong-password offer (spec `extension-generator`): generated here under the organisation policy, only after the host
+ * confirmed the press was the user's, and sent to the list's frame for its new-password fields. Kept in the generator
+ * history like the context menu's, so a sign-up that then fails does not lose it.
+ */
+async function pickGenerated(tabId: number, session: InlineSession, message: PickMessage): Promise<InlinePickReply> {
+	if (message.itemId !== GENERATE_ROW_ID) return refuse(tabId, session, 'stale')
+	if (await toHost(tabId, session, { kind: 'inline.verify', key: session.key, input: message.input }) !== true) return { refused: 'not_visible' }
+	await touch()
+	const { accountId } = session
+	const epoch = sessionEpoch(accountId)
+	const result = await generate('password', await readOptions(accountId), await readPolicy(accountId), { website: null, accountEmail: null })
+	if (!result.ok) return refuse(tabId, session, 'stale')
+	const fillMessage: BackgroundToContent = { kind: 'fill.newPassword', password: result.value, origin: new URL(session.frameUrl).origin, anchorKey: session.key }
+	const reply = await toHost(tabId, session, fillMessage) as { filled?: unknown } | undefined
+	const filled = typeof reply?.filled === 'number' && reply.filled > 0
+	if (filled) {
+		await openHistory(accountId, epoch)
+		await addHistory(accountId, { value: result.value, kind: 'password' }, epoch)
+	}
+	await drop(tabId, { key: session.key, refocus: true })
+	return { filled: filled ? 'password' : 'none', code: false }
 }
 
 /** A login, a login's code, or a card or identity, which fills the group the list is open on and other frames by the frame plan. */

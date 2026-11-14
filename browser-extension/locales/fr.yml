@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 identité Keepiq. Appuyez sur Flèche bas pour choisir.
         n: $1 identités Keepiq. Appuyez sur Flèche bas pour choisir.
+  newPassword:
+    frameTitle: Mot de passe fort Keepiq
+    offer: Utiliser un mot de passe fort
+    locked: Déverrouillez Keepiq pour obtenir un mot de passe fort
+    status: Utiliser un mot de passe fort. Appuyez sur Flèche bas pour choisir.
 
 notificationBar:
   label: Notification Keepiq

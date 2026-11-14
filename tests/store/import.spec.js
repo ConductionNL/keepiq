@@ -209,6 +209,9 @@ describe('useImportStore', () => {
 			rejected: 1,
 			foldersCreated: 2,
 			rejectedRows: [{ sourceRow: 999, reason: 'rejected by server', name: '' }],
+			createdTypes: [],
+			typeFallbacks: [],
+			omittedFields: [],
 		})
 	})
 
@@ -759,6 +762,87 @@ describe('useImportStore', () => {
 			expect(items['Office VPN'].typeId).toBe(TYPE_IDS.vpnProfile)
 			// An unknown type falls back to the server's default type.
 			expect(items.Mystery.typeId).toBeUndefined()
+		})
+
+		it('restores every type by name on a new instance, creating a missing custom type once (D3)', async () => {
+			await unlockSession()
+			const { useSecretTypeStore } = await import('../../src/store/modules/secretType.js')
+			const typeStore = useSecretTypeStore()
+			// A new instance: the system types only, with their deterministic ids.
+			typeStore.types = [
+				{ id: TYPE_IDS.login, name: 'login', scope: 'system' },
+				{ id: TYPE_IDS.api_key, name: 'api_key', scope: 'system' },
+				{ id: TYPE_IDS.totp, name: 'totp', scope: 'system' },
+				{ id: 'passkey-uuid', name: 'passkey', scope: 'system' },
+			]
+			const createType = vi.spyOn(typeStore, 'createType').mockImplementation(async (data) => {
+				const type = { id: 'new-vpn-uuid', name: data.name, label: data.label, scope: data.scope }
+				typeStore.types.push(type)
+				return type
+			})
+			const entry = (name, type, typeName, typeLabel) => ({
+				name,
+				url: null,
+				login: null,
+				password: 'value-' + name,
+				additionalFields: null,
+				folder: '',
+				type,
+				typeName,
+				...(typeLabel ? { typeLabel } : {}),
+			})
+			const items = await restore({
+				format: 'keepiq-vault',
+				version: 1,
+				partial: true,
+				omittedFields: ['login'],
+				secrets: [
+					entry('Authenticator', 'old-instance-totp-id', 'totp'),
+					entry('Passkey', 'old-instance-passkey-id', 'passkey'),
+					entry('Stripe', 'old-instance-api-id', 'api_key'),
+					entry('Office VPN', 'old-instance-vpn-id', 'vpn_profile', 'VPN profile'),
+					entry('Home VPN', 'old-instance-vpn-id', 'vpn_profile', 'VPN profile'),
+					entry('Lost', 'old-instance-x-id', 'gone_type'),
+				],
+				folders: [],
+			})
+
+			expect(items.Authenticator.typeId).toBe(TYPE_IDS.totp)
+			expect(items.Passkey.typeId).toBe('passkey-uuid')
+			expect(items.Stripe.typeId).toBe(TYPE_IDS.api_key)
+			expect(items['Office VPN'].typeId).toBe('new-vpn-uuid')
+			expect(items['Home VPN'].typeId).toBe('new-vpn-uuid')
+			expect(createType).toHaveBeenCalledTimes(1)
+			expect(createType).toHaveBeenCalledWith({ name: 'vpn_profile', label: 'VPN profile', scope: 'user' })
+			expect(items.Lost.typeId).toBeUndefined()
+			const summary = useImportStore().summary
+			expect(summary.createdTypes).toEqual([{ name: 'vpn_profile', label: 'VPN profile' }])
+			expect(summary.typeFallbacks).toEqual([{ sourceRow: 6, type: 'gone_type' }])
+			expect(summary.omittedFields).toEqual(['login'])
+		})
+
+		it('falls back to the default type when a custom type cannot be created', async () => {
+			await unlockSession()
+			await seedVaultTypes()
+			const { useSecretTypeStore } = await import('../../src/store/modules/secretType.js')
+			const createType = vi.spyOn(useSecretTypeStore(), 'createType').mockRejectedValue(new Error('403'))
+			const entry = (name) => ({
+				name,
+				password: 'v',
+				folder: '',
+				type: 'old-id',
+				typeName: 'router_admin',
+				typeLabel: 'Router admin',
+			})
+			const items = await restore({ format: 'keepiq-vault', version: 1, secrets: [entry('A'), entry('B')], folders: [] })
+
+			expect(items.A.typeId).toBeUndefined()
+			expect(items.B.typeId).toBeUndefined()
+			expect(createType).toHaveBeenCalledTimes(1)
+			expect(useImportStore().summary.typeFallbacks).toEqual([
+				{ sourceRow: 1, type: 'Router admin' },
+				{ sourceRow: 2, type: 'Router admin' },
+			])
 		})
 	})
 
