@@ -218,21 +218,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 			userId: $userId
 		);
 
-		if ($path->isCopyEditor() === true) {
-			if ($request->entries->federatedCount() > 0) {
-				throw new ShareSaveRefusal(
-					error: 'federated_owner_only',
-					message: 'Only the owner writes partner shares'
-				);
-			}
-
-			if ($request->sourceBaseUpdatedAt === null) {
-				throw new ShareSaveRefusal(
-					error: 'source_base_required',
-					message: 'sourceBaseUpdatedAt is required when saving through a copy'
-				);
-			}
-		}
+		$this->assertCopyEditorRequest(path: $path, request: $request);
 
 		$entries = $request->entries;
 		$expiresAt = null;
@@ -253,26 +239,72 @@ class ShareSaveService implements ShareSaveServiceInterface {
 		$this->dropStageWhenStale(
 			request: $request,
 			step: function () use ($path, $request): void {
-				if ($this->movedOn(row: $path->row, base: $request->baseUpdatedAt) === true) {
-					// Name the source only as this copy was written with it: a source that moved alone was not in the conflict.
-					$sourceVersion = $request->sourceBaseUpdatedAt;
-					if ($this->movedOn(row: $path->source, base: $path->row->getUpdatedAt()) === false) {
-						$sourceVersion = $path->source->getUpdatedAt();
-					}
-
-					throw $this->staleRow(path: $path, current: $path->row, sourceVersion: $sourceVersion);
-				}
-
-				if ($path->isCopyEditor() === true
-					&& $this->movedOn(row: $path->source, base: $request->sourceBaseUpdatedAt) === true
-				) {
-					throw $this->staleSource(current: $path->source);
-				}
+				$this->assertBasesCurrent(path: $path, request: $request);
 			}
 		);
 
 		return [$path, $entries, $expiresAt, $chunks];
 	}//end open()
+
+	/**
+	 * A copy editor writes no partner shares and must name the source version
+	 * the edit was made from. Nothing to check for the owner.
+	 *
+	 * @param ShareSavePath $path The path
+	 * @param ShareSaveRequest $request The request
+	 *
+	 * @throws ShareSaveRefusal federated_owner_only or source_base_required
+	 *
+	 * @return void
+	 */
+	private function assertCopyEditorRequest(ShareSavePath $path, ShareSaveRequest $request): void {
+		if ($path->isCopyEditor() === false) {
+			return;
+		}
+
+		if ($request->entries->federatedCount() > 0) {
+			throw new ShareSaveRefusal(
+				error: 'federated_owner_only',
+				message: 'Only the owner writes partner shares'
+			);
+		}
+
+		if ($request->sourceBaseUpdatedAt === null) {
+			throw new ShareSaveRefusal(
+				error: 'source_base_required',
+				message: 'sourceBaseUpdatedAt is required when saving through a copy'
+			);
+		}
+	}//end assertCopyEditorRequest()
+
+	/**
+	 * Refuse the save when the row, or for a copy editor the source, is no
+	 * longer at the version the edit was made from.
+	 *
+	 * @param ShareSavePath $path The path
+	 * @param ShareSaveRequest $request The request
+	 *
+	 * @throws StaleWriteException|ShareSaveRefusal When a base moved on
+	 *
+	 * @return void
+	 */
+	private function assertBasesCurrent(ShareSavePath $path, ShareSaveRequest $request): void {
+		if ($this->movedOn(row: $path->row, base: $request->baseUpdatedAt) === true) {
+			// Name the source only as this copy was written with it: a source that moved alone was not in the conflict.
+			$sourceVersion = $request->sourceBaseUpdatedAt;
+			if ($this->movedOn(row: $path->source, base: $path->row->getUpdatedAt()) === false) {
+				$sourceVersion = $path->source->getUpdatedAt();
+			}
+
+			throw $this->staleRow(path: $path, current: $path->row, sourceVersion: $sourceVersion);
+		}
+
+		if ($path->isCopyEditor() === true
+			&& $this->movedOn(row: $path->source, base: $request->sourceBaseUpdatedAt) === true
+		) {
+			throw $this->staleSource(current: $path->source);
+		}
+	}//end assertBasesCurrent()
 
 	/**
 	 * The transaction body: lock both versions, check the write grade and the

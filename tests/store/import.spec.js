@@ -162,6 +162,56 @@ describe('useImportStore', () => {
 		expect(store.summary.imported).toBe(1)
 	})
 
+	it('refuses to commit while the vault is locked', async () => {
+		const store = useImportStore()
+		store.rows = [{ sourceRow: 1, name: 'A', password: 'x', folder: '', errors: [] }]
+
+		await expect(store.commit()).rejects.toThrow('Vault is locked')
+		expect(store.step).not.toBe('commit')
+		expect(store.loading).toBe(false)
+	})
+
+	it('builds the summary across chunks: distinct folders, unknown indexes and a flattened root folder name', async () => {
+		await unlockSession()
+		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
+		const bodies = []
+		vi.spyOn(axios, 'post').mockImplementation(async (url, payload) => {
+			bodies.push(payload)
+			const results = payload.items.map((_, i) => ({
+				index: i,
+				status: 'created',
+				secretId: 's' + i,
+			}))
+			if (bodies.length === 2) {
+				results.push({ index: 999, status: 'failed' })
+			}
+			return { data: { results, foldersCreated: ['root-a', 'root-a/Work'] } }
+		})
+
+		const store = useImportStore()
+		store.rows = Array.from({ length: COMMIT_CHUNK_SIZE + 1 }, (_, i) => ({
+			sourceRow: i + 1,
+			name: 'S' + i,
+			password: 'p',
+			folder: 'Work',
+			errors: [],
+		}))
+		await store.commit({ rootFolder: ' root/a ' })
+
+		expect(bodies).toHaveLength(2)
+		expect(bodies[0].items[0].folderPath).toEqual(['root-a', 'Work'])
+		expect(bodies[0].folders).toEqual([['root-a', 'Work']])
+		expect(store.step).toBe('summary')
+		expect(store.loading).toBe(false)
+		expect(store.summary).toEqual({
+			imported: COMMIT_CHUNK_SIZE + 1,
+			skippedDuplicates: 0,
+			rejected: 1,
+			foldersCreated: 2,
+			rejectedRows: [{ sourceRow: 999, reason: 'rejected by server', name: '' }],
+		})
+	})
+
 	it('chunks at 50 and reports progress', async () => {
 		await unlockSession()
 		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
