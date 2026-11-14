@@ -1750,6 +1750,11 @@ OC.L10N.register(
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Deze QR-code bevat geen authenticator-sleutel. Gebruik de QR-code die de site toont wanneer je tweestapsaanmelding instelt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dit geheim wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw, of vraag een beheerder te controleren of achtergrondtaken draaien.",
         "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat.",
+        "Clone": "Klonen",
+        "{name} (copy)": "{name} (kopie)",
+        "This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.": "Dit is een kopie van een ander geheim. Bijlagen, delingen, geschiedenis, passkeys en de eenmalige code worden niet gekopieerd.",
+        "Preview attachment": "Bijlage bekijken",
+        "Attachment": "Bijlage",
         "How your vault is protected": "Zo is uw kluis beveiligd",
         "Your vault certificate": "Uw kluiscertificaat",
         "Loading certificate details…": "Certificaatgegevens laden…",
@@ -1764,7 +1769,11 @@ OC.L10N.register(
         "Signature algorithm": "Handtekeningalgoritme",
         "Fingerprint": "Vingerafdruk",
         "Valid": "Geldig",
-        "{from} to {until}": "{from} tot {until}"
+        "{from} to {until}": "{from} tot {until}",
+        "Unencrypted address": "Onversleuteld adres",
+        "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "Deze logins zijn opgeslagen met een http-adres, dus het wachtwoord wordt onversleuteld verstuurd. Wijzig het adres in https als de site dat aanbiedt.",
+        "Change to https": "Wijzigen in https",
+        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen."
     },
     "nplurals=2; plural=(n != 1);"
 )

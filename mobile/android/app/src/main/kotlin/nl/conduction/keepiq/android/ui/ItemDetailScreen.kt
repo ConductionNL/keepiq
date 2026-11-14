@@ -229,59 +229,14 @@ internal fun ItemDetail(
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(row.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text("${item.type?.label ?: item.typeName} · $folderPath", style = MaterialTheme.typography.bodyMedium)
-        if (item.fromCache) Note(stringResource(R.string.detail_from_cache))
-        if (row.useOnly) Note(stringResource(R.string.detail_use_only))
-        if (row.readOnly && !row.useOnly) Note(stringResource(R.string.detail_read_only))
-        // A refusal is announced: after a refused passkey Delete the dialog closes and focus goes nowhere.
-        problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
-        if (passkeyDeleted) {
-            Text(stringResource(R.string.detail_passkey_deleted), style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-        }
+        DetailNotes(item, problem, passkeyDeleted)
         if (row.blocked) {
             Note(row.blockedReason ?: stringResource(R.string.detail_blocked))
             return@Column
         }
 
-        val passwordLabel = stringResource(if (item.kind == FormKind.LOGIN) R.string.detail_password else R.string.detail_value)
-        when (item.kind) {
-            FormKind.LOGIN, FormKind.GENERIC -> {
-                if (item.login.isNotEmpty()) FieldRow(stringResource(R.string.detail_username), item.login, onCopy = onCopy)
-                if (!row.useOnly) FieldRow(passwordLabel, item.secret, masked = true, onCopy = onCopy)
-            }
-            FormKind.TOTP -> TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
-            FormKind.NOTE -> if (!row.useOnly) FieldRow(stringResource(R.string.detail_notes), item.secret, onCopy = onCopy)
-            FormKind.CARD, FormKind.IDENTITY -> if (!row.useOnly) {
-                val data = item.composite
-                if (data == null) {
-                    Text(stringResource(R.string.detail_fields_error), color = MaterialTheme.colorScheme.error)
-                } else {
-                    if (item.kind == FormKind.CARD) {
-                        Composite.last4(data["number"] ?: "").takeIf { it.isNotEmpty() }?.let {
-                            Text(stringResource(R.string.detail_card_ending, it))
-                        }
-                    }
-                    for (field in Composite.fieldsOf(item.kind)) {
-                        val value = data[field] ?: ""
-                        if (value.isNotEmpty()) FieldRow(compositeLabel(field), value, masked = field in Composite.MASKED, onCopy = onCopy)
-                    }
-                }
-            }
-            FormKind.PASSKEY -> item.passkey?.let { pk ->
-                FieldRow(stringResource(R.string.detail_passkey_site), pk.rpName?.let { "$it (${pk.rpId})" } ?: pk.rpId, copy = false, onCopy = onCopy)
-                pk.userName?.let { FieldRow(stringResource(R.string.detail_passkey_account), it, copy = false, onCopy = onCopy) }
-                pk.createdAt?.let { FieldRow(stringResource(R.string.detail_passkey_created), it, copy = false, onCopy = onCopy) }
-                Text(stringResource(R.string.detail_passkey_note), style = MaterialTheme.typography.bodySmall)
-            }
-        }
-        // The item's own `totp` field, for any type that holds one; on an Authenticator item it is a second code, named so.
-        if (item.hasSavedKey) {
-            if (item.kind == FormKind.TOTP) {
-                val own = item.totpSeed.takeIf { it.isNotBlank() }?.let { runCatching { Totp.parse(it) }.getOrNull() }
-                TotpRow(own, stringResource(R.string.detail_code_own_key), onCopy)
-            } else {
-                TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
-            }
-        }
+        KindFields(item, onCopy)
+        if (item.hasSavedKey) SavedKeyRow(item, onCopy)
         val mayDelete = !row.useOnly && !row.readOnly && !offline
         if (!row.useOnly) {
             PasskeyRows(item.passkeys, mayDelete, focusPasskey, onDeletePasskey, onPasskeyFocused)
@@ -294,30 +249,111 @@ internal fun ItemDetail(
             }
         }
         row.url?.takeIf { it.isNotEmpty() }?.let { FieldRow(stringResource(R.string.detail_address), it, onCopy = onCopy) }
-        if (!row.useOnly) {
-            for ((field, value) in item.typedValues) {
-                if (value.isNotEmpty()) FieldRow(field.label, value, masked = field.hidden, onCopy = onCopy)
-            }
-            if (item.kind != FormKind.NOTE && item.notes.isNotEmpty()) FieldRow(stringResource(R.string.detail_notes), item.notes, onCopy = onCopy)
-            if (item.additionalFieldsError) Text(stringResource(R.string.detail_fields_error), color = MaterialTheme.colorScheme.error)
-            if (item.extraFields.isNotEmpty()) {
-                Text(stringResource(R.string.detail_extra_fields), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
-                for ((name, value) in item.extraFields) FieldRow(name, value, onCopy = onCopy)
-            }
-        }
+        if (!row.useOnly) MoreFields(item, onCopy)
 
         HorizontalDivider()
-        if (!row.useOnly) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onEdit, enabled = !offline, modifier = Modifier.focusMove(editFocus)) { Text(stringResource(R.string.action_edit)) }
-                OutlinedButton(onClick = onMove, enabled = !offline) { Text(stringResource(R.string.action_move)) }
-            }
-            if (item.kind == FormKind.LOGIN) {
-                OutlinedButton(onClick = onSendLogin, enabled = !offline) { Text(stringResource(R.string.cd_new_send)) }
-            }
-        }
+        if (!row.useOnly) WriteActions(item, offline, editFocus, onEdit, onMove, onSendLogin)
         OutlinedButton(onClick = onTrash, enabled = !offline) { Text(stringResource(R.string.action_trash)) }
         if (offline) Text(stringResource(R.string.write_offline), style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+/** The notes under the title: where the item came from, what the caller may do with it, and live announcements. */
+@Composable
+private fun DetailNotes(item: DecryptedItem, problem: WriteProblem?, passkeyDeleted: Boolean) {
+    val row = item.row
+    if (item.fromCache) Note(stringResource(R.string.detail_from_cache))
+    if (row.useOnly) Note(stringResource(R.string.detail_use_only))
+    if (row.readOnly && !row.useOnly) Note(stringResource(R.string.detail_read_only))
+    // A refusal is announced: after a refused passkey Delete the dialog closes and focus goes nowhere.
+    problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+    if (passkeyDeleted) {
+        Text(stringResource(R.string.detail_passkey_deleted), style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+    }
+}
+
+/** The fields that belong to the item's kind. */
+@Composable
+private fun KindFields(item: DecryptedItem, onCopy: (String) -> Unit) {
+    val row = item.row
+    val passwordLabel = stringResource(if (item.kind == FormKind.LOGIN) R.string.detail_password else R.string.detail_value)
+    when (item.kind) {
+        FormKind.LOGIN, FormKind.GENERIC -> {
+            if (item.login.isNotEmpty()) FieldRow(stringResource(R.string.detail_username), item.login, onCopy = onCopy)
+            if (!row.useOnly) FieldRow(passwordLabel, item.secret, masked = true, onCopy = onCopy)
+        }
+        FormKind.TOTP -> TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
+        FormKind.NOTE -> if (!row.useOnly) FieldRow(stringResource(R.string.detail_notes), item.secret, onCopy = onCopy)
+        FormKind.CARD, FormKind.IDENTITY -> if (!row.useOnly) CompositeFields(item, onCopy)
+        FormKind.PASSKEY -> item.passkey?.let { pk ->
+            FieldRow(stringResource(R.string.detail_passkey_site), pk.rpName?.let { "$it (${pk.rpId})" } ?: pk.rpId, copy = false, onCopy = onCopy)
+            pk.userName?.let { FieldRow(stringResource(R.string.detail_passkey_account), it, copy = false, onCopy = onCopy) }
+            pk.createdAt?.let { FieldRow(stringResource(R.string.detail_passkey_created), it, copy = false, onCopy = onCopy) }
+            Text(stringResource(R.string.detail_passkey_note), style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+/** The fields of a card or identity, read from its composite value. */
+@Composable
+private fun CompositeFields(item: DecryptedItem, onCopy: (String) -> Unit) {
+    val data = item.composite
+    if (data == null) {
+        Text(stringResource(R.string.detail_fields_error), color = MaterialTheme.colorScheme.error)
+        return
+    }
+    if (item.kind == FormKind.CARD) {
+        Composite.last4(data["number"] ?: "").takeIf { it.isNotEmpty() }?.let {
+            Text(stringResource(R.string.detail_card_ending, it))
+        }
+    }
+    for (field in Composite.fieldsOf(item.kind)) {
+        val value = data[field] ?: ""
+        if (value.isNotEmpty()) FieldRow(compositeLabel(field), value, masked = field in Composite.MASKED, onCopy = onCopy)
+    }
+}
+
+/** The item's own `totp` field, for any type that holds one; on an Authenticator item it is a second code, named so. */
+@Composable
+private fun SavedKeyRow(item: DecryptedItem, onCopy: (String) -> Unit) {
+    if (item.kind == FormKind.TOTP) {
+        val own = item.totpSeed.takeIf { it.isNotBlank() }?.let { runCatching { Totp.parse(it) }.getOrNull() }
+        TotpRow(own, stringResource(R.string.detail_code_own_key), onCopy)
+    } else {
+        TotpRow(item.totp, stringResource(R.string.detail_code), onCopy)
+    }
+}
+
+/** The typed values, notes and extra fields shown after the address. */
+@Composable
+private fun MoreFields(item: DecryptedItem, onCopy: (String) -> Unit) {
+    for ((field, value) in item.typedValues) {
+        if (value.isNotEmpty()) FieldRow(field.label, value, masked = field.hidden, onCopy = onCopy)
+    }
+    if (item.kind != FormKind.NOTE && item.notes.isNotEmpty()) FieldRow(stringResource(R.string.detail_notes), item.notes, onCopy = onCopy)
+    if (item.additionalFieldsError) Text(stringResource(R.string.detail_fields_error), color = MaterialTheme.colorScheme.error)
+    if (item.extraFields.isNotEmpty()) {
+        Text(stringResource(R.string.detail_extra_fields), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+        for ((name, value) in item.extraFields) FieldRow(name, value, onCopy = onCopy)
+    }
+}
+
+/** Edit, Move and, for a login, Send: the actions a caller who may write has. */
+@Composable
+private fun WriteActions(
+    item: DecryptedItem,
+    offline: Boolean,
+    editFocus: FocusMove,
+    onEdit: () -> Unit,
+    onMove: () -> Unit,
+    onSendLogin: () -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(onClick = onEdit, enabled = !offline, modifier = Modifier.focusMove(editFocus)) { Text(stringResource(R.string.action_edit)) }
+        OutlinedButton(onClick = onMove, enabled = !offline) { Text(stringResource(R.string.action_move)) }
+    }
+    if (item.kind == FormKind.LOGIN) {
+        OutlinedButton(onClick = onSendLogin, enabled = !offline) { Text(stringResource(R.string.cd_new_send)) }
     }
 }
 
