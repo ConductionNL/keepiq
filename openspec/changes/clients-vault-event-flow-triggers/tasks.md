@@ -2,7 +2,8 @@
 
 ## 0. OpenRegister prerequisite (owned by ConductionNL/openregister)
 
-- [ ] 0.1 Open an OpenRegister change for `RegisterFlowTriggersEvent`: dispatched when `EventCatalogService` builds its catalog, carrying `addTrigger(string $id, string $label, string $group)`. `getCatalog()` and `knownTriggerIds()` return the constant entries plus the contributed ones. Verify: an OpenRegister unit test that a contributed trigger shows in `GET /api/flow/event-catalog`.
+- [x] 0.1 Open an OpenRegister change for `RegisterFlowTriggersEvent`: dispatched when `EventCatalogService` builds its catalog, carrying `addTrigger(string $id, string $label, string $group)`. `getCatalog()` and `knownTriggerIds()` return the constant entries plus the contributed ones. Verify: an OpenRegister unit test that a contributed trigger shows in `GET /api/flow/event-catalog`.
+  - Done: ConductionNL/openregister#10570 (`RegisterFlowTriggersEvent`, `EventCatalogService` lists contributions, unit tests); the live palette check is owed with the live pass.
 
 ## 1. Fire vault events
 
