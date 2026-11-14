@@ -1773,7 +1773,12 @@ OC.L10N.register(
         "Unencrypted address": "Onversleuteld adres",
         "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "Deze logins zijn opgeslagen met een http-adres, dus het wachtwoord wordt onversleuteld verstuurd. Wijzig het adres in https als de site dat aanbiedt.",
         "Change to https": "Wijzigen in https",
-        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen."
+        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen.",
+        "Site directory": "Sitedirectory",
+        "Show users which of their sites offer one-time codes or passkeys they have not set up.": "Laat gebruikers zien welke van hun sites eenmalige codes of passkeys aanbieden die ze nog niet hebben ingesteld.",
+        "Use the site directory in the password health report": "De sitedirectory gebruiken in het wachtwoordgezondheidsrapport",
+        "Once a day the server downloads the whole public list from api.2fa.directory and passkeys-api.2fa.directory. Matching happens in each user's browser: no login, address or result is sent to the directories or stored on the server. Leave this off for air-gapped instances.": "Eén keer per dag downloadt de server de hele openbare lijst van api.2fa.directory en passkeys-api.2fa.directory. Het vergelijken gebeurt in de browser van elke gebruiker: geen login, adres of uitkomst wordt naar de directory's gestuurd of op de server opgeslagen. Laat dit uit voor instanties zonder internetverbinding.",
+        "Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Gegevens: 2FA Directory (MIT) en Passkeys Directory (CC BY 4.0), door 2factorauth en bijdragers."
     },
     "nplurals=2; plural=(n != 1);"
 )

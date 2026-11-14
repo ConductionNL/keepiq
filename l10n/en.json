@@ -1845,7 +1845,12 @@
         "Unencrypted address": "Unencrypted address",
         "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.",
         "Change to https": "Change to https",
-        "Could not save the https address for {name}.": "Could not save the https address for {name}."
+        "Could not save the https address for {name}.": "Could not save the https address for {name}.",
+        "Site directory": "Site directory",
+        "Show users which of their sites offer one-time codes or passkeys they have not set up.": "Show users which of their sites offer one-time codes or passkeys they have not set up.",
+        "Use the site directory in the password health report": "Use the site directory in the password health report",
+        "Once a day the server downloads the whole public list from api.2fa.directory and passkeys-api.2fa.directory. Matching happens in each user's browser: no login, address or result is sent to the directories or stored on the server. Leave this off for air-gapped instances.": "Once a day the server downloads the whole public list from api.2fa.directory and passkeys-api.2fa.directory. Matching happens in each user's browser: no login, address or result is sent to the directories or stored on the server. Leave this off for air-gapped instances.",
+        "Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
