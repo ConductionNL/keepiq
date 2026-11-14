@@ -2,13 +2,13 @@
 
 ## 1. Clone
 
-- [ ] 1.1 Add a `prefill` prop to `SecretCreateDialog.vue` that seeds type, name with " (copy)", address, username, value, additional fields and folder, with a note that attachments, shares and history are not copied. Verify: vitest that the dialog starts with the prefilled values and saves through the normal create action.
-- [ ] 1.2 Add Clone to the More menu in `SecretDetailSidebar.vue`, hidden for passkey items. Verify: Playwright flow clone the fixture login, save, a second item exists with a new id and no shares.
+- [x] 1.1 Add a `prefill` prop to `SecretCreateDialog.vue` that seeds type, name with " (copy)", address, username, value, additional fields and folder, with a note that attachments, shares and history are not copied. Verify: vitest that the dialog starts with the prefilled values and saves through the normal create action.
+- [x] 1.2 Add Clone to the More menu in `SecretDetailSidebar.vue`, hidden for passkey items. Verify: Playwright flow clone the fixture login, save, a second item exists with a new id and no shares.
 
 ## 2. Attachment preview
 
-- [ ] 2.1 Extract the fetch, unwrap and decrypt steps of `attachment.js` `download()` into one helper and add `preview()` that returns an object URL for the allowed types. Verify: vitest for each allowed type and a refusal for `image/svg+xml`.
-- [ ] 2.2 Add `src/modals/AttachmentPreviewModal.vue` (image, sandboxed PDF frame, text) and a Preview button in `AttachmentPanel.vue`; revoke the URL on close. Verify: Playwright flow preview the fixture PNG, close, no download happened; hydra modal-isolation gate.
+- [x] 2.1 Extract the fetch, unwrap and decrypt steps of `attachment.js` `download()` into one helper and add `preview()` that returns an object URL for the allowed types. Verify: vitest for each allowed type and a refusal for `image/svg+xml`.
+- [x] 2.2 Add `src/modals/AttachmentPreviewModal.vue` (image, sandboxed PDF frame, text) and a Preview button in `AttachmentPanel.vue`; revoke the URL on close. Verify: Playwright flow preview the fixture PNG, close, no download happened; hydra modal-isolation gate.
 
 ## 3. Print and QR code
 
