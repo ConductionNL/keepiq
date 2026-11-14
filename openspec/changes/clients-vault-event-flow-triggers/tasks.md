@@ -6,15 +6,16 @@
 
 ## 1. Fire vault events
 
-- [ ] 1.1 Add `lib/Service/Flow/VaultFlowTriggerCatalog.php`: maps each `AuditEventTypes` constant to a trigger id (`keepiq.` + type), a label and a group (items, item reads, sharing, links, requests, emergency access, applications, keys). Verify: unit test that every constant in `AuditEventTypes` has exactly one entry.
-- [ ] 1.2 Add `lib/Listener/FlowTriggerForwardListener.php` on `AuditEvent`: skip when OpenRegister is not enabled or the group is off; build the payload with `SiemService::buildPayload()`; resolve `OCA\OpenRegister\Service\Flow\FlowTriggerService` from the container by string; call `fire(event, [], user, ['payload' => $payload])`; catch and log every `Throwable`. Verify: unit test with the real `AuditEvent` class, a stub trigger service, and assertions for group off, OpenRegister off, and a throwing service.
-- [ ] 1.3 Bind the listener in `lib/AppInfo/AuditStreamEventRegistrar.php` next to `SiemForwardListener`. Verify: a test that asserts the binding from the registrar, not from the listener.
-- [ ] 1.4 Listen for `RegisterFlowTriggersEvent` (string class name, guarded by `class_exists`) and add the catalog entries with group `Vault`. Verify: unit test with a fake registry.
+- [x] 1.1 Add `lib/Service/Flow/VaultFlowTriggerCatalog.php`: maps each `AuditEventTypes` constant to a trigger id (`keepiq.` + type), a label and a group (items, item reads, sharing, links, requests, emergency access, applications, keys). Verify: unit test that every constant in `AuditEventTypes` has exactly one entry.
+- [x] 1.2 Add `lib/Listener/FlowTriggerForwardListener.php` on `AuditEvent`: skip when OpenRegister is not enabled or the group is off; build the payload with `SiemService::buildPayload()`; resolve `OCA\OpenRegister\Service\Flow\FlowTriggerService` from the container by string; call `fire(event, [], user, ['payload' => $payload])`; catch and log every `Throwable`. Verify: unit test with the real `AuditEvent` class, a stub trigger service, and assertions for group off, OpenRegister off, and a throwing service.
+- [x] 1.3 Bind the listener in `lib/AppInfo/AuditStreamEventRegistrar.php` next to `SiemForwardListener`. Verify: a test that asserts the binding from the registrar, not from the listener.
+- [x] 1.4 Listen for `RegisterFlowTriggersEvent` (string class name, guarded by `class_exists`) and add the catalog entries with group `Vault`. Verify: unit test with a fake registry.
 
 ## 2. Admin setting
 
-- [ ] 2.1 Store enabled groups in app config `flow_trigger_groups` (JSON array, default empty); expose read and write on the existing admin settings endpoint, admin only. Verify: controller test that a non-admin gets 403 and an admin round-trips the value.
-- [ ] 2.2 Add a Flows section to the audit admin page (board KqBeheerAudit): one checkbox per group, the sentence "Flows receive who did what and when, never a secret.", and the section hidden when OpenRegister is not enabled. Verify: vitest for hidden and shown, and a Playwright check on the admin page.
+- [x] 2.1 Store enabled groups in app config `flow_trigger_groups` (JSON array, default empty); expose read and write on the existing admin settings endpoint, admin only. Verify: controller test that a non-admin gets 403 and an admin round-trips the value.
+- [x] 2.2 Add a Flows section to the audit admin page (board KqBeheerAudit): one checkbox per group, the sentence "Flows receive who did what and when, never a secret.", and the section hidden when OpenRegister is not enabled. Verify: vitest for hidden and shown, and a Playwright check on the admin page.
+  - Done: vitest `tests/components/AdminFlowTriggersSection.spec.js`; the Playwright check is owed with the live pass.
 
 ## 3. End to end
 
@@ -22,7 +23,7 @@
 
 ## 4. Docs
 
-- [ ] 4.1 Document the trigger list, the groups and the payload in `docs/flows.md`. Verify: docs build.
+- [x] 4.1 Document the trigger list, the groups and the payload in `docs/flows.md`. Verify: docs build.
 
 ## Acceptance criteria
 
