@@ -3,9 +3,9 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   Vault password-health report. Runs the client-side analysis engine over the
-  unlocked vault and renders an overall score plus five finding categories —
-  weak, reused, stale, breached (when both breach gates are on), and
-  possibly-compromised — each finding deep-linking to the secret detail. All
+  unlocked vault and renders an overall score plus six finding categories —
+  weak, reused, stale, breached (when both breach gates are on),
+  possibly-compromised and unencrypted address — each finding deep-linking to the secret detail. All
   value-bearing computation happens in the browser; nothing value-bearing leaves
   it. Shows an unlock prompt when the vault is locked and an "unavailable" state
   when the breach service is unreachable (password-health design D5/D6/D7).
@@ -89,6 +89,10 @@
 						{{ t('keepiq', 'Possibly compromised') }}:
 						{{ store.summary.compromisedCount }}
 					</li>
+					<li>
+						{{ t('keepiq', 'Unencrypted address') }}:
+						{{ store.summary.insecureAddressCount }}
+					</li>
 				</ul>
 
 				<HealthCategory
@@ -144,6 +148,25 @@
 					testid="category-compromised"
 					@open="openSecret" />
 				<HealthCategory
+					:title="t('keepiq', 'Unencrypted address')"
+					:description="
+						t(
+							'keepiq',
+							'These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.',
+						)
+					"
+					:findings="store.insecureAddressFindings"
+					:actionLabel="t('keepiq', 'Change to https')"
+					testid="category-insecure-address"
+					@open="openSecret"
+					@action="changeToHttps" />
+				<p
+					v-if="httpsError"
+					class="health-report__error"
+					data-testid="change-to-https-error">
+					{{ httpsError }}
+				</p>
+				<HealthCategory
 					:title="t('keepiq', 'Rotation due')"
 					:description="
 						t(
@@ -173,8 +196,10 @@ import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcSelect } from '@nextcloud/vue'
 import HealthCategory from '../components/HealthCategory.vue'
 import OwnershipFindings from '../components/OwnershipFindings.vue'
+import { httpsAddress } from '../health/insecureAddress.js'
 import { useHealthStore } from '../store/modules/health.js'
 import { useRotationStore } from '../store/modules/rotation.js'
+import { useSecretStore } from '../store/modules/secret.js'
 import { useSessionStore } from '../store/modules/session.js'
 import { secretDetailLocation } from '../utils/detailRoute.js'
 
@@ -187,8 +212,10 @@ export default {
 			store: useHealthStore(),
 			session: useSessionStore(),
 			rotation: useRotationStore(),
+			secrets: useSecretStore(),
 			breachGateOn: loadState('keepiq', 'breachCheckEnabled', false),
 			breachOptIn: false,
+			httpsError: '',
 			stalenessOption: { value: '365', label: t('keepiq', '365 days') },
 		}
 	},
@@ -312,6 +339,29 @@ export default {
 				stalenessThreshold: this.stalenessOption?.value ?? '365',
 				breachEnabled: this.breachActive,
 			})
+		},
+
+		/**
+		 * Save a finding's http address as https, then analyse again so the
+		 * login leaves the category. Only the address changes.
+		 *
+		 * @param {object} finding A finding of the Unencrypted address category.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
+		 */
+		async changeToHttps(finding) {
+			this.httpsError = ''
+			try {
+				await this.secrets.updateSecret(finding.id, {
+					url: httpsAddress(finding.url),
+				})
+			} catch {
+				this.httpsError = t('keepiq', 'Could not save the https address for {name}.', {
+					name: finding.name,
+				})
+				return
+			}
+			await this.reanalyse()
 		},
 
 		/**

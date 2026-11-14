@@ -18,6 +18,7 @@
 
 import zxcvbn from 'zxcvbn'
 import { isPasswordBearing } from './classify.js'
+import { isInsecureAddress } from './insecureAddress.js'
 
 /**
  * zxcvbn score at or below which a password is flagged weak.
@@ -136,7 +137,8 @@ async function digestIndex(rows, digest) {
 
 /**
  * The finding for one row, or null when it has no flag and no strength score.
- * Flags come in a fixed order: weak, reused, stale, compromised, breached.
+ * Flags come in a fixed order: weak, reused, stale, compromised, breached,
+ * insecure-address.
  *
  * @param {object} row One row passed to {@link analyse}.
  * @param {object} ctx The digest index, stale cutoff, reference time and breach verdicts.
@@ -158,6 +160,8 @@ function analyseRow(row, ctx) {
 		// Possibly-compromised (the one server-known finding, from suite recovery).
 		[Boolean(row.possiblyCompromisedAt), 'compromised'],
 		[breached, 'breached'],
+		// A plain-http address sends the password in the clear (health-site-security-checks D1).
+		[isInsecureAddress(row.url), 'insecure-address'],
 	]
 		.filter(([on]) => on)
 		.map(([, flag]) => flag)
@@ -168,6 +172,7 @@ function analyseRow(row, ctx) {
 	return {
 		id: row.id,
 		name: row.name,
+		url: row.url ?? null,
 		folderPath: row.folderPath ?? null,
 		score,
 		flags,
@@ -237,11 +242,14 @@ function summarise(analysedCount, findings) {
 		staleCount: count('stale'),
 		breachedCount: count('breached'),
 		compromisedCount: count('compromised'),
+		insecureAddressCount: count('insecure-address'),
 	}
 }
 
 /**
- * Compute the weighted vault health score (0–100) from finding counts.
+ * Compute the weighted vault health score (0–100) from finding counts. An
+ * unencrypted address is a fact about the saved address, not about the
+ * secret, so it does not weigh on the score.
  *
  * score = 100 × (1 − Σ(weightᵢ × countᵢ) / analysedCount), clamped to [0, 100].
  *
