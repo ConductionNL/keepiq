@@ -1,12 +1,12 @@
 {
-  "measured_at": "2026-11-14T20:27:24Z",
-  "commit": "42046b6c6d61fa7e67d4983e973950d785bc7dd1",
+  "measured_at": "2026-11-14T20:56:03Z",
+  "commit": "1af646f1d32177b0afa92476b9d7d86b5e053209",
   "tool": "common-ground-checker scan-local",
   "tool_version": "0.0.2+aa578398248c",
   "scoring_digest": "9fecce06b1cacea2",
-  "score": 97,
+  "score": 100,
   "criteria": {
-    "adrvalidator": "warn",
+    "adrvalidator": "pass",
     "changelog": "pass",
     "cicd": "pass",
     "codeofconduct": "pass",
@@ -38,7 +38,7 @@
     "tests": "pass"
   },
   "stars": {
-    "adrvalidator": 3,
+    "adrvalidator": 5,
     "changelog": 5,
     "cicd": 5,
     "codeofconduct": 5,
