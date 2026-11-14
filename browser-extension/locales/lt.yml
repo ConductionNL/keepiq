@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 Keepiq tapatybė. Norėdami pasirinkti, spauskite rodyklę žemyn.
         n: "Keepiq tapatybių: $1. Norėdami pasirinkti, spauskite rodyklę žemyn."
+  newPassword:
+    frameTitle: Keepiq stiprus slaptažodis
+    offer: Naudoti stiprų slaptažodį
+    locked: Atrakinkite Keepiq, kad gautumėte stiprų slaptažodį
+    status: Naudoti stiprų slaptažodį. Norėdami pasirinkti, spauskite rodyklę žemyn.
 
 notificationBar:
   label: Keepiq pranešimas

@@ -1,6 +1,6 @@
 import { i18n } from '#i18n'
 import {
-	INLINE_FRAME_TITLES, INLINE_GAP_PX, INLINE_INSET_PX, INLINE_MODES, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineHeight, THEMES,
+	GENERATE_ROW_ID, INLINE_FRAME_TITLES, INLINE_GAP_PX, INLINE_INSET_PX, INLINE_MODES, INLINE_RADIUS_PX, INLINE_ROW_PX, inlineClampHeight, inlineHeight, THEMES,
 	type ContentToInlineList, type FormConfirmation, type FormQuestion, type InlineCard, type InlineCode, type InlineListToBackground, type InlineMode, type InlineRow,
 	type InlineStateReply, type PasskeyRow, type PickInput,
 } from '@/src/messages'
@@ -50,6 +50,8 @@ const ROW_CHECKS: Record<InlineMode, (row: InlineRow) => boolean> = {
 	code: (row) => isCode(row.code) && row.detail === undefined && row.card === undefined,
 	card: (row) => isWalletRow(row) && row.detail === undefined && (row.card === undefined || isCard(row.card)),
 	identity: (row) => isWalletRow(row) && row.card === undefined && (row.detail === null || typeof row.detail === 'string'),
+	// The offer is drawn here; the background sends no rows for it.
+	newPassword: () => false,
 }
 
 function hasValidRows({ mode, rows }: Partial<State>): boolean {
@@ -95,11 +97,14 @@ function statusText(reply: State): string {
 	return count === 0 ? TEXTS[reply.mode].statusNoMatch(reply.host) : TEXTS[reply.mode].count(count)
 }
 
-/** Passkeys above the logins (spec `inline-list`, Passkeys in the list during a conditional request). */
-const shownRows = ({ rows, passkeys = [] }: State): Row[] => [
+/** The one offer of an unlocked `newPassword` list. */
+const offerRow = (): Row => ({ id: GENERATE_ROW_ID, name: i18n.t('inlineList.newPassword.offer'), username: null })
+
+/** Passkeys above the logins (spec `inline-list`, Passkeys in the list during a conditional request); a new-password list's offer alone. */
+const shownRows = ({ state, mode, rows, passkeys = [] }: State): Row[] => (mode === 'newPassword' ? (state === 'unlocked' ? [offerRow()] : []) : [
 	...passkeys.map((passkey) => ({ id: passkey.itemId, name: passkey.name, username: passkey.userName || null, credentialId: passkey.credentialId })),
 	...rows,
-]
+])
 
 /** The answers a pick carries: a login's insecure page, or every answer so far for a card or identity. */
 type Answers = { confirmedInsecure?: true; confirmed?: FormConfirmation }
@@ -157,6 +162,13 @@ const TEXTS: Record<InlineMode, ModeTexts> = {
 		count: (n) => i18n.t('inlineList.identity.status.count', n),
 		statusNoMatch: () => i18n.t('inlineList.identity.noMatch'),
 	},
+	newPassword: {
+		label: () => i18n.t(INLINE_FRAME_TITLES.newPassword),
+		noMatch: () => i18n.t('inlineList.newPassword.offer'),
+		locked: () => i18n.t('inlineList.newPassword.locked'),
+		count: () => i18n.t('inlineList.newPassword.status'),
+		statusNoMatch: () => i18n.t('inlineList.newPassword.offer'),
+	},
 }
 
 /** The rows `content` asks the host for, as the background counted them at `inline.open`, or null for content sized by its own height. */
@@ -202,6 +214,7 @@ const ICONS: Record<InlineMode | 'passkey', Shape[]> = {
 	passkey: [['circle', { cx: '8', cy: '15', r: '4' }], ['path', { d: 'M10.8 12.2 20 3M17 6l3 3M14.5 8.5l2 2' }]],
 	card: [['rect', { x: '2', y: '5', width: '20', height: '14', rx: '2' }], ['path', { d: 'M2 10h20M6 15h4' }]],
 	identity: [['circle', { cx: '12', cy: '8', r: '4' }], ['path', { d: 'M4 21a8 8 0 0 1 16 0' }]],
+	newPassword: [['rect', { x: '4', y: '11', width: '16', height: '10', rx: '2' }], ['path', { d: 'M8 11V7a4 4 0 0 1 8 0v4M12 15v2' }]],
 }
 
 function svgElement<K extends 'svg' | Shape[0]>(tag: K, attributes: Record<string, string>): SVGElementTagNameMap[K] {

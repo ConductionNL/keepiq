@@ -54,34 +54,6 @@ export const STEPS = [
 const DEFAULT_TYPE_NAME = 'login'
 
 /**
- * Build the lookup that turns an import row's `type` into a type id this vault
- * knows (keepiq#749).
- *
- * A backup written by the export serializer stores the server secret's
- * `typeId`, a UUID; the format parsers and older backups store a type name. A
- * known type id is kept, a name maps to the id of the vault's type with that
- * name (a system type wins over a custom type of the same name), and anything
- * else maps to null so the server applies its default type.
- *
- * @param {Array<object>} types The vault's secret types ({ id, name, scope }).
- * @return {function((string|null|undefined)): (string|null)} Maps a row type
- *   to a type id, or null.
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
- */
-export function typeIdResolver(types) {
-	const { ids, idsByName } = typeIndex(types)
-	return (rowType) => {
-		if (typeof rowType !== 'string' || rowType === '') {
-			return null
-		}
-		if (ids.has(rowType)) {
-			return rowType
-		}
-		return idsByName.get(rowType) ?? null
-	}
-}
-
-/**
  * The vault's type ids, and the id of each type name with a system type
  * ahead of a custom type of the same name.
  *
@@ -114,6 +86,70 @@ function systemTypesFirst(types) {
 		...known.filter((type) => type.scope === 'system'),
 		...known.filter((type) => type.scope !== 'system'),
 	]
+}
+
+/**
+ * Resolve the type of every restored row (portability-export-choice-and-restore-fidelity D3).
+ *
+ * A row carrying `typeName` (a backup written by the current serializer)
+ * takes, in order: the system type of that name; the vault's custom type of
+ * that name; a new user-scoped custom type with the backup's name and label,
+ * created once per name. A row without `typeName` (a parser, or an older
+ * backup) takes its `type` as a type id the vault knows, which recovers
+ * system types because their ids are the same on every instance, or else as
+ * a type name. A row that names a type none of this finds falls back to the
+ * default type and is listed, so the summary can warn on its row.
+ *
+ * @param {Array<object>} rows The rows to commit.
+ * @param {object} typeStore The secret type store (types, createType).
+ * @return {Promise<{typeIdFor: function(object): (string|null), created: Array<{name: string, label: string}>, fallbacks: Array<{sourceRow: number, type: string}>}>}
+ *   The row-to-type-id lookup, the types created and the rows that fell back.
+ * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ */
+export async function resolveRowTypes(rows, typeStore) {
+	const { ids, idsByName } = typeIndex(typeStore.types)
+	const created = []
+	const failedNames = new Set()
+	const fallbacks = []
+	const byRow = new Map()
+
+	const createFor = async (row) => {
+		if (failedNames.has(row.typeName)) {
+			return null
+		}
+		try {
+			const type = await typeStore.createType({ name: row.typeName, label: row.typeLabel, scope: 'user' })
+			if (type && type.id) {
+				idsByName.set(row.typeName, type.id)
+				ids.add(type.id)
+				created.push({ name: row.typeName, label: row.typeLabel })
+				return type.id
+			}
+		} catch {
+			// Falls back below, with a warning on the row.
+		}
+		failedNames.add(row.typeName)
+		return null
+	}
+
+	for (const row of rows) {
+		let id = null
+		if (typeof row.typeName === 'string' && row.typeName !== '') {
+			id = idsByName.get(row.typeName) ?? null
+			if (id === null && typeof row.typeLabel === 'string' && row.typeLabel !== '') {
+				id = await createFor(row)
+			}
+		}
+		if (id === null && typeof row.type === 'string' && row.type !== '') {
+			id = ids.has(row.type) ? row.type : (idsByName.get(row.type) ?? null)
+		}
+		if (id === null && namesAnotherType(row)) {
+			fallbacks.push({ sourceRow: row.sourceRow, type: row.typeLabel || row.typeName || row.type })
+		}
+		byRow.set(row, id)
+	}
+
+	return { typeIdFor: (row) => byRow.get(row) ?? null, created, fallbacks }
 }
 
 /**
@@ -166,9 +202,9 @@ async function encryptOptionalFields(item, row, publicKey) {
  * @return {boolean}
  */
 function namesAnotherType(row) {
-	return typeof row.type === 'string'
-		&& row.type !== ''
-		&& row.type !== DEFAULT_TYPE_NAME
+	return [row.typeName, row.type].some(
+		(type) => typeof type === 'string' && type !== '' && type !== DEFAULT_TYPE_NAME,
+	)
 }
 
 /**
@@ -220,7 +256,7 @@ async function ensureTypesLoaded(typeStore, rows) {
  * @param {object} context Encryption context.
  * @param {CryptoKey} context.publicKey The vault public key.
  * @param {Set<number>} context.dupRows Source rows to import as a copy.
- * @param {function((string|null|undefined)): (string|null)} context.typeIdFor Maps a row type to a type id.
+ * @param {function(object): (string|null)} context.typeIdFor Maps a row to its type id.
  * @param {string} context.rootFolder Root folder name, or ''.
  * @return {Promise<Array<object>>} The encrypted items.
  */
@@ -232,7 +268,7 @@ async function encryptRows(store, rows, { publicKey, dupRows, typeIdFor, rootFol
 			row,
 			publicKey,
 			asCopy,
-			typeIdFor(row.type),
+			typeIdFor(row),
 		)
 		if (rootFolder !== '') {
 			item.folderPath = [rootFolder, ...item.folderPath]
@@ -323,6 +359,23 @@ async function readWithParser(parser, text, options) {
 }
 
 /**
+ * The fields a partial backup left out, from its rows' markers.
+ *
+ * @param {Array<object>} rows The parsed rows.
+ * @return {Array<string>} The left-out fields, in first-seen order.
+ * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ */
+function partialFieldsOf(rows) {
+	const fields = new Set()
+	for (const row of rows) {
+		for (const field of Array.isArray(row.omittedFields) ? row.omittedFields : []) {
+			fields.add(field)
+		}
+	}
+	return [...fields]
+}
+
+/**
  * Whether a parsed row carries no errors.
  *
  * @param {object} row The parsed row.
@@ -353,7 +406,7 @@ function typeNameResolver(types) {
 	const nameById = new Map(
 		(Array.isArray(types) ? types : []).map((type) => [type.id, type.name]),
 	)
-	return (row) => nameById.get(row.type) || row.type || DEFAULT_TYPE_NAME
+	return (row) => row.typeName || nameById.get(row.type) || row.type || DEFAULT_TYPE_NAME
 }
 
 /**
@@ -429,6 +482,8 @@ export const useImportStore = defineStore('import', {
 		rows: [],
 		/** @type {Array<object>} Rejected rows ({ sourceRow, reason }). */
 		rejected: [],
+		/** @type {Array<string>} The fields a partial backup left out; empty for a complete file. */
+		partialFields: [],
 		/** @type {Array<object>} The detected/adjusted CSV column mapping. */
 		mapping: [],
 		/** @type {Array<string>} The CSV header row, for the mapping step. */
@@ -511,6 +566,7 @@ export const useImportStore = defineStore('import', {
 				this.adjustableMapping = read.adjustableMapping
 				this.sourceText = read.sourceText
 				this.format = format
+				this.partialFields = partialFieldsOf(read.rows)
 				this.rows = read.rows.filter(rowIsClean)
 				this.rejected = read.rows
 					.filter((r) => !rowIsClean(r))
@@ -586,7 +642,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {CryptoKey} publicKey The owner's imported public key.
 		 * @param {boolean} asCopy Whether to apply the "(imported)" copy suffix.
 		 * @param {string|null} typeId The vault type id resolved for the row's
-		 *   `type` (see typeIdResolver), or null for the server's default type.
+		 *   `type` (see resolveRowTypes), or null for the server's default type.
 		 * @return {Promise<object>} The ciphertext-only item.
 		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
@@ -679,8 +735,9 @@ export const useImportStore = defineStore('import', {
 			// imports under the default type.
 			const typeStore = useSecretTypeStore()
 			await ensureTypesLoaded(typeStore, rows)
-			const typeIdFor = typeIdResolver(typeStore.types)
 			await this.dropPolicyRejected(rows, typeStore.types)
+			// A backup's type names find, or create, each row's type (D3).
+			const { typeIdFor, created: createdTypes, fallbacks: typeFallbacks } = await resolveRowTypes(rows, typeStore)
 
 			// Encrypt every row client-side BEFORE any request leaves the browser.
 			const items = await encryptRows(
@@ -711,6 +768,9 @@ export const useImportStore = defineStore('import', {
 				rejected: this.rejected.length,
 				foldersCreated: foldersCreated.size,
 				rejectedRows: [...this.rejected],
+				createdTypes,
+				typeFallbacks,
+				omittedFields: [...this.partialFields],
 			}
 			this.step = 'summary'
 			this.loading = false
@@ -801,6 +861,7 @@ export const useImportStore = defineStore('import', {
 			this.format = null
 			this.rows = []
 			this.rejected = []
+			this.partialFields = []
 			this.mapping = []
 			this.headers = []
 			this.adjustableMapping = false

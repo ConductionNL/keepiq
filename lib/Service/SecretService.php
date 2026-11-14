@@ -37,6 +37,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
+use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
@@ -147,6 +148,7 @@ class SecretService implements SecretServiceInterface {
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
+	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
 	 *
 	 * @return void
 	 */
@@ -174,6 +176,7 @@ class SecretService implements SecretServiceInterface {
 		private ?OrgOwnershipGuard $orgOwnership = null,
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 		private ?FederatedShareService $federatedShares = null,
+		private ?SecretUrlMapper $urlMapper = null,
 	) {
 	}//end __construct()
 
@@ -1477,6 +1480,7 @@ class SecretService implements SecretServiceInterface {
 		$this->versionService?->deleteForSecret($secretId);
 		$this->rotationService?->deleteForSecret($secretId);
 		$this->tagMapper?->deleteBySecret($secretId);
+		$this->urlMapper?->deleteBySecret($secretId);
 	}//end deleteSecretData()
 
 	/**
