@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Това не е ключ на удостоверител. Поставете връзка otpauth://totp/ или тайната във формат base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Този QR код не съдържа ключ на удостоверител. Използвайте QR кода, който сайтът показва при настройване на двуфакторното влизане.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Тази тайна изчаква проверка на споделянията си, която още не е завършила. Нищо не беше запазено; опитайте отново по-късно или помолете администратор да провери дали фоновите задачи се изпълняват.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само собственикът може да промени мениджър или членство, което обхваща мениджър."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само собственикът може да промени мениджър или членство, което обхваща мениджър.",
+        "Field kind": "Вид поле",
+        "Yes or no": "Да или не",
+        "Public key": "Публичен ключ",
+        "Fingerprint": "Отпечатък",
+        "Copy public key": "Копиране на публичния ключ",
+        "Copy fingerprint": "Копиране на отпечатъка",
+        "Generate key pair": "Генериране на двойка ключове",
+        "Import from file": "Внасяне от файл",
+        "Derived from the public key.": "Изведен от публичния ключ.",
+        "The file could not be read.": "Файлът не можа да бъде прочетен.",
+        "This browser could not generate a key pair.": "Този браузър не успя да генерира двойка ключове.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Това не е частен ключ. Поставете частен ключ във формат OpenSSH или PEM или генерирайте нов.",
+        "This is not an OpenSSH public key.": "Това не е публичен ключ във формат OpenSSH.",
+        "This public key does not belong to the private key.": "Този публичен ключ не принадлежи на частния ключ."
     },
     "nplurals=2; plural=(n != 1);"
 )

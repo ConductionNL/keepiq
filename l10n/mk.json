@@ -1811,7 +1811,21 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ова не е клуч на автентикатор. Залепете врска otpauth://totp/ или тајната во формат base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Овој QR-код не содржи клуч на автентикатор. Користете го QR-кодот што го прикажува страницата кога ја поставувате најавата во два чекора.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Оваа тајна чека проверка на нејзините споделувања која сè уште не е завршена. Ништо не е зачувано; обидете се повторно подоцна или замолете администратор да провери дали работат позадинските задачи.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само сопственикот може да промени менаџер или членство што опфаќа менаџер."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само сопственикот може да промени менаџер или членство што опфаќа менаџер.",
+        "Field kind": "Вид поле",
+        "Yes or no": "Да или не",
+        "Public key": "Јавен клуч",
+        "Fingerprint": "Отпечаток",
+        "Copy public key": "Копирај го јавниот клуч",
+        "Copy fingerprint": "Копирај го отпечатокот",
+        "Generate key pair": "Генерирај пар клучеви",
+        "Import from file": "Увези од датотека",
+        "Derived from the public key.": "Изведен од јавниот клуч.",
+        "The file could not be read.": "Датотеката не можеше да се прочита.",
+        "This browser could not generate a key pair.": "Овој прелистувач не можеше да генерира пар клучеви.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ова не е приватен клуч. Залепете приватен клуч во формат OpenSSH или PEM или генерирајте нов.",
+        "This is not an OpenSSH public key.": "Ова не е јавен клуч во формат OpenSSH.",
+        "This public key does not belong to the private key.": "Овој јавен клуч не припаѓа на приватниот клуч."
     },
     "plurals": null
 }

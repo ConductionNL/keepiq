@@ -1811,7 +1811,21 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dëst ass kee Authentifikatorschlëssel. Plakt en otpauth://totp/-Link oder dat base32-Geheimnis an.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dëse QR-Code huet keen Authentifikatorschlëssel dran. Benotzt de QR-Code, deen de Site weist, wann Dir d'Zwee-Faktor-Umeldung ariichtt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dëst Geheimnis waart op eng Kontroll vu senge Fräigaben, déi nach net fäerdeg ass. Näischt gouf gespäichert; probéiert méi spéit nach eng Kéier, oder frot en Administrateur ze kontrolléieren, ob d'Hannergrondaufgaben lafen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Nëmmen de Besëtzer kann e Manager änneren, oder eng Memberschaft, déi e Manager ëmfaasst."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Nëmmen de Besëtzer kann e Manager änneren, oder eng Memberschaft, déi e Manager ëmfaasst.",
+        "Field kind": "Feldaart",
+        "Yes or no": "Jo oder nee",
+        "Public key": "Ëffentleche Schlëssel",
+        "Fingerprint": "Fangerofdrock",
+        "Copy public key": "Ëffentleche Schlëssel kopéieren",
+        "Copy fingerprint": "Fangerofdrock kopéieren",
+        "Generate key pair": "Schlësselpuer generéieren",
+        "Import from file": "Aus enger Datei importéieren",
+        "Derived from the public key.": "Vum ëffentleche Schlëssel ofgeleet.",
+        "The file could not be read.": "D’Datei konnt net gelies ginn.",
+        "This browser could not generate a key pair.": "Dëse Browser konnt kee Schlësselpuer generéieren.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dat ass kee private Schlëssel. Fügt e private OpenSSH- oder PEM-Schlëssel an oder generéiert een.",
+        "This is not an OpenSSH public key.": "Dat ass keen ëffentlechen OpenSSH-Schlëssel.",
+        "This public key does not belong to the private key.": "Dësen ëffentleche Schlëssel gehéiert net zum private Schlëssel."
     },
     "plurals": null
 }

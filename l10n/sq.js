@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ky nuk është çelës autentikuesi. Ngjitni një lidhje otpauth://totp/ ose sekretin base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ky kod QR nuk përmban çelës autentikuesi. Përdorni kodin QR që shfaq faqja kur vendosni hyrjen me dy faktorë.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ky sekret po pret një kontroll të ndarjeve të tij që nuk ka përfunduar ende. Asgjë nuk u ruajt; provoni përsëri më vonë ose kërkojini një administratori të kontrollojë që punët në sfond po ekzekutohen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Vetëm pronari mund të ndryshojë një menaxher, ose një anëtarësim që përfshin një menaxher."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Vetëm pronari mund të ndryshojë një menaxher, ose një anëtarësim që përfshin një menaxher.",
+        "Field kind": "Lloji i fushës",
+        "Yes or no": "Po ose jo",
+        "Public key": "Çelësi publik",
+        "Fingerprint": "Gjurma",
+        "Copy public key": "Kopjo çelësin publik",
+        "Copy fingerprint": "Kopjo gjurmën",
+        "Generate key pair": "Gjenero një çift çelësash",
+        "Import from file": "Importo nga skedari",
+        "Derived from the public key.": "Nxjerrë nga çelësi publik.",
+        "The file could not be read.": "Skedari nuk mund të lexohej.",
+        "This browser could not generate a key pair.": "Ky shfletues nuk mundi të gjenerojë një çift çelësash.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ky nuk është çelës privat. Ngjitni një çelës privat OpenSSH ose PEM, ose gjeneroni një të ri.",
+        "This is not an OpenSSH public key.": "Ky nuk është çelës publik OpenSSH.",
+        "This public key does not belong to the private key.": "Ky çelës publik nuk i përket çelësit privat."
     },
     "nplurals=2; plural=(n != 1);"
 )

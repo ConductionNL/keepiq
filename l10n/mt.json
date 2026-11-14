@@ -1863,7 +1863,21 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Din mhijiex ċavetta tal-awtentikatur. Waħħal link otpauth://totp/ jew is-sigriet base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dan il-kodiċi QR ma fihx ċavetta tal-awtentikatur. Uża l-kodiċi QR li s-sit juri meta tissettja l-awtentikazzjoni b'żewġ fatturi.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dan is-sigriet qed jistenna verifika tal-qsim tiegħu li għadha ma ntemmitx. Ma ġie ssejvjat xejn; erġa' pprova aktar tard, jew staqsi lil amministratur jiċċekkja li x-xogħlijiet fl-isfond qed jaħdmu.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Is-sid biss jista' jibdel maniġer, jew sħubija li tkopri maniġer."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Is-sid biss jista' jibdel maniġer, jew sħubija li tkopri maniġer.",
+        "Field kind": "Tip ta’ qasam",
+        "Yes or no": "Iva jew le",
+        "Public key": "Ċavetta pubblika",
+        "Fingerprint": "Marka tas-swaba’",
+        "Copy public key": "Ikkopja ċ-ċavetta pubblika",
+        "Copy fingerprint": "Ikkopja l-marka tas-swaba’",
+        "Generate key pair": "Iġġenera par ta’ ċwievet",
+        "Import from file": "Importa minn fajl",
+        "Derived from the public key.": "Derivata miċ-ċavetta pubblika.",
+        "The file could not be read.": "Il-fajl ma setax jinqara.",
+        "This browser could not generate a key pair.": "Dan il-browser ma setax jiġġenera par ta’ ċwievet.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Din mhijiex ċavetta privata. Waħħal ċavetta privata OpenSSH jew PEM, jew iġġenera waħda.",
+        "This is not an OpenSSH public key.": "Din mhijiex ċavetta pubblika OpenSSH.",
+        "This public key does not belong to the private key.": "Din iċ-ċavetta pubblika ma tappartjenix liċ-ċavetta privata."
     },
     "plurals": null
 }

@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "See ei ole autentija võti. Kleebi otpauth://totp/-link või base32-saladus.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "See QR-kood ei sisalda autentija võtit. Kasuta QR-koodi, mida sait näitab kaheastmelise sisselogimise seadistamisel.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "See saladus ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei salvestatud; proovige hiljem uuesti või paluge administraatoril kontrollida, kas taustatööd töötavad.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Ainult omanik saab muuta haldurit või liikmesust, mis hõlmab haldurit."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Ainult omanik saab muuta haldurit või liikmesust, mis hõlmab haldurit.",
+        "Field kind": "Välja liik",
+        "Yes or no": "Jah või ei",
+        "Public key": "Avalik võti",
+        "Fingerprint": "Sõrmejälg",
+        "Copy public key": "Kopeeri avalik võti",
+        "Copy fingerprint": "Kopeeri sõrmejälg",
+        "Generate key pair": "Loo võtmepaar",
+        "Import from file": "Impordi failist",
+        "Derived from the public key.": "Tuletatud avalikust võtmest.",
+        "The file could not be read.": "Faili ei õnnestunud lugeda.",
+        "This browser could not generate a key pair.": "See brauser ei suutnud võtmepaari luua.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "See ei ole privaatvõti. Kleepige OpenSSH- või PEM-vormingus privaatvõti või looge uus.",
+        "This is not an OpenSSH public key.": "See ei ole OpenSSH avalik võti.",
+        "This public key does not belong to the private key.": "See avalik võti ei kuulu selle privaatvõtme juurde."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Это не ключ аутентификатора. Вставьте ссылку otpauth://totp/ или секрет в формате base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Этот QR-код не содержит ключ аутентификатора. Используйте QR-код, который сайт показывает при настройке двухфакторного входа.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Этот секрет ожидает проверки своих общих доступов, которая ещё не завершена. Ничего не сохранено; повторите попытку позже или попросите администратора проверить, работают ли фоновые задания.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Только владелец может изменить менеджера или членство, которое охватывает менеджера."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Только владелец может изменить менеджера или членство, которое охватывает менеджера.",
+        "Field kind": "Вид поля",
+        "Yes or no": "Да или нет",
+        "Public key": "Открытый ключ",
+        "Fingerprint": "Отпечаток",
+        "Copy public key": "Скопировать открытый ключ",
+        "Copy fingerprint": "Скопировать отпечаток",
+        "Generate key pair": "Сгенерировать пару ключей",
+        "Import from file": "Импортировать из файла",
+        "Derived from the public key.": "Вычислен по открытому ключу.",
+        "The file could not be read.": "Не удалось прочитать файл.",
+        "This browser could not generate a key pair.": "Этот браузер не смог сгенерировать пару ключей.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Это не закрытый ключ. Вставьте закрытый ключ OpenSSH или PEM либо сгенерируйте новый.",
+        "This is not an OpenSSH public key.": "Это не открытый ключ OpenSSH.",
+        "This public key does not belong to the private key.": "Этот открытый ключ не соответствует закрытому ключу."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

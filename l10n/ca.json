@@ -1811,7 +1811,21 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Això no és una clau d'autenticador. Enganxeu un enllaç otpauth://totp/ o el secret en base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Aquest codi QR no conté cap clau d'autenticador. Feu servir el codi QR que el lloc mostra quan configureu l'inici de sessió en dos passos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Aquest secret està esperant una comprovació de les seves comparticions que encara no ha acabat. No s'ha desat res; torneu-ho a provar més tard o demaneu a un administrador que comprovi que les tasques en segon pla s'executen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Només el propietari pot canviar un gestor o una pertinença que inclogui un gestor."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Només el propietari pot canviar un gestor o una pertinença que inclogui un gestor.",
+        "Field kind": "Tipus de camp",
+        "Yes or no": "Sí o no",
+        "Public key": "Clau pública",
+        "Fingerprint": "Empremta",
+        "Copy public key": "Copia la clau pública",
+        "Copy fingerprint": "Copia l’empremta",
+        "Generate key pair": "Genera un parell de claus",
+        "Import from file": "Importa des d’un fitxer",
+        "Derived from the public key.": "Derivada de la clau pública.",
+        "The file could not be read.": "No s’ha pogut llegir el fitxer.",
+        "This browser could not generate a key pair.": "Aquest navegador no ha pogut generar un parell de claus.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Això no és una clau privada. Enganxeu una clau privada OpenSSH o PEM, o genereu-ne una.",
+        "This is not an OpenSSH public key.": "Això no és una clau pública OpenSSH.",
+        "This public key does not belong to the private key.": "Aquesta clau pública no correspon a la clau privada."
     },
     "plurals": null
 }

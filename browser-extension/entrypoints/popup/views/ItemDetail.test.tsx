@@ -155,6 +155,16 @@ describe('additional fields and notes', () => {
 		expect([...section('Notes').querySelectorAll('.notes')].map((note) => note.textContent)).toEqual(['a\nb\nc', 'a\nb\nc'])
 	})
 
+	it('shows a hidden field masked and, on Show, as its value rather than its JSON (Keepiq vault-custom-fields)', async () => {
+		renderDetail(itemMeta(), { key: 'pw', additionalFields: JSON.stringify({ 'Recovery code': { value: 'r-1', kind: 'hidden' }, tenant: 'acme' }) })
+		const fields = await screen.findByRole('heading', { name: 'Additional fields' }).then((h) => h.closest('section')!)
+		expect(within(fields).queryByText('r-1')).toBeNull()
+		expect(fields.textContent).not.toContain('"kind"')
+		await userEvent.click(within(fields).getByRole('button', { name: /^Show recovery code$/i }))
+		expect(within(fields).getByText('r-1')).toBeTruthy()
+		expect(fields.textContent).not.toContain('{')
+	})
+
 	it('says when the fields do not parse', async () => {
 		renderDetail(itemMeta(), { key: 'pw', additionalFields: '[1,2]' })
 		expect(await screen.findByText('Could not read additional fields')).toBeTruthy()

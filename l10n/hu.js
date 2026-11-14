@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ez nem hitelesítőkulcs. Illesszen be egy otpauth://totp/ hivatkozást vagy a base32 titkot.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ez a QR-kód nem tartalmaz hitelesítőkulcsot. Használja azt a QR-kódot, amelyet a webhely a kétlépcsős bejelentkezés beállításakor megjelenít.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ez a titok a megosztásainak ellenőrzésére vár, amely még nem fejeződött be. Semmi sem lett mentve; próbálja újra később, vagy kérje meg a rendszergazdát, hogy ellenőrizze, futnak-e a háttérfeladatok.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Csak a tulajdonos módosíthat kezelőt, vagy olyan tagságot, amely kezelőre is kiterjed."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Csak a tulajdonos módosíthat kezelőt, vagy olyan tagságot, amely kezelőre is kiterjed.",
+        "Field kind": "Mező fajtája",
+        "Yes or no": "Igen vagy nem",
+        "Public key": "Nyilvános kulcs",
+        "Fingerprint": "Ujjlenyomat",
+        "Copy public key": "Nyilvános kulcs másolása",
+        "Copy fingerprint": "Ujjlenyomat másolása",
+        "Generate key pair": "Kulcspár generálása",
+        "Import from file": "Importálás fájlból",
+        "Derived from the public key.": "A nyilvános kulcsból származtatva.",
+        "The file could not be read.": "A fájlt nem sikerült beolvasni.",
+        "This browser could not generate a key pair.": "Ez a böngésző nem tudott kulcspárt generálni.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ez nem titkos kulcs. Illesszen be egy OpenSSH vagy PEM formátumú titkos kulcsot, vagy generáljon egyet.",
+        "This is not an OpenSSH public key.": "Ez nem OpenSSH nyilvános kulcs.",
+        "This public key does not belong to the private key.": "Ez a nyilvános kulcs nem a titkos kulcshoz tartozik."
     },
     "nplurals=2; plural=(n != 1);"
 )

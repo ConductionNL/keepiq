@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dette er ikke en autentifikatornøgle. Indsæt et otpauth://totp/-link eller base32-hemmeligheden.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Denne QR-kode indeholder ikke en autentifikatornøgle. Brug den QR-kode, som siden viser, når du opsætter totrinslogin.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Denne hemmelighed venter på en kontrol af dens delinger, som ikke er færdig endnu. Intet blev gemt; prøv igen senere, eller bed en administrator om at kontrollere, at baggrundsjob kører.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Kun ejeren kan ændre en administrator eller et medlemskab, der omfatter en administrator."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Kun ejeren kan ændre en administrator eller et medlemskab, der omfatter en administrator.",
+        "Field kind": "Felttype",
+        "Yes or no": "Ja eller nej",
+        "Public key": "Offentlig nøgle",
+        "Fingerprint": "Fingeraftryk",
+        "Copy public key": "Kopiér offentlig nøgle",
+        "Copy fingerprint": "Kopiér fingeraftryk",
+        "Generate key pair": "Generer nøglepar",
+        "Import from file": "Importér fra fil",
+        "Derived from the public key.": "Afledt af den offentlige nøgle.",
+        "The file could not be read.": "Filen kunne ikke læses.",
+        "This browser could not generate a key pair.": "Denne browser kunne ikke generere et nøglepar.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dette er ikke en privat nøgle. Indsæt en privat OpenSSH- eller PEM-nøgle, eller generer en.",
+        "This is not an OpenSSH public key.": "Dette er ikke en offentlig OpenSSH-nøgle.",
+        "This public key does not belong to the private key.": "Denne offentlige nøgle hører ikke til den private nøgle."
     },
     "nplurals=2; plural=(n != 1);"
 )

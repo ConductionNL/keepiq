@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ovo nije ključ autentifikatora. Zalijepite poveznicu otpauth://totp/ ili tajnu u formatu base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ovaj QR kod ne sadrži ključ autentifikatora. Koristite QR kod koji stranica prikazuje kada postavljate prijavu u dva koraka.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ova tajna čeka provjeru svojih dijeljenja koja još nije završena. Ništa nije sačuvano; pokušajte ponovo kasnije ili zamolite administratora da provjeri rade li pozadinski poslovi.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Samo vlasnik može promijeniti upravitelja ili članstvo koje obuhvata upravitelja."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Samo vlasnik može promijeniti upravitelja ili članstvo koje obuhvata upravitelja.",
+        "Field kind": "Vrsta polja",
+        "Yes or no": "Da ili ne",
+        "Public key": "Javni ključ",
+        "Fingerprint": "Otisak",
+        "Copy public key": "Kopiraj javni ključ",
+        "Copy fingerprint": "Kopiraj otisak",
+        "Generate key pair": "Generiraj par ključeva",
+        "Import from file": "Uvezi iz datoteke",
+        "Derived from the public key.": "Izveden iz javnog ključa.",
+        "The file could not be read.": "Datoteka se nije mogla pročitati.",
+        "This browser could not generate a key pair.": "Ovaj preglednik nije mogao generirati par ključeva.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ovo nije privatni ključ. Zalijepite privatni ključ u formatu OpenSSH ili PEM ili generirajte novi.",
+        "This is not an OpenSSH public key.": "Ovo nije javni ključ u formatu OpenSSH.",
+        "This public key does not belong to the private key.": "Ovaj javni ključ ne pripada privatnom ključu."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

@@ -1811,7 +1811,21 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Det här är inte en autentiserarnyckel. Klistra in en otpauth://totp/-länk eller base32-hemligheten.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Den här QR-koden innehåller ingen autentiserarnyckel. Använd den QR-kod som webbplatsen visar när du ställer in tvåstegsinloggning.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Den här hemligheten väntar på en kontroll av sina delningar som inte är klar än. Inget sparades; försök igen senare eller be en administratör kontrollera att bakgrundsjobb körs.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Endast ägaren kan ändra en ansvarig, eller ett medlemskap som omfattar en ansvarig."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Endast ägaren kan ändra en ansvarig, eller ett medlemskap som omfattar en ansvarig.",
+        "Field kind": "Fälttyp",
+        "Yes or no": "Ja eller nej",
+        "Public key": "Publik nyckel",
+        "Fingerprint": "Fingeravtryck",
+        "Copy public key": "Kopiera publik nyckel",
+        "Copy fingerprint": "Kopiera fingeravtryck",
+        "Generate key pair": "Generera nyckelpar",
+        "Import from file": "Importera från fil",
+        "Derived from the public key.": "Härlett från den publika nyckeln.",
+        "The file could not be read.": "Filen kunde inte läsas.",
+        "This browser could not generate a key pair.": "Den här webbläsaren kunde inte generera ett nyckelpar.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Det här är ingen privat nyckel. Klistra in en privat OpenSSH- eller PEM-nyckel, eller generera en.",
+        "This is not an OpenSSH public key.": "Det här är ingen publik OpenSSH-nyckel.",
+        "This public key does not belong to the private key.": "Den här publika nyckeln hör inte till den privata nyckeln."
     },
     "plurals": null
 }

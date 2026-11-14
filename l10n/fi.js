@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Tämä ei ole autentikaattoriavain. Liitä otpauth://totp/-linkki tai base32-salaisuus.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tämä QR-koodi ei sisällä autentikaattoriavainta. Käytä QR-koodia, jonka sivusto näyttää, kun otat kaksivaiheisen kirjautumisen käyttöön.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Tämä salaisuus odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei tallennettu; yritä myöhemmin uudelleen tai pyydä ylläpitäjää tarkistamaan, että taustatyöt ovat käynnissä.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Vain omistaja voi muuttaa ylläpitäjää tai jäsenyyttä, joka kattaa ylläpitäjän."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Vain omistaja voi muuttaa ylläpitäjää tai jäsenyyttä, joka kattaa ylläpitäjän.",
+        "Field kind": "Kentän laji",
+        "Yes or no": "Kyllä tai ei",
+        "Public key": "Julkinen avain",
+        "Fingerprint": "Sormenjälki",
+        "Copy public key": "Kopioi julkinen avain",
+        "Copy fingerprint": "Kopioi sormenjälki",
+        "Generate key pair": "Luo avainpari",
+        "Import from file": "Tuo tiedostosta",
+        "Derived from the public key.": "Johdettu julkisesta avaimesta.",
+        "The file could not be read.": "Tiedostoa ei voitu lukea.",
+        "This browser could not generate a key pair.": "Tämä selain ei pystynyt luomaan avainparia.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Tämä ei ole yksityinen avain. Liitä OpenSSH- tai PEM-muotoinen yksityinen avain tai luo uusi.",
+        "This is not an OpenSSH public key.": "Tämä ei ole OpenSSH-muotoinen julkinen avain.",
+        "This public key does not belong to the private key.": "Tämä julkinen avain ei kuulu yksityiseen avaimeen."
     },
     "nplurals=2; plural=(n != 1);"
 )

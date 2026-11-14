@@ -1739,7 +1739,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dit is geen authenticator-sleutel. Plak een otpauth://totp/-link of het base32-geheim.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Deze QR-code bevat geen authenticator-sleutel. Gebruik de QR-code die de site toont wanneer je tweestapsaanmelding instelt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dit geheim wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw, of vraag een beheerder te controleren of achtergrondtaken draaien.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat.",
+        "Field kind": "Soort veld",
+        "Yes or no": "Ja of nee",
+        "Public key": "Publieke sleutel",
+        "Fingerprint": "Vingerafdruk",
+        "Copy public key": "Publieke sleutel kopiëren",
+        "Copy fingerprint": "Vingerafdruk kopiëren",
+        "Generate key pair": "Sleutelpaar genereren",
+        "Import from file": "Importeren uit bestand",
+        "Derived from the public key.": "Afgeleid van de publieke sleutel.",
+        "The file could not be read.": "Het bestand kon niet worden gelezen.",
+        "This browser could not generate a key pair.": "Deze browser kon geen sleutelpaar genereren.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dit is geen privésleutel. Plak een OpenSSH- of PEM-privésleutel, of genereer er een.",
+        "This is not an OpenSSH public key.": "Dit is geen OpenSSH-publieke sleutel.",
+        "This public key does not belong to the private key.": "Deze publieke sleutel hoort niet bij de privésleutel."
     },
     "nplurals=2; plural=(n != 1);"
 )

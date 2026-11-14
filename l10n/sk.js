@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Toto nie je kľúč autentifikátora. Vložte odkaz otpauth://totp/ alebo tajomstvo vo formáte base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tento QR kód neobsahuje kľúč autentifikátora. Použite QR kód, ktorý web zobrazí pri nastavovaní dvojfázového prihlásenia.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajomstvo čaká na kontrolu svojich zdieľaní, ktorá ešte neskončila. Nič sa neuložilo; skúste to neskôr alebo požiadajte správcu, aby overil, že bežia úlohy na pozadí.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Správcu alebo členstvo, ktoré zahŕňa správcu, môže zmeniť len vlastník."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Správcu alebo členstvo, ktoré zahŕňa správcu, môže zmeniť len vlastník.",
+        "Field kind": "Druh poľa",
+        "Yes or no": "Áno alebo nie",
+        "Public key": "Verejný kľúč",
+        "Fingerprint": "Odtlačok",
+        "Copy public key": "Kopírovať verejný kľúč",
+        "Copy fingerprint": "Kopírovať odtlačok",
+        "Generate key pair": "Vygenerovať pár kľúčov",
+        "Import from file": "Importovať zo súboru",
+        "Derived from the public key.": "Odvodené z verejného kľúča.",
+        "The file could not be read.": "Súbor sa nepodarilo prečítať.",
+        "This browser could not generate a key pair.": "Tento prehliadač nedokázal vygenerovať pár kľúčov.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Toto nie je privátny kľúč. Vložte privátny kľúč OpenSSH alebo PEM, alebo nejaký vygenerujte.",
+        "This is not an OpenSSH public key.": "Toto nie je verejný kľúč OpenSSH.",
+        "This public key does not belong to the private key.": "Tento verejný kľúč nepatrí k privátnemu kľúču."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

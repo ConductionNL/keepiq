@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Αυτό δεν είναι κλειδί επαληθευτή. Επικολλήστε έναν σύνδεσμο otpauth://totp/ ή το μυστικό base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Αυτός ο κωδικός QR δεν περιέχει κλειδί επαληθευτή. Χρησιμοποιήστε τον κωδικό QR που εμφανίζει ο ιστότοπος όταν ρυθμίζετε τη σύνδεση δύο παραγόντων.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Αυτό το μυστικό περιμένει έναν έλεγχο των κοινοποιήσεών του που δεν έχει ολοκληρωθεί ακόμη. Δεν αποθηκεύτηκε τίποτα· δοκιμάστε ξανά αργότερα ή ζητήστε από έναν διαχειριστή να ελέγξει ότι εκτελούνται οι εργασίες παρασκηνίου.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Μόνο ο κάτοχος μπορεί να αλλάξει έναν διαχειριστή ή μια συμμετοχή που καλύπτει έναν διαχειριστή."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Μόνο ο κάτοχος μπορεί να αλλάξει έναν διαχειριστή ή μια συμμετοχή που καλύπτει έναν διαχειριστή.",
+        "Field kind": "Είδος πεδίου",
+        "Yes or no": "Ναι ή όχι",
+        "Public key": "Δημόσιο κλειδί",
+        "Fingerprint": "Αποτύπωμα",
+        "Copy public key": "Αντιγραφή δημόσιου κλειδιού",
+        "Copy fingerprint": "Αντιγραφή αποτυπώματος",
+        "Generate key pair": "Δημιουργία ζεύγους κλειδιών",
+        "Import from file": "Εισαγωγή από αρχείο",
+        "Derived from the public key.": "Προκύπτει από το δημόσιο κλειδί.",
+        "The file could not be read.": "Δεν ήταν δυνατή η ανάγνωση του αρχείου.",
+        "This browser could not generate a key pair.": "Αυτό το πρόγραμμα περιήγησης δεν μπόρεσε να δημιουργήσει ζεύγος κλειδιών.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Αυτό δεν είναι ιδιωτικό κλειδί. Επικολλήστε ένα ιδιωτικό κλειδί OpenSSH ή PEM ή δημιουργήστε ένα.",
+        "This is not an OpenSSH public key.": "Αυτό δεν είναι δημόσιο κλειδί OpenSSH.",
+        "This public key does not belong to the private key.": "Αυτό το δημόσιο κλειδί δεν ανήκει στο ιδιωτικό κλειδί."
     },
     "nplurals=2; plural=(n != 1);"
 )

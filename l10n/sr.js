@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ово није кључ аутентификатора. Налепите везу otpauth://totp/ или тајну у формату base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Овај QR код не садржи кључ аутентификатора. Користите QR код који сајт приказује када подешавате пријаву у два корака.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ова тајна чека проверу својих дељења која још није завршена. Ништа није сачувано; покушајте поново касније или замолите администратора да провери да ли раде позадински послови.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника.",
+        "Field kind": "Врста поља",
+        "Yes or no": "Да или не",
+        "Public key": "Јавни кључ",
+        "Fingerprint": "Отисак",
+        "Copy public key": "Копирај јавни кључ",
+        "Copy fingerprint": "Копирај отисак",
+        "Generate key pair": "Генериши пар кључева",
+        "Import from file": "Увези из датотеке",
+        "Derived from the public key.": "Изведен из јавног кључа.",
+        "The file could not be read.": "Датотека није могла да се прочита.",
+        "This browser could not generate a key pair.": "Овај прегледач није могао да генерише пар кључева.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ово није приватни кључ. Налепите приватни кључ у формату OpenSSH или PEM или генеришите нови.",
+        "This is not an OpenSSH public key.": "Ово није јавни кључ у формату OpenSSH.",
+        "This public key does not belong to the private key.": "Овај јавни кључ не припада приватном кључу."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
