@@ -325,7 +325,8 @@ export default {
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 */
 		policyVerdict() {
-			if (this.isCard || this.isIdentity) {
+			// An SSH private key is not a password; a strength score of it means nothing.
+			if (this.isCard || this.isIdentity || this.isSshKey) {
 				return { compliant: true, reason: null }
 			}
 			return evaluateScore(this.policy, this.selectedTypeName, this.value)
@@ -420,17 +421,23 @@ export default {
 
 		/**
 		 * The additional-fields object to encrypt: the free members plus the
-		 * typed values.
+		 * typed values, plus an SSH key's public key and fingerprint.
 		 *
+		 * @param {object} [ssh] The SSH key members (sshKeyToSave).
 		 * @return {object} The blob.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-typed-fields-storage
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
-		additionalBlob() {
-			return mergeTypedValues(
-				membersToObject(this.additionalFields),
-				this.typedFields,
-				this.typedValues,
-			)
+		additionalBlob(ssh = {}) {
+			return {
+				...mergeTypedValues(
+					membersToObject(this.additionalFields),
+					this.typedFields,
+					this.typedValues,
+				),
+
+				...ssh,
+			}
 		},
 
 		/**
@@ -438,10 +445,12 @@ export default {
 		 * login and value, then the additional fields and the authenticator
 		 * key when there are any.
 		 *
+		 * @param {object} [ssh] The SSH key members (sshKeyToSave).
 		 * @return {object} The value part of the create body.
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 */
-		valueFields() {
+		valueFields(ssh = {}) {
+			const blob = this.additionalBlob(ssh)
 			return {
 				url: this.url || null,
 				login: this.login || '',
@@ -451,9 +460,7 @@ export default {
 				// ciphertext blob onto every secret ever created here.
 				// The typed values ride in the same blob, named by field label,
 				// so the server only ever sees their ciphertext (admin-18).
-				...(Object.keys(this.additionalBlob()).length > 0
-					? { additionalFields: this.additionalBlob() }
-					: {}),
+				...(Object.keys(blob).length > 0 ? { additionalFields: blob } : {}),
 
 				// Only when entered, like the additional fields above.
 				...(this.totpToSave ? { totp: this.totpToSave } : {}),
@@ -470,6 +477,7 @@ export default {
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async submit() {
 			if (this.saveBlocked()) {
@@ -478,7 +486,17 @@ export default {
 			this.saving = true
 			this.error = ''
 			try {
-				if (!this.isCard && !this.isIdentity && (await this.breachBlocked())) {
+				// A malformed SSH key is refused on its field; nothing is saved.
+				const ssh = this.isSshKey ? await this.sshKeyToSave() : {}
+				if (ssh === null) {
+					return
+				}
+				if (
+					!this.isCard
+					&& !this.isIdentity
+					&& !this.isSshKey
+					&& (await this.breachBlocked())
+				) {
 					return
 				}
 				if (this.contributeTo) {
@@ -489,7 +507,7 @@ export default {
 						{
 							name: this.name.trim(),
 							typeId: this.typeId,
-							...this.valueFields(),
+							...this.valueFields(ssh),
 						},
 					)
 					this.$emit('saved', result.secret)
@@ -500,7 +518,7 @@ export default {
 					name: this.name.trim(),
 					typeId: this.typeId,
 					folderId: this.selectedFolderId,
-					...this.valueFields(),
+					...this.valueFields(ssh),
 				})
 				// Tags are stored apart from the value (vault-favourites-tags-and-last-used).
 				if (this.tags.length > 0 && created?.id) {

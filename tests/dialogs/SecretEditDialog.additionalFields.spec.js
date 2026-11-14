@@ -103,8 +103,8 @@ describe('SecretEditDialog — additional fields', () => {
 		const wrapper = await mountOver({ 'client-id': 'acme-4711', tenant: 'acme' })
 
 		expect(wrapper.vm.additionalFields).toEqual([
-			{ name: 'client-id', value: 'acme-4711' },
-			{ name: 'tenant', value: 'acme' },
+			{ name: 'client-id', value: 'acme-4711', kind: 'text' },
+			{ name: 'tenant', value: 'acme', kind: 'text' },
 		])
 		expect(
 			wrapper.find('[data-testid="additional-field-name-0"]').element.value,
@@ -207,5 +207,44 @@ describe('SecretEditDialog — additional fields', () => {
 		expect('key' in diff).toBe(false)
 		expect('login' in diff).toBe(false)
 		expect('additionalFields' in diff).toBe(false)
+	})
+
+	/**
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+	 */
+	it('saves a field made hidden with its kind in the blob', async () => {
+		const wrapper = await mountOver({ 'Recovery code': 'abc-123' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
+
+		wrapper.vm.additionalFields = [
+			{ name: 'Recovery code', value: 'abc-123', kind: 'hidden' },
+		]
+		await wrapper.vm.submit()
+
+		expect(update.mock.calls[0][1].additionalFields).toEqual({
+			'Recovery code': { value: 'abc-123', kind: 'hidden' },
+		})
+	})
+
+	/**
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+	 */
+	it('loads a hidden field as hidden and leaves it alone when unchanged', async () => {
+		const wrapper = await mountOver({
+			'Recovery code': { value: 'abc-123', kind: 'hidden' },
+		})
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
+
+		expect(wrapper.vm.additionalFields).toEqual([
+			{ name: 'Recovery code', value: 'abc-123', kind: 'hidden' },
+		])
+		wrapper.vm.name = 'Renamed'
+		await wrapper.vm.submit()
+
+		expect('additionalFields' in update.mock.calls[0][1]).toBe(false)
 	})
 })

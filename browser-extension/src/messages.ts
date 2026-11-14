@@ -752,6 +752,15 @@ export type PasskeysReply =
 	| { ok: true; passkeys: Array<PasskeyDetail | null> }
 	| { ok: false; error: 'locked' | 'not_found' | 'blocked' | 'unreadable' }
 
+/**
+ * A field the web app stores as `{ value, kind }` rather than as text: a hidden or a yes-or-no field (Keepiq
+ * `vault-custom-fields`). `boolean` marks a value stored as a JSON boolean rather than as `'true'` or `'false'`.
+ */
+export interface FieldShape {
+	kind: string
+	boolean?: true
+}
+
 /** Plaintext draft. The background encrypts key, login and additionalFields; the popup never does. */
 export interface ItemDraft {
 	typeId: string
@@ -762,6 +771,8 @@ export interface ItemDraft {
 	login: string | null
 	/** Name to value, `notes` included; `{}` when empty. */
 	additionalFields: Record<string, string>
+	/** The fields of `additionalFields` that are stored with a kind, by name; absent when none is. Saved back with that kind. */
+	fieldKinds?: Record<string, FieldShape>
 	/** A login's authenticator key; absent or `''` for none. */
 	totp?: string
 }

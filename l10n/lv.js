@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Šī nav autentifikatora atslēga. Ielīmējiet saiti otpauth://totp/ vai noslēpumu base32 formātā.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Šis QR kods nesatur autentifikatora atslēgu. Izmantojiet QR kodu, ko vietne rāda, iestatot divpakāpju pieteikšanos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Šis noslēpums gaida savu kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vai lūdziet administratoram pārbaudīt, vai darbojas fona uzdevumi.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Tikai īpašnieks var mainīt pārvaldnieku vai dalību, kas aptver pārvaldnieku."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tikai īpašnieks var mainīt pārvaldnieku vai dalību, kas aptver pārvaldnieku.",
+        "Field kind": "Lauka veids",
+        "Yes or no": "Jā vai nē",
+        "Public key": "Publiskā atslēga",
+        "Fingerprint": "Pirkstu nospiedums",
+        "Copy public key": "Kopēt publisko atslēgu",
+        "Copy fingerprint": "Kopēt pirkstu nospiedumu",
+        "Generate key pair": "Ģenerēt atslēgu pāri",
+        "Import from file": "Importēt no faila",
+        "Derived from the public key.": "Atvasināts no publiskās atslēgas.",
+        "The file could not be read.": "Failu neizdevās nolasīt.",
+        "This browser could not generate a key pair.": "Šī pārlūkprogramma nevarēja ģenerēt atslēgu pāri.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Šī nav privātā atslēga. Ielīmējiet OpenSSH vai PEM privāto atslēgu vai ģenerējiet jaunu.",
+        "This is not an OpenSSH public key.": "Šī nav OpenSSH publiskā atslēga.",
+        "This public key does not belong to the private key.": "Šī publiskā atslēga nepieder privātajai atslēgai."
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

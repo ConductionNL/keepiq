@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Toto není klíč autentikátoru. Vložte odkaz otpauth://totp/ nebo tajemství ve formátu base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tento QR kód neobsahuje klíč autentikátoru. Použijte QR kód, který web zobrazí při nastavování dvoufázového přihlášení.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajemství čeká na kontrolu svých sdílení, která ještě neskončila. Nic nebylo uloženo; zkuste to později, nebo požádejte správce, aby ověřil, že běží úlohy na pozadí.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Správce nebo členství, které zahrnuje správce, může změnit jen vlastník."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Správce nebo členství, které zahrnuje správce, může změnit jen vlastník.",
+        "Field kind": "Druh pole",
+        "Yes or no": "Ano nebo ne",
+        "Public key": "Veřejný klíč",
+        "Fingerprint": "Otisk",
+        "Copy public key": "Kopírovat veřejný klíč",
+        "Copy fingerprint": "Kopírovat otisk",
+        "Generate key pair": "Vygenerovat pár klíčů",
+        "Import from file": "Importovat ze souboru",
+        "Derived from the public key.": "Odvozeno z veřejného klíče.",
+        "The file could not be read.": "Soubor se nepodařilo přečíst.",
+        "This browser could not generate a key pair.": "Tento prohlížeč nedokázal vygenerovat pár klíčů.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Toto není privátní klíč. Vložte privátní klíč OpenSSH nebo PEM, nebo nějaký vygenerujte.",
+        "This is not an OpenSSH public key.": "Toto není veřejný klíč OpenSSH.",
+        "This public key does not belong to the private key.": "Tento veřejný klíč nepatří k privátnímu klíči."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

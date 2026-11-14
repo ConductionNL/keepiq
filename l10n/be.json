@@ -1837,7 +1837,21 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Гэта не ключ аўтэнтыфікатара. Уставіце спасылку otpauth://totp/ або сакрэт у фармаце base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Гэты QR-код не ўтрымлівае ключ аўтэнтыфікатара. Выкарыстоўвайце QR-код, які сайт паказвае пры наладзе двухфактарнага ўваходу.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Гэты сакрэт чакае праверкі сваіх абагульванняў, якая яшчэ не скончылася. Нічога не захавана; паспрабуйце пазней або папрасіце адміністратара праверыць, ці працуюць фонавыя задачы.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Толькі ўладальнік можа змяніць кіраўніка або членства, якое ахоплівае кіраўніка."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Толькі ўладальнік можа змяніць кіраўніка або членства, якое ахоплівае кіраўніка.",
+        "Field kind": "Від поля",
+        "Yes or no": "Так або не",
+        "Public key": "Адкрыты ключ",
+        "Fingerprint": "Адбітак",
+        "Copy public key": "Скапіраваць адкрыты ключ",
+        "Copy fingerprint": "Скапіраваць адбітак",
+        "Generate key pair": "Згенераваць пару ключоў",
+        "Import from file": "Імпартаваць з файла",
+        "Derived from the public key.": "Вылічаны з адкрытага ключа.",
+        "The file could not be read.": "Не ўдалося прачытаць файл.",
+        "This browser could not generate a key pair.": "Гэты браўзер не змог згенераваць пару ключоў.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Гэта не закрыты ключ. Устаўце закрыты ключ OpenSSH або PEM ці згенеруйце новы.",
+        "This is not an OpenSSH public key.": "Гэта не адкрыты ключ OpenSSH.",
+        "This public key does not belong to the private key.": "Гэты адкрыты ключ не адпавядае закрытаму ключу."
     },
     "plurals": null
 }

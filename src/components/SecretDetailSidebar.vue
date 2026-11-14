@@ -732,6 +732,56 @@
 				</div>
 			</div>
 
+			<!-- The SSH key's public half and its derived fingerprint, from
+			     the encrypted additional fields (vault-ssh-key-item). The
+			     private key is the key row above. -->
+			<div
+				v-if="sshPublicKey && !useOnly"
+				class="secret-detail__box"
+				data-testid="secret-detail-ssh">
+				<div class="secret-detail__row">
+					<span class="secret-detail__row-icon">
+						<KeyVariant :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Public key')
+						}}</span>
+						<div
+							class="secret-detail__row-value secret-detail__row-value--mono"
+							data-testid="secret-detail-ssh-public-key">
+							{{ sshPublicKey }}
+						</div>
+					</div>
+					<span class="secret-detail__row-trailing">
+						<CopyButton
+							:value="sshPublicKey"
+							:label="t('keepiq', 'Copy public key')"
+							data-testid="secret-detail-ssh-copy-public-key" />
+					</span>
+				</div>
+				<div v-if="sshFingerprint" class="secret-detail__row">
+					<span class="secret-detail__row-icon">
+						<Fingerprint :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Fingerprint')
+						}}</span>
+						<div
+							class="secret-detail__row-value secret-detail__row-value--mono"
+							data-testid="secret-detail-ssh-fingerprint">
+							{{ sshFingerprint }}
+						</div>
+					</div>
+					<span class="secret-detail__row-trailing">
+						<CopyButton
+							:value="sshFingerprint"
+							:label="t('keepiq', 'Copy fingerprint')" />
+					</span>
+				</div>
+			</div>
+
 			<div v-if="hasAdditionalFields && !useOnly" class="secret-detail__box">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
@@ -741,15 +791,64 @@
 						<span class="secret-detail__row-label">{{
 							t('keepiq', 'Additional fields')
 						}}</span>
+						<!-- A hidden value is masked until Reveal; Copy copies
+						     the real value without revealing it. -->
 						<dl class="secret-detail__extra">
 							<template
-								v-for="(value, key) in secret.additionalFields"
-								:key="key">
+								v-for="field in additionalFieldRows"
+								:key="field.name">
 								<dt>
-									{{ key }}
+									{{ field.name }}
 								</dt>
-								<dd>
-									{{ value }}
+								<dd
+									v-if="field.kind === 'hidden'"
+									class="secret-detail__extra-hidden">
+									<span
+										class="secret-detail__row-value--mono"
+										:data-testid="`secret-detail-field-${field.name}`">
+										{{
+											revealedFields[field.name]
+												? field.value
+												: '••••••••'
+										}}
+									</span>
+									<NcButton
+										variant="tertiary"
+										:ariaLabel="
+											revealedFields[field.name]
+												? t('keepiq', 'Hide')
+												: t('keepiq', 'Show')
+										"
+										:title="
+											revealedFields[field.name]
+												? t('keepiq', 'Hide')
+												: t('keepiq', 'Show')
+										"
+										:data-testid="`secret-detail-field-reveal-${field.name}`"
+										@click="toggleField(field.name)">
+										<template #icon>
+											<EyeOffOutline
+												v-if="revealedFields[field.name]"
+												:size="20" />
+											<EyeOutline v-else :size="20" />
+										</template>
+									</NcButton>
+									<CopyButton
+										:value="field.value"
+										:label="t('keepiq', 'Copy value')"
+										:data-testid="`secret-detail-field-copy-${field.name}`" />
+								</dd>
+								<dd
+									v-else-if="field.kind === 'boolean'"
+									:data-testid="`secret-detail-field-${field.name}`">
+									{{
+										field.value === 'true'
+											? t('keepiq', 'Yes')
+											: t('keepiq', 'No')
+									}}
+								</dd>
+								<dd v-else :data-testid="`secret-detail-field-${field.name}`">
+									{{ field.value }}
 								</dd>
 							</template>
 						</dl>
@@ -1067,10 +1166,16 @@ import VersionHistoryPanel from './VersionHistoryPanel.vue'
 import { cardBrandInfo, formatCardNumber, maskCardNumber, parsePayload } from '../cardIdentity/cardIdentity.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
+import {
+	SSH_FINGERPRINT_MEMBER,
+	SSH_KEY_TYPE_NAME,
+	SSH_PUBLIC_KEY_MEMBER,
+} from '../ssh/sshKey.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { fieldValueOf, objectToMembers } from '../utils/additionalFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
@@ -1180,6 +1285,8 @@ export default {
 			cardRevealed: { number: false, cvv: false, pin: false },
 			/** Reveal state for the identity's BSN row (masked by default). */
 			bsnRevealed: false,
+			/** Reveal state of the hidden additional fields, by name (masked by default). */
+			revealedFields: {},
 			/**
 			 * Bumped by every successful `load()`, and bound to
 			 * `<PasswordField :key>` so the field remounts whenever the
@@ -1356,14 +1463,66 @@ export default {
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		hasAdditionalFields() {
-			const blob = this.secret?.additionalFields
+			return this.additionalFieldRows.length > 0
+		},
 
-			return (
-				blob !== null
-				&& blob !== undefined
-				&& typeof blob === 'object'
-				&& Object.keys(blob).length > 0
+		/**
+		 * The additional fields to list, as `{ name, value, kind }` rows. A
+		 * field saved before kinds existed reads as text. An SSH key's public
+		 * key and fingerprint have their own rows, so they are left out here.
+		 *
+		 * @return {Array<{name: string, value: string, kind: string}>}
+		 *
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 */
+		additionalFieldRows() {
+			const blob = this.secret?.additionalFields
+			if (blob === null || blob === undefined || typeof blob !== 'object') {
+				return []
+			}
+			const own = this.isSshKey
+				? [SSH_PUBLIC_KEY_MEMBER, SSH_FINGERPRINT_MEMBER]
+				: []
+			return objectToMembers(blob).filter(
+				(member) => !own.includes(member.name),
 			)
+		},
+
+		/**
+		 * Whether this secret is the `ssh_key` system type.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		isSshKey() {
+			const type = useSecretTypeStore().typesById[this.secret?.typeId]
+			return Boolean(type) && type.name === SSH_KEY_TYPE_NAME
+		},
+
+		/**
+		 * The SSH key's public key line from the encrypted blob, '' when none.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		sshPublicKey() {
+			const blob = this.secret?.additionalFields
+			return this.isSshKey && blob && typeof blob === 'object'
+				? fieldValueOf(blob[SSH_PUBLIC_KEY_MEMBER])
+				: ''
+		},
+
+		/**
+		 * The SSH key's stored fingerprint, '' when none.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		sshFingerprint() {
+			const blob = this.secret?.additionalFields
+			return this.sshPublicKey !== ''
+				? fieldValueOf(blob[SSH_FINGERPRINT_MEMBER])
+				: ''
 		},
 
 		/**
@@ -1707,6 +1866,7 @@ export default {
 			// Masked fields never carry reveal state over to another secret.
 			this.cardRevealed = { number: false, cvv: false, pin: false }
 			this.bsnRevealed = false
+			this.revealedFields = {}
 			this.load()
 		},
 	},
@@ -1842,6 +2002,20 @@ export default {
 			this.cardRevealed = {
 				...this.cardRevealed,
 				[field]: !this.cardRevealed[field],
+			}
+		},
+
+		/**
+		 * Toggle one hidden additional field's reveal state (masked by default).
+		 *
+		 * @param {string} name The field name.
+		 * @return {void}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 */
+		toggleField(name) {
+			this.revealedFields = {
+				...this.revealedFields,
+				[name]: !this.revealedFields[name],
 			}
 		},
 
@@ -2265,6 +2439,13 @@ details[open] > summary .secret-detail__accordion-chevron {
 .secret-detail__row-value--mono {
 	font-family: monospace;
 	letter-spacing: 0.04em;
+}
+
+/* A hidden additional field: the masked value, Show and Copy on one line. */
+.secret-detail__extra-hidden {
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }
 
 /* Identity section headings: plain text OUTSIDE the boxes (Proton). */

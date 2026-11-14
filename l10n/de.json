@@ -1811,7 +1811,21 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Das ist kein Authenticator-Schlüssel. Fügen Sie einen otpauth://totp/-Link oder das base32-Geheimnis ein.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dieser QR-Code enthält keinen Authenticator-Schlüssel. Verwenden Sie den QR-Code, den die Website beim Einrichten der Zwei-Faktor-Anmeldung anzeigt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dieses Geheimnis wartet auf eine Prüfung seiner Freigaben, die noch nicht abgeschlossen ist. Es wurde nichts gespeichert; versuchen Sie es später erneut oder bitten Sie eine Administratorin oder einen Administrator zu prüfen, ob Hintergrundjobs laufen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Nur der Eigentümer kann einen Verwalter ändern oder eine Mitgliedschaft, die einen Verwalter umfasst."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Nur der Eigentümer kann einen Verwalter ändern oder eine Mitgliedschaft, die einen Verwalter umfasst.",
+        "Field kind": "Feldart",
+        "Yes or no": "Ja oder nein",
+        "Public key": "Öffentlicher Schlüssel",
+        "Fingerprint": "Fingerabdruck",
+        "Copy public key": "Öffentlichen Schlüssel kopieren",
+        "Copy fingerprint": "Fingerabdruck kopieren",
+        "Generate key pair": "Schlüsselpaar erzeugen",
+        "Import from file": "Aus Datei importieren",
+        "Derived from the public key.": "Aus dem öffentlichen Schlüssel abgeleitet.",
+        "The file could not be read.": "Die Datei konnte nicht gelesen werden.",
+        "This browser could not generate a key pair.": "Dieser Browser konnte kein Schlüsselpaar erzeugen.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dies ist kein privater Schlüssel. Fügen Sie einen privaten OpenSSH- oder PEM-Schlüssel ein oder erzeugen Sie einen.",
+        "This is not an OpenSSH public key.": "Dies ist kein öffentlicher OpenSSH-Schlüssel.",
+        "This public key does not belong to the private key.": "Dieser öffentliche Schlüssel gehört nicht zum privaten Schlüssel."
     },
     "plurals": null
 }

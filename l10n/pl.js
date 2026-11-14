@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "To nie jest klucz uwierzytelniacza. Wklej link otpauth://totp/ lub sekret w formacie base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ten kod QR nie zawiera klucza uwierzytelniacza. Użyj kodu QR, który strona pokazuje podczas konfigurowania logowania dwuetapowego.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ten sekret czeka na sprawdzenie swoich udostępnień, które jeszcze się nie zakończyło. Nic nie zostało zapisane; spróbuj ponownie później lub poproś administratora o sprawdzenie, czy działają zadania w tle.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Tylko właściciel może zmienić menedżera lub członkostwo obejmujące menedżera."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tylko właściciel może zmienić menedżera lub członkostwo obejmujące menedżera.",
+        "Field kind": "Rodzaj pola",
+        "Yes or no": "Tak lub nie",
+        "Public key": "Klucz publiczny",
+        "Fingerprint": "Odcisk klucza",
+        "Copy public key": "Kopiuj klucz publiczny",
+        "Copy fingerprint": "Kopiuj odcisk klucza",
+        "Generate key pair": "Wygeneruj parę kluczy",
+        "Import from file": "Importuj z pliku",
+        "Derived from the public key.": "Wyliczony z klucza publicznego.",
+        "The file could not be read.": "Nie udało się odczytać pliku.",
+        "This browser could not generate a key pair.": "Ta przeglądarka nie mogła wygenerować pary kluczy.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "To nie jest klucz prywatny. Wklej klucz prywatny OpenSSH lub PEM albo wygeneruj nowy.",
+        "This is not an OpenSSH public key.": "To nie jest klucz publiczny OpenSSH.",
+        "This public key does not belong to the private key.": "Ten klucz publiczny nie należy do klucza prywatnego."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

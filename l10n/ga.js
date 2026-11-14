@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ní eochair fíordheimhnitheora é seo. Greamaigh nasc otpauth://totp/ nó an rún base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Níl eochair fíordheimhnitheora sa chód QR seo. Úsáid an cód QR a thaispeánann an suíomh nuair a shocraíonn tú logáil isteach dhá fhachtóir.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Tá an rún seo ag fanacht ar sheiceáil ar a chomhroinnt nach bhfuil críochnaithe fós. Níor sábháladh aon rud; bain triail eile as ar ball, nó iarr ar riarthóir a sheiceáil go bhfuil na jabanna cúlra ag rith.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Ní féidir ach leis an úinéir bainisteoir a athrú, nó ballraíocht a chuimsíonn bainisteoir."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Ní féidir ach leis an úinéir bainisteoir a athrú, nó ballraíocht a chuimsíonn bainisteoir.",
+        "Field kind": "Cineál réimse",
+        "Yes or no": "Tá nó níl",
+        "Public key": "Eochair phoiblí",
+        "Fingerprint": "Méarlorg",
+        "Copy public key": "Cóipeáil an eochair phoiblí",
+        "Copy fingerprint": "Cóipeáil an méarlorg",
+        "Generate key pair": "Gin péire eochracha",
+        "Import from file": "Iompórtáil ó chomhad",
+        "Derived from the public key.": "Díorthaithe ón eochair phoiblí.",
+        "The file could not be read.": "Níorbh fhéidir an comhad a léamh.",
+        "This browser could not generate a key pair.": "Níorbh fhéidir leis an mbrabhsálaí seo péire eochracha a ghiniúint.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ní eochair phríobháideach í seo. Greamaigh eochair phríobháideach OpenSSH nó PEM, nó gin ceann.",
+        "This is not an OpenSSH public key.": "Ní eochair phoiblí OpenSSH í seo.",
+        "This public key does not belong to the private key.": "Ní bhaineann an eochair phoiblí seo leis an eochair phríobháideach."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

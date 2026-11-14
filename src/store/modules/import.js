@@ -25,6 +25,7 @@ import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 import { dedupeKey, folderSegments } from '../../import/model.js'
 import { getParser } from '../../import/parserRegistry.js'
 import { evaluateScore, fetchPolicy } from '../../policy/policy.js'
+import { withDerivedFingerprint } from '../../ssh/sshKey.js'
 import { BLOB_FIELDS } from '../../utils/valueFields.js'
 import { useSecretStore } from './secret.js'
 import { useSecretTypeStore } from './secretType.js'
@@ -179,7 +180,11 @@ async function encryptOptionalFields(item, row, publicKey) {
 	if (row.login != null && row.login !== '') {
 		item.login = await rsaEncrypt(String(row.login), publicKey)
 	}
-	const json = additionalFieldsJson(row.additionalFields)
+	// An SSH key's fingerprint is derived from its public key, never taken
+	// from the file (vault-ssh-key-item D3).
+	const json = additionalFieldsJson(
+		await withDerivedFingerprint(row.type, row.additionalFields),
+	)
 	if (json) {
 		item.additionalFields = await rsaEncrypt(json, publicKey)
 	}

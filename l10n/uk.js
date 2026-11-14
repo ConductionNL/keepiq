@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Це не ключ автентифікатора. Вставте посилання otpauth://totp/ або секрет у форматі base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Цей QR-код не містить ключа автентифікатора. Використайте QR-код, який сайт показує під час налаштування двофакторного входу.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Цей секрет очікує перевірки своїх спільних доступів, яка ще не завершилася. Нічого не збережено; спробуйте пізніше або попросіть адміністратора перевірити, чи працюють фонові завдання.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Лише власник може змінити менеджера або членство, яке охоплює менеджера."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Лише власник може змінити менеджера або членство, яке охоплює менеджера.",
+        "Field kind": "Вид поля",
+        "Yes or no": "Так або ні",
+        "Public key": "Відкритий ключ",
+        "Fingerprint": "Відбиток",
+        "Copy public key": "Копіювати відкритий ключ",
+        "Copy fingerprint": "Копіювати відбиток",
+        "Generate key pair": "Згенерувати пару ключів",
+        "Import from file": "Імпортувати з файлу",
+        "Derived from the public key.": "Обчислено з відкритого ключа.",
+        "The file could not be read.": "Не вдалося прочитати файл.",
+        "This browser could not generate a key pair.": "Цей браузер не зміг згенерувати пару ключів.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Це не закритий ключ. Вставте закритий ключ OpenSSH або PEM чи згенеруйте новий.",
+        "This is not an OpenSSH public key.": "Це не відкритий ключ OpenSSH.",
+        "This public key does not belong to the private key.": "Цей відкритий ключ не відповідає закритому ключу."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

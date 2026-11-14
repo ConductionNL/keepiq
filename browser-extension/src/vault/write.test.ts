@@ -112,6 +112,13 @@ describe('createItem', () => {
 		expect(JSON.stringify(body)).not.toContain('hunter2')
 	})
 
+	it('keeps the kind of a hidden field on a new item, such as a clone (Keepiq vault-custom-fields)', async () => {
+		server({ 'POST /api/v1/secrets': () => json(secretRow({ id: 'new' }), 201) })
+		await createItem(draft({ additionalFields: { PIN: '4711', tenant: 'acme' }, fieldKinds: { PIN: { kind: 'hidden' } } }))
+		const body = bodyOf('POST /api/v1/secrets')
+		expect(JSON.parse(await decrypt(body.additionalFields))).toEqual({ PIN: { value: '4711', kind: 'hidden' }, tenant: 'acme' })
+	})
+
 	it('omits an empty username, nulls an empty URL and encrypts empty fields as {}', async () => {
 		server({ 'POST /api/v1/secrets': () => json(secretRow({ id: 'new' }), 201) })
 		await createItem(draft({ login: null, url: null }))
@@ -222,6 +229,19 @@ describe('fetchItem', () => {
 			},
 		})
 		expect(sent()).toEqual(['GET /api/v1/secrets/s1', 'GET /api/v1/secrets/s1/write-context'])
+	})
+
+	it('opens a hidden or yes-or-no field as its value, with its kind beside it (Keepiq vault-custom-fields)', async () => {
+		const row = secretRow({ key: await encrypt('pw'), additionalFields: await encrypt('{"tenant":"acme","Recovery code":{"value":"abc-123","kind":"hidden"},"Active":{"value":"true","kind":"boolean"}}') })
+		await serve(row)
+		const opened = await fetchItem('s1')
+		expect(opened).toMatchObject({
+			ok: true,
+			value: {
+				additionalFields: { tenant: 'acme', 'Recovery code': 'abc-123', Active: 'true' },
+				fieldKinds: { 'Recovery code': { kind: 'hidden' }, Active: { kind: 'boolean' } },
+			},
+		})
 	})
 
 	it('records the ciphertext it showed, its version and the source version for an edit, and reads no source version for a clone', async () => {
@@ -503,6 +523,13 @@ describe('updateItem', () => {
 		expect(patch).not.toHaveProperty('baseUpdatedAt')
 		expect(await decrypt(patch.key)).toBe('new')
 		expect(await decrypt(patch.additionalFields)).toBe('{"pin":"1"}')
+	})
+
+	it('writes an edited hidden field back with its kind and a plain field as text (Keepiq vault-custom-fields)', async () => {
+		server()
+		await updateItem('s1', { additionalFields: { tenant: 'acme', 'Recovery code': 'xyz-789' }, fieldKinds: { 'Recovery code': { kind: 'hidden' } } }, BASE)
+		const patch = bodyOf('PUT /api/v1/secrets/s1/share-save').patch as Record<string, unknown>
+		expect(JSON.parse(await decrypt(patch.additionalFields))).toEqual({ tenant: 'acme', 'Recovery code': { value: 'xyz-789', kind: 'hidden' } })
 	})
 
 	it('saves a new authenticator key through share-save, as a value change', async () => {

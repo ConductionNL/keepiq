@@ -10,13 +10,22 @@ import {
 	serializeCard,
 	serializeIdentity,
 } from '../cardIdentity/cardIdentity.js'
+import {
+	isPublicKey,
+	parsePrivateKey,
+	samePublicKey,
+	SSH_FINGERPRINT_MEMBER,
+	SSH_KEY_TYPE_NAME,
+	SSH_PUBLIC_KEY_MEMBER,
+	withDerivedFingerprint,
+} from '../ssh/sshKey.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { missingRequired, typedFieldsOf } from '../utils/typedFields.js'
 
 /**
  * The form state the create and edit secret dialogs share: the value, the
- * card and identity fields, the typed fields of the chosen type and the key
- * generator. The host provides `typeId` and an `open` flag.
+ * card, identity and SSH key fields, the typed fields of the chosen type and
+ * the key generator. The host provides `typeId`, `saving` and an `open` flag.
  */
 export const secretPayloadForm = {
 	data() {
@@ -34,6 +43,10 @@ export const secretPayloadForm = {
 				email: '',
 				bsn: '',
 			},
+			/** An SSH key's public half and fingerprint; its private key is `value`. */
+			sshKey: { publicKey: '', fingerprint: '' },
+			/** Why a save refused the SSH key fields, by field. */
+			sshErrors: { privateKey: '', publicKey: '' },
 		}
 	},
 
@@ -83,6 +96,16 @@ export const secretPayloadForm = {
 		},
 
 		/**
+		 * Whether the chosen type is an SSH key.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		isSshKey() {
+			return this.selectedTypeName === SSH_KEY_TYPE_NAME
+		},
+
+		/**
 		 * The props of the SecretPayloadFields in the dialog.
 		 *
 		 * @return {object}
@@ -96,6 +119,10 @@ export const secretPayloadForm = {
 				generatorOpen: this.generatorOpen,
 				isCard: this.isCard,
 				isIdentity: this.isIdentity,
+				isSshKey: this.isSshKey,
+				sshKey: this.sshKey,
+				sshErrors: this.sshErrors,
+				disabled: Boolean(this.saving),
 				valueLabel: this.valueLabel,
 			}
 		},
@@ -110,6 +137,11 @@ export const secretPayloadForm = {
 			return {
 				'update:value': (value) => {
 					this.value = value
+					this.sshErrors = { ...this.sshErrors, privateKey: '' }
+				},
+				'update:sshKey': (sshKey) => {
+					this.sshKey = sshKey
+					this.sshErrors = { ...this.sshErrors, publicKey: '' }
 				},
 				'update:card': (card) => {
 					this.card = card
@@ -142,6 +174,86 @@ export const secretPayloadForm = {
 	},
 
 	methods: {
+		/**
+		 * Check an SSH key before it is saved and work out what to store
+		 * next to the private key. The private key must be a key; its
+		 * public key is derived where the format allows, and a public key
+		 * typed alongside must be that key. The fingerprint is always
+		 * derived from the public key, never taken from the form.
+		 *
+		 * On a refusal the reason is set on the field and null is returned,
+		 * so the caller saves nothing.
+		 *
+		 * @return {Promise<object|null>} The members to put in the blob, or null.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		async sshKeyToSave() {
+			this.sshErrors = { privateKey: '', publicKey: '' }
+			let derived
+			try {
+				derived = (await parsePrivateKey(this.value)).publicKey
+			} catch {
+				this.sshErrors = {
+					...this.sshErrors,
+					privateKey: t(
+						'keepiq',
+						'This is not a private key. Paste an OpenSSH or PEM private key, or generate one.',
+					),
+				}
+				return null
+			}
+			const typed = (this.sshKey.publicKey || '').trim()
+			if (typed !== '' && !isPublicKey(typed)) {
+				this.sshErrors = {
+					...this.sshErrors,
+					publicKey: t('keepiq', 'This is not an OpenSSH public key.'),
+				}
+				return null
+			}
+			if (derived !== null && typed !== '' && !samePublicKey(typed, derived)) {
+				this.sshErrors = {
+					...this.sshErrors,
+					publicKey: t(
+						'keepiq',
+						'This public key does not belong to the private key.',
+					),
+				}
+				return null
+			}
+			// A typed key keeps its comment; otherwise the derived one is used.
+			const publicKey = typed !== '' ? typed : (derived ?? '')
+			if (publicKey === '') {
+				return {}
+			}
+			return withDerivedFingerprint(SSH_KEY_TYPE_NAME, {
+				[SSH_PUBLIC_KEY_MEMBER]: publicKey,
+			})
+		},
+
+		/**
+		 * Take the SSH key's public key and fingerprint out of a decrypted
+		 * blob into the form, returning the members left for the editor.
+		 *
+		 * @param {object} rest The free members of the blob.
+		 * @return {object} The members without the SSH key's own.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		takeSshMembers(rest) {
+			if (!this.isSshKey || !rest || typeof rest !== 'object') {
+				return rest
+			}
+			const {
+				[SSH_PUBLIC_KEY_MEMBER]: publicKey,
+				[SSH_FINGERPRINT_MEMBER]: fingerprint,
+				...others
+			} = rest
+			this.sshKey = {
+				publicKey: typeof publicKey === 'string' ? publicKey : '',
+				fingerprint: typeof fingerprint === 'string' ? fingerprint : '',
+			}
+			return others
+		},
+
 		/**
 		 * Take the typed values and clear the marks of fields now filled.
 		 *

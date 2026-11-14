@@ -9,6 +9,7 @@
 
   @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
   @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
+  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 -->
 <template>
 	<template v-if="isCard || isIdentity">
@@ -29,6 +30,16 @@
 				@update:modelValue="setField(field.key, $event)" />
 		</template>
 	</template>
+	<SshKeyFields
+		v-else-if="isSshKey"
+		:privateKey="value"
+		:publicKey="sshKey.publicKey"
+		:fingerprint="sshKey.fingerprint"
+		:privateKeyError="sshErrors.privateKey"
+		:publicKeyError="sshErrors.publicKey"
+		:disabled="disabled"
+		@update:privateKey="$emit('update:value', $event)"
+		@update:keys="$emit('update:sshKey', $event)" />
 	<div v-else class="secret-form__value-row">
 		<NcPasswordField
 			:modelValue="value"
@@ -58,6 +69,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcPasswordField, NcTextField } from '@nextcloud/vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import KeyGeneratorModal from '../dialogs/KeyGeneratorModal.vue'
+import SshKeyFields from './SshKeyFields.vue'
 import { cardNumberHint, securityCodeHint } from '../cardIdentity/cardIdentity.js'
 
 export default {
@@ -69,6 +81,7 @@ export default {
 		NcButton,
 		NcPasswordField,
 		NcTextField,
+		SshKeyFields,
 	},
 
 	props: {
@@ -80,6 +93,30 @@ export default {
 
 		/** Whether the secret is an identity. */
 		isIdentity: {
+			type: Boolean,
+			default: false,
+		},
+
+		/** Whether the secret is an SSH key. */
+		isSshKey: {
+			type: Boolean,
+			default: false,
+		},
+
+		/** The SSH key's public key and fingerprint. */
+		sshKey: {
+			type: Object,
+			default: () => ({ publicKey: '', fingerprint: '' }),
+		},
+
+		/** Why the SSH key fields were refused on save, by field. */
+		sshErrors: {
+			type: Object,
+			default: () => ({ privateKey: '', publicKey: '' }),
+		},
+
+		/** Whether editing is blocked (a save in flight). */
+		disabled: {
 			type: Boolean,
 			default: false,
 		},
@@ -119,6 +156,7 @@ export default {
 		'update:value',
 		'update:card',
 		'update:identity',
+		'update:sshKey',
 		'update:generatorOpen',
 		'generate',
 		'generated',

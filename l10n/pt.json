@@ -1811,7 +1811,21 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Isto não é uma chave de autenticador. Cole uma ligação otpauth://totp/ ou o segredo base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Este código QR não contém uma chave de autenticador. Utilize o código QR que o site mostra quando configura a autenticação de dois fatores.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Este segredo aguarda uma verificação das suas partilhas que ainda não terminou. Nada foi guardado; tente novamente mais tarde ou peça a um administrador que verifique se as tarefas em segundo plano estão a ser executadas.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Só o proprietário pode alterar um gestor ou uma associação que inclua um gestor."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Só o proprietário pode alterar um gestor ou uma associação que inclua um gestor.",
+        "Field kind": "Tipo de campo",
+        "Yes or no": "Sim ou não",
+        "Public key": "Chave pública",
+        "Fingerprint": "Impressão digital",
+        "Copy public key": "Copiar chave pública",
+        "Copy fingerprint": "Copiar impressão digital",
+        "Generate key pair": "Gerar par de chaves",
+        "Import from file": "Importar de ficheiro",
+        "Derived from the public key.": "Derivada da chave pública.",
+        "The file could not be read.": "Não foi possível ler o ficheiro.",
+        "This browser could not generate a key pair.": "Este navegador não conseguiu gerar um par de chaves.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Isto não é uma chave privada. Cole uma chave privada OpenSSH ou PEM, ou gere uma.",
+        "This is not an OpenSSH public key.": "Isto não é uma chave pública OpenSSH.",
+        "This public key does not belong to the private key.": "Esta chave pública não pertence à chave privada."
     },
     "plurals": null
 }

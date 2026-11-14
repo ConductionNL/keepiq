@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EditableItem } from '@/src/messages'
 import { parseTotpSeed } from '@/src/totp/totp'
-import { CARD_FIELDS, customField, diffDraft, emptyValues, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
+import { CARD_FIELDS, customField, diffDraft, emptyValues, fieldShapes, fieldText, fieldTexts, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, withKinds, type FormValues } from './fields'
 
 function values(overrides: Partial<FormValues> = {}): FormValues {
 	return { ...emptyValues('t-login'), name: 'GitHub', ...overrides }
@@ -319,5 +319,53 @@ describe('diffDraft and validate, field by field', () => {
 		expect(Object.keys(validate({ ...identity, identity: { ...identity.identity, address: long } }, 'identity'))).toEqual(['identity.address'])
 		expect(validate(values({ typeId: 't-totp', secret: 'not base32 !' }), 'totp')).toEqual({ secret: { code: 'invalidTotp' } })
 		expect(validate(values({ typeId: 't-passkey', name: '', url: long, login: long }), 'passkey')).toEqual({ name: { code: 'required' }, url: { code: 'tooLong', max: 4096 } })
+	})
+})
+
+/** Keepiq `vault-custom-fields`: the web app stores a hidden or yes-or-no field as `{ value, kind }`. */
+describe('kinded additional fields', () => {
+	const blob = { tenant: 'acme', 'Recovery code': { value: 'abc-123', kind: 'hidden' }, Active: { value: true, kind: 'boolean' }, Archived: { value: 'false', kind: 'boolean' } }
+
+	it('reads a hidden field as its value, not its JSON, and a yes or no as true or false', () => {
+		expect(fieldTexts(blob)).toEqual({ tenant: 'acme', 'Recovery code': 'abc-123', Active: 'true', Archived: 'false' })
+		expect(fieldText({ value: 'x', kind: 'hidden' })).not.toContain('{')
+		expect(fieldText({ nested: 1 })).toBe('{"nested":1}')
+	})
+
+	it('records the shape of the kinded fields only', () => {
+		expect(fieldShapes(blob)).toEqual({ 'Recovery code': { kind: 'hidden' }, Active: { kind: 'boolean', boolean: true }, Archived: { kind: 'boolean' } })
+	})
+
+	it('saves an edited hidden field back with its kind, and a plain field as plain text', () => {
+		const fetched = item({ additionalFields: fieldTexts(blob), fieldKinds: fieldShapes(blob) })
+		const form = fromItem(fetched, 'login')
+		form.fields = form.fields.map((field) => field.name === 'Recovery code' ? { ...field, value: 'xyz-789' } : field)
+		const patch = diffDraft(toDraft(fromItem(fetched, 'login'), 'login'), toDraft(form, 'login'))
+
+		expect(patch.additionalFields).toEqual({ tenant: 'acme', 'Recovery code': 'xyz-789', Active: 'true', Archived: 'false' })
+		expect(withKinds(patch.additionalFields!, patch.fieldKinds)).toEqual({
+			tenant: 'acme',
+			'Recovery code': { value: 'xyz-789', kind: 'hidden' },
+			Active: { value: true, kind: 'boolean' },
+			Archived: { value: 'false', kind: 'boolean' },
+		})
+	})
+
+	it('keeps the kind through a rename', () => {
+		const fetched = item({ additionalFields: { PIN: '4711' }, fieldKinds: { PIN: { kind: 'hidden' } } })
+		const form = fromItem(fetched, 'login')
+		form.fields = form.fields.map((field) => ({ ...field, name: 'Card PIN' }))
+		const draft = toDraft(form, 'login')
+		expect(withKinds(draft.additionalFields, draft.fieldKinds)).toEqual({ 'Card PIN': { value: '4711', kind: 'hidden' } })
+	})
+
+	it('leaves an item without kinded fields exactly as before', () => {
+		const fetched = item({ additionalFields: { pin: '1234' } })
+		const draft = toDraft(fromItem(fetched, 'login'), 'login')
+		expect(draft).not.toHaveProperty('fieldKinds')
+		expect(withKinds(draft.additionalFields, draft.fieldKinds)).toEqual({ pin: '1234' })
+		const renamed = fromItem(fetched, 'login')
+		renamed.name = 'Renamed'
+		expect(diffDraft(draft, toDraft(renamed, 'login'))).toEqual({ name: 'Renamed' })
 	})
 })

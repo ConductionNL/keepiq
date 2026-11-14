@@ -32,10 +32,20 @@ import { makeRow, rejectRow, validateRow } from '../import/model.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
 import { buildPasskeyCredential, parsePasskey } from '../passkey/passkey.js'
 import {
+	parsePublicKey,
+	SSH_FINGERPRINT_MEMBER,
+	SSH_PUBLIC_KEY_MEMBER,
+} from '../ssh/sshKey.js'
+import {
 	authenticatorKeyError,
 	authenticatorKeyFromParts,
 } from '../totp/authenticatorKey.js'
 import { parseOtpauth } from '../totp/totp.js'
+import {
+	fieldEntry,
+	objectToMembers,
+	RESERVED_MEMBER_NAMES,
+} from '../utils/additionalFields.js'
 
 /** The CXF version this module targets (Proposed Standard, Aug 2025 line). */
 export const CXF_VERSION = { major: 1, minor: 0 }
@@ -245,7 +255,9 @@ function sshKeyFields(credential, title) {
 		name: title !== '' ? title : 'SSH key',
 		password: fieldValue(credential.privateKey),
 		type: 'ssh_key',
-		additionalFields: publicKey ? { publicKey } : null,
+		// The fingerprint is not read from the file: it is derived from the
+		// public key when the row is committed (vault-ssh-key-item D3).
+		additionalFields: publicKey ? { [SSH_PUBLIC_KEY_MEMBER]: publicKey } : null,
 	}
 }
 
@@ -271,6 +283,19 @@ function wifiFields(credential, title) {
 			...(security !== '' ? { security } : {}),
 		},
 	}
+}
+
+/** The CXF field types an imported custom field keeps as its kind. */
+const CXF_FIELD_KINDS = {
+	'concealed-string': 'hidden',
+	boolean: 'boolean',
+}
+
+/** The CXF field type each custom field kind is exported as. */
+const KIND_FIELD_TYPES = {
+	text: 'string',
+	hidden: 'concealed-string',
+	boolean: 'boolean',
 }
 
 /** The row fields of each supported CXF credential type. */
@@ -334,11 +359,16 @@ function itemToRows(item, folder, firstRow) {
 		rows: [],
 		seeds: [],
 		passkeys: [],
+		customFields: [],
 	}
 	for (const [index, credential] of item.credentials.entries()) {
 		readCredential(ctx, { credential, sourceRow: firstRow + index })
 	}
-	if (ctx.seeds.length === 0 && ctx.passkeys.length === 0) {
+	if (
+		ctx.seeds.length === 0
+		&& ctx.passkeys.length === 0
+		&& ctx.customFields.length === 0
+	) {
 		return ctx.rows
 	}
 	attachExtras(ctx)
@@ -373,6 +403,8 @@ function readCredential(ctx, entry) {
 	const type = String(entry.credential?.type ?? '')
 	if (type === 'totp') {
 		readTotp(ctx, entry)
+	} else if (type === 'custom-fields') {
+		ctx.customFields.push(entry)
 	} else if (type === 'passkey') {
 		readPasskey(ctx, entry)
 	} else {
@@ -450,7 +482,9 @@ function extrasTarget(ctx) {
 				type: 'login',
 			},
 			Math.min(
-				...[...ctx.seeds, ...ctx.passkeys].map((entry) => entry.sourceRow),
+				...[...ctx.seeds, ...ctx.passkeys, ...ctx.customFields].map(
+					(entry) => entry.sourceRow,
+				),
 			),
 		),
 	)
@@ -482,6 +516,52 @@ function attachExtras(ctx) {
 	)) {
 		rejectEntry(ctx, { sourceRow, reason: SECOND_PASSKEY_REASON })
 	}
+	for (const entry of ctx.customFields) {
+		attachCustomFields(ctx, target, entry)
+	}
+}
+
+/**
+ * Put the fields of a CXF `custom-fields` credential on the item's row as
+ * additional fields, keeping each field's kind: a `concealed-string` comes
+ * back hidden, a `boolean` as yes or no, anything else as text. A field
+ * named after a built-in field (`key`, `login`, `url`) or already on the
+ * row is rejected with a reason rather than overwriting it.
+ *
+ * @param {object} ctx The item being read (itemToRows).
+ * @param {object} target The row the fields go on.
+ * @param {{credential: object, sourceRow: number}} entry The credential and its source row.
+ * @return {void}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
+ */
+function attachCustomFields(ctx, target, entry) {
+	const fields = Array.isArray(entry.credential.fields)
+		? entry.credential.fields
+		: []
+	const members =
+		target.additionalFields && typeof target.additionalFields === 'object'
+			? { ...target.additionalFields }
+			: {}
+	for (const [index, field] of fields.entries()) {
+		const label = fieldValue(field?.label).trim() || `Field ${index + 1}`
+		if (
+			RESERVED_MEMBER_NAMES.includes(label.toLowerCase())
+			|| Object.hasOwn(members, label)
+		) {
+			rejectEntry(ctx, {
+				sourceRow: entry.sourceRow,
+				reason: `CXF custom field "${label}" clashes with a field the secret already has`,
+			})
+			continue
+		}
+		const kind = CXF_FIELD_KINDS[String(field?.fieldType ?? '')] ?? 'text'
+		const value = fieldValue(field)
+		members[label] = fieldEntry(
+			kind === 'boolean' ? String(value === 'true') : value,
+			kind,
+		)
+	}
+	target.additionalFields = members
 }
 
 /**
@@ -713,10 +793,8 @@ function apiKeyCredential(row) {
  * @return {object}
  */
 function sshKeyCredential(row) {
-	const fields = row.additionalFields
-	const publicKey =
-		fields && typeof fields === 'object' ? (fields.publicKey ?? '') : ''
-	return {
+	const publicKey = memberText(row, SSH_PUBLIC_KEY_MEMBER)
+	const credential = {
 		type: 'ssh-key',
 		privateKey: {
 			fieldType: 'concealed-string',
@@ -724,6 +802,71 @@ function sshKeyCredential(row) {
 		},
 		publicKey: { fieldType: 'string', value: publicKey },
 	}
+	try {
+		const parsed = parsePublicKey(publicKey)
+		credential.keyType = parsed.type
+		if (parsed.comment !== '') {
+			credential.keyComment = parsed.comment
+		}
+	} catch {
+		// No usable public key: the private key is still exported.
+	}
+	return credential
+}
+
+/**
+ * The text of one additional field of a row, '' when absent.
+ *
+ * @param {object} row The serialized secret.
+ * @param {string} name The member name.
+ * @return {string}
+ */
+function memberText(row, name) {
+	const fields = row.additionalFields
+	if (!fields || typeof fields !== 'object') {
+		return ''
+	}
+	const member = objectToMembers(fields).find((entry) => entry.name === name)
+	return member ? member.value : ''
+}
+
+/** The additional fields a type's own CXF entity already carries. */
+const ENTITY_MEMBERS = {
+	ssh_key: [SSH_PUBLIC_KEY_MEMBER, SSH_FINGERPRINT_MEMBER],
+}
+
+/**
+ * The CXF `custom-fields` credential of a row's additional fields, with
+ * each field's kind: hidden as `concealed-string`, yes or no as `boolean`,
+ * text as `string`. Fields the type's own entity carries are left out.
+ *
+ * @param {object} row The serialized secret.
+ * @param {string} typeName The resolved Keepiq type name.
+ * @return {Array<object>} [] or the one credential.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
+ */
+function customFieldCredentials(row, typeName) {
+	const fields = row.additionalFields
+	if (!fields || typeof fields !== 'object') {
+		return []
+	}
+	const own = ENTITY_MEMBERS[typeName] ?? []
+	const members = objectToMembers(fields).filter(
+		(member) => !own.includes(member.name),
+	)
+	if (members.length === 0) {
+		return []
+	}
+	return [
+		{
+			type: 'custom-fields',
+			fields: members.map((member) => ({
+				fieldType: KIND_FIELD_TYPES[member.kind],
+				label: member.name,
+				value: member.value,
+			})),
+		},
+	]
 }
 
 /**
@@ -800,7 +943,8 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 	const collections = new Map()
 
 	for (const [index, row] of serializedSecrets.entries()) {
-		const credential = rowToCredential(row, typeNameOf(row, options), unmapped)
+		const typeName = typeNameOf(row, options)
+		const credential = rowToCredential(row, typeName, unmapped)
 		if (credential === null) {
 			continue
 		}
@@ -809,7 +953,11 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 		items.push({
 			id: itemId,
 			title: row.name ?? '',
-			credentials: [credential, ...valueFieldCredentials(row, unmapped)],
+			credentials: [
+				credential,
+				...valueFieldCredentials(row, unmapped),
+				...customFieldCredentials(row, typeName),
+			],
 		})
 		addToCollection(collections, { folder: row.folder, itemId })
 	}

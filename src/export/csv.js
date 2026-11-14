@@ -14,6 +14,8 @@
  * The CSV is generated in the browser and never transmitted to the server.
  */
 
+import { fieldValueOf } from '../utils/additionalFields.js'
+
 /** The fixed column order, matching the generic CSV import mapping. */
 export const CSV_COLUMNS = [
 	'name',
@@ -58,8 +60,9 @@ function notesOf(secret) {
 		return af
 	}
 	if (typeof af === 'object') {
-		if (typeof af.notes === 'string') {
-			return af.notes
+		// A hidden notes field is stored as `{ value, kind }`.
+		if (typeof af.notes === 'string' || typeof af.notes?.value === 'string') {
+			return fieldValueOf(af.notes)
 		}
 		return JSON.stringify(af)
 	}

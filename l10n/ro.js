@@ -1734,7 +1734,21 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Aceasta nu este o cheie de autentificator. Lipiți un link otpauth://totp/ sau secretul base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Acest cod QR nu conține o cheie de autentificator. Folosiți codul QR pe care îl afișează site-ul când configurați autentificarea cu doi factori.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Acest secret așteaptă o verificare a partajărilor sale care nu s-a încheiat încă. Nu s-a salvat nimic; încercați din nou mai târziu sau cereți unui administrator să verifice dacă rulează sarcinile de fundal.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Doar proprietarul poate modifica un manager sau o apartenență care include un manager."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Doar proprietarul poate modifica un manager sau o apartenență care include un manager.",
+        "Field kind": "Tipul câmpului",
+        "Yes or no": "Da sau nu",
+        "Public key": "Cheie publică",
+        "Fingerprint": "Amprentă",
+        "Copy public key": "Copiați cheia publică",
+        "Copy fingerprint": "Copiați amprenta",
+        "Generate key pair": "Generați o pereche de chei",
+        "Import from file": "Importați din fișier",
+        "Derived from the public key.": "Derivată din cheia publică.",
+        "The file could not be read.": "Fișierul nu a putut fi citit.",
+        "This browser could not generate a key pair.": "Acest browser nu a putut genera o pereche de chei.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Aceasta nu este o cheie privată. Lipiți o cheie privată OpenSSH sau PEM ori generați una.",
+        "This is not an OpenSSH public key.": "Aceasta nu este o cheie publică OpenSSH.",
+        "This public key does not belong to the private key.": "Această cheie publică nu aparține cheii private."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )
