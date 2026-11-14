@@ -25,11 +25,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SiemSink;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCA\Keepiq\Service\Siem\SiemSinkRequest;
-use OCA\Keepiq\Service\SiemService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -47,19 +47,19 @@ class SiemSinkController extends OCSController {
 	 * Constructor for SiemSinkController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SiemService $service The SIEM service
+	 * @param SiemServiceInterface $service The SIEM service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Audit admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Audit admin area
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SiemService $service,
+		private SiemServiceInterface $service,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

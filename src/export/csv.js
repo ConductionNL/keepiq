@@ -5,8 +5,9 @@
  * Plaintext CSV export + parse (secret-export-gdpr D2, tasks §5.3).
  *
  * Produces the obvious plaintext columns
- * (`name,url,login,password,notes,folder,type`) with RFC 4180 quoting, in a
- * layout the secret-import generic CSV auto-detection round-trips. This module
+ * (`name,url,login,password,notes,folder,type,totp`) with RFC 4180 quoting, in
+ * a layout the secret-import generic CSV auto-detection round-trips. A
+ * login's passkeys have no column and are left out. This module
  * is pure string transformation — the SECURITY gating (warning acknowledgement
  * + master-password re-auth) lives in the export store/dialog, never here.
  *
@@ -22,6 +23,7 @@ export const CSV_COLUMNS = [
 	'notes',
 	'folder',
 	'type',
+	'totp',
 ]
 
 /**
@@ -81,10 +83,117 @@ export function generateCsv(secrets) {
 			notesOf(secret),
 			secret.folder,
 			secret.type,
+			secret.totp,
 		]
 		lines.push(row.map(quoteField).join(','))
 	}
 	return lines.join('\r\n')
+}
+
+/**
+ * Close the field the tokenizer is reading.
+ *
+ * @param {object} state The tokenizer state.
+ * @return {void}
+ */
+function endField(state) {
+	state.record.push(state.field)
+	state.field = ''
+}
+
+/**
+ * Close the field and the record the tokenizer is reading.
+ *
+ * @param {object} state The tokenizer state.
+ * @return {void}
+ */
+function endRecord(state) {
+	endField(state)
+	state.rows.push(state.record)
+	state.record = []
+}
+
+/**
+ * Read one character inside a quoted field. A doubled quote is a literal
+ * quote; a single one closes the quoted part.
+ *
+ * @param {object} state The tokenizer state.
+ * @return {number} The number of characters consumed.
+ */
+function quotedStep(state) {
+	const ch = state.csv[state.i]
+	if (ch !== '"') {
+		state.field += ch
+		return 1
+	}
+	if (state.csv[state.i + 1] === '"') {
+		state.field += '"'
+		return 2
+	}
+	state.inQuotes = false
+	return 1
+}
+
+/**
+ * Read one character outside a quoted field. CRLF, CR and LF each end a
+ * record.
+ *
+ * @param {object} state The tokenizer state.
+ * @return {number} The number of characters consumed.
+ */
+function plainStep(state) {
+	const ch = state.csv[state.i]
+	if (ch === '"') {
+		state.inQuotes = true
+		return 1
+	}
+	if (ch === ',') {
+		endField(state)
+		return 1
+	}
+	if (ch === '\n') {
+		endRecord(state)
+		return 1
+	}
+	if (ch === '\r') {
+		endRecord(state)
+		return state.csv[state.i + 1] === '\n' ? 2 : 1
+	}
+	state.field += ch
+	return 1
+}
+
+/**
+ * Split an RFC 4180 CSV string into records of raw field strings.
+ *
+ * @param {string} csv The CSV document.
+ * @return {Array<Array<string>>} The records, header included.
+ */
+function csvRecords(csv) {
+	const state = { csv, i: 0, field: '', record: [], rows: [], inQuotes: false }
+	while (state.i < csv.length) {
+		state.i += state.inQuotes ? quotedStep(state) : plainStep(state)
+	}
+	// Flush trailing field/record if the document does not end with a newline.
+	if (state.field !== '' || state.record.length > 0) {
+		endRecord(state)
+	}
+	return state.rows
+}
+
+/**
+ * Key one record by the header columns; a missing cell is ''.
+ *
+ * @param {Array<string>} header The header record.
+ * @param {Array<string>} record The data record.
+ * @return {object} The row keyed by header column.
+ */
+function recordObject(header, record) {
+	const obj = {}
+	header.forEach((col, idx) => {
+		obj[col] = record[idx] ?? ''
+	})
+	return obj
 }
 
 /**
@@ -95,70 +204,7 @@ export function generateCsv(secrets) {
  * @return {Array<object>} Rows keyed by header column.
  */
 export function parseCsv(csv) {
-	const rows = []
-	let field = ''
-	let record = []
-	let inQuotes = false
-	let i = 0
-
-	const pushField = () => {
-		record.push(field)
-		field = ''
-	}
-	const pushRecord = () => {
-		pushField()
-		rows.push(record)
-		record = []
-	}
-
-	while (i < csv.length) {
-		const ch = csv[i]
-		if (inQuotes) {
-			if (ch === '"') {
-				if (csv[i + 1] === '"') {
-					field += '"'
-					i += 2
-					continue
-				}
-				inQuotes = false
-				i++
-				continue
-			}
-			field += ch
-			i++
-			continue
-		}
-		if (ch === '"') {
-			inQuotes = true
-			i++
-			continue
-		}
-		if (ch === ',') {
-			pushField()
-			i++
-			continue
-		}
-		if (ch === '\r') {
-			if (csv[i + 1] === '\n') {
-				i++
-			}
-			pushRecord()
-			i++
-			continue
-		}
-		if (ch === '\n') {
-			pushRecord()
-			i++
-			continue
-		}
-		field += ch
-		i++
-	}
-	// Flush trailing field/record if the document does not end with a newline.
-	if (field !== '' || record.length > 0) {
-		pushRecord()
-	}
-
+	const rows = csvRecords(csv)
 	if (rows.length === 0) {
 		return []
 	}
@@ -166,11 +212,5 @@ export function parseCsv(csv) {
 	return rows
 		.slice(1)
 		.filter((r) => r.length > 1 || (r.length === 1 && r[0] !== ''))
-		.map((r) => {
-			const obj = {}
-			header.forEach((col, idx) => {
-				obj[col] = r[idx] ?? ''
-			})
-			return obj
-		})
+		.map((r) => recordObject(header, r))
 }

@@ -6,6 +6,8 @@
 import axios from '@nextcloud/axios'
 import { generateOcsUrl, generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { copyCiphertext, recipientFields } from '../../services/recipientCopy.js'
+import { uniqueSharees } from '../../utils/sharees.js'
 import { useSecretStore } from './secret.js'
 import { useShareStore } from './share.js'
 
@@ -23,6 +25,94 @@ const MAX_GROUP_RESULTS = 25
  *
  * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
  */
+/**
+ * The group rows of a sharee search answer: the exact matches, then the
+ * others.
+ *
+ * @param {object} response The sharee search response.
+ * @return {Array<object>}
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+ */
+function shareeGroupRows(response) {
+	const data = response.data?.ocs?.data ?? {}
+	return [
+		...(Array.isArray(data.exact?.groups) ? data.exact.groups : []),
+		...(Array.isArray(data.groups) ? data.groups : []),
+	]
+}
+
+/**
+ * What the server answered on creating a group share: the share, the
+ * members eligible for a copy, and how many it left out itself.
+ *
+ * @param {object|undefined} data The response body.
+ * @return {{groupShare: ?object, members: Array<object>, skippedByServer: number}}
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+ */
+function createdGroupShare(data) {
+	return {
+		groupShare: data?.groupShare ?? null,
+		members: Array.isArray(data?.members) ? data.members : [],
+		skippedByServer: Number(data?.skipped ?? 0),
+	}
+}
+
+/**
+ * Encrypt a copy for each eligible member and register them. register-batch
+ * needs a vault-key proof (keepiq#818).
+ *
+ * @param {object} store The group share store.
+ * @param {object} share The source secret id and the created group share.
+ * @return {Promise<{received: number, refused: number, mismatched: number}>}
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+ */
+async function registerMemberCopies(store, share) {
+	if (share.groupShare === null || share.members.length === 0) {
+		return { received: 0, refused: 0, mismatched: 0 }
+	}
+	const rows = await store.encryptForMembers(
+		share.secretId,
+		share.groupShare.id,
+		share.members,
+	)
+	const { items } = await useShareStore().registerBatch(rows)
+	return registeredCounts(items, share.members.length)
+}
+
+/**
+ * How the registered copies came out. A copy the server would leave without
+ * the login's one-time code or passkeys is refused for that reason, not for
+ * a missing encryption suite.
+ *
+ * @param {Array<object>} items The register-batch items.
+ * @param {number} memberCount How many members a copy was made for.
+ * @return {{received: number, refused: number, mismatched: number}}
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+ */
+function registeredCounts(items, memberCount) {
+	const received = items.filter(
+		(item) => item.status === 'created' || item.status === 'exists',
+	).length
+	const mismatched = items.filter(
+		(item) => item.status === 'copy_fields_mismatch',
+	).length
+	return { received, refused: memberCount - received - mismatched, mismatched }
+}
+
+/**
+ * List a group share, replacing an older entry of it.
+ *
+ * @param {object} store The group share store.
+ * @param {object} groupShare The group share.
+ * @return {void}
+ */
+function rememberGroupShare(store, groupShare) {
+	store.groupShares = [
+		...store.groupShares.filter((row) => row.id !== groupShare.id),
+		groupShare,
+	]
+}
+
 export const useGroupShareStore = defineStore('groupShare', {
 	state: () => ({
 		/** @type {Array<object>} The group shares of the secret last fetched. */
@@ -82,22 +172,10 @@ export const useGroupShareStore = defineStore('groupShare', {
 				},
 			)
 
-			const data = response.data?.ocs?.data ?? {}
-			const rows = [
-				...(Array.isArray(data.exact?.groups) ? data.exact.groups : []),
-				...(Array.isArray(data.groups) ? data.groups : []),
-			]
-			const groups = []
-			const seen = new Set()
-			for (const row of rows) {
-				const id = String(row?.value?.shareWith ?? '')
-				if (id === '' || seen.has(id)) {
-					continue
-				}
-				seen.add(id)
-				groups.push({ id, label: String(row?.label || id) })
-			}
-			return groups.slice(0, MAX_GROUP_RESULTS)
+			return uniqueSharees(shareeGroupRows(response)).slice(
+				0,
+				MAX_GROUP_RESULTS,
+			)
 		},
 
 		/**
@@ -106,8 +184,9 @@ export const useGroupShareStore = defineStore('groupShare', {
 		 * @param {string} secretId The source secret id.
 		 * @param {string} groupId The Nextcloud group id.
 		 * @param {{useOnly: boolean, expiresAt: string|null}} [restriction] Use-only and end date.
-		 * @return {Promise<{received: number, skipped: number}>} How many members
-		 *   got a copy, and how many did not (no encryption suite, or refused).
+		 * @return {Promise<{received: number, skipped: number, refused: number}>} How many
+		 *   members got a copy, how many did not (no encryption suite, or refused), and how
+		 *   many were refused because the login holds a one-time code or passkeys.
 		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		async shareWithGroup(secretId, groupId, restriction = {}) {
@@ -120,39 +199,16 @@ export const useGroupShareStore = defineStore('groupShare', {
 					),
 					{ groupId, ...restriction },
 				)
-				const groupShare = created.data?.groupShare ?? null
-				const members = Array.isArray(created.data?.members)
-					? created.data.members
-					: []
-				const skippedByServer = Number(created.data?.skipped ?? 0)
-
-				let received = 0
-				let refused = 0
-				if (groupShare !== null && members.length > 0) {
-					const rows = await this.encryptForMembers(
-						secretId,
-						groupShare.id,
-						members,
-					)
-					// register-batch needs a vault-key proof (keepiq#818).
-					const { items } = await useShareStore().registerBatch(rows)
-					received = items.filter(
-						(item) =>
-							item.status === 'created' || item.status === 'exists',
-					).length
-					refused = members.length - received
+				const share = { secretId, ...createdGroupShare(created.data) }
+				const counts = await registerMemberCopies(this, share)
+				if (share.groupShare !== null) {
+					rememberGroupShare(this, share.groupShare)
 				}
-
-				if (groupShare !== null) {
-					this.groupShares = [
-						...this.groupShares.filter(
-							(row) => row.id !== groupShare.id,
-						),
-						groupShare,
-					]
+				return {
+					received: counts.received,
+					skipped: share.skippedByServer + counts.refused,
+					refused: counts.mismatched,
 				}
-
-				return { received, skipped: skippedByServer + refused }
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message || e?.message || 'Failed to share'
@@ -174,15 +230,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 		async encryptForMembers(secretId, groupShareId, members) {
 			const shareStore = useShareStore()
 			const plain = await useSecretStore().fetchSecret(secretId)
-			const snapshot = {
-				key: plain?.key ?? '',
-				login: plain?.login ?? '',
-				additionalFields:
-					typeof plain?.additionalFields === 'object'
-					&& plain.additionalFields !== null
-						? JSON.stringify(plain.additionalFields)
-						: (plain?.additionalFields ?? ''),
-			}
+			const snapshot = recipientFields(plain)
 
 			const rows = []
 			for (const member of members) {
@@ -193,9 +241,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 				rows.push({
 					sourceSecretId: secretId,
 					targetUserId: member.userId,
-					encryptedKey: blob.key ?? '',
-					encryptedLogin: blob.login ?? null,
-					encryptedAdditionalFields: blob.additionalFields ?? null,
+					...copyCiphertext(blob),
 					groupShareId,
 				})
 			}

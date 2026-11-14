@@ -47,8 +47,9 @@ use Psr\Container\ContainerInterface;
  *
  * @covers \OCA\Keepiq\Controller\SettingsController
  * @covers \OCA\Keepiq\AppInfo\DomainOverrideRegistrar
- * @covers \OCA\Keepiq\AppInfo\SettingsControllerFactory
+ * @covers \OCA\Keepiq\Controller\SettingsControllerFactory
  * @uses   \OCA\Keepiq\Controller\AdminAreaSettingsController
+ * @uses   \OCA\Keepiq\Support\MessageResponse
  */
 class SettingsControllerConnectionRefreshTest extends TestCase {
 

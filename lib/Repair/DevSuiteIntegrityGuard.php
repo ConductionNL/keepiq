@@ -27,7 +27,7 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Service\DecryptService;
+use OCA\Keepiq\Kernel\Contracts\DecryptServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Migration\IOutput;
 use Psr\Log\LoggerInterface;
@@ -58,7 +58,7 @@ class DevSuiteIntegrityGuard {
 	 * @param EncryptionSuiteMapper $suiteMapper The encryption suite mapper
 	 * @param SecretMapper $secretMapper The secret mapper (rebuild cleanup)
 	 * @param FolderMapper $folderMapper The folder mapper (rebuild cleanup)
-	 * @param DecryptService $decryptService The decrypt service (suite validation)
+	 * @param DecryptServiceInterface $decryptService The decrypt service (suite validation)
 	 * @param LoggerInterface $logger The logger interface
 	 *
 	 * @return void
@@ -67,7 +67,7 @@ class DevSuiteIntegrityGuard {
 		private EncryptionSuiteMapper $suiteMapper,
 		private SecretMapper $secretMapper,
 		private FolderMapper $folderMapper,
-		private DecryptService $decryptService,
+		private DecryptServiceInterface $decryptService,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

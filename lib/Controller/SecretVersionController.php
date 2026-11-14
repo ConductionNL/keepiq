@@ -26,8 +26,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\SecretVersionServiceInterface;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -43,17 +47,17 @@ class SecretVersionController extends OCSController {
 	 * Constructor for SecretVersionController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretVersionService $versionService The version service
+	 * @param SecretVersionServiceInterface $versionService The version service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretVersionService $versionService,
+		private SecretVersionServiceInterface $versionService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -124,32 +128,46 @@ class SecretVersionController extends OCSController {
 	}//end show()
 
 	/**
-	 * Restore a version onto the head. The client then drives the
-	 * existing sync-on-update fan-out for shared recipients.
+	 * Restore a version onto this one row. The web app restores through
+	 * share-save (`restoredFrom`). A copy whose holder may not write its
+	 * source is view-only and its restore is refused.
 	 *
 	 * @param string $id The version UUID
+	 * @param string|null $baseUpdatedAt The head version the restore was chosen on
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
 	#[NoAdminRequired]
-	public function restore(string $id): JSONResponse {
+	public function restore(string $id, ?string $baseUpdatedAt = null): JSONResponse {
 		$userId = $this->sessionUserId();
 		if ($userId === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
-			$secret = $this->versionService->restore(versionId: $id, userId: $userId);
-		} catch (InvalidArgumentException $exception) {
+			$secret = $this->versionService->restore(versionId: $id, userId: $userId, baseUpdatedAt: $baseUpdatedAt);
+		} catch (StaleWriteException $exception) {
 			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
+				data: ['message' => $exception->getMessage(), 'current' => $exception->getCurrent()->jsonSerialize()],
+				statusCode: Http::STATUS_CONFLICT
 			);
-		}
+		} catch (ForbiddenException $exception) {
+			$body = ['message' => $exception->getMessage()];
+			if ($exception->policyCode() !== null) {
+				$body['code'] = $exception->policyCode();
+			}
+
+			return new JSONResponse(data: $body, statusCode: Http::STATUS_FORBIDDEN);
+		} catch (NotFoundException $exception) {
+			return new MessageResponse(error: $exception, status: Http::STATUS_NOT_FOUND);
+		} catch (InvalidArgumentException $exception) {
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
+		}//end try
 
 		return new JSONResponse(data: $secret->jsonSerialize());
 	}//end restore()

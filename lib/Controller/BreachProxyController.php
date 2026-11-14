@@ -31,7 +31,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\Connection\ConnectionReporter;
+use OCA\Keepiq\Kernel\Contracts\ConnectionReporterInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -92,7 +92,7 @@ class BreachProxyController extends Controller {
 	 * @param ICacheFactory $cacheFactory The cache factory
 	 * @param IUserSession $userSession The user session (auth posture)
 	 * @param LoggerInterface $logger The logger
-	 * @param ConnectionReporter|null $connectionReporter Tells integriq what an upstream lookup met, or nothing when absent.
+	 * @param ConnectionReporterInterface|null $connectionReporter Tells integriq what an upstream lookup met, or nothing when absent.
 	 *
 	 * @return void
 	 *
@@ -105,7 +105,7 @@ class BreachProxyController extends Controller {
 		ICacheFactory $cacheFactory,
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
-		private ?ConnectionReporter $connectionReporter = null,
+		private ?ConnectionReporterInterface $connectionReporter = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 		// Namespace deliberately still `keepiq_` after the doriath -> keepiq
@@ -158,6 +158,28 @@ class BreachProxyController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function range(string $prefix = ''): DataResponse {
+		$prefix = strtoupper(trim($prefix));
+		$refusal = $this->refusal(prefix: $prefix);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$cached = $this->cache->get($prefix);
+		if (is_string($cached) === true) {
+			return new DataResponse(data: ['suffixes' => $cached]);
+		}
+
+		return $this->lookup(prefix: $prefix);
+	}//end range()
+
+	/**
+	 * Why a range lookup is refused, if it is.
+	 *
+	 * @param string $prefix The upper-cased, trimmed prefix
+	 *
+	 * @return DataResponse|null The refusal, or null when the lookup may go ahead
+	 */
+	private function refusal(string $prefix): ?DataResponse {
 		if ($this->userSession->getUser() === null) {
 			return new DataResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
@@ -172,7 +194,6 @@ class BreachProxyController extends Controller {
 
 		// Validate the prefix is EXACTLY 5 hexadecimal characters — never accept
 		// a longer fragment that would narrow k-anonymity, and never a value.
-		$prefix = strtoupper(trim($prefix));
 		if (preg_match('/^[0-9A-F]{5}$/', $prefix) !== 1) {
 			return new DataResponse(
 				data: ['message' => 'prefix must be exactly 5 hexadecimal characters'],
@@ -180,14 +201,19 @@ class BreachProxyController extends Controller {
 			);
 		}
 
-		$cached = $this->cache->get($prefix);
-		if (is_string($cached) === true) {
-			return new DataResponse(data: ['suffixes' => $cached]);
-		}
+		return null;
+	}//end refusal()
 
+	/**
+	 * Fetch a range from the upstream, report it and cache it.
+	 *
+	 * @param string $prefix The validated prefix
+	 *
+	 * @return DataResponse The suffixes, or 503 when the upstream failed
+	 */
+	private function lookup(string $prefix): DataResponse {
 		try {
-			$client = $this->clientService->newClient();
-			$response = $client->get(
+			$response = $this->clientService->newClient()->get(
 				self::HIBP_RANGE_URL . $prefix,
 				[
 					'timeout' => self::UPSTREAM_TIMEOUT,
@@ -196,32 +222,43 @@ class BreachProxyController extends Controller {
 			);
 			$body = (string)$response->getBody();
 		} catch (Throwable $e) {
-			// Soft-degrade. Never log the prefix together with a user id
-			// (privacy), and the exception is exactly that pairing: the client's
-			// message names the upstream URL, which ends in the prefix, and
-			// Nextcloud stamps every line with the user who typed the password
-			// and with the request URI, which is why the prefix travels in the
-			// body and not in this route's path (keepiq#866).
-			// So the class and the HTTP status go in the line and the message
-			// goes nowhere, not even as an `exception` context key, which the
-			// log writer would render in full.
-			$httpStatus = $this->connectionReporter?->httpStatusOf(exception: $e);
-			$this->logger->warning(
-				'Keepiq: HIBP range lookup failed: ' . $e::class . ' ' . $this->outcomeOf(httpStatus: $httpStatus),
-				['app' => Application::APP_ID]
-			);
-			$this->reportLookup(httpStatus: $httpStatus);
-			return new DataResponse(
-				data: ['message' => 'Breach service unavailable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		}//end try
+			return $this->unavailable(exception: $e);
+		}
 
 		$this->reportLookup(httpStatus: $response->getStatusCode());
 		$this->cache->set($prefix, $body, self::CACHE_TTL);
 
 		return new DataResponse(data: ['suffixes' => $body]);
-	}//end range()
+	}//end lookup()
+
+	/**
+	 * Log and report a failed upstream lookup and answer 503.
+	 *
+	 * @param Throwable $exception What the upstream lookup threw
+	 *
+	 * @return DataResponse
+	 */
+	private function unavailable(Throwable $exception): DataResponse {
+		// Soft-degrade. Never log the prefix together with a user id
+		// (privacy), and the exception is exactly that pairing: the client's
+		// message names the upstream URL, which ends in the prefix, and
+		// Nextcloud stamps every line with the user who typed the password
+		// and with the request URI, which is why the prefix travels in the
+		// body and not in this route's path (keepiq#866).
+		// So the class and the HTTP status go in the line and the message
+		// goes nowhere, not even as an `exception` context key, which the
+		// log writer would render in full.
+		$httpStatus = $this->connectionReporter?->httpStatusOf(exception: $exception);
+		$this->logger->warning(
+			'Keepiq: HIBP range lookup failed: ' . $exception::class . ' ' . $this->outcomeOf(httpStatus: $httpStatus),
+			['app' => Application::APP_ID]
+		);
+		$this->reportLookup(httpStatus: $httpStatus);
+		return new DataResponse(
+			data: ['message' => 'Breach service unavailable'],
+			statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+		);
+	}//end unavailable()
 
 	/**
 	 * Hand the upstream's HTTP status, and nothing else, to the connection reporter.

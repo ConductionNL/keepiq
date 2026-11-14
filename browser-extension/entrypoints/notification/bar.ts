@@ -1,0 +1,536 @@
+import { i18n } from '#i18n'
+import { MIN_KEEPIQ_VERSION } from '@/src/api/keepiq-version'
+import {
+	BAR_COMPACT_HEIGHT_PX, THEMES,
+	type CaptureRefused, type CaptureStateReply, type ContentToNotification, type NotificationToBackground, type PickInput, type VaultWriteError, type WriteErrorCode, type WriteResult,
+} from '@/src/messages'
+import { GUARD_MS } from '@/src/autofill/visibility'
+import { trackVisibility } from '@/src/autofill/visibility-tracker'
+import { applyTheme, followMirror, mirroredTheme } from '../popup/theme'
+
+/** A status region filled at once after it appears is not announced. */
+const ANNOUNCE_MS = 250
+/** A save that takes longer than this says so. */
+const SLOW_MS = 1000
+/** `send` could not reach the background, as opposed to its `null` reply. */
+const UNREACHABLE = Symbol('unreachable')
+
+type Mode = CaptureStateReply['mode']
+
+const optional = (value: unknown) => value === undefined || typeof value === 'string'
+
+type StateDraft = Partial<CaptureStateReply>
+
+/** An add, or an update of a login named by text. */
+const hasMode = (r: StateDraft) => r.mode === 'add' || (r.mode === 'update' && typeof r.itemName === 'string')
+
+/** The hosts, and the optional item name, username and shortcut, as text. */
+const hasTexts = (r: StateDraft) => typeof r.host === 'string' && optional(r.tabHost) && optional(r.itemName) && optional(r.username) && optional(r.shortcut)
+
+const hasFolders = (r: StateDraft) => Array.isArray(r.folders) && r.folders.every((folder) => typeof folder?.id === 'string' && typeof folder.name === 'string')
+
+const hasLabels = (r: StateDraft) => hasMode(r) && hasTexts(r)
+
+function isState(reply: unknown): reply is CaptureStateReply {
+	const r = reply as StateDraft | null
+	return typeof r === 'object' && r !== null && hasLabels(r) && THEMES.includes(r.theme as never) && hasFolders(r)
+}
+
+function isWriteResult(reply: unknown): reply is WriteResult<null> {
+	const r = reply as { ok?: unknown; error?: { code?: unknown } } | null
+	return typeof r === 'object' && r !== null && (r.ok === true || (r.ok === false && typeof r.error?.code === 'string'))
+}
+
+const isRefusal = (reply: unknown): reply is CaptureRefused => (reply as Partial<CaptureRefused> | null)?.refused === 'not_visible'
+
+async function send(message: NotificationToBackground): Promise<unknown> {
+	try {
+		return await browser.runtime.sendMessage(message)
+	} catch {
+		return UNREACHABLE
+	}
+}
+
+const unknownText = () => i18n.t('errors.unknown')
+
+/** The bar's wording per write error code; a code from a newer background reads as unknown too. */
+const WRITE_ERROR_TEXTS: Record<WriteErrorCode, (mode: Mode) => string> = {
+	write_locked: () => i18n.t('notificationBar.errors.writeLocked'),
+	unverified: () => i18n.t('notificationBar.errors.unverified'),
+	view_only: () => i18n.t('notificationBar.errors.viewOnly'),
+	// A save names only a folder that could have gone.
+	not_found: (mode) => (mode === 'update' ? i18n.t('notificationBar.errors.loginGone') : i18n.t('writeErrors.folderGone')),
+	locked: () => i18n.t('notificationBar.errors.locked'),
+	session_revoked: () => i18n.t('errors.sessionRevoked'),
+	account_changed: () => i18n.t('notificationBar.errors.accountChanged'),
+	offline: () => i18n.t('writeErrors.offline'),
+	server_error: () => i18n.t('writeErrors.serverError'),
+	forbidden: () => i18n.t('writeErrors.forbidden'),
+	policy: () => i18n.t('writeErrors.policy'),
+	invalid: () => i18n.t('writeErrors.invalid'),
+	conflict: () => i18n.t('writeErrors.invalid'),
+	restricted: () => i18n.t('writeErrors.restricted'),
+	key_mismatch: () => i18n.t('notificationBar.errors.keyMismatch'),
+	stale_source: () => i18n.t('notificationBar.errors.staleSource'),
+	share_scan_pending: () => i18n.t('notificationBar.errors.shareScanPending'),
+	incomplete: () => i18n.t('notificationBar.errors.incomplete'),
+	bad_certificate: () => i18n.t('notificationBar.errors.badCertificate'),
+	keepiq_outdated: () => i18n.t('notificationBar.errors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION }),
+	// No wording of the bar's own; listed so a new code needs a decision here.
+	blocked: unknownText,
+	unreadable: unknownText,
+	unknown: unknownText,
+	partner_unreachable: unknownText,
+	partner_upgrade_required: unknownText,
+	partner_lookup_limit: unknownText,
+	federation_unavailable: unknownText,
+	partner_clock: unknownText,
+	passkey_clone: unknownText,
+	argon2_unavailable: unknownText,
+}
+
+/** What the bar says for a failed save or update; `undefined` is the background not answering. */
+export function writeErrorText(error: VaultWriteError | undefined, mode: Mode): string {
+	if (error?.code === undefined) return i18n.t('notificationBar.errors.notResponding')
+	const text = Object.hasOwn(WRITE_ERROR_TEXTS, error.code) ? WRITE_ERROR_TEXTS[error.code] : unknownText
+	return text(mode)
+}
+
+function updateQuestion(name: string, { host, tabHost, username }: CaptureStateReply): string {
+	if (username) {
+		return tabHost ? i18n.t('notificationBar.updateQuestionUserHost', { name, username, host }) : i18n.t('notificationBar.updateQuestionUser', { name, username })
+	}
+	return tabHost ? i18n.t('notificationBar.updateQuestionHost', { name, host }) : i18n.t('notificationBar.updateQuestion', { name })
+}
+
+/** The question, naming the login's own host where the tab shows another site. */
+export function questionText(reply: CaptureStateReply): string {
+	if (reply.mode === 'add') return i18n.t('notificationBar.saveQuestion', { host: reply.host })
+	return updateQuestion(reply.itemName ?? '', reply)
+}
+
+/** `present` announces the question with the shortcut that answers it. */
+function questionAnnouncement(reply: CaptureStateReply): string {
+	const question = questionText(reply)
+	return reply.shortcut ? `${question} ${i18n.t('notificationBar.shortcutHint', { shortcut: reply.shortcut })}` : question
+}
+
+const savingText = (mode: Mode) => (mode === 'add' ? i18n.t('notificationBar.saving') : i18n.t('notificationBar.updating'))
+
+const isPressKey = (event: KeyboardEvent) => event.key === 'Enter' || event.key === ' '
+
+/** A message from the parent that names a key. */
+type KeyedMessage = Partial<ContentToNotification> & { key: string }
+
+function isKeyed(message: Partial<ContentToNotification> | null): message is KeyedMessage {
+	return typeof message === 'object' && message !== null && typeof message.key === 'string'
+}
+
+export function element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Record<string, string>, ...children: Array<Node | string>) {
+	const node = document.createElement(tag)
+	for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value)
+	node.append(...children)
+	return node
+}
+
+const SVG = 'http://www.w3.org/2000/svg'
+
+export function svg(attributes: Record<string, string>, shapes: Array<[string, Record<string, string>]>): SVGSVGElement {
+	const root = document.createElementNS(SVG, 'svg')
+	for (const [name, value] of Object.entries({ 'aria-hidden': 'true', ...attributes })) root.setAttribute(name, value)
+	for (const [tag, shape] of shapes) {
+		const node = document.createElementNS(SVG, tag)
+		for (const [name, value] of Object.entries(shape)) node.setAttribute(name, value)
+		root.append(node)
+	}
+	return root
+}
+
+export const stroke = { 'fill': 'none', 'stroke': 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }
+
+/** The app icon, as the popup's `Logo`. */
+export function logo(): SVGSVGElement {
+	const icon = svg({ class: 'logo', width: '24', height: '24', viewBox: '0 0 512 512' }, [
+		['polygon', { points: '256,26 455.19,141 455.19,371 256,486 56.81,371 56.81,141', fill: 'currentColor' }],
+	])
+	const lock = svg({ x: '136', y: '116', width: '240', height: '240', viewBox: '0 0 24 24', fill: '#ffffff' }, [
+		['rect', { x: '5', y: '11', width: '14', height: '10', rx: '2' }],
+		['path', { 'fill-rule': 'evenodd', d: 'M12 2A5 5 0 0 0 7 7v4h2V7a3 3 0 0 1 6 0v4h2V7A5 5 0 0 0 12 2Z' }],
+	])
+	icon.append(lock)
+	return icon
+}
+
+/**
+ * The save and update bar (design.md, Notification bar). It learns its key only from its parent's `postMessage`,
+ * never from its URL, hears from the background only in replies, and never holds the password. Returns a teardown.
+ */
+export function startNotificationBar(): () => void {
+	const bar = document.getElementById('bar')!
+	const status = document.querySelector('[role="status"]')!
+	document.documentElement.lang = i18n.t('language')
+	document.title = i18n.t('notificationBar.label')
+	bar.setAttribute('aria-label', i18n.t('notificationBar.label'))
+	applyTheme(mirroredTheme())
+
+	let stopped = false
+	let key: string | null = null
+	/** A `capture.focus` that came before its key was accepted. */
+	let earlyFocusKey: string | null = null
+	let state: CaptureStateReply | null = null
+	/** One decision at a time; after Close or Never it stays set, as the background then removes the bar. */
+	let busy = false
+	let guardSince = Date.now()
+	let press: { target: HTMLButtonElement; input: PickInput } | null = null
+	/** The buttons behind the guard and what each does. */
+	const guarded = new Map<HTMLButtonElement, (input: PickInput) => void>()
+	let text: HTMLElement | null = null
+	let title: HTMLElement | null = null
+	let error: HTMLElement | null = null
+	let primary: HTMLButtonElement | null = null
+	let folder: HTMLSelectElement | null = null
+	let item: HTMLElement | null = null
+	/** The host's one-row height for a short viewport (`barHostHeight`). */
+	let compact = false
+	let expandSent = false
+	let announceTimer: ReturnType<typeof setTimeout> | undefined
+	let slowTimer: ReturnType<typeof setTimeout> | undefined
+	const visibility = trackVisibility(bar)
+
+	const restartGuard = () => {
+		guardSince = Date.now()
+	}
+	const settled = (input: PickInput) => input.at - guardSince >= GUARD_MS
+
+	function announce(message: string) {
+		clearTimeout(announceTimer)
+		status.textContent = ''
+		announceTimer = setTimeout(() => {
+			status.textContent = message
+		}, ANNOUNCE_MS)
+	}
+
+	/** The item row only repeats the question, so it gives way to a question that needs its room. */
+	function makeRoomFor(question: HTMLElement) {
+		if (!item) return
+		bar.classList.remove('bar--long-question')
+		bar.classList.toggle('bar--long-question', question.scrollHeight > question.clientHeight)
+	}
+
+	/** Lets a clipped question or error scroll from the keyboard. */
+	function scrollable() {
+		if (!text || text.classList.contains('bar__saved')) return
+		makeRoomFor(text)
+		if (text.scrollHeight > text.clientHeight) text.tabIndex = 0
+		else if (!text.classList.contains('bar__notice')) text.removeAttribute('tabindex')
+	}
+
+	function guardedButton(label: string, variant: 'primary' | 'secondary', act: (target: HTMLButtonElement, input: PickInput) => void) {
+		const node = element('button', { type: 'button', class: `btn btn--${variant}` }, label)
+		guarded.set(node, (input) => act(node, input))
+		return node
+	}
+
+	function closeButton() {
+		const close = element('button', { type: 'button', class: 'icon-btn bar__close', 'aria-label': i18n.t('notificationBar.close') },
+			svg({ width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'M18 6 6 18M6 6l12 12' }]]))
+		close.addEventListener('click', () => void dismiss(false))
+		return close
+	}
+
+	function folderChoice(folders: CaptureStateReply['folders']) {
+		folder = element('select', { id: 'bar-folder', class: 'select__input' },
+			element('option', { value: '' }, i18n.t('notificationBar.noFolder')),
+			...folders.map((entry) => element('option', { value: entry.id }, entry.name)))
+		return element('div', { class: 'bar__folder' },
+			element('label', { class: 'bar__label', for: 'bar-folder' }, i18n.t('notificationBar.folder')),
+			element('div', { class: 'select' }, folder, svg({ class: 'select__chevron', width: '16', height: '16', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'm6 9 6 6 6-6' }]])))
+	}
+
+	/** Hidden from screen readers, as the question already names the item and its username. */
+	function itemRow(name: string, username: string | undefined) {
+		const lines = [element('span', { class: 'bar__item-name' }, name)]
+		if (username) lines.push(element('span', { class: 'bar__item-user' }, username))
+		return element('div', { 'class': 'bar__item', 'aria-hidden': 'true' },
+			element('span', { class: 'bar__item-icon' }, svg({ width: '20', height: '20', viewBox: '0 0 24 24', ...stroke }, [
+				['circle', { cx: '7.5', cy: '15.5', r: '5.5' }],
+				['path', { d: 'm21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3' }],
+			])),
+			element('span', { class: 'bar__item-text' }, ...lines))
+	}
+
+	function render(mode: Mode, failure?: string) {
+		const current = { ...state!, mode }
+		bar.className = 'bar'
+		guarded.clear()
+		folder = null
+		item = null
+		title = element('p', { class: 'bar__title', id: 'bar-title' }, questionText(current))
+		error = element('p', { class: 'bar__error', id: 'bar-error' })
+		error.hidden = true
+		text = element('div', { class: 'bar__text' }, title, error)
+		const buttons = element('div', { class: 'bar__buttons' })
+		const parts: Node[] = [logo(), text]
+		if (mode === 'add') {
+			primary = guardedButton(i18n.t('notificationBar.save'), 'primary', (target, input) => void decide(target, 'add', input))
+			buttons.append(guardedButton(i18n.t('notificationBar.never'), 'secondary', (_target, input) => void dismiss(true, input)), primary)
+			parts.push(folderChoice(current.folders))
+		} else {
+			primary = guardedButton(i18n.t('notificationBar.update'), 'primary', (target, input) => void decide(target, 'update', input))
+			buttons.append(primary)
+			item = itemRow(current.itemName!, current.username)
+			parts.push(item)
+		}
+		// Shown only compact; the question stays whole in the DOM, so screen readers get all of it.
+		const more = element('button', { 'type': 'button', 'class': 'icon-btn bar__expand', 'aria-label': i18n.t('notificationBar.expand'), 'aria-expanded': 'false' },
+			svg({ width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'm6 9 6 6 6-6' }]]))
+		bar.replaceChildren(...parts, buttons, more, closeButton())
+		if (failure) showError(failure)
+		restartGuard()
+		scrollable()
+	}
+
+	/** The error takes the question's place, which stays the button's description, so the smallest bar still shows it. */
+	function showError(message: string) {
+		error!.textContent = message
+		error!.hidden = false
+		title!.hidden = true
+		primary?.setAttribute('aria-describedby', 'bar-error bar-title')
+		// The buttons may have moved with the text.
+		restartGuard()
+		scrollable()
+	}
+
+	/** The question and its buttons go; the background removes the bar three seconds later. */
+	function renderSaved(mode: Mode) {
+		const hadFocus = bar.contains(document.activeElement)
+		const message = mode === 'add' ? i18n.t('notificationBar.saved') : i18n.t('notificationBar.updated')
+		text = element('p', { class: 'bar__text bar__saved', tabindex: '-1' },
+			svg({ class: 'bar__check', width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'M20 6 9 17l-5-5' }]]), message)
+		guarded.clear()
+		primary = null
+		folder = null
+		item = null
+		bar.className = 'bar bar--saved'
+		bar.replaceChildren(logo(), text)
+		// Focus would otherwise fall to the body; once moved, it reads the message out itself.
+		if (hadFocus) text.focus()
+		else announce(message)
+	}
+
+	/**
+	 * For a press refused as not visible, here or by the background: says why and takes focus, which reads it out.
+	 * Only Close stays, so nothing more is decided here, as in the inline list.
+	 */
+	function showNotVisible() {
+		guarded.clear()
+		primary = null
+		folder = null
+		item = null
+		text = element('p', { class: 'bar__text bar__notice', tabindex: '-1' }, i18n.t('notificationBar.notVisible'))
+		bar.className = 'bar bar--notice'
+		bar.replaceChildren(logo(), text, closeButton())
+		text.focus()
+	}
+
+	/** A decision is pending or made, or the bar has no key yet. */
+	const unavailable = () => busy || stopped || !key
+
+	/** Before sending: too soon after showing or moving stays silent, as a second press works; hidden, it says why. */
+	function cleared(input: PickInput): boolean {
+		if (unavailable() || !settled(input)) return false
+		if (visibility.allows(input.at)) return true
+		showNotVisible()
+		return false
+	}
+
+	function writeMessage(mode: Mode, input: PickInput): NotificationToBackground {
+		return mode === 'add' ? { kind: 'capture.save', key: key!, folderId: folder?.value || null, input } : { kind: 'capture.update', key: key!, input }
+	}
+
+	/** The item went meanwhile, so the bar offers to save the login as new. */
+	function offerSaveAsNew(message: string) {
+		const hadFocus = bar.contains(document.activeElement)
+		render('add', message)
+		if (hadFocus) primary!.focus()
+		announce(message)
+	}
+
+	function settleWriteError(mode: Mode, writeError: VaultWriteError) {
+		const message = writeErrorText(writeError, mode)
+		if (mode === 'update' && writeError.code === 'not_found') offerSaveAsNew(message)
+		else fail(message)
+	}
+
+	function settleWrite(mode: Mode, reply: unknown) {
+		if (isRefusal(reply)) return showNotVisible()
+		if (!isWriteResult(reply)) return fail(reply === UNREACHABLE ? writeErrorText(undefined, mode) : i18n.t('errors.unknown'))
+		if (reply.ok) return renderSaved(mode)
+		settleWriteError(mode, reply.error)
+	}
+
+	async function decide(target: HTMLButtonElement, mode: Mode, input: PickInput) {
+		if (!cleared(input)) return
+		busy = true
+		target.setAttribute('aria-busy', 'true')
+		slowTimer = setTimeout(() => announce(savingText(mode)), SLOW_MS)
+		const reply = await send(writeMessage(mode, input))
+		clearTimeout(slowTimer)
+		if (stopped) return
+		busy = false
+		target.removeAttribute('aria-busy')
+		settleWrite(mode, reply)
+	}
+
+	/** The buttons stay, so the user can try again. */
+	function fail(message: string) {
+		showError(message)
+		announce(message)
+	}
+
+	/** Close and Escape need no guard: the worst a page can make of them is a closed bar. */
+	async function dismiss(never: boolean, input?: PickInput) {
+		if (never ? !cleared(input!) : unavailable()) return
+		busy = true
+		const reply = await send({ kind: 'capture.dismiss', key: key!, never, ...(input ? { input } : {}) })
+		if (!stopped) settleDismiss(reply)
+	}
+
+	/** An unreached background lets Close be pressed again; a refusal says why. */
+	function settleDismiss(reply: unknown) {
+		if (reply === UNREACHABLE) busy = false
+		else if (isRefusal(reply)) {
+			busy = false
+			showNotVisible()
+		}
+	}
+
+	function keyInput(target: Element): PickInput {
+		const rect = target.getBoundingClientRect()
+		return { kind: 'key', at: Date.now(), x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+	}
+
+	/** Compact, the controls are hidden, so focus goes to the expand control, which grows the bar. */
+	function focusFirst() {
+		const first = bar.querySelector<HTMLElement>(compact ? '.bar__expand, [tabindex="-1"]' : 'select, button:not(.bar__expand), [tabindex="-1"]')
+		first?.focus()
+	}
+
+	/** Once per compact spell; the host shrinks the bar again when focus leaves it. */
+	function expand() {
+		if (!compact || expandSent || !key) return
+		expandSent = true
+		void send({ kind: 'capture.expand', key }).then((reply) => {
+			if (reply === UNREACHABLE) expandSent = false
+		})
+	}
+
+	function onResize() {
+		const wasCompact = compact
+		compact = window.innerHeight === BAR_COMPACT_HEIGHT_PX
+		document.documentElement.classList.toggle('is-compact', compact)
+		expandSent = false
+		// The expand control that had focus is hidden at full height.
+		if (wasCompact && !compact && document.activeElement?.classList.contains('bar__expand')) focusFirst()
+		scrollable()
+	}
+
+	async function present(candidate: string) {
+		const reply = await send({ kind: 'capture.state', key: candidate })
+		if (stopped || key !== null || !isState(reply)) return
+		key = candidate
+		state = reply
+		applyTheme(reply.theme)
+		render(reply.mode)
+		announce(questionAnnouncement(reply))
+		if (earlyFocusKey === key) focusFirst()
+		earlyFocusKey = null
+	}
+
+	/** Before a key is accepted, only an init, or a focus to apply once it is. */
+	function onMessageBeforeKey(message: KeyedMessage) {
+		if (message.kind === 'capture.init') void present(message.key)
+		else if (message.kind === 'capture.focus') earlyFocusKey = message.key
+	}
+
+	function onMessageForKey(message: KeyedMessage) {
+		if (message.kind === 'capture.focus') focusFirst()
+		else if (message.kind === 'capture.moved') restartGuard()
+	}
+
+	function onMessage(event: MessageEvent) {
+		if (event.source !== window.parent) return
+		const message = event.data as Partial<ContentToNotification> | null
+		if (!isKeyed(message)) return
+		if (key === null) return onMessageBeforeKey(message)
+		if (message.key === key) onMessageForKey(message)
+	}
+
+	/** After a save too: focus then sits on the message, and the background closes such a bar at once on a dismiss. */
+	function onEscape(event: KeyboardEvent) {
+		if (!state) return
+		event.preventDefault()
+		void dismiss(false)
+	}
+
+	function onKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') return onEscape(event)
+		expand()
+		const act = guarded.get(event.target as HTMLButtonElement)
+		if (!act || !isPressKey(event)) return
+		// The keydown is the press, so the button's own click from this key must not act again.
+		event.preventDefault()
+		if (!event.repeat) act(keyInput(event.target as Element))
+	}
+
+	function onPointerdown(event: PointerEvent) {
+		expand()
+		const target = (event.target as Element).closest?.('button') ?? null
+		press = target && guarded.has(target) && event.button === 0
+			? { target, input: { kind: 'pointer', at: Date.now(), x: event.clientX, y: event.clientY } }
+			: null
+	}
+
+	/** Only a click with its own primary press acts; a keyboard's click has none, as its keydown already acted. */
+	function onClick(event: MouseEvent) {
+		const target = (event.target as Element).closest?.('button') ?? null
+		const pressed = press
+		press = null
+		if (!target || pressed?.target !== target) return
+		guarded.get(target)?.(pressed.input)
+	}
+
+	/** So a `frames[n].focus()` by the page lands on no button an Enter meant for the page would press. The select stays, as blurring would close its open list. */
+	function onBlur() {
+		earlyFocusKey = null
+		press = null
+		const active = document.activeElement
+		if (active instanceof HTMLButtonElement) active.blur()
+	}
+
+	onResize()
+	window.addEventListener('message', onMessage)
+	window.addEventListener('blur', onBlur)
+	window.addEventListener('storage', followMirror)
+	window.addEventListener('resize', onResize)
+	document.addEventListener('keydown', onKeydown)
+	document.addEventListener('pointerdown', onPointerdown)
+	document.addEventListener('click', onClick)
+	document.addEventListener('focusin', expand)
+
+	return () => {
+		if (stopped) return
+		stopped = true
+		clearTimeout(announceTimer)
+		clearTimeout(slowTimer)
+		visibility.stop()
+		window.removeEventListener('message', onMessage)
+		window.removeEventListener('blur', onBlur)
+		window.removeEventListener('storage', followMirror)
+		window.removeEventListener('resize', onResize)
+		document.removeEventListener('keydown', onKeydown)
+		document.removeEventListener('pointerdown', onPointerdown)
+		document.removeEventListener('click', onClick)
+		document.removeEventListener('focusin', expand)
+	}
+}

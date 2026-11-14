@@ -71,6 +71,22 @@ class SiemFormattersTest extends TestCase {
 	}//end testCefLine()
 
 	/**
+	 * An actor that is not a user names no suser, and an empty metadata is {}.
+	 *
+	 * @return void
+	 */
+	public function testCefLineOfASystemActor(): void {
+		$payload = self::payload('secret.updated', []);
+		$payload['actorType'] = 'application';
+		$payload['actorId'] = 'app-1';
+		$this->assertSame(
+			'CEF:0|Conduction|Keepiq|2|secret.updated|secret updated|3|rt=1790942400000 cat=secret act=secret.updated'
+			. ' cs1Label=actorType cs1=application cs2Label=objectType cs2=suite cs3Label=objectId cs3=suite-9 msg={}',
+			(new CefFormatter())->format($payload, '2')
+		);
+	}//end testCefLineOfASystemActor()
+
+	/**
 	 * Header fields escape \ and |; extension values escape \, = and line breaks.
 	 *
 	 * @return void

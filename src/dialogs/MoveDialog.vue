@@ -383,32 +383,25 @@ export default {
 				// source vault — and per item is also the abort granularity:
 				// a dismissal mid-transfer stops before the next PUT rather
 				// than churning on invisibly after the dialog is gone.
-				for (const secret of secrets) {
-					if (this.cancelled) {
-						return
-					}
-					try {
-						await secretStore.updateSecret(secret.id, {
-							folderId: this.target,
-						})
-					} catch (e) {
-						failures.push(this.describeFailure(secret, e))
-					}
+				const movedSecrets = await this.moveEach(
+					secrets,
+					(secret) =>
+						secretStore.updateSecret(secret.id, { folderId: this.target }),
+					failures,
+				)
+				if (!movedSecrets) {
+					return
 				}
-				for (const subfolder of subfolders) {
-					if (this.cancelled) {
-						return
-					}
-					try {
-						await folderStore.updateFolder(subfolder.id, {
+				const movedSubfolders = await this.moveEach(
+					subfolders,
+					(subfolder) =>
+						folderStore.updateFolder(subfolder.id, {
 							parentId: this.target,
 							move: true,
-						})
-					} catch (e) {
-						failures.push(this.describeFailure(subfolder, e))
-					}
-				}
-				if (this.cancelled) {
+						}),
+					failures,
+				)
+				if (!movedSubfolders || this.cancelled) {
 					return
 				}
 
@@ -443,6 +436,29 @@ export default {
 				}
 				this.saving = false
 			}
+		},
+
+		/**
+		 * Move each item on its own, recording a failure and carrying on, and
+		 * stop before the next item once the dialog was dismissed.
+		 *
+		 * @param {Array<object>} items The secrets or subfolders to move.
+		 * @param {function(object): Promise<unknown>} move Moves one item.
+		 * @param {Array<object>} failures The items that stayed behind, appended to.
+		 * @return {Promise<boolean>} False when the run was cancelled.
+		 */
+		async moveEach(items, move, failures) {
+			for (const item of items) {
+				if (this.cancelled) {
+					return false
+				}
+				try {
+					await move(item)
+				} catch (e) {
+					failures.push(this.describeFailure(item, e))
+				}
+			}
+			return true
 		},
 
 		/**

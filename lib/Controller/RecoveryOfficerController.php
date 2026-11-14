@@ -20,14 +20,14 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Service\RecoveryKeyService;
-use OCA\Keepiq\Service\RecoveryPolicyService;
-use OCA\Keepiq\Service\RecoveryRequestService;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\RecoveryKeyServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RecoveryPolicyServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RecoveryRequestServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -46,9 +46,9 @@ class RecoveryOfficerController extends Controller {
 	 * Constructor for RecoveryOfficerController.
 	 *
 	 * @param IRequest               $request     The request
-	 * @param RecoveryPolicyService  $policy      The officers
-	 * @param RecoveryKeyService     $keys        The recovery keys
-	 * @param RecoveryRequestService $requests    The requests
+	 * @param RecoveryPolicyServiceInterface  $policy      The officers
+	 * @param RecoveryKeyServiceInterface     $keys        The recovery keys
+	 * @param RecoveryRequestServiceInterface $requests    The requests
 	 * @param IUserSession           $userSession The user session
 	 *
 	 * @return void
@@ -57,12 +57,12 @@ class RecoveryOfficerController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private RecoveryPolicyService $policy,
-		private RecoveryKeyService $keys,
-		private RecoveryRequestService $requests,
+		private RecoveryPolicyServiceInterface $policy,
+		private RecoveryKeyServiceInterface $keys,
+		private RecoveryRequestServiceInterface $requests,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -195,7 +195,7 @@ class RecoveryOfficerController extends Controller {
 	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['id'], subject: 'active', purpose: VaultKeyProofService::PURPOSE_APPROVE_ACCOUNT_RECOVERY)]
+	#[VaultKeyProofRequired(binds: ['id'], subject: 'active', purpose: VaultKeyProofServiceInterface::PURPOSE_APPROVE_ACCOUNT_RECOVERY)]
 	public function approve(string $id): JSONResponse {
 		return $this->run(action: fn (string $uid): array => ['status' => $this->requests->approve(id: $id, officerUid: $uid)]);
 	}//end approve()

@@ -100,6 +100,56 @@ describe('ImportWizardDialog', () => {
 		expect(wrapper.vm.canProceed).toBe(true)
 	})
 
+	it('marks a preview row that brings a code or passkeys along (keepiq#1327)', async () => {
+		useSessionStore().cryptoKey = { fake: true }
+		const wrapper = mount(ImportWizardDialog, {
+			propsData: { open: true },
+			...mountOpts,
+		})
+		const store = useImportStore()
+		store.goToStep('mapping')
+		store.rows = [
+			{
+				sourceRow: 1,
+				name: 'Bank',
+				totp: 'JBSWY3DPEHPK3PXP',
+				passkeys: '[{}]',
+				errors: [],
+			},
+			{ sourceRow: 2, name: 'Plain', errors: [] },
+		]
+		await wrapper.vm.$nextTick()
+
+		const [bank, plain] = wrapper.findAll('tbody tr')
+		expect(bank.find('[data-testid="login-marker-totp"]').exists()).toBe(true)
+		expect(bank.find('[data-testid="login-marker-passkeys"]').exists()).toBe(
+			true,
+		)
+		expect(plain.find('[data-testid="login-marker-totp"]').exists()).toBe(false)
+		expect(plain.find('[data-testid="login-marker-passkeys"]').exists()).toBe(
+			false,
+		)
+	})
+
+	it('marks a duplicate row that brings a code along', async () => {
+		useSessionStore().cryptoKey = { fake: true }
+		const wrapper = mount(ImportWizardDialog, {
+			propsData: { open: true },
+			...mountOpts,
+		})
+		const store = useImportStore()
+		store.goToStep('duplicates')
+		store.duplicates = [
+			{ sourceRow: 1, name: 'Bank', totp: 'JBSWY3DPEHPK3PXP', errors: [] },
+			{ sourceRow: 2, name: 'Plain', errors: [] },
+		]
+		await wrapper.vm.$nextTick()
+
+		const [bank, plain] = wrapper.findAll('tbody tr')
+		expect(bank.find('[data-testid="login-marker-totp"]').exists()).toBe(true)
+		expect(plain.find('[data-testid="login-marker-totp"]').exists()).toBe(false)
+	})
+
 	it('passes the one-folder choice to the commit, named after the file and date (keepiq#749)', async () => {
 		useSessionStore().cryptoKey = { fake: true }
 		const wrapper = mount(ImportWizardDialog, {

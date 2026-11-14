@@ -39,6 +39,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\CertificateLifecycleServiceInterface;
 use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -50,7 +51,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The inventory merges
  *   three certificate domains by design — the seams are the mappers.
  */
-class CertificateLifecycleService {
+class CertificateLifecycleService implements CertificateLifecycleServiceInterface {
 	use SuppressesDiagnostics;
 
 	/**
@@ -179,6 +180,8 @@ class CertificateLifecycleService {
 			$fingerprintValue = 'sha256:' . $fingerprint;
 		}
 
+		$keyFacts = $this->publicKeyFacts(pem: $pem);
+
 		return [
 			'subject' => $this->dnToString(dnParts: (array)($parsed['subject'] ?? [])),
 			'issuer' => $this->dnToString(dnParts: (array)($parsed['issuer'] ?? [])),
@@ -186,8 +189,68 @@ class CertificateLifecycleService {
 			'fingerprintSha256' => $fingerprintValue,
 			'notBefore' => $notBefore?->format('c'),
 			'notAfter' => $notAfter?->format('c'),
+			'keyType' => $keyFacts['keyType'],
+			'keyBits' => $keyFacts['keyBits'],
+			'signatureAlgorithm' => $this->signatureAlgorithm(parsed: $parsed),
 		];
 	}//end parseCaCertificate()
+
+	/**
+	 * The type and size of a certificate's public key, read from the
+	 * certificate itself. Only the public key is touched.
+	 *
+	 * @param string $pem The cleartext PEM certificate
+	 *
+	 * @return array{keyType: string|null, keyBits: int|null}
+	 *
+	 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
+	 */
+	private function publicKeyFacts(string $pem): array {
+		$publicKey = $this->withoutDiagnostics(call: static fn () => openssl_pkey_get_public(public_key: $pem));
+		if ($publicKey === false) {
+			return ['keyType' => null, 'keyBits' => null];
+		}
+
+		$details = openssl_pkey_get_details(key: $publicKey);
+		if (is_array($details) === false) {
+			return ['keyType' => null, 'keyBits' => null];
+		}
+
+		$keyType = match ($details['type'] ?? null) {
+			OPENSSL_KEYTYPE_RSA => 'RSA',
+			OPENSSL_KEYTYPE_EC => 'EC',
+			OPENSSL_KEYTYPE_DSA => 'DSA',
+			OPENSSL_KEYTYPE_DH => 'DH',
+			default => null,
+		};
+
+		$keyBits = null;
+		if (isset($details['bits']) === true) {
+			$keyBits = (int)$details['bits'];
+		}
+
+		return ['keyType' => $keyType, 'keyBits' => $keyBits];
+	}//end publicKeyFacts()
+
+	/**
+	 * The signature algorithm of a parsed certificate, by its long name
+	 * (e.g. `sha256WithRSAEncryption`), falling back to the short name.
+	 *
+	 * @param array<string,mixed> $parsed The openssl_x509_parse() result
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
+	 */
+	private function signatureAlgorithm(array $parsed): ?string {
+		foreach (['signatureTypeLN', 'signatureTypeSN'] as $field) {
+			if (isset($parsed[$field]) === true && is_string($parsed[$field]) === true && $parsed[$field] !== '') {
+				return $parsed[$field];
+			}
+		}
+
+		return null;
+	}//end signatureAlgorithm()
 
 	/**
 	 * Persist client-parsed metadata for an owned certificate-type
@@ -204,6 +267,7 @@ class CertificateLifecycleService {
 	 *
 	 * @throws DoesNotExistException When the secret does not exist
 	 * @throws InvalidArgumentException When not owned, wrong type, or unparseable dates
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When the secret moved twice while its expiry was set
 	 *
 	 * @spec openspec/specs/certificate-lifecycle/spec.md
 	 */

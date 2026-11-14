@@ -93,6 +93,13 @@ The system MUST let a member whose effective grade on a team folder is `write` c
 - **WHEN** `jack` calls `POST /api/v1/team-folders/{id}/secrets` for `Ops`
 - **THEN** the response MUST be 403 and no secret MUST be stored
 
+#### Scenario: A member copy must mirror the new secret's TOTP seed and passkeys
+
+@e2e exclude A server-side refusal before any write; covered by PHPUnit (TeamFolderContributionServiceTest).
+- **GIVEN** `hank` holds a `write` grade on team folder `Ops`
+- **WHEN** `hank` saves a secret whose member copy leaves out the `totp` or `passkeys` the owner row carries, or carries one the owner row does not
+- **THEN** the response MUST be 400 and no secret or copy MUST be stored
+
 ### Requirement: Users see personal items that break the ownership policy
 
 When the ownership policy applies to a user, the health report MUST list their secrets of in-scope types that sit outside a team folder, and MUST offer a move action into a team folder they own or can contribute to.

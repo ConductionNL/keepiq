@@ -89,6 +89,22 @@ describe('user preferences store', () => {
 		expect(resolveDefaultTypeId('retired_type', TYPES)).toBe('type-login')
 	})
 
+	it('falls back to login when the saved type is Authenticator or Passkey', () => {
+		const types = [
+			{ id: 'type-totp', name: 'totp' },
+			{ id: 'type-passkey', name: 'passkey' },
+			...TYPES,
+		]
+		expect(resolveDefaultTypeId('totp', types)).toBe('type-login')
+		expect(resolveDefaultTypeId('passkey', types)).toBe('type-login')
+		expect(
+			resolveDefaultTypeId('totp', [
+				{ id: 'type-totp', name: 'totp' },
+				{ id: 'type-note', name: 'note' },
+			]),
+		).toBe('type-note')
+	})
+
 	it('falls back to the first type when login is gone too', () => {
 		expect(resolveDefaultTypeId('x', [{ id: 'type-note', name: 'note' }])).toBe(
 			'type-note',

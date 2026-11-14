@@ -81,15 +81,20 @@ describe('password options', () => {
 		})
 	})
 
-	it('grows the length to fit the minimums', () => {
-		expect(
-			generateKey({
+	it('grows the length to fit the minimums and one of every other chosen kind', () => {
+		repeat(() => {
+			const value = generateKey({
 				length: 8,
 				includeSpecialCharacters: true,
 				minDigits: 6,
 				minSpecial: 5,
-			}),
-		).toHaveLength(11)
+			})
+			expect(value).toHaveLength(13)
+			expect(value).toMatch(/[A-Z]/)
+			expect(value).toMatch(/[a-z]/)
+			expect(value.replace(/[^0-9]/g, '')).toHaveLength(6)
+			expect(value.replace(/[A-Za-z0-9]/g, '')).toHaveLength(5)
+		})
 	})
 
 	it('leaves out I, O, l, 0 and 1 when avoiding ambiguous characters', () => {

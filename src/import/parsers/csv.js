@@ -18,6 +18,7 @@
  */
 
 import { parseCsv } from '../../export/csv.js'
+import { attachTotp, keepAsAdditionalField } from '../loginValueFields.js'
 import { makeRow, validateRow } from '../model.js'
 
 /**
@@ -33,6 +34,7 @@ const HEADER_SYNONYMS = {
 	notes: ['notes', 'note', 'comment', 'comments'],
 	folder: ['folder', 'group', 'grouping', 'collection', 'category'],
 	type: ['type'],
+	totp: ['totp', 'otp', 'login_totp'],
 }
 
 /**
@@ -51,22 +53,29 @@ export function detectMapping(headers) {
 		const key = String(header ?? '')
 			.trim()
 			.toLowerCase()
-		let target = 'ignore'
-		for (const [field, synonyms] of Object.entries(HEADER_SYNONYMS)) {
-			if (field === 'notes') {
-				continue
-			}
-			if (!used.has(field) && synonyms.includes(key)) {
-				target = field
-				used.add(field)
-				break
-			}
-		}
-		if (target === 'ignore' && HEADER_SYNONYMS.notes.includes(key)) {
-			target = 'notes'
-		}
+		const target =
+			singleValuedTarget(key, used)
+			?? (HEADER_SYNONYMS.notes.includes(key) ? 'notes' : 'ignore')
 		return { column: header, target }
 	})
+}
+
+/**
+ * The first single-valued target (every target but notes) a header names
+ * that no earlier header took; it is taken by this header.
+ *
+ * @param {string} key The trimmed, lower-cased header.
+ * @param {Set<string>} used The targets earlier headers took.
+ * @return {string|null} The target, or null when none matches.
+ */
+function singleValuedTarget(key, used) {
+	for (const [field, synonyms] of Object.entries(HEADER_SYNONYMS)) {
+		if (field !== 'notes' && !used.has(field) && synonyms.includes(key)) {
+			used.add(field)
+			return field
+		}
+	}
+	return null
 }
 
 /**
@@ -74,6 +83,8 @@ export function detectMapping(headers) {
  *
  * Columns mapped to `notes` or `additional:<label>` collect into
  * additionalFields. The `notes` mapping uses the `notes` key by convention.
+ * A column mapped to `totp` (Bitwarden's fixed mapping) fills the login's own
+ * `totp` field.
  *
  * @param {object} record The raw CSV record (keyed by header).
  * @param {Array<object>} mapping The column → target mapping.
@@ -81,25 +92,57 @@ export function detectMapping(headers) {
  * @return {object} A normalized, validated row.
  */
 export function applyMapping(record, mapping, sourceRow) {
-	const fields = { additionalFields: null }
-	const additional = {}
+	const { fields, additional, totp } = mappedValues(record, mapping)
+	if (Object.keys(additional).length > 0) {
+		fields.additionalFields = additional
+	}
+	const row = makeRow(fields, sourceRow)
+	if (attachTotp(row, totp) !== null) {
+		keepAsAdditionalField(row, 'totp', totp)
+	}
+	return validateRow(row)
+}
+
+/**
+ * The record's non-empty cells sorted by their target: row fields,
+ * additional fields and the one-time code. Ignored columns are dropped.
+ *
+ * @param {object} record The raw CSV record (keyed by header).
+ * @param {Array<object>} mapping The column → target mapping.
+ * @return {{fields: object, additional: object, totp: string|null}} The sorted values.
+ */
+function mappedValues(record, mapping) {
+	const values = { fields: { additionalFields: null }, additional: {}, totp: null }
 	for (const { column, target } of mapping) {
 		const value = record[column]
 		if (value == null || value === '' || target === 'ignore') {
 			continue
 		}
-		if (target === 'notes') {
-			additional.notes = value
-		} else if (typeof target === 'string' && target.startsWith('additional:')) {
-			additional[target.slice('additional:'.length)] = value
-		} else {
-			fields[target] = value
-		}
+		placeValue(values, { target, value })
 	}
-	if (Object.keys(additional).length > 0) {
-		fields.additionalFields = additional
+	return values
+}
+
+/**
+ * Put one mapped cell where its target says: `notes` and `additional:<label>`
+ * into the additional fields, `totp` on the login's own code, any other
+ * target on the row field of that name.
+ *
+ * @param {{fields: object, additional: object, totp: string|null}} values The sorted values.
+ * @param {{target: string, value: string}} cell The cell and its target.
+ * @return {void}
+ */
+function placeValue(values, cell) {
+	const { target, value } = cell
+	if (target === 'notes') {
+		values.additional.notes = value
+	} else if (target === 'totp') {
+		values.totp = value
+	} else if (typeof target === 'string' && target.startsWith('additional:')) {
+		values.additional[target.slice('additional:'.length)] = value
+	} else {
+		values.fields[target] = value
 	}
-	return validateRow(makeRow(fields, sourceRow))
 }
 
 /**

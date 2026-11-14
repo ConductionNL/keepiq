@@ -20,6 +20,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { CONTENT_KEY_PARAMETERS } from '../../crypto/aes.js'
 import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../../crypto/index.js'
 import { useSessionStore } from './session.js'
 
@@ -83,6 +84,170 @@ async function aesDecryptBytes(key, data) {
 	)
 }
 
+/**
+ * The text a failed request leaves: the server's message, else the error's
+ * own, else the operation's fallback.
+ *
+ * @param {Error|object} e The failure.
+ * @param {string} fallback The operation's own text.
+ * @return {string}
+ * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+ */
+function failureText(e, fallback) {
+	return e?.response?.data?.message || e?.message || fallback
+}
+
+/**
+ * @param {string} secretId The secret id.
+ * @return {string} The URL of the secret's attachments.
+ */
+function attachmentsUrl(secretId) {
+	return generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/attachments`)
+}
+
+/**
+ * A secret's attachment rows with their metadata decrypted.
+ *
+ * @param {object} store The attachment store.
+ * @param {string} secretId The secret id.
+ * @return {Promise<Array<object>>}
+ * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
+ */
+async function decryptedListing(store, secretId) {
+	const response = await axios.get(attachmentsUrl(secretId))
+	const rows = []
+	for (const row of response.data || []) {
+		const meta = await decryptedMetadata(store, row)
+		rows.push({
+			id: row.id,
+			sizeBytes: row.sizeBytes,
+			createdAt: row.createdAt,
+			wrappedFileKey: row.wrappedFileKey,
+			filename: meta.filename ?? null,
+			contentType: meta.contentType ?? null,
+		})
+	}
+	return rows
+}
+
+/**
+ * A listed row's filename and content type. Honest failure: undecryptable
+ * metadata shows as invalid.
+ *
+ * @param {object} store The attachment store.
+ * @param {object} row The listed row.
+ * @return {Promise<{filename: ?string, contentType: ?string}>}
+ * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
+ */
+async function decryptedMetadata(store, row) {
+	try {
+		const key = await store.unwrapFileKey(row.wrappedFileKey)
+		const metaBytes = await aesDecryptBytes(
+			key,
+			fromBase64(row.encryptedMetadata),
+		)
+		return JSON.parse(new TextDecoder().decode(metaBytes))
+	} catch {
+		return { filename: null, contentType: null }
+	}
+}
+
+/**
+ * Encrypt a file for upload: the blob and its metadata under a fresh file
+ * key, and that key wrapped under the session certificate.
+ *
+ * @param {File} file The picked file.
+ * @param {object} session The session store (holds the certificate).
+ * @return {Promise<{blob: string, encryptedMetadata: string, wrappedFileKey: string}>}
+ * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+ */
+async function sealedUpload(file, session) {
+	const fileKey = await crypto.subtle.generateKey(
+		{ ...CONTENT_KEY_PARAMETERS },
+		true,
+		['encrypt', 'decrypt'],
+	)
+	const bytes = new Uint8Array(await file.arrayBuffer())
+	const blob = await aesEncryptBytes(fileKey, bytes)
+	const encryptedMetadata = await encryptedMetadataOf(file, fileKey)
+	const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', fileKey))
+	const publicKey = await importPublicKey(session.certificate)
+	const wrappedFileKey = await rsaEncrypt(toBase64(rawKey), publicKey)
+	return { blob: toBase64(blob), encryptedMetadata, wrappedFileKey }
+}
+
+/**
+ * @param {File} file The picked file.
+ * @param {CryptoKey} fileKey The file key.
+ * @return {Promise<string>} Its filename and content type, encrypted.
+ */
+async function encryptedMetadataOf(file, fileKey) {
+	const metaBytes = new TextEncoder().encode(
+		JSON.stringify({
+			filename: file.name,
+			contentType: file.type || 'application/octet-stream',
+		}),
+	)
+	return toBase64(await aesEncryptBytes(fileKey, metaBytes))
+}
+
+/**
+ * Fetch an attachment's blob and decrypt it with its file key.
+ *
+ * @param {object} store The attachment store.
+ * @param {object} attachment The listed attachment row.
+ * @return {Promise<Uint8Array>} The plaintext bytes.
+ * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
+ */
+async function decryptedBlob(store, attachment) {
+	const response = await axios.get(
+		generateUrl(`/apps/keepiq/api/v1/attachments/${attachment.id}/blob`),
+	)
+	const key = await store.unwrapFileKey(attachment.wrappedFileKey)
+	return aesDecryptBytes(key, fromBase64(response.data.blob))
+}
+
+/**
+ * Trigger a local save of decrypted bytes under the attachment's name.
+ *
+ * @param {Uint8Array} plaintext The plaintext bytes.
+ * @param {object} attachment The listed attachment row.
+ * @return {void}
+ */
+function saveLocally(plaintext, attachment) {
+	const blob = new Blob([plaintext], {
+		type: attachment.contentType || 'application/octet-stream',
+	})
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = attachment.filename || 'attachment'
+	a.click()
+	URL.revokeObjectURL(url)
+}
+
+/**
+ * Re-wrap one attachment's file key for the recipient and POST the grant.
+ *
+ * @param {{session: object, recipientKey: CryptoKey, copySecretId: string, recipientId: string}} grant The re-grant.
+ * @param {object} row The listed attachment row.
+ * @return {Promise<void>}
+ * @spec openspec/specs/encrypted-attachments/spec.md#scenario-sharing-re-wraps-the-key-not-the-blob
+ */
+async function postGrant(grant, row) {
+	const rawBase64 = await rsaDecrypt(row.wrappedFileKey, grant.session.cryptoKey)
+	const rewrapped = await rsaEncrypt(rawBase64, grant.recipientKey)
+	await axios.post(
+		generateUrl(`/apps/keepiq/api/v1/attachments/${row.id}/grants`),
+		{
+			copySecretId: grant.copySecretId,
+			recipientId: grant.recipientId,
+			wrappedFileKey: rewrapped,
+			recipientType: 'user',
+		},
+	)
+}
+
 export const useAttachmentStore = defineStore('attachment', {
 	state: () => ({
 		/** @type {Array<object>} Attachments of the focused secret (decrypted metadata). */
@@ -136,42 +301,12 @@ export const useAttachmentStore = defineStore('attachment', {
 			this.loading = true
 			this.error = null
 			try {
-				const response = await axios.get(
-					generateUrl(
-						`/apps/keepiq/api/v1/secrets/${secretId}/attachments`,
-					),
-				)
-				const rows = []
-				for (const row of response.data || []) {
-					let meta = { filename: null, contentType: null }
-					try {
-						const key = await this.unwrapFileKey(row.wrappedFileKey)
-
-						const metaBytes = await aesDecryptBytes(
-							key,
-							fromBase64(row.encryptedMetadata),
-						)
-						meta = JSON.parse(new TextDecoder().decode(metaBytes))
-					} catch {
-						// Honest failure: undecryptable metadata shows as invalid.
-					}
-					rows.push({
-						id: row.id,
-						sizeBytes: row.sizeBytes,
-						createdAt: row.createdAt,
-						wrappedFileKey: row.wrappedFileKey,
-						filename: meta.filename ?? null,
-						contentType: meta.contentType ?? null,
-					})
-				}
+				const rows = await decryptedListing(this, secretId)
 				if (requestId === this.listRequestId) {
 					this.attachments = rows
 				}
 			} catch (e) {
-				const message =
-					e?.response?.data?.message
-					|| e?.message
-					|| 'Failed to load attachments'
+				const message = failureText(e, 'Failed to load attachments')
 				if (requestId === this.listRequestId) {
 					this.error = message
 				}
@@ -200,43 +335,13 @@ export const useAttachmentStore = defineStore('attachment', {
 			this.loading = true
 			this.error = null
 			try {
-				const fileKey = await crypto.subtle.generateKey(
-					{ name: 'AES-GCM', length: 256 },
-					true,
-					['encrypt', 'decrypt'],
-				)
-				const bytes = new Uint8Array(await file.arrayBuffer())
-				const blob = await aesEncryptBytes(fileKey, bytes)
-				const metaBytes = new TextEncoder().encode(
-					JSON.stringify({
-						filename: file.name,
-						contentType: file.type || 'application/octet-stream',
-					}),
-				)
-				const encryptedMetadata = toBase64(
-					await aesEncryptBytes(fileKey, metaBytes),
-				)
-
-				const rawKey = new Uint8Array(
-					await crypto.subtle.exportKey('raw', fileKey),
-				)
-				const publicKey = await importPublicKey(session.certificate)
-				const wrappedFileKey = await rsaEncrypt(toBase64(rawKey), publicKey)
-
 				await axios.post(
-					generateUrl(
-						`/apps/keepiq/api/v1/secrets/${secretId}/attachments`,
-					),
-					{
-						blob: toBase64(blob),
-						encryptedMetadata,
-						wrappedFileKey,
-					},
+					attachmentsUrl(secretId),
+					await sealedUpload(file, session),
 				)
 				await this.fetchAttachments(secretId)
 			} catch (e) {
-				this.error =
-					e?.response?.data?.message || e?.message || 'Upload failed'
+				this.error = failureText(e, 'Upload failed')
 				throw e
 			} finally {
 				this.loading = false
@@ -254,28 +359,9 @@ export const useAttachmentStore = defineStore('attachment', {
 			this.loading = true
 			this.error = null
 			try {
-				const response = await axios.get(
-					generateUrl(
-						`/apps/keepiq/api/v1/attachments/${attachment.id}/blob`,
-					),
-				)
-				const key = await this.unwrapFileKey(attachment.wrappedFileKey)
-				const plaintext = await aesDecryptBytes(
-					key,
-					fromBase64(response.data.blob),
-				)
-				const blob = new Blob([plaintext], {
-					type: attachment.contentType || 'application/octet-stream',
-				})
-				const url = URL.createObjectURL(blob)
-				const a = document.createElement('a')
-				a.href = url
-				a.download = attachment.filename || 'attachment'
-				a.click()
-				URL.revokeObjectURL(url)
+				saveLocally(await decryptedBlob(this, attachment), attachment)
 			} catch (e) {
-				this.error =
-					e?.response?.data?.message || e?.message || 'Download failed'
+				this.error = failureText(e, 'Download failed')
 				throw e
 			} finally {
 				this.loading = false
@@ -300,8 +386,7 @@ export const useAttachmentStore = defineStore('attachment', {
 				)
 				await this.fetchAttachments(secretId)
 			} catch (e) {
-				this.error =
-					e?.response?.data?.message || e?.message || 'Delete failed'
+				this.error = failureText(e, 'Delete failed')
 				throw e
 			} finally {
 				this.loading = false
@@ -314,46 +399,31 @@ export const useAttachmentStore = defineStore('attachment', {
 		 * re-wrap under the recipient certificate, POST the grants. The
 		 * blob is never touched (encrypted-attachments §6.3).
 		 *
-		 * @param {string} sourceSecretId The owner's secret id.
-		 * @param {string} copySecretId The recipient's copy id.
-		 * @param {string} recipientId The recipient user id.
-		 * @param {string} recipientCertificate The recipient's PEM certificate.
+		 * @param {object} regrant The re-grant.
+		 * @param {string} regrant.sourceSecretId The owner's secret id.
+		 * @param {string} regrant.copySecretId The recipient's copy id.
+		 * @param {string} regrant.recipientId The recipient user id.
+		 * @param {string} regrant.recipientCertificate The recipient's PEM certificate.
 		 * @return {Promise<number>} Grants created.
+		 * @spec openspec/specs/encrypted-attachments/spec.md#scenario-sharing-re-wraps-the-key-not-the-blob
 		 */
-		async regrantForRecipient(
-			sourceSecretId,
-			copySecretId,
-			recipientId,
-			recipientCertificate,
-		) {
+		async regrantForRecipient(regrant) {
 			const session = useSessionStore()
 			if (!session.cryptoKey) {
 				throw new Error('Vault is locked')
 			}
 			const response = await axios.get(
-				generateUrl(
-					`/apps/keepiq/api/v1/secrets/${sourceSecretId}/attachments`,
-				),
+				attachmentsUrl(regrant.sourceSecretId),
 			)
-			const recipientKey = await importPublicKey(recipientCertificate)
+			const grant = {
+				session,
+				recipientKey: await importPublicKey(regrant.recipientCertificate),
+				copySecretId: regrant.copySecretId,
+				recipientId: regrant.recipientId,
+			}
 			let created = 0
 			for (const row of response.data || []) {
-				const rawBase64 = await rsaDecrypt(
-					row.wrappedFileKey,
-					session.cryptoKey,
-				)
-
-				const rewrapped = await rsaEncrypt(rawBase64, recipientKey)
-
-				await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/attachments/${row.id}/grants`),
-					{
-						copySecretId,
-						recipientId,
-						wrappedFileKey: rewrapped,
-						recipientType: 'user',
-					},
-				)
+				await postGrant(grant, row)
 				created++
 			}
 			return created

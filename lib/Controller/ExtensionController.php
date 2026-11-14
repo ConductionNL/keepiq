@@ -27,9 +27,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Service\AdminSettingsService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Service\SecretUrlService;
+use OCA\Keepiq\Kernel\Contracts\AdminSettingsServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -77,8 +78,9 @@ class ExtensionController extends Controller {
 	 * @param IRequest $request The request
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param IUserSession $userSession The user session
-	 * @param AdminSettingsService $adminSettings The admin settings (extension idle maximum)
+	 * @param AdminSettingsServiceInterface $adminSettings The admin settings (extension idle maximum)
 	 * @param IAppManager $appManager The app manager (server version for the pairing handshake)
+	 * @param SecretUrlService|null $urls The extra website addresses a match carries
 	 *
 	 * @return void
 	 */
@@ -86,10 +88,11 @@ class ExtensionController extends Controller {
 		IRequest $request,
 		private SecretMapper $secretMapper,
 		private IUserSession $userSession,
-		private AdminSettingsService $adminSettings,
+		private AdminSettingsServiceInterface $adminSettings,
 		private IAppManager $appManager,
+		private ?SecretUrlService $urls = null,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -131,8 +134,8 @@ class ExtensionController extends Controller {
 				'apiVersion' => 1,
 				// The extension compares this with its minimum and asks for a
 				// server update instead of failing on a missing route.
-				'serverVersion' => $this->appManager->getAppVersion(Application::APP_ID),
-				'capabilities' => ['match', 'autofill', 'passkey-provider', 'totp'],
+				'serverVersion' => $this->appManager->getAppVersion(AppIdentity::APP_ID),
+				'capabilities' => ['match', 'autofill', 'passkey-provider', 'totp', 'totp-field', 'passkeys-field'],
 			]
 		);
 	}//end pair()
@@ -230,6 +233,10 @@ class ExtensionController extends Controller {
 		$secrets = $this->secretMapper->searchByNameOrUrl(ownerType: 'user', ownerId: $uid, term: $term, limit: self::MATCH_LIMIT);
 
 		$items = array_map(static fn ($secret) => $secret->jsonSerialize(), $secrets);
+		if ($this->urls !== null) {
+			// Every address of a login, so the extension scores each (vault-website-addresses).
+			$items = $this->urls->withUrls(items: $items);
+		}
 
 		return new JSONResponse(data: ['items' => $items, 'host' => $host, 'term' => $term]);
 	}//end match()

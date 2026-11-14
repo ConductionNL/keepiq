@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\SiemSink;
 use OCA\Keepiq\Db\SiemSinkMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -55,7 +56,7 @@ use Throwable;
  *   SiemSinkController. Retiring the tag needs that controller repointed at
  *   SiemSinkService, which is outside this change.
  */
-class SiemService {
+class SiemService implements SiemServiceInterface {
 	/**
 	 * Retry ceiling before a row dead-letters.
 	 *
@@ -256,32 +257,62 @@ class SiemService {
 		} catch (Throwable $exception) {
 			// Never the message: an HTTP client names the full sink URL in it,
 			// token and all. Class, status and host only (keepiq#728).
-			$failure = $this->transport->describeFailure(exception: $exception, sink: $sink);
-			$item->setAttempts($item->getAttempts() + 1);
-			$item->setLastError($failure);
-			if ($item->getAttempts() >= self::MAX_ATTEMPTS) {
-				$item->setStatus('dead');
-			}
-
-			if ($item->getAttempts() < self::MAX_ATTEMPTS) {
-				$backoff = self::BACKOFF_BASE_SECONDS * (2 ** ($item->getAttempts() - 1));
-				$item->setNextAttemptAt((new DateTime())->add(new DateInterval('PT' . $backoff . 'S')));
-			}
-
-			$this->queueMapper->update($item);
-
-			$sink->setLastDeliveryStatus('failing');
-			if ($item->getStatus() === 'dead') {
-				$sink->setLastDeliveryStatus('dead');
-			}
-
-			$sink->setLastError($failure);
-			$sink->setConsecutiveFailures($sink->getConsecutiveFailures() + 1);
-			$this->sinkMapper->update($sink);
+			$this->recordFailedAttempt(
+				item: $item,
+				failure: $this->transport->describeFailure(exception: $exception, sink: $sink)
+			);
+			$this->markSinkFailing(sink: $sink, item: $item);
 
 			return false;
 		}//end try
 	}//end deliverOne()
+
+	/**
+	 * Count a failed attempt on the queued row: dead at the last attempt, else
+	 * due again after a backoff that doubles per attempt.
+	 *
+	 * @param SiemQueueItem $item    The queued payload
+	 * @param string        $failure What failed, without the message
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-reliable-background-delivery
+	 */
+	private function recordFailedAttempt(SiemQueueItem $item, string $failure): void {
+		$item->setAttempts($item->getAttempts() + 1);
+		$item->setLastError($failure);
+		if ($item->getAttempts() >= self::MAX_ATTEMPTS) {
+			$item->setStatus('dead');
+		}
+
+		if ($item->getAttempts() < self::MAX_ATTEMPTS) {
+			$backoff = self::BACKOFF_BASE_SECONDS * (2 ** ($item->getAttempts() - 1));
+			$item->setNextAttemptAt((new DateTime())->add(new DateInterval('PT' . $backoff . 'S')));
+		}
+
+		$this->queueMapper->update($item);
+	}//end recordFailedAttempt()
+
+	/**
+	 * Mark the sink failing, or dead once the row is, with the row's failure.
+	 *
+	 * @param SiemSink      $sink The target sink
+	 * @param SiemQueueItem $item The queued payload that failed
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-reliable-background-delivery
+	 */
+	private function markSinkFailing(SiemSink $sink, SiemQueueItem $item): void {
+		$sink->setLastDeliveryStatus('failing');
+		if ($item->getStatus() === 'dead') {
+			$sink->setLastDeliveryStatus('dead');
+		}
+
+		$sink->setLastError($item->getLastError());
+		$sink->setConsecutiveFailures($sink->getConsecutiveFailures() + 1);
+		$this->sinkMapper->update($sink);
+	}//end markSinkFailing()
 
 	/**
 	 * Create a sink (§6.1).

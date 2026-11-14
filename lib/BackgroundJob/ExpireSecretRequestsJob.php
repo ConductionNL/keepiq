@@ -39,7 +39,7 @@ namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
 use OCA\Keepiq\Db\SecretRequestMapper;
-use OCA\Keepiq\Service\SecretRequestService;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -66,7 +66,7 @@ class ExpireSecretRequestsJob extends TimedJob {
 	 *
 	 * @param ITimeFactory $time The time factory
 	 * @param SecretRequestMapper $mapper Selects the lapsed rows
-	 * @param SecretRequestService $service Performs the transition
+	 * @param SecretRequestServiceInterface $service Performs the transition
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
@@ -74,7 +74,7 @@ class ExpireSecretRequestsJob extends TimedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private SecretRequestMapper $mapper,
-		private SecretRequestService $service,
+		private SecretRequestServiceInterface $service,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

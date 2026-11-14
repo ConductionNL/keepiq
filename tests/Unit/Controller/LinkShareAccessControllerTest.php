@@ -86,12 +86,15 @@ class LinkShareAccessControllerTest extends TestCase {
 	}//end makeShare()
 
 	/**
-	 * Test Phase 1 returns the blob and salt for a valid token.
+	 * Test Phase 1 returns the blob and salt the service served.
 	 *
 	 * @return void
 	 */
 	public function testShowReturnsBlobForValidToken(): void {
-		$this->linkShareService->method('getByToken')->with('tok-1')->willReturn($this->makeShare());
+		$this->linkShareService->expects($this->once())
+			->method('serve')
+			->with('tok-1')
+			->willReturn($this->makeShare()->jsonSerializePublic());
 
 		$response = $this->controller->show('tok-1');
 		$data = $response->getData();
@@ -104,12 +107,12 @@ class LinkShareAccessControllerTest extends TestCase {
 	}//end testShowReturnsBlobForValidToken()
 
 	/**
-	 * Test Phase 1 returns a uniform 404 for an invalid token.
+	 * Test Phase 1 returns a uniform 404 when the service refuses the serve.
 	 *
 	 * @return void
 	 */
 	public function testShowReturnsNotFoundForInvalidToken(): void {
-		$this->linkShareService->method('getByToken')
+		$this->linkShareService->method('serve')
 			->willThrowException(new RuntimeException('Link not found or expired'));
 
 		$response = $this->controller->show('missing');
@@ -117,34 +120,6 @@ class LinkShareAccessControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 		$this->assertSame('Link not found or expired', $response->getData()['message']);
 	}//end testShowReturnsNotFoundForInvalidToken()
-
-	/**
-	 * Test Phase 1 records a failed attempt when the browser reports failure.
-	 *
-	 * @return void
-	 */
-	public function testShowRecordsFailedAttemptWhenReported(): void {
-		$this->linkShareService->expects($this->once())
-			->method('recordFailedAttempt')
-			->with('tok-1');
-		$this->linkShareService->method('getByToken')->willReturn($this->makeShare());
-
-		$response = $this->controller->show('tok-1', '1');
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-	}//end testShowRecordsFailedAttemptWhenReported()
-
-	/**
-	 * Test Phase 1 does NOT record a failed attempt on the first request.
-	 *
-	 * @return void
-	 */
-	public function testShowDoesNotRecordFailureOnFirstRequest(): void {
-		$this->linkShareService->expects($this->never())->method('recordFailedAttempt');
-		$this->linkShareService->method('getByToken')->willReturn($this->makeShare());
-
-		$this->controller->show('tok-1', '0');
-	}//end testShowDoesNotRecordFailureOnFirstRequest()
 
 	/**
 	 * Test Phase 2 confirm increments usage and returns remaining count.

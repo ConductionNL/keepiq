@@ -44,6 +44,18 @@ trait ExpiringGrantQueries {
 	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	public function findEndingBetween(?DateTime $from, DateTime $to): array {
+		return $this->findEntities(query: $this->endingBetweenQuery(from: $from, to: $to));
+	}//end findEndingBetween()
+
+	/**
+	 * The query behind findEndingBetween(), for a mapper that narrows it.
+	 *
+	 * @param DateTime|null $from Exclusive lower bound (null = none)
+	 * @param DateTime      $to   Inclusive upper bound
+	 *
+	 * @return IQueryBuilder
+	 */
+	protected function endingBetweenQuery(?DateTime $from, DateTime $to): IQueryBuilder {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
@@ -53,6 +65,6 @@ trait ExpiringGrantQueries {
 			$qb->andWhere($qb->expr()->gt('expires_at', $qb->createNamedParameter($from, IQueryBuilder::PARAM_DATETIME_MUTABLE)));
 		}
 
-		return $this->findEntities(query: $qb);
-	}//end findEndingBetween()
+		return $qb;
+	}//end endingBetweenQuery()
 }//end trait

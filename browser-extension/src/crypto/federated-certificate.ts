@@ -1,0 +1,469 @@
+/** A port of the Keepiq web app's `src/crypto/federatedCertificate.js`. Both servers are trusted, the pin arriving in the owner server's reply; this catches a certificate for the wrong user, an expired one, or a chain from another partner before anything is encrypted to it. */
+import { decodePem } from './rsa'
+
+const OID_COMMON_NAME = '2.5.4.3'
+const OID_BASIC_CONSTRAINTS = '2.5.29.19'
+const OID_KEY_USAGE = '2.5.29.15'
+const OID_SHA256_RSA = '1.2.840.113549.1.1.11'
+const OID_RSA_PSS = '1.2.840.113549.1.1.10'
+const OID_MGF1 = '1.2.840.113549.1.1.8'
+const OID_SHA256 = '2.16.840.1.101.3.4.2.1'
+const UTF8_STRING = 0x0c
+const PRINTABLE_STRING = 0x13
+const TELETEX_STRING = 0x14
+const IA5_STRING = 0x16
+
+/** How far `notBefore` may lie ahead of this clock, so a freshly renewed partner intermediate passes a clock running slightly behind; `notAfter` is strict. */
+const CLOCK_SKEW_MS = 5 * 60 * 1000
+
+export type FederatedCertificateReason = 'malformed' | 'untrusted_root' | 'bad_chain' | 'name_mismatch' | 'not_valid_now'
+
+export class FederatedCertificateError extends Error {
+	constructor(readonly reason: FederatedCertificateReason) {
+		super(reason)
+		this.name = 'FederatedCertificateError'
+	}
+}
+
+interface Element {
+	tag: number
+	/** Where the header starts. */
+	offset: number
+	start: number
+	end: number
+}
+
+type Algorithm = { import: RsaHashedImportParams; verify: AlgorithmIdentifier | RsaPssParams }
+
+interface Parsed {
+	der: Uint8Array<ArrayBuffer>
+	tbs: Uint8Array<ArrayBuffer>
+	/** `null` for a signature algorithm Keepiq does not use. */
+	algorithm: Algorithm | null
+	signature: Uint8Array<ArrayBuffer>
+	issuer: Uint8Array
+	subject: Uint8Array
+	notBefore: number
+	notAfter: number
+	spki: Uint8Array<ArrayBuffer>
+	/** basicConstraints sets cA, whatever the key usage says. */
+	ca: boolean
+	/** A CA whose key usage, if it has one, includes keyCertSign. */
+	mayIssue: boolean
+	pathLen: number | null
+}
+
+const malformed = () => new FederatedCertificateError('malformed')
+const utf8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
+
+function pemToDer(pem: unknown): Uint8Array<ArrayBuffer> {
+	const { label, der } = decodePem(typeof pem === 'string' ? pem : '')
+	if (label !== 'CERTIFICATE') throw malformed()
+	return der
+}
+
+function byteAt(bytes: Uint8Array, offset: number): number {
+	const byte = bytes[offset]
+	if (byte === undefined) throw malformed()
+	return byte
+}
+
+/** DER uses the long form only past 127, in as few bytes as it takes (X.690 10.1), so anything else is malformed. */
+function longFormLength(octets: Uint8Array): number {
+	const length = octets.reduce((sum, octet) => sum * 256 + octet, 0)
+	if (length < 0x80 || octets[0] === 0) throw malformed()
+	return length
+}
+
+/** One DER element whose length fits in `limit`, so a hostile certificate can't read out of bounds. */
+function tlv(bytes: Uint8Array, offset: number, limit = bytes.length): Element {
+	const tag = byteAt(bytes, offset)
+	let cursor = offset + 1
+	let length = byteAt(bytes, cursor++)
+	if (length & 0x80) {
+		const count = length & 0x7f
+		if (count === 0 || count > 4) throw malformed()
+		length = longFormLength(bytes.subarray(cursor, cursor + count))
+		cursor += count
+	}
+	if (cursor + length > limit) throw malformed()
+	return { tag, offset, start: cursor, end: cursor + length }
+}
+
+function children(bytes: Uint8Array, parent: Element | undefined): Element[] {
+	if (!parent) throw malformed()
+	const out: Element[] = []
+	for (let cursor = parent.start; cursor < parent.end;) {
+		const child = tlv(bytes, cursor, parent.end)
+		out.push(child)
+		cursor = child.end
+	}
+	return out
+}
+
+/** The one element that fills `parent`, with `tag` when given. */
+function only(bytes: Uint8Array, parent: Element | undefined, tag?: number): Element {
+	const [child, extra] = children(bytes, parent)
+	if (!child || extra || (tag !== undefined && child.tag !== tag)) throw malformed()
+	return child
+}
+
+/** DER (X.690 8.3.2): no leading byte that only repeats the sign of the next. */
+function uint(bytes: Uint8Array, element: Element): number {
+	const length = element.end - element.start
+	if (element.tag !== 0x02 || length < 1 || length > 4 || byteAt(bytes, element.start) & 0x80) throw malformed()
+	if (length > 1 && byteAt(bytes, element.start) === 0 && !(byteAt(bytes, element.start + 1) & 0x80)) throw malformed()
+	let value = 0
+	for (let i = element.start; i < element.end; i++) value = value * 256 + byteAt(bytes, i)
+	return value
+}
+
+/** A BOOLEAN DEFAULT FALSE that is present: DER encodes TRUE as 0xFF only (X.690 11.1) and leaves a default out (11.5), so it is 0xFF or malformed. */
+function presentFlag(bytes: Uint8Array, element: Element): true {
+	if (element.tag !== 0x01 || element.end - element.start !== 1 || byteAt(bytes, element.start) !== 0xff) throw malformed()
+	return true
+}
+
+function oid(bytes: Uint8Array, element: Element | undefined): string {
+	if (element?.tag !== 0x06) throw malformed()
+	const parts: number[] = []
+	let value = 0
+	for (let i = element.start; i < element.end; i++) {
+		const byte = byteAt(bytes, i)
+		value = value * 128 + (byte & 0x7f)
+		if ((byte & 0x80) === 0) {
+			if (parts.length === 0) parts.push(Math.floor(value / 40), value % 40)
+			else parts.push(value)
+			value = 0
+		}
+	}
+	return parts.join('.')
+}
+
+/** The whole element, header included; a copy, since WebCrypto takes `ArrayBuffer`-backed views. */
+function whole(bytes: Uint8Array<ArrayBuffer>, element: Element): Uint8Array<ArrayBuffer> {
+	return bytes.slice(element.offset, element.end)
+}
+
+const equalBytes = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.every((byte, i) => byte === b[i])
+
+function time(bytes: Uint8Array, element: Element | undefined): number {
+	if (!element) throw malformed()
+	const text = new TextDecoder().decode(bytes.subarray(element.start, element.end))
+	const match = /^(\d{2}|\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$/.exec(text)
+	if (!match) throw malformed()
+	let year = Number(match[1])
+	if (match[1]!.length === 2) year += year < 50 ? 2000 : 1900
+	return Date.UTC(year, Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]), Number(match[6]))
+}
+
+/** What the extensions read so far say about issuing, and which extensions were seen. */
+interface ExtensionsRun {
+	bytes: Uint8Array
+	seen: Set<string>
+	ca: boolean
+	keyCertSign: boolean
+	pathLen: number | null
+}
+
+/** One extension: its id, its criticality flag if it has one, and its OCTET STRING value. */
+interface ExtensionParts {
+	id: string
+	critical: Element | undefined
+	value: Element
+}
+
+/** RFC 5280 § 4.2: each extension at most once, and none critical that this doesn't read. § 4.2.1.3 and § 4.2.1.9: without basicConstraints a certificate is no CA. */
+function issuing(bytes: Uint8Array, extensions: Element | undefined): Pick<Parsed, 'ca' | 'mayIssue' | 'pathLen'> {
+	const run: ExtensionsRun = { bytes, seen: new Set<string>(), ca: false, keyCertSign: true, pathLen: null }
+	for (const extension of extensions ? children(bytes, only(bytes, extensions, 0x30)) : []) readExtension(run, extension)
+	return { ca: run.ca, mayIssue: run.ca && run.keyCertSign, pathLen: run.ca ? run.pathLen : null }
+}
+
+function readExtension(run: ExtensionsRun, extension: Element): void {
+	const parts = extensionParts(run.bytes, extension)
+	if (run.seen.has(parts.id)) throw malformed()
+	run.seen.add(parts.id)
+	if (criticalUnread(run.bytes, parts)) throw malformed()
+	EXTENSION_READERS.get(parts.id)?.(run, parts.value)
+}
+
+function extensionParts(bytes: Uint8Array, extension: Element): ExtensionParts {
+	if (extension.tag !== 0x30) throw malformed()
+	const [extnId, ...rest] = children(bytes, extension)
+	const value = rest.pop()
+	const [critical, extra] = rest
+	if (value?.tag !== 0x04 || extra) throw malformed()
+	return { id: oid(bytes, extnId), critical, value }
+}
+
+const criticalUnread = (bytes: Uint8Array, { id, critical }: ExtensionParts) => !!critical && presentFlag(bytes, critical) && !EXTENSION_READERS.has(id)
+
+function readBasicConstraints(run: ExtensionsRun, value: Element): void {
+	const fields = children(run.bytes, only(run.bytes, value, 0x30))
+	let next = 0
+	if (fields[next]?.tag === 0x01) run.ca = presentFlag(run.bytes, fields[next++]!)
+	if (fields[next]?.tag === 0x02) run.pathLen = uint(run.bytes, fields[next++]!)
+	if (next !== fields.length) throw malformed()
+}
+
+function readKeyUsage(run: ExtensionsRun, value: Element): void {
+	const bits = only(run.bytes, value, 0x03)
+	const length = bits.end - bits.start
+	const unused = length > 0 ? byteAt(run.bytes, bits.start) : 0
+	if (badUnusedBits(length, unused)) throw malformed()
+	// After the unused-bits count, keyCertSign is bit 5 of the first byte; when that byte is also the last, its unused bits are padding.
+	const first = length > 1 ? byteAt(run.bytes, bits.start + 1) : 0
+	const mask = length === 2 ? (0xff << unused) & 0xff : 0xff
+	run.keyCertSign = (first & mask & 0x04) !== 0
+}
+
+const badUnusedBits = (length: number, unused: number) => length === 0 || unused > 7 || (length === 1 && unused !== 0)
+
+/** The extensions this reads; any other one must not be critical. */
+const EXTENSION_READERS = new Map<string, (run: ExtensionsRun, value: Element) => void>([
+	[OID_BASIC_CONSTRAINTS, readBasicConstraints],
+	[OID_KEY_USAGE, readKeyUsage],
+])
+
+/** The RSASSA-PSS parameters read so far, with the PSS defaults for what is absent. */
+interface PssRun {
+	bytes: Uint8Array
+	hash: string | null
+	mask: string | null
+	maskHash: string | null
+	saltLength: number
+}
+
+/** Only SHA-256, and for PSS only with MGF1-SHA-256: the PSS default is SHA-1. Parameters that don't decode are malformed. */
+function algorithmOf(bytes: Uint8Array, algorithm: Element): Algorithm | null {
+	const [id, params, extra] = children(bytes, algorithm)
+	if (extra) throw malformed()
+	const name = oid(bytes, id)
+	if (name === OID_SHA256_RSA) {
+		const pkcs1 = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
+		return { import: pkcs1, verify: pkcs1 }
+	}
+	if (name !== OID_RSA_PSS || !params) return null
+	return pssAlgorithm(bytes, params)
+}
+
+function pssAlgorithm(bytes: Uint8Array, params: Element): Algorithm | null {
+	if (params.tag !== 0x30) throw malformed()
+	const pss: PssRun = { bytes, hash: null, mask: null, maskHash: null, saltLength: 20 }
+	for (const field of children(bytes, params)) readPssField(pss, field)
+	if (!sha256Throughout(pss)) return null
+	return { import: { name: 'RSA-PSS', hash: 'SHA-256' }, verify: { name: 'RSA-PSS', saltLength: pss.saltLength } }
+}
+
+const sha256Throughout = (pss: PssRun) => pss.hash === OID_SHA256 && pss.mask === OID_MGF1 && pss.maskHash === OID_SHA256
+
+function readPssField(pss: PssRun, field: Element): void {
+	const inner = only(pss.bytes, field)
+	const read = PSS_FIELDS.get(field.tag)
+	if (!read) throw malformed()
+	read(pss, inner)
+}
+
+const algorithmIdOf = (bytes: Uint8Array, element: Element) => oid(bytes, children(bytes, element.tag === 0x30 ? element : undefined)[0])
+
+function readMaskGeneration(pss: PssRun, inner: Element): void {
+	if (inner.tag !== 0x30) throw malformed()
+	const [maskId, maskParams] = children(pss.bytes, inner)
+	pss.mask = oid(pss.bytes, maskId)
+	pss.maskHash = maskParams ? algorithmIdOf(pss.bytes, maskParams) : null
+}
+
+function readTrailerField(pss: PssRun, inner: Element): void {
+	if (uint(pss.bytes, inner) !== 1) throw malformed()
+}
+
+/** RSASSA-PSS-params: [0] hash, [1] mask generation, [2] salt length, [3] trailer field. */
+const PSS_FIELDS = new Map<number, (pss: PssRun, inner: Element) => void>([
+	[0xa0, (pss, inner) => { pss.hash = algorithmIdOf(pss.bytes, inner) }],
+	[0xa1, readMaskGeneration],
+	[0xa2, (pss, inner) => { pss.saltLength = uint(pss.bytes, inner) }],
+	[0xa3, readTrailerField],
+])
+
+const ASCII_STRINGS = new Set([PRINTABLE_STRING, TELETEX_STRING, IA5_STRING])
+
+/** The other string types OpenSSL's `string_mask` may write a cloud id in, only as printable ASCII: any other byte reads differently per decoder. */
+function textOf(bytes: Uint8Array, value: Element): string {
+	const text = bytes.subarray(value.start, value.end)
+	if (value.tag === UTF8_STRING || (ASCII_STRINGS.has(value.tag) && text.every((byte) => byte >= 0x20 && byte <= 0x7e))) return utf8.decode(text)
+	throw malformed()
+}
+
+/** The leaf's one common name, which must be text this decodes exactly; a second could name someone else to a reader that takes the other. A CA's is never read. */
+function commonNameOf(subject: Uint8Array): string | null {
+	let commonName: string | null = null
+	for (const rdn of children(subject, tlv(subject, 0))) {
+		for (const attribute of children(subject, rdn)) {
+			const [type, value] = children(subject, attribute)
+			if (!type || !value || oid(subject, type) !== OID_COMMON_NAME) continue
+			if (commonName !== null) throw malformed()
+			commonName = textOf(subject, value)
+		}
+	}
+	return commonName
+}
+
+/** The three parts of a certificate: what is signed, the algorithm it is signed with, and the signature. */
+interface CertificateParts {
+	tbs: Element
+	algorithm: Element
+	signature: Element
+}
+
+/** The fields of the signed part, after the version. */
+interface TbsFields {
+	issuer: Element
+	validity: Element
+	subject: Element
+	spki: Element
+	optional: Element[]
+}
+
+function parse(pem: unknown): Parsed {
+	const der = pemToDer(pem)
+	const parts = certificateParts(der)
+	const fields = tbsFields(der, parts)
+	return {
+		der,
+		...signedParts(der, parts),
+		issuer: whole(der, fields.issuer),
+		subject: whole(der, fields.subject),
+		...validityOf(der, fields.validity),
+		spki: whole(der, fields.spki),
+		...issuing(der, fields.optional.find((field) => field.tag === 0xa3)),
+	}
+}
+
+function certificateParts(der: Uint8Array): CertificateParts {
+	const outer = tlv(der, 0)
+	if (outer.tag !== 0x30 || outer.end !== der.length) throw malformed()
+	const [tbs, algorithm, signature, extra] = children(der, outer)
+	if (tbs?.tag !== 0x30 || algorithm?.tag !== 0x30) throw malformed()
+	return { tbs, algorithm, signature: bareSignature(der, [signature, extra]) }
+}
+
+/** A BIT STRING value starts with its unused-bits count, which a signature never has. */
+function bareSignature(der: Uint8Array, [signature, extra]: Array<Element | undefined>): Element {
+	if (signature?.tag !== 0x03 || extra || signature.end === signature.start || byteAt(der, signature.start) !== 0) throw malformed()
+	return signature
+}
+
+function tbsFields(der: Uint8Array, parts: CertificateParts): TbsFields {
+	const { signed, issuer, validity, subject, spki, optional } = presentFields(afterVersion(children(der, parts.tbs)))
+	if (spki?.tag !== 0x30) throw malformed()
+	// RFC 5280 § 4.1.1.2: the algorithm the signature covers is the one it is checked with.
+	if (!equalBytes(der.subarray(signed.offset, signed.end), der.subarray(parts.algorithm.offset, parts.algorithm.end))) throw malformed()
+	// The unique IDs and the extensions, each at most once and in order, so no second extensions block goes unread.
+	if (!inOrderOnce(optional)) throw malformed()
+	return { issuer, validity, subject, spki, optional }
+}
+
+/** The signed part's fields that must be there; the key is checked by the caller. */
+interface PresentFields extends Omit<TbsFields, 'spki'> {
+	signed: Element
+	spki: Element | undefined
+}
+
+/** The serial number is skipped; the signature algorithm, issuer, validity and subject must be there. */
+function presentFields(fields: Element[]): PresentFields {
+	const [, signed, issuer, validity, subject, spki, ...optional] = fields
+	if (!signed || !issuer || !validity || !subject) throw malformed()
+	return { signed, issuer, validity, subject, spki, optional }
+}
+
+const afterVersion = (fields: Element[]) => fields.slice(fields[0]?.tag === 0xa0 ? 1 : 0)
+
+const inOrderOnce = (optional: Element[]) => optional.every((field, i) => [0x81, 0x82, 0xa3].includes(field.tag) && field.tag > (optional[i - 1]?.tag ?? 0))
+
+function signedParts(der: Uint8Array<ArrayBuffer>, parts: CertificateParts): Pick<Parsed, 'tbs' | 'algorithm' | 'signature'> {
+	return {
+		tbs: whole(der, parts.tbs),
+		algorithm: algorithmOf(der, parts.algorithm),
+		signature: der.slice(parts.signature.start + 1, parts.signature.end),
+	}
+}
+
+function validityOf(der: Uint8Array, validity: Element): Pick<Parsed, 'notBefore' | 'notAfter'> {
+	const [notBefore, notAfter] = children(der, validity)
+	return { notBefore: time(der, notBefore), notAfter: time(der, notAfter) }
+}
+
+async function signedBy(cert: Parsed, issuer: Parsed): Promise<boolean> {
+	if (!cert.algorithm || !equalBytes(cert.issuer, issuer.subject)) return false
+	try {
+		const key = await crypto.subtle.importKey('spki', issuer.spki, cert.algorithm.import, false, ['verify'])
+		return await crypto.subtle.verify(cert.algorithm.verify, key, cert.signature, cert.tbs)
+	} catch {
+		return false
+	}
+}
+
+async function sha256Hex(der: Uint8Array<ArrayBuffer>): Promise<string> {
+	const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', der))
+	return Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+/** `user@host[:port][/path]`: an http instance names its users `bob@http://host`, which is their certificate's common name, while the share holds `bob@host`. Only the host's case is folded. */
+export function canonicalCloudId(cloudId: unknown): string {
+	const text = String(cloudId ?? '')
+	const at = text.lastIndexOf('@')
+	if (at <= 0) return ''
+	const remote = text.slice(at + 1).replace(/^https?:\/\//i, '').replace(/\/+$/, '')
+	const host = remote.split('/', 1)[0]!
+	return remote === '' ? '' : `${text.slice(0, at)}@${host.toLowerCase()}${remote.slice(host.length)}`
+}
+
+export interface FederatedCertificateInput {
+	certificate: unknown
+	/** The partner's intermediate, then its root. */
+	chain: unknown
+	/** The owner server's pin, hex SHA-256. */
+	partnerRootFingerprint: unknown
+	/** The share's own `recipientCloudId`, never the lookup's echo of it. */
+	cloudId: string
+	now?: number
+}
+
+export interface VerifiedFederatedCertificate {
+	/** The leaf's SHA-256 as lowercase hex, the `certFingerprint` Keepiq takes. */
+	fingerprint: string
+	/** The leaf's SubjectPublicKeyInfo, for `importSpki`: a second parse of the PEM might not find the key that was checked. */
+	spki: Uint8Array<ArrayBuffer>
+}
+
+/** Rejects with a `FederatedCertificateError`. */
+export async function verifyFederatedCertificate({ certificate, chain, partnerRootFingerprint, cloudId, now = Date.now() }: FederatedCertificateInput): Promise<VerifiedFederatedCertificate> {
+	if (!Array.isArray(chain) || chain.length === 0) throw new FederatedCertificateError('untrusted_root')
+	// Keepiq's `FederationRootService::localChain` serves exactly these two.
+	if (chain.length !== 2) throw new FederatedCertificateError('bad_chain')
+	let certs: Parsed[]
+	let commonName: string | null
+	try {
+		certs = [certificate, ...chain].map(parse)
+		commonName = commonNameOf(certs[0]!.subject)
+	} catch (error) {
+		throw error instanceof FederatedCertificateError ? error : malformed()
+	}
+	const pinned = typeof partnerRootFingerprint === 'string' ? partnerRootFingerprint.toLowerCase() : ''
+	if (pinned === '' || await sha256Hex(certs[certs.length - 1]!.der) !== pinned) throw new FederatedCertificateError('untrusted_root')
+	// The first link must be the partner's intermediate, not its root again. A CA-marked leaf is refused even where older Keepiq versions issued one (keepiq#1257).
+	if (equalBytes(certs[1]!.issuer, certs[1]!.subject) || certs[0]!.ca) throw new FederatedCertificateError('bad_chain')
+	for (let i = 1; i < certs.length; i++) {
+		const issuer = certs[i]!
+		// pathLen counts the CAs below this one, not the leaf.
+		const mayIssue = issuer.mayIssue && (issuer.pathLen === null || i - 1 <= issuer.pathLen)
+		if (!mayIssue || !await signedBy(certs[i - 1]!, issuer)) throw new FederatedCertificateError('bad_chain')
+	}
+	const leaf = certs[0]!
+	const expected = canonicalCloudId(cloudId)
+	// Two names without `user@remote` both canonicalise to ''.
+	if (expected === '' || commonName === null || canonicalCloudId(commonName) !== expected) throw new FederatedCertificateError('name_mismatch')
+	if (certs.some((cert) => now + CLOCK_SKEW_MS < cert.notBefore || now > cert.notAfter)) throw new FederatedCertificateError('not_valid_now')
+	return { fingerprint: await sha256Hex(leaf.der), spki: leaf.spki }
+}

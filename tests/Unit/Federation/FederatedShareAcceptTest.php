@@ -201,7 +201,7 @@ class FederatedShareAcceptTest extends TestCase {
 			'keepiq',
 			'https://cloud.city.example',
 			'keepiq/shares/' . self::SHARE_ID,
-			['sharedSecret' => self::SHARED_SECRET, 'sender' => 'bob@cloud.here.example'],
+			['sharedSecret' => self::SHARED_SECRET, 'sender' => 'bob@cloud.here.example', 'valueFields' => ['totp', 'passkeys']],
 			'post',
 		);
 
@@ -301,6 +301,8 @@ class FederatedShareAcceptTest extends TestCase {
 		$source = new Secret();
 		$source->setId('src');
 		$source->setName('Supplier portal');
+		$source->setOwnerType('user');
+		$source->setOwnerId('alice');
 		$source->setKey('ALICE-OWN-CIPHERTEXT');
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($source);

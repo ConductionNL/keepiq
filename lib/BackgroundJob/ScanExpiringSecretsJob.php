@@ -26,12 +26,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Service\NotificationService;
-use OCA\Keepiq\Service\RotationPolicyService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RotationPolicyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -56,8 +56,8 @@ class ScanExpiringSecretsJob extends TimedJob {
 	 * @param ITimeFactory $time The time factory
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param RotationFlagMapper $flagMapper The flag mapper (open-flag check)
-	 * @param RotationPolicyService $rotationService The rotation service
-	 * @param NotificationService $notificationService The notification dispatcher
+	 * @param RotationPolicyServiceInterface $rotationService The rotation service
+	 * @param NotificationServiceInterface $notificationService The notification dispatcher
 	 * @param IAppConfig $appConfig The app config
 	 * @param LoggerInterface $logger The logger
 	 *
@@ -67,8 +67,8 @@ class ScanExpiringSecretsJob extends TimedJob {
 		ITimeFactory $time,
 		private SecretMapper $secretMapper,
 		private RotationFlagMapper $flagMapper,
-		private RotationPolicyService $rotationService,
-		private NotificationService $notificationService,
+		private RotationPolicyServiceInterface $rotationService,
+		private NotificationServiceInterface $notificationService,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 	) {
@@ -89,28 +89,20 @@ class ScanExpiringSecretsJob extends TimedJob {
 	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
 	 */
 	protected function run($argument): void {
-		$thresholds = json_decode(
-			$this->appConfig->getValueString(Application::APP_ID, 'expiry_reminder_days', '[30,7,1]'),
-			true
-		);
-		if (is_array($thresholds) === false || $thresholds === []) {
-			$thresholds = [30, 7, 1];
-		}
-
-		$now = $this->time->getDateTime();
+		$scan = new ExpiryScan(thresholds: $this->reminderThresholds(), now: $this->time->getDateTime());
 		$offset = 0;
 		do {
 			$page = $this->secretMapper->findAllUserOwnedPaged(limit: self::PAGE_SIZE, offset: $offset);
 			$pageCount = count($page);
 			foreach ($page as $secret) {
 				try {
-					$this->scanOne(secret: $secret, thresholds: $thresholds, now: $now);
+					$this->scanOne(secret: $secret, scan: $scan);
 				} catch (Throwable $exception) {
 					// The class, not the message: a message is unbounded and can
 					// carry whatever the failing call put in it (keepiq#728).
 					$this->logger->warning(
 						'Keepiq: expiry scan failed for secret '.$secret->getId().': '.$exception::class,
-						['app' => Application::APP_ID]
+						['app' => AppIdentity::APP_ID]
 					);
 				}
 			}
@@ -120,67 +112,120 @@ class ScanExpiringSecretsJob extends TimedJob {
 	}//end run()
 
 	/**
+	 * The instance-wide reminder days, or [30,7,1] when none are stored.
+	 *
+	 * @return array<int,mixed>
+	 */
+	private function reminderThresholds(): array {
+		$thresholds = json_decode(
+			$this->appConfig->getValueString(AppIdentity::APP_ID, 'expiry_reminder_days', '[30,7,1]'),
+			true
+		);
+		if (is_array($thresholds) === false || $thresholds === []) {
+			return [30, 7, 1];
+		}
+
+		return $thresholds;
+	}//end reminderThresholds()
+
+	/**
 	 * Scan a single secret: threshold reminder or overdue flag.
 	 *
-	 * @param Secret $secret The secret row
-	 * @param int[] $thresholds Reminder thresholds (days before expiry)
-	 * @param \DateTimeInterface $now The scan instant
+	 * @param Secret     $secret The secret row
+	 * @param ExpiryScan $scan   The reminder days and the scan instant
 	 *
 	 * @return void
 	 */
-	private function scanOne(Secret $secret, array $thresholds, \DateTimeInterface $now): void {
+	private function scanOne(Secret $secret, ExpiryScan $scan): void {
 		$expiry = $this->rotationService->resolveEffectiveExpiry(secret: $secret);
 		if ($expiry === null) {
 			return;
 		}
 
-		$daysLeft = (int)floor(($expiry->getTimestamp() - $now->getTimestamp()) / 86400);
-
+		$daysLeft = $scan->daysUntil(expiry: $expiry);
 		if ($daysLeft < 0) {
-			// Overdue: raise the policy_expiry flag; notify ONLY when the
-			// flag was not already open (one notification per episode).
-			$alreadyOpen = false;
-			try {
-				$alreadyOpen = $this->flagMapper->findBySecret(secretId: $secret->getId())->getStatus() === 'open';
-			} catch (DoesNotExistException) {
-				// No flag yet.
-			}
-
-			if ($alreadyOpen === true) {
-				return;
-			}
-
-			$this->rotationService->flag(secretId: $secret->getId(), reason: 'policy_expiry');
-			$this->notificationService->notify(
-				subject: 'secret_rotation_due',
-				recipientId: $secret->getOwnerId(),
-				params: [
-					'secret_name' => $secret->getName(),
-					'secret_id' => $secret->getId(),
-				],
-				objectType: 'secret',
-				objectId: $secret->getId(),
-			);
+			$this->flagOverdue(secret: $secret);
 			return;
-		}//end if
+		}
 
 		// Approaching: the daily cadence means daysLeft passes each integer
 		// exactly once, so an exact threshold match is naturally deduped. A
 		// policy that sets its own reminder days replaces the instance-wide
 		// thresholds for the secrets it scopes (keepiq#746).
-		$thresholds = ($this->rotationService->reminderDaysFor(secret: $secret) ?? $thresholds);
+		$thresholds = ($this->rotationService->reminderDaysFor(secret: $secret) ?? $scan->thresholds);
 		if (in_array($daysLeft, array_map('intval', $thresholds), true) === true) {
-			$this->notificationService->notify(
-				subject: 'secret_expiring',
-				recipientId: $secret->getOwnerId(),
-				params: [
-					'secret_name' => $secret->getName(),
-					'secret_id' => $secret->getId(),
-					'days_left' => $daysLeft,
-				],
-				objectType: 'secret',
-				objectId: $secret->getId(),
-			);
+			$this->remindExpiring(secret: $secret, daysLeft: $daysLeft);
 		}
 	}//end scanOne()
+
+	/**
+	 * Raise the policy_expiry flag on an overdue secret and notify its owner,
+	 * ONLY when the flag was not already open (one notification per episode).
+	 *
+	 * @param Secret $secret The overdue secret
+	 *
+	 * @return void
+	 */
+	private function flagOverdue(Secret $secret): void {
+		if ($this->flagOpen(secret: $secret) === true) {
+			return;
+		}
+
+		$this->rotationService->flag(secretId: $secret->getId(), reason: 'policy_expiry');
+		$this->notificationService->notify(
+			subject: 'secret_rotation_due',
+			recipientId: $secret->getOwnerId(),
+			params: $this->secretParams(secret: $secret),
+			objectType: 'secret',
+			objectId: $secret->getId(),
+		);
+	}//end flagOverdue()
+
+	/**
+	 * Whether the secret's rotation flag is open.
+	 *
+	 * @param Secret $secret The secret
+	 *
+	 * @return bool False when it has no flag yet
+	 */
+	private function flagOpen(Secret $secret): bool {
+		try {
+			return $this->flagMapper->findBySecret(secretId: $secret->getId())->getStatus() === 'open';
+		} catch (DoesNotExistException) {
+			// No flag yet.
+			return false;
+		}
+	}//end flagOpen()
+
+	/**
+	 * Remind the owner of a secret that reached a reminder day.
+	 *
+	 * @param Secret $secret   The secret
+	 * @param int    $daysLeft Whole days until it expires
+	 *
+	 * @return void
+	 */
+	private function remindExpiring(Secret $secret, int $daysLeft): void {
+		$this->notificationService->notify(
+			subject: 'secret_expiring',
+			recipientId: $secret->getOwnerId(),
+			params: $this->secretParams(secret: $secret) + ['days_left' => $daysLeft],
+			objectType: 'secret',
+			objectId: $secret->getId(),
+		);
+	}//end remindExpiring()
+
+	/**
+	 * The notification parameters naming a secret.
+	 *
+	 * @param Secret $secret The secret
+	 *
+	 * @return array{secret_name:string,secret_id:string}
+	 */
+	private function secretParams(Secret $secret): array {
+		return [
+			'secret_name' => $secret->getName(),
+			'secret_id' => $secret->getId(),
+		];
+	}//end secretParams()
 }//end class

@@ -25,6 +25,7 @@ namespace OCA\Keepiq\Db;
 use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -38,6 +39,9 @@ use OCP\IDBConnection;
  *   classes for no benefit. Mirrors the same suppression on SecretMapper.
  */
 class SecretVersionMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for SecretVersionMapper.
 	 *
@@ -59,12 +63,7 @@ class SecretVersionMapper extends QBMapper {
 	 * @throws DoesNotExistException When no row matches
 	 */
 	public function findById(string $id): SecretVersion {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**
@@ -241,18 +240,10 @@ class SecretVersionMapper extends QBMapper {
 		string $ownerId,
 	): int {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'cnt'))
-			->from($this->getTableName(), 'v')
-			->innerJoin('v', 'keepiq_secrets', 's', $qb->expr()->eq('v.secret_id', 's.id'))
-			->where($qb->expr()->eq('v.encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
-			->andWhere($qb->expr()->eq('s.owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('s.owner_id', $qb->createNamedParameter($ownerId)));
+		$qb->select($qb->func()->count('*', 'cnt'));
+		$this->fromSuiteForOwner(qb: $qb, ref: new SuiteOwnerRef(encryptionSuiteId: $encryptionSuiteId, ownerType: $ownerType, ownerId: $ownerId));
 
-		$result = $qb->executeQuery();
-		$row = $result->fetch();
-		$result->closeCursor();
-
-		return (int)($row['cnt'] ?? 0);
+		return (new QueryCount())->read(qb: $qb);
 	}//end countBySuiteForOwner()
 
 	/**
@@ -278,19 +269,11 @@ class SecretVersionMapper extends QBMapper {
 		string $ownerId,
 	): int {
 		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'cnt'))
-			->from($this->getTableName(), 'v')
-			->innerJoin('v', 'keepiq_secrets', 's', $qb->expr()->eq('v.secret_id', 's.id'))
-			->where($qb->expr()->eq('v.encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
-			->andWhere($qb->expr()->eq('s.owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('s.owner_id', $qb->createNamedParameter($ownerId)))
+		$qb->select($qb->func()->count('*', 'cnt'));
+		$this->fromSuiteForOwner(qb: $qb, ref: new SuiteOwnerRef(encryptionSuiteId: $encryptionSuiteId, ownerType: $ownerType, ownerId: $ownerId))
 			->andWhere($qb->expr()->isNull('s.migration_error'));
 
-		$result = $qb->executeQuery();
-		$row = $result->fetch();
-		$result->closeCursor();
-
-		return (int)($row['cnt'] ?? 0);
+		return (new QueryCount())->read(qb: $qb);
 	}//end countUnaccountedBySuiteForOwner()
 
 	/**
@@ -320,12 +303,8 @@ class SecretVersionMapper extends QBMapper {
 		int $offset = 0,
 	): array {
 		$qb = $this->db->getQueryBuilder();
-		$qb->selectDistinct('v.secret_id')
-			->from($this->getTableName(), 'v')
-			->innerJoin('v', 'keepiq_secrets', 's', $qb->expr()->eq('v.secret_id', 's.id'))
-			->where($qb->expr()->eq('v.encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
-			->andWhere($qb->expr()->eq('s.owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('s.owner_id', $qb->createNamedParameter($ownerId)))
+		$qb->selectDistinct('v.secret_id');
+		$this->fromSuiteForOwner(qb: $qb, ref: new SuiteOwnerRef(encryptionSuiteId: $encryptionSuiteId, ownerType: $ownerType, ownerId: $ownerId))
 			->orderBy('v.secret_id', 'ASC')
 			->setMaxResults(max(1, $limit))
 			->setFirstResult(max(0, $offset));
@@ -336,4 +315,21 @@ class SecretVersionMapper extends QBMapper {
 
 		return $ids;
 	}//end findSecretIdsWithSuiteVersionsForOwner()
+
+	/**
+	 * Read versions joined to their secret, narrowed to one owner's versions
+	 * still bound to one suite.
+	 *
+	 * @param IQueryBuilder $qb The query, its selection already made
+	 * @param SuiteOwnerRef $ref The suite and owner
+	 *
+	 * @return IQueryBuilder The same query, for chaining
+	 */
+	private function fromSuiteForOwner(IQueryBuilder $qb, SuiteOwnerRef $ref): IQueryBuilder {
+		return $qb->from($this->getTableName(), 'v')
+			->innerJoin('v', 'keepiq_secrets', 's', $qb->expr()->eq('v.secret_id', 's.id'))
+			->where($qb->expr()->eq('v.encryption_suite_id', $qb->createNamedParameter($ref->encryptionSuiteId)))
+			->andWhere($qb->expr()->eq('s.owner_type', $qb->createNamedParameter($ref->ownerType)))
+			->andWhere($qb->expr()->eq('s.owner_id', $qb->createNamedParameter($ref->ownerId)));
+	}//end fromSuiteForOwner()
 }//end class

@@ -457,15 +457,11 @@
 						     the toggling exactly once (a raw click handler
 						     would double-fire through the label's forwarded
 						     click). -->
-						<NcCheckboxRadioSwitch
+						<SecretRowCheck
 							class="secret-list-view__check"
-							:modelValue="bulkStore.selectedIds.includes(object.id)"
-							:aria-label="
-								t('keepiq', 'Select {name}', { name: object.name })
-							"
-							:data-testid="`bulk-check-${object.id}`"
-							@click.capture="lastShiftKey = $event.shiftKey"
-							@update:modelValue="onRowCheck(object)" />
+							:secret="object"
+							@shift="lastShiftKey = $event"
+							@check="onRowCheck(object)" />
 						<SecretListItem
 							class="secret-list-view__row-item"
 							:class="{
@@ -490,15 +486,11 @@
 						:class="{
 							'secret-list-view__card--selected': selected,
 						}">
-						<NcCheckboxRadioSwitch
+						<SecretRowCheck
 							class="secret-list-view__check"
-							:modelValue="bulkStore.selectedIds.includes(object.id)"
-							:aria-label="
-								t('keepiq', 'Select {name}', { name: object.name })
-							"
-							:data-testid="`bulk-check-${object.id}`"
-							@click.capture="lastShiftKey = $event.shiftKey"
-							@update:modelValue="onRowCheck(object)" />
+							:secret="object"
+							@shift="lastShiftKey = $event"
+							@check="onRowCheck(object)" />
 						<SecretListItem
 							class="secret-list-view__card-item"
 							:secret="object"
@@ -523,6 +515,7 @@
 						<span class="secret-list-view__name-cell-text">{{
 							row.name
 						}}</span>
+						<LoginExtrasMarkers :secret="row" />
 						<VaultIndicator :vault="rowVault(row)" />
 					</span>
 				</template>
@@ -574,7 +567,6 @@ import {
 	NcActions,
 	NcActionSeparator,
 	NcButton,
-	NcCheckboxRadioSwitch,
 	NcEmptyContent,
 } from '@nextcloud/vue'
 import { markRaw } from 'vue'
@@ -594,7 +586,9 @@ import Safe from 'vue-material-design-icons/Safe.vue'
 import ShareVariantOutline from 'vue-material-design-icons/ShareVariantOutline.vue'
 import TagOutline from 'vue-material-design-icons/TagOutline.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
+import LoginExtrasMarkers from '../components/LoginExtrasMarkers.vue'
 import SecretListItem from '../components/SecretListItem.vue'
+import SecretRowCheck from '../components/SecretRowCheck.vue'
 import SecretTypeIcon from '../components/SecretTypeIcon.vue'
 import StrengthBadge from '../components/StrengthBadge.vue'
 import VaultIndicator from '../components/VaultIndicator.vue'
@@ -642,6 +636,46 @@ const TOOLBAR_ICONS = {
 }
 
 /**
+ * The page action that creates a folder, or a vault at the top level.
+ *
+ * @param {object} vm The secret list.
+ * @return {object} The action.
+ * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+ */
+function newFolderItem(vm) {
+	return {
+		id: 'new-folder',
+		label: vm.newFolderLabel,
+		// A top-level create makes a VAULT, so the entry carries the safe
+		// glyph there (restyle terminology).
+		icon: vm.selectedFolderId ? TOOLBAR_ICONS.folderPlus : TOOLBAR_ICONS.safe,
+		disabled: vm.offlineReadOnly,
+		testid: 'open-create-folder',
+		run: () => vm.openCreateFolder(),
+	}
+}
+
+/**
+ * The page action that opens team sharing for the selected folder.
+ *
+ * @param {object} vm The secret list.
+ * @return {object} The action.
+ * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+ */
+function teamSharingItem(vm) {
+	return {
+		id: 'team-sharing',
+		label: t('keepiq', 'Team sharing'),
+		icon: TOOLBAR_ICONS.accountGroup,
+		disabled: vm.vaultLocked,
+		testid: 'team-folder-open',
+		run: () => {
+			vm.teamFolderOpen = true
+		},
+	}
+}
+
+/**
  * Hard ceiling on the breadcrumb parent walk. A well-formed tree never gets
  * near it; it exists so a corrupt parentId cycle that survives the seen-set
  * (e.g. duplicated ids) still terminates.
@@ -668,7 +702,6 @@ export default {
 		NcActions,
 		NcActionSeparator,
 		NcButton,
-		NcCheckboxRadioSwitch,
 		NcEmptyContent,
 		AccountGroup,
 		FilterIcon,
@@ -684,7 +717,9 @@ export default {
 		BulkTagDialog,
 		TagOutline,
 		KeyVariant,
+		LoginExtrasMarkers,
 		SecretListItem,
+		SecretRowCheck,
 		SecretTypeIcon,
 		StrengthBadge,
 		VaultIndicator,
@@ -1237,19 +1272,7 @@ export default {
 		 */
 		toolbarItems() {
 			const items = [
-				{
-					id: 'new-folder',
-					label: this.newFolderLabel,
-					// A top-level create makes a VAULT, so the entry carries
-					// the safe glyph there (restyle terminology).
-					icon: this.selectedFolderId
-						? TOOLBAR_ICONS.folderPlus
-						: TOOLBAR_ICONS.safe,
-
-					disabled: this.offlineReadOnly,
-					testid: 'open-create-folder',
-					run: () => this.openCreateFolder(),
-				},
+				newFolderItem(this),
 				// Ask someone for a credential (request-first-secret-requests):
 				// reachable with an EMPTY vault, because a requester has nothing
 				// to point at yet. The Secret is created by the request itself,
@@ -1276,16 +1299,7 @@ export default {
 			// Team folder sharing (team-folder-sharing §5.1): only for a
 			// concrete selected folder; the dialog owns membership + fan-out.
 			if (this.selectedFolderId) {
-				items.push({
-					id: 'team-sharing',
-					label: t('keepiq', 'Team sharing'),
-					icon: TOOLBAR_ICONS.accountGroup,
-					disabled: this.vaultLocked,
-					testid: 'team-folder-open',
-					run: () => {
-						this.teamFolderOpen = true
-					},
-				})
+				items.push(teamSharingItem(this))
 			}
 			return items
 		},
@@ -1752,6 +1766,26 @@ export default {
 		},
 
 		/**
+		 * Declare what the list shows to the store — folder, search, sort,
+		 * type, state, favourite and tag — so a bare `fetchSecrets()` from
+		 * elsewhere refreshes the same list.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
+		declareListQuery() {
+			this.secretStore.setListQuery({
+				folderId: this.selectedFolderId,
+				search: this.searchTerm,
+				sort: this.sortField,
+				typeId: this.typeFilter,
+				state: this.listState,
+				favourite: this.favouriteFilter,
+				tag: this.tagFilter,
+			})
+		},
+
+		/**
 		 * Reload the current page of secrets with the active filters.
 		 *
 		 * @return {Promise<void>}
@@ -1764,15 +1798,7 @@ export default {
 			// the query lived only in these call arguments, every such refresh
 			// dropped the folder filter and replaced a folder's contents with
 			// the whole vault.
-			this.secretStore.setListQuery({
-				folderId: this.selectedFolderId,
-				search: this.searchTerm,
-				sort: this.sortField,
-				typeId: this.typeFilter,
-				state: this.listState,
-				favourite: this.favouriteFilter,
-				tag: this.tagFilter,
-			})
+			this.declareListQuery()
 			await this.secretStore.fetchSecrets({ page: 1 })
 		},
 
@@ -1855,15 +1881,7 @@ export default {
 			// Same contract as reload(): the store holds the query, this call
 			// only moves the page. Note this used to omit `typeId`, so paging a
 			// type-filtered list silently un-filtered it.
-			this.secretStore.setListQuery({
-				folderId: this.selectedFolderId,
-				search: this.searchTerm,
-				sort: this.sortField,
-				typeId: this.typeFilter,
-				state: this.listState,
-				favourite: this.favouriteFilter,
-				tag: this.tagFilter,
-			})
+			this.declareListQuery()
 			this.secretStore.fetchSecrets({ page: target })
 		},
 

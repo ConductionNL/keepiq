@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -78,7 +78,7 @@ class PreferencesController extends Controller {
 		private readonly IConfig $config,
 		private readonly IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -102,7 +102,7 @@ class PreferencesController extends Controller {
 			return new JSONResponse(data: ['message' => 'Invalid key'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
-		$value = $this->config->getUserValue($user->getUID(), Application::APP_ID, self::KEY_PREFIX . $safeKey, '');
+		$value = $this->config->getUserValue($user->getUID(), AppIdentity::APP_ID, self::KEY_PREFIX . $safeKey, '');
 		if ($value === '') {
 			return new JSONResponse(data: ['value' => null]);
 		}
@@ -137,11 +137,11 @@ class PreferencesController extends Controller {
 		}
 
 		if ($value === '') {
-			$this->config->deleteUserValue($user->getUID(), Application::APP_ID, self::KEY_PREFIX . $safeKey);
+			$this->config->deleteUserValue($user->getUID(), AppIdentity::APP_ID, self::KEY_PREFIX . $safeKey);
 			return new JSONResponse(data: ['value' => null]);
 		}
 
-		$this->config->setUserValue($user->getUID(), Application::APP_ID, self::KEY_PREFIX . $safeKey, $value);
+		$this->config->setUserValue($user->getUID(), AppIdentity::APP_ID, self::KEY_PREFIX . $safeKey, $value);
 		return new JSONResponse(data: ['value' => $value]);
 	}//end setPreference()
 

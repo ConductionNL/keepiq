@@ -29,11 +29,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
-use OCA\Keepiq\Service\CertificateLifecycleService;
-use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\CertificateLifecycleServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -62,8 +62,8 @@ class ScanCertificateExpiryJob extends TimedJob {
 	 *
 	 * @param ITimeFactory $time The time factory
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper
-	 * @param CertificateLifecycleService $lifecycleService The lifecycle service (server parse)
-	 * @param NotificationService $notificationService The notification dispatcher
+	 * @param CertificateLifecycleServiceInterface $lifecycleService The lifecycle service (server parse)
+	 * @param NotificationServiceInterface $notificationService The notification dispatcher
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
@@ -71,8 +71,8 @@ class ScanCertificateExpiryJob extends TimedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private EncryptionSuiteMapper $suiteMapper,
-		private CertificateLifecycleService $lifecycleService,
-		private NotificationService $notificationService,
+		private CertificateLifecycleServiceInterface $lifecycleService,
+		private NotificationServiceInterface $notificationService,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);
@@ -105,7 +105,7 @@ class ScanCertificateExpiryJob extends TimedJob {
 					// carry whatever the failing call put in it (keepiq#728).
 					$this->logger->warning(
 						'Keepiq: certificate expiry scan failed for suite '.$suite->getId().': '.$exception::class,
-						['app' => Application::APP_ID]
+						['app' => AppIdentity::APP_ID]
 					);
 				}
 			}

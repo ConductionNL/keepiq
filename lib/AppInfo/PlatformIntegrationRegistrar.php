@@ -3,8 +3,8 @@
 /**
  * Keepiq platform-integration registrar
  *
- * Registers the three Nextcloud platform extension points Keepiq plugs into:
- * unified search, notifications, and request middleware.
+ * Registers the Nextcloud platform extension points Keepiq plugs into:
+ * unified search, notifications, request middleware and setup checks.
  *
  * @category AppInfo
  * @package  OCA\Keepiq\AppInfo
@@ -22,11 +22,11 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
-use OCA\Keepiq\Middleware\JwtAuthMiddleware;
-use OCA\Keepiq\Middleware\OcsRefusalMiddleware;
-use OCA\Keepiq\Middleware\VaultKeyProofMiddleware;
-use OCA\Keepiq\Notification\KeepiqNotifier;
-use OCA\Keepiq\Search\SecretSearchProvider;
+use OCA\Keepiq\Listener\FederationEventRegistrar;
+use OCA\Keepiq\Middleware\MiddlewareRegistrar;
+use OCA\Keepiq\Notification\NotificationRegistrar;
+use OCA\Keepiq\Search\SearchRegistrar;
+use OCA\Keepiq\SetupCheck\SetupCheckRegistrar;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
@@ -35,14 +35,16 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  *
  * These registrations are not Keepiq domain wiring — they are the places
  * where the PLATFORM calls into this app: the unified-search bar, the
- * notification renderer, the request pipeline and Open Cloud Mesh. They are grouped because
+ * notification renderer, the request pipeline, the admin overview's setup
+ * checks and Open Cloud Mesh. They are grouped because
  * they share that direction of control and because each one is a single
  * class handed to a core registry, with no ordering relationship to the
  * domain listeners.
  */
 final class PlatformIntegrationRegistrar {
 	/**
-	 * Register the search provider, the notifier and the middleware.
+	 * Register the search provider, the notifier, the middleware and the setup
+	 * check.
 	 *
 	 * @param IRegistrationContext $context The registration context
 	 *
@@ -52,29 +54,10 @@ final class PlatformIntegrationRegistrar {
 	 *   behaviour and their own spec references; this method only binds them.
 	 */
 	public function register(IRegistrationContext $context): void {
-		// The Nextcloud unified search provider for secrets. It queries
-		// unencrypted name/url metadata only and needs no vault session
-		// (ADR-003).
-		$context->registerSearchProvider(SecretSearchProvider::class);
-
-		// The notifier responsible for rendering sharing, secret-request and
-		// application-management notification subjects.
-		$context->registerNotifierService(KeepiqNotifier::class);
-
-		// The JWT-Bearer middleware for application-authenticated routes.
-		// Fires only on ApplicationApiController subclasses; session
-		// controllers pass through untouched.
-		$context->registerMiddleware(JwtAuthMiddleware::class);
-
-		// The vault-key-proof middleware. Runs for every controller but acts
-		// only on methods carrying #[VaultKeyProofRequired]; every other method
-		// passes through untouched.
-		$context->registerMiddleware(VaultKeyProofMiddleware::class);
-
-		// Keeps a refusal of a Keepiq OCSController visible: Nextcloud's
-		// OCSMiddleware rewrites a 403 there into an HTTP 200 OCS envelope, so
-		// the controller's own 403 leaves as 428 with an `error` code.
-		$context->registerMiddleware(OcsRefusalMiddleware::class);
+		(new SearchRegistrar())->register(context: $context);
+		(new NotificationRegistrar())->register(context: $context);
+		(new MiddlewareRegistrar())->registerPlatformMiddleware(context: $context);
+		(new SetupCheckRegistrar())->register(context: $context);
 
 		// Open Cloud Mesh: Nextcloud's OCM discovery and endpoint-request
 		// events, through which partner instances reach the federation

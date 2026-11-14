@@ -164,6 +164,8 @@ class RotationControllerTest extends TestCase {
 			name: 'Production database',
 			expiresAt: new DateTime('2027-03-01T12:00:00+00:00')
 		);
+		$stored->setTotp('TOTP-CIPHERTEXT');
+		$stored->setPasskeys('PASSKEYS-CIPHERTEXT');
 
 		$this->secretService->expects($this->once())
 			->method('setExpiry')
@@ -197,6 +199,8 @@ class RotationControllerTest extends TestCase {
 			$data['secret']['expiresAt'],
 			'the stored expiry must be the submitted instant'
 		);
+		$this->assertSame('TOTP-CIPHERTEXT', $data['secret']['totp']);
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $data['secret']['passkeys']);
 		$this->assertSame(
 			'2027-02-01T00:00:00+00:00',
 			$data['effectiveExpiry'],
@@ -297,6 +301,23 @@ class RotationControllerTest extends TestCase {
 			'a refused secret and an absent one must be indistinguishable to the caller'
 		);
 	}//end testSetExpiryHidesOwnershipBehindTheSameNotFoundBody()
+
+	/**
+	 * A secret that kept moving while its expiry was set answers 409.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testSetExpiryOverASecretThatKeptMovingAnswersConflict(): void {
+		$secret = new \OCA\Keepiq\Db\Secret();
+		$this->secretService->method('setExpiry')
+			->willThrowException(new \OCA\Keepiq\Exception\StaleWriteException(current: $secret));
+
+		$response = $this->controller('alice')->setExpiry(id: 'cc000000-0000-4000-8000-00000000000c');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+	}//end testSetExpiryOverASecretThatKeptMovingAnswersConflict()
 
 	/**
 	 * An anonymous caller gets 401 and no write is attempted.

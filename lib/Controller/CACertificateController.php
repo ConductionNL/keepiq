@@ -22,9 +22,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use Exception;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\CertificateAuthorityServiceInterface;
 use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -40,15 +41,15 @@ class CACertificateController extends OCSController {
 	 * Constructor for CACertificateController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param CertificateAuthorityService $caService The CA service
+	 * @param CertificateAuthorityServiceInterface $caService The CA service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private CertificateAuthorityService $caService,
+		private CertificateAuthorityServiceInterface $caService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -94,10 +95,7 @@ class CACertificateController extends OCSController {
 			$this->caService->retryBootstrap();
 			return new JSONResponse(data: $this->caService->getStatus());
 		} catch (RuntimeException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}//end retryBootstrap()
 
@@ -122,10 +120,7 @@ class CACertificateController extends OCSController {
 				]
 			);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}//end renewIntermediate()
 
@@ -150,10 +145,7 @@ class CACertificateController extends OCSController {
 				]
 			);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}//end renewRoot()
 }//end class

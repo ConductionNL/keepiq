@@ -52,6 +52,11 @@ final class AuditEventTypes {
 	public const SHARE_REVOKED = 'share.revoked';
 	public const SHARE_DELEGATED = 'share.delegated';
 	public const SHARE_DELEGATION_RECLAIMED = 'share.delegation_reclaimed';
+	// The scan quarantined a planted share row (GHSA-m5p9-6pw7-pf3g), and an
+	// administrator released or dropped one with occ keepiq:share-quarantine.
+	public const SHARE_QUARANTINED = 'share.quarantined';
+	public const SHARE_QUARANTINE_RELEASED = 'share.quarantine_released';
+	public const SHARE_QUARANTINE_DROPPED = 'share.quarantine_dropped';
 
 	// Link share.
 	public const LINK_SHARE_CREATED = 'link_share.created';
@@ -210,6 +215,14 @@ final class AuditEventTypes {
 	public const DEVICE_APPROVAL_EXPIRED = 'device_approval.expired';
 	public const DEVICE_APPROVAL_PICKED_UP = 'device_approval.picked_up';
 
+	// Browser-extension passkeys (extension-passkey-enrolment D3), identifiers only.
+	public const PASSKEY_REVOKED_WITH_APP_PASSWORD =
+		'passkey.revoked_with_app_password';
+	public const PASSKEY_ENROLLED = 'passkey.enrolled';
+	public const PASSKEY_UNLOCKED = 'passkey.unlocked';
+	public const PASSKEY_REFUSED = 'passkey.refused';
+	public const PASSKEY_SUSPENDED = 'passkey.suspended';
+
 	// Organisation account recovery (crypto-organisation-account-recovery 5.2),
 	// identifiers only: never an envelope, a wrapped copy or a sealed result.
 	public const RECOVERY_SETTINGS_CHANGED = 'recovery.settings_changed';
@@ -240,6 +253,8 @@ final class AuditEventTypes {
 	public const FEDERATED_SHARE_RECIPIENT_DECLINED = 'federated_share.recipient_declined';
 	// The owner's side of a recipient restoring a declined copy from the trash.
 	public const FEDERATED_SHARE_RECIPIENT_RESUMED = 'federated_share.recipient_resumed';
+	// A partner's lookup answer advertised other value fields than recorded (keepiq#1325).
+	public const FEDERATION_PARTNER_VALUE_FIELDS_CHANGED = 'federation_partner.value_fields_changed';
 
 	/**
 	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
@@ -254,6 +269,8 @@ final class AuditEventTypes {
 		'password',
 		'value',
 		'additionalFields',
+		'totp',
+		'passkeys',
 		'ciphertext',
 		'payload',
 	];
@@ -271,7 +288,7 @@ final class AuditEventTypes {
 	 */
 	public const WHITELIST = [
 		self::SECRET_CREATED => ['typeId', 'folderId'],
-		self::SECRET_UPDATED => ['changedFields'],
+		self::SECRET_UPDATED => ['changedFields', 'skippedUserIds'],
 		self::SECRET_READ => [],
 		self::SECRET_DELETED => [],
 		self::SECRET_TRASHED => [],
@@ -285,6 +302,9 @@ final class AuditEventTypes {
 		self::SHARE_REVOKED => ['recipientType', 'recipientId'],
 		self::SHARE_DELEGATED => ['delegatedTo', 'isPermanent'],
 		self::SHARE_DELEGATION_RECLAIMED => ['delegatedTo'],
+		self::SHARE_QUARANTINED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'copyUseOnly', 'copyAccessEndsAt'],
+		self::SHARE_QUARANTINE_RELEASED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'forced'],
+		self::SHARE_QUARANTINE_DROPPED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'restrictionsCleared'],
 		self::LINK_SHARE_CREATED => ['hasPassword', 'expiresAt'],
 		self::LINK_SHARE_ACCESSED => [],
 		self::LINK_SHARE_ACCESS_FAILED => ['reason'],
@@ -329,7 +349,8 @@ final class AuditEventTypes {
 		self::EMERGENCY_ACCESS_REVOKED => ['grantorUserId', 'granteeUserId'],
 		self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
 		self::EMERGENCY_ACCESS_CARRIED => ['grantorUserId', 'granteeUserId', 'fromSuiteId', 'toSuiteId'],
-		self::SECRET_VERSION_RESTORED => ['versionNumber'],
+		// `via: share-save` marks a version number the client asserted.
+		self::SECRET_VERSION_RESTORED => ['versionNumber', 'via'],
 		// Rotation & expiry — ids/reasons only (§5.2).
 		self::SECRET_EXPIRY_SET => ['expiresAt'],
 		self::SECRET_ROTATION_FLAGGED => ['reason'],
@@ -365,6 +386,7 @@ final class AuditEventTypes {
 			'successorUserId',
 			'revokedCount',
 			'transferredCount',
+			'linkSharesTransferredCount',
 			// Member offboarding (admin-member-overview-and-offboarding §1.3): counts and group ids only.
 			'membershipsRemovedCount',
 			'coveringGroupIds',
@@ -389,6 +411,11 @@ final class AuditEventTypes {
 		self::DEVICE_APPROVAL_DENIED => [],
 		self::DEVICE_APPROVAL_EXPIRED => [],
 		self::DEVICE_APPROVAL_PICKED_UP => [],
+		self::PASSKEY_REVOKED_WITH_APP_PASSWORD => ['credentialCount'],
+		self::PASSKEY_ENROLLED => ['clientKind'],
+		self::PASSKEY_UNLOCKED => ['clientKind'],
+		self::PASSKEY_REFUSED => ['clientKind', 'ceremony'],
+		self::PASSKEY_SUSPENDED => ['clientKind'],
 		self::RECOVERY_SETTINGS_CHANGED => ['policy', 'threshold', 'officerCount'],
 		self::RECOVERY_KEY_CREATED => [],
 		self::RECOVERY_KEY_RETIRED => [],
@@ -411,13 +438,16 @@ final class AuditEventTypes {
 		self::FEDERATED_SHARE_DECLINED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		self::FEDERATED_COPY_UPDATED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		self::FEDERATED_COPY_REMOVED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
-		self::FEDERATED_SHARE_RECIPIENT_DECLINED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
+		self::FEDERATED_SHARE_RECIPIENT_DECLINED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'kept'],
 		self::FEDERATED_SHARE_RECIPIENT_RESUMED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
+		// Field names only, never a value.
+		self::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED => ['partnerId', 'from', 'to'],
 	];
 
 	/**
 	 * The whitelisted metadata keys whose VALUES reference a user id and must
-	 * be scrubbed on account-deletion anonymization (design D6).
+	 * be scrubbed on account-deletion anonymization (design D6). A value is
+	 * one user id or a list of them.
 	 *
 	 * @var string[]
 	 */
@@ -429,6 +459,7 @@ final class AuditEventTypes {
 		'memberId',
 		'leavingUserId',
 		'successorUserId',
+		'skippedUserIds',
 	];
 
 	/**

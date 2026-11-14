@@ -30,7 +30,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Backup;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\App\IAppManager;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\NotFoundException;
@@ -107,7 +107,7 @@ class ArchiveWriter {
 
 		$manifest = [
 			'format' => self::FORMAT,
-			'appVersion' => $this->appManager->getAppVersion(Application::APP_ID),
+			'appVersion' => $this->appManager->getAppVersion(AppIdentity::APP_ID),
 			'schemaFingerprint' => $this->fingerprint->current(),
 			'createdAt' => (new DateTime())->format('c'),
 			'instanceId' => (string)$this->config->getSystemValue('instanceid', ''),
@@ -156,7 +156,7 @@ class ArchiveWriter {
 	 */
 	private function blobs(): iterable {
 		try {
-			$folder = $this->appDataFactory->get(Application::APP_ID)->getFolder(self::BLOB_FOLDER);
+			$folder = $this->appDataFactory->get(AppIdentity::APP_ID)->getFolder(self::BLOB_FOLDER);
 		} catch (NotFoundException) {
 			return;
 		}

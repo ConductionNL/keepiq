@@ -203,18 +203,64 @@ struct FieldRow: View {
 
     @State private var shown = false
 
+    /// A long address or login has no spaces, so the text could only be cut
+    /// off. A zero-width space after each slash, dot and @ lets it wrap there;
+    /// VoiceOver and Copy keep the value as it is.
+    static func breakable(_ value: String) -> String {
+        guard !value.contains(" ") else { return value }
+        var out = ""
+        for character in value {
+            out.append(character)
+            if character == "/" || character == "." || character == "@" { out.append("\u{200B}") }
+        }
+        return out
+    }
+
+    /// A random password has no word breaks at all, so at the largest text
+    /// sizes it could only be clipped. Inside a run of more than 10
+    /// characters without a space or a hyphen, a zero-width space after every
+    /// character lets it wrap anywhere. Shorter runs, such as the words of a
+    /// passphrase, keep their natural breaks. Only the drawn text: VoiceOver
+    /// (an explicit label) and Copy keep the value as it is.
+    static func breakableLongRuns(_ value: String) -> String {
+        var out = ""
+        var run: [Character] = []
+        func flush() {
+            out += run.count > 10 ? run.map { String($0) + "\u{200B}" }.joined() : String(run)
+            run.removeAll()
+        }
+        for character in value {
+            if character.isWhitespace || character == "-" {
+                flush()
+                out.append(character)
+            } else {
+                run.append(character)
+            }
+        }
+        flush()
+        return out
+    }
+    @Environment(\.dynamicTypeSize) private var typeSize
+
     var body: some View {
+        // At the accessibility text sizes the buttons go under the value, so
+        // a long value keeps the full width instead of being clipped.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading)) : AnyLayout(HStackLayout())
         VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
-            HStack {
+            Text(label).font(.caption).foregroundStyle(KeepiqPalette.secondaryText)
+            layout {
                 if masked && !shown {
                     Text("••••••••").accessibilityLabel(label)
                 } else {
-                    Text(value.isEmpty ? "-" : value)
+                    Text(value.isEmpty ? "-" : masked ? Self.breakableLongRuns(value) : Self.breakable(value))
                         .font(masked ? .body.monospaced() : .body)
                         .textSelection(.disabled)
+                        .lineLimit(nil)
+                        // Wraps instead of clipping at large Dynamic Type sizes.
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityLabel(value.isEmpty ? "-" : value)
                 }
-                Spacer()
+                if !typeSize.isAccessibilitySize { Spacer() }
                 if masked {
                     Button(shown ? L("action_hide") : L("action_show")) { shown.toggle() }
                         .frame(minWidth: 44, minHeight: 44)

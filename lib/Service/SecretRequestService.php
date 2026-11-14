@@ -32,6 +32,8 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerInterface;
@@ -42,13 +44,15 @@ use Throwable;
 /**
  * Business logic for the SecretRequest lifecycle.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 14 against a threshold of 13,
- * and one of the fourteen cannot be removed: SecretService takes a nullable
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 18 against a threshold of 13,
+ * and one of the eighteen cannot be removed: SecretService takes a nullable
  * SecretRequestService and this class reaches SecretService through the
  * container, which is how the cycle between them is broken. Injecting
  * SecretService directly to drop ContainerInterface would trade one coupling
- * for a construction-time circular dependency. The remainder are two mappers,
- * two Db entities, two lookup exceptions and the value types (DateTime, Uuid) —
+ * for a construction-time circular dependency. The remainder are the mappers,
+ * the Db entities, the request lifecycle's collaborators, the lookup
+ * exceptions, the stale-write exception a fill retries on and the value types
+ * (DateTime, Uuid) —
  * none of them indirection worth adding a class to hide.
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
@@ -59,7 +63,7 @@ use Throwable;
  * creation paths across classes would scatter the rollback and the
  * fresh-vs-re-request distinction that the spec turns on.
  */
-class SecretRequestService {
+class SecretRequestService implements SecretRequestServiceInterface {
 	/*
 	 * The field model lives on SecretRequestPolicy so validation and persistence
 	 * cannot drift apart: the validator decides which bucket a requested name
@@ -78,6 +82,7 @@ class SecretRequestService {
 	 * @param SecretMapper $secretMapper Reads the Secret a request writes to
 	 * @param ContainerInterface $container Resolves SecretService lazily (see fill)
 	 * @param SecretPlaceholderCleaner $placeholderCleaner Removes an unfilled placeholder
+	 * @param ViewOnlyCopyGuard $viewOnlyCopies Refuses a fill onto a copy its holder may not write
 	 *
 	 * @return void
 	 */
@@ -90,6 +95,7 @@ class SecretRequestService {
 		private SecretMapper $secretMapper,
 		private ContainerInterface $container,
 		private SecretPlaceholderCleaner $placeholderCleaner,
+		private ViewOnlyCopyGuard $viewOnlyCopies,
 	) {
 	}//end __construct()
 
@@ -157,6 +163,9 @@ class SecretRequestService {
 	 * @return SecretRequest
 	 *
 	 * @throws InvalidArgumentException
+	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the secret's holder may not change it, as with a copy shared with them to view only
+	 * @throws \OCA\Keepiq\Exception\NotFoundException When the secret is a copy whose source cannot be resolved, or is gone by the write
+	 * @throws \OCA\Keepiq\Exception\ShareScanPendingException When the share row naming the secret waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
 	 */
@@ -230,77 +239,62 @@ class SecretRequestService {
 		array $encryptedFields,
 		array $plainFields,
 	): void {
-		$data = [];
-
-		// Encrypted bucket: the Secret's two ciphertext value columns, plus the
-		// one blob that carries every additional member.
-		foreach ($encryptedFields as $field => $value) {
-			$allowed = array_merge(SecretRequestPolicy::ENCRYPTED_FIELDS, [SecretRequestPolicy::ADDITIONAL_BLOB]);
-
-			if (in_array($field, SecretRequestPolicy::PLAINTEXT_FIELDS, true) === true) {
-				// Refused rather than stored: this column is searchable
-				// plaintext, so a ciphertext here would break search and render
-				// the value unreadable to its owner.
-				throw new InvalidArgumentException(
-					message: sprintf('Field "%s" is plaintext metadata and must be sent in plainFields', $field),
-					code: 400
-				);
-			}
-
-			if (in_array($field, $allowed, true) === false) {
-				throw new InvalidArgumentException(
-					message: sprintf(
-						'Field "%s" cannot be stored on a secret. Additional members belong inside the '
-						. '"%s" blob, keyed by their own names.',
-						$field,
-						SecretRequestPolicy::ADDITIONAL_BLOB
-					),
-					code: 400
-				);
-			}
-
-			$data[$field] = $value;
-		}
-
-		// Plaintext bucket: metadata the owner searches on.
-		foreach ($plainFields as $field => $value) {
-			if (in_array($field, SecretRequestPolicy::PLAINTEXT_FIELDS, true) === false) {
-				throw new InvalidArgumentException(
-					message: sprintf('Field "%s" is not plaintext metadata and must be encrypted', $field),
-					code: 400
-				);
-			}
-
-			$data[$field] = $value;
-		}
-
+		$buckets = new FilledValueBuckets();
+		$data    = $buckets->encrypted(encryptedFields: $encryptedFields)
+			+ $buckets->plain(plainFields: $plainFields);
 		if ($data === []) {
 			return;
 		}
 
+		$this->writeFilledValues(secret: $this->fillTarget(request: $request), data: $data);
+	}//end persistFilledValues()
+
+	/**
+	 * The secret a request writes to.
+	 *
+	 * @param SecretRequest $request The request being fulfilled
+	 *
+	 * @return Secret
+	 *
+	 * @throws InvalidArgumentException With code 404 when the secret is gone
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	private function fillTarget(SecretRequest $request): Secret {
 		try {
-			$secret = $this->secretMapper->findById($request->getSecretId());
+			return $this->secretMapper->findById($request->getSecretId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			throw new InvalidArgumentException(
 				message: 'The secret this request writes to no longer exists',
 				code: 404
 			);
 		}
-
-		$this->writeFilledValues(secret: $secret, data: $data);
-	}//end persistFilledValues()
+	}//end fillTarget()
 
 	/**
 	 * Write the filled values through the owner's update path: the
 	 * application's, or the user's after holding back a filled extra-field
 	 * blob that would overwrite the owner's own (keepiq#750).
 	 *
+	 * The user's update is refused when the owner's row moves between its read
+	 * and its write. The update is then made once more on the row as it is
+	 * now, which keeps the owner's change as a version, with the hold-back
+	 * decided again on that row: the owner may have saved extra fields
+	 * meanwhile. A second refusal leaves the request pending, but a blob held
+	 * back by then is already in the secret's pending list.
+	 *
 	 * @param Secret $secret The secret the request writes to
 	 * @param array<string,mixed> $data The values to write
 	 *
 	 * @return void
 	 *
+	 * @throws InvalidArgumentException With code 409 when the row moved twice during the fill
+	 * @throws \OCA\Keepiq\Exception\ForbiddenException When the owner may not change the secret, as with a copy shared with them to view only
+	 * @throws \OCA\Keepiq\Exception\NotFoundException When the secret is a copy whose source cannot be resolved, or is gone by the write
+	 * @throws \OCA\Keepiq\Exception\ShareScanPendingException When the share row naming the secret waits for the share quarantine scan
+	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
 	private function writeFilledValues(Secret $secret, array $data): void {
 		$secretService = $this->container->get(SecretService::class);
@@ -315,16 +309,33 @@ class SecretRequestService {
 			return;
 		}
 
+		// Before the hold-back: it stores a filled extra-field blob on its own,
+		// and that is a value change too.
+		$this->viewOnlyCopies->assertMayChangeValue(row: $secret, fields: array_keys($data), userId: $secret->getOwnerId());
+
 		$data = $this->holdBackAdditionalFields(secret: $secret, data: $data);
 		if ($data === []) {
 			return;
 		}
 
-		$secretService->update(
-			id: $secret->getId(),
-			data: $data,
-			userId: $secret->getOwnerId()
-		);
+		$write = fn (array $values) => $secretService->update(id: $secret->getId(), data: $values, userId: $secret->getOwnerId());
+		try {
+			$write($data);
+		} catch (StaleWriteException $e) {
+			$data = $this->holdBackAdditionalFields(secret: $e->getCurrent(), data: $data);
+			if ($data === []) {
+				return;
+			}
+
+			try {
+				$write($data);
+			} catch (StaleWriteException) {
+				throw new InvalidArgumentException(
+					message: 'The secret changed while the request was filled; please submit again',
+					code: 409
+				);
+			}
+		}
 	}//end writeFilledValues()
 
 	/**

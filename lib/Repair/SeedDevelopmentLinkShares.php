@@ -32,15 +32,12 @@ namespace OCA\Keepiq\Repair;
 
 use DateInterval;
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IAppConfig;
-use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -80,8 +77,7 @@ class SeedDevelopmentLinkShares implements IRepairStep {
 	 * @param LinkShareMapper $linkShareMapper The link share mapper
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper
-	 * @param IConfig $config The config
-	 * @param IAppConfig $appConfig The app config
+	 * @param SeedVersionGate $seedGate The debug and once-per-version gate
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
@@ -90,8 +86,7 @@ class SeedDevelopmentLinkShares implements IRepairStep {
 		private LinkShareMapper $linkShareMapper,
 		private SecretMapper $secretMapper,
 		private EncryptionSuiteMapper $suiteMapper,
-		private IConfig $config,
-		private IAppConfig $appConfig,
+		private SeedVersionGate $seedGate,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -115,34 +110,35 @@ class SeedDevelopmentLinkShares implements IRepairStep {
 	 * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
 	 */
 	public function run(IOutput $output): void {
-		if ($this->config->getSystemValueBool('debug', false) === false) {
+		$appVersion = $this->seedGate->dueVersion(key: self::SEED_VERSION_KEY);
+		if ($appVersion === null) {
 			return;
 		}
 
-		// Version gate: <post-migration> repair steps re-run on every
-		// upgrade/repair; only seed once per installed app version.
-		$appVersion = $this->appConfig->getValueString(Application::APP_ID, 'installed_version', '');
-		if ($appVersion !== ''
-			&& $this->appConfig->getValueString(Application::APP_ID, self::SEED_VERSION_KEY, '') === $appVersion
-		) {
+		$vault = (new DevVaultLoader(suiteMapper: $this->suiteMapper, secretMapper: $this->secretMapper))
+			->load(output: $output, seedName: 'link-share seed');
+		if ($vault === null) {
 			return;
 		}
 
-		try {
-			$suite = $this->suiteMapper->findActiveByOwner('user', self::DEV_USER_ID);
-		} catch (DoesNotExistException) {
-			$output->info('Keepiq: no dev EncryptionSuite, skipping link-share seed');
-			return;
-		}
+		$seeded = $this->seedLinkShares(vault: $vault);
 
-		$secrets = $this->secretMapper->findByOwner('user', self::DEV_USER_ID);
-		if ($secrets === []) {
-			$output->info('Keepiq: no dev secrets, skipping link-share seed');
-			return;
-		}
+		$this->seedGate->markSeeded(key: self::SEED_VERSION_KEY, version: $appVersion);
+		$output->info('Keepiq: seeded ' . $seeded . ' development link shares');
+		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' link shares');
+	}//end run()
 
+	/**
+	 * Seed the single-use, multi-use and expired development link shares.
+	 *
+	 * @param DevVault $vault The dev user's suite and secrets
+	 *
+	 * @return int Number of rows seeded
+	 */
+	private function seedLinkShares(DevVault $vault): int {
+		$secrets = $vault->secrets;
 		$first = $secrets[0];
-		$suiteId = $suite->getId();
+		$suiteId = $vault->suiteId;
 		$seeded = 0;
 		$now = new DateTime();
 
@@ -180,10 +176,8 @@ class SeedDevelopmentLinkShares implements IRepairStep {
 			);
 		}
 
-		$this->appConfig->setValueString(Application::APP_ID, self::SEED_VERSION_KEY, $appVersion);
-		$output->info('Keepiq: seeded ' . $seeded . ' development link shares');
-		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' link shares');
-	}//end run()
+		return $seeded;
+	}//end seedLinkShares()
 
 	/**
 	 * Produce a deterministic UUIDv5 from a seed string.

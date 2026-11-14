@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Basic login</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Basic login</h1>
+		<p class="tests">Username and password in one form. Submitting redirects twice before landing on the signed-in page.</p>
+		<form method="post" action="/login">
+			<label>Username <input name="username" type="text"></label>
+			<label>Password <input name="password" type="password"></label>
+			<button type="submit">Sign in</button>
+		</form>
+	</main>
+</body>
+</html>

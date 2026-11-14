@@ -26,8 +26,9 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\SecretRequestService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestServiceInterface;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -74,17 +75,17 @@ class SecretRequestController extends OCSController {
 	 * Constructor for SecretRequestController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretRequestService $service The secret-request service
+	 * @param SecretRequestServiceInterface $service The secret-request service
 	 * @param IUserSession $session The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretRequestService $service,
+		private SecretRequestServiceInterface $service,
 		private IUserSession $session,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -131,10 +132,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$requests = $this->service->listBySecret(secretId: $secretId, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(
@@ -182,10 +180,6 @@ class SecretRequestController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		// Resolve the three creation paths to one explicit mode here, so the
-		// dispatcher below is a plain lookup rather than a flag-driven branch.
-		// An applicationId wins over the re-request discriminator, matching
-		// the original precedence.
 		// A re-request overwrites values in an existing Secret, so it cannot be
 		// asked for without naming one. Refused explicitly rather than left to
 		// fail deeper with a generic 'secretId is required', because the two
@@ -197,17 +191,9 @@ class SecretRequestController extends OCSController {
 			);
 		}
 
-		$mode = match (true) {
-			($applicationId !== null && $applicationId !== '') => self::MODE_APPLICATION,
-			($isReRequest === true) => self::MODE_RE_REQUEST,
-			// No Secret named and not a re-request: the system creates one.
-			($secretId === '') => self::MODE_FRESH,
-			default => self::MODE_PLAIN,
-		};
-
 		try {
 			$entity = $this->dispatchCreate(
-				mode: $mode,
+				mode: $this->createMode(secretId: $secretId, isReRequest: $isReRequest, applicationId: $applicationId),
 				secretId: $secretId,
 				encryptionSuiteId: $encryptionSuiteId,
 				requestedFields: $requestedFields,
@@ -218,20 +204,52 @@ class SecretRequestController extends OCSController {
 				folderId: $folderId
 			);
 		} catch (InvalidArgumentException $e) {
-			$code = $e->getCode();
-			$status = Http::STATUS_BAD_REQUEST;
-			if ($code === 403 || $code === 404 || $code === 409) {
-				$status = $code;
-			}
-
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
-				statusCode: $status
+				statusCode: $this->refusalStatus(exception: $e)
 			);
 		}//end try
 
 		return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
 	}//end create()
+
+	/**
+	 * Resolve the three creation paths to one explicit mode, so the dispatcher
+	 * is a plain lookup rather than a flag-driven branch. An applicationId wins
+	 * over the re-request discriminator.
+	 *
+	 * @param string $secretId The Secret named in the request, or ''
+	 * @param bool $isReRequest Whether the request is a re-request
+	 * @param string|null $applicationId The owning application ID, if any
+	 *
+	 * @return string One of the MODE_* constants
+	 */
+	private function createMode(string $secretId, bool $isReRequest, ?string $applicationId): string {
+		return match (true) {
+			($applicationId !== null && $applicationId !== '') => self::MODE_APPLICATION,
+			($isReRequest === true) => self::MODE_RE_REQUEST,
+			// No Secret named and not a re-request: the system creates one.
+			($secretId === '') => self::MODE_FRESH,
+			default => self::MODE_PLAIN,
+		};
+	}//end createMode()
+
+	/**
+	 * Map a service refusal to its HTTP status: 403, 404 and 409 pass
+	 * through, anything else is a 400.
+	 *
+	 * @param InvalidArgumentException $exception The service refusal
+	 *
+	 * @return int The HTTP status
+	 */
+	private function refusalStatus(InvalidArgumentException $exception): int {
+		$code = $exception->getCode();
+		if ($code === 403 || $code === 404 || $code === 409) {
+			return $code;
+		}
+
+		return Http::STATUS_BAD_REQUEST;
+	}//end refusalStatus()
 
 	/**
 	 * Parse the optional expiry timestamp. An unparseable value surfaces as
@@ -344,10 +362,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$entity = $this->service->approve(requestId: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $entity->jsonSerialize());
@@ -374,10 +389,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$entity = $this->service->decline(requestId: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $entity->jsonSerialize());
@@ -409,10 +421,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$entity = $this->service->decline(requestId: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: ['status' => 'deleted', 'request' => $entity->jsonSerialize()]);

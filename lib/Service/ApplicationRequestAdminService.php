@@ -37,12 +37,13 @@ namespace OCA\Keepiq\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Kernel\Contracts\ApplicationRequestAdminServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
  * What an application is asking humans for, and how an administrator ends it.
  */
-class ApplicationRequestAdminService {
+class ApplicationRequestAdminService implements ApplicationRequestAdminServiceInterface {
 	/**
 	 * Constructor for ApplicationRequestAdminService.
 	 *

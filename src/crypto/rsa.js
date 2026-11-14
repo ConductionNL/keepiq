@@ -1,13 +1,35 @@
 /**
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ *
  * RSA-OAEP-SHA256 encryption/decryption using WebCrypto.
  *
  * Handles chunking for payloads > 446 bytes (RSA-4096 OAEP-SHA256 limit).
  * Format: [4-byte chunk count (big-endian)][512-byte encrypted blocks...]
  */
 
+import { decodePem } from './pem.js'
+
 const RSA_KEY_BITS = 4096
 const RSA_BLOCK_SIZE = 512
 const RSA_CHUNK_SIZE = 446
+const RSA_ALGORITHM = 'RSA-OAEP'
+const RSA_HASH = 'SHA-256'
+const RSA_PUBLIC_EXPONENT = 65537
+
+/**
+ * The public parameters of the RSA scheme that encrypts secret values, as the
+ * functions below use them. Read by the encryption overview so the screen
+ * cannot say something this module does not do.
+ *
+ * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ */
+export const RSA_PARAMETERS = Object.freeze({
+	algorithm: RSA_ALGORITHM,
+	hash: RSA_HASH,
+	keyBits: RSA_KEY_BITS,
+	publicExponent: RSA_PUBLIC_EXPONENT,
+})
 
 /**
  * Generate an RSA-4096 key pair.
@@ -17,10 +39,10 @@ const RSA_CHUNK_SIZE = 446
 export async function generateKeyPair() {
 	const keyPair = await crypto.subtle.generateKey(
 		{
-			name: 'RSA-OAEP',
+			name: RSA_ALGORITHM,
 			modulusLength: RSA_KEY_BITS,
 			publicExponent: new Uint8Array([1, 0, 1]),
-			hash: 'SHA-256',
+			hash: RSA_HASH,
 		},
 		true,
 		['encrypt', 'decrypt'],
@@ -49,19 +71,12 @@ export async function generateKeyPair() {
  * @return {Promise<CryptoKey>} Non-extractable RSA-OAEP private key
  */
 export async function importPrivateKey(pem) {
-	const pemBody = pem
-		.replace(/-----BEGIN PRIVATE KEY-----/, '')
-		.replace(/-----END PRIVATE KEY-----/, '')
-		.replace(/-----BEGIN RSA PRIVATE KEY-----/, '')
-		.replace(/-----END RSA PRIVATE KEY-----/, '')
-		.replace(/\s/g, '')
-
-	const binary = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0))
+	const { der } = decodePem(pem, ['PRIVATE KEY', 'RSA PRIVATE KEY'])
 
 	return crypto.subtle.importKey(
 		'pkcs8',
-		binary,
-		{ name: 'RSA-OAEP', hash: 'SHA-256' },
+		der,
+		{ name: RSA_ALGORITHM, hash: RSA_HASH },
 		false, // extractable = false — security critical
 		['decrypt'],
 	)
@@ -161,30 +176,32 @@ function extractSpkiFromCertificate(certDer) {
  * Accepts either a `SubjectPublicKeyInfo` (`-----BEGIN PUBLIC KEY-----`) or a
  * full X.509 certificate (`-----BEGIN CERTIFICATE-----`). For a certificate the
  * embedded SubjectPublicKeyInfo is extracted before importKey('spki', …), which
- * rejects a raw certificate DER with DataError.
+ * rejects a raw certificate DER with DataError. The PEM must be exactly one
+ * block (see pem.js).
  *
  * @param {string} pem PEM-encoded SPKI public key or X.509 certificate
  * @return {Promise<CryptoKey>}
  */
 export async function importPublicKey(pem) {
-	const isCertificate = /-----BEGIN CERTIFICATE-----/.test(pem)
+	const { label, der } = decodePem(pem, ['PUBLIC KEY', 'CERTIFICATE'])
 
-	const pemBody = pem
-		.replace(/-----BEGIN PUBLIC KEY-----/, '')
-		.replace(/-----END PUBLIC KEY-----/, '')
-		.replace(/-----BEGIN CERTIFICATE-----/, '')
-		.replace(/-----END CERTIFICATE-----/, '')
-		.replace(/\s/g, '')
+	return importSpkiPublicKey(
+		label === 'CERTIFICATE' ? extractSpkiFromCertificate(der) : der,
+	)
+}
 
-	let spki = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0))
-	if (isCertificate === true) {
-		spki = extractSpkiFromCertificate(spki)
-	}
-
+/**
+ * Import SubjectPublicKeyInfo bytes for encryption, such as the key of a
+ * certificate that was just verified.
+ *
+ * @param {Uint8Array} spki DER SubjectPublicKeyInfo
+ * @return {Promise<CryptoKey>}
+ */
+export async function importSpkiPublicKey(spki) {
 	return crypto.subtle.importKey(
 		'spki',
 		spki,
-		{ name: 'RSA-OAEP', hash: 'SHA-256' },
+		{ name: RSA_ALGORITHM, hash: RSA_HASH },
 		false,
 		['encrypt'],
 	)
@@ -215,7 +232,7 @@ export async function rsaEncrypt(plaintext, publicKey) {
 
 	for (let i = 0; i < chunks.length; i++) {
 		const encrypted = new Uint8Array(
-			await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, publicKey, chunks[i]),
+			await crypto.subtle.encrypt({ name: RSA_ALGORITHM }, publicKey, chunks[i]),
 		)
 		result.set(encrypted, 4 + i * RSA_BLOCK_SIZE)
 	}
@@ -252,7 +269,7 @@ export async function rsaDecrypt(ciphertext, privateKey) {
 	for (let i = 0; i < chunkCount; i++) {
 		const block = raw.slice(4 + i * RSA_BLOCK_SIZE, 4 + (i + 1) * RSA_BLOCK_SIZE)
 		const decrypted = new Uint8Array(
-			await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, privateKey, block),
+			await crypto.subtle.decrypt({ name: RSA_ALGORITHM }, privateKey, block),
 		)
 		parts.push(decrypted)
 		total += decrypted.length

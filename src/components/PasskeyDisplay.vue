@@ -6,7 +6,8 @@
   canonical JSON (passkey-item-type D7): associated site (RP id / name),
   account (user name / display name), truncated credential id, transports,
   and creation date. The private key is masked and only revealed/copied
-  through an explicit action, exactly like a password value. An
+  through an explicit action, exactly like a password value; a login's
+  passkeys leave that row out (`hidePrivateKey`). An
   unparseable credential shows an explicit invalid state and never
   fabricated fields. Everything stays in component memory — nothing is
   transmitted or persisted.
@@ -61,7 +62,7 @@
 				<dt>{{ t('keepiq', 'Created') }}</dt>
 				<dd data-testid="passkey-created">{{ createdDisplay }}</dd>
 			</div>
-			<div class="passkey-display__field">
+			<div v-if="!hidePrivateKey" class="passkey-display__field">
 				<dt>{{ t('keepiq', 'Private key') }}</dt>
 				<dd class="passkey-display__key-row">
 					<span data-testid="passkey-private-key">{{
@@ -94,7 +95,11 @@ import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue
 import Eye from 'vue-material-design-icons/Eye.vue'
 import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import CopyButton from './CopyButton.vue'
-import { parsePasskey, truncateCredentialId } from '../passkey/passkey.js'
+import {
+	buildPasskeyCredential,
+	parsePasskey,
+	truncateCredentialId,
+} from '../passkey/passkey.js'
 
 export default {
 	name: 'PasskeyDisplay',
@@ -111,6 +116,17 @@ export default {
 			type: String,
 			default: '',
 		},
+
+		/**
+		 * Leave the private key row out entirely: a login's passkeys never
+		 * show or copy their private key.
+		 *
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		hidePrivateKey: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
 	data() {
@@ -124,7 +140,22 @@ export default {
 		 * @spec openspec/specs/passkey-item-type/spec.md#requirement-listing-filtering-and-site-associated-presentation
 		 */
 		credential() {
-			return parsePasskey(this.credentialJson)
+			if (!this.hidePrivateKey) {
+				return parsePasskey(this.credentialJson)
+			}
+			// Without the private key row the key is not needed, so a caller
+			// may leave it out of the JSON it passes.
+			let raw
+			try {
+				raw = JSON.parse(this.credentialJson)
+			} catch {
+				return null
+			}
+			if (raw === null || typeof raw !== 'object') {
+				return null
+			}
+			const credential = buildPasskeyCredential({ ...raw, privateKey: '-' })
+			return credential === null ? null : { ...credential, privateKey: '' }
 		},
 
 		/**

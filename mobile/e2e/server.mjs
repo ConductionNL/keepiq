@@ -413,9 +413,15 @@ async function record(o) {
 
 	const placeholder = (text) => text.split(origin).join('{origin}').split(`http://${host}`).join('{origin}')
 	out.loginInit = JSON.parse(placeholder(JSON.stringify(flow)))
-	out.loginInit.poll.token = 'recorded-poll-token'
+	out.loginInit.poll.token =
+		'recorded-poll-token'
 	out.loginInit.login = out.loginInit.login.replace(/flow\/[^/?#]+/, 'flow/recorded-login-token')
-	out.poll = { ...creds, server: '{origin}', appPassword: 'stub-app-password' }
+	out.poll = {
+		...creds,
+		server: '{origin}',
+		appPassword:
+			'stub-app-password',
+	}
 	out.pair = pair
 	out.suites = suites
 	out.suitesTwoFactorRequired = blocked
@@ -504,6 +510,92 @@ function replay(o) {
 
 const now = () => new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00')
 
+const API = '/index.php/apps/keepiq/api/v1'
+
+/** The recorded vault rows, most recently updated first. */
+const vaultRows = (vault) => [...vault.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+
+/**
+ * The read-only GET endpoints, by path: each answers [status, body] from the
+ * recording and the in-memory vault.
+ */
+const VAULT_READS = {
+	'/index.php/apps/keepiq/api/settings/policy': (r) => [200, r.f.generatorPolicy],
+	[`${API}/offline/manifest`]: (r) => [200, { ...r.f.manifest, secrets: vaultRows(r.vault), syncedAt: now() }],
+	[`${API}/folders`]: (r) => [200, r.f.manifest.folders],
+	[`${API}/secret-types`]: (r) => [200, r.f.manifest.types],
+	[`${API}/secrets`]: (r) => {
+		const limit = Number(new URL(r.url, 'https://replay').searchParams.get('limit') || 100)
+		return [200, { items: vaultRows(r.vault).slice(0, limit), total: r.vault.size }]
+	},
+	[`${API}/sends`]: (r) => [200, [...r.sends.values()]],
+}
+
+/** POST /secrets: a new row shaped like the first recorded secret. */
+function createSecret(r) {
+	const b = r.json()
+	const at = now()
+	const row = {
+		...r.f.manifest.secrets[0],
+		id: randomUUID(),
+		name: b.name,
+		url: b.url ?? null,
+		typeId: b.typeId ?? null,
+		folderId: b.folderId ?? null,
+		key: b.key,
+		login: b.login ?? null,
+		additionalFields: b.additionalFields ?? null,
+		// A login's own seed and passkeys, as the server keeps them; "" is none.
+		totp: b.totp || null,
+		passkeys: b.passkeys || null,
+		createdAt: at,
+		updatedAt: at,
+		keyUpdatedAt: at,
+	}
+	r.vault.set(row.id, row)
+	return [201, row]
+}
+
+/** GET, PUT or DELETE /secrets/{id}; null for another method. */
+function secretAnswer(r, id) {
+	const row = r.vault.get(id)
+	if (!row) return [404, { error: 'not found' }]
+	if (r.method === 'GET') return [200, { ...row, tags: r.f.secretTags || [] }]
+	if (r.method === 'PUT') {
+		const b = r.json()
+		for (const field of ['name', 'url', 'folderId', 'key', 'login', 'additionalFields']) if (field in b) row[field] = b[field]
+		for (const field of ['totp', 'passkeys']) if (field in b) row[field] = b[field] || null
+		row.updatedAt = now()
+		if ('key' in b) row.keyUpdatedAt = row.updatedAt
+		return [200, row]
+	}
+	if (r.method === 'DELETE') {
+		r.vault.delete(id)
+		return [200, { ...row, trashedAt: now() }]
+	}
+	return null
+}
+
+/** POST /sends: a new Send shaped like the recorded one, with a fresh token. */
+function createSend(r) {
+	const b = r.json()
+	const id = randomUUID()
+	const at = new Date()
+	const { token: _recordedToken, ...shape } = r.f.sendListed || {}
+	const listed = {
+		...shape,
+		id,
+		payloadType: b.payloadType || 'text',
+		maxViews: b.maxViews ?? 1,
+		viewCount: 0,
+		hasPassword: b.hasPassword === true,
+		createdAt: now(),
+		expiresAt: new Date(at.getTime() + (b.ttlSeconds || 86400) * 1000).toISOString().replace(/\.\d{3}Z$/, '+00:00'),
+	}
+	r.sends.set(id, listed)
+	return [201, { ...r.f.sendCreated, ...listed, token: randomUUID().replace(/-/g, '') }]
+}
+
 /**
  * The vault and Send endpoints of the replay: the recorded manifest, kept in
  * memory and changed by the writes the tests make. Field values arrive
@@ -511,82 +603,29 @@ const now = () => new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00')
  * plaintext. Answers [status, body], or null for a path it does not know.
  */
 function vaultAnswer(f, vault, sends, method, path, url, body) {
-	const api = '/index.php/apps/keepiq/api/v1'
-	const json = () => {
-		try {
-			return JSON.parse(body || '{}')
-		} catch {
-			return {}
-		}
+	const r = {
+		f,
+		vault,
+		sends,
+		method,
+		url,
+		json: () => {
+			try {
+				return JSON.parse(body || '{}')
+			} catch {
+				return {}
+			}
+		},
 	}
-	const rows = () => [...vault.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-	if (method === 'GET' && path === '/index.php/apps/keepiq/api/settings/policy') return [200, f.generatorPolicy]
-	if (method === 'GET' && path === `${api}/offline/manifest`) return [200, { ...f.manifest, secrets: rows(), syncedAt: now() }]
-	if (method === 'GET' && path === `${api}/folders`) return [200, f.manifest.folders]
-	if (method === 'GET' && path === `${api}/secret-types`) return [200, f.manifest.types]
-	if (method === 'GET' && path === `${api}/secrets`) {
-		const limit = Number(new URL(url, 'https://replay').searchParams.get('limit') || 100)
-		return [200, { items: rows().slice(0, limit), total: vault.size }]
-	}
-	if (method === 'POST' && path === `${api}/secrets`) {
-		const b = json()
-		const template = f.manifest.secrets[0]
-		const at = now()
-		const row = {
-			...template,
-			id: randomUUID(),
-			name: b.name,
-			url: b.url ?? null,
-			typeId: b.typeId ?? null,
-			folderId: b.folderId ?? null,
-			key: b.key,
-			login: b.login ?? null,
-			additionalFields: b.additionalFields ?? null,
-			createdAt: at,
-			updatedAt: at,
-			keyUpdatedAt: at,
-		}
-		vault.set(row.id, row)
-		return [201, row]
-	}
-	const secret = path.match(new RegExp(`^${api}/secrets/([^/]+)$`))
+	if (method === 'GET' && Object.hasOwn(VAULT_READS, path)) return VAULT_READS[path](r)
+	if (method === 'POST' && path === `${API}/secrets`) return createSecret(r)
+	const secret = path.match(new RegExp(`^${API}/secrets/([^/]+)$`))
 	if (secret) {
-		const id = decodeURIComponent(secret[1])
-		const row = vault.get(id)
-		if (!row) return [404, { error: 'not found' }]
-		if (method === 'GET') return [200, { ...row, tags: f.secretTags || [] }]
-		if (method === 'PUT') {
-			const b = json()
-			for (const field of ['name', 'url', 'folderId', 'key', 'login', 'additionalFields']) if (field in b) row[field] = b[field]
-			row.updatedAt = now()
-			if ('key' in b) row.keyUpdatedAt = row.updatedAt
-			return [200, row]
-		}
-		if (method === 'DELETE') {
-			vault.delete(id)
-			return [200, { ...row, trashedAt: now() }]
-		}
+		const answer = secretAnswer(r, decodeURIComponent(secret[1]))
+		if (answer !== null) return answer
 	}
-	if (method === 'GET' && path === `${api}/sends`) return [200, [...sends.values()]]
-	if (method === 'POST' && path === `${api}/sends`) {
-		const b = json()
-		const id = randomUUID()
-		const at = new Date()
-		const { token: _recordedToken, ...shape } = f.sendListed || {}
-		const listed = {
-			...shape,
-			id,
-			payloadType: b.payloadType || 'text',
-			maxViews: b.maxViews ?? 1,
-			viewCount: 0,
-			hasPassword: b.hasPassword === true,
-			createdAt: now(),
-			expiresAt: new Date(at.getTime() + (b.ttlSeconds || 86400) * 1000).toISOString().replace(/\.\d{3}Z$/, '+00:00'),
-		}
-		sends.set(id, listed)
-		return [201, { ...f.sendCreated, ...listed, token: randomUUID().replace(/-/g, '') }]
-	}
-	const oneSend = path.match(new RegExp(`^${api}/sends/([^/]+)$`))
+	if (method === 'POST' && path === `${API}/sends`) return createSend(r)
+	const oneSend = path.match(new RegExp(`^${API}/sends/([^/]+)$`))
 	if (oneSend && method === 'DELETE') {
 		sends.delete(decodeURIComponent(oneSend[1]))
 		return [200, { success: true }]

@@ -120,28 +120,27 @@ export const useLinkShareStore = defineStore('linkShare', {
 		 * Phase 1 — fetch the public-share metadata (ciphertext blob +
 		 * salt) by token. Runs with NO Nextcloud session — the
 		 * controller is `#[PublicPage]`. A 404 is the generic
-		 * not-found-or-expired response.
+		 * not-found-or-expired response. Each fetch counts as one use and
+		 * one attempt on the server.
 		 *
 		 * @param {string} token The public token from the share URL
-		 * @param failed
 		 * @return {Promise<object>} The public link-share metadata
 		 *
 		 * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
 		 */
-		async fetchPublicLinkShare(token, failed = false) {
+		async fetchPublicLinkShare(token) {
 			const response = await axios.get(
 				generateUrl(
 					`/apps/keepiq/api/v1/public/link-shares/${encodeURIComponent(token)}`,
 				),
-				{ params: failed ? { failed: '1' } : {} },
 			)
 			return response.data
 		},
 
 		/**
 		 * Phase 2 — confirm that the recipient successfully decrypted
-		 * the blob. The server increments the usage count atomically
-		 * and auto-deletes when the cap is hit.
+		 * the blob. The server resets the attempts; the use was counted
+		 * when the blob was fetched.
 		 *
 		 * @param {string} token The public token
 		 * @return {Promise<object>} The updated usage envelope

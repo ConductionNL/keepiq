@@ -39,6 +39,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\FieldsNotReencryptedException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
@@ -153,6 +154,22 @@ class MigrationWorkServiceTest extends TestCase {
 
 		return $secret;
 	}//end makeSecret()
+
+	/**
+	 * Build a version of `secret-1` bound to the old suite.
+	 *
+	 * @return SecretVersion
+	 */
+	private function makeVersion(): SecretVersion {
+		$version = new SecretVersion();
+		$version->setId('version-1');
+		$version->setSecretId('secret-1');
+		$version->setVersionNumber(1);
+		$version->setEncryptionSuiteId('old-suite');
+		$version->setKey('OLD-V-KEY-CIPHERTEXT');
+
+		return $version;
+	}//end makeVersion()
 
 	/**
 	 * Test a secret owned by another user is refused.
@@ -701,10 +718,285 @@ class MigrationWorkServiceTest extends TestCase {
 
 		// Plaintext organisational metadata is fine; a decrypted value is not.
 		$this->assertSame(
-			['id', 'name', 'key', 'login', 'additionalFields'],
+			['id', 'name', 'key', 'login', 'additionalFields', 'totp', 'passkeys'],
 			array_keys($record)
 		);
 	}//end testListWorkCarriesCiphertextOnly()
+
+	/**
+	 * Test the work list carries the TOTP and passkeys ciphertexts of secrets and versions.
+	 *
+	 * @return void
+	 */
+	public function testListWorkCarriesTotpAndPasskeys(): void {
+		$secret = $this->makeSecret();
+		$secret->setTotp('OLD-TOTP-CIPHERTEXT');
+		$secret->setPasskeys('OLD-PASSKEYS-CIPHERTEXT');
+
+		$version = $this->makeVersion();
+		$version->setTotp('OLD-V-TOTP-CIPHERTEXT');
+		// Recorded while the field was empty: listed as null, as a head's is.
+		$version->setPasskeys('');
+
+		$this->secretMapper->method('findBySuiteForOwner')->willReturn([$secret]);
+		$this->grantMapper->method('findBySuiteForRecipient')->willReturn([]);
+		$this->versionMapper->method('findSecretIdsWithSuiteVersionsForOwner')->willReturn(['secret-1']);
+		$this->versionMapper->method('findBySecretAndSuite')->willReturn([$version]);
+
+		$work = $this->service->listWork(
+			migration: $this->makeMigration(),
+			ownerId: 'alice'
+		);
+
+		$secretRecord = $work['secrets']['records'][0];
+		$this->assertSame('OLD-TOTP-CIPHERTEXT', $secretRecord['totp']);
+		$this->assertSame('OLD-PASSKEYS-CIPHERTEXT', $secretRecord['passkeys']);
+
+		$versionRecord = $work['versions']['records'][0];
+		$this->assertSame('OLD-V-TOTP-CIPHERTEXT', $versionRecord['totp']);
+		$this->assertArrayHasKey('passkeys', $versionRecord);
+		$this->assertNull($versionRecord['passkeys']);
+	}//end testListWorkCarriesTotpAndPasskeys()
+
+	/**
+	 * Test a commit replaces the stored TOTP and passkeys ciphertexts with the re-encrypted ones.
+	 *
+	 * @return void
+	 */
+	public function testCommitReEncryptsTotpAndPasskeys(): void {
+		$secret = $this->makeSecret();
+		$secret->setTotp('OLD-TOTP-CIPHERTEXT');
+		$secret->setPasskeys('OLD-PASSKEYS-CIPHERTEXT');
+
+		$version = $this->makeVersion();
+		$version->setTotp('OLD-V-TOTP-CIPHERTEXT');
+		$version->setPasskeys('OLD-V-PASSKEYS-CIPHERTEXT');
+
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+		$this->versionMapper->method('findById')->willReturn($version);
+		$this->versionMapper->method('update')->willReturnArgument(0);
+
+		$committedSecret = $this->service->commitSecret(
+			migration: $this->makeMigration(),
+			ownerId: 'alice',
+			secretId: 'secret-1',
+			key: 'NEW-KEY-CIPHERTEXT',
+			login: null,
+			additionalFields: null,
+			totp: 'NEW-TOTP-CIPHERTEXT',
+			passkeys: 'NEW-PASSKEYS-CIPHERTEXT'
+		);
+		$committedVersion = $this->service->commitVersion(
+			migration: $this->makeMigration(),
+			ownerId: 'alice',
+			versionId: 'version-1',
+			key: 'NEW-KEY-CIPHERTEXT',
+			login: null,
+			additionalFields: null,
+			totp: 'NEW-V-TOTP-CIPHERTEXT',
+			passkeys: 'NEW-V-PASSKEYS-CIPHERTEXT'
+		);
+
+		$this->assertSame('NEW-TOTP-CIPHERTEXT', $committedSecret->getTotp());
+		$this->assertSame('NEW-PASSKEYS-CIPHERTEXT', $committedSecret->getPasskeys());
+		$this->assertSame('new-suite', $committedSecret->getEncryptionSuiteId());
+		$this->assertSame('NEW-V-TOTP-CIPHERTEXT', $committedVersion->getTotp());
+		$this->assertSame('NEW-V-PASSKEYS-CIPHERTEXT', $committedVersion->getPasskeys());
+		$this->assertSame('new-suite', $committedVersion->getEncryptionSuiteId());
+	}//end testCommitReEncryptsTotpAndPasskeys()
+
+	/**
+	 * Test a secret commit that omits a stored field is refused and writes nothing.
+	 *
+	 * @return void
+	 */
+	public function testCommitSecretRefusesWhenStoredFieldNotReencrypted(): void {
+		$secret = $this->makeSecret();
+		$secret->setTotp('OLD-TOTP-CIPHERTEXT');
+		$secret->setPasskeys('OLD-PASSKEYS-CIPHERTEXT');
+
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretMapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->commitSecret(
+				migration: $this->makeMigration(),
+				ownerId: 'alice',
+				secretId: 'secret-1',
+				key: 'NEW-KEY-CIPHERTEXT',
+				login: null,
+				additionalFields: null,
+				totp: 'NEW-TOTP-CIPHERTEXT'
+			);
+			$this->fail('A stored passkeys value left out of the commit must be refused');
+		} catch (FieldsNotReencryptedException $exception) {
+			$this->assertSame(['passkeys'], $exception->getFields());
+		}
+
+		// The record is untouched, so it stays whole on the old suite.
+		$this->assertSame('old-suite', $secret->getEncryptionSuiteId());
+		$this->assertSame('OLD-KEY-CIPHERTEXT', $secret->getKey());
+	}//end testCommitSecretRefusesWhenStoredFieldNotReencrypted()
+
+	/**
+	 * Test a version commit from a client that predates the fields is refused when the version holds one.
+	 *
+	 * @return void
+	 */
+	public function testCommitVersionRefusesWhenStoredFieldNotReencrypted(): void {
+		$version = $this->makeVersion();
+		$version->setTotp('OLD-V-TOTP-CIPHERTEXT');
+
+		$this->versionMapper->method('findById')->willReturn($version);
+		$this->secretMapper->method('findById')->willReturn($this->makeSecret());
+		$this->versionMapper->expects($this->never())->method('update');
+
+		$this->expectException(FieldsNotReencryptedException::class);
+
+		$this->service->commitVersion(
+			migration: $this->makeMigration(),
+			ownerId: 'alice',
+			versionId: 'version-1',
+			key: 'NEW-KEY-CIPHERTEXT',
+			login: null,
+			additionalFields: null
+		);
+	}//end testCommitVersionRefusesWhenStoredFieldNotReencrypted()
+
+	/**
+	 * Test a legacy-only commit succeeds on records that hold no TOTP or passkeys, which stay null.
+	 *
+	 * @return void
+	 */
+	public function testLegacyCommitSucceedsWhenNewFieldsAreNull(): void {
+		$secret = $this->makeSecret();
+		$version = $this->makeVersion();
+
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+		$this->versionMapper->method('findById')->willReturn($version);
+		$this->versionMapper->method('update')->willReturnArgument(0);
+
+		$committedSecret = $this->service->commitSecret(
+			migration: $this->makeMigration(),
+			ownerId: 'alice',
+			secretId: 'secret-1',
+			key: 'NEW-KEY-CIPHERTEXT',
+			login: 'NEW-LOGIN-CIPHERTEXT',
+			additionalFields: 'NEW-FIELDS-CIPHERTEXT'
+		);
+		$committedVersion = $this->service->commitVersion(
+			migration: $this->makeMigration(),
+			ownerId: 'alice',
+			versionId: 'version-1',
+			key: 'NEW-KEY-CIPHERTEXT',
+			login: null,
+			additionalFields: null
+		);
+
+		$this->assertSame('new-suite', $committedSecret->getEncryptionSuiteId());
+		$this->assertNull($committedSecret->getTotp());
+		$this->assertNull($committedSecret->getPasskeys());
+		$this->assertSame('new-suite', $committedVersion->getEncryptionSuiteId());
+		$this->assertNull($committedVersion->getTotp());
+		$this->assertNull($committedVersion->getPasskeys());
+	}//end testLegacyCommitSucceedsWhenNewFieldsAreNull()
+
+	/**
+	 * Test a commit that sends a TOTP seed or passkeys for a record holding none is refused, and nothing is written:
+	 * re-encrypting an empty field cannot produce a value.
+	 *
+	 * @return void
+	 */
+	public function testACommitCannotPlantAFieldTheRecordDoesNotHold(): void {
+		$secret = $this->makeSecret();
+		$version = $this->makeVersion();
+		$version->setPasskeys('');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->versionMapper->method('findById')->willReturn($version);
+		$this->secretMapper->expects($this->never())->method('update');
+		$this->versionMapper->expects($this->never())->method('update');
+
+		$commits = [
+			fn () => $this->service->commitSecret(
+				migration: $this->makeMigration(),
+				ownerId: 'alice',
+				secretId: 'secret-1',
+				key: 'NEW-KEY-CIPHERTEXT',
+				login: null,
+				additionalFields: null,
+				totp: 'PLANTED-TOTP'
+			),
+			fn () => $this->service->commitVersion(
+				migration: $this->makeMigration(),
+				ownerId: 'alice',
+				versionId: 'version-1',
+				key: 'NEW-KEY-CIPHERTEXT',
+				login: null,
+				additionalFields: null,
+				passkeys: 'PLANTED-PASSKEYS'
+			),
+		];
+		foreach ($commits as $commit) {
+			try {
+				$commit();
+				$this->fail('A value for a field the record does not hold was committed');
+			} catch (\InvalidArgumentException $exception) {
+				$this->assertStringContainsString('holds no value', $exception->getMessage());
+			}
+		}
+
+		$this->assertNull($secret->getTotp());
+		$this->assertSame('old-suite', $secret->getEncryptionSuiteId());
+		$this->assertSame('', $version->getPasskeys());
+	}//end testACommitCannotPlantAFieldTheRecordDoesNotHold()
+
+	/**
+	 * Test an empty string counts as not sent: it is refused next to a stored value and never written.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyFieldInACommitCountsAsNotSent(): void {
+		$secret = $this->makeSecret();
+		$secret->setTotp('OLD-TOTP-CIPHERTEXT');
+
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+
+		try {
+			$this->service->commitSecret(
+				migration: $this->makeMigration(),
+				ownerId: 'alice',
+				secretId: 'secret-1',
+				key: 'NEW-KEY-CIPHERTEXT',
+				login: null,
+				additionalFields: null,
+				totp: '',
+				passkeys: ''
+			);
+			$this->fail('An empty totp next to a stored one must be refused');
+		} catch (FieldsNotReencryptedException $exception) {
+			$this->assertSame(['totp'], $exception->getFields());
+		}
+
+		$this->assertSame('OLD-TOTP-CIPHERTEXT', $secret->getTotp());
+		$this->assertSame('old-suite', $secret->getEncryptionSuiteId());
+
+		$secret->setTotp(null);
+		$committed = $this->service->commitSecret(
+			migration: $this->makeMigration(),
+			ownerId: 'alice',
+			secretId: 'secret-1',
+			key: 'NEW-KEY-CIPHERTEXT',
+			login: null,
+			additionalFields: null,
+			totp: '',
+			passkeys: ''
+		);
+		$this->assertNull($committed->getTotp());
+		$this->assertNull($committed->getPasskeys());
+	}//end testAnEmptyFieldInACommitCountsAsNotSent()
 
 	/**
 	 * countCommitted sums the owner's rows now on the NEW suite across the three

@@ -31,9 +31,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\EncryptionSuiteService;
-use OCA\Keepiq\Service\SecretRequestService;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -53,17 +56,17 @@ class SecretRequestFillController extends OCSController {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretRequestService $secretRequestService The secret-request service
-	 * @param EncryptionSuiteService $suiteService The suite lookup service
+	 * @param SecretRequestServiceInterface $secretRequestService The secret-request service
+	 * @param EncryptionSuiteServiceInterface $suiteService The suite lookup service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretRequestService $secretRequestService,
-		private EncryptionSuiteService $suiteService,
+		private SecretRequestServiceInterface $secretRequestService,
+		private EncryptionSuiteServiceInterface $suiteService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -189,6 +192,14 @@ class SecretRequestFillController extends OCSController {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
 				statusCode: $status
+			);
+		} catch (ForbiddenException|NotFoundException|ShareScanPendingException) {
+			// The refusal speaks to the secret's holder (also a secret whose
+			// share row waits for the share quarantine scan); the filler gets its
+			// outcome only. The request stays pending.
+			return new JSONResponse(
+				data: ['message' => 'The secret this request writes to cannot be changed'],
+				statusCode: Http::STATUS_FORBIDDEN
 			);
 		} catch (Throwable) {
 			return new JSONResponse(

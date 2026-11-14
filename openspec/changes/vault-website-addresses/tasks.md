@@ -2,8 +2,10 @@
 
 ## 1. Addresses
 
-- [ ] 1.1 Add the migration and a `SecretUrl` entity and mapper; accept `additionalUrls` (at most 20) on create and update in `SecretController` and `SecretService`; bump `<version>`. Verify: PHPUnit for store, replace and the cap.
-- [ ] 1.2 Search the table in `searchByNameOrUrl()` and `findForUnifiedSearch()`, and return the list in the match endpoint. Verify: PHPUnit that a login is found and matched by an extra address.
+- [x] 1.1 Add the migration and a `SecretUrl` entity and mapper; accept `additionalUrls` (at most 20) on create and update in `SecretController` and `SecretService`; bump `<version>`. Verify: PHPUnit for store, replace and the cap.
+      > `Version001020Date20261114090000` (`keepiq_secret_urls`), `SecretUrl` / `SecretUrlMapper`, and `SecretUrlService` (cap 20, trimmed, without repeats, at most 512 characters each, owner only). `SecretController::create` and `SecretUpdateController::update` take `additionalUrls`; the list is checked before anything is written. `show` answers it. Purge and account deletion remove it. PHPUnit: `SecretUrlServiceTest`, `SecretUrlMapperTest`, `SecretAddressesControllerTest`.
+- [x] 1.2 Search the table in `searchByNameOrUrl()` and `findForUnifiedSearch()`, and return the list in the match endpoint. Verify: PHPUnit that a login is found and matched by an extra address.
+      > Both searches match an extra address through a subquery on `keepiq_secret_urls`, and the extension's match answers `additionalUrls` for each login. PHPUnit: `SecretMapperQueriesTest`, the re-recorded query golden, and `SecretAddressesControllerTest::testTheMatchCarriesEveryAddress`.
 - [ ] 1.3 Copy the list onto share, group-share and team-folder copies at creation and on the owner's change. Verify: PHPUnit that a recipient copy gets the owner's new list.
 - [ ] 1.4 Add the address list to the create and edit dialogs and the detail sidebar; include it in backup export, restore, the GDPR export and account deletion. Verify: Playwright flow add an extra address, search for it, the login is found; vitest on the serializer round trip.
 - [ ] 1.5 Score every address in `browser-extension/src/lib/match.js`. Verify: extension unit test that a login matches on its second address.

@@ -37,15 +37,16 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Service\MachineSecretEnvelopeService;
-use OCA\Keepiq\Service\MachineSecretResponseService;
-use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\MachineSecretEnvelopeServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\MachineSecretResponseServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -85,9 +86,9 @@ class ApplicationSecretsController extends ApplicationApiController {
 	 * @param IRequest $request The HTTP request
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param FolderMapper $folderMapper The folder mapper
-	 * @param SecretService $secretService The secret write service
-	 * @param MachineSecretEnvelopeService $envelopeService The envelope serializer
-	 * @param MachineSecretResponseService $responseService The single-secret response builder
+	 * @param SecretServiceInterface $secretService The secret write service
+	 * @param MachineSecretEnvelopeServiceInterface $envelopeService The envelope serializer
+	 * @param MachineSecretResponseServiceInterface $responseService The single-secret response builder
 	 *
 	 * @return void
 	 */
@@ -95,11 +96,11 @@ class ApplicationSecretsController extends ApplicationApiController {
 		IRequest $request,
 		private SecretMapper $secretMapper,
 		private FolderMapper $folderMapper,
-		private SecretService $secretService,
-		private MachineSecretEnvelopeService $envelopeService,
-		private MachineSecretResponseService $responseService,
+		private SecretServiceInterface $secretService,
+		private MachineSecretEnvelopeServiceInterface $envelopeService,
+		private MachineSecretResponseServiceInterface $responseService,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -138,7 +139,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 
 		return new JSONResponse(
 			data: [
-				'format' => MachineSecretEnvelopeService::FORMAT,
+				'format' => MachineSecretEnvelopeServiceInterface::FORMAT,
 				'items' => array_map(
 					fn (Secret $secret) => $this->envelopeService->serialize($secret),
 					$secrets
@@ -293,15 +294,9 @@ class ApplicationSecretsController extends ApplicationApiController {
 				applicationId: $application->getId()
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
 		return new JSONResponse(
@@ -347,10 +342,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 		} catch (NotFoundException) {
 			return $this->notFound();
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return $this->responseService->envelope(secret: $secret, applicationId: $application->getId());
@@ -454,13 +446,14 @@ class ApplicationSecretsController extends ApplicationApiController {
 
 	/**
 	 * Collect the plaintext-safe metadata + ciphertext fields a write
-	 * request may carry. The server treats every field opaquely.
+	 * request may carry. The server treats every field opaquely. `totp` and
+	 * `passkeys` are passed on only so SecretService refuses them with a 400.
 	 *
 	 * @return array<string,mixed>
 	 */
 	private function writePayload(): array {
 		$payload = [];
-		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'] as $field) {
+		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'] as $field) {
 			$value = $this->request->getParam($field);
 			if ($value !== null) {
 				$payload[$field] = $value;

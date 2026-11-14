@@ -70,6 +70,7 @@ export default {
 				{ value: 'notes', label: t('keepiq', 'Notes') },
 				{ value: 'folder', label: t('keepiq', 'Folder') },
 				{ value: 'type', label: t('keepiq', 'Type') },
+				{ value: 'totp', label: t('keepiq', 'Authenticator key') },
 				{ value: 'ignore', label: t('keepiq', 'Do not import') },
 			]
 		},

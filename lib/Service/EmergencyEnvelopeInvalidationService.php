@@ -41,12 +41,13 @@ use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\EmergencyEnvelopeInvalidationServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
  * Key-change invalidation of break-glass recovery envelopes.
  */
-class EmergencyEnvelopeInvalidationService {
+class EmergencyEnvelopeInvalidationService implements EmergencyEnvelopeInvalidationServiceInterface {
 	/**
 	 * The recovery-envelope format this service knows how to shape-check.
 	 *
@@ -244,52 +245,41 @@ class EmergencyEnvelopeInvalidationService {
 		string $recoveryEnvelope,
 		string $sealedSuiteId,
 	): EmergencyContact {
-		try {
-			$contact = $this->mapper->findById(id: $contactId);
-		} catch (DoesNotExistException) {
-			throw new NotFoundException(message: 'Emergency contact not found');
-		}
+		return $this->carry(
+			carry: new EnvelopeCarry(
+				ownerId: $ownerId,
+				oldSuiteId: $oldSuiteId,
+				newSuiteId: $newSuiteId,
+				contactId: $contactId,
+				recoveryEnvelope: $recoveryEnvelope,
+				sealedSuiteId: $sealedSuiteId,
+			)
+		);
+	}//end reEnvelopeForRotation()
 
-		if ($contact->getGrantorUserId() !== $ownerId) {
-			throw new ForbiddenException(message: 'Emergency contact does not belong to you');
-		}
+	/**
+	 * Carry one granted contact onto the migration's new suite with its fresh
+	 * envelope, after every refusal has had its say.
+	 *
+	 * @param EnvelopeCarry $carry The grantor, suites, contact and envelope
+	 *
+	 * @return EmergencyContact The re-pointed contact
+	 *
+	 * @throws NotFoundException When the contact does not exist
+	 * @throws ForbiddenException When it is not the grantor's granted contact on the old suite
+	 * @throws InvalidArgumentException When the envelope is malformed or not sealed to the grantee's active suite
+	 *
+	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	public function carry(EnvelopeCarry $carry): EmergencyContact {
+		$contact = $this->carriableContact(carry: $carry);
 
-		if ($contact->getGrantorSuiteId() !== $oldSuiteId) {
-			throw new ForbiddenException(message: 'Emergency contact is not bound to this migration\'s old suite');
-		}
+		$this->assertWellFormedEnvelope(envelope: $carry->recoveryEnvelope);
+		$this->assertSealedToGrantee(contact: $contact, carry: $carry);
 
-		// Only a `granted` contact is carried (keepiq#800). A `requested` or
-		// `approved` one has a break-glass in flight: carrying it would release
-		// the NEW private key to that grantee with the wait already served, which
-		// is what a contact planted with a stolen session is waiting for. An
-		// invalidated contact has no envelope to carry. Refused contacts stay on
-		// the old suite, the completion sweep invalidates them, and the grantor
-		// re-designates the ones they still want, with a fresh key proof.
-		if ($contact->getState() !== EmergencyContact::STATE_GRANTED) {
-			throw new ForbiddenException(
-				message: 'Only a granted emergency contact is carried across a key rotation'
-			);
-		}
-
-		$this->assertWellFormedEnvelope(envelope: $recoveryEnvelope);
-
-		// The envelope is only openable by the grantee, so the strongest check the
-		// grantor's server can make is that it was sealed to the grantee's CURRENT
-		// suite. A grantee who rotated since designation has a new active suite;
-		// sealing to the old one would produce an envelope they could never open.
-		try {
-			$granteeSuite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $contact->getGranteeUserId());
-		} catch (DoesNotExistException) {
-			throw new InvalidArgumentException('The grantee has no active encryption suite to seal to');
-		}
-
-		if ($sealedSuiteId !== $granteeSuite->getId()) {
-			throw new InvalidArgumentException('The declared grantee suite does not match the grantee\'s active suite');
-		}
-
-		$contact->setRecoveryEnvelope($recoveryEnvelope);
-		$contact->setGrantorSuiteId($newSuiteId);
-		$contact->setGranteeSuiteId($sealedSuiteId);
+		$contact->setRecoveryEnvelope($carry->recoveryEnvelope);
+		$contact->setGrantorSuiteId($carry->newSuiteId);
+		$contact->setGranteeSuiteId($carry->sealedSuiteId);
 
 		$contact->setInvalidatedReason(null);
 		$contact->setUpdatedAt(new DateTime());
@@ -301,12 +291,82 @@ class EmergencyEnvelopeInvalidationService {
 			grantorUserId: $updated->getGrantorUserId(),
 			granteeUserId: $updated->getGranteeUserId(),
 			id: $updated->getId(),
-			fromSuiteId: $oldSuiteId,
-			toSuiteId: $newSuiteId,
+			fromSuiteId: $carry->oldSuiteId,
+			toSuiteId: $carry->newSuiteId,
 		);
 
 		return $updated;
-	}//end reEnvelopeForRotation()
+	}//end carry()
+
+	/**
+	 * The contact to carry: the grantor's own, still on the old suite, and
+	 * granted.
+	 *
+	 * Only a `granted` contact is carried (keepiq#800). A `requested` or
+	 * `approved` one has a break-glass in flight: carrying it would release
+	 * the NEW private key to that grantee with the wait already served, which
+	 * is what a contact planted with a stolen session is waiting for. An
+	 * invalidated contact has no envelope to carry. Refused contacts stay on
+	 * the old suite, the completion sweep invalidates them, and the grantor
+	 * re-designates the ones they still want, with a fresh key proof.
+	 *
+	 * @param EnvelopeCarry $carry The carry
+	 *
+	 * @return EmergencyContact
+	 *
+	 * @throws NotFoundException When the contact does not exist
+	 * @throws ForbiddenException When the contact may not be carried
+	 */
+	private function carriableContact(EnvelopeCarry $carry): EmergencyContact {
+		try {
+			$contact = $this->mapper->findById(id: $carry->contactId);
+		} catch (DoesNotExistException) {
+			throw new NotFoundException(message: 'Emergency contact not found');
+		}
+
+		if ($contact->getGrantorUserId() !== $carry->ownerId) {
+			throw new ForbiddenException(message: 'Emergency contact does not belong to you');
+		}
+
+		if ($contact->getGrantorSuiteId() !== $carry->oldSuiteId) {
+			throw new ForbiddenException(message: 'Emergency contact is not bound to this migration\'s old suite');
+		}
+
+		if ($contact->getState() !== EmergencyContact::STATE_GRANTED) {
+			throw new ForbiddenException(
+				message: 'Only a granted emergency contact is carried across a key rotation'
+			);
+		}
+
+		return $contact;
+	}//end carriableContact()
+
+	/**
+	 * Refuse an envelope not sealed to the grantee's CURRENT suite.
+	 *
+	 * The envelope is only openable by the grantee, so the strongest check the
+	 * grantor's server can make is that it was sealed to the grantee's CURRENT
+	 * suite. A grantee who rotated since designation has a new active suite;
+	 * sealing to the old one would produce an envelope they could never open.
+	 *
+	 * @param EmergencyContact $contact The contact being carried
+	 * @param EnvelopeCarry $carry The carry
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the grantee has no active suite or another one
+	 */
+	private function assertSealedToGrantee(EmergencyContact $contact, EnvelopeCarry $carry): void {
+		try {
+			$granteeSuite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $contact->getGranteeUserId());
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException('The grantee has no active encryption suite to seal to');
+		}
+
+		if ($carry->sealedSuiteId !== $granteeSuite->getId()) {
+			throw new InvalidArgumentException('The declared grantee suite does not match the grantee\'s active suite');
+		}
+	}//end assertSealedToGrantee()
 
 	/**
 	 * Shape-check a recovery envelope without opening it.

@@ -1,0 +1,338 @@
+{
+	"null": {
+		"text": null
+	},
+	"undefined": {
+		"text": null
+	},
+	"plain error": {
+		"text": null
+	},
+	"409 with current": {
+		"text": "[keepiq] This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"409 without current": {
+		"text": null
+	},
+	"412 with current": {
+		"text": null
+	},
+	"partner upgrade, version and partners": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <9.9.9> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"partner upgrade, no partners": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys. It needs Keepiq <2.0.0> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"refusal with a policy code": {
+		"text": null
+	},
+	"refusal not from share save": {
+		"text": null
+	},
+	"share save forbidden, 400": {
+		"text": null
+	},
+	"partner unreachable without partners": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"ShareSaveError partner_unreachable with an empty partner list": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"ShareSaveError partner_unreachable, a partner without a cloud id": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"ShareSaveError partner_unreachable, an empty cloud id": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached. Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"ShareSaveError partner_unreachable, an empty and a named partner": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached (<bob@cloud.example>). Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"share save forbidden, fromShareSave \"true\"": {
+		"text": null
+	},
+	"ShareSaveError incomplete with partner upgrade data": {
+		"text": "[keepiq] The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again."
+	},
+	"ShareSaveError partner_unreachable with partner upgrade data": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <9.9.9> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"ShareSaveError other with partner upgrade data": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <9.9.9> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"ShareSaveError partner_upgrade_required, no response": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"ShareSaveError stale": {
+		"text": "[keepiq] This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"response 403 stale": {
+		"text": "[keepiq] This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"share save 403 stale": {
+		"text": "[keepiq] This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"response 409 stale": {
+		"text": "[keepiq] This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"share save 409 stale": {
+		"text": "[keepiq] This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"response 500 stale": {
+		"text": "[keepiq] This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"share save 500 stale": {
+		"text": "[keepiq] This secret was changed elsewhere after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"ShareSaveError stale_source": {
+		"text": "[keepiq] The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"response 403 stale_source": {
+		"text": "[keepiq] The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"share save 403 stale_source": {
+		"text": "[keepiq] The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"response 409 stale_source": {
+		"text": "[keepiq] The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"share save 409 stale_source": {
+		"text": "[keepiq] The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"response 500 stale_source": {
+		"text": "[keepiq] The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"share save 500 stale_source": {
+		"text": "[keepiq] The original of this shared secret was changed after you opened it. Nothing was saved; open it again and redo your change."
+	},
+	"ShareSaveError version_refused": {
+		"text": "[keepiq] This version cannot be restored to this secret. Nothing was saved."
+	},
+	"response 403 version_refused": {
+		"text": "[keepiq] This version cannot be restored to this secret. Nothing was saved."
+	},
+	"share save 403 version_refused": {
+		"text": "[keepiq] This version cannot be restored to this secret. Nothing was saved."
+	},
+	"response 409 version_refused": {
+		"text": "[keepiq] This version cannot be restored to this secret. Nothing was saved."
+	},
+	"share save 409 version_refused": {
+		"text": "[keepiq] This version cannot be restored to this secret. Nothing was saved."
+	},
+	"response 500 version_refused": {
+		"text": "[keepiq] This version cannot be restored to this secret. Nothing was saved."
+	},
+	"share save 500 version_refused": {
+		"text": "[keepiq] This version cannot be restored to this secret. Nothing was saved."
+	},
+	"ShareSaveError incomplete": {
+		"text": "[keepiq] The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again."
+	},
+	"response 403 incomplete": {
+		"text": "[keepiq] The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again."
+	},
+	"share save 403 incomplete": {
+		"text": "[keepiq] The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again."
+	},
+	"response 409 incomplete": {
+		"text": "[keepiq] The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again."
+	},
+	"share save 409 incomplete": {
+		"text": "[keepiq] The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again."
+	},
+	"response 500 incomplete": {
+		"text": "[keepiq] The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again."
+	},
+	"share save 500 incomplete": {
+		"text": "[keepiq] The people this secret is shared with kept changing while it was saved. Nothing was saved; please try again."
+	},
+	"ShareSaveError partner_lookup_limit": {
+		"text": "[keepiq] Too many partner lookups. Nothing was saved; try again in a minute."
+	},
+	"response 403 partner_lookup_limit": {
+		"text": "[keepiq] Too many partner lookups. Nothing was saved; try again in a minute."
+	},
+	"share save 403 partner_lookup_limit": {
+		"text": "[keepiq] Too many partner lookups. Nothing was saved; try again in a minute."
+	},
+	"response 409 partner_lookup_limit": {
+		"text": "[keepiq] Too many partner lookups. Nothing was saved; try again in a minute."
+	},
+	"share save 409 partner_lookup_limit": {
+		"text": "[keepiq] Too many partner lookups. Nothing was saved; try again in a minute."
+	},
+	"response 500 partner_lookup_limit": {
+		"text": "[keepiq] Too many partner lookups. Nothing was saved; try again in a minute."
+	},
+	"share save 500 partner_lookup_limit": {
+		"text": "[keepiq] Too many partner lookups. Nothing was saved; try again in a minute."
+	},
+	"ShareSaveError view_only": {
+		"text": "[keepiq] Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
+	},
+	"response 403 view_only": {
+		"text": "[keepiq] Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
+	},
+	"share save 403 view_only": {
+		"text": "[keepiq] Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
+	},
+	"response 409 view_only": {
+		"text": "[keepiq] Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
+	},
+	"share save 409 view_only": {
+		"text": "[keepiq] Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
+	},
+	"response 500 view_only": {
+		"text": "[keepiq] Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
+	},
+	"share save 500 view_only": {
+		"text": "[keepiq] Shared with you to view only. Nothing was saved; ask its owner for edit rights to change it."
+	},
+	"ShareSaveError partner_unreachable": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached (<bob@cloud.example, eve@other.example>). Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"response 403 partner_unreachable": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached (<bob@cloud.example, eve@other.example>). Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"share save 403 partner_unreachable": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached (<bob@cloud.example, eve@other.example>). Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"response 409 partner_unreachable": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached (<bob@cloud.example, eve@other.example>). Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"share save 409 partner_unreachable": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached (<bob@cloud.example, eve@other.example>). Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"response 500 partner_unreachable": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached (<bob@cloud.example, eve@other.example>). Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"share save 500 partner_unreachable": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with cannot be reached (<bob@cloud.example, eve@other.example>). Try again later, or save without them, which stops sharing this secret with them until you share it with them again."
+	},
+	"ShareSaveError partner_upgrade_required": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"response 403 partner_upgrade_required": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"share save 403 partner_upgrade_required": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"response 409 partner_upgrade_required": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"share save 409 partner_upgrade_required": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"response 500 partner_upgrade_required": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"share save 500 partner_upgrade_required": {
+		"text": "[keepiq] Nothing was saved: a partner organisation this secret is shared with runs an older Keepiq that cannot store one-time codes or passkeys (<bob@cloud.example, eve@other.example>). It needs Keepiq <> or later; until then, remove the one-time code and passkeys from this login or stop sharing it with them."
+	},
+	"ShareSaveError forbidden": {
+		"text": null
+	},
+	"response 403 forbidden": {
+		"text": null
+	},
+	"share save 403 forbidden": {
+		"text": "[keepiq] You are not allowed to save this change for everyone this secret is shared with. Nothing was saved."
+	},
+	"response 409 forbidden": {
+		"text": null
+	},
+	"share save 409 forbidden": {
+		"text": null
+	},
+	"response 500 forbidden": {
+		"text": null
+	},
+	"share save 500 forbidden": {
+		"text": null
+	},
+	"ShareSaveError not_allowed": {
+		"text": null
+	},
+	"response 403 not_allowed": {
+		"text": null
+	},
+	"share save 403 not_allowed": {
+		"text": "[keepiq] You are not allowed to save this change for everyone this secret is shared with. Nothing was saved."
+	},
+	"response 409 not_allowed": {
+		"text": null
+	},
+	"share save 409 not_allowed": {
+		"text": null
+	},
+	"response 500 not_allowed": {
+		"text": null
+	},
+	"share save 500 not_allowed": {
+		"text": null
+	},
+	"ShareSaveError other": {
+		"text": null
+	},
+	"response 403 other": {
+		"text": null
+	},
+	"share save 403 other": {
+		"text": null
+	},
+	"response 409 other": {
+		"text": null
+	},
+	"share save 409 other": {
+		"text": null
+	},
+	"response 500 other": {
+		"text": null
+	},
+	"share save 500 other": {
+		"text": null
+	},
+	"ShareSaveError constructor": {
+		"text": null
+	},
+	"response 403 constructor": {
+		"text": null
+	},
+	"share save 403 constructor": {
+		"text": null
+	},
+	"response 409 constructor": {
+		"text": null
+	},
+	"share save 409 constructor": {
+		"text": null
+	},
+	"response 500 constructor": {
+		"text": null
+	},
+	"share save 500 constructor": {
+		"text": null
+	},
+	"ShareSaveError toString": {
+		"text": null
+	},
+	"response 403 toString": {
+		"text": null
+	},
+	"share save 403 toString": {
+		"text": null
+	},
+	"response 409 toString": {
+		"text": null
+	},
+	"share save 409 toString": {
+		"text": null
+	},
+	"response 500 toString": {
+		"text": null
+	},
+	"share save 500 toString": {
+		"text": null
+	}
+}

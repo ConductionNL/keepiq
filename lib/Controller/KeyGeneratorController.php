@@ -27,8 +27,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\KeyGeneratorService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\KeyGeneratorServiceInterface;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -45,17 +46,17 @@ class KeyGeneratorController extends OCSController {
 	 * Constructor for KeyGeneratorController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param KeyGeneratorService $keyGenerator The key generator service
+	 * @param KeyGeneratorServiceInterface $keyGenerator The key generator service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private KeyGeneratorService $keyGenerator,
+		private KeyGeneratorServiceInterface $keyGenerator,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -111,15 +112,9 @@ class KeyGeneratorController extends OCSController {
 
 			return new JSONResponse(data: ['generatedKey' => $generatedKey]);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		} catch (RuntimeException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_UNPROCESSABLE_ENTITY);
 		}//end try
 	}//end generate()
 }//end class

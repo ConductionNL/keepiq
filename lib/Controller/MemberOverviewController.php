@@ -25,8 +25,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\MemberOverviewService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\MemberOverviewServiceInterface;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -42,7 +42,7 @@ class MemberOverviewController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request
-	 * @param MemberOverviewService $service The member overview service
+	 * @param MemberOverviewServiceInterface $service The member overview service
 	 *
 	 * @return void
 	 *
@@ -50,9 +50,9 @@ class MemberOverviewController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private MemberOverviewService $service,
+		private MemberOverviewServiceInterface $service,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -73,7 +73,7 @@ class MemberOverviewController extends Controller {
 	public function index(
 		string $status = '',
 		string $search = '',
-		int $limit = MemberOverviewService::DEFAULT_LIMIT,
+		int $limit = MemberOverviewServiceInterface::DEFAULT_LIMIT,
 		int $offset = 0,
 	): JSONResponse {
 		try {

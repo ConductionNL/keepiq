@@ -26,14 +26,14 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\Application;
 use OCA\Keepiq\Db\ApplicationMapper;
-use OCA\Keepiq\Service\ApplicationService;
-use OCA\Keepiq\Service\LeaseService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ApplicationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\LeaseServiceInterface;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\UserRateLimit;
@@ -50,8 +50,8 @@ class AdminApplicationController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request
-	 * @param ApplicationService $applications The application service the admin screen uses
-	 * @param LeaseService $leases The lease policy service
+	 * @param ApplicationServiceInterface $applications The application service the admin screen uses
+	 * @param LeaseServiceInterface $leases The lease policy service
 	 * @param ApplicationMapper $applicationMapper Existence check for the lease policy
 	 * @param IUserSession $userSession The acting administrator
 	 *
@@ -61,12 +61,12 @@ class AdminApplicationController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private ApplicationService $applications,
-		private LeaseService $leases,
+		private ApplicationServiceInterface $applications,
+		private LeaseServiceInterface $leases,
 		private ApplicationMapper $applicationMapper,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

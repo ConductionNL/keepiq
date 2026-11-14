@@ -13,6 +13,8 @@ import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import ExtensionSection from '../../src/components/settings/ExtensionSection.vue'
 
+const ROUTE = '/apps/keepiq/api/settings/admin/policies'
+
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 function mountSection() {
@@ -20,7 +22,7 @@ function mountSection() {
 		global: {
 			stubs: {
 				CnSettingsSection: { template: '<section><slot /></section>' },
-				NcNoteCard: { template: '<div><slot /></div>' },
+				NcNoteCard: { template: '<div class="note"><slot /></div>' },
 			},
 		},
 	})
@@ -51,8 +53,74 @@ describe('ExtensionSection', () => {
 		await select.setValue('30')
 		await flush()
 
+		expect(axios.get).toHaveBeenCalledWith(ROUTE)
 		expect(put).toHaveBeenCalledTimes(1)
-		expect(put.mock.calls[0][1]).toEqual({ extension_max_idle_minutes: 30 })
+		expect(put).toHaveBeenCalledWith(ROUTE, {
+			extension_max_idle_minutes: 30,
+			extension_passkeys_enabled: true,
+			extension_passkey_origins: [],
+		})
+	})
+
+	it('shows the passkey settings and saves the switch and one origin per line', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: {
+				extension_max_idle_minutes: 60,
+				extension_passkeys_enabled: true,
+				extension_passkey_origins: ['chrome-extension://abcdefghijklmnopabcdefghijklmnop'],
+				extension_passkey_pinned_origins: ['chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba'],
+			},
+		})
+		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
+		const wrapper = mountSection()
+		await flush()
+
+		expect(wrapper.find('[data-testid="extension-pinned-origins"]').text()).toBe('chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba')
+		const origins = wrapper.find('[data-testid="extension-passkey-origins"]')
+		expect(origins.element.value).toBe('chrome-extension://abcdefghijklmnopabcdefghijklmnop')
+
+		await origins.setValue(' chrome-extension://abcdefghijklmnopabcdefghijklmnop \n\nmoz-extension://x ')
+		await origins.trigger('change')
+		await wrapper.find('[data-testid="extension-passkeys-enabled"]').setValue(false)
+		await flush()
+
+		expect(put).toHaveBeenNthCalledWith(1, ROUTE, {
+			extension_max_idle_minutes: 60,
+			extension_passkeys_enabled: true,
+			extension_passkey_origins: ['chrome-extension://abcdefghijklmnopabcdefghijklmnop', 'moz-extension://x'],
+		})
+		expect(put).toHaveBeenLastCalledWith(ROUTE, expect.objectContaining({ extension_passkeys_enabled: false }))
+	})
+
+	it('shows the server message when loading is refused', async () => {
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { data: { message: 'Server says no' } },
+		})
+		const wrapper = mountSection()
+		await flush()
+
+		expect(wrapper.find('.note').text()).toBe('Server says no')
+	})
+
+	it('shows the server message when saving is refused, and clears it on the next save', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { extension_max_idle_minutes: 60 },
+		})
+		const put = vi.spyOn(axios, 'put').mockRejectedValueOnce({
+			response: { data: { message: 'Server says no' } },
+		})
+		const wrapper = mountSection()
+		await flush()
+
+		const select = wrapper.find('[data-testid="extension-max-idle"]')
+		await select.setValue('30')
+		await flush()
+		expect(wrapper.find('.note').text()).toBe('Server says no')
+
+		put.mockResolvedValue({ data: {} })
+		await select.setValue('15')
+		await flush()
+		expect(wrapper.find('.note').exists()).toBe(false)
 	})
 
 	it('defaults to four hours when nothing is stored', async () => {

@@ -1,0 +1,819 @@
+# Formal address (vy, lowercase váš) as in Nextcloud's Slovak; trezor, hlavné heslo, heslo aplikácie, prístupový kľúč, prihlasovacie údaje, položka, priečinok, zásielka, webová aplikácia.
+language: sk
+extensionDescription: Keepiq pre váš prehliadač. Vypĺňajte prihlasovacie údaje, prístupové kľúče a jednorazové kódy zo šifrovaného trezoru v Nextcloud.
+commandAutofillLogin: Vyplniť naposledy použité prihlasovacie údaje
+commandFocusNotificationBar: Prejsť na lištu ukladania Keepiq
+
+errors:
+  insecureUrl: Pre tento server použite https
+  invalidUrl: Zadajte platnú URL adresu servera
+  permissionDenied: Keepiq potrebuje povolenie na prístup k {host}
+  unreachable: Nedá sa spojiť s {host}
+  notNextcloud: "{host} nevyzerá ako server Nextcloud"
+  serverError: "{host} je teraz nedostupný, skúste to neskôr"
+  unauthorized: Nesprávne používateľské meno alebo heslo aplikácie
+  keepiqMissing: Na {host} nie je Keepiq nainštalovaný
+  keepiqOutdated: Keepiq na {host} je pre toto rozšírenie príliš starý, potrebuje verziu {version} alebo novšiu. Požiadajte správcu o aktualizáciu Keepiq.
+  noActiveSuite: Raz otvorte webovú aplikáciu Keepiq a nastavte hlavné heslo, potom to skúste znova
+  unlockBlocked: Vaša organizácia vyžaduje dvojfázové overenie. Nastavte druhý faktor v Nextcloud v Nastavenia, Zabezpečenie a potom to skúste znova
+  duplicate: Tento účet už je pridaný
+  limitReached: Dosiahnutý maximálny počet účtov ({count})
+  invalidMasterPassword: Neplatné hlavné heslo
+  keyUnreadable: Kľúč vášho trezoru v Keepiq sa nedá prečítať, takže ho tento prehliadač nemôže odomknúť. Informujte správcu Keepiq.
+  offlineNoCache: Ste offline a tento trezor ešte nebol synchronizovaný
+  sessionRevoked: Relácia bola zrušená, prihláste sa znova
+  writeLocked: Trezor teraz nemožno meniť, skúste to neskôr
+  notResponding: Keepiq nereaguje. Znova načítajte rozšírenie a znova otvorte toto okno.
+  invalidPin:
+    1: Nesprávny PIN, zostáva 1 pokus
+    n: "Nesprávny PIN, zostávajúce pokusy: $1"
+  wrongPin: Nesprávny PIN
+  pinForgotten: PIN bol po príliš veľa pokusoch zabudnutý
+  pinKeyChanged: Kľúč trezoru sa zmenil. Odomknite ho hlavným heslom.
+  pinTooShort: "Minimálny počet znakov: {count}"
+  unknown: Niečo sa pokazilo
+  passkeyFailed: "Prístupový kľúč trezor neodomkol. Použite hlavné heslo."
+
+notices:
+  keyChanged: Kľúč vášho trezoru sa v Keepiq zmenil. Odomknite ho aktuálnym hlavným heslom.
+  fileAccess: "Keepiq nepotrebuje prístup k súborom. V Nextcloud v Nastavenia, Zabezpečenie, Zariadenia a relácie môžete tomuto heslu aplikácie vypnúť prístup k súborom alebo ho zrušiť."
+
+common:
+  accountOnHost: "{name} na {host}"
+  loading: Načítava sa…
+  back: Späť
+  cancel: Zrušiť
+  logOut: Odhlásiť
+  appPassword: Heslo aplikácie
+  addAccount: Pridať účet
+  openWebApp: Otvoriť webovú aplikáciu Keepiq
+  justNow: práve teraz
+
+titles:
+  accounts: Účty
+  logInAgain: Znova prihlásiť
+  unlock: Odomknúť
+  viewItem: Zobraziť položku
+  newItem: Nová položka
+  newLogin: Nové prihlasovacie údaje
+  newCard: Nová karta
+  newIdentity: Nová identita
+  editItem: Upraviť položku
+  newSend: Nová zásielka
+  sendCreated: Zásielka vytvorená
+
+tabs:
+  label: Hlavná ponuka
+  vault: Trezor
+  generator: Generátor
+  send: Odoslať
+  settings: Nastavenia
+
+header:
+  popout: Otvoriť v samostatnom okne
+  accounts: "Účty, prihlásený používateľ: {name}"
+  new: Pridať
+
+unlock:
+  masterPassword: Hlavné heslo
+  submit: Odomknúť
+  pin: PIN
+  useMasterPassword: Použiť hlavné heslo
+
+logInAgain:
+  submit: Prihlásiť
+
+addAccount:
+  serverUrl: URL adresa servera
+  serverUrlPlaceholder: cloud.example.org
+  username: Používateľské meno
+  hint: Vytvorte ho v Nextcloud v Nastavenia, Zabezpečenie. Nikdy sem nezadávajte svoje prihlasovacie heslo do Nextcloud.
+  hintWithLink: "Vytvorte ho v Nextcloud v Nastavenia, Zabezpečenie: {link}. Nikdy sem nezadávajte svoje prihlasovacie heslo do Nextcloud."
+  securityLink: otvoriť nastavenia zabezpečenia
+  signInWithBrowser: "Prihlásiť sa cez Nextcloud"
+  finishInTab: "Dokončite prihlásenie na otvorenej stránke Nextcloud. Keepiq pridá účet, keď skončíte."
+  orAppPassword: "Alebo zadajte heslo aplikácie:"
+
+accounts:
+  active: (aktívny)
+  unlocked: Odomknuté
+  locked: Zamknuté
+  loggedOut: Odhlásené
+  lock: Zamknúť účet {account}
+  logOut: Odhlásiť z účtu {account}
+  lockAll: Zamknúť všetky
+  logOutAll: Odhlásiť všetky
+  logOutAllQuestion: Odhlásiť zo všetkých účtov?
+  logOutAllDetail: Všetky účty sa z tohto prehliadača odstránia. Pre každý z nich budete znova potrebovať heslo aplikácie.
+  logOutQuestion: Odhlásiť z účtu {account}?
+  logOutDetail: Účet sa z tohto prehliadača odstráni. Na jeho opätovné pridanie budete potrebovať heslo aplikácie.
+
+vault:
+  loadFailed: Trezor sa nepodarilo načítať
+  tryAgain: Skúsiť znova
+  syncing: Synchronizácia trezoru
+  empty: Trezor neobsahuje žiadne položky
+  noMatch: Žiadne zodpovedajúce položky
+  searchCovers: Hľadá sa v názvoch a weboch.
+  clearFilters: Vymazať filtre
+  items: Položky
+  tooMany: Zobrazené prvé výsledky ({count}), spresnite hľadanie
+  offline: "Offline. Posledná synchronizácia: {time}"
+  syncNow: Synchronizovať
+  busy: Server je zaneprázdnený, skúsi sa to neskôr
+  allBlocked: Všetky položky sú zablokované.
+  suggestions: Návrhy automatického vyplnenia
+  noSuggestions: Žiadne položky pre {host}
+  autofillUnavailable: Automatické vypĺňanie nie je na tejto stránke dostupné
+  fillFailed: Na tejto stránke sa nedá automaticky vypĺňať. Údaje skopírujte a vložte.
+  openFailed: Web sa nepodarilo otvoriť
+  popoutFailed: Nové okno sa nepodarilo otvoriť
+
+filters:
+  search: Hľadať
+  searchLabel: Hľadať v trezore
+  clearSearch: Vymazať hľadanie
+  folder: Priečinok
+  allItems: Všetky položky
+  noFolder: Bez priečinka
+  type: Typ
+  all: Všetko
+  more: Viac
+  moreTypes: Ďalšie typy
+  login: Prihlasovacie údaje
+  card: Karta
+  identity: Identita
+  note: Poznámka
+  totp: TOTP
+  passkey: Prístupový kľúč
+
+item:
+  blocked: Zablokované
+  launch: Otvoriť {name}
+  fill: Vyplniť
+  fillName: Vyplniť {name}
+  insecureTitle: Naozaj chcete tieto prihlasovacie údaje vyplniť?
+  insecureWarning: "Upozornenie: Toto je nezabezpečená stránka HTTP a akékoľvek odoslané informácie môžu ostatní vidieť a meniť. Tieto prihlasovacie údaje boli pôvodne uložené na zabezpečenej stránke (HTTPS)."
+  cardInsecureTitle: Vyplniť túto kartu na nezabezpečenom webe?
+  cardInsecureWarning: Tento web nie je zabezpečený. Ktokoľvek v sieti môže vyplnené údaje karty prečítať.
+  crossSiteTitle: Vyplniť aj na {hosts}?
+  crossSiteWarning: Časť tohto formulára pochádza z {hosts}, nie z {host}. Keepiq ju tam vyplní len s vaším súhlasom.
+  onlyHost: Iba {host}
+  copyMenu: Kopírovať, {name}
+  moreMenu: Viac, {name}
+  copyUsername: Kopírovať používateľské meno
+  copyPassword: Kopírovať heslo
+  copyCode: Kopírovať overovací kód
+  view: Zobraziť
+  edit: Upraviť
+  clone: Klonovať
+  move: Presunúť do priečinka
+  delete: Odstrániť
+  send: Odoslať
+  cloneName: "{name} - klon"
+  passkeyNoClone: Prístupové kľúče sa nedajú klonovať
+  useOnly: Zdieľané s vami iba na prihlasovanie
+  readOnly: Zdieľané z inej organizácie, preto sa dá iba presunúť
+  viewOnly: Zdieľané s vami iba na zobrazenie. Ak to chcete zmeniť, požiadajte vlastníka o oprávnenie na úpravy.
+  expiringNoClone: Váš prístup končí {date}, preto sa to nedá klonovať
+  expiringNoSend: Váš prístup končí {date}, preto sa to nedá odoslať
+  saved: Položka uložená
+  deleted: Položka presunutá do koša
+  moved: Presunuté do priečinka {folder}
+  deleteTitle: Odstrániť položku
+  deleteConfirm: Presunúť {name} do koša? Položka prestane byť zdieľaná, a to aj po obnovení z koša vo webovej aplikácii Keepiq.
+  gone: Táto položka už neexistuje
+
+form:
+  itemDetails: Podrobnosti položky
+  type: Typ
+  name: Názov
+  cardNumberLength: "{brand} nevydáva čísla kariet tejto dĺžky. Uložiť môžete aj tak."
+  cardNumberLengthUnknown: Čísla kariet majú 12 až 19 číslic. Uložiť môžete aj tak.
+  cardNumberChecksum: Toto číslo neprešlo kontrolným súčtom karty. Skontrolujte ho; uložiť môžete aj tak.
+  cardCodeLength: Karty {brand} používajú {size}-miestny kód {name}. Uložiť môžete aj tak.
+  folder: Priečinok
+  chooseFolder: Vyberte priečinok, teraz {folder}
+  website: URL adresa webu
+  autofillOptions: Možnosti automatického vypĺňania
+  additionalOptions: Ďalšie možnosti
+  authenticator: Autentifikátor
+  note: Poznámka
+  secret: Tajný kľúč
+  advanced: Pokročilé
+  algorithm: Algoritmus
+  digits: Číslice
+  period: Interval v sekundách
+  addField: Pridať pole
+  fieldName: Názov poľa
+  fieldValue: Hodnota
+  removeField: Odstrániť pole {name}
+  removeUnnamed: Odstrániť pole
+  save: Uložiť
+  passkeyReadOnly: Údaje prístupového kľúča sa dajú zmeniť iba vo webovej aplikácii Keepiq
+  offline: Ste offline. Zmeny vyžadujú pripojenie ku Keepiq.
+  unsavedTitle: Neuložené zmeny
+  unsaved: Máte neuložené zmeny. Zahodiť ich?
+  discard: Zahodiť
+  keepEditing: Pokračovať v úpravách
+
+authKey:
+  label: Kľúč autentifikátora
+  optionalLabel: Kľúč autentifikátora (voliteľné)
+  newLabel: Nový kľúč autentifikátora
+  help: Vložte odkaz otpauth://totp/ alebo tajný kľúč, alebo naskenujte QR kód na stránke.
+  scan: Naskenovať QR kód na stránke
+  read: Kľúč autentifikátora načítaný z QR kódu
+  noQr: Na stránke sa nenašiel žiadny QR kód. Posuňte stránku tak, aby bol viditeľný, a skúste to znova.
+  notTotp: Tento QR kód neobsahuje kľúč autentifikátora. Použite QR kód, ktorý web zobrazí pri nastavení dvojfázového overenia.
+  noPicture: Keepiq nemôže zachytiť snímku tejto stránky. Vložte namiesto toho kľúč.
+  popout: Na naskenovanie otvorte Keepiq z panela nástrojov na stránke s QR kódom.
+  saved: Uložené
+  remove: Odstrániť kľúč autentifikátora
+  replaceHelp: Vložte alebo naskenujte nový kľúč, alebo pole nechajte prázdne a uložený kľúč sa odstráni.
+  keep: Ponechať uložený kľúč
+  removedOnSave: Kľúč autentifikátora sa pri uložení odstráni.
+  notCloned: Kľúč autentifikátora sa neklonuje.
+
+fieldErrors:
+  required: Názov je povinný
+  tooLong: "Maximálny počet znakov: {max}"
+  tooLongBytes: "Príliš dlhé (max. počet bajtov: {max})"
+  reserved: Tento názov je vyhradený
+  duplicate: Pole s týmto názvom už existuje
+  invalidTotp: Neplatný tajný kľúč autentifikátora
+  slash: Názvy priečinkov nesmú obsahovať lomky
+
+writeErrors:
+  writeLocked: Trezor je dočasne zamknutý pre migráciu kľúča, skúste to neskôr
+  forbidden: Keepiq túto zmenu nepovoľuje. Dôvod zobrazí webová aplikácia Keepiq.
+  policy: Zásady vašej organizácie túto zmenu nepovoľujú
+  accountChanged: Medzitým ste prepli na iný účet, preto sa nič neuložilo. Na uloženie prepnite späť.
+  accountChangedDelete: Medzitým ste prepli na iný účet, preto sa nič neodstránilo. Na odstránenie prepnite späť.
+  keepClash: O úroveň vyššie už existuje priečinok s názvom {name}. Zvoľte preň „Presunúť položky do nadradeného priečinka“ alebo „Odstrániť“, alebo najprv jeden z nich premenujte.
+  keepClashAfter: Priečinok, ktorý ste chceli ponechať, má rovnaký názov ako priečinok o úroveň vyššie, preto sa nič neodstránilo. Skontrolujte voľby znova.
+  invalid: Keepiq túto zmenu odmietol
+  stale: Táto položka bola zmenená inde. Vráťte sa a upravte ju znova, aby ste videli najnovšiu verziu.
+  itemGone: Táto položka už neexistuje
+  folderGone: Tento priečinok už neexistuje
+  duplicateFolder: Priečinok s týmto názvom tu už existuje
+  folderChanged: Tento priečinok sa zmenil. Skontrolujte voľby znova.
+  offline: Nedá sa spojiť so serverom
+  serverError: Keepiq je teraz nedostupný, skúste to neskôr
+  unreadable: Túto položku nemožno prečítať, preto ju tu nemožno upraviť
+  restricted: Táto položka s vami bola zdieľaná s obmedzeniami, preto ju tu nemožno meniť ani kopírovať
+  unmatched: Keepiq poslal verziu tejto položky, ktorú váš trezor neobsahuje, preto nebola otvorená.
+  keyMismatch: Keepiq poslal šifrovací kľúč, ktorý nezodpovedá vášmu trezoru, preto sa nič neuložilo. Informujte správcu Keepiq.
+  staleSource: Originál tejto zdieľanej položky sa po jej otvorení zmenil. Nič sa neuložilo; otvorte ju znova a zmenu zopakujte.
+  incomplete: Okruh ľudí, s ktorými je táto položka zdieľaná, sa počas ukladania stále menil. Nič sa neuložilo; skúste to znova.
+  badCertificate: Keepiq poslal šifrovací kľúč jedného z ľudí, s ktorými je táto položka zdieľaná, a tento prehliadač ho nedokázal prečítať. Nič sa neuložilo.
+  unverified: Táto položka je zdieľaná s partnerskými organizáciami a tento prehliadač nemôže potvrdiť, že ju dostanú presne tak, ako ste ju videli. Nič sa neuložilo; urobte túto zmenu vo webovej aplikácii Keepiq.
+  partnerUnreachable: "Nič sa neuložilo: partnerská organizácia, s ktorou je táto položka zdieľaná, je nedostupná ({cloudIds}). Skúste to neskôr, alebo uložte bez nich, čím sa zdieľanie tejto položky s nimi pozastaví, kým ju s nimi znova nezdieľate."
+  partnerUpgradeRequired: "Nič sa neuložilo: Keepiq u {cloudIds} je príliš starý na prijatie kľúča autentifikátora. Odstráňte kľúč, alebo ich požiadajte o aktualizáciu Keepiq."
+  partnerUpgradeRequiredUnnamed: "Nič sa neuložilo: partnerská organizácia, s ktorou je táto položka zdieľaná, používa príliš starý Keepiq na prijatie kľúča autentifikátora. Odstráňte kľúč, alebo ju požiadajte o aktualizáciu Keepiq."
+  partnerUpgradeVersion: Potrebujú Keepiq {version} alebo novší.
+  partnerLookupLimit: Príliš veľa vyhľadávaní partnerov. Nič sa neuložilo; skúste to o minútu.
+  federationUnavailable: Váš server Keepiq nevie zdieľať s partnerskými organizáciami, preto túto položku nemožno uložiť. Nič sa neuložilo; obráťte sa na správcu.
+  keepiqOutdated: Váš server Keepiq je na uloženie tejto zmeny príliš starý. Nič sa neuložilo; požiadajte správcu o aktualizáciu Keepiq na verziu {version} alebo novšiu.
+  partnerClock: Certifikát partnerskej organizácie, s ktorou je táto položka zdieľaná, podľa hodín tohto počítača nie je platný. Nič sa neuložilo; skontrolujte dátum a čas tohto počítača, alebo urobte zmenu vo webovej aplikácii Keepiq.
+  shareScanPending: Táto položka čaká na dokončenie kontroly svojho zdieľania. Nič sa neuložilo; skúste to neskôr.
+  shareScanPendingOpen: Táto položka čaká na kontrolu svojho zdieľania a zatiaľ ju nemožno upraviť. Skúste to neskôr.
+  shareScanPendingDelete: Táto položka čaká na dokončenie kontroly svojho zdieľania. Nič sa neodstránilo; skúste to neskôr.
+  sendInvalid: Keepiq túto zásielku neprijal. Nič sa neodoslalo; skontrolujte polia a skúste to znova.
+  sendOffline: Nedá sa spojiť so serverom, nič sa neodoslalo
+  argon2Unavailable: Ochrana heslom nie je v tomto prehliadači dostupná
+
+shareSave:
+  saveWithout: Uložiť bez nich
+  ownerOnly: Uložené. Príjemcovia v partnerských organizáciách dostanú túto zmenu, keď ju vlastník nabudúce uloží.
+  suspended: Zdieľanie s {cloudIds} je pozastavené, pretože ich certifikát sa nepodarilo overiť alebo ho ich organizácia už neprijíma. Zdieľanie zobrazí webová aplikácia Keepiq.
+  paused: Zdieľanie s {cloudIds} je pozastavené, kým s nimi túto položku znova nezdieľate.
+
+folders:
+  add: Pridať priečinok
+  newFolder: Nový priečinok
+  rename: Premenovať
+  renameTitle: Premenovať priečinok
+  delete: Odstrániť
+  more: Viac, {name}
+  name: Názov priečinka
+  empty: Zatiaľ žiadne priečinky
+  notice: Názvy priečinkov nie sú šifrované
+  dismiss: Zavrieť
+  current: Aktuálny priečinok
+  pickTitle: Vybrať priečinok
+  moveTitle: Presunúť do priečinka
+  saved: Priečinok uložený
+  deleted: Priečinok odstránený
+  deleteTitle: Odstrániť priečinok
+  deleteConfirm: Odstrániť priečinok {name}? Túto akciu nemožno vrátiť.
+  cascade:
+    1: Odstrániť priečinok {name} aj s 1 položkou, alebo položku presunúť do priečinka {parent}?
+    n: "Odstrániť priečinok {name} aj s položkami (počet: $1), alebo ich presunúť do priečinka {parent}?"
+  countsAll: Započítavajú sa aj archivované položky a položky v koši.
+  deleteItems: Odstrániť aj položky
+  moveItems: Presunúť položky do nadradeného priečinka
+  items:
+    1: 1 položka
+    n: "položky: $1"
+  subfolders:
+    1: 1 podpriečinok
+    n: "podpriečinky: $1"
+  directRow: Priamo v priečinku {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Odstrániť
+  actionMove: Presunúť položky do nadradeného priečinka
+  actionKeep: Ponechať
+  directMove: Presunúť do nadradeného priečinka
+
+clipboard:
+  copied: "Skopírované: {what}"
+  failed: Kopírovanie zlyhalo
+
+field:
+  show: "Zobraziť: {field}"
+  hide: "Skryť: {field}"
+  copy: "Kopírovať: {field}"
+
+blocked:
+  generic: Táto položka je zablokovaná.
+  suiteMissing: Jej šifrovací kľúč už neexistuje.
+  suiteRevoked: Jej šifrovací kľúč bol zneplatnený.
+  suiteCompromised: Zašifrované kompromitovaným kľúčom, preto ju tu nemožno otvoriť. Webová aplikácia Keepiq ukáže, či ju možno obnoviť.
+  migrationFailed: Pri obnove po kompromitácii ju nebolo možné previesť na váš nový kľúč. Uložená hodnota je zachovaná, ale nemožno ju otvoriť.
+
+detail:
+  item: Položka
+  decrypting: Dešifruje sa…
+  decryptFailed: Túto položku nemožno dešifrovať
+  unreadablePasskey: Tento prístupový kľúč nemožno prečítať
+  unreadableFields: Ďalšie polia nemožno prečítať
+  loginCredentials: Prihlasovacie údaje
+  username: Používateľské meno
+  password: Heslo
+  authenticatorKey: Kľúč autentifikátora
+  website: Web
+  additionalFields: Ďalšie polia
+  notes: Poznámky
+  history: História položky
+  created: Vytvorené
+  updated: Aktualizované
+  expires: Platnosť do
+  cardDetails: Údaje karty
+  number: Číslo
+  numberWithBrand: Číslo · {brand}
+  cardNumber: Číslo karty
+  cardholder: Držiteľ karty
+  expiry: Platnosť
+  cvv: CVV
+  pin: PIN
+  identity: Identita
+  firstName: Meno
+  lastName: Priezvisko
+  address: Adresa
+  phone: Telefón
+  email: E-mail
+  bsn: BSN
+  passkey: Prístupový kľúč
+  relyingParty: Web alebo aplikácia
+  passkeyUser: Používateľské meno
+  passkeyOnLogin: Keepiq sa prihlasuje prístupovými kľúčmi uloženými pri prihlasovacích údajoch, nie touto položkou
+  passkeys: Prístupové kľúče
+  passkeyCreated: Vytvorené {date}
+  useOnly: Vlastník vám nedovoľuje toto zobraziť ani kopírovať.
+
+totp:
+  code: Overovací kód
+  invalid: Neplatný kľúč autentifikátora
+  changesIn:
+    1: Zmena o 1 sekundu
+    n: Zmena o $1 s
+
+settings:
+  accountSecurity: Zabezpečenie účtu
+  autofill: Automatické vypĺňanie
+  notifications: Upozornenia
+  vault: Trezor
+  appearance: Vzhľad
+  about: O rozšírení
+  folders: Priečinky
+  theme: Motív
+  themeSystem: Podľa systému
+  themeLight: Svetlý
+  themeDark: Tmavý
+  comingLater: Pripravujeme
+  setByOrganisation: Nastavené vašou organizáciou
+  turnedOffByOrganisation: Vypnuté vašou organizáciou
+  never: Nikdy
+  durationHours: "{count} h"
+  durationMinutes: "{count} min"
+  pin: Odomykanie PIN-om
+  pinTurnOn: Zapnúť
+  masterPasswordRequired: Zadajte hlavné heslo
+  pinAgain: Potvrdiť PIN
+  pinMismatch: PIN-y sa nezhodujú
+  pinAdvice: Nepoužívajte PIN, ktorý už máte k telefónu alebo banke.
+  pinAfterRestart: Po reštarte prehliadača raz zadáte hlavné heslo; potom bude PIN znova fungovať.
+  vaultTimeout: Časový limit trezoru
+  timeoutImmediately: Okamžite
+  timeoutMinutes:
+    1: 1 minúta
+    n: $1 min
+  timeoutHours:
+    1: 1 hodina
+    n: $1 h
+  timeoutOnSystemLock: Pri zamknutí systému
+  timeoutOnSystemLockCapped: Pri zamknutí systému alebo po {duration} nečinnosti (nastavené vašou organizáciou)
+  timeoutOnRestart: Pri reštarte prehliadača
+  timeoutCustom: Vlastný
+  hours: Hodiny
+  minutes: Minúty
+  customAtLeastOne: Zadajte aspoň jednu minútu
+  customWhole: Zadajte celé hodiny a minúty
+  customAtMost: Vaša organizácia povoľuje najviac {duration}
+  neverTitle: Ponechať trezor odomknutý?
+  neverWarning: Trezor zostane odomknutý, kým ho ručne nezamknete. Kľúč, ktorý ho otvára, sa zapíše na disk tohto profilu prehliadača, kde ho môže prečítať ktokoľvek, kto má k profilu prístup.
+  neverConfirm: Ponechať odomknutý
+  timeoutAction: Akcia po vypršaní
+  actionLock: Zamknúť
+  actionLogOutNote: Po vypršaní časového limitu budete odhlásení a znova budete potrebovať heslo aplikácie
+  lockNow: Zamknúť teraz
+  changeMasterPassword: Zmeniť hlavné heslo
+  autofillOnPageLoad: Automaticky vyplniť po načítaní stránky
+  autofillOnPageLoadWarning: Napadnuté alebo nedôveryhodné weby môžu zneužiť automatické vyplnenie po načítaní stránky
+  defaultAutofill: Predvolené nastavenie automatického vypĺňania pre prihlasovacie údaje
+  defaultAutofillOnPageLoad: Automaticky vyplniť po načítaní stránky, ak je zapnuté
+  uriMatch: Predvolená detekcia zhody URI
+  uriBaseDomain: Základná doména
+  uriHost: Hostiteľ
+  uriStartsWith: Začína na
+  uriExact: Presná zhoda
+  uriRegex: Regulárny výraz
+  uriRegexNote: Regulárne výrazy sú pokročilá možnosť a môžu narušiť vyhľadávanie zhody
+  inlineSuggestions: Zobrazovať návrhy automatického vyplnenia v poliach formulárov
+  inlineCards: Zobrazovať karty ako návrhy
+  inlineIdentities: Zobrazovať identity ako návrhy
+  inlineKindsOff: Najprv zapnite Zobrazovať návrhy automatického vyplnenia v poliach formulárov.
+  vaultCards: Vždy zobrazovať karty ako návrhy automatického vyplnenia v zobrazení trezoru
+  vaultIdentities: Vždy zobrazovať identity ako návrhy automatického vyplnenia v zobrazení trezoru
+  defaultPasswordManager: Nastaviť Keepiq ako predvoleného správcu hesiel
+  defaultPasswordManagerHint: Vypne ukladanie hesiel a automatické vypĺňanie adries v prehliadači, aby jeho návrhy neprekrývali návrhy Keepiq.
+  defaultPasswordManagerManaged: Toto nastavenie prehliadača spravuje vaša organizácia alebo iné rozšírenie.
+  contextMenu: Povoliť možnosti v kontextovej ponuke
+  shortcut: Klávesová skratka pre automatické vyplnenie
+  shortcutNotSet: Nenastavené
+  shortcutChange: Zmeniť
+  shortcutFirefox: Otvorte about:addons, zvoľte ponuku s ozubeným kolesom a potom Spravovať klávesové skratky rozšírení
+  shortcutSafari: Otvorte nastavenia Safari, zvoľte Rozšírenia a potom vyberte Keepiq, ak chcete zmeniť jeho klávesovú skratku
+  websiteAccess: Prístup k webom
+  websiteAccessAll: Všetky weby
+  websiteAccessSome: Len weby, ktoré ste povolili
+  websiteAccessServer: Bez vášho servera Keepiq
+  clearClipboard: Vymazať schránku
+  clipboardSeconds:
+    1: 1 sekunda
+    n: $1 s
+  autoCopyTotp: Automaticky kopírovať TOTP
+  autoCopyTotpHint: Ak majú prihlasovacie údaje overovací kód, pri ich automatickom vyplnení sa skopíruje do schránky.
+  askToAdd: Ponúkať pridanie prihlasovacích údajov
+  askToUpdate: Ponúkať aktualizáciu existujúcich prihlasovacích údajov
+  askPasskeys: Ponúkať ukladanie a používanie prístupových kľúčov
+  excludedDomains: Vylúčené domény
+  addCurrentSite: Pridať aktuálny web
+  domain: Doména
+  addDomain: Pridať
+  domainEmpty: Zadajte doménu
+  domainUnreadable: Zadajte doménu, napríklad example.org
+  domainDuplicate: Už vylúčené
+  removeDomain: Odstrániť {domain}
+  webTitle: Keepiq na webe
+  webText: Vlastné upozornenia Keepiq, import a export a hlavné heslo sa spravujú v Keepiq v Nextcloud, v Osobných nastaveniach.
+  openKeepiq: Otvoriť Keepiq
+  lastSync: "Posledná synchronizácia: {time}"
+  lastSyncNever: "Posledná synchronizácia: nikdy"
+  syncOffline: Synchronizácia zlyhala, ste offline
+  syncFailed: Synchronizácia zlyhala, skúste to neskôr
+  importItems: Importovať položky
+  exportVault: Exportovať trezor
+  defaultItemType: Predvolený typ položky v tomto rozšírení
+  compactMode: Kompaktný režim
+  showAnimations: Zobrazovať animácie
+  quickCopy: Zobrazovať v trezore akcie rýchleho kopírovania
+  showBadgeCounter: Zobrazovať počet návrhov prihlasovacích údajov na ikone rozšírenia
+  language: Jazyk
+  languageFollows: Podľa prehliadača
+  version: Verzia {version}
+  server: Server {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Verzia Keepiq neznáma
+  help: Pomocník
+  reportBug: Nahlásiť chybu
+  contactSupport: Kontaktovať podporu
+  privacyPolicy: Zásady ochrany osobných údajov
+  webApp: Webová aplikácia Keepiq
+  rate: Ohodnotiť rozšírenie
+
+websiteAccess:
+  title: Nechajte Keepiq pracovať na weboch
+  body: Safari spúšťa Keepiq len na weboch, ktoré povolíte. Povoľte ho na všetkých weboch, aby ste mohli všade, kde sa prihlasujete, vypĺňať prihlasovacie údaje, ukladať nové a používať prístupové kľúče.
+  allow: Povoliť na všetkých weboch
+  dismiss: Teraz nie
+  steps: V Safari vyberte Safari > Nastavenia a potom Webové stránky. V zozname vyberte Keepiq a nastavte „Pri otváraní iných stránok“ na Povoliť.
+  perSite: Ak chcete povoľovať weby po jednom, kliknite na danom webe na tlačidlo Keepiq a zvoľte, že ho chcete povoliť vždy.
+  serverTitle: Keepiq sa nemôže pripojiť k {host}
+  serverBody: Safari nedovolí Keepiq pripojiť sa k vášmu serveru, preto sa trezor nemôže synchronizovať.
+  serverAllow: Povoliť {host}
+
+generator:
+  kinds: Čo vygenerovať
+  password: Heslo
+  passphrase: Heslová fráza
+  username: Používateľské meno
+  length: Dĺžka
+  lengthValue: Dĺžka v znakoch
+  uppercase: Veľké písmená (A-Z)
+  lowercase: Malé písmená (a-z)
+  digits: Číslice (0-9)
+  special: Špeciálne znaky, napríklad !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Typy znakov
+  lastClassOn: Aspoň jeden typ zostane zapnutý
+  minNumbers: Min. číslic
+  minSpecial: Min. špeciálnych znakov
+  avoidAmbiguous: Vyhnúť sa zameniteľným znakom
+  lockedByPolicy: Nastavené vašou organizáciou
+  passphraseOff: Vypnuté vašou organizáciou
+  words: Počet slov
+  separator: Oddeľovač slov
+  capitalizeWords: Veľké začiatočné písmená
+  capitalize: Veľké začiatočné písmeno
+  includeNumber: Pridať číslicu
+  usernameType: Typ
+  typeWord: Náhodné slovo
+  typePlus: E-mail s plusom
+  typeCatchall: Catch-all e-mail
+  email: E-mail
+  emailPlaceholder: meno@example.com
+  domain: Doména
+  domainPlaceholder: example.com
+  basedOn: Na základe
+  random: Náhodne
+  websiteName: Názov webu
+  noWebsite: Nebol rozpoznaný žiadny web
+  needsEmail: Zadajte e-mailovú adresu
+  needsDomain: Zadajte doménu
+  wordlistUnavailable: Zoznam slov nie je dostupný
+  regenerate: Vygenerovať znova
+  usePassword: Použiť toto heslo
+  useUsername: Použiť toto používateľské meno
+  history: História generátora
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Zatiaľ žiadne vygenerované hodnoty
+  clearHistory: Vymazať
+  clearHistoryTitle: Vymazať históriu generátora?
+  clearHistoryText: Všetky hodnoty v zozname sa z tohto prehliadača odstránia.
+  generatePasswordLink: Vygenerovať heslo
+  generatePassword: Vygenerovať heslo
+  generateUsername: Vygenerovať používateľské meno
+
+send:
+  new: Nová zásielka
+  empty: Zatiaľ žiadne zásielky
+  emptyText: Zdieľajte text alebo prihlasovacie údaje odkazom, ktorý sa sám odstráni.
+  loadFailed: Zásielky sa nepodarilo načítať
+  retry: Skúsiť znova
+  labelText: "Textová zásielka, {time}"
+  labelCredential: "Zásielka prihlasovacích údajov, {time}"
+  viewsLeft:
+    1: "Zostávajúce zobrazenia: {left} z 1"
+    n: "Zostávajúce zobrazenia: {left} z $1"
+  expires: "Vyprší {date}"
+  neverExpires: Nikdy nevyprší
+  expired: Vypršané
+  passwordBadge: Heslo
+  link: Odkaz
+  copyLink: Kopírovať odkaz
+  copyLinkOf: "Kopírovať odkaz, {name}"
+  linkGone: Odkaz už nie je dostupný
+  remove: Odstrániť
+  removeOf: "Odstrániť, {name}"
+  removeTitle: Odstrániť zásielku
+  removeConfirm: Odstrániť túto zásielku? Ktokoľvek s odkazom stratí prístup.
+  removed: Zásielka odstránená
+  contentSection: Obsah
+  optionsSection: Možnosti
+  type: Typ
+  text: Text
+  credential: Prihlasovacie údaje
+  content: Text na zdieľanie
+  maxViews: Max. zobrazení
+  maxViewsRange: "Od 1 do {max}"
+  expiry: Platnosť
+  expiry1h: 1 hodina
+  expiry1d: 1 deň
+  expiry2d: 2 dni
+  expiry3d: 3 dni
+  expiry7d: 7 dní
+  expiry30d: 30 dní
+  expiryCustom: Vlastná
+  customHours: Hodiny
+  customHoursMin: Aspoň 1 hodina
+  customHoursMax: Najviac 720 hodín (30 dní)
+  accessPassword: Prístupové heslo
+  accessPasswordHint: Voliteľné. Príjemca ho potrebuje na otvorenie zásielky.
+  create: Vytvoriť
+  protecting: Zabezpečuje sa heslom…
+  offline: Zásielky vyžadujú pripojenie k serveru Keepiq
+  prefillFailed: Tieto prihlasovacie údaje sa nedajú prečítať
+  ready: Zásielka je pripravená
+  shownOnce:
+    1: Skopírujte si odkaz hneď. Zobrazí sa iba do zatvorenia tohto okna a obsah zmizne po jednom zobrazení.
+    n: Skopírujte si odkaz hneď. Zobrazí sa iba do zatvorenia tohto okna a obsah zmizne po $1. zobrazení.
+  passwordNote: Prístupové heslo zdieľajte oddelene od odkazu. Po 5 nesprávnych pokusoch sa zásielka odstráni.
+  done: Hotovo
+
+pageFill:
+  insecure: "Upozornenie: Toto je nezabezpečená stránka HTTP a akékoľvek odoslané informácie môžu ostatní vidieť a meniť. Tieto prihlasovacie údaje boli pôvodne uložené na zabezpečenej stránke (HTTPS), {host}.\n\nNaozaj chcete tieto prihlasovacie údaje vyplniť?"
+  insecureNoHost: "Upozornenie: Toto je nezabezpečená stránka HTTP a akékoľvek odoslané informácie môžu ostatní vidieť a meniť. Tieto prihlasovacie údaje boli pôvodne uložené na zabezpečenej stránke (HTTPS).\n\nNaozaj chcete tieto prihlasovacie údaje vyplniť?"
+  cardInsecure: "Vyplniť túto kartu na nezabezpečenom webe?\n\nTento web nie je zabezpečený. Ktokoľvek v sieti môže vyplnené údaje karty prečítať."
+  crossSite: "Vyplniť aj na {hosts}?\n\nČasť tohto formulára pochádza z {hosts}, nie z {host}. Keepiq ju tam vyplní len s vaším súhlasom."
+
+contextMenu:
+  root: Keepiq
+  autofill: Vyplniť prihlasovacie údaje
+  noMatches: Žiadne prihlasovacie údaje
+  noUsernames: Žiadne používateľské mená
+  noPasswords: Žiadne heslá
+  noCodes: Žiadne overovacie kódy
+  noIdentities: Žiadne identity
+  noCards: Žiadne karty
+  addLogin: Pridať prihlasovacie údaje
+  addIdentity: Pridať identitu
+  addCard: Pridať kartu
+  openKeepiq: Otvoriť Keepiq
+  copyUsername: Kopírovať používateľské meno
+  copyPassword: Kopírovať heslo
+  copyCode: Kopírovať overovací kód
+  autofillCard: Vyplniť kartu
+  autofillIdentity: Vyplniť identitu
+  generatePassword: Vygenerovať a skopírovať heslo
+  unlock: Odomknúť trezor
+
+pageNotice:
+  label: Oznámenie Keepiq
+  noLoginForm: Keepiq na tejto stránke nenašiel žiadny prihlasovací formulár na vyplnenie.
+  noCardForm: Keepiq na tejto stránke nenašiel žiadne polia karty na vyplnenie.
+  noIdentityForm: Keepiq na tejto stránke nenašiel žiadne polia adresy ani osobných údajov na vyplnenie.
+
+toolbar:
+  locked: "{name}: zamknuté"
+  loggedOut: "{name}: odhlásené"
+  count:
+    1: "{name} – prihlasovacie údaje pre tento web: 1"
+    n: "{name} – prihlasovacie údaje pre tento web: $1"
+
+inlineList:
+  frameTitle: Prihlasovacie údaje Keepiq
+  label: Prihlasovacie údaje Keepiq pre {host}
+  row: "{name}, {username}"
+  noMatch: Žiadne prihlasovacie údaje pre {host}
+  passkeyRow: "{name}, {username}, prístupový kľúč"
+  passkeyRowNoUser: "{name}, prístupový kľúč"
+  noMatchPasskeys: Žiadne prihlasovacie údaje ani prístupové kľúče pre {host}
+  locked: Keepiq je zamknutý
+  unlock: Odomknúť
+  insecureQuestion: Vyplniť na tomto nezabezpečenom webe?
+  insecureDetail: Tento web nie je zabezpečený. Ktokoľvek v sieti môže prečítať, čo sa vyplní.
+  fill: Vyplniť
+  notVisible: Keepiq tu nemôže vypĺňať, pretože táto stránka mení spôsob svojho zobrazenia. Použite tlačidlo Keepiq na paneli nástrojov.
+  status:
+    count:
+      1: "Prihlasovacie údaje Keepiq: 1. Vyberte šípkou nadol."
+      n: "Prihlasovacie údaje Keepiq: $1. Vyberte šípkou nadol."
+    noMatch: Žiadne prihlasovacie údaje Keepiq pre {host}
+    countPasskeys:
+      1: "Prihlasovacie údaje alebo prístupové kľúče Keepiq: 1. Vyberte šípkou nadol."
+      n: "Prihlasovacie údaje a prístupové kľúče Keepiq: $1. Vyberte šípkou nadol."
+    noMatchPasskeys: Žiadne prihlasovacie údaje ani prístupové kľúče Keepiq pre {host}
+    locked: Keepiq je zamknutý. Odomknite ho šípkou nadol.
+  code:
+    frameTitle: Overovacie kódy Keepiq
+    label: Overovacie kódy Keepiq pre {host}
+    noMatch: Žiadne overovacie kódy pre {host}
+    locked: Odomknite Keepiq a zobrazte overovacie kódy
+    invalid: Neplatný tajný kľúč autentifikátora
+    status:
+      count:
+        1: 1 overovací kód Keepiq. Vyberte šípkou nadol.
+        n: "Overovacie kódy Keepiq: $1. Vyberte šípkou nadol."
+      noMatch: Žiadne overovacie kódy Keepiq pre {host}
+  card:
+    frameTitle: Karty Keepiq
+    noMatch: V Keepiq nie sú žiadne karty
+    locked: Odomknite Keepiq a zobrazte karty
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Karta, *{last4}"
+    row: "{name}, {brand} končiaca na {last4}"
+    rowNoBrand: "{name}, karta končiaca na {last4}"
+    status:
+      count:
+        1: 1 karta Keepiq. Vyberte šípkou nadol.
+        n: "Karty Keepiq: $1. Vyberte šípkou nadol."
+  identity:
+    frameTitle: Identity Keepiq
+    noMatch: V Keepiq nie sú žiadne identity
+    locked: Odomknite Keepiq a zobrazte identity
+    status:
+      count:
+        1: 1 identita Keepiq. Vyberte šípkou nadol.
+        n: "Identity Keepiq: $1. Vyberte šípkou nadol."
+  newPassword:
+    frameTitle: Silné heslo Keepiq
+    offer: Použiť silné heslo
+    locked: Odomknite Keepiq a získajte silné heslo
+    status: Použiť silné heslo. Vyberte šípkou nadol.
+
+notificationBar:
+  label: Oznámenie Keepiq
+  saveQuestion: Uložiť prihlasovacie údaje pre {host} do Keepiq?
+  updateQuestion: Aktualizovať heslo pre {name}?
+  updateQuestionUser: Aktualizovať heslo pre {name} ({username})?
+  updateQuestionHost: Aktualizovať heslo pre {name} na {host}?
+  updateQuestionUserHost: Aktualizovať heslo pre {name} ({username}) na {host}?
+  folder: Priečinok
+  noFolder: Bez priečinka
+  save: Uložiť
+  never: Pre tento web nikdy
+  update: Aktualizovať
+  close: Zavrieť
+  expand: Zobraziť možnosti
+  shortcutHint: Odpovedzte stlačením {shortcut}.
+  saving: Ukladá sa…
+  updating: Aktualizuje sa…
+  saved: Prihlasovacie údaje uložené
+  updated: Heslo aktualizované
+  notVisible: Keepiq to tu nemôže urobiť, pretože táto stránka mení spôsob svojho zobrazenia. Zatvorte túto lištu a pridajte prihlasovacie údaje tlačidlom Keepiq na paneli nástrojov.
+  errors:
+    writeLocked: Trezor je dočasne zamknutý pre zmeny. Skúste to neskôr.
+    unverified: Na zmenu hesla upravte tieto prihlasovacie údaje v okne Keepiq alebo vo webovej aplikácii.
+    viewOnly: Tieto prihlasovacie údaje s vami boli zdieľané iba na zobrazenie, preto tu heslo nemožno aktualizovať.
+    loginGone: Tieto prihlasovacie údaje už neexistujú. Uložiť ich ako nové?
+    locked: Keepiq je zamknutý. Odomknite ho tlačidlom Keepiq na paneli nástrojov a skúste to znova.
+    notResponding: Keepiq nereaguje. Skúste to znova.
+    accountChanged: Prepli ste účet, preto sa nič neuložilo.
+    keyMismatch: Kľúč Keepiq nezodpovedá vášmu trezoru. Nič sa neuložilo; informujte správcu.
+    staleSource: Originál týchto zdieľaných údajov sa zmenil. Nič sa neuložilo; skúste to znova.
+    incomplete: Okruh ľudí, s ktorými sú tieto údaje zdieľané, sa stále menil. Nič sa neuložilo; skúste to znova.
+    badCertificate: Šifrovací kľúč príjemcu sa nedá prečítať. Nič sa neuložilo.
+    keepiqOutdated: Váš server Keepiq je príliš starý. Nič sa neuložilo; požiadajte správcu o Keepiq {version} alebo novší.
+    shareScanPending: Tieto údaje čakajú na kontrolu svojho zdieľania. Nič sa neuložilo; skúste to neskôr.
+
+passkey:
+  unlockGet: Odomknite Keepiq a použite prístupový kľúč pre {rpId}
+  unlockCreate: Odomknite Keepiq a uložte prístupový kľúč pre {rpId}
+  verifyTitle: Potvrďte, že ste to vy
+  verifyPassword: Pokračujte zadaním hlavného hesla.
+  verifyPin: Pokračujte zadaním PIN-u.
+  confirm: Potvrdiť
+  signInTitle: Prihlásenie prístupovým kľúčom
+  signInText: Použite prístupový kľúč uložený v Keepiq pre {rpId}
+  row: "{name}, {userName}"
+  noPasskey: Žiadny prístupový kľúč Keepiq pre {rpId}
+  saveTitle: Uložiť prístupový kľúč
+  saveTo: Uložiť k prihlasovacím údajom
+  replaces: Nahradí prístupový kľúč pre {userName}
+  newLogin: Nové prihlasovacie údaje
+  name: Názov
+  folder: Priečinok
+  noFolder: Bez priečinka
+  saveNew: Uložiť ako nové prihlasovacie údaje
+  replaceQuestion: Nahradiť prístupový kľúč pre {userName} v {name}?
+  replace: Nahradiť
+  alreadySavedTitle: Prístupový kľúč už je uložený
+  alreadySaved: Prístupový kľúč pre tento účet už je v Keepiq uložený
+  close: Zavrieť
+  retry: Skúsiť znova
+  fallback: Použiť zariadenie alebo hardvérový kľúč
+  stalePick: Tento prístupový kľúč už vo vašom trezore nie je. Vyberte iný.
+  staleSave: K týmto prihlasovacím údajom už nemožno uložiť prístupový kľúč. Vyberte iné, alebo ho uložte ako nové prihlasovacie údaje.
+  errors:
+    conflict: Tieto prihlasovacie údaje sa počas ukladania zmenili. Nič sa neuložilo; skúste to znova.
+    partnerUpgradeRequired: "Nič sa neuložilo: Keepiq u {cloudIds} je príliš starý na ukladanie prístupových kľúčov. Požiadajte ich o aktualizáciu Keepiq, alebo uložte prístupový kľúč k iným prihlasovacím údajom."
+    partnerUpgradeRequiredUnnamed: "Nič sa neuložilo: partnerská organizácia, s ktorou sú tieto prihlasovacie údaje zdieľané, používa príliš starý Keepiq na ukladanie prístupových kľúčov. Požiadajte ju o aktualizáciu Keepiq, alebo uložte prístupový kľúč k iným prihlasovacím údajom."
+    shareScanPending: Tieto prihlasovacie údaje čakajú na dokončenie kontroly svojho zdieľania. Nič sa neuložilo; skúste to neskôr.
+
+vaultPasskey:
+  unlock: "Odomknúť odtlačkom prsta alebo tvárou"
+  unlockIntro: "Prehliadač si vyžiada odtlačok prsta, tvár alebo PIN zariadenia."
+  enrolTitle: "Nastaviť odomykanie odtlačkom prsta alebo tvárou"
+  enrolIntro: "Potvrďte hlavné heslo. Prehliadač si potom dvakrát vyžiada odtlačok prsta, tvár alebo PIN zariadenia."
+  enrolSubmit: "Nastaviť"
+  enrolDone: "Odomykanie odtlačkom prsta alebo tvárou je pre tento prehliadač nastavené."
+  close: "Zavrieť"
+  label: "Rozšírenie prehliadača Keepiq"
+  tooOld: "Odomykanie odtlačkom prsta alebo tvárou vyžaduje Chrome alebo Edge 122, alebo Firefox 150, či novší. Použite hlavné heslo."
+  unsupported: "Tento prehliadač alebo zariadenie nemôže odomknúť Keepiq odtlačkom prsta ani tvárou. Použite hlavné heslo."
+  revokeInWebApp: "Ak to chcete vypnúť, zrušte tento prístupový kľúč vo webovej aplikácii Keepiq."

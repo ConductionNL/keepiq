@@ -31,6 +31,7 @@ use DateTime;
 use OCA\Keepiq\Db\FederatedInbound;
 use OCA\Keepiq\Db\FederatedInboundMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\FederatedRemoteChangeServiceInterface;
 use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\ICrypto;
 use OCP\Share\Exceptions\ShareNotFound;
@@ -46,7 +47,7 @@ use Throwable;
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
  */
-class FederatedRemoteChangeService {
+class FederatedRemoteChangeService implements FederatedRemoteChangeServiceInterface {
 	/**
 	 * The OCM notification that a share changed.
 	 *

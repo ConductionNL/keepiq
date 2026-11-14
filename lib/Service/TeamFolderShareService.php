@@ -29,14 +29,14 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateTime;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolder;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
-use Ramsey\Uuid\Uuid;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
@@ -46,14 +46,17 @@ use Throwable;
  *   share row and its restriction; each collaborator is one of those.
  */
 class TeamFolderShareService {
+
 	/**
 	 * Constructor for TeamFolderShareService.
 	 *
 	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper (per-row reads/writes)
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param BulkGrantShareTargetMapper $bulkGrantMapper The share-target mapper keyed on the grant (cascade)
 	 * @param RecipientSecretCopyService $copies The recipient-copy service
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
+	 * @param LoggerInterface $logger Records each unjudged row a revoke that cannot wait removes
 	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 *
 	 * @return void
@@ -62,10 +65,12 @@ class TeamFolderShareService {
 	 */
 	public function __construct(
 		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private BulkGrantShareTargetMapper $bulkGrantMapper,
 		private RecipientSecretCopyService $copies,
 		private NotificationService $notificationService,
 		private IDBConnection $db,
+		private LoggerInterface $logger,
 		private ?ShareRestrictionResolver $restrictions = null,
 	) {
 	}//end __construct()
@@ -82,16 +87,23 @@ class TeamFolderShareService {
 	 * retried or duplicated chunk never double-shares.
 	 *
 	 * In the returned array, `created` is the number of fan-out shares created
-	 * (skips excluded) and `rows` describes each one.
+	 * (skips excluded), `rows` describes each one and `skipped` names every row
+	 * not created with its reason (see createFanOutShare()), so a client can tell
+	 * a pair it must fix from one that is done.
 	 *
 	 * @param TeamFolder $teamFolder The team folder being fanned out
 	 * @param array<int,array<string,mixed>> $shares Rows of sourceSecretId, targetUserId,
 	 *                                               encryptedKey, encryptedLogin,
-	 *                                               encryptedAdditionalFields
+	 *                                               encryptedAdditionalFields, encryptedTotp,
+	 *                                               encryptedPasskeys
 	 * @param array<string,bool> $subtreeSecretIds The secret ids inside the folder subtree
 	 * @param string $userId The caller (the folder owner)
 	 *
-	 * @return array{created: int, rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>}
+	 * @return array{
+	 *   created: int,
+	 *   rows: array<int,array{sourceSecretId: string, targetUserId: string, recipientSecretId: string}>,
+	 *   skipped: list<array{sourceSecretId: string, targetUserId: string, reason: string}>
+	 * }
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
@@ -101,51 +113,73 @@ class TeamFolderShareService {
 		array $subtreeSecretIds,
 		string $userId,
 	): array {
-		$createdRows = [];
-		$newRecipients = [];
-
+		$run = new FanOutRun(teamFolder: $teamFolder, subtreeSecretIds: $subtreeSecretIds, userId: $userId);
 		$this->db->beginTransaction();
 		try {
-			foreach ($shares as $row) {
-				$createdRow = $this->createFanOutShare(
-					teamFolder: $teamFolder,
-					row: $row,
-					subtreeSecretIds: $subtreeSecretIds,
-					userId: $userId
-				);
-				if ($createdRow === null) {
-					continue;
-				}
-
-				$createdRows[] = $createdRow;
-				$newRecipients[$createdRow['targetUserId']] = true;
-			}//end foreach
-
+			$outcome = $this->createFanOutShares(shares: $shares, run: $run);
 			$this->db->commit();
 		} catch (Throwable $exception) {
 			$this->db->rollBack();
 			throw $exception;
 		}//end try
 
-		// One notification per recipient per fan-out run — not per secret.
-		foreach (array_keys($newRecipients) as $recipientId) {
+		$this->notifyNewRecipients(run: $run, recipientIds: array_keys($outcome['recipients']));
+
+		return [
+			'created' => count($outcome['rows']),
+			'rows' => $outcome['rows'],
+			'skipped' => $outcome['skipped'],
+		];
+	}//end registerFanOutShares()
+
+	/**
+	 * Create the share of every submitted row, or note why not.
+	 *
+	 * @param array<int,array<string,mixed>> $shares The submitted rows
+	 * @param FanOutRun                      $run    The fan-out
+	 *
+	 * @return array{rows: list<array<string,string>>, skipped: list<array<string,string>>, recipients: array<string,bool>}
+	 */
+	private function createFanOutShares(array $shares, FanOutRun $run): array {
+		$outcome = ['rows' => [], 'skipped' => [], 'recipients' => []];
+		foreach ($shares as $row) {
+			$share = new FanOutShareRow(row: $row);
+			$created = $this->createFanOutShare(share: $share, run: $run);
+			if (is_string($created) === true) {
+				$outcome['skipped'][] = $share->skipped(reason: $created);
+				continue;
+			}
+
+			$outcome['rows'][] = $created;
+			$outcome['recipients'][$created['targetUserId']] = true;
+		}
+
+		return $outcome;
+	}//end createFanOutShares()
+
+	/**
+	 * Tell each new recipient once: one notification per recipient per
+	 * fan-out run — not per secret.
+	 *
+	 * @param FanOutRun    $run          The fan-out
+	 * @param list<string> $recipientIds The recipients who got a share
+	 *
+	 * @return void
+	 */
+	private function notifyNewRecipients(FanOutRun $run, array $recipientIds): void {
+		foreach ($recipientIds as $recipientId) {
 			$this->notificationService->notify(
 				subject: 'team_folder_shared',
 				recipientId: (string)$recipientId,
 				params: [
-					'teamFolderId' => $teamFolder->getId(),
-					'sharedBy' => $userId,
+					'teamFolderId' => $run->teamFolder->getId(),
+					'sharedBy' => $run->userId,
 				],
 				objectType: 'team_folder',
-				objectId: $teamFolder->getId(),
+				objectId: $run->teamFolder->getId(),
 			);
 		}
-
-		return [
-			'created' => count($createdRows),
-			'rows' => $createdRows,
-		];
-	}//end registerFanOutShares()
+	}//end notifyNewRecipients()
 
 	/**
 	 * The (secret × recipient) pairs that still have no ShareTarget, so
@@ -206,187 +240,295 @@ class TeamFolderShareService {
 	}//end confirmers()
 
 	/**
+	 * Refuse, before anything is written, a revoke that would reach a row the
+	 * pending quarantine scan cannot judge: of a whole team folder, or of one
+	 * user's rows in it. A row it quarantines is not refused here; the revoke
+	 * keeps it with its copy for an administrator to judge.
+	 *
+	 * @param string      $teamFolderId The TeamFolder UUID
+	 * @param string|null $targetUserId The user losing access, or null for every member
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function assertRevocable(string $teamFolderId, ?string $targetUserId = null): void {
+		$rows = $this->folderRows(teamFolderId: $teamFolderId, targetUserId: $targetUserId);
+		foreach ($rows->all() as $row) {
+			if ($rows->verdict(row: $row) === ShareQuarantineScanner::HELD_UNJUDGED) {
+				throw $this->scanPending();
+			}
+		}
+	}//end assertRevocable()
+
+	/**
 	 * Revoke every derived ShareTarget of a team folder (and the
-	 * recipient Secret copies they point at).
+	 * recipient Secret copies they point at), for its owner unsharing it. A
+	 * row the pending quarantine scan quarantines is kept with its copy, and
+	 * one it cannot judge refuses the revoke.
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 *
 	 * @return int Rows revoked
 	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
+	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function revokeForTeamFolder(string $teamFolderId): int {
-		$revoked = 0;
-		foreach ($this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolderId) as $row) {
-			$this->revokeRow(row: $row);
-			++$revoked;
-		}
-
-		return $revoked;
+		return $this->revokeOrRefuse(rows: $this->folderRows(teamFolderId: $teamFolderId, targetUserId: null));
 	}//end revokeForTeamFolder()
 
 	/**
-	 * Revoke one user's derived ShareTargets for one team folder,
-	 * deleting their recipient Secret copies too.
+	 * Revoke one user's derived ShareTargets for one team folder, deleting
+	 * their recipient Secret copies too, for an owner or manager removing a
+	 * member. A row the pending quarantine scan quarantines is kept with its
+	 * copy, and one it cannot judge refuses the revoke.
 	 *
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param string $targetUserId The recipient losing access
 	 *
 	 * @return int Rows revoked
 	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
+	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function revokeForMember(string $teamFolderId, string $targetUserId): int {
-		$revoked = 0;
-		foreach ($this->bulkGrantMapper->findByTeamFolderAndTargetUser(
-			teamFolderId: $teamFolderId,
-			targetUserId: $targetUserId
-		) as $row) {
-			$this->revokeRow(row: $row);
-			++$revoked;
-		}
-
-		return $revoked;
+		return $this->revokeOrRefuse(rows: $this->folderRows(teamFolderId: $teamFolderId, targetUserId: $targetUserId));
 	}//end revokeForMember()
 
 	/**
-	 * Revoke every TEAM-FOLDER-derived share held by a user. Direct
-	 * (non-team) shares are left untouched.
+	 * Revoke one user's derived ShareTargets for one team folder where the
+	 * revoke cannot be refused: they left a group, left the folder
+	 * themselves, or their membership ended. As a group leave does, a row the
+	 * pending quarantine scan quarantines is kept with its copy, and one it
+	 * cannot judge is removed while its copy is kept.
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $targetUserId The recipient losing access
+	 *
+	 * @return int Rows revoked
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#3.2
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function releaseForMember(string $teamFolderId, string $targetUserId): int {
+		return $this->release(rows: $this->folderRows(teamFolderId: $teamFolderId, targetUserId: $targetUserId));
+	}//end releaseForMember()
+
+	/**
+	 * Revoke every TEAM-FOLDER-derived share held by a user, for offboarding,
+	 * which cannot be refused. Direct (non-team) shares are left untouched.
+	 * Held-back rows are handled as releaseForMember() handles them.
 	 *
 	 * @param string $targetUserId The departing user
 	 *
 	 * @return int Number of derived shares revoked
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function revokeTeamSharesForUser(string $targetUserId): int {
+		$rows = $this->rowJudge->rowsOfTarget(targetUserId: $targetUserId);
+
+		return $this->release(
+			rows: $this->rowJudge->judgeRows(
+				rows: array_filter($rows->all(), static fn (ShareTarget $row): bool => (string)$row->getTeamFolderId() !== '')
+			)
+		);
+	}//end revokeTeamSharesForUser()
+
+	/**
+	 * The live rows of a team folder, or of one user in it, judged when asked.
+	 *
+	 * @param string      $teamFolderId The TeamFolder UUID
+	 * @param string|null $targetUserId The user, or null for every member
+	 *
+	 * @return JudgedShareRows
+	 */
+	private function folderRows(string $teamFolderId, ?string $targetUserId): JudgedShareRows {
+		if ($targetUserId === null) {
+			return $this->rowJudge->judgeRows(rows: $this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolderId));
+		}
+
+		return $this->rowJudge->judgeRows(
+			rows: $this->bulkGrantMapper->findByTeamFolderAndTargetUser(teamFolderId: $teamFolderId, targetUserId: $targetUserId)
+		);
+	}//end folderRows()
+
+	/**
+	 * Revoke rows where the caller can be refused: every row is judged before
+	 * anything is written, a row the scan cannot judge refuses the request,
+	 * a row it quarantines is kept with its copy, and every other row goes
+	 * with its copy.
+	 *
+	 * @param JudgedShareRows $rows The rows
+	 *
+	 * @return int Rows revoked
+	 *
+	 * @throws ShareScanPendingException When the scan cannot judge one of the rows
+	 */
+	private function revokeOrRefuse(JudgedShareRows $rows): int {
+		$trusted = [];
+		foreach ($rows->all() as $row) {
+			$held = $rows->verdict(row: $row);
+			if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+				throw $this->scanPending();
+			}
+
+			if ($held === null) {
+				$trusted[] = $row;
+			}
+		}
+
+		foreach ($trusted as $row) {
+			$this->copies->deleteByShare(share: $row);
+			$this->shareTargetMapper->delete($row);
+		}
+
+		return count($trusted);
+	}//end revokeOrRefuse()
+
+	/**
+	 * Revoke rows where the caller cannot be refused: a row the scan
+	 * quarantines is kept with its copy, one it cannot judge is removed, its
+	 * copy kept and the row logged as a warning, and every other row goes
+	 * with its copy.
+	 *
+	 * @param JudgedShareRows $rows The rows
+	 *
+	 * @return int Rows revoked
+	 */
+	private function release(JudgedShareRows $rows): int {
 		$revoked = 0;
-		foreach ($this->shareTargetMapper->findByTargetUser(targetUserId: $targetUserId) as $row) {
-			if ($row->getTeamFolderId() === null || $row->getTeamFolderId() === '') {
+		foreach ($rows->all() as $row) {
+			$held = $rows->verdict(row: $row);
+			if ($held === ShareQuarantineScanner::HELD_QUARANTINED) {
 				continue;
 			}
 
-			$this->revokeRow(row: $row);
+			if ($held === null) {
+				$this->copies->deleteByShare(share: $row);
+			}
+
+			if ($held === ShareQuarantineScanner::HELD_UNJUDGED) {
+				// The row is the only link from the kept copy to its source:
+				// record it, so an administrator can still find the copy.
+				$this->logger->warning(
+					'Removed a team-folder share row the pending quarantine scan cannot judge and kept its copy',
+					[
+						'app' => 'keepiq',
+						'shareId' => $row->getId(),
+						'sourceSecretId' => $row->getSourceSecretId(),
+						'targetUserId' => $row->getTargetUserId(),
+						'secretId' => $row->getSecretId(),
+						'teamFolderId' => $row->getTeamFolderId(),
+					]
+				);
+			}
+
+			$this->shareTargetMapper->delete($row);
 			++$revoked;
 		}
 
 		return $revoked;
-	}//end revokeTeamSharesForUser()
+	}//end release()
+
+	/**
+	 * The refusal of a team-folder revoke that reaches a row the pending scan cannot judge.
+	 *
+	 * @return ShareScanPendingException
+	 */
+	private function scanPending(): ShareScanPendingException {
+		return $this->rowJudge->scanPending(
+			refusal: 'A share of this team folder waits for the share quarantine scan, so it cannot be revoked yet'
+		);
+	}//end scanPending()
 
 	/**
 	 * Materialise one fan-out share row, or report a skip.
 	 *
-	 * A row is skipped (null) when it is incomplete, when the source secret
-	 * is outside this folder's subtree, when the target is the folder owner,
-	 * when the share already exists, or when the recipient has no active
-	 * encryption suite.
+	 * A row is skipped, with the reason returned, when it is incomplete
+	 * (`incomplete`), when the source secret is outside this folder's subtree
+	 * or the target is the folder owner (`not_in_folder`), when the share
+	 * already exists (`exists`), or when no copy was minted (the reasons of
+	 * RecipientSecretCopyService::createCopy()).
 	 *
-	 * @param TeamFolder $teamFolder The team folder being fanned out
-	 * @param array<string,mixed> $row One {sourceSecretId, targetUserId, encryptedKey, ...} row
-	 * @param array<string,bool> $subtreeSecretIds The secret ids inside the folder subtree
-	 * @param string $userId The caller (the folder owner)
+	 * @param FanOutShareRow $share The submitted row
+	 * @param FanOutRun      $run   The fan-out
 	 *
-	 * @return array{sourceSecretId:string,targetUserId:string,recipientSecretId:string}|null
+	 * @return array{sourceSecretId:string,targetUserId:string,recipientSecretId:string}|string The created row, or the skip reason
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
 	 */
-	private function createFanOutShare(
-		TeamFolder $teamFolder,
-		array $row,
-		array $subtreeSecretIds,
-		string $userId,
-	): ?array {
-		$sourceSecretId = (string)($row['sourceSecretId'] ?? '');
-		$targetUserId = (string)($row['targetUserId'] ?? '');
-		$encryptedKey = (string)($row['encryptedKey'] ?? '');
-
-		if ($sourceSecretId === '' || $targetUserId === '' || $encryptedKey === '') {
-			return null;
+	private function createFanOutShare(FanOutShareRow $share, FanOutRun $run): array|string {
+		$refusal = $this->fanOutRefusal(share: $share, run: $run);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
-		// Only secrets inside this team folder's subtree may carry
-		// its provenance, and never a copy for the owner.
-		if (isset($subtreeSecretIds[$sourceSecretId]) === false
-			|| $targetUserId === $teamFolder->getOwnerId()
-		) {
-			return null;
+		$copy = $this->copies->createCopy(sourceSecretId: $share->sourceSecretId, ciphertext: $share->ciphertext());
+		if (is_string($copy) === true) {
+			// Skipped, so missingPairs() still lists the pair.
+			return $copy;
 		}
 
-		try {
-			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $sourceSecretId,
-				targetUserId: $targetUserId
-			);
-			return null;
-		} catch (DoesNotExistException) {
-			// No existing share — create below.
-		}
+		$persisted = $this->shareTargetMapper->insert($run->shareTarget(share: $share, copyId: $copy->getId()));
+		// Inside the fan-out's transaction, so a restricted membership never
+		// commits a full copy.
+		$this->restrictions?->resolveMinted(target: $persisted);
 
-		$copy = $this->copies->create(
-			sourceSecretId: $sourceSecretId,
-			targetUserId: $targetUserId,
-			encryptedKey: $encryptedKey,
-			encryptedLogin: $this->nullableString(value: $row['encryptedLogin'] ?? null),
-			encryptedExtras: $this->nullableString(value: $row['encryptedAdditionalFields'] ?? null),
-		);
-		if ($copy === null) {
-			// Recipient without an active suite — skipped silently.
-			return null;
-		}
-
-		$entity = new ShareTarget();
-		$entity->setId(Uuid::uuid4()->toString());
-		$entity->setSourceSecretId($sourceSecretId);
-		$entity->setTargetUserId($targetUserId);
-		$entity->setSecretId($copy->getId());
-		$entity->setTeamFolderId($teamFolder->getId());
-		$entity->setCreatedBy($userId);
-		$entity->setCreatedAt(new DateTime());
-		$persisted = $this->shareTargetMapper->insert($entity);
-		$this->restrictions?->resolveTarget(target: $persisted);
-
-		return [
-			'sourceSecretId' => $sourceSecretId,
-			'targetUserId' => $targetUserId,
-			'recipientSecretId' => $copy->getId(),
-		];
+		return $share->created(copyId: $copy->getId());
 	}//end createFanOutShare()
 
 	/**
-	 * Revoke one ShareTarget row: the recipient's Secret copy goes first,
-	 * then the provenance row itself.
+	 * Why a row gets no share before any copy is made: it is incomplete;
+	 * its secret is outside this team folder's subtree, or it is a copy for
+	 * the owner (only secrets inside the subtree may carry its provenance,
+	 * and never a copy for the owner); or the share already exists.
 	 *
-	 * @param ShareTarget $row The share-target row
+	 * @param FanOutShareRow $share The submitted row
+	 * @param FanOutRun      $run   The fan-out
 	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @return string|null The skip reason, or null to create the share
 	 */
-	private function revokeRow(ShareTarget $row): void {
-		$this->copies->deleteById(secretId: $row->getSecretId());
-		$this->shareTargetMapper->delete($row);
-	}//end revokeRow()
+	private function fanOutRefusal(FanOutShareRow $share, FanOutRun $run): ?string {
+		if ($share->isComplete() === false) {
+			return 'incomplete';
+		}
+
+		if ($run->covers(share: $share) === false) {
+			return 'not_in_folder';
+		}
+
+		if ($this->shareExists(share: $share) === true) {
+			return 'exists';
+		}
+
+		return null;
+	}//end fanOutRefusal()
 
 	/**
-	 * Normalize an optional string value: empty becomes null.
+	 * Whether the source secret is already shared with the recipient.
 	 *
-	 * @param mixed $value The candidate value
+	 * @param FanOutShareRow $share The submitted row
 	 *
-	 * @return string|null
-	 *
-	 * @spec exclude Value normalisation helper with no spec behaviour of its own.
+	 * @return bool
 	 */
-	private function nullableString(mixed $value): ?string {
-		if ($value === null) {
-			return null;
+	private function shareExists(FanOutShareRow $share): bool {
+		try {
+			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $share->sourceSecretId,
+				targetUserId: $share->targetUserId
+			);
+			return true;
+		} catch (DoesNotExistException) {
+			return false;
 		}
-
-		$string = (string)$value;
-
-		if ($string === '') {
-			return null;
-		}
-
-		return $string;
-	}//end nullableString()
+	}//end shareExists()
 }//end class

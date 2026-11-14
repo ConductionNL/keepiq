@@ -29,8 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
 use OCA\Keepiq\Service\SettingsService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -46,7 +46,7 @@ class PurgeAuditLogJob extends TimedJob {
 	 * Constructor for PurgeAuditLogJob.
 	 *
 	 * @param ITimeFactory $time The time factory
-	 * @param AuditService $auditService The audit service
+	 * @param AuditServiceInterface $auditService The audit service
 	 * @param IAppConfig $appConfig The app config
 	 * @param LoggerInterface $logger The logger
 	 *
@@ -54,7 +54,7 @@ class PurgeAuditLogJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private AuditService $auditService,
+		private AuditServiceInterface $auditService,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 	) {
@@ -76,7 +76,7 @@ class PurgeAuditLogJob extends TimedJob {
 	 */
 	protected function run($argument): void {
 		$retentionDays = $this->appConfig->getValueInt(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'audit_retention_days',
 			SettingsService::AUDIT_RETENTION_DEFAULT
 		);

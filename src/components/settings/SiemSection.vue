@@ -261,6 +261,8 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
+import { busyRequest } from '../../mixins/busyRequest.js'
+import { dateTimeOrDash } from '../../utils/dateTime.js'
 import {
 	connectorOf,
 	fieldsFor,
@@ -324,6 +326,8 @@ export default {
 		NcSelect,
 		NcTextField,
 	},
+
+	mixins: [busyRequest],
 
 	data() {
 		return {
@@ -515,36 +519,48 @@ export default {
 		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		async onSave() {
-			this.busy = true
-			this.error = null
-			try {
+			await this.runBusy(async () => {
 				const { type, ...payload } = requestBody(this.form)
 				if (this.editingId) {
-					const response = await axios.put(
-						generateUrl(
-							`/apps/keepiq/api/v1/siem/sinks/${this.editingId}`,
-						),
-						payload,
-					)
-					this.sinks = this.sinks.map((s) =>
-						s.id === this.editingId ? response.data : s,
-					)
+					await this.updateSink(payload)
 				} else {
-					const response = await axios.post(
-						generateUrl('/apps/keepiq/api/v1/siem/sinks'),
-						{
-							...payload,
-							type,
-						},
-					)
-					this.sinks = [response.data, ...this.sinks]
+					await this.addSink({ ...payload, type })
 				}
 				this.formOpen = false
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
+		},
+
+		/**
+		 * Save the sink being edited and swap its row in place. The type of
+		 * a stored sink never changes, so it is not sent.
+		 *
+		 * @param {object} payload The request body without the type.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
+		 */
+		async updateSink(payload) {
+			const response = await axios.put(
+				generateUrl(`/apps/keepiq/api/v1/siem/sinks/${this.editingId}`),
+				payload,
+			)
+			this.sinks = this.sinks.map((s) =>
+				s.id === this.editingId ? response.data : s,
+			)
+		},
+
+		/**
+		 * Create a sink and list it first.
+		 *
+		 * @param {object} body The request body, type included.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
+		 */
+		async addSink(body) {
+			const response = await axios.post(
+				generateUrl('/apps/keepiq/api/v1/siem/sinks'),
+				body,
+			)
+			this.sinks = [response.data, ...this.sinks]
 		},
 
 		/**
@@ -555,10 +571,8 @@ export default {
 		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-forwarded-payload-carries-no-secret-material
 		 */
 		async onTest(sink) {
-			this.busy = true
-			this.error = null
-			this.notice = null
-			try {
+			await this.runBusy(async () => {
+				this.notice = null
 				const response = await axios.post(
 					generateUrl(`/apps/keepiq/api/v1/siem/sinks/${sink.id}/test`),
 				)
@@ -577,11 +591,7 @@ export default {
 						},
 					)
 				}
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
 		},
 
 		/**
@@ -592,18 +602,12 @@ export default {
 		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		async onDelete(sink) {
-			this.busy = true
-			this.error = null
-			try {
+			await this.runBusy(async () => {
 				await axios.delete(
 					generateUrl(`/apps/keepiq/api/v1/siem/sinks/${sink.id}`),
 				)
 				this.sinks = this.sinks.filter((s) => s.id !== sink.id)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
 		},
 
 		/**
@@ -641,20 +645,8 @@ export default {
 			return 'siem__muted'
 		},
 
-		/**
-		 * Render an ISO date briefly.
-		 *
-		 * @param {string|null} iso The ISO timestamp.
-		 * @return {string}
-		 *
-		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale string.
-		 */
-		formatDate(iso) {
-			if (!iso) {
-				return '—'
-			}
-			return new Date(iso).toLocaleString()
-		},
+		/** The shown timestamp (see `dateTimeOrDash` in utils/dateTime.js). */
+		formatDate: dateTimeOrDash,
 	},
 }
 </script>

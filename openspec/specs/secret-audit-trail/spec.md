@@ -56,7 +56,7 @@ Because export runs client-side, these entries cover the supported, client-repor
 - **THEN** an audit entry MUST be recorded with event type `vault.account_deleted` carrying the per-entity deletion counts
 
 ### Requirement: No Secret Material in Audit Entries
-Audit entries MUST NEVER contain secret values, login fields, additional fields, plaintext passwords, or ciphertext. Entry metadata MUST be validated against a per-event-type whitelist of keys; unknown keys MUST be dropped, and any attempt to record a forbidden key (`key`, `login`, `password`, `value`, `additionalFields`, `ciphertext`, `payload`) MUST be rejected with an error. A secret's `name` and `url` (plaintext metadata per the secrets spec) are the only object-identifying strings permitted.
+Audit entries MUST NEVER contain secret values, login fields, additional fields, plaintext passwords, or ciphertext. Entry metadata MUST be validated against a per-event-type whitelist of keys; unknown keys MUST be dropped, and any attempt to record a forbidden key (`key`, `login`, `password`, `value`, `additionalFields`, `totp`, `passkeys`, `ciphertext`, `payload`) MUST be rejected with an error. A secret's `name` and `url` (plaintext metadata per the secrets spec) are the only object-identifying strings permitted. Naming a field is not secret material: `secret.updated` lists the value fields an update changed by name in `changedFields`, `totp` and `passkeys` included, so a changed second factor is never an empty update.
 
 #### Scenario: Forbidden metadata rejected
 @e2e exclude Structural guarantee enforced in AuditService::record — a server-side validation/exception path with no DOM surface; covered by PHPUnit (AuditService forbidden-key tests, one per forbidden key + nested).

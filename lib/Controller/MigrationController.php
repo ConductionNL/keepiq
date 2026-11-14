@@ -23,18 +23,20 @@ namespace OCA\Keepiq\Controller;
 
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\FieldsNotReencryptedException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
-use OCA\Keepiq\Service\EncryptionSuiteService;
-use OCA\Keepiq\Service\MigrationService;
-use OCA\Keepiq\Service\MigrationWorkService;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\EmergencyEnvelopeInvalidationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\MigrationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\MigrationWorkServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -73,23 +75,23 @@ class MigrationController extends OCSController {
 	 * Constructor for MigrationController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param MigrationService $migrationService The migration service
-	 * @param MigrationWorkService $workService The per-record migration work service
-	 * @param EncryptionSuiteService $suiteService The suite service (ownership check)
-	 * @param EmergencyEnvelopeInvalidationService $envelopeService The emergency-envelope re-point service
+	 * @param MigrationServiceInterface $migrationService The migration service
+	 * @param MigrationWorkServiceInterface $workService The per-record migration work service
+	 * @param EncryptionSuiteServiceInterface $suiteService The suite service (ownership check)
+	 * @param EmergencyEnvelopeInvalidationServiceInterface $envelopeService The emergency-envelope re-point service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private MigrationService $migrationService,
-		private MigrationWorkService $workService,
-		private EncryptionSuiteService $suiteService,
-		private EmergencyEnvelopeInvalidationService $envelopeService,
+		private MigrationServiceInterface $migrationService,
+		private MigrationWorkServiceInterface $workService,
+		private EncryptionSuiteServiceInterface $suiteService,
+		private EmergencyEnvelopeInvalidationServiceInterface $envelopeService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -122,7 +124,7 @@ class MigrationController extends OCSController {
 	#[VaultKeyProofRequired(
 		binds: ['id', 'hasErrors', 'acceptUnrecoverable'],
 		subject: 'migrationOldSuite',
-		purpose: VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION
+		purpose: VaultKeyProofServiceInterface::PURPOSE_COMPLETE_MIGRATION
 	)]
 	/**
 	 * Complete a migration.
@@ -189,15 +191,9 @@ class MigrationController extends OCSController {
 			// getWork and all three re-encryption endpoints return 404 for the
 			// same condition. A client could not tell "no such migration" from
 			// "malformed request" on the one endpoint where it matters most.
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_NOT_FOUND);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}//end try
 	}//end complete()
 
@@ -225,7 +221,7 @@ class MigrationController extends OCSController {
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['id'], subject: 'migrationNewSuite', purpose: VaultKeyProofService::PURPOSE_ABORT_MIGRATION)]
+	#[VaultKeyProofRequired(binds: ['id'], subject: 'migrationNewSuite', purpose: VaultKeyProofServiceInterface::PURPOSE_ABORT_MIGRATION)]
 	public function abort(string $id): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -279,28 +275,22 @@ class MigrationController extends OCSController {
 	 */
 	#[NoAdminRequired]
 	public function getWork(string $id, int $limit = 25, int $offset = 0): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		$owned = $this->requireGuardedMigration(id: $id);
+		if ($owned instanceof JSONResponse) {
+			return $owned;
 		}
 
-		$userId = $user->getUID();
-
 		try {
-			$migration = $this->requireOwnMigration(migrationId: $id, userId: $userId);
-
 			return new JSONResponse(
 				data: $this->workService->listWork(
-					migration: $migration,
-					ownerId: $userId,
+					migration: $owned->migration,
+					ownerId: $owned->userId,
 					limit: $limit,
 					offset: $offset
 				)
 			);
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		} catch (NotFoundException | ForbiddenException $e) {
+			return $this->refusal(exception: $e);
 		}
 	}//end getWork()
 
@@ -318,6 +308,8 @@ class MigrationController extends OCSController {
 	 * @param string|null $login The re-encrypted login ciphertext
 	 * @param string|null $additionalFields The re-encrypted additional-fields ciphertext
 	 * @param string|null $error A per-record failure to record instead
+	 * @param string|null $totp The re-encrypted TOTP ciphertext
+	 * @param string|null $passkeys The re-encrypted passkeys ciphertext
 	 *
 	 * @NoAdminRequired
 	 *
@@ -333,46 +325,27 @@ class MigrationController extends OCSController {
 		?string $login = null,
 		?string $additionalFields = null,
 		?string $error = null,
+		?string $totp = null,
+		?string $passkeys = null,
 	): JSONResponse {
-		$userId = $this->uid();
-		if ($userId === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		$owned = $this->requireGuardedMigration(id: $id);
+		if ($owned instanceof JSONResponse) {
+			return $owned;
 		}
 
-		try {
-			$migration = $this->requireOwnMigration(migrationId: $id, userId: $userId);
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		}
+		$fields = new ReEncryptedFields(
+			key: $key,
+			login: $login,
+			additionalFields: $additionalFields,
+			totp: $totp,
+			passkeys: $passkeys
+		);
+
+		$outcome = new RecordOutcome(owned: $owned, store: 'secrets', recordId: $secretId, error: $error);
 
 		return $this->commitRecord(
-			migration: $migration,
-			userId: $userId,
-			store: 'secrets',
-			recordId: $secretId,
-			error: $error,
-			commit: function ($migration, $userId) use ($secretId, $key, $login, $additionalFields) {
-				if ($key === null) {
-					throw new ForbiddenException(message: 'A re-encrypted key ciphertext is required');
-				}
-
-				$secret = $this->workService->commitSecret(
-					migration: $migration,
-					ownerId: $userId,
-					secretId: $secretId,
-					key: $key,
-					login: $login,
-					additionalFields: $additionalFields
-				);
-
-				return [
-					'id' => $secret->getId(),
-					'encryptionSuiteId' => $secret->getEncryptionSuiteId(),
-					'possiblyCompromisedAt' => $secret->getPossiblyCompromisedAt()?->format('c'),
-				];
-			}
+			outcome: $outcome,
+			commit: fn (): array => $this->committedSecret(outcome: $outcome, fields: $fields)
 		);
 	}//end reEncryptSecret()
 
@@ -385,6 +358,8 @@ class MigrationController extends OCSController {
 	 * @param string|null $login The re-encrypted login ciphertext
 	 * @param string|null $additionalFields The re-encrypted additional-fields ciphertext
 	 * @param string|null $error A per-record failure to record instead
+	 * @param string|null $totp The re-encrypted TOTP ciphertext
+	 * @param string|null $passkeys The re-encrypted passkeys ciphertext
 	 *
 	 * @NoAdminRequired
 	 *
@@ -400,46 +375,27 @@ class MigrationController extends OCSController {
 		?string $login = null,
 		?string $additionalFields = null,
 		?string $error = null,
+		?string $totp = null,
+		?string $passkeys = null,
 	): JSONResponse {
-		$userId = $this->uid();
-		if ($userId === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		$owned = $this->requireGuardedMigration(id: $id);
+		if ($owned instanceof JSONResponse) {
+			return $owned;
 		}
 
-		try {
-			$migration = $this->requireOwnMigration(migrationId: $id, userId: $userId);
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		}
+		$fields = new ReEncryptedFields(
+			key: $key,
+			login: $login,
+			additionalFields: $additionalFields,
+			totp: $totp,
+			passkeys: $passkeys
+		);
+
+		$outcome = new RecordOutcome(owned: $owned, store: 'versions', recordId: $versionId, error: $error);
 
 		return $this->commitRecord(
-			migration: $migration,
-			userId: $userId,
-			store: 'versions',
-			recordId: $versionId,
-			error: $error,
-			commit: function ($migration, $userId) use ($versionId, $key, $login, $additionalFields) {
-				if ($key === null) {
-					throw new ForbiddenException(message: 'A re-encrypted key ciphertext is required');
-				}
-
-				$version = $this->workService->commitVersion(
-					migration: $migration,
-					ownerId: $userId,
-					versionId: $versionId,
-					key: $key,
-					login: $login,
-					additionalFields: $additionalFields
-				);
-
-				return [
-					'id' => $version->getId(),
-					'secretId' => $version->getSecretId(),
-					'encryptionSuiteId' => $version->getEncryptionSuiteId(),
-				];
-			}
+			outcome: $outcome,
+			commit: fn (): array => $this->committedVersion(outcome: $outcome, fields: $fields)
 		);
 	}//end reEncryptVersion()
 
@@ -464,43 +420,16 @@ class MigrationController extends OCSController {
 		?string $wrappedFileKey = null,
 		?string $error = null,
 	): JSONResponse {
-		$userId = $this->uid();
-		if ($userId === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		$owned = $this->requireGuardedMigration(id: $id);
+		if ($owned instanceof JSONResponse) {
+			return $owned;
 		}
 
-		try {
-			$migration = $this->requireOwnMigration(migrationId: $id, userId: $userId);
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		}
+		$outcome = new RecordOutcome(owned: $owned, store: 'attachmentGrants', recordId: $grantId, error: $error);
 
 		return $this->commitRecord(
-			migration: $migration,
-			userId: $userId,
-			store: 'attachmentGrants',
-			recordId: $grantId,
-			error: $error,
-			commit: function ($migration, $userId) use ($grantId, $wrappedFileKey) {
-				if ($wrappedFileKey === null) {
-					throw new ForbiddenException(message: 'A re-wrapped file key is required');
-				}
-
-				$grant = $this->workService->commitAttachmentGrant(
-					migration: $migration,
-					ownerId: $userId,
-					grantId: $grantId,
-					wrappedFileKey: $wrappedFileKey
-				);
-
-				return [
-					'id' => $grant->getId(),
-					'secretId' => $grant->getSecretId(),
-					'encryptionSuiteId' => $grant->getEncryptionSuiteId(),
-				];
-			}
+			outcome: $outcome,
+			commit: fn (): array => $this->committedGrant(outcome: $outcome, wrappedFileKey: $wrappedFileKey)
 		);
 	}//end reEncryptAttachmentGrant()
 
@@ -539,7 +468,7 @@ class MigrationController extends OCSController {
 	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(purpose: VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE, binds: self::ENVELOPE_BINDS, subject: 'migrationNewSuite')]
+	#[VaultKeyProofRequired(purpose: VaultKeyProofServiceInterface::PURPOSE_EMERGENCY_RE_ENVELOPE, binds: self::ENVELOPE_BINDS, subject: 'migrationNewSuite')]
 	public function reEnvelopeEmergencyContact(
 		string $id,
 		string $contactId,
@@ -605,6 +534,160 @@ class MigrationController extends OCSController {
 	}//end uid()
 
 	/**
+	 * The migration behind a per-record endpoint, once the acting user is
+	 * signed in and proven to own it.
+	 *
+	 * The ownership guard runs here, before anything is read or written, and
+	 * deliberately NOT inside commitRecord: each endpoint calls this first and
+	 * returns its refusal itself, so the authorization stays one visible call
+	 * away from the endpoint it protects.
+	 *
+	 * @param string $id The migration ID
+	 *
+	 * @return OwnedMigration|JSONResponse The guarded migration, or the 401/403/404 refusal
+	 *
+	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+	 */
+	private function requireGuardedMigration(string $id): OwnedMigration|JSONResponse {
+		$userId = $this->uid();
+		if ($userId === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$migration = $this->requireOwnMigration(migrationId: $id, userId: $userId);
+		} catch (NotFoundException | ForbiddenException $e) {
+			return $this->refusal(exception: $e);
+		}
+
+		return new OwnedMigration(migration: $migration, userId: $userId);
+	}//end requireGuardedMigration()
+
+	/**
+	 * The 404 or 403 response for a missing or refused record.
+	 *
+	 * @param NotFoundException|ForbiddenException $exception The refusal
+	 *
+	 * @return JSONResponse
+	 */
+	private function refusal(NotFoundException|ForbiddenException $exception): JSONResponse {
+		$status = Http::STATUS_FORBIDDEN;
+		if ($exception instanceof NotFoundException) {
+			$status = Http::STATUS_NOT_FOUND;
+		}
+
+		return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: $status);
+	}//end refusal()
+
+	/**
+	 * Commit one re-encrypted secret and answer with its identifiers.
+	 *
+	 * @param RecordOutcome $outcome The record being committed
+	 * @param ReEncryptedFields $fields The re-encrypted ciphertexts
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws ForbiddenException When the key ciphertext is missing
+	 */
+	private function committedSecret(RecordOutcome $outcome, ReEncryptedFields $fields): array {
+		$this->requireKey(fields: $fields);
+
+		$secret = $this->workService->commitSecret(
+			migration: $outcome->owned->migration,
+			ownerId: $outcome->owned->userId,
+			secretId: $outcome->recordId,
+			key: $fields->key,
+			login: $fields->login,
+			additionalFields: $fields->additionalFields,
+			totp: $fields->totp,
+			passkeys: $fields->passkeys
+		);
+
+		return [
+			'id' => $secret->getId(),
+			'encryptionSuiteId' => $secret->getEncryptionSuiteId(),
+			'possiblyCompromisedAt' => $secret->getPossiblyCompromisedAt()?->format('c'),
+		];
+	}//end committedSecret()
+
+	/**
+	 * Commit one re-encrypted secret version and answer with its identifiers.
+	 *
+	 * @param RecordOutcome $outcome The record being committed
+	 * @param ReEncryptedFields $fields The re-encrypted ciphertexts
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws ForbiddenException When the key ciphertext is missing
+	 */
+	private function committedVersion(RecordOutcome $outcome, ReEncryptedFields $fields): array {
+		$this->requireKey(fields: $fields);
+
+		$version = $this->workService->commitVersion(
+			migration: $outcome->owned->migration,
+			ownerId: $outcome->owned->userId,
+			versionId: $outcome->recordId,
+			key: $fields->key,
+			login: $fields->login,
+			additionalFields: $fields->additionalFields,
+			totp: $fields->totp,
+			passkeys: $fields->passkeys
+		);
+
+		return [
+			'id' => $version->getId(),
+			'secretId' => $version->getSecretId(),
+			'encryptionSuiteId' => $version->getEncryptionSuiteId(),
+		];
+	}//end committedVersion()
+
+	/**
+	 * Refuse a secret or version commit that carries no key ciphertext.
+	 *
+	 * @param ReEncryptedFields $fields The re-encrypted ciphertexts
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenException When the key ciphertext is missing
+	 *
+	 * @psalm-assert !null $fields->key
+	 */
+	private function requireKey(ReEncryptedFields $fields): void {
+		if ($fields->key === null) {
+			throw new ForbiddenException(message: 'A re-encrypted key ciphertext is required');
+		}
+	}//end requireKey()
+
+	/**
+	 * Commit one re-wrapped attachment grant and answer with its identifiers.
+	 *
+	 * @param RecordOutcome $outcome The record being committed
+	 * @param string|null $wrappedFileKey The file key re-wrapped under the new suite
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws ForbiddenException When the wrapped file key is missing
+	 */
+	private function committedGrant(RecordOutcome $outcome, ?string $wrappedFileKey): array {
+		if ($wrappedFileKey === null) {
+			throw new ForbiddenException(message: 'A re-wrapped file key is required');
+		}
+
+		$grant = $this->workService->commitAttachmentGrant(
+			migration: $outcome->owned->migration,
+			ownerId: $outcome->owned->userId,
+			grantId: $outcome->recordId,
+			wrappedFileKey: $wrappedFileKey
+		);
+
+		return [
+			'id' => $grant->getId(),
+			'secretId' => $grant->getSecretId(),
+			'encryptionSuiteId' => $grant->getEncryptionSuiteId(),
+		];
+	}//end committedGrant()
+
+	/**
 	 * Shared tail for the three per-record endpoints.
 	 *
 	 * Holds the parts that MUST be identical across all three — the in-progress
@@ -612,70 +695,78 @@ class MigrationController extends OCSController {
 	 * fourth store cannot ship with weaker handling than the other three.
 	 *
 	 * The ownership guard deliberately does NOT live here: each endpoint calls
-	 * `requireOwnMigration` in its own body and passes the result in, so the
-	 * authorization is visible at the endpoint it protects rather than buried
-	 * one call deeper (hydra-gate-no-admin-idor reads method bodies, and so do
-	 * people).
+	 * `requireGuardedMigration` first and passes the guarded migration in, so
+	 * the authorization is visible at the endpoint it protects rather than
+	 * buried in the commit path (hydra-gate-no-admin-idor reads method bodies,
+	 * and so do people).
 	 *
-	 * @param SuiteMigration $migration The already-guarded migration
-	 * @param string $userId The acting user's id
-	 * @param string $store The store being written
-	 * @param string $recordId The record ID
-	 * @param string|null $error A per-record failure to record instead of committing
+	 * @param RecordOutcome $outcome The record and what the browser reported for it
 	 * @param callable $commit Performs the guarded commit, returning the response body
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
-	private function commitRecord(
-		SuiteMigration $migration,
-		string $userId,
-		string $store,
-		string $recordId,
-		?string $error,
-		callable $commit,
-	): JSONResponse {
+	private function commitRecord(RecordOutcome $outcome, callable $commit): JSONResponse {
 		try {
 			// A terminated migration has already released the write lock and
 			// marked the old suite compromised. Accepting more re-encryptions
 			// against it would re-point rows to a suite whose migration is
 			// closed, with no gate left to notice.
-			if ($migration->getStatus() !== 'in_progress') {
+			if ($outcome->owned->migration->getStatus() !== 'in_progress') {
 				return new JSONResponse(
 					data: ['message' => 'Migration is no longer in progress'],
 					statusCode: Http::STATUS_CONFLICT
 				);
 			}
 
-			if ($error !== null) {
-				$secretId = $this->workService->recordFailure(
-					migration: $migration,
-					ownerId: $userId,
-					store: $store,
-					recordId: $recordId,
-					message: $error
-				);
-
-				return new JSONResponse(
-					data: [
-						'recorded' => true,
-						'store' => $store,
-						'recordId' => $recordId,
-						'secretId' => $secretId,
-					]
-				);
+			if ($outcome->error !== null) {
+				return $this->recordedFailure(outcome: $outcome);
 			}
 
-			return new JSONResponse(data: $commit($migration, $userId));
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+			return new JSONResponse(data: $commit());
+		} catch (FieldsNotReencryptedException $e) {
+			// Nothing was written; the client resends the record with every listed field re-encrypted.
+			return new JSONResponse(
+				data: [
+					'error' => 'fields_not_reencrypted',
+					'message' => $e->getMessage(),
+					'fields' => $e->getFields(),
+				],
+				statusCode: Http::STATUS_CONFLICT
+			);
+		} catch (NotFoundException | ForbiddenException $e) {
+			return $this->refusal(exception: $e);
 		} catch (Exception $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}//end try
 	}//end commitRecord()
+
+	/**
+	 * Record a per-record failure reported by the browser and echo it back.
+	 *
+	 * @param RecordOutcome $outcome The record and the failure reported for it
+	 *
+	 * @return JSONResponse
+	 */
+	private function recordedFailure(RecordOutcome $outcome): JSONResponse {
+		$secretId = $this->workService->recordFailure(
+			migration: $outcome->owned->migration,
+			ownerId: $outcome->owned->userId,
+			store: $outcome->store,
+			recordId: $outcome->recordId,
+			message: (string) $outcome->error
+		);
+
+		return new JSONResponse(
+			data: [
+				'recorded' => true,
+				'store' => $outcome->store,
+				'recordId' => $outcome->recordId,
+				'secretId' => $secretId,
+			]
+		);
+	}//end recordedFailure()
 
 	/**
 	 * Resolve a migration and insist it belongs to the acting user.

@@ -7,13 +7,37 @@ import {
 	encryptPrivateKey,
 	generateKeyPair,
 	importPrivateKey,
-	importPublicKey,
 } from '../../crypto/index.js'
 import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../crypto/keyProof.js'
 import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
+import { confirmPasswordFirst } from '../../utils/passwordConfirmation.js'
+import {
+	assertNoPendingOfflineChanges,
+	assertResumable,
+	assertSessionOnSuite,
+	bindSessionToNewSuite,
+	bindSessionToSuite,
+	carriedContacts,
+	evictOfflineSnapshot,
+	migrationSuites,
+	postCompromiseRecovery,
+	resumeCompletion,
+	resumedMigration,
+	rotationCompletion,
+	rotationMigration,
+	showRotationStarting,
+	wrappedKeyPair,
+} from './keyRotation.js'
 import { usePasskeyStore } from './passkey.js'
 import { onVaultLock, useSessionStore } from './session.js'
+import {
+	finishRun,
+	migratePages,
+	postWindow,
+	unnamedJobs,
+	unwrapMigrationKeys,
+} from './suiteMigrationRun.js'
 
 /**
  * How many re-encryption POSTs are in flight at once. Small on purpose: the
@@ -42,6 +66,277 @@ function boundParam(value) {
 		return ''
 	}
 	return String(value)
+}
+
+/**
+ * The completion proof of a migration run that finalises without an
+ * acknowledged loss. Completion is guarded, and its proof is over the OLD
+ * key — the suite being retired — not the new one. That is the key both the
+ * initiate path and the resume path already hold the password for
+ * (oldPassword), so completion needs no extra prompt on either. It binds
+ * every parameter finaliseMigration will send to complete — the id,
+ * hasErrors and the (here absent) acceptUnrecoverable — so a captured proof
+ * cannot be replayed to finalise with an acknowledged loss it never carried.
+ *
+ * @param {{suiteId: string, encryptedPrivateKey: string, masterPassword: string, migrationId: string}} completion The old suite, its wrapped key, the old password and the migration.
+ * @param {{failed: number}} outcome The migration outcome.
+ * @return {Promise<object>} The proof headers.
+ * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+ */
+async function completionProof(completion, outcome) {
+	return buildKeyProofHeaders({
+		suiteId: completion.suiteId,
+		purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
+		encryptedPrivateKey: completion.encryptedPrivateKey,
+		masterPassword: completion.masterPassword,
+		boundValues: [
+			completion.migrationId,
+			boundParam(outcome.failed > 0),
+			boundParam(null),
+		],
+	})
+}
+
+/**
+ * The owner's emergency contacts, or null when they cannot be listed.
+ *
+ * @return {Promise<Array<object>|null>}
+ */
+async function listEmergencyContacts() {
+	try {
+		const response = await axios.get(
+			generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
+		)
+		return Array.isArray(response.data) ? response.data : []
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Whether a contact was put at stake by this rotation. An invalidated contact
+ * has no envelope to carry, and a contact stranded on a prior suite was not
+ * lost in this rotation, so neither is reported as a residual.
+ *
+ * @param {object} contact The emergency contact.
+ * @param {string} oldSuiteId The rotating old suite.
+ * @return {boolean}
+ */
+function belongsToRotation(contact, oldSuiteId) {
+	return contact.state !== 'invalidated' && contact.grantorSuiteId === oldSuiteId
+}
+
+/**
+ * Why a contact of this rotation is not carried, or null when it is.
+ *
+ * A break-glass in flight, or not confirmed by the owner: never escrow the new
+ * key to it. Each gets its own reason, because the form must not nudge the
+ * owner to re-add either the way it does for an unreachable grantee: that is
+ * what a planted contact is after (#804 review).
+ *
+ * @param {object} contact The emergency contact.
+ * @param {string[]} carryContactIds The contact ids the owner confirmed.
+ * @return {string|null}
+ */
+function residualReason(contact, carryContactIds) {
+	if (['requested', 'approved'].includes(contact.state)) {
+		return 'break_glass_in_flight'
+	}
+	if (contact.state !== 'granted' || !carryContactIds.includes(contact.id)) {
+		return 'not_confirmed'
+	}
+	return null
+}
+
+/**
+ * Build a fresh recovery envelope escrowing the new private key to the
+ * grantee's current certificate (a build, not a re-wrap).
+ *
+ * @param {object} contact The confirmed, granted contact.
+ * @param {object} rotation The rotation; see reEnvelopeContact.
+ * @return {Promise<{contactId: string, recoveryEnvelope: string, granteeSuiteId: string}>}
+ */
+async function freshRecoveryEnvelope(contact, rotation) {
+	const certResponse = await axios.get(
+		generateUrl('/apps/keepiq/api/v1/emergency-access/grantee-certificate'),
+		{ params: { granteeUserId: contact.granteeUserId } },
+	)
+	const recoveryEnvelope = await buildRecoveryEnvelope(
+		rotation.newPrivateKeyPem,
+		certResponse.data.certificate,
+	)
+	return {
+		contactId: contact.id,
+		recoveryEnvelope,
+		granteeSuiteId: certResponse.data.suiteId,
+	}
+}
+
+/**
+ * Re-point a contact to its fresh envelope, with a vault-key proof made with
+ * the new key and password.
+ *
+ * @param {object} envelope The contactId, recoveryEnvelope and granteeSuiteId.
+ * @param {object} rotation The rotation; see reEnvelopeContact.
+ * @return {Promise<void>}
+ */
+async function rePointContact(envelope, rotation) {
+	// Bound in the order the server hashes them:
+	// id, contactId, recoveryEnvelope, granteeSuiteId.
+	const headers = await buildKeyProofHeaders({
+		suiteId: rotation.newSuiteId,
+		purpose: PROOF_PURPOSE.EMERGENCY_RE_ENVELOPE,
+		encryptedPrivateKey: rotation.newEncryptedPrivateKey,
+		masterPassword: rotation.newPassword,
+		boundValues: [
+			rotation.migrationId,
+			envelope.contactId,
+			envelope.recoveryEnvelope,
+			envelope.granteeSuiteId,
+		],
+	})
+	await axios.post(
+		generateUrl(
+			`/apps/keepiq/api/v1/migrations/${rotation.migrationId}/emergency-contacts/${envelope.contactId}`,
+		),
+		{
+			recoveryEnvelope: envelope.recoveryEnvelope,
+			granteeSuiteId: envelope.granteeSuiteId,
+		},
+		{ headers },
+	)
+}
+
+/**
+ * Carry a contact onto the new suite.
+ *
+ * A grantee without an active certificate, a refused proof or a failed
+ * re-point leaves the contact on the old suite for the completion sweep to
+ * invalidate. That is never fatal: contacts are outside the gate.
+ *
+ * @param {object} contact The confirmed, granted contact.
+ * @param {object} rotation The migrationId, newPrivateKeyPem, newSuiteId,
+ *  newEncryptedPrivateKey and newPassword.
+ * @return {Promise<string|null>} `unreachable` on failure, else null.
+ */
+async function reEnvelopeContact(contact, rotation) {
+	try {
+		await rePointContact(
+			await freshRecoveryEnvelope(contact, rotation),
+			rotation,
+		)
+		return null
+	} catch {
+		return 'unreachable'
+	}
+}
+
+/**
+ * Why a contact of this rotation is left behind, or null once it is carried.
+ *
+ * @param {object} contact The emergency contact.
+ * @param {object} run The carryContactIds and the rotation.
+ * @return {Promise<string|null>}
+ */
+async function contactResidual(contact, run) {
+	return (
+		residualReason(contact, run.carryContactIds)
+		?? reEnvelopeContact(contact, run.rotation)
+	)
+}
+
+/**
+ * Refuse a force-revocation without a suite id or a reason, before any sudo
+ * prompt or request.
+ *
+ * @param {string} id The suite id to force-revoke.
+ * @param {string} reason The revocation reason.
+ * @return {void}
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+function assertForceRevocable(id, reason) {
+	if (!id) {
+		throw new Error('No suite id to revoke')
+	}
+	if (!reason) {
+		throw new Error('A reason is required to force-revoke a suite')
+	}
+}
+
+/**
+ * Whether a force-revoke failed only at ending the suite's key migration:
+ * the suite was revoked all the same (keepiq#1189).
+ *
+ * @param {object} error The axios error.
+ * @return {boolean}
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+function isMigrationEndFailure(error) {
+	return (
+		error?.response?.status === 500
+		&& error.response.data?.error === 'migration_end_failed'
+	)
+}
+
+/**
+ * POST the force-revoke; a failed migration end still answers with the
+ * revocation's body, any other failure rejects.
+ *
+ * @param {string} id The suite id.
+ * @param {{reason: string, markCompromised: boolean, confirmSuiteId: string}} body The request body.
+ * @return {Promise<object>} The response body.
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+async function postForceRevoke(id, body) {
+	try {
+		const response = await axios.post(
+			generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
+			body,
+		)
+		return response.data
+	} catch (error) {
+		if (!isMigrationEndFailure(error)) {
+			throw error
+		}
+		return error.response.data
+	}
+}
+
+/**
+ * @param {object} data The force-revoke's response body.
+ * @return {object} The revoked suite, the emergency contacts destroyed, the
+ *   rotation warning, and the unfinished message when the suite was revoked
+ *   but its key migration could not be ended; force-revoking again
+ *   finishes it (keepiq#1189).
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+function revokedOutcome(data) {
+	return {
+		unfinished: data.error === 'migration_end_failed' ? data.message : null,
+		suite: data,
+		emergencyContactsDestroyed: data.emergencyContactsDestroyed ?? 0,
+		warning: data.warning ?? null,
+	}
+}
+
+/**
+ * A compromise force-revoke during a key migration also revokes the
+ * migration's other suite and ends the migration (keepiq#877), and reports
+ * the steps of the compromise response that failed (keepiq#863).
+ *
+ * @param {object} data The force-revoke's response body.
+ * @return {object}
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ */
+function compromiseCascadeOutcome(data) {
+	return {
+		alsoRevokedSuite: data.alsoRevokedSuite ?? null,
+		terminatedMigration: data.terminatedMigration ?? null,
+		alsoRevokedEmergencyContactsDestroyed:
+			data.alsoRevokedEmergencyContactsDestroyed ?? 0,
+		cascadeIncomplete: data.cascadeIncomplete === true,
+		cascadeFailed: data.cascade?.failed ?? 0,
+	}
 }
 
 export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
@@ -107,43 +402,27 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		/**
 		 * Create a new EncryptionSuite (first-time setup).
 		 *
-		 * @param {string} masterPassword
+		 * @param {string} masterPassword The master password that protects the new private key.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async createSuite(masterPassword) {
 			this.loading = true
 			try {
-				const { publicKeyPem, privateKey } = await generateKeyPair()
-
-				// Export private key as PEM for encryption.
-				const pkcs8 = await crypto.subtle.exportKey('pkcs8', privateKey)
-				const privateKeyPem =
-					'-----BEGIN PRIVATE KEY-----\n'
-					+ btoa(String.fromCharCode(...new Uint8Array(pkcs8)))
-						.match(/.{1,64}/g)
-						.join('\n')
-					+ '\n-----END PRIVATE KEY-----'
-
-				const encryptedPk = await encryptPrivateKey(
-					privateKeyPem,
-					masterPassword,
-				)
-
+				const keys = await wrappedKeyPair(masterPassword)
 				const response = await this.postNewSuite({
-					publicKey: publicKeyPem,
-					encryptedPrivateKey: encryptedPk,
+					publicKey: keys.publicKeyPem,
+					encryptedPrivateKey: keys.encryptedPrivateKey,
 				})
 
 				this.currentSuite = response.data
 
 				// Immediately unlock the session.
-				const session = useSessionStore()
-				const cryptoKey = await importPrivateKey(privateKeyPem)
-				session.cryptoKey = cryptoKey
-				session.encryptedPrivateKey = encryptedPk
-				session.certificate = response.data.certificate
-				session.suiteId = response.data.id
-				session.lastActivity = Date.now()
+				await bindSessionToSuite(useSessionStore(), {
+					privateKeyPem: keys.privateKeyPem,
+					encryptedPrivateKey: keys.encryptedPrivateKey,
+					certificate: response.data.certificate,
+					suiteId: response.data.id,
+				})
 			} finally {
 				this.loading = false
 			}
@@ -152,8 +431,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		/**
 		 * Change master password (routine — re-wrap private key only).
 		 *
-		 * @param {string} oldPassword
-		 * @param {string} newPassword
+		 * @param {string} oldPassword The current master password.
+		 * @param {string} newPassword The new master password.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		async changePassword(oldPassword, newPassword) {
@@ -231,92 +510,23 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			newPassword,
 			carryContactIds = [],
 		) {
-			// Offline changes are sealed to the current certificate: a rotation
-			// waits until they are synced or discarded (offline-edit-queue D6).
-			const { useOfflineStore: offlineStoreOf } = await import('./offline.js')
-			const offline = offlineStoreOf()
-			await offline.loadQueue()
-			offline.assertNoPendingChanges()
-
-			const { publicKeyPem, privateKey } = await generateKeyPair()
-
-			// Export new private key as PEM.
-			const pkcs8 = await crypto.subtle.exportKey('pkcs8', privateKey)
-			const newPrivateKeyPem =
-				'-----BEGIN PRIVATE KEY-----\n'
-				+ btoa(String.fromCharCode(...new Uint8Array(pkcs8)))
-					.match(/.{1,64}/g)
-					.join('\n')
-				+ '\n-----END PRIVATE KEY-----'
-
-			const newEncryptedPk = await encryptPrivateKey(
-				newPrivateKeyPem,
+			await assertNoPendingOfflineChanges()
+			const rotation = {
+				oldPassword,
 				newPassword,
-			)
-
-			this.migrationProgress = { done: 0, total: 0, phase: 'starting' }
-			this.migrationFailures = []
-			this.migrationDroppedVersions = 0
-
-			// Starting a rotation is guarded: prove possession of the OLD suite
-			// key (i.e. the old master password) over the submitted new key
-			// material, so a stolen session cannot begin a hostile rotation.
-			const session = useSessionStore()
-			const startProof = await buildKeyProofHeaders({
-				suiteId: session.suiteId,
-				purpose: PROOF_PURPOSE.COMPROMISE_RECOVERY,
-				encryptedPrivateKey: session.encryptedPrivateKey,
-				masterPassword: oldPassword,
-				boundValues: [publicKeyPem, newEncryptedPk],
-			})
-
-			const response = await axios.post(
-				generateUrl('/apps/keepiq/api/v1/suites/compromise-recovery'),
-				{
-					publicKey: publicKeyPem,
-					encryptedPrivateKey: newEncryptedPk,
-				},
-				{ headers: startProof },
-			)
-
-			this.migrationStatus = response.data.migration
-			this.currentSuite = response.data.newSuite
-
-			// Rebind the session to the NEW suite, the way createSuite does.
-			// Without this the session still names the old suite, and
-			// resumeMigration's "is this session unlocked against the
-			// migration's new suite?" check refused — so "Try these again", the
-			// only in-dialog escape from a partly-failed run, raised an error
-			// every time and pushed the user at "Finish anyway" instead.
-			//
-			// The key material is the pair generated above, so this is the same
-			// binding createSuite performs on first-time setup, not a
-			// re-derivation from anything the server sent.
-			session.cryptoKey = await importPrivateKey(newPrivateKeyPem)
-			session.encryptedPrivateKey = newEncryptedPk
-			session.certificate = response.data.newSuite?.certificate ?? null
-			session.suiteId = response.data.newSuite?.id ?? session.suiteId
-			session.lastActivity = Date.now()
-
-			// Suite rotation invalidates every cached ciphertext (encrypted to
-			// the now-dead key) — evict the offline snapshot (offline-readonly-
-			// cache §D4). Lazy import avoids a static store cycle.
-			try {
-				const { useOfflineStore } = await import('./offline.js')
-				await useOfflineStore().evict()
-			} catch (e) {
-				// Offline cache absent — nothing to evict.
+				carryContactIds,
+				...(await wrappedKeyPair(newPassword)),
 			}
 
-			const outcome = await this.runMigration({
-				migrationId: response.data.migration.id,
-				oldEncryptedPrivateKey: response.data.oldEncryptedPrivateKey,
-				oldPassword,
-				newPublicKeyPem: publicKeyPem,
-				// Re-imported rather than reusing the generated CryptoKey, so the
-				// verification key is non-extractable like every other key here.
-				newPrivateKey: await importPrivateKey(newPrivateKeyPem),
-			})
+			showRotationStarting(this)
+			const session = useSessionStore()
+			rotation.started = await postCompromiseRecovery(rotation, session)
+			this.migrationStatus = rotation.started.migration
+			this.currentSuite = rotation.started.newSuite
+			await bindSessionToNewSuite(rotation, session)
+			await evictOfflineSnapshot()
+
+			const outcome = await this.runMigration(await rotationMigration(rotation))
 
 			// Migrate emergency-access recovery envelopes BEFORE completion. The
 			// completion sweep (SuiteMigrationCompletedEvent) invalidates every
@@ -327,44 +537,18 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// only for an unreachable one, and warns about a break-glass in flight.
 			// Emergency contacts are outside the completion gate, so this never
 			// blocks completion (design D2).
-			outcome.residualContacts = await this.migrateEmergencyContacts({
-				migrationId: response.data.migration.id,
-				oldSuiteId: response.data.migration.oldSuiteId,
-				newPrivateKeyPem,
-				newSuiteId: response.data.newSuite?.id,
-				newEncryptedPrivateKey: newEncryptedPk,
-				newPassword,
-				carryContactIds,
-			})
+			outcome.residualContacts = await this.migrateEmergencyContacts(
+				carriedContacts(rotation),
+			)
 
 			// Only now, with nothing left on the old suite, is the vault ready
 			// for the terminal step. The premature complete() that used to sit
 			// here reported success five lines after initiating, before a single
 			// record had been touched.
-			// Completion is guarded too, and its proof is over the OLD key —
-			// the suite being retired — not the new one. That is the key both
-			// this initiate path and the resume path already hold the password
-			// for (oldPassword), so completion needs no extra prompt on either.
-			// Bind every parameter finaliseMigration will send to complete — the
-			// id, hasErrors and the (here absent) acceptUnrecoverable — so a
-			// captured proof cannot be replayed to finalise with an acknowledged
-			// loss it never carried. This path finalises a clean run, so
-			// acceptUnrecoverable is null and hasErrors follows the outcome.
-			const completeProof = await buildKeyProofHeaders({
-				suiteId: response.data.migration.oldSuiteId,
-				purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
-				encryptedPrivateKey: response.data.oldEncryptedPrivateKey,
-				masterPassword: oldPassword,
-				boundValues: [
-					response.data.migration.id,
-					boundParam(outcome.failed > 0),
-					boundParam(null),
-				],
-			})
 			await this.finaliseMigration(
-				response.data.migration.id,
+				rotation.started.migration.id,
 				outcome,
-				completeProof,
+				await completionProof(rotationCompletion(rotation), outcome),
 			)
 
 			return outcome
@@ -436,112 +620,29 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   `not_confirmed` or `unreachable`.
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
-		async migrateEmergencyContacts({
-			migrationId,
-			oldSuiteId,
-			newPrivateKeyPem,
-			newSuiteId,
-			newEncryptedPrivateKey,
-			newPassword,
-			carryContactIds = [],
-		}) {
+		async migrateEmergencyContacts(params) {
+			const { oldSuiteId, carryContactIds = [], ...rotation } = params
 			const residualContacts = []
 
-			let contacts
-			try {
-				const response = await axios.get(
-					generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
-				)
-				contacts = Array.isArray(response.data) ? response.data : []
-			} catch {
-				// Could not enumerate the contacts — none are re-enveloped and the
+			const contacts = await listEmergencyContacts()
+			if (contacts === null) {
+				// Could not enumerate the contacts: none are re-enveloped and the
 				// completion sweep invalidates them all, the pre-change behaviour.
 				return residualContacts
 			}
 
 			for (const contact of contacts) {
-				// An already-invalidated contact has no envelope to carry.
-				if (contact.state === 'invalidated') {
+				if (!belongsToRotation(contact, oldSuiteId)) {
 					continue
 				}
-
-				// Only THIS rotation's contacts belong here. A contact stranded on
-				// a prior suite was not lost in this rotation, so skip it silently
-				// rather than mislabelling it as a residual this rotation dropped.
-				if (contact.grantorSuiteId !== oldSuiteId) {
-					continue
-				}
-
-				// A break-glass in flight, or not confirmed by the owner: never
-				// escrow the new key to it. The sweep invalidates it at completion.
-				// Each gets its own reason, because the form must not nudge the
-				// owner to re-add either the way it does for an unreachable
-				// grantee: that is what a planted contact is after (#804 review).
-				if (['requested', 'approved'].includes(contact.state)) {
+				const reason = await contactResidual(contact, {
+					carryContactIds,
+					rotation,
+				})
+				if (reason !== null) {
 					residualContacts.push({
 						granteeUserId: contact.granteeUserId,
-						reason: 'break_glass_in_flight',
-					})
-					continue
-				}
-				// Declined (nothing in flight) or unticked: the owner's choice.
-				if (
-					contact.state !== 'granted'
-					|| !carryContactIds.includes(contact.id)
-				) {
-					residualContacts.push({
-						granteeUserId: contact.granteeUserId,
-						reason: 'not_confirmed',
-					})
-					continue
-				}
-
-				try {
-					const certResponse = await axios.get(
-						generateUrl(
-							'/apps/keepiq/api/v1/emergency-access/grantee-certificate',
-						),
-						{ params: { granteeUserId: contact.granteeUserId } },
-					)
-
-					const recoveryEnvelope = await buildRecoveryEnvelope(
-						newPrivateKeyPem,
-						certResponse.data.certificate,
-					)
-
-					// Bound in the order the server hashes them:
-					// id, contactId, recoveryEnvelope, granteeSuiteId.
-					const headers = await buildKeyProofHeaders({
-						suiteId: newSuiteId,
-						purpose: PROOF_PURPOSE.EMERGENCY_RE_ENVELOPE,
-						encryptedPrivateKey: newEncryptedPrivateKey,
-						masterPassword: newPassword,
-						boundValues: [
-							migrationId,
-							contact.id,
-							recoveryEnvelope,
-							certResponse.data.suiteId,
-						],
-					})
-
-					await axios.post(
-						generateUrl(
-							`/apps/keepiq/api/v1/migrations/${migrationId}/emergency-contacts/${contact.id}`,
-						),
-						{
-							recoveryEnvelope,
-							granteeSuiteId: certResponse.data.suiteId,
-						},
-						{ headers },
-					)
-				} catch {
-					// Grantee unreachable (no active certificate), a refused proof,
-					// or a transient re-point failure: leave the contact on the old
-					// suite for the completion sweep to invalidate, and prompt
-					// re-establishment. Never fatal — contacts are outside the gate.
-					residualContacts.push({
-						granteeUserId: contact.granteeUserId,
-						reason: 'unreachable',
+						reason,
 					})
 				}
 			}
@@ -566,156 +667,26 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   failures: Array<object>, usedWorker: boolean}>} The migration outcome.
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
-		async runMigration({
-			migrationId,
-			oldEncryptedPrivateKey,
-			oldPassword,
-			newPublicKeyPem,
-			newPrivateKey,
-		}) {
-			// Unwrap the old private key with the old master password. Both stay
-			// in this scope; neither is ever sent anywhere (ADR-003).
-			const oldPrivateKeyPem = await decryptPrivateKey(
-				oldEncryptedPrivateKey,
-				oldPassword,
+		async runMigration(params) {
+			const runner = await createMigrationRunner(
+				await unwrapMigrationKeys(params),
 			)
-
-			const keys = {
-				oldPrivateKey: await importPrivateKey(oldPrivateKeyPem),
-				newPublicKey: await importPublicKey(newPublicKeyPem),
-				newPrivateKey,
-			}
-
-			const runner = await createMigrationRunner(keys)
 			this.migrationRunner = runner
-
-			let migrated = 0
-			let halted = null
-			const failures = []
-
+			const run = {
+				suiteStore: this,
+				migrationId: params.migrationId,
+				runner,
+				migrated: 0,
+				halted: null,
+				failures: [],
+			}
 			try {
-				// Each pass re-asks for outstanding work from offset 0: committed
-				// records leave the result set, so the next page is always at the
-				// front.
-				for (;;) {
-					const { data } = await axios.get(
-						generateUrl(
-							`/apps/keepiq/api/v1/migrations/${migrationId}/work`,
-						),
-					)
-
-					this.migrationDroppedVersions =
-						data.versions?.dropCandidates || 0
-
-					const jobs = this.buildJobs(data)
-					if (jobs.length === 0) {
-						break
-					}
-
-					// `totalRemaining` counts EVERY row still on the old suite,
-					// including the version rows outside the retention window.
-					// Those are reported as dropCandidates and never dispatched
-					// as jobs — the server deletes them at completion — so using
-					// the raw number as the denominator left the bar short of
-					// 100% and then jumping to the terminal panel, which reads as
-					// a hang during an already-anxious operation.
-					const denominator =
-						migrated
-						+ Math.max(
-							0,
-							data.totalRemaining
-								- (data.versions?.dropCandidates || 0),
-						)
-
-					this.migrationProgress = {
-						done: migrated,
-						total: denominator,
-						phase: 'migrating',
-					}
-
-					const results = await runner.run(jobs)
-					const outcome = await this.postResults(
-						migrationId,
-						results,
-						jobs,
-					)
-
-					migrated += outcome.committed
-					failures.push(...outcome.failures)
-					this.migrationFailures = [...failures]
-
-					this.migrationProgress = {
-						done: migrated,
-						total: denominator,
-						phase: 'migrating',
-					}
-
-					// A round-trip that does not verify is not this record's
-					// problem — it is the new key's. Stop immediately rather than
-					// grinding through the vault producing ciphertext nobody can
-					// read. Everything committed so far was individually verified,
-					// so it stays valid, and the migration stays resumable.
-					if (outcome.halt !== null) {
-						halted = outcome.halt
-						break
-					}
-
-					// A pass that commits nothing cannot make progress, and the
-					// work list is re-derived from the rows — so asking again
-					// returns exactly the same page. Stop either way; what
-					// differs is whether it counts as a halt.
-					if (outcome.committed === 0) {
-						if (outcome.failures.length === 0) {
-							// Nothing committed and nothing permanently failed:
-							// the whole page was transient (offline, server
-							// down). The rows stay unaccounted server-side, so
-							// the completion gate will refuse and the resume
-							// banner picks it up.
-							halted =
-								'Migration could not reach the server; no records were changed.'
-						}
-
-						// Otherwise every record in this page failed permanently
-						// and is now recorded against its owning secret. Letting
-						// the loop continue here was an infinite spin: the rows
-						// stay bound to the old suite, so each pass re-fetched
-						// and re-failed the same page and the dialog sat at
-						// "0 of N" forever. Fall through to completion, which
-						// asks the user what to do about them.
-						break
-					}
-				}
+				await migratePages(run)
 			} finally {
 				runner.dispose()
 				this.migrationRunner = null
 			}
-
-			if (halted !== null) {
-				this.migrationProgress = {
-					done: migrated,
-					total: migrated,
-					phase: 'halted',
-				}
-				const error = new Error(halted)
-				error.name = 'MigrationHaltedError'
-				error.migrated = migrated
-				error.failures = failures
-				throw error
-			}
-
-			this.migrationProgress = {
-				done: migrated,
-				total: migrated,
-				phase: 'done',
-			}
-
-			return {
-				migrated,
-				failed: failures.length,
-				droppedVersions: this.migrationDroppedVersions,
-				failures,
-				usedWorker: runner.usesWorker,
-			}
+			return finishRun(run)
 		},
 
 		/**
@@ -726,34 +697,20 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
 		buildJobs(work) {
-			const jobs = []
-
-			for (const record of work.secrets?.records || []) {
-				jobs.push({
-					store: MIGRATION_STORES.SECRETS,
-					id: record.id,
-					name: record.name,
-					record,
-				})
-			}
-			for (const record of work.versions?.records || []) {
-				jobs.push({
-					store: MIGRATION_STORES.VERSIONS,
-					id: record.id,
-					name: null,
-					record,
-				})
-			}
-			for (const record of work.attachmentGrants?.records || []) {
-				jobs.push({
-					store: MIGRATION_STORES.ATTACHMENT_GRANTS,
-					id: record.id,
-					name: null,
-					record,
-				})
-			}
-
-			return jobs
+			const secrets = (work.secrets?.records || []).map((record) => ({
+				store: MIGRATION_STORES.SECRETS,
+				id: record.id,
+				name: record.name,
+				record,
+			}))
+			return [
+				...secrets,
+				...unnamedJobs(work.versions, MIGRATION_STORES.VERSIONS),
+				...unnamedJobs(
+					work.attachmentGrants,
+					MIGRATION_STORES.ATTACHMENT_GRANTS,
+				),
+			]
 		},
 
 		/**
@@ -761,7 +718,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * A record that failed its round-trip is reported to the server as an
 		 * `error` so it lands in `migration_error` on the owning secret; its
-		 * original ciphertext is left untouched and the run continues.
+		 * original ciphertext is left untouched and the run continues. A
+		 * window that halts is the last one posted.
 		 *
 		 * @param {string} migrationId The migration ID.
 		 * @param {Array<object>} results The pipeline results.
@@ -770,119 +728,26 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-re-encrypted-ciphertext-is-verified-before-the-original-is-discarded
 		 */
 		async postResults(migrationId, results, jobs) {
-			const namesById = new Map(jobs.map((job) => [job.id, job.name]))
-			let committed = 0
-			const failures = []
-			const retryable = []
-			let halt = null
-
+			const run = {
+				suiteStore: this,
+				migrationId,
+				namesById: new Map(jobs.map((job) => [job.id, job.name])),
+				committed: 0,
+				failures: [],
+				retryable: [],
+				halt: null,
+			}
 			for (
 				let start = 0;
-				start < results.length;
+				start < results.length && run.halt === null;
 				start += MIGRATION_CONCURRENCY
 			) {
-				const window = results.slice(start, start + MIGRATION_CONCURRENCY)
-
-				const settled = await Promise.all(
-					window.map(async (result) => {
-						// A round-trip mismatch means the STORED value read back fine
-						// and the new key could not carry it. Reporting that as a
-						// failure would let the server finalise a readable secret as
-						// unrecoverable, so it is never sent — the run stops instead.
-						if (result.halt === true) {
-							return { outcome: 'halt', result, error: result.error }
-						}
-
-						// Only an old-key decrypt failure is reported. Anything else
-						// unproven stays unreported, which leaves the row unaccounted
-						// server-side so the completion gate keeps blocking and a
-						// resume retries it.
-						if (result.ok !== true && result.permanent !== true) {
-							return {
-								outcome: 'retryable',
-								result,
-								error: result.error,
-							}
-						}
-
-						const url = this.recordUrl(
-							migrationId,
-							result.store,
-							result.id,
-						)
-						if (url === null) {
-							return {
-								outcome: 'retryable',
-								result,
-								error: `Unknown migration store: ${result.store}`,
-							}
-						}
-
-						const body =
-							result.ok === true
-								? result.payload
-								: { error: result.error }
-
-						try {
-							await axios.post(url, body)
-							return {
-								outcome:
-									result.ok === true ? 'committed' : 'permanent',
-								result,
-								error: result.error,
-							}
-						} catch (e) {
-							// The commit itself never landed (network, guard
-							// rejection), so nothing was written and the row is
-							// simply still outstanding. Retryable by definition.
-							return {
-								outcome: 'retryable',
-								result,
-								error:
-									e?.response?.data?.message
-									|| String(e?.message || e),
-							}
-						}
-					}),
+				await postWindow(
+					run,
+					results.slice(start, start + MIGRATION_CONCURRENCY),
 				)
-
-				for (const entry of settled) {
-					if (entry.outcome === 'committed') {
-						committed += 1
-						continue
-					}
-
-					if (entry.outcome === 'halt') {
-						halt =
-							halt
-							?? (entry.error || 'Re-encryption could not be verified')
-						continue
-					}
-
-					if (entry.outcome === 'retryable') {
-						retryable.push({
-							store: entry.result.store,
-							id: entry.result.id,
-							name: namesById.get(entry.result.id) ?? null,
-							error: entry.error || 'Temporarily failed',
-						})
-						continue
-					}
-
-					failures.push({
-						store: entry.result.store,
-						id: entry.result.id,
-						name: namesById.get(entry.result.id) ?? null,
-						error: entry.error || 'Migration failed',
-						unrecoverable: true,
-					})
-				}
-
-				if (halt !== null) {
-					break
-				}
 			}
-
+			const { committed, failures, retryable, halt } = run
 			return { committed, failures, retryable, halt }
 		},
 
@@ -1178,20 +1043,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 */
 		async resumeMigration(oldPassword) {
 			await this.fetchMigrationStatus()
-			if (this.migrationStatus === null) {
-				throw new Error('There is no migration to resume')
-			}
-
 			const session = useSessionStore()
-			if (session.cryptoKey === null) {
-				throw new Error('Unlock the vault before resuming the migration')
+			assertResumable(this.migrationStatus, session)
+			// The old suite is read now: completion refreshes the status, which
+			// is null once the migration has ended, and the read-back below
+			// needs it.
+			const resume = {
+				oldPassword,
+				migrationId: this.migrationStatus.id,
+				oldSuiteId: this.migrationStatus.oldSuiteId,
 			}
-
-			const migrationId = this.migrationStatus.id
-			// Read now: completion refreshes the status, which is null once the
-			// migration has ended, and the read-back below needs the old suite.
-			const oldSuiteId = this.migrationStatus.oldSuiteId
-
 			// Both suites are resolved from the MIGRATION, never from the session.
 			// During a migration two suites are active, and the session binds to
 			// whichever one the suite list yielded first — historically the OLD
@@ -1199,66 +1060,23 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// handing the pipeline the old private key as its verification key, so
 			// every single record would fail its round-trip and the run would look
 			// like a vault full of corrupt data instead of one mis-wired resume.
-			const { data: oldSuite } = await axios.get(
-				generateUrl(
-					`/apps/keepiq/api/v1/suites/${this.migrationStatus.oldSuiteId}`,
-				),
-			)
-			const { data: newSuite } = await axios.get(
-				generateUrl(
-					`/apps/keepiq/api/v1/suites/${this.migrationStatus.newSuiteId}`,
-				),
-			)
-
-			// The session must be bound to the migration's NEW suite, because
-			// session.cryptoKey is the verification key the pipeline will use.
-			// Bound to the old suite it would verify new ciphertext against the
-			// OLD private key: every record would fail its round-trip and the run
-			// would look like a vault full of corrupt data rather than one
-			// mis-wired resume. Suite resolution now deterministically prefers the
-			// newest active suite, so this is a transient state at worst — say so
-			// instead of guessing at a key.
-			if (session.suiteId !== newSuite.id) {
-				throw new Error(
-					'Your session is unlocked against the previous encryption suite. '
-						+ 'Lock and unlock the vault, then resume the migration.',
-				)
-			}
+			Object.assign(resume, await migrationSuites(this.migrationStatus))
+			assertSessionOnSuite(session, resume.newSuite)
 
 			this.migrationFailures = []
 			this.migrationDroppedVersions = 0
+			const outcome = await this.runMigration(resumedMigration(resume, session))
 
-			const outcome = await this.runMigration({
-				migrationId,
-				oldEncryptedPrivateKey: oldSuite.privateKey,
-				oldPassword,
-				// Taken from the migration's own new suite, not from the session.
-				newPublicKeyPem: newSuite.certificate ?? newSuite.publicKey,
-				newPrivateKey: session.cryptoKey,
-			})
-
-			// Completion's proof is over the OLD key, which resume already holds
-			// the password for — so a resumed run finalises without any extra
-			// prompt, exactly like the initiate path.
-			// Bind every parameter finaliseMigration sends to complete (id,
-			// hasErrors, and the absent acceptUnrecoverable), matching the initiate
-			// path — a proof that commits only to the id could be re-aimed to
-			// acknowledge a loss.
-			const completeProof = await buildKeyProofHeaders({
-				suiteId: this.migrationStatus.oldSuiteId,
-				purpose: PROOF_PURPOSE.COMPLETE_MIGRATION,
-				encryptedPrivateKey: oldSuite.privateKey,
-				masterPassword: oldPassword,
-				boundValues: [
-					migrationId,
-					boundParam(outcome.failed > 0),
-					boundParam(null),
-				],
-			})
+			// A resumed run finalises without any extra prompt, exactly like the
+			// initiate path: completion's proof is over the OLD key, which resume
+			// already holds the password for.
 			const completion = await this.finaliseMigration(
-				migrationId,
+				resume.migrationId,
 				outcome,
-				completeProof,
+				await completionProof(
+					resumeCompletion(resume, this.migrationStatus),
+					outcome,
+				),
 			)
 
 			// A resumed run never carries an emergency contact: that step belongs
@@ -1271,7 +1089,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// acceptMigrationLosses reads back once the owner finishes.
 			outcome.residualContacts =
 				completion?.finalised === true
-					? await this.rotationRemovedContacts(oldSuiteId)
+					? await this.rotationRemovedContacts(resume.oldSuiteId)
 					: []
 
 			return outcome
@@ -1457,56 +1275,18 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			markCompromised = false,
 			confirmSuiteId = '',
 		}) {
-			if (!id) {
-				throw new Error('No suite id to revoke')
-			}
-			if (!reason) {
-				throw new Error('A reason is required to force-revoke a suite')
-			}
+			assertForceRevocable(id, reason)
 
 			// Complete Nextcloud sudo BEFORE issuing the request — the endpoint's
 			// #[PasswordConfirmationRequired] middleware rejects it otherwise.
-			const { confirmPassword } =
-				await import('@nextcloud/password-confirmation')
-			await confirmPassword()
+			await confirmPasswordFirst()
 
-			let response
-			try {
-				response = await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
-					{ reason, markCompromised, confirmSuiteId },
-				)
-			} catch (error) {
-				if (
-					error?.response?.status !== 500
-					|| error.response.data?.error !== 'migration_end_failed'
-				) {
-					throw error
-				}
-				response = error.response
-			}
-
-			return {
-				// Set when the suite was revoked but its key migration could
-				// not be ended; force-revoking again finishes it (keepiq#1189).
-				unfinished:
-					response.data.error === 'migration_end_failed'
-						? response.data.message
-						: null,
-				suite: response.data,
-				emergencyContactsDestroyed:
-					response.data.emergencyContactsDestroyed ?? 0,
-				warning: response.data.warning ?? null,
-				// A compromise force-revoke during a key migration also revokes
-				// the migration's other suite and ends the migration (keepiq#877).
-				alsoRevokedSuite: response.data.alsoRevokedSuite ?? null,
-				terminatedMigration: response.data.terminatedMigration ?? null,
-				alsoRevokedEmergencyContactsDestroyed:
-					response.data.alsoRevokedEmergencyContactsDestroyed ?? 0,
-				// Steps of the compromise response that failed (keepiq#863).
-				cascadeIncomplete: response.data.cascadeIncomplete === true,
-				cascadeFailed: response.data.cascade?.failed ?? 0,
-			}
+			const data = await postForceRevoke(id, {
+				reason,
+				markCompromised,
+				confirmSuiteId,
+			})
+			return { ...revokedOutcome(data), ...compromiseCascadeOutcome(data) }
 		},
 
 		/**
@@ -1533,9 +1313,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				}
 			}
 
-			const { confirmPassword } =
-				await import('@nextcloud/password-confirmation')
-			await confirmPassword()
+			await confirmPasswordFirst()
 			return axios.post(
 				generateUrl('/apps/keepiq/api/v1/suites/reenrol'),
 				body,
@@ -1559,9 +1337,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				throw new Error('No suite id to reinstate')
 			}
 
-			const { confirmPassword } =
-				await import('@nextcloud/password-confirmation')
-			await confirmPassword()
+			await confirmPasswordFirst()
 
 			const response = await axios.post(
 				generateUrl(`/apps/keepiq/api/v1/suites/${id}/reinstate`),

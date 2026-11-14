@@ -6,6 +6,7 @@ package nl.conduction.keepiq.android.ui
 import android.content.Intent
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -154,8 +156,10 @@ fun SettingsScreen(state: AppState, activity: FragmentActivity, vault: UnlockedV
             for (minutes in IdlePolicy.offeredChoices(maxIdle)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
+                    // 48 dp: the radio row is the touch target (the accessibility audit, task 3.1).
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 48.dp)
                         .selectable(
                             selected = settings.idleMinutes == minutes,
                             role = Role.RadioButton,

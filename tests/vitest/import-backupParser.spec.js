@@ -64,6 +64,51 @@ describe('backup parser registry', () => {
 		expect(rows.map((row) => row.sourceRow)).toEqual([1, 2])
 	})
 
+	it("reads a login's code and passkeys back from the backup (keepiq#1327)", async () => {
+		const withExtras = {
+			...payload,
+			secrets: [
+				{
+					...payload.secrets[0],
+					totp: 'JBSWY3DPEHPK3PXP',
+					passkeys: '[{"rpId":"aws.test"}]',
+				},
+				{ ...payload.secrets[0], name: 'GCP' },
+			],
+		}
+		const envelope = await encryptBackup(withExtras, 'restore-pass-1')
+		const rows = await parseBackup(envelope, { passphrase: 'restore-pass-1' })
+		expect(rows[0].totp).toBe('JBSWY3DPEHPK3PXP')
+		expect(rows[0].passkeys).toBe('[{"rpId":"aws.test"}]')
+		expect('totp' in rows[1]).toBe(false)
+		expect('passkeys' in rows[1]).toBe(false)
+	})
+
+	it('reads type names, labels and the partial marker (portability-export-choice-and-restore-fidelity)', async () => {
+		const partial = {
+			...payload,
+			partial: true,
+			omittedFields: ['login'],
+			secrets: [
+				{ ...payload.secrets[0], type: 'b0c1-uuid', typeName: 'vpn-profile', typeLabel: 'VPN profile' },
+				{ ...payload.secrets[0], name: 'GCP', typeName: 'api-key' },
+			],
+		}
+		const envelope = await encryptBackup(partial, 'restore-pass-1')
+		const rows = await parseBackup(envelope, { passphrase: 'restore-pass-1' })
+		expect(rows[0]).toMatchObject({ sourceRow: 1, type: 'b0c1-uuid', typeName: 'vpn-profile', typeLabel: 'VPN profile', omittedFields: ['login'] })
+		expect(rows[1]).toMatchObject({ sourceRow: 2, typeName: 'api-key', omittedFields: ['login'] })
+		expect('typeLabel' in rows[1]).toBe(false)
+	})
+
+	it('reads an old-format backup without type names or a marker', async () => {
+		const envelope = await encryptBackup(payload, 'restore-pass-1')
+		const [row] = await parseBackup(envelope, { passphrase: 'restore-pass-1' })
+		expect(row.sourceRow).toBe(1)
+		expect('typeName' in row).toBe(false)
+		expect('omittedFields' in row).toBe(false)
+	})
+
 	it('throws on a wrong restore passphrase and yields no rows', async () => {
 		const envelope = await encryptBackup(payload, 'restore-pass-1')
 		await expect(parseBackup(envelope, { passphrase: 'nope' })).rejects.toThrow()

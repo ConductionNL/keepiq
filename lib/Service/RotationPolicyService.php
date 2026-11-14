@@ -28,13 +28,14 @@ namespace OCA\Keepiq\Service;
 use DateInterval;
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\ExpiryPolicy;
 use OCA\Keepiq\Db\ExpiryPolicyMapper;
 use OCA\Keepiq\Db\RotationFlag;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\RotationPolicyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -50,7 +51,7 @@ use Ramsey\Uuid\Uuid;
  *   span policy/secret/config sources in one place.
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)   One method per API op.
  */
-class RotationPolicyService {
+class RotationPolicyService implements RotationPolicyServiceInterface {
 	/**
 	 * Constructor for RotationPolicyService.
 	 *
@@ -146,7 +147,7 @@ class RotationPolicyService {
 
 		$userMax = (int)($this->config?->getUserValue(
 			$secret->getOwnerId(),
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'expiry_max_age_days',
 			'0'
 		) ?? 0);
@@ -154,7 +155,7 @@ class RotationPolicyService {
 			$candidates[] = (clone $base)->add(new DateInterval('P' . $userMax . 'D'));
 		}
 
-		$adminMax = $this->appConfig->getValueInt(Application::APP_ID, 'expiry_default_max_age_days', 0);
+		$adminMax = $this->appConfig->getValueInt(AppIdentity::APP_ID, 'expiry_default_max_age_days', 0);
 		if ($adminMax > 0) {
 			$candidates[] = (clone $base)->add(new DateInterval('P' . $adminMax . 'D'));
 		}
@@ -267,23 +268,50 @@ class RotationPolicyService {
 		$policy->setReminderDays($encodedReminders);
 		$policy->setUpdatedAt(new DateTime());
 
-		$policy = match ($isNew) {
+		$policy = $this->storePolicy(policy: $policy, isNew: $isNew);
+		$this->auditPolicyChange(userId: $userId, policy: $policy);
+
+		return $policy;
+	}//end upsertPolicy()
+
+	/**
+	 * Insert a new policy, or update the one found for its scope.
+	 *
+	 * @param ExpiryPolicy $policy The policy to store
+	 * @param bool         $isNew  Whether no policy existed for the scope
+	 *
+	 * @return ExpiryPolicy The stored policy
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The insert-or-update choice upsertPolicy already made.
+	 */
+	private function storePolicy(ExpiryPolicy $policy, bool $isNew): ExpiryPolicy {
+		return match ($isNew) {
 			true => $this->policyMapper->insert($policy),
 			false => $this->policyMapper->update($policy),
 		};
+	}//end storePolicy()
 
+	/**
+	 * Audit a saved expiry policy with its scope.
+	 *
+	 * @param string       $userId The caller
+	 * @param ExpiryPolicy $policy The stored policy
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+	 */
+	private function auditPolicyChange(string $userId, ExpiryPolicy $policy): void {
 		$this->dispatchAudit(
 			actorId: $userId,
 			eventType: AuditEventTypes::POLICY_EXPIRY_CHANGED,
 			objectId: $policy->getId(),
 			metadata: [
-				'scope' => $scope,
-				'scopeId' => $scopeId,
+				'scope' => $policy->getScope(),
+				'scopeId' => $policy->getScopeId(),
 			],
 		);
-
-		return $policy;
-	}//end upsertPolicy()
+	}//end auditPolicyChange()
 
 	/**
 	 * Reject a policy the service cannot store.
@@ -419,7 +447,7 @@ class RotationPolicyService {
 	}//end openFlags()
 
 	/**
-	 * Mark a flag rotated — ONLY when the head's `key_updated_at` has
+	 * Mark a flag rotated — ONLY when the head's credential change time has
 	 * advanced past the value frozen at flag time (a proven rotation).
 	 * Otherwise the caller is told to rotate first (re-request path).
 	 *

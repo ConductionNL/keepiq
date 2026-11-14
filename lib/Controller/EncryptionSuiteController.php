@@ -23,17 +23,18 @@ namespace OCA\Keepiq\Controller;
 
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ReinstateRefusedException;
 use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
-use OCA\Keepiq\Attribute\VaultKeyProofRequired;
-use OCA\Keepiq\Service\AdminSuiteRevocationService;
-use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
-use OCA\Keepiq\Service\EncryptionSuiteService;
-use OCA\Keepiq\Service\MigrationService;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminSuiteRevocationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\EmergencyEnvelopeInvalidationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\MigrationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCA\Keepiq\Settings\PeopleAdminSettings;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -72,29 +73,29 @@ class EncryptionSuiteController extends OCSController {
 	 * Constructor for EncryptionSuiteController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param EncryptionSuiteService $suiteService The suite service
-	 * @param MigrationService $migrationService The migration service
+	 * @param EncryptionSuiteServiceInterface $suiteService The suite service
+	 * @param MigrationServiceInterface $migrationService The migration service
 	 * @param IUserSession $userSession The user session
-	 * @param VaultKeyProofService $proofService The vault-key-proof service (issues challenges)
-	 * @param EmergencyEnvelopeInvalidationService $emergencyService The emergency-envelope service (revoke safeguard)
+	 * @param VaultKeyProofServiceInterface $proofService The vault-key-proof service (issues challenges)
+	 * @param EmergencyEnvelopeInvalidationServiceInterface $emergencyService The emergency-envelope service (revoke safeguard)
 	 * @param \OCA\Keepiq\Service\TwoFactorGate $twoFactor The two-factor vault policy (admin-vault-policies D3)
-	 * @param AdminSuiteRevocationService $adminRevocation The administrator force-revoke, plain and compromise
+	 * @param AdminSuiteRevocationServiceInterface $adminRevocation The administrator force-revoke, plain and compromise
 	 * @param \OCA\Keepiq\Service\PasskeyService|null $passkeyService The passkey service (passkey vault login; null when unwired)
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private EncryptionSuiteService $suiteService,
-		private MigrationService $migrationService,
+		private EncryptionSuiteServiceInterface $suiteService,
+		private MigrationServiceInterface $migrationService,
 		private IUserSession $userSession,
-		private VaultKeyProofService $proofService,
-		private EmergencyEnvelopeInvalidationService $emergencyService,
+		private VaultKeyProofServiceInterface $proofService,
+		private EmergencyEnvelopeInvalidationServiceInterface $emergencyService,
 		private \OCA\Keepiq\Service\TwoFactorGate $twoFactor,
-		private AdminSuiteRevocationService $adminRevocation,
+		private AdminSuiteRevocationServiceInterface $adminRevocation,
 		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -154,10 +155,7 @@ class EncryptionSuiteController extends OCSController {
 			$blocked = $this->twoFactor->blocks(userId: (string)$this->userSession->getUser()?->getUID());
 			return new JSONResponse(data: self::withholdKey(suite: $suite->jsonSerialize(), blocked: $blocked));
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_NOT_FOUND);
 		}
 	}//end show()
 
@@ -368,15 +366,9 @@ class EncryptionSuiteController extends OCSController {
 		} catch (InvalidArgumentException $e) {
 			// Malformed key material (e.g. a non-PEM publicKey) is a client error,
 			// not a server fault — surface it as a 400 instead of a 500.
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		} catch (RuntimeException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_SERVICE_UNAVAILABLE);
 		}//end try
 	}//end enrol()
 
@@ -384,7 +376,7 @@ class EncryptionSuiteController extends OCSController {
 	#[VaultKeyProofRequired(
 		binds: ['encryptedPrivateKey'],
 		subject: 'routeParam:id',
-		purpose: VaultKeyProofService::PURPOSE_UPDATE_PRIVATE_KEY
+		purpose: VaultKeyProofServiceInterface::PURPOSE_UPDATE_PRIVATE_KEY
 	)]
 	/**
 	 * Update the encrypted private key (routine password change).
@@ -441,10 +433,7 @@ class EncryptionSuiteController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}//end try
 	}//end updatePrivateKey()
 
@@ -486,7 +475,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['reason', 'acceptEmergencyLoss'], subject: 'routeParam:id', purpose: VaultKeyProofService::PURPOSE_REVOKE_SUITE)]
+	#[VaultKeyProofRequired(binds: ['reason', 'acceptEmergencyLoss'], subject: 'routeParam:id', purpose: VaultKeyProofServiceInterface::PURPOSE_REVOKE_SUITE)]
 	public function revoke(string $id, string $reason, bool $acceptEmergencyLoss = false): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -541,15 +530,9 @@ class EncryptionSuiteController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (RuntimeException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}//end try
 	}//end revoke()
 
@@ -584,10 +567,7 @@ class EncryptionSuiteController extends OCSController {
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 	}//end reinstate()
 
@@ -686,16 +666,10 @@ class EncryptionSuiteController extends OCSController {
 			);
 		} catch (RuntimeException $e) {
 			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'forbidden', markCompromised: $markCompromised);
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
 			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'invalid_argument', markCompromised: $markCompromised);
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}//end try
 	}//end forceRevoke()
 
@@ -711,7 +685,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 */
 	private function compromiseResponse(array $data): JSONResponse {
-		if (($data['error'] ?? null) === AdminSuiteRevocationService::MIGRATION_END_FAILED) {
+		if (($data['error'] ?? null) === AdminSuiteRevocationServiceInterface::MIGRATION_END_FAILED) {
 			return new JSONResponse(data: $data, statusCode: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
@@ -722,7 +696,7 @@ class EncryptionSuiteController extends OCSController {
 	#[VaultKeyProofRequired(
 		binds: ['publicKey', 'encryptedPrivateKey'],
 		subject: 'active',
-		purpose: VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY
+		purpose: VaultKeyProofServiceInterface::PURPOSE_COMPROMISE_RECOVERY
 	)]
 	/**
 	 * Initiate compromise recovery: create new suite and migration record.
@@ -826,15 +800,9 @@ class EncryptionSuiteController extends OCSController {
 				);
 			}
 
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}//end try
 	}//end compromiseRecovery()
 
@@ -862,7 +830,7 @@ class EncryptionSuiteController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		if ($purpose === null || in_array($purpose, VaultKeyProofService::ALLOWED_PURPOSES, true) === false) {
+		if ($purpose === null || in_array($purpose, VaultKeyProofServiceInterface::ALLOWED_PURPOSES, true) === false) {
 			return new JSONResponse(
 				data: ['message' => 'Unknown or missing proof purpose'],
 				statusCode: Http::STATUS_BAD_REQUEST
@@ -873,10 +841,7 @@ class EncryptionSuiteController extends OCSController {
 			$suite = $this->suiteService->getSuite($id);
 			$this->validateOwnership(suite: $suite);
 		} catch (Exception $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_NOT_FOUND);
 		}
 
 		return new JSONResponse(

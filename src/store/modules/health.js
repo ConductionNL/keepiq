@@ -58,6 +58,155 @@ async function fetchEverySecret() {
 	return all
 }
 
+/**
+ * The secret types, fetched when none are loaded yet. A failed fetch is
+ * non-fatal: without types no row can be excluded by type.
+ *
+ * @return {Promise<Array<object>>}
+ * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
+ */
+async function loadedTypes() {
+	const typeStore = useSecretTypeStore()
+	if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
+		try {
+			await typeStore.fetchTypes()
+		} catch {
+			// Non-fatal: without types we simply cannot exclude totp rows.
+		}
+	}
+	return Array.isArray(typeStore.types) ? typeStore.types : []
+}
+
+/**
+ * The ids of the types whose secrets hold machine material: `totp` seeds and
+ * `passkey` private keys are high-entropy, so scoring, reuse-matching or
+ * breach-checking them is meaningless noise (add-totp-secrets D7,
+ * passkey-item-type D6).
+ *
+ * @param {Array<object>} types The secret types.
+ * @return {Set<string|number>}
+ * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
+ */
+function machineMaterialTypeIds(types) {
+	return new Set(types.filter(isMachineMaterialType).map((type) => type.id))
+}
+
+/**
+ * @param {object|null} type A secret type.
+ * @return {boolean} Whether it is the totp or the passkey type.
+ */
+function isMachineMaterialType(type) {
+	return Boolean(type && (type.name === 'totp' || type.name === 'passkey'))
+}
+
+/**
+ * Whether a secret is analysed: not blocked, with a key, and of no type
+ * holding machine material.
+ *
+ * @param {object} secret A listed secret.
+ * @param {Set<string|number>} excludedTypeIds The machine-material type ids.
+ * @return {boolean}
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+function isAnalysable(secret, excludedTypeIds) {
+	if (secret.blocked || !secret.key) {
+		return false
+	}
+	return !excludedTypeIds.has(secret.typeId)
+}
+
+/**
+ * A secret's health row with its value decrypted in the browser, or null
+ * when the value does not decrypt.
+ *
+ * @param {object} secret A listed secret.
+ * @param {object} session The session store (holds the CryptoKey).
+ * @return {Promise<object|null>}
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+async function decryptedRow(secret, session) {
+	let value
+	try {
+		value = await rsaDecrypt(secret.key, session.cryptoKey)
+	} catch {
+		return null
+	}
+	return healthRow(secret, value)
+}
+
+/**
+ * @param {object} secret A listed secret.
+ * @param {string} value Its decrypted value.
+ * @return {object} The row the engine analyses.
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+function healthRow(secret, value) {
+	return {
+		id: secret.id,
+		name: secret.name,
+		url: secret.url ?? null,
+		folderPath: secret.folderId ?? null,
+		value,
+		keyUpdatedAt: keyChangedAt(secret),
+		possiblyCompromisedAt: secret.possiblyCompromisedAt ?? null,
+	}
+}
+
+/**
+ * @param {object} secret A listed secret.
+ * @return {string|null} When its value last changed: its key update, else
+ *   its creation.
+ */
+function keyChangedAt(secret) {
+	return secret.keyUpdatedAt ?? secret.createdAt ?? null
+}
+
+/**
+ * Load the decrypted rows, or record why they could not be loaded.
+ *
+ * @param {object} store The health store.
+ * @param {object} session The session store (holds the CryptoKey).
+ * @return {Promise<Array<object>|null>} The rows, or null after a failure.
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+async function loadRowsOrFail(store, session) {
+	try {
+		return await store.loadDecryptedRows(session)
+	} catch (e) {
+		store.status = 'error'
+		store.error = e?.message || 'Failed to load vault'
+		return null
+	}
+}
+
+/**
+ * Run the engine over the rows and keep its findings, summary and score, or
+ * record why it failed; the plaintext rows are dropped either way.
+ *
+ * @param {object} store The health store.
+ * @param {{rows: Array<object>, stalenessThreshold: string|number, breachResults: ?Map}} analysis The rows and the engine's options.
+ * @return {Promise<void>}
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+async function scoreRows(store, analysis) {
+	try {
+		const result = await store.runEngine(analysis.rows, {
+			stalenessThreshold: analysis.stalenessThreshold,
+			breachResults: analysis.breachResults,
+		})
+		store.findings = result.findings
+		store.summary = result.summary
+		store.score = result.score
+		store.status = 'ready'
+	} catch (e) {
+		store.status = 'error'
+		store.error = e?.message || 'Analysis failed'
+	} finally {
+		// Drop plaintext references held in this scope after the pass.
+		analysis.rows.length = 0
+	}
+}
+
 export const useHealthStore = defineStore('health', {
 	state: () => ({
 		/** @type {Array<object>} Per-secret findings (memory only). */
@@ -146,37 +295,18 @@ export const useHealthStore = defineStore('health', {
 			}
 			this.status = 'analysing'
 			this.error = null
-
-			let rows = []
-			try {
-				rows = await this.loadDecryptedRows(session)
-			} catch (e) {
-				this.status = 'error'
-				this.error = e?.message || 'Failed to load vault'
+			const rows = await loadRowsOrFail(this, session)
+			if (rows === null) {
 				return
 			}
-
-			let breachResults = null
-			if (opts.breachEnabled) {
-				breachResults = await this.runBreachChecks(rows)
-			}
-
-			try {
-				const result = await this.runEngine(rows, {
-					stalenessThreshold: opts.stalenessThreshold ?? '365',
-					breachResults,
-				})
-				this.findings = result.findings
-				this.summary = result.summary
-				this.score = result.score
-				this.status = 'ready'
-			} catch (e) {
-				this.status = 'error'
-				this.error = e?.message || 'Analysis failed'
-			} finally {
-				// Drop plaintext references held in this scope after the pass.
-				rows.length = 0
-			}
+			const breachResults = opts.breachEnabled
+				? await this.runBreachChecks(rows)
+				: null
+			await scoreRows(this, {
+				rows,
+				stalenessThreshold: opts.stalenessThreshold ?? '365',
+				breachResults,
+			})
 		},
 
 		/**
@@ -188,58 +318,17 @@ export const useHealthStore = defineStore('health', {
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
 		 */
 		async loadDecryptedRows(session) {
-			// Resolve the set of `totp` type ids so authenticator seeds — which
-			// are high-entropy machine material, not passwords — are excluded
-			// from strength / reuse / breach analysis (add-totp-secrets D7).
-			const typeStore = useSecretTypeStore()
-			if (!Array.isArray(typeStore.types) || typeStore.types.length === 0) {
-				try {
-					await typeStore.fetchTypes()
-				} catch {
-					// Non-fatal: without types we simply cannot exclude totp rows.
-				}
-			}
-			const types = Array.isArray(typeStore.types) ? typeStore.types : []
-			// `totp` seeds and `passkey` private keys are high-entropy machine
-			// material — scoring, reuse-matching, or breach-checking them is
-			// meaningless noise (add-totp-secrets D7, passkey-item-type D6).
-			const excludedTypeIds = new Set(
-				types
-					.filter(
-						(type) =>
-							type
-							&& (type.name === 'totp' || type.name === 'passkey'),
-					)
-					.map((type) => type.id),
-			)
-
+			const excludedTypeIds = machineMaterialTypeIds(await loadedTypes())
 			const items = await fetchEverySecret()
 			const rows = []
 			for (const secret of items) {
-				if (secret.blocked || !secret.key) {
+				if (!isAnalysable(secret, excludedTypeIds)) {
 					continue
 				}
-				// Skip TOTP and passkey secrets: their material must never be
-				// scored, reuse-matched, or breach-checked (add-totp-secrets
-				// D7, passkey-item-type D6).
-				if (excludedTypeIds.has(secret.typeId)) {
-					continue
+				const row = await decryptedRow(secret, session)
+				if (row !== null) {
+					rows.push(row)
 				}
-				let value = ''
-				try {
-					value = await rsaDecrypt(secret.key, session.cryptoKey)
-				} catch {
-					continue
-				}
-				rows.push({
-					id: secret.id,
-					name: secret.name,
-					url: secret.url ?? null,
-					folderPath: secret.folderId ?? null,
-					value,
-					keyUpdatedAt: secret.keyUpdatedAt ?? secret.updatedAt ?? null,
-					possiblyCompromisedAt: secret.possiblyCompromisedAt ?? null,
-				})
 			}
 			return rows
 		},

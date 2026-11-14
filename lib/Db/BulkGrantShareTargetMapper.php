@@ -49,6 +49,9 @@ use OCP\IDBConnection;
  * the same entity, and QBMapper's contract is (connection, table, entity) —
  * nothing about it says one table may have only one mapper.
  *
+ * As in ShareTargetMapper, the finders see live rows only and the row-only
+ * cascade delete matches quarantined rows too (GHSA-m5p9-6pw7-pf3g).
+ *
  * @extends QBMapper<ShareTarget>
  */
 class BulkGrantShareTargetMapper extends QBMapper {
@@ -80,7 +83,8 @@ class BulkGrantShareTargetMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('group_share_id', $qb->createNamedParameter($groupShareId)));
+			->where($qb->expr()->eq('group_share_id', $qb->createNamedParameter($groupShareId)))
+			->andWhere($qb->expr()->isNull('quarantined_at'));
 
 		return $this->findEntities(query: $qb);
 	}//end findByGroupShare()
@@ -123,7 +127,8 @@ class BulkGrantShareTargetMapper extends QBMapper {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->eq('team_folder_id', $qb->createNamedParameter($teamFolderId)));
+			->where($qb->expr()->eq('team_folder_id', $qb->createNamedParameter($teamFolderId)))
+			->andWhere($qb->expr()->isNull('quarantined_at'));
 
 		return $this->findEntities(query: $qb);
 	}//end findByTeamFolder()
@@ -144,7 +149,8 @@ class BulkGrantShareTargetMapper extends QBMapper {
 		$qb->select('*')
 			->from($this->getTableName())
 			->where($qb->expr()->eq('team_folder_id', $qb->createNamedParameter($teamFolderId)))
-			->andWhere($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)));
+			->andWhere($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)))
+			->andWhere($qb->expr()->isNull('quarantined_at'));
 
 		return $this->findEntities(query: $qb);
 	}//end findByTeamFolderAndTargetUser()

@@ -28,6 +28,7 @@ use OCA\Keepiq\Db\MachineLease;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\MachineSecretResponseServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -47,7 +48,7 @@ use OCP\IRequest;
  * Zero-knowledge (ADR-003) is preserved: everything this class emits is
  * already ciphertext or public metadata.
  */
-class MachineSecretResponseService {
+class MachineSecretResponseService implements MachineSecretResponseServiceInterface {
 	/**
 	 * Constructor for MachineSecretResponseService.
 	 *

@@ -49,89 +49,52 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { NcNoteCard } from '@nextcloud/vue'
+import { adminSettingsForm } from '../../mixins/adminSettingsForm.js'
 
 const MIB = 1048576
 
 export default {
 	name: 'AttachmentLimitsSection',
 	components: { CnSettingsSection, NcNoteCard },
+	mixins: [adminSettingsForm('/apps/keepiq/api/settings/admin/general')],
 
 	data() {
 		return {
 			maxMib: 25,
 			quotaMib: 100,
-			error: null,
-		}
-	},
-
-	/**
-	 * Load the current admin limits.
-	 *
-	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
-	 */
-	async created() {
-		try {
-			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin/general'),
-			)
-			this.maxMib = Math.round(
-				(response.data.attachment_max_bytes ?? 25 * MIB) / MIB,
-			)
-			this.quotaMib = Math.round(
-				(response.data.attachment_user_quota_bytes ?? 100 * MIB) / MIB,
-			)
-		} catch (e) {
-			this.error = e?.response?.data?.message || e?.message
 		}
 	},
 
 	methods: {
 		/**
-		 * Persist the limits (server validates positivity).
+		 * Take the stored settings into the form.
 		 *
-		 * @return {Promise<void>}
+		 * @param {object} data The stored settings.
+		 * @return {void}
 		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
 		 */
-		async save() {
-			this.error = null
-			try {
-				await axios.put(
-					generateUrl('/apps/keepiq/api/settings/admin/general'),
-					{
-						attachment_max_bytes: Math.max(1, this.maxMib) * MIB,
-						attachment_user_quota_bytes:
-							Math.max(1, this.quotaMib) * MIB,
-					},
-				)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+		readSettings(data) {
+			this.maxMib = Math.round((data.attachment_max_bytes ?? 25 * MIB) / MIB)
+			this.quotaMib = Math.round(
+				(data.attachment_user_quota_bytes ?? 100 * MIB) / MIB,
+			)
+		},
+
+		/**
+		 * The limits to store (the server validates positivity).
+		 *
+		 * @return {object} The settings to store.
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
+		 */
+		settingsPayload() {
+			return {
+				attachment_max_bytes: Math.max(1, this.maxMib) * MIB,
+				attachment_user_quota_bytes: Math.max(1, this.quotaMib) * MIB,
 			}
 		},
 	},
 }
 </script>
 
-<style scoped>
-.attachment-limits {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	max-width: 420px;
-}
-
-.attachment-limits__field {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-}
-
-.attachment-limits__field input {
-	padding: 8px;
-	border: 1px solid var(--color-border-dark, #999);
-	border-radius: var(--border-radius, 4px);
-	width: 160px;
-}
-</style>
+<style scoped src="./limitFields.css"></style>

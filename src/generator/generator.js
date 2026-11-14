@@ -8,7 +8,8 @@
  * never seen by the server: only its ciphertext is ever sent. This is a port
  * of the server's KeyGeneratorService and KeyGeneratorRegexParser with the
  * same options, the same org policy clamp and the same error messages. The
- * browser extension imports it verbatim, as it does `src/totp`.
+ * browser extension has its own TypeScript port, held in step by
+ * `tests/vectors/generator/cases.json`.
  *
  * Pure module: the org policy is passed in, and the random source can be
  * swapped for tests.
@@ -33,6 +34,12 @@ const DIGITS = '0123456789'
 const SPECIAL = '!@#$%^&*()-_=+[]{}|;:,.<>?/'
 /** Characters that are easy to mistake for one another. */
 const AMBIGUOUS = 'IOl01'
+/**
+ * The list without its four hyphenated words (drop-down, felt-tip, t-shirt,
+ * yo-yo): with the `-` separator they let two word sequences give the same
+ * passphrase.
+ */
+const PASSPHRASE_WORDS = EFF_LARGE_WORDLIST.filter((word) => !word.includes('-'))
 
 /** Thrown for a request the generator refuses; `message` is user-facing. */
 export class GeneratorError extends Error {
@@ -85,7 +92,11 @@ export function generatorPolicy(raw) {
 	}
 	const floor = Number.parseInt(raw.generator_min_length ?? 12, 10)
 	return {
-		minLength: Math.max(MIN_LENGTH, Number.isNaN(floor) ? 12 : floor),
+		// The server stores any floor of 8 or more; above 128 nothing could be generated.
+		minLength: Math.min(
+			MAX_LENGTH,
+			Math.max(MIN_LENGTH, Number.isNaN(floor) ? 12 : floor),
+		),
 		requireUpper: raw.generator_require_upper === true,
 		requireLower: raw.generator_require_lower === true,
 		requireDigit: raw.generator_require_digit === true,
@@ -201,115 +212,156 @@ function buildString(charset, length, rand) {
 }
 
 /**
- * Put one character of every required class the result lacks into it, each
- * at a different position.
+ * Fisher–Yates shuffle in place: every arrangement is equally likely, so a
+ * character forced in for a minimum may land on any position.
  *
- * @param {string} result The generated value.
- * @param {object} policy A normalised policy.
- * @param {string} charset The resolved set.
+ * @param {string[]} chars The characters.
  * @param {(min: number, max: number) => number} rand The random-integer source.
- * @return {string}
+ * @return {string[]}
  */
-function forceRequiredClasses(result, policy, charset, rand) {
-	const chars = [...result]
-	const used = new Set()
-	for (const [, classSet] of requiredClasses(policy)) {
-		if (intersects(result, classSet)) {
-			continue
-		}
-		const allowed = [...classSet].filter((c) => charset.includes(c))
-		if (allowed.length === 0) {
-			continue
-		}
-		let position
-		do {
-			position = rand(0, chars.length - 1)
-		} while (used.has(position))
-		used.add(position)
-		chars[position] = allowed[rand(0, allowed.length - 1)]
+function shuffle(chars, rand) {
+	for (let i = chars.length - 1; i > 0; i--) {
+		const j = rand(0, i)
+		const swap = chars[i]
+		chars[i] = chars[j]
+		chars[j] = swap
 	}
-	return chars.join('')
+	return chars
 }
 
 /**
- * Generate from the built-in character classes.
+ * Generate from the built-in character classes: a uniform draw from the set,
+ * topped up to the minimum of every chosen class, then shuffled.
  *
  * @param {object} options The request.
  * @param {object|null} policy A normalised policy.
  * @param {(min: number, max: number) => number} rand The random-integer source.
  * @return {string}
  * @spec openspec/specs/extension-generator-policy/spec.md#requirement-every-chosen-kind-of-character-appears
+ * @spec openspec/specs/extension-generator/spec.md#requirement-password-options
+ * @spec openspec/specs/org-password-policies/spec.md#requirement-generator-locked-to-policy
  */
 function generateFromCharset(options, policy, rand) {
-	let length = Number(options.length ?? 16)
-	let includeUpper = options.includeUppercase !== false
-	let includeLower = options.includeLowercase !== false
-	let includeDigits = options.includeDigits !== false
-	let includeSpecial = options.includeSpecialCharacters !== false
-	let minDigits = Math.max(0, Number(options.minDigits ?? 0) || 0)
-	let minSpecial = Math.max(0, Number(options.minSpecial ?? 0) || 0)
-	const excluded = new Set(options.excludedCharacters ?? '')
-	if (options.avoidAmbiguous === true) {
-		for (const char of AMBIGUOUS) {
-			excluded.add(char)
-		}
-	}
-
-	// Org policy clamp: the length is raised to the floor, and required
-	// classes are switched on, forced into the set and into the output.
-	if (policy !== null) {
-		length = Math.max(length, policy.minLength)
-		includeUpper = includeUpper || policy.requireUpper
-		includeLower = includeLower || policy.requireLower
-		includeDigits = includeDigits || policy.requireDigit
-		includeSpecial = includeSpecial || policy.requireSymbol
-	}
-	if (!includeUpper && !includeLower && !includeDigits && !includeSpecial) {
+	const spec = readSpec(options, policy)
+	if (
+		!spec.includeUppercase
+		&& !spec.includeLowercase
+		&& !spec.includeDigits
+		&& !spec.includeSpecialCharacters
+	) {
 		throw new GeneratorError('Choose at least one kind of character')
 	}
-	minDigits = includeDigits ? minDigits : 0
-	minSpecial = includeSpecial ? minSpecial : 0
-	// The minimums must fit: the length grows to hold them.
-	length = Math.max(length, minDigits + minSpecial)
+	const charset = buildCharset(spec, policy)
+	const minimums = classMinimums(spec, charset)
+	// The length grows to hold every minimum, as Bitwarden's atLeastSum does.
+	const length = Math.max(
+		spec.length,
+		minimums.reduce((sum, [, count]) => sum + count, 0),
+	)
 	assertLengthInRange(length)
+	assertCharsetViable(charset)
 
-	let charset =
-		(includeUpper ? UPPERCASE : '')
-		+ (includeLower ? LOWERCASE : '')
-		+ (includeDigits ? DIGITS : '')
-		+ (includeSpecial ? SPECIAL : '')
-	charset = dedupe([...charset].filter((c) => !excluded.has(c)))
+	const value = ensureMinimums(
+		buildString(charset, length, rand),
+		charset,
+		minimums,
+		rand,
+	)
+	return shuffle([...value], rand).join('')
+}
+
+/**
+ * A non-negative whole count; anything else is 0. Whole numbers only: a
+ * fraction would make the length a fraction too.
+ *
+ * @param {number|string|undefined} value The requested count.
+ * @return {number}
+ */
+function wholeCount(value) {
+	return Math.max(0, Math.floor(Number(value ?? 0)) || 0)
+}
+
+/**
+ * The request with its defaults. Under an org policy the length is raised to
+ * the floor and the required kinds are switched on.
+ *
+ * @param {object} options The request.
+ * @param {object|null} policy A normalised policy.
+ * @return {object} length, the four kinds, the two minimums and the excluded set.
+ */
+function readSpec(options, policy) {
+	const spec = {
+		length: Number(options.length ?? 16),
+		includeUppercase: options.includeUppercase !== false,
+		includeLowercase: options.includeLowercase !== false,
+		includeDigits: options.includeDigits !== false,
+		includeSpecialCharacters: options.includeSpecialCharacters !== false,
+		minDigits: wholeCount(options.minDigits),
+		minSpecial: wholeCount(options.minSpecial),
+		excludedCharacters: new Set(options.excludedCharacters ?? ''),
+	}
+	if (options.avoidAmbiguous === true) {
+		for (const char of AMBIGUOUS) {
+			spec.excludedCharacters.add(char)
+		}
+	}
 	if (policy !== null) {
-		// An exclusion list may not hollow out a required class.
+		spec.length = Math.max(spec.length, policy.minLength)
+		spec.includeUppercase = spec.includeUppercase || policy.requireUpper
+		spec.includeLowercase = spec.includeLowercase || policy.requireLower
+		spec.includeDigits = spec.includeDigits || policy.requireDigit
+		spec.includeSpecialCharacters =
+			spec.includeSpecialCharacters || policy.requireSymbol
+	}
+	return spec
+}
+
+/**
+ * The chosen kinds minus the exclusions. An exclusion list may not hollow out
+ * a class the policy requires, so such a class is added back whole.
+ *
+ * @param {object} spec The request as readSpec returns it.
+ * @param {object|null} policy A normalised policy.
+ * @return {string}
+ */
+function buildCharset(spec, policy) {
+	let charset =
+		(spec.includeUppercase ? UPPERCASE : '')
+		+ (spec.includeLowercase ? LOWERCASE : '')
+		+ (spec.includeDigits ? DIGITS : '')
+		+ (spec.includeSpecialCharacters ? SPECIAL : '')
+	charset = dedupe([...charset].filter((c) => !spec.excludedCharacters.has(c)))
+	if (policy !== null) {
 		for (const [, classSet] of requiredClasses(policy)) {
 			if (!intersects(charset, classSet)) {
 				charset += classSet
 			}
 		}
 	}
-	assertCharsetViable(charset)
+	return charset
+}
 
-	let result = buildString(charset, length, rand)
-	// Every chosen kind appears at least once, on top of the minimums.
-	result = ensureMinimums(
-		result,
-		charset,
-		[
-			[UPPERCASE, includeUpper ? 1 : 0],
-			[LOWERCASE, includeLower ? 1 : 0],
-			[DIGITS, includeDigits ? Math.max(minDigits, 1) : 0],
-			[SPECIAL, includeSpecial ? Math.max(minSpecial, 1) : 0],
-		],
-		rand,
-	)
-	return policy !== null
-		? forceRequiredClasses(result, policy, charset, rand)
-		: result
+/**
+ * Every chosen kind appears at least once, on top of the minimums. A required
+ * class is chosen and in the set, so this also meets the policy.
+ *
+ * @param {object} spec The request as readSpec returns it.
+ * @param {string} charset The resolved set.
+ * @return {Array<[string, number]>} Class set and minimum count.
+ */
+function classMinimums(spec, charset) {
+	return [
+		[UPPERCASE, spec.includeUppercase ? 1 : 0],
+		[LOWERCASE, spec.includeLowercase ? 1 : 0],
+		[DIGITS, spec.includeDigits ? Math.max(spec.minDigits, 1) : 0],
+		[SPECIAL, spec.includeSpecialCharacters ? Math.max(spec.minSpecial, 1) : 0],
+	].filter(([classSet, count]) => count > 0 && intersects(charset, classSet))
 }
 
 /**
  * Make sure the value holds at least `count` characters of each class, by
- * replacing characters of other classes at random positions.
+ * replacing characters of other classes at random positions. The length
+ * must hold the sum of the counts.
  *
  * @param {string} value The generated value.
  * @param {string} charset The resolved set.
@@ -322,25 +374,17 @@ function ensureMinimums(value, charset, minimums, rand) {
 	const reserved = new Set()
 	for (const [classSet, count] of minimums) {
 		const allowed = [...classSet].filter((c) => charset.includes(c))
-		if (count === 0 || allowed.length === 0) {
-			continue
-		}
 		const have = chars
 			.map((c, i) => (classSet.includes(c) ? i : -1))
 			.filter((i) => i >= 0)
 		for (const i of have.slice(0, count)) {
 			reserved.add(i)
 		}
-		let missing = count - Math.min(have.length, count)
-		while (missing > 0) {
+		for (let missing = count - have.length; missing > 0; missing--) {
 			const free = chars.map((c, i) => i).filter((i) => !reserved.has(i))
-			if (free.length === 0) {
-				break
-			}
 			const position = free[rand(0, free.length - 1)]
 			chars[position] = allowed[rand(0, allowed.length - 1)]
 			reserved.add(position)
-			missing--
 		}
 	}
 	return chars.join('')
@@ -395,23 +439,23 @@ export function extractLength(regex) {
 }
 
 /**
+ * The characters of the escaped classes `\d` and `\w`, and of `\s`:
+ * whitespace is not a useful generation set, so a space stands for it.
+ */
+const ESCAPE_CLASSES = new Map([
+	['d', [...DIGITS]],
+	['w', [...(UPPERCASE + LOWERCASE + DIGITS + '_')]],
+	['s', [' ']],
+])
+
+/**
  * Expand one escape inside a character class.
  *
  * @param {string} escape The character after the backslash.
  * @return {string[]}
  */
 function expandEscape(escape) {
-	switch (escape) {
-		case 'd':
-			return [...DIGITS]
-		case 'w':
-			return [...(UPPERCASE + LOWERCASE + DIGITS + '_')]
-		case 's':
-			// Whitespace is not a useful generation set; a space stands for it.
-			return [' ']
-		default:
-			return [escape]
-	}
+	return ESCAPE_CLASSES.get(escape) ?? [escape]
 }
 
 /**
@@ -486,6 +530,28 @@ export function extractCharset(regex) {
 }
 
 /**
+ * Refuse a pattern that cannot meet the org policy; it is never weakened.
+ *
+ * @param {object} policy A normalised policy.
+ * @param {object} pattern The pattern as generateFromRegex reads it.
+ * @return {void}
+ */
+function assertPolicyReachable(policy, pattern) {
+	if (pattern.maxLength < policy.minLength) {
+		throw new GeneratorError(
+			`The regex cannot reach the org policy minimum length of ${policy.minLength} characters`,
+		)
+	}
+	for (const [label, classSet] of requiredClasses(policy)) {
+		if (!intersects(pattern.charset, classSet)) {
+			throw new GeneratorError(
+				`The regex excludes the ${label} characters the org policy requires`,
+			)
+		}
+	}
+}
+
+/**
  * Generate from a regex: a length within its quantifier, characters from its
  * first class, checked against the pattern itself.
  *
@@ -495,38 +561,59 @@ export function extractCharset(regex) {
  * @return {string}
  */
 function generateFromRegex(regex, policy, rand) {
-	const compiled = compilePattern(regex)
-	const [quantifierMin, maxLength] = extractLength(regex)
-	let minLength = quantifierMin
-	const charset = extractCharset(regex)
+	const pattern = regexPattern(regex)
+	if (policy !== null) {
+		assertPolicyReachable(policy, pattern)
+		pattern.minLength = Math.max(
+			pattern.minLength,
+			Math.min(policy.minLength, pattern.maxLength),
+		)
+	}
+	assertCharsetViable(pattern.charset)
+	return matchingCandidate(pattern, rand)
+}
 
-	if (minLength < MIN_LENGTH) {
+/**
+ * A pattern's compiled form, its quantifier's length range and its first
+ * class's characters; a range shorter than the minimum length is refused.
+ *
+ * @param {string} regex The pattern.
+ * @return {{compiled: RegExp, minLength: number, maxLength: number, charset: string}}
+ */
+function regexPattern(regex) {
+	const compiled = compilePattern(regex)
+	const [minLength, maxLength] = extractLength(regex)
+	const pattern = {
+		compiled,
+		minLength,
+		maxLength,
+		charset: extractCharset(regex),
+	}
+	if (pattern.minLength < MIN_LENGTH) {
 		throw new GeneratorError(
 			`The regex length must be at least ${MIN_LENGTH} characters`,
 		)
 	}
-	// A pattern that cannot meet the policy is refused, never weakened.
-	if (policy !== null) {
-		if (maxLength < policy.minLength) {
-			throw new GeneratorError(
-				`The regex cannot reach the org policy minimum length of ${policy.minLength} characters`,
-			)
-		}
-		for (const [label, classSet] of requiredClasses(policy)) {
-			if (!intersects(charset, classSet)) {
-				throw new GeneratorError(
-					`The regex excludes the ${label} characters the org policy requires`,
-				)
-			}
-		}
-		minLength = Math.max(minLength, Math.min(policy.minLength, maxLength))
-	}
-	assertCharsetViable(charset)
+	return pattern
+}
 
+/**
+ * A candidate within the pattern's length range that the pattern itself
+ * accepts, after at most MAX_REGEX_ATTEMPTS tries.
+ *
+ * @param {object} pattern The pattern.
+ * @param {(min: number, max: number) => number} rand The random-integer source.
+ * @return {string}
+ */
+function matchingCandidate(pattern, rand) {
 	for (let attempt = 0; attempt < MAX_REGEX_ATTEMPTS; attempt++) {
-		const candidate = buildString(charset, rand(minLength, maxLength), rand)
-		compiled.lastIndex = 0
-		if (compiled.test(candidate)) {
+		const candidate = buildString(
+			pattern.charset,
+			rand(pattern.minLength, pattern.maxLength),
+			rand,
+		)
+		pattern.compiled.lastIndex = 0
+		if (pattern.compiled.test(candidate)) {
 			return candidate
 		}
 	}
@@ -560,7 +647,7 @@ export function generateKey(options = {}, rawPolicy = null, rand = randomInt) {
 
 /**
  * Generate a passphrase in the browser: words drawn uniformly from the EFF
- * large word list, joined by a separator.
+ * large word list without its hyphenated words, joined by a separator.
  *
  * With the org policy on, the passphrase is made to meet it rather than
  * refused: words are added until the length floor is met, words are
@@ -586,41 +673,76 @@ export function generatePassphrase(
 	rand = randomInt,
 ) {
 	const policy = generatorPolicy(rawPolicy)
-	if (policy !== null && !policy.allowPassphrase) {
+	if (policy?.allowPassphrase === false) {
 		throw new GeneratorError('Your organisation has switched passphrases off')
 	}
 
+	const spec = passphraseSpec(options, policy)
+	if (policy?.requireSymbol && !intersects(spec.separator, SPECIAL)) {
+		spec.separator = SPECIAL[rand(0, SPECIAL.length - 1)]
+	}
+
+	const words = passphraseWords(spec, rand)
+	while (words.join(spec.separator).length < policy?.minLength) {
+		words.push(drawWord(spec, rand))
+	}
+	return words.join(spec.separator)
+}
+
+/**
+ * The passphrase request with its defaults, its word count checked and the
+ * policy's required kinds switched on.
+ *
+ * @param {object} options The request.
+ * @param {object|null} policy A normalised policy.
+ * @return {{count: number, separator: string, capitalise: boolean, includeNumber: boolean}}
+ * @throws {GeneratorError} When the word count is out of range.
+ */
+function passphraseSpec(options, policy) {
 	const count = Number(options.words ?? DEFAULT_WORDS)
 	if (!Number.isInteger(count) || count < MIN_WORDS || count > MAX_WORDS) {
 		throw new GeneratorError(
 			`A passphrase must have ${MIN_WORDS} to ${MAX_WORDS} words`,
 		)
 	}
-	let separator = options.separator ?? '-'
-	let capitalise = options.capitalise === true
-	let includeNumber = options.includeNumber === true
-
+	const spec = {
+		count,
+		separator: options.separator ?? '-',
+		capitalise: options.capitalise === true,
+		includeNumber: options.includeNumber === true,
+	}
 	if (policy !== null) {
-		capitalise = capitalise || policy.requireUpper
-		includeNumber = includeNumber || policy.requireDigit
-		if (policy.requireSymbol && !intersects(separator, SPECIAL)) {
-			separator = SPECIAL[rand(0, SPECIAL.length - 1)]
-		}
+		spec.capitalise = spec.capitalise || policy.requireUpper
+		spec.includeNumber = spec.includeNumber || policy.requireDigit
 	}
+	return spec
+}
 
-	const draw = () => {
-		const word = EFF_LARGE_WORDLIST[rand(0, EFF_LARGE_WORDLIST.length - 1)]
-		return capitalise ? word[0].toUpperCase() + word.slice(1) : word
-	}
-	const words = Array.from({ length: count }, draw)
-	if (includeNumber) {
+/**
+ * One word from the list, capitalised when the request asks for it.
+ *
+ * @param {object} spec The request as passphraseSpec returns it.
+ * @param {(min: number, max: number) => number} rand The random-integer source.
+ * @return {string}
+ */
+function drawWord(spec, rand) {
+	const word = PASSPHRASE_WORDS[rand(0, PASSPHRASE_WORDS.length - 1)]
+	return spec.capitalise ? word[0].toUpperCase() + word.slice(1) : word
+}
+
+/**
+ * The requested number of words, one of them with a digit appended when
+ * the request asks for a number.
+ *
+ * @param {object} spec The request as passphraseSpec returns it.
+ * @param {(min: number, max: number) => number} rand The random-integer source.
+ * @return {string[]}
+ */
+function passphraseWords(spec, rand) {
+	const words = Array.from({ length: spec.count }, () => drawWord(spec, rand))
+	if (spec.includeNumber) {
 		const index = rand(0, words.length - 1)
 		words[index] += String(rand(0, 9))
 	}
-	if (policy !== null) {
-		while (words.join(separator).length < policy.minLength) {
-			words.push(draw())
-		}
-	}
-	return words.join(separator)
+	return words
 }

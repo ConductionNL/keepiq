@@ -23,9 +23,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Service\FederatedInboundService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\FederatedInboundServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -44,7 +44,7 @@ class FederatedInboundController extends Controller {
 	 * Constructor for FederatedInboundController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param FederatedInboundService $inbound The receiving side
+	 * @param FederatedInboundServiceInterface $inbound The receiving side
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
@@ -53,10 +53,10 @@ class FederatedInboundController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private FederatedInboundService $inbound,
+		private FederatedInboundServiceInterface $inbound,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

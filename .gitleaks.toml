@@ -1,13 +1,129 @@
-# Secret scanning configuration (gitleaks v8).
-#
-# sdk/testdata/ holds a throwaway RSA key and values encrypted to it. They are
-# conformance vectors that every client library and the server decrypt in
-# tests; the key protects nothing and is labelled TEST ONLY in each file.
-title = "keepiq"
+# gitleaks configuration: the default rules, plus allowlists for findings
+# that are not secrets. Each allowlist names the exact files and only the
+# rules that fire there, so anything else in those files is still reported.
 
 [extend]
 useDefault = true
 
-[allowlist]
-description = "Test-only conformance vectors for the client libraries"
-paths = ['''^sdk/testdata/''']
+[[allowlists]]
+description = "CI smoke test: curl with the default admin:admin login of the throwaway Nextcloud container the job starts."
+targetRules = ["curl-auth-user"]
+paths = [
+  '''(^|/)\.github/workflows/standalone\.yml$''',
+]
+
+[[allowlists]]
+description = "Browser extension unit tests and golden files: RFC 6238 TOTP test secrets, throwaway test keys and certificates (marked TEST ONLY)."
+targetRules = ["generic-api-key", "private-key"]
+paths = [
+  '''(^|/)browser\-extension/entrypoints/popup/views/ItemDetail\.test\.tsx$''',
+  '''(^|/)browser\-extension/entrypoints/popup/views/Shell\.test\.tsx$''',
+  '''(^|/)browser\-extension/entrypoints/popup/views/VaultList\.test\.tsx$''',
+  '''(^|/)browser\-extension/src/passkey/match\.test\.ts$''',
+  '''(^|/)browser\-extension/src/testing/ca\-constraints\-chain\.json$''',
+  '''(^|/)browser\-extension/src/totp/totp\.test\.ts$''',
+  '''(^|/)browser\-extension/src/vault/secret\-units\.golden\.json$''',
+]
+
+[[allowlists]]
+description = "Documentation examples: the default admin:admin login of the local development and demo containers."
+targetRules = ["curl-auth-user"]
+paths = [
+  '''(^|/)docs/Installation/demo\-environment\.md$''',
+]
+
+[[allowlists]]
+description = "Tutorial example: curl with an APP_PASSWORD placeholder."
+targetRules = ["curl-auth-user"]
+paths = [
+  '''(^|/)docs/tutorials/admin/02\-admin\-api\.md$''',
+]
+
+[[allowlists]]
+description = "Operator unit test: a made-up database password the test writes into a fake secret."
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)integrations/kubernetes/internal/controller/keepiqsecret_controller_test\.go$''',
+]
+
+[[allowlists]]
+description = "Mobile E2E fixtures: encrypted demo vault entries and demo tokens for the mocked server."
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)mobile/e2e/fixtures/server\.json$''',
+]
+
+[[allowlists]]
+description = "PEM parser: the BEGIN/END PRIVATE KEY marker strings it strips, not a key."
+targetRules = ["private-key"]
+paths = [
+  '''(^|/)mobile/shared/src/commonMain/kotlin/nl/conduction/keepiq/shared/crypto/Rsa\.kt$''',
+]
+
+[[allowlists]]
+description = "Mobile unit tests: fixture vault entries with made-up values."
+targetRules = ["generic-api-key"]
+paths = [
+  '''(^|/)mobile/shared/src/jvmTest/kotlin/nl/conduction/keepiq/shared/vault/VaultRepositoryTest\.kt$''',
+]
+
+[[allowlists]]
+description = "SDK test data: a throwaway RSA key and envelope, marked TEST ONLY."
+targetRules = ["generic-api-key", "private-key"]
+paths = [
+  '''(^|/)sdk/testdata/machine_envelope\.json$''',
+]
+
+[[allowlists]]
+description = "Key export code: the BEGIN/END PRIVATE KEY marker strings around an exported key, not a key."
+targetRules = ["private-key"]
+paths = [
+  '''(^|/)src/store/modules/keyRotation\.js$''',
+]
+
+[[allowlists]]
+description = "Unit tests, snapshots and crypto test vectors: RFC 6238 TOTP test secrets, deterministic throwaway test keys and made-up tokens."
+targetRules = ["generic-api-key", "private-key"]
+paths = [
+  '''(^|/)tests/Unit/Service/EmergencyEnvelopeInvalidationServiceTest\.php$''',
+  '''(^|/)tests/Unit/Service/SecretServiceOrgOwnershipTest\.php$''',
+  '''(^|/)tests/components/SecretDetailSidebar\.loginTotpPasskeys\.spec\.js$''',
+  '''(^|/)tests/components/SecretRequestList\.spec\.js$''',
+  '''(^|/)tests/components/TotpDisplay\.spec\.js$''',
+  '''(^|/)tests/dialogs/SecretEditDialog\.totp\.spec\.js$''',
+  '''(^|/)tests/dialogs/VersionDetailsDialog\.loginFields\.spec\.js$''',
+  '''(^|/)tests/store/__snapshots__/suiteRotationSteps\.spec\.js\.snap$''',
+  '''(^|/)tests/store/accountRecovery\.spec\.js$''',
+  '''(^|/)tests/store/import\.spec\.js$''',
+  '''(^|/)tests/store/linkShare\.spec\.js$''',
+  '''(^|/)tests/vectors/crypto/envelope\.json$''',
+  '''(^|/)tests/vectors/crypto/kotlin\-output\.json$''',
+  '''(^|/)tests/vectors/crypto/passkey\.json$''',
+  '''(^|/)tests/vectors/crypto/send\.json$''',
+  '''(^|/)tests/vitest/aes\.spec\.js$''',
+  '''(^|/)tests/vitest/cxf\.golden\.spec\.js$''',
+  '''(^|/)tests/vitest/cxf\.spec\.js$''',
+  '''(^|/)tests/vitest/emergencyEnvelope\.spec\.js$''',
+  '''(^|/)tests/vitest/export\-serializer\.spec\.js$''',
+  '''(^|/)tests/vitest/fixtures/rsa\-fixtures\.js$''',
+  '''(^|/)tests/vitest/hpke\-rfc9180\.spec\.js$''',
+  '''(^|/)tests/vitest/import\-parsers\.spec\.js$''',
+  '''(^|/)tests/vitest/passkey\.spec\.js$''',
+  '''(^|/)tests/vitest/proveMasterPassword\.spec\.js$''',
+  '''(^|/)tests/vitest/rsa\.spec\.js$''',
+  '''(^|/)tests/vitest/totp\.spec\.js$''',
+]
+
+[[allowlists]]
+description = "Test setup script: the default admin:admin login of the throwaway federation test containers."
+targetRules = ["curl-auth-user"]
+paths = [
+  '''(^|/)tests/integration/federation/setup\.sh$''',
+]
+
+[[allowlists]]
+description = "Test setup script: the default admin:admin login of the throwaway test container."
+targetRules = ["curl-auth-user"]
+paths = [
+  '''(^|/)tests/server/setup\.sh$''',
+]

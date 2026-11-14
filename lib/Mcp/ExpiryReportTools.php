@@ -23,7 +23,7 @@ use DateTime;
 use DateTimeInterface;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Service\CertificateLifecycleService;
+use OCA\Keepiq\Kernel\Contracts\CertificateLifecycleServiceInterface;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCP\AppFramework\Utility\ITimeFactory;
 
@@ -38,7 +38,7 @@ class ExpiryReportTools {
 	/**
 	 * Constructor.
 	 *
-	 * @param CertificateLifecycleService $certificates The certificate inventory
+	 * @param CertificateLifecycleServiceInterface $certificates The certificate inventory
 	 * @param SecretMapper $secretMapper The caller's secrets (expiry dates)
 	 * @param ITimeFactory $time The clock
 	 * @param McpToolContext $context The principal and the audit
@@ -47,7 +47,7 @@ class ExpiryReportTools {
 	 * @return void
 	 */
 	public function __construct(
-		private CertificateLifecycleService $certificates,
+		private CertificateLifecycleServiceInterface $certificates,
 		private SecretMapper $secretMapper,
 		private ITimeFactory $time,
 		private McpToolContext $context,
@@ -65,7 +65,8 @@ class ExpiryReportTools {
 		idempotentHint: true,
 		scope: 'read',
 		subject: 'entry',
-		action: 'list'
+		action: 'list',
+		reach: 'user'
 	)]
 	/**
 	 * Report what expires within withinDays, plus what already expired.

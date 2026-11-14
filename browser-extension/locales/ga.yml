@@ -1,0 +1,819 @@
+# Terms and tone follow Nextcloud's Irish: informal tú, taisceadán, máistirphasfhocal, pasfhocal aipe, eochair rochtana (passkey), aip ghréasáin; counts use "Label: $1" or unmutated nouns.
+language: ga
+extensionDescription: Keepiq do do bhrabhsálaí. Líon isteach logálacha isteach, eochracha rochtana agus cóid aonuaire ó thaisceadán criptithe Nextcloud.
+commandAutofillLogin: Uathlíon an logáil isteach is déanaí a úsáideadh
+commandFocusNotificationBar: Téigh chuig barra sábhála Keepiq
+
+errors:
+  insecureUrl: Úsáid https don fhreastalaí seo
+  invalidUrl: Cuir isteach URL bailí freastalaí
+  permissionDenied: Tá cead ag teastáil ó Keepiq chun {host} a rochtain
+  unreachable: Níorbh fhéidir {host} a shroicheadh
+  notNextcloud: Ní cosúil gur freastalaí Nextcloud é {host}
+  serverError: Níl {host} ar fáil faoi láthair, bain triail eile as ar ball
+  unauthorized: Ainm úsáideora nó pasfhocal aipe mícheart
+  keepiqMissing: Níl Keepiq suiteáilte ar {host}
+  keepiqOutdated: Tá Keepiq ar {host} rósean don síneadh seo, a dteastaíonn leagan {version} nó níos déanaí uaidh. Iarr ar do riarthóir Keepiq a nuashonrú.
+  noActiveSuite: Oscail aip ghréasáin Keepiq uair amháin agus socraigh máistirphasfhocal, ansin bain triail eile as
+  unlockBlocked: Éilíonn d'eagraíocht logáil isteach dhá fhachtóir. Socraigh an dara fachtóir i Socruithe Nextcloud, Slándáil, ansin bain triail eile as
+  duplicate: Tá an cuntas seo curtha leis cheana
+  limitReached: Tá uasteorainn na gcuntas bainte amach ({count})
+  invalidMasterPassword: Máistirphasfhocal neamhbhailí
+  keyUnreadable: Níorbh fhéidir eochair do thaisceadáin i Keepiq a léamh, mar sin ní féidir leis an mbrabhsálaí seo é a dhíghlasáil. Inis do do riarthóir Keepiq.
+  offlineNoCache: Tá tú as líne agus níor sioncronaíodh an taisceadán seo fós
+  sessionRevoked: Cúlghaireadh an seisiún, logáil isteach arís
+  writeLocked: Ní féidir do thaisceadán a athrú faoi láthair, bain triail eile as ar ball
+  notResponding: Níl Keepiq ag freagairt. Athlódáil an síneadh agus oscail an fhuinneog aníos seo arís.
+  invalidPin:
+    1: PIN mícheart, 1 iarracht fágtha
+    n: "PIN mícheart, iarrachtaí fágtha: $1"
+  wrongPin: PIN mícheart
+  pinForgotten: Dearmadadh an PIN tar éis an iomarca iarrachtaí
+  pinKeyChanged: Athraíodh eochair do thaisceadáin. Díghlasáil le do mháistirphasfhocal.
+  pinTooShort: "Róghearr, íosmhéid carachtar: {count}"
+  unknown: Tharla earráid
+  passkeyFailed: "Níorbh fhéidir leis an eochair phasfhocail do thaisce a dhíghlasáil. Úsáid do mháistirphasfhocal."
+
+notices:
+  keyChanged: Athraíodh eochair do thaisceadáin i Keepiq. Díghlasáil le do mháistirphasfhocal reatha.
+  fileAccess: "Ní theastaíonn rochtain ar chomhaid ó Keepiq. In Nextcloud, faoi Socruithe, Slándáil, Gléasanna agus seisiúin, is féidir leat rochtain ar chomhaid a mhúchadh don phasfhocal aipe seo nó é a chúlghairm."
+
+common:
+  accountOnHost: "{name} ar {host}"
+  loading: Á lódáil…
+  back: Siar
+  cancel: Cealaigh
+  logOut: Logáil amach
+  appPassword: Pasfhocal aipe
+  addAccount: Cuir cuntas leis
+  openWebApp: Oscail aip ghréasáin Keepiq
+  justNow: díreach anois
+
+titles:
+  accounts: Cuntais
+  logInAgain: Logáil isteach arís
+  unlock: Díghlasáil
+  viewItem: Féach ar mhír
+  newItem: Mír nua
+  newLogin: Logáil isteach nua
+  newCard: Cárta nua
+  newIdentity: Aitheantas nua
+  editItem: Cuir mír in eagar
+  newSend: Seoladh nua
+  sendCreated: Cruthaíodh an seoladh
+
+tabs:
+  label: Príomhroghchlár
+  vault: Taisceadán
+  generator: Gineadóir
+  send: Seol
+  settings: Socruithe
+
+header:
+  popout: Oscail i bhfuinneog
+  accounts: Cuntais, logáilte isteach mar {name}
+  new: Nua
+
+unlock:
+  masterPassword: Máistirphasfhocal
+  submit: Díghlasáil
+  pin: PIN
+  useMasterPassword: Úsáid máistirphasfhocal
+
+logInAgain:
+  submit: Logáil isteach
+
+addAccount:
+  serverUrl: URL an fhreastalaí
+  serverUrlPlaceholder: cloud.example.org
+  username: Ainm úsáideora
+  hint: Cruthaigh ceann faoi Socruithe Nextcloud, Slándáil. Ná cuir isteach do phasfhocal logála isteach Nextcloud anseo choíche.
+  hintWithLink: "Cruthaigh ceann faoi Socruithe Nextcloud, Slándáil: {link}. Ná cuir isteach do phasfhocal logála isteach Nextcloud anseo choíche."
+  securityLink: oscail na socruithe slándála
+  signInWithBrowser: "Sínigh isteach trí Nextcloud"
+  finishInTab: "Críochnaigh an síniú isteach ar an leathanach Nextcloud a d'oscail. Cuireann Keepiq an cuntas leis nuair a bheidh tú réidh."
+  orAppPassword: "Nó cuir isteach pasfhocal aipe:"
+
+accounts:
+  active: (gníomhach)
+  unlocked: Díghlasáilte
+  locked: Glasáilte
+  loggedOut: Logáilte amach
+  lock: Glasáil {account}
+  logOut: Logáil amach as {account}
+  lockAll: Glasáil gach ceann
+  logOutAll: Logáil amach as gach ceann
+  logOutAllQuestion: Logáil amach as gach cuntas?
+  logOutAllDetail: Bainfear gach cuntas den bhrabhsálaí seo. Beidh gach pasfhocal aipe ag teastáil uait arís.
+  logOutQuestion: Logáil amach as {account}?
+  logOutDetail: Bainfear an cuntas den bhrabhsálaí seo. Beidh pasfhocal aipe ag teastáil uait chun é a chur leis arís.
+
+vault:
+  loadFailed: Níorbh fhéidir do thaisceadán a lódáil
+  tryAgain: Bain triail eile as
+  syncing: Do thaisceadán á shioncronú
+  empty: Níl aon mhír i do thaisceadán
+  noMatch: Níl aon mhír ag teacht leis
+  searchCovers: Cuardaítear ainmneacha agus suímh Ghréasáin.
+  clearFilters: Glan na scagairí
+  items: Míreanna
+  tooMany: Na chéad {count} á dtaispeáint, beachtaigh do chuardach
+  offline: "As líne. Sioncronú deireanach: {time}"
+  syncNow: Sioncronaigh anois
+  busy: Freastalaí gnóthach, triailfear arís ar ball
+  allBlocked: Tá gach mír bactha.
+  suggestions: Moltaí uathlíonta
+  noSuggestions: Níl aon mhír do {host}
+  autofillUnavailable: Níl uathlíonadh ar fáil ar an leathanach seo
+  fillFailed: Ní féidir uathlíonadh ar an leathanach seo. Cóipeáil agus greamaigh ina ionad.
+  openFailed: Níorbh fhéidir an suíomh Gréasáin a oscailt
+  popoutFailed: Níorbh fhéidir fuinneog nua a oscailt
+
+filters:
+  search: Cuardaigh
+  searchLabel: Cuardaigh an taisceadán
+  clearSearch: Glan an cuardach
+  folder: Fillteán
+  allItems: Gach mír
+  noFolder: Gan fillteán
+  type: Cineál
+  all: Gach ceann
+  more: Tuilleadh
+  moreTypes: Tuilleadh cineálacha
+  login: Logáil isteach
+  card: Cárta
+  identity: Aitheantas
+  note: Nóta
+  totp: TOTP
+  passkey: Eochair rochtana
+
+item:
+  blocked: Bactha
+  launch: Oscail {name}
+  fill: Líon
+  fillName: Líon {name}
+  insecureTitle: An bhfuil tú fós ag iarraidh an logáil isteach seo a líonadh?
+  insecureWarning: "Rabhadh: Is leathanach HTTP neamhdhaingean é seo, agus d'fhéadfadh daoine eile aon fhaisnéis a sheolann tú a fheiceáil agus a athrú. Sábháladh an logáil isteach seo ar leathanach daingean (HTTPS) ar dtús."
+  cardInsecureTitle: An líonfar an cárta seo ar shuíomh neamhdhaingean?
+  cardInsecureWarning: Níl an suíomh seo daingean. D'fhéadfadh duine ar bith ar an líonra sonraí an chárta a líontar a léamh.
+  crossSiteTitle: Líon ar {hosts} freisin?
+  crossSiteWarning: Tagann cuid den fhoirm seo ó {hosts}, ní ó {host}. Ní líonann Keepiq ansin é ach má aontaíonn tú.
+  onlyHost: "{host} amháin"
+  copyMenu: Cóipeáil, {name}
+  moreMenu: Tuilleadh, {name}
+  copyUsername: Cóipeáil an t-ainm úsáideora
+  copyPassword: Cóipeáil an pasfhocal
+  copyCode: Cóipeáil an cód fíoraithe
+  view: Féach
+  edit: Cuir in eagar
+  clone: Clónáil
+  move: Bog go fillteán
+  delete: Scrios
+  send: Seol
+  cloneName: "{name} - Clón"
+  passkeyNoClone: Ní féidir eochracha rochtana a chlónáil
+  useOnly: Comhroinnte leat chun logáil isteach amháin
+  readOnly: Comhroinnte ó eagraíocht eile, mar sin ní féidir ach é a bhogadh
+  viewOnly: Comhroinnte leat le féachaint air amháin. Iarr cearta eagarthóireachta ar an úinéir chun é a athrú.
+  expiringNoClone: Críochnaíonn do rochtain {date}, mar sin ní féidir é a chlónáil
+  expiringNoSend: Críochnaíonn do rochtain {date}, mar sin ní féidir é a sheoladh
+  saved: Sábháladh an mhír
+  deleted: Bogadh an mhír go dtí an bruscar
+  moved: Bogadh chuig {folder}
+  deleteTitle: Scrios an mhír
+  deleteConfirm: An mbogfar {name} go dtí an bruscar? Stopfar á chomhroinnt é, fiú má aischuirtear ón mbruscar é in aip ghréasáin Keepiq.
+  gone: Níl an mhír seo ann a thuilleadh
+
+form:
+  itemDetails: Sonraí na míre
+  type: Cineál
+  name: Ainm
+  cardNumberLength: Ní eisíonn {brand} uimhreacha cárta den fhad seo. Is féidir leat sábháil fós.
+  cardNumberLengthUnknown: Bíonn 12 go 19 digit in uimhir chárta. Is féidir leat sábháil fós.
+  cardNumberChecksum: Ní théann an uimhir seo tríd an tseiceáil suime cárta. Seiceáil í; is féidir leat sábháil fós.
+  cardCodeLength: Úsáideann cártaí {brand} {name} {size} dhigit. Is féidir leat sábháil fós.
+  folder: Fillteán
+  chooseFolder: "Roghnaigh fillteán, faoi láthair: {folder}"
+  website: URL an tsuímh Ghréasáin
+  autofillOptions: Roghanna uathlíonta
+  additionalOptions: Roghanna breise
+  authenticator: Fíordheimhneoir
+  note: Nóta
+  secret: Rún
+  advanced: Ardroghanna
+  algorithm: Algartam
+  digits: Digití
+  period: Tréimhse i soicindí
+  addField: Cuir réimse leis
+  fieldName: Ainm an réimse
+  fieldValue: Luach
+  removeField: Bain {name}
+  removeUnnamed: Bain an réimse
+  save: Sábháil
+  passkeyReadOnly: Ní féidir dintiúir eochrach rochtana a athrú ach in aip ghréasáin Keepiq
+  offline: Tá tú as líne. Teastaíonn ceangal le Keepiq le haghaidh athruithe.
+  unsavedTitle: Athruithe gan sábháil
+  unsaved: Tá athruithe agat nach bhfuil sábháilte. An gcuirfear i leataobh iad?
+  discard: Cuir i leataobh
+  keepEditing: Lean ort ag eagarthóireacht
+
+authKey:
+  label: Eochair fhíordheimhnithe
+  optionalLabel: Eochair fhíordheimhnithe (roghnach)
+  newLabel: Eochair fhíordheimhnithe nua
+  help: Greamaigh an nasc otpauth://totp/ nó an eochair rúnda, nó scan an cód QR ar an leathanach.
+  scan: Scan an cód QR ar an leathanach
+  read: Léadh an eochair fhíordheimhnithe ón gcód QR
+  noQr: Níor aimsíodh cód QR ar an leathanach. Scrollaigh go dtí é agus bain triail eile as.
+  notTotp: Níl eochair fhíordheimhnithe sa chód QR seo. Úsáid an cód QR a thaispeánann an suíomh nuair a shocraíonn tú logáil isteach dhá fhachtóir.
+  noPicture: Ní féidir le Keepiq pictiúr a ghlacadh den leathanach seo. Greamaigh an eochair ina ionad.
+  popout: Oscail Keepiq ón mbarra uirlisí ar an leathanach leis an gcód QR chun é a scanadh.
+  saved: Sábháilte
+  remove: Bain an eochair fhíordheimhnithe
+  replaceHelp: Greamaigh nó scan eochair nua, nó fág folamh é chun an ceann sábháilte a bhaint.
+  keep: Coinnigh an eochair shábháilte
+  removedOnSave: Bainfear an eochair fhíordheimhnithe nuair a shábhálann tú.
+  notCloned: Ní chlónáiltear an eochair fhíordheimhnithe.
+
+fieldErrors:
+  required: Tá ainm riachtanach
+  tooLong: "Uasmhéid carachtar: {max}"
+  tooLongBytes: "Rófhada (uasmhéid bearta: {max})"
+  reserved: Tá an t-ainm seo in áirithe
+  duplicate: Tá réimse leis an ainm seo ann cheana
+  invalidTotp: Ní rún fíordheimhnithe bailí é
+  slash: Ní féidir slaiseanna a bheith in ainmneacha fillteán
+
+writeErrors:
+  writeLocked: Tá an taisceadán faoi ghlas go sealadach le haghaidh imirce eochrach, bain triail eile as ar ball
+  forbidden: Ní cheadaíonn Keepiq an t-athrú seo. Taispeánann aip ghréasáin Keepiq an chúis.
+  policy: Ní cheadaíonn beartas d'eagraíochta an t-athrú seo
+  accountChanged: D'athraigh tú go cuntas eile idir an dá linn, mar sin níor sábháladh aon rud. Athraigh ar ais chun é a shábháil.
+  accountChangedDelete: D'athraigh tú go cuntas eile idir an dá linn, mar sin níor scriosadh aon rud. Athraigh ar ais chun é a scriosadh.
+  keepClash: Tá fillteán darb ainm {name} leibhéal amháin suas cheana. Roghnaigh Bog míreanna go dtí an tuismitheoir nó Scrios dó, nó athainmnigh ceann acu ar dtús.
+  keepClashAfter: Tá an t-ainm céanna ar fhillteán a roghnaigh tú a choinneáil agus atá ar fhillteán leibhéal suas, mar sin níor scriosadh aon rud. Seiceáil na roghanna arís.
+  invalid: Dhiúltaigh Keepiq don athrú seo
+  stale: Athraíodh an mhír seo in áit eile. Téigh siar agus cuir in eagar arís í chun an leagan is déanaí a fheiceáil.
+  itemGone: Níl an mhír seo ann a thuilleadh
+  folderGone: Níl an fillteán seo ann a thuilleadh
+  duplicateFolder: Tá fillteán leis an ainm seo anseo cheana
+  folderChanged: Athraíodh an fillteán seo. Seiceáil na roghanna arís.
+  offline: Níorbh fhéidir an freastalaí a shroicheadh
+  serverError: Níl Keepiq ar fáil faoi láthair, bain triail eile as ar ball
+  unreadable: Níorbh fhéidir an mhír seo a léamh, mar sin ní féidir í a chur in eagar anseo
+  restricted: Comhroinneadh an mhír seo leat le srianta, mar sin ní féidir í a athrú ná a chóipeáil anseo
+  unmatched: Sheol Keepiq leagan den mhír seo nach bhfuil i do thaisceadán, mar sin níor osclaíodh í.
+  keyMismatch: Sheol Keepiq eochair chriptithe nach bhfuil ag teacht le do thaisceadán, mar sin níor sábháladh aon rud. Inis do do riarthóir Keepiq.
+  staleSource: Athraíodh bunleagan na míre comhroinnte seo tar éis duit í a oscailt. Níor sábháladh aon rud; oscail arís í agus déan d'athrú arís.
+  incomplete: Bhí na daoine a bhfuil an mhír seo comhroinnte leo ag athrú fad is a bhí sí á sábháil. Níor sábháladh aon rud; bain triail eile as.
+  badCertificate: Sheol Keepiq eochair chriptithe do dhuine a bhfuil an mhír seo comhroinnte leis nárbh fhéidir leis an mbrabhsálaí seo a léamh. Níor sábháladh aon rud.
+  unverified: Tá an mhír seo comhroinnte le heagraíochtaí comhpháirtíochta, agus ní féidir leis an mbrabhsálaí seo a dheimhniú go bhfaighidís í díreach mar a chonaic tusa í. Níor sábháladh aon rud; déan an t-athrú seo in aip ghréasáin Keepiq.
+  partnerUnreachable: "Níor sábháladh aon rud: ní féidir eagraíocht chomhpháirtíochta a bhfuil an mhír seo comhroinnte léi a shroicheadh ({cloudIds}). Bain triail eile as ar ball, nó sábháil gan iad, rud a chuireann comhroinnt na míre seo leo ar sos go dtí go gcomhroinnfidh tú arís leo í."
+  partnerUpgradeRequired: "Níor sábháladh aon rud: tá an Keepiq atá ag {cloudIds} rósean chun eochair fhíordheimhnithe a fháil. Bain an eochair, nó iarr orthu Keepiq a nuashonrú."
+  partnerUpgradeRequiredUnnamed: "Níor sábháladh aon rud: tá Keepiq rósean ag eagraíocht chomhpháirtíochta a bhfuil an mhír seo comhroinnte léi chun eochair fhíordheimhnithe a fháil. Bain an eochair, nó iarr orthu Keepiq a nuashonrú."
+  partnerUpgradeVersion: Teastaíonn Keepiq {version} nó níos déanaí uathu.
+  partnerLookupLimit: An iomarca cuardach comhpháirtithe. Níor sábháladh aon rud; bain triail eile as i gceann nóiméid.
+  federationUnavailable: Ní féidir le do fhreastalaí Keepiq comhroinnt le heagraíochtaí comhpháirtíochta, mar sin ní féidir an mhír seo a shábháil anseo. Níor sábháladh aon rud; fiafraigh de do riarthóir.
+  keepiqOutdated: Tá do fhreastalaí Keepiq rósean chun an t-athrú seo a shábháil. Níor sábháladh aon rud; iarr ar do riarthóir Keepiq a nuashonrú go leagan {version} nó níos déanaí.
+  partnerClock: Níl teastas eagraíochta comhpháirtíochta a bhfuil an mhír seo comhroinnte léi bailí de réir chlog an ríomhaire seo. Níor sábháladh aon rud; seiceáil dáta agus am an ríomhaire seo, nó déan an t-athrú seo in aip ghréasáin Keepiq.
+  shareScanPending: Tá an mhír seo ag fanacht ar sheiceáil dá comhroinntí nach bhfuil críochnaithe. Níor sábháladh aon rud; bain triail eile as ar ball.
+  shareScanPendingOpen: Tá an mhír seo ag fanacht ar sheiceáil dá comhroinntí agus ní féidir í a chur in eagar fós. Bain triail eile as ar ball.
+  shareScanPendingDelete: Tá an mhír seo ag fanacht ar sheiceáil dá comhroinntí nach bhfuil críochnaithe. Níor scriosadh aon rud; bain triail eile as ar ball.
+  sendInvalid: Níor ghlac Keepiq leis an seoladh seo. Níor seoladh aon rud; seiceáil na réimsí agus bain triail eile as.
+  sendOffline: Níorbh fhéidir an freastalaí a shroicheadh, níor seoladh aon rud
+  argon2Unavailable: Níl cosaint phasfhocail ar fáil sa bhrabhsálaí seo
+
+shareSave:
+  saveWithout: Sábháil gan iad
+  ownerOnly: Sábháilte. Gheobhaidh faighteoirí in eagraíochtaí comhpháirtíochta an t-athrú seo an chéad uair eile a shábhálann an t-úinéir í.
+  suspended: Tá comhroinnt le {cloudIds} curtha ar sos, toisc nárbh fhéidir a dteastas a fhíorú nó nach nglacann a n-eagraíocht leis a thuilleadh. Taispeánann aip ghréasáin Keepiq an chomhroinnt.
+  paused: Tá comhroinnt le {cloudIds} curtha ar sos go dtí go gcomhroinnfidh tú an mhír seo leo arís.
+
+folders:
+  add: Cuir fillteán leis
+  newFolder: Fillteán nua
+  rename: Athainmnigh
+  renameTitle: Athainmnigh an fillteán
+  delete: Scrios
+  more: Tuilleadh, {name}
+  name: Ainm an fhillteáin
+  empty: Níl aon fhillteán fós
+  notice: Níl ainmneacha fillteán criptithe
+  dismiss: Ruaig
+  current: Fillteán reatha
+  pickTitle: Roghnaigh fillteán
+  moveTitle: Bog go fillteán
+  saved: Sábháladh an fillteán
+  deleted: Scriosadh an fillteán
+  deleteTitle: Scrios an fillteán
+  deleteConfirm: An scriosfar {name}? Ní féidir é seo a chealú.
+  cascade:
+    1: An scriosfar {name} agus an 1 mhír atá ann, nó an mbogfar í chuig {parent}?
+    n: An scriosfar {name} agus a mhíreanna ($1), nó an mbogfar iad chuig {parent}?
+  countsAll: Áirítear míreanna cartlannaithe agus míreanna sa bhruscar freisin.
+  deleteItems: Scrios na míreanna freisin
+  moveItems: Bog míreanna go dtí an tuismitheoir
+  items:
+    1: 1 mhír
+    n: "Míreanna: $1"
+  subfolders:
+    1: 1 fhofhillteán
+    n: "Fofhillteáin: $1"
+  directRow: Míreanna san fhillteán {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Scrios
+  actionMove: Bog míreanna go dtí an tuismitheoir
+  actionKeep: Coinnigh
+  directMove: Bog go dtí an tuismitheoir
+
+clipboard:
+  copied: "Cóipeáladh: {what}"
+  failed: Níorbh fhéidir cóipeáil
+
+field:
+  show: Taispeáin {field}
+  hide: Folaigh {field}
+  copy: Cóipeáil {field}
+
+blocked:
+  generic: Tá an mhír seo bactha.
+  suiteMissing: Níl a heochair chriptithe ann a thuilleadh.
+  suiteRevoked: Cúlghaireadh a heochair chriptithe.
+  suiteCompromised: Criptithe le heochair a cuireadh i gcontúirt, mar sin ní féidir í a oscailt anseo. Taispeánann aip ghréasáin Keepiq an féidir í a aisghabháil.
+  migrationFailed: Níorbh fhéidir í a aistriú chuig d'eochair nua le linn an athshlánaithe. Coinnítear an luach stóráilte ach ní féidir é a oscailt.
+
+detail:
+  item: Mír
+  decrypting: Á díchriptiú…
+  decryptFailed: Níorbh fhéidir an mhír seo a dhíchriptiú
+  unreadablePasskey: Níorbh fhéidir an eochair rochtana seo a léamh
+  unreadableFields: Níorbh fhéidir na réimsí breise a léamh
+  loginCredentials: Dintiúir logála isteach
+  username: Ainm úsáideora
+  password: Pasfhocal
+  authenticatorKey: Eochair fhíordheimhnithe
+  website: Suíomh Gréasáin
+  additionalFields: Réimsí breise
+  notes: Nótaí
+  history: Stair na míre
+  created: Cruthaithe
+  updated: Nuashonraithe
+  expires: Dul in éag
+  cardDetails: Sonraí an chárta
+  number: Uimhir
+  numberWithBrand: Uimhir · {brand}
+  cardNumber: Uimhir an chárta
+  cardholder: Sealbhóir an chárta
+  expiry: Dáta éaga
+  cvv: CVV
+  pin: PIN
+  identity: Aitheantas
+  firstName: Céadainm
+  lastName: Sloinne
+  address: Seoladh
+  phone: Fón
+  email: Ríomhphost
+  bsn: BSN
+  passkey: Eochair rochtana
+  relyingParty: Suíomh nó aip
+  passkeyUser: Ainm úsáideora
+  passkeyOnLogin: Logálann Keepiq isteach le heochracha rochtana atá sábháilte ar logáil isteach, ní leis an mír seo
+  passkeys: Eochracha rochtana
+  passkeyCreated: Cruthaithe {date}
+  useOnly: Ní ligeann an t-úinéir duit é seo a fheiceáil ná a chóipeáil.
+
+totp:
+  code: Cód fíoraithe
+  invalid: Eochair fhíordheimhnithe neamhbhailí
+  changesIn:
+    1: Athraíonn sé i gceann 1 soicind
+    n: Athraíonn sé i gceann $1 s
+
+settings:
+  accountSecurity: Slándáil an chuntais
+  autofill: Uathlíonadh
+  notifications: Fógraí
+  vault: Taisceadán
+  appearance: Cuma
+  about: Maidir leis
+  folders: Fillteáin
+  theme: Téama
+  themeSystem: Réamhshocrú an chórais
+  themeLight: Geal
+  themeDark: Dorcha
+  comingLater: Ag teacht níos déanaí
+  setByOrganisation: Socraithe ag d'eagraíocht
+  turnedOffByOrganisation: Múchta ag d'eagraíocht
+  never: Choíche
+  durationHours: "{count} u"
+  durationMinutes: "{count} nóim"
+  pin: Díghlasáil le PIN
+  pinTurnOn: Cas air
+  masterPasswordRequired: Cuir isteach do mháistirphasfhocal
+  pinAgain: Deimhnigh an PIN
+  pinMismatch: Níl na PIN-anna mar a chéile
+  pinAdvice: Ná húsáid PIN atá agat cheana do d'fhón nó do do bhanc.
+  pinAfterRestart: Tar éis atosú an bhrabhsálaí cuirfidh tú isteach do mháistirphasfhocal uair amháin; ansin oibreoidh do PIN arís.
+  vaultTimeout: Teorainn ama an taisceadáin
+  timeoutImmediately: Láithreach
+  timeoutMinutes:
+    1: 1 nóiméad
+    n: $1 nóiméad
+  timeoutHours:
+    1: 1 uair an chloig
+    n: "Uaireanta an chloig: $1"
+  timeoutOnSystemLock: Nuair a ghlasáiltear an córas
+  timeoutOnSystemLockCapped: Nuair a ghlasáiltear an córas, nó tar éis {duration} díomhaoin (socraithe ag d'eagraíocht)
+  timeoutOnRestart: Nuair a atosaítear an brabhsálaí
+  timeoutCustom: Saincheaptha
+  hours: Uaireanta an chloig
+  minutes: Nóiméid
+  customAtLeastOne: Cuir isteach nóiméad amháin ar a laghad
+  customWhole: Cuir isteach uaireanta agus nóiméid iomlána
+  customAtMost: Ceadaíonn d'eagraíocht {duration} ar a mhéad
+  neverTitle: An bhfágfar an taisceadán díghlasáilte?
+  neverWarning: Fanann do thaisceadán díghlasáilte go dtí go nglasálann tú de láimh é. Scríobhtar an eochair a osclaíonn é ar dhiosca phróifíl an bhrabhsálaí seo, áit ar féidir le duine ar bith a léann an phróifíl í a léamh.
+  neverConfirm: Fág díghlasáilte
+  timeoutAction: Gníomh na teorann ama
+  actionLock: Glasáil
+  actionLogOutNote: Nuair a chríochnaíonn an teorainn ama logálfar amach thú agus beidh an pasfhocal aipe ag teastáil arís
+  lockNow: Glasáil anois
+  changeMasterPassword: Athraigh an máistirphasfhocal
+  autofillOnPageLoad: Uathlíon nuair a lódáiltear an leathanach
+  autofillOnPageLoadWarning: Is féidir le suímh Ghréasáin atá i gcontúirt nó neamhiontaofa leas a bhaint as uathlíonadh nuair a lódáiltear an leathanach
+  defaultAutofill: Socrú réamhshocraithe uathlíonta do logálacha isteach
+  defaultAutofillOnPageLoad: Uathlíon nuair a lódáiltear an leathanach, má tá sé cumasaithe
+  uriMatch: Braite réamhshocraithe meaitseála URI
+  uriBaseDomain: Bunfhearann
+  uriHost: Óstach
+  uriStartsWith: Tosaíonn le
+  uriExact: Beacht
+  uriRegex: Slonn ionadaíochta
+  uriRegexNote: Is ardrogha iad sloinn ionadaíochta agus d'fhéadfaidís an meaitseáil a bhriseadh
+  inlineSuggestions: Taispeáin moltaí uathlíonta i réimsí foirme
+  inlineCards: Taispeáin cártaí mar mholtaí
+  inlineIdentities: Taispeáin aitheantais mar mholtaí
+  inlineKindsOff: Cas air Taispeáin moltaí uathlíonta i réimsí foirme ar dtús.
+  vaultCards: Taispeáin cártaí i gcónaí mar mholtaí uathlíonta san amharc Taisceadáin
+  vaultIdentities: Taispeáin aitheantais i gcónaí mar mholtaí uathlíonta san amharc Taisceadáin
+  defaultPasswordManager: Déan Keepiq de do bhainisteoir pasfhocal réamhshocraithe
+  defaultPasswordManagerHint: Múchann sé sábháil pasfhocal agus uathlíonadh seoltaí an bhrabhsálaí féin, ionas nach gclúdaíonn a mholtaí moltaí Keepiq.
+  defaultPasswordManagerManaged: Tá an socrú brabhsálaí seo á bhainistiú ag d'eagraíocht nó ag síneadh eile.
+  contextMenu: Cumasaigh roghanna sa roghchlár comhthéacs
+  shortcut: Aicearra méarchláir uathlíonta
+  shortcutNotSet: Gan socrú
+  shortcutChange: Athraigh
+  shortcutFirefox: Oscail about:addons, roghnaigh roghchlár an fhearas, ansin Bainistigh Aicearraí Síntí
+  shortcutSafari: Oscail Socruithe Safari, roghnaigh Síntí, ansin roghnaigh Keepiq chun a aicearra a athrú
+  websiteAccess: Rochtain ar shuímh Ghréasáin
+  websiteAccessAll: Gach suíomh Gréasáin
+  websiteAccessSome: Na suímh Ghréasáin a cheadaigh tú amháin
+  websiteAccessServer: Gan do fhreastalaí Keepiq
+  clearClipboard: Glan an ghearrthaisce
+  clipboardSeconds:
+    1: 1 soicind
+    n: "Soicindí: $1"
+  autoCopyTotp: Cóipeáil TOTP go huathoibríoch
+  autoCopyTotpHint: Má tá cód fíoraithe ag logáil isteach, cóipeáil chuig do ghearrthaisce é nuair a uathlíonann tú an logáil isteach.
+  askToAdd: Iarr logáil isteach a chur leis
+  askToUpdate: Iarr logáil isteach atá ann a nuashonrú
+  askPasskeys: Iarr eochracha rochtana a shábháil agus a úsáid
+  excludedDomains: Fearainn eisiata
+  addCurrentSite: Cuir an suíomh reatha leis
+  domain: Fearann
+  addDomain: Cuir leis
+  domainEmpty: Cuir isteach fearann
+  domainUnreadable: Cuir isteach fearann ar nós example.org
+  domainDuplicate: Eisiata cheana
+  removeDomain: Bain {domain}
+  webTitle: Keepiq ar an nGréasán
+  webText: Bainistítear fógraí Keepiq féin, iompórtáil agus easpórtáil, agus do mháistirphasfhocal i Keepiq ar Nextcloud, faoi Socruithe pearsanta.
+  openKeepiq: Oscail Keepiq
+  lastSync: "Sioncronú deireanach: {time}"
+  lastSyncNever: "Sioncronú deireanach: Riamh"
+  syncOffline: Theip ar an sioncronú, tá tú as líne
+  syncFailed: Theip ar an sioncronú, bain triail eile as ar ball
+  importItems: Iompórtáil míreanna
+  exportVault: Easpórtáil an taisceadán
+  defaultItemType: Cineál míre réamhshocraithe sa síneadh seo
+  compactMode: Mód dlúth
+  showAnimations: Taispeáin beochana
+  quickCopy: Taispeáin gníomhartha mearchóipeála sa taisceadán
+  showBadgeCounter: Taispeáin líon na moltaí uathlíonta ar dheilbhín an tsínidh
+  language: Teanga
+  languageFollows: De réir do bhrabhsálaí
+  version: Leagan {version}
+  server: Freastalaí {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Leagan Keepiq anaithnid
+  help: Cabhair
+  reportBug: Tuairiscigh fabht
+  contactSupport: Déan teagmháil leis an tacaíocht
+  privacyPolicy: Polasaí príobháideachais
+  webApp: Aip ghréasáin Keepiq
+  rate: Rátáil an síneadh
+
+websiteAccess:
+  title: Lig do Keepiq oibriú ar shuímh Ghréasáin
+  body: Ní ritheann Safari Keepiq ach ar na suímh Ghréasáin a cheadaíonn tú. Ceadaigh é ar gach suíomh Gréasáin chun logálacha isteach a líonadh, cinn nua a shábháil agus eochracha rochtana a úsáid cibé áit a logálann tú isteach.
+  allow: Ceadaigh ar gach suíomh Gréasáin
+  dismiss: Ní anois
+  steps: In Safari, roghnaigh Safari > Socruithe, ansin Suímh Ghréasáin. Roghnaigh Keepiq sa liosta agus socraigh “Agus suímh Ghréasáin eile á bhfeiceáil” go Ceadaigh.
+  perSite: Chun suíomh amháin a cheadú ag an am, cliceáil an cnaipe Keepiq ar an suíomh sin agus roghnaigh é a cheadú i gcónaí.
+  serverTitle: Ní féidir le Keepiq {host} a bhaint amach
+  serverBody: Ní ligeann Safari do Keepiq do fhreastalaí a bhaint amach, mar sin ní féidir do thaisceadán a shioncronú.
+  serverAllow: Ceadaigh {host}
+
+generator:
+  kinds: Cad atá le giniúint
+  password: Pasfhocal
+  passphrase: Pasfhrása
+  username: Ainm úsáideora
+  length: Fad
+  lengthValue: Fad i gcarachtair
+  uppercase: Ceannlitreacha (A-Z)
+  lowercase: Litreacha beaga (a-z)
+  digits: Uimhreacha (0-9)
+  special: Carachtair speisialta, mar shampla !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Cineálacha carachtar
+  lastClassOn: Fanann cineál amháin ar a laghad ar siúl
+  minNumbers: Íosmhéid uimhreacha
+  minSpecial: Íosmhéid speisialta
+  avoidAmbiguous: Seachain carachtair débhríocha
+  lockedByPolicy: Socraithe ag d'eagraíocht
+  passphraseOff: Múchta ag d'eagraíocht
+  words: Líon na bhfocal
+  separator: Deighilteoir focal
+  capitalizeWords: Ceannlitir
+  capitalize: Ceannlitir
+  includeNumber: Cuir uimhir san áireamh
+  usernameType: Cineál
+  typeWord: Focal randamach
+  typePlus: Ríomhphost le plus
+  typeCatchall: Ríomhphost uile-ghabhála
+  email: Ríomhphost
+  emailPlaceholder: ainm@example.com
+  domain: Fearann
+  domainPlaceholder: example.com
+  basedOn: Bunaithe ar
+  random: Randamach
+  websiteName: Ainm an tsuímh Ghréasáin
+  noWebsite: Níor braitheadh suíomh Gréasáin
+  needsEmail: Cuir isteach seoladh ríomhphoist
+  needsDomain: Cuir isteach fearann
+  wordlistUnavailable: Níl an liosta focal ar fáil
+  regenerate: Gin arís
+  usePassword: Úsáid an pasfhocal seo
+  useUsername: Úsáid an t-ainm úsáideora seo
+  history: Stair an ghineadóra
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Níl aon luachanna ginte fós
+  clearHistory: Glan
+  clearHistoryTitle: An nglanfar stair an ghineadóra?
+  clearHistoryText: Baineann sé seo gach luach sa liosta den bhrabhsálaí seo.
+  generatePasswordLink: Gin pasfhocal
+  generatePassword: Gin pasfhocal
+  generateUsername: Gin ainm úsáideora
+
+send:
+  new: Seoladh nua
+  empty: Níl aon seoladh fós
+  emptyText: Comhroinn téacs nó logáil isteach trí nasc a scriosann é féin.
+  loadFailed: Níorbh fhéidir do sheoltaí a lódáil
+  retry: Triail arís
+  labelText: "Seoladh téacs, {time}"
+  labelCredential: "Seoladh dintiúr, {time}"
+  viewsLeft:
+    1: "Amharc fágtha: {left}/1"
+    n: "Amhairc fágtha: {left}/$1"
+  expires: "Dáta éaga: {date}"
+  neverExpires: Ní théann sé in éag choíche
+  expired: Imithe in éag
+  passwordBadge: Pasfhocal
+  link: Nasc
+  copyLink: Cóipeáil an nasc
+  copyLinkOf: "Cóipeáil an nasc, {name}"
+  linkGone: Níl an nasc ar fáil a thuilleadh
+  remove: Bain
+  removeOf: "Bain, {name}"
+  removeTitle: Bain an seoladh
+  removeConfirm: An mbainfear an seoladh seo? Cailleann aon duine a bhfuil an nasc aige rochtain air.
+  removed: Baineadh an seoladh
+  contentSection: Ábhar
+  optionsSection: Roghanna
+  type: Cineál
+  text: Téacs
+  credential: Dintiúr
+  content: Téacs le comhroinnt
+  maxViews: Uasmhéid amharc
+  maxViewsRange: "Idir 1 agus {max}"
+  expiry: Dul in éag
+  expiry1h: 1 uair an chloig
+  expiry1d: 1 lá
+  expiry2d: 2 lá
+  expiry3d: 3 lá
+  expiry7d: 7 lá
+  expiry30d: 30 lá
+  expiryCustom: Saincheaptha
+  customHours: Uaireanta an chloig
+  customHoursMin: 1 uair an chloig ar a laghad
+  customHoursMax: 720 uair an chloig ar a mhéad (30 lá)
+  accessPassword: Pasfhocal rochtana
+  accessPasswordHint: Roghnach. Teastaíonn sé ón bhfaighteoir chun an seoladh a oscailt.
+  create: Cruthaigh
+  protecting: Á chosaint le pasfhocal…
+  offline: Teastaíonn ceangal le do fhreastalaí Keepiq le haghaidh seoltaí
+  prefillFailed: Níorbh fhéidir an logáil isteach seo a léamh
+  ready: Tá do sheoladh réidh
+  shownOnce:
+    1: Cóipeáil an nasc seo anois. Ní thaispeántar é ach go dtí go ndúnfaidh tú an fhuinneog seo, agus scriosfar an t-ábhar tar éis 1 amharc.
+    n: Cóipeáil an nasc seo anois. Ní thaispeántar é ach go dtí go ndúnfaidh tú an fhuinneog seo, agus scriosfar an t-ábhar nuair a shroichfear uasmhéid na n-amharc ($1).
+  passwordNote: Comhroinn an pasfhocal rochtana ar leith ón nasc. Tar éis 5 iarracht mhíchearta scriosfar an seoladh.
+  done: Déanta
+
+pageFill:
+  insecure: "Rabhadh: Is leathanach HTTP neamhdhaingean é seo, agus d'fhéadfadh daoine eile aon fhaisnéis a sheolann tú a fheiceáil agus a athrú. Sábháladh an logáil isteach seo ar leathanach daingean (HTTPS) ar dtús, {host}.\n\nAn bhfuil tú fós ag iarraidh an logáil isteach seo a líonadh?"
+  insecureNoHost: "Rabhadh: Is leathanach HTTP neamhdhaingean é seo, agus d'fhéadfadh daoine eile aon fhaisnéis a sheolann tú a fheiceáil agus a athrú. Sábháladh an logáil isteach seo ar leathanach daingean (HTTPS) ar dtús.\n\nAn bhfuil tú fós ag iarraidh an logáil isteach seo a líonadh?"
+  cardInsecure: "An líonfar an cárta seo ar shuíomh neamhdhaingean?\n\nNíl an suíomh seo daingean. D'fhéadfadh duine ar bith ar an líonra sonraí an chárta a líontar a léamh."
+  crossSite: "Líon ar {hosts} freisin?\n\nTagann cuid den fhoirm seo ó {hosts}, ní ó {host}. Ní líonann Keepiq ansin é ach má aontaíonn tú."
+
+contextMenu:
+  root: Keepiq
+  autofill: Uathlíon logáil isteach
+  noMatches: Níl aon logáil isteach ar fáil
+  noUsernames: Níl aon ainm úsáideora ar fáil
+  noPasswords: Níl aon phasfhocal ar fáil
+  noCodes: Níl aon chód fíoraithe ar fáil
+  noIdentities: Níl aon aitheantas ar fáil
+  noCards: Níl aon chárta ar fáil
+  addLogin: Cuir logáil isteach leis
+  addIdentity: Cuir aitheantas leis
+  addCard: Cuir cárta leis
+  openKeepiq: Oscail Keepiq
+  copyUsername: Cóipeáil an t-ainm úsáideora
+  copyPassword: Cóipeáil an pasfhocal
+  copyCode: Cóipeáil an cód fíoraithe
+  autofillCard: Uathlíon cárta
+  autofillIdentity: Uathlíon aitheantas
+  generatePassword: Gin pasfhocal agus cóipeáil é
+  unlock: Díghlasáil an taisceadán
+
+pageNotice:
+  label: Fógra Keepiq
+  noLoginForm: Níor aimsigh Keepiq foirm logála isteach le líonadh ar an leathanach seo.
+  noCardForm: Níor aimsigh Keepiq réimsí cárta le líonadh ar an leathanach seo.
+  noIdentityForm: Níor aimsigh Keepiq réimsí seolta nó sonraí pearsanta le líonadh ar an leathanach seo.
+
+toolbar:
+  locked: "{name}: Glasáilte"
+  loggedOut: "{name}: Logáilte amach"
+  count:
+    1: "{name}: 1 logáil isteach don tsuíomh seo"
+    n: "{name}: $1 logáil isteach don tsuíomh seo"
+
+inlineList:
+  frameTitle: Logálacha isteach Keepiq
+  label: Logálacha isteach Keepiq do {host}
+  row: "{name}, {username}"
+  noMatch: Níl aon logáil isteach do {host}
+  passkeyRow: "{name}, {username}, eochair rochtana"
+  passkeyRowNoUser: "{name}, eochair rochtana"
+  noMatchPasskeys: Níl aon logáil isteach ná eochair rochtana do {host}
+  locked: Tá Keepiq faoi ghlas
+  unlock: Díghlasáil
+  insecureQuestion: Líon ar an suíomh neamhdhaingean seo?
+  insecureDetail: Níl an suíomh seo daingean. D'fhéadfadh duine ar bith ar an líonra an méid a líontar a léamh.
+  fill: Líon
+  notVisible: Ní féidir le Keepiq líonadh anseo toisc go n-athraíonn an leathanach seo an chaoi a dtaispeántar é. Úsáid an cnaipe Keepiq sa bharra uirlisí.
+  status:
+    count:
+      1: 1 logáil isteach Keepiq. Brúigh an tSaighead Síos chun roghnú.
+      n: $1 logáil isteach Keepiq. Brúigh an tSaighead Síos chun roghnú.
+    noMatch: Níl aon logáil isteach Keepiq do {host}
+    countPasskeys:
+      1: 1 logáil isteach nó eochair rochtana Keepiq. Brúigh an tSaighead Síos chun roghnú.
+      n: "Logálacha isteach agus eochracha rochtana Keepiq: $1. Brúigh an tSaighead Síos chun roghnú."
+    noMatchPasskeys: Níl aon logáil isteach ná eochair rochtana Keepiq do {host}
+    locked: Tá Keepiq faoi ghlas. Brúigh an tSaighead Síos chun é a dhíghlasáil.
+  code:
+    frameTitle: Cóid fhíoraithe Keepiq
+    label: Cóid fhíoraithe Keepiq do {host}
+    noMatch: Níl aon chód fíoraithe do {host}
+    locked: Díghlasáil Keepiq chun do chóid fhíoraithe a fheiceáil
+    invalid: Ní rún fíordheimhnithe bailí é
+    status:
+      count:
+        1: 1 chód fíoraithe Keepiq. Brúigh an tSaighead Síos chun roghnú.
+        n: "Cóid fhíoraithe Keepiq: $1. Brúigh an tSaighead Síos chun roghnú."
+      noMatch: Níl aon chód fíoraithe Keepiq do {host}
+  card:
+    frameTitle: Cártaí Keepiq
+    noMatch: Níl aon chárta i Keepiq
+    locked: Díghlasáil Keepiq chun do chártaí a fheiceáil
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Cárta, *{last4}"
+    row: "{name}, {brand} dar críoch {last4}"
+    rowNoBrand: "{name}, cárta dar críoch {last4}"
+    status:
+      count:
+        1: 1 chárta Keepiq. Brúigh an tSaighead Síos chun roghnú.
+        n: "Cártaí Keepiq: $1. Brúigh an tSaighead Síos chun roghnú."
+  identity:
+    frameTitle: Aitheantais Keepiq
+    noMatch: Níl aon aitheantas i Keepiq
+    locked: Díghlasáil Keepiq chun d'aitheantais a fheiceáil
+    status:
+      count:
+        1: 1 aitheantas Keepiq. Brúigh an tSaighead Síos chun roghnú.
+        n: "Aitheantais Keepiq: $1. Brúigh an tSaighead Síos chun roghnú."
+  newPassword:
+    frameTitle: Pasfhocal láidir Keepiq
+    offer: Úsáid pasfhocal láidir
+    locked: Díghlasáil Keepiq chun pasfhocal láidir a fháil
+    status: Úsáid pasfhocal láidir. Brúigh an tSaighead Síos chun roghnú.
+
+notificationBar:
+  label: Fógra Keepiq
+  saveQuestion: Sábháil logáil isteach do {host} i Keepiq?
+  updateQuestion: Nuashonraigh an pasfhocal do {name}?
+  updateQuestionUser: Nuashonraigh an pasfhocal do {name} ({username})?
+  updateQuestionHost: Nuashonraigh an pasfhocal do {name} ar {host}?
+  updateQuestionUserHost: Nuashonraigh an pasfhocal do {name} ({username}) ar {host}?
+  folder: Fillteán
+  noFolder: Gan fillteán
+  save: Sábháil
+  never: Riamh don tsuíomh seo
+  update: Nuashonraigh
+  close: Dún
+  expand: Taispeáin roghanna
+  shortcutHint: Brúigh {shortcut} chun freagairt.
+  saving: Á shábháil…
+  updating: Á nuashonrú…
+  saved: Sábháladh an logáil isteach
+  updated: Nuashonraíodh an pasfhocal
+  notVisible: Ní féidir le Keepiq é seo a dhéanamh anseo toisc go n-athraíonn an leathanach seo an chaoi a dtaispeántar é. Dún é seo agus cuir an logáil isteach leis ón gcnaipe Keepiq sa bharra uirlisí.
+  errors:
+    writeLocked: Tá an taisceadán faoi ghlas go sealadach ar athruithe. Bain triail eile as ar ball.
+    unverified: Cuir an logáil isteach seo in eagar i bhfuinneog aníos Keepiq nó san aip ghréasáin chun a phasfhocal a athrú.
+    viewOnly: Comhroinneadh an logáil isteach seo leat le féachaint air amháin, mar sin ní féidir a phasfhocal a nuashonrú anseo.
+    loginGone: Níl an logáil isteach seo ann a thuilleadh. Sábháil mar logáil isteach nua?
+    locked: Tá Keepiq faoi ghlas. Díghlasáil é ón gcnaipe Keepiq sa bharra uirlisí, ansin bain triail eile as.
+    notResponding: Níl Keepiq ag freagairt. Bain triail eile as.
+    accountChanged: D'athraigh tú cuntas, mar sin níor sábháladh aon rud.
+    keyMismatch: Níl eochair Keepiq ag teacht le do thaisceadán. Níor sábháladh aon rud; inis do do riarthóir.
+    staleSource: Athraíodh bunleagan na logála isteach comhroinnte seo. Níor sábháladh aon rud; bain triail eile as.
+    incomplete: Bhí na daoine a bhfuil an logáil isteach seo comhroinnte leo ag athrú. Níor sábháladh aon rud; bain triail eile as.
+    badCertificate: Níorbh fhéidir eochair chriptithe faighteora a léamh. Níor sábháladh aon rud.
+    keepiqOutdated: Tá do fhreastalaí Keepiq rósean. Níor sábháladh aon rud; iarr Keepiq {version} nó níos déanaí ar do riarthóir.
+    shareScanPending: Tá an logáil isteach seo ag fanacht ar sheiceáil dá comhroinntí. Níor sábháladh aon rud; bain triail eile as ar ball.
+
+passkey:
+  unlockGet: Díghlasáil Keepiq chun eochair rochtana do {rpId} a úsáid
+  unlockCreate: Díghlasáil Keepiq chun eochair rochtana do {rpId} a shábháil
+  verifyTitle: Deimhnigh gur tusa atá ann
+  verifyPassword: Cuir isteach do mháistirphasfhocal chun leanúint ar aghaidh.
+  verifyPin: Cuir isteach do PIN chun leanúint ar aghaidh.
+  confirm: Deimhnigh
+  signInTitle: Logáil isteach le heochair rochtana
+  signInText: Úsáid eochair rochtana atá sábháilte i Keepiq do {rpId}
+  row: "{name}, {userName}"
+  noPasskey: Níl aon eochair rochtana Keepiq do {rpId}
+  saveTitle: Sábháil an eochair rochtana
+  saveTo: Sábháil ar logáil isteach
+  replaces: Cuirtear in ionad na heochrach rochtana do {userName}
+  newLogin: Logáil isteach nua
+  name: Ainm
+  folder: Fillteán
+  noFolder: Gan fillteán
+  saveNew: Sábháil mar logáil isteach nua
+  replaceQuestion: Cuir eochair nua in ionad na heochrach rochtana do {userName} ar {name}?
+  replace: Ionadaigh
+  alreadySavedTitle: Eochair rochtana sábháilte cheana
+  alreadySaved: Tá eochair rochtana don chuntas seo sábháilte i Keepiq cheana
+  close: Dún
+  retry: Triail arís
+  fallback: Úsáid do ghléas nó d'eochair chrua-earraí
+  stalePick: Níl an eochair rochtana seo i do thaisceadán a thuilleadh. Roghnaigh ceann eile.
+  staleSave: Ní féidir an eochair rochtana a shábháil ar an logáil isteach seo a thuilleadh. Roghnaigh ceann eile, nó sábháil í mar logáil isteach nua.
+  errors:
+    conflict: Athraíodh an logáil isteach seo le linn sábhála. Níor sábháladh aon rud; bain triail eile as.
+    partnerUpgradeRequired: "Níor sábháladh aon rud: tá an Keepiq atá ag {cloudIds} rósean chun eochracha rochtana a stóráil. Iarr orthu Keepiq a nuashonrú, nó sábháil an eochair rochtana ar logáil isteach eile."
+    partnerUpgradeRequiredUnnamed: "Níor sábháladh aon rud: tá Keepiq rósean ag eagraíocht chomhpháirtíochta a bhfuil an logáil isteach seo comhroinnte léi chun eochracha rochtana a stóráil. Iarr orthu Keepiq a nuashonrú, nó sábháil an eochair rochtana ar logáil isteach eile."
+    shareScanPending: Tá an logáil isteach seo ag fanacht ar sheiceáil dá comhroinntí nach bhfuil críochnaithe. Níor sábháladh aon rud; bain triail eile as ar ball.
+
+vaultPasskey:
+  unlock: "Díghlasáil le méarlorg nó aghaidh"
+  unlockIntro: "Iarrann do bhrabhsálaí do mhéarlorg, d'aghaidh nó UAP an ghléis."
+  enrolTitle: "Socraigh díghlasáil le méarlorg nó aghaidh"
+  enrolIntro: "Deimhnigh do mháistirphasfhocal. Ansin iarrann do bhrabhsálaí do mhéarlorg, d'aghaidh nó UAP an ghléis faoi dhó."
+  enrolSubmit: "Socraigh"
+  enrolDone: "Tá díghlasáil le méarlorg nó aghaidh socraithe don bhrabhsálaí seo."
+  close: "Dún"
+  label: "Breiseán brabhsálaí Keepiq"
+  tooOld: "Teastaíonn Chrome nó Edge 122, nó Firefox 150, nó níos déanaí le díghlasáil le méarlorg nó aghaidh. Úsáid do mháistirphasfhocal."
+  unsupported: "Ní féidir leis an mbrabhsálaí nó an gléas seo Keepiq a dhíghlasáil le méarlorg nó aghaidh. Úsáid do mháistirphasfhocal."
+  revokeInWebApp: "Chun é a mhúchadh, cúlghair an eochair phasfhocail seo san aip ghréasáin Keepiq."

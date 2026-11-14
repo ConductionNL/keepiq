@@ -10,10 +10,11 @@
 
 import axios from '@nextcloud/axios'
 import { mount } from '@vue/test-utils'
+import { createPublicKey, X509Certificate } from 'node:crypto'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AdminSuiteSection from '../../src/components/settings/AdminSuiteSection.vue'
-import { certificateFingerprint, chainsTo } from '../../src/certificates/x509.js'
+import { verifiedCertificate } from '../../src/certificates/x509.js'
 import {
 	createRecoveryKey,
 	generateRequestKeyPair,
@@ -26,6 +27,7 @@ import {
 	buildRecoveryEnvelope,
 	openRecoveryEnvelope,
 } from '../../src/crypto/emergencyEnvelope.js'
+import { decodePem } from '../../src/crypto/pem.js'
 import { generateKeyPair, importPrivateKey } from '../../src/crypto/rsa.js'
 import {
 	requestKeyStore,
@@ -33,11 +35,16 @@ import {
 } from '../../src/store/modules/accountRecovery.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 import {
+	otherKeyText,
+	recordEncryptionKeys,
+} from '../vitest/fixtures/pem-extra-text.js'
+import {
 	INTERMEDIATE_PEM,
 	LEAF_PEM,
 	OTHER_ROOT_PEM,
 	ROOT_PEM,
 } from '../vitest/fixtures/recovery-chain.js'
+import { RSA4096_PRIVATE_KEY_PKCS8_PEM } from '../vitest/fixtures/rsa-fixtures.js'
 
 vi.mock('../../src/crypto/keyProof.js', () => ({
 	PROOF_PURPOSE: {
@@ -70,21 +77,68 @@ async function rsaPair() {
 	}
 }
 
+const CHAIN = [INTERMEDIATE_PEM, ROOT_PEM]
+const LEAF_SPKI = new Uint8Array(
+	createPublicKey(LEAF_PEM).export({ type: 'spki', format: 'der' }),
+)
+const LEAF_FINGERPRINT = new X509Certificate(LEAF_PEM).fingerprint256
+	.replaceAll(':', '')
+	.toLowerCase()
+
+/**
+ * The store of a user about to enrol to `certificate`, with the server's
+ * fingerprint of the real recovery certificate and its chain.
+ *
+ * @param {string} certificate The certificate text the server sends.
+ * @return {Promise<object>}
+ */
+async function enrolling(certificate) {
+	useSessionStore().encryptedPrivateKey = await encryptPrivateKey(
+		RSA4096_PRIVATE_KEY_PKCS8_PEM,
+		'correct horse',
+	)
+	const store = useAccountRecoveryStore()
+	store.status = {
+		policy: 'optional',
+		enrolled: false,
+		current: false,
+		key: {
+			id: 'key-1',
+			certificate,
+			fingerprint: LEAF_FINGERPRINT,
+			caChain: CHAIN,
+		},
+	}
+	return store
+}
+
 describe('the recovery certificate check', () => {
 	it('accepts a certificate issued through the instance chain', async () => {
-		expect(await chainsTo(LEAF_PEM, [INTERMEDIATE_PEM, ROOT_PEM])).toBe(true)
+		expect(await verifiedCertificate(LEAF_PEM, CHAIN)).not.toBeNull()
 	})
 
 	it('refuses another root, a missing chain and a broken order', async () => {
-		expect(await chainsTo(LEAF_PEM, [INTERMEDIATE_PEM, OTHER_ROOT_PEM])).toBe(
-			false,
-		)
-		expect(await chainsTo(LEAF_PEM, [])).toBe(false)
-		expect(await chainsTo(LEAF_PEM, [ROOT_PEM])).toBe(false)
+		expect(
+			await verifiedCertificate(LEAF_PEM, [INTERMEDIATE_PEM, OTHER_ROOT_PEM]),
+		).toBeNull()
+		expect(await verifiedCertificate(LEAF_PEM, [])).toBeNull()
+		expect(await verifiedCertificate(LEAF_PEM, [ROOT_PEM])).toBeNull()
 	})
 
-	it('computes the fingerprint the server shows', async () => {
-		expect(await certificateFingerprint(LEAF_PEM)).toMatch(/^[0-9a-f]{64}$/)
+	it('computes the fingerprint the server shows and reads the key', async () => {
+		expect(await verifiedCertificate(LEAF_PEM, CHAIN)).toEqual({
+			fingerprint: LEAF_FINGERPRINT,
+			spki: LEAF_SPKI,
+		})
+	})
+
+	it('refuses a certificate text that is more than one PEM block', async () => {
+		const { text } = await otherKeyText()
+
+		expect(await verifiedCertificate(`${text}\n${LEAF_PEM}`, CHAIN)).toBeNull()
+		expect(
+			await verifiedCertificate(`${LEAF_PEM}\n${ROOT_PEM}`, CHAIN),
+		).toBeNull()
 	})
 })
 
@@ -171,7 +225,10 @@ describe('account recovery store', () => {
 				caChain: [],
 			},
 		}
-		store.verifyKey = vi.fn().mockResolvedValue('x')
+		store.verifyKey = vi.fn().mockResolvedValue({
+			fingerprint: 'x',
+			spki: decodePem(recovery.publicKeyPem, ['PUBLIC KEY']).der,
+		})
 		const put = vi
 			.spyOn(axios, 'put')
 			.mockResolvedValue({ data: { enrolled: true } })
@@ -196,15 +253,55 @@ describe('account recovery store', () => {
 				caChain: [INTERMEDIATE_PEM, OTHER_ROOT_PEM],
 			}),
 		).rejects.toThrow()
-		const good = await certificateFingerprint(LEAF_PEM)
 		expect(
 			await store.verifyKey({
 				certificate: LEAF_PEM,
-				fingerprint: good,
-				caChain: [INTERMEDIATE_PEM, ROOT_PEM],
+				fingerprint: LEAF_FINGERPRINT,
+				caChain: CHAIN,
 			}),
-		).toBe(good)
+		).toEqual({ fingerprint: LEAF_FINGERPRINT, spki: LEAF_SPKI })
 	})
+
+	it('enrols to the key of the certificate it verified', async () => {
+		const other = await otherKeyText()
+		const store = await enrolling(LEAF_PEM)
+		const put = vi
+			.spyOn(axios, 'put')
+			.mockResolvedValue({ data: { enrolled: true } })
+		const keys = recordEncryptionKeys()
+
+		await store.enrol('correct horse')
+
+		expect(keys).toEqual([LEAF_SPKI])
+		await expect(
+			openRecoveryEnvelope(put.mock.calls[0][1].envelope, other.privateKey),
+		).rejects.toThrow()
+	}, 60000)
+
+	it('enrols to nothing when the certificate text is more than one PEM block', async () => {
+		const other = await otherKeyText()
+		const store = await enrolling(`${other.text}\n${LEAF_PEM}`)
+		const put = vi
+			.spyOn(axios, 'put')
+			.mockResolvedValue({ data: { enrolled: true } })
+		const keys = recordEncryptionKeys()
+
+		let refusal = null
+		try {
+			await store.enrol('correct horse')
+		} catch (e) {
+			refusal = e
+		}
+
+		for (const [, body] of put.mock.calls) {
+			await expect(
+				openRecoveryEnvelope(body.envelope, other.privateKey),
+			).rejects.toThrow()
+		}
+		expect(put).not.toHaveBeenCalled()
+		expect(keys).toEqual([])
+		expect(refusal?.message).toMatch(/not issued by this Keepiq/)
+	}, 60000)
 
 	it('completes: new wrapping with a proof, request fulfilled, one-time key dropped', async () => {
 		const user = await rsaPair()
@@ -258,6 +355,22 @@ describe('account recovery store', () => {
 		expect(post.mock.calls[0][0]).toContain('/recovery/requests/req-1/complete')
 		expect(session.unlock).toHaveBeenCalledWith('a brand new password')
 		expect(stored.has('req-1')).toBe(false)
+		expect(store.myRequest).toEqual({
+			id: 'req-1',
+			suiteId: 'suite-bob',
+			status: 'fulfilled',
+			sealedResult: undefined,
+		})
+		expect(post.mock.invocationCallOrder[0]).toBeLessThan(
+			session.unlock.mock.invocationCallOrder[0],
+		)
+
+		// A second browser, without the one-time key, cannot complete it.
+		store.myRequest = { id: 'req-1', suiteId: 'suite-bob', sealedResult: sealed }
+		await expect(store.complete('pw')).rejects.toThrow(
+			'Finish the recovery in the browser you asked from.',
+		)
+		expect(put).toHaveBeenCalledTimes(1)
 	}, 60000)
 
 	it('warns before revoking the suite of an enrolled user', async () => {
@@ -376,6 +489,15 @@ describe('the officer path for a new device', () => {
 		expect(await store.unlockDevice()).toBe('olga')
 		expect(session.unlockWithPrivateKeyPem).toHaveBeenCalledWith(user.pem)
 		expect(put).not.toHaveBeenCalled()
+		expect(store.myRequest).toEqual({
+			id: 'req-d',
+			purpose: 'device',
+			status: 'fulfilled',
+			sealedResult: undefined,
+		})
+		expect(session.unlockWithPrivateKeyPem.mock.invocationCallOrder[0]).toBeLessThan(
+			axios.post.mock.invocationCallOrder[0],
+		)
 
 		store.myRequest = {
 			id: 'req-p',

@@ -53,32 +53,12 @@
 			<!-- Secrets that could not be decrypted are not in the package:
 			     say how many, and hold the download until the user chooses
 			     to continue without them (keepiq#874). -->
-			<div
+			<SkippedSecretsNotice
 				v-if="!locked && skipped > 0"
+				v-model:acknowledged="skippedAcknowledged"
 				class="gdpr-dialog__skipped"
-				data-testid="gdpr-skipped-warning">
-				<NcNoteCard type="warning">
-					{{
-						n(
-							'keepiq',
-							'%n secret could not be decrypted and is not in this export.',
-							'%n secrets could not be decrypted and are not in this export.',
-							skipped,
-						)
-					}}
-				</NcNoteCard>
-				<NcCheckboxRadioSwitch
-					:modelValue="skippedAcknowledged"
-					data-testid="gdpr-skipped-ack"
-					@update:modelValue="skippedAcknowledged = $event">
-					{{
-						t(
-							'keepiq',
-							'Continue without the secrets that could not be decrypted',
-						)
-					}}
-				</NcCheckboxRadioSwitch>
-			</div>
+				name="gdpr"
+				:skipped="skipped" />
 		</div>
 
 		<template #actions>
@@ -101,63 +81,23 @@
 </template>
 
 <script>
-import {
-	NcButton,
-	NcCheckboxRadioSwitch,
-	NcDialog,
-	NcNoteCard,
-} from '@nextcloud/vue'
-import { useExportStore } from '../store/modules/export.js'
-import { useSessionStore } from '../store/modules/session.js'
+import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
+import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
+import exportSourceProps from '../mixins/exportSourceProps.js'
+import exportStoreDialog from '../mixins/exportStoreDialog.js'
 
 export default {
 	name: 'GdprExportDialog',
 	components: {
+		SkippedSecretsNotice,
 		NcDialog,
 		NcButton,
-		NcCheckboxRadioSwitch,
 		NcNoteCard,
 	},
 
-	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
-
-		/** Decrypted secrets (empty/ignored when locked). */
-		secrets: {
-			type: Array,
-			default: () => [],
-		},
-
-		/** Folder rows. */
-		folders: {
-			type: Array,
-			default: () => [],
-		},
-
-		/** How many secrets could not be decrypted and are not in `secrets`. */
-		skipped: {
-			type: Number,
-			default: 0,
-		},
-	},
+	mixins: [exportSourceProps, exportStoreDialog],
 
 	emits: ['update:open'],
-	/**
-	 * Provide the export + session Pinia stores to the component.
-	 *
-	 * @return {object}
-	 * @spec openspec/specs/gdpr-compliance/spec.md
-	 */
-	setup() {
-		return {
-			exportStore: useExportStore(),
-			sessionStore: useSessionStore(),
-		}
-	},
-
 	data() {
 		return {
 			error: null,
@@ -167,16 +107,6 @@ export default {
 	},
 
 	computed: {
-		/**
-		 * Whether an export is in flight (from the store).
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/gdpr-compliance/spec.md
-		 */
-		loading() {
-			return this.exportStore.loading
-		},
-
 		/**
 		 * Whether the vault is locked (drives the metadata-only vs full variant).
 		 *
@@ -228,18 +158,14 @@ export default {
 		},
 
 		/**
-		 * Handle open-state changes, clearing the error on close.
+		 * Clear the error and the skipped-secrets acknowledgement.
 		 *
-		 * @param {boolean} value The new open state.
 		 * @return {void}
 		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
-		onUpdateOpen(value) {
-			if (!value) {
-				this.error = null
-				this.skippedAcknowledged = false
-			}
-			this.$emit('update:open', value)
+		reset() {
+			this.error = null
+			this.skippedAcknowledged = false
 		},
 	},
 }

@@ -45,6 +45,8 @@ use OCP\AppFramework\Db\Entity;
  */
 class GroupShare extends Entity implements JsonSerializable {
 
+	use StringPrimaryKey;
+
 	/**
 	 * The owner's source Secret ID.
 	 *
@@ -96,26 +98,6 @@ class GroupShare extends Entity implements JsonSerializable {
 	public $id = '';
 
 	/**
-	 * Get the UUID primary key.
-	 *
-	 * @return string
-	 */
-	public function getId(): string {
-		return (string)$this->id;
-	}//end getId()
-
-	/**
-	 * Set the UUID primary key.
-	 *
-	 * @param string $id The UUID
-	 *
-	 * @return void
-	 */
-	public function setId($id): void {
-		$this->setter(name: 'id', args: [$id]);
-	}//end setId()
-
-	/**
 	 * Constructor for GroupShare.
 	 *
 	 * @return void
@@ -129,6 +111,19 @@ class GroupShare extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'useOnly', type: 'boolean');
 		$this->addType(fieldName: 'expiresAt', type: 'datetime');
 	}//end __construct()
+
+	/**
+	 * Whether this is a full group share, not use-only, that has not expired.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
+	 */
+	public function isFullAndLive(): bool {
+		$expires = $this->expiresAt;
+
+		return $this->useOnly !== true && ($expires === null || $expires->getTimestamp() > time());
+	}//end isFullAndLive()
 
 	/**
 	 * Serialize the entity to an array for the API.

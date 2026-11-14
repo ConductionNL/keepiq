@@ -18,6 +18,7 @@
  */
 
 import { decryptPrivateKey } from './aes.js'
+import { decodePem } from './pem.js'
 
 /**
  * The exact string the server verifies (VaultKeyProofService::signedMessage):
@@ -71,17 +72,7 @@ export async function proveMasterPassword(
 	// A wrong password throws here (AES-GCM tag mismatch) before anything signs.
 	const pem = await decryptPrivateKey(encryptedPrivateKey, masterPassword)
 
-	const pkcs8 = Uint8Array.from(
-		atob(
-			pem
-				.replace(/-----BEGIN PRIVATE KEY-----/, '')
-				.replace(/-----END PRIVATE KEY-----/, '')
-				.replace(/-----BEGIN RSA PRIVATE KEY-----/, '')
-				.replace(/-----END RSA PRIVATE KEY-----/, '')
-				.replace(/\s/g, ''),
-		),
-		(c) => c.charCodeAt(0),
-	)
+	const { der: pkcs8 } = decodePem(pem, ['PRIVATE KEY', 'RSA PRIVATE KEY'])
 
 	// Re-import for SIGNING specifically — a distinct capability from the
 	// session key, which is imported non-extractable and ['decrypt'] only.

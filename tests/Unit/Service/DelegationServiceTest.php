@@ -32,12 +32,16 @@ use OCA\Keepiq\Service\DelegationAuthorizer;
 use OCA\Keepiq\Service\DelegationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
+use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for DelegationService.
  */
 class DelegationServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	use AdminAreaFixture;
 
 	/**
@@ -50,7 +54,7 @@ class DelegationServiceTest extends TestCase {
 		$secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$service = new DelegationService(
 			mapper: $mapper,
-			authorizer: new DelegationAuthorizer(secretMapper: $secretMapper),
+			authorizer: new DelegationAuthorizer(secretMapper: $secretMapper, rowJudge: $this->shareRowJudgeWhereEveryoneHoldsACopy()),
 		);
 
 		return [$service, $mapper, $secretMapper];
@@ -63,13 +67,32 @@ class DelegationServiceTest extends TestCase {
 	 *
 	 * @return Secret
 	 */
-	private function buildSecret(string $ownerId = 'alice'): Secret {
+	private function buildSecret(string $ownerId = 'alice', string $id = 'sec-1'): Secret {
 		$secret = new Secret();
-		$secret->setId('sec-1');
+		$secret->setId($id);
 		$secret->setOwnerType('user');
 		$secret->setOwnerId($ownerId);
 		return $secret;
 	}//end buildSecret()
+
+	/**
+	 * Alice owns sec-1, and $holder holds a copy of it through a real share row.
+	 *
+	 * @param MockObject&SecretMapper      $secretMapper      The secret mapper
+	 * @param MockObject&ShareTargetMapper $shareTargetMapper The share-target mapper
+	 * @param string                       $holder            The copy's holder
+	 *
+	 * @return void
+	 */
+	private function holdsACopy(MockObject $secretMapper, MockObject $shareTargetMapper, string $holder): void {
+		$secretMapper->method('findById')->willReturnCallback(
+			fn (string $id): Secret => ($id === 'copy-1' ? $this->buildSecret(ownerId: $holder, id: 'copy-1') : $this->buildSecret(ownerId: 'alice'))
+		);
+		$row = new ShareTarget();
+		$row->setTargetUserId($holder);
+		$row->setSecretId('copy-1');
+		$shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn($row);
+	}//end holdsACopy()
 
 	/**
 	 * createDelegation persists a temporary delegation row.
@@ -242,7 +265,7 @@ class DelegationServiceTest extends TestCase {
 			mapper: $mapper,
 			authorizer: new DelegationAuthorizer(
 				secretMapper: $secretMapper,
-				shareTargetMapper: $shareTargetMapper,
+				rowJudge: $this->shareRowJudge(targets: $shareTargetMapper, secrets: $secretMapper),
 				areas: $this->areaAuthorizer(groupManager: $groupManager, delegated: $delegated),
 			),
 		);
@@ -280,8 +303,7 @@ class DelegationServiceTest extends TestCase {
 	 */
 	public function testCreateDelegationAcceptsDelegateWithPreExistingShare(): void {
 		[$service, $mapper, $secretMapper, $shareTargetMapper, $_groupManager] = $this->buildWithAdmin();
-		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'alice'));
-		$shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn(new ShareTarget());
+		$this->holdsACopy(secretMapper: $secretMapper, shareTargetMapper: $shareTargetMapper, holder: 'bob');
 		$mapper->expects($this->once())
 			->method('insert')
 			->willReturnCallback(static fn (SecretDelegation $e): SecretDelegation => $e);
@@ -304,8 +326,7 @@ class DelegationServiceTest extends TestCase {
 		[$service, $mapper, $secretMapper, $shareTargetMapper, $_groupManager] = $this->buildWithAdmin(
 			delegated: [PeopleAdminSettings::class]
 		);
-		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'alice'));
-		$shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn(new ShareTarget());
+		$this->holdsACopy(secretMapper: $secretMapper, shareTargetMapper: $shareTargetMapper, holder: 'mallory');
 		$mapper->expects($this->once())
 			->method('insert')
 			->willReturnCallback(static fn (SecretDelegation $e): SecretDelegation => $e);

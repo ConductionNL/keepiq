@@ -179,6 +179,72 @@ class CertificateLifecycleServiceTest extends TestCase {
 	}//end testParseCaCertificate()
 
 	/**
+	 * The parsed metadata carries the key type, key size and signature
+	 * algorithm read from a 4096-bit RSA certificate (crypto-vault-encryption-details
+	 * task 1.2), and nothing private.
+	 *
+	 * @return void
+	 */
+	public function testParseCaCertificateReadsKeyAndSignatureAlgorithm(): void {
+		$key = openssl_pkey_new(['private_key_bits' => 4096, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+		$csr = openssl_csr_new(['commonName' => 'vault-4096.keepiq'], $key, ['digest_alg' => 'sha256']);
+		$x509 = openssl_csr_sign($csr, null, $key, 365, ['digest_alg' => 'sha256']);
+		openssl_x509_export(certificate: $x509, output: $pem);
+
+		$parsed = $this->service->parseCaCertificate(pem: $pem);
+
+		$this->assertNotNull(actual: $parsed);
+		$this->assertSame(expected: 'RSA', actual: $parsed['keyType']);
+		$this->assertSame(expected: 4096, actual: $parsed['keyBits']);
+		$this->assertSame(expected: 'sha256WithRSAEncryption', actual: $parsed['signatureAlgorithm']);
+		$this->assertStringNotContainsString(needle: 'PRIVATE KEY', haystack: (string)json_encode($parsed));
+	}//end testParseCaCertificateReadsKeyAndSignatureAlgorithm()
+
+	/**
+	 * A 2048-bit certificate signed with SHA-384 reports its own size and
+	 * algorithm, not fixed values.
+	 *
+	 * @return void
+	 */
+	public function testParseCaCertificateReportsTheCertificatesOwnKey(): void {
+		$parsed = $this->service->parseCaCertificate(pem: $this->pem);
+		$this->assertSame(expected: 'RSA', actual: $parsed['keyType']);
+		$this->assertSame(expected: 2048, actual: $parsed['keyBits']);
+
+		$key = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']);
+		$csr = openssl_csr_new(['commonName' => 'ec.keepiq'], $key, ['digest_alg' => 'sha384']);
+		$x509 = openssl_csr_sign($csr, null, $key, 30, ['digest_alg' => 'sha384']);
+		openssl_x509_export(certificate: $x509, output: $ecPem);
+
+		$ec = $this->service->parseCaCertificate(pem: $ecPem);
+		$this->assertSame(expected: 'EC', actual: $ec['keyType']);
+		$this->assertSame(expected: 256, actual: $ec['keyBits']);
+		$this->assertSame(expected: 'ecdsa-with-SHA384', actual: $ec['signatureAlgorithm']);
+	}//end testParseCaCertificateReportsTheCertificatesOwnKey()
+
+	/**
+	 * The suite row in the inventory carries the new fields.
+	 *
+	 * @return void
+	 */
+	public function testInventorySuiteRowCarriesKeyFacts(): void {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('alice');
+		$suite->setStatus('active');
+		$suite->setCertificate($this->pem);
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($suite);
+
+		$inventory = $this->service->inventory(userId: 'alice', isAdmin: false);
+
+		$metadata = $inventory['suites'][0]['metadata'];
+		$this->assertSame(expected: 'RSA', actual: $metadata['keyType']);
+		$this->assertSame(expected: 2048, actual: $metadata['keyBits']);
+		$this->assertSame(expected: 'sha256WithRSAEncryption', actual: $metadata['signatureAlgorithm']);
+	}//end testInventorySuiteRowCarriesKeyFacts()
+
+	/**
 	 * Cross-owner metadata submission is rejected before any write
 	 * (§6.1).
 	 *

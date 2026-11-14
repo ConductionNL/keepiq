@@ -210,4 +210,46 @@ class VaultPolicyServiceTest extends TestCase {
 		$this->assertFalse($this->admin->getPolicy(userId: 'olaf')['vault_org_ownership']);
 		$this->assertSame(['staff'], $this->admin->getAdminSettings()['vault_org_ownership_groups']);
 	}//end testUserPolicyNeverReturnsGroupLists()
+
+	/**
+	 * A save without policy keys writes and audits nothing.
+	 *
+	 * @return void
+	 */
+	public function testASaveWithoutPolicyKeysWritesNothing(): void {
+		$this->service->update(data: ['unrelated' => true]);
+
+		$this->assertSame([], $this->store);
+		$this->assertSame([], $this->events);
+	}//end testASaveWithoutPolicyKeysWritesNothing()
+
+	/**
+	 * A switch is stored as a bool and a list as JSON, and one audit names the admin and the policy object.
+	 *
+	 * @return void
+	 */
+	public function testASaveStoresSwitchesAndListsAndAuditsTheTouchedKeysOnly(): void {
+		$this->service->update(data: [
+			'vault_export_disabled_groups' => ['staff'],
+			'vault_export_disabled' => true,
+			'unrelated' => 'x',
+		]);
+
+		$this->assertSame(
+			['vault_export_disabled' => true, 'vault_export_disabled_groups' => '["staff"]'],
+			$this->store
+		);
+		$this->assertCount(1, $this->events);
+		$event = $this->events[0];
+		$this->assertSame('admin', $event->getActorId());
+		$this->assertSame('settings', $event->getObjectType());
+		$this->assertSame('vault_policy', $event->getObjectId());
+		$this->assertSame(
+			[
+				'before' => ['vault_export_disabled' => false, 'vault_export_disabled_groups' => []],
+				'after' => ['vault_export_disabled' => true, 'vault_export_disabled_groups' => ['staff']],
+			],
+			$event->getMetadata()
+		);
+	}//end testASaveStoresSwitchesAndListsAndAuditsTheTouchedKeysOnly()
 }//end class

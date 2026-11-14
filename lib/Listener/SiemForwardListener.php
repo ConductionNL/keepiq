@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Event\Audit\AuditEvent;
-use OCA\Keepiq\Service\SiemService;
+use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -41,13 +41,13 @@ class SiemForwardListener implements IEventListener {
 	/**
 	 * Constructor for SiemForwardListener.
 	 *
-	 * @param SiemService $siemService The SIEM service
+	 * @param SiemServiceInterface $siemService The SIEM service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private SiemService $siemService,
+		private SiemServiceInterface $siemService,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

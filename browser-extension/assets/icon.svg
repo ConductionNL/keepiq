@@ -1,0 +1,22 @@
+<!--
+  Placeholder icon. Replace it — a shipped extension wearing the template's
+  outline is indistinguishable from every other repo made from this template.
+
+  Regenerate public/icon/*.png after editing:
+    for s in 16 32 48 96 128; do
+      rsvg-convert -w $s -h $s assets/icon.svg -o public/icon/$s.png
+    done
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+	<rect x="8" y="8" width="112" height="112" rx="26" fill="#2c6bf5" />
+	<rect x="8" y="8" width="112" height="112" rx="26" fill="none" stroke="#1b4fc4" stroke-width="4" />
+	<!-- Deliberately abstract: a puzzle piece, the universal "extension". Built
+	     from a rect plus two circles rather than one path because the shape has
+	     to stay legible when it is rasterised down to 16px. -->
+	<g fill="#ffffff">
+		<rect x="34" y="34" width="52" height="60" rx="7" />
+		<circle cx="86" cy="64" r="13" />
+	</g>
+	<!-- The socket. Opaque plate colour, not a cut-out — the plate below is solid. -->
+	<circle cx="60" cy="34" r="13" fill="#2c6bf5" />
+</svg>

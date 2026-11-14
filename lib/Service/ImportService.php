@@ -12,8 +12,8 @@
  *     normal UI uses — no duplicated persistence logic),
  *   - returns per-index results so one invalid item never fails its neighbours.
  *
- * The server never receives plaintext secret values: key/login/additionalFields
- * arrive as RSA ciphertext envelopes and are stored verbatim (ADR-003). Ownership
+ * The server never receives plaintext secret values: key/login/additionalFields/
+ * totp/passkeys arrive as RSA ciphertext envelopes and are stored verbatim (ADR-003). Ownership
  * is derived exclusively from the caller-supplied session user id — no owner
  * field is accepted from the request (ADR-005, IDOR-safe by construction).
  *
@@ -34,20 +34,16 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Kernel\Contracts\ImportServiceInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
  * Server side of the chunked encrypted-import commit.
  */
-class ImportService {
-	/**
-	 * Maximum items accepted in a single batch request.
-	 *
-	 * @var int
-	 */
-	public const MAX_ITEMS = 100;
+class ImportService implements ImportServiceInterface {
 
 	/**
 	 * Maximum byte length of a single plaintext metadata field (name/url).
@@ -69,6 +65,13 @@ class ImportService {
 	 * @var int
 	 */
 	public const MAX_BLOB_LENGTH = 65536;
+
+	/**
+	 * The smallest RSA block a ciphertext chunk can be, in bytes (RSA-2048).
+	 *
+	 * @var int
+	 */
+	public const MIN_RSA_BLOCK = 256;
 
 	/**
 	 * Constructor for ImportService.
@@ -117,55 +120,11 @@ class ImportService {
 		// rather than each item independently throwing the same block.
 		$this->secretService->assertActiveSuite($userId);
 
-		// Per-request folder-path cache: "Work/CI" -> folder id.
-		$folderCache = [];
-		$foldersCreated = [];
-
+		$run = new ImportChunkRun(userId: $userId);
 		$results = [];
 		foreach ($items as $index => $item) {
-			try {
-				$this->validateItem(item: $item);
-				$folderId = $this->ensureFolderPath(
-					pathSegments: (array)($item['folderPath'] ?? []),
-					userId: $userId,
-					cache: $folderCache,
-					created: $foldersCreated,
-				);
-
-				$secret = $this->secretService->create(
-					[
-						'name' => $item['name'],
-						'key' => $item['key'],
-						'url' => ($item['url'] ?? null),
-						'folderId' => $folderId,
-						'login' => ($item['login'] ?? null),
-						'additionalFields' => ($item['additionalFields'] ?? null),
-						// Optional secret-type id (UUID). Carries an imported
-						// TOTP seed into a `totp`-typed secret (add-totp-secrets
-						// D6); null resolves to the `login` default. The type is
-						// a UI hint only — the seed is ciphertext in `key`.
-						'typeId' => ($item['typeId'] ?? null),
-					],
-					$userId
-				);
-
-				$results[] = [
-					'index' => $index,
-					'status' => 'created',
-					'secretId' => $secret->getId(),
-				];
-			} catch (SuiteBlockedException $e) {
-				// No active suite is a whole-request condition; re-throw so the
-				// controller maps it to 412 rather than reporting it per-item.
-				throw $e;
-			} catch (Throwable $e) {
-				$results[] = [
-					'index' => $index,
-					'status' => 'failed',
-					'error' => $e->getMessage(),
-				];
-			}//end try
-		}//end foreach
+			$results[] = ['index' => $index] + $this->commitItem(run: $run, item: $item);
+		}
 
 		$createdCount = count(array_filter($results, static fn (array $r): bool => $r['status'] === 'created'));
 		$this->logger->debug(
@@ -174,15 +133,84 @@ class ImportService {
 
 		return [
 			'results' => $results,
-			'foldersCreated' => array_values(array_unique($foldersCreated)),
+			'foldersCreated' => $run->createdPaths(),
 		];
 	}//end commitChunk()
 
 	/**
+	 * Commit one item, or report why it failed.
+	 *
+	 * @param ImportChunkRun $run The chunk being committed
+	 * @param array<string,mixed> $item The encrypted item
+	 *
+	 * @return array<string,mixed> The item's status and secret id, or its error
+	 *
+	 * @throws SuiteBlockedException When the user has no active EncryptionSuite
+	 */
+	private function commitItem(ImportChunkRun $run, array $item): array {
+		try {
+			return [
+				'status' => 'created',
+				'secretId' => $this->createSecret(run: $run, item: $item)->getId(),
+			];
+		} catch (SuiteBlockedException $e) {
+			// No active suite is a whole-request condition; re-throw so the
+			// controller maps it to 412 rather than reporting it per-item.
+			throw $e;
+		} catch (Throwable $e) {
+			return [
+				'status' => 'failed',
+				'error' => $e->getMessage(),
+			];
+		}
+	}//end commitItem()
+
+	/**
+	 * Validate one item, ensure its folder path and create its secret.
+	 *
+	 * @param ImportChunkRun $run The chunk being committed
+	 * @param array<string,mixed> $item The encrypted item
+	 *
+	 * @return Secret The created secret
+	 */
+	private function createSecret(ImportChunkRun $run, array $item): Secret {
+		$this->validateItem(item: $item);
+		$folderId = $this->ensureFolderPath(run: $run, pathSegments: (array)($item['folderPath'] ?? []));
+
+		return $this->secretService->create($this->secretData(item: $item, folderId: $folderId), $run->userId);
+	}//end createSecret()
+
+	/**
+	 * The secret-create input of one item.
+	 *
+	 * @param array<string,mixed> $item The encrypted item
+	 * @param string|null $folderId The item's folder id (null = root)
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function secretData(array $item, ?string $folderId): array {
+		return [
+			'name' => $item['name'],
+			'key' => $item['key'],
+			'url' => ($item['url'] ?? null),
+			'folderId' => $folderId,
+			'login' => ($item['login'] ?? null),
+			'additionalFields' => ($item['additionalFields'] ?? null),
+			// Optional secret-type id (UUID). Carries an imported
+			// TOTP seed into a `totp`-typed secret (add-totp-secrets
+			// D6); null resolves to the `login` default. The type is
+			// a UI hint only — the seed is ciphertext in `key`.
+			'typeId' => ($item['typeId'] ?? null),
+			'totp' => ($item['totp'] ?? null),
+			'passkeys' => ($item['passkeys'] ?? null),
+		];
+	}//end secretData()
+
+	/**
 	 * Validate one encrypted item's metadata + ciphertext envelope shape.
 	 *
-	 * Rejects plaintext-shaped sensitive fields: key/login/additionalFields MUST
-	 * look like an envelope, never plaintext. A missing/oversized name, an
+	 * Rejects plaintext-shaped sensitive fields: key/login/additionalFields/totp/
+	 * passkeys MUST look like an envelope, never plaintext. A missing/oversized name, an
 	 * oversized url, or an oversized blob is rejected.
 	 *
 	 * @param array<string,mixed> $item The encrypted item
@@ -214,6 +242,19 @@ class ImportService {
 			throw new InvalidArgumentException('Missing encrypted key');
 		}
 
+		$this->assertEncryptedFields(item: $item);
+	}//end validateItem()
+
+	/**
+	 * Assert every sensitive field the item carries is a ciphertext envelope.
+	 *
+	 * @param array<string,mixed> $item The encrypted item
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a field is not a ciphertext envelope
+	 */
+	private function assertEncryptedFields(array $item): void {
 		foreach (['key', 'login', 'additionalFields'] as $field) {
 			// The isset() check is already false for a null value, so a
 			// separate null comparison is redundant.
@@ -223,7 +264,43 @@ class ImportService {
 
 			$this->assertCiphertext(field: $field, value: (string)$item[$field]);
 		}
-	}//end validateItem()
+
+		// `''` means "not set" for these two, as SecretService::create stores it.
+		foreach (['totp', 'passkeys'] as $field) {
+			if (isset($item[$field]) === false || $item[$field] === '') {
+				continue;
+			}
+
+			$this->assertCiphertext(field: $field, value: (string)$item[$field]);
+			$this->assertRsaChunks(field: $field, value: (string)$item[$field]);
+		}
+	}//end assertEncryptedFields()
+
+	/**
+	 * Assert a value has the shape `rsaEncrypt()` gives every field: base64 of
+	 * a big-endian chunk count followed by that many whole RSA blocks. A TOTP
+	 * seed is itself base32 and passes the charset check above, so these two
+	 * fields need the stricter test.
+	 *
+	 * @param string $field The field name (for the error message)
+	 * @param string $value The candidate ciphertext blob
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the value is not chunked RSA ciphertext
+	 */
+	private function assertRsaChunks(string $field, string $value): void {
+		$raw = base64_decode($value, true);
+		if ($raw === false || strlen($raw) < 4 + self::MIN_RSA_BLOCK) {
+			throw new InvalidArgumentException($field . ' is not a valid ciphertext envelope');
+		}
+
+		$chunks = (int)unpack('N', substr($raw, 0, 4))[1];
+		$body = strlen($raw) - 4;
+		if ($chunks < 1 || $body % $chunks !== 0 || intdiv($body, $chunks) < self::MIN_RSA_BLOCK) {
+			throw new InvalidArgumentException($field . ' is not a valid ciphertext envelope');
+		}
+	}//end assertRsaChunks()
 
 	/**
 	 * Assert a sensitive field is an encrypted envelope, not plaintext.
@@ -259,14 +336,39 @@ class ImportService {
 	 * segments via FolderService (owner-scoped). Results are cached per request
 	 * so sibling items reuse the same ids and folders are created at most once.
 	 *
-	 * @param string[] $pathSegments The folder path segments
-	 * @param string $userId The session user id
-	 * @param array<string,?string> $cache Per-request path -> id cache
-	 * @param string[] $created Accumulator of created paths
+	 * @param ImportChunkRun $run The chunk being committed, with its folder cache
+	 * @param array<int|string,mixed> $pathSegments The folder path segments
 	 *
 	 * @return string|null The leaf folder id, or null for a root-level item
 	 */
-	private function ensureFolderPath(array $pathSegments, string $userId, array &$cache, array &$created): ?string {
+	private function ensureFolderPath(ImportChunkRun $run, array $pathSegments): ?string {
+		$parentId = null;
+		$accumulated = '';
+		foreach ($this->segmentsOf(pathSegments: $pathSegments) as $segment) {
+			$accumulated = $this->joinedPath(accumulated: $accumulated, segment: $segment);
+
+			if ($run->hasFolder(path: $accumulated) === true) {
+				$parentId = $run->folderAt(path: $accumulated);
+				continue;
+			}
+
+			$parentId = $this->resolveFolder(
+				run: $run,
+				step: new FolderStep(name: $segment, parentId: $parentId, path: $accumulated)
+			);
+		}
+
+		return $parentId;
+	}//end ensureFolderPath()
+
+	/**
+	 * The trimmed, non-empty segments of a folder path.
+	 *
+	 * @param array<int|string,mixed> $pathSegments The raw path segments
+	 *
+	 * @return string[]
+	 */
+	private function segmentsOf(array $pathSegments): array {
 		$segments = [];
 		foreach ($pathSegments as $segment) {
 			$name = trim((string)$segment);
@@ -275,53 +377,59 @@ class ImportService {
 			}
 		}
 
-		if (count($segments) === 0) {
-			return null;
+		return $segments;
+	}//end segmentsOf()
+
+	/**
+	 * A path with one more segment.
+	 *
+	 * @param string $accumulated The path so far ('' at the root)
+	 * @param string $segment The next segment
+	 *
+	 * @return string
+	 */
+	private function joinedPath(string $accumulated, string $segment): string {
+		if ($accumulated === '') {
+			return $segment;
 		}
 
-		$parentId = null;
-		$accumulated = '';
-		foreach ($segments as $segment) {
-			$separator = '/';
-			if ($accumulated === '') {
-				$separator = '';
-			}
+		return $accumulated . '/' . $segment;
+	}//end joinedPath()
 
-			$accumulated = $accumulated . $separator . $segment;
+	/**
+	 * The id of the folder for one path step: the user's existing folder, or
+	 * one created for it. Either is remembered for the rest of the chunk.
+	 *
+	 * @param ImportChunkRun $run The chunk being committed
+	 * @param FolderStep $step The folder to find or create
+	 *
+	 * @return string The folder id
+	 */
+	private function resolveFolder(ImportChunkRun $run, FolderStep $step): string {
+		$existing = $this->findOwnedFolder(step: $step, userId: $run->userId);
+		if ($existing !== null) {
+			$run->remember(path: $step->path, folderId: $existing);
+			return $existing;
+		}
 
-			if (array_key_exists($accumulated, $cache) === true) {
-				$parentId = $cache[$accumulated];
-				continue;
-			}
+		$folder = $this->folderService->create(name: $step->name, parentId: $step->parentId, userId: $run->userId);
+		$run->remember(path: $step->path, folderId: $folder->getId());
+		$run->markCreated(path: $step->path);
 
-			$existing = $this->findOwnedFolder(name: $segment, parentId: $parentId, userId: $userId);
-			if ($existing !== null) {
-				$parentId = $existing;
-				$cache[$accumulated] = $existing;
-				continue;
-			}
-
-			$folder = $this->folderService->create(name: $segment, parentId: $parentId, userId: $userId);
-			$parentId = $folder->getId();
-			$cache[$accumulated] = $parentId;
-			$created[] = $accumulated;
-		}//end foreach
-
-		return $parentId;
-	}//end ensureFolderPath()
+		return $folder->getId();
+	}//end resolveFolder()
 
 	/**
 	 * Find a user-owned folder by name under a given parent, or null.
 	 *
-	 * @param string $name The folder name
-	 * @param string|null $parentId The parent folder id (null = root)
+	 * @param FolderStep $step The folder name and the parent it sits in
 	 * @param string $userId The session user id
 	 *
 	 * @return string|null The matching folder id, or null when absent
 	 */
-	private function findOwnedFolder(string $name, ?string $parentId, string $userId): ?string {
+	private function findOwnedFolder(FolderStep $step, string $userId): ?string {
 		foreach ($this->folderService->listForUser(userId: $userId) as $folder) {
-			if ($folder->getName() === $name && $folder->getParentId() === $parentId) {
+			if ($folder->getName() === $step->name && $folder->getParentId() === $step->parentId) {
 				return $folder->getId();
 			}
 		}

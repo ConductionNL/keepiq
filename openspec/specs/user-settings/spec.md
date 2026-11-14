@@ -21,7 +21,7 @@ No new entities. User settings use Nextcloud's `OCP\IConfig` for per-user storag
 | `notify_shares` | bool | true | MVP | Notification when a secret is shared with me |
 | `notify_requests` | bool | true | MVP | Notification when a secret request is fulfilled |
 | `notify_group_shares` | bool | true | V1 | Notification for group share additions |
-| `notify_security` | bool | true | V1 | Notification for compromise/security alerts |
+| `notify_security` | bool | true | V1 | Notification for compromise/security alerts, and when a group member can now change my secret |
 | `default_secret_type` | string | `login` | V1 | Default type when creating a new secret |
 | `default_view` | string | `list` | V1 | Default vault view (list or folders) |
 

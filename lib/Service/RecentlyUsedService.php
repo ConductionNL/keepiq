@@ -23,7 +23,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTimeInterface;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Kernel\Contracts\RecentlyUsedServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
@@ -32,7 +34,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
  *
  * @spec openspec/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
  */
-class RecentlyUsedService {
+class RecentlyUsedService implements RecentlyUsedServiceInterface {
 
 	/**
 	 * How many read events are scanned to find the distinct secrets. A secret
@@ -85,16 +87,8 @@ class RecentlyUsedService {
 			}
 
 			$seen[$secretId] = true;
-			try {
-				$secret = $this->secretMapper->findById($secretId);
-			} catch (DoesNotExistException|MultipleObjectsReturnedException) {
-				continue;
-			}
-
-			if ($secret->getOwnerType() !== 'user'
-				|| $secret->getOwnerId() !== $userId
-				|| $secret->getTombstonedAt() !== null
-			) {
+			$secret = $this->heldSecret(secretId: $secretId, userId: $userId);
+			if ($secret === null) {
 				continue;
 			}
 
@@ -111,4 +105,45 @@ class RecentlyUsedService {
 
 		return $rows;
 	}//end forUser()
+
+	/**
+	 * The secret when it still exists, the user owns it and it is not
+	 * tombstoned; null otherwise.
+	 *
+	 * @param string $secretId The secret id from the audit entry
+	 * @param string $userId   The user
+	 *
+	 * @return Secret|null
+	 *
+	 * @spec openspec/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
+	 */
+	private function heldSecret(string $secretId, string $userId): ?Secret {
+		try {
+			$secret = $this->secretMapper->findById($secretId);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return null;
+		}
+
+		if ($this->isHeldBy(secret: $secret, userId: $userId) === false) {
+			return null;
+		}
+
+		return $secret;
+	}//end heldSecret()
+
+	/**
+	 * Whether the user owns the secret and it is not tombstoned.
+	 *
+	 * @param Secret $secret The secret
+	 * @param string $userId The user
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
+	 */
+	private function isHeldBy(Secret $secret, string $userId): bool {
+		return $secret->getOwnerType() === 'user'
+			&& $secret->getOwnerId() === $userId
+			&& $secret->getTombstonedAt() === null;
+	}//end isHeldBy()
 }//end class

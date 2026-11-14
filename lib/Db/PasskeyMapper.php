@@ -24,6 +24,7 @@ namespace OCA\Keepiq\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -32,6 +33,9 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<PasskeyCredential>
  */
 class PasskeyMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for PasskeyMapper.
 	 *
@@ -53,12 +57,7 @@ class PasskeyMapper extends QBMapper {
 	 * @throws DoesNotExistException When missing
 	 */
 	public function findById(string $id): PasskeyCredential {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**
@@ -133,6 +132,31 @@ class PasskeyMapper extends QBMapper {
 			->where($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
 		$qb->executeStatement();
 	}//end deleteByOwner()
+
+	/**
+	 * Delete the extension credentials bound to an app password; the
+	 * owners whose credentials went, with how many each.
+	 *
+	 * @param int $tokenId The app password's token id
+	 *
+	 * @return array<string,int> Owner id => credentials deleted
+	 *
+	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-credentials-follow-their-app-password
+	 */
+	public function deleteByToken(int $tokenId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('token_id', $qb->createNamedParameter($tokenId, IQueryBuilder::PARAM_INT)));
+
+		$owners = [];
+		foreach ($this->findEntities(query: $qb) as $credential) {
+			$this->delete(entity: $credential);
+			$owners[$credential->getOwnerId()] = ($owners[$credential->getOwnerId()] ?? 0) + 1;
+		}
+
+		return $owners;
+	}//end deleteByToken()
 
 	/**
 	 * Mark an owner's active envelopes stale (routine master-password

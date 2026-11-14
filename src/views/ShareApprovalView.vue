@@ -172,30 +172,8 @@ export default {
 						: await store.approveShareRequest(request)
 				if (SHARED.includes(status)) {
 					this.done = true
-					this.outcome = {
-						type: 'success',
-						text: this.t(
-							'keepiq',
-							'Shared. The recipient can now open the secret.',
-						),
-					}
-				} else if (status === 'no_suite') {
-					this.outcome = {
-						type: 'warning',
-						text: this.t(
-							'keepiq',
-							'The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.',
-						),
-					}
-				} else {
-					this.outcome = {
-						type: 'error',
-						text: this.t(
-							'keepiq',
-							'Could not share the secret. Only its owner can approve this.',
-						),
-					}
 				}
+				this.outcome = this.approvalOutcome(status)
 			} catch {
 				this.outcome = {
 					type: 'error',
@@ -204,6 +182,61 @@ export default {
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * What the page says about an approval's answer.
+		 *
+		 * @param {string} status The answer.
+		 * @return {{type: string, text: string}}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+		 */
+		approvalOutcome(status) {
+			if (SHARED.includes(status)) {
+				return {
+					type: 'success',
+					text: this.t('keepiq', 'Shared. The recipient can now open the secret.'),
+				}
+			}
+			return (
+				this.notSharedWarning(status) ?? {
+					type: 'error',
+					text: this.t(
+						'keepiq',
+						'Could not share the secret. Only its owner can approve this.',
+					),
+				}
+			)
+		},
+
+		/**
+		 * The warning for an approval that shared nothing for a reason the
+		 * recipient's side can resolve, or null.
+		 *
+		 * @param {string} status The answer.
+		 * @return {{type: string, text: string}|null}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+		 */
+		notSharedWarning(status) {
+			if (status === 'no_suite') {
+				return {
+					type: 'warning',
+					text: this.t(
+						'keepiq',
+						'The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.',
+					),
+				}
+			}
+			if (status === 'copy_fields_mismatch') {
+				return {
+					type: 'warning',
+					text: this.t(
+						'keepiq',
+						'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
+					),
+				}
+			}
+			return null
 		},
 
 		/**

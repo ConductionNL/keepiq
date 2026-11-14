@@ -30,15 +30,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Repair;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IAppConfig;
-use OCP\IConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -86,8 +83,7 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper
-	 * @param IConfig $config The config
-	 * @param IAppConfig $appConfig The app config
+	 * @param SeedVersionGate $seedGate The debug and once-per-version gate
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
@@ -96,8 +92,7 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 		private SecretMapper $secretMapper,
 		private SecretDelegationMapper $delegationMapper,
 		private EncryptionSuiteMapper $suiteMapper,
-		private IConfig $config,
-		private IAppConfig $appConfig,
+		private SeedVersionGate $seedGate,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -121,32 +116,33 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 	 * @spec exclude idempotency fix — dev-only seed guard, no spec scenario
 	 */
 	public function run(IOutput $output): void {
-		if ($this->config->getSystemValueBool('debug', false) === false) {
+		$appVersion = $this->seedGate->dueVersion(key: self::SEED_VERSION_KEY);
+		if ($appVersion === null) {
 			return;
 		}
 
-		// Version gate: <post-migration> repair steps re-run on every
-		// upgrade/repair; only seed once per installed app version.
-		$appVersion = $this->appConfig->getValueString(Application::APP_ID, 'installed_version', '');
-		if ($appVersion !== ''
-			&& $this->appConfig->getValueString(Application::APP_ID, self::SEED_VERSION_KEY, '') === $appVersion
-		) {
+		$vault = (new DevVaultLoader(suiteMapper: $this->suiteMapper, secretMapper: $this->secretMapper))
+			->load(output: $output, seedName: 'delegation seed');
+		if ($vault === null) {
 			return;
 		}
 
-		try {
-			$this->suiteMapper->findActiveByOwner('user', self::DEV_USER_ID);
-		} catch (DoesNotExistException) {
-			$output->info('Keepiq: no dev EncryptionSuite, skipping delegation seed');
-			return;
-		}
+		$seeded = $this->seedDelegations(vault: $vault);
 
-		$secrets = $this->secretMapper->findByOwner('user', self::DEV_USER_ID);
-		if ($secrets === []) {
-			$output->info('Keepiq: no dev secrets, skipping delegation seed');
-			return;
-		}
+		$this->seedGate->markSeeded(key: self::SEED_VERSION_KEY, version: $appVersion);
+		$output->info('Keepiq: seeded ' . $seeded . ' development secret delegation');
+		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' SecretDelegation row');
+	}//end run()
 
+	/**
+	 * Seed the development secret delegation.
+	 *
+	 * @param DevVault $vault The dev user's suite and secrets
+	 *
+	 * @return int Number of rows seeded
+	 */
+	private function seedDelegations(DevVault $vault): int {
+		$secrets = $vault->secrets;
 		$first = $secrets[0];
 		$seeded = $this->seedDelegation(
 			id: $this->deterministicId(seed: 'delegation_temp_01'),
@@ -154,10 +150,8 @@ class SeedDevelopmentSecretDelegations implements IRepairStep {
 			delegate: self::DEV_DELEGATE,
 		);
 
-		$this->appConfig->setValueString(Application::APP_ID, self::SEED_VERSION_KEY, $appVersion);
-		$output->info('Keepiq: seeded ' . $seeded . ' development secret delegation');
-		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' SecretDelegation row');
-	}//end run()
+		return $seeded;
+	}//end seedDelegations()
 
 	/**
 	 * Produce a deterministic UUIDv5 from a seed string.

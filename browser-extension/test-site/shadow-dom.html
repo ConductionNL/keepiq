@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Shadow DOM</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Shadow DOM</h1>
+		<p class="tests">The form below is inside an open shadow root, as web components render it.</p>
+		<test-login></test-login>
+	</main>
+	<script>
+		customElements.define('test-login', class extends HTMLElement {
+			connectedCallback() {
+				const root = this.attachShadow({ mode: 'open' })
+				root.innerHTML = `
+					<link rel="stylesheet" href="/style.css">
+					<form method="post" action="/shadow-dom">
+						<label>Username <input name="username" type="text"></label>
+						<label>Password <input name="password" type="password"></label>
+						<button type="submit">Sign in</button>
+					</form>`
+			}
+		})
+	</script>
+</body>
+</html>

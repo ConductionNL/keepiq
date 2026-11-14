@@ -25,13 +25,14 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\Connection\ConnectionReporter;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ConnectionReporterInterface;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCA\Keepiq\Settings\PolicyAdminSettings;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -48,7 +49,7 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @param IRequest $request The request
 	 * @param SettingsService $settingsService The settings service
-	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a breach check save, or nothing when absent.
+	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a breach check save, or nothing when absent.
 	 *
 	 * @return void
 	 *
@@ -57,9 +58,9 @@ class AdminAreaSettingsController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private SettingsService $settingsService,
-		private ?ConnectionReporter $connectionReporter = null,
+		private ?ConnectionReporterInterface $connectionReporter = null,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -215,10 +216,7 @@ class AdminAreaSettingsController extends Controller {
 		try {
 			$result = $this->settingsService->updateAreaSettings(area: $area, data: $data);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $result);

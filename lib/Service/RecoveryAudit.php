@@ -21,6 +21,7 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\RecoveryAuditInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 
 /**
@@ -29,9 +30,7 @@ use OCP\EventDispatcher\IEventDispatcher;
  * AuditEventTypes drops anything else, and the forbidden keys refuse key
  * material outright.
  */
-class RecoveryAudit {
-
-	public const SETTINGS_CHANGED = AuditEventTypes::RECOVERY_SETTINGS_CHANGED;
+class RecoveryAudit implements RecoveryAuditInterface {
 
 	public const KEY_CREATED = AuditEventTypes::RECOVERY_KEY_CREATED;
 

@@ -1,0 +1,819 @@
+# Terms and tone follow Nextcloud's Latvian translation: formal jūs, glabātava, galvenā parole, lietotnes parole, piekļuves atslēga, pieteikšanās vienums, vienums, pārvaldītājs; counts use "Vienumi: $1" to avoid plural forms.
+language: lv
+extensionDescription: Keepiq jūsu pārlūkam. Aizpildiet pieteikšanās datus, piekļuves atslēgas un vienreizējos kodus no šifrētās Nextcloud glabātavas.
+commandAutofillLogin: Aizpildīt pēdējo izmantoto pieteikšanās vienumu
+commandFocusNotificationBar: Pāriet uz Keepiq saglabāšanas joslu
+
+errors:
+  insecureUrl: Šim serverim izmantojiet https
+  invalidUrl: Ievadiet derīgu servera URL
+  permissionDenied: Keepiq nepieciešama atļauja piekļūt serverim {host}
+  unreachable: Nevarēja sasniegt serveri {host}
+  notNextcloud: "{host} neizskatās pēc Nextcloud servera"
+  serverError: "{host} pašlaik nav pieejams, mēģiniet vēlāk vēlreiz"
+  unauthorized: Nepareizs lietotājvārds vai lietotnes parole
+  keepiqMissing: Serverī {host} nav uzstādīts Keepiq
+  keepiqOutdated: Keepiq serverī {host} ir pārāk vecs šim paplašinājumam, kam nepieciešama {version} vai jaunāka versija. Lūdziet pārvaldītājam atjaunināt Keepiq.
+  noActiveSuite: Vienreiz atveriet Keepiq tīmekļa lietotni un iestatiet galveno paroli, tad mēģiniet vēlreiz
+  unlockBlocked: Jūsu organizācija pieprasa divpakāpju autentificēšanos. Iestatiet otro pakāpi Nextcloud iestatījumu sadaļā Drošība, tad mēģiniet vēlreiz
+  duplicate: Šis konts jau ir pievienots
+  limitReached: "Sasniegts lielākais kontu skaits: {count}"
+  invalidMasterPassword: Nederīga galvenā parole
+  keyUnreadable: Jūsu glabātavas atslēgu Keepiq nevarēja nolasīt, tāpēc šis pārlūks to nevar atslēgt. Ziņojiet Keepiq pārvaldītājam.
+  offlineNoCache: Jūs esat bezsaistē, un šī glabātava vēl nav sinhronizēta
+  sessionRevoked: Sesija atsaukta, lūdzu, piesakieties vēlreiz
+  writeLocked: Jūsu glabātavu pašlaik nevar mainīt, mēģiniet vēlāk vēlreiz
+  notResponding: Keepiq neatbild. Pārlādējiet paplašinājumu un atkal atveriet šo uznirstošo logu.
+  invalidPin:
+    1: Nepareizs PIN, atlicis 1 mēģinājums
+    n: "Nepareizs PIN, atlikušie mēģinājumi: $1"
+  wrongPin: Nepareizs PIN
+  pinForgotten: PIN aizmirsts pēc pārāk daudziem mēģinājumiem
+  pinKeyChanged: Jūsu glabātavas atslēga mainījās. Atslēdziet ar galveno paroli.
+  pinTooShort: "Mazākais rakstzīmju skaits: {count}"
+  unknown: Kaut kas nogāja greizi
+  passkeyFailed: "Piekļuves atslēga neatbloķēja jūsu glabātuvi. Izmantojiet galveno paroli."
+
+notices:
+  keyChanged: Jūsu glabātavas atslēga Keepiq mainījās. Atslēdziet ar savu pašreizējo galveno paroli.
+  fileAccess: "Keepiq nav vajadzīga piekļuve failiem. Nextcloud sadaļā Iestatījumi, Drošība, Ierīces un sesijas varat izslēgt šīs lietotnes paroles piekļuvi failiem vai to atsaukt."
+
+common:
+  accountOnHost: "{name} serverī {host}"
+  loading: Ielādē…
+  back: Atpakaļ
+  cancel: Atcelt
+  logOut: Atteikties
+  appPassword: Lietotnes parole
+  addAccount: Pievienot kontu
+  openWebApp: Atvērt Keepiq tīmekļa lietotni
+  justNow: tikko
+
+titles:
+  accounts: Konti
+  logInAgain: Pieteikties vēlreiz
+  unlock: Atslēgt
+  viewItem: Skatīt vienumu
+  newItem: Jauns vienums
+  newLogin: Jauns pieteikšanās vienums
+  newCard: Jauna karte
+  newIdentity: Jauna identitāte
+  editItem: Labot vienumu
+  newSend: Jauns sūtījums
+  sendCreated: Sūtījums izveidots
+
+tabs:
+  label: Galvenā izvēlne
+  vault: Glabātava
+  generator: Ģenerators
+  send: Sūtīt
+  settings: Iestatījumi
+
+header:
+  popout: Atvērt atsevišķā logā
+  accounts: Konti, pašreizējais lietotājs {name}
+  new: Jauns
+
+unlock:
+  masterPassword: Galvenā parole
+  submit: Atslēgt
+  pin: PIN
+  useMasterPassword: Izmantot galveno paroli
+
+logInAgain:
+  submit: Pieteikties
+
+addAccount:
+  serverUrl: Servera URL
+  serverUrlPlaceholder: cloud.example.org
+  username: Lietotājvārds
+  hint: Izveidojiet to Nextcloud iestatījumu sadaļā Drošība. Nekad neievadiet šeit savu Nextcloud pieteikšanās paroli.
+  hintWithLink: "Izveidojiet to Nextcloud iestatījumu sadaļā Drošība: {link}. Nekad neievadiet šeit savu Nextcloud pieteikšanās paroli."
+  securityLink: atvērt drošības iestatījumus
+  signInWithBrowser: "Pieteikties ar Nextcloud"
+  finishInTab: "Pabeidziet pieteikšanos atvērtajā Nextcloud lapā. Keepiq pievienos kontu, kad būsiet pabeidzis."
+  orAppPassword: "Vai ievadiet lietotnes paroli:"
+
+accounts:
+  active: (aktīvs)
+  unlocked: Atslēgts
+  locked: Aizslēgts
+  loggedOut: Nav pieteicies
+  lock: Aizslēgt kontu {account}
+  logOut: Atteikties no konta {account}
+  lockAll: Aizslēgt visus
+  logOutAll: Atteikties no visiem
+  logOutAllQuestion: Atteikties no visiem kontiem?
+  logOutAllDetail: Visi konti tiek noņemti no šī pārlūka. Jums atkal būs vajadzīga katra lietotnes parole.
+  logOutQuestion: Atteikties no konta {account}?
+  logOutDetail: Konts tiek noņemts no šī pārlūka. Lai to pievienotu atkal, būs vajadzīga lietotnes parole.
+
+vault:
+  loadFailed: Nevarēja ielādēt jūsu glabātavu
+  tryAgain: Mēģināt vēlreiz
+  syncing: Sinhronizē jūsu glabātavu
+  empty: Glabātavā nav vienumu
+  noMatch: Nav atbilstošu vienumu
+  searchCovers: Meklēšana aptver nosaukumus un tīmekļvietnes.
+  clearFilters: Notīrīt filtrus
+  items: Vienumi
+  tooMany: Rāda tikai pirmos {count}, precizējiet meklēšanu
+  offline: Bezsaistē. Pēdējā sinhronizēšana {time}
+  syncNow: Sinhronizēt tagad
+  busy: Serveris aizņemts, vēlāk tiks mēģināts vēlreiz
+  allBlocked: Visi vienumi ir bloķēti.
+  suggestions: Automātiskās aizpildes ieteikumi
+  noSuggestions: Vietnei {host} nav vienumu
+  autofillUnavailable: Automātiskā aizpilde šajā lapā nav pieejama
+  fillFailed: Šajā lapā nevar automātiski aizpildīt. Nokopējiet un ielīmējiet paši.
+  openFailed: Nevarēja atvērt tīmekļvietni
+  popoutFailed: Nevarēja atvērt jaunu logu
+
+filters:
+  search: Meklēt
+  searchLabel: Meklēt glabātavā
+  clearSearch: Notīrīt meklēšanu
+  folder: Mape
+  allItems: Visi vienumi
+  noFolder: Bez mapes
+  type: Veids
+  all: Visi
+  more: Vairāk
+  moreTypes: Vairāk veidu
+  login: Pieteikšanās
+  card: Karte
+  identity: Identitāte
+  note: Piezīme
+  totp: TOTP
+  passkey: Piekļuves atslēga
+
+item:
+  blocked: Bloķēts
+  launch: Atvērt {name}
+  fill: Aizpildīt
+  fillName: Aizpildīt {name}
+  insecureTitle: Vai tomēr aizpildīt šo pieteikšanās vienumu?
+  insecureWarning: "Brīdinājums: šī ir nedroša HTTP lapa, un citi var redzēt un mainīt jebkuru jūsu iesniegto informāciju. Šis pieteikšanās vienums sākotnēji tika saglabāts drošā (HTTPS) lapā."
+  cardInsecureTitle: Aizpildīt šo karti nedrošā vietnē?
+  cardInsecureWarning: Šī vietne nav droša. Ikviens tīklā var nolasīt aizpildītos kartes datus.
+  crossSiteTitle: Aizpildīt arī citās vietnēs ({hosts})?
+  crossSiteWarning: Daļa šīs veidlapas nāk no citām vietnēm ({hosts}), nevis no vietnes {host}. Keepiq to tur aizpildīs tikai ar jūsu piekrišanu.
+  onlyHost: Tikai {host}
+  copyMenu: Kopēt, {name}
+  moreMenu: Vairāk, {name}
+  copyUsername: Kopēt lietotājvārdu
+  copyPassword: Kopēt paroli
+  copyCode: Kopēt apstiprinājuma kodu
+  view: Skatīt
+  edit: Labot
+  clone: Klonēt
+  move: Pārvietot uz mapi
+  delete: Izdzēst
+  send: Sūtīt
+  cloneName: "{name} - klons"
+  passkeyNoClone: Piekļuves atslēgas nevar klonēt
+  useOnly: Kopīgots ar jums tikai pieteikšanās vajadzībām
+  readOnly: Kopīgots no citas organizācijas, tāpēc to var tikai pārvietot
+  viewOnly: Kopīgots ar jums tikai skatīšanai. Lai to mainītu, lūdziet īpašniekam labošanas tiesības.
+  expiringNoClone: Jūsu piekļuve beidzas {date}, tāpēc to nevar klonēt
+  expiringNoSend: Jūsu piekļuve beidzas {date}, tāpēc to nevar nosūtīt
+  saved: Vienums saglabāts
+  deleted: Vienums pārvietots uz atkritni
+  moved: Pārvietots uz mapi {folder}
+  deleteTitle: Izdzēst vienumu
+  deleteConfirm: Pārvietot {name} uz atkritni? Tas vairs netiks kopīgots, arī pēc atjaunošanas no atkritnes Keepiq tīmekļa lietotnē.
+  gone: Šis vienums vairs nepastāv
+
+form:
+  itemDetails: Vienuma dati
+  type: Veids
+  name: Nosaukums
+  cardNumberLength: "{brand} neizsniedz šāda garuma karšu numurus. Varat tomēr saglabāt."
+  cardNumberLengthUnknown: Karšu numuros ir no 12 līdz 19 cipariem. Varat tomēr saglabāt.
+  cardNumberChecksum: Šis numurs neatbilst kartes kontrolsummai. Pārbaudiet to; varat tomēr saglabāt.
+  cardCodeLength: "{brand} kartēm {name} ir {size} cipari. Varat tomēr saglabāt."
+  folder: Mape
+  chooseFolder: Izvēlieties mapi, pašlaik {folder}
+  website: Tīmekļvietnes URL
+  autofillOptions: Automātiskās aizpildes iespējas
+  additionalOptions: Papildu iespējas
+  authenticator: Autentificētājs
+  note: Piezīme
+  secret: Noslēpums
+  advanced: Paplašināti
+  algorithm: Algoritms
+  digits: Cipari
+  period: Periods sekundēs
+  addField: Pievienot lauku
+  fieldName: Lauka nosaukums
+  fieldValue: Vērtība
+  removeField: Noņemt {name}
+  removeUnnamed: Noņemt lauku
+  save: Saglabāt
+  passkeyReadOnly: Piekļuves atslēgas datus var mainīt tikai Keepiq tīmekļa lietotnē
+  offline: Jūs esat bezsaistē. Izmaiņām ir nepieciešams savienojums ar Keepiq.
+  unsavedTitle: Nesaglabātas izmaiņas
+  unsaved: Jums ir nesaglabātas izmaiņas. Atmest tās?
+  discard: Atmest
+  keepEditing: Turpināt labošanu
+
+authKey:
+  label: Autentificētāja atslēga
+  optionalLabel: Autentificētāja atslēga (neobligāta)
+  newLabel: Jauna autentificētāja atslēga
+  help: Ielīmējiet otpauth://totp/ saiti vai slepeno atslēgu, vai nolasiet lapā redzamo QR kodu.
+  scan: Nolasīt lapas QR kodu
+  read: Autentificētāja atslēga nolasīta no QR koda
+  noQr: Lapā netika atrasts QR kods. Ritiniet, lai tas būtu redzams, un mēģiniet vēlreiz.
+  notTotp: Šajā QR kodā nav autentificētāja atslēgas. Izmantojiet QR kodu, ko vietne rāda, iestatot divpakāpju autentificēšanos.
+  noPicture: Keepiq nevar uzņemt šīs lapas attēlu. Tā vietā ielīmējiet atslēgu.
+  popout: Lai nolasītu QR kodu, atveriet Keepiq no rīkjoslas lapā ar QR kodu.
+  saved: Saglabāta
+  remove: Noņemt autentificētāja atslēgu
+  replaceHelp: Ielīmējiet vai nolasiet jaunu atslēgu, vai atstājiet tukšu, lai noņemtu saglabāto.
+  keep: Paturēt saglabāto atslēgu
+  removedOnSave: Autentificētāja atslēga tiks noņemta, kad saglabāsiet.
+  notCloned: Autentificētāja atslēga netiek klonēta.
+
+fieldErrors:
+  required: Nosaukums ir obligāts
+  tooLong: "Lielākais rakstzīmju skaits: {max}"
+  tooLongBytes: Pārāk garš (maks. {max} B)
+  reserved: Šis nosaukums ir rezervēts
+  duplicate: Lauks ar šādu nosaukumu jau pastāv
+  invalidTotp: Nederīgs autentificētāja noslēpums
+  slash: Mapju nosaukumos nedrīkst būt slīpsvītras
+
+writeErrors:
+  writeLocked: Glabātava ir īslaicīgi aizslēgta atslēgas migrēšanas dēļ, mēģiniet vēlāk vēlreiz
+  forbidden: Keepiq neļauj veikt šo izmaiņu. Iemeslu parāda Keepiq tīmekļa lietotne.
+  policy: Jūsu organizācijas politika neļauj veikt šo izmaiņu
+  accountChanged: Pa to laiku pārslēdzāties uz citu kontu, tāpēc nekas netika saglabāts. Pārslēdzieties atpakaļ, lai saglabātu.
+  accountChangedDelete: Pa to laiku pārslēdzāties uz citu kontu, tāpēc nekas netika izdzēsts. Pārslēdzieties atpakaļ, lai izdzēstu.
+  keepClash: Līmeni augstāk jau ir mape {name}. Izvēlieties tai Pārvietot vienumus uz vecākmapi vai Izdzēst, vai vispirms pārdēvējiet vienu no tām.
+  keepClashAfter: Mapei, ko izvēlējāties paturēt, ir tāds pats nosaukums kā mapei līmeni augstāk, tāpēc nekas netika izdzēsts. Vēlreiz pārbaudiet izvēles.
+  invalid: Keepiq noraidīja šo izmaiņu
+  stale: Šis vienums tika mainīts citur. Atgriezieties un labojiet to vēlreiz, lai redzētu jaunāko versiju.
+  itemGone: Šis vienums vairs nepastāv
+  folderGone: Šī mape vairs nepastāv
+  duplicateFolder: Šeit jau ir mape ar šādu nosaukumu
+  folderChanged: Šī mape mainījās. Vēlreiz pārbaudiet izvēles.
+  offline: Nevarēja sasniegt serveri
+  serverError: Keepiq pašlaik nav pieejams, mēģiniet vēlāk vēlreiz
+  unreadable: Šo vienumu nevarēja nolasīt, tāpēc to šeit nevar labot
+  restricted: Šis vienums ar jums kopīgots ar ierobežojumiem, tāpēc šeit to nevar mainīt vai kopēt
+  unmatched: Keepiq nosūtīja šī vienuma versiju, kuras nav jūsu glabātavā, tāpēc tas netika atvērts.
+  keyMismatch: Keepiq nosūtīja šifrēšanas atslēgu, kas neatbilst jūsu glabātavai, tāpēc nekas netika saglabāts. Ziņojiet Keepiq pārvaldītājam.
+  staleSource: Šī kopīgotā vienuma oriģināls tika mainīts pēc tam, kad to atvērāt. Nekas netika saglabāts; atveriet to vēlreiz un atkārtojiet izmaiņu.
+  incomplete: Saglabāšanas laikā nepārtraukti mainījās cilvēki, ar kuriem šis vienums ir kopīgots. Nekas netika saglabāts; mēģiniet vēlreiz.
+  badCertificate: Keepiq nosūtīja šifrēšanas atslēgu kādam, ar kuru šis vienums ir kopīgots, bet šis pārlūks to nevarēja nolasīt. Nekas netika saglabāts.
+  unverified: Šis vienums ir kopīgots ar partneru organizācijām, un šis pārlūks nevar apstiprināt, ka tās to saņems tieši tādu, kādu jūs to redzējāt. Nekas netika saglabāts; veiciet šo izmaiņu Keepiq tīmekļa lietotnē.
+  partnerUnreachable: "Nekas netika saglabāts: nevar sasniegt partnera organizāciju, ar kuru šis vienums ir kopīgots ({cloudIds}). Mēģiniet vēlāk vēlreiz vai saglabājiet bez tiem – tad šī vienuma kopīgošana ar viņiem tiks apturēta, līdz atkal to ar viņiem kopīgosiet."
+  partnerUpgradeRequired: "Nekas netika saglabāts: saņēmēju {cloudIds} Keepiq ir pārāk vecs, lai saņemtu autentificētāja atslēgu. Noņemiet atslēgu vai lūdziet viņiem atjaunināt Keepiq."
+  partnerUpgradeRequiredUnnamed: "Nekas netika saglabāts: partnera organizācijai, ar kuru šis vienums ir kopīgots, ir pārāk vecs Keepiq, lai saņemtu autentificētāja atslēgu. Noņemiet atslēgu vai lūdziet viņiem atjaunināt Keepiq."
+  partnerUpgradeVersion: Viņiem nepieciešams Keepiq {version} vai jaunāks.
+  partnerLookupLimit: Pārāk daudz partneru vaicājumu. Nekas netika saglabāts; mēģiniet vēlreiz pēc minūtes.
+  federationUnavailable: Jūsu Keepiq serveris nevar kopīgot ar partneru organizācijām, tāpēc šo vienumu šeit nevar saglabāt. Nekas netika saglabāts; vērsieties pie pārvaldītāja.
+  keepiqOutdated: Jūsu Keepiq serveris ir pārāk vecs, lai saglabātu šo izmaiņu. Nekas netika saglabāts; lūdziet pārvaldītājam atjaunināt Keepiq uz {version} vai jaunāku versiju.
+  partnerClock: Partnera organizācijas, ar kuru šis vienums ir kopīgots, sertifikāts nav derīgs pēc šī datora pulksteņa. Nekas netika saglabāts; pārbaudiet šī datora datumu un laiku vai veiciet šo izmaiņu Keepiq tīmekļa lietotnē.
+  shareScanPending: Šis vienums gaida kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vēlreiz.
+  shareScanPendingOpen: Šis vienums gaida kopīgojumu pārbaudi, un to vēl nevar labot. Mēģiniet vēlāk vēlreiz.
+  shareScanPendingDelete: Šis vienums gaida kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika izdzēsts; mēģiniet vēlāk vēlreiz.
+  sendInvalid: Keepiq nepieņēma šo sūtījumu. Nekas netika nosūtīts; pārbaudiet laukus un mēģiniet vēlreiz.
+  sendOffline: Nevarēja sasniegt serveri, nekas netika nosūtīts
+  argon2Unavailable: Aizsardzība ar paroli šajā pārlūkā nav pieejama
+
+shareSave:
+  saveWithout: Saglabāt bez viņiem
+  ownerOnly: Saglabāts. Saņēmēji partneru organizācijās saņems šo izmaiņu, kad īpašnieks nākamreiz saglabās vienumu.
+  suspended: Kopīgošana ar {cloudIds} ir apturēta, jo viņu sertifikātu nevarēja pārbaudīt vai viņu organizācija to vairs nepieņem. Kopīgojumu parāda Keepiq tīmekļa lietotne.
+  paused: Kopīgošana ar {cloudIds} ir apturēta, līdz atkal kopīgosiet šo vienumu ar viņiem.
+
+folders:
+  add: Pievienot mapi
+  newFolder: Jauna mape
+  rename: Pārdēvēt
+  renameTitle: Pārdēvēt mapi
+  delete: Izdzēst
+  more: Vairāk, {name}
+  name: Mapes nosaukums
+  empty: Vēl nav mapju
+  notice: Mapju nosaukumi netiek šifrēti
+  dismiss: Aizvērt
+  current: Pašreizējā mape
+  pickTitle: Izvēlēties mapi
+  moveTitle: Pārvietot uz mapi
+  saved: Mape saglabāta
+  deleted: Mape izdzēsta
+  deleteTitle: Izdzēst mapi
+  deleteConfirm: Izdzēst {name}? To nevar atsaukt.
+  cascade:
+    1: Izdzēst {name} un tajā esošo 1 vienumu vai pārvietot to uz mapi {parent}?
+    n: "Izdzēst {name} un tajā esošos vienumus (kopā: $1) vai pārvietot tos uz mapi {parent}?"
+  countsAll: Tiek ieskaitīti arī arhivētie un atkritnē esošie vienumi.
+  deleteItems: Izdzēst arī vienumus
+  moveItems: Pārvietot vienumus uz vecākmapi
+  items:
+    1: 1 vienums
+    n: "Vienumi: $1"
+  subfolders:
+    1: 1 apakšmape
+    n: "Apakšmapes: $1"
+  directRow: Vienumi mapē {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Izdzēst
+  actionMove: Pārvietot vienumus uz vecākmapi
+  actionKeep: Paturēt
+  directMove: Pārvietot uz vecākmapi
+
+clipboard:
+  copied: "Nokopēts: {what}"
+  failed: Nevarēja nokopēt
+
+field:
+  show: "Rādīt: {field}"
+  hide: "Slēpt: {field}"
+  copy: "Kopēt: {field}"
+
+blocked:
+  generic: Šis vienums ir bloķēts.
+  suiteMissing: Tā šifrēšanas atslēga vairs nepastāv.
+  suiteRevoked: Tā šifrēšanas atslēga tika atsaukta.
+  suiteCompromised: Šifrēts ar apdraudētu atslēgu, tāpēc šeit to nevar atvērt. Keepiq tīmekļa lietotne parāda, vai to var atgūt.
+  migrationFailed: Apdraudējuma atkopšanas laikā to nevarēja pārvietot uz jūsu jauno atslēgu. Saglabātā vērtība ir paturēta, bet to nevar atvērt.
+
+detail:
+  item: Vienums
+  decrypting: Atšifrē…
+  decryptFailed: Nevarēja atšifrēt šo vienumu
+  unreadablePasskey: Nevarēja nolasīt šo piekļuves atslēgu
+  unreadableFields: Nevarēja nolasīt papildu laukus
+  loginCredentials: Pieteikšanās dati
+  username: Lietotājvārds
+  password: Parole
+  authenticatorKey: Autentificētāja atslēga
+  website: Tīmekļvietne
+  additionalFields: Papildu lauki
+  notes: Piezīmes
+  history: Vienuma vēsture
+  created: Izveidots
+  updated: Atjaunināts
+  expires: Derīgs līdz
+  cardDetails: Kartes dati
+  number: Numurs
+  numberWithBrand: Numurs · {brand}
+  cardNumber: Kartes numurs
+  cardholder: Kartes īpašnieks
+  expiry: Derīguma termiņš
+  cvv: CVV
+  pin: PIN
+  identity: Identitāte
+  firstName: Vārds
+  lastName: Uzvārds
+  address: Adrese
+  phone: Tālrunis
+  email: E-pasts
+  bsn: BSN
+  passkey: Piekļuves atslēga
+  relyingParty: Vietne vai lietotne
+  passkeyUser: Lietotājvārds
+  passkeyOnLogin: Keepiq piesakās ar piekļuves atslēgām, kas saglabātas pieteikšanās vienumā, nevis ar šo vienumu
+  passkeys: Piekļuves atslēgas
+  passkeyCreated: Izveidota {date}
+  useOnly: Īpašnieks neļauj jums to skatīt vai kopēt.
+
+totp:
+  code: Apstiprinājuma kods
+  invalid: Nederīga autentificētāja atslēga
+  changesIn:
+    1: Mainīsies pēc 1 sekundes
+    n: Mainīsies pēc $1 s
+
+settings:
+  accountSecurity: Konta drošība
+  autofill: Automātiskā aizpilde
+  notifications: Paziņojumi
+  vault: Glabātava
+  appearance: Izskats
+  about: Par
+  folders: Mapes
+  theme: Motīvs
+  themeSystem: Sistēmas noklusējums
+  themeLight: Gaišs
+  themeDark: Tumšs
+  comingLater: Būs vēlāk
+  setByOrganisation: Iestatījusi jūsu organizācija
+  turnedOffByOrganisation: Izslēgusi jūsu organizācija
+  never: Nekad
+  durationHours: "{count} h"
+  durationMinutes: "{count} min"
+  pin: Atslēgt ar PIN
+  pinTurnOn: Ieslēgt
+  masterPasswordRequired: Ievadiet galveno paroli
+  pinAgain: Apstipriniet PIN
+  pinMismatch: PIN nesakrīt
+  pinAdvice: Neizmantojiet atkārtoti tālruņa vai bankas PIN.
+  pinAfterRestart: Pēc pārlūka pārsāknēšanas vienreiz ievadiet galveno paroli; pēc tam PIN atkal darbosies.
+  vaultTimeout: Glabātavas noildze
+  timeoutImmediately: Uzreiz
+  timeoutMinutes:
+    1: 1 minūte
+    n: $1 min
+  timeoutHours:
+    1: 1 stunda
+    n: $1 h
+  timeoutOnSystemLock: Kad sistēma tiek aizslēgta
+  timeoutOnSystemLockCapped: Kad sistēma tiek aizslēgta vai pēc {duration} dīkstāves (iestatījusi jūsu organizācija)
+  timeoutOnRestart: Pārsāknējot pārlūku
+  timeoutCustom: Pielāgota
+  hours: Stundas
+  minutes: Minūtes
+  customAtLeastOne: Ievadiet vismaz vienu minūti
+  customWhole: Ievadiet veselas stundas un minūtes
+  customAtMost: Jūsu organizācija atļauj ne vairāk kā {duration}
+  neverTitle: Paturēt glabātavu atslēgtu?
+  neverWarning: Jūsu glabātava paliek atslēgta, līdz to aizslēdzat pašrocīgi. Atslēga, kas to atver, tiek ierakstīta šī pārlūka profila diskā, kur to var nolasīt ikviens, kurš var nolasīt profilu.
+  neverConfirm: Paturēt atslēgtu
+  timeoutAction: Noildzes darbība
+  actionLock: Aizslēgt
+  actionLogOutNote: Kad noildze beidzas, notiek atteikšanās, un atkal būs vajadzīga lietotnes parole
+  lockNow: Aizslēgt tagad
+  changeMasterPassword: Mainīt galveno paroli
+  autofillOnPageLoad: Automātiski aizpildīt lapas ielādes laikā
+  autofillOnPageLoadWarning: Apdraudētas vai neuzticamas tīmekļvietnes var ļaunprātīgi izmantot automātisko aizpildi lapas ielādes laikā
+  defaultAutofill: Noklusējuma automātiskās aizpildes iestatījums pieteikšanās vienumiem
+  defaultAutofillOnPageLoad: Aizpildīt lapas ielādes laikā, ja ieslēgts
+  uriMatch: Noklusējuma URI atbilstības noteikšana
+  uriBaseDomain: Pamata domēns
+  uriHost: Saimniekdators
+  uriStartsWith: Sākas ar
+  uriExact: Precīzi
+  uriRegex: Regulārā izteiksme
+  uriRegexNote: Regulārās izteiksmes ir papildu iespēja un var traucēt atbilstības noteikšanu
+  inlineSuggestions: Rādīt automātiskās aizpildes ieteikumus veidlapu laukos
+  inlineCards: Rādīt kartes kā ieteikumus
+  inlineIdentities: Rādīt identitātes kā ieteikumus
+  inlineKindsOff: Vispirms ieslēdziet Rādīt automātiskās aizpildes ieteikumus veidlapu laukos.
+  vaultCards: Vienmēr rādīt kartes kā automātiskās aizpildes ieteikumus glabātavas skatā
+  vaultIdentities: Vienmēr rādīt identitātes kā automātiskās aizpildes ieteikumus glabātavas skatā
+  defaultPasswordManager: Padarīt Keepiq par noklusējuma paroļu pārvaldnieku
+  defaultPasswordManagerHint: Izslēdz pārlūka paša paroļu saglabāšanu un adrešu automātisko aizpildi, lai tā ieteikumi neaizsegtu Keepiq ieteikumus.
+  defaultPasswordManagerManaged: Šo pārlūka iestatījumu pārvalda jūsu organizācija vai cits paplašinājums.
+  contextMenu: Iespējot konteksta izvēlnes iespējas
+  shortcut: Automātiskās aizpildes īsinājumtaustiņš
+  shortcutNotSet: Nav iestatīts
+  shortcutChange: Mainīt
+  shortcutFirefox: Atveriet about:addons, izvēlieties zobrata izvēlni, tad Pārvaldīt paplašinājumu īsinājumtaustiņus
+  shortcutSafari: Atveriet Safari iestatījumus, izvēlieties Paplašinājumi un pēc tam atlasiet Keepiq, lai mainītu tā īsinājumtaustiņu
+  websiteAccess: Piekļuve tīmekļvietnēm
+  websiteAccessAll: Visas tīmekļvietnes
+  websiteAccessSome: Tikai jūsu atļautās tīmekļvietnes
+  websiteAccessServer: Bez jūsu Keepiq servera
+  clearClipboard: Notīrīt starpliktuvi
+  clipboardSeconds:
+    1: 1 sekunde
+    n: $1 s
+  autoCopyTotp: Automātiski kopēt TOTP
+  autoCopyTotpHint: Ja pieteikšanās vienumam ir apstiprinājuma kods, tas tiek nokopēts starpliktuvē, kad automātiski aizpildāt pieteikšanās vienumu.
+  askToAdd: Piedāvāt pievienot pieteikšanās vienumu
+  askToUpdate: Piedāvāt atjaunināt esošu pieteikšanās vienumu
+  askPasskeys: Piedāvāt saglabāt un izmantot piekļuves atslēgas
+  excludedDomains: Izslēgtie domēni
+  addCurrentSite: Pievienot pašreizējo vietni
+  domain: Domēns
+  addDomain: Pievienot
+  domainEmpty: Ievadiet domēnu
+  domainUnreadable: Ievadiet domēnu, piemēram, example.org
+  domainDuplicate: Jau izslēgts
+  removeDomain: Noņemt {domain}
+  webTitle: Keepiq tīmeklī
+  webText: Paša Keepiq paziņojumi, importēšana un eksportēšana, kā arī jūsu galvenā parole tiek pārvaldīti Keepiq lietotnē Nextcloud, sadaļā Personiskie iestatījumi.
+  openKeepiq: Atvērt Keepiq
+  lastSync: "Pēdējā sinhronizēšana: {time}"
+  lastSyncNever: "Pēdējā sinhronizēšana: nekad"
+  syncOffline: Sinhronizēšana neizdevās, jūs esat bezsaistē
+  syncFailed: Sinhronizēšana neizdevās, mēģiniet vēlāk vēlreiz
+  importItems: Importēt vienumus
+  exportVault: Eksportēt glabātavu
+  defaultItemType: Noklusējuma vienuma veids šajā paplašinājumā
+  compactMode: Kompakts režīms
+  showAnimations: Rādīt animācijas
+  quickCopy: Rādīt ātrās kopēšanas darbības glabātavā
+  showBadgeCounter: Rādīt pieteikšanās ieteikumu skaitu uz paplašinājuma ikonas
+  language: Valoda
+  languageFollows: Atbilstoši pārlūkam
+  version: Versija {version}
+  server: Serveris {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiq versija nav zināma
+  help: Palīdzība
+  reportBug: Ziņot par kļūdu
+  contactSupport: Sazināties ar atbalstu
+  privacyPolicy: Privātuma politika
+  webApp: Keepiq tīmekļa lietotne
+  rate: Novērtēt paplašinājumu
+
+websiteAccess:
+  title: Ļaujiet Keepiq darboties tīmekļvietnēs
+  body: Safari palaiž Keepiq tikai tīmekļvietnēs, kuras atļaujat. Atļaujiet to visās tīmekļvietnēs, lai visur, kur piesakāties, aizpildītu pieteikšanās datus, saglabātu jaunus un izmantotu piekļuves atslēgas.
+  allow: Atļaut visās tīmekļvietnēs
+  dismiss: Ne tagad
+  steps: Pārlūkā Safari izvēlieties Safari > Iestatījumi un pēc tam Tīmekļvietnes. Sarakstā atlasiet Keepiq un iestatiet „Apmeklējot citas tīmekļvietnes“ uz Atļaut.
+  perSite: Lai atļautu pa vienai vietnei, šajā vietnē noklikšķiniet uz Keepiq pogas un izvēlieties vienmēr atļaut.
+  serverTitle: Keepiq nevar sasniegt {host}
+  serverBody: Safari neļauj Keepiq sasniegt jūsu serveri, tāpēc glabātavu nevar sinhronizēt.
+  serverAllow: Atļaut {host}
+
+generator:
+  kinds: Ko ģenerēt
+  password: Parole
+  passphrase: Paroles frāze
+  username: Lietotājvārds
+  length: Garums
+  lengthValue: Garums rakstzīmēs
+  uppercase: Lielie burti (A-Z)
+  lowercase: Mazie burti (a-z)
+  digits: Cipari (0-9)
+  special: Īpašās rakstzīmes, piemēram, !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Rakstzīmju veidi
+  lastClassOn: Vismaz viens veids paliek ieslēgts
+  minNumbers: Mazākais ciparu skaits
+  minSpecial: Mazākais īpašo rakstzīmju skaits
+  avoidAmbiguous: Izvairīties no līdzīgām rakstzīmēm
+  lockedByPolicy: Iestatījusi jūsu organizācija
+  passphraseOff: Izslēgusi jūsu organizācija
+  words: Vārdu skaits
+  separator: Vārdu atdalītājs
+  capitalizeWords: Lielie sākumburti
+  capitalize: Lielais sākumburts
+  includeNumber: Iekļaut ciparu
+  usernameType: Veids
+  typeWord: Nejaušs vārds
+  typePlus: E-pasts ar plus adresāciju
+  typeCatchall: Catch-all e-pasts
+  email: E-pasts
+  emailPlaceholder: vards@example.com
+  domain: Domēns
+  domainPlaceholder: example.com
+  basedOn: Pamatojoties uz
+  random: Nejaušs
+  websiteName: Tīmekļvietnes nosaukums
+  noWebsite: Tīmekļvietne nav noteikta
+  needsEmail: Ievadiet e-pasta adresi
+  needsDomain: Ievadiet domēnu
+  wordlistUnavailable: Vārdu saraksts nav pieejams
+  regenerate: Ģenerēt vēlreiz
+  usePassword: Izmantot šo paroli
+  useUsername: Izmantot šo lietotājvārdu
+  history: Ģeneratora vēsture
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Vēl nav ģenerētu vērtību
+  clearHistory: Notīrīt
+  clearHistoryTitle: Notīrīt ģeneratora vēsturi?
+  clearHistoryText: No šī pārlūka tiks noņemtas visas saraksta vērtības.
+  generatePasswordLink: Ģenerēt paroli
+  generatePassword: Ģenerēt paroli
+  generateUsername: Ģenerēt lietotājvārdu
+
+send:
+  new: Jauns sūtījums
+  empty: Vēl nav sūtījumu
+  emptyText: Kopīgojiet tekstu vai pieteikšanās datus ar saiti, kas pati sevi izdzēš.
+  loadFailed: Nevarēja ielādēt jūsu sūtījumus
+  retry: Mēģināt vēlreiz
+  labelText: "Teksts, {time}"
+  labelCredential: "Pieteikšanās dati, {time}"
+  viewsLeft:
+    1: "Atlikušie skatījumi: {left} no 1"
+    n: "Atlikušie skatījumi: {left} no $1"
+  expires: "Derīgs līdz {date}"
+  neverExpires: Bez termiņa
+  expired: Termiņš beidzies
+  passwordBadge: Parole
+  link: Saite
+  copyLink: Kopēt saiti
+  copyLinkOf: "Kopēt saiti, {name}"
+  linkGone: Saite vairs nav pieejama
+  remove: Noņemt
+  removeOf: "Noņemt, {name}"
+  removeTitle: Noņemt sūtījumu
+  removeConfirm: Noņemt šo sūtījumu? Ikviens, kam ir saite, zaudēs piekļuvi.
+  removed: Sūtījums noņemts
+  contentSection: Saturs
+  optionsSection: Iespējas
+  type: Veids
+  text: Teksts
+  credential: Pieteikšanās dati
+  content: Kopīgojamais teksts
+  maxViews: Maks. skatījumi
+  maxViewsRange: "No 1 līdz {max}"
+  expiry: Derīgums
+  expiry1h: 1 stunda
+  expiry1d: 1 diena
+  expiry2d: 2 dienas
+  expiry3d: 3 dienas
+  expiry7d: 7 dienas
+  expiry30d: 30 dienas
+  expiryCustom: Pielāgots
+  customHours: Stundas
+  customHoursMin: Vismaz 1 stunda
+  customHoursMax: Ne vairāk kā 720 stundas (30 dienas)
+  accessPassword: Piekļuves parole
+  accessPasswordHint: Neobligāti. Saņēmējam tā būs vajadzīga, lai atvērtu sūtījumu.
+  create: Izveidot
+  protecting: Aizsargā ar paroli…
+  offline: Sūtījumiem ir nepieciešams savienojums ar jūsu Keepiq serveri
+  prefillFailed: Nevarēja nolasīt šo pieteikšanās vienumu
+  ready: Jūsu sūtījums ir gatavs
+  shownOnce:
+    1: Nokopējiet šo saiti tagad. Tā tiek rādīta tikai līdz šī loga aizvēršanai, un saturs tiek iznīcināts pēc 1 skatījuma.
+    n: Nokopējiet šo saiti tagad. Tā tiek rādīta tikai līdz šī loga aizvēršanai, un saturs tiek iznīcināts, kad sasniegts skatījumu limits ($1).
+  passwordNote: Nododiet piekļuves paroli atsevišķi no saites. Pēc 5 nepareiziem mēģinājumiem sūtījums tiek izdzēsts.
+  done: Gatavs
+
+pageFill:
+  insecure: "Brīdinājums: šī ir nedroša HTTP lapa, un citi var redzēt un mainīt jebkuru jūsu iesniegto informāciju. Šis pieteikšanās vienums sākotnēji tika saglabāts drošā (HTTPS) lapā {host}.\n\nVai tomēr aizpildīt šo pieteikšanās vienumu?"
+  insecureNoHost: "Brīdinājums: šī ir nedroša HTTP lapa, un citi var redzēt un mainīt jebkuru jūsu iesniegto informāciju. Šis pieteikšanās vienums sākotnēji tika saglabāts drošā (HTTPS) lapā.\n\nVai tomēr aizpildīt šo pieteikšanās vienumu?"
+  cardInsecure: "Aizpildīt šo karti nedrošā vietnē?\n\nŠī vietne nav droša. Ikviens tīklā var nolasīt aizpildītos kartes datus."
+  crossSite: "Aizpildīt arī citās vietnēs ({hosts})?\n\nDaļa šīs veidlapas nāk no citām vietnēm ({hosts}), nevis no vietnes {host}. Keepiq to tur aizpildīs tikai ar jūsu piekrišanu."
+
+contextMenu:
+  root: Keepiq
+  autofill: Aizpildīt pieteikšanās datus
+  noMatches: Nav pieteikšanās vienumu
+  noUsernames: Nav lietotājvārdu
+  noPasswords: Nav paroļu
+  noCodes: Nav apstiprinājuma kodu
+  noIdentities: Nav identitāšu
+  noCards: Nav karšu
+  addLogin: Pievienot pieteikšanās vienumu
+  addIdentity: Pievienot identitāti
+  addCard: Pievienot karti
+  openKeepiq: Atvērt Keepiq
+  copyUsername: Kopēt lietotājvārdu
+  copyPassword: Kopēt paroli
+  copyCode: Kopēt apstiprinājuma kodu
+  autofillCard: Aizpildīt karti
+  autofillIdentity: Aizpildīt identitāti
+  generatePassword: Ģenerēt un kopēt paroli
+  unlock: Atslēgt glabātavu
+
+pageNotice:
+  label: Keepiq paziņojums
+  noLoginForm: Keepiq šajā lapā neatrada aizpildāmu pieteikšanās veidlapu.
+  noCardForm: Keepiq šajā lapā neatrada aizpildāmus kartes laukus.
+  noIdentityForm: Keepiq šajā lapā neatrada aizpildāmus adreses vai personas datu laukus.
+
+toolbar:
+  locked: "{name}: aizslēgts"
+  loggedOut: "{name}: nav pieteicies"
+  count:
+    1: "{name}: 1 pieteikšanās vienums šai vietnei"
+    n: "{name}: šīs vietnes pieteikšanās vienumi ($1)"
+
+inlineList:
+  frameTitle: Keepiq pieteikšanās vienumi
+  label: Keepiq pieteikšanās vienumi vietnei {host}
+  row: "{name}, {username}"
+  noMatch: Vietnei {host} nav pieteikšanās vienumu
+  passkeyRow: "{name}, {username}, piekļuves atslēga"
+  passkeyRowNoUser: "{name}, piekļuves atslēga"
+  noMatchPasskeys: Vietnei {host} nav pieteikšanās vienumu vai piekļuves atslēgu
+  locked: Keepiq ir aizslēgts
+  unlock: Atslēgt
+  insecureQuestion: Aizpildīt šajā nedrošajā vietnē?
+  insecureDetail: Šī vietne nav droša. Ikviens tīklā var nolasīt aizpildīto informāciju.
+  fill: Aizpildīt
+  notVisible: Keepiq šeit nevar aizpildīt, jo šī lapa maina savu attēlošanas veidu. Izmantojiet Keepiq pogu rīkjoslā.
+  status:
+    count:
+      1: 1 Keepiq pieteikšanās vienums. Lai izvēlētos, nospiediet bultiņu uz leju.
+      n: "Keepiq pieteikšanās vienumi: $1. Lai izvēlētos, nospiediet bultiņu uz leju."
+    noMatch: Vietnei {host} nav Keepiq pieteikšanās vienumu
+    countPasskeys:
+      1: 1 Keepiq pieteikšanās vienums vai piekļuves atslēga. Lai izvēlētos, nospiediet bultiņu uz leju.
+      n: "Keepiq pieteikšanās vienumi un piekļuves atslēgas: $1. Lai izvēlētos, nospiediet bultiņu uz leju."
+    noMatchPasskeys: Vietnei {host} nav Keepiq pieteikšanās vienumu vai piekļuves atslēgu
+    locked: Keepiq ir aizslēgts. Lai atslēgtu, nospiediet bultiņu uz leju.
+  code:
+    frameTitle: Keepiq apstiprinājuma kodi
+    label: Keepiq apstiprinājuma kodi vietnei {host}
+    noMatch: Vietnei {host} nav apstiprinājuma kodu
+    locked: Atslēdziet Keepiq, lai redzētu apstiprinājuma kodus
+    invalid: Nederīgs autentificētāja noslēpums
+    status:
+      count:
+        1: 1 Keepiq apstiprinājuma kods. Lai izvēlētos, nospiediet bultiņu uz leju.
+        n: "Keepiq apstiprinājuma kodi: $1. Lai izvēlētos, nospiediet bultiņu uz leju."
+      noMatch: Vietnei {host} nav Keepiq apstiprinājuma kodu
+  card:
+    frameTitle: Keepiq kartes
+    noMatch: Keepiq nav karšu
+    locked: Atslēdziet Keepiq, lai redzētu kartes
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Karte, *{last4}"
+    row: "{name}, {brand}, beidzas ar {last4}"
+    rowNoBrand: "{name}, karte, beidzas ar {last4}"
+    status:
+      count:
+        1: 1 Keepiq karte. Lai izvēlētos, nospiediet bultiņu uz leju.
+        n: "Keepiq kartes: $1. Lai izvēlētos, nospiediet bultiņu uz leju."
+  identity:
+    frameTitle: Keepiq identitātes
+    noMatch: Keepiq nav identitāšu
+    locked: Atslēdziet Keepiq, lai redzētu identitātes
+    status:
+      count:
+        1: 1 Keepiq identitāte. Lai izvēlētos, nospiediet bultiņu uz leju.
+        n: "Keepiq identitātes: $1. Lai izvēlētos, nospiediet bultiņu uz leju."
+  newPassword:
+    frameTitle: Keepiq stipra parole
+    offer: Izmantot stipru paroli
+    locked: Atbloķējiet Keepiq, lai iegūtu stipru paroli
+    status: Izmantot stipru paroli. Lai izvēlētos, nospiediet bultiņu uz leju.
+
+notificationBar:
+  label: Keepiq paziņojums
+  saveQuestion: Saglabāt vietnes {host} pieteikšanās datus Keepiq?
+  updateQuestion: Atjaunināt {name} paroli?
+  updateQuestionUser: Atjaunināt {name} ({username}) paroli?
+  updateQuestionHost: Atjaunināt {name} paroli vietnē {host}?
+  updateQuestionUserHost: Atjaunināt {name} ({username}) paroli vietnē {host}?
+  folder: Mape
+  noFolder: Bez mapes
+  save: Saglabāt
+  never: Nekad šai vietnei
+  update: Atjaunināt
+  close: Aizvērt
+  expand: Rādīt iespējas
+  shortcutHint: Lai atbildētu, nospiediet {shortcut}.
+  saving: Saglabā…
+  updating: Atjaunina…
+  saved: Pieteikšanās dati saglabāti
+  updated: Parole atjaunināta
+  notVisible: Keepiq šeit to nevar izdarīt, jo šī lapa maina savu attēlošanas veidu. Aizveriet šo un pievienojiet pieteikšanās vienumu ar Keepiq pogu rīkjoslā.
+  errors:
+    writeLocked: Glabātava ir īslaicīgi aizslēgta izmaiņām. Mēģiniet vēlāk vēlreiz.
+    unverified: Lai mainītu paroli, labojiet šo pieteikšanās vienumu Keepiq uznirstošajā logā vai tīmekļa lietotnē.
+    viewOnly: Šis pieteikšanās vienums ar jums kopīgots tikai skatīšanai, tāpēc tā paroli šeit nevar atjaunināt.
+    loginGone: Šis pieteikšanās vienums vairs nepastāv. Saglabāt kā jaunu?
+    locked: Keepiq ir aizslēgts. Atslēdziet to ar Keepiq pogu rīkjoslā un mēģiniet vēlreiz.
+    notResponding: Keepiq neatbild. Mēģiniet vēlreiz.
+    accountChanged: Jūs pārslēdzāt kontu, tāpēc nekas netika saglabāts.
+    keyMismatch: Keepiq atslēga neatbilst jūsu glabātavai. Nekas netika saglabāts; ziņojiet pārvaldītājam.
+    staleSource: Šī kopīgotā pieteikšanās vienuma oriģināls mainījās. Nekas netika saglabāts; mēģiniet vēlreiz.
+    incomplete: Cilvēki, ar kuriem šis vienums kopīgots, nepārtraukti mainījās. Nekas netika saglabāts; mēģiniet vēlreiz.
+    badCertificate: Nevarēja nolasīt saņēmēja šifrēšanas atslēgu. Nekas netika saglabāts.
+    keepiqOutdated: Jūsu Keepiq serveris ir pārāk vecs. Nekas netika saglabāts; lūdziet pārvaldītājam Keepiq {version} vai jaunāku.
+    shareScanPending: Šis pieteikšanās vienums gaida kopīgojumu pārbaudi. Nekas netika saglabāts; mēģiniet vēlāk.
+
+passkey:
+  unlockGet: Atslēdziet Keepiq, lai izmantotu vietnes {rpId} piekļuves atslēgu
+  unlockCreate: Atslēdziet Keepiq, lai saglabātu vietnes {rpId} piekļuves atslēgu
+  verifyTitle: Apstipriniet, ka tas esat jūs
+  verifyPassword: Lai turpinātu, ievadiet galveno paroli.
+  verifyPin: Lai turpinātu, ievadiet PIN.
+  confirm: Apstiprināt
+  signInTitle: Pieteikties ar piekļuves atslēgu
+  signInText: Izmantot Keepiq saglabātu vietnes {rpId} piekļuves atslēgu
+  row: "{name}, {userName}"
+  noPasskey: Vietnei {rpId} nav Keepiq piekļuves atslēgas
+  saveTitle: Saglabāt piekļuves atslēgu
+  saveTo: Saglabāt pieteikšanās vienumā
+  replaces: Aizstāj lietotāja {userName} piekļuves atslēgu
+  newLogin: Jauns pieteikšanās vienums
+  name: Nosaukums
+  folder: Mape
+  noFolder: Bez mapes
+  saveNew: Saglabāt kā jaunu pieteikšanās vienumu
+  replaceQuestion: Aizstāt lietotāja {userName} piekļuves atslēgu vienumā {name}?
+  replace: Aizstāt
+  alreadySavedTitle: Piekļuves atslēga jau saglabāta
+  alreadySaved: Šī konta piekļuves atslēga jau ir saglabāta Keepiq
+  close: Aizvērt
+  retry: Mēģināt vēlreiz
+  fallback: Izmantot savu ierīci vai aparatūras atslēgu
+  stalePick: Šīs piekļuves atslēgas vairs nav jūsu glabātavā. Izvēlieties citu.
+  staleSave: Šajā pieteikšanās vienumā vairs nevar saglabāt piekļuves atslēgu. Izvēlieties citu vai saglabājiet kā jaunu pieteikšanās vienumu.
+  errors:
+    conflict: Šis pieteikšanās vienums saglabāšanas laikā mainījās. Nekas netika saglabāts; mēģiniet vēlreiz.
+    partnerUpgradeRequired: "Nekas netika saglabāts: saņēmēju {cloudIds} Keepiq ir pārāk vecs, lai glabātu piekļuves atslēgas. Lūdziet viņiem atjaunināt Keepiq vai saglabājiet piekļuves atslēgu citā pieteikšanās vienumā."
+    partnerUpgradeRequiredUnnamed: "Nekas netika saglabāts: partnera organizācijai, ar kuru šis pieteikšanās vienums ir kopīgots, ir pārāk vecs Keepiq, lai glabātu piekļuves atslēgas. Lūdziet viņiem atjaunināt Keepiq vai saglabājiet piekļuves atslēgu citā pieteikšanās vienumā."
+    shareScanPending: Šis pieteikšanās vienums gaida kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vēlreiz.
+
+vaultPasskey:
+  unlock: "Atbloķēt ar pirksta nospiedumu vai seju"
+  unlockIntro: "Pārlūks prasīs pirksta nospiedumu, seju vai ierīces PIN."
+  enrolTitle: "Iestatīt atbloķēšanu ar pirksta nospiedumu vai seju"
+  enrolIntro: "Apstipriniet galveno paroli. Pēc tam pārlūks divreiz prasīs pirksta nospiedumu, seju vai ierīces PIN."
+  enrolSubmit: "Iestatīt"
+  enrolDone: "Atbloķēšana ar pirksta nospiedumu vai seju šim pārlūkam ir iestatīta."
+  close: "Aizvērt"
+  label: "Keepiq pārlūka paplašinājums"
+  tooOld: "Atbloķēšanai ar pirksta nospiedumu vai seju vajag Chrome vai Edge 122, vai Firefox 150, vai jaunāku. Izmantojiet galveno paroli."
+  unsupported: "Šis pārlūks vai ierīce nevar atbloķēt Keepiq ar pirksta nospiedumu vai seju. Izmantojiet galveno paroli."
+  revokeInWebApp: "Lai to izslēgtu, atsauciet šo piekļuves atslēgu Keepiq tīmekļa lietotnē."

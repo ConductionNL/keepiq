@@ -28,7 +28,6 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\Attachment;
 use OCA\Keepiq\Db\AttachmentGrant;
 use OCA\Keepiq\Db\AttachmentGrantMapper;
@@ -39,6 +38,8 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AttachmentServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\AppData\IAppDataFactory;
@@ -53,7 +54,7 @@ use Ramsey\Uuid\Uuid;
  *   attachment/grant/secret/suite mappers plus app-data and config so the
  *   blob + grant invariants live in one place.
  */
-class AttachmentService {
+class AttachmentService implements AttachmentServiceInterface {
 	/**
 	 * The IAppData folder holding attachment ciphertext blobs.
 	 */
@@ -66,7 +67,7 @@ class AttachmentService {
 	 * relocated by OCA\Keepiq\Repair\MoveAttachmentBlobs before this is
 	 * read — see blobFolder().
 	 */
-	private const BLOB_APP_DATA_NAMESPACE = Application::APP_ID;
+	private const BLOB_APP_DATA_NAMESPACE = AppIdentity::APP_ID;
 
 	/**
 	 * The pre-rename AppData namespace, still consulted on READ.
@@ -82,7 +83,7 @@ class AttachmentService {
 	 * migration having completed, which is what makes the migration safe to
 	 * make non-fatal. Writes never come here; this is a read-only tail that
 	 * goes away with the rest of the pre-stable compatibility, per
-	 * Application::PRE_STABLE_COMPAT_REMOVED_IN.
+	 * AppIdentity::PRE_STABLE_COMPAT_REMOVED_IN.
 	 *
 	 * @var string
 	 */
@@ -190,11 +191,7 @@ class AttachmentService {
 	 * owner's RSA-wrapped file key. Size limit and per-user quota are
 	 * enforced server-side in ciphertext bytes BEFORE persisting.
 	 *
-	 * @param string $secretId The owning secret UUID
-	 * @param string $userId The caller (must own the secret)
-	 * @param string $blob The ciphertext bytes
-	 * @param string $encryptedMetadata The AES-GCM metadata ciphertext
-	 * @param string $wrappedFileKey The owner's RSA-wrapped file key
+	 * @param AttachmentUpload $upload The secret, the caller, the ciphertext, its metadata and the wrapped key
 	 *
 	 * @return array{attachment: Attachment, grant: AttachmentGrant}
 	 *
@@ -204,89 +201,152 @@ class AttachmentService {
 	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
 	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-operations-are-auditable
 	 */
-	public function upload(
-		string $secretId,
-		string $userId,
-		string $blob,
-		string $encryptedMetadata,
-		string $wrappedFileKey,
-	): array {
+	public function upload(AttachmentUpload $upload): array {
 		// A new attachment would be wrapped to whichever suite is current, while
 		// the migration is walking the other one — so it would either be missed
 		// or counted as outstanding work that the client never fetched. Reads
 		// stay open; only the write is refused.
-		$this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+		$this->writeLockService->assertNotWriteLocked(ownerId: $upload->userId);
 
-		$secret = $this->loadOwnedSecret(secretId: $secretId, userId: $userId);
+		$secret = $this->loadOwnedSecret(secretId: $upload->secretId, userId: $upload->userId);
 
-		if ($blob === '' || $encryptedMetadata === '' || $wrappedFileKey === '') {
+		if ($upload->isComplete() === false) {
 			throw new InvalidArgumentException('blob, encryptedMetadata, and wrappedFileKey are required');
 		}
 
-		$size = strlen($blob);
-		$maxBytes = $this->appConfig->getValueInt(Application::APP_ID, 'attachment_max_bytes', 26214400);
-		if ($size > $maxBytes) {
-			throw new InvalidArgumentException(
-				'Attachment exceeds the per-attachment limit of ' . $maxBytes . ' bytes'
-			);
-		}
+		$size = strlen($upload->blob);
+		$this->assertWithinLimits(upload: $upload, size: $size);
 
-		$quota = $this->appConfig->getValueInt(Application::APP_ID, 'attachment_user_quota_bytes', 104857600);
-		$used = $this->mapper->sumBytesForOwner(ownerId: $userId);
-		if (($used + $size) > $quota) {
-			throw new InvalidArgumentException(
-				'Attachment quota exceeded (' . $used . ' of ' . $quota . ' bytes in use)'
-			);
-		}
-
-		$suiteId = null;
-		try {
-			$suiteId = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $userId)->getId();
-		} catch (DoesNotExistException) {
-			// Provenance only — a missing suite does not block the upload.
-		}
-
-		$blobRef = Uuid::uuid4()->toString() . '.bin';
-		$this->blobFolder()->newFile($blobRef)->putContent($blob);
-
-		$attachment = new Attachment();
-		$attachment->setId(Uuid::uuid4()->toString());
-		$attachment->setSourceSecretId($secretId);
-		$attachment->setBlobRef($blobRef);
-		$attachment->setEncryptedMetadata($encryptedMetadata);
-		$attachment->setSizeBytes($size);
-		$attachment->setCreatedAt(new DateTime());
-		$attachment->setUpdatedAt(new DateTime());
-		$attachment = $this->mapper->insert($attachment);
+		$suiteId = $this->activeSuiteId(ownerType: 'user', ownerId: $upload->userId);
+		$attachment = $this->storeAttachment(upload: $upload, size: $size);
 
 		$grant = $this->insertGrant(
-			attachmentId: $attachment->getId(),
-			secretId: $secretId,
-			recipientType: 'user',
-			recipientId: $userId,
-			wrappedFileKey: $wrappedFileKey,
-			suiteId: $suiteId,
-		);
-
-		$this->dispatchAudit(
-			event: $this->auditEvents->forUser(
-				actorId: $userId,
-				eventType: AuditEventTypes::ATTACHMENT_UPLOADED,
-				objectType: 'attachment',
-				objectId: $attachment->getId(),
-				objectName: $secret->getName(),
-				metadata: [
-					'secretId' => $secretId,
-					'sizeBytes' => $size,
-				],
+			grant: new NewAttachmentGrant(
+				attachmentId: $attachment->getId(),
+				secretId: $upload->secretId,
+				recipientType: 'user',
+				recipientId: $upload->userId,
+				wrappedFileKey: $upload->wrappedFileKey,
+				suiteId: $suiteId,
 			)
 		);
+
+		$this->auditUpload(secret: $secret, attachment: $attachment);
 
 		return [
 			'attachment' => $attachment,
 			'grant' => $grant,
 		];
 	}//end upload()
+
+	/**
+	 * Refuse an upload over the per-attachment limit or the caller's quota,
+	 * both counted in ciphertext bytes.
+	 *
+	 * @param AttachmentUpload $upload The upload
+	 * @param int $size The ciphertext size in bytes
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a limit would be exceeded
+	 *
+	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
+	 */
+	private function assertWithinLimits(AttachmentUpload $upload, int $size): void {
+		$maxBytes = $this->appConfig->getValueInt(AppIdentity::APP_ID, 'attachment_max_bytes', 26214400);
+		if ($size > $maxBytes) {
+			throw new InvalidArgumentException(
+				'Attachment exceeds the per-attachment limit of ' . $maxBytes . ' bytes'
+			);
+		}
+
+		$quota = $this->appConfig->getValueInt(AppIdentity::APP_ID, 'attachment_user_quota_bytes', 104857600);
+		$used = $this->mapper->sumBytesForOwner(ownerId: $upload->userId);
+		if (($used + $size) > $quota) {
+			throw new InvalidArgumentException(
+				'Attachment quota exceeded (' . $used . ' of ' . $quota . ' bytes in use)'
+			);
+		}
+	}//end assertWithinLimits()
+
+	/**
+	 * The id of an owner's active suite, recorded as the wrap's provenance;
+	 * null when they have none, which does not block the write.
+	 *
+	 * @param string $ownerType The owner type
+	 * @param string $ownerId The owner id
+	 *
+	 * @return string|null
+	 */
+	private function activeSuiteId(string $ownerType, string $ownerId): ?string {
+		try {
+			return $this->suiteMapper->findActiveByOwner(ownerType: $ownerType, ownerId: $ownerId)->getId();
+		} catch (DoesNotExistException) {
+			// Provenance only — a missing suite does not block the write.
+			return null;
+		}
+	}//end activeSuiteId()
+
+	/**
+	 * Write the ciphertext blob and insert its attachment row.
+	 *
+	 * @param AttachmentUpload $upload The upload
+	 * @param int $size The ciphertext size in bytes
+	 *
+	 * @return Attachment The inserted row
+	 */
+	private function storeAttachment(AttachmentUpload $upload, int $size): Attachment {
+		$blobRef = Uuid::uuid4()->toString() . '.bin';
+		$this->blobFolder()->newFile($blobRef)->putContent($upload->blob);
+
+		$attachment = new Attachment();
+		$attachment->setId(Uuid::uuid4()->toString());
+		$attachment->setSourceSecretId($upload->secretId);
+		$attachment->setBlobRef($blobRef);
+		$attachment->setEncryptedMetadata($upload->encryptedMetadata);
+		$attachment->setSizeBytes($size);
+		$attachment->setCreatedAt(new DateTime());
+		$attachment->setUpdatedAt(new DateTime());
+
+		return $this->mapper->insert($attachment);
+	}//end storeAttachment()
+
+	/**
+	 * The audit metadata of an attachment event: its secret and its size.
+	 *
+	 * @param Attachment $attachment The attachment
+	 *
+	 * @return array{secretId: string, sizeBytes: int}
+	 */
+	private function auditMetadata(Attachment $attachment): array {
+		return [
+			'secretId' => $attachment->getSourceSecretId(),
+			'sizeBytes' => $attachment->getSizeBytes(),
+		];
+	}//end auditMetadata()
+
+	/**
+	 * Audit an upload: the owner uploaded this attachment to their secret.
+	 *
+	 * @param Secret $secret The owned secret, whose owner is the uploader
+	 * @param Attachment $attachment The inserted attachment
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-attachment-operations-are-auditable
+	 */
+	private function auditUpload(Secret $secret, Attachment $attachment): void {
+		$this->dispatchAudit(
+			event: $this->auditEvents->forUser(
+				actorId: $secret->getOwnerId(),
+				eventType: AuditEventTypes::ATTACHMENT_UPLOADED,
+				objectType: 'attachment',
+				objectId: $attachment->getId(),
+				objectName: $secret->getName(),
+				metadata: $this->auditMetadata(attachment: $attachment),
+			)
+		);
+	}//end auditUpload()
 
 	/**
 	 * List a secret's attachments with the CALLER'S own wrapped file key
@@ -355,10 +415,7 @@ class AttachmentService {
 				objectType: 'attachment',
 				objectId: $attachmentId,
 				objectName: '',
-				metadata: [
-					'secretId' => $attachment->getSourceSecretId(),
-					'sizeBytes' => $attachment->getSizeBytes(),
-				],
+				metadata: $this->auditMetadata(attachment: $attachment),
 			)
 		);
 
@@ -370,12 +427,7 @@ class AttachmentService {
 	 * never re-uploaded; only the tiny wrapped key is per-recipient.
 	 * Idempotent per (attachment, copy).
 	 *
-	 * @param string $attachmentId The attachment UUID
-	 * @param string $userId The caller (must own the source secret)
-	 * @param string $copySecretId The recipient's Secret copy UUID
-	 * @param string $recipientId The recipient user/application ID
-	 * @param string $wrappedFileKey The file key wrapped under the recipient's cert
-	 * @param string $recipientType The recipient type (`user`|`application`)
+	 * @param AttachmentGrantRequest $request The attachment, the caller and the recipient copy
 	 *
 	 * @return AttachmentGrant
 	 *
@@ -383,50 +435,50 @@ class AttachmentService {
 	 *
 	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
 	 */
-	public function addGrant(
-		string $attachmentId,
-		string $userId,
-		string $copySecretId,
-		string $recipientId,
-		string $wrappedFileKey,
-		string $recipientType = 'user',
-	): AttachmentGrant {
-		$this->writeLockService->assertNotWriteLocked(ownerId: $userId);
+	public function addGrant(AttachmentGrantRequest $request): AttachmentGrant {
+		$this->writeLockService->assertNotWriteLocked(ownerId: $request->userId);
 
-		$attachment = $this->loadAttachment(attachmentId: $attachmentId);
-		$this->loadOwnedSecret(secretId: $attachment->getSourceSecretId(), userId: $userId);
+		$attachment = $this->loadAttachment(attachmentId: $request->attachmentId);
+		$this->loadOwnedSecret(secretId: $attachment->getSourceSecretId(), userId: $request->userId);
 
-		if ($copySecretId === '' || $recipientId === '' || $wrappedFileKey === '') {
-			throw new InvalidArgumentException('copySecretId, recipientId, and wrappedFileKey are required');
-		}
-
-		if (in_array($recipientType, ['user', 'application'], true) === false) {
-			throw new InvalidArgumentException('recipientType must be user or application');
-		}
+		$request->assertValid();
 
 		// Idempotent per copy: an existing grant for this copy is returned.
-		foreach ($this->grantMapper->findBySecret(secretId: $copySecretId) as $existing) {
-			if ($existing->getAttachmentId() === $attachmentId) {
+		$existing = $this->existingGrant(request: $request);
+		if ($existing !== null) {
+			return $existing;
+		}
+
+		$suiteId = $this->activeSuiteId(ownerType: $request->recipientType, ownerId: $request->recipientId);
+
+		return $this->insertGrant(
+			grant: new NewAttachmentGrant(
+				attachmentId: $request->attachmentId,
+				secretId: $request->copySecretId,
+				recipientType: $request->recipientType,
+				recipientId: $request->recipientId,
+				wrappedFileKey: $request->wrappedFileKey,
+				suiteId: $suiteId,
+			)
+		);
+	}//end addGrant()
+
+	/**
+	 * The copy's grant for this attachment, when it already has one.
+	 *
+	 * @param AttachmentGrantRequest $request The grant request
+	 *
+	 * @return AttachmentGrant|null
+	 */
+	private function existingGrant(AttachmentGrantRequest $request): ?AttachmentGrant {
+		foreach ($this->grantMapper->findBySecret(secretId: $request->copySecretId) as $existing) {
+			if ($existing->getAttachmentId() === $request->attachmentId) {
 				return $existing;
 			}
 		}
 
-		$suiteId = null;
-		try {
-			$suiteId = $this->suiteMapper->findActiveByOwner(ownerType: $recipientType, ownerId: $recipientId)->getId();
-		} catch (DoesNotExistException) {
-			// Provenance only.
-		}
-
-		return $this->insertGrant(
-			attachmentId: $attachmentId,
-			secretId: $copySecretId,
-			recipientType: $recipientType,
-			recipientId: $recipientId,
-			wrappedFileKey: $wrappedFileKey,
-			suiteId: $suiteId,
-		);
-	}//end addGrant()
+		return null;
+	}//end existingGrant()
 
 	/**
 	 * Delete an attachment entirely — owner-only. Removes all grants and
@@ -466,10 +518,7 @@ class AttachmentService {
 				objectType: 'attachment',
 				objectId: $attachmentId,
 				objectName: $secret->getName(),
-				metadata: [
-					'secretId' => $attachment->getSourceSecretId(),
-					'sizeBytes' => $attachment->getSizeBytes(),
-				],
+				metadata: $this->auditMetadata(attachment: $attachment),
 			)
 		);
 	}//end delete()
@@ -532,34 +581,12 @@ class AttachmentService {
 	/**
 	 * Insert a grant row.
 	 *
-	 * @param string $attachmentId The attachment UUID
-	 * @param string $secretId The copy UUID
-	 * @param string $recipientType The recipient type
-	 * @param string $recipientId The recipient id
-	 * @param string $wrappedFileKey The wrapped file key
-	 * @param string|null $suiteId The wrapping suite id
+	 * @param NewAttachmentGrant $grant The grant to insert
 	 *
 	 * @return AttachmentGrant
 	 */
-	private function insertGrant(
-		string $attachmentId,
-		string $secretId,
-		string $recipientType,
-		string $recipientId,
-		string $wrappedFileKey,
-		?string $suiteId,
-	): AttachmentGrant {
-		$grant = new AttachmentGrant();
-		$grant->setId(Uuid::uuid4()->toString());
-		$grant->setAttachmentId($attachmentId);
-		$grant->setSecretId($secretId);
-		$grant->setRecipientType($recipientType);
-		$grant->setRecipientId($recipientId);
-		$grant->setWrappedFileKey($wrappedFileKey);
-		$grant->setEncryptionSuiteId($suiteId);
-		$grant->setCreatedAt(new DateTime());
-
-		return $this->grantMapper->insert($grant);
+	private function insertGrant(NewAttachmentGrant $grant): AttachmentGrant {
+		return $this->grantMapper->insert($grant->toRow());
 	}//end insertGrant()
 
 	/**

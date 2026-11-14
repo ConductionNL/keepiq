@@ -144,6 +144,7 @@ dependencies {
 
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.compose.ui.test.junit4.accessibility)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.junit)
@@ -156,6 +157,7 @@ dependencies {
     testImplementation(libs.kotlinx.serialization.json)
     androidTestImplementation(libs.kotlinx.serialization.json)
     testImplementation(libs.robolectric)
+    testImplementation(libs.ktor.client.mock)
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
     debugImplementation(platform(libs.compose.bom))

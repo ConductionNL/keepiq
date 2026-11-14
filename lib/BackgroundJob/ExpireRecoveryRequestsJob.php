@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Keepiq\Service\RecoveryRequestService;
+use OCA\Keepiq\Kernel\Contracts\RecoveryRequestServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -38,7 +38,7 @@ class ExpireRecoveryRequestsJob extends TimedJob {
 	 * Constructor for ExpireRecoveryRequestsJob.
 	 *
 	 * @param ITimeFactory          $time      The time factory
-	 * @param RecoveryRequestService $requests  The request service
+	 * @param RecoveryRequestServiceInterface $requests  The request service
 	 * @param LoggerInterface       $logger    The logger
 	 *
 	 * @return void
@@ -47,7 +47,7 @@ class ExpireRecoveryRequestsJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private RecoveryRequestService $requests,
+		private RecoveryRequestServiceInterface $requests,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

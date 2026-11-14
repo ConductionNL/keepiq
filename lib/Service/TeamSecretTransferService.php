@@ -31,10 +31,7 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
-use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMapper;
-use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 
 /**
@@ -46,9 +43,9 @@ class TeamSecretTransferService {
 	 *
 	 * @param TeamFolderMapper $mapper The team-folder mapper
 	 * @param TeamFolderMembershipResolver $memberships The membership resolver (subtree walk)
-	 * @param ShareTargetMapper $shareTargetMapper The share-target mapper
+	 * @param ShareRowJudge $rowJudge Judged share rows (the successor's own copy)
 	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
-	 * @param SecretMapper $secretMapper The secret mapper
+	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner and link shares over
 	 *
 	 * @return void
 	 *
@@ -57,55 +54,49 @@ class TeamSecretTransferService {
 	public function __construct(
 		private TeamFolderMapper $mapper,
 		private TeamFolderMembershipResolver $memberships,
-		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private SecretDelegationMapper $delegationMapper,
-		private SecretMapper $secretMapper,
+		private SecretOwnerTransferService $ownerTransfer,
 	) {
 	}//end __construct()
 
 	/**
 	 * Delegate and reassign every team secret the leaving user owns to the
-	 * successor. A secret the successor holds no recipient copy of is
-	 * reported as skipped rather than transferred, because delegation
-	 * promotes an existing copy.
+	 * successor. A secret the successor holds no recipient copy of, through
+	 * a share row the judge trusts (ShareRowJudge), is reported as skipped
+	 * rather than transferred, because delegation promotes an existing copy:
+	 * a row the pending quarantine scan holds back is no copy.
 	 *
 	 * @param string $leavingUserId The departing user
 	 * @param string $successorUserId The successor taking ownership
 	 * @param string $adminId The admin running the offboarding
 	 *
-	 * @return array{transferred:int,skipped:array<int,string>}
+	 * @return array{transferred:int,linksTransferred:int,skipped:array<int,string>} What was handed over and skipped
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
 	public function transfer(string $leavingUserId, string $successorUserId, string $adminId): array {
 		$transferred = 0;
+		$linksTransferred = 0;
 		$skipped = [];
 		foreach ($this->mapper->findByOwner(ownerId: $leavingUserId) as $teamFolder) {
 			foreach ($this->memberships->subtreeSecretRefs(teamFolder: $teamFolder) as $secretRef) {
-				try {
-					$this->shareTargetMapper->findBySourceSecretAndTargetUser(
-						sourceSecretId: $secretRef['id'],
-						targetUserId: $successorUserId
-					);
-				} catch (DoesNotExistException) {
+				if ($this->rowJudge->forPair(sourceId: $secretRef['id'], targetUserId: $successorUserId)->trustedRow() === null) {
 					// Delegation promotes an existing recipient copy; the
 					// successor holds none for this secret yet.
 					$skipped[] = $secretRef['id'];
 					continue;
 				}
 
-				$delegation = new SecretDelegation();
-				$delegation->setId(Uuid::uuid4()->toString());
-				$delegation->setSecretId($secretRef['id']);
-				$delegation->setOriginalOwnerId($leavingUserId);
+				$delegation = $this->permanentDelegation(secretId: $secretRef['id'], leavingUserId: $leavingUserId);
 				$delegation->setDelegatedTo($successorUserId);
-				$delegation->setDelegatedAt(new DateTime());
 				$delegation->setInitiatedBy($adminId);
-				$delegation->setIsPermanent(true);
 				$this->delegationMapper->insert($delegation);
 
-				$this->secretMapper->reassignOwner(
+				$linksTransferred += $this->ownerTransfer->transfer(
 					secretId: $secretRef['id'],
+					fromOwnerId: $leavingUserId,
 					newOwnerId: $successorUserId
 				);
 				++$transferred;
@@ -114,7 +105,29 @@ class TeamSecretTransferService {
 
 		return [
 			'transferred' => $transferred,
+			'linksTransferred' => $linksTransferred,
 			'skipped' => $skipped,
 		];
 	}//end transfer()
+
+	/**
+	 * A permanent delegation of one of the leaver's secrets, made now; the
+	 * caller names who takes it over and who handed it over.
+	 *
+	 * @param string $secretId      The team secret
+	 * @param string $leavingUserId The departing owner
+	 *
+	 * @return SecretDelegation
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
+	 */
+	private function permanentDelegation(string $secretId, string $leavingUserId): SecretDelegation {
+		$delegation = new SecretDelegation();
+		$delegation->setId(Uuid::uuid4()->toString());
+		$delegation->setSecretId($secretId);
+		$delegation->setOriginalOwnerId($leavingUserId);
+		$delegation->setDelegatedAt(new DateTime());
+		$delegation->setIsPermanent(true);
+		return $delegation;
+	}//end permanentDelegation()
 }//end class

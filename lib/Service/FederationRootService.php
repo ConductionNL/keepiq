@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Kernel\Contracts\FederationRootServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\OCM\Events\OCMEndpointRequestEvent;
 
@@ -33,7 +34,7 @@ use OCP\OCM\Events\OCMEndpointRequestEvent;
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
-class FederationRootService {
+class FederationRootService implements FederationRootServiceInterface {
 	/**
 	 * Constructor for FederationRootService.
 	 *

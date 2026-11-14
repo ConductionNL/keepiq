@@ -3,7 +3,7 @@
 		class="secret-list-item"
 		role="button"
 		tabindex="0"
-		:aria-label="t('keepiq', 'Open {name}', { name: secret.name })"
+		:aria-label="openLabel"
 		:class="{ 'secret-list-item--blocked': secret.blocked }"
 		@click="$emit('open', secret.id)"
 		@keydown.enter="onRowActivate"
@@ -22,6 +22,7 @@
 		<span class="secret-list-item__main">
 			<span class="secret-list-item__name">
 				{{ secret.name }}
+				<LoginExtrasMarkers :secret="secret" />
 				<StrengthBadge v-if="!secret.blocked" :secretId="secret.id" />
 			</span>
 			<span v-if="secret.url" class="secret-list-item__url">{{
@@ -140,11 +141,13 @@ import Lock from 'vue-material-design-icons/Lock.vue'
 import Star from 'vue-material-design-icons/Star.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import CopyButton from './CopyButton.vue'
+import LoginExtrasMarkers from './LoginExtrasMarkers.vue'
 import SecretTypeIcon from './SecretTypeIcon.vue'
 import StrengthBadge from './StrengthBadge.vue'
 import VaultIndicator from './VaultIndicator.vue'
 import { useSecretStore } from '../store/modules/secret.js'
 import { resolveFaviconUrl } from '../utils/favicon.js'
+import { rowOpenLabel } from '../utils/valueFieldMarkers.js'
 
 /**
  * A single secret row: favicon (or type icon), name, url, and a copy button.
@@ -161,6 +164,7 @@ export default {
 		Lock,
 		AlertOutline,
 		CopyButton,
+		LoginExtrasMarkers,
 		SecretTypeIcon,
 		StrengthBadge,
 		VaultIndicator,
@@ -209,6 +213,18 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The row's accessible name. A role=button row hides its content
+		 * from screen readers, so the code and passkey markers are named
+		 * here too.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		openLabel() {
+			return rowOpenLabel(this.secret)
+		},
+
 		/**
 		 * Whether the holder starred this row.
 		 *

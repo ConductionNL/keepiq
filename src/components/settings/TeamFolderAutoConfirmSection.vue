@@ -46,56 +46,41 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import { NcNoteCard } from '@nextcloud/vue'
+import { adminSettingsForm } from '../../mixins/adminSettingsForm.js'
 
 export default {
 	name: 'TeamFolderAutoConfirmSection',
 	components: { CnSettingsSection, NcNoteCard },
+	mixins: [adminSettingsForm('/apps/keepiq/api/settings/admin/policies')],
 
 	data() {
 		return {
 			enabled: false,
-			error: null,
-		}
-	},
-
-	/**
-	 * Load the current switch.
-	 *
-	 * @return {Promise<void>}
-	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
-	 */
-	async created() {
-		try {
-			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin/policies'),
-			)
-			this.enabled = response.data?.team_folder_auto_confirm === true
-		} catch (e) {
-			this.error = e?.response?.data?.message || e?.message
 		}
 	},
 
 	methods: {
 		/**
-		 * Save the switch on its own, so the policy audit records only it.
+		 * Take the stored switch into the form.
 		 *
-		 * @return {Promise<void>}
+		 * @param {object} data The stored settings.
+		 * @return {void}
 		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
 		 */
-		async save() {
-			this.error = null
-			try {
-				await axios.put(
-					generateUrl('/apps/keepiq/api/settings/admin/policies'),
-					{
-						team_folder_auto_confirm: this.enabled,
-					},
-				)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
+		readSettings(data) {
+			this.enabled = data?.team_folder_auto_confirm === true
+		},
+
+		/**
+		 * The switch to store.
+		 *
+		 * @return {object} The settings to store.
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
+		 */
+		settingsPayload() {
+			return {
+				team_folder_auto_confirm: this.enabled,
 			}
 		},
 	},

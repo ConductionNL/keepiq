@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# One Nextcloud with Keepiq (and OpenRegister when asked), the test server for
+# mobile-e2e.yml and standalone.yml. PostgreSQL, because Keepiq's migrations
+# use json columns that SQLite refuses.
+#
+#   docker compose -p kq-test -f tests/server/compose.yaml up -d
+#   bash tests/server/setup.sh kq-test . [<openregister dir>]
+#
+# KQ_TEST_PORT moves the port (8188 by default). KQ_TEST_NC_IMAGE and
+# KQ_TEST_DB_IMAGE swap the images, for a machine that already has another
+# Nextcloud 32 to 35 or PostgreSQL 16 image.
+# Tear down with `down -v`.
+
+services:
+    db:
+        image: ${KQ_TEST_DB_IMAGE:-postgres:16-alpine}
+        environment:
+            POSTGRES_DB: nextcloud
+            POSTGRES_USER: nextcloud
+            POSTGRES_PASSWORD: nextcloud
+        volumes: [db:/var/lib/postgresql/data]
+
+    nc:
+        image: ${KQ_TEST_NC_IMAGE:-nextcloud:35-apache}
+        depends_on: [db]
+        ports: ['${KQ_TEST_PORT:-8188}:80']
+        environment:
+            POSTGRES_HOST: db
+            POSTGRES_DB: nextcloud
+            POSTGRES_USER: nextcloud
+            POSTGRES_PASSWORD: nextcloud
+            NEXTCLOUD_ADMIN_USER: admin
+            NEXTCLOUD_ADMIN_PASSWORD: admin
+            NEXTCLOUD_TRUSTED_DOMAINS: localhost localhost:${KQ_TEST_PORT:-8188}
+        volumes:
+            - nc:/var/www/html
+
+volumes:
+    db:
+    nc:

@@ -57,6 +57,7 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -65,6 +66,7 @@ use PHPUnit\Framework\TestCase;
  * the folder; hank and jack hold copies, kim waits.
  */
 class TeamFolderConfirmationServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	private bool $switchOn = true;
 
@@ -215,6 +217,8 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 				}
 
 				$row = new ShareTarget();
+				$row->setId($sourceSecretId . '|' . $targetUserId);
+				$row->setTargetUserId($targetUserId);
 				$row->setSecretId($copyId);
 				return $row;
 			}
@@ -255,7 +259,8 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			),
 			notificationService: $notificationService,
 			db: $this->createMock(IDBConnection::class),
-		);
+			logger: $this->createMock(\Psr\Log\LoggerInterface::class),
+			rowJudge: $this->shareRowJudge(targets: $shareTargetMapper));
 		$this->teamFolders = $this->createMock(TeamFolderService::class);
 
 		$queries = new TeamFolderQueryService(
@@ -265,6 +270,7 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			secretMapper: $secretMapper,
 			groupManager: $groupManager,
 			memberships: $memberships,
+			subAdmin: $this->createMock(\OCP\Group\ISubAdmin::class),
 		);
 		$this->service = new TeamFolderConfirmationService(
 			appConfig: $appConfig,
@@ -274,7 +280,11 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			shares: $shares,
 			copies: new \OCA\Keepiq\Service\ConfirmerCopyResolver(
 				queries: $queries,
-				shareTargetMapper: $shareTargetMapper,
+				rowJudge: new \OCA\Keepiq\Service\ShareRowJudge(
+					targets: $shareTargetMapper,
+					secrets: $secretMapper,
+					scanner: $this->createMock(\OCA\Keepiq\Service\ShareQuarantineScanner::class)
+				),
 				secretMapper: $secretMapper,
 			),
 			notificationService: $notificationService,
@@ -404,6 +414,23 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 	}//end testStaleCopyIsNotOffered()
 
 	/**
+	 * A source whose key a restore changed has no key change time on a flagged row: it counts
+	 * as changed by its last write, so a copy from before the restore is not handed out.
+	 *
+	 * @return void
+	 */
+	public function testACopyFromBeforeARestoreOfTheSourceKeyIsNotOffered(): void {
+		$this->secrets['db-root']->setKeyUpdatedAt(null);
+		$this->secrets['db-root']->setUpdatedAt(new DateTime('2026-09-20'));
+
+		$this->assertSame([], $this->service->pendingConfirmations(userId: 'hank'));
+
+		$this->secrets['copy-hank'] = $this->copy(id: 'copy-hank', owner: 'hank', updatedAt: '2026-09-21');
+
+		$this->assertNotSame([], $this->service->pendingConfirmations(userId: 'hank'));
+	}//end testACopyFromBeforeARestoreOfTheSourceKeyIsNotOffered()
+
+	/**
 	 * An accepted row stores kim's copy, notifies kim and the owner, and
 	 * audits with hank as actor (§2.2, §2.3).
 	 *
@@ -437,7 +464,10 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 	public function testUnsafeRowsAreSkipped(): void {
 		// Scenario "Uncovered user is refused": lee is in no membership row.
 		$this->enabled['lee'] = true;
-		$this->assertSame(0, $this->service->registerShares('tf-ops', [$this->row(target: 'lee')], 'hank')['created']);
+		$refused = $this->service->registerShares('tf-ops', [$this->row(target: 'lee')], 'hank');
+		$this->assertSame(0, $refused['created']);
+		$this->assertSame('lee', $refused['skipped'][0]['targetUserId']);
+		$this->assertSame('not_eligible', $refused['skipped'][0]['reason']);
 
 		// A read member cannot hand a copy on.
 		$this->assertSame(0, $this->service->registerShares('tf-ops', [$this->row(target: 'kim')], 'jack')['created']);
@@ -506,4 +536,76 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 
 		$this->assertSame(1, $result['created']);
 	}//end testAManagerUsesThePlainFanOut()
+
+	/**
+	 * A batch with an unsafe and a safe row stores the safe one and lists
+	 * the unsafe one first among the skipped, with its exact shape.
+	 *
+	 * @return void
+	 */
+	public function testAMixedBatchStoresTheSafeRowAndNamesTheUnsafeOne(): void {
+		$this->enabled['lee'] = true;
+
+		$result = $this->service->registerShares(
+			teamFolderId: 'tf-ops',
+			rows: [$this->row(target: 'lee'), $this->row(target: 'kim')],
+			userId: 'hank'
+		);
+
+		$this->assertSame(1, $result['created']);
+		$this->assertSame(['kim'], array_map(static fn (Secret $copy): string => $copy->getOwnerId(), $this->insertedCopies));
+		$this->assertSame(
+			['sourceSecretId' => 'db-root', 'targetUserId' => 'lee', 'reason' => 'not_eligible'],
+			$result['skipped'][0]
+		);
+		$this->assertCount(1, $this->auditEvents);
+	}//end testAMixedBatchStoresTheSafeRowAndNamesTheUnsafeOne()
+
+	/**
+	 * A batch with no safe row returns the exact empty result, stores and
+	 * announces nothing, and names a row without ids by empty strings.
+	 *
+	 * @return void
+	 */
+	public function testAnAllUnsafeBatchReturnsTheExactEmptyResult(): void {
+		$this->enabled['lee'] = true;
+
+		$result = $this->service->registerShares(
+			teamFolderId: 'tf-ops',
+			rows: [$this->row(target: 'lee'), ['encryptedKey' => 'X']],
+			userId: 'hank'
+		);
+
+		$this->assertSame(
+			[
+				'created' => 0,
+				'rows' => [],
+				'skipped' => [
+					['sourceSecretId' => 'db-root', 'targetUserId' => 'lee', 'reason' => 'not_eligible'],
+					['sourceSecretId' => '', 'targetUserId' => '', 'reason' => 'not_eligible'],
+				],
+			],
+			$result
+		);
+		$this->assertSame([], $this->insertedCopies);
+		$this->assertSame([], $this->notifications);
+		$this->assertSame([], $this->auditEvents);
+	}//end testAnAllUnsafeBatchReturnsTheExactEmptyResult()
+
+	/**
+	 * A pending entry carries its fields in order, and offers only the
+	 * recipients a missing pair names, never the owner or the confirmer.
+	 *
+	 * @return void
+	 */
+	public function testAPendingEntryOffersOnlyTheNeededRecipients(): void {
+		foreach (['hank', 'iris'] as $confirmer) {
+			$pending = $this->service->pendingConfirmations(userId: $confirmer);
+
+			$this->assertCount(1, $pending);
+			$this->assertSame(['teamFolderId', 'role', 'missing', 'recipients'], array_keys($pending[0]));
+			$this->assertSame(['kim'], array_column($pending[0]['recipients'], 'userId'));
+			$this->assertSame('-----BEGIN CERTIFICATE-----', $pending[0]['recipients'][0]['certificate']);
+		}
+	}//end testAPendingEntryOffersOnlyTheNeededRecipients()
 }//end class

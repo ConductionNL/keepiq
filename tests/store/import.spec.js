@@ -162,6 +162,59 @@ describe('useImportStore', () => {
 		expect(store.summary.imported).toBe(1)
 	})
 
+	it('refuses to commit while the vault is locked', async () => {
+		const store = useImportStore()
+		store.rows = [{ sourceRow: 1, name: 'A', password: 'x', folder: '', errors: [] }]
+
+		await expect(store.commit()).rejects.toThrow('Vault is locked')
+		expect(store.step).not.toBe('commit')
+		expect(store.loading).toBe(false)
+	})
+
+	it('builds the summary across chunks: distinct folders, unknown indexes and a flattened root folder name', async () => {
+		await unlockSession()
+		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
+		const bodies = []
+		vi.spyOn(axios, 'post').mockImplementation(async (url, payload) => {
+			bodies.push(payload)
+			const results = payload.items.map((_, i) => ({
+				index: i,
+				status: 'created',
+				secretId: 's' + i,
+			}))
+			if (bodies.length === 2) {
+				results.push({ index: 999, status: 'failed' })
+			}
+			return { data: { results, foldersCreated: ['root-a', 'root-a/Work'] } }
+		})
+
+		const store = useImportStore()
+		store.rows = Array.from({ length: COMMIT_CHUNK_SIZE + 1 }, (_, i) => ({
+			sourceRow: i + 1,
+			name: 'S' + i,
+			password: 'p',
+			folder: 'Work',
+			errors: [],
+		}))
+		await store.commit({ rootFolder: ' root/a ' })
+
+		expect(bodies).toHaveLength(2)
+		expect(bodies[0].items[0].folderPath).toEqual(['root-a', 'Work'])
+		expect(bodies[0].folders).toEqual([['root-a', 'Work']])
+		expect(store.step).toBe('summary')
+		expect(store.loading).toBe(false)
+		expect(store.summary).toEqual({
+			imported: COMMIT_CHUNK_SIZE + 1,
+			skippedDuplicates: 0,
+			rejected: 1,
+			foldersCreated: 2,
+			rejectedRows: [{ sourceRow: 999, reason: 'rejected by server', name: '' }],
+			createdTypes: [],
+			typeFallbacks: [],
+			omittedFields: [],
+		})
+	})
+
 	it('chunks at 50 and reports progress', async () => {
 		await unlockSession()
 		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
@@ -384,46 +437,137 @@ describe('useImportStore', () => {
 		}
 	})
 
-	it('splits an imported TOTP seed into its own totp-typed row (add-totp-secrets D6)', () => {
+	it('imports a Bitwarden login with its code and passkeys as one encrypted item (keepiq#1327)', async () => {
+		const privateKey = await unlockSession()
+		let posted = null
+		vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
+			posted = body
+			return {
+				data: {
+					results: body.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: `s${i}`,
+					})),
+					foldersCreated: [],
+				},
+			}
+		})
+
 		const store = useImportStore()
-		const rows = [
-			{
-				sourceRow: 1,
-				name: 'GitHub',
-				url: 'https://github.com',
-				login: 'alice',
-				password: 'pw',
-				additionalFields: { totp: 'JBSWY3DPEHPK3PXP', notes: 'n' },
-				folder: 'Work',
-				errors: [],
-			},
-			{
-				sourceRow: 2,
-				name: 'Plain',
-				url: null,
-				login: null,
-				password: 'x',
-				additionalFields: null,
-				folder: '',
-				errors: [],
-			},
-		]
-		const out = store.expandTotpRows(rows)
+		await store.parseFile(
+			JSON.stringify({
+				items: [
+					{
+						type: 1,
+						name: 'GitHub',
+						notes: 'n',
+						login: {
+							username: 'alice',
+							password: 'pw',
+							uri: 'https://github.com',
+							totp: 'JBSWY3DPEHPK3PXP',
+							fido2Credentials: [
+								{
+									credentialId: 'CRED',
+									rpId: 'github.com',
+									keyValue: 'PASSKEY_PRIVATE',
+								},
+							],
+						},
+					},
+					{
+						type: 1,
+						name: 'Plain',
+						login: { username: 'bob', password: 'x' },
+					},
+				],
+			}),
+			'bitwarden',
+		)
 
-		// Original login row keeps its non-totp additional fields, loses the seed.
-		const login = out.find((r) => r.name === 'GitHub')
-		expect(login.additionalFields).toEqual({ notes: 'n' })
+		// One row per entry: no `(TOTP)` or `(passkey)` rows.
+		expect(store.rows.map((row) => row.name)).toEqual(['GitHub', 'Plain'])
+		expect(store.rows.every((row) => row.type === 'login')).toBe(true)
 
-		// A new totp row carries the seed as its password (→ encrypted key).
-		const totp = out.find((r) => r.type === 'totp')
-		expect(totp).toBeTruthy()
-		expect(totp.name).toBe('GitHub (TOTP)')
-		expect(totp.password).toBe('JBSWY3DPEHPK3PXP')
-		expect(totp.folder).toBe('Work')
+		await store.commit()
+		expect(posted.items).toHaveLength(2)
+		const [github, plain] = posted.items
+		// Neither the seed nor the private key is ever plaintext on the wire.
+		expect(JSON.stringify(posted)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect(JSON.stringify(posted)).not.toContain('PASSKEY_PRIVATE')
+		expect(await rsaDecrypt(github.totp, privateKey)).toBe('JBSWY3DPEHPK3PXP')
+		const passkeys = JSON.parse(await rsaDecrypt(github.passkeys, privateKey))
+		expect(passkeys).toHaveLength(1)
+		expect(passkeys[0].privateKey).toBe('PASSKEY_PRIVATE')
+		expect(
+			JSON.parse(await rsaDecrypt(github.additionalFields, privateKey)),
+		).toEqual({
+			notes: 'n',
+		})
+		// A login without them sends neither field, not an encrypted ''.
+		expect('totp' in plain).toBe(false)
+		expect('passkeys' in plain).toBe(false)
+	})
 
-		// The untouched row passes through unchanged.
-		expect(out.some((r) => r.name === 'Plain')).toBe(true)
-		expect(out).toHaveLength(3)
+	it("restores a login's code and passkeys from a backup", async () => {
+		const privateKey = await unlockSession()
+		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
+		const posted = []
+		vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
+			posted.push(...body.items)
+			return {
+				data: {
+					results: body.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: `r${i}`,
+					})),
+					foldersCreated: [],
+				},
+			}
+		})
+		const passkeys = JSON.stringify([
+			{ credentialId: 'CRED', rpId: 'bank.example', privateKey: 'PK' },
+		])
+		const payload = serializeVault(
+			[
+				{
+					name: 'Bank',
+					key: 'pw',
+					login: 'alice',
+					totp: 'JBSWY3DPEHPK3PXP',
+					passkeys,
+					folderId: null,
+					type: 'login',
+				},
+				{
+					name: 'Plain',
+					key: 'x',
+					login: null,
+					totp: '',
+					passkeys: '',
+					folderId: null,
+					type: 'login',
+				},
+			],
+			[],
+		)
+		const envelope = await encryptBackup(payload, 'restore-pass')
+
+		const store = useImportStore()
+		await store.parseFile(JSON.stringify(envelope), 'doriath-backup', {
+			passphrase: 'restore-pass',
+		})
+		await store.commit()
+
+		const byName = Object.fromEntries(posted.map((item) => [item.name, item]))
+		expect(await rsaDecrypt(byName.Bank.totp, privateKey)).toBe(
+			'JBSWY3DPEHPK3PXP',
+		)
+		expect(await rsaDecrypt(byName.Bank.passkeys, privateKey)).toBe(passkeys)
+		expect('totp' in byName.Plain).toBe(false)
+		expect('passkeys' in byName.Plain).toBe(false)
 	})
 
 	it('stamps the resolved totp type id on committed totp items, seed stays ciphertext', async () => {
@@ -453,7 +597,7 @@ describe('useImportStore', () => {
 		store.rows = [
 			{
 				sourceRow: 1,
-				name: 'GH (TOTP)',
+				name: 'GH authenticator',
 				url: null,
 				login: null,
 				password: 'JBSWY3DPEHPK3PXP',
@@ -618,6 +762,87 @@ describe('useImportStore', () => {
 			expect(items['Office VPN'].typeId).toBe(TYPE_IDS.vpnProfile)
 			// An unknown type falls back to the server's default type.
 			expect(items.Mystery.typeId).toBeUndefined()
+		})
+
+		it('restores every type by name on a new instance, creating a missing custom type once (D3)', async () => {
+			await unlockSession()
+			const { useSecretTypeStore } = await import('../../src/store/modules/secretType.js')
+			const typeStore = useSecretTypeStore()
+			// A new instance: the system types only, with their deterministic ids.
+			typeStore.types = [
+				{ id: TYPE_IDS.login, name: 'login', scope: 'system' },
+				{ id: TYPE_IDS.api_key, name: 'api_key', scope: 'system' },
+				{ id: TYPE_IDS.totp, name: 'totp', scope: 'system' },
+				{ id: 'passkey-uuid', name: 'passkey', scope: 'system' },
+			]
+			const createType = vi.spyOn(typeStore, 'createType').mockImplementation(async (data) => {
+				const type = { id: 'new-vpn-uuid', name: data.name, label: data.label, scope: data.scope }
+				typeStore.types.push(type)
+				return type
+			})
+			const entry = (name, type, typeName, typeLabel) => ({
+				name,
+				url: null,
+				login: null,
+				password: 'value-' + name,
+				additionalFields: null,
+				folder: '',
+				type,
+				typeName,
+				...(typeLabel ? { typeLabel } : {}),
+			})
+			const items = await restore({
+				format: 'keepiq-vault',
+				version: 1,
+				partial: true,
+				omittedFields: ['login'],
+				secrets: [
+					entry('Authenticator', 'old-instance-totp-id', 'totp'),
+					entry('Passkey', 'old-instance-passkey-id', 'passkey'),
+					entry('Stripe', 'old-instance-api-id', 'api_key'),
+					entry('Office VPN', 'old-instance-vpn-id', 'vpn_profile', 'VPN profile'),
+					entry('Home VPN', 'old-instance-vpn-id', 'vpn_profile', 'VPN profile'),
+					entry('Lost', 'old-instance-x-id', 'gone_type'),
+				],
+				folders: [],
+			})
+
+			expect(items.Authenticator.typeId).toBe(TYPE_IDS.totp)
+			expect(items.Passkey.typeId).toBe('passkey-uuid')
+			expect(items.Stripe.typeId).toBe(TYPE_IDS.api_key)
+			expect(items['Office VPN'].typeId).toBe('new-vpn-uuid')
+			expect(items['Home VPN'].typeId).toBe('new-vpn-uuid')
+			expect(createType).toHaveBeenCalledTimes(1)
+			expect(createType).toHaveBeenCalledWith({ name: 'vpn_profile', label: 'VPN profile', scope: 'user' })
+			expect(items.Lost.typeId).toBeUndefined()
+			const summary = useImportStore().summary
+			expect(summary.createdTypes).toEqual([{ name: 'vpn_profile', label: 'VPN profile' }])
+			expect(summary.typeFallbacks).toEqual([{ sourceRow: 6, type: 'gone_type' }])
+			expect(summary.omittedFields).toEqual(['login'])
+		})
+
+		it('falls back to the default type when a custom type cannot be created', async () => {
+			await unlockSession()
+			await seedVaultTypes()
+			const { useSecretTypeStore } = await import('../../src/store/modules/secretType.js')
+			const createType = vi.spyOn(useSecretTypeStore(), 'createType').mockRejectedValue(new Error('403'))
+			const entry = (name) => ({
+				name,
+				password: 'v',
+				folder: '',
+				type: 'old-id',
+				typeName: 'router_admin',
+				typeLabel: 'Router admin',
+			})
+			const items = await restore({ format: 'keepiq-vault', version: 1, secrets: [entry('A'), entry('B')], folders: [] })
+
+			expect(items.A.typeId).toBeUndefined()
+			expect(items.B.typeId).toBeUndefined()
+			expect(createType).toHaveBeenCalledTimes(1)
+			expect(useImportStore().summary.typeFallbacks).toEqual([
+				{ sourceRow: 1, type: 'Router admin' },
+				{ sourceRow: 2, type: 'Router admin' },
+			])
 		})
 	})
 

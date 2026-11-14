@@ -1,0 +1,64 @@
+publiccodeYmlVersion: "0.4"
+
+name: Keepiq
+url: "https://github.com/ConductionNL/keepiq"
+softwareVersion: "0.3.10"
+releaseDate: "2026-10-08"
+developmentStatus: beta
+softwareType: addon
+
+platforms:
+  - nextcloud
+
+categories:
+  - it-security
+  - identity-management
+
+description:
+  nl:
+    shortDescription: "Versleutelde geheimenbeheerder voor Nextcloud"
+    longDescription: |
+      Keepiq is een versleutelde geheimenbeheerder voor Nextcloud volgens het
+      zero-knowledge principe: een persoonlijke kluis voor gebruikers en een
+      schrijven-zonder-lezen opslag van inloggegevens voor applicaties. Keepiq
+      gebruikt end-to-end RSA-4096/AES-256-versleuteling met een eigen
+      certificaatautoriteit. Je hoofdwachtwoord wordt nooit opgeslagen, dus
+      zelfs de serverbeheerder kan je geheimen niet lezen.
+    features:
+      - End-to-end versleuteling met een eigen certificaatautoriteit
+      - Persoonlijke kluis met mappen en zoeken
+      - Geheimen delen met gebruikers, groepen en via een link
+      - Schrijven-zonder-lezen geheimen voor applicaties
+  en:
+    shortDescription: "Encrypted secrets manager for Nextcloud"
+    longDescription: |
+      Keepiq is a zero-knowledge encrypted secrets manager for Nextcloud: a
+      personal vault for users and a write-without-read credential store for
+      applications. It uses end-to-end RSA-4096/AES-256 encryption backed by a
+      private certificate authority. Your master password is never stored, so
+      not even the server administrator can read your secrets.
+    features:
+      - End-to-end encryption with a private certificate authority
+      - Personal vault with folders and search
+      - Sharing with users, groups and by link
+      - Write-without-read secrets for applications
+
+legal:
+  license: EUPL-1.2
+
+localisation:
+  localisationReady: true
+  availableLanguages:
+    - nl
+    - en
+
+maintenance:
+  type: internal
+  contacts:
+    - name: Conduction Development Team
+      email: info@conduction.nl
+      affiliation: Conduction B.V.
+
+# Common Ground layer (nl.vng profile), as a standard supports entry.
+supports:
+  - id: https://commonground.nl/cms/view/54476261/5-lagen-model#data

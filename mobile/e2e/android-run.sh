@@ -131,6 +131,26 @@ if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 34 ]; then
 	adb shell dumpsys credential > "$OUT/dumpsys-credential.txt" 2>&1 || true
 fi
 
+# Offline reading (task 3.4): sync, cut the network, read from the store,
+# edits refused, network back. The test restores the network itself; these
+# three lines are the fallback for a run that crashed half way.
+adb shell pm clear "$PKG" >/dev/null
+video_start keepiq-android-offline
+run_class OfflineReadingTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
+video_stop keepiq-android-offline
+adb shell cmd connectivity airplane-mode disable >/dev/null 2>&1 || true
+adb shell svc wifi enable || true
+adb shell svc data enable || true
+
+# The accessibility audit of the main screens (task 3.1). Compose's
+# accessibility checks need Android 14, so the API 34 job only. Its findings
+# land in e2e-shots/a11y-findings.txt.
+if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 34 ]; then
+	adb shell pm clear "$PKG" >/dev/null
+	run_class AccessibilityAuditTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
+	cat "$OUT/e2e-shots/a11y-findings.txt" 2>/dev/null || echo "::warning::no a11y-findings.txt"
+fi
+
 # The R8 release build (API 34 job only): it starts, shows its first screen
 # and stays up while another app asks it for autofill. R8 removes code that only
 # reflection or JNI reaches; the e2e build above is not shrunk, so this is

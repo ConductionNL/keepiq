@@ -37,9 +37,9 @@ use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\EmergencyAccessServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
 
 /**
  * Lifecycle service for break-glass emergency access.
@@ -48,7 +48,7 @@ use Ramsey\Uuid\Uuid;
  * EmergencyAccessAuditTrail (design D8), and the key-change invalidation
  * paths live in EmergencyEnvelopeInvalidationService.
  */
-class EmergencyAccessService {
+class EmergencyAccessService implements EmergencyAccessServiceInterface {
 	/**
 	 * The object type used for the emergency-access relation.
 	 *
@@ -144,11 +144,7 @@ class EmergencyAccessService {
 	 * supplied here as opaque ciphertext — the server stores it verbatim and
 	 * never sees a usable key (design D1/D2).
 	 *
-	 * @param string $grantorUserId The grantor (vault owner) Nextcloud user ID
-	 * @param string $granteeUserId The grantee Nextcloud user ID
-	 * @param int $waitPeriodDays The wait period (1|3|7|30)
-	 * @param string $accessLevel The access level (v1: only 'view')
-	 * @param string $recoveryEnvelope The grantee-encrypted recovery envelope
+	 * @param EmergencyDesignation $designation The grantor, grantee, wait period, level and envelope
 	 *
 	 * @return EmergencyContact
 	 *
@@ -158,82 +154,48 @@ class EmergencyAccessService {
 	 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-designate-emergency-contact
 	 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-client-side-recovery-envelope-escrow
 	 */
-	public function designate(
-		string $grantorUserId,
-		string $granteeUserId,
-		int $waitPeriodDays,
-		string $accessLevel,
-		string $recoveryEnvelope,
-	): EmergencyContact {
-		if ($accessLevel !== EmergencyContact::ACCESS_VIEW) {
-			throw new InvalidArgumentException('v1 emergency access supports the "view" access level only');
-		}
-
-		if (in_array($waitPeriodDays, self::ALLOWED_WAIT_PERIODS, true) === false) {
-			throw new InvalidArgumentException('Unsupported wait period');
-		}
-
-		if ($granteeUserId === '' || $granteeUserId === $grantorUserId) {
-			throw new InvalidArgumentException('Cannot designate yourself as an emergency contact');
-		}
-
-		if (trim($recoveryEnvelope) === '') {
-			throw new InvalidArgumentException('A recovery envelope is required');
-		}
+	public function designate(EmergencyDesignation $designation): EmergencyContact {
+		$designation->assertValid();
 
 		// The grantee MUST have an active suite (the envelope is encrypted to it).
-		$granteeCert = $this->getGranteeCertificate(granteeUserId: $granteeUserId);
-		$granteeSuiteId = $granteeCert['suiteId'];
+		$granteeCert = $this->getGranteeCertificate(granteeUserId: $designation->granteeUserId);
 
-		// The grantor MUST be unlocked/have an active suite — record it so a
-		// rotation/revocation of the grantor's suite invalidates this envelope.
-		try {
-			$grantorSuite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $grantorUserId);
-		} catch (DoesNotExistException) {
-			throw new InvalidArgumentException('You have no active encryption suite');
-		}
+		$contact = $designation->grantWith(
+			granteeSuiteId: $granteeCert['suiteId'],
+			grantorSuiteId: $this->grantorSuiteId(grantorUserId: $designation->grantorUserId)
+		)->save(mapper: $this->mapper);
 
-		$now = new DateTime();
-
-		$isNew = false;
-		try {
-			$contact = $this->mapper->findByGrantorAndGrantee(grantorUserId: $grantorUserId, granteeUserId: $granteeUserId);
-		} catch (DoesNotExistException) {
-			$isNew = true;
-			$contact = new EmergencyContact();
-			$contact->setId(Uuid::uuid4()->toString());
-			$contact->setGrantorUserId($grantorUserId);
-			$contact->setGranteeUserId($granteeUserId);
-			$contact->setCreatedAt($now);
-		}
-
-		$contact->setAccessLevel(EmergencyContact::ACCESS_VIEW);
-		$contact->setWaitPeriodDays($waitPeriodDays);
-		$contact->setState(EmergencyContact::STATE_GRANTED);
-		$contact->setRequestedAt(null);
-		$contact->setRecoveryEnvelope($recoveryEnvelope);
-		$contact->setGrantorSuiteId($grantorSuite->getId());
-		$contact->setGranteeSuiteId($granteeSuiteId);
-		$contact->setInvalidatedReason(null);
-		$contact->setUpdatedAt($now);
-
-		$contact = match ($isNew) {
-			true => $this->mapper->insert($contact),
-			false => $this->mapper->update($contact),
-		};
-
-		$this->logger->debug('Keepiq: emergency contact designated for grantee ' . $granteeUserId);
+		$this->logger->debug('Keepiq: emergency contact designated for grantee ' . $designation->granteeUserId);
 
 		$this->auditTrail->recordGranted(
-			grantorUserId: $grantorUserId,
-			granteeUserId: $granteeUserId,
+			grantorUserId: $designation->grantorUserId,
+			granteeUserId: $designation->granteeUserId,
 			id: $contact->getId(),
 			accessLevel: EmergencyContact::ACCESS_VIEW,
-			waitPeriodDays: $waitPeriodDays,
+			waitPeriodDays: $designation->waitPeriodDays,
 		);
 
 		return $contact;
 	}//end designate()
+
+	/**
+	 * The grantor's active suite id. The grantor MUST be unlocked/have an
+	 * active suite — it is recorded so a rotation/revocation of the grantor's
+	 * suite invalidates the envelope.
+	 *
+	 * @param string $grantorUserId The grantor Nextcloud user ID
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When the grantor has no active suite
+	 */
+	private function grantorSuiteId(string $grantorUserId): string {
+		try {
+			return $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $grantorUserId)->getId();
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException('You have no active encryption suite');
+		}
+	}//end grantorSuiteId()
 
 	/**
 	 * Revoke an emergency contact: delete the recovery envelope and cancel any

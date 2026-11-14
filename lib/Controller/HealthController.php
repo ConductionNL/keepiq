@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -62,7 +62,7 @@ class HealthController extends Controller {
 		private readonly ITempManager $tempManager,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -100,8 +100,8 @@ class HealthController extends Controller {
 		return new JSONResponse(
 			data: [
 				'status'  => $status,
-				'app'     => Application::APP_ID,
-				'version' => $this->appManager->getAppVersion(Application::APP_ID),
+				'app'     => AppIdentity::APP_ID,
+				'version' => $this->appManager->getAppVersion(AppIdentity::APP_ID),
 				'checks'  => $checks,
 			],
 			statusCode: $httpStatus

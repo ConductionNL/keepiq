@@ -210,8 +210,9 @@ class TeamFolderMembershipResolver {
 	 * @return bool
 	 *
 	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-the-fan-out-never-re-shares-to-a-disabled-account
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
 	 */
-	private function isDisabledAccount(string $userId): bool {
+	public function isDisabledAccount(string $userId): bool {
 		$user = $this->userManager->get($userId);
 
 		return $user !== null && $user->isEnabled() === false;

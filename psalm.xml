@@ -77,6 +77,10 @@
                      require doctrine/dbal — it comes through Nextcloud's runtime). -->
                 <referencedClass name="Doctrine\DBAL\Types\Type"/>
                 <referencedClass name="Doctrine\DBAL\Platforms\AbstractPlatform"/>
+                <!-- WebAuthn, COSE and Symfony UID: the Nextcloud server's 3rdparty, used by WebAuthnVerifier -->
+                <referencedClass name="Webauthn\*"/>
+                <referencedClass name="Cose\*"/>
+                <referencedClass name="Symfony\Component\Uid\*"/>
             </errorLevel>
         </UndefinedClass>
         <UndefinedMagicMethod errorLevel="suppress"/>

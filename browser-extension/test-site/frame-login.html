@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login in a frame</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body class="frame">
+	<!-- The login the inline-list.html iframes load: one row, vertically centred, so a 120 px frame leaves one list row above and below. -->
+	<form class="row" method="post" action="/frame-login">
+		<input name="username" type="text" placeholder="Username" aria-label="Username">
+		<input name="password" type="password" placeholder="Password" aria-label="Password">
+		<button type="submit">Sign in</button>
+	</form>
+</body>
+</html>

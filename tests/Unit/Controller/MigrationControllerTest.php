@@ -23,7 +23,9 @@ use DateTime;
 use OCA\Keepiq\Controller\MigrationController;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Exception\FieldsNotReencryptedException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
@@ -41,6 +43,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 /**
  * Tests for MigrationController.
@@ -558,6 +561,88 @@ class MigrationControllerTest extends TestCase {
 	}//end testReEncryptGrantReportsMissingRecord()
 
 	/**
+	 * Test the TOTP and passkeys ciphertexts reach the secret and version commits.
+	 *
+	 * @return void
+	 */
+	public function testReEncryptPassesTotpAndPasskeysThrough(): void {
+		$this->arrangeOwnMigration();
+
+		$secret = new Secret();
+		$secret->setId('secret-1');
+		$secret->setEncryptionSuiteId('suite-2');
+
+		$version = new SecretVersion();
+		$version->setId('version-1');
+		$version->setSecretId('secret-1');
+		$version->setEncryptionSuiteId('suite-2');
+
+		$this->workService->expects($this->once())
+			->method('commitSecret')
+			->with(
+				$this->anything(),
+				'testuser',
+				'secret-1',
+				'NEW-KEY',
+				null,
+				null,
+				'NEW-TOTP',
+				'NEW-PASSKEYS'
+			)
+			->willReturn($secret);
+		$this->workService->expects($this->once())
+			->method('commitVersion')
+			->with(
+				$this->anything(),
+				'testuser',
+				'version-1',
+				'NEW-KEY',
+				null,
+				null,
+				'NEW-TOTP',
+				'NEW-PASSKEYS'
+			)
+			->willReturn($version);
+
+		$secretResponse = $this->controller->reEncryptSecret(
+			'migr-1',
+			'secret-1',
+			key: 'NEW-KEY',
+			totp: 'NEW-TOTP',
+			passkeys: 'NEW-PASSKEYS'
+		);
+		$versionResponse = $this->controller->reEncryptVersion(
+			'migr-1',
+			'version-1',
+			key: 'NEW-KEY',
+			totp: 'NEW-TOTP',
+			passkeys: 'NEW-PASSKEYS'
+		);
+
+		$this->assertSame(Http::STATUS_OK, $secretResponse->getStatus());
+		$this->assertSame(Http::STATUS_OK, $versionResponse->getStatus());
+	}//end testReEncryptPassesTotpAndPasskeysThrough()
+
+	/**
+	 * Test an omitted stored field is surfaced as a coded 409 naming the fields.
+	 *
+	 * @return void
+	 */
+	public function testReEncryptMapsFieldsNotReencryptedTo409(): void {
+		$this->arrangeOwnMigration();
+		$this->workService->method('commitVersion')->willThrowException(
+			(new FieldsNotReencryptedException('Stored value fields were not re-encrypted: totp'))->withFields(['totp'])
+		);
+
+		$response = $this->controller->reEncryptVersion('migr-1', 'version-1', key: 'NEW');
+		$data = $response->getData();
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('fields_not_reencrypted', $data['error']);
+		$this->assertSame(['totp'], $data['fields']);
+	}//end testReEncryptMapsFieldsNotReencryptedTo409()
+
+	/**
 	 * A re-point delegates to the envelope service with the migration's owner and
 	 * suite ids resolved from the guarded migration, and echoes the result.
 	 *
@@ -682,4 +767,105 @@ class MigrationControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 	}//end testReEnvelopeEmergencyContactMapsInvalidArgumentTo400()
+
+	/**
+	 * Without a user every migration endpoint answers 401 and asks no service.
+	 *
+	 * @return void
+	 */
+	public function testWithoutAUserTheEndpointsAnswer401(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
+		$this->migrationService->expects($this->never())->method($this->anything());
+		$controller = new MigrationController(
+			request: $this->createMock(IRequest::class),
+			migrationService: $this->migrationService,
+			workService: $this->workService,
+			suiteService: $this->suiteService,
+			envelopeService: $this->envelopeService,
+			userSession: $session,
+		);
+
+		$responses = [
+			$controller->getStatus(),
+			$controller->complete('migr-1'),
+			$controller->abort('migr-1'),
+			$controller->reEnvelopeEmergencyContact('migr-1', 'contact-1'),
+		];
+
+		foreach ($responses as $response) {
+			$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+			$this->assertSame(['message' => 'Unauthorized'], $response->getData());
+		}
+	}//end testWithoutAUserTheEndpointsAnswer401()
+
+	/**
+	 * Completing another user's migration answers 403 and completes nothing.
+	 *
+	 * @return void
+	 */
+	public function testCompleteForbiddenForAnotherUsersMigration(): void {
+		$this->arrangeForeignMigration();
+		$this->migrationService->expects($this->never())->method('completeMigration');
+
+		$response = $this->controller->complete('migr-1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(['message' => 'Forbidden: migration does not belong to you'], $response->getData());
+	}//end testCompleteForbiddenForAnotherUsersMigration()
+
+	/**
+	 * Any other failure on complete answers 400.
+	 *
+	 * @return void
+	 */
+	public function testCompleteMapsAnyOtherFailureTo400(): void {
+		$this->arrangeOwnMigration();
+		$this->migrationService->method('completeMigration')->willThrowException(new RuntimeException('Bad acknowledgement'));
+
+		$response = $this->controller->complete('migr-1');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+	}//end testCompleteMapsAnyOtherFailureTo400()
+
+	/**
+	 * Aborting a missing migration answers 404; any other failure 400, with its message.
+	 *
+	 * @return void
+	 */
+	public function testAbortMapsMissingTo404AndOtherFailuresTo400(): void {
+		$this->migrationService->method('getMigration')->willReturnOnConsecutiveCalls(
+			$this->throwException(new DoesNotExistException('gone')),
+			$this->makeMigration('migr-1')
+		);
+		$this->suiteService->method('getSuite')->willReturn($this->makeOwnedSuite());
+		$this->migrationService->method('abortMigration')->willThrowException(new RuntimeException('Abort failed'));
+
+		$missing = $this->controller->abort('migr-1');
+		$this->assertSame(Http::STATUS_NOT_FOUND, $missing->getStatus());
+		$this->assertSame(['message' => 'Migration not found'], $missing->getData());
+
+		$failed = $this->controller->abort('migr-1');
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $failed->getStatus());
+		$this->assertSame(['message' => 'Abort failed'], $failed->getData());
+	}//end testAbortMapsMissingTo404AndOtherFailuresTo400()
+
+	/**
+	 * A work list the service refuses answers 404 or 403 by the refusal.
+	 *
+	 * @return void
+	 */
+	public function testGetWorkMapsTheServiceRefusals(): void {
+		$this->arrangeOwnMigration();
+		$this->workService->method('listWork')->willReturnOnConsecutiveCalls(
+			$this->throwException(new NotFoundException(message: 'No such record')),
+			$this->throwException(new ForbiddenException(message: 'Not yours'))
+		);
+
+		$missing = $this->controller->getWork('migr-1');
+		$this->assertSame(Http::STATUS_NOT_FOUND, $missing->getStatus());
+		$this->assertSame(['message' => 'No such record'], $missing->getData());
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->getWork('migr-1')->getStatus());
+	}//end testGetWorkMapsTheServiceRefusals()
 }//end class

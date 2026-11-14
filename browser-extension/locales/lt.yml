@@ -1,0 +1,819 @@
+# Terms and tone follow Nextcloud's Lithuanian translation: formal jūs, saugykla, pagrindinis slaptažodis, programėlės slaptažodis, prieigos raktas, prisijungimas, elementas, įrašyti; counts use "Elementų: $1" to avoid plural forms.
+language: lt
+extensionDescription: Keepiq jūsų naršyklei. Užpildykite prisijungimus, prieigos raktus ir vienkartinius kodus iš savo šifruotos Nextcloud saugyklos.
+commandAutofillLogin: Užpildyti paskutinį naudotą prisijungimą
+commandFocusNotificationBar: Pereiti į Keepiq įrašymo juostą
+
+errors:
+  insecureUrl: Šiam serveriui naudokite https
+  invalidUrl: Įveskite tinkamą serverio URL
+  permissionDenied: Keepiq reikia leidimo pasiekti serverį {host}
+  unreachable: Nepavyko pasiekti serverio {host}
+  notNextcloud: "{host} neatrodo kaip Nextcloud serveris"
+  serverError: "{host} šiuo metu nepasiekiamas, bandykite vėliau"
+  unauthorized: Neteisingas naudotojo vardas arba programėlės slaptažodis
+  keepiqMissing: Serveryje {host} neįdiegta Keepiq programėlė
+  keepiqOutdated: Keepiq versija serveryje {host} per sena šiam plėtiniui, kuriam reikia {version} ar naujesnės versijos. Paprašykite administratoriaus atnaujinti Keepiq.
+  noActiveSuite: Vieną kartą atidarykite Keepiq žiniatinklio programėlę ir nustatykite pagrindinį slaptažodį, tada bandykite dar kartą
+  unlockBlocked: Jūsų organizacija reikalauja dviejų veiksnių prisijungimo. Nustatykite antrąjį veiksnį Nextcloud nustatymų skiltyje Saugumas, tada bandykite dar kartą
+  duplicate: Ši paskyra jau pridėta
+  limitReached: "Pasiektas didžiausias paskyrų skaičius: {count}"
+  invalidMasterPassword: Neteisingas pagrindinis slaptažodis
+  keyUnreadable: Nepavyko perskaityti jūsų saugyklos rakto Keepiq, todėl ši naršyklė negali jos atrakinti. Praneškite Keepiq administratoriui.
+  offlineNoCache: Esate neprisijungę, o ši saugykla dar nesinchronizuota
+  sessionRevoked: Seansas atšauktas, prisijunkite iš naujo
+  writeLocked: Šiuo metu jūsų saugyklos keisti negalima, bandykite vėliau
+  notResponding: Keepiq neatsako. Iš naujo įkelkite plėtinį ir vėl atidarykite šį iššokantįjį langą.
+  invalidPin:
+    1: Neteisingas PIN kodas, liko 1 bandymas
+    n: "Neteisingas PIN kodas, liko bandymų: $1"
+  wrongPin: Neteisingas PIN kodas
+  pinForgotten: PIN kodas pamirštas po per daug bandymų
+  pinKeyChanged: Jūsų saugyklos raktas pasikeitė. Atrakinkite pagrindiniu slaptažodžiu.
+  pinTooShort: "Mažiausias simbolių skaičius: {count}"
+  unknown: Kažkas nepavyko
+  passkeyFailed: "Prieigos raktas neatrakino jūsų saugyklos. Naudokite pagrindinį slaptažodį."
+
+notices:
+  keyChanged: Jūsų saugyklos raktas Keepiq pasikeitė. Atrakinkite dabartiniu pagrindiniu slaptažodžiu.
+  fileAccess: "Keepiq nereikia prieigos prie failų. Nextcloud skiltyje Nustatymai, Saugumas, Įrenginiai ir seansai galite išjungti šio programėlės slaptažodžio prieigą prie failų arba jį atšaukti."
+
+common:
+  accountOnHost: "{name} serveryje {host}"
+  loading: Įkeliama…
+  back: Atgal
+  cancel: Atšaukti
+  logOut: Atsijungti
+  appPassword: Programėlės slaptažodis
+  addAccount: Pridėti paskyrą
+  openWebApp: Atidaryti Keepiq žiniatinklio programėlę
+  justNow: ką tik
+
+titles:
+  accounts: Paskyros
+  logInAgain: Prisijungti iš naujo
+  unlock: Atrakinti
+  viewItem: Peržiūrėti elementą
+  newItem: Naujas elementas
+  newLogin: Naujas prisijungimas
+  newCard: Nauja kortelė
+  newIdentity: Nauja tapatybė
+  editItem: Redaguoti elementą
+  newSend: Naujas siuntinys
+  sendCreated: Siuntinys sukurtas
+
+tabs:
+  label: Pagrindinis
+  vault: Saugykla
+  generator: Generatorius
+  send: Siųsti
+  settings: Nustatymai
+
+header:
+  popout: Atidaryti atskirame lange
+  accounts: Paskyros, prisijungta kaip {name}
+  new: Naujas
+
+unlock:
+  masterPassword: Pagrindinis slaptažodis
+  submit: Atrakinti
+  pin: PIN kodas
+  useMasterPassword: Naudoti pagrindinį slaptažodį
+
+logInAgain:
+  submit: Prisijungti
+
+addAccount:
+  serverUrl: Serverio URL
+  serverUrlPlaceholder: cloud.example.org
+  username: Naudotojo vardas
+  hint: Sukurkite jį Nextcloud nustatymų skiltyje Saugumas. Niekada neįveskite čia savo Nextcloud prisijungimo slaptažodžio.
+  hintWithLink: "Sukurkite jį Nextcloud nustatymų skiltyje Saugumas: {link}. Niekada neįveskite čia savo Nextcloud prisijungimo slaptažodžio."
+  securityLink: atidaryti saugumo nustatymus
+  signInWithBrowser: "Prisijungti per Nextcloud"
+  finishInTab: "Užbaikite prisijungimą atsidariusiame Nextcloud puslapyje. Keepiq pridės paskyrą, kai baigsite."
+  orAppPassword: "Arba įveskite programėlės slaptažodį:"
+
+accounts:
+  active: (aktyvi)
+  unlocked: Atrakinta
+  locked: Užrakinta
+  loggedOut: Atsijungta
+  lock: Užrakinti paskyrą {account}
+  logOut: Atsijungti nuo paskyros {account}
+  lockAll: Užrakinti visas
+  logOutAll: Atsijungti nuo visų
+  logOutAllQuestion: Atsijungti nuo visų paskyrų?
+  logOutAllDetail: Visos paskyros bus pašalintos iš šios naršyklės. Jums vėl reikės kiekvienos programėlės slaptažodžio.
+  logOutQuestion: Atsijungti nuo paskyros {account}?
+  logOutDetail: Paskyra bus pašalinta iš šios naršyklės. Norint ją vėl pridėti, reikės programėlės slaptažodžio.
+
+vault:
+  loadFailed: Nepavyko įkelti jūsų saugyklos
+  tryAgain: Bandyti dar kartą
+  syncing: Sinchronizuojama saugykla
+  empty: Saugykloje nėra elementų
+  noMatch: Atitinkančių elementų nėra
+  searchCovers: Ieškoma pagal pavadinimus ir svetaines.
+  clearFilters: Išvalyti filtrus
+  items: Elementai
+  tooMany: Rodomi tik pirmieji {count}, patikslinkite paiešką
+  offline: Neprisijungta. Paskutinį kartą sinchronizuota {time}
+  syncNow: Sinchronizuoti dabar
+  busy: Serveris užimtas, bus bandoma vėliau
+  allBlocked: Visi elementai užblokuoti.
+  suggestions: Automatinio užpildymo pasiūlymai
+  noSuggestions: Svetainei {host} elementų nėra
+  autofillUnavailable: Šiame puslapyje automatinis užpildymas negalimas
+  fillFailed: Šiame puslapyje nepavyko automatiškai užpildyti. Nukopijuokite ir įklijuokite patys.
+  openFailed: Nepavyko atidaryti svetainės
+  popoutFailed: Nepavyko atidaryti naujo lango
+
+filters:
+  search: Ieškoti
+  searchLabel: Ieškoti saugykloje
+  clearSearch: Išvalyti paiešką
+  folder: Aplankas
+  allItems: Visi elementai
+  noFolder: Be aplanko
+  type: Tipas
+  all: Visi
+  more: Daugiau
+  moreTypes: Daugiau tipų
+  login: Prisijungimas
+  card: Kortelė
+  identity: Tapatybė
+  note: Pastaba
+  totp: TOTP
+  passkey: Prieigos raktas
+
+item:
+  blocked: Užblokuota
+  launch: Atidaryti {name}
+  fill: Užpildyti
+  fillName: Užpildyti {name}
+  insecureTitle: Ar vis tiek norite užpildyti šį prisijungimą?
+  insecureWarning: "Įspėjimas: tai neapsaugotas HTTP puslapis, todėl kiti gali matyti ir pakeisti bet kokią jūsų pateiktą informaciją. Šis prisijungimas iš pradžių buvo įrašytas saugiame (HTTPS) puslapyje."
+  cardInsecureTitle: Užpildyti šią kortelę nesaugioje svetainėje?
+  cardInsecureWarning: Ši svetainė nėra saugi. Bet kas tinkle gali perskaityti užpildytus kortelės duomenis.
+  crossSiteTitle: Užpildyti ir kitose svetainėse ({hosts})?
+  crossSiteWarning: Dalis šios formos gaunama iš kitų svetainių ({hosts}), o ne iš svetainės {host}. Keepiq ją ten užpildys tik jums sutikus.
+  onlyHost: Tik {host}
+  copyMenu: Kopijuoti, {name}
+  moreMenu: Daugiau, {name}
+  copyUsername: Kopijuoti naudotojo vardą
+  copyPassword: Kopijuoti slaptažodį
+  copyCode: Kopijuoti patvirtinimo kodą
+  view: Peržiūrėti
+  edit: Redaguoti
+  clone: Klonuoti
+  move: Perkelti į aplanką
+  delete: Ištrinti
+  send: Siųsti
+  cloneName: "{name} - klonas"
+  passkeyNoClone: Prieigos raktų klonuoti negalima
+  useOnly: Bendrinama su jumis tik prisijungimui
+  readOnly: Bendrinama iš kitos organizacijos, todėl galima tik perkelti
+  viewOnly: Bendrinama su jumis tik peržiūrai. Norėdami pakeisti, paprašykite savininko redagavimo teisių.
+  expiringNoClone: Jūsų prieiga baigiasi {date}, todėl klonuoti negalima
+  expiringNoSend: Jūsų prieiga baigiasi {date}, todėl siųsti negalima
+  saved: Elementas įrašytas
+  deleted: Elementas perkeltas į šiukšlinę
+  moved: Perkelta į aplanką {folder}
+  deleteTitle: Ištrinti elementą
+  deleteConfirm: Perkelti {name} į šiukšlinę? Elementas nebebus bendrinamas, net jei bus atkurtas iš šiukšlinės Keepiq žiniatinklio programėlėje.
+  gone: Šio elemento nebėra
+
+form:
+  itemDetails: Elemento duomenys
+  type: Tipas
+  name: Pavadinimas
+  cardNumberLength: "{brand} neišduoda tokio ilgio kortelių numerių. Vis tiek galite įrašyti."
+  cardNumberLengthUnknown: Kortelių numeriai turi nuo 12 iki 19 skaitmenų. Vis tiek galite įrašyti.
+  cardNumberChecksum: Šis numeris neatitinka kortelės kontrolinės sumos. Patikrinkite jį; vis tiek galite įrašyti.
+  cardCodeLength: "{brand} kortelių {name} sudaro {size} skaitmenys. Vis tiek galite įrašyti."
+  folder: Aplankas
+  chooseFolder: Pasirinkite aplanką, dabar {folder}
+  website: Svetainės URL
+  autofillOptions: Automatinio užpildymo parinktys
+  additionalOptions: Papildomos parinktys
+  authenticator: Autentifikatorius
+  note: Pastaba
+  secret: Paslaptis
+  advanced: Išplėstinės
+  algorithm: Algoritmas
+  digits: Skaitmenys
+  period: Laikotarpis sekundėmis
+  addField: Pridėti lauką
+  fieldName: Lauko pavadinimas
+  fieldValue: Reikšmė
+  removeField: Šalinti {name}
+  removeUnnamed: Šalinti lauką
+  save: Įrašyti
+  passkeyReadOnly: Prieigos rakto duomenis galima keisti tik Keepiq žiniatinklio programėlėje
+  offline: Esate neprisijungę. Pakeitimams reikia ryšio su Keepiq.
+  unsavedTitle: Neįrašyti pakeitimai
+  unsaved: Turite neįrašytų pakeitimų. Atmesti juos?
+  discard: Atmesti
+  keepEditing: Tęsti redagavimą
+
+authKey:
+  label: Autentifikatoriaus raktas
+  optionalLabel: Autentifikatoriaus raktas (neprivaloma)
+  newLabel: Naujas autentifikatoriaus raktas
+  help: Įklijuokite otpauth://totp/ nuorodą arba slaptąjį raktą, arba nuskenuokite puslapyje esantį QR kodą.
+  scan: Nuskenuoti puslapio QR kodą
+  read: Autentifikatoriaus raktas nuskaitytas iš QR kodo
+  noQr: Puslapyje QR kodas nerastas. Slinkite, kad jis būtų matomas, ir bandykite dar kartą.
+  notTotp: Šiame QR kode nėra autentifikatoriaus rakto. Naudokite QR kodą, kurį svetainė rodo nustatant dviejų veiksnių prisijungimą.
+  noPicture: Keepiq negali nufotografuoti šio puslapio. Verčiau įklijuokite raktą.
+  popout: Norėdami nuskenuoti QR kodą, atidarykite Keepiq iš įrankių juostos puslapyje su QR kodu.
+  saved: Įrašyta
+  remove: Šalinti autentifikatoriaus raktą
+  replaceHelp: Įklijuokite arba nuskenuokite naują raktą arba palikite tuščią, kad įrašytas raktas būtų pašalintas.
+  keep: Palikti įrašytą raktą
+  removedOnSave: Autentifikatoriaus raktas bus pašalintas, kai įrašysite.
+  notCloned: Autentifikatoriaus raktas neklonuojamas.
+
+fieldErrors:
+  required: Pavadinimas privalomas
+  tooLong: "Daugiausia simbolių: {max}"
+  tooLongBytes: Per ilgas (daugiausia {max} B)
+  reserved: Šis pavadinimas rezervuotas
+  duplicate: Laukas tokiu pavadinimu jau yra
+  invalidTotp: Netinkama autentifikatoriaus paslaptis
+  slash: Aplankų pavadinimuose negali būti pasvirųjų brūkšnių
+
+writeErrors:
+  writeLocked: Saugykla laikinai užrakinta dėl rakto perkėlimo, bandykite vėliau
+  forbidden: Keepiq neleidžia šio pakeitimo. Priežastį rodo Keepiq žiniatinklio programėlė.
+  policy: Jūsų organizacijos politika neleidžia šio pakeitimo
+  accountChanged: Tuo metu perjungėte kitą paskyrą, todėl niekas neįrašyta. Norėdami įrašyti, perjunkite atgal.
+  accountChangedDelete: Tuo metu perjungėte kitą paskyrą, todėl niekas neištrinta. Norėdami ištrinti, perjunkite atgal.
+  keepClash: Lygiu aukščiau jau yra aplankas {name}. Pasirinkite jam Perkelti elementus į tėvinį aplanką arba Ištrinti, arba pirma pervadinkite vieną iš jų.
+  keepClashAfter: Aplanko, kurį pasirinkote palikti, pavadinimas sutampa su aplanko lygiu aukščiau pavadinimu, todėl niekas neištrinta. Dar kartą patikrinkite pasirinkimus.
+  invalid: Keepiq atmetė šį pakeitimą
+  stale: Šis elementas buvo pakeistas kitur. Grįžkite ir redaguokite jį dar kartą, kad matytumėte naujausią versiją.
+  itemGone: Šio elemento nebėra
+  folderGone: Šio aplanko nebėra
+  duplicateFolder: Čia jau yra aplankas tokiu pavadinimu
+  folderChanged: Šis aplankas pasikeitė. Dar kartą patikrinkite pasirinkimus.
+  offline: Nepavyko pasiekti serverio
+  serverError: Keepiq šiuo metu neveikia, bandykite vėliau
+  unreadable: Nepavyko perskaityti šio elemento, todėl čia jo redaguoti negalima
+  restricted: Šis elementas su jumis bendrinamas su apribojimais, todėl čia jo keisti ar kopijuoti negalima
+  unmatched: Keepiq atsiuntė šio elemento versiją, kurios jūsų saugykloje nėra, todėl jis neatidarytas.
+  keyMismatch: Keepiq atsiuntė šifravimo raktą, kuris neatitinka jūsų saugyklos, todėl niekas neįrašyta. Praneškite Keepiq administratoriui.
+  staleSource: Šio bendrinamo elemento originalas buvo pakeistas jums jį atidarius. Niekas neįrašyta; atidarykite jį dar kartą ir pakartokite pakeitimą.
+  incomplete: Įrašant nuolat keitėsi žmonės, su kuriais bendrinamas šis elementas. Niekas neįrašyta; bandykite dar kartą.
+  badCertificate: Keepiq atsiuntė šifravimo raktą asmeniui, su kuriuo bendrinamas šis elementas, tačiau ši naršyklė negalėjo jo perskaityti. Niekas neįrašyta.
+  unverified: Šis elementas bendrinamas su partnerių organizacijomis, o ši naršyklė negali patvirtinti, kad jos gaus jį tiksliai tokį, kokį matėte. Niekas neįrašyta; atlikite šį pakeitimą Keepiq žiniatinklio programėlėje.
+  partnerUnreachable: "Niekas neįrašyta: nepavyksta pasiekti partnerio organizacijos, su kuria bendrinamas šis elementas ({cloudIds}). Bandykite vėliau arba įrašykite be jų – tada bendrinimas su jais bus pristabdytas, kol vėl su jais pasidalinsite."
+  partnerUpgradeRequired: "Niekas neįrašyta: gavėjų {cloudIds} Keepiq versija per sena autentifikatoriaus raktui priimti. Pašalinkite raktą arba paprašykite jų atnaujinti Keepiq."
+  partnerUpgradeRequiredUnnamed: "Niekas neįrašyta: partnerio organizacija, su kuria bendrinamas šis elementas, naudoja per seną Keepiq versiją autentifikatoriaus raktui priimti. Pašalinkite raktą arba paprašykite jų atnaujinti Keepiq."
+  partnerUpgradeVersion: Jiems reikia Keepiq {version} ar naujesnės versijos.
+  partnerLookupLimit: Per daug partnerių paieškų. Niekas neįrašyta; bandykite po minutės.
+  federationUnavailable: Jūsų Keepiq serveris negali bendrinti su partnerių organizacijomis, todėl šio elemento čia įrašyti negalima. Niekas neįrašyta; kreipkitės į administratorių.
+  keepiqOutdated: Jūsų Keepiq serveris per senas šiam pakeitimui įrašyti. Niekas neįrašyta; paprašykite administratoriaus atnaujinti Keepiq iki {version} ar naujesnės versijos.
+  partnerClock: Partnerio organizacijos, su kuria bendrinamas šis elementas, sertifikatas pagal šio kompiuterio laikrodį negalioja. Niekas neįrašyta; patikrinkite šio kompiuterio datą ir laiką arba atlikite pakeitimą Keepiq žiniatinklio programėlėje.
+  shareScanPending: Šis elementas laukia bendrinimo patikros, kuri dar nebaigta. Niekas neįrašyta; bandykite vėliau.
+  shareScanPendingOpen: Šis elementas laukia bendrinimo patikros, todėl jo dar negalima redaguoti. Bandykite vėliau.
+  shareScanPendingDelete: Šis elementas laukia bendrinimo patikros, kuri dar nebaigta. Niekas neištrinta; bandykite vėliau.
+  sendInvalid: Keepiq nepriėmė šio siuntinio. Niekas neišsiųsta; patikrinkite laukus ir bandykite dar kartą.
+  sendOffline: Nepavyko pasiekti serverio, niekas neišsiųsta
+  argon2Unavailable: Šioje naršyklėje apsauga slaptažodžiu negalima
+
+shareSave:
+  saveWithout: Įrašyti be jų
+  ownerOnly: Įrašyta. Gavėjai partnerių organizacijose gaus šį pakeitimą, kai savininkas kitą kartą įrašys elementą.
+  suspended: Bendrinimas su {cloudIds} pristabdytas, nes nepavyko patvirtinti jų sertifikato arba jų organizacija jo nebepriima. Bendrinimą rodo Keepiq žiniatinklio programėlė.
+  paused: Bendrinimas su {cloudIds} pristabdytas, kol vėl pasidalinsite šiuo elementu su jais.
+
+folders:
+  add: Pridėti aplanką
+  newFolder: Naujas aplankas
+  rename: Pervadinti
+  renameTitle: Pervadinti aplanką
+  delete: Ištrinti
+  more: Daugiau, {name}
+  name: Aplanko pavadinimas
+  empty: Aplankų dar nėra
+  notice: Aplankų pavadinimai nešifruojami
+  dismiss: Uždaryti
+  current: Dabartinis aplankas
+  pickTitle: Pasirinkti aplanką
+  moveTitle: Perkelti į aplanką
+  saved: Aplankas įrašytas
+  deleted: Aplankas ištrintas
+  deleteTitle: Ištrinti aplanką
+  deleteConfirm: Ištrinti {name}? Šio veiksmo atšaukti negalima.
+  cascade:
+    1: Ištrinti {name} ir jame esantį 1 elementą ar perkelti jį į aplanką {parent}?
+    n: "Ištrinti {name} ir jame esančius elementus (iš viso: $1) ar perkelti juos į aplanką {parent}?"
+  countsAll: Įskaičiuojami ir archyvuoti bei šiukšlinėje esantys elementai.
+  deleteItems: Ištrinti ir elementus
+  moveItems: Perkelti elementus į tėvinį aplanką
+  items:
+    1: 1 elementas
+    n: "Elementų: $1"
+  subfolders:
+    1: 1 poaplankis
+    n: "Poaplankių: $1"
+  directRow: Elementai aplanke {name}, {items}
+  subfolderRow: "{name}, {items}, {subfolders}"
+  actionDelete: Ištrinti
+  actionMove: Perkelti elementus į tėvinį aplanką
+  actionKeep: Palikti
+  directMove: Perkelti į tėvinį aplanką
+
+clipboard:
+  copied: "Nukopijuota: {what}"
+  failed: Nepavyko nukopijuoti
+
+field:
+  show: "Rodyti: {field}"
+  hide: "Slėpti: {field}"
+  copy: "Kopijuoti: {field}"
+
+blocked:
+  generic: Šis elementas užblokuotas.
+  suiteMissing: Jo šifravimo rakto nebėra.
+  suiteRevoked: Jo šifravimo raktas atšauktas.
+  suiteCompromised: Užšifruotas pažeistu raktu, todėl čia jo atidaryti negalima. Keepiq žiniatinklio programėlė parodo, ar jį galima atkurti.
+  migrationFailed: Atkuriant po pažeidimo jo nepavyko perkelti į jūsų naują raktą. Įrašyta reikšmė išsaugota, tačiau jos atidaryti negalima.
+
+detail:
+  item: Elementas
+  decrypting: Iššifruojama…
+  decryptFailed: Nepavyko iššifruoti šio elemento
+  unreadablePasskey: Nepavyko perskaityti šio prieigos rakto
+  unreadableFields: Nepavyko perskaityti papildomų laukų
+  loginCredentials: Prisijungimo duomenys
+  username: Naudotojo vardas
+  password: Slaptažodis
+  authenticatorKey: Autentifikatoriaus raktas
+  website: Svetainė
+  additionalFields: Papildomi laukai
+  notes: Pastabos
+  history: Elemento istorija
+  created: Sukurta
+  updated: Atnaujinta
+  expires: Galioja iki
+  cardDetails: Kortelės duomenys
+  number: Numeris
+  numberWithBrand: Numeris · {brand}
+  cardNumber: Kortelės numeris
+  cardholder: Kortelės savininkas
+  expiry: Galiojimo pabaiga
+  cvv: CVV
+  pin: PIN kodas
+  identity: Tapatybė
+  firstName: Vardas
+  lastName: Pavardė
+  address: Adresas
+  phone: Telefonas
+  email: El. paštas
+  bsn: BSN
+  passkey: Prieigos raktas
+  relyingParty: Svetainė ar programėlė
+  passkeyUser: Naudotojo vardas
+  passkeyOnLogin: Keepiq prisijungia su prieigos raktais, įrašytais prisijungime, o ne su šiuo elementu
+  passkeys: Prieigos raktai
+  passkeyCreated: Sukurta {date}
+  useOnly: Savininkas neleidžia jums to peržiūrėti ar kopijuoti.
+
+totp:
+  code: Patvirtinimo kodas
+  invalid: Netinkamas autentifikatoriaus raktas
+  changesIn:
+    1: Pasikeis po 1 sekundės
+    n: Pasikeis po $1 sek.
+
+settings:
+  accountSecurity: Paskyros saugumas
+  autofill: Automatinis užpildymas
+  notifications: Pranešimai
+  vault: Saugykla
+  appearance: Išvaizda
+  about: Apie
+  folders: Aplankai
+  theme: Tema
+  themeSystem: Sistemos numatytoji
+  themeLight: Šviesi
+  themeDark: Tamsi
+  comingLater: Bus vėliau
+  setByOrganisation: Nustatė jūsų organizacija
+  turnedOffByOrganisation: Išjungė jūsų organizacija
+  never: Niekada
+  durationHours: "{count} val."
+  durationMinutes: "{count} min."
+  pin: Atrakinti PIN kodu
+  pinTurnOn: Įjungti
+  masterPasswordRequired: Įveskite pagrindinį slaptažodį
+  pinAgain: Patvirtinkite PIN kodą
+  pinMismatch: PIN kodai nesutampa
+  pinAdvice: Nenaudokite to paties PIN kodo kaip telefone ar banke.
+  pinAfterRestart: Paleidę naršyklę iš naujo vieną kartą įvesite pagrindinį slaptažodį; tada PIN kodas vėl veiks.
+  vaultTimeout: Saugyklos skirtasis laikas
+  timeoutImmediately: Iš karto
+  timeoutMinutes:
+    1: 1 minutė
+    n: $1 min.
+  timeoutHours:
+    1: 1 valanda
+    n: $1 val.
+  timeoutOnSystemLock: Užrakinus sistemą
+  timeoutOnSystemLockCapped: Užrakinus sistemą arba po {duration} neveiklumo (nustatė jūsų organizacija)
+  timeoutOnRestart: Paleidus naršyklę iš naujo
+  timeoutCustom: Pasirinktinis
+  hours: Valandos
+  minutes: Minutės
+  customAtLeastOne: Įveskite bent vieną minutę
+  customWhole: Įveskite sveikas valandas ir minutes
+  customAtMost: Jūsų organizacija leidžia daugiausia {duration}
+  neverTitle: Laikyti saugyklą atrakintą?
+  neverWarning: Jūsų saugykla liks atrakinta, kol užrakinsite ją patys. Ją atrakinantis raktas įrašomas į šio naršyklės profilio diską, kur jį gali perskaityti kiekvienas, galintis skaityti profilį.
+  neverConfirm: Laikyti atrakintą
+  timeoutAction: Veiksmas pasibaigus laikui
+  actionLock: Užrakinti
+  actionLogOutNote: Pasibaigus laikui būsite atjungti ir vėl reikės programėlės slaptažodžio
+  lockNow: Užrakinti dabar
+  changeMasterPassword: Keisti pagrindinį slaptažodį
+  autofillOnPageLoad: Automatiškai užpildyti įkeliant puslapį
+  autofillOnPageLoadWarning: Pažeistos ar nepatikimos svetainės gali piktnaudžiauti automatiniu užpildymu įkeliant puslapį
+  defaultAutofill: Numatytasis prisijungimų automatinio užpildymo nustatymas
+  defaultAutofillOnPageLoad: Užpildyti įkeliant puslapį, jei įjungta
+  uriMatch: Numatytasis URI atitikties aptikimas
+  uriBaseDomain: Pagrindinis domenas
+  uriHost: Serveris
+  uriStartsWith: Prasideda
+  uriExact: Tikslus
+  uriRegex: Reguliarusis reiškinys
+  uriRegexNote: Reguliarieji reiškiniai yra išplėstinė parinktis ir gali sutrikdyti atitikties aptikimą
+  inlineSuggestions: Rodyti automatinio užpildymo pasiūlymus formos laukuose
+  inlineCards: Rodyti korteles kaip pasiūlymus
+  inlineIdentities: Rodyti tapatybes kaip pasiūlymus
+  inlineKindsOff: Pirmiausia įjunkite Rodyti automatinio užpildymo pasiūlymus formos laukuose.
+  vaultCards: Visada rodyti korteles kaip automatinio užpildymo pasiūlymus saugyklos rodinyje
+  vaultIdentities: Visada rodyti tapatybes kaip automatinio užpildymo pasiūlymus saugyklos rodinyje
+  defaultPasswordManager: Padaryti Keepiq numatytąja slaptažodžių tvarkykle
+  defaultPasswordManagerHint: Išjungia pačios naršyklės slaptažodžių įrašymą ir adresų automatinį užpildymą, kad jos pasiūlymai neuždengtų Keepiq pasiūlymų.
+  defaultPasswordManagerManaged: Šį naršyklės nustatymą valdo jūsų organizacija arba kitas plėtinys.
+  contextMenu: Įjungti kontekstinio meniu parinktis
+  shortcut: Automatinio užpildymo spartusis klavišas
+  shortcutNotSet: Nenustatyta
+  shortcutChange: Keisti
+  shortcutFirefox: Atidarykite about:addons, pasirinkite krumpliaračio meniu, tada Tvarkyti plėtinių sparčiuosius klavišus
+  shortcutSafari: Atidarykite Safari nustatymus, pasirinkite Plėtiniai, tada pažymėkite Keepiq, kad pakeistumėte jo spartųjį klavišą
+  websiteAccess: Prieiga prie svetainių
+  websiteAccessAll: Visos svetainės
+  websiteAccessSome: Tik jūsų leistos svetainės
+  websiteAccessServer: Be jūsų Keepiq serverio
+  clearClipboard: Išvalyti iškarpinę
+  clipboardSeconds:
+    1: 1 sekundė
+    n: $1 sek.
+  autoCopyTotp: Automatiškai kopijuoti TOTP
+  autoCopyTotpHint: Jei prisijungimas turi patvirtinimo kodą, jis nukopijuojamas į iškarpinę, kai automatiškai užpildote prisijungimą.
+  askToAdd: Siūlyti pridėti prisijungimą
+  askToUpdate: Siūlyti atnaujinti esamą prisijungimą
+  askPasskeys: Siūlyti įrašyti ir naudoti prieigos raktus
+  excludedDomains: Išskirti domenai
+  addCurrentSite: Pridėti dabartinę svetainę
+  domain: Domenas
+  addDomain: Pridėti
+  domainEmpty: Įveskite domeną
+  domainUnreadable: Įveskite domeną, pvz., example.org
+  domainDuplicate: Jau išskirtas
+  removeDomain: Šalinti {domain}
+  webTitle: Keepiq žiniatinklyje
+  webText: Pačios Keepiq pranešimai, importavimas ir eksportavimas bei jūsų pagrindinis slaptažodis tvarkomi Keepiq programėlėje Nextcloud, skiltyje Asmeniniai nustatymai.
+  openKeepiq: Atidaryti Keepiq
+  lastSync: "Paskutinis sinchronizavimas: {time}"
+  lastSyncNever: "Paskutinis sinchronizavimas: niekada"
+  syncOffline: Sinchronizuoti nepavyko, esate neprisijungę
+  syncFailed: Sinchronizuoti nepavyko, bandykite vėliau
+  importItems: Importuoti elementus
+  exportVault: Eksportuoti saugyklą
+  defaultItemType: Numatytasis elemento tipas šiame plėtinyje
+  compactMode: Kompaktiškas režimas
+  showAnimations: Rodyti animacijas
+  quickCopy: Rodyti greitojo kopijavimo veiksmus saugykloje
+  showBadgeCounter: Rodyti prisijungimų pasiūlymų skaičių plėtinio piktogramoje
+  language: Kalba
+  languageFollows: Pagal naršyklę
+  version: Versija {version}
+  server: Serveris {url}
+  keepiqVersion: Keepiq {version}
+  keepiqVersionUnknown: Keepiq versija nežinoma
+  help: Žinynas
+  reportBug: Pranešti apie klaidą
+  contactSupport: Susisiekti su palaikymo tarnyba
+  privacyPolicy: Privatumo politika
+  webApp: Keepiq žiniatinklio programėlė
+  rate: Įvertinti plėtinį
+
+websiteAccess:
+  title: Leiskite Keepiq veikti svetainėse
+  body: Safari leidžia Keepiq veikti tik jūsų leistose svetainėse. Leiskite jį visose svetainėse, kad galėtumėte užpildyti prisijungimus, įrašyti naujus ir naudoti prieigos raktus visur, kur prisijungiate.
+  allow: Leisti visose svetainėse
+  dismiss: Ne dabar
+  steps: Naršyklėje Safari pasirinkite Safari > Nustatymai, tada Svetainės. Sąraše pažymėkite Keepiq ir nustatykite „Lankantis kitose svetainėse“ į Leisti.
+  perSite: Norėdami leisti svetaines po vieną, toje svetainėje spustelėkite Keepiq mygtuką ir pasirinkite visada leisti.
+  serverTitle: Keepiq negali pasiekti {host}
+  serverBody: Safari neleidžia Keepiq pasiekti jūsų serverio, todėl saugykla negali sinchronizuotis.
+  serverAllow: Leisti {host}
+
+generator:
+  kinds: Ką generuoti
+  password: Slaptažodis
+  passphrase: Slaptafrazė
+  username: Naudotojo vardas
+  length: Ilgis
+  lengthValue: Ilgis simboliais
+  uppercase: Didžiosios raidės (A-Z)
+  lowercase: Mažosios raidės (a-z)
+  digits: Skaičiai (0-9)
+  special: Specialieji simboliai, pvz., !@#$%^&*
+  uppercaseShort: A-Z
+  lowercaseShort: a-z
+  digitsShort: 0-9
+  specialShort: "!@#$%^&*"
+  characterTypes: Simbolių tipai
+  lastClassOn: Bent vienas tipas lieka įjungtas
+  minNumbers: Mažiausiai skaičių
+  minSpecial: Mažiausiai specialiųjų
+  avoidAmbiguous: Vengti panašių simbolių
+  lockedByPolicy: Nustatė jūsų organizacija
+  passphraseOff: Išjungė jūsų organizacija
+  words: Žodžių skaičius
+  separator: Žodžių skirtukas
+  capitalizeWords: Didžiosios pradžios raidės
+  capitalize: Didžioji pradžios raidė
+  includeNumber: Įtraukti skaičių
+  usernameType: Tipas
+  typeWord: Atsitiktinis žodis
+  typePlus: El. paštas su pliuso adresu
+  typeCatchall: Catch-all el. paštas
+  email: El. paštas
+  emailPlaceholder: vardas@example.com
+  domain: Domenas
+  domainPlaceholder: example.com
+  basedOn: Pagal
+  random: Atsitiktinis
+  websiteName: Svetainės pavadinimas
+  noWebsite: Svetainė neaptikta
+  needsEmail: Įveskite el. pašto adresą
+  needsDomain: Įveskite domeną
+  wordlistUnavailable: Žodžių sąrašas nepasiekiamas
+  regenerate: Generuoti iš naujo
+  usePassword: Naudoti šį slaptažodį
+  useUsername: Naudoti šį naudotojo vardą
+  history: Generatoriaus istorija
+  historyMeta: "{kind}, {time}"
+  historyEmpty: Sugeneruotų reikšmių dar nėra
+  clearHistory: Išvalyti
+  clearHistoryTitle: Išvalyti generatoriaus istoriją?
+  clearHistoryText: Visos sąrašo reikšmės bus pašalintos iš šios naršyklės.
+  generatePasswordLink: Generuoti slaptažodį
+  generatePassword: Generuoti slaptažodį
+  generateUsername: Generuoti naudotojo vardą
+
+send:
+  new: Naujas siuntinys
+  empty: Siuntinių dar nėra
+  emptyText: Bendrinkite tekstą ar prisijungimą per nuorodą, kuri išsitrina pati.
+  loadFailed: Nepavyko įkelti jūsų siuntinių
+  retry: Bandyti dar kartą
+  labelText: "Tekstas, {time}"
+  labelCredential: "Prisijungimo duomenys, {time}"
+  viewsLeft:
+    1: "Liko peržiūrų: {left} iš 1"
+    n: "Liko peržiūrų: {left} iš $1"
+  expires: "Galioja iki {date}"
+  neverExpires: Galioja neribotai
+  expired: Nebegalioja
+  passwordBadge: Slaptažodis
+  link: Nuoroda
+  copyLink: Kopijuoti nuorodą
+  copyLinkOf: "Kopijuoti nuorodą, {name}"
+  linkGone: Nuoroda nebepasiekiama
+  remove: Šalinti
+  removeOf: "Šalinti, {name}"
+  removeTitle: Šalinti siuntinį
+  removeConfirm: Šalinti šį siuntinį? Visi, turintys nuorodą, praras prieigą.
+  removed: Siuntinys pašalintas
+  contentSection: Turinys
+  optionsSection: Parinktys
+  type: Tipas
+  text: Tekstas
+  credential: Prisijungimo duomenys
+  content: Bendrinamas tekstas
+  maxViews: Daugiausia peržiūrų
+  maxViewsRange: "Nuo 1 iki {max}"
+  expiry: Galiojimas
+  expiry1h: 1 valanda
+  expiry1d: 1 diena
+  expiry2d: 2 dienos
+  expiry3d: 3 dienos
+  expiry7d: 7 dienos
+  expiry30d: 30 dienų
+  expiryCustom: Pasirinktinis
+  customHours: Valandos
+  customHoursMin: Ne mažiau kaip 1 valanda
+  customHoursMax: Ne daugiau kaip 720 valandų (30 dienų)
+  accessPassword: Prieigos slaptažodis
+  accessPasswordHint: Neprivaloma. Gavėjui jo reikės siuntiniui atidaryti.
+  create: Sukurti
+  protecting: Apsaugoma slaptažodžiu…
+  offline: Siuntiniams reikia ryšio su jūsų Keepiq serveriu
+  prefillFailed: Nepavyko perskaityti šio prisijungimo
+  ready: Jūsų siuntinys paruoštas
+  shownOnce:
+    1: Nukopijuokite šią nuorodą dabar. Ji rodoma tik kol uždarysite šį langą, o turinys sunaikinamas po 1 peržiūros.
+    n: Nukopijuokite šią nuorodą dabar. Ji rodoma tik kol uždarysite šį langą, o turinys sunaikinamas pasiekus peržiūrų ribą ($1).
+  passwordNote: Prieigos slaptažodį perduokite atskirai nuo nuorodos. Po 5 nesėkmingų bandymų siuntinys ištrinamas.
+  done: Atlikta
+
+pageFill:
+  insecure: "Įspėjimas: tai neapsaugotas HTTP puslapis, todėl kiti gali matyti ir pakeisti bet kokią jūsų pateiktą informaciją. Šis prisijungimas iš pradžių buvo įrašytas saugiame (HTTPS) puslapyje {host}.\n\nAr vis tiek norite užpildyti šį prisijungimą?"
+  insecureNoHost: "Įspėjimas: tai neapsaugotas HTTP puslapis, todėl kiti gali matyti ir pakeisti bet kokią jūsų pateiktą informaciją. Šis prisijungimas iš pradžių buvo įrašytas saugiame (HTTPS) puslapyje.\n\nAr vis tiek norite užpildyti šį prisijungimą?"
+  cardInsecure: "Užpildyti šią kortelę nesaugioje svetainėje?\n\nŠi svetainė nėra saugi. Bet kas tinkle gali perskaityti užpildytus kortelės duomenis."
+  crossSite: "Užpildyti ir kitose svetainėse ({hosts})?\n\nDalis šios formos gaunama iš kitų svetainių ({hosts}), o ne iš svetainės {host}. Keepiq ją ten užpildys tik jums sutikus."
+
+contextMenu:
+  root: Keepiq
+  autofill: Užpildyti prisijungimą
+  noMatches: Prisijungimų nėra
+  noUsernames: Naudotojo vardų nėra
+  noPasswords: Slaptažodžių nėra
+  noCodes: Patvirtinimo kodų nėra
+  noIdentities: Tapatybių nėra
+  noCards: Kortelių nėra
+  addLogin: Pridėti prisijungimą
+  addIdentity: Pridėti tapatybę
+  addCard: Pridėti kortelę
+  openKeepiq: Atidaryti Keepiq
+  copyUsername: Kopijuoti naudotojo vardą
+  copyPassword: Kopijuoti slaptažodį
+  copyCode: Kopijuoti patvirtinimo kodą
+  autofillCard: Užpildyti kortelę
+  autofillIdentity: Užpildyti tapatybę
+  generatePassword: Generuoti ir kopijuoti slaptažodį
+  unlock: Atrakinti saugyklą
+
+pageNotice:
+  label: Keepiq pranešimas
+  noLoginForm: Keepiq šiame puslapyje nerado prisijungimo formos, kurią galėtų užpildyti.
+  noCardForm: Keepiq šiame puslapyje nerado kortelės laukų, kuriuos galėtų užpildyti.
+  noIdentityForm: Keepiq šiame puslapyje nerado adreso ar asmens duomenų laukų, kuriuos galėtų užpildyti.
+
+toolbar:
+  locked: "{name}: užrakinta"
+  loggedOut: "{name}: atsijungta"
+  count:
+    1: "{name}: 1 prisijungimas šiai svetainei"
+    n: "{name}: šios svetainės prisijungimai ($1)"
+
+inlineList:
+  frameTitle: Keepiq prisijungimai
+  label: Keepiq prisijungimai svetainei {host}
+  row: "{name}, {username}"
+  noMatch: Svetainei {host} prisijungimų nėra
+  passkeyRow: "{name}, {username}, prieigos raktas"
+  passkeyRowNoUser: "{name}, prieigos raktas"
+  noMatchPasskeys: Svetainei {host} prisijungimų ar prieigos raktų nėra
+  locked: Keepiq saugykla užrakinta
+  unlock: Atrakinti
+  insecureQuestion: Užpildyti šioje nesaugioje svetainėje?
+  insecureDetail: Ši svetainė nėra saugi. Bet kas tinkle gali perskaityti tai, kas užpildoma.
+  fill: Užpildyti
+  notVisible: Keepiq čia negali užpildyti, nes šis puslapis keičia savo rodymo būdą. Naudokite Keepiq mygtuką įrankių juostoje.
+  status:
+    count:
+      1: 1 Keepiq prisijungimas. Norėdami pasirinkti, spauskite rodyklę žemyn.
+      n: "Keepiq prisijungimų: $1. Norėdami pasirinkti, spauskite rodyklę žemyn."
+    noMatch: Svetainei {host} Keepiq prisijungimų nėra
+    countPasskeys:
+      1: 1 Keepiq prisijungimas ar prieigos raktas. Norėdami pasirinkti, spauskite rodyklę žemyn.
+      n: "Keepiq prisijungimų ir prieigos raktų: $1. Norėdami pasirinkti, spauskite rodyklę žemyn."
+    noMatchPasskeys: Svetainei {host} Keepiq prisijungimų ar prieigos raktų nėra
+    locked: Keepiq saugykla užrakinta. Norėdami atrakinti, spauskite rodyklę žemyn.
+  code:
+    frameTitle: Keepiq patvirtinimo kodai
+    label: Keepiq patvirtinimo kodai svetainei {host}
+    noMatch: Svetainei {host} patvirtinimo kodų nėra
+    locked: Atrakinkite Keepiq, kad matytumėte patvirtinimo kodus
+    invalid: Netinkama autentifikatoriaus paslaptis
+    status:
+      count:
+        1: 1 Keepiq patvirtinimo kodas. Norėdami pasirinkti, spauskite rodyklę žemyn.
+        n: "Keepiq patvirtinimo kodų: $1. Norėdami pasirinkti, spauskite rodyklę žemyn."
+      noMatch: Svetainei {host} Keepiq patvirtinimo kodų nėra
+  card:
+    frameTitle: Keepiq kortelės
+    noMatch: Keepiq kortelių nėra
+    locked: Atrakinkite Keepiq, kad matytumėte korteles
+    detail: "{brand}, *{last4}"
+    detailNoBrand: "Kortelė, *{last4}"
+    row: "{name}, {brand}, baigiasi {last4}"
+    rowNoBrand: "{name}, kortelė, baigiasi {last4}"
+    status:
+      count:
+        1: 1 Keepiq kortelė. Norėdami pasirinkti, spauskite rodyklę žemyn.
+        n: "Keepiq kortelių: $1. Norėdami pasirinkti, spauskite rodyklę žemyn."
+  identity:
+    frameTitle: Keepiq tapatybės
+    noMatch: Keepiq tapatybių nėra
+    locked: Atrakinkite Keepiq, kad matytumėte tapatybes
+    status:
+      count:
+        1: 1 Keepiq tapatybė. Norėdami pasirinkti, spauskite rodyklę žemyn.
+        n: "Keepiq tapatybių: $1. Norėdami pasirinkti, spauskite rodyklę žemyn."
+  newPassword:
+    frameTitle: Keepiq stiprus slaptažodis
+    offer: Naudoti stiprų slaptažodį
+    locked: Atrakinkite Keepiq, kad gautumėte stiprų slaptažodį
+    status: Naudoti stiprų slaptažodį. Norėdami pasirinkti, spauskite rodyklę žemyn.
+
+notificationBar:
+  label: Keepiq pranešimas
+  saveQuestion: Įrašyti svetainės {host} prisijungimą į Keepiq?
+  updateQuestion: Atnaujinti {name} slaptažodį?
+  updateQuestionUser: Atnaujinti {name} ({username}) slaptažodį?
+  updateQuestionHost: Atnaujinti {name} slaptažodį svetainėje {host}?
+  updateQuestionUserHost: Atnaujinti {name} ({username}) slaptažodį svetainėje {host}?
+  folder: Aplankas
+  noFolder: Be aplanko
+  save: Įrašyti
+  never: Niekada šioje svetainėje
+  update: Atnaujinti
+  close: Uždaryti
+  expand: Rodyti parinktis
+  shortcutHint: Norėdami atsakyti, spauskite {shortcut}.
+  saving: Įrašoma…
+  updating: Atnaujinama…
+  saved: Prisijungimas įrašytas
+  updated: Slaptažodis atnaujintas
+  notVisible: Keepiq čia to padaryti negali, nes šis puslapis keičia savo rodymo būdą. Uždarykite tai ir pridėkite prisijungimą Keepiq mygtuku įrankių juostoje.
+  errors:
+    writeLocked: Saugykla laikinai užrakinta pakeitimams. Bandykite vėliau.
+    unverified: Norėdami pakeisti slaptažodį, redaguokite šį prisijungimą Keepiq iššokančiajame lange ar žiniatinklio programėlėje.
+    viewOnly: Šis prisijungimas su jumis bendrinamas tik peržiūrai, todėl jo slaptažodžio čia atnaujinti negalima.
+    loginGone: Šio prisijungimo nebėra. Įrašyti kaip naują prisijungimą?
+    locked: Keepiq saugykla užrakinta. Atrakinkite ją Keepiq mygtuku įrankių juostoje ir bandykite dar kartą.
+    notResponding: Keepiq neatsako. Bandykite dar kartą.
+    accountChanged: Perjungėte paskyrą, todėl niekas neįrašyta.
+    keyMismatch: Keepiq raktas neatitinka jūsų saugyklos. Niekas neįrašyta; praneškite administratoriui.
+    staleSource: Šio bendrinamo prisijungimo originalas pasikeitė. Niekas neįrašyta; bandykite dar kartą.
+    incomplete: Žmonės, su kuriais bendrinamas šis prisijungimas, nuolat keitėsi. Niekas neįrašyta; bandykite dar kartą.
+    badCertificate: Nepavyko perskaityti gavėjo šifravimo rakto. Niekas neįrašyta.
+    keepiqOutdated: Jūsų Keepiq serveris per senas. Niekas neįrašyta; paprašykite administratoriaus Keepiq {version} ar naujesnės versijos.
+    shareScanPending: Šis prisijungimas laukia bendrinimo patikros. Niekas neįrašyta; bandykite vėliau.
+
+passkey:
+  unlockGet: Atrakinkite Keepiq, kad galėtumėte naudoti svetainės {rpId} prieigos raktą
+  unlockCreate: Atrakinkite Keepiq, kad galėtumėte įrašyti svetainės {rpId} prieigos raktą
+  verifyTitle: Patvirtinkite, kad tai jūs
+  verifyPassword: Norėdami tęsti, įveskite pagrindinį slaptažodį.
+  verifyPin: Norėdami tęsti, įveskite PIN kodą.
+  confirm: Patvirtinti
+  signInTitle: Prisijungti su prieigos raktu
+  signInText: Naudoti Keepiq įrašytą svetainės {rpId} prieigos raktą
+  row: "{name}, {userName}"
+  noPasskey: Svetainei {rpId} Keepiq prieigos rakto nėra
+  saveTitle: Įrašyti prieigos raktą
+  saveTo: Įrašyti į prisijungimą
+  replaces: Pakeičia naudotojo {userName} prieigos raktą
+  newLogin: Naujas prisijungimas
+  name: Pavadinimas
+  folder: Aplankas
+  noFolder: Be aplanko
+  saveNew: Įrašyti kaip naują prisijungimą
+  replaceQuestion: Pakeisti naudotojo {userName} prieigos raktą prisijungime {name}?
+  replace: Pakeisti
+  alreadySavedTitle: Prieigos raktas jau įrašytas
+  alreadySaved: Šios paskyros prieigos raktas jau įrašytas Keepiq saugykloje
+  close: Uždaryti
+  retry: Bandyti dar kartą
+  fallback: Naudoti savo įrenginį ar aparatinį raktą
+  stalePick: Šio prieigos rakto jūsų saugykloje nebėra. Pasirinkite kitą.
+  staleSave: Į šį prisijungimą prieigos rakto įrašyti nebegalima. Pasirinkite kitą arba įrašykite kaip naują prisijungimą.
+  errors:
+    conflict: Įrašant šis prisijungimas pasikeitė. Niekas neįrašyta; bandykite dar kartą.
+    partnerUpgradeRequired: "Niekas neįrašyta: gavėjų {cloudIds} Keepiq versija per sena prieigos raktams saugoti. Paprašykite jų atnaujinti Keepiq arba įrašykite prieigos raktą į kitą prisijungimą."
+    partnerUpgradeRequiredUnnamed: "Niekas neįrašyta: partnerio organizacija, su kuria bendrinamas šis prisijungimas, naudoja per seną Keepiq versiją prieigos raktams saugoti. Paprašykite jų atnaujinti Keepiq arba įrašykite prieigos raktą į kitą prisijungimą."
+    shareScanPending: Šis prisijungimas laukia bendrinimo patikros, kuri dar nebaigta. Niekas neįrašyta; bandykite vėliau.
+
+vaultPasskey:
+  unlock: "Atrakinti piršto atspaudu arba veidu"
+  unlockIntro: "Naršyklė paprašys piršto atspaudo, veido arba įrenginio PIN kodo."
+  enrolTitle: "Nustatyti atrakinimą piršto atspaudu arba veidu"
+  enrolIntro: "Patvirtinkite pagrindinį slaptažodį. Tada naršyklė du kartus paprašys piršto atspaudo, veido arba įrenginio PIN kodo."
+  enrolSubmit: "Nustatyti"
+  enrolDone: "Atrakinimas piršto atspaudu arba veidu šioje naršyklėje nustatytas."
+  close: "Uždaryti"
+  label: "Keepiq naršyklės plėtinys"
+  tooOld: "Atrakinimui piršto atspaudu arba veidu reikia Chrome arba Edge 122, arba Firefox 150, arba naujesnės. Naudokite pagrindinį slaptažodį."
+  unsupported: "Ši naršyklė arba įrenginys negali atrakinti Keepiq piršto atspaudu ar veidu. Naudokite pagrindinį slaptažodį."
+  revokeInWebApp: "Norėdami išjungti, atšaukite šį prieigos raktą Keepiq žiniatinklio programoje."

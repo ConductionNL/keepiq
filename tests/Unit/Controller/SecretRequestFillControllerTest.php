@@ -24,13 +24,19 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\SecretRequestFillController;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\SecretRequestPolicy;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -268,6 +274,45 @@ class SecretRequestFillControllerTest extends TestCase {
 		$this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
 
 	}//end testFillReturns500OnGenericFailure()
+
+	/**
+	 * Refusals a fill can meet from the secret's holder side.
+	 *
+	 * @return array<string,array{RuntimeException}>
+	 */
+	public static function holderRefusals(): array {
+		return [
+			'a copy shared to view only' => [new ViewOnlyCopyException()],
+			'a copy from another organisation' => [new ForbiddenException(message: Secret::READ_ONLY_REFUSAL)],
+			'a copy whose source cannot be resolved' => [new NotFoundException(message: 'Secret not found')],
+			'a secret whose share row waits for the quarantine scan' => [new ShareScanPendingException('This secret waits for the share quarantine scan')],
+		];
+	}//end holderRefusals()
+
+	/**
+	 * A fill the secret's holder may not take, such as one onto a copy shared
+	 * with them to view only, answers 403 without the holder-facing refusal
+	 * (keepiq#1287).
+	 *
+	 * @param RuntimeException $refusal The refusal the fill meets
+	 *
+	 * @return void
+	 */
+	#[DataProvider('holderRefusals')]
+	public function testFillReturns403WhenTheSecretMayNotBeChanged(RuntimeException $refusal): void {
+		$this->secretRequestService->expects($this->once())
+			->method('fill')
+			->willThrowException($refusal);
+
+		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'B']);
+
+		$this->assertSame(expected: Http::STATUS_FORBIDDEN, actual: $response->getStatus());
+		$this->assertSame(
+			expected: ['message' => 'The secret this request writes to cannot be changed'],
+			actual: $response->getData()
+		);
+	}//end testFillReturns403WhenTheSecretMayNotBeChanged()
+
 	/**
 	 * The fill response never tells the recipient which fields already hold values.
 	 *
@@ -349,4 +394,64 @@ class SecretRequestFillControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_GONE, $response->getStatus());
 	}//end testFillRefusesARequestOnARevokedSuite()
+
+	/**
+	 * A refusal without an HTTP code answers 404, with the message and the reason.
+	 *
+	 * @return void
+	 */
+	public function testShowWithoutACodedRefusalIs404(): void {
+		$this->secretRequestService->method('getByToken')->willThrowException(new InvalidArgumentException(message: 'Unknown token'));
+		$this->secretRequestService->method('refusalReason')->with(token: 'tok-x')->willReturn('not_found');
+
+		$response = $this->controller->show(token: 'tok-x');
+
+		$this->assertSame(expected: Http::STATUS_NOT_FOUND, actual: $response->getStatus());
+		$this->assertSame(expected: ['message' => 'Unknown token', 'reason' => 'not_found'], actual: $response->getData());
+	}//end testShowWithoutACodedRefusalIs404()
+
+	/**
+	 * Requested fields that are not a JSON list read as none.
+	 *
+	 * @return void
+	 */
+	public function testShowReadsUnreadableRequestedFieldsAsNone(): void {
+		$request = $this->makeRequest();
+		$request->setRequestedFields('not json');
+		$this->secretRequestService->method('getByToken')->willReturn($request);
+		$this->encryptionSuiteService->method('getSuite')->willReturn($this->makeSuite());
+
+		$response = $this->controller->show(token: 'tok-1');
+
+		$this->assertSame(expected: [], actual: $response->getData()['requested_fields']);
+	}//end testShowReadsUnreadableRequestedFieldsAsNone()
+
+	/**
+	 * A fill without encrypted fields is a 400 and never reaches the service.
+	 *
+	 * @return void
+	 */
+	public function testFillWithoutFieldsIs400(): void {
+		$this->secretRequestService->expects($this->never())->method('fill');
+
+		foreach ([null, []] as $fields) {
+			$response = $this->controller->fill(token: 'tok-1', encryptedFields: $fields);
+			$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+			$this->assertSame(expected: ['message' => 'encryptedFields is required'], actual: $response->getData());
+		}
+	}//end testFillWithoutFieldsIs400()
+
+	/**
+	 * A validation refusal without an HTTP code answers 400.
+	 *
+	 * @return void
+	 */
+	public function testFillWithAnUncodedRefusalIs400(): void {
+		$this->secretRequestService->method('fill')->willThrowException(new InvalidArgumentException(message: 'Bad field'));
+
+		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'CIPHER']);
+
+		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+		$this->assertSame(expected: ['message' => 'Bad field'], actual: $response->getData());
+	}//end testFillWithAnUncodedRefusalIs400()
 }//end class

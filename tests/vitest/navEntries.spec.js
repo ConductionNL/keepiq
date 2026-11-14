@@ -158,8 +158,9 @@ describe('isMenuEntryVisible', () => {
 
 	it('is what KeepiqAppNav filters and routes with', () => {
 		const nav = read('src', 'components', 'KeepiqAppNav', 'KeepiqAppNav.vue')
+		const entry = read('src', 'components', 'KeepiqAppNav', 'NavMenuEntry.vue')
 		expect(nav).toContain('.filter((item) => isMenuEntryVisible(item, context))')
-		expect(nav).toMatch(/itemTo\(item\) \{\s+return menuEntryTo\(item\)\s+\}/)
+		expect(entry).toMatch(/itemTo\(item\) \{\s+return menuEntryTo\(item\)\s+\}/)
 		expect(nav).toMatch(/appsWebRoots:\s+currentAppsWebRoots\(\),/)
 	})
 })

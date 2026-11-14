@@ -22,7 +22,7 @@ namespace OCA\Keepiq\Tests\Unit\Mcp;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\McpRegistrar;
+use OCA\Keepiq\Mcp\McpRegistrar;
 use OCA\Keepiq\Db\AuditEntry;
 use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
@@ -52,6 +52,7 @@ use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
+use ReflectionMethod;
 
 /**
  * The MCP metadata surface.
@@ -114,6 +115,7 @@ class McpSurfaceTest extends TestCase {
 		$row = [
 			'id' => 's1', 'name' => 'staging db', 'url' => 'https://db', 'typeId' => 't', 'folderId' => null,
 			'key' => 'CIPHER-KEY', 'login' => 'CIPHER-LOGIN', 'additionalFields' => 'CIPHER-EXTRA',
+			'totp' => 'CIPHER-TOTP', 'passkeys' => 'CIPHER-PASSKEYS',
 			'encryptionSuiteId' => 'suite-1', 'brandNewColumn' => 'x', 'nested' => ['id' => 1],
 		];
 		$projected = (new MetadataAllowList())->project(row: $row, type: 'entry');
@@ -124,10 +126,19 @@ class McpSurfaceTest extends TestCase {
 		// check pass something it must refuse, so the check is not vacuous.
 		$this->assertFalse(self::onlyAllowed([$row], MetadataAllowList::KEYS['entry']));
 		foreach (MetadataAllowList::KEYS as $type => $keys) {
-			foreach (['key', 'login', 'additionalFields', 'encryptionSuiteId', 'value', 'password', 'privateKey'] as $banned) {
+			foreach ([...Secret::VALUE_FIELDS, 'encryptionSuiteId', 'value', 'password', 'privateKey'] as $banned) {
 				$this->assertNotContains($banned, $keys, $type . ' allows ' . $banned);
 			}
 		}
+
+		// A real secret row, every value field set, projects to no value field.
+		$secret = new Secret();
+		$secret->setId('s2');
+		$secret->setKey('CIPHER-KEY');
+		$secret->setTotp('CIPHER-TOTP');
+		$secret->setPasskeys('CIPHER-PASSKEYS');
+		$entry = (new MetadataAllowList())->project(row: $secret->jsonSerialize(), type: 'entry');
+		$this->assertSame([], array_intersect(Secret::VALUE_FIELDS, array_keys($entry)));
 
 		$this->expectException(InvalidArgumentException::class);
 		(new MetadataAllowList())->project(row: [], type: 'unknown');
@@ -185,6 +196,45 @@ class McpSurfaceTest extends TestCase {
 			(new KeepiqScannableServices())->getScannableServiceClasses()
 		);
 	}//end testScannableSurfaceIsExactlyThreeReadTools()
+
+	/**
+	 * Each tool declares its reach. All three read only the session user's own
+	 * vault metadata and return it to that user, so each reaches `user`; an
+	 * omitted reach would resolve to `external` in openregister.
+	 *
+	 * @return void
+	 */
+	public function testEachToolDeclaresItsReach(): void {
+		$expected = [
+			EntryMetadataTools::class . '::listEntries' => 'user',
+			ExpiryReportTools::class . '::expiryReport' => 'user',
+			RotationStatusTools::class . '::rotationStatus' => 'user',
+		];
+
+		foreach ($expected as $where => $reach) {
+			[$class, $method] = explode('::', $where);
+			$attributes = (new ReflectionMethod($class, $method))->getAttributes(McpTool::class);
+			$this->assertCount(expectedCount: 1, haystack: $attributes, message: $where);
+			$this->assertSame(expected: $reach, actual: $attributes[0]->newInstance()->reach, message: $where);
+		}
+	}//end testEachToolDeclaresItsReach()
+
+	/**
+	 * #[McpTool] takes openregister's constructor parameters, in its order.
+	 *
+	 * @return void
+	 */
+	public function testMcpToolTakesOpenRegistersParameters(): void {
+		$parameters = array_map(
+			static fn ($parameter) => $parameter->getName(),
+			(new ReflectionClass(McpTool::class))->getConstructor()->getParameters()
+		);
+
+		$this->assertSame(
+			['name', 'description', 'readOnlyHint', 'destructiveHint', 'idempotentHint', 'scope', 'subject', 'action', 'reach', 'annotations'],
+			$parameters
+		);
+	}//end testMcpToolTakesOpenRegistersParameters()
 
 	/**
 	 * The alias is registered unconditionally, as two strings, and is inert
