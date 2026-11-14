@@ -1,6 +1,9 @@
 <template>
-	<section class="secret-activity" data-testid="secret-activity-tab">
-		<h3 class="secret-activity__heading">
+	<section
+		class="secret-activity"
+		:class="{ 'secret-activity--embedded': hideHeading }"
+		data-testid="secret-activity-tab">
+		<h3 v-if="!hideHeading" class="secret-activity__heading">
 			{{ t('keepiq', 'Activity') }}
 		</h3>
 
@@ -61,6 +64,15 @@ export default {
 		secretId: {
 			type: String,
 			required: true,
+		},
+
+		/**
+		 * Whether the tab leaves out its own "Activity" heading, where the
+		 * surrounding row already labels it.
+		 */
+		hideHeading: {
+			type: Boolean,
+			default: false,
 		},
 	},
 
@@ -150,6 +162,10 @@ export default {
 <style scoped lang="scss">
 .secret-activity {
 	margin-block-start: 1rem;
+
+	&--embedded {
+		margin-block-start: 0;
+	}
 
 	&__heading {
 		font-weight: bold;

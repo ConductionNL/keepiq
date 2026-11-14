@@ -52,7 +52,10 @@ describe('additional fields under real encryption', () => {
 			JSON.parse(await rsaDecrypt(sealed, pair.privateKey)),
 		)
 
-		expect(opened).toEqual(members)
+		// Each member comes back with its schema: plain text, as none was set.
+		expect(opened).toEqual(
+			members.map((member) => ({ ...member, schema: { type: 'string' } })),
+		)
 	})
 
 	it('leaks neither member names nor values into the ciphertext', async () => {

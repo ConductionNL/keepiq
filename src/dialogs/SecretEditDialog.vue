@@ -90,9 +90,12 @@
 				:removeOnly="!totpEditable"
 				:disabled="saving || loading || viewOnly" />
 
-			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
+			<NcTextField
+				v-if="showUrl"
+				v-model="url"
+				:label="t('keepiq', 'URL (optional)')" />
 
-			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+			<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
@@ -168,7 +171,9 @@ import {
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import { leavesOut } from '../utils/builtinTypeFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
+import { valuesFit } from '../utils/fieldSchema.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
 import { mergeTypedValues, splitTypedValues } from '../utils/typedFields.js'
@@ -253,6 +258,34 @@ export default {
 		 */
 		typeLabel() {
 			return secretTypeLabel(useSecretTypeStore().typesById[this.typeId])
+		},
+
+		/**
+		 * Whether the login field is shown: when the type uses it, or when the
+		 * secret already holds a login, so it never becomes unreachable.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showLogin() {
+			return (
+				!leavesOut(this.selectedTypeName, 'login')
+				|| Boolean(this.original?.login)
+			)
+		},
+
+		/**
+		 * Whether the URL field is shown: when the type uses it, or when the
+		 * secret already holds a URL.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showUrl() {
+			return (
+				!leavesOut(this.selectedTypeName, 'url')
+				|| Boolean(this.original?.url)
+			)
 		},
 
 		/**
@@ -352,6 +385,7 @@ export default {
 
 		/**
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		canSubmit() {
 			return (
@@ -361,6 +395,11 @@ export default {
 				&& this.name.trim() !== ''
 				&& this.policyVerdict.compliant
 				&& this.totpError === ''
+				&& valuesFit(
+					this.additionalFields,
+					this.typedFields,
+					this.typedValues,
+				)
 			)
 		},
 	},

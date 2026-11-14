@@ -11,11 +11,26 @@
  * so #keepiq-app shrinks to the card's width — the recipient card's
  * `margin: auto` then has no free space to distribute and the card sits
  * pinned in the corner. Let the mount fill the flex row so the
- * .keepiq-public-shell wrapper (App.vue) can centre its card.
+ * .keepiq-public-shell wrapper (App.vue) can centre its card. Core gives
+ * #content a fixed height and `overflow: clip`, so the mount scrolls itself:
+ * otherwise a card taller than the window is cut off with no scrollbar.
  */
 #body-public #keepiq-app {
 	flex: 1 1 auto;
 	min-width: 0;
+	overflow-y: auto;
+}
+
+/*
+ * Core keeps a header's height free above #content and pads its bottom for a
+ * public footer, but the base layout renders neither: on the secret request
+ * fill page, keep only the thin body margin on both sides.
+ */
+#body-public #content:has(.keepiq-secret-request-fill) {
+	margin-top: var(--body-container-margin);
+	height: calc(100% - 2 * var(--body-container-margin));
+	min-height: 0;
+	padding-block-end: 0;
 }
 
 /*

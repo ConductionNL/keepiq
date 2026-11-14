@@ -21,6 +21,7 @@
  *
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 
 import {
@@ -36,6 +37,8 @@ import {
 	authenticatorKeyFromParts,
 } from '../totp/authenticatorKey.js'
 import { parseOtpauth } from '../totp/totp.js'
+import { mergeBlobs } from '../utils/fieldSchema.js'
+import { customFieldsCredential, readCustomFields } from './cxfCustomFields.js'
 
 /** The CXF version this module targets (Proposed Standard, Aug 2025 line). */
 export const CXF_VERSION = { major: 1, minor: 0 }
@@ -233,6 +236,17 @@ function apiKeyFields(credential, title) {
 }
 
 /**
+ * The member an SSH key's public key is stored under: the built-in SSH Key
+ * form's own field.
+ */
+const SSH_PUBLIC_KEY = 'Public key'
+
+/**
+ * The member older imports stored the public key under, still read on export.
+ */
+const SSH_PUBLIC_KEY_ALIAS = 'publicKey'
+
+/**
  * Row fields of an SSH key credential.
  *
  * @param {object} credential The CXF credential entity.
@@ -245,7 +259,7 @@ function sshKeyFields(credential, title) {
 		name: title !== '' ? title : 'SSH key',
 		password: fieldValue(credential.privateKey),
 		type: 'ssh_key',
-		additionalFields: publicKey ? { publicKey } : null,
+		additionalFields: publicKey ? { [SSH_PUBLIC_KEY]: publicKey } : null,
 	}
 }
 
@@ -334,11 +348,16 @@ function itemToRows(item, folder, firstRow) {
 		rows: [],
 		seeds: [],
 		passkeys: [],
+		custom: [],
 	}
 	for (const [index, credential] of item.credentials.entries()) {
 		readCredential(ctx, { credential, sourceRow: firstRow + index })
 	}
-	if (ctx.seeds.length === 0 && ctx.passkeys.length === 0) {
+	if (
+		ctx.seeds.length === 0
+		&& ctx.passkeys.length === 0
+		&& ctx.custom.length === 0
+	) {
 		return ctx.rows
 	}
 	attachExtras(ctx)
@@ -362,8 +381,8 @@ function rejectEntry(ctx, entry) {
 }
 
 /**
- * Read one credential of the item: a TOTP seed and a passkey wait for the
- * row they go on, anything else becomes a row of its own.
+ * Read one credential of the item: a TOTP seed, a passkey and custom fields
+ * wait for the row they go on, anything else becomes a row of its own.
  *
  * @param {object} ctx The item being read (itemToRows).
  * @param {{credential: object, sourceRow: number}} entry The credential and its source row.
@@ -375,6 +394,8 @@ function readCredential(ctx, entry) {
 		readTotp(ctx, entry)
 	} else if (type === 'passkey') {
 		readPasskey(ctx, entry)
+	} else if (type === 'custom-fields') {
+		ctx.custom.push(readCustomFields(entry.credential))
 	} else {
 		ctx.rows.push(
 			credentialToRow(entry.credential, ctx.item, ctx.folder, entry.sourceRow),
@@ -459,14 +480,19 @@ function extrasTarget(ctx) {
 }
 
 /**
- * Put the item's TOTP seeds and passkeys on its target row, rejecting a
- * seed or passkey that row cannot take.
+ * Put the item's TOTP seeds, passkeys and custom fields on its target row,
+ * rejecting a seed or passkey that row cannot take. Custom fields join the
+ * row's own, each with its schema.
  *
  * @param {object} ctx The item being read (itemToRows).
  * @return {void}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 function attachExtras(ctx) {
 	const target = extrasTarget(ctx)
+	for (const blob of ctx.custom) {
+		target.additionalFields = mergeBlobs(target.additionalFields || {}, blob)
+	}
 	for (const { seed, sourceRow } of ctx.seeds) {
 		const reason = attachTotp(target, seed)
 		if (reason !== null) {
@@ -715,7 +741,9 @@ function apiKeyCredential(row) {
 function sshKeyCredential(row) {
 	const fields = row.additionalFields
 	const publicKey =
-		fields && typeof fields === 'object' ? (fields.publicKey ?? '') : ''
+		fields && typeof fields === 'object'
+			? (fields[SSH_PUBLIC_KEY] ?? fields[SSH_PUBLIC_KEY_ALIAS] ?? '')
+			: ''
 	return {
 		type: 'ssh-key',
 		privateKey: {
@@ -793,6 +821,7 @@ const TYPE_NAMES = new Set([
  *   name map, used when a row's `type` carries an id rather than a name.
  * @param {string} [options.accountUserName] The exporting account's user name.
  * @return {{document: object, unmapped: Array<string>, itemCount: number}}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 export function buildCxfDocument(serializedSecrets, options = {}) {
 	const unmapped = []
@@ -800,16 +829,29 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 	const collections = new Map()
 
 	for (const [index, row] of serializedSecrets.entries()) {
-		const credential = rowToCredential(row, typeNameOf(row, options), unmapped)
+		const typeName = typeNameOf(row, options)
+		const credential = rowToCredential(row, typeName, unmapped)
 		if (credential === null) {
 			continue
 		}
 
 		const itemId = `item-${index + 1}`
+		// The SSH key entity carries the public key itself.
+		const custom = customFieldsCredential(
+			row.additionalFields,
+			credential.type === 'ssh-key'
+				? [SSH_PUBLIC_KEY, SSH_PUBLIC_KEY_ALIAS]
+				: [],
+			typeName,
+		)
 		items.push({
 			id: itemId,
 			title: row.name ?? '',
-			credentials: [credential, ...valueFieldCredentials(row, unmapped)],
+			credentials: [
+				credential,
+				...valueFieldCredentials(row, unmapped),
+				...(custom === null ? [] : [custom]),
+			],
 		})
 		addToCollection(collections, { folder: row.folder, itemId })
 	}

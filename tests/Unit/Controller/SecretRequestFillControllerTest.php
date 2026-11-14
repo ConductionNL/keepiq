@@ -143,6 +143,26 @@ class SecretRequestFillControllerTest extends TestCase {
 	}//end testShowReturnsTheCertificateAndRequestedFields()
 
 	/**
+	 * Show names the type of the Secret the request fills, so the fill page can
+	 * use the type's own labels and inputs.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 */
+	public function testShowNamesTheTypeOfTheSecretBeingFilled(): void {
+		$request = $this->makeRequest();
+		$this->secretRequestService->method('getByToken')->willReturn($request);
+		$this->secretRequestService->expects($this->once())
+			->method('secretTypeName')->with($request)->willReturn('certificate');
+		$this->encryptionSuiteService->method('getSuite')->willReturn($this->makeSuite());
+
+		$data = $this->controller->show(token: 'tok-1')->getData();
+
+		$this->assertSame(expected: 'certificate', actual: $data['secret_type']);
+	}//end testShowNamesTheTypeOfTheSecretBeingFilled()
+
+	/**
 	 * Show propagates the InvalidArgumentException HTTP code (e.g. 410 Gone).
 	 *
 	 * @return void

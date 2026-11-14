@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EditableItem } from '@/src/messages'
 import { parseTotpSeed } from '@/src/totp/totp'
-import { CARD_FIELDS, customField, diffDraft, emptyValues, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
+import { blobText, CARD_FIELDS, customField, diffDraft, emptyValues, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
 
 function values(overrides: Partial<FormValues> = {}): FormValues {
 	return { ...emptyValues('t-login'), name: 'GitHub', ...overrides }
@@ -171,6 +171,22 @@ describe('fromItem and diffDraft', () => {
 	it('never sends a withheld passkey credential', () => {
 		const fetched = item({ typeId: 't-passkey', key: '', login: null })
 		expect(patchOf(fetched, 'passkey', () => ({ name: 'Renamed' }))).toEqual({ name: 'Renamed' })
+	})
+
+	it('keeps the field schemas out of the fields and writes them back as an object', () => {
+		const schemas = '{"pin":{"type":"string","hidden":true},"gone":{"type":"integer"}}'
+		const fetched = item({ additionalFields: { pin: '1234', '@schema': schemas } })
+		const form = fromItem(fetched, 'login')
+		expect(form.fields.map((field) => field.name)).toEqual(['pin'])
+		const patch = patchOf(fetched, 'login', (values) => ({ fields: [...values.fields, customField('port', '22')] }))
+		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ pin: '1234', port: '22', '@schema': { pin: { type: 'string', hidden: true } } })
+	})
+})
+
+describe('blobText', () => {
+	it('writes fields without schemas as they are', () => {
+		expect(blobText({ pin: '1234' })).toBe('{"pin":"1234"}')
+		expect(blobText({ pin: '1234', '@schema': '{"gone":{"type":"integer"}}' })).toBe('{"pin":"1234"}')
 	})
 })
 

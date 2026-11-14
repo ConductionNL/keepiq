@@ -122,6 +122,29 @@ class SecretRequestControllerTest extends TestCase {
 	}//end testCreateWithoutASecretIdTakesTheFreshPath()
 
 	/**
+	 * The fresh path forwards the chosen type for the placeholder.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testCreateForwardsTheChosenTypeToTheFreshPath(): void {
+		$this->service->expects($this->once())
+			->method('createForUserVault')
+			->with('alice', ['key'], 'Supplier TLS certificate', 'folder-1', null, 'type-certificate')
+			->willReturn($this->made());
+
+		$response = $this->controller->create(
+			requestedFields: ['key'],
+			name: 'Supplier TLS certificate',
+			folderId: 'folder-1',
+			typeId: 'type-certificate',
+		);
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+	}//end testCreateForwardsTheChosenTypeToTheFreshPath()
+
+	/**
 	 * A re-request without a secretId is refused explicitly.
 	 *
 	 * It overwrites values in an existing Secret, so it cannot be asked for

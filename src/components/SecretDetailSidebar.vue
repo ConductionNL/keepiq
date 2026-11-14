@@ -303,7 +303,7 @@
 					</span>
 					<div class="secret-detail__row-main">
 						<span class="secret-detail__row-label">{{
-							t('keepiq', 'Login')
+							loginLabel
 						}}</span>
 						<div class="secret-detail__row-value">
 							{{ secret.login }}
@@ -332,10 +332,50 @@
 								:key="secretLoadToken"
 								:label="keyLabel"
 								:useOnly="useOnly"
+								:multiline="valueField?.kind === 'multiline'"
+								:alwaysShown="valueField?.public === true"
 								:resolve="resolveKey" />
 						</div>
 					</div>
 				</div>
+
+				<!-- The type's own fields, such as a certificate's private key
+				     or a database's host, sit with the value they belong to.
+				     They are stored in the additional fields, but only the
+				     members a person added show under "Additional fields". -->
+				<template v-if="!useOnly">
+					<div
+						v-for="member in typeMembers"
+						:key="member.field.label"
+						class="secret-detail__row"
+						data-testid="secret-detail-type-field">
+						<span class="secret-detail__row-icon">
+							<KeyVariant
+								v-if="isMaskedField(member.field)"
+								:size="20" />
+							<FormatListBulleted v-else :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<div
+								v-if="isMaskedField(member.field)"
+								class="secret-detail__row-value">
+								<PasswordField
+									:key="`${secretLoadToken}-${member.field.label}`"
+									:label="member.label"
+									:multiline="member.field.kind === 'multiline'"
+									:resolve="memberResolver(member.value)" />
+							</div>
+							<template v-else>
+								<span class="secret-detail__row-label">{{
+									member.label
+								}}</span>
+								<div class="secret-detail__row-value">
+									{{ member.value }}
+								</div>
+							</template>
+						</div>
+					</div>
+				</template>
 
 				<div
 					v-if="isTotp"
@@ -672,12 +712,16 @@
 							t('keepiq', 'URL')
 						}}</span>
 						<div class="secret-detail__row-value">
+							<!-- Only a web or mail address is a link: another
+							     scheme, such as javascript:, shows as text. -->
 							<a
-								:href="secret.url"
+								v-if="urlHref"
+								:href="urlHref"
 								target="_blank"
 								rel="noopener noreferrer">
 								{{ secret.url }}
 							</a>
+							<span v-else>{{ secret.url }}</span>
 						</div>
 					</div>
 				</div>
@@ -732,7 +776,7 @@
 				</div>
 			</div>
 
-			<div v-if="hasAdditionalFields && !useOnly" class="secret-detail__box">
+			<div v-if="ownMembers.length > 0 && !useOnly" class="secret-detail__box">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<FormatListBulleted :size="20" />
@@ -741,18 +785,24 @@
 						<span class="secret-detail__row-label">{{
 							t('keepiq', 'Additional fields')
 						}}</span>
-						<dl class="secret-detail__extra">
-							<template
-								v-for="(value, key) in secret.additionalFields"
-								:key="key">
-								<dt>
-									{{ key }}
-								</dt>
-								<dd>
-									{{ value }}
-								</dd>
-							</template>
-						</dl>
+						<div class="secret-detail__row-value">
+							<dl class="secret-detail__extra">
+								<div
+									v-for="member in ownMembers"
+									:key="member.name"
+									class="secret-detail__extra-item">
+									<dt>
+										{{ member.name }}
+									</dt>
+									<dd>
+										<SchemaValueView
+											:value="member.value"
+											:schema="member.schema"
+											:label="member.name" />
+									</dd>
+								</div>
+							</dl>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -840,105 +890,151 @@
 			    - recipient        → ShareRequestForm (request that the
 			                          owner share with a third party).
 			-->
-				<section
-					v-if="canSeeSharing"
-					class="secret-detail__sharing"
-					data-testid="secret-detail-sharing">
-					<h3 class="secret-detail__sharing-heading">
-						{{ t('keepiq', 'Sharing') }}
-					</h3>
+				<!-- The same grouped rows as "Advanced": one box, each part an
+				     icon + muted label with its content beneath. -->
+				<div
+					v-if="canSeeSharing || isOwner"
+					class="secret-detail__box secret-detail__more">
+					<section
+						v-if="canSeeSharing"
+						class="secret-detail__row secret-detail__row--block"
+						data-testid="secret-detail-sharing">
+						<span class="secret-detail__row-icon">
+							<ShareVariant :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<h3 class="secret-detail__row-label">
+								{{ t('keepiq', 'Sharing') }}
+							</h3>
+							<div class="secret-detail__row-value">
+								<ShareList
+									v-if="isOwner"
+									:secretId="secretId"
+									data-testid="secret-detail-share-list" />
 
-					<ShareList
-						v-if="isOwner"
-						:secretId="secretId"
-						data-testid="secret-detail-share-list" />
+								<GroupShareList
+									v-if="isOwner"
+									:secretId="secretId"
+									data-testid="secret-detail-group-share-list" />
 
-					<GroupShareList
-						v-if="isOwner"
-						:secretId="secretId"
-						data-testid="secret-detail-group-share-list" />
+								<DelegationManager
+									v-if="isOwner"
+									:secretId="secretId"
+									:canReclaim="true"
+									data-testid="secret-detail-delegation-manager"
+									@reclaimed="onReclaimed" />
 
-					<DelegationManager
-						v-if="isOwner"
-						:secretId="secretId"
-						:canReclaim="true"
-						data-testid="secret-detail-delegation-manager"
-						@reclaimed="onReclaimed" />
+								<ShareRequestForm
+									v-if="isRecipient && !isOwner"
+									:secretId="secretId"
+									data-testid="secret-detail-share-request" />
 
-					<ShareRequestForm
-						v-if="isRecipient && !isOwner"
-						:secretId="secretId"
-						data-testid="secret-detail-share-request" />
+								<!--
+							  Vault-admin takeover (user-sharing spec.md § Ownership
+							  Delegation). Only offered to a vault admin looking at
+							  somebody else's secret — the owner has ShareList and
+							  DelegationManager above instead. The server re-checks group
+							  membership AND that the admin already holds a share, so this
+							  condition decides what to SHOW, never what is allowed.
+							-->
+								<AdminHandoverPanel
+									v-if="!isOwner"
+									:secretId="secretId"
+									data-testid="secret-detail-admin-handover" />
+							</div>
+						</div>
+					</section>
 
 					<!--
-				  Vault-admin takeover (user-sharing spec.md § Ownership
-				  Delegation). Only offered to a vault admin looking at
-				  somebody else's secret — the owner has ShareList and
-				  DelegationManager above instead. The server re-checks group
-				  membership AND that the admin already holds a share, so this
-				  condition decides what to SHOW, never what is allowed.
-				-->
-					<AdminHandoverPanel
-						v-if="!isOwner"
-						:secretId="secretId"
-						data-testid="secret-detail-admin-handover" />
-				</section>
-
-				<!--
 			  Requests section — implement-secret-requests §8.4. Owners see
 			  a paginated list of pending/fulfilled/locked SecretRequests +
 			  a "Request fill-in" button that opens SecretRequestCreateDialog
 			  for write-without-read filling.
 			-->
-				<section
-					v-if="isOwner"
-					class="secret-detail__requests"
-					data-testid="secret-detail-requests">
-					<h3 class="secret-detail__requests-heading">
-						{{ t('keepiq', 'Requests') }}
-					</h3>
+					<section
+						v-if="isOwner"
+						class="secret-detail__row secret-detail__row--block"
+						data-testid="secret-detail-requests">
+						<span class="secret-detail__row-icon">
+							<MessageQuestionOutline :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<h3 class="secret-detail__row-label">
+								{{ t('keepiq', 'Requests') }}
+							</h3>
+							<div class="secret-detail__row-value">
+								<!-- Not for a payment card, identity, authenticator key or
+								     passkey: asking someone for those through a fill link is
+								     what fraud looks like, and the server refuses it. Their
+								     request history still shows. -->
+								<div
+									v-if="
+										!viewOnlyCopy
+										&& !isCard
+										&& !isIdentity
+										&& !isTotp
+										&& !isPasskey
+									"
+									class="secret-detail__requests-actions">
+									<!-- This action always targets THIS Secret, so the label
+								     says which of the two things it does. Asking for a
+								     credential you do not have yet starts from the vault,
+								     not from inside a Secret. -->
+									<NcButton
+										variant="secondary"
+										data-testid="secret-detail-request-create"
+										@click="openRequestCreate">
+										{{
+											secretHasValue
+												? t('keepiq', 'Ask for new values')
+												: t(
+														'keepiq',
+														'Ask someone to fill this in',
+													)
+										}}
+									</NcButton>
+								</div>
 
-					<div
-						v-if="!viewOnlyCopy"
-						class="secret-detail__requests-actions">
-						<!-- This action always targets THIS Secret, so the label
-					     says which of the two things it does. Asking for a
-					     credential you do not have yet starts from the vault,
-					     not from inside a Secret. -->
-						<NcButton
-							variant="secondary"
-							data-testid="secret-detail-request-create"
-							@click="openRequestCreate">
-							{{
-								secretHasValue
-									? t('keepiq', 'Ask for new values')
-									: t('keepiq', 'Ask someone to fill this in')
-							}}
-						</NcButton>
-					</div>
+								<SecretRequestList
+									:secretId="secretId"
+									data-testid="secret-detail-request-list" />
 
-					<SecretRequestList
-						:secretId="secretId"
-						data-testid="secret-detail-request-list" />
+								<SecretRequestCreateDialog
+									v-if="requestDialogOpen"
+									:open="requestDialogOpen"
+									:secret="secret"
+									:isReRequest="secretHasValue"
+									data-testid="secret-detail-request-dialog"
+									@update:open="requestDialogOpen = $event"
+									@created="onRequestCreated" />
+							</div>
+						</div>
+					</section>
 
-					<SecretRequestCreateDialog
-						v-if="requestDialogOpen"
-						:open="requestDialogOpen"
-						:secret="secret"
-						:isReRequest="secretHasValue"
-						data-testid="secret-detail-request-dialog"
-						@update:open="requestDialogOpen = $event"
-						@created="onRequestCreated" />
-				</section>
-
-				<!--
-			  Activity — add-secret-audit-trail §5.2. The audit trail
-			  for this secret, owner-scoped, newest first.
-			-->
-				<SecretActivityTab
-					v-if="isOwner"
-					:secretId="secretId"
-					data-testid="secret-detail-activity" />
+					<!--
+				  Activity — add-secret-audit-trail §5.2. The audit trail
+				  for this secret, owner-scoped, newest first. The row labels
+				  it, so the tab drops its own heading.
+				-->
+					<section
+						v-if="isOwner"
+						class="secret-detail__row secret-detail__row--block">
+						<span class="secret-detail__row-icon">
+							<TimelineClockOutline :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<h3 class="secret-detail__row-label">
+								{{ t('keepiq', 'Activity') }}
+							</h3>
+							<div class="secret-detail__row-value">
+								<SecretActivityTab
+									:secretId="secretId"
+									:hideHeading="true"
+									data-testid="secret-detail-activity" />
+							</div>
+						</div>
+					</section>
+				</div>
 			</details>
 
 			<details v-if="isOwner" class="secret-detail__accordion">
@@ -1038,6 +1134,7 @@ import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue
 import History from 'vue-material-design-icons/History.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
+import MessageQuestionOutline from 'vue-material-design-icons/MessageQuestionOutline.vue'
 import NoteTextOutline from 'vue-material-design-icons/NoteTextOutline.vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -1045,6 +1142,7 @@ import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import ShieldOutline from 'vue-material-design-icons/ShieldOutline.vue'
 import Star from 'vue-material-design-icons/Star.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
+import TimelineClockOutline from 'vue-material-design-icons/TimelineClockOutline.vue'
 import Web from 'vue-material-design-icons/Web.vue'
 import SecretRequestCreateDialog from '../dialogs/SecretRequestCreateDialog.vue'
 import AttachmentPanel from './AttachmentPanel.vue'
@@ -1054,6 +1152,7 @@ import PasskeyDisplay from './PasskeyDisplay.vue'
 import PasskeyList from './PasskeyList.vue'
 import PasswordField from './PasswordField.vue'
 import RotationPanel from './RotationPanel.vue'
+import SchemaValueView from './SchemaValueView.vue'
 import SecretActivityTab from './SecretActivityTab.vue'
 import SecretRequestList from './secretRequest/SecretRequestList.vue'
 import AdminHandoverPanel from './share/AdminHandoverPanel.vue'
@@ -1071,8 +1170,15 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import {
+	loginLabelOf,
+	typeFieldsOf,
+	valueFieldOf,
+} from '../utils/builtinTypeFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
+import { fieldsOf, schemasOf } from '../utils/fieldSchema.js'
 import { isRefusal } from '../utils/refusal.js'
+import { linkHref } from '../utils/safeLink.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
@@ -1118,12 +1224,14 @@ export default {
 		History,
 		KeyVariant,
 		Lock,
+		MessageQuestionOutline,
 		NoteTextOutline,
 		Paperclip,
 		Pencil,
 		ShareVariant,
 		Star,
 		StarOutline,
+		TimelineClockOutline,
 		Web,
 		AdminHandoverPanel,
 		AttachmentPanel,
@@ -1134,6 +1242,7 @@ export default {
 		PasskeyList,
 		PasswordField,
 		RotationPanel,
+		SchemaValueView,
 		SecretActivityTab,
 		SecretRequestCreateDialog,
 		SecretRequestList,
@@ -1362,8 +1471,54 @@ export default {
 				blob !== null
 				&& blob !== undefined
 				&& typeof blob === 'object'
-				&& Object.keys(blob).length > 0
+				&& Object.keys(fieldsOf(blob)).length > 0
 			)
+		},
+
+		/**
+		 * The fields of the secret's type that hold a value, in the type's
+		 * order, each with its translated label.
+		 *
+		 * @return {Array<{field: object, label: string, value: string}>}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		typeMembers() {
+			if (!this.hasAdditionalFields) {
+				return []
+			}
+			const blob = this.secret.additionalFields
+			const type = useSecretTypeStore().typesById[this.secret.typeId]
+			return typeFieldsOf(type)
+				.filter((field) => Object.hasOwn(blob, field.label))
+				.map((field) => ({
+					field,
+					label: field.displayLabel ?? field.label,
+					value: blob[field.label],
+				}))
+		},
+
+		/**
+		 * The members a person added themselves: every additional field the
+		 * secret's type does not define, each with its schema.
+		 *
+		 * @return {Array<{name: string, value: string, schema: object}>}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		ownMembers() {
+			if (!this.hasAdditionalFields) {
+				return []
+			}
+			const typeNames = new Set(this.typeMembers.map((m) => m.field.label))
+			const schemas = schemasOf(this.secret.additionalFields)
+			return Object.entries(fieldsOf(this.secret.additionalFields))
+				.filter(([name]) => !typeNames.has(name))
+				.map(([name, value]) => ({
+					name,
+					value:
+						value === null || value === undefined ? '' : String(value),
+					schema: schemas[name] ?? { type: 'string' },
+				}))
 		},
 
 		/**
@@ -1484,15 +1639,45 @@ export default {
 		},
 
 		/**
-		 * The label for the decrypted key field, which reads "Note" for the
-		 * `note` system type and "Key" otherwise.
+		 * The label for the decrypted key field: the type's own, such as
+		 * "Note" or "Certificate", else "Key".
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		keyLabel() {
-			return this.isNote ? t('keepiq', 'Note') : t('keepiq', 'Key')
+			return this.valueField?.label ?? t('keepiq', 'Key')
+		},
+
+		/**
+		 * The type's own value field, or null for the generic one.
+		 *
+		 * @return {{label: string, kind: string, public?: boolean}|null}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		valueField() {
+			return valueFieldOf(this.typeName)
+		},
+
+		/**
+		 * The login row's label: "Username" on a database, else "Login".
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		loginLabel() {
+			return loginLabelOf(this.typeName) ?? t('keepiq', 'Login')
+		},
+
+		/**
+		 * The system name of the secret's type, '' while none is loaded.
+		 *
+		 * @spec exclude Trivial lookup: resolves the secret's type id to its name.
+		 */
+		typeName() {
+			return useSecretTypeStore().typesById[this.secret?.typeId]?.name ?? ''
 		},
 
 		/**
@@ -1508,6 +1693,17 @@ export default {
 			}
 			const type = useSecretTypeStore().typesById[this.secret.typeId]
 			return Boolean(type) && type.name === 'totp'
+		},
+
+		/**
+		 * The link for the secret's URL: only a web or mail address, so a
+		 * `javascript:` or `data:` URL is never a live link.
+		 *
+		 * @return {string|null} The href, or null to show the URL as text.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		urlHref() {
+			return linkHref(this.secret?.url)
 		},
 
 		/**
@@ -1732,6 +1928,31 @@ export default {
 
 	methods: {
 		t,
+
+		/**
+		 * Whether a field of the type is shown masked: a hidden or
+		 * multi-line field, such as a passphrase or a private key.
+		 *
+		 * @param {{kind: string}} field The field.
+		 * @return {boolean} True when the field is masked.
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		isMaskedField(field) {
+			return field.kind === 'hidden' || field.kind === 'multiline'
+		},
+
+		/**
+		 * The resolver a masked member's field reveals and copies through.
+		 * Built here because a template cannot reach `Promise`: Vue only
+		 * exposes a fixed list of globals to template expressions.
+		 *
+		 * @param {string|number|boolean} value The member's decrypted value.
+		 * @return {function(): Promise<string>} The resolver.
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		memberResolver(value) {
+			return async () => String(value)
+		},
 
 		/**
 		 * Load and decrypt the secret.
@@ -2312,6 +2533,37 @@ details[open] > summary .secret-detail__accordion-chevron {
 	min-width: 0;
 }
 
+/* Additional fields: each a muted label above its value, like the rows.
+   Nextcloud's core CSS makes every dt and dd an inline-block with a fixed
+   130px right-aligned dt, which shrinks a value to its content; the list
+   resets that so each value spans the box. */
+.secret-detail__extra {
+	margin: 0;
+	padding: 0;
+}
+
+.secret-detail__extra-item + .secret-detail__extra-item {
+	margin-top: 10px;
+}
+
+.secret-detail__extra dt,
+.secret-detail__extra dd {
+	display: block;
+	width: auto;
+	padding: 0;
+	text-align: start;
+}
+
+.secret-detail__extra dt {
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+}
+
+.secret-detail__extra dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
 /* Metadata box (Proton): tight rows, no separators. */
 .secret-detail__box--meta .secret-detail__row {
 	padding: 8px 0;
@@ -2321,28 +2573,28 @@ details[open] > summary .secret-detail__accordion-chevron {
 	border-top: none;
 }
 
-.secret-detail__sharing {
-	margin-top: 24px;
-	padding-top: 16px;
-	border-top: 1px solid var(--color-border);
+/* "More information": a row label is a real heading for screen readers,
+   so it drops the large top margin and weight Nextcloud's core h3 adds. */
+h3.secret-detail__row-label {
+	margin-top: 0;
+	font-weight: normal;
+	line-height: inherit;
 }
 
-.secret-detail__sharing-heading {
-	margin: 0 0 12px;
-	font-size: 1.1rem;
+/* The sharing and request panels each bring their own headings ("Shared
+   with", "Delegations", ...) at the core h3/h4 sizes; inside a row they
+   read as one size of sub-heading, with even space between panels. */
+.secret-detail__more .secret-detail__row-value :deep(h3),
+.secret-detail__more .secret-detail__row-value :deep(h4) {
+	margin: 0 0 4px;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
 	color: var(--color-main-text);
 }
 
-.secret-detail__requests {
-	margin-top: 24px;
-	padding-top: 16px;
-	border-top: 1px solid var(--color-border);
-}
-
-.secret-detail__requests-heading {
-	margin: 0 0 12px;
-	font-size: 1.1rem;
-	color: var(--color-main-text);
+.secret-detail__more .secret-detail__row-value > * + * {
+	margin-top: 16px;
 }
 
 .secret-detail__requests-actions {

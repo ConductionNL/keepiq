@@ -170,6 +170,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @return {Promise<object>} The created request.
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		async createRequest(payload) {
 			this.loading = true
@@ -184,10 +185,16 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 						secretId: payload.secretId || '',
 						encryptionSuiteId: payload.encryptionSuiteId || '',
 						requestedFields: payload.requestedFields,
+						// The schema of each requested custom field, so the fill
+						// page shows and checks it.
+						fieldSchemas: payload.fieldSchemas || {},
 						isReRequest: payload.isReRequest === true,
 						expiresAt: payload.expiresAt || null,
 						name: payload.name || null,
 						folderId: payload.folderId || null,
+						// The type a FRESH request's placeholder is created as; null
+						// leaves the server's default.
+						typeId: payload.typeId || null,
 					},
 				)
 				this.secretRequests.unshift(response.data)
@@ -210,18 +217,22 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @param {string}        encryptionSuiteId The recipient suite ID.
 		 * @param {Array<string>} requestedFields   The field names to ask for.
 		 * @param {string|null}   [expiresAt]  Optional ISO-8601 expiry.
+		 * @param {object}        [fieldSchemas] The requested custom fields' schemas.
 		 * @return {Promise<object>}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		async createReRequest(
 			secretId,
 			encryptionSuiteId,
 			requestedFields,
 			expiresAt = null,
+			fieldSchemas = {},
 		) {
 			return this.createRequest({
 				secretId,
 				encryptionSuiteId,
 				requestedFields,
+				fieldSchemas,
 				isReRequest: true,
 				expiresAt,
 			})

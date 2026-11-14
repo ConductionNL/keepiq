@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Keepiq",
-        "version": "0.3.9-unstable.20261111130000",
+        "version": "0.3.9-unstable.20261113120000",
         "description": "The versioned JSON API of Keepiq, the password and secrets vault for Nextcloud: secrets, folders, shares, emergency access, recovery, applications and the admin API. Authenticate as a Nextcloud user: a browser session, or an app password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here. Errors on the /api/v1/ paths of the unversioned routes are RFC 9457 problem details (application/problem+json); the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json.",
         "contact": {
             "name": "Conduction B.V.",
@@ -8975,7 +8975,7 @@
             "get": {
                 "operationId": "secret-request-fill-show",
                 "summary": "Phase 1: resolve a token to its public metadata",
-                "description": "Phase 1: resolve a token to its public metadata. Returns the list of requested fields, the public certificate the browser must import to encrypt the responses, and the current status so the page can render \"expired\" / \"fulfilled\" / \"temporarily unavailable\" messages without leaking ownership.",
+                "description": "Phase 1: resolve a token to its public metadata. Returns the list of requested fields and their schemas, the type of the Secret they fill, the public certificate the browser must import to encrypt the responses, and the current status so the page can render \"expired\" / \"fulfilled\" / \"temporarily unavailable\" messages without leaking ownership.",
                 "tags": [
                     "secret-request-fill"
                 ],
@@ -10491,6 +10491,9 @@
                                         "type": "string"
                                     },
                                     "folderId": {
+                                        "type": "string"
+                                    },
+                                    "typeId": {
                                         "type": "string"
                                     }
                                 }

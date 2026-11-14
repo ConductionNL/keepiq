@@ -103,8 +103,8 @@ describe('SecretEditDialog — additional fields', () => {
 		const wrapper = await mountOver({ 'client-id': 'acme-4711', tenant: 'acme' })
 
 		expect(wrapper.vm.additionalFields).toEqual([
-			{ name: 'client-id', value: 'acme-4711' },
-			{ name: 'tenant', value: 'acme' },
+			{ name: 'client-id', value: 'acme-4711', schema: { type: 'string' } },
+			{ name: 'tenant', value: 'acme', schema: { type: 'string' } },
 		])
 		expect(
 			wrapper.find('[data-testid="additional-field-name-0"]').element.value,

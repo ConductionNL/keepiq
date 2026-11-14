@@ -11,7 +11,12 @@ import {
 	serializeIdentity,
 } from '../cardIdentity/cardIdentity.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
-import { missingRequired, typedFieldsOf } from '../utils/typedFields.js'
+import {
+	loginLabelOf,
+	typeFieldsOf,
+	valueFieldOf,
+} from '../utils/builtinTypeFields.js'
+import { missingRequired } from '../utils/typedFields.js'
 
 /**
  * The form state the create and edit secret dialogs share: the value, the
@@ -39,30 +44,56 @@ export const secretPayloadForm = {
 
 	computed: {
 		/**
-		 * The label for the secret-value field, which reads "Note" for the
-		 * `note` system type and "Secret value" otherwise.
+		 * The label for the secret-value field: the type's own, such as
+		 * "Note" or "Certificate", else "Secret value".
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valueLabel() {
-			const type = useSecretTypeStore().typesById[this.typeId]
-			return type && type.name === 'note'
-				? t('keepiq', 'Note')
-				: t('keepiq', 'Secret value')
+			return (
+				valueFieldOf(this.selectedTypeName)?.label
+				?? t('keepiq', 'Secret value')
+			)
 		},
 
 		/**
-		 * The fields an administrator defined on the chosen type; empty for
-		 * the built-in types, which keep their own forms.
+		 * Whether the value is entered in a text area, as a certificate or a
+		 * note is: a password input would drop the line breaks of a PEM block.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		valueMultiline() {
+			return valueFieldOf(this.selectedTypeName)?.kind === 'multiline'
+		},
+
+		/**
+		 * The login field's label: "Username" on a database, else "Login".
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		loginLabel() {
+			return (
+				loginLabelOf(this.selectedTypeName, true)
+				?? t('keepiq', 'Login (optional)')
+			)
+		},
+
+		/**
+		 * The extra fields of the chosen type: a built-in type's own, or the
+		 * fields an administrator defined on it.
 		 *
 		 * @return {Array<object>} The fields.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		typedFields() {
-			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
+			return typeFieldsOf(useSecretTypeStore().typesById[this.typeId])
 		},
 
 		/**
@@ -83,12 +114,15 @@ export const secretPayloadForm = {
 		},
 
 		/**
-		 * The props of the SecretPayloadFields in the dialog.
+		 * The props of the SecretPayloadFields in the dialog. A host whose
+		 * `valueRequired` is true marks the value as required.
 		 *
 		 * @return {object}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
 		 */
 		payloadFields() {
+			const required = this.valueRequired === true
 			return {
 				value: this.value,
 				card: this.card,
@@ -96,7 +130,11 @@ export const secretPayloadForm = {
 				generatorOpen: this.generatorOpen,
 				isCard: this.isCard,
 				isIdentity: this.isIdentity,
-				valueLabel: this.valueLabel,
+				valueLabel: required
+					? t('keepiq', '{label} (required)', { label: this.valueLabel })
+					: this.valueLabel,
+				valueRequired: required,
+				valueMultiline: this.valueMultiline,
 			}
 		},
 

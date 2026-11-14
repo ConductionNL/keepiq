@@ -38,6 +38,9 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for SecretRequest CRUD.
+ *
+ * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequestController extends OCSController {
 	/**
@@ -151,12 +154,17 @@ class SecretRequestController extends OCSController {
 	 * @param string|null $applicationId Optional owning application ID
 	 * @param string|null $name Name for the Secret a FRESH request creates
 	 * @param string|null $folderId Optional folder for that created Secret
+	 * @param string|null $typeId Optional type for that created Secret
+	 *
+	 * The schemas of requested custom fields arrive as `fieldSchemas` in the body.
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $isReRequest is a field of the POST
 	 *   body that the Nextcloud router binds by name, not an internal switch a caller
@@ -174,6 +182,7 @@ class SecretRequestController extends OCSController {
 		?string $applicationId = null,
 		?string $name = null,
 		?string $folderId = null,
+		?string $typeId = null,
 	): JSONResponse {
 		$user = $this->session->getUser();
 		if ($user === null) {
@@ -212,8 +221,12 @@ class SecretRequestController extends OCSController {
 				expiry: $this->parseExpiry(expiresAt: $expiresAt),
 				applicationId: (string)$applicationId,
 				userId: $user->getUID(),
-				name: $name,
-				folderId: $folderId
+				placeholder: [
+					'name' => $name,
+					'folderId' => $folderId,
+					'typeId' => $typeId,
+				],
+				fieldSchemas: $this->fieldSchemas()
 			);
 		} catch (InvalidArgumentException $e) {
 			$code = $e->getCode();
@@ -230,6 +243,25 @@ class SecretRequestController extends OCSController {
 
 		return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
 	}//end create()
+
+	/**
+	 * The schemas of the requested custom fields from the body; empty when none were sent.
+	 *
+	 * Read from the request rather than bound as a parameter, so create() stays within the
+	 * parameter limit.
+	 *
+	 * @return array<mixed>
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	private function fieldSchemas(): array {
+		$raw = $this->request->getParam('fieldSchemas');
+		if (is_array($raw) === false) {
+			return [];
+		}
+
+		return $raw;
+	}//end fieldSchemas()
 
 	/**
 	 * Parse the optional expiry timestamp. An unparseable value surfaces as
@@ -264,12 +296,16 @@ class SecretRequestController extends OCSController {
 	 * @param string $applicationId Owning application ID ('' unless
 	 *                              $mode is MODE_APPLICATION)
 	 * @param string $userId The requesting user
-	 * @param string|null $name Name for a FRESH request's created Secret
-	 * @param string|null $folderId Folder for that created Secret
+	 * @param array{name: ?string, folderId: ?string, typeId: ?string} $placeholder What a
+	 *        FRESH request's created Secret is made from; unused by the other modes
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields; an
+	 *        application request carries none
 	 *
 	 * @return \OCA\Keepiq\Db\SecretRequest
 	 *
 	 * @throws InvalidArgumentException Propagated from the service.
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function dispatchCreate(
 		string $mode,
@@ -279,8 +315,8 @@ class SecretRequestController extends OCSController {
 		?DateTime $expiry,
 		string $applicationId,
 		string $userId,
-		?string $name = null,
-		?string $folderId = null,
+		array $placeholder,
+		array $fieldSchemas,
 	): \OCA\Keepiq\Db\SecretRequest {
 		if ($mode === self::MODE_APPLICATION) {
 			return $this->service->createForApplication(
@@ -296,9 +332,11 @@ class SecretRequestController extends OCSController {
 			return $this->service->createForUserVault(
 				userId: $userId,
 				requestedFields: $requestedFields,
-				name: $name,
-				folderId: $folderId,
+				name: $placeholder['name'],
+				folderId: $placeholder['folderId'],
 				expiresAt: $expiry,
+				typeId: $placeholder['typeId'],
+				fieldSchemas: $fieldSchemas,
 			);
 		}
 
@@ -308,6 +346,7 @@ class SecretRequestController extends OCSController {
 				requestedFields: $requestedFields,
 				expiresAt: $expiry,
 				userId: $userId,
+				fieldSchemas: $fieldSchemas,
 			);
 		}
 
@@ -318,6 +357,7 @@ class SecretRequestController extends OCSController {
 			isReRequest: false,
 			expiresAt: $expiry,
 			userId: $userId,
+			fieldSchemas: $fieldSchemas,
 		);
 	}//end dispatchCreate()
 

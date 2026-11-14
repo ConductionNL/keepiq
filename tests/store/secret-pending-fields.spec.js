@@ -11,6 +11,7 @@
  * store specs; the real crypto is covered in tests/vitest.
  *
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 
 import axios from '@nextcloud/axios'
@@ -113,6 +114,75 @@ describe('secret store: pending request-filled extra fields (keepiq#750)', () =>
 		const put = vi.spyOn(axios, 'put')
 
 		await useSecretStore().fetchSecret('s1')
+
+		expect(put).not.toHaveBeenCalled()
+	})
+
+	it('keeps the owner’s schemas when a fill seals its own', async () => {
+		const decrypted = await useSecretStore().decryptSecret({
+			...served([
+				'ENC({"PIN":"1234","@schema":{"A":{"type":"string"},"PIN":{"type":"boolean"}}})',
+			]),
+			additionalFields:
+				'ENC({"A":"a","PIN":"","@schema":{"A":{"type":"string","hidden":true},"PIN":{"type":"string","pattern":"^[0-9]{4}$"}}})',
+		})
+
+		expect(decrypted.additionalFields).toEqual({
+			A: 'a',
+			PIN: '1234',
+			'@schema': {
+				A: { type: 'string', hidden: true },
+				PIN: { type: 'string', pattern: '^[0-9]{4}$' },
+			},
+		})
+	})
+})
+
+describe('secret store: the fields a request asks for', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		const session = useSessionStore()
+		session.certificate = 'PEM'
+		session.cryptoKey = { fake: 'unlocked' }
+	})
+
+	/**
+	 * Serve s1 as it is now, with the write context a share save reads.
+	 *
+	 * @return {void}
+	 */
+	function serveS1() {
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => ({
+			data: url.endsWith('/write-context')
+				? { sourceSecretId: 's1', effectiveGrade: 'owner' }
+				: { ...served([]), updatedAt: 'v1' },
+		}))
+	}
+
+	it('writes them into the secret, empty, with their schemas', async () => {
+		serveS1()
+		const put = vi
+			.spyOn(axios, 'put')
+			.mockResolvedValue({ data: { secret: { id: 's1', updatedAt: 'v2' } } })
+
+		await useSecretStore().prepareRequestedFields('s1', ['A', 'PIN'], {
+			PIN: { type: 'string', hidden: true },
+		})
+
+		expect(put).toHaveBeenCalledTimes(1)
+		const body = put.mock.calls[0][1]
+		expect(body.baseUpdatedAt).toBe('v1')
+		expect(body.patch.additionalFields).toBe(
+			'ENC({"A":"a","B":"b","PIN":"","@schema":{"PIN":{"type":"string","hidden":true}}})',
+		)
+	})
+
+	it('writes nothing when the fields are already there', async () => {
+		serveS1()
+		const put = vi.spyOn(axios, 'put')
+
+		await useSecretStore().prepareRequestedFields('s1', ['A'], {})
 
 		expect(put).not.toHaveBeenCalled()
 	})

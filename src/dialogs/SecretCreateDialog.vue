@@ -32,7 +32,7 @@
 				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
-			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+			<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
 			<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
 
@@ -42,7 +42,10 @@
 				mode="replace"
 				:disabled="saving" />
 
-			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
+			<NcTextField
+				v-if="showUrl"
+				v-model="url"
+				:label="t('keepiq', 'URL (optional)')" />
 
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
@@ -148,6 +151,8 @@ import {
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
 import { membersToObject } from '../utils/additionalFields.js'
+import { leavesOut } from '../utils/builtinTypeFields.js'
+import { valuesFit } from '../utils/fieldSchema.js'
 import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
 import { mergeTypedValues } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
@@ -301,6 +306,58 @@ export default {
 		},
 
 		/**
+		 * The value is required here: Create stays disabled without it, so
+		 * the value form marks it as the type's own required fields are.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
+		 */
+		valueRequired() {
+			return true
+		},
+
+		/**
+		 * Whether the chosen type uses the login field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showLogin() {
+			return !leavesOut(this.selectedTypeName, 'login')
+		},
+
+		/**
+		 * Whether the chosen type uses the URL field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showUrl() {
+			return !leavesOut(this.selectedTypeName, 'url')
+		},
+
+		/**
+		 * The login to save: none when the type leaves the field out, so one
+		 * typed before switching type is not saved unseen.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		loginToSave() {
+			return this.showLogin ? this.login || '' : ''
+		},
+
+		/**
+		 * The URL to save: none when the type leaves the field out.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		urlToSave() {
+			return this.showUrl ? this.url || null : null
+		},
+
+		/**
 		 * Whether the team folder ownership policy covers this user and type.
 		 *
 		 * @return {boolean}
@@ -334,13 +391,19 @@ export default {
 		/**
 		 * Whether Create may run: not busy, named, a folder chosen (secrets
 		 * cannot live at the vault root), and the type's own required value
-		 * present and policy-compliant.
+		 * present and policy-compliant, and every field value fitting its schema.
 		 *
 		 * @return {boolean}
-		 * @spec exclude Form-enablement guard; no domain behaviour.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		canSubmit() {
 			if (this.saving || this.locked || this.name.trim() === '') {
+				return false
+			}
+			// A value that does not fit its field's schema is never stored.
+			if (
+				!valuesFit(this.additionalFields, this.typedFields, this.typedValues)
+			) {
 				return false
 			}
 			if (!this.selectedFolderId && !this.contributeTo) {
@@ -440,11 +503,12 @@ export default {
 		 *
 		 * @return {object} The value part of the create body.
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valueFields() {
 			return {
-				url: this.url || null,
-				login: this.login || '',
+				url: this.urlToSave,
+				login: this.loginToSave,
 				key: this.effectiveValue,
 				// Only when there ARE members: the store encrypts whatever it is
 				// handed, so passing {} unconditionally would write an empty

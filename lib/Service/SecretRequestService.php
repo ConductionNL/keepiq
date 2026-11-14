@@ -62,6 +62,9 @@ use Throwable;
  * to create its own Secret before it can create the request; splitting the
  * creation paths across classes would scatter the rollback and the
  * fresh-vs-re-request distinction that the spec turns on.
+ *
+ * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequestService implements SecretRequestServiceInterface {
 	/*
@@ -103,19 +106,26 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * Look up a pending, non-expired request by its public access token.
 	 *
 	 * Distinguishes locked / expired / fulfilled / unknown via specific
-	 * error codes so the public fill page can render targeted messaging.
+	 * error codes so the public fill page can render targeted messaging. The
+	 * Secret's type is checked again: its owner may have changed it to one
+	 * that cannot be requested since the request was made.
 	 *
 	 * @param string $token The access token
 	 *
 	 * @return SecretRequest
 	 *
 	 * @throws InvalidArgumentException With code 404 (unknown), 410 (fulfilled),
-	 *                                  423 (locked) or 408 (expired).
+	 *                                  423 (locked), 408 (expired) or 403 (a type
+	 *                                  that cannot be requested).
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function getByToken(string $token): SecretRequest {
-		return $this->policy->requireOpenByToken(token: $token);
+		$request = $this->policy->requireOpenByToken(token: $token);
+		$this->requireRequestableSecret(secretId: $request->getSecretId());
+
+		return $request;
 	}//end getByToken()
 
 	/**
@@ -134,6 +144,23 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	public function refusalReason(string $token): string {
 		return $this->policy->refusalReason(token: $token);
 	}//end refusalReason()
+
+	/**
+	 * The system name of the type of the Secret a request fills.
+	 *
+	 * Pass-through to the policy, which holds the Secret and type lookups, so
+	 * the public fill page can show the requested fields with the type's own
+	 * labels and inputs.
+	 *
+	 * @param SecretRequest $request The request being filled
+	 *
+	 * @return string|null The type name, or null when it cannot be resolved
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 */
+	public function secretTypeName(SecretRequest $request): ?string {
+		return $this->policy->secretTypeName(secretId: $request->getSecretId());
+	}//end secretTypeName()
 
 	/**
 	 * Mark a pending request as fulfilled from the public fill endpoint.
@@ -168,6 +195,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @throws \OCA\Keepiq\Exception\ShareScanPendingException When the share row naming the secret waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function fill(string $token, array $encryptedFields, array $plainFields = []): SecretRequest {
 		$entity = $this->policy->requireOpenByToken(token: $token);
@@ -230,9 +258,10 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException When a field name has nowhere to be stored
+	 * @throws InvalidArgumentException When a field name has nowhere to be stored, or with code 403 for a type that cannot be requested
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	private function persistFilledValues(
 		SecretRequest $request,
@@ -246,7 +275,10 @@ class SecretRequestService implements SecretRequestServiceInterface {
 			return;
 		}
 
-		$this->writeFilledValues(secret: $this->fillTarget(request: $request), data: $data);
+		$secret = $this->fillTarget(request: $request);
+		// The owner may have changed the Secret's type since the request was made.
+		$this->policy->requireRequestableType(typeId: $secret->getTypeId());
+		$this->writeFilledValues(secret: $secret, data: $data);
 	}//end persistFilledValues()
 
 	/**
@@ -274,14 +306,13 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	/**
 	 * Write the filled values through the owner's update path: the
 	 * application's, or the user's after holding back a filled extra-field
-	 * blob that would overwrite the owner's own (keepiq#750).
+	 * blob (keepiq#750).
 	 *
 	 * The user's update is refused when the owner's row moves between its read
 	 * and its write. The update is then made once more on the row as it is
-	 * now, which keeps the owner's change as a version, with the hold-back
-	 * decided again on that row: the owner may have saved extra fields
-	 * meanwhile. A second refusal leaves the request pending, but a blob held
-	 * back by then is already in the secret's pending list.
+	 * now, which keeps the owner's change as a version. A second refusal
+	 * leaves the request pending, but the blob held back is already in the
+	 * secret's pending list.
 	 *
 	 * @param Secret $secret The secret the request writes to
 	 * @param array<string,mixed> $data The values to write
@@ -321,12 +352,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		$write = fn (array $values) => $secretService->update(id: $secret->getId(), data: $values, userId: $secret->getOwnerId());
 		try {
 			$write($data);
-		} catch (StaleWriteException $e) {
-			$data = $this->holdBackAdditionalFields(secret: $e->getCurrent(), data: $data);
-			if ($data === []) {
-				return;
-			}
-
+		} catch (StaleWriteException) {
 			try {
 				$write($data);
 			} catch (StaleWriteException) {
@@ -339,12 +365,13 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	}//end writeFilledValues()
 
 	/**
-	 * Keep a filled extra-field blob apart when the owner already has one
-	 * (keepiq#750). The filler cannot read the owner's blob, so storing the
-	 * filled one in its place wiped every other extra field. It is appended
-	 * to the secret's pending list instead, and the owner's browser merges
-	 * it on the next open. With no stored blob there is nothing to lose and
-	 * the filled blob is written as is.
+	 * Keep a filled extra-field blob apart (keepiq#750). The filler cannot
+	 * read the owner's blob, so storing the filled one in its place wiped
+	 * every other extra field. It is appended to the secret's pending list
+	 * instead, and the owner's browser merges it on the next open. That
+	 * holds with no stored blob too: the merge takes only the values, while
+	 * a blob written as is would also keep whatever `@schema` the filler
+	 * sealed into it.
 	 *
 	 * @param Secret $secret The user-owned secret the request writes to
 	 * @param array<string,mixed> $data The values to write
@@ -352,11 +379,11 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @return array<string,mixed> The values still to write through update()
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function holdBackAdditionalFields(Secret $secret, array $data): array {
 		$blob = $data[SecretRequestPolicy::ADDITIONAL_BLOB] ?? null;
-		$stored = $secret->getAdditionalFields();
-		if (is_string($blob) === false || $stored === null || $stored === '') {
+		if (is_string($blob) === false) {
 			return $data;
 		}
 
@@ -379,12 +406,14 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @param bool $isReRequest Whether this is a re-request
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the request
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
 	 * @throws InvalidArgumentException
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function create(
 		string $secretId,
@@ -393,6 +422,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		bool $isReRequest,
 		?DateTime $expiresAt,
 		string $userId,
+		array $fieldSchemas = [],
 	): SecretRequest {
 		// Pending requests are locked for the duration of a migration and
 		// re-pointed to the new suite on completion. A request created now would
@@ -411,9 +441,17 @@ class SecretRequestService implements SecretRequestServiceInterface {
 			throw new InvalidArgumentException(message: 'requestedFields cannot be empty');
 		}
 
+		if (in_array(FieldSchemaShape::SCHEMA_MEMBER, $requestedFields, true) === true) {
+			throw new InvalidArgumentException(message: FieldSchemaShape::SCHEMA_MEMBER . ' holds the field schemas and cannot be requested');
+		}
+
 		if ($userId === '') {
 			throw new InvalidArgumentException(message: 'userId is required');
 		}
+
+		$this->requireRequestableSecret(secretId: $secretId);
+		$shape   = new FieldSchemaShape();
+		$schemas = $shape->normalize(schemas: $fieldSchemas, requestedFields: $requestedFields);
 
 		$entity = new SecretRequest();
 		$entity->setId(Uuid::uuid4()->toString());
@@ -426,6 +464,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		}
 
 		$entity->setRequestedFields($encodedFields);
+		$entity->setFieldSchemas($shape->encode(schemas: $schemas));
 		$entity->setStatus(SecretRequest::STATUS_PENDING);
 		$entity->setIsReRequest($isReRequest);
 		$entity->setExpiresAt($expiresAt);
@@ -442,6 +481,31 @@ class SecretRequestService implements SecretRequestServiceInterface {
 
 		return $persisted;
 	}//end create()
+
+	/**
+	 * Refuse a request for a Secret whose type may not be requested.
+	 *
+	 * Every user path that creates a request ends in create(), so a fresh
+	 * request, a plain fill-in and a re-request all meet this one rule. A missing
+	 * Secret is not refused here: the path that names one reports that itself.
+	 *
+	 * @param string $secretId The Secret the request would write to
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException With code 403 for a type that cannot be requested.
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	private function requireRequestableSecret(string $secretId): void {
+		try {
+			$secret = $this->secretMapper->findById($secretId);
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return;
+		}
+
+		$this->policy->requireRequestableType(typeId: $secret->getTypeId());
+	}//end requireRequestableSecret()
 
 	/**
 	 * Create a FRESH request in the requester's own vault, creating the Secret.
@@ -465,12 +529,16 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @param string|null $name Name for the created Secret
 	 * @param string|null $folderId Optional folder to file it under
 	 * @param DateTime|null $expiresAt Optional expiry
+	 * @param string|null $typeId Optional type for the created Secret; null
+	 *                            leaves SecretService's default (Login)
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
 	 * @throws InvalidArgumentException When userId or requestedFields are missing
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createForUserVault(
 		string $userId,
@@ -478,6 +546,8 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		?string $name = null,
 		?string $folderId = null,
 		?DateTime $expiresAt = null,
+		?string $typeId = null,
+		array $fieldSchemas = [],
 	): SecretRequest {
 		if ($userId === '') {
 			throw new InvalidArgumentException(message: 'userId is required');
@@ -487,12 +557,20 @@ class SecretRequestService implements SecretRequestServiceInterface {
 			throw new InvalidArgumentException(message: 'requestedFields cannot be empty');
 		}
 
+		// Before the placeholder exists, so a refused type leaves nothing behind.
+		$this->policy->requireRequestableType(typeId: $typeId);
+
 		$secretService = $this->container->get(SecretService::class);
 
 		$shell = $secretService->create(
 			data: [
 				'name' => ($name ?? 'Unfilled request'),
 				'folderId' => $folderId,
+				// The type the requester picked, so the placeholder is filed as
+				// what is being asked for. SecretService validates it (unknown, or
+				// another user's private type, is refused) and applies the team
+				// folder rule to it, exactly as for a secret created directly.
+				'typeId' => $typeId,
 				// Keyless by design: the recipient supplies the value and the
 				// server never holds a plaintext one (ADR-003). Permitted only
 				// because a pending request will target this Secret.
@@ -513,7 +591,8 @@ class SecretRequestService implements SecretRequestServiceInterface {
 				requestedFields: $requestedFields,
 				isReRequest: false,
 				expiresAt: $expiresAt,
-				userId: $userId
+				userId: $userId,
+				fieldSchemas: $fieldSchemas
 			);
 		} catch (Throwable $exception) {
 			// No orphan shell: it holds no value and exists only for this
@@ -586,6 +665,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @param array<string> $requestedFields Field names to be re-filled
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the re-request
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
@@ -593,12 +673,14 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *                                  or the caller is not the owner.
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.4
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createReRequest(
 		string $secretId,
 		array $requestedFields,
 		?DateTime $expiresAt,
 		string $userId,
+		array $fieldSchemas = [],
 	): SecretRequest {
 		$secret = $this->policy->requireReRequestableSecret(secretId: $secretId, userId: $userId);
 		$this->policy->requireNoPendingRequest(secretId: $secretId);
@@ -610,6 +692,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 			isReRequest: true,
 			expiresAt: $expiresAt,
 			userId: $userId,
+			fieldSchemas: $fieldSchemas,
 		);
 
 		$this->outbox->recordReRequested(userId: $userId, requestId: $persisted->getId());

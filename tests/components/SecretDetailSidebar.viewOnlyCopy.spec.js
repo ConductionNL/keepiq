@@ -250,6 +250,27 @@ describe('a copy without a write grade', () => {
 	})
 })
 
+// openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+describe('a secret of a type that cannot be requested', () => {
+	it.each([
+		['a payment card', 'card', false],
+		['an identity', 'identity', false],
+		['an authenticator key', 'totp', false],
+		['a passkey', 'passkey', false],
+		['a login', 'login', true],
+	])('%s (%s) offers a request: %s', async (_, typeName, offered) => {
+		serveWriteContexts({
+			'own-1': { sourceSecretId: 'own-1', effectiveGrade: 'owner' },
+		})
+		useSecretTypeStore().types = [{ id: 'type-1', name: typeName }]
+		const wrapper = await mountHeld('own-1', { typeId: 'type-1' })
+
+		expect(has(wrapper, 'secret-detail-request-create')).toBe(offered)
+		// The request history stays, whatever the type.
+		expect(has(wrapper, 'secret-detail-request-list')).toBe(true)
+	})
+})
+
 describe('a secret its holder may write', () => {
 	it.each([
 		['a copy with grade write', 'copy-1', copyWith('write')],
