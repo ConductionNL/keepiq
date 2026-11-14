@@ -141,8 +141,27 @@ class SecretController extends OCSController {
 			$result = $this->secretService->search($userId, $search, $page, $limit);
 		}
 
-		return new JSONResponse(data: $result);
+		return new JSONResponse(data: $this->withExtraUrls(result: $result));
 	}//end index()
+
+	/**
+	 * A list answer with each row's extra website addresses, so the vault
+	 * export and the detail views have them without one request per row.
+	 *
+	 * @param array<string,mixed> $result The list answer
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	private function withExtraUrls(array $result): array {
+		if ($this->urls === null || is_array($result['items'] ?? null) === false) {
+			return $result;
+		}
+
+		$result['items'] = $this->urls->withUrls(items: array_values($result['items']));
+		return $result;
+	}//end withExtraUrls()
 
 	/**
 	 * Get a single secret (returns encrypted blobs; never decrypts).

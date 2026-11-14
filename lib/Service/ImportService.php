@@ -86,6 +86,7 @@ class ImportService implements ImportServiceInterface {
 		private SecretService $secretService,
 		private FolderService $folderService,
 		private LoggerInterface $logger,
+		private ?SecretUrlService $urls = null,
 	) {
 	}//end __construct()
 
@@ -175,10 +176,35 @@ class ImportService implements ImportServiceInterface {
 	 */
 	private function createSecret(ImportChunkRun $run, array $item): Secret {
 		$this->validateItem(item: $item);
-		$folderId = $this->ensureFolderPath(run: $run, pathSegments: (array)($item['folderPath'] ?? []));
+		$extraUrls = $this->extraUrls(item: $item);
+		$folderId  = $this->ensureFolderPath(run: $run, pathSegments: (array)($item['folderPath'] ?? []));
 
-		return $this->secretService->create($this->secretData(item: $item, folderId: $folderId), $run->userId);
+		$secret = $this->secretService->create($this->secretData(item: $item, folderId: $folderId), $run->userId);
+		if ($extraUrls !== []) {
+			$this->urls?->replace(secret: $secret, userId: $run->userId, urls: $extraUrls);
+		}
+
+		return $secret;
 	}//end createSecret()
+
+	/**
+	 * The item's extra website addresses, checked before anything is written.
+	 *
+	 * @param array<string,mixed> $item The encrypted item
+	 *
+	 * @return list<string>
+	 *
+	 * @throws InvalidArgumentException When the list is malformed or too long
+	 *
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	private function extraUrls(array $item): array {
+		if ($this->urls === null) {
+			return [];
+		}
+
+		return $this->urls->normalise(urls: ($item['additionalUrls'] ?? null));
+	}//end extraUrls()
 
 	/**
 	 * The secret-create input of one item.
