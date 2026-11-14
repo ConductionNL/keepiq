@@ -16,7 +16,9 @@
  * RFC 9457 problem (application/problem+json, schema Problem: type, title,
  * status, detail, with the original members kept). A route the app declares
  * under /api/v1/ itself keeps its body as before: application/json with a
- * `message` and, on a refusal, an `error` code (schema Error).
+ * `message` and, on a refusal, an `error` code (schema Error), unless the
+ * request's Accept header asks for application/problem+json; then it gets
+ * the same problem form, so both media types are described.
  *
  * Usage: php scripts/generate-openapi.php [--check]
  *   --check  exit 1 when the committed openapi.json differs from the output
@@ -177,7 +179,10 @@ function errorContent(bool $alias): array
 		return ['application/problem+json' => ['schema' => ['$ref' => '#/components/schemas/Problem']]];
 	}
 
-	return ['application/json' => ['schema' => ['$ref' => '#/components/schemas/Error']]];
+	return [
+		'application/problem+json' => ['schema' => ['allOf' => [['$ref' => '#/components/schemas/Problem'], ['$ref' => '#/components/schemas/Error']]]],
+		'application/json' => ['schema' => ['$ref' => '#/components/schemas/Error']],
+	];
 }
 
 function schemaOf(string $type): array
@@ -346,7 +351,7 @@ $paths['/openapi.json']['get'] = [
 			],
 			'content' => ['application/json' => ['schema' => ['type' => 'object', 'additionalProperties' => true]]],
 		],
-		'404' => ['description' => 'The document is not installed', 'content' => ['application/json' => ['schema' => ['$ref' => '#/components/schemas/Error']]]],
+		'404' => ['description' => 'The document is not installed', 'content' => errorContent(alias: false)],
 	],
 ];
 ksort($paths);
@@ -371,7 +376,8 @@ $document = [
 			. 'password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by '
 			. 'scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here. '
 			. 'Errors on the /api/v1/ paths of the unversioned routes are RFC 9457 problem details (application/problem+json); '
-			. 'the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json.',
+			. 'the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json, and as '
+			. 'application/problem+json when the request\'s Accept header asks for it.',
 		'contact' => ['name' => 'Conduction B.V.', 'email' => 'info@conduction.nl', 'url' => 'https://conduction.nl'],
 		'license' => ['name' => 'EUPL-1.2', 'url' => 'https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12'],
 	],

@@ -1751,6 +1751,11 @@ OC.L10N.register(
         "Enter your master password": "Enter your master password",
         "\"{name}\" asks for your master password before it is shown, copied or filled.": "\"{name}\" asks for your master password before it is shown, copied or filled.",
         "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.",
+        "Clone": "Clone",
+        "{name} (copy)": "{name} (copy)",
+        "This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.": "This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.",
+        "Preview attachment": "Preview attachment",
+        "Attachment": "Attachment",
         "How your vault is protected": "How your vault is protected",
         "Your vault certificate": "Your vault certificate",
         "Loading certificate details…": "Loading certificate details…",
@@ -1765,7 +1770,11 @@ OC.L10N.register(
         "Signature algorithm": "Signature algorithm",
         "Fingerprint": "Fingerprint",
         "Valid": "Valid",
-        "{from} to {until}": "{from} to {until}"
+        "{from} to {until}": "{from} to {until}",
+        "Unencrypted address": "Unencrypted address",
+        "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.",
+        "Change to https": "Change to https",
+        "Could not save the https address for {name}.": "Could not save the https address for {name}."
     },
     "nplurals=2; plural=(n != 1);"
 )

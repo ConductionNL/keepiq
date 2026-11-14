@@ -2,8 +2,9 @@
 
 ## 1. Plain http
 
-- [ ] 1.1 Add the `insecure-address` flag to `src/health/engine.js` (D1 exclusions) and its category in `HealthReportView.vue` with a Change to https action. Verify: vitest for http, https, localhost and a private address; Playwright check on the fixture login.
-- [ ] 1.2 Warn before a fill on an `http://` page in the extension. Verify: extension unit test that the fill waits for confirmation on http and not on https.
+- [x] 1.1 Add the `insecure-address` flag to `src/health/engine.js` (D1 exclusions) and its category in `HealthReportView.vue` with a Change to https action. Verify: vitest for http, https, localhost and a private address; Playwright check on the fixture login.
+  - `src/health/insecureAddress.js` holds the rule (loopback, RFC 1918, link-local and the IPv6 equivalents excluded) and the https rewrite; the engine flags `insecure-address` on the login's plain-text `url` (the only plain-text address a secret has; typed URL fields are encrypted and not in the health rows), counts it as `insecureAddressCount`, and leaves the score alone. `HealthCategory` takes an optional per-finding action; the report's Unencrypted address category saves the https address and analyses again. Vitest: `health-insecure-address.spec.js`, `HealthCategory.action.spec.js`, `HealthReportView.changeToHttps.spec.js`. The Playwright check on the fixture login needs a live instance and is still owed.
+- [x] 1.2 Warn before a fill on an `http://` page in the extension. Verify: extension unit test that the fill waits for confirmation on http and not on https.
 
 ## 2. Site directory
 

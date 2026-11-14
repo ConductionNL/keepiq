@@ -24,7 +24,7 @@ Every response of an `/api/v1/` alias (a versioned path added by `ApiPathAliases
 
 ### Requirement: API errors are problem details
 
-A JSON error response (status 400 or higher) of an `/api/v1/` alias MUST be served as `application/problem+json` with the members `type`, `title` and `status`, plus `detail` when the body already carries a `detail`, `message` or `error` text (/core/error-handling/problem-details). Every member the body already had MUST be kept, so existing callers see no change. A body that already uses `type`, `title` or `status` for something else, or that is a JSON list, MUST be left as it is. An error of an unversioned path, or of a route the app already declared under `/api/v1/`, MUST keep its body and its content type.
+A JSON error response (status 400 or higher) of an `/api/v1/` alias MUST be served as `application/problem+json` with the members `type`, `title` and `status`, plus `detail` when the body already carries a `detail`, `message` or `error` text (/core/error-handling/problem-details). Every member the body already had MUST be kept, so existing callers see no change. A body that already uses `type`, `title` or `status` for something else, or that is a JSON list, MUST be left as it is. An error of an unversioned path MUST keep its body and its content type. An error of a route the app already declared under `/api/v1/` MUST keep its body and its content type, unless the request's `Accept` header lists `application/problem+json`: then it MUST be served as problem details in the same way, without an `API-Version` header.
 
 #### Scenario: A not-found error becomes problem details
 
@@ -34,6 +34,16 @@ A JSON error response (status 400 or higher) of an `/api/v1/` alias MUST be serv
 - WHEN the response leaves the app
 - THEN its content type MUST be `application/problem+json`
 - AND its body MUST be `{"type": "about:blank", "title": "Not Found", "status": 404, "detail": "Thing not found", "error": "Thing not found"}`
+
+#### Scenario: A declared versioned route serves problem details on request
+
+@e2e exclude a content type and a body shape, not browser behaviour; covered by PHPUnit ApiContractMiddlewareTest.
+
+- GIVEN a route the app declared under `/api/v1/` answers `403` with `{"error": "Forbidden"}`
+- WHEN the request's `Accept` header lists `application/problem+json`
+- THEN its content type MUST be `application/problem+json`
+- AND its body MUST be `{"type": "about:blank", "title": "Forbidden", "status": 403, "detail": "Forbidden", "error": "Forbidden"}`
+- AND without that `Accept` value the same route MUST answer `application/json` with `{"error": "Forbidden"}`
 
 ### Requirement: The API publishes its own OpenAPI document
 

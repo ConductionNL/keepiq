@@ -1756,6 +1756,11 @@ OC.L10N.register(
         "Enter your master password": "Voer je masterwachtwoord in",
         "\"{name}\" asks for your master password before it is shown, copied or filled.": "\"{name}\" vraagt om je masterwachtwoord voordat het wordt getoond, gekopieerd of ingevuld.",
         "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Je masterwachtwoord wordt op dit apparaat gecontroleerd en nooit verstuurd. Dit houdt iemand achter je ontgrendelde scherm tegen; het beschermt niet tegen een aangepaste app.",
+        "Clone": "Klonen",
+        "{name} (copy)": "{name} (kopie)",
+        "This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.": "Dit is een kopie van een ander geheim. Bijlagen, delingen, geschiedenis, passkeys en de eenmalige code worden niet gekopieerd.",
+        "Preview attachment": "Bijlage bekijken",
+        "Attachment": "Bijlage",
         "How your vault is protected": "Zo is uw kluis beveiligd",
         "Your vault certificate": "Uw kluiscertificaat",
         "Loading certificate details…": "Certificaatgegevens laden…",
@@ -1770,7 +1775,11 @@ OC.L10N.register(
         "Signature algorithm": "Handtekeningalgoritme",
         "Fingerprint": "Vingerafdruk",
         "Valid": "Geldig",
-        "{from} to {until}": "{from} tot {until}"
+        "{from} to {until}": "{from} tot {until}",
+        "Unencrypted address": "Onversleuteld adres",
+        "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "Deze logins zijn opgeslagen met een http-adres, dus het wachtwoord wordt onversleuteld verstuurd. Wijzig het adres in https als de site dat aanbiedt.",
+        "Change to https": "Wijzigen in https",
+        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen."
     },
     "nplurals=2; plural=(n != 1);"
 )

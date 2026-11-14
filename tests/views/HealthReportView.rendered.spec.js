@@ -34,6 +34,9 @@ vi.mock('../../src/store/modules/session.js', () => ({
 vi.mock('../../src/store/modules/rotation.js', () => ({
 	useRotationStore: () => rotationStore,
 }))
+vi.mock('../../src/store/modules/secret.js', () => ({
+	useSecretStore: () => ({ updateSecret: vi.fn() }),
+}))
 
 const { default: HealthReportView } =
 	await import('../../src/views/HealthReportView.vue')
@@ -91,12 +94,14 @@ describe('HealthReportView rendered', () => {
 				staleCount: 3,
 				breachedCount: 4,
 				compromisedCount: 5,
+				insecureAddressCount: 6,
 			},
 			weakFindings: [{ id: 'w1', name: 'Weak one' }],
 			reusedFindings: [],
 			staleFindings: [],
 			breachedFindings: [{ id: 'b1', name: 'Breached one' }],
 			compromisedFindings: [],
+			insecureAddressFindings: [],
 			analyseVault: vi.fn().mockResolvedValue(),
 			registerLockReset: vi.fn(),
 		}
@@ -139,8 +144,9 @@ describe('HealthReportView rendered', () => {
 			'Reused: 2',
 			'Old: 3',
 			'Possibly compromised: 5',
+			'Unencrypted address: 6',
 		])
-		for (const id of ['weak', 'reused', 'stale', 'compromised', 'rotation']) {
+		for (const id of ['weak', 'reused', 'stale', 'compromised', 'insecure-address', 'rotation']) {
 			expect(wrapper.find(`[data-testid="category-${id}"]`).exists()).toBe(
 				true,
 			)

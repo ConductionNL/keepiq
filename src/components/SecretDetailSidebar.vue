@@ -142,6 +142,18 @@
 							</template>
 							{{ t('keepiq', 'Move') }}
 						</NcActionButton>
+						<!-- vault-item-clone-preview-and-print: a prefilled create of a
+						     new secret; never for a passkey item or a use-only copy. -->
+						<NcActionButton
+							v-if="canClone"
+							:closeAfterClick="true"
+							data-testid="secret-detail-clone"
+							@click="openClone">
+							<template #icon>
+								<ContentDuplicate :size="20" />
+							</template>
+							{{ t('keepiq', 'Clone') }}
+						</NcActionButton>
 						<NcActionButton
 							v-if="!offlineReadOnly && !federatedReadOnly"
 							:closeAfterClick="true"
@@ -1034,6 +1046,7 @@ import CalendarMonthOutline from 'vue-material-design-icons/CalendarMonthOutline
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ClockOutline from 'vue-material-design-icons/ClockOutline.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import ContentDuplicate from 'vue-material-design-icons/ContentDuplicate.vue'
 import CreditCardOutline from 'vue-material-design-icons/CreditCardOutline.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Dialpad from 'vue-material-design-icons/Dialpad.vue'
@@ -1122,6 +1135,7 @@ export default {
 		Delete,
 		Fingerprint,
 		Flash,
+		ContentDuplicate,
 		FolderMove,
 		FormatListBulleted,
 		History,
@@ -1225,6 +1239,18 @@ export default {
 		 */
 		revealGuard() {
 			return needsReprompt(this.secret) ? useReprompt(() => this.secret) : null
+		},
+
+		/**
+		 * Whether the secret may be cloned: online, its value visible to the
+		 * holder (not a use-only copy), and not a passkey item, whose
+		 * credential is bound to one item.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		canClone() {
+			return Boolean(this.secret) && !this.offlineReadOnly && !this.useOnly && !this.isPasskey
 		},
 
 		/**
@@ -1952,6 +1978,53 @@ export default {
 		openEditDialog() {
 			this.cnOpenModal('secret-edit', {
 				secretId: this.secretId,
+				onSaved: () => this.reloadWithList(),
+			})
+		},
+
+		/**
+		 * Open the create dialog prefilled from this secret's decrypted fields.
+		 * Saving is an ordinary create: a new id, fresh ciphertext, no shares,
+		 * attachments, history, passkeys or one-time code.
+		 *
+		 * A flagged item opens the prefilled form, which holds its value, only
+		 * after the master password re-prompt (crypto-item-reprompt D2).
+		 *
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		openClone() {
+			if (!this.secret) {
+				return undefined
+			}
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.openCloneDialog()
+					}
+				})
+			}
+			this.openCloneDialog()
+			return undefined
+		},
+
+		/**
+		 * Open the create dialog prefilled from this secret.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		openCloneDialog() {
+			this.cnOpenModal('secret-create', {
+				folderId: this.secret.folderId || null,
+				prefill: {
+					typeId: this.secret.typeId || null,
+					name: this.secret.name || '',
+					url: this.secret.url || '',
+					login: this.secret.login || '',
+					key: this.secret.key || '',
+					additionalFields: this.secret.additionalFields ?? null,
+				},
 				onSaved: () => this.reloadWithList(),
 			})
 		},
