@@ -95,6 +95,7 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 		'general' => [
 			'ca_auto_renew_enabled',
 			'breach_check_enabled',
+			'site_directory_enabled',
 			'offline_cache_enabled',
 			'offline_edits_enabled',
 			'device_approval_enabled',
@@ -245,6 +246,7 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 				self::AUDIT_RETENTION_DEFAULT
 			),
 			'breach_check_enabled' => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
+			'site_directory_enabled' => $this->appConfig->getValueBool($appId, 'site_directory_enabled', false),
 		];
 	}//end sessionAndAuditSettings()
 
@@ -591,6 +593,10 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 
 		if (isset($data['breach_check_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool)$data['breach_check_enabled']);
+		}
+
+		if (isset($data['site_directory_enabled']) === true) {
+			$this->appConfig->setValueBool($appId, 'site_directory_enabled', (bool)$data['site_directory_enabled']);
 		}
 
 		if (isset($data['offline_cache_enabled']) === true) {
