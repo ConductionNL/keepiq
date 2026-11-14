@@ -2,8 +2,10 @@
 
 ## 1. Backend
 
-- [ ] 1.1 Store one wrapped recovery copy per user and suite (`lib/Db/` entity and mapper, migration), with routes to create, fetch for the signed-in user only, and delete it. Verify: PHPUnit for create, replace, fetch by another user (refused) and delete.
-- [ ] 1.2 Rate limit the fetch and write `recovery_kit.created`, `recovery_kit.used` and `recovery_kit.revoked` to the audit trail. Verify: PHPUnit for the limit and the three events.
+- [x] 1.1 Store one wrapped recovery copy per user and suite (`lib/Db/` entity and mapper, migration), with routes to create, fetch for the signed-in user only, and delete it. Verify: PHPUnit for create, replace, fetch by another user (refused) and delete.
+  - `keepiq_recovery_kits` (declared in the consolidated schema for a fresh install, created by `Version001020Date20261114120000` on an existing one, backed up with the vault), `RecoveryKit`/`RecoveryKitMapper`, `RecoveryKitService` and `RecoveryKitController`: `GET/PUT/DELETE /api/v1/recovery-kit`, `GET /api/v1/recovery-kit/copy`, `POST /api/v1/recovery-kit/spent`. Every route acts on the session user's own active suite, chosen on the server; no route takes a user id. Account deletion removes the kit. PHPUnit `tests/Unit/Service/RecoveryKitServiceTest.php`.
+- [x] 1.2 Rate limit the fetch and write `recovery_kit.created`, `recovery_kit.used` and `recovery_kit.revoked` to the audit trail. Verify: PHPUnit for the limit and the three events.
+  - The copy's fetch carries `#[UserRateLimit(limit: 5, period: 3600)]`, so every recovery attempt counts. `recovery_kit.created`, `recovery_kit.used` and `recovery_kit.revoked` go to the audit trail with the suite as the object and no metadata. Same test file.
 
 ## 2. Web app
 

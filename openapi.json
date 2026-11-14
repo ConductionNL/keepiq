@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Keepiq",
-        "version": "0.3.9-unstable.20261111130000",
+        "version": "0.3.9-unstable.20261114120000",
         "description": "The versioned JSON API of Keepiq, the password and secrets vault for Nextcloud: secrets, folders, shares, emergency access, recovery, applications and the admin API. Authenticate as a Nextcloud user: a browser session, or an app password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here. Errors on the /api/v1/ paths of the unversioned routes are RFC 9457 problem details (application/problem+json); the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json.",
         "contact": {
             "name": "Conduction B.V.",
@@ -187,6 +187,9 @@
         },
         {
             "name": "recovery-admin"
+        },
+        {
+            "name": "recovery-kit"
         },
         {
             "name": "recovery-officer"
@@ -9272,6 +9275,209 @@
                     }
                 },
                 "security": []
+            }
+        },
+        "/recovery-kit": {
+            "get": {
+                "operationId": "recovery-kit-show",
+                "summary": "Whether the user has a kit, and when it was made; never the copy",
+                "description": "Whether the user has a kit, and when it was made; never the copy.",
+                "tags": [
+                    "recovery-kit"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "recovery-kit-create",
+                "summary": "Store a new kit, replacing the old one",
+                "description": "Store a new kit, replacing the old one.",
+                "tags": [
+                    "recovery-kit"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "wrappedKey": {
+                                        "type": "string"
+                                    },
+                                    "kdf": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "recovery-kit-revoke",
+                "summary": "Delete the kit without using it",
+                "description": "Delete the kit without using it.",
+                "tags": [
+                    "recovery-kit"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recovery-kit/copy": {
+            "get": {
+                "operationId": "recovery-kit-fetch",
+                "summary": "The wrapped copy, to unwrap with the recovery code in the browser",
+                "description": "The wrapped copy, to unwrap with the recovery code in the browser. Every attempt to recover fetches it, so the limit counts wrong codes.",
+                "tags": [
+                    "recovery-kit"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/recovery-kit/spent": {
+            "post": {
+                "operationId": "recovery-kit-spend",
+                "summary": "Delete the spent copy after a recovery",
+                "description": "Delete the spent copy after a recovery.",
+                "tags": [
+                    "recovery-kit"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/recovery/admin": {
