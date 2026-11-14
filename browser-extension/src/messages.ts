@@ -213,7 +213,8 @@ export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number
  * `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`.
  * `form`: a card or identity filled at least one field. `noFields`: no frame of the tab had a field for the item.
  */
-export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; needsFormConfirm?: FormQuestion; noFields?: true }
+/** `savedSecure` comes with `needsInsecureConfirm`: the login was saved on an https page, so the question can say so. */
+export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; savedSecure?: boolean; needsFormConfirm?: FormQuestion; noFields?: true }
 
 /** What a menu fill without a form says in the page (ext-context-menu). */
 export type PageNoticeCode = 'no_login_form' | 'no_card_form' | 'no_identity_form'
@@ -267,7 +268,8 @@ export type FillExecuteFormReply = { filled: number }
 export type FillConfirmForm = { kind: 'fill.confirmForm' } & FormQuestion
 
 /** Background → the top frame. Reply: whether the user accepted. */
-export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: string }
+/** `savedSecure` false: the login was itself saved with http, so the question does not claim an https origin. */
+export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: string; savedSecure?: boolean }
 
 /**
  * Background → one frame; the only message to a content script carrying vault data.

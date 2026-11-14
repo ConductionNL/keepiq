@@ -28,7 +28,8 @@ const filledSomething = (reply: FillResult | undefined) => reply != null && (rep
  */
 export function useFill(tab: CurrentTab | undefined): { fill: (itemId: string) => void; dialog: ReactNode } {
 	const { toast, refreshState } = useShell()
-	const [insecure, setInsecure] = useState<string | null>(null)
+	// `savedSecure` false: the login was saved with http, so the warning does not claim an https origin.
+	const [insecure, setInsecure] = useState<{ itemId: string; savedSecure: boolean } | null>(null)
 	const [form, setForm] = useState<FormAsk | null>(null)
 	// A ref, not a disabled button: a focused button that becomes disabled drops focus to `<body>`.
 	const inFlight = useRef(false)
@@ -39,7 +40,7 @@ export function useFill(tab: CurrentTab | undefined): { fill: (itemId: string) =
 		inFlight.current = true
 		try {
 			const reply = await request({ kind: 'fill.request', itemId, tabId, ...answers })
-			if (reply?.needsInsecureConfirm) return setInsecure(itemId)
+			if (reply?.needsInsecureConfirm) return setInsecure({ itemId, savedSecure: reply.savedSecure !== false })
 			if (reply?.needsFormConfirm) return setForm({ itemId, question: reply.needsFormConfirm, previous: answers.confirmed, insecureAnswered: false })
 			if (filledSomething(reply)) {
 				if (!isPopout) window.close()
@@ -64,14 +65,14 @@ export function useFill(tab: CurrentTab | undefined): { fill: (itemId: string) =
 					label: i18n.t('item.fill'),
 					onClick: () => {
 						setInsecure(null)
-						void send(insecure, { confirmedInsecure: true })
+						void send(insecure.itemId, { confirmedInsecure: true })
 					},
 				}]}
 				onCancel={() => setInsecure(null)}
 				focusCancel
 				describeBody
 			>
-				<p>{i18n.t('item.insecureWarning')}</p>
+				<p>{insecure.savedSecure ? i18n.t('item.insecureWarning') : i18n.t('inlineList.insecureDetail')}</p>
 			</ConfirmDialog>
 		)
 	} else if (form !== null) {

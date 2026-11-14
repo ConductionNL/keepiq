@@ -304,6 +304,24 @@ describe('filling from the suggestions', () => {
 	describe('on an insecure page', () => {
 		const insecure = (message: { confirmedInsecure?: boolean }) => (message.confirmedInsecure ? { filled: 'both' } : { filled: 'none', needsInsecureConfirm: true })
 
+		// Spec `health-site-checks`: a login saved with http is asked about too, without claiming it was saved on https.
+		it('asks with the plain insecure text for a login saved with http, and fills once confirmed', async () => {
+			closeSpy()
+			const savedHttp = (message: { confirmedInsecure?: boolean }) => (message.confirmedInsecure ? { filled: 'both' } : { filled: 'none', needsInsecureConfirm: true, savedSecure: false })
+			const { sent } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': savedHttp } })
+			const user = userEvent.setup()
+			await user.click(within(suggestions()).getByRole('button', { name: 'Fill GitHub' }))
+			const dialog = await screen.findByRole('dialog', { name: 'Do you still wish to fill this login?' })
+			const body = document.getElementById(dialog.getAttribute('aria-describedby')!)!.textContent
+			expect(body).toContain('This site is not secure. Anyone on the network could read what is filled in.')
+			expect(body).not.toContain('HTTPS')
+			await user.click(within(dialog).getByRole('button', { name: 'Fill' }))
+			expect(sentOf(sent, 'fill.request')).toEqual([
+				{ kind: 'fill.request', itemId: '1', tabId: 7 },
+				{ kind: 'fill.request', itemId: '1', tabId: 7, confirmedInsecure: true },
+			])
+		})
+
 		it('asks first, with focus on Cancel, and declining sends nothing more', async () => {
 			const close = closeSpy()
 			const { sent, toast } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': insecure } })
