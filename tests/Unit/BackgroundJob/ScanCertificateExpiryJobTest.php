@@ -146,4 +146,29 @@ class ScanCertificateExpiryJobTest extends TestCase {
 
 		$this->runJob();
 	}//end testApplicationSuitesAreSkipped()
+
+	/**
+	 * A user suite with no certificate (null or empty) is never parsed and
+	 * notifies nobody; the scan goes on to the next suite.
+	 *
+	 * @return void
+	 */
+	public function testSuitesWithoutACertificateAreSkipped(): void {
+		$suites = [];
+		foreach (['none' => null, 'empty' => ''] as $id => $pem) {
+			$suite = new EncryptionSuite();
+			$suite->setId('suite-'.$id);
+			$suite->setOwnerType('user');
+			$suite->setOwnerId('alice');
+			$suite->setCertificate($pem);
+			$suites[] = $suite;
+		}
+
+		$this->suiteMapper->method('findAllActiveWithLimit')
+			->willReturnOnConsecutiveCalls($suites, []);
+		$this->lifecycleService->expects($this->never())->method('parseCaCertificate');
+		$this->notificationService->expects($this->never())->method('notify');
+
+		$this->runJob();
+	}//end testSuitesWithoutACertificateAreSkipped()
 }//end class

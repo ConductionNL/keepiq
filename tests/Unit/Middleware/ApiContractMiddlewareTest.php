@@ -263,6 +263,38 @@ class ApiContractMiddlewareTest extends TestCase {
 	}//end testStandardProtocolPathIsUntouched()
 
 	/**
+	 * 400 is the first status that becomes problem details; a 3xx JSON body
+	 * just under it keeps its answer and only gets the version header.
+	 *
+	 * @return void
+	 */
+	public function testProblemDetailsStartAtStatus400(): void {
+		$badRequest = $this->decorate(
+			path: '/apps/keepiq/api/v1/things',
+			response: new JSONResponse(data: ['error' => 'Missing name'], statusCode: 400)
+		);
+		$this->assertSame(
+			expected: [
+				'type'   => 'about:blank',
+				'title'  => 'Bad Request',
+				'status' => 400,
+				'detail' => 'Missing name',
+				'error'  => 'Missing name',
+			],
+			actual: $badRequest->getData()
+		);
+		$this->assertSame(expected: ApiContractMiddleware::PROBLEM_CONTENT_TYPE, actual: $this->headersOf(response: $badRequest)['Content-Type']);
+
+		$below = $this->decorate(
+			path: '/apps/keepiq/api/v1/things',
+			response: new JSONResponse(data: ['error' => 'Moved'], statusCode: 399)
+		);
+		$this->assertSame(expected: ['error' => 'Moved'], actual: $below->getData());
+		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $this->headersOf(response: $below)['Content-Type']);
+		$this->assertSame(expected: '1.2.3', actual: $this->headersOf(response: $below)['API-Version']);
+	}//end testProblemDetailsStartAtStatus400()
+
+	/**
 	 * The headers a response set, read without the server container that
 	 * Response::getHeaders() needs.
 	 *
