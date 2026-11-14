@@ -6,7 +6,8 @@
    "reusedCount",
    "staleCount",
    "breachedCount",
-   "compromisedCount"
+   "compromisedCount",
+   "insecureAddressCount"
   ],
   "count": 12
  },
@@ -15,6 +16,7 @@
    {
     "id": "a",
     "name": "weak",
+    "url": null,
     "folderPath": "f",
     "score": 0,
     "flags": [
@@ -27,6 +29,7 @@
    {
     "id": "b",
     "name": "strong",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -39,6 +42,7 @@
    {
     "id": "c",
     "name": "reuse 1",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -51,6 +55,7 @@
    {
     "id": "d",
     "name": "reuse 2",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -64,6 +69,7 @@
    {
     "id": "e",
     "name": "key material",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -76,6 +82,7 @@
    {
     "id": "f",
     "name": "empty",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -88,6 +95,7 @@
    {
     "id": "h",
     "name": "missing value",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -100,6 +108,7 @@
    {
     "id": "i",
     "name": "triple 1",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -114,6 +123,7 @@
    {
     "id": "j",
     "name": "triple 2",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -127,6 +137,7 @@
    {
     "id": "k",
     "name": "triple 3",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -140,6 +151,7 @@
    {
     "id": "l",
     "name": "breached",
+    "url": null,
     "folderPath": null,
     "score": 2,
     "flags": [
@@ -152,6 +164,7 @@
    {
     "id": "m",
     "name": "safe verdict",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [],
@@ -166,7 +179,8 @@
    "reusedCount": 5,
    "staleCount": 4,
    "breachedCount": 0,
-   "compromisedCount": 2
+   "compromisedCount": 2,
+   "insecureAddressCount": 0
   },
   "score": 25
  },
@@ -175,6 +189,7 @@
    {
     "id": "a",
     "name": "weak",
+    "url": null,
     "folderPath": "f",
     "score": 0,
     "flags": [
@@ -187,6 +202,7 @@
    {
     "id": "b",
     "name": "strong",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -199,6 +215,7 @@
    {
     "id": "c",
     "name": "reuse 1",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -211,6 +228,7 @@
    {
     "id": "d",
     "name": "reuse 2",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -224,6 +242,7 @@
    {
     "id": "e",
     "name": "key material",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -236,6 +255,7 @@
    {
     "id": "f",
     "name": "empty",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -248,6 +268,7 @@
    {
     "id": "h",
     "name": "missing value",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -260,6 +281,7 @@
    {
     "id": "i",
     "name": "triple 1",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -274,6 +296,7 @@
    {
     "id": "j",
     "name": "triple 2",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -287,6 +310,7 @@
    {
     "id": "k",
     "name": "triple 3",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -300,6 +324,7 @@
    {
     "id": "l",
     "name": "breached",
+    "url": null,
     "folderPath": null,
     "score": 2,
     "flags": [
@@ -313,6 +338,7 @@
    {
     "id": "m",
     "name": "safe verdict",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -329,7 +355,8 @@
    "reusedCount": 5,
    "staleCount": 6,
    "breachedCount": 0,
-   "compromisedCount": 2
+   "compromisedCount": 2,
+   "insecureAddressCount": 0
   },
   "score": 20
  },
@@ -338,6 +365,7 @@
    {
     "id": "a",
     "name": "weak",
+    "url": null,
     "folderPath": "f",
     "score": 0,
     "flags": [
@@ -350,6 +378,7 @@
    {
     "id": "b",
     "name": "strong",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -362,6 +391,7 @@
    {
     "id": "c",
     "name": "reuse 1",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -374,6 +404,7 @@
    {
     "id": "d",
     "name": "reuse 2",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -387,6 +418,7 @@
    {
     "id": "f",
     "name": "empty",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -399,6 +431,7 @@
    {
     "id": "h",
     "name": "missing value",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -411,6 +444,7 @@
    {
     "id": "i",
     "name": "triple 1",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -425,6 +459,7 @@
    {
     "id": "j",
     "name": "triple 2",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -438,6 +473,7 @@
    {
     "id": "k",
     "name": "triple 3",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -451,6 +487,7 @@
    {
     "id": "l",
     "name": "breached",
+    "url": null,
     "folderPath": null,
     "score": 2,
     "flags": [
@@ -463,6 +500,7 @@
    {
     "id": "m",
     "name": "safe verdict",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [],
@@ -477,7 +515,8 @@
    "reusedCount": 5,
    "staleCount": 3,
    "breachedCount": 0,
-   "compromisedCount": 2
+   "compromisedCount": 2,
+   "insecureAddressCount": 0
   },
   "score": 27
  },
@@ -486,6 +525,7 @@
    {
     "id": "a",
     "name": "weak",
+    "url": null,
     "folderPath": "f",
     "score": 0,
     "flags": [
@@ -498,6 +538,7 @@
    {
     "id": "b",
     "name": "strong",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [],
@@ -508,6 +549,7 @@
    {
     "id": "c",
     "name": "reuse 1",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -520,6 +562,7 @@
    {
     "id": "d",
     "name": "reuse 2",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -533,6 +576,7 @@
    {
     "id": "h",
     "name": "missing value",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -545,6 +589,7 @@
    {
     "id": "i",
     "name": "triple 1",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -558,6 +603,7 @@
    {
     "id": "j",
     "name": "triple 2",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -571,6 +617,7 @@
    {
     "id": "k",
     "name": "triple 3",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -584,6 +631,7 @@
    {
     "id": "l",
     "name": "breached",
+    "url": null,
     "folderPath": null,
     "score": 2,
     "flags": [
@@ -596,6 +644,7 @@
    {
     "id": "m",
     "name": "safe verdict",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [],
@@ -610,7 +659,8 @@
    "reusedCount": 5,
    "staleCount": 0,
    "breachedCount": 0,
-   "compromisedCount": 2
+   "compromisedCount": 2,
+   "insecureAddressCount": 0
   },
   "score": 34
  },
@@ -619,6 +669,7 @@
    {
     "id": "a",
     "name": "weak",
+    "url": null,
     "folderPath": "f",
     "score": 0,
     "flags": [
@@ -631,6 +682,7 @@
    {
     "id": "b",
     "name": "strong",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -643,6 +695,7 @@
    {
     "id": "c",
     "name": "reuse 1",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -655,6 +708,7 @@
    {
     "id": "d",
     "name": "reuse 2",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -668,6 +722,7 @@
    {
     "id": "e",
     "name": "key material",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -680,6 +735,7 @@
    {
     "id": "f",
     "name": "empty",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -692,6 +748,7 @@
    {
     "id": "h",
     "name": "missing value",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -704,6 +761,7 @@
    {
     "id": "i",
     "name": "triple 1",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -718,6 +776,7 @@
    {
     "id": "j",
     "name": "triple 2",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -731,6 +790,7 @@
    {
     "id": "k",
     "name": "triple 3",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -744,6 +804,7 @@
    {
     "id": "l",
     "name": "breached",
+    "url": null,
     "folderPath": null,
     "score": 2,
     "flags": [
@@ -756,6 +817,7 @@
    {
     "id": "m",
     "name": "safe verdict",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [],
@@ -770,7 +832,8 @@
    "reusedCount": 5,
    "staleCount": 4,
    "breachedCount": 0,
-   "compromisedCount": 2
+   "compromisedCount": 2,
+   "insecureAddressCount": 0
   },
   "score": 25
  },
@@ -779,6 +842,7 @@
    {
     "id": "a",
     "name": "weak",
+    "url": null,
     "folderPath": "f",
     "score": 0,
     "flags": [
@@ -791,6 +855,7 @@
    {
     "id": "b",
     "name": "strong",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -803,6 +868,7 @@
    {
     "id": "c",
     "name": "reuse 1",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -815,6 +881,7 @@
    {
     "id": "d",
     "name": "reuse 2",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -828,6 +895,7 @@
    {
     "id": "e",
     "name": "key material",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -840,6 +908,7 @@
    {
     "id": "f",
     "name": "empty",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -852,6 +921,7 @@
    {
     "id": "h",
     "name": "missing value",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -864,6 +934,7 @@
    {
     "id": "i",
     "name": "triple 1",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -881,6 +952,7 @@
    {
     "id": "j",
     "name": "triple 2",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -897,6 +969,7 @@
    {
     "id": "k",
     "name": "triple 3",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -913,6 +986,7 @@
    {
     "id": "l",
     "name": "breached",
+    "url": null,
     "folderPath": null,
     "score": 2,
     "flags": [
@@ -929,6 +1003,7 @@
    {
     "id": "m",
     "name": "safe verdict",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [],
@@ -946,7 +1021,8 @@
    "reusedCount": 5,
    "staleCount": 4,
    "breachedCount": 1,
-   "compromisedCount": 2
+   "compromisedCount": 2,
+   "insecureAddressCount": 0
   },
   "score": 17
  },
@@ -955,6 +1031,7 @@
    {
     "id": "a",
     "name": "weak",
+    "url": null,
     "folderPath": "f",
     "score": 0,
     "flags": [
@@ -967,6 +1044,7 @@
    {
     "id": "b",
     "name": "strong",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -979,6 +1057,7 @@
    {
     "id": "c",
     "name": "reuse 1",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -991,6 +1070,7 @@
    {
     "id": "d",
     "name": "reuse 2",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -1004,6 +1084,7 @@
    {
     "id": "e",
     "name": "key material",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -1016,6 +1097,7 @@
    {
     "id": "f",
     "name": "empty",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -1028,6 +1110,7 @@
    {
     "id": "h",
     "name": "missing value",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -1040,6 +1123,7 @@
    {
     "id": "i",
     "name": "triple 1",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -1054,6 +1138,7 @@
    {
     "id": "j",
     "name": "triple 2",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -1067,6 +1152,7 @@
    {
     "id": "k",
     "name": "triple 3",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -1080,6 +1166,7 @@
    {
     "id": "l",
     "name": "breached",
+    "url": null,
     "folderPath": null,
     "score": 2,
     "flags": [
@@ -1092,6 +1179,7 @@
    {
     "id": "m",
     "name": "safe verdict",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [],
@@ -1106,7 +1194,8 @@
    "reusedCount": 5,
    "staleCount": 4,
    "breachedCount": 0,
-   "compromisedCount": 2
+   "compromisedCount": 2,
+   "insecureAddressCount": 0
   },
   "score": 25
  },
@@ -1115,6 +1204,7 @@
    {
     "id": "a",
     "name": "weak",
+    "url": null,
     "folderPath": "f",
     "score": 0,
     "flags": [
@@ -1132,6 +1222,7 @@
    {
     "id": "b",
     "name": "strong",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -1149,6 +1240,7 @@
    {
     "id": "c",
     "name": "reuse 1",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -1165,6 +1257,7 @@
    {
     "id": "d",
     "name": "reuse 2",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -1182,6 +1275,7 @@
    {
     "id": "e",
     "name": "key material",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -1199,6 +1293,7 @@
    {
     "id": "f",
     "name": "empty",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -1211,6 +1306,7 @@
    {
     "id": "h",
     "name": "missing value",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -1223,6 +1319,7 @@
    {
     "id": "i",
     "name": "triple 1",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -1241,6 +1338,7 @@
    {
     "id": "j",
     "name": "triple 2",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -1258,6 +1356,7 @@
    {
     "id": "k",
     "name": "triple 3",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -1275,6 +1374,7 @@
    {
     "id": "l",
     "name": "breached",
+    "url": null,
     "folderPath": null,
     "score": 2,
     "flags": [
@@ -1292,6 +1392,7 @@
    {
     "id": "m",
     "name": "safe verdict",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -1312,7 +1413,8 @@
    "reusedCount": 10,
    "staleCount": 4,
    "breachedCount": 10,
-   "compromisedCount": 2
+   "compromisedCount": 2,
+   "insecureAddressCount": 0
   },
   "score": 0
  },
@@ -1321,6 +1423,7 @@
    {
     "id": "a",
     "name": "weak",
+    "url": null,
     "folderPath": "f",
     "score": 0,
     "flags": [
@@ -1333,6 +1436,7 @@
    {
     "id": "b",
     "name": "strong",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -1345,6 +1449,7 @@
    {
     "id": "c",
     "name": "reuse 1",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [],
@@ -1355,6 +1460,7 @@
    {
     "id": "d",
     "name": "reuse 2",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [
@@ -1367,6 +1473,7 @@
    {
     "id": "e",
     "name": "key material",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -1379,6 +1486,7 @@
    {
     "id": "f",
     "name": "empty",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -1391,6 +1499,7 @@
    {
     "id": "h",
     "name": "missing value",
+    "url": null,
     "folderPath": null,
     "score": null,
     "flags": [
@@ -1403,6 +1512,7 @@
    {
     "id": "i",
     "name": "triple 1",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -1416,6 +1526,7 @@
    {
     "id": "j",
     "name": "triple 2",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -1428,6 +1539,7 @@
    {
     "id": "k",
     "name": "triple 3",
+    "url": null,
     "folderPath": null,
     "score": 0,
     "flags": [
@@ -1440,6 +1552,7 @@
    {
     "id": "l",
     "name": "breached",
+    "url": null,
     "folderPath": null,
     "score": 2,
     "flags": [
@@ -1452,6 +1565,7 @@
    {
     "id": "m",
     "name": "safe verdict",
+    "url": null,
     "folderPath": null,
     "score": 4,
     "flags": [],
@@ -1466,7 +1580,8 @@
    "reusedCount": 0,
    "staleCount": 4,
    "breachedCount": 0,
-   "compromisedCount": 2
+   "compromisedCount": 2,
+   "insecureAddressCount": 0
   },
   "score": 55
  },
@@ -1478,7 +1593,8 @@
    "reusedCount": 0,
    "staleCount": 0,
    "breachedCount": 0,
-   "compromisedCount": 0
+   "compromisedCount": 0,
+   "insecureAddressCount": 0
   },
   "score": 100
  },

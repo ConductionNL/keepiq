@@ -1834,6 +1834,11 @@
         "One exact origin per line, such as chrome-extension:// followed by the 32-letter extension id. Wildcards are not accepted.": "Eén exacte origin per regel, zoals chrome-extension:// gevolgd door de extensie-id van 32 letters. Jokertekens worden niet geaccepteerd.",
         "Other extension builds allowed to use passkeys": "Andere versies van de extensie die passkeys mogen gebruiken",
         "Suspended": "Geschorst",
+        "Clone": "Klonen",
+        "{name} (copy)": "{name} (kopie)",
+        "This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.": "Dit is een kopie van een ander geheim. Bijlagen, delingen, geschiedenis, passkeys en de eenmalige code worden niet gekopieerd.",
+        "Preview attachment": "Bijlage bekijken",
+        "Attachment": "Bijlage",
         "How your vault is protected": "Zo is uw kluis beveiligd",
         "Your vault certificate": "Uw kluiscertificaat",
         "Loading certificate details…": "Certificaatgegevens laden…",
@@ -1848,7 +1853,11 @@
         "Signature algorithm": "Handtekeningalgoritme",
         "Fingerprint": "Vingerafdruk",
         "Valid": "Geldig",
-        "{from} to {until}": "{from} tot {until}"
+        "{from} to {until}": "{from} tot {until}",
+        "Unencrypted address": "Onversleuteld adres",
+        "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "Deze logins zijn opgeslagen met een http-adres, dus het wachtwoord wordt onversleuteld verstuurd. Wijzig het adres in https als de site dat aanbiedt.",
+        "Change to https": "Wijzigen in https",
+        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"
