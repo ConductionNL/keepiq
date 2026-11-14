@@ -24,7 +24,8 @@
 
 ## 4. Docs
 
-- [ ] 4.1 Document the three categories and the site directory setting in `docs/password-health.md`. Verify: docs build.
+- [x] 4.1 Document the three categories and the site directory setting in `docs/password-health.md`. Verify: docs build.
+  - The Unencrypted address entry (from 1.1), plus a Site directory section: both categories, how a site matches, the two sources with their licences, why the list is downloaded whole, and how to switch it on. The docs build was not run here: `npm ci` in `docs/` refuses because its `package-lock.json` is out of sync with `package.json` on development itself.
 
 ## Acceptance criteria
 
