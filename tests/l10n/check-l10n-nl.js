@@ -28,4 +28,6 @@ if (process.argv.includes('--write')) {
 }
 
 process.env.L10N_FILE = process.env.L10N_FILE || 'l10n/nl.json'
+// Dutch coverage only; locale parity is enforced by test:l10n.
+process.env.L10N_SKIP_PARITY = '1'
 require('./check-l10n.js')
