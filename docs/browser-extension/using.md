@@ -35,9 +35,16 @@ Before you start, open the Keepiq web app once and set your master password.
 
 1. Click the Keepiq icon. The extension shows **Add account**.
 2. Enter your **Server URL**. The address of any Nextcloud page works; the extension keeps only the server part.
-3. Enter your Nextcloud **Username**.
-4. Enter an **App password**. Create one in Nextcloud under **Settings**, then **Security**. Once you have entered the server, the form links straight to that page. Never enter your Nextcloud login password here.
-5. Choose **Add account**. The browser asks whether Keepiq may reach your server. Allow it.
+3. Choose **Sign in through Nextcloud**. The browser asks whether Keepiq may reach your server. Allow it.
+4. A Nextcloud page opens in a new tab. Sign in there as you always do and grant access. Keepiq adds the account when you are done; the tab tells you to finish there. If you close the tab, or do not finish within 20 minutes, nothing is added.
+
+Keepiq never sees your Nextcloud password: Nextcloud gives it an app password of its own. After adding the account, the extension reminds you that Keepiq needs no file access. In Nextcloud, under **Settings**, **Security**, **Devices & sessions**, you can switch off file access for that app password, or revoke it.
+
+**Or enter an app password** instead, when signing in through Nextcloud does not suit you:
+
+1. Enter your Nextcloud **Username**.
+2. Enter an **App password**. Create one in Nextcloud under **Settings**, then **Security**. Once you have entered the server, the form links straight to that page. Never enter your Nextcloud login password here.
+3. Choose **Add account**. The browser asks whether Keepiq may reach your server. Allow it.
 
 The extension checks the details with your server before it stores anything. When something is wrong, it says what:
 
@@ -56,13 +63,25 @@ The extension checks the details with your server before it stores anything. Whe
 | This account is already added | This user on this server is already in the extension. |
 | Maximum of 5 accounts reached | Log out of an account you no longer need first. |
 
-You can add up to five accounts, on the same server or on different ones. Your Nextcloud security settings list each app password you made. Revoke it there to cut the browser off.
+You can add up to five accounts, on the same server or on different ones. Your Nextcloud security settings list each app password, under **Devices & sessions**. Revoke it there to cut the browser off; that also removes the browser's fingerprint or face unlock (see [Fingerprint or face unlock](#fingerprint-or-face-unlock)).
 
 ## Unlocking
 
 Enter your master password and choose **Unlock**. Your master password never leaves the browser, and the extension does not store it.
 
 When you set a PIN in [Settings](#settings), the lock screen asks for it instead, with **Use master password** beside it. After a browser restart you enter your master password once; then your PIN works again.
+
+### Fingerprint or face unlock
+
+You can also unlock with your fingerprint, your face or your device PIN, through a passkey your device keeps. It needs Chrome or Edge 122 or later, or Firefox 150 or later, and a device that can do it; otherwise the extension says so and you use your master password.
+
+- **Set it up:** in [Settings](#settings), **Account security**, turn on **Unlock with fingerprint or face**. A Keepiq window opens: confirm your master password, and your browser asks for your fingerprint, face or device PIN twice. The window then says **Fingerprint or face unlock is set up for this browser**.
+- **Unlock:** on the lock screen choose **Unlock with fingerprint or face**. A Keepiq window opens and your browser asks for your fingerprint, face or device PIN. Your master password keeps working as well.
+- **Turn it off:** revoke the passkey in the Keepiq web app. Revoking the extension's app password in Nextcloud's **Devices & sessions** also removes it.
+
+The passkey belongs to this browser's app password: it unlocks only this account in this browser. Your server keeps your vault key only in a form your passkey alone can open; your master password and your fingerprint or face never reach it.
+
+Your administrator can switch fingerprint or face unlock off for everyone; the extension then asks for your master password.
 
 **Invalid master password** means the password did not open your vault. When you changed your master password in the web app, the extension notices and takes the new one.
 
@@ -281,7 +300,7 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
   - **Timeout action:** **Lock**, or **Log out**, after which you need the app password again.
   - **Unlock with PIN:** enter your master password and a PIN of at least 6 characters, twice. Don't reuse the PIN of your phone or bank card.
   - **After a browser restart you enter your master password once; then your PIN works again.** Locking keeps the PIN; five wrong PINs in a row, logging out and a changed vault key forget it, and you unlock with your master password.
-  - **Unlock with biometrics** is not available yet.
+  - **Unlock with fingerprint or face:** see [Fingerprint or face unlock](#fingerprint-or-face-unlock). Once it is on, the setting says to revoke the passkey in the Keepiq web app to turn it off.
   - **Lock now**, **Log out**, and **Change master password**, which opens the Keepiq web app.
 - **Autofill:**
   - **Autofill on page load,** off by default, and **Default autofill setting for login items**, see [Filling in logins](#filling-in-logins).
@@ -303,6 +322,19 @@ The **Settings** tab has a section per topic. Your choices are kept per account,
   - **Compact mode** tightens the spacing. Turning off **Show animations** stops transitions, and turning off **Show quick copy actions on vault** hides the copy buttons on the vault list. Turning off **Show number of login autofill suggestions on extension icon** removes the number from the toolbar icon; the icon still shows whether you are locked.
   - **Language** shows your browser's language, see [Language](#language).
 - **About:** the extension's version, your server and its Keepiq version, and links to help, bug reports, support, the privacy policy and the Keepiq web app.
+
+## For administrators
+
+Under **Administration settings**, **Keepiq**, **Browser extension**:
+
+- **Longest idle time before the extension locks**, from 1 minute to 4 hours. Users can pick a shorter time, not a longer one.
+- **Allow passkey unlock in the extension** turns fingerprint or face unlock on or off for every user. Off, the server refuses every extension passkey set-up and unlock, and users unlock with their master password.
+- **Official extension builds** lists the extension origins of Keepiq's own store builds. Keepiq trusts these without any setting.
+- **Other extension builds allowed to use passkeys:** the origins of builds you made or approved yourself, one per line, exactly as the browser reports them: `chrome-extension://` followed by the 32-letter extension id, or `moz-extension://` followed by the 64-letter id. Wildcards and anything else are refused. Remove a line and the passkeys set up from that build stop unlocking at their next try.
+
+A refused passkey set-up or unlock is logged with the check that failed; the user sees one general message and can still unlock with the master password.
+
+When a user, or you, revokes an extension's app password in Nextcloud under **Devices & sessions**, Keepiq deletes the fingerprint or face unlock set up under it, and writes an audit event. Another app password of the same user is not affected.
 
 ## Language
 
