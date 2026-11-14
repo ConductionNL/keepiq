@@ -41,8 +41,40 @@ browser. Neither sends plaintext, a passphrase, or a derived key to the server.
 
 ### Scope
 
-Both modes export the whole vault or a selected folder subtree. Scope never
-changes the security gating of the chosen mode.
+Every export mode (encrypted backup, plaintext CSV and CXF) can be limited to:
+
+- **Entire vault** — every secret you can export.
+- **Chosen folders and types** — one or more folders, each with its
+  subfolders, and one or more secret types. With both chosen, only secrets
+  that are in a chosen folder *and* of a chosen type are exported.
+- **The selected secrets** — select secrets in the vault list and choose
+  **Export selected** in the selection strip. The dialog opens on exactly that
+  selection; it is not combined with folders or types.
+
+Scope never changes the security gating of the chosen mode: a plaintext CSV
+of three secrets still needs the warning and the master password.
+
+### Leaving fields out
+
+For the encrypted backup and the plaintext CSV you can leave out
+**usernames**, **additional fields** or **one-time code seeds**. A secret's
+name and value are always exported, because a backup without values is not a
+backup. A backup with fields left out is marked as *partial* inside its
+encrypted payload, and restoring it says which fields are missing before
+anything is restored.
+
+### Secrets that could not be decrypted
+
+A secret under a revoked or blocked encryption suite cannot be decrypted in
+the browser, so it cannot be exported. The dialog says how many secrets are
+not in the export and asks you to continue without them before any file is
+written.
+
+### Types in a backup
+
+Each secret in a backup carries its type's name and, for a custom type, its
+label. That is what lets a backup restore with its types on another account
+or instance; see [Restoring a Keepiq backup](importing.md#restoring-a-keepiq-backup).
 
 ## GDPR data export (Art. 15, right of access)
 

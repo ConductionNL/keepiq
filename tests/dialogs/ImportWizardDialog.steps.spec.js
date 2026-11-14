@@ -188,6 +188,52 @@ describe('ImportWizardDialog steps', () => {
 		expect(wrapper.find('.empty').text()).toBe('No duplicates found')
 	})
 
+	it('lists the secret types the restore created and the rows that fell back', async () => {
+		const { wrapper, store } = openWizard()
+		store.summary = {
+			imported: 3,
+			skippedDuplicates: 0,
+			rejected: 0,
+			foldersCreated: 0,
+			rejectedRows: [],
+			createdTypes: [{ name: 'vpn-profile', label: 'VPN profile' }, { name: 'badge', label: '' }],
+			typeFallbacks: [{ sourceRow: 3, type: 'Smart card' }],
+		}
+		store.goToStep('summary')
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.find('[data-testid="import-created-types"]').findAll('li').map((li) => li.text()))
+			.toEqual(['VPN profile', 'badge'])
+		expect(wrapper.find('[data-testid="import-type-fallbacks"]').exists()).toBe(true)
+		expect(wrapper.findAll('tbody td').map((td) => td.text())).toEqual(['3', 'Smart card'])
+	})
+
+	it('shows neither list when the restore created no type and none fell back', async () => {
+		const { wrapper, store } = openWizard()
+		store.summary = { imported: 1, skippedDuplicates: 0, rejected: 0, foldersCreated: 0, rejectedRows: [] }
+		store.goToStep('summary')
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.find('[data-testid="import-created-types"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="import-type-fallbacks"]').exists()).toBe(false)
+	})
+
+	it('announces a partial backup, naming what it left out, before the restore', async () => {
+		const { wrapper, store } = openWizard()
+		store.rows = [{ sourceRow: 1, name: 'Mail' }]
+		store.partialFields = ['login', 'totp']
+		store.goToStep('mapping')
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.find('[data-testid="import-partial-backup"]').text()).toBe(
+			'This backup is partial. It was made without: Usernames, One-time code seeds. Those fields stay empty on the restored secrets.',
+		)
+
+		store.partialFields = []
+		await wrapper.vm.$nextTick()
+		expect(wrapper.find('[data-testid="import-partial-backup"]').exists()).toBe(false)
+	})
+
 	it('lists the rejected rows and downloads them as CSV without uploading', async () => {
 		const { wrapper, store } = openWizard()
 		store.rejected = [{ sourceRow: 4, name: 'Bad, row', reason: 'missing name' }]

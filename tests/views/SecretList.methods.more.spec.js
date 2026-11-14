@@ -399,6 +399,27 @@ describe('SecretList — export, CXP and GDPR', () => {
 		expect(ctx[flag]).toBe(true)
 	})
 
+	it('Export selected opens the export dialog on the current selection', async () => {
+		const ctx = exportCtx()
+		ctx.bulkStore = { selectedIds: ['ok', 'broken'] }
+		ctx.exportSelection = []
+		ctx.openExport = methods.openExport.bind(ctx)
+		await methods.openExportSelected.call(ctx)
+		expect(ctx.exportSelection).toEqual(['ok', 'broken'])
+		expect(ctx.exportSelection).not.toBe(ctx.bulkStore.selectedIds)
+		expect(ctx.exportOpen).toBe(true)
+		expect(ctx.skippedSecrets).toBe(2)
+	})
+
+	it('closing the export dialog forgets the selection it was opened with', () => {
+		const ctx = { exportOpen: true, exportSelection: ['ok'] }
+		methods.onExportOpen.call(ctx, true)
+		expect(ctx.exportSelection).toEqual(['ok'])
+		methods.onExportOpen.call(ctx, false)
+		expect(ctx.exportOpen).toBe(false)
+		expect(ctx.exportSelection).toEqual([])
+	})
+
 	it('"export first" closes the deletion dialog and opens the export', async () => {
 		const ctx = { deletionOpen: true, openExport: vi.fn().mockResolvedValue() }
 		await methods.onExportFirst.call(ctx)

@@ -10,7 +10,8 @@
 				:secrets="decryptedSecrets"
 				:skipped="skippedSecrets"
 				:folders="folders"
-				@update:open="exportOpen = $event" />
+				:selectedIds="exportSelection"
+				@update:open="onExportOpen" />
 			<CxpTransferDialog
 				:open="cxpOpen"
 				:secrets="decryptedSecrets"
@@ -418,6 +419,16 @@
 					<NcButton
 						variant="secondary"
 						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-export"
+						@click="openExportSelected">
+						<template #icon>
+							<DownloadOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Export selected') }}
+					</NcButton>
+					<NcButton
+						variant="secondary"
+						:disabled="loading || folderSwitching"
 						data-testid="bulk-open-archive"
 						@click="bulkDialog = 'archive'">
 						<template #icon>
@@ -575,6 +586,7 @@ import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
 import ArchiveArrowUpOutline from 'vue-material-design-icons/ArchiveArrowUpOutline.vue'
 import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
 import DeleteRestore from 'vue-material-design-icons/DeleteRestore.vue'
+import DownloadOutline from 'vue-material-design-icons/DownloadOutline.vue'
 import FilterIcon from 'vue-material-design-icons/Filter.vue'
 import FilterOutline from 'vue-material-design-icons/FilterOutline.vue'
 import FolderMoveOutline from 'vue-material-design-icons/FolderMoveOutline.vue'
@@ -713,6 +725,7 @@ export default {
 		ArchiveArrowUpOutline,
 		ArchiveOutline,
 		DeleteRestore,
+		DownloadOutline,
 		BulkStateDialog,
 		BulkTagDialog,
 		TagOutline,
@@ -752,6 +765,8 @@ export default {
 			sortField: 'name',
 			searchTimer: null,
 			exportOpen: false,
+			/** The secret ids Export selected opened the export dialog with. */
+			exportSelection: [],
 			cxpOpen: false,
 			gdprOpen: false,
 			deletionOpen: false,
@@ -1574,6 +1589,33 @@ export default {
 			this.decryptedSecrets = secrets
 			this.skippedSecrets = skipped
 			this.exportOpen = true
+		},
+
+		/**
+		 * Open the export dialog on the vault list's selection (Export
+		 * selected in the selection strip).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		async openExportSelected() {
+			this.exportSelection = [...this.bulkStore.selectedIds]
+			await this.openExport()
+		},
+
+		/**
+		 * Follow the export dialog opening or closing; a closed dialog forgets
+		 * the selection it was opened with.
+		 *
+		 * @param {boolean} open Whether the dialog is open.
+		 * @return {void}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		onExportOpen(open) {
+			this.exportOpen = open
+			if (!open) {
+				this.exportSelection = []
+			}
 		},
 
 		/**

@@ -21,6 +21,7 @@ import CxpTransferDialog from '../../src/dialogs/CxpTransferDialog.vue'
 import ExportDialog from '../../src/dialogs/ExportDialog.vue'
 import * as reauth from '../../src/crypto/reauth.js'
 import { useExportStore } from '../../src/store/modules/export.js'
+import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 
 vi.mock('../../src/policy/policy.js', () => ({
@@ -70,17 +71,64 @@ describe('ExportDialog.onExport', () => {
 		await wrapper.vm.onExport()
 		expect(backup).toHaveBeenCalledWith(SECRETS, FOLDERS, 'pass phrase', {
 			mode: 'vault',
-		})
+		}, { types: [], omitFields: [] })
 		expect(wrapper.emitted('update:open')).toEqual([[false]])
 		expect(wrapper.vm.passphrase).toBe('')
 	})
 
-	it('scopes the export to one folder', async () => {
+	it('scopes the export to chosen folders and types combined', async () => {
 		const wrapper = mountExport()
 		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
-		wrapper.vm.scopeFolder = 'f1'
+		wrapper.vm.scopeKind = 'chosen'
+		wrapper.vm.scopeFolderIds = ['f1', 'f2']
+		wrapper.vm.scopeTypeIds = ['type-api']
 		await wrapper.vm.onExport()
-		expect(backup.mock.calls[0][3]).toEqual({ mode: 'folders', folderIds: ['f1'] })
+		expect(backup.mock.calls[0][3]).toEqual({
+			folderIds: ['f1', 'f2'],
+			typeIds: ['type-api'],
+		})
+	})
+
+	it('scopes the export to chosen types alone', async () => {
+		const wrapper = mountExport()
+		wrapper.vm.scopeKind = 'chosen'
+		wrapper.vm.scopeTypeIds = ['type-api']
+		expect(wrapper.vm.buildScope()).toEqual({ typeIds: ['type-api'] })
+	})
+
+	it('blocks a chosen scope that names no folder or type', async () => {
+		const wrapper = mountExport()
+		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
+		wrapper.vm.passphrase = 'a long passphrase'
+		wrapper.vm.passphraseScore = 4
+		wrapper.vm.scopeKind = 'chosen'
+		expect(wrapper.vm.canSubmit).toBe(false)
+		wrapper.vm.scopeFolderIds = ['f1']
+		expect(wrapper.vm.canSubmit).toBe(true)
+		expect(backup).not.toHaveBeenCalled()
+	})
+
+	it('exports the selection it was opened with, on its own', async () => {
+		const wrapper = mountExport({ selectedIds: ['s1', 's3'] })
+		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
+		await wrapper.setProps({ open: false })
+		await wrapper.setProps({ open: true })
+		expect(wrapper.vm.scopeKind).toBe('selection')
+		wrapper.vm.scopeFolderIds = ['f1']
+		await wrapper.vm.onExport()
+		expect(backup.mock.calls[0][3]).toEqual({ secretIds: ['s1', 's3'] })
+	})
+
+	it('passes the vault types and the fields left out to the serializer', async () => {
+		const wrapper = mountExport()
+		const types = [{ id: 't1', name: 'vpn-profile', label: 'VPN profile', scope: 'user' }]
+		useSecretTypeStore().types = types
+		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
+		wrapper.vm.toggleOmitField('login', true)
+		wrapper.vm.toggleOmitField('totp', true)
+		wrapper.vm.toggleOmitField('login', false)
+		await wrapper.vm.onExport()
+		expect(backup.mock.calls[0][4]).toEqual({ types, omitFields: ['totp'] })
 	})
 
 	it('writes nothing while skipped secrets are not acknowledged', async () => {
@@ -114,7 +162,10 @@ describe('ExportDialog.onExport', () => {
 		const csv = vi.spyOn(useExportStore(), 'exportCsv').mockResolvedValue()
 		wrapper.vm.mode = 'csv'
 		await wrapper.vm.onExport()
-		expect(csv).toHaveBeenCalledWith(SECRETS, FOLDERS, { mode: 'vault' })
+		expect(csv).toHaveBeenCalledWith(SECRETS, FOLDERS, { mode: 'vault' }, {
+			types: [],
+			omitFields: [],
+		})
 		expect(wrapper.emitted('update:open')).toEqual([[false]])
 	})
 

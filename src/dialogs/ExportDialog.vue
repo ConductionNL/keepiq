@@ -13,7 +13,9 @@
     knowledge — verified by decrypting the private-key blob, never sent to the
     server), THEN download.
 
-  Both modes support scope selection (whole vault or a folder subtree). The
+  Every mode supports scope selection (whole vault, chosen folders with their
+  subfolders and chosen types, or the vault list's selection), and the backup
+  and CSV can leave out usernames, additional fields or seeds. The
   caller passes already-decrypted secrets + the folder list.
 
   @spec openspec/specs/secret-export/spec.md
@@ -111,12 +113,95 @@
 					<p>{{ t('keepiq', 'Export again to proceed anyway.') }}</p>
 				</NcNoteCard>
 
-				<NcSelect
-					v-model="scopeFolder"
-					:inputLabel="t('keepiq', 'Scope')"
-					:options="scopeOptions"
-					:reduce="(opt) => opt.value"
-					:clearable="false" />
+				<!-- What goes in (portability-export-choice-and-restore-fidelity
+				     D1): the entire vault, chosen folders and types (the two
+				     combine), or the selection made in the vault list. -->
+				<fieldset class="export-dialog__scope" data-testid="export-scope">
+					<legend>{{ t('keepiq', 'What to export') }}</legend>
+					<NcCheckboxRadioSwitch
+						:modelValue="scopeKind"
+						value="vault"
+						name="export-scope"
+						type="radio"
+						@update:modelValue="scopeKind = $event">
+						{{ t('keepiq', 'Entire vault') }}
+					</NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch
+						:modelValue="scopeKind"
+						value="chosen"
+						name="export-scope"
+						type="radio"
+						data-testid="export-scope-chosen"
+						@update:modelValue="scopeKind = $event">
+						{{ t('keepiq', 'Chosen folders and types') }}
+					</NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch
+						v-if="selectedIds.length > 0"
+						:modelValue="scopeKind"
+						value="selection"
+						name="export-scope"
+						type="radio"
+						data-testid="export-scope-selection"
+						@update:modelValue="scopeKind = $event">
+						{{
+							n(
+								'keepiq',
+								'The selected secret',
+								'The %n selected secrets',
+								selectedIds.length,
+							)
+						}}
+					</NcCheckboxRadioSwitch>
+				</fieldset>
+
+				<template v-if="scopeKind === 'chosen'">
+					<NcSelect
+						v-model="scopeFolderIds"
+						:inputLabel="t('keepiq', 'Folders, with their subfolders')"
+						:options="folderOptions"
+						:reduce="(opt) => opt.value"
+						:multiple="true"
+						data-testid="export-scope-folders" />
+					<NcSelect
+						v-model="scopeTypeIds"
+						:inputLabel="t('keepiq', 'Secret types')"
+						:options="typeOptions"
+						:reduce="(opt) => opt.value"
+						:multiple="true"
+						data-testid="export-scope-types" />
+					<p class="export-dialog__hint">
+						{{
+							t(
+								'keepiq',
+								'Choose at least one folder or type. With both, only secrets that match both are exported.',
+							)
+						}}
+					</p>
+				</template>
+
+				<!-- Fields to leave out (D2): the name and the value always go in. -->
+				<fieldset
+					v-if="mode !== 'cxf'"
+					class="export-dialog__fields"
+					data-testid="export-fields">
+					<legend>{{ t('keepiq', 'Leave out') }}</legend>
+					<NcCheckboxRadioSwitch
+						v-for="option in fieldOptions"
+						:key="option.value"
+						:modelValue="omitFields.includes(option.value)"
+						:data-testid="'export-omit-' + option.value"
+						@update:modelValue="toggleOmitField(option.value, $event)">
+						{{ option.label }}
+					</NcCheckboxRadioSwitch>
+					<p class="export-dialog__hint">
+						{{
+							t(
+								'keepiq',
+								'Names and values are always exported. A backup with fields left out is marked as partial.',
+							)
+						}}
+					</p>
+				</fieldset>
 
 				<!-- Encrypted backup path -->
 				<div
@@ -203,6 +288,7 @@ import {
 } from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
 import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
+import { OMITTABLE_FIELDS } from '../export/serializer.js'
 import exportSourceProps from '../mixins/exportSourceProps.js'
 import exportStoreDialog from '../mixins/exportStoreDialog.js'
 import masterPasswordCheck from '../mixins/masterPasswordCheck.js'
@@ -226,6 +312,17 @@ export default {
 
 	mixins: [exportSourceProps, exportStoreDialog, masterPasswordCheck],
 
+	props: {
+		/**
+		 * The secrets selected in the vault list, when the dialog was opened
+		 * with Export selected; the dialog then exports only those (D1).
+		 */
+		selectedIds: {
+			type: Array,
+			default: () => [],
+		},
+	},
+
 	emits: ['update:open'],
 	data() {
 		return {
@@ -236,7 +333,14 @@ export default {
 			warningAcknowledged: false,
 			/** Whether the user chose to export without the skipped secrets. */
 			skippedAcknowledged: false,
-			scopeFolder: 'vault',
+			/** The scope (D1): 'vault', 'chosen' (folders and types) or 'selection'. */
+			scopeKind: 'vault',
+			/** The chosen folder ids; each exports with its subfolders. */
+			scopeFolderIds: [],
+			/** The chosen secret type ids. */
+			scopeTypeIds: [],
+			/** The fields to leave out (D2), from OMITTABLE_FIELDS. */
+			omitFields: [],
 			error: null,
 			/** CXF pre-download unmapped-item report (null = not built yet). */
 			cxfReport: null,
@@ -258,19 +362,61 @@ export default {
 		},
 
 		/**
-		 * The scope selector options: the whole vault plus each folder.
+		 * The folder options of a chosen-folders scope.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/specs/secret-export/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
-		scopeOptions() {
-			const opts = [
-				{ label: this.t('keepiq', 'Entire vault'), value: 'vault' },
-			]
-			for (const folder of this.folders) {
-				opts.push({ label: folder.name, value: folder.id })
+		folderOptions() {
+			return this.folders.map((folder) => ({
+				label: folder.name,
+				value: folder.id,
+			}))
+		},
+
+		/**
+		 * The secret type options of a chosen-types scope.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		typeOptions() {
+			return useSecretTypeStore().types.map((type) => ({
+				label: type.label || type.name,
+				value: type.id,
+			}))
+		},
+
+		/**
+		 * The fields the user may leave out (D2), labelled.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		fieldOptions() {
+			const labels = {
+				login: this.t('keepiq', 'Usernames'),
+				additionalFields: this.t('keepiq', 'Additional fields'),
+				totp: this.t('keepiq', 'One-time code seeds'),
 			}
-			return opts
+			return OMITTABLE_FIELDS.map((value) => ({ value, label: labels[value] }))
+		},
+
+		/**
+		 * Whether the chosen scope names something to export: a chosen
+		 * scope needs a folder or a type, a selection needs a secret.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		scopeComplete() {
+			if (this.scopeKind === 'chosen') {
+				return this.scopeFolderIds.length > 0 || this.scopeTypeIds.length > 0
+			}
+			if (this.scopeKind === 'selection') {
+				return this.selectedIds.length > 0
+			}
+			return true
 		},
 
 		/**
@@ -306,6 +452,9 @@ export default {
 			if (this.skipped > 0 && !this.skippedAcknowledged) {
 				return false
 			}
+			if (!this.scopeComplete) {
+				return false
+			}
 			if (this.mode === 'encrypted-backup') {
 				return (
 					this.passphrase.length > 0
@@ -339,6 +488,10 @@ export default {
 			if (open !== true) {
 				return
 			}
+			// Export selected opens the dialog on the selection (D1).
+			if (this.selectedIds.length > 0) {
+				this.scopeKind = 'selection'
+			}
 			resetPolicyCache()
 			this.exportBlocked =
 				(await fetchPolicy())?.vault_export_disabled === true
@@ -370,16 +523,56 @@ export default {
 		},
 
 		/**
-		 * Build the scope selector for the store action.
+		 * Build the scope selector for the store action (D1): the whole vault,
+		 * the chosen folders (with subfolders) and types combined, or the
+		 * selected secrets on their own.
 		 *
 		 * @return {object}
 		 * @spec openspec/specs/secret-export/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
 		buildScope() {
-			if (this.scopeFolder === 'vault') {
+			if (this.scopeKind === 'selection') {
+				return { secretIds: [...this.selectedIds] }
+			}
+			if (this.scopeKind !== 'chosen') {
 				return { mode: 'vault' }
 			}
-			return { mode: 'folders', folderIds: [this.scopeFolder] }
+			const scope = {}
+			if (this.scopeFolderIds.length > 0) {
+				scope.folderIds = [...this.scopeFolderIds]
+			}
+			if (this.scopeTypeIds.length > 0) {
+				scope.typeIds = [...this.scopeTypeIds]
+			}
+			return scope
+		},
+
+		/**
+		 * The serializer options: the vault's types, so each secret carries
+		 * its type name and custom label (D3), and the fields left out (D2).
+		 *
+		 * @return {{types: Array<object>, omitFields: Array<string>}}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 */
+		buildOptions() {
+			return {
+				types: useSecretTypeStore().types,
+				omitFields: [...this.omitFields],
+			}
+		},
+
+		/**
+		 * Leave a field out of the export, or put it back.
+		 *
+		 * @param {string} field The field, from OMITTABLE_FIELDS.
+		 * @param {boolean} omit Whether to leave it out.
+		 * @return {void}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		toggleOmitField(field, omit) {
+			const rest = this.omitFields.filter((value) => value !== field)
+			this.omitFields = omit ? [...rest, field] : rest
 		},
 
 		/**
@@ -423,6 +616,7 @@ export default {
 					this.folders,
 					this.passphrase,
 					scope,
+					this.buildOptions(),
 				)
 				return true
 			}
@@ -432,7 +626,12 @@ export default {
 			if (this.mode === 'cxf') {
 				return this.exportCxf(scope)
 			}
-			await this.exportStore.exportCsv(this.secrets, this.folders, scope)
+			await this.exportStore.exportCsv(
+				this.secrets,
+				this.folders,
+				scope,
+				this.buildOptions(),
+			)
 			return true
 		},
 
@@ -510,7 +709,10 @@ export default {
 			this.masterPassword = ''
 			this.warningAcknowledged = false
 			this.skippedAcknowledged = false
-			this.scopeFolder = 'vault'
+			this.scopeKind = 'vault'
+			this.scopeFolderIds = []
+			this.scopeTypeIds = []
+			this.omitFields = []
 			this.error = null
 			this.cxfReport = null
 		},
@@ -534,7 +736,9 @@ export default {
 	gap: 4px;
 }
 
-.export-dialog__modes {
+.export-dialog__modes,
+.export-dialog__scope,
+.export-dialog__fields {
 	border: none;
 	margin: 0;
 	padding: 0;

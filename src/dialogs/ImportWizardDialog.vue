@@ -143,6 +143,21 @@
 					</tbody>
 				</table>
 
+				<!-- A partial backup is announced before anything is restored
+				     (portability-export-choice-and-restore-fidelity D2). -->
+				<NcNoteCard
+					v-if="partialFieldLabels.length"
+					type="warning"
+					data-testid="import-partial-backup">
+					{{
+						t(
+							'keepiq',
+							'This backup is partial. It was made without: {fields}. Those fields stay empty on the restored secrets.',
+							{ fields: partialFieldLabels.join(', ') },
+						)
+					}}
+				</NcNoteCard>
+
 				<NcNoteCard v-if="store.rejected.length" type="warning">
 					{{
 						t(
@@ -284,6 +299,44 @@
 						}}
 					</li>
 				</ul>
+				<!-- Types the restore created, and rows that fell back to the
+				     default type (D3). -->
+				<template v-if="createdTypes.length">
+					<h4>{{ t('keepiq', 'Secret types created') }}</h4>
+					<ul data-testid="import-created-types">
+						<li v-for="type in createdTypes" :key="type.name">
+							{{ type.label || type.name }}
+						</li>
+					</ul>
+				</template>
+				<template v-if="typeFallbacks.length">
+					<NcNoteCard type="warning" data-testid="import-type-fallbacks">
+						{{
+							t(
+								'keepiq',
+								'These rows were restored with the default type, because their own type could not be found or created.',
+							)
+						}}
+					</NcNoteCard>
+					<table class="import-wizard__preview">
+						<thead>
+							<tr>
+								<th scope="col">
+									{{ t('keepiq', 'Row') }}
+								</th>
+								<th scope="col">
+									{{ t('keepiq', 'Type in the backup') }}
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="f in typeFallbacks" :key="f.sourceRow">
+								<td>{{ f.sourceRow }}</td>
+								<td>{{ f.type }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</template>
 				<template v-if="store.summary.rejectedRows.length">
 					<h4>{{ t('keepiq', 'Rejected rows') }}</h4>
 					<table class="import-wizard__preview">
@@ -446,6 +499,46 @@ export default {
 				{ value: 'skip', label: t('keepiq', 'Skip') },
 				{ value: 'copy', label: t('keepiq', 'Import as copy') },
 			]
+		},
+
+		/**
+		 * The labels of the fields a partial backup left out (D2).
+		 *
+		 * @return {Array<string>}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 */
+		partialFieldLabels() {
+			const labels = {
+				login: t('keepiq', 'Usernames'),
+				additionalFields: t('keepiq', 'Additional fields'),
+				totp: t('keepiq', 'One-time code seeds'),
+			}
+			const fields = Array.isArray(this.store.partialFields)
+				? this.store.partialFields
+				: []
+			return fields.map((field) => labels[field] || field)
+		},
+
+		/**
+		 * The secret types the restore created (D3).
+		 *
+		 * @return {Array<{name: string, label: string}>}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 */
+		createdTypes() {
+			const created = this.store.summary?.createdTypes
+			return Array.isArray(created) ? created : []
+		},
+
+		/**
+		 * The rows that fell back to the default type (D3).
+		 *
+		 * @return {Array<{sourceRow: number, type: string}>}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 */
+		typeFallbacks() {
+			const fallbacks = this.store.summary?.typeFallbacks
+			return Array.isArray(fallbacks) ? fallbacks : []
 		},
 
 		/**

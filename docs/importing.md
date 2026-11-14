@@ -48,6 +48,27 @@ guidance.
    reasons), and how many folders were created. You can download the rejected
    rows as a CSV (generated locally, never uploaded) to fix and re-import.
 
+## Restoring a Keepiq backup
+
+A `.doriath-backup` restores through the same wizard, after its passphrase.
+
+- **Types come back.** Each secret is restored with its own type, in this
+  order: a built-in type of the same name; one of your custom types with the
+  same name; otherwise a new custom type, created for you with the name and
+  label from the backup. The summary lists every type the restore created, so
+  you can remove one you do not want. Only when no type can be found or
+  created does a secret get the default type, and the summary lists that row
+  with the type it had in the backup.
+- **Older backups.** A backup made before type names were exported holds only
+  a type id. Built-in types have the same id on every instance, so they are
+  still recognised; a custom type from such a backup comes back as the
+  default type and is listed.
+- **Row numbers.** Every restored or rejected row is numbered by its position
+  in the backup (the first secret is row 1), so a rejected row can be found.
+- **Partial backups.** When the backup was made with fields left out, the
+  mapping step says which ones before anything is restored. Those fields stay
+  empty on the restored secrets.
+
 ## What is not imported
 
 - **Shares, link shares, and delegations** — set these up again in Keepiq.

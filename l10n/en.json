@@ -1836,7 +1836,25 @@
         "Signature algorithm": "Signature algorithm",
         "Fingerprint": "Fingerprint",
         "Valid": "Valid",
-        "{from} to {until}": "{from} to {until}"
+        "{from} to {until}": "{from} to {until}",
+        "What to export": "What to export",
+        "Chosen folders and types": "Chosen folders and types",
+        "Folders, with their subfolders": "Folders, with their subfolders",
+        "Secret types": "Secret types",
+        "Choose at least one folder or type. With both, only secrets that match both are exported.": "Choose at least one folder or type. With both, only secrets that match both are exported.",
+        "Leave out": "Leave out",
+        "Usernames": "Usernames",
+        "One-time code seeds": "One-time code seeds",
+        "Names and values are always exported. A backup with fields left out is marked as partial.": "Names and values are always exported. A backup with fields left out is marked as partial.",
+        "Export selected": "Export selected",
+        "This backup is partial. It was made without: {fields}. Those fields stay empty on the restored secrets.": "This backup is partial. It was made without: {fields}. Those fields stay empty on the restored secrets.",
+        "Secret types created": "Secret types created",
+        "These rows were restored with the default type, because their own type could not be found or created.": "These rows were restored with the default type, because their own type could not be found or created.",
+        "Type in the backup": "Type in the backup",
+        "_The selected secret_::_The %n selected secrets_": [
+            "The selected secret",
+            "The %n selected secrets"
+        ]
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
