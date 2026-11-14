@@ -21,6 +21,7 @@
     "test:coverage-ratchet": "npm run test:coverage && bash tests/coverage-ratchet.sh vitest coverage-vitest/coverage-summary.json",
     "test:l10n": "node tests/l10n/check-l10n.js",
     "test:l10n:write": "node tests/l10n/check-l10n.js --write",
+    "test:l10n:nl": "node tests/l10n/check-l10n-nl.js",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "watch": "NODE_ENV=development webpack --config webpack.config.js --progress --watch"

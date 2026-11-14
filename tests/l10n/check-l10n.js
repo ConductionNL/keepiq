@@ -279,10 +279,10 @@ function seedLocalePlurals (keys) {
 
 console.log(`l10n-check [${appId}]: scanned ${files.length} files, `
 	+ `${used.size} distinct literal keys used, `
-	+ `${Object.keys(translations).length} keys in en.json`)
+	+ `${Object.keys(translations).length} keys in ${path.basename(enFile)}`)
 
 if (missing.length === 0) {
-	console.log('l10n-check: OK — every used translation key is present in l10n/en.json')
+	console.log(`l10n-check: OK — every used translation key is present in ${path.relative(ROOT, enFile)}`)
 	const shape = pluralShapeProblems()
 	if (shape.length > 0) {
 		console.error(`\nl10n-check: FAIL — ${shape.length} plural entr(y/ies) with the wrong number of forms:`)
@@ -334,7 +334,7 @@ if (WRITE) {
 }
 
 console.error(`\nl10n-check: FAIL — ${missing.length} translation key(s) used in source `
-	+ 'but MISSING from l10n/en.json:')
+	+ `but MISSING from ${path.relative(ROOT, enFile)}:`)
 for (const { key, locations, malformed } of missing.sort((a, b) => a.key.localeCompare(b.key))) {
 	console.error(`  • ${JSON.stringify(key)}${malformed ? ` (present, but not an array of ${EN_FORMS} forms)` : ''}`)
 	for (const loc of locations.slice(0, 5)) {

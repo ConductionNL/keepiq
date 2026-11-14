@@ -21,8 +21,9 @@ $manifestUrl  = $urlGenerator->linkToRoute($appId . '.webManifest.manifest');
 $touchIcon    = $urlGenerator->imagePath($appId, 'pwa-icon.svg');
 Util::addHeader('link', ['rel' => 'manifest', 'href' => $manifestUrl]);
 // The instance theme colour, so an organisation theme (nldesign) reaches the
-// browser chrome instead of a fixed brand colour.
-$themeColor   = \OCP\Server::get(\OCP\Defaults::class)->getColorPrimary();
+// browser chrome instead of a fixed brand colour (the brand colour is only
+// the fallback when theming yields none).
+$themeColor   = \OCA\Keepiq\Controller\WebManifestController::themeColor(\OCP\Server::get(\OCP\Defaults::class));
 Util::addHeader('meta', ['name' => 'theme-color', 'content' => $themeColor]);
 Util::addHeader('meta', ['name' => 'apple-mobile-web-app-capable', 'content' => 'yes']);
 Util::addHeader('meta', ['name' => 'apple-mobile-web-app-status-bar-style', 'content' => 'black-translucent']);

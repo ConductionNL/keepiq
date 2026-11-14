@@ -93,4 +93,70 @@ class WebManifestControllerTest extends TestCase {
 		$this->assertNotEmpty($manifest['shortcuts']);
 		$this->assertStringContainsString('secrets', $manifest['shortcuts'][0]['url']);
 	}//end testManifestShape()
+
+	/**
+	 * With Nextcloud theming setting a primary colour, the manifest's theme
+	 * and background colours are that colour (platform-properties 1.2).
+	 *
+	 * @return void
+	 */
+	public function testThemingOnUsesThePrimaryColour(): void {
+		$manifest = $this->manifestFor(primary: '#2E7D32');
+
+		$this->assertSame(expected: '#2E7D32', actual: $manifest['theme_color']);
+		$this->assertSame(expected: '#2E7D32', actual: $manifest['background_color']);
+	}//end testThemingOnUsesThePrimaryColour()
+
+	/**
+	 * With theming yielding no usable colour, the Keepiq brand colour is
+	 * the fallback (platform-properties 1.2).
+	 *
+	 * @return void
+	 */
+	public function testThemingOffFallsBackToTheBrandColour(): void {
+		foreach (['', '   ', 'green', '#12345', 'var(--color-primary)'] as $primary) {
+			$manifest = $this->manifestFor(primary: $primary);
+			$this->assertSame(expected: '#21468B', actual: $manifest['theme_color'], message: 'primary ' . var_export(value: $primary, return: true));
+			$this->assertSame(expected: '#21468B', actual: $manifest['background_color']);
+		}
+	}//end testThemingOffFallsBackToTheBrandColour()
+
+	/**
+	 * The shared helper trims a padded theme colour and keeps short hex.
+	 *
+	 * @return void
+	 */
+	public function testThemeColorTrimsAndAcceptsShortHex(): void {
+		$defaults = $this->createMock(originalClassName: Defaults::class);
+		$defaults->method('getColorPrimary')->willReturnOnConsecutiveCalls(' #0a0 ', '#ABCDEF');
+
+		$this->assertSame(expected: '#0a0', actual: WebManifestController::themeColor(defaults: $defaults));
+		$this->assertSame(expected: '#ABCDEF', actual: WebManifestController::themeColor(defaults: $defaults));
+	}//end testThemeColorTrimsAndAcceptsShortHex()
+
+	/**
+	 * Build the manifest with the given primary theme colour.
+	 *
+	 * @param string $primary What Defaults::getColorPrimary() returns
+	 *
+	 * @return array<string, mixed> The decoded manifest
+	 */
+	private function manifestFor(string $primary): array {
+		$url = $this->createMock(originalClassName: IURLGenerator::class);
+		$url->method('linkToRouteAbsolute')->willReturn(value: 'https://cloud.example/apps/keepiq/');
+		$url->method('linkToRoute')->willReturn(value: '/apps/keepiq/');
+		$url->method('imagePath')->willReturn(value: '/apps/keepiq/img/pwa-icon.svg');
+		$url->method('getAbsoluteURL')->willReturnArgument(argumentIndex: 0);
+
+		$defaults = $this->createMock(originalClassName: Defaults::class);
+		$defaults->method('getColorPrimary')->willReturn(value: $primary);
+
+		$controller = new WebManifestController(
+			request: $this->createMock(originalClassName: IRequest::class),
+			urlGenerator: $url,
+			defaults: $defaults,
+		);
+
+		return json_decode(json: $controller->manifest()->getData(), associative: true);
+	}//end manifestFor()
 }//end class
