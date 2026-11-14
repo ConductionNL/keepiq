@@ -167,6 +167,7 @@ import {
 	auditEventOptions,
 } from '../../utils/auditEventLabels.js'
 import { buildCsv, downloadCsv } from '../../utils/csv.js'
+import { auditTime } from '../../utils/dateTime.js'
 
 /**
  * Admin instance-wide audit view + retention setting.
@@ -273,23 +274,8 @@ export default {
 			return auditActorLabel(entry)
 		},
 
-		/**
-		 * Format an ISO timestamp as a localized date-time.
-		 *
-		 * @param {string} iso The ISO-8601 timestamp.
-		 * @return {string} The formatted time.
-		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.4
-		 */
-		formatTime(iso) {
-			if (!iso) {
-				return ''
-			}
-			try {
-				return new Date(iso).toLocaleString()
-			} catch (e) {
-				return iso
-			}
-		},
+		/** The shown timestamp (see `auditTime` in utils/dateTime.js). */
+		formatTime: auditTime,
 
 		/**
 		 * Load the current retention window from the admin settings API.

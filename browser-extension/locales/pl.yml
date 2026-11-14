@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 tożsamość Keepiq. Naciśnij strzałkę w dół, aby wybrać.
         n: "Tożsamości Keepiq: $1. Naciśnij strzałkę w dół, aby wybrać."
+  newPassword:
+    frameTitle: Silne hasło Keepiq
+    offer: Użyj silnego hasła
+    locked: Odblokuj Keepiq, aby otrzymać silne hasło
+    status: Użyj silnego hasła. Naciśnij strzałkę w dół, aby wybrać.
 
 notificationBar:
   label: Powiadomienie Keepiq
