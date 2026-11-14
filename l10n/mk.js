@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ова не е клуч на автентикатор. Залепете врска otpauth://totp/ или тајната во формат base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Овој QR-код не содржи клуч на автентикатор. Користете го QR-кодот што го прикажува страницата кога ја поставувате најавата во два чекора.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Оваа тајна чека проверка на нејзините споделувања која сè уште не е завршена. Ништо не е зачувано; обидете се повторно подоцна или замолете администратор да провери дали работат позадинските задачи.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само сопственикот може да промени менаџер или членство што опфаќа менаџер."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само сопственикот може да промени менаџер или членство што опфаќа менаџер.",
+        "Additional fields after the merge": "Дополнителни полиња по спојувањето",
+        "Duplicates": "Дупликати",
+        "Exact duplicates": "Точни дупликати",
+        "Item to keep": "Ставка што останува",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Ставки што ја содржат истата најава повеќе од еднаш. Спојувањето задржува една и ги отстранува другите.",
+        "Likely duplicates": "Веројатни дупликати",
+        "Merge": "Спој",
+        "Merge duplicates": "Спој дупликати",
+        "People who lose access: {count}": "Луѓе што губат пристап: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Иста адреса и корисничко име, друга лозинка. Две одделни сметки може да изгледаат вака, затоа проверете пред спојување.",
+        "The merge did not complete. Check the items of this group in your vault.": "Спојувањето не е завршено. Проверете ги ставките од оваа група во вашиот трезор.",
+        "The merge failed. Nothing was removed.": "Спојувањето не успеа. Ништо не е отстрането.",
+        "The other items move to the trash, where you can restore them.": "Другите ставки одат во корпата, од каде што можете да ги вратите."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

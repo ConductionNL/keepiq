@@ -1863,7 +1863,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Din mhijiex ċavetta tal-awtentikatur. Waħħal link otpauth://totp/ jew is-sigriet base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dan il-kodiċi QR ma fihx ċavetta tal-awtentikatur. Uża l-kodiċi QR li s-sit juri meta tissettja l-awtentikazzjoni b'żewġ fatturi.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dan is-sigriet qed jistenna verifika tal-qsim tiegħu li għadha ma ntemmitx. Ma ġie ssejvjat xejn; erġa' pprova aktar tard, jew staqsi lil amministratur jiċċekkja li x-xogħlijiet fl-isfond qed jaħdmu.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Is-sid biss jista' jibdel maniġer, jew sħubija li tkopri maniġer."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Is-sid biss jista' jibdel maniġer, jew sħubija li tkopri maniġer.",
+        "Additional fields after the merge": "Oqsma addizzjonali wara l-għaqda",
+        "Duplicates": "Duplikati",
+        "Exact duplicates": "Duplikati eżatti",
+        "Item to keep": "Oġġett li jinżamm",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Oġġetti li fihom l-istess login aktar minn darba. L-għaqda żżomm wieħed u tneħħi l-oħrajn.",
+        "Likely duplicates": "Duplikati probabbli",
+        "Merge": "Għaqqad",
+        "Merge duplicates": "Għaqqad id-duplikati",
+        "People who lose access: {count}": "Nies li jitilfu l-aċċess: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "L-istess indirizz u l-istess isem tal-utent, password oħra. Żewġ kontijiet separati jistgħu jidhru hekk, għalhekk iċċekkja qabel tgħaqqad.",
+        "The merge did not complete. Check the items of this group in your vault.": "L-għaqda ma tlestietx. Iċċekkja l-oġġetti ta' dan il-grupp fil-kaxxa forti tiegħek.",
+        "The merge failed. Nothing was removed.": "L-għaqda falliet. Ma tneħħa xejn.",
+        "The other items move to the trash, where you can restore them.": "L-oġġetti l-oħra jmorru fil-barmil, minn fejn tista' terġa' ġġibhom."
     },
     "plurals": null
 }

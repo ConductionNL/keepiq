@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dette er ikke en autentikatornøkkel. Lim inn en otpauth://totp/-lenke eller base32-hemmeligheten.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Denne QR-koden inneholder ikke en autentikatornøkkel. Bruk QR-koden nettstedet viser når du setter opp totrinnspålogging.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Denne hemmeligheten venter på en kontroll av delingene sine som ikke er ferdig ennå. Ingenting ble lagret; prøv igjen senere, eller be en administrator kontrollere at bakgrunnsjobber kjører.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Bare eieren kan endre en administrator, eller et medlemskap som omfatter en administrator."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Bare eieren kan endre en administrator, eller et medlemskap som omfatter en administrator.",
+        "Additional fields after the merge": "Tilleggsfelter etter sammenslåingen",
+        "Duplicates": "Duplikater",
+        "Exact duplicates": "Eksakte duplikater",
+        "Item to keep": "Element som beholdes",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementer som inneholder samme innlogging mer enn én gang. Sammenslåing beholder ett og fjerner de andre.",
+        "Likely duplicates": "Sannsynlige duplikater",
+        "Merge": "Slå sammen",
+        "Merge duplicates": "Slå sammen duplikater",
+        "People who lose access: {count}": "Personer som mister tilgang: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Samme adresse og brukernavn, et annet passord. To separate kontoer kan se slik ut, så sjekk før du slår sammen.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sammenslåingen ble ikke fullført. Sjekk elementene i denne gruppen i hvelvet ditt.",
+        "The merge failed. Nothing was removed.": "Sammenslåingen mislyktes. Ingenting ble fjernet.",
+        "The other items move to the trash, where you can restore them.": "De andre elementene flyttes til papirkurven, der du kan gjenopprette dem."
     },
     "nplurals=2; plural=(n != 1);"
 )

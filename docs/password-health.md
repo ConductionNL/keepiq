@@ -47,6 +47,48 @@ oracle ("attack the weak ones first"), so nothing health-related is written to
   action. This is the one finding the server already knows about.
 - **Breached** — optional; see below.
 
+## Duplicates
+
+The report also lists items your vault holds more than once, found in the
+same browser pass as the other findings:
+
+- **Exact duplicates** have the same address host, the same username and the
+  same password. Saving one login from two browsers, or once by hand and once
+  from the extension, gives you one of these.
+- **Likely duplicates** have the same host and username but a different
+  password. Two genuinely separate accounts can look like this (a personal and a
+  work login on one site with one email address), so check before you merge.
+- Items without an address are only grouped when the name, username and
+  password are all the same.
+
+The host is read from the address, so `https://www.github.com/login` and
+`github.com` count as one host. Usernames are compared without case or
+surrounding spaces. Passkeys and authenticator (one-time code) items are never
+grouped, and neither are copies other people shared with you: only items you
+own are listed. When Keepiq cannot tell your own items from shared copies, the
+Duplicates section is left out rather than shown incomplete.
+
+### Merging
+
+**Merge** on a group opens a dialog where you pick the item to keep. For an
+exact group the first item is picked for you; for a likely group you always
+choose.
+
+- The kept item keeps its own address, username, password and additional
+  fields. The others' additional fields are added to it. When a field name is
+  already taken with a different value, that value is kept under the name with
+  a number, such as `pin (2)`; a value the field already holds is not repeated.
+  The dialog lists the field names the kept item will have, never their values.
+- The other items then move to the trash, where you can restore them one by
+  one. Their attachments and version history go with them.
+- Before you confirm, the dialog says how many people lose access because an
+  item being removed is shared with them.
+
+The kept item is re-encrypted in your browser and saved through the normal
+update; the others are deleted through the normal delete. The server sees those
+writes and nothing else: no group, count or verdict about duplicates is sent to
+it.
+
 ## Breach checking (opt-in, k-anonymity)
 
 When enabled, Keepiq checks password-bearing values against the
@@ -78,7 +120,7 @@ findings are unaffected.
 
 ## What the server knows
 
-Nothing about password health. The only health-relevant facts derivable from the
+Nothing about password health, and nothing about duplicates. The only health-relevant facts derivable from the
 database are `key_updated_at` (ciphertext age — a fact the server already knows
 from its own write log) and the pre-existing `possibly_compromised_at` flag. No
 endpoint accepts a score, digest, reuse datum, full hash, or breach verdict from

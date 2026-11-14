@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Això no és una clau d'autenticador. Enganxeu un enllaç otpauth://totp/ o el secret en base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Aquest codi QR no conté cap clau d'autenticador. Feu servir el codi QR que el lloc mostra quan configureu l'inici de sessió en dos passos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Aquest secret està esperant una comprovació de les seves comparticions que encara no ha acabat. No s'ha desat res; torneu-ho a provar més tard o demaneu a un administrador que comprovi que les tasques en segon pla s'executen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Només el propietari pot canviar un gestor o una pertinença que inclogui un gestor."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Només el propietari pot canviar un gestor o una pertinença que inclogui un gestor.",
+        "Additional fields after the merge": "Camps addicionals després de combinar",
+        "Duplicates": "Duplicats",
+        "Exact duplicates": "Duplicats exactes",
+        "Item to keep": "Element que es conserva",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elements que contenen el mateix inici de sessió més d'una vegada. Combinar-los en conserva un i suprimeix els altres.",
+        "Likely duplicates": "Duplicats probables",
+        "Merge": "Combina",
+        "Merge duplicates": "Combina els duplicats",
+        "People who lose access: {count}": "Persones que perden l'accés: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Mateixa adreça i mateix nom d'usuari, una altra contrasenya. Dos comptes diferents poden semblar així, per tant comproveu-ho abans de combinar.",
+        "The merge did not complete. Check the items of this group in your vault.": "La combinació no s'ha completat. Comproveu els elements d'aquest grup a la vostra caixa forta.",
+        "The merge failed. Nothing was removed.": "La combinació ha fallat. No s'ha suprimit res.",
+        "The other items move to the trash, where you can restore them.": "Els altres elements van a la paperera, d'on els podeu restaurar."
     },
     "plurals": null
 }

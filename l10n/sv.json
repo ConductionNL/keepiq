@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Det här är inte en autentiserarnyckel. Klistra in en otpauth://totp/-länk eller base32-hemligheten.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Den här QR-koden innehåller ingen autentiserarnyckel. Använd den QR-kod som webbplatsen visar när du ställer in tvåstegsinloggning.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Den här hemligheten väntar på en kontroll av sina delningar som inte är klar än. Inget sparades; försök igen senare eller be en administratör kontrollera att bakgrundsjobb körs.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Endast ägaren kan ändra en ansvarig, eller ett medlemskap som omfattar en ansvarig."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Endast ägaren kan ändra en ansvarig, eller ett medlemskap som omfattar en ansvarig.",
+        "Additional fields after the merge": "Ytterligare fält efter sammanslagningen",
+        "Duplicates": "Dubbletter",
+        "Exact duplicates": "Exakta dubbletter",
+        "Item to keep": "Objekt att behålla",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Objekt som innehåller samma inloggning mer än en gång. Sammanslagning behåller ett och tar bort de andra.",
+        "Likely duplicates": "Troliga dubbletter",
+        "Merge": "Slå samman",
+        "Merge duplicates": "Slå samman dubbletter",
+        "People who lose access: {count}": "Personer som förlorar åtkomst: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Samma adress och användarnamn, ett annat lösenord. Två separata konton kan se ut så, så kontrollera innan du slår samman.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sammanslagningen slutfördes inte. Kontrollera objekten i den här gruppen i ditt valv.",
+        "The merge failed. Nothing was removed.": "Sammanslagningen misslyckades. Inget togs bort.",
+        "The other items move to the trash, where you can restore them.": "De andra objekten flyttas till papperskorgen, där du kan återställa dem."
     },
     "plurals": null
 }

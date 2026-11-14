@@ -6,7 +6,8 @@
  * the secret types are fetched only when none are loaded and a failed fetch
  * excludes nothing, totp and passkey secrets, blocked ones, ones without a
  * key and ones that do not decrypt are passed over, and the optional fields
- * fall back as before.
+ * fall back as before. Each row carries its decrypted username and whether it
+ * is a recipient copy, read from the vault snapshot (vault-duplicate-finder).
  *
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
  */
@@ -38,12 +39,13 @@ const ITEMS = [
 		key: 'enc:pw2',
 		typeId: 1,
 		url: 'https://x',
+		login: 'enc:anna',
 		folderId: 'f',
 		keyUpdatedAt: 'K',
 		createdAt: 'C2',
 		possiblyCompromisedAt: 'P',
 	},
-	{ id: 'bare', name: 'Bare', key: 'enc:pw3' },
+	{ id: 'bare', name: 'Bare', key: 'enc:pw3', login: 'enc:broken' },
 	{ id: 'totp', name: 'Seed', key: 'enc:seed', typeId: 2 },
 	{ id: 'passkey', name: 'Pk', key: 'enc:pk', typeId: 3 },
 	{ id: 'blocked', name: 'B', key: 'enc:b', blocked: true },
@@ -62,7 +64,10 @@ describe('loadDecryptedRows', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { items: ITEMS } })
+		vi.spyOn(axios, 'get').mockImplementation(async (url) =>
+			url.endsWith('/offline/manifest')
+				? { data: { secrets: [{ id: 'plain', sourceUpdatedAt: null }, { id: 'full', sourceUpdatedAt: 'S' }] } }
+				: { data: { items: ITEMS } })
 	})
 
 	it('decrypts only the analysable secrets into rows with their fallbacks', async () => {
@@ -77,6 +82,8 @@ describe('loadDecryptedRows', () => {
 				name: 'Plain',
 				url: null,
 				folderPath: null,
+				login: null,
+				copy: false,
 				value: 'pw/k',
 				keyUpdatedAt: 'C1',
 				possiblyCompromisedAt: null,
@@ -86,6 +93,8 @@ describe('loadDecryptedRows', () => {
 				name: 'Full',
 				url: 'https://x',
 				folderPath: 'f',
+				login: 'anna/k',
+				copy: true,
 				value: 'pw2/k',
 				keyUpdatedAt: 'K',
 				possiblyCompromisedAt: 'P',
@@ -95,11 +104,27 @@ describe('loadDecryptedRows', () => {
 				name: 'Bare',
 				url: null,
 				folderPath: null,
+				login: null,
+				copy: false,
 				value: 'pw3/k',
 				keyUpdatedAt: null,
 				possiblyCompromisedAt: null,
 			},
 		])
+		expect(rows.copiesKnown).toBe(true)
+	})
+
+	it('treats every row as a copy when the copies cannot be told apart', async () => {
+		useSecretTypeStore().types = TYPES
+		axios.get.mockImplementation(async (url) => {
+			if (url.endsWith('/offline/manifest')) {
+				throw new Error('no suite')
+			}
+			return { data: { items: ITEMS } }
+		})
+		const rows = await useHealthStore().loadDecryptedRows(SESSION)
+		expect(rows.copiesKnown).toBe(false)
+		expect(rows.every((r) => r.copy === true)).toBe(true)
 	})
 
 	it('fetches the types when none are loaded, and uses what it fetched', async () => {

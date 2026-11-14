@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dette er ikke en autentifikatornøgle. Indsæt et otpauth://totp/-link eller base32-hemmeligheden.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Denne QR-kode indeholder ikke en autentifikatornøgle. Brug den QR-kode, som siden viser, når du opsætter totrinslogin.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Denne hemmelighed venter på en kontrol af dens delinger, som ikke er færdig endnu. Intet blev gemt; prøv igen senere, eller bed en administrator om at kontrollere, at baggrundsjob kører.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Kun ejeren kan ændre en administrator eller et medlemskab, der omfatter en administrator."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Kun ejeren kan ændre en administrator eller et medlemskab, der omfatter en administrator.",
+        "Additional fields after the merge": "Yderligere felter efter sammenlægningen",
+        "Duplicates": "Dubletter",
+        "Exact duplicates": "Nøjagtige dubletter",
+        "Item to keep": "Element, der beholdes",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementer, der indeholder det samme login mere end én gang. Sammenlægning beholder ét og fjerner de andre.",
+        "Likely duplicates": "Sandsynlige dubletter",
+        "Merge": "Læg sammen",
+        "Merge duplicates": "Læg dubletter sammen",
+        "People who lose access: {count}": "Personer, der mister adgang: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Samme adresse og brugernavn, en anden adgangskode. To separate konti kan se sådan ud, så tjek det, før du lægger sammen.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sammenlægningen blev ikke fuldført. Tjek elementerne i denne gruppe i din boks.",
+        "The merge failed. Nothing was removed.": "Sammenlægningen mislykkedes. Intet blev fjernet.",
+        "The other items move to the trash, where you can restore them.": "De andre elementer flyttes til papirkurven, hvor du kan gendanne dem."
     },
     "plurals": null
 }

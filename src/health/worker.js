@@ -14,6 +14,7 @@
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
  */
 
+import { duplicateGroups } from './duplicates.js'
 import { analyse } from './engine.js'
 
 self.addEventListener('message', async (event) => {
@@ -24,7 +25,11 @@ self.addEventListener('message', async (event) => {
 		if (options && Array.isArray(options.breachResults)) {
 			options = { ...options, breachResults: new Map(options.breachResults) }
 		}
-		const result = await analyse(rows || [], options || {})
+		const result = {
+			...(await analyse(rows || [], options || {})),
+			// vault-duplicate-finder D2: grouped in the same pass, values never leave.
+			duplicates: duplicateGroups(rows || []),
+		}
 		self.postMessage({ requestId, ok: true, result })
 	} catch (e) {
 		self.postMessage({ requestId, ok: false, error: String(e?.message || e) })
