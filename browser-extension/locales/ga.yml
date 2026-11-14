@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 aitheantas Keepiq. Brúigh an tSaighead Síos chun roghnú.
         n: "Aitheantais Keepiq: $1. Brúigh an tSaighead Síos chun roghnú."
+  newPassword:
+    frameTitle: Pasfhocal láidir Keepiq
+    offer: Úsáid pasfhocal láidir
+    locked: Díghlasáil Keepiq chun pasfhocal láidir a fháil
+    status: Úsáid pasfhocal láidir. Brúigh an tSaighead Síos chun roghnú.
 
 notificationBar:
   label: Fógra Keepiq

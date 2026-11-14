@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 identita Keepiq. Vyberte šípkou nadol.
         n: "Identity Keepiq: $1. Vyberte šípkou nadol."
+  newPassword:
+    frameTitle: Silné heslo Keepiq
+    offer: Použiť silné heslo
+    locked: Odomknite Keepiq a získajte silné heslo
+    status: Použiť silné heslo. Vyberte šípkou nadol.
 
 notificationBar:
   label: Oznámenie Keepiq
