@@ -1811,7 +1811,12 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Això no és una clau d'autenticador. Enganxeu un enllaç otpauth://totp/ o el secret en base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Aquest codi QR no conté cap clau d'autenticador. Feu servir el codi QR que el lloc mostra quan configureu l'inici de sessió en dos passos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Aquest secret està esperant una comprovació de les seves comparticions que encara no ha acabat. No s'ha desat res; torneu-ho a provar més tard o demaneu a un administrador que comprovi que les tasques en segon pla s'executen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Només el propietari pot canviar un gestor o una pertinença que inclogui un gestor."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Només el propietari pot canviar un gestor o una pertinença que inclogui un gestor.",
+        "Ask for my master password before showing or filling this item": "Demana la meva contrasenya mestra abans de mostrar o emplenar aquest element",
+        "Asks for your master password": "Demana la vostra contrasenya mestra",
+        "Enter your master password": "Introduïu la vostra contrasenya mestra",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "«{name}» demana la vostra contrasenya mestra abans de mostrar-se, copiar-se o emplenar-se.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "La vostra contrasenya mestra es comprova en aquest dispositiu i no s'envia mai. Això atura algú davant la vostra pantalla desbloquejada; no protegeix d'una aplicació modificada."
     },
     "plurals": null
 }

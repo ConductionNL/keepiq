@@ -1811,7 +1811,12 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Isto não é uma chave de autenticador. Cole uma ligação otpauth://totp/ ou o segredo base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Este código QR não contém uma chave de autenticador. Utilize o código QR que o site mostra quando configura a autenticação de dois fatores.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Este segredo aguarda uma verificação das suas partilhas que ainda não terminou. Nada foi guardado; tente novamente mais tarde ou peça a um administrador que verifique se as tarefas em segundo plano estão a ser executadas.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Só o proprietário pode alterar um gestor ou uma associação que inclua um gestor."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Só o proprietário pode alterar um gestor ou uma associação que inclua um gestor.",
+        "Ask for my master password before showing or filling this item": "Pedir a minha palavra-passe mestre antes de mostrar ou preencher este item",
+        "Asks for your master password": "Pede a sua palavra-passe mestre",
+        "Enter your master password": "Introduza a sua palavra-passe mestre",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "«{name}» pede a sua palavra-passe mestre antes de ser mostrado, copiado ou preenchido.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "A sua palavra-passe mestre é verificada neste dispositivo e nunca é enviada. Isto trava alguém em frente ao seu ecrã desbloqueado; não protege contra uma aplicação modificada."
     },
     "plurals": null
 }

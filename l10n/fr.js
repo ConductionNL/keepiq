@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ce n'est pas une clé d'authentificateur. Collez un lien otpauth://totp/ ou le secret en base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ce code QR ne contient pas de clé d'authentificateur. Utilisez le code QR que le site affiche lorsque vous configurez la connexion à deux facteurs.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ce secret attend une vérification de ses partages qui n'est pas encore terminée. Rien n'a été enregistré ; réessayez plus tard ou demandez à un administrateur de vérifier que les tâches de fond s'exécutent.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Seul le propriétaire peut modifier un gestionnaire, ou une adhésion qui couvre un gestionnaire."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Seul le propriétaire peut modifier un gestionnaire, ou une adhésion qui couvre un gestionnaire.",
+        "Ask for my master password before showing or filling this item": "Demander mon mot de passe maître avant d'afficher ou de remplir cet élément",
+        "Asks for your master password": "Demande votre mot de passe maître",
+        "Enter your master password": "Saisissez votre mot de passe maître",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "« {name} » demande votre mot de passe maître avant d'être affiché, copié ou rempli.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Votre mot de passe maître est vérifié sur cet appareil et n'est jamais envoyé. Cela arrête une personne devant votre écran déverrouillé ; cela ne protège pas contre une application modifiée."
     },
     "nplurals=2; plural=(n > 1);"
 )

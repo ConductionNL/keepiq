@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dette er ikke en autentikatornøkkel. Lim inn en otpauth://totp/-lenke eller base32-hemmeligheten.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Denne QR-koden inneholder ikke en autentikatornøkkel. Bruk QR-koden nettstedet viser når du setter opp totrinnspålogging.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Denne hemmeligheten venter på en kontroll av delingene sine som ikke er ferdig ennå. Ingenting ble lagret; prøv igjen senere, eller be en administrator kontrollere at bakgrunnsjobber kjører.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Bare eieren kan endre en administrator, eller et medlemskap som omfatter en administrator."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Bare eieren kan endre en administrator, eller et medlemskap som omfatter en administrator.",
+        "Ask for my master password before showing or filling this item": "Spør etter hovedpassordet mitt før dette elementet vises eller fylles ut",
+        "Asks for your master password": "Spør etter hovedpassordet ditt",
+        "Enter your master password": "Skriv inn hovedpassordet ditt",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "«{name}» spør etter hovedpassordet ditt før det vises, kopieres eller fylles ut.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Hovedpassordet ditt kontrolleres på denne enheten og sendes aldri. Det stopper en person ved den ulåste skjermen din; det beskytter ikke mot en endret app."
     },
     "nplurals=2; plural=(n != 1);"
 )

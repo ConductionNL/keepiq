@@ -1811,7 +1811,12 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Това не е ключ на удостоверител. Поставете връзка otpauth://totp/ или тайната във формат base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Този QR код не съдържа ключ на удостоверител. Използвайте QR кода, който сайтът показва при настройване на двуфакторното влизане.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Тази тайна изчаква проверка на споделянията си, която още не е завършила. Нищо не беше запазено; опитайте отново по-късно или помолете администратор да провери дали фоновите задачи се изпълняват.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само собственикът може да промени мениджър или членство, което обхваща мениджър."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само собственикът може да промени мениджър или членство, което обхваща мениджър.",
+        "Ask for my master password before showing or filling this item": "Питай за главната ми парола, преди този елемент да бъде показан или попълнен",
+        "Asks for your master password": "Изисква главната ви парола",
+        "Enter your master password": "Въведете главната си парола",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ изисква главната ви парола, преди да бъде показан, копиран или попълнен.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Главната ви парола се проверява на това устройство и никога не се изпраща. Това спира човек пред отключения ви екран; не защитава от променено приложение."
     },
     "plurals": null
 }

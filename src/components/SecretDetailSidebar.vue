@@ -311,6 +311,7 @@
 					</div>
 					<span class="secret-detail__row-trailing">
 						<CopyButton
+							:guard="revealGuard"
 							:value="secret.login"
 							:label="t('keepiq', 'Copy login')" />
 					</span>
@@ -332,6 +333,7 @@
 								:key="secretLoadToken"
 								:label="keyLabel"
 								:useOnly="useOnly"
+								:guard="revealGuard"
 								:resolve="resolveKey" />
 						</div>
 					</div>
@@ -436,6 +438,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.number"
 								:label="t('keepiq', 'Copy number')" />
 						</span>
@@ -492,6 +495,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.cvv"
 								:label="t('keepiq', 'Copy CVV')" />
 						</span>
@@ -534,6 +538,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.pin"
 								:label="t('keepiq', 'Copy PIN')" />
 						</span>
@@ -645,7 +650,7 @@
 											: t('keepiq', 'Show')
 									"
 									data-testid="identity-reveal-bsn"
-									@click="bsnRevealed = !bsnRevealed">
+									@click="toggleBsn">
 									<template #icon>
 										<EyeOffOutline
 											v-if="bsnRevealed"
@@ -654,6 +659,7 @@
 									</template>
 								</NcButton>
 								<CopyButton
+									:guard="revealGuard"
 									:value="identityPayload.bsn"
 									:label="t('keepiq', 'Copy BSN')" />
 							</span>
@@ -1065,6 +1071,7 @@ import TotpDisplay from './TotpDisplay.vue'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
 import { cardBrandInfo, formatCardNumber, maskCardNumber, parsePayload } from '../cardIdentity/cardIdentity.js'
+import { needsReprompt, useReprompt } from '../composables/useReprompt.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
 import { useFolderStore } from '../store/modules/folder.js'
@@ -1207,6 +1214,17 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The master password re-prompt every reveal path of this item awaits,
+		 * or null when the holder did not flag it (crypto-item-reprompt D2).
+		 *
+		 * @return {Function|null}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		revealGuard() {
+			return needsReprompt(this.secret) ? useReprompt(() => this.secret) : null
+		},
+
 		/**
 		 * Whether the open secret is archived (vault-trash-and-archive).
 		 *
@@ -1835,13 +1853,49 @@ export default {
 		 * Toggle one card field's reveal state (masked by default).
 		 *
 		 * @param {string} field The field name (number | cvv | pin).
-		 * @return {void}
+		 * @return {Promise<void>}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
 		 */
-		toggleCardField(field) {
+		async toggleCardField(field) {
+			if (!this.cardRevealed[field] && !(await this.allowedToReveal())) {
+				return
+			}
 			this.cardRevealed = {
 				...this.cardRevealed,
 				[field]: !this.cardRevealed[field],
+			}
+		},
+
+		/**
+		 * Show or hide the BSN; showing a flagged item's asks first.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		async toggleBsn() {
+			if (!this.bsnRevealed && !(await this.allowedToReveal())) {
+				return
+			}
+			this.bsnRevealed = !this.bsnRevealed
+		},
+
+		/**
+		 * Whether this item may be revealed now: at once when it is not
+		 * flagged, after the master password re-prompt when it is.
+		 *
+		 * @return {Promise<boolean>}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		async allowedToReveal() {
+			if (!this.revealGuard) {
+				return true
+			}
+			try {
+				await this.revealGuard()
+				return true
+			} catch {
+				return false
 			}
 		},
 
@@ -1870,10 +1924,30 @@ export default {
 		 * Open the edit dialog for this secret; reload the detail and the
 		 * list behind it on success.
 		 *
-		 * @return {void}
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		openEdit() {
+			// A flagged item opens its edit form only after the re-prompt;
+			// any other opens at once (crypto-item-reprompt D2).
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.openEditDialog()
+					}
+				})
+			}
+			this.openEditDialog()
+			return undefined
+		},
+
+		/**
+		 * Open the edit dialog itself.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
+		openEditDialog() {
 			this.cnOpenModal('secret-edit', {
 				secretId: this.secretId,
 				onSaved: () => this.reloadWithList(),

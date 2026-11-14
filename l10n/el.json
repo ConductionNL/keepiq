@@ -1811,7 +1811,12 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Αυτό δεν είναι κλειδί επαληθευτή. Επικολλήστε έναν σύνδεσμο otpauth://totp/ ή το μυστικό base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Αυτός ο κωδικός QR δεν περιέχει κλειδί επαληθευτή. Χρησιμοποιήστε τον κωδικό QR που εμφανίζει ο ιστότοπος όταν ρυθμίζετε τη σύνδεση δύο παραγόντων.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Αυτό το μυστικό περιμένει έναν έλεγχο των κοινοποιήσεών του που δεν έχει ολοκληρωθεί ακόμη. Δεν αποθηκεύτηκε τίποτα· δοκιμάστε ξανά αργότερα ή ζητήστε από έναν διαχειριστή να ελέγξει ότι εκτελούνται οι εργασίες παρασκηνίου.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Μόνο ο κάτοχος μπορεί να αλλάξει έναν διαχειριστή ή μια συμμετοχή που καλύπτει έναν διαχειριστή."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Μόνο ο κάτοχος μπορεί να αλλάξει έναν διαχειριστή ή μια συμμετοχή που καλύπτει έναν διαχειριστή.",
+        "Ask for my master password before showing or filling this item": "Να ζητείται ο κύριος κωδικός πρόσβασής μου πριν εμφανιστεί ή συμπληρωθεί αυτό το στοιχείο",
+        "Asks for your master password": "Ζητά τον κύριο κωδικό πρόσβασής σας",
+        "Enter your master password": "Εισαγάγετε τον κύριο κωδικό πρόσβασής σας",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "Το «{name}» ζητά τον κύριο κωδικό πρόσβασής σας πριν εμφανιστεί, αντιγραφεί ή συμπληρωθεί.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ο κύριος κωδικός πρόσβασής σας ελέγχεται σε αυτήν τη συσκευή και δεν αποστέλλεται ποτέ. Αυτό σταματά κάποιον μπροστά στην ξεκλείδωτη οθόνη σας· δεν προστατεύει από τροποποιημένη εφαρμογή."
     },
     "plurals": null
 }

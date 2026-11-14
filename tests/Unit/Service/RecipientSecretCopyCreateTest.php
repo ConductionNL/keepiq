@@ -230,4 +230,22 @@ class RecipientSecretCopyCreateTest extends TestCase {
 
 		$this->assertCopy(copy: $copy, typeId: null);
 	}//end testFactoryWithoutATypeServiceSetsNoType()
+
+	/**
+	 * A new copy starts with the owner's re-prompt setting (crypto-item-reprompt D1).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-1.1
+	 */
+	public function testANewCopyStartsWithTheOwnersRepromptSetting(): void {
+		$factory = new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper);
+
+		$plain = $factory->create(source: $this->source, targetUserId: 'bob', encryptedKey: 'KEY', encryptedLogin: 'LOGIN', encryptedExtras: null, encryptedTotp: 'TOTP');
+		$this->source->setReprompt(true);
+		$flagged = $factory->create(source: $this->source, targetUserId: 'bob', encryptedKey: 'KEY', encryptedLogin: 'LOGIN', encryptedExtras: null, encryptedTotp: 'TOTP');
+
+		$this->assertFalse($plain->getReprompt());
+		$this->assertTrue($flagged->getReprompt());
+	}//end testANewCopyStartsWithTheOwnersRepromptSetting()
 }//end class

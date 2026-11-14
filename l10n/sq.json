@@ -1811,7 +1811,12 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ky nuk është çelës autentikuesi. Ngjitni një lidhje otpauth://totp/ ose sekretin base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ky kod QR nuk përmban çelës autentikuesi. Përdorni kodin QR që shfaq faqja kur vendosni hyrjen me dy faktorë.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ky sekret po pret një kontroll të ndarjeve të tij që nuk ka përfunduar ende. Asgjë nuk u ruajt; provoni përsëri më vonë ose kërkojini një administratori të kontrollojë që punët në sfond po ekzekutohen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Vetëm pronari mund të ndryshojë një menaxher, ose një anëtarësim që përfshin një menaxher."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Vetëm pronari mund të ndryshojë një menaxher, ose një anëtarësim që përfshin një menaxher.",
+        "Ask for my master password before showing or filling this item": "Kërko fjalëkalimin tim kryesor para se ky element të shfaqet ose të plotësohet",
+        "Asks for your master password": "Kërkon fjalëkalimin tuaj kryesor",
+        "Enter your master password": "Jepni fjalëkalimin tuaj kryesor",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ kërkon fjalëkalimin tuaj kryesor para se të shfaqet, të kopjohet ose të plotësohet.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Fjalëkalimi juaj kryesor kontrollohet në këtë pajisje dhe nuk dërgohet kurrë. Kjo ndalon dikë para ekranit tuaj të shkyçur; nuk mbron nga një aplikacion i modifikuar."
     },
     "plurals": null
 }

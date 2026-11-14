@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "To nie jest klucz uwierzytelniacza. Wklej link otpauth://totp/ lub sekret w formacie base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ten kod QR nie zawiera klucza uwierzytelniacza. Użyj kodu QR, który strona pokazuje podczas konfigurowania logowania dwuetapowego.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ten sekret czeka na sprawdzenie swoich udostępnień, które jeszcze się nie zakończyło. Nic nie zostało zapisane; spróbuj ponownie później lub poproś administratora o sprawdzenie, czy działają zadania w tle.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Tylko właściciel może zmienić menedżera lub członkostwo obejmujące menedżera."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tylko właściciel może zmienić menedżera lub członkostwo obejmujące menedżera.",
+        "Ask for my master password before showing or filling this item": "Pytaj o moje hasło główne przed pokazaniem lub wypełnieniem tego elementu",
+        "Asks for your master password": "Wymaga Twojego hasła głównego",
+        "Enter your master password": "Wpisz swoje hasło główne",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}” wymaga Twojego hasła głównego przed pokazaniem, skopiowaniem lub wypełnieniem.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Twoje hasło główne jest sprawdzane na tym urządzeniu i nigdy nie jest wysyłane. Zatrzymuje to osobę przy Twoim odblokowanym ekranie; nie chroni przed zmodyfikowaną aplikacją."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

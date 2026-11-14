@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Din mhijiex ċavetta tal-awtentikatur. Waħħal link otpauth://totp/ jew is-sigriet base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dan il-kodiċi QR ma fihx ċavetta tal-awtentikatur. Uża l-kodiċi QR li s-sit juri meta tissettja l-awtentikazzjoni b'żewġ fatturi.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dan is-sigriet qed jistenna verifika tal-qsim tiegħu li għadha ma ntemmitx. Ma ġie ssejvjat xejn; erġa' pprova aktar tard, jew staqsi lil amministratur jiċċekkja li x-xogħlijiet fl-isfond qed jaħdmu.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Is-sid biss jista' jibdel maniġer, jew sħubija li tkopri maniġer."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Is-sid biss jista' jibdel maniġer, jew sħubija li tkopri maniġer.",
+        "Ask for my master password before showing or filling this item": "Itlob il-password master tiegħi qabel ma jintwera jew jimtela dan l-oġġett",
+        "Asks for your master password": "Jitlob il-password master tiegħek",
+        "Enter your master password": "Daħħal il-password master tiegħek",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "\"{name}\" jitlob il-password master tiegħek qabel ma jintwera, jiġi kkupjat jew jimtela.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Il-password master tiegħek tiġi ċċekkjata fuq dan it-tagħmir u qatt ma tintbagħat. Dan iwaqqaf lil xi ħadd quddiem l-iskrin miftuħ tiegħek; ma jipproteġix minn app mibdula."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

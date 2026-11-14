@@ -572,6 +572,9 @@ function plainPatch(store, data) {
 			payload[field] = data[field]
 		}
 	}
+	if (data.reprompt !== undefined) {
+		payload.reprompt = data.reprompt === true
+	}
 	const rpId = mirroredRpId(store, data)
 	if (rpId) {
 		payload.url = rpId
@@ -1236,6 +1239,12 @@ export const useSecretStore = defineStore('secret', {
 				typeId: data.typeId ?? null,
 				folderId: data.folderId ?? null,
 				key: await rsaEncrypt(String(data.key ?? ''), publicKey),
+			}
+			// Plain metadata, not a value: ask for the master password again
+			// before the item is used (crypto-item-reprompt D1). Sent only when
+			// set, so an unflagged create carries exactly what it did before.
+			if (data.reprompt === true) {
+				payload.reprompt = true
 			}
 			await encryptOptionalFields(payload, { data, publicKey })
 
