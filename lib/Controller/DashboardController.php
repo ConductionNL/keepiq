@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\DashboardSummaryService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\DashboardSummaryServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -46,9 +46,9 @@ class DashboardController extends Controller {
 	 * @param IInitialState $initialState The initial state service
 	 * @param IAppConfig $appConfig The app config interface
 	 * @param IAppManager $appManager The app manager (version source)
-	 * @param DashboardSummaryService $summaryService The dashboard summary aggregator
+	 * @param DashboardSummaryServiceInterface $summaryService The dashboard summary aggregator
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Applications admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Applications admin area
 	 *
 	 * @return void
 	 */
@@ -57,11 +57,11 @@ class DashboardController extends Controller {
 		private IInitialState $initialState,
 		private IAppConfig $appConfig,
 		private IAppManager $appManager,
-		private DashboardSummaryService $summaryService,
+		private DashboardSummaryServiceInterface $summaryService,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -81,7 +81,7 @@ class DashboardController extends Controller {
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizerInterface::APPLICATIONS);
 
 		return new JSONResponse(data: $this->summaryService->fetchSummary(userId: $userId, isAdmin: $isAdmin));
 	}//end summary()
@@ -98,7 +98,7 @@ class DashboardController extends Controller {
 	 */
 	public function page(): TemplateResponse {
 		// Privacy-respecting default: favicons disabled unless an admin opts in.
-		$faviconServiceUrl = $this->appConfig->getValueString(Application::APP_ID, 'favicon_service_url', '');
+		$faviconServiceUrl = $this->appConfig->getValueString(AppIdentity::APP_ID, 'favicon_service_url', '');
 		$this->initialState->provideInitialState(key: 'faviconServiceUrl', data: $faviconServiceUrl);
 
 		// Password-health breach-check admin gate (password-health §1.4). The
@@ -106,7 +106,7 @@ class DashboardController extends Controller {
 		// BOTH gates are on. This is the boolean instance-wide gate only.
 		$this->initialState->provideInitialState(
 			key: 'breachCheckEnabled',
-			data: $this->appConfig->getValueBool(Application::APP_ID, 'breach_check_enabled', false),
+			data: $this->appConfig->getValueBool(AppIdentity::APP_ID, 'breach_check_enabled', false),
 		);
 
 		// The user-settings dialog renders this as its version footer.
@@ -114,17 +114,17 @@ class DashboardController extends Controller {
 		// package.json version is stale and must not be used.
 		$this->initialState->provideInitialState(
 			key: 'appVersion',
-			data: $this->appManager->getAppVersion(Application::APP_ID),
+			data: $this->appManager->getAppVersion(AppIdentity::APP_ID),
 		);
 
 		// A login's `totp` and `passkeys` are stored by this server; the web app reads the release
 		// that first stored them from here, so it keeps no version number of its own (keepiq#1326).
 		$this->initialState->provideInitialState(
 			key: 'loginValueFields',
-			data: ['since' => Application::TOTP_PASSKEYS_FIELDS_SINCE],
+			data: ['since' => AppIdentity::TOTP_PASSKEYS_FIELDS_SINCE],
 		);
 
-		$response = new TemplateResponse(appName: Application::APP_ID, templateName: 'index');
+		$response = new TemplateResponse(appName: AppIdentity::APP_ID, templateName: 'index');
 
 		// Link-share encryption derives its AES key client-side via the Argon2id
 		// WASM module (argon2-browser). Nextcloud's default CSP forbids

@@ -50,6 +50,7 @@ use OCA\Keepiq\Db\FederatedInbound;
 use OCA\Keepiq\Db\FederatedInboundMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\FederatedCopyDeclineServiceInterface;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Federation\ICloudIdManager;
@@ -68,21 +69,7 @@ use Throwable;
  * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
  * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-restores-his-copy
  */
-class FederatedCopyDeclineService {
-	/**
-	 * The OCM notification that the recipient declined a share.
-	 *
-	 * @var string
-	 */
-	public const SHARE_DECLINED = 'SHARE_DECLINED';
-
-	/**
-	 * The OCM notification that the recipient accepted a share, here: took
-	 * a declined one back by restoring the copy.
-	 *
-	 * @var string
-	 */
-	public const SHARE_ACCEPTED = 'SHARE_ACCEPTED';
+class FederatedCopyDeclineService implements FederatedCopyDeclineServiceInterface {
 
 	/**
 	 * A restored copy follows the owner again.

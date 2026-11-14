@@ -25,8 +25,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\Connection\ConnectionReporter;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ConnectionReporterInterface;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
@@ -49,7 +49,7 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @param IRequest $request The request
 	 * @param SettingsService $settingsService The settings service
-	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a breach check save, or nothing when absent.
+	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a breach check save, or nothing when absent.
 	 *
 	 * @return void
 	 *
@@ -58,9 +58,9 @@ class AdminAreaSettingsController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private SettingsService $settingsService,
-		private ?ConnectionReporter $connectionReporter = null,
+		private ?ConnectionReporterInterface $connectionReporter = null,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

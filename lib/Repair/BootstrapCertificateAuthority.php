@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Repair;
 
-use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Kernel\Contracts\CertificateAuthorityServiceInterface;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -35,13 +35,13 @@ class BootstrapCertificateAuthority implements IRepairStep {
 	/**
 	 * Constructor for BootstrapCertificateAuthority.
 	 *
-	 * @param CertificateAuthorityService $caService The CA service
+	 * @param CertificateAuthorityServiceInterface $caService The CA service
 	 * @param LoggerInterface $logger The logger interface
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private CertificateAuthorityService $caService,
+		private CertificateAuthorityServiceInterface $caService,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

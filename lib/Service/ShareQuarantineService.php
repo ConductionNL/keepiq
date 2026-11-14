@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\ShareQuarantineServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -47,7 +48,7 @@ use OCP\EventDispatcher\IEventDispatcher;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A release judges the row against its copy, its group share and the
  *   live shares, and every release or drop is audited; each collaborator is one of those.
  */
-class ShareQuarantineService {
+class ShareQuarantineService implements ShareQuarantineServiceInterface {
 	/**
 	 * Constructor.
 	 *

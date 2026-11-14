@@ -25,12 +25,12 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
-use OCA\Keepiq\Service\EncryptionSuiteService;
-use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\LinkShareServiceInterface;
 use OCA\Keepiq\Service\NewLinkShare;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -55,8 +55,8 @@ class LinkShareController extends OCSController {
 	 * Constructor for LinkShareController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param LinkShareService $linkShareService The link share service
-	 * @param EncryptionSuiteService $suiteService The encryption suite service
+	 * @param LinkShareServiceInterface $linkShareService The link share service
+	 * @param EncryptionSuiteServiceInterface $suiteService The encryption suite service
 	 * @param IUserSession $userSession The user session
 	 * @param IURLGenerator $urlGenerator The URL generator
 	 *
@@ -64,12 +64,12 @@ class LinkShareController extends OCSController {
 	 */
 	public function __construct(
 		IRequest $request,
-		private LinkShareService $linkShareService,
-		private EncryptionSuiteService $suiteService,
+		private LinkShareServiceInterface $linkShareService,
+		private EncryptionSuiteServiceInterface $suiteService,
 		private IUserSession $userSession,
 		private IURLGenerator $urlGenerator,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

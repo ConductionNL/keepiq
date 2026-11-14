@@ -32,6 +32,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Kernel\Contracts\OfflineManifestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
@@ -48,7 +49,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * and is the org-wide switch on — while the snapshot's shape (which mappers,
  * in which order, serialised how) is assembled and tested here.
  */
-class OfflineManifestService {
+class OfflineManifestService implements OfflineManifestServiceInterface {
 	/**
 	 * Constructor for OfflineManifestService.
 	 *

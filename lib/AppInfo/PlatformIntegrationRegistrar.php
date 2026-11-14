@@ -22,13 +22,11 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
-use OCA\Keepiq\Middleware\JwtAuthMiddleware;
-use OCA\Keepiq\Middleware\OcsRefusalMiddleware;
-use OCA\Keepiq\Middleware\ShareScanPendingMiddleware;
-use OCA\Keepiq\Middleware\VaultKeyProofMiddleware;
-use OCA\Keepiq\Notification\KeepiqNotifier;
-use OCA\Keepiq\Search\SecretSearchProvider;
-use OCA\Keepiq\SetupCheck\ShareQuarantineScanPending;
+use OCA\Keepiq\Listener\FederationEventRegistrar;
+use OCA\Keepiq\Middleware\MiddlewareRegistrar;
+use OCA\Keepiq\Notification\NotificationRegistrar;
+use OCA\Keepiq\Search\SearchRegistrar;
+use OCA\Keepiq\SetupCheck\SetupCheckRegistrar;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
@@ -56,36 +54,10 @@ final class PlatformIntegrationRegistrar {
 	 *   behaviour and their own spec references; this method only binds them.
 	 */
 	public function register(IRegistrationContext $context): void {
-		// The Nextcloud unified search provider for secrets. It queries
-		// unencrypted name/url metadata only and needs no vault session
-		// (ADR-003).
-		$context->registerSearchProvider(SecretSearchProvider::class);
-
-		// The notifier responsible for rendering sharing, secret-request and
-		// application-management notification subjects.
-		$context->registerNotifierService(KeepiqNotifier::class);
-
-		// The JWT-Bearer middleware for application-authenticated routes.
-		// Fires only on ApplicationApiController subclasses; session
-		// controllers pass through untouched.
-		$context->registerMiddleware(JwtAuthMiddleware::class);
-
-		// The vault-key-proof middleware. Runs for every controller but acts
-		// only on methods carrying #[VaultKeyProofRequired]; every other method
-		// passes through untouched.
-		$context->registerMiddleware(VaultKeyProofMiddleware::class);
-
-		// Keeps a refusal of a Keepiq OCSController visible: Nextcloud's
-		// OCSMiddleware rewrites a 403 there into an HTTP 200 OCS envelope, so
-		// the controller's own 403 leaves as 428 with an `error` code.
-		$context->registerMiddleware(OcsRefusalMiddleware::class);
-
-		// A request that reaches a share row the pending share quarantine scan
-		// cannot judge answers 409 share_scan_pending on every route.
-		$context->registerMiddleware(ShareScanPendingMiddleware::class);
-
-		// The admin overview warns while the share quarantine scan is pending.
-		$context->registerSetupCheck(ShareQuarantineScanPending::class);
+		(new SearchRegistrar())->register(context: $context);
+		(new NotificationRegistrar())->register(context: $context);
+		(new MiddlewareRegistrar())->registerPlatformMiddleware(context: $context);
+		(new SetupCheckRegistrar())->register(context: $context);
 
 		// Open Cloud Mesh: Nextcloud's OCM discovery and endpoint-request
 		// events, through which partner instances reach the federation

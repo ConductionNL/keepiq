@@ -34,7 +34,7 @@ namespace OCA\Keepiq\Listener;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
-use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -50,14 +50,14 @@ class AuditListener implements IEventListener {
 	/**
 	 * Constructor for AuditListener.
 	 *
-	 * @param AuditService $auditService The audit service
+	 * @param AuditServiceInterface $auditService The audit service
 	 * @param LoggerInterface $logger The logger
 	 * @param AuditEventFactory $auditEvents The audit-event factory
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private AuditService $auditService,
+		private AuditServiceInterface $auditService,
 		private LoggerInterface $logger,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {

@@ -123,6 +123,7 @@ import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import { useHoneyStore } from '../../store/modules/honey.js'
 import { dateTimeOrDash } from '../../utils/dateTime.js'
+import { isSnoozed } from '../../utils/honeyAlerts.js'
 
 export default {
 	name: 'HoneySection',
@@ -147,20 +148,7 @@ export default {
 	},
 
 	methods: {
-		/**
-		 * Whether the alert's accessor is currently snoozed.
-		 *
-		 * @param {object} alert The alert row.
-		 * @return {boolean}
-		 *
-		 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
-		 */
-		isSnoozed(alert) {
-			return (
-				!!alert.snoozedUntil
-				&& new Date(alert.snoozedUntil).getTime() > Date.now()
-			)
-		},
+		isSnoozed,
 
 		/**
 		 * Shorten a user agent for the table.

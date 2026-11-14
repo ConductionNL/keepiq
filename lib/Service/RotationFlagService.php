@@ -34,6 +34,7 @@ use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\RotationFlagServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
@@ -41,7 +42,7 @@ use Ramsey\Uuid\Uuid;
 /**
  * Business logic for the rotation-flag lifecycle.
  */
-class RotationFlagService {
+class RotationFlagService implements RotationFlagServiceInterface {
 	/**
 	 * Constructor for RotationFlagService.
 	 *

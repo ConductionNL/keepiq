@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { i18n } from '#i18n'
 import { MIN_KEEPIQ_VERSION } from '@/src/api/keepiq-version'
-import type { BlockReason, VaultWriteError, WriteErrorCode } from '@/src/messages'
+import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type VaultWriteError, type WriteErrorCode } from '@/src/messages'
 import { LOCALES, setLocale } from '@/src/testing/i18n'
-import { writeErrorText, type WriteContext } from './errors'
+import { errorText, writeErrorText, type WriteContext } from './errors'
 
 const t = i18n.t as (key: string, substitutions?: Record<string, string>) => string
 
@@ -140,5 +140,59 @@ describe('writeErrorText', () => {
 		it('adds no version when none was named', () => {
 			expect(writeErrorText({ ...named, requiredVersion: '' })).toBe(writeErrorText(named))
 		})
+	})
+})
+
+/** The catalog key each code reads as, and whether it names the host. Typed per code, so a new ErrorCode does not compile until it has an expectation here. */
+const ERROR_KEYS = {
+	insecure_url: ['errors.insecureUrl', false],
+	invalid_url: ['errors.invalidUrl', false],
+	permission_denied: ['errors.permissionDenied', true],
+	unreachable: ['errors.unreachable', true],
+	not_nextcloud: ['errors.notNextcloud', true],
+	server_error: ['errors.serverError', true],
+	unauthorized: ['errors.unauthorized', false],
+	keepiq_missing: ['errors.keepiqMissing', true],
+	keepiq_outdated: ['errors.keepiqOutdated', true],
+	no_active_suite: ['errors.noActiveSuite', false],
+	key_unreadable: ['errors.keyUnreadable', false],
+	unlock_blocked: ['errors.unlockBlocked', false],
+	duplicate: ['errors.duplicate', false],
+	limit_reached: ['errors.limitReached', false],
+	invalid_master_password: ['errors.invalidMasterPassword', false],
+	offline_no_cache: ['errors.offlineNoCache', false],
+	session_revoked: ['errors.sessionRevoked', false],
+	write_locked: ['errors.writeLocked', false],
+	not_responding: ['errors.notResponding', false],
+	invalid_pin: ['errors.wrongPin', false],
+	pin_forgotten: ['errors.pinForgotten', false],
+	pin_key_changed: ['errors.pinKeyChanged', false],
+	passkey_failed: ['errors.passkeyFailed', false],
+	unknown: ['errors.unknown', false],
+} satisfies Record<ErrorCode, readonly [string, boolean]>
+
+describe.each(LOCALES)('errorText in %s', (locale) => {
+	it.each(Object.keys(ERROR_KEYS) as ErrorCode[])('reads %s as its catalog text', (code) => {
+		setLocale(locale)
+		const host = 'cloud.example.org'
+		const text = errorText(code, host)
+		expect(text.trim()).not.toBe('')
+		expect(text).toBe(t(ERROR_KEYS[code][0], { host, version: MIN_KEEPIQ_VERSION, count: String(MAX_ACCOUNTS) }))
+		if (ERROR_KEYS[code][1]) expect(text).toContain(host)
+	})
+})
+
+describe('errorText', () => {
+	it('counts the PIN attempts left only when the background sent them', () => {
+		for (const attemptsLeft of [0, 1, 4]) expect(errorText('invalid_pin', 'h', attemptsLeft)).toBe((i18n.t as (key: string, count: number) => string)('errors.invalidPin', attemptsLeft))
+		expect(errorText('invalid_pin', 'h')).toBe(t('errors.wrongPin'))
+	})
+
+	it('ignores attempts sent with any other code', () => {
+		expect(errorText('unreachable', 'h', 2)).toBe(errorText('unreachable', 'h'))
+	})
+
+	it.each(['from_a_newer_background', 'constructor', 'toString', '__proto__'])('reads %s as unknown', (code) => {
+		expect(errorText(code as ErrorCode, 'h')).toBe(t('errors.unknown'))
 	})
 })

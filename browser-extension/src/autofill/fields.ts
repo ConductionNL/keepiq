@@ -231,6 +231,11 @@ function isSeen(control: FormControl): boolean {
 	const x = rect.left + rect.width / 2
 	const y = rect.top + rect.height / 2
 	if (Math.min(rect.width, rect.height) < MIN_SIDE || !inPage(x, y)) return false
+	return seenAt(control, { rect, x, y })
+}
+
+/** Judged by its centre while in view, else by whether anything clips it away. */
+function seenAt(control: FormControl, { rect, x, y }: { rect: DOMRect; x: number; y: number }): boolean {
 	if (!inViewport(x, y)) return !clippedAway(control, rect)
 	return onTop(control, x, y) || (scrolledAway(control, x, y) && !clippedAway(control, rect))
 }
@@ -270,24 +275,45 @@ interface Facts {
 	otp: boolean
 }
 
+const isOtpText = (text: string) => OTP_TEXT.test(text) && !/post|zip/.test(text)
+const isNumericInput = (input: FormControl) => input.getAttribute('inputmode') === 'numeric' || input.type === 'number'
+
+function hasCodeLength(input: FormControl): boolean {
+	const max = Number(input.getAttribute('maxlength'))
+	return max >= 4 && max <= 8
+}
+
+/** The token alone never decides: it needs a second signal. */
+function otpScore(input: FormControl, { text, token }: Omit<Facts, 'otp'>): number {
+	let otp = token === 'one-time-code' ? 2 : 0
+	if (isOtpText(text)) otp += 2
+	if (isNumericInput(input)) otp += 1
+	if (hasCodeLength(input)) otp += 1
+	return otp
+}
+
 function factsOf(input: FormControl): Facts {
 	const text = fieldText(input)
 	const token = tokenOf(input)
-	// The token alone never decides: it needs a second signal.
-	let otp = token === 'one-time-code' ? 2 : 0
-	if (OTP_TEXT.test(text) && !/post|zip/.test(text)) otp += 2
-	if (input.getAttribute('inputmode') === 'numeric' || input.type === 'number') otp += 1
-	const max = Number(input.getAttribute('maxlength'))
-	if (max >= 4 && max <= 8) otp += 1
-	return { text, token, otp: otp >= 3 && !RECOVERY_TEXT.test(text) }
+	return { text, token, otp: otpScore(input, { text, token }) >= 3 && !RECOVERY_TEXT.test(text) }
 }
 
-function usernameScore({ text, token }: Facts, phone: boolean): number {
-	const fits = token === 'username' || token === 'email' || (phone && token?.startsWith('tel'))
-	let score = fits ? 1 : token ? -1 : 0
+const fitsUsername = (token: string | null, phone: boolean) => token === 'username' || token === 'email' || (phone && token?.startsWith('tel'))
+
+function usernameTokenScore(token: string | null, phone: boolean): number {
+	if (fitsUsername(token, phone)) return 1
+	return token ? -1 : 0
+}
+
+function usernameTextScore(text: string, phone: boolean): number {
+	let score = 0
 	if (USERNAME_TEXT.test(text) || (phone && PHONE_TEXT.test(text))) score += 2
 	if (NOT_USERNAME_TEXT.test(text)) score -= 2
 	return score
+}
+
+function usernameScore({ text, token }: Facts, phone: boolean): number {
+	return usernameTokenScore(token, phone) + usernameTextScore(text, phone)
 }
 
 /** Above zero leans new password, below zero current. */
@@ -372,12 +398,15 @@ function buildGroup(follows: Follows, anchor: Element | Root, controls: FormCont
 		if (loginKeyword || lone) kind = 'login'
 	}
 
+	const passwordRole = (field: HTMLInputElement): FieldRole | null => {
+		if (field === currentPassword) return 'currentPassword'
+		return newPasswords.includes(field) ? 'newPassword' : null
+	}
+	const usernameRole = (field: FormControl): FieldRole => (field === username && kind !== 'other' ? 'username' : 'other')
 	const loginRole = (field: FormControl): FieldRole => {
 		if (!isInput(field)) return 'other'
 		if (fact(field).otp) return 'oneTimeCode'
-		if (field === currentPassword) return 'currentPassword'
-		if (newPasswords.includes(field)) return 'newPassword'
-		return field === username && kind !== 'other' ? 'username' : 'other'
+		return passwordRole(field) ?? usernameRole(field)
 	}
 	const roles = new Map<FormControl, FieldRole>(controls.map((control) => [control, cards.get(control) ?? loginRole(control)]))
 	const group: FieldGroup = { kind, anchor, fields, controls, username: kind === 'other' ? null : username, currentPassword, newPasswords, submit, roles }
@@ -414,25 +443,41 @@ interface CardHit {
 	token: boolean
 }
 
+function monthOrYearHit(month: boolean, strong: boolean): CardHit {
+	return { role: month ? 'expMonth' : 'expYear', strong, token: false }
+}
+
 function expiryHit(text: string): CardHit | null {
 	if (DATE_TEXT.test(text)) return null
 	const expiry = EXPIRY_TEXT.test(text)
 	const month = MONTH_TEXT.test(text)
 	const year = YEAR_TEXT.test(text)
-	if (month !== year) return { role: month ? 'expMonth' : 'expYear', strong: expiry, token: false }
+	if (month !== year) return monthOrYearHit(month, expiry)
 	if (expiry || month) return { role: 'expiry', strong: expiry, token: false }
 	return null
 }
 
-function cardHitOf(control: FormControl, { text, token }: Facts): CardHit | null {
-	const byToken = token ? CARD_TOKENS.get(token) : undefined
-	if (byToken) return { role: byToken, strong: true, token: true }
-	// Any other token already names the field: a one-time code labelled "Security code" is no CVC.
-	if (token) return null
+/** Any token but a `cc-*` one already names the field: a one-time code labelled "Security code" is no CVC. */
+function tokenCardHit(token: string): CardHit | null {
+	const byToken = CARD_TOKENS.get(token)
+	return byToken ? { role: byToken, strong: true, token: true } : null
+}
+
+function textCardHit(text: string): CardHit | null {
 	const named = CARD_TEXT.find(([, pattern]) => pattern.test(text))?.[0]
-	const hit = named ? { role: named, strong: true, token: false } : expiryHit(text)
-	if (!hit || control.localName === 'textarea') return null
-	return isInput(control) || SELECT_CARD_ROLES.has(hit.role) ? hit : null
+	return named ? { role: named, strong: true, token: false } : expiryHit(text)
+}
+
+/** Never a text area; a select only for the roles a select can hold. */
+function holdsCardRole(control: FormControl, hit: CardHit): boolean {
+	return control.localName !== 'textarea' && (isInput(control) || SELECT_CARD_ROLES.has(hit.role))
+}
+
+function cardHitOf(control: FormControl, { text, token }: Facts): CardHit | null {
+	if (token) return tokenCardHit(token)
+	const hit = textCardHit(text)
+	if (!hit) return null
+	return holdsCardRole(control, hit) ? hit : null
 }
 
 type FactOf = (control: FormControl) => Facts
@@ -515,20 +560,34 @@ const isSplitPart = (control: FormControl) =>
 	isInput(control) && SPLIT_PART_TYPES.has(control.type) && control.maxLength >= 1 && control.maxLength <= 8 && isSeen(control)
 
 /** Up to four inputs in a row from the first of `controls` whose lengths together hold a card number, or null. */
+/** A control that cannot continue a run: not shaped as a part, or one past the first with a card role other than the number. */
+function breaksRun(control: FormControl, { run, roles }: { run: HTMLInputElement[]; roles: Map<FormControl, CardRole> }): boolean {
+	return !isSplitPart(control) || (run.length > 0 && roles.has(control) && roles.get(control) !== 'number')
+}
+
+function holdsCardNumber(run: HTMLInputElement[]): boolean {
+	const total = run.reduce((sum, input) => sum + input.maxLength, 0)
+	return run.length > 1 && total >= 14 && total <= 19
+}
+
 function splitRun(controls: FormControl[], roles: Map<FormControl, CardRole>): HTMLInputElement[] | null {
 	const run: HTMLInputElement[] = []
 	for (const control of controls.slice(0, 4)) {
-		if (!isSplitPart(control) || (run.length && roles.has(control) && roles.get(control) !== 'number')) return null
+		if (breaksRun(control, { run, roles })) return null
 		run.push(control as HTMLInputElement)
-		const total = run.reduce((sum, input) => sum + input.maxLength, 0)
-		if (run.length > 1 && total >= 14 && total <= 19) return run
+		if (holdsCardNumber(run)) return run
 	}
 	return null
 }
 
+/** A number field right after no number field, where a split number can start. */
+function startsSplit(roles: Map<FormControl, CardRole>, { controls, at }: { controls: FormControl[]; at: number }): boolean {
+	return roles.get(controls[at]!) === 'number' && !(at > 0 && roles.get(controls[at - 1]!) === 'number')
+}
+
 function markSplitNumbers(controls: FormControl[], roles: Map<FormControl, CardRole>): void {
-	for (const [at, control] of controls.entries()) {
-		if (roles.get(control) !== 'number' || (at > 0 && roles.get(controls[at - 1]!) === 'number')) continue
+	for (const at of controls.keys()) {
+		if (!startsSplit(roles, { controls, at })) continue
 		for (const part of splitRun(controls.slice(at), roles) ?? []) roles.set(part, 'number')
 	}
 }
@@ -557,15 +616,25 @@ const roleOfType = (control: FormControl): IdentityRole | null => (control.type 
 /** An input of up to four characters is one box of a split code or number, whatever its label says. */
 const isBox = (control: FormControl) => isInput(control) && control.maxLength >= 1 && control.maxLength <= 4
 
+/** An identity token, or `email`, which is a login token too. */
+const namesIdentity = (token: string | null): token is string => !!token && (token === 'email' || !LOGIN_TOKENS.has(token))
+
+const identityOfToken = (token: string): IdentityRole | null => IDENTITY_TOKENS.get(token) ?? null
+
+const identityByText = (text: string): IdentityRole | null => IDENTITY_TEXT.find(([, pattern]) => pattern.test(text))?.[0] ?? null
+
 function identityEvidence(control: FormControl, { text, token }: Facts): IdentityRole | null {
 	if (NOT_IDENTITY_TEXT.test(text) || isBox(control)) return null
-	if (token && (token === 'email' || !LOGIN_TOKENS.has(token))) return IDENTITY_TOKENS.get(token) ?? null
-	return roleOfType(control) ?? IDENTITY_TEXT.find(([, pattern]) => pattern.test(text))?.[0] ?? null
+	if (namesIdentity(token)) return identityOfToken(token)
+	return roleOfType(control) ?? identityByText(text)
 }
+
+/** A text area only ever holds a street address. */
+const textAreaRole = (role: IdentityRole | null): IdentityRole | null => (role === 'streetAddress' || role === 'addressLine1' ? 'streetAddress' : null)
 
 function identityRoleOf(control: FormControl, facts: Facts): IdentityRole | null {
 	const role = identityEvidence(control, facts)
-	if (control.localName === 'textarea') return role === 'streetAddress' || role === 'addressLine1' ? 'streetAddress' : null
+	if (control.localName === 'textarea') return textAreaRole(role)
 	return isInput(control) && IDENTITY_TYPES.has(control.type) ? role : null
 }
 
@@ -579,10 +648,16 @@ function identityRange(group: FieldGroup, control: FormControl): 'any' | 'email'
 function addIdentityRoles(group: FieldGroup, fact: (control: FormControl) => Facts): void {
 	if (group.kind === 'login') return
 	for (const control of group.controls) {
-		const range = identityRange(group, control)
-		const role = range && identityRoleOf(control, fact(control))
-		if (role && (range === 'any' || role === 'email') && isSeen(control)) group.roles.set(control, role)
+		const role = identityRoleIn(group, { control, fact })
+		if (role && isSeen(control)) group.roles.set(control, role)
 	}
+}
+
+/** The identity role `control` takes within its range in `group`, before the visibility check. */
+function identityRoleIn(group: FieldGroup, { control, fact }: { control: FormControl; fact: (control: FormControl) => Facts }): IdentityRole | null {
+	const range = identityRange(group, control)
+	const role = range && identityRoleOf(control, fact(control))
+	return role && (range === 'any' || role === 'email') ? role : null
 }
 
 /** The controls of `group` with a role of `kind`, in DOM order. */
@@ -714,8 +789,12 @@ const SPLIT_TYPES = new Set(['text', 'tel', 'number'])
 /** 1: a one-character input, 2: one of two to four characters, 0: neither. */
 function splitKind(input: HTMLInputElement): 0 | 1 | 2 {
 	if (!SPLIT_TYPES.has(input.type) || RECOVERY_TEXT.test(fieldText(input))) return 0
-	const max = input.maxLength
-	return max === 1 ? 1 : max >= 2 && max <= 4 ? 2 : 0
+	return splitKindOfLength(input.maxLength)
+}
+
+function splitKindOfLength(max: number): 0 | 1 | 2 {
+	if (max === 1) return 1
+	return max >= 2 && max <= 4 ? 2 : 0
 }
 
 /** The code group holding `field` in `group`: its run of short inputs, else the field alone when it is a one-time code. */
@@ -765,14 +844,17 @@ export function codeGroup(field: Element): HTMLInputElement[] | null {
 /** Every code group in `root`, in document order; `within` keeps those of one field group. */
 export function findCodeGroups(root: Root = document, within?: FieldGroup): HTMLInputElement[][] {
 	const found: HTMLInputElement[][] = []
-	for (const group of within ? [within] : findGroups(root)) {
-		for (const field of group.fields) {
-			if (found.some((run) => run.includes(field))) continue
-			const run = codeGroupIn(group, field)
-			if (run) found.push(run)
-		}
-	}
+	for (const group of within ? [within] : findGroups(root)) addCodeGroups(group, found)
 	return found
+}
+
+/** The code groups of `group` not found yet. */
+function addCodeGroups(group: FieldGroup, found: HTMLInputElement[][]): void {
+	for (const field of group.fields) {
+		if (found.some((run) => run.includes(field))) continue
+		const run = codeGroupIn(group, field)
+		if (run) found.push(run)
+	}
 }
 
 /** An `autocomplete` with the `webauthn` token: such a field may open the list while a conditional passkey request is pending. */
@@ -786,11 +868,16 @@ export const isWebauthnField = (field: Element): boolean =>
 export function isQualifying(field: Element): InlineMode | null {
 	const group = groupOf(field)
 	if (!group) return null
-	if (group.kind === 'login' && (field === group.username || field === group.currentPassword)) return 'login'
+	if (isLoginEntry(group, field)) return 'login'
 	const role = group.roles.get(field as FormControl)
-	if (isFormRole('card', role)) return role === 'brand' || field.localName === 'select' ? null : 'card'
+	if (isFormRole('card', role)) return cardListOf(role, field)
 	return codeGroupIn(group, field as HTMLInputElement) ? 'code' : identityListOf(group, field)
 }
+
+const isLoginEntry = (group: FieldGroup, field: Element) => group.kind === 'login' && (field === group.username || field === group.currentPassword)
+
+/** A card's brand, and any select, keep their own choice. */
+const cardListOf = (role: FormRole, field: Element): 'card' | null => (role === 'brand' || field.localName === 'select' ? null : 'card')
 
 function identityListOf(group: FieldGroup, field: Element): 'identity' | null {
 	const role = group.roles.get(field as FormControl)

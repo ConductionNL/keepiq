@@ -39,6 +39,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Kernel\Contracts\GdprServiceInterface;
 
 /**
  * Assembles the server-readable half of a GDPR personal-data export.
@@ -48,7 +49,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
  * @SuppressWarnings(PHPMD.ExcessiveParameterList) Same reason: one mapper per
  *   section, injected by the container.
  */
-class GdprService {
+class GdprService implements GdprServiceInterface {
 	/**
 	 * The metadata document format identifier.
 	 *

@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Exception\DecryptionException;
+use OCA\Keepiq\Kernel\Contracts\DecryptServiceInterface;
 
 /**
  * Stateless decryption service. No database access, no entity awareness.
@@ -32,7 +33,7 @@ use OCA\Keepiq\Exception\DecryptionException;
  *
  * The encrypted blobs are base64-encoded.
  */
-class DecryptService {
+class DecryptService implements DecryptServiceInterface {
 	private const ENVELOPE_VERSION = 1;
 	private const RSA_BLOCK_SIZE = 512;
 	private const AES_SALT_LENGTH = 16;

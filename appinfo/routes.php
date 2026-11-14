@@ -538,7 +538,8 @@ $extra = [
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
 ];
 
-return [
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\Keepiq\Middleware\Support\ApiPathAliases::withVersionedAliases([
     'routes' => array_merge(
         [
             ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
@@ -551,6 +552,8 @@ return [
             // Observability (hydra ADR-006): health is public, metrics admin-only.
             ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
             ['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
+            // The OpenAPI document of the versioned API (NL API Design Rules /core/doc-openapi).
+            ['name' => 'openApi#show', 'url' => '/api/v1/openapi.json', 'verb' => 'GET'],
         ],
         $extra,
         [
@@ -563,4 +566,4 @@ return [
             ],
         ]
     ),
-];
+]);

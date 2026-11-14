@@ -413,9 +413,15 @@ async function record(o) {
 
 	const placeholder = (text) => text.split(origin).join('{origin}').split(`http://${host}`).join('{origin}')
 	out.loginInit = JSON.parse(placeholder(JSON.stringify(flow)))
-	out.loginInit.poll.token = 'recorded-poll-token'
+	out.loginInit.poll.token =
+		'recorded-poll-token'
 	out.loginInit.login = out.loginInit.login.replace(/flow\/[^/?#]+/, 'flow/recorded-login-token')
-	out.poll = { ...creds, server: '{origin}', appPassword: 'stub-app-password' }
+	out.poll = {
+		...creds,
+		server: '{origin}',
+		appPassword:
+			'stub-app-password',
+	}
 	out.pair = pair
 	out.suites = suites
 	out.suitesTwoFactorRequired = blocked

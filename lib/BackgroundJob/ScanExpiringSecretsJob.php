@@ -26,12 +26,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\RotationFlagMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Service\NotificationService;
-use OCA\Keepiq\Service\RotationPolicyService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\NotificationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RotationPolicyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -56,8 +56,8 @@ class ScanExpiringSecretsJob extends TimedJob {
 	 * @param ITimeFactory $time The time factory
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param RotationFlagMapper $flagMapper The flag mapper (open-flag check)
-	 * @param RotationPolicyService $rotationService The rotation service
-	 * @param NotificationService $notificationService The notification dispatcher
+	 * @param RotationPolicyServiceInterface $rotationService The rotation service
+	 * @param NotificationServiceInterface $notificationService The notification dispatcher
 	 * @param IAppConfig $appConfig The app config
 	 * @param LoggerInterface $logger The logger
 	 *
@@ -67,8 +67,8 @@ class ScanExpiringSecretsJob extends TimedJob {
 		ITimeFactory $time,
 		private SecretMapper $secretMapper,
 		private RotationFlagMapper $flagMapper,
-		private RotationPolicyService $rotationService,
-		private NotificationService $notificationService,
+		private RotationPolicyServiceInterface $rotationService,
+		private NotificationServiceInterface $notificationService,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 	) {
@@ -102,7 +102,7 @@ class ScanExpiringSecretsJob extends TimedJob {
 					// carry whatever the failing call put in it (keepiq#728).
 					$this->logger->warning(
 						'Keepiq: expiry scan failed for secret '.$secret->getId().': '.$exception::class,
-						['app' => Application::APP_ID]
+						['app' => AppIdentity::APP_ID]
 					);
 				}
 			}
@@ -118,7 +118,7 @@ class ScanExpiringSecretsJob extends TimedJob {
 	 */
 	private function reminderThresholds(): array {
 		$thresholds = json_decode(
-			$this->appConfig->getValueString(Application::APP_ID, 'expiry_reminder_days', '[30,7,1]'),
+			$this->appConfig->getValueString(AppIdentity::APP_ID, 'expiry_reminder_days', '[30,7,1]'),
 			true
 		);
 		if (is_array($thresholds) === false || $thresholds === []) {

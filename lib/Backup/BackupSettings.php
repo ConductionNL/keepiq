@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Backup;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 
 /**
@@ -67,7 +67,7 @@ class BackupSettings {
 	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function read(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		return [
 			self::ENABLED => $this->appConfig->getValueBool($appId, self::ENABLED, false),
@@ -89,7 +89,7 @@ class BackupSettings {
 	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function update(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		$writes = [];
 
 		if (array_key_exists(self::ENABLED, $data) === true) {

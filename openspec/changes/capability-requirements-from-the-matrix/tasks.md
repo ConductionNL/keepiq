@@ -1,4 +1,4 @@
-# Tasks: requirements for five matrix rows that no spec states
+# Tasks: requirements for six matrix rows that no spec states
 
 ## 1. Compare versions (vault-29)
 
@@ -21,7 +21,11 @@
 
 - [x] 5.1 The five events notify the people concerned when recorded (`HoneyTripwireService`, `EmergencyAccessService`, `CompromiseContainmentService`, `DeviceApprovalService`, `RecoveryRequestService`). Verify: the existing PHPUnit tests of those services.
 
+## 6. Secure note (vault-12)
+
+- [x] 6.1 Secure note is a seeded system type (`lib/Repair/SeedSecretTypes.php:66`), the new secret dialog labels the value field Note for it (`src/dialogs/SecretCreateDialog.vue:279`) and the detail sidebar shows it as a note (`src/components/SecretDetailSidebar.vue:1382`). Verify: the existing type seeding PHPUnit and the create dialog vitest.
+
 ## Acceptance criteria
 
-- Each of the five rows records a requirement in this change that states it.
+- Each of the six rows records a requirement in this change that states it.
 - `openspec validate capability-requirements-from-the-matrix --strict` passes.

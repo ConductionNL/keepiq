@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -55,7 +55,7 @@ class ServiceWorkerController extends Controller {
 		IRequest $request,
 		private IAppManager $appManager,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -76,7 +76,7 @@ class ServiceWorkerController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function script(): DataDisplayResponse {
-		$path = $this->appManager->getAppPath(Application::APP_ID) . '/js/' . Application::APP_ID . '-service-worker.js';
+		$path = $this->appManager->getAppPath(AppIdentity::APP_ID) . '/js/' . AppIdentity::APP_ID . '-service-worker.js';
 		$script = false;
 		if (is_file($path) === true && is_readable($path) === true) {
 			$script = file_get_contents($path);

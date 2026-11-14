@@ -22,8 +22,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use Exception;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\CertificateAuthorityServiceInterface;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
@@ -41,15 +41,15 @@ class CACertificateController extends OCSController {
 	 * Constructor for CACertificateController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param CertificateAuthorityService $caService The CA service
+	 * @param CertificateAuthorityServiceInterface $caService The CA service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private CertificateAuthorityService $caService,
+		private CertificateAuthorityServiceInterface $caService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

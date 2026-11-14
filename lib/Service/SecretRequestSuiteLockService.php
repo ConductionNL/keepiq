@@ -29,13 +29,14 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestSuiteLockServiceInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
  * Suite-migration locking of pending secret requests.
  */
-class SecretRequestSuiteLockService {
+class SecretRequestSuiteLockService implements SecretRequestSuiteLockServiceInterface {
 	/**
 	 * Constructor for SecretRequestSuiteLockService.
 	 *

@@ -25,9 +25,13 @@ const DEFAULT_PATTERN: ExpiryPattern = { month: 2, separator: '/', year: 2 }
 export function expiryPattern(control: HTMLInputElement): ExpiryPattern {
 	for (const text of labelTexts(control)) {
 		const match = WRITTEN.exec(text)
-		if (match) return { month: match[1]!.length === 1 ? 1 : 2, separator: match[2]!, year: match[3]!.length === 4 ? 4 : 2 }
+		if (match) return writtenPattern(match)
 	}
 	return BY_LENGTH[control.maxLength] ?? DEFAULT_PATTERN
+}
+
+function writtenPattern(match: RegExpExecArray): ExpiryPattern {
+	return { month: match[1]!.length === 1 ? 1 : 2, separator: match[2]!, year: match[3]!.length === 4 ? 4 : 2 }
 }
 
 const MONTH = /^(0[1-9]|1[0-2])$/
@@ -62,23 +66,30 @@ export const yearOptions = (year: string) => [year, year.slice(2)]
 const placeholderIs = (control: FormControl, pattern: RegExp) => pattern.test((control.getAttribute('placeholder') ?? '').trim())
 const isSelect = (control: FormControl) => control.localName === 'select'
 
+const oneDigitMonth = (control: FormControl) => (control as HTMLInputElement).maxLength === 1 || placeholderIs(control, /^M$/i)
+const twoDigitYear = (control: FormControl) => (control as HTMLInputElement).maxLength === 2 || placeholderIs(control, /^(YY|JJ)$/i)
+
 function monthFor(control: FormControl, month: unknown): string[] {
 	if (typeof month !== 'string' || !MONTH.test(month)) return []
 	if (isSelect(control)) return monthOptions(month)
-	const one = (control as HTMLInputElement).maxLength === 1 || placeholderIs(control, /^M$/i)
-	return [monthIn(month, one ? 1 : 2)]
+	return [monthIn(month, oneDigitMonth(control) ? 1 : 2)]
 }
 
 function yearFor(control: FormControl, year: unknown): string[] {
 	if (typeof year !== 'string' || !YEAR.test(year)) return []
 	if (isSelect(control)) return yearOptions(year)
-	const two = (control as HTMLInputElement).maxLength === 2 || placeholderIs(control, /^(YY|JJ)$/i)
-	return [yearIn(year, two ? 2 : 4)]
+	return [yearIn(year, twoDigitYear(control) ? 2 : 4)]
 }
 
-function expiryFor(control: FormControl, { expMonth, expYear }: FormValues): string[] {
-	if (!expMonth || !expYear || !MONTH.test(expMonth) || !YEAR.test(expYear) || isSelect(control)) return []
-	return fittingExpiry(control as HTMLInputElement, { month: expMonth, year: expYear })
+/** The expiry the background sent, when both parts are well-formed. */
+function expiryOf({ expMonth, expYear }: FormValues): { month: string; year: string } | null {
+	return expMonth && expYear && MONTH.test(expMonth) && YEAR.test(expYear) ? { month: expMonth, year: expYear } : null
+}
+
+function expiryFor(control: FormControl, values: FormValues): string[] {
+	const expiry = expiryOf(values)
+	if (!expiry || isSelect(control)) return []
+	return fittingExpiry(control as HTMLInputElement, expiry)
 }
 
 
@@ -119,9 +130,15 @@ const isPart = (field: HTMLInputElement) => field.maxLength >= 1 && field.maxLen
 
 /** Each number field's part, in order; null when the number does not fit them. Fields too long to be parts, such as a number and its confirmation, take it whole into the first. */
 export function numberParts(fields: readonly HTMLInputElement[], number: unknown): string[] | null {
-	const digits = typeof number === 'string' ? number.replace(/\D/g, '') : ''
+	const digits = digitsOf(number)
 	const [first] = fields
 	if (!digits || !first) return null
-	if (fields.length > 1 && fields.every(isPart)) return splitNumber(digits, fields.map((field) => field.maxLength))
-	return first.maxLength < 0 || first.maxLength >= digits.length ? [digits] : null
+	if (isSplitOver(fields)) return splitNumber(digits, fields.map((field) => field.maxLength))
+	return wholeIn(first, digits)
 }
+
+const digitsOf = (number: unknown) => (typeof number === 'string' ? number.replace(/\D/g, '') : '')
+const isSplitOver = (fields: readonly HTMLInputElement[]) => fields.length > 1 && fields.every(isPart)
+
+/** The whole number in one field that holds it. */
+const wholeIn = (field: HTMLInputElement, digits: string) => (field.maxLength < 0 || field.maxLength >= digits.length ? [digits] : null)

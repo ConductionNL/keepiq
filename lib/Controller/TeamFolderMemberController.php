@@ -36,13 +36,13 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ManagerOnlyException;
 use OCA\Keepiq\Exception\OwnerOnlyException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderServiceInterface;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionRules;
-use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -61,17 +61,17 @@ class TeamFolderMemberController extends OCSController {
 	 * Constructor for TeamFolderMemberController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param TeamFolderService $teamFolderService The team-folder service
+	 * @param TeamFolderServiceInterface $teamFolderService The team-folder service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private TeamFolderService $teamFolderService,
+		private TeamFolderServiceInterface $teamFolderService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

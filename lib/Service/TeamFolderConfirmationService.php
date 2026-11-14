@@ -32,9 +32,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderConfirmationServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 
@@ -44,7 +45,7 @@ use OCP\IAppConfig;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The confirmation rules join
  *   the team folder, membership, grade, share and secret sides in one place.
  */
-class TeamFolderConfirmationService {
+class TeamFolderConfirmationService implements TeamFolderConfirmationServiceInterface {
 	/**
 	 * The admin policy switch (admin-auto-confirm-members D1).
 	 */
@@ -88,7 +89,7 @@ class TeamFolderConfirmationService {
 	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
 	 */
 	public function isEnabled(): bool {
-		return $this->appConfig->getValueBool(Application::APP_ID, self::SWITCH_KEY, false);
+		return $this->appConfig->getValueBool(AppIdentity::APP_ID, self::SWITCH_KEY, false);
 	}//end isEnabled()
 
 	/**

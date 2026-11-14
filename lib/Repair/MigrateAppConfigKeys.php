@@ -71,7 +71,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Repair;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -216,11 +216,11 @@ class MigrateAppConfigKeys implements IRepairStep {
 			return 'empty';
 		}
 
-		if ($this->appConfig->getValueString(Application::APP_ID, $key, '') !== '') {
+		if ($this->appConfig->getValueString(AppIdentity::APP_ID, $key, '') !== '') {
 			return 'present';
 		}
 
-		$this->appConfig->setValueString(Application::APP_ID, $key, $old);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, $key, $old);
 		return 'migrated';
 	}//end copyKey()
 

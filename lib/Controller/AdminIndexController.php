@@ -24,8 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -81,7 +81,7 @@ class AdminIndexController extends Controller {
 	 *
 	 * @param IRequest $request The request
 	 * @param IUserSession $userSession The session user
-	 * @param AdminAreaAuthorizer $areas The admin areas the caller holds
+	 * @param AdminAreaAuthorizerInterface $areas The admin areas the caller holds
 	 *
 	 * @return void
 	 *
@@ -90,9 +90,9 @@ class AdminIndexController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

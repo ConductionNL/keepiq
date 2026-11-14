@@ -24,8 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Listener;
 
-use OCA\Keepiq\Service\FederatedCertificateService;
-use OCA\Keepiq\Service\FederationPartnerService;
+use OCA\Keepiq\Kernel\Contracts\FederatedCertificateServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\FederationPartnerServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\OCM\Events\LocalOCMDiscoveryEvent;
@@ -41,14 +41,14 @@ class FederationOcmDiscoveryListener implements IEventListener {
 	/**
 	 * Constructor for FederationOcmDiscoveryListener.
 	 *
-	 * @param FederationPartnerService $partners The partner allowlist
+	 * @param FederationPartnerServiceInterface $partners The partner allowlist
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; no behaviour.
 	 */
 	public function __construct(
-		private FederationPartnerService $partners,
+		private FederationPartnerServiceInterface $partners,
 	) {
 	}//end __construct()
 
@@ -66,6 +66,6 @@ class FederationOcmDiscoveryListener implements IEventListener {
 			return;
 		}
 
-		$event->addCapability(FederatedCertificateService::OCM_CAPABILITY);
+		$event->addCapability(FederatedCertificateServiceInterface::OCM_CAPABILITY);
 	}//end handle()
 }//end class

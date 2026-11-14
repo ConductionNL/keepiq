@@ -24,12 +24,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
-use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -56,17 +56,17 @@ class SecretController extends OCSController {
 	 * Constructor for SecretController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretService $secretService The secret service
+	 * @param SecretServiceInterface $secretService The secret service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretService $secretService,
+		private SecretServiceInterface $secretService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -116,7 +116,7 @@ class SecretController extends OCSController {
 		?string $sort = null,
 		string $direction = 'asc',
 		int $page = 1,
-		int $limit = SecretService::DEFAULT_LIMIT,
+		int $limit = SecretServiceInterface::DEFAULT_LIMIT,
 		?string $typeId = null,
 		string $state = 'live',
 		?string $favourite = null,

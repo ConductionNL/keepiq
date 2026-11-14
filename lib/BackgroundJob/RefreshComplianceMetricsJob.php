@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\ComplianceReportService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ComplianceReportServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -37,14 +37,14 @@ class RefreshComplianceMetricsJob extends TimedJob {
 	 * Constructor for RefreshComplianceMetricsJob.
 	 *
 	 * @param ITimeFactory $time The time factory
-	 * @param ComplianceReportService $service The compliance service
+	 * @param ComplianceReportServiceInterface $service The compliance service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private ComplianceReportService $service,
+		private ComplianceReportServiceInterface $service,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);
@@ -69,7 +69,7 @@ class RefreshComplianceMetricsJob extends TimedJob {
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: compliance metrics refresh failed: ' . $exception->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}
 	}//end run()

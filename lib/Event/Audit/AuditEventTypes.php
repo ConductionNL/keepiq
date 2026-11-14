@@ -216,7 +216,8 @@ final class AuditEventTypes {
 	public const DEVICE_APPROVAL_PICKED_UP = 'device_approval.picked_up';
 
 	// Browser-extension passkeys (extension-passkey-enrolment D3), identifiers only.
-	public const PASSKEY_REVOKED_WITH_APP_PASSWORD = 'passkey.revoked_with_app_password';
+	public const PASSKEY_REVOKED_WITH_APP_PASSWORD =
+		'passkey.revoked_with_app_password';
 	public const PASSKEY_ENROLLED = 'passkey.enrolled';
 	public const PASSKEY_UNLOCKED = 'passkey.unlocked';
 	public const PASSKEY_REFUSED = 'passkey.refused';

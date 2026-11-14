@@ -26,8 +26,8 @@ namespace OCA\Keepiq\BackgroundJob;
 
 use DateInterval;
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\ShareExpiryService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ShareExpiryServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -51,7 +51,7 @@ class ExpireSharesJob extends TimedJob {
 	 * Constructor for ExpireSharesJob.
 	 *
 	 * @param ITimeFactory       $time      The time factory
-	 * @param ShareExpiryService $expiry    The expiry service
+	 * @param ShareExpiryServiceInterface $expiry    The expiry service
 	 * @param IAppConfig         $appConfig The app config (warning window)
 	 * @param LoggerInterface    $logger    The logger
 	 *
@@ -61,7 +61,7 @@ class ExpireSharesJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private ShareExpiryService $expiry,
+		private ShareExpiryServiceInterface $expiry,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
 	) {
@@ -110,14 +110,14 @@ class ExpireSharesJob extends TimedJob {
 	private function warn(DateTime $now): void {
 		$until = (clone $now)->add(new DateInterval('P1D'));
 		$from  = $now;
-		$saved = $this->appConfig->getValueInt(Application::APP_ID, self::WARNED_UNTIL_KEY, 0);
+		$saved = $this->appConfig->getValueInt(AppIdentity::APP_ID, self::WARNED_UNTIL_KEY, 0);
 		if ($saved > $now->getTimestamp()) {
 			$from = (new DateTime())->setTimestamp($saved);
 		}
 
 		try {
 			$this->expiry->warnEnding(from: $from, to: $until);
-			$this->appConfig->setValueInt(Application::APP_ID, self::WARNED_UNTIL_KEY, $until->getTimestamp());
+			$this->appConfig->setValueInt(AppIdentity::APP_ID, self::WARNED_UNTIL_KEY, $until->getTimestamp());
 		} catch (Throwable $exception) {
 			$this->logger->error(
 				'Keepiq: share expiry warning failed: ' . $exception->getMessage(),

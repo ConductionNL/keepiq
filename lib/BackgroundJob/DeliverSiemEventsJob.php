@@ -23,9 +23,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCA\Keepiq\Service\SiemFailureOutcome;
-use OCA\Keepiq\Service\SiemService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -39,14 +39,14 @@ class DeliverSiemEventsJob extends TimedJob {
 	 * Constructor for DeliverSiemEventsJob.
 	 *
 	 * @param ITimeFactory $time The time factory
-	 * @param SiemService $siemService The SIEM service
+	 * @param SiemServiceInterface $siemService The SIEM service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private SiemService $siemService,
+		private SiemServiceInterface $siemService,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);
@@ -71,7 +71,7 @@ class DeliverSiemEventsJob extends TimedJob {
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: SIEM delivery drain failed: '.(new SiemFailureOutcome())->classOf(exception: $exception),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}
 	}//end run()

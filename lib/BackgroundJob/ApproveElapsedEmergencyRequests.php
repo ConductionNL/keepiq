@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\Service\EmergencyAccessService;
+use OCA\Keepiq\Kernel\Contracts\EmergencyAccessServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -41,14 +41,14 @@ class ApproveElapsedEmergencyRequests extends TimedJob {
 	 * Constructor for ApproveElapsedEmergencyRequests.
 	 *
 	 * @param ITimeFactory $time The time factory
-	 * @param EmergencyAccessService $service The emergency-access service
+	 * @param EmergencyAccessServiceInterface $service The emergency-access service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private EmergencyAccessService $service,
+		private EmergencyAccessServiceInterface $service,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

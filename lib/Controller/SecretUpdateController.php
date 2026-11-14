@@ -27,13 +27,13 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\WriteLockedException;
-use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -58,17 +58,17 @@ class SecretUpdateController extends OCSController {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretService $secretService The secret service
+	 * @param SecretServiceInterface $secretService The secret service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretService $secretService,
+		private SecretServiceInterface $secretService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -161,7 +161,7 @@ class SecretUpdateController extends OCSController {
 	 */
 	private function requestedChanges(): array {
 		$data = [];
-		foreach (SecretService::UPDATABLE_FIELDS as $field) {
+		foreach (SecretServiceInterface::UPDATABLE_FIELDS as $field) {
 			$value = $this->request->getParam($field, '__unset__');
 			if ($value !== '__unset__') {
 				$data[$field] = (string)$value;

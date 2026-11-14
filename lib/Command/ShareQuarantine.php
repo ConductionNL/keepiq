@@ -25,7 +25,7 @@ namespace OCA\Keepiq\Command;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\ShareTarget;
-use OCA\Keepiq\Service\ShareQuarantineService;
+use OCA\Keepiq\Kernel\Contracts\ShareQuarantineServiceInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
@@ -42,14 +42,14 @@ class ShareQuarantine extends Command {
 	/**
 	 * Constructor.
 	 *
-	 * @param ShareQuarantineService $quarantine The quarantine service
+	 * @param ShareQuarantineServiceInterface $quarantine The quarantine service
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private ShareQuarantineService $quarantine,
+		private ShareQuarantineServiceInterface $quarantine,
 	) {
 		parent::__construct();
 	}//end __construct()

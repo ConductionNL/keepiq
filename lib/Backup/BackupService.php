@@ -28,10 +28,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Backup;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
-use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -64,7 +64,7 @@ class BackupService {
 	 * @param ArchiveStore $store Archive storage and scratch files
 	 * @param IAppConfig $appConfig Last-run status
 	 * @param ITimeFactory $time The clock
-	 * @param AuditService $audit The audit trail
+	 * @param AuditServiceInterface $audit The audit trail
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
@@ -78,7 +78,7 @@ class BackupService {
 		private ArchiveStore $store,
 		private IAppConfig $appConfig,
 		private ITimeFactory $time,
-		private AuditService $audit,
+		private AuditServiceInterface $audit,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -96,11 +96,11 @@ class BackupService {
 			return false;
 		}
 
-		if ($this->appConfig->getValueBool(Application::APP_ID, self::RUN_REQUESTED, false) === true) {
+		if ($this->appConfig->getValueBool(AppIdentity::APP_ID, self::RUN_REQUESTED, false) === true) {
 			return true;
 		}
 
-		$lastRun = $this->appConfig->getValueInt(Application::APP_ID, self::LAST_RUN, 0);
+		$lastRun = $this->appConfig->getValueInt(AppIdentity::APP_ID, self::LAST_RUN, 0);
 
 		return ($this->time->getTime() - $lastRun) >= ($settings[BackupSettings::INTERVAL] * 3600);
 	}//end isDue()
@@ -113,7 +113,7 @@ class BackupService {
 	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function requestRun(): void {
-		$this->appConfig->setValueBool(Application::APP_ID, self::RUN_REQUESTED, true);
+		$this->appConfig->setValueBool(AppIdentity::APP_ID, self::RUN_REQUESTED, true);
 	}//end requestRun()
 
 	/**
@@ -126,21 +126,21 @@ class BackupService {
 	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function createBackup(): array {
-		$this->appConfig->setValueBool(Application::APP_ID, self::RUN_REQUESTED, false);
-		$this->appConfig->setValueInt(Application::APP_ID, self::LAST_RUN, $this->time->getTime());
+		$this->appConfig->setValueBool(AppIdentity::APP_ID, self::RUN_REQUESTED, false);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, self::LAST_RUN, $this->time->getTime());
 
 		try {
 			$result = $this->writeArchive();
 		} catch (Throwable $exception) {
-			$this->appConfig->setValueString(Application::APP_ID, self::LAST_STATUS, 'failed');
-			$this->appConfig->setValueString(Application::APP_ID, self::LAST_ERROR, substr($exception->getMessage(), 0, 500));
+			$this->appConfig->setValueString(AppIdentity::APP_ID, self::LAST_STATUS, 'failed');
+			$this->appConfig->setValueString(AppIdentity::APP_ID, self::LAST_ERROR, substr($exception->getMessage(), 0, 500));
 			$this->record(eventType: AuditEventTypes::BACKUP_FAILED, name: '', metadata: ['error' => substr($exception->getMessage(), 0, 200)]);
 			$this->logger->error('Keepiq vault backup failed: ' . $exception->getMessage(), ['exception' => $exception]);
 			throw $exception;
 		}
 
-		$this->appConfig->setValueString(Application::APP_ID, self::LAST_STATUS, 'ok');
-		$this->appConfig->setValueString(Application::APP_ID, self::LAST_ERROR, '');
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::LAST_STATUS, 'ok');
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::LAST_ERROR, '');
 		$this->record(
 			eventType: AuditEventTypes::BACKUP_CREATED,
 			name: $result['name'],
@@ -183,7 +183,7 @@ class BackupService {
 	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function status(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		return [
 			'lastRunAt' => $this->appConfig->getValueInt($appId, self::LAST_RUN, 0),

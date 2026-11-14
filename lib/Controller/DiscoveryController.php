@@ -42,11 +42,11 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
-use OCA\Keepiq\Service\AudiencePolicy;
-use OCA\Keepiq\Service\FederationRootService;
-use OCA\Keepiq\Service\JwtAuthService;
-use OCA\Keepiq\Service\MachineSecretEnvelopeService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AudiencePolicyInterface;
+use OCA\Keepiq\Kernel\Contracts\FederationRootServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\JwtAuthServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\MachineSecretEnvelopeServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -54,8 +54,8 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
-use Psr\Log\LoggerInterface;
 use OCP\IURLGenerator;
+use Psr\Log\LoggerInterface;
 
 /**
  * Public discovery endpoint for the machine secret-store API.
@@ -90,7 +90,7 @@ class DiscoveryController extends Controller {
 	 *
 	 * @var string
 	 */
-	public const DEPRECATED_PATH_REMOVED_IN = KeepiqApp::PRE_STABLE_COMPAT_REMOVED_IN;
+	public const DEPRECATED_PATH_REMOVED_IN = AppIdentity::PRE_STABLE_COMPAT_REMOVED_IN;
 
 	/**
 	 * Constructor for DiscoveryController.
@@ -99,7 +99,7 @@ class DiscoveryController extends Controller {
 	 * @param IURLGenerator $urlGenerator The URL generator
 	 * @param IAppConfig|null $appConfig The app config (lease policy advert)
 	 * @param LoggerInterface|null $logger Logger for the deprecated-path warning
-	 * @param FederationRootService|null $federationRoot Root fingerprint and version gate for federation
+	 * @param FederationRootServiceInterface|null $federationRoot Root fingerprint and version gate for federation
 	 *
 	 * @return void
 	 */
@@ -108,9 +108,9 @@ class DiscoveryController extends Controller {
 		private IURLGenerator $urlGenerator,
 		private ?IAppConfig $appConfig = null,
 		private ?LoggerInterface $logger = null,
-		private ?FederationRootService $federationRoot = null,
+		private ?FederationRootServiceInterface $federationRoot = null,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -156,19 +156,19 @@ class DiscoveryController extends Controller {
 				'grantType' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
 				'assertion' => [
 					'alg' => 'RS256',
-					'maxLifetime' => JwtAuthService::ACCESS_TOKEN_TTL,
+					'maxLifetime' => JwtAuthServiceInterface::ACCESS_TOKEN_TTL,
 					// `audience` is the value to SEND; `acceptedAudiences` is
 					// what this instance will honour. Both are additive within
 					// the current apiVersion: a consumer reading `audience`
 					// converges on the canonical name, and one still sending a
 					// deprecated value keeps working until the version named in
 					// `deprecatedAudiences[].removedInAppVersion`.
-					'audience' => AudiencePolicy::CANONICAL_AUDIENCE,
-					'acceptedAudiences' => AudiencePolicy::ACCEPTED_AUDIENCES,
+					'audience' => AudiencePolicyInterface::CANONICAL_AUDIENCE,
+					'acceptedAudiences' => AudiencePolicyInterface::ACCEPTED_AUDIENCES,
 					'deprecatedAudiences' => [
 						[
-							'value' => AudiencePolicy::DEPRECATED_AUDIENCE,
-							'removedInAppVersion' => AudiencePolicy::DEPRECATED_AUDIENCE_REMOVED_IN,
+							'value' => AudiencePolicyInterface::DEPRECATED_AUDIENCE,
+							'removedInAppVersion' => AudiencePolicyInterface::DEPRECATED_AUDIENCE_REMOVED_IN,
 						],
 					],
 					'audienceUrl' => $tokenAbsolute,
@@ -199,12 +199,12 @@ class DiscoveryController extends Controller {
 				// The calling application's own certificate and fingerprint
 				// (app-own-certificate); Bearer-authenticated.
 				'certificate' => $this->urlGenerator->linkToRoute('keepiq.applicationCertificate.show'),
-				'envelopeFormats' => [MachineSecretEnvelopeService::FORMAT],
+				'envelopeFormats' => [MachineSecretEnvelopeServiceInterface::FORMAT],
 				'upcomingEnvelopeFormats' => [
 					[
-						'value' => MachineSecretEnvelopeService::UPCOMING_FORMAT,
-						'replaces' => MachineSecretEnvelopeService::FORMAT,
-						'emittedFromAppVersion' => MachineSecretEnvelopeService::UPCOMING_FORMAT_APP_VERSION,
+						'value' => MachineSecretEnvelopeServiceInterface::UPCOMING_FORMAT,
+						'replaces' => MachineSecretEnvelopeServiceInterface::FORMAT,
+						'emittedFromAppVersion' => MachineSecretEnvelopeServiceInterface::UPCOMING_FORMAT_APP_VERSION,
 					],
 				],
 				// Machine leases (machine-secret-leases §3.3): additive
@@ -212,9 +212,9 @@ class DiscoveryController extends Controller {
 				// addressing change.
 				'lease' => [
 					'supported' => true,
-					'defaultTtl' => $this->appConfig?->getValueInt(KeepiqApp::APP_ID, 'lease_default_ttl_seconds', 900) ?? 900,
-					'maxTtl' => $this->appConfig?->getValueInt(KeepiqApp::APP_ID, 'lease_max_ttl_seconds', 86400) ?? 86400,
-					'renewable' => $this->appConfig?->getValueBool(KeepiqApp::APP_ID, 'lease_renewable', true) ?? true,
+					'defaultTtl' => $this->appConfig?->getValueInt(AppIdentity::APP_ID, 'lease_default_ttl_seconds', 900) ?? 900,
+					'maxTtl' => $this->appConfig?->getValueInt(AppIdentity::APP_ID, 'lease_max_ttl_seconds', 86400) ?? 86400,
+					'renewable' => $this->appConfig?->getValueBool(AppIdentity::APP_ID, 'lease_renewable', true) ?? true,
 				],
 			]
 		);

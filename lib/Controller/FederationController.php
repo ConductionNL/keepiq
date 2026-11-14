@@ -26,8 +26,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\FederatedCertificateService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\FederatedCertificateServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -47,7 +47,7 @@ class FederationController extends Controller {
 	 * Constructor for FederationController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param FederatedCertificateService $certificates The federated certificate lookup
+	 * @param FederatedCertificateServiceInterface $certificates The federated certificate lookup
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
@@ -56,10 +56,10 @@ class FederationController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private FederatedCertificateService $certificates,
+		private FederatedCertificateServiceInterface $certificates,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

@@ -220,31 +220,46 @@ function newId(): string {
 	return toBase64Url(crypto.getRandomValues(new Uint8Array(16)))
 }
 
-/** Opens the ceremony's window, or shows it in the one it took over; runs in the tab's queue. */
-async function showWindow(tabId: number, id: string): Promise<void> {
-	const ceremony = await store.get(tabId)
-	if (ceremony?.id !== id) return
-	const url = browser.runtime.getURL(`/popup.html?passkey=${encodeURIComponent(id)}`)
-	if (ceremony.window) {
-		const { id: windowId, tabId: windowTab } = ceremony.window
-		// The reload drops the page's `popup` port before the new one connects; that gap is not "popup closed".
-		expectPopout()
-		if (await browser.tabs.update(windowTab, { url }).then(() => true, () => false)) {
-			void browser.windows.update(windowId, { focused: true }).catch(() => {})
-			return
-		}
-		cancelPopout()
+type CeremonyWindow = NonNullable<Ceremony['window']>
+
+/** Shows the ceremony in the window it took over; false when that window's tab is gone. */
+async function reuseWindow(window: CeremonyWindow, url: string): Promise<boolean> {
+	const { id: windowId, tabId: windowTab } = window
+	// The reload drops the page's `popup` port before the new one connects; that gap is not "popup closed".
+	expectPopout()
+	if (await browser.tabs.update(windowTab, { url }).then(() => true, () => false)) {
+		void browser.windows.update(windowId, { focused: true }).catch(() => {})
+		return true
 	}
+	cancelPopout()
+	return false
+}
+
+async function windowTabOf(created: Browser.windows.Window | undefined, windowId: number): Promise<number | undefined> {
+	return created!.tabs?.[0]?.id ?? (await browser.windows.get(windowId, { populate: true })).tabs?.[0]?.id
+}
+
+/** A new popup window for the ceremony, with its tab. */
+async function openWindow(url: string): Promise<CeremonyWindow> {
 	const created = await browser.windows.create({ type: 'popup', width: 380, height: 630, url })
 	const windowId = created?.id
 	if (windowId === undefined) throw new Error('No window to show the ceremony in')
-	const windowTab = created!.tabs?.[0]?.id ?? (await browser.windows.get(windowId, { populate: true })).tabs?.[0]?.id
+	const windowTab = await windowTabOf(created, windowId)
 	if (windowTab === undefined) {
 		// Awaited, so the fallback that follows reaches the page after this window is gone.
 		await closeWithin(windowId, CLOSE_MS)
 		throw new Error('No tab in the ceremony window')
 	}
-	await store.set({ ...ceremony, window: { id: windowId, tabId: windowTab } })
+	return { id: windowId, tabId: windowTab }
+}
+
+/** Opens the ceremony's window, or shows it in the one it took over; runs in the tab's queue. */
+async function showWindow(tabId: number, id: string): Promise<void> {
+	const ceremony = await store.get(tabId)
+	if (ceremony?.id !== id) return
+	const url = browser.runtime.getURL(`/popup.html?passkey=${encodeURIComponent(id)}`)
+	if (ceremony.window && await reuseWindow(ceremony.window, url)) return
+	await store.set({ ...ceremony, window: await openWindow(url) })
 }
 
 export async function startCeremony(message: Extract<PasskeyContentToBackground, { kind: 'passkey.start' }>, sender: Sender): Promise<PasskeyStartReply> {
@@ -352,21 +367,30 @@ async function view(ceremony: Ceremony): Promise<PasskeyView> {
 	return { ...shown, failure, ...await saveView(ceremony, key) }
 }
 
-/** The ceremony a window names, only from that ceremony's own window and while it may still run. */
-async function forWindow(ceremonyId: unknown, sender: Sender): Promise<Ceremony | null> {
-	const windowTab = sender.tab?.id
-	if (typeof ceremonyId !== 'string' || windowTab === undefined) return null
+/** The ceremony `ceremonyId` when `windowTab` is its window's tab. */
+async function ceremonyOfWindow(ceremonyId: string, windowTab: number): Promise<Ceremony | null> {
 	const found = (await store.all()).find((candidate) => candidate.id === ceremonyId)
 	if (!found) return null
 	// Read again in the tab's queue, behind the write that records a window still opening.
 	const ceremony = await inTab(found.tabId, () => store.get(found.tabId))
-	if (ceremony?.id !== ceremonyId || ceremony.window?.tabId !== windowTab) return null
+	return ceremony?.id === ceremonyId && ceremony.window?.tabId === windowTab ? ceremony : null
+}
+
+/** Before its deadline, and while its account is still the active one. */
+async function mayStillRun(ceremony: Ceremony): Promise<boolean> {
 	const overdue = ceremony.deadline !== null && Date.now() >= ceremony.deadline
-	if (overdue || !(await stillActive(ceremony))) {
-		await end(ceremony.tabId, ceremony.id, NOT_ALLOWED)
-		return null
-	}
-	return ceremony
+	return !overdue && await stillActive(ceremony)
+}
+
+/** The ceremony a window names, only from that ceremony's own window and while it may still run. */
+async function forWindow(ceremonyId: unknown, sender: Sender): Promise<Ceremony | null> {
+	const windowTab = sender.tab?.id
+	if (typeof ceremonyId !== 'string' || windowTab === undefined) return null
+	const ceremony = await ceremonyOfWindow(ceremonyId, windowTab)
+	if (!ceremony) return null
+	if (await mayStillRun(ceremony)) return ceremony
+	await end(ceremony.tabId, ceremony.id, NOT_ALLOWED)
+	return null
 }
 
 const isMethod = (method: unknown): method is UnlockMethod => {
@@ -374,24 +398,44 @@ const isMethod = (method: unknown): method is UnlockMethod => {
 	return (m?.type === 'masterPassword' && typeof m.masterPassword === 'string') || (m?.type === 'pin' && typeof m.pin === 'string')
 }
 
+/** A failed unlock's answer; anything but a `Failure` is no answer and goes on up. */
+function unlockRefusal(error: unknown): PasskeyWindowReply {
+	if (!(error instanceof Failure)) throw error
+	return error.attemptsLeft === undefined ? { ok: false, code: error.code } : { ok: false, code: error.code, attemptsLeft: error.attemptsLeft }
+}
+
+async function unlockFor(accountId: string, method: UnlockMethod): Promise<PasskeyWindowReply | null> {
+	try {
+		await unlock(accountId, method)
+		return null
+	} catch (error) {
+		return unlockRefusal(error)
+	}
+}
+
+async function afterUnlock(accountId: string, wasLocked: boolean): Promise<void> {
+	if (wasLocked) void sync(accountId, 'full')
+	await syncAlarm()
+}
+
+/** The held pick signs only when the user confirmed it as shown; after an unlock they pick again from the list. */
+function confirmedPick(ceremony: Ceremony, wasLocked: boolean): Ceremony['pending'] | null {
+	const { pending } = ceremony
+	return pending && !wasLocked && ceremony.kind === 'get' ? pending : null
+}
+
 /** Unlocking from the window and "Confirm it's you" both go through `unlock()`, so the PIN keeps its five tries. */
 async function verify(ceremony: Ceremony, method: unknown): Promise<PasskeyWindowReply> {
 	if (!isMethod(method)) return { ok: false, code: 'unknown' }
 	await touch()
 	const wasLocked = (await getKey(ceremony.accountId)) === null
-	try {
-		await unlock(ceremony.accountId, method)
-	} catch (error) {
-		if (!(error instanceof Failure)) throw error
-		return error.attemptsLeft === undefined ? { ok: false, code: error.code } : { ok: false, code: error.code, attemptsLeft: error.attemptsLeft }
-	}
-	if (wasLocked) void sync(ceremony.accountId, 'full')
-	await syncAlarm()
+	const refused = await unlockFor(ceremony.accountId, method)
+	if (refused) return refused
+	await afterUnlock(ceremony.accountId, wasLocked)
 	const verified = await update(ceremony, { verified: true, pending: undefined })
 	if (!verified) return ENDED
-	// The held pick signs only when the user confirmed it as shown; after an unlock they pick again from the list.
-	const { pending } = ceremony
-	if (pending && !wasLocked && ceremony.kind === 'get') return once(verified, () => pick(verified, pending.itemId, pending.credentialId))
+	const pending = confirmedPick(ceremony, wasLocked)
+	if (pending) return once(verified, () => pick(verified, pending.itemId, pending.credentialId))
 	return { ok: true, view: await view(verified) }
 }
 
@@ -399,9 +443,23 @@ async function verify(ceremony: Ceremony, method: unknown): Promise<PasskeyWindo
 async function settled(ceremony: Ceremony, outcome: SaveOutcome | SignOutcome, step: Step): Promise<PasskeyWindowReply> {
 	if (outcome === 'delivered') return { ok: true }
 	if (outcome === 'ended') return ENDED
-	if (typeof outcome === 'string') return !ceremony.failed || (await update(ceremony, { failed: undefined })) ? { ok: false, code: outcome } : ENDED
-	const failed: FailedStep = step.action === 'save' && 'attempt' in outcome ? { ...step, attempt: outcome.attempt, error: outcome.error } : { ...step, error: outcome.error }
-	return (await update(ceremony, { failed })) ? { ok: false, code: 'write_failed', error: outcome.error } : ENDED
+	if (typeof outcome === 'string') return refusedStep(ceremony, outcome)
+	return keepFailed(ceremony, failedStep(outcome, step))
+}
+
+type Outcome = SaveOutcome | SignOutcome
+type Refusal = Exclude<Extract<Outcome, string>, 'delivered' | 'ended'>
+
+async function refusedStep(ceremony: Ceremony, code: Refusal): Promise<PasskeyWindowReply> {
+	return !ceremony.failed || (await update(ceremony, { failed: undefined })) ? { ok: false, code } : ENDED
+}
+
+function failedStep(outcome: Exclude<Outcome, string>, step: Step): FailedStep {
+	return step.action === 'save' && 'attempt' in outcome ? { ...step, attempt: outcome.attempt, error: outcome.error } : { ...step, error: outcome.error }
+}
+
+async function keepFailed(ceremony: Ceremony, failed: FailedStep): Promise<PasskeyWindowReply> {
+	return (await update(ceremony, { failed })) ? { ok: false, code: 'write_failed', error: failed.error } : ENDED
 }
 
 /** The vault key once the user may act on the ceremony: unlocked, and verified where required. */
@@ -413,16 +471,30 @@ async function actingKey(ceremony: Ceremony): Promise<{ key: CryptoKey } | { ref
 	return { key }
 }
 
-async function pick(ceremony: Ceremony, itemId: unknown, credentialId: unknown): Promise<PasskeyWindowReply> {
-	if (ceremony.kind !== 'get' || typeof itemId !== 'string' || typeof credentialId !== 'string') return STALE
+/** Why a pick may not go on: a conditional request no longer asked, or a ceremony that ended. */
+async function pickRefusal(ceremony: Ceremony): Promise<PasskeyWindowReply | null> {
 	if (ceremony.conditional && !(await stillAsked(ceremony))) return STALE
 	// Any other pick replaces the held one, so a later "Confirm it's you" never signs a passkey the user moved away from.
 	if (ceremony.pending && !(await update(ceremony, { pending: undefined }))) return ENDED
-	const acting = await actingKey(ceremony)
+	return null
+}
+
+async function pickingKey(ceremony: Ceremony): Promise<{ key: CryptoKey } | { refused: PasskeyWindowReply }> {
+	const refused = await pickRefusal(ceremony)
+	return refused ? { refused } : actingKey(ceremony)
+}
+
+async function pick(ceremony: Ceremony, itemId: unknown, credentialId: unknown): Promise<PasskeyWindowReply> {
+	if (ceremony.kind !== 'get' || typeof itemId !== 'string' || typeof credentialId !== 'string') return STALE
+	const acting = await pickingKey(ceremony)
 	if ('refused' in acting) return acting.refused
 	const { key } = acting
 	const outcome = await signIn({ ceremony, key, itemId, credentialId, deliver: (result) => end(ceremony.tabId, ceremony.id, result) })
 	return settled(ceremony, outcome, { action: 'pick', itemId, credentialId })
+}
+
+async function markAlreadySaved(ceremony: Ceremony): Promise<PasskeyWindowReply> {
+	return (await update(ceremony, { alreadySaved: true })) ? { ok: false, code: 'already_saved' } : ENDED
 }
 
 async function save(ceremony: Ceremony, request: SaveRequest | null, attempt?: SaveAttempt): Promise<PasskeyWindowReply> {
@@ -431,20 +503,21 @@ async function save(ceremony: Ceremony, request: SaveRequest | null, attempt?: S
 	if ('refused' in acting) return acting.refused
 	const { key } = acting
 	// Checked again here, so no save gets past an excluded credential the view showed.
-	if (await alreadySaved(ceremony, key)) return (await update(ceremony, { alreadySaved: true })) ? { ok: false, code: 'already_saved' } : ENDED
+	if (await alreadySaved(ceremony, key)) return markAlreadySaved(ceremony)
 	const outcome = await savePasskey({ ceremony, key, request, attempt, deliver: (result) => end(ceremony.tabId, ceremony.id, result) })
 	return settled(ceremony, outcome, { action: 'save', request })
 }
 
 /** A fresh save to the failed save's target carries its attempt, so a try the server stored after a lost reply is found. */
+function sameTarget(before: SaveRequest, request: SaveRequest): boolean {
+	if ('itemId' in request) return 'itemId' in before && before.itemId === request.itemId
+	return 'name' in before && before.name.trim() === request.name.trim() && before.folderId === request.folderId
+}
+
 function attemptFor(ceremony: Ceremony, request: SaveRequest | null): SaveAttempt | undefined {
 	const { failed } = ceremony
 	if (failed?.action !== 'save' || !request) return undefined
-	const before = failed.request
-	const same = 'itemId' in request
-		? 'itemId' in before && before.itemId === request.itemId
-		: 'name' in before && before.name.trim() === request.name.trim() && before.folderId === request.folderId
-	return same ? failed.attempt : undefined
+	return sameTarget(failed.request, request) ? failed.attempt : undefined
 }
 
 function retry(ceremony: Ceremony): Promise<PasskeyWindowReply> {
@@ -487,28 +560,27 @@ async function fallbackOrCancel(ceremony: Ceremony, kind: 'passkey.fallback' | '
 	return await closed ? { ok: true } : ENDED
 }
 
+type WindowMessage<K extends PasskeyPopupRequest['kind']> = Extract<PasskeyPopupRequest, { kind: K }>
+
+/** What each passkey window kind does for the ceremony the window may answer. */
+const ANSWERS: { [K in PasskeyPopupRequest['kind']]: (ceremony: Ceremony, message: WindowMessage<K>) => Promise<PasskeyWindowReply> } = {
+	'passkey.state': async (ceremony) => ({ ok: true, view: await view(ceremony) }),
+	'passkey.pick': (ceremony, message) => once(ceremony, () => pick(ceremony, message.itemId, message.credentialId)),
+	'passkey.save': (ceremony, message) => once(ceremony, () => {
+		const request = readSaveRequest(message.target)
+		return save(ceremony, request, attemptFor(ceremony, request))
+	}),
+	'passkey.retry': (ceremony) => once(ceremony, () => retry(ceremony)),
+	'passkey.verify': (ceremony, message) => verify(ceremony, message.method),
+	'passkey.fallback': (ceremony, message) => fallbackOrCancel(ceremony, message.kind),
+	'passkey.cancel': (ceremony, message) => fallbackOrCancel(ceremony, message.kind),
+}
+
 /** A passkey window kind, for the ceremony the window may answer. */
 async function answer(ceremony: Ceremony, message: PasskeyPopupRequest): Promise<PasskeyWindowReply> {
-	switch (message.kind) {
-		case 'passkey.state':
-			return { ok: true, view: await view(ceremony) }
-		case 'passkey.pick':
-			return once(ceremony, () => pick(ceremony, message.itemId, message.credentialId))
-		case 'passkey.save':
-			return once(ceremony, () => {
-				const request = readSaveRequest(message.target)
-				return save(ceremony, request, attemptFor(ceremony, request))
-			})
-		case 'passkey.retry':
-			return once(ceremony, () => retry(ceremony))
-		case 'passkey.verify':
-			return verify(ceremony, message.method)
-		case 'passkey.fallback':
-		case 'passkey.cancel':
-			return fallbackOrCancel(ceremony, message.kind)
-		default:
-			return { ok: false, code: 'unknown' }
-	}
+	if (!Object.hasOwn(ANSWERS, message.kind)) return { ok: false, code: 'unknown' }
+	const act = ANSWERS[message.kind] as (ceremony: Ceremony, message: PasskeyPopupRequest) => Promise<PasskeyWindowReply>
+	return act(ceremony, message)
 }
 
 /** A passkey window kind. */
@@ -590,15 +662,29 @@ export async function pickFromList(tabId: number, ceremonyId: string, itemId: st
 	// A click in the inline list is a new round: a verification in the window counts for neither it nor what follows.
 	const ceremony = asked && await update(asked, { verified: false })
 	if (!ceremony) return 'stale'
-	const reply = await once(ceremony, () => pick(ceremony, itemId, credentialId))
+	const step = listPickStep(await once(ceremony, () => pick(ceremony, itemId, credentialId)))
+	if (step === 'verify_required') return holdForWindow(ceremony, { itemId, credentialId })
+	if (step === 'window') await showListWindow(tabId, ceremony.id)
+	return step
+}
+
+/** What a list pick's reply leads to: done, locked, stale, or the window for verification or a failed counter save. */
+function listPickStep(reply: PasskeyWindowReply): ListPick | 'verify_required' {
 	if (reply.ok) return 'signed'
 	if (reply.code === 'locked') return 'locked'
-	if (reply.code !== 'verify_required' && reply.code !== 'write_failed') return 'stale'
-	if (reply.code === 'verify_required') {
-		const held = await hold(ceremony, { itemId, credentialId })
-		if (held !== 'held') return held
-	}
-	await inTab(tabId, () => showWindow(tabId, ceremony.id)).catch(log('window'))
+	if (reply.code === 'verify_required') return 'verify_required'
+	return reply.code === 'write_failed' ? 'window' : 'stale'
+}
+
+async function showListWindow(tabId: number, ceremonyId: string): Promise<void> {
+	await inTab(tabId, () => showWindow(tabId, ceremonyId)).catch(log('window'))
+}
+
+/** Verification goes on in the window, which shows the held pick for "Confirm it's you". */
+async function holdForWindow(ceremony: Ceremony, pending: NonNullable<Ceremony['pending']>): Promise<ListPick> {
+	const held = await hold(ceremony, pending)
+	if (held !== 'held') return held
+	await showListWindow(ceremony.tabId, ceremony.id)
 	return 'window'
 }
 

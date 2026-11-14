@@ -37,11 +37,12 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\DuplicateFolderNameException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\FolderServiceInterface;
 
 /**
  * Business logic for the folder tree.
  */
-class FolderService {
+class FolderService implements FolderServiceInterface {
 	/**
 	 * Constructor for FolderService.
 	 *

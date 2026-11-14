@@ -68,21 +68,7 @@ const DEFAULT_TYPE_NAME = 'login'
  * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
  */
 export function typeIdResolver(types) {
-	const known = (Array.isArray(types) ? types : []).filter(
-		(type) => type && type.id,
-	)
-	const systemFirst = [
-		...known.filter((type) => type.scope === 'system'),
-		...known.filter((type) => type.scope !== 'system'),
-	]
-	const ids = new Set()
-	const idsByName = new Map()
-	for (const type of systemFirst) {
-		ids.add(type.id)
-		if (type.name && !idsByName.has(type.name)) {
-			idsByName.set(type.name, type.id)
-		}
-	}
+	const { ids, idsByName } = typeIndex(types)
 	return (rowType) => {
 		if (typeof rowType !== 'string' || rowType === '') {
 			return null
@@ -91,6 +77,340 @@ export function typeIdResolver(types) {
 			return rowType
 		}
 		return idsByName.get(rowType) ?? null
+	}
+}
+
+/**
+ * The vault's type ids, and the id of each type name with a system type
+ * ahead of a custom type of the same name.
+ *
+ * @param {Array<object>} types The vault's secret types ({ id, name, scope }).
+ * @return {{ids: Set<string>, idsByName: Map<string, string>}} The index.
+ */
+function typeIndex(types) {
+	const ids = new Set()
+	const idsByName = new Map()
+	for (const type of systemTypesFirst(types)) {
+		ids.add(type.id)
+		if (type.name && !idsByName.has(type.name)) {
+			idsByName.set(type.name, type.id)
+		}
+	}
+	return { ids, idsByName }
+}
+
+/**
+ * The types that have an id, system types ahead of custom ones.
+ *
+ * @param {Array<object>} types The vault's secret types.
+ * @return {Array<object>} The ordered types.
+ */
+function systemTypesFirst(types) {
+	const known = (Array.isArray(types) ? types : []).filter(
+		(type) => type && type.id,
+	)
+	return [
+		...known.filter((type) => type.scope === 'system'),
+		...known.filter((type) => type.scope !== 'system'),
+	]
+}
+
+/**
+ * The additional fields of a row as the JSON to encrypt, or '' when there are none.
+ *
+ * @param {object|string|null|undefined} value The row's additionalFields.
+ * @return {string} The JSON, or ''.
+ */
+function additionalFieldsJson(value) {
+	if (value == null) {
+		return ''
+	}
+	const json = typeof value === 'string' ? value : JSON.stringify(value)
+	return json && json !== '{}' && json !== 'null' ? json : ''
+}
+
+/**
+ * Encrypt a row's optional fields onto its commit item: the login, the
+ * additional fields, and a login's code and passkeys. Each is sent only when
+ * the row has it, since an encrypted empty string would read as a value.
+ *
+ * @param {object} item The commit item, added to.
+ * @param {object} row The plaintext row.
+ * @param {CryptoKey} publicKey The owner's imported public key.
+ * @return {Promise<void>}
+ */
+async function encryptOptionalFields(item, row, publicKey) {
+	if (row.login != null && row.login !== '') {
+		item.login = await rsaEncrypt(String(row.login), publicKey)
+	}
+	const json = additionalFieldsJson(row.additionalFields)
+	if (json) {
+		item.additionalFields = await rsaEncrypt(json, publicKey)
+	}
+	for (const field of BLOB_FIELDS) {
+		if (typeof row[field] === 'string' && row[field] !== '') {
+			item[field] = await rsaEncrypt(row[field], publicKey)
+		}
+	}
+}
+
+/**
+ * Whether a row names a type other than the default.
+ *
+ * @param {object} row The row.
+ * @return {boolean}
+ */
+function namesAnotherType(row) {
+	return typeof row.type === 'string'
+		&& row.type !== ''
+		&& row.type !== DEFAULT_TYPE_NAME
+}
+
+/**
+ * Whether the type store has no types loaded.
+ *
+ * @param {object} typeStore The secret type store.
+ * @return {boolean}
+ */
+function typesMissing(typeStore) {
+	return !Array.isArray(typeStore.types) || typeStore.types.length === 0
+}
+
+/**
+ * The single root folder to import beneath, or '' for none. A slash would
+ * split the one folder into a path, so it becomes a dash (keepiq#749).
+ *
+ * @param {object} options The commit() options.
+ * @return {string} The root folder name.
+ */
+function rootFolderName(options) {
+	return typeof options.rootFolder === 'string'
+		? options.rootFolder.replaceAll('/', '-').trim()
+		: ''
+}
+
+/**
+ * Fetch the type list when a row names a type other than the default and the
+ * list is not loaded yet. Best-effort: a failed fetch is not fatal.
+ *
+ * @param {object} typeStore The secret type store.
+ * @param {Array<object>} rows The rows to import.
+ * @return {Promise<void>}
+ */
+async function ensureTypesLoaded(typeStore, rows) {
+	if (rows.some(namesAnotherType) && typesMissing(typeStore)) {
+		try {
+			await typeStore.fetchTypes()
+		} catch {
+			// Non-fatal.
+		}
+	}
+}
+
+/**
+ * Encrypt every row into a commit item, in row order.
+ *
+ * @param {object} store The import store (for encryptRow).
+ * @param {Array<object>} rows The accepted rows.
+ * @param {object} context Encryption context.
+ * @param {CryptoKey} context.publicKey The vault public key.
+ * @param {Set<number>} context.dupRows Source rows to import as a copy.
+ * @param {function((string|null|undefined)): (string|null)} context.typeIdFor Maps a row type to a type id.
+ * @param {string} context.rootFolder Root folder name, or ''.
+ * @return {Promise<Array<object>>} The encrypted items.
+ */
+async function encryptRows(store, rows, { publicKey, dupRows, typeIdFor, rootFolder }) {
+	const items = []
+	for (const row of rows) {
+		const asCopy = dupRows.has(row.sourceRow)
+		const item = await store.encryptRow(
+			row,
+			publicKey,
+			asCopy,
+			typeIdFor(row.type),
+		)
+		if (rootFolder !== '') {
+			item.folderPath = [rootFolder, ...item.folderPath]
+		}
+		items.push(item)
+	}
+	return items
+}
+
+/**
+ * The distinct, non-empty folder paths a chunk's items live in.
+ *
+ * @param {Array<object>} chunk The chunk's items.
+ * @return {Array<Array<string>>} Folder paths as segment arrays.
+ */
+function chunkFolders(chunk) {
+	return [
+		...new Set(
+			chunk
+				.map((it) => it.folderPath.join('/'))
+				.filter((p) => p !== ''),
+		),
+	].map((p) => p.split('/'))
+}
+
+/**
+ * Fold one chunk's server result into the rejected list and the set of
+ * created folders. A null result (the chunk failed twice) rejects all its rows.
+ *
+ * @param {Array<object>} rejected The rejected list, appended to.
+ * @param {Array<object>} chunk The chunk's items.
+ * @param {object|null} result The server result.
+ * @param {Set<string>} foldersCreated Created folders, added to.
+ * @return {number} The number of items created.
+ */
+function foldChunkResult(rejected, chunk, result, foldersCreated) {
+	if (result === null) {
+		rejectChunk(rejected, chunk)
+		return 0
+	}
+	let created = 0
+	for (const r of result.results || []) {
+		if (r.status === 'created') {
+			created += 1
+		} else {
+			rejected.push(serverRejection(chunk[r.index], r))
+		}
+	}
+	for (const f of result.foldersCreated || []) {
+		foldersCreated.add(f)
+	}
+	return created
+}
+
+/**
+ * Reject every item of a chunk the server failed on.
+ *
+ * @param {Array<object>} rejected The rejected list, appended to.
+ * @param {Array<object>} chunk The chunk's items.
+ * @return {void}
+ */
+function rejectChunk(rejected, chunk) {
+	for (const it of chunk) {
+		rejected.push({
+			sourceRow: it.sourceRow,
+			reason: 'server error',
+			name: it.name,
+		})
+	}
+}
+
+/**
+ * Parse text with a parser: the detailed parse (rows, mapping and headers)
+ * for a parser whose mapping can be adjusted, the plain parse otherwise.
+ *
+ * @param {object} parser The format parser.
+ * @param {string} text The file text.
+ * @param {object} options The parser options.
+ * @return {Promise<object>} The rows, mapping, headers, adjustableMapping and sourceText.
+ */
+async function readWithParser(parser, text, options) {
+	if (parser.adjustableMapping === true && typeof parser.parseDetailed === 'function') {
+		const detailed = await parser.parseDetailed(text, options)
+		return { rows: detailed.rows, mapping: detailed.mapping, headers: detailed.headers, adjustableMapping: true, sourceText: text }
+	}
+	const rows = await parser.parse(text, options)
+	return { rows, mapping: [], headers: [], adjustableMapping: false, sourceText: null }
+}
+
+/**
+ * Whether a parsed row carries no errors.
+ *
+ * @param {object} row The parsed row.
+ * @return {boolean}
+ */
+function rowIsClean(row) {
+	return !row.errors || row.errors.length === 0
+}
+
+/**
+ * The rejection entry for a row the parser could not read.
+ *
+ * @param {object} row The parsed row with errors.
+ * @return {object} The rejection ({ sourceRow, reason, name }).
+ */
+function parseRejection(row) {
+	return { sourceRow: row.sourceRow, reason: row.errors.join('; '), name: row.name }
+}
+
+/**
+ * Maps a row to the name of its type, for the password policy: the vault's
+ * name for a known type id, else the row's own type, else the default.
+ *
+ * @param {Array<object>} types The vault's secret types ({ id, name }).
+ * @return {function(object): string} Row to type name.
+ */
+function typeNameResolver(types) {
+	const nameById = new Map(
+		(Array.isArray(types) ? types : []).map((type) => [type.id, type.name]),
+	)
+	return (row) => nameById.get(row.type) || row.type || DEFAULT_TYPE_NAME
+}
+
+/**
+ * A row's password as text, '' when it has none.
+ *
+ * @param {object} row The row.
+ * @return {string}
+ */
+function rowPassword(row) {
+	return String(row.password ?? '')
+}
+
+/**
+ * The commit items in chunks of COMMIT_CHUNK_SIZE.
+ *
+ * @param {Array<object>} items The commit items.
+ * @return {Array<Array<object>>} The chunks.
+ */
+function inChunks(items) {
+	const chunks = []
+	for (let i = 0; i < items.length; i += COMMIT_CHUNK_SIZE) {
+		chunks.push(items.slice(i, i + COMMIT_CHUNK_SIZE))
+	}
+	return chunks
+}
+
+/**
+ * How many duplicates were skipped rather than imported as a copy.
+ *
+ * @param {Array<object>} duplicates The detected duplicates.
+ * @param {object} resolutions The resolution per source row.
+ * @return {number}
+ */
+function skippedDuplicateCount(duplicates, resolutions) {
+	return duplicates.filter((d) => resolutions[d.sourceRow] !== 'copy').length
+}
+
+/**
+ * Refuse to commit while the vault is locked.
+ *
+ * @param {object} session The session store.
+ * @return {void}
+ * @throws {Error} When the vault is locked.
+ */
+function assertUnlocked(session) {
+	if (!session.certificate || session.isLocked) {
+		throw new Error('Vault is locked')
+	}
+}
+
+/**
+ * The rejection entry for one item the server did not create.
+ *
+ * @param {object|undefined} item The chunk item at the result's index, if any.
+ * @param {object} r The server's per-item result.
+ * @return {object} The rejection ({ sourceRow, reason, name }).
+ */
+function serverRejection(item, r) {
+	return {
+		sourceRow: item ? item.sourceRow : r.index,
+		reason: r.error || 'rejected by server',
+		name: item ? item.name : '',
 	}
 }
 
@@ -180,33 +500,16 @@ export const useImportStore = defineStore('import', {
 				if (!parser) {
 					throw new Error(`Unknown import format: ${format}`)
 				}
-				let parsed
-				if (
-					parser.adjustableMapping === true
-					&& typeof parser.parseDetailed === 'function'
-				) {
-					const detailed = await parser.parseDetailed(text, options)
-					parsed = detailed.rows
-					this.mapping = detailed.mapping
-					this.headers = detailed.headers
-					this.adjustableMapping = true
-					this.sourceText = text
-				} else {
-					parsed = await parser.parse(text, options)
-					this.mapping = []
-					this.headers = []
-					this.adjustableMapping = false
-					this.sourceText = null
-				}
+				const read = await readWithParser(parser, text, options)
+				this.mapping = read.mapping
+				this.headers = read.headers
+				this.adjustableMapping = read.adjustableMapping
+				this.sourceText = read.sourceText
 				this.format = format
-				this.rows = parsed.filter((r) => !r.errors || r.errors.length === 0)
-				this.rejected = parsed
-					.filter((r) => r.errors && r.errors.length > 0)
-					.map((r) => ({
-						sourceRow: r.sourceRow,
-						reason: r.errors.join('; '),
-						name: r.name,
-					}))
+				this.rows = read.rows.filter(rowIsClean)
+				this.rejected = read.rows
+					.filter((r) => !rowIsClean(r))
+					.map(parseRejection)
 			} catch (e) {
 				this.error = e.message || 'Could not parse the file'
 				throw e
@@ -301,25 +604,7 @@ export const useImportStore = defineStore('import', {
 			if (typeId) {
 				item.typeId = typeId
 			}
-			if (row.login != null && row.login !== '') {
-				item.login = await rsaEncrypt(String(row.login), publicKey)
-			}
-			if (row.additionalFields != null) {
-				const json =
-					typeof row.additionalFields === 'string'
-						? row.additionalFields
-						: JSON.stringify(row.additionalFields)
-				if (json && json !== '{}' && json !== 'null') {
-					item.additionalFields = await rsaEncrypt(json, publicKey)
-				}
-			}
-			// A login's code and passkeys, sent only when the row has them: an
-			// encrypted empty string would read as a value.
-			for (const field of BLOB_FIELDS) {
-				if (typeof row[field] === 'string' && row[field] !== '') {
-					item[field] = await rsaEncrypt(row[field], publicKey)
-				}
-			}
+			await encryptOptionalFields(item, row, publicKey)
 			return item
 		},
 
@@ -340,21 +625,10 @@ export const useImportStore = defineStore('import', {
 			if (!policy || policy.policy_enabled !== true) {
 				return
 			}
-			const nameById = new Map(
-				(Array.isArray(types) ? types : []).map((type) => [
-					type.id,
-					type.name,
-				]),
-			)
+			const typeNameOf = typeNameResolver(types)
 			const kept = []
 			for (const row of rows) {
-				const typeName =
-					nameById.get(row.type) || row.type || DEFAULT_TYPE_NAME
-				const verdict = evaluateScore(
-					policy,
-					typeName,
-					String(row.password ?? ''),
-				)
+				const verdict = evaluateScore(policy, typeNameOf(row), rowPassword(row))
 				if (verdict.compliant) {
 					kept.push(row)
 				} else {
@@ -382,15 +656,9 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
 		async commit(options = {}) {
-			// A slash would split the one folder into a path.
-			const rootFolder =
-				typeof options.rootFolder === 'string'
-					? options.rootFolder.replaceAll('/', '-').trim()
-					: ''
+			const rootFolder = rootFolderName(options)
 			const session = useSessionStore()
-			if (!session.certificate || session.isLocked) {
-				throw new Error('Vault is locked')
-			}
+			assertUnlocked(session)
 			this.loading = true
 			this.error = null
 			this.step = 'commit'
@@ -402,51 +670,21 @@ export const useImportStore = defineStore('import', {
 			// Resolve every row's type to a type id this vault knows: a type id
 			// from a backup, or a type name from a parser or an older backup
 			// (keepiq#749; add-totp-secrets D6, passkey-item-type D5,
-			// card-identity-items §5.1). The type list is fetched only when a
-			// row names a type other than the default. Best-effort: without the
-			// list every row imports under the default type.
+			// card-identity-items §5.1). Without the type list every row
+			// imports under the default type.
 			const typeStore = useSecretTypeStore()
-			const needsTypes = rows.some(
-				(row) =>
-					typeof row.type === 'string'
-					&& row.type !== ''
-					&& row.type !== DEFAULT_TYPE_NAME,
-			)
-			if (
-				needsTypes
-				&& (!Array.isArray(typeStore.types) || typeStore.types.length === 0)
-			) {
-				try {
-					await typeStore.fetchTypes()
-				} catch {
-					// Non-fatal.
-				}
-			}
+			await ensureTypesLoaded(typeStore, rows)
 			const typeIdFor = typeIdResolver(typeStore.types)
 			await this.dropPolicyRejected(rows, typeStore.types)
 
 			// Encrypt every row client-side BEFORE any request leaves the browser.
-			const items = []
-			const itemRowByIndex = []
-			for (const row of rows) {
-				const asCopy = dupRows.has(row.sourceRow)
-				const item = await this.encryptRow(
-					row,
-					publicKey,
-					asCopy,
-					typeIdFor(row.type),
-				)
-				if (rootFolder !== '') {
-					item.folderPath = [rootFolder, ...item.folderPath]
-				}
-				items.push(item)
-				itemRowByIndex.push(row)
-			}
+			const items = await encryptRows(
+				this,
+				rows,
+				{ publicKey, dupRows, typeIdFor, rootFolder },
+			)
 
-			const chunks = []
-			for (let i = 0; i < items.length; i += COMMIT_CHUNK_SIZE) {
-				chunks.push(items.slice(i, i + COMMIT_CHUNK_SIZE))
-			}
+			const chunks = inChunks(items)
 			this.totalChunks = chunks.length
 			this.committedChunks = 0
 
@@ -454,48 +692,17 @@ export const useImportStore = defineStore('import', {
 			const foldersCreated = new Set()
 
 			for (const chunk of chunks) {
-				const folders = [
-					...new Set(
-						chunk
-							.map((it) => it.folderPath.join('/'))
-							.filter((p) => p !== ''),
-					),
-				].map((p) => p.split('/'))
-				const result = await this.postChunk({ folders, items: chunk })
-				if (result === null) {
-					// Chunk failed twice: reject all its rows.
-					for (const it of chunk) {
-						this.rejected.push({
-							sourceRow: it.sourceRow,
-							reason: 'server error',
-							name: it.name,
-						})
-					}
-				} else {
-					for (const r of result.results || []) {
-						const item = chunk[r.index]
-						if (r.status === 'created') {
-							created += 1
-						} else {
-							this.rejected.push({
-								sourceRow: item ? item.sourceRow : r.index,
-								reason: r.error || 'rejected by server',
-								name: item ? item.name : '',
-							})
-						}
-					}
-					for (const f of result.foldersCreated || []) {
-						foldersCreated.add(f)
-					}
-				}
+				const result = await this.postChunk({
+					folders: chunkFolders(chunk),
+					items: chunk,
+				})
+				created += foldChunkResult(this.rejected, chunk, result, foldersCreated)
 				this.committedChunks += 1
 			}
 
 			this.summary = {
 				imported: created,
-				skippedDuplicates: this.duplicates.filter(
-					(d) => this.duplicateResolutions[d.sourceRow] !== 'copy',
-				).length,
+				skippedDuplicates: skippedDuplicateCount(this.duplicates, this.duplicateResolutions),
 				rejected: this.rejected.length,
 				foldersCreated: foldersCreated.size,
 				rejectedRows: [...this.rejected],

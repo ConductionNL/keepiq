@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -56,7 +56,7 @@ class WebManifestController extends Controller {
 		private IURLGenerator $urlGenerator,
 		private Defaults $defaults,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -79,12 +79,12 @@ class WebManifestController extends Controller {
 		$vaultUrl = $this->urlGenerator->linkToRouteAbsolute('keepiq.dashboard.page') . 'secrets';
 		$startUrl = $this->urlGenerator->linkToRouteAbsolute('keepiq.dashboard.page');
 		$scope = $this->urlGenerator->linkToRoute('keepiq.dashboard.page');
-		$maskable = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon-maskable.svg'));
-		$anyIcon = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon.svg'));
+		$maskable = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(AppIdentity::APP_ID, 'pwa-icon-maskable.svg'));
+		$anyIcon = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(AppIdentity::APP_ID, 'pwa-icon.svg'));
 		// Raster copies: some mobile browsers only offer to install with PNG
 		// icons at 192 and 512 pixels.
 		$pngIcon = fn (string $name): string => $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->imagePath(Application::APP_ID, $name)
+			$this->urlGenerator->imagePath(AppIdentity::APP_ID, $name)
 		);
 		// The instance theme colour (nldesign or the admin's theming), so an
 		// organisation theme reaches the browser chrome too.

@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\SiemSink;
 use OCA\Keepiq\Db\SiemSinkMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -55,7 +56,7 @@ use Throwable;
  *   SiemSinkController. Retiring the tag needs that controller repointed at
  *   SiemSinkService, which is outside this change.
  */
-class SiemService {
+class SiemService implements SiemServiceInterface {
 	/**
 	 * Retry ceiling before a row dead-letters.
 	 *

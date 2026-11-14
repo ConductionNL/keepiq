@@ -26,10 +26,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\FederatedShareService;
-use OCA\Keepiq\Service\FederationPartnerService;
-use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\FederationPartnerServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\FederationRootServiceInterface;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -50,10 +50,10 @@ class FederationPartnerController extends Controller {
 	 * Constructor for FederationPartnerController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param FederationPartnerService $partners The partner allowlist
-	 * @param FederationRootService $root The local root and version gate
+	 * @param FederationPartnerServiceInterface $partners The partner allowlist
+	 * @param FederationRootServiceInterface $root The local root and version gate
 	 * @param IUserSession $userSession The user session
-	 * @param FederatedShareService $federatedShares Suspends shares to a removed partner
+	 * @param FederatedShareServiceInterface $federatedShares Suspends shares to a removed partner
 	 *
 	 * @return void
 	 *
@@ -61,12 +61,12 @@ class FederationPartnerController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private FederationPartnerService $partners,
-		private FederationRootService $root,
+		private FederationPartnerServiceInterface $partners,
+		private FederationRootServiceInterface $root,
 		private IUserSession $userSession,
-		private FederatedShareService $federatedShares,
+		private FederatedShareServiceInterface $federatedShares,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

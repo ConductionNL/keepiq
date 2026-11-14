@@ -27,6 +27,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Kernel\Contracts\LinkShareServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Log\LoggerInterface;
@@ -36,7 +37,7 @@ use RuntimeException;
 /**
  * Business logic for link share lifecycle.
  */
-class LinkShareService {
+class LinkShareService implements LinkShareServiceInterface {
 	/**
 	 * Minimum allowed usage limit.
 	 *

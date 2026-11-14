@@ -32,6 +32,7 @@ namespace OCA\Keepiq\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Application;
 use OCA\Keepiq\Db\ApplicationMapper;
+use OCA\Keepiq\Kernel\Contracts\ApplicationServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -44,7 +45,7 @@ use Psr\Log\LoggerInterface;
  * caller-supplied `$isAdmin` flag. The controller resolves admin status
  * from the IUserSession + IGroupManager and forwards the flag.
  */
-class ApplicationService {
+class ApplicationService implements ApplicationServiceInterface {
 
 	/**
 	 * The admission transitions (register / approve / reject).
