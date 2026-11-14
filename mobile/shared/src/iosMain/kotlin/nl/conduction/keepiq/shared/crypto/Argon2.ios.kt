@@ -11,7 +11,7 @@ import nl.conduction.keepiq.shared.argon2.argon2id_hash_raw
 
 /**
  * Argon2id on iOS (task 1.3.1): neither the Security framework nor CryptoKit
- * has it, so this calls the reference C code (src/nativeInterop/argon2,
+ * has it, so this calls the reference C code (src/nativeInterop/vendor/argon2,
  * CC0 or Apache 2.0) through cinterop, as design D1 names it. Same
  * parameters and output as Bouncy Castle on Android; the known-answer and
  * password-Send vectors check both.

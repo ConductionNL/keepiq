@@ -23,7 +23,7 @@ exclude:
   - ".*/[.]claude/.*"
   # The Argon2 reference C implementation, vendored unchanged for the mobile
   # cinterop build (CC0-1.0 or Apache-2.0, see its LICENSE).
-  - ".*/mobile/shared/src/nativeInterop/argon2/.*"
+  - ".*/mobile/shared/src/nativeInterop/vendor/argon2/.*"
   # The Android client (mobile/android): a Kotlin Compose app measured and
   # reviewed with the Android toolchain, outside the scope of the Nextcloud app.
   - ".*/mobile/android/.*"

@@ -53,7 +53,7 @@ SPDX-License-Identifier = "EUPL-1.2 AND MIT"
 # into the iOS build of the mobile core through cinterop (clients-mobile-apps
 # design D1). Unchanged upstream files; the authors offer CC0 or Apache 2.0.
 [[annotations]]
-path = "mobile/shared/src/nativeInterop/argon2/**"
+path = "mobile/shared/src/nativeInterop/vendor/argon2/**"
 precedence = "override"
 SPDX-FileCopyrightText = "2015 Daniel Dinu, Dmitry Khovratovich, Jean-Philippe Aumasson, and Samuel Neves"
 SPDX-License-Identifier = "CC0-1.0 OR Apache-2.0"
