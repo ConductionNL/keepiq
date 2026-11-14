@@ -23,9 +23,60 @@ import { registerParser } from './parserRegistry.js'
  */
 function toRows(payload) {
 	const secrets = (payload && payload.secrets) || []
+	const omitted = omittedFieldsOf(payload)
 	// Number every row: duplicate choices, preview keys and rejected-row
 	// reports are all keyed by sourceRow (keepiq#749).
-	return secrets.map((s, index) => withBlobFields(baseRow(s, index + 1), s))
+	return secrets.map((s, index) =>
+		withPartial(withTypeNames(withBlobFields(baseRow(s, index + 1), s), s), omitted),
+	)
+}
+
+/**
+ * The fields a partial backup left out, or none for a complete one
+ * (portability-export-choice-and-restore-fidelity D2).
+ *
+ * @param {object} payload The decrypted payload.
+ * @return {Array<string>} The left-out fields.
+ * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ */
+function omittedFieldsOf(payload) {
+	if (!payload || payload.partial !== true) {
+		return []
+	}
+	const listed = Array.isArray(payload.omittedFields) ? payload.omittedFields : []
+	return listed.filter((field) => typeof field === 'string' && field !== '')
+}
+
+/**
+ * The row with the type name and, for a custom type, the label the backup
+ * carries (D3), so the restore can find or recreate the type.
+ *
+ * @param {object} row The row.
+ * @param {object} s The decrypted secret.
+ * @return {object} The same row.
+ * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ */
+function withTypeNames(row, s) {
+	for (const field of ['typeName', 'typeLabel']) {
+		if (typeof s[field] === 'string' && s[field] !== '') {
+			row[field] = s[field]
+		}
+	}
+	return row
+}
+
+/**
+ * The row marked as coming from a partial backup, with the fields it lacks.
+ *
+ * @param {object} row The row.
+ * @param {Array<string>} omitted The fields the backup left out.
+ * @return {object} The same row.
+ */
+function withPartial(row, omitted) {
+	if (omitted.length > 0) {
+		row.omittedFields = [...omitted]
+	}
+	return row
 }
 
 /** The plain fields of a restored row, with the value each takes when the secret lacks it. */

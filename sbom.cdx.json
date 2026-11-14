@@ -7,7 +7,7 @@
     "tools": [
       {
         "name": "composer",
-        "version": "2.10.2"
+        "version": "2.8.12"
       },
       {
         "vendor": "cyclonedx",
@@ -3493,6 +3493,40 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/@humanwhocodes/retry"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "nonrecursive-glob-match",
+      "group": "@isaacs",
+      "version": "1.1.0",
+      "bom-ref": "keepiq@0.1.0|@isaacs/nonrecursive-glob-match@1.1.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "BlueOak-1.0.0"
+          }
+        }
+      ],
+      "purl": "pkg:npm/%40isaacs/nonrecursive-glob-match@1.1.0",
+      "externalReferences": [
+        {
+          "url": "https://registry.npmjs.org/@isaacs/nonrecursive-glob-match/-/nonrecursive-glob-match-1.1.0.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "18f9bf0dbbe4e512e68519f15c86bb9d3a4ad31b65e04d308f432c96cb8d889d45211394fb6fbd960502fdd805ec4cb84025a17c4b20c6294c44c09d1cf7c37f"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/@isaacs/nonrecursive-glob-match"
         }
       ]
     },
@@ -12130,10 +12164,6 @@
       ],
       "properties": [
         {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
-        {
           "name": "cdx:npm:package:path",
           "value": "node_modules/balanced-match"
         }
@@ -12169,39 +12199,6 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/base-64"
-        }
-      ]
-    },
-    {
-      "type": "library",
-      "name": "base64-js",
-      "version": "1.5.1",
-      "bom-ref": "keepiq@0.1.0|base64-js@1.5.1",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "purl": "pkg:npm/base64-js@1.5.1",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/base64-js/-/base64-js-1.5.1.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "00aa5a6251e7f2de1255b3870b2f9be7e28a82f478bebb03f2f6efadb890269b3b7ca0d3923903af2ea38b4ad42630b49336cd78f2f0cf1abc8b2a68e35a9e58"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/base64-js"
         }
       ]
     },
@@ -12348,8 +12345,8 @@
     {
       "type": "library",
       "name": "brace-expansion",
-      "version": "5.0.9",
-      "bom-ref": "keepiq@0.1.0|brace-expansion@5.0.9",
+      "version": "5.0.13",
+      "bom-ref": "keepiq@0.1.0|brace-expansion@5.0.13",
       "licenses": [
         {
           "license": {
@@ -12357,25 +12354,21 @@
           }
         }
       ],
-      "purl": "pkg:npm/brace-expansion@5.0.9",
+      "purl": "pkg:npm/brace-expansion@5.0.13",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.9.tgz",
+          "url": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.13.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "49c43822ebc8105d533253fb66dfaf8c9ffff7394f6f64837315b13376e4f2ceade8619d27b28ed5d09c4e274e3c929e3d6df42c4ff6713ef00b23e1a3dfd6c6"
+              "content": "561ddd9856dce3065ea31eccf48ff42fd19f15df374aee3ec82724fce17d1a2fcffdd0079f4453ed7e0af51ee030d3210dc9370ef851e905ec9d07638e0c0dbd"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
         }
       ],
       "properties": [
-        {
-          "name": "cdx:npm:package:development",
-          "value": "true"
-        },
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/brace-expansion"
@@ -12490,39 +12483,6 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/buffer-from"
-        }
-      ]
-    },
-    {
-      "type": "library",
-      "name": "buffer",
-      "version": "6.0.3",
-      "bom-ref": "keepiq@0.1.0|buffer@6.0.3",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "purl": "pkg:npm/buffer@6.0.3",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/buffer/-/buffer-6.0.3.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "153882a4dc6dc226591c465b71b4c87198c44552029fdcaafe90c591397de7f031cc3d6768172d37b60eebcae233f80b48363bb1dacc6f2f21a1f00362ebaa38"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/buffer"
         }
       ]
     },
@@ -15831,6 +15791,10 @@
       ],
       "properties": [
         {
+          "name": "cdx:npm:package:development",
+          "value": "true"
+        },
+        {
           "name": "cdx:npm:package:path",
           "value": "node_modules/events"
         }
@@ -16088,8 +16052,8 @@
     {
       "type": "library",
       "name": "fast-uri",
-      "version": "3.1.7",
-      "bom-ref": "keepiq@0.1.0|fast-uri@3.1.7",
+      "version": "3.1.9",
+      "bom-ref": "keepiq@0.1.0|fast-uri@3.1.9",
       "licenses": [
         {
           "license": {
@@ -16097,15 +16061,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/fast-uri@3.1.7",
+      "purl": "pkg:npm/fast-uri@3.1.9",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.7.tgz",
+          "url": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.9.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "74ebd95738dd65dcfba6177dbfa8c26f0c6b056ddf2ba9fc45cd02b5d98ce1bba6ccc9f1cb005886ea61e89f35f51470fe4bbeacb6de9707ccba792dbb35551e"
+              "content": "852ff45addd86b4e37a0a5ecd2c231acca4a4084d784c2c8ad500a2978b8828cc60bdbfb6115959d7219ce334f4ced3633d05dc4b096a8ad7245780dce257225"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -16614,8 +16578,8 @@
     {
       "type": "library",
       "name": "follow-redirects",
-      "version": "1.16.0",
-      "bom-ref": "keepiq@0.1.0|follow-redirects@1.16.0",
+      "version": "1.16.3",
+      "bom-ref": "keepiq@0.1.0|follow-redirects@1.16.3",
       "licenses": [
         {
           "license": {
@@ -16623,15 +16587,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/follow-redirects@1.16.0",
+      "purl": "pkg:npm/follow-redirects@1.16.3",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.16.0.tgz",
+          "url": "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.16.3.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "cb9acdfee3ac69d153fc97d8c21c514b947b41c7be837cc6f7bf89aed159942f64957fd6e610fb8a22f349c2389d9a944bb0cd51d84f830e3123c5b62ee5e553"
+              "content": "b68392a2a37a779d568dfd5a38525872856fd5a343f6b8ff0b08cb534573e34a03b92a560dac8278a7b82692f934bd16745be838e088dc1468ebd1da8636d1d4"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -17839,39 +17803,6 @@
     },
     {
       "type": "library",
-      "name": "ieee754",
-      "version": "1.2.1",
-      "bom-ref": "keepiq@0.1.0|ieee754@1.2.1",
-      "licenses": [
-        {
-          "license": {
-            "id": "BSD-3-Clause"
-          }
-        }
-      ],
-      "purl": "pkg:npm/ieee754@1.2.1",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/ieee754/-/ieee754-1.2.1.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "75ccaa843bd7d42e3a95765c56a0a92be16d31141574830debf0dfe63b36ce8b94b2a1bb23ab05c62b480beeca60adbd29d5ce2c776ef732f8b059e85509ea68"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/ieee754"
-        }
-      ]
-    },
-    {
-      "type": "library",
       "name": "ignore",
       "version": "5.3.2",
       "bom-ref": "keepiq@0.1.0|ignore@5.3.2",
@@ -18052,39 +17983,6 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/imurmurhash"
-        }
-      ]
-    },
-    {
-      "type": "library",
-      "name": "inherits",
-      "version": "2.0.4",
-      "bom-ref": "keepiq@0.1.0|inherits@2.0.4",
-      "licenses": [
-        {
-          "license": {
-            "id": "ISC"
-          }
-        }
-      ],
-      "purl": "pkg:npm/inherits@2.0.4",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "93fbc6697e3f6256b75b3c8c0af4d039761e207bea38ab67a8176ecd31e9ce9419cc0b2428c859d8af849c189233dcc64a820578ca572b16b8758799210a9ec1"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/inherits"
         }
       ]
     },
@@ -22686,39 +22584,6 @@
     },
     {
       "type": "library",
-      "name": "path-browserify",
-      "version": "1.0.1",
-      "bom-ref": "keepiq@0.1.0|path-browserify@1.0.1",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "purl": "pkg:npm/path-browserify@1.0.1",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/path-browserify/-/path-browserify-1.0.1.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "6fbba8d9409439865c9c5ff7203d25ba53898bf6da7f16b5c4f7bb64fb1a9a6052a634964248cdc65b7adf96064b632247d1a3bee5c2b73d9e9abde36eccfdf2"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/path-browserify"
-        }
-      ]
-    },
-    {
-      "type": "library",
       "name": "path-exists",
       "version": "4.0.0",
       "bom-ref": "keepiq@0.1.0|path-exists@4.0.0",
@@ -23425,39 +23290,6 @@
     },
     {
       "type": "library",
-      "name": "process",
-      "version": "0.11.10",
-      "bom-ref": "keepiq@0.1.0|process@0.11.10",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "purl": "pkg:npm/process@0.11.10",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/process/-/process-0.11.10.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "71d19e7ff76b585a32743d49b0ccee15ff35d349d997e193fb269c7366c471e7797fd463938cfe5ad1544c1bbd3e13a2f63fe37e604fbb498c118e3021d005f0"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/process"
-        }
-      ]
-    },
-    {
-      "type": "library",
       "name": "property-information",
       "version": "7.2.0",
       "bom-ref": "keepiq@0.1.0|property-information@7.2.0",
@@ -23624,8 +23456,8 @@
     {
       "type": "library",
       "name": "prosemirror-model",
-      "version": "1.25.11",
-      "bom-ref": "keepiq@0.1.0|prosemirror-model@1.25.11",
+      "version": "1.25.13",
+      "bom-ref": "keepiq@0.1.0|prosemirror-model@1.25.13",
       "licenses": [
         {
           "license": {
@@ -23633,15 +23465,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/prosemirror-model@1.25.11",
+      "purl": "pkg:npm/prosemirror-model@1.25.13",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/prosemirror-model/-/prosemirror-model-1.25.11.tgz",
+          "url": "https://registry.npmjs.org/prosemirror-model/-/prosemirror-model-1.25.13.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "41683d4619e92e5a20026a77a7deae105ac4e6dc50a45ca7778be104010b93080e09642cfd7d320b3077fe1ac7aa23f07fdd511b92b25aaeb9e77cecf49a8839"
+              "content": "3250cc5868d85da60e78288ed7b8dcc9b9ed08eccf9cdfbded4d3cd3d91ed90b203edc56de7e7fb03e992b224e35480cc3588ff77a216538de2a39d127b2fa91"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -23723,8 +23555,8 @@
     {
       "type": "library",
       "name": "prosemirror-view",
-      "version": "1.42.3",
-      "bom-ref": "keepiq@0.1.0|prosemirror-view@1.42.3",
+      "version": "1.42.9",
+      "bom-ref": "keepiq@0.1.0|prosemirror-view@1.42.9",
       "licenses": [
         {
           "license": {
@@ -23732,15 +23564,15 @@
           }
         }
       ],
-      "purl": "pkg:npm/prosemirror-view@1.42.3",
+      "purl": "pkg:npm/prosemirror-view@1.42.9",
       "externalReferences": [
         {
-          "url": "https://registry.npmjs.org/prosemirror-view/-/prosemirror-view-1.42.3.tgz",
+          "url": "https://registry.npmjs.org/prosemirror-view/-/prosemirror-view-1.42.9.tgz",
           "type": "distribution",
           "hashes": [
             {
               "alg": "SHA-512",
-              "content": "a1337b12d1fe0a9c3153d36bc04616774519e09531ee5d38f25e40d97a699b8a7feb48ac6582e7b61f50550982dd5448bddac8582c7065277e533efdd46df5ff"
+              "content": "6ca6dfcde2993aed87d89414d93689998bba101728af75671884788d1df571b12dd73b549df501e9b286575f9f27338976b55647eb51534db4f33337a10c78c0"
             }
           ],
           "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -24582,39 +24414,6 @@
     },
     {
       "type": "library",
-      "name": "safe-buffer",
-      "version": "5.2.1",
-      "bom-ref": "keepiq@0.1.0|safe-buffer@5.2.1",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "purl": "pkg:npm/safe-buffer@5.2.1",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "ae9dd2a34eca71d9a629b1af81a37141226bedb1954959394bd12ad45fa9a5b468ef4f9879a0f1930e4377c34f37e183e9b8e7626d95b8fb825e6a6e62f9825d"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/safe-buffer"
-        }
-      ]
-    },
-    {
-      "type": "library",
       "name": "sass",
       "version": "1.103.1",
       "bom-ref": "keepiq@0.1.0|sass@1.103.1",
@@ -25218,74 +25017,6 @@
     },
     {
       "type": "library",
-      "name": "stream-browserify",
-      "version": "3.0.0",
-      "bom-ref": "keepiq@0.1.0|stream-browserify@3.0.0",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "purl": "pkg:npm/stream-browserify@3.0.0",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/stream-browserify/-/stream-browserify-3.0.0.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "1fbdd1007b1505aa5b8a6d2d536270c0e897523f9f8a47e26a86002871775497c0d297b6042ce48401c194b1ba444cc4fb658d65cc4e5e32bb964b28fbd7ae2c"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/stream-browserify"
-        }
-      ],
-      "components": [
-        {
-          "type": "library",
-          "name": "readable-stream",
-          "version": "3.6.2",
-          "bom-ref": "keepiq@0.1.0|stream-browserify@3.0.0|readable-stream@3.6.2",
-          "licenses": [
-            {
-              "license": {
-                "id": "MIT"
-              }
-            }
-          ],
-          "purl": "pkg:npm/readable-stream@3.6.2",
-          "externalReferences": [
-            {
-              "url": "https://registry.npmjs.org/readable-stream/-/readable-stream-3.6.2.tgz",
-              "type": "distribution",
-              "hashes": [
-                {
-                  "alg": "SHA-512",
-                  "content": "f6efec9e20ab6370f959db04447cc71381b66025eaa06e454c7522082e1221bafa5dc2d9058d39c9af442a361e93d3b9c4e0308c6abed497460404bb43d49ca0"
-                }
-              ],
-              "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-            }
-          ],
-          "properties": [
-            {
-              "name": "cdx:npm:package:path",
-              "value": "node_modules/stream-browserify/node_modules/readable-stream"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "type": "library",
       "name": "string-width",
       "version": "8.2.2",
       "bom-ref": "keepiq@0.1.0|string-width@8.2.2",
@@ -25318,39 +25049,6 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/string-width"
-        }
-      ]
-    },
-    {
-      "type": "library",
-      "name": "string_decoder",
-      "version": "1.3.0",
-      "bom-ref": "keepiq@0.1.0|string_decoder@1.3.0",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT"
-          }
-        }
-      ],
-      "purl": "pkg:npm/string_decoder@1.3.0",
-      "externalReferences": [
-        {
-          "url": "https://registry.npmjs.org/string_decoder/-/string_decoder-1.3.0.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "864457f14d568c915df0bb03276c90ff0596c5aa2912c0015355df90cf00fa3d3ef392401a9a6dd7a72bd56860e8a21b6f8a2453a32a97a04e8febaea7fc0a78"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/string_decoder"
         }
       ]
     },
@@ -27761,6 +27459,10 @@
       ],
       "properties": [
         {
+          "name": "cdx:npm:package:development",
+          "value": "true"
+        },
+        {
           "name": "cdx:npm:package:path",
           "value": "node_modules/util-deprecate"
         }
@@ -28457,24 +28159,24 @@
         {
           "type": "library",
           "name": "minimatch",
-          "version": "9.0.9",
-          "bom-ref": "keepiq@0.1.0|webdav@5.10.0|minimatch@9.0.9",
+          "version": "11.0.8",
+          "bom-ref": "keepiq@0.1.0|webdav@5.10.0|minimatch@11.0.8",
           "licenses": [
             {
               "license": {
-                "id": "ISC"
+                "id": "BlueOak-1.0.0"
               }
             }
           ],
-          "purl": "pkg:npm/minimatch@9.0.9",
+          "purl": "pkg:npm/minimatch@11.0.8",
           "externalReferences": [
             {
-              "url": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.9.tgz",
+              "url": "https://registry.npmjs.org/minimatch/-/minimatch-11.0.8.tgz",
               "type": "distribution",
               "hashes": [
                 {
                   "alg": "SHA-512",
-                  "content": "381c0137d00be1daa61139694b6cdab31faf4de59c956ce46e57d993b2930398f78de38e373fed4429d9a26532bcd83cdf02f966ff52b3a1cc2570202fc47662"
+                  "content": "9c542e6124d5ac6bf2b15069b39221fb405d9d814dfc28f70bcd7aafafa9ef22be147ad52c61383b837d005c3292b94d96f3361d8b7e45a775522ae8ea1f3c22"
                 }
               ],
               "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
@@ -28484,72 +28186,6 @@
             {
               "name": "cdx:npm:package:path",
               "value": "node_modules/webdav/node_modules/minimatch"
-            }
-          ]
-        },
-        {
-          "type": "library",
-          "name": "brace-expansion",
-          "version": "2.1.4",
-          "bom-ref": "keepiq@0.1.0|webdav@5.10.0|brace-expansion@2.1.4",
-          "licenses": [
-            {
-              "license": {
-                "id": "MIT"
-              }
-            }
-          ],
-          "purl": "pkg:npm/brace-expansion@2.1.4",
-          "externalReferences": [
-            {
-              "url": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-2.1.4.tgz",
-              "type": "distribution",
-              "hashes": [
-                {
-                  "alg": "SHA-512",
-                  "content": "8467d5ccfc6d85b7f7fb6ca383f441b3ad1c074161a814bfcef755ff8c27e3f0663746cd30c1cf73857f05b1627aa7f54ca0061801e76387928da8c29747f65e"
-                }
-              ],
-              "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-            }
-          ],
-          "properties": [
-            {
-              "name": "cdx:npm:package:path",
-              "value": "node_modules/webdav/node_modules/brace-expansion"
-            }
-          ]
-        },
-        {
-          "type": "library",
-          "name": "balanced-match",
-          "version": "1.0.2",
-          "bom-ref": "keepiq@0.1.0|webdav@5.10.0|balanced-match@1.0.2",
-          "licenses": [
-            {
-              "license": {
-                "id": "MIT"
-              }
-            }
-          ],
-          "purl": "pkg:npm/balanced-match@1.0.2",
-          "externalReferences": [
-            {
-              "url": "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz",
-              "type": "distribution",
-              "hashes": [
-                {
-                  "alg": "SHA-512",
-                  "content": "de849e50ed13315ebb84dd4099b5ec2b8c9aa94eed8e21e56f144364ea47d0a5bdf82797e1b440697d009f1b74b71d8cae94695b041a3f02252121098585393f"
-                }
-              ],
-              "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-            }
-          ],
-          "properties": [
-            {
-              "name": "cdx:npm:package:path",
-              "value": "node_modules/webdav/node_modules/balanced-match"
             }
           ]
         }

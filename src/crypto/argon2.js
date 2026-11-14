@@ -36,6 +36,22 @@ const IV_LENGTH = 12
 const SALT_LENGTH = 16
 
 /**
+ * How backups, link shares and password-protected sends are protected, as
+ * `deriveAesKeyArgon2id` does it. Read by the encryption overview.
+ *
+ * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ */
+export const ARGON2_PARAMETERS = Object.freeze({
+	kdf: 'Argon2id',
+	memoryKiB: ARGON2_MEMORY_KIB,
+	iterations: ARGON2_ITERATIONS,
+	parallelism: ARGON2_PARALLELISM,
+	saltBytes: SALT_LENGTH,
+	cipher: 'AES-GCM',
+	keyBits: KEY_LENGTH * 8,
+})
+
+/**
  * Whether the runtime supports WebAssembly (required for Argon2id).
  *
  * @return {boolean} True when WASM is available
@@ -103,7 +119,7 @@ export async function deriveAesKeyArgon2id(password, salt) {
 	return crypto.subtle.importKey(
 		'raw',
 		result.hash,
-		{ name: 'AES-GCM', length: 256 },
+		{ name: ARGON2_PARAMETERS.cipher, length: ARGON2_PARAMETERS.keyBits },
 		false,
 		['encrypt', 'decrypt'],
 	)
