@@ -352,6 +352,7 @@
 						<div class="secret-detail__row-value">
 							<TotpDisplay
 								:seed="secret.key || ''"
+								:guard="revealGuard"
 								data-testid="secret-detail-totp" />
 						</div>
 					</div>
@@ -710,6 +711,7 @@
 						<div class="secret-detail__row-value">
 							<TotpDisplay
 								:seed="fieldTotp"
+								:guard="revealGuard"
 								data-testid="secret-detail-login-totp" />
 						</div>
 					</div>

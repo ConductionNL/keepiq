@@ -912,6 +912,7 @@ OC.L10N.register(
         "Contact Nextcloud user ID": "Nextcloud-gebruikers-ID van het contact",
         "Content to send": "Inhoud om te versturen",
         "Copy one-time code": "Eenmalige code kopiëren",
+        "Show one-time code": "Eenmalige code tonen",
         "Copy private key": "Privésleutel kopiëren",
         "Copy this link now — it is shown only once. The content burns after {views} view(s).": "Kopieer deze link nu — hij wordt maar één keer getoond. De inhoud wordt vernietigd na {views} weergave(n).",
         "Could not designate the contact": "Kan het contact niet aanwijzen",

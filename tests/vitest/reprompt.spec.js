@@ -188,6 +188,15 @@ describe('every reveal path goes through the guard', () => {
 		}
 	})
 
+	it('guards every one-time code display of the detail sidebar', () => {
+		const displays = tags(template('SecretDetailSidebar'), 'TotpDisplay')
+
+		expect(displays.length).toBeGreaterThan(0)
+		for (const tag of displays) {
+			expect(tag, tag).toMatch(/:guard="revealGuard"/)
+		}
+	})
+
 	it('guards the card and BSN reveals and the edit button of the detail sidebar', () => {
 		const tpl = template('SecretDetailSidebar')
 		const reveals = [...tpl.matchAll(/@click="([^"]+)"/g)].map((match) => match[1]).filter((handler) => /reveal|Revealed|toggleCard|toggleBsn/i.test(handler))

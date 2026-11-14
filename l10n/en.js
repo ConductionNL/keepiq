@@ -646,6 +646,7 @@ OC.L10N.register(
         "Copy CVV": "Copy CVV",
         "Copy number": "Copy number",
         "Copy one-time code": "Copy one-time code",
+        "Show one-time code": "Show one-time code",
         "Copy PIN": "Copy PIN",
         "Copy private key": "Copy private key",
         "Copy this link now — it is shown only once. The content burns after {views} view(s).": "Copy this link now — it is shown only once. The content burns after {views} view(s).",
