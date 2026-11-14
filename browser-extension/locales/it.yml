@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 identità di Keepiq. Premi Freccia giù per scegliere.
         n: $1 identità di Keepiq. Premi Freccia giù per scegliere.
+  newPassword:
+    frameTitle: Password sicura di Keepiq
+    offer: Usa una password sicura
+    locked: Sblocca Keepiq per ottenere una password sicura
+    status: Usa una password sicura. Premi Freccia giù per scegliere.
 
 notificationBar:
   label: Notifica di Keepiq

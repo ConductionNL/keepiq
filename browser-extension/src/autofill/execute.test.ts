@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { FillConfirmForm, FillExecute, FillExecuteForm, FillProbeReply, FormRole, FormValues } from '@/src/messages'
+import type { FillConfirmForm, FillExecute, FillExecuteForm, FillNewPassword, FillProbeReply, FormRole, FormValues } from '@/src/messages'
 import { mockLayout } from '@/src/testing/layout'
-import { answerFill, confirmForm, executeFill, executeForm, isFillMessage, probeForm } from './execute'
+import { answerFill, confirmForm, executeFill, executeForm, fillNewPassword, isFillMessage, probeForm } from './execute'
 
 const $ = (selector: string) => document.querySelector(selector) as HTMLInputElement
 const message = (overrides: Partial<FillExecute> = {}): FillExecute =>
@@ -373,5 +373,56 @@ describe('answerFill', () => {
 	it('fills a login on fill.execute', () => {
 		document.body.innerHTML = LOGIN
 		expect(answerFill(message(), null)).toEqual({ filled: 'both', code: false })
+	})
+})
+
+// Spec `extension-generator`, Suggest a strong password in a sign-up field.
+describe('fillNewPassword', () => {
+	const SIGN_UP = `
+		<form>
+			<input id="u" name="username" autocomplete="username">
+			<input id="p" type="password" autocomplete="new-password">
+			<input id="c" type="password" autocomplete="new-password">
+			<button type="submit">Create account</button>
+		</form>`
+	const CHANGE = `
+		<form>
+			<input id="u" name="username" autocomplete="username">
+			<input id="cur" type="password" autocomplete="current-password">
+			<input id="new" type="password" autocomplete="new-password">
+			<input id="c" type="password" autocomplete="new-password">
+			<button type="submit">Change password</button>
+		</form>`
+	const generated = (overrides: Partial<FillNewPassword> = {}): FillNewPassword =>
+		({ kind: 'fill.newPassword', password: 'G3n3rated!pass-word', origin: location.origin, anchorKey: 'k1', ...overrides })
+
+	it('fills the new password and its confirmation of a sign-up with the same value', () => {
+		document.body.innerHTML = SIGN_UP
+		expect(fillNewPassword(generated(), { key: 'k1', field: $('#p') })).toEqual({ filled: 2 })
+		expect([$('#u').value, $('#p').value, $('#c').value]).toEqual(['', 'G3n3rated!pass-word', 'G3n3rated!pass-word'])
+	})
+
+	it('leaves the current password of a change-password form alone', () => {
+		document.body.innerHTML = CHANGE
+		$('#cur').value = 'old-secret'
+		expect(fillNewPassword(generated(), { key: 'k1', field: $('#new') })).toEqual({ filled: 2 })
+		expect([$('#cur').value, $('#new').value, $('#c').value]).toEqual(['old-secret', 'G3n3rated!pass-word', 'G3n3rated!pass-word'])
+	})
+
+	it('fills nothing from the current-password field, another list, another origin or without a list', () => {
+		document.body.innerHTML = CHANGE
+		expect(fillNewPassword(generated(), { key: 'k1', field: $('#cur') })).toEqual({ filled: 0 })
+		expect(fillNewPassword(generated(), { key: 'k2', field: $('#new') })).toEqual({ filled: 0 })
+		expect(fillNewPassword(generated({ origin: 'https://elsewhere.test' }), { key: 'k1', field: $('#new') })).toEqual({ filled: 0 })
+		expect(fillNewPassword(generated())).toEqual({ filled: 0 })
+		expect([$('#cur').value, $('#new').value, $('#c').value]).toEqual(['', '', ''])
+	})
+
+	it('keeps nothing of the password once the fields hold it, and answers through answerFill', () => {
+		document.body.innerHTML = SIGN_UP
+		const message = generated()
+		expect(isFillMessage(message)).toBe(true)
+		expect(answerFill(message, { key: 'k1', field: $('#p') })).toEqual({ filled: 2 })
+		expect(message.password).toBe('')
 	})
 })

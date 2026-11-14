@@ -567,14 +567,19 @@ class SecretMapperQueriesTest extends TestCase {
 		$mapper->findForUnifiedSearch(userId: 'alice', term: 'bank', limit: 5);
 
 		$live = [
-			'andWhere(orX(iLike(name, :p2), iLike(url, :p3)))', 'andWhere(isNull(trashed_at))', 'andWhere(isNull(archived_at))',
+			'andWhere(orX(iLike(name, :p2), iLike(url, :p3), in(id, SQL)))', 'andWhere(isNull(trashed_at))', 'andWhere(isNull(archived_at))',
 		];
 		$this->assertSame(expected: $live, actual: array_slice($this->opsOf(index: 0), 4, 3));
 		$this->assertSame(expected: 'setMaxResults(1)', actual: $this->opsOf(index: 0)[7]);
 		$this->assertSame(expected: '%bank%', actual: $this->paramsOf(index: 0)[':p2']);
 		$this->assertSame(expected: '%bank%', actual: $this->paramsOf(index: 0)[':p3']);
-		$this->assertSame(expected: ['orderBy(name, ASC)', 'setMaxResults(5)'], actual: array_slice($this->opsOf(index: 1), 7, 2));
-		$this->assertSame(expected: 'user', actual: $this->paramsOf(index: 1)[':p5']);
+		// An extra address of the login matches too (vault-website-addresses).
+		$this->assertSame(expected: '%bank%', actual: $this->paramsOf(index: 0)[':p4']);
+		// Each search builds its extra-address subquery on a builder of its own (queries 1 and 3).
+		$this->assertSame(expected: ['select(su.secret_id)', 'from(keepiq_secret_urls, su)', 'where(iLike(su.url, :p4))'], actual: $this->opsOf(index: 1));
+		$this->assertSame(expected: ['orderBy(name, ASC)', 'setMaxResults(5)'], actual: array_slice($this->opsOf(index: 2), 7, 2));
+		$this->assertSame(expected: 'user', actual: $this->paramsOf(index: 2)[':p6']);
+		$this->assertSame(expected: '%bank%', actual: $this->paramsOf(index: 2)[':p10']);
 	}//end testSearchesMatchLiveRows()
 
 	/**

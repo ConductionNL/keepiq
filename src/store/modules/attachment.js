@@ -20,6 +20,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { CONTENT_KEY_PARAMETERS } from '../../crypto/aes.js'
 import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../../crypto/index.js'
 import { useSessionStore } from './session.js'
 
@@ -162,7 +163,7 @@ async function decryptedMetadata(store, row) {
  */
 async function sealedUpload(file, session) {
 	const fileKey = await crypto.subtle.generateKey(
-		{ name: 'AES-GCM', length: 256 },
+		{ ...CONTENT_KEY_PARAMETERS },
 		true,
 		['encrypt', 'decrypt'],
 	)

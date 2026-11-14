@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 Keepiq identitāte. Lai izvēlētos, nospiediet bultiņu uz leju.
         n: "Keepiq identitātes: $1. Lai izvēlētos, nospiediet bultiņu uz leju."
+  newPassword:
+    frameTitle: Keepiq stipra parole
+    offer: Izmantot stipru paroli
+    locked: Atbloķējiet Keepiq, lai iegūtu stipru paroli
+    status: Izmantot stipru paroli. Lai izvēlētos, nospiediet bultiņu uz leju.
 
 notificationBar:
   label: Keepiq paziņojums

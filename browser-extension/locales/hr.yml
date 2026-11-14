@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 identitet iz Keepiqa. Pritisnite strelicu dolje za odabir.
         n: "Identiteti iz Keepiqa: $1. Pritisnite strelicu dolje za odabir."
+  newPassword:
+    frameTitle: Jaka lozinka Keepiq
+    offer: Upotrijebi jaku lozinku
+    locked: Otključajte Keepiq za jaku lozinku
+    status: Upotrijebi jaku lozinku. Pritisnite strelicu dolje za odabir.
 
 notificationBar:
   label: Obavijest Keepiqa
