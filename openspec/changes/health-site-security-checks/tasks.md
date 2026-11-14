@@ -17,7 +17,8 @@
 
 ## 3. Directory categories
 
-- [ ] 3.1 Move the registrable-domain helper from `browser-extension/src/lib/match.js` to a module both the web app and the extension import. Verify: the existing extension match tests pass unchanged.
+- [x] 3.1 Move the registrable-domain helper from `browser-extension/src/lib/match.js` to a module both the web app and the extension import. Verify: the existing extension match tests pass unchanged.
+  - The helper lives in `browser-extension/src/vault/match.ts`; its rule moved to `src/shared/registrableDomain.js` (with a `.d.ts`), which imports nothing and takes the public suffix lookup as an argument, because the extension and the web app are separate npm packages and the extension's CI installs only its own. `baseDomain()` now calls it with the extension's `tldts`; the web app gains `tldts` 7.4.15 (the extension's pin, SBOM regenerated). Extension: `match.test.ts` unchanged and passing, whole suite 8760 passed, typecheck and build green. Web: `tests/vitest/registrableDomain.spec.js` (11).
 - [ ] 3.2 Add the `two-factor-available` and `passkey-available` flags to the engine using the directory and the vault facts of D4, and their categories in the report. Verify: vitest with the directory fixture, a login with and without a seed, and with and without a passkey item.
 
 ## 4. Docs
