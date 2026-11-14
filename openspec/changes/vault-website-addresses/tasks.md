@@ -27,7 +27,8 @@
 
 ## 4. Docs
 
-- [ ] 4.1 Document extra addresses, site images with their privacy note, and the change-password link. Verify: docs build.
+- [x] 4.1 Document extra addresses, site images with their privacy note, and the change-password link. Verify: docs build.
+      > `docs/website-addresses.md`: extra addresses (plain text, search, extension match, sharing, backup and GDPR), site icons and previews with what each service receives, and Change password. `npm run build` in `docs/` passes.
 
 ## Acceptance criteria
 
