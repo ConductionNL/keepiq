@@ -62,6 +62,7 @@ export const ADMIN_AREAS = [
 			'AdminAuditSection',
 			'ComplianceSection',
 			'SiemSection',
+			'AdminFlowTriggersSection',
 			'HoneySection',
 		],
 	},

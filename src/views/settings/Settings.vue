@@ -24,6 +24,7 @@
 import AccountRecoverySection from '../../components/settings/AccountRecoverySection.vue'
 import AdminAreasSection from '../../components/settings/AdminAreasSection.vue'
 import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
+import AdminFlowTriggersSection from '../../components/settings/AdminFlowTriggersSection.vue'
 import AdminSuiteSection from '../../components/settings/AdminSuiteSection.vue'
 import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
 import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsSection.vue'
@@ -76,6 +77,7 @@ export default {
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,
+		AdminFlowTriggersSection,
 		VaultPolicySection,
 		VaultBackupSection,
 	},
