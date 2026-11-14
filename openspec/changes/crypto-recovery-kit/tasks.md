@@ -9,9 +9,12 @@
 
 ## 2. Web app
 
-- [ ] 2.1 `src/crypto/recoveryKit.js`: generate the recovery code, derive the key with Argon2id (`src/crypto/argon2.js`), wrap and unwrap the suite private key. Verify: vitest round trip, a wrong code fails, and no request body carries the code or the unwrapped key.
-- [ ] 2.2 Personal settings and the export screen (board `KqExporteren`): create, print and download the kit, and show when the current kit was made. Verify: vitest for the dialog, Playwright creates a kit and downloads it.
-- [ ] 2.3 `src/views/LockScreen.vue`: "I lost my master password" takes the recovery code, unwraps the key, sets a new master password through the routine change, then deletes the spent copy and offers a new kit. Verify: Playwright recovers with a kit, then the old code is refused.
+- [x] 2.1 `src/crypto/recoveryKit.js`: generate the recovery code, derive the key with Argon2id (`src/crypto/argon2.js`), wrap and unwrap the suite private key. Verify: vitest round trip, a wrong code fails, and no request body carries the code or the unwrapped key.
+  - A 160-bit code in Crockford base32 (read back whatever the case, spacing or look-alike letters), wrapped with `encryptSnapshot()`; the stored `kdf` names the version, the Argon2id parameters and the salt. The requests are in `src/services/recoveryKit.js`. `tests/vitest/recoveryKit.spec.js` covers the round trip, a wrong, malformed or unreadable code, and that no request URL, body or header carries the code, the unwrapped key or the new master password.
+- [x] 2.2 Personal settings and the export screen (board `KqExporteren`): create, print and download the kit, and show when the current kit was made. Verify: vitest for the dialog, Playwright creates a kit and downloads it.
+  - `src/components/RecoveryKitPanel.vue`, in Settings, Security and beside the encrypted backup in the export dialog: when the kit was made, making one with the master password, the code shown once with Download (text file) and Print. Vitest in `tests/components/RecoveryKitPanel.spec.js`. The Playwright run is not done in this lane.
+- [x] 2.3 `src/views/LockScreen.vue`: "I lost my master password" takes the recovery code, unwraps the key, sets a new master password through the routine change, then deletes the spent copy and offers a new kit. Verify: Playwright recovers with a kit, then the old code is refused.
+  - `src/components/RecoveryKitUnlock.vue`, shown on the lock screen to a user with a kit. The new envelope goes through the routine `PUT /suites/{id}/private-key`, its key proof signed with the unwrapped key (`provePrivateKey()` in `reauth.js`, which `proveMasterPassword()` now calls); then the kit is spent, the session unlocks with the new password and a new kit is offered before continuing. Vitest in the same spec file; the Playwright run is not done in this lane.
 
 ## 3. Specs and matrix
 

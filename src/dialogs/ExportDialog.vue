@@ -140,6 +140,8 @@
 						:class="'export-dialog__strength--' + passphraseScore">
 						{{ strengthLabel }}
 					</p>
+					<!-- crypto-recovery-kit 2.2: the kit sits beside the backup -->
+					<RecoveryKitPanel class="export-dialog__recovery-kit" />
 				</div>
 
 				<!-- Plaintext CSV or CXF path: warning -> ack -> re-auth. Each
@@ -202,6 +204,7 @@ import {
 	NcSelect,
 } from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
+import RecoveryKitPanel from '../components/RecoveryKitPanel.vue'
 import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
 import exportSourceProps from '../mixins/exportSourceProps.js'
 import exportStoreDialog from '../mixins/exportStoreDialog.js'
@@ -215,6 +218,7 @@ const PASSPHRASE_FLOOR = 3
 export default {
 	name: 'ExportDialog',
 	components: {
+		RecoveryKitPanel,
 		SkippedSecretsNotice,
 		NcDialog,
 		NcButton,
@@ -520,6 +524,10 @@ export default {
 </script>
 
 <style scoped>
+.export-dialog__recovery-kit {
+	margin-block-start: calc(var(--default-grid-baseline) * 4);
+}
+
 .export-dialog {
 	display: flex;
 	flex-direction: column;
