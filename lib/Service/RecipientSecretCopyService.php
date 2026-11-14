@@ -46,6 +46,7 @@ class RecipientSecretCopyService {
 	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper (recipient suite)
 	 * @param SecretTypeService $typeService The secret-type resolver (copy typing)
 	 * @param LoggerInterface|null $logger The logger (skipped cross-user deletes)
+	 * @param SecretUrlService|null $urls The extra website addresses a copy carries from its source
 	 *
 	 * @return void
 	 *
@@ -56,6 +57,7 @@ class RecipientSecretCopyService {
 		private EncryptionSuiteMapper $suiteMapper,
 		private SecretTypeService $typeService,
 		private ?LoggerInterface $logger = null,
+		private ?SecretUrlService $urls = null,
 	) {
 	}//end __construct()
 
@@ -86,7 +88,12 @@ class RecipientSecretCopyService {
 			return 'copy_fields_mismatch';
 		}
 
-		$copies = new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper, typeService: $this->typeService);
+		$copies = new RecipientSecretCopyFactory(
+			secretMapper: $this->secretMapper,
+			suiteMapper: $this->suiteMapper,
+			typeService: $this->typeService,
+			urls: $this->urls
+		);
 		return $copies->createCopy(source: $source, ciphertext: $ciphertext) ?? 'no_suite';
 	}//end createCopy()
 

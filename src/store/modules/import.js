@@ -660,6 +660,10 @@ export const useImportStore = defineStore('import', {
 			if (typeId) {
 				item.typeId = typeId
 			}
+			// Extra website addresses are plain text, like `url` (vault-website-addresses D1).
+			if (Array.isArray(row.additionalUrls) && row.additionalUrls.length > 0) {
+				item.additionalUrls = [...row.additionalUrls]
+			}
 			await encryptOptionalFields(item, row, publicKey)
 			return item
 		},

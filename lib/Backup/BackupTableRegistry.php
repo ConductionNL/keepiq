@@ -82,6 +82,7 @@ final class BackupTableRegistry {
 		'secret_requests',
 		'secret_tags',
 		'secret_types',
+		'secret_urls',
 		'secret_versions',
 		'secrets',
 		'share_targets',
@@ -98,5 +99,5 @@ final class BackupTableRegistry {
 	 *
 	 * @var string[]
 	 */
-	public const AUTOINCREMENT = ['audit_log', 'migration_failures', 'secret_tags', 'used_proofs'];
+	public const AUTOINCREMENT = ['audit_log', 'migration_failures', 'secret_tags', 'secret_urls', 'used_proofs'];
 }//end class

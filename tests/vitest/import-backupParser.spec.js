@@ -15,6 +15,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { encryptBackup } from '../../src/export/backup.js'
+import { serializeVault } from '../../src/export/serializer.js'
 import { backupParser, parseBackup } from '../../src/import/backupParser.js'
 import { getParser } from '../../src/import/parserRegistry.js'
 
@@ -107,6 +108,23 @@ describe('backup parser registry', () => {
 		expect(row.sourceRow).toBe(1)
 		expect('typeName' in row).toBe(false)
 		expect('omittedFields' in row).toBe(false)
+	})
+
+	it('round-trips extra website addresses through the serializer and the parser (vault-website-addresses)', async () => {
+		const exported = serializeVault(
+			[
+				{ id: 's1', name: 'Example', url: 'https://example.com', key: 'k', additionalUrls: ['https://login.example.com', '', 'https://example.net'] },
+				{ id: 's2', name: 'Plain', url: 'https://plain.test', key: 'k', additionalUrls: [] },
+			],
+			[],
+		)
+		expect(exported.secrets[0].additionalUrls).toEqual(['https://login.example.com', 'https://example.net'])
+		expect('additionalUrls' in exported.secrets[1]).toBe(false)
+
+		const envelope = await encryptBackup(exported, 'restore-pass-1')
+		const rows = await parseBackup(envelope, { passphrase: 'restore-pass-1' })
+		expect(rows[0].additionalUrls).toEqual(['https://login.example.com', 'https://example.net'])
+		expect('additionalUrls' in rows[1]).toBe(false)
 	})
 
 	it('throws on a wrong restore passphrase and yields no rows', async () => {
