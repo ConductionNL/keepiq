@@ -1764,7 +1764,11 @@ OC.L10N.register(
         "Signature algorithm": "Handtekeningalgoritme",
         "Fingerprint": "Vingerafdruk",
         "Valid": "Geldig",
-        "{from} to {until}": "{from} tot {until}"
+        "{from} to {until}": "{from} tot {until}",
+        "Unencrypted address": "Onversleuteld adres",
+        "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "Deze logins zijn opgeslagen met een http-adres, dus het wachtwoord wordt onversleuteld verstuurd. Wijzig het adres in https als de site dat aanbiedt.",
+        "Change to https": "Wijzigen in https",
+        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen."
     },
     "nplurals=2; plural=(n != 1);"
 )

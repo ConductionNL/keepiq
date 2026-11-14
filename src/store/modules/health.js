@@ -257,6 +257,13 @@ export const useHealthStore = defineStore('health', {
 		compromisedFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('compromised')),
 		/**
+		 * @param {object} state The store state.
+		 * @return {Array<object>} Findings whose address is plain http.
+		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
+		 */
+		insecureAddressFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('insecure-address')),
+		/**
 		 * Map of secretId -> zxcvbn score for the StrengthBadge component.
 		 *
 		 * @param {object} state The store state.
