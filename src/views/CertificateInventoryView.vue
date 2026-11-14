@@ -131,6 +131,12 @@
 								{{ t('keepiq', 'Subject') }}
 							</th>
 							<th scope="col">
+								{{ t('keepiq', 'Key') }}
+							</th>
+							<th scope="col">
+								{{ t('keepiq', 'Signature algorithm') }}
+							</th>
+							<th scope="col">
 								{{ t('keepiq', 'Expires') }}
 							</th>
 							<th scope="col" />
@@ -143,6 +149,12 @@
 							:data-testid="`cert-suite-${row.id}`">
 							<td>{{ row.ownerType }}: {{ row.ownerId }}</td>
 							<td>{{ row.metadata?.subject || '—' }}</td>
+							<td :data-testid="`cert-suite-key-${row.id}`">
+								{{ keyLabel(row.metadata) }}
+							</td>
+							<td :data-testid="`cert-suite-signature-${row.id}`">
+								{{ row.metadata?.signatureAlgorithm || '—' }}
+							</td>
 							<td>
 								<CertificateExpiry :notAfter="row.metadata?.notAfter" />
 							</td>
@@ -205,6 +217,7 @@
 
 <script>
 import { showError, showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import CertificateExpiry from '../components/CertificateExpiry.vue'
 import CertificateRenewalChecklistDialog from '../dialogs/CertificateRenewalChecklistDialog.vue'
@@ -249,6 +262,24 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * A certificate's key as "RSA, 4096-bit", or a dash when the server
+		 * could not read it.
+		 *
+		 * @param {object|null} metadata The server-parsed certificate metadata.
+		 * @return {string}
+		 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
+		 */
+		keyLabel(metadata) {
+			if (!metadata?.keyType || !metadata?.keyBits) {
+				return '—'
+			}
+			return t('keepiq', '{type}, {bits}-bit', {
+				type: metadata.keyType,
+				bits: metadata.keyBits,
+			})
+		},
+
 		/**
 		 * Decrypt + parse a stored certificate in the browser and submit
 		 * its display metadata.

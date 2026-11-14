@@ -56,6 +56,7 @@ import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import History from 'vue-material-design-icons/History.vue'
 import { useAuditStore } from '../store/modules/audit.js'
 import { auditEventLabel } from '../utils/auditEventLabels.js'
+import { auditTime } from '../utils/dateTime.js'
 
 /**
  * The session user's personal activity feed.
@@ -114,23 +115,8 @@ export default {
 			return auditEventLabel(eventType)
 		},
 
-		/**
-		 * Format an ISO timestamp as a localized date-time.
-		 *
-		 * @param {string} iso The ISO-8601 timestamp.
-		 * @return {string} The formatted time.
-		 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-5.3
-		 */
-		formatTime(iso) {
-			if (!iso) {
-				return ''
-			}
-			try {
-				return new Date(iso).toLocaleString()
-			} catch (e) {
-				return iso
-			}
-		},
+		/** The shown timestamp (see `auditTime` in utils/dateTime.js). */
+		formatTime: auditTime,
 	},
 }
 </script>

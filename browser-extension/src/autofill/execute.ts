@@ -2,7 +2,7 @@
 import { i18n } from '#i18n'
 import {
 	isFormKind, kindSet, type BackgroundToContent, type FillConfirmForm, type FillConfirmInsecure, type FillExecute, type FillExecuteForm, type FillExecuteFormReply,
-	type FillExecuteReply, type FillOutcome, type FillProbe, type FillProbeReply, type FormKind, type FormValues,
+	type FillExecuteReply, type FillNewPassword, type FillNewPasswordReply, type FillOutcome, type FillProbe, type FillProbeReply, type FormKind, type FormValues,
 } from '@/src/messages'
 import {
 	codeGroup, fillField, fillSelect, findCodeGroups, findGroups, findLoginFields, formRolesIn, groupOf, type FieldGroup, type FormControl,
@@ -103,6 +103,23 @@ function fillLoginCode(message: FillExecute, anchor: Element | null): boolean {
 
 const outcomeOf = (user: boolean, pass: boolean): FillOutcome => (user && pass ? 'both' : user ? 'username' : pass ? 'password' : 'none')
 
+/**
+ * A generated password into the new-password field the list is open on and its confirmation, in that form only.
+ * Never into a current-password field, and nothing without the open list's anchor.
+ */
+export function fillNewPassword(message: FillNewPassword, list: OpenList | null = null): FillNewPasswordReply {
+	try {
+		if (location.origin !== message.origin) return { filled: 0 }
+		const anchor = anchorFor(message.anchorKey, list)
+		const group = anchor ? groupOf(anchor) : null
+		if (!group || (group.kind !== 'signUp' && group.kind !== 'passwordChange') || !group.newPasswords.includes(anchor as HTMLInputElement)) return { filled: 0 }
+		for (const field of group.newPasswords) fillField(field, message.password)
+		return { filled: group.newPasswords.length }
+	} finally {
+		message.password = ''
+	}
+}
+
 // Cards and identities, spec `card-identity-fill` § Each frame gets only its own members.
 
 /** The list's field for an `anchorKey`, `null` without one, `undefined` when it is not the open list's. */
@@ -185,18 +202,19 @@ function confirmInsecure(message: FillConfirmInsecure): boolean {
 type FillMessage = Extract<BackgroundToContent, { kind: `fill.${string}` }>
 
 const FILL_KINDS = kindSet<FillMessage['kind']>({
-	'fill.confirmInsecure': true, 'fill.execute': true, 'fill.probe': true, 'fill.executeForm': true, 'fill.confirmForm': true,
+	'fill.confirmInsecure': true, 'fill.execute': true, 'fill.probe': true, 'fill.executeForm': true, 'fill.confirmForm': true, 'fill.newPassword': true,
 })
 
 export const isFillMessage = (message: BackgroundToContent | null): message is FillMessage => typeof message?.kind === 'string' && FILL_KINDS.has(message.kind)
 
 /** The content script's answer to every fill message from the background. */
-export function answerFill(message: FillMessage, list: OpenList | null): FillExecuteReply | FillProbeReply | FillExecuteFormReply | boolean {
+export function answerFill(message: FillMessage, list: OpenList | null): FillExecuteReply | FillProbeReply | FillExecuteFormReply | FillNewPasswordReply | boolean {
 	switch (message.kind) {
 		case 'fill.confirmInsecure': return confirmInsecure(message)
 		case 'fill.execute': return executeFill(message, list)
 		case 'fill.probe': return probeForm(message, list)
 		case 'fill.executeForm': return executeForm(message, list)
 		case 'fill.confirmForm': return confirmForm(message)
+		case 'fill.newPassword': return fillNewPassword(message, list)
 	}
 }

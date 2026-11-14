@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 Keepiq-identitet. Tryck på nedåtpil för att välja.
         n: $1 Keepiq-identiteter. Tryck på nedåtpil för att välja.
+  newPassword:
+    frameTitle: Starkt lösenord från Keepiq
+    offer: Använd ett starkt lösenord
+    locked: Lås upp Keepiq för att få ett starkt lösenord
+    status: Använd ett starkt lösenord. Tryck på nedåtpil för att välja.
 
 notificationBar:
   label: Keepiq-avisering
