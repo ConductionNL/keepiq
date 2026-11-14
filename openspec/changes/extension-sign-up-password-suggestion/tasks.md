@@ -2,8 +2,8 @@
 
 ## 1. Offer
 
-- [ ] 1.1 Show "Use a strong password" in the inline list (`browser-extension/entrypoints/inline-list/`) when a field of a `signUp` or `passwordChange` group that is not the current-password field gets focus (`browser-extension/src/autofill/fields.ts`). Verify: vitest on the field roles, including a change-password form with a current-password field.
-- [ ] 1.2 On a trusted click, generate under the policy (`browser-extension/src/generator/policy.ts`) in the worker and fill the new-password field and its confirmation through `browser-extension/src/autofill/execute.ts`; ignore an untrusted click. Verify: vitest on the fill and on a script-dispatched click.
+- [x] 1.1 Show "Use a strong password" in the inline list (`browser-extension/entrypoints/inline-list/`) when a field of a `signUp` or `passwordChange` group that is not the current-password field gets focus (`browser-extension/src/autofill/fields.ts`). Verify: vitest on the field roles, including a change-password form with a current-password field.
+- [x] 1.2 On a trusted click, generate under the policy (`browser-extension/src/generator/policy.ts`) in the worker and fill the new-password field and its confirmation through `browser-extension/src/autofill/execute.ts`; ignore an untrusted click. Verify: vitest on the fill and on a script-dispatched click.
 
 ## 2. Check
 
