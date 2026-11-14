@@ -33,6 +33,7 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Service\SecretUrlService;
 use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -60,6 +61,7 @@ class SecretUpdateController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param SecretServiceInterface $secretService The secret service
 	 * @param IUserSession $userSession The user session
+	 * @param SecretUrlService|null $urls The extra website addresses of a login
 	 *
 	 * @return void
 	 */
@@ -67,6 +69,7 @@ class SecretUpdateController extends OCSController {
 		IRequest $request,
 		private SecretServiceInterface $secretService,
 		private IUserSession $userSession,
+		private ?SecretUrlService $urls = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -96,7 +99,13 @@ class SecretUpdateController extends OCSController {
 		}
 
 		try {
+			// The extra addresses are checked before anything is written (vault-website-addresses).
+			$extraUrls = $this->extraUrls(id: $id, userId: $user->getUID());
 			$secret = $this->updateOnCurrent(id: $id, changes: $this->requestedChanges(), userId: $user->getUID());
+			$data = $secret->jsonSerialize();
+			if ($extraUrls !== null && $this->urls !== null) {
+				$data['additionalUrls'] = $this->urls->replace(secret: $secret, userId: $user->getUID(), urls: $extraUrls);
+			}
 		} catch (StaleWriteException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage(), 'current' => $e->getCurrent()->jsonSerialize()],
@@ -118,8 +127,39 @@ class SecretUpdateController extends OCSController {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}//end try
 
-		return new JSONResponse(data: $secret->jsonSerialize());
+		return new JSONResponse(data: $data);
 	}//end update()
+
+	/**
+	 * The extra addresses the request carries, normalised, or null when it
+	 * carries none. Only the owner of a login changes them; a recipient's
+	 * copy is refused before the update writes anything.
+	 *
+	 * @param string $id     The secret ID
+	 * @param string $userId The requesting user
+	 *
+	 * @return list<string>|null
+	 *
+	 * @throws InvalidArgumentException When the list cannot be stored
+	 * @throws ForbiddenException When the login is not the caller's own
+	 * @throws NotFoundException When the secret does not exist
+	 *
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	private function extraUrls(string $id, string $userId): ?array {
+		$urls = $this->request->getParam('additionalUrls');
+		if ($urls === null || $this->urls === null) {
+			return null;
+		}
+
+		$list = $this->urls->normalise(urls: $urls);
+		$secret = $this->secretService->get($id, $userId);
+		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
+			throw new ForbiddenException(message: 'Only the owner of a login changes its addresses');
+		}
+
+		return $list;
+	}//end extraUrls()
 
 	/**
 	 * Run the update. One with a base is refused at once when the secret

@@ -748,6 +748,12 @@ inlineList:
       count:
         1: 1 Keepiq identity. Press Down Arrow to choose.
         n: $1 Keepiq identities. Press Down Arrow to choose.
+  # A new-password field of a sign-up or change-password form: one row that fills a generated password.
+  newPassword:
+    frameTitle: Keepiq strong password
+    offer: Use a strong password
+    locked: Unlock Keepiq to get a strong password
+    status: Use a strong password. Press Down Arrow to choose.
 
 # The save and update bar at the top of the web page.
 notificationBar:
