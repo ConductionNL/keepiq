@@ -2,7 +2,7 @@
 
 ## 1. Backend
 
-- [x] 1.1 Add the `reprompt` column and entity field, accept it on create and update, return it in `jsonSerialize()`, and copy it onto new share copies; bump `<version>`. Verify: PHPUnit for create, update and a new share copy. Migration `Version001020Date20261114120000`; create takes it only when true, update through `SecretUpdateController` as a boolean; `RecipientSecretCopyFactory` copies it onto new copies. Tests in `tests/Unit/Service/SecretRepromptTest.php` and `RecipientSecretCopyCreateTest`.
+- [x] 1.1 Add the `reprompt` column and entity field, accept it on create and update, return it in `jsonSerialize()`, and copy it onto new share copies; bump `<version>`. Verify: PHPUnit for create, update and a new share copy. Migration `Version001021Date20261114130000`; create takes it only when true, update through `SecretUpdateController` as a boolean; `RecipientSecretCopyFactory` copies it onto new copies. Tests in `tests/Unit/Service/SecretRepromptTest.php` and `RecipientSecretCopyCreateTest`.
 
 ## 2. Web app
 

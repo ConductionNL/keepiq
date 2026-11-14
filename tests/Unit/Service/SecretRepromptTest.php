@@ -28,7 +28,7 @@ use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
-use OCA\Keepiq\Migration\Version001020Date20261114120000;
+use OCA\Keepiq\Migration\Version001021Date20261114130000;
 use OCA\Keepiq\Service\FolderOwnershipGuard;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
@@ -49,7 +49,7 @@ use Psr\Log\LoggerInterface;
  *
  * @covers \OCA\Keepiq\Service\SecretService
  * @covers \OCA\Keepiq\Db\Secret
- * @covers \OCA\Keepiq\Migration\Version001020Date20261114120000
+ * @covers \OCA\Keepiq\Migration\Version001021Date20261114130000
  */
 class SecretRepromptTest extends TestCase {
 
@@ -216,9 +216,9 @@ class SecretRepromptTest extends TestCase {
 			}
 		);
 		$schema = $this->createMock(ISchemaWrapper::class);
-		$schema->method('hasTable')->with(Version001020Date20261114120000::TABLE)->willReturn(true);
+		$schema->method('hasTable')->with(Version001021Date20261114130000::TABLE)->willReturn(true);
 		$schema->method('getTable')->willReturn($table);
-		$step = new Version001020Date20261114120000();
+		$step = new Version001021Date20261114130000();
 
 		$this->assertSame($schema, $step->changeSchema($this->createMock(IOutput::class), static fn () => $schema, []));
 		$this->assertSame(['reprompt' => ['boolean', ['notnull' => false, 'default' => false]]], $added);

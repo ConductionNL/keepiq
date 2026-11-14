@@ -37,7 +37,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-1.1
  */
-class Version001020Date20261114120000 extends SimpleMigrationStep {
+class Version001021Date20261114130000 extends SimpleMigrationStep {
 	/**
 	 * The secrets table.
 	 *
