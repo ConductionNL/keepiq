@@ -5,6 +5,7 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
+    "prebuild": "node scripts/encryption-overview.mjs",
     "build": "docusaurus build",
     "postbuild": "validate-ai-baseline",
     "validate:ai-baseline": "validate-ai-baseline",

@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 Keepiq-identiteit. Druk op pijl-omlaag om te kiezen.
         n: $1 Keepiq-identiteiten. Druk op pijl-omlaag om te kiezen.
+  newPassword:
+    frameTitle: Keepiq-sterk wachtwoord
+    offer: Sterk wachtwoord gebruiken
+    locked: Ontgrendel Keepiq voor een sterk wachtwoord
+    status: Sterk wachtwoord gebruiken. Druk op pijl-omlaag om te kiezen.
 
 notificationBar:
   label: Keepiq-melding
