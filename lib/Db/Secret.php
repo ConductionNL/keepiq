@@ -86,6 +86,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setLastUsedAt(?DateTime $lastUsedAt)
  * @method bool|null getUseOnly()
  * @method void setUseOnly(bool $useOnly)
+ * @method bool|null getReprompt()
+ * @method void setReprompt(bool $reprompt)
  * @method DateTime|null getAccessExpiresAt()
  * @method void setAccessExpiresAt(?DateTime $accessExpiresAt)
  * @method bool|null getReadOnly()
@@ -343,6 +345,15 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?bool $useOnly = false;
 
 	/**
+	 * Whether the holder asked to type the master password again before this
+	 * item is shown, copied, edited or filled (crypto-item-reprompt D1). Plain
+	 * metadata on the holder's own row; it says nothing about the value.
+	 *
+	 * @var boolean|null
+	 */
+	protected ?bool $reprompt = false;
+
+	/**
 	 * When the holder's access to this recipient copy ends (nullable = no
 	 * end). Not to be confused with expiresAt, which is credential expiry.
 	 *
@@ -441,6 +452,7 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'isFavourite', type: 'boolean');
 		$this->addType(fieldName: 'lastUsedAt', type: 'datetime');
 		$this->addType(fieldName: 'useOnly', type: 'boolean');
+		$this->addType(fieldName: 'reprompt', type: 'boolean');
 		$this->addType(fieldName: 'accessExpiresAt', type: 'datetime');
 		$this->addType(fieldName: 'readOnly', type: 'boolean');
 		$this->addType(fieldName: 'federatedSource', type: 'string');
@@ -586,6 +598,7 @@ class Secret extends Entity implements JsonSerializable {
 			'favourite' => ($this->isFavourite === true),
 			'lastUsedAt' => $this->lastUsedAt?->format('c'),
 			'useOnly' => ($this->useOnly === true),
+			'reprompt' => ($this->reprompt === true),
 			'accessExpiresAt' => $this->accessExpiresAt?->format('c'),
 			'readOnly' => ($this->readOnly === true),
 			'federatedSource' => $this->federatedSource,
@@ -684,6 +697,7 @@ class Secret extends Entity implements JsonSerializable {
 			'favourite' => ($this->isFavourite === true),
 			'lastUsedAt' => $this->lastUsedAt?->format('c'),
 			'useOnly' => ($this->useOnly === true),
+			'reprompt' => ($this->reprompt === true),
 			'accessExpiresAt' => $this->accessExpiresAt?->format('c'),
 			'readOnly' => ($this->readOnly === true),
 			'federatedSource' => $this->federatedSource,

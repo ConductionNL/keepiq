@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Šī nav autentifikatora atslēga. Ielīmējiet saiti otpauth://totp/ vai noslēpumu base32 formātā.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Šis QR kods nesatur autentifikatora atslēgu. Izmantojiet QR kodu, ko vietne rāda, iestatot divpakāpju pieteikšanos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Šis noslēpums gaida savu kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vai lūdziet administratoram pārbaudīt, vai darbojas fona uzdevumi.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Tikai īpašnieks var mainīt pārvaldnieku vai dalību, kas aptver pārvaldnieku."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tikai īpašnieks var mainīt pārvaldnieku vai dalību, kas aptver pārvaldnieku.",
+        "Ask for my master password before showing or filling this item": "Pirms šī ieraksta parādīšanas vai aizpildīšanas prasīt manu galveno paroli",
+        "Asks for your master password": "Prasa jūsu galveno paroli",
+        "Enter your master password": "Ievadiet savu galveno paroli",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "“{name}” prasa jūsu galveno paroli, pirms to parāda, kopē vai aizpilda.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Jūsu galvenā parole tiek pārbaudīta šajā ierīcē un nekad netiek nosūtīta. Tas aptur cilvēku pie jūsu atbloķētā ekrāna; no pārveidotas lietotnes tas neaizsargā."
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Це не ключ автентифікатора. Вставте посилання otpauth://totp/ або секрет у форматі base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Цей QR-код не містить ключа автентифікатора. Використайте QR-код, який сайт показує під час налаштування двофакторного входу.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Цей секрет очікує перевірки своїх спільних доступів, яка ще не завершилася. Нічого не збережено; спробуйте пізніше або попросіть адміністратора перевірити, чи працюють фонові завдання.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Лише власник може змінити менеджера або членство, яке охоплює менеджера."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Лише власник може змінити менеджера або членство, яке охоплює менеджера.",
+        "Ask for my master password before showing or filling this item": "Запитувати мій головний пароль перед показом або заповненням цього запису",
+        "Asks for your master password": "Запитує ваш головний пароль",
+        "Enter your master password": "Введіть свій головний пароль",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "«{name}» запитує ваш головний пароль, перш ніж його буде показано, скопійовано або заповнено.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ваш головний пароль перевіряється на цьому пристрої й ніколи не надсилається. Це зупиняє людину біля вашого розблокованого екрана; від зміненого застосунку це не захищає."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

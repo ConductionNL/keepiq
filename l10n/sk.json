@@ -1837,7 +1837,12 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Toto nie je kľúč autentifikátora. Vložte odkaz otpauth://totp/ alebo tajomstvo vo formáte base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tento QR kód neobsahuje kľúč autentifikátora. Použite QR kód, ktorý web zobrazí pri nastavovaní dvojfázového prihlásenia.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajomstvo čaká na kontrolu svojich zdieľaní, ktorá ešte neskončila. Nič sa neuložilo; skúste to neskôr alebo požiadajte správcu, aby overil, že bežia úlohy na pozadí.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Správcu alebo členstvo, ktoré zahŕňa správcu, môže zmeniť len vlastník."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Správcu alebo členstvo, ktoré zahŕňa správcu, môže zmeniť len vlastník.",
+        "Ask for my master password before showing or filling this item": "Pred zobrazením alebo vyplnením tejto položky sa pýtať na hlavné heslo",
+        "Asks for your master password": "Vyžaduje vaše hlavné heslo",
+        "Enter your master password": "Zadajte svoje hlavné heslo",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ vyžaduje vaše hlavné heslo, kým sa zobrazí, skopíruje alebo vyplní.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Vaše hlavné heslo sa overuje na tomto zariadení a nikdy sa neodosiela. Zastaví to človeka pri vašej odomknutej obrazovke; pred upravenou aplikáciou to nechráni."
     },
     "plurals": null
 }

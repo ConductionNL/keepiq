@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Tämä ei ole autentikaattoriavain. Liitä otpauth://totp/-linkki tai base32-salaisuus.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tämä QR-koodi ei sisällä autentikaattoriavainta. Käytä QR-koodia, jonka sivusto näyttää, kun otat kaksivaiheisen kirjautumisen käyttöön.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Tämä salaisuus odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei tallennettu; yritä myöhemmin uudelleen tai pyydä ylläpitäjää tarkistamaan, että taustatyöt ovat käynnissä.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Vain omistaja voi muuttaa ylläpitäjää tai jäsenyyttä, joka kattaa ylläpitäjän."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Vain omistaja voi muuttaa ylläpitäjää tai jäsenyyttä, joka kattaa ylläpitäjän.",
+        "Ask for my master password before showing or filling this item": "Kysy pääsalasanaani ennen kuin tämä kohde näytetään tai täytetään",
+        "Asks for your master password": "Kysyy pääsalasanaasi",
+        "Enter your master password": "Anna pääsalasanasi",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "”{name}” kysyy pääsalasanaasi ennen kuin se näytetään, kopioidaan tai täytetään.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Pääsalasanasi tarkistetaan tällä laitteella eikä sitä koskaan lähetetä. Se pysäyttää lukitsemattoman näyttösi ääressä olevan henkilön; se ei suojaa muokatulta sovellukselta."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Das ist kein Authenticator-Schlüssel. Fügen Sie einen otpauth://totp/-Link oder das base32-Geheimnis ein.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dieser QR-Code enthält keinen Authenticator-Schlüssel. Verwenden Sie den QR-Code, den die Website beim Einrichten der Zwei-Faktor-Anmeldung anzeigt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dieses Geheimnis wartet auf eine Prüfung seiner Freigaben, die noch nicht abgeschlossen ist. Es wurde nichts gespeichert; versuchen Sie es später erneut oder bitten Sie eine Administratorin oder einen Administrator zu prüfen, ob Hintergrundjobs laufen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Nur der Eigentümer kann einen Verwalter ändern oder eine Mitgliedschaft, die einen Verwalter umfasst."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Nur der Eigentümer kann einen Verwalter ändern oder eine Mitgliedschaft, die einen Verwalter umfasst.",
+        "Ask for my master password before showing or filling this item": "Vor dem Anzeigen oder Ausfüllen dieses Eintrags nach meinem Master-Passwort fragen",
+        "Asks for your master password": "Fragt nach Ihrem Master-Passwort",
+        "Enter your master password": "Geben Sie Ihr Master-Passwort ein",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ fragt nach Ihrem Master-Passwort, bevor es angezeigt, kopiert oder ausgefüllt wird.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ihr Master-Passwort wird auf diesem Gerät geprüft und nie gesendet. Das hält jemanden an Ihrem entsperrten Bildschirm auf; vor einer veränderten App schützt es nicht."
     },
     "nplurals=2; plural=(n != 1);"
 )

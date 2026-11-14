@@ -22,6 +22,16 @@
 		<span class="secret-list-item__main">
 			<span class="secret-list-item__name">
 				{{ secret.name }}
+				<!-- Asks for the master password before use (crypto-item-reprompt). -->
+				<span
+					v-if="secret.reprompt === true"
+					class="secret-list-item__reprompt"
+					role="img"
+					:aria-label="t('keepiq', 'Asks for your master password')"
+					:title="t('keepiq', 'Asks for your master password')"
+					data-testid="secret-reprompt-marker">
+					<Lock :size="14" />
+				</span>
 				<LoginExtrasMarkers :secret="secret" />
 				<StrengthBadge v-if="!secret.blocked" :secretId="secret.id" />
 			</span>
@@ -126,6 +136,7 @@
 			<CopyButton
 				:resolve="resolveKey"
 				:useOnly="secret.useOnly === true"
+				:guard="revealGuard"
 				:label="t('keepiq', 'Copy password')"
 				@copied="$emit('copied')" />
 		</span>
@@ -145,6 +156,7 @@ import LoginExtrasMarkers from './LoginExtrasMarkers.vue'
 import SecretTypeIcon from './SecretTypeIcon.vue'
 import StrengthBadge from './StrengthBadge.vue'
 import VaultIndicator from './VaultIndicator.vue'
+import { needsReprompt, useReprompt } from '../composables/useReprompt.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { resolveFaviconUrl } from '../utils/favicon.js'
 import { rowOpenLabel } from '../utils/valueFieldMarkers.js'
@@ -213,6 +225,17 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The master password re-prompt the copy button awaits, or null when
+		 * the holder did not flag this item (crypto-item-reprompt D2).
+		 *
+		 * @return {Function|null}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		revealGuard() {
+			return needsReprompt(this.secret) ? useReprompt(() => this.secret) : null
+		},
+
 		/**
 		 * The row's accessible name. A role=button row hides its content
 		 * from screen readers, so the code and passkey markers are named
@@ -345,6 +368,12 @@ export default {
 </script>
 
 <style scoped>
+.secret-list-item__reprompt {
+	display: inline-flex;
+	vertical-align: middle;
+	color: var(--color-text-maxcontrast);
+}
+
 .secret-list-item {
 	display: flex;
 	align-items: center;

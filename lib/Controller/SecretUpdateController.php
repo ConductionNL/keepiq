@@ -173,6 +173,12 @@ class SecretUpdateController extends OCSController {
 			$data['mergedPending'] = (int)$mergedPending;
 		}
 
+		// The re-prompt flag is a boolean, not a string field (crypto-item-reprompt D1).
+		$reprompt = $this->request->getParam('reprompt');
+		if ($reprompt !== null) {
+			$data['reprompt'] = filter_var($reprompt, FILTER_VALIDATE_BOOLEAN);
+		}
+
 		$baseUpdatedAt = $this->request->getParam('baseUpdatedAt');
 		if ($baseUpdatedAt !== null && $baseUpdatedAt !== '') {
 			$data['baseUpdatedAt'] = (string)$baseUpdatedAt;

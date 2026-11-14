@@ -1811,7 +1811,12 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Questa non è una chiave dell'autenticatore. Incolla un link otpauth://totp/ o il segreto base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Questo codice QR non contiene una chiave dell'autenticatore. Usa il codice QR che il sito mostra quando configuri l'accesso a due fattori.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Questo segreto è in attesa di un controllo delle sue condivisioni che non è ancora terminato. Non è stato salvato nulla; riprova più tardi o chiedi a un amministratore di verificare che i processi in background siano in esecuzione.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Solo il proprietario può modificare un gestore o un'appartenenza che include un gestore."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Solo il proprietario può modificare un gestore o un'appartenenza che include un gestore.",
+        "Ask for my master password before showing or filling this item": "Chiedi la mia password master prima di mostrare o compilare questo elemento",
+        "Asks for your master password": "Chiede la tua password master",
+        "Enter your master password": "Inserisci la tua password master",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "«{name}» chiede la tua password master prima di essere mostrato, copiato o compilato.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "La tua password master viene verificata su questo dispositivo e non viene mai inviata. Ferma chi si trova davanti al tuo schermo sbloccato; non protegge da un'app modificata."
     },
     "plurals": null
 }

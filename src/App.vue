@@ -106,6 +106,7 @@
 		<!-- The master password prompt for vault-key proofs on sharing and
 		     delegation (keepiq#818). One instance; stores await it. -->
 		<KeyProofPromptDialog />
+		<RepromptDialog />
 
 		<CnAppRoot
 			:aiCompanion="hermiqEnabled"
@@ -457,6 +458,7 @@ import ExpiryPoliciesSection from './components/settings/ExpiryPoliciesSection.v
 import FederationReceiveSection from './components/settings/FederationReceiveSection.vue'
 import DeviceApprovalDialog from './dialogs/DeviceApprovalDialog.vue'
 import KeyProofPromptDialog from './dialogs/KeyProofPromptDialog.vue'
+import RepromptDialog from './dialogs/RepromptDialog.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -525,6 +527,7 @@ export default {
 		KeepiqAppNav,
 		MigrationResumeBanner,
 		KeyProofPromptDialog,
+		RepromptDialog,
 		OfflineSyncPanel,
 		SecretDetailSidebar,
 	},

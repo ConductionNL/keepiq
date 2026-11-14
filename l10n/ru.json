@@ -1837,7 +1837,12 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Это не ключ аутентификатора. Вставьте ссылку otpauth://totp/ или секрет в формате base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Этот QR-код не содержит ключ аутентификатора. Используйте QR-код, который сайт показывает при настройке двухфакторного входа.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Этот секрет ожидает проверки своих общих доступов, которая ещё не завершена. Ничего не сохранено; повторите попытку позже или попросите администратора проверить, работают ли фоновые задания.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Только владелец может изменить менеджера или членство, которое охватывает менеджера."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Только владелец может изменить менеджера или членство, которое охватывает менеджера.",
+        "Ask for my master password before showing or filling this item": "Запрашивать мой мастер-пароль перед показом или заполнением этого элемента",
+        "Asks for your master password": "Запрашивает ваш мастер-пароль",
+        "Enter your master password": "Введите ваш мастер-пароль",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "«{name}» запрашивает ваш мастер-пароль перед показом, копированием или заполнением.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ваш мастер-пароль проверяется на этом устройстве и никогда не отправляется. Это останавливает человека у вашего разблокированного экрана; от изменённого приложения это не защищает."
     },
     "plurals": null
 }

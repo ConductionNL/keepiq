@@ -212,6 +212,8 @@ class RecipientSecretCopyFactory {
 		$copy->setAdditionalFields($ciphertext->additionalFields);
 		$copy->setTotp($ciphertext->totp);
 		$copy->setPasskeys($ciphertext->passkeys);
+		// A new copy starts with the owner's re-prompt setting; afterwards each holder sets their own (crypto-item-reprompt D1).
+		$copy->setReprompt($source->getReprompt() === true);
 		$copy->setOwnerType('user');
 		$copy->setOwnerId($ciphertext->recipientId);
 		$copy->setCreatedAt($now);

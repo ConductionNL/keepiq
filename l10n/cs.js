@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Toto není klíč autentikátoru. Vložte odkaz otpauth://totp/ nebo tajemství ve formátu base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tento QR kód neobsahuje klíč autentikátoru. Použijte QR kód, který web zobrazí při nastavování dvoufázového přihlášení.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajemství čeká na kontrolu svých sdílení, která ještě neskončila. Nic nebylo uloženo; zkuste to později, nebo požádejte správce, aby ověřil, že běží úlohy na pozadí.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Správce nebo členství, které zahrnuje správce, může změnit jen vlastník."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Správce nebo členství, které zahrnuje správce, může změnit jen vlastník.",
+        "Ask for my master password before showing or filling this item": "Před zobrazením nebo vyplněním této položky se ptát na hlavní heslo",
+        "Asks for your master password": "Vyžaduje vaše hlavní heslo",
+        "Enter your master password": "Zadejte své hlavní heslo",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ vyžaduje vaše hlavní heslo, než se zobrazí, zkopíruje nebo vyplní.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Vaše hlavní heslo se ověřuje na tomto zařízení a nikdy se neodesílá. Zastaví to člověka u vaší odemčené obrazovky; před upravenou aplikací to nechrání."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

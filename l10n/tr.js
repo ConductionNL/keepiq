@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Bu bir kimlik doğrulayıcı anahtarı değil. Bir otpauth://totp/ bağlantısı veya base32 sırrı yapıştırın.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Bu QR kodu bir kimlik doğrulayıcı anahtarı içermiyor. Sitenin iki adımlı girişi kurarken gösterdiği QR kodunu kullanın.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Bu gizli bilgi, paylaşımlarının henüz tamamlanmamış bir denetimini bekliyor. Hiçbir şey kaydedilmedi; daha sonra yeniden deneyin ya da bir yöneticiden arka plan görevlerinin çalıştığını denetlemesini isteyin.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Yalnızca sahip bir yöneticiyi veya bir yöneticiyi kapsayan bir üyeliği değiştirebilir."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Yalnızca sahip bir yöneticiyi veya bir yöneticiyi kapsayan bir üyeliği değiştirebilir.",
+        "Ask for my master password before showing or filling this item": "Bu öğe gösterilmeden veya doldurulmadan önce ana parolamı sor",
+        "Asks for your master password": "Ana parolanızı sorar",
+        "Enter your master password": "Ana parolanızı girin",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "\"{name}\" gösterilmeden, kopyalanmadan veya doldurulmadan önce ana parolanızı sorar.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ana parolanız bu cihazda denetlenir ve asla gönderilmez. Bu, kilidi açık ekranınızın başındaki birini durdurur; değiştirilmiş bir uygulamaya karşı korumaz."
     },
     "nplurals=1; plural=0;"
 )

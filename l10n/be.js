@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Гэта не ключ аўтэнтыфікатара. Уставіце спасылку otpauth://totp/ або сакрэт у фармаце base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Гэты QR-код не ўтрымлівае ключ аўтэнтыфікатара. Выкарыстоўвайце QR-код, які сайт паказвае пры наладзе двухфактарнага ўваходу.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Гэты сакрэт чакае праверкі сваіх абагульванняў, якая яшчэ не скончылася. Нічога не захавана; паспрабуйце пазней або папрасіце адміністратара праверыць, ці працуюць фонавыя задачы.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Толькі ўладальнік можа змяніць кіраўніка або членства, якое ахоплівае кіраўніка."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Толькі ўладальнік можа змяніць кіраўніка або членства, якое ахоплівае кіраўніка.",
+        "Ask for my master password before showing or filling this item": "Пытаць мой галоўны пароль перад паказам або запаўненнем гэтага элемента",
+        "Asks for your master password": "Пытае ваш галоўны пароль",
+        "Enter your master password": "Увядзіце ваш галоўны пароль",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "«{name}» пытае ваш галоўны пароль, перш чым яго паказаць, скапіяваць або запоўніць.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ваш галоўны пароль правяраецца на гэтай прыладзе і нікуды не адпраўляецца. Гэта спыняе чалавека каля вашага разблакаванага экрана; ад змененай праграмы гэта не абараняе."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

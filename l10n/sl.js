@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "To ni ključ avtentikatorja. Prilepite povezavo otpauth://totp/ ali skrivnost v obliki base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ta koda QR ne vsebuje ključa avtentikatorja. Uporabite kodo QR, ki jo spletno mesto prikaže ob nastavitvi dvostopenjske prijave.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ta skrivnost čaka na preverjanje svojih skupnih rab, ki še ni končano. Nič ni bilo shranjeno; poskusite znova pozneje ali prosite skrbnika, naj preveri, ali se opravila v ozadju izvajajo.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Samo lastnik lahko spremeni upravitelja ali članstvo, ki zajema upravitelja."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Samo lastnik lahko spremeni upravitelja ali članstvo, ki zajema upravitelja.",
+        "Ask for my master password before showing or filling this item": "Pred prikazom ali izpolnjevanjem tega elementa zahtevaj moje glavno geslo",
+        "Asks for your master password": "Zahteva vaše glavno geslo",
+        "Enter your master password": "Vnesite svoje glavno geslo",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "»{name}« zahteva vaše glavno geslo, preden se prikaže, kopira ali izpolni.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Vaše glavno geslo se preveri na tej napravi in se nikoli ne pošlje. To ustavi osebo pred vašim odklenjenim zaslonom; pred spremenjeno aplikacijo ne ščiti."
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

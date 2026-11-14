@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Aceasta nu este o cheie de autentificator. Lipiți un link otpauth://totp/ sau secretul base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Acest cod QR nu conține o cheie de autentificator. Folosiți codul QR pe care îl afișează site-ul când configurați autentificarea cu doi factori.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Acest secret așteaptă o verificare a partajărilor sale care nu s-a încheiat încă. Nu s-a salvat nimic; încercați din nou mai târziu sau cereți unui administrator să verifice dacă rulează sarcinile de fundal.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Doar proprietarul poate modifica un manager sau o apartenență care include un manager."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Doar proprietarul poate modifica un manager sau o apartenență care include un manager.",
+        "Ask for my master password before showing or filling this item": "Cere parola mea principală înainte ca acest element să fie afișat sau completat",
+        "Asks for your master password": "Cere parola dumneavoastră principală",
+        "Enter your master password": "Introduceți parola principală",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}” cere parola dumneavoastră principală înainte de a fi afișat, copiat sau completat.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Parola principală este verificată pe acest dispozitiv și nu este trimisă niciodată. Asta oprește pe cineva aflat la ecranul dumneavoastră deblocat; nu protejează împotriva unei aplicații modificate."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

@@ -1734,7 +1734,12 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ово није кључ аутентификатора. Налепите везу otpauth://totp/ или тајну у формату base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Овај QR код не садржи кључ аутентификатора. Користите QR код који сајт приказује када подешавате пријаву у два корака.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ова тајна чека проверу својих дељења која још није завршена. Ништа није сачувано; покушајте поново касније или замолите администратора да провери да ли раде позадински послови.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника.",
+        "Ask for my master password before showing or filling this item": "Тражи моју главну лозинку пре приказивања или попуњавања ове ставке",
+        "Asks for your master password": "Тражи вашу главну лозинку",
+        "Enter your master password": "Унесите своју главну лозинку",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "„{name}“ тражи вашу главну лозинку пре него што се прикаже, копира или попуни.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Ваша главна лозинка се проверава на овом уређају и никада се не шаље. То зауставља особу за вашим откључаним екраном; не штити од измењене апликације."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

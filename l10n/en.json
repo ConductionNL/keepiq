@@ -1811,7 +1811,12 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Only the owner can change a manager, or a membership that covers a manager."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Only the owner can change a manager, or a membership that covers a manager.",
+        "Ask for my master password before showing or filling this item": "Ask for my master password before showing or filling this item",
+        "Asks for your master password": "Asks for your master password",
+        "Enter your master password": "Enter your master password",
+        "\"{name}\" asks for your master password before it is shown, copied or filled.": "\"{name}\" asks for your master password before it is shown, copied or filled.",
+        "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.": "Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"
