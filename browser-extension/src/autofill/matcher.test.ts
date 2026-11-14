@@ -226,7 +226,7 @@ describe('matches', () => {
 
 describe('candidatesFor', () => {
 	const types = [{ id: 't-login', name: 'login' }, { id: 't-note', name: 'note' }]
-	const row = (id: string, name: string, overrides: Partial<{ url: string | null; typeId: string | null; blocked: boolean }> = {}) => ({
+	const row = (id: string, name: string, overrides: Partial<{ url: string | null; additionalUrls: string[]; typeId: string | null; blocked: boolean }> = {}) => ({
 		id, name, url: 'https://example.test/', typeId: 't-login', blocked: false, ...overrides,
 	})
 	const page = 'https://login.example.test/'
@@ -235,6 +235,16 @@ describe('candidatesFor', () => {
 		const secrets = [row('a', 'A'), row('b', 'B', { url: 'https://other.test/' })]
 		expect(candidatesFor(page, { secrets, types }, 'baseDomain', {}).map((r) => r.id)).toEqual(['a'])
 		expect(candidatesFor(page, { secrets, types }, 'host', {})).toEqual([])
+	})
+
+	it('matches a login on its second address, under the same rule as the first', () => {
+		const secrets = [
+			row('a', 'A', { url: 'https://other.test/', additionalUrls: ['https://example.net/', 'https://accounts.example.test/'] }),
+			row('b', 'B', { url: 'https://other.test/', additionalUrls: ['https://example.net/'] }),
+			row('c', 'C', { url: null, additionalUrls: ['login.example.test'] }),
+		]
+		expect(candidatesFor(page, { secrets, types }, 'baseDomain', {}).map((r) => r.id)).toEqual(['a', 'c'])
+		expect(candidatesFor(page, { secrets, types }, 'host', {}).map((r) => r.id)).toEqual(['c'])
 	})
 
 	it('leaves out rows with an empty url', () => {
