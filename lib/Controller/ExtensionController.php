@@ -29,6 +29,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Service\SecretUrlService;
 use OCA\Keepiq\Kernel\Contracts\AdminSettingsServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -79,6 +80,7 @@ class ExtensionController extends Controller {
 	 * @param IUserSession $userSession The user session
 	 * @param AdminSettingsServiceInterface $adminSettings The admin settings (extension idle maximum)
 	 * @param IAppManager $appManager The app manager (server version for the pairing handshake)
+	 * @param SecretUrlService|null $urls The extra website addresses a match carries
 	 *
 	 * @return void
 	 */
@@ -88,6 +90,7 @@ class ExtensionController extends Controller {
 		private IUserSession $userSession,
 		private AdminSettingsServiceInterface $adminSettings,
 		private IAppManager $appManager,
+		private ?SecretUrlService $urls = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -230,6 +233,10 @@ class ExtensionController extends Controller {
 		$secrets = $this->secretMapper->searchByNameOrUrl(ownerType: 'user', ownerId: $uid, term: $term, limit: self::MATCH_LIMIT);
 
 		$items = array_map(static fn ($secret) => $secret->jsonSerialize(), $secrets);
+		if ($this->urls !== null) {
+			// Every address of a login, so the extension scores each (vault-website-addresses).
+			$items = $this->urls->withUrls(items: $items);
+		}
 
 		return new JSONResponse(data: ['items' => $items, 'host' => $host, 'term' => $term]);
 	}//end match()
