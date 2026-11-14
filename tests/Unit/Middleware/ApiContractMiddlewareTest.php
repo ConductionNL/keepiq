@@ -43,13 +43,15 @@ class ApiContractMiddlewareTest extends TestCase {
 	 * @param string|false $path     The request path info.
 	 * @param Response     $response The controller response.
 	 * @param string|null  $route    The matched route name; an alias carries the `v1` postfix.
+	 * @param string       $accept   The request's `Accept` header.
 	 *
 	 * @return Response The decorated response.
 	 */
-	private function decorate(string|false $path, Response $response, ?string $route='keepiq.things.showv1'): Response {
+	private function decorate(string|false $path, Response $response, ?string $route='keepiq.things.showv1', string $accept=''): Response {
 		$request = $this->createMock(originalClassName: IRequest::class);
 		$request->method('getPathInfo')->willReturn($path);
 		$request->method('getParam')->willReturnMap([['_route', null, $route]]);
+		$request->method('getHeader')->willReturnMap([['Accept', $accept]]);
 		$appManager = $this->createMock(originalClassName: IAppManager::class);
 		$appManager->method('getAppVersion')->willReturn('1.2.3');
 
@@ -222,6 +224,69 @@ class ApiContractMiddlewareTest extends TestCase {
 			$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
 		}
 	}//end testDeclaredVersionedRouteIsUntouched()
+
+	/**
+	 * A route the app declared under `/api/v1/` serves problem details to a
+	 * caller that asks for them, and keeps its version header off.
+	 *
+	 * @return void
+	 */
+	public function testDeclaredVersionedRouteServesProblemDetailsOnRequest(): void {
+		foreach (['application/problem+json', 'application/json, Application/Problem+JSON;q=0.9'] as $accept) {
+			$response = $this->decorate(
+				path: '/apps/keepiq/api/v1/admin/audit',
+				response: new JSONResponse(data: ['error' => 'Forbidden'], statusCode: 403),
+				route: 'keepiq.admin_audit.events',
+				accept: $accept
+			);
+			$headers  = $this->headersOf(response: $response);
+
+			$expected = [
+				'type'   => 'about:blank',
+				'title'  => 'Forbidden',
+				'status' => 403,
+				'detail' => 'Forbidden',
+				'error'  => 'Forbidden',
+			];
+			$this->assertSame(expected: $expected, actual: $response->getData());
+			$this->assertSame(expected: ApiContractMiddleware::PROBLEM_CONTENT_TYPE, actual: $headers['Content-Type']);
+			$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
+		}
+	}//end testDeclaredVersionedRouteServesProblemDetailsOnRequest()
+
+	/**
+	 * Asking for problem details changes no success answer, no unversioned
+	 * answer and no answer outside the API.
+	 *
+	 * @return void
+	 */
+	public function testAskingForProblemDetailsLeavesOtherAnswersAlone(): void {
+		$success = $this->decorate(
+			path: '/apps/keepiq/api/v1/admin/audit',
+			response: new JSONResponse(data: ['id' => 1]),
+			route: 'keepiq.admin_audit.events',
+			accept: 'application/problem+json'
+		);
+		$this->assertSame(expected: ['id' => 1], actual: $success->getData());
+		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $this->headersOf(response: $success)['Content-Type']);
+
+		$unversioned = $this->decorate(
+			path: '/apps/keepiq/api/things/7',
+			response: new JSONResponse(data: ['error' => 'x'], statusCode: 404),
+			route: 'keepiq.things.show',
+			accept: 'application/problem+json'
+		);
+		$this->assertSame(expected: ['error' => 'x'], actual: $unversioned->getData());
+		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $this->headersOf(response: $unversioned)['Content-Type']);
+
+		$page = $this->decorate(
+			path: '/apps/keepiq/v1/things',
+			response: new JSONResponse(data: ['error' => 'x'], statusCode: 404),
+			route: 'keepiq.page.index',
+			accept: 'application/problem+json'
+		);
+		$this->assertSame(expected: ['error' => 'x'], actual: $page->getData());
+	}//end testAskingForProblemDetailsLeavesOtherAnswersAlone()
 
 	/**
 	 * An alias postfix on an unversioned path does not make it an alias.
