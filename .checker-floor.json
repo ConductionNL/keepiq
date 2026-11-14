@@ -1,6 +1,6 @@
 {
-  "measured_at": "2026-11-14T19:05:47Z",
-  "commit": "b363cec37257e61288196174db88c339882850b9",
+  "measured_at": "2026-11-14T20:27:24Z",
+  "commit": "42046b6c6d61fa7e67d4983e973950d785bc7dd1",
   "tool": "common-ground-checker scan-local",
   "tool_version": "0.0.2+aa578398248c",
   "scoring_digest": "9fecce06b1cacea2",
@@ -34,7 +34,7 @@
     "semver": "pass",
     "sourcecode": "pass",
     "spdxheaders": "pass",
-    "testcoderatio": "warn",
+    "testcoderatio": "pass",
     "tests": "pass"
   },
   "stars": {
@@ -65,7 +65,7 @@
     "semver": 5,
     "sourcecode": 5,
     "spdxheaders": 5,
-    "testcoderatio": 3,
+    "testcoderatio": 4,
     "tests": 5
   }
 }
