@@ -47,7 +47,7 @@ class Version001020Date20261114090000 extends SimpleMigrationStep {
 	 * (Version001000Date20260908000000::SCHEMA) so a fresh install and the
 	 * backup registry know it.
 	 *
-	 * @var array{columns: list<array{0: string, 1: string, 2: array<string, mixed>}>, primary: list<string>, indexes: list<array{0: string, 1: list<string>}>, uniqueIndexes: list<mixed>}
+	 * @var array<string, list<mixed>>
 	 */
 	public const DEFINITION = [
 		'columns' => [

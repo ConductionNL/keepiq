@@ -675,6 +675,14 @@
 			</template>
 
 			<div v-if="secret.url" class="secret-detail__box">
+				<img
+					v-if="previewSrc"
+					:src="previewSrc"
+					:alt="t('keepiq', 'Preview of {site}', { site: secret.url })"
+					class="secret-detail__preview"
+					referrerpolicy="no-referrer"
+					loading="lazy"
+					data-testid="secret-detail-preview">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<Web :size="20" />
@@ -691,6 +699,15 @@
 								{{ secret.url }}
 							</a>
 						</div>
+						<a
+							v-if="changePasswordHref"
+							:href="changePasswordHref"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="secret-detail__change-password"
+							data-testid="secret-detail-change-password">
+							{{ t('keepiq', 'Change password') }}
+						</a>
 					</div>
 				</div>
 				<div
@@ -1114,6 +1131,7 @@ import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
+import { changePasswordUrl, previewImageUrl, previewTemplate } from '../utils/siteImages.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 import { rootVaultOf } from '../utils/vaultList.js'
 
@@ -1256,6 +1274,27 @@ export default {
 		 */
 		extraUrls() {
 			return extraUrlLinks(this.secret?.additionalUrls)
+		},
+
+		/**
+		 * The site preview image, only when an admin set a preview service:
+		 * with no template nothing is requested.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+		 */
+		previewSrc() {
+			return previewImageUrl(previewTemplate(), this.secret?.url)
+		},
+
+		/**
+		 * The site's change-password page, null without a web address.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+		 */
+		changePasswordHref() {
+			return changePasswordUrl(this.secret?.url)
 		},
 
 		/**
@@ -2458,5 +2497,20 @@ details[open] > summary .secret-detail__accordion-chevron {
 	list-style: none;
 	margin: 0;
 	padding: 0;
+}
+
+.secret-detail__preview {
+	display: block;
+	width: 100%;
+	max-height: 160px;
+	object-fit: cover;
+	border-radius: var(--border-radius-large);
+	margin-bottom: 8px;
+}
+
+.secret-detail__change-password {
+	display: inline-block;
+	margin-top: 4px;
+	color: var(--color-primary-element);
 }
 </style>

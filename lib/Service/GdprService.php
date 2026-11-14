@@ -78,6 +78,7 @@ class GdprService implements GdprServiceInterface {
 	 * @param \OCA\Keepiq\Db\AttachmentGrantMapper|null $grantMapper The attachment-grant mapper (export metadata)
 	 * @param \OCA\Keepiq\Db\SecretTagMapper|null $tagMapper The tag mapper (export metadata)
 	 * @param QuarantinedShareTargetMapper|null $quarantinedMapper The quarantined share rows naming the subject
+	 * @param \OCA\Keepiq\Db\SecretUrlMapper|null $urlMapper The extra website addresses (export metadata)
 	 *
 	 * @return void
 	 */

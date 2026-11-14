@@ -15,12 +15,15 @@
 
 ## 2. Site images
 
-- [ ] 2.1 Add `site_preview_service_url` to `AdminSettingsService` and a `SiteImagesSection.vue` admin section for both templates with the privacy text. Verify: PHPUnit on validation (https only, placeholder present), and a Playwright check of the section.
-- [ ] 2.2 Show the preview image in the detail sidebar when the template is set, with no-referrer. Verify: vitest that nothing is requested when the template is empty.
+- [x] 2.1 Add `site_preview_service_url` to `AdminSettingsService` and a `SiteImagesSection.vue` admin section for both templates with the privacy text. Verify: PHPUnit on validation (https only, placeholder present), and a Playwright check of the section.
+      > `lib/Service/SiteImageSettings.php` reads and checks `favicon_service_url` (`{domain}`) and `site_preview_service_url` (`{url}`) in the General area of `AdminSettingsService`: empty by default, '' switches one off, a set template must be an https address with its placeholder, and one bad template stops both from being written. `SiteImagesSection.vue` (General) edits both with the text on what leaves the instance. PHPUnit: `SiteImageSettingsTest`, the re-recorded admin payload golden. Vitest: `SiteImagesSection.spec.js`. The Playwright check is owed with the live pass.
+- [x] 2.2 Show the preview image in the detail sidebar when the template is set, with no-referrer. Verify: vitest that nothing is requested when the template is empty.
+      > The page gets `sitePreviewServiceUrl` as initial state; the sidebar shows `previewImageUrl()` with `referrerpolicy="no-referrer"`, and with no template there is no image and no request. Vitest: `SiteImagesSection.spec.js` 'builds no preview without a valid template or a web address'.
 
 ## 3. Change password
 
-- [ ] 3.1 Add Change password to the detail sidebar for logins with an address and to weak, reused and breached findings in `HealthCategory.vue`, opening the host's well-known address in a new tab. Verify: vitest on the URL built from the address, and a Playwright check that the link target is `/.well-known/change-password` on the host.
+- [x] 3.1 Add Change password to the detail sidebar for logins with an address and to weak, reused and breached findings in `HealthCategory.vue`, opening the host's well-known address in a new tab. Verify: vitest on the URL built from the address, and a Playwright check that the link target is `/.well-known/change-password` on the host.
+      > `changePasswordUrl()` gives `https://<host>/.well-known/change-password` for the main address; the sidebar shows Change password under the address, and `HealthCategory` (weak, reused and breached) a link per finding with an address, both opening a new tab and requesting nothing before the click. Vitest: `SiteImagesSection.spec.js` (URL and the health link). The Playwright check is owed with the live pass.
 
 ## 4. Docs
 

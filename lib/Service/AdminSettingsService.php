@@ -100,6 +100,8 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 			'device_approval_enabled',
 			'attachment_max_bytes',
 			'attachment_user_quota_bytes',
+			'favicon_service_url',
+			'site_preview_service_url',
 		],
 		'applications' => [
 			'lease_default_ttl_seconds',
@@ -217,7 +219,8 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 			// shared with the user-visible getPolicy() floor.
 			$this->policyService->readAdminPolicyKeys(),
 			$this->leaseAndDeviceSettings(),
-			$this->offlineSettings()
+			$this->offlineSettings(),
+			(new SiteImageSettings(appConfig: $this->appConfig))->read()
 		);
 
 		return $this->withCaStatus(settings: $settings);
@@ -492,6 +495,7 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 			case 'general':
 				$this->updateInstanceSettings(data: $data);
 				$this->updateAttachmentSettings(data: $data);
+				(new SiteImageSettings(appConfig: $this->appConfig))->update(data: $data);
 				return;
 			case 'policies':
 				$this->updateAuthenticationSettings(data: $data);

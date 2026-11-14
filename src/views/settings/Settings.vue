@@ -44,6 +44,7 @@ import PasswordPolicySection from '../../components/settings/PasswordPolicySecti
 import RetentionPolicySection from '../../components/settings/RetentionPolicySection.vue'
 import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
 import SiemSection from '../../components/settings/SiemSection.vue'
+import SiteImagesSection from '../../components/settings/SiteImagesSection.vue'
 import TeamFolderAutoConfirmSection from '../../components/settings/TeamFolderAutoConfirmSection.vue'
 import VaultBackupSection from '../../components/settings/VaultBackupSection.vue'
 import VaultPolicySection from '../../components/settings/VaultPolicySection.vue'
@@ -58,6 +59,7 @@ export default {
 		OrgPasswordPolicySection,
 		TeamFolderAutoConfirmSection,
 		BreachCheckSection,
+		SiteImagesSection,
 		CaHealthSection,
 		ApplicationQueueSection,
 		AttachmentLimitsSection,

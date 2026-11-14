@@ -79,6 +79,7 @@ class ImportService implements ImportServiceInterface {
 	 * @param SecretService $secretService The secret create delegate
 	 * @param FolderService $folderService The folder ensure delegate
 	 * @param LoggerInterface $logger The logger
+	 * @param SecretUrlService|null $urls The extra website addresses of a restored login
 	 *
 	 * @return void
 	 */
