@@ -30,6 +30,8 @@ const recorded = {}
 const expected = RECORD ? {} : JSON.parse(readFileSync(FIXTURE, 'utf8'))
 
 const stubs = {
+	// The recovery kit beside the backup has its own spec (RecoveryKitPanel.spec.js).
+	RecoveryKitPanel: { template: '<div data-testid="recovery-kit" />' },
 	NcDialog: {
 		props: ['name', 'open', 'size'],
 		template:

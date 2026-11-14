@@ -305,6 +305,12 @@ $extra = [
     ['name' => 'recoveryUser#myRequest',      'url' => '/api/v1/recovery/requests/mine',              'verb' => 'GET'],
     ['name' => 'recoveryUser#createRequest',  'url' => '/api/v1/recovery/requests',                   'verb' => 'POST'],
     ['name' => 'recoveryUser#complete',       'url' => '/api/v1/recovery/requests/{id}/complete',     'verb' => 'POST'],
+    // A user's own recovery kit (crypto-recovery-kit): the session user only.
+    ['name' => 'recoveryKit#show',            'url' => '/api/v1/recovery-kit',                        'verb' => 'GET'],
+    ['name' => 'recoveryKit#create',          'url' => '/api/v1/recovery-kit',                        'verb' => 'PUT'],
+    ['name' => 'recoveryKit#revoke',          'url' => '/api/v1/recovery-kit',                        'verb' => 'DELETE'],
+    ['name' => 'recoveryKit#fetch',           'url' => '/api/v1/recovery-kit/copy',                   'verb' => 'GET'],
+    ['name' => 'recoveryKit#spend',           'url' => '/api/v1/recovery-kit/spent',                  'verb' => 'POST'],
     // New device approval (crypto-new-device-approval). The fixed paths come
     // before the {id} ones.
     ['name' => 'deviceApproval#status',  'url' => '/api/v1/device-approvals/status',       'verb' => 'GET'],

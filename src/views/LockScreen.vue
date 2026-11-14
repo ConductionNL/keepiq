@@ -306,6 +306,9 @@
 					<ForgotPasswordRecovery
 						v-if="offlineStore.online"
 						@recovered="onRecovered" />
+					<RecoveryKitUnlock
+						v-if="offlineStore.online"
+						@recovered="onApprovedUnlock" />
 				</template>
 			</template>
 		</div>
@@ -321,6 +324,7 @@ import LockOpenVariantIcon from 'vue-material-design-icons/LockOpenVariant.vue'
 import DeviceApprovalRequest from '../components/DeviceApprovalRequest.vue'
 import ForgotPasswordRecovery from '../components/ForgotPasswordRecovery.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
+import RecoveryKitUnlock from '../components/RecoveryKitUnlock.vue'
 import { useAccountRecoveryStore } from '../store/modules/accountRecovery.js'
 import { useDeviceApprovalStore } from '../store/modules/deviceApproval.js'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
@@ -392,6 +396,7 @@ export default {
 		LockOpenVariantIcon,
 		KeyIcon,
 		PasswordStrengthMeter,
+		RecoveryKitUnlock,
 		DeviceApprovalRequest,
 		ForgotPasswordRecovery,
 	},
