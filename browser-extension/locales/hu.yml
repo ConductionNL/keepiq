@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 Keepiq-személyazonosság. A választáshoz nyomd meg a lefelé nyilat.
         n: $1 Keepiq-személyazonosság. A választáshoz nyomd meg a lefelé nyilat.
+  newPassword:
+    frameTitle: Keepiq erős jelszó
+    offer: Erős jelszó használata
+    locked: Oldd fel a Keepiq zárolását egy erős jelszóért
+    status: Erős jelszó használata. A választáshoz nyomd meg a lefelé nyilat.
 
 notificationBar:
   label: Keepiq-értesítés

@@ -862,19 +862,25 @@ export const isWebauthnField = (field: Element): boolean =>
 	(field.getAttribute('autocomplete') ?? '').toLowerCase().split(/\s+/).includes('webauthn')
 
 /**
- * Whether the inline list may open on `field`, and in which mode (spec `inline-list`, Which fields open the list, and `card-identity-fill`, Card and identity inline list).
+ * Whether the inline list may open on `field`, and in which mode (spec `inline-list`, Which fields open the list, `card-identity-fill`, Card and identity inline list,
+ * and `extension-generator`, Suggest a strong password in a sign-up field).
  * Never on a `<select>`, which has its own dropdown. A code box comes before an identity field, since a split code's boxes may look like phone numbers.
  */
 export function isQualifying(field: Element): InlineMode | null {
 	const group = groupOf(field)
 	if (!group) return null
 	if (isLoginEntry(group, field)) return 'login'
+	if (isNewPasswordEntry(group, field)) return 'newPassword'
 	const role = group.roles.get(field as FormControl)
 	if (isFormRole('card', role)) return cardListOf(role, field)
 	return codeGroupIn(group, field as HTMLInputElement) ? 'code' : identityListOf(group, field)
 }
 
 const isLoginEntry = (group: FieldGroup, field: Element) => group.kind === 'login' && (field === group.username || field === group.currentPassword)
+
+/** A new password of a sign-up or change-password form; its current-password field never is one. */
+const isNewPasswordEntry = (group: FieldGroup, field: Element) =>
+	(group.kind === 'signUp' || group.kind === 'passwordChange') && group.newPasswords.includes(field as HTMLInputElement)
 
 /** A card's brand, and any select, keep their own choice. */
 const cardListOf = (role: FormRole, field: Element): 'card' | null => (role === 'brand' || field.localName === 'select' ? null : 'card')

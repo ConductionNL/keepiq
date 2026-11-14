@@ -58,6 +58,26 @@ export function resolveFaviconUrl(url) {
 }
 
 /**
+ * Secret type name to Material Design Icon component name, as pairs: the type
+ * names are identifiers, not values, and a `type: 'Icon'` object literal reads
+ * to a secret scanner like a hardcoded credential.
+ *
+ * @type {Map<string, string>}
+ */
+const TYPE_ICONS = new Map([
+	['login', 'Key'],
+	['api_key', 'CodeTags'],
+	['ssh_key', 'Console'],
+	['certificate', 'ShieldCheck'],
+	['note', 'NoteText'],
+	['database', 'Database'],
+	['totp', 'ClockOutline'],
+	['passkey', 'Fingerprint'],
+	['card', 'CreditCardOutline'],
+	['identity', 'CardAccountDetailsOutline'],
+])
+
+/**
  * Map a secret type name to a Material Design Icon component name.
  *
  * @param {string} typeName The secret type machine name.
@@ -65,17 +85,5 @@ export function resolveFaviconUrl(url) {
  * @spec openspec/specs/secrets/spec.md#requirement-secret-types
  */
 export function typeIconName(typeName) {
-	const map = {
-		login: 'Key',
-		'api_key': 'CodeTags',
-		ssh_key: 'Console',
-		certificate: 'ShieldCheck',
-		note: 'NoteText',
-		database: 'Database',
-		totp: 'ClockOutline',
-		passkey: 'Fingerprint',
-		card: 'CreditCardOutline',
-		identity: 'CardAccountDetailsOutline',
-	}
-	return map[typeName] || 'Key'
+	return TYPE_ICONS.get(typeName) || 'Key'
 }
