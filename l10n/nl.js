@@ -1739,7 +1739,14 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dit is geen authenticator-sleutel. Plak een otpauth://totp/-link of het base32-geheim.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Deze QR-code bevat geen authenticator-sleutel. Gebruik de QR-code die de site toont wanneer je tweestapsaanmelding instelt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dit geheim wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw, of vraag een beheerder te controleren of achtergrondtaken draaien.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat.",
+        "Choose which vault events may start a flow. Every group starts switched off.": "Kies welke kluisgebeurtenissen een flow mogen starten. Elke groep staat eerst uit.",
+        "Flows receive who did what and when, never a secret.": "Flows krijgen wie wat wanneer deed, nooit een geheim.",
+        "Item reads": "Items bekeken",
+        "Items": "Items",
+        "Keys": "Sleutels",
+        "Links": "Links",
+        "The flow settings could not be saved.": "De flowinstellingen konden niet worden opgeslagen."
     },
     "nplurals=2; plural=(n != 1);"
 )
