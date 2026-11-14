@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Šī nav autentifikatora atslēga. Ielīmējiet saiti otpauth://totp/ vai noslēpumu base32 formātā.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Šis QR kods nesatur autentifikatora atslēgu. Izmantojiet QR kodu, ko vietne rāda, iestatot divpakāpju pieteikšanos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Šis noslēpums gaida savu kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vai lūdziet administratoram pārbaudīt, vai darbojas fona uzdevumi.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Tikai īpašnieks var mainīt pārvaldnieku vai dalību, kas aptver pārvaldnieku."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tikai īpašnieks var mainīt pārvaldnieku vai dalību, kas aptver pārvaldnieku.",
+        "Other side": "Otra puse",
+        "Keepiq on this Nextcloud": "Keepiq šajā Nextcloud",
+        "Another provider (files)": "Cits pakalpojumu sniedzējs (datnes)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Lejupielādējiet pieprasījuma datni un nododiet to otram pakalpojumu sniedzējam. Šeit ielādējiet aizzīmogoto datni, ko tas atgriež; to var atvērt tikai šis logs.",
+        "Download request file": "Lejupielādēt pieprasījuma datni",
+        "Sealed file from the other provider": "Aizzīmogota datne no otra pakalpojumu sniedzēja",
+        "Request file from the receiving provider": "Pieprasījuma datne no saņemošā pakalpojumu sniedzēja",
+        "Request loaded. The transfer is sealed for that provider only.": "Pieprasījums ielādēts. Pārsūtīšana tiek aizzīmogota tikai šim pakalpojumu sniedzējam.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Aizzīmogotā datne lejupielādēta. To var atvērt tikai pakalpojumu sniedzējs, kas izveidoja pieprasījumu.",
+        "Selected items ({count})": "Atlasītie vienumi ({count})",
+        "The file could not be verified. Nothing was imported.": "Datni nevarēja pārbaudīt. Nekas netika importēts.",
+        "This is not a transfer request file.": "Šī nav pārsūtīšanas pieprasījuma datne.",
+        "What to send": "Ko sūtīt"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

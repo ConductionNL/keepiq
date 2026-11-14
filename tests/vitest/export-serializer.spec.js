@@ -86,4 +86,23 @@ describe('serializeVault', () => {
 		expect('totp' in plain).toBe(false)
 		expect('passkeys' in plain).toBe(false)
 	})
+
+	// portability-cxp-cross-provider-transfer: the send side seals exactly
+	// the items selected on the list.
+	it('selection export holds exactly the selected items and their folders', () => {
+		const withIds = secrets.map((secret, i) => ({ ...secret, id: `s${i + 1}` }))
+		const payload = serializeVault(withIds, folders, {
+			mode: 'selection',
+			secretIds: ['s1', 's3'],
+		})
+		expect(payload.secrets.map((s) => s.name)).toEqual(['AWS', 'Root'])
+		expect(payload.folders.map((f) => f.path)).toEqual(['Work/Cloud'])
+	})
+
+	it('an empty selection exports nothing', () => {
+		const withIds = secrets.map((secret, i) => ({ ...secret, id: `s${i + 1}` }))
+		const payload = serializeVault(withIds, folders, { mode: 'selection', secretIds: [] })
+		expect(payload.secrets).toEqual([])
+		expect(payload.folders).toEqual([])
+	})
 })

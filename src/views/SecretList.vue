@@ -16,6 +16,7 @@
 				:secrets="decryptedSecrets"
 				:skipped="skippedSecrets"
 				:folders="folders"
+				:selectedIds="bulkStore.selectedIds"
 				@update:open="cxpOpen = $event"
 				@openImport="importOpen = true" />
 			<GdprExportDialog

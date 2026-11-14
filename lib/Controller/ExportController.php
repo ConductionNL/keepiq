@@ -53,11 +53,12 @@ class ExportController extends Controller {
 	private const MODES = ['encrypted-backup', 'plaintext-csv', 'cxf', 'cxp'];
 
 	/**
-	 * The accepted export scopes.
+	 * The accepted export scopes. `selection` is a hand-picked set of items,
+	 * sent to another provider (portability-cxp-cross-provider-transfer).
 	 *
 	 * @var string[]
 	 */
-	private const SCOPES = ['vault', 'folders'];
+	private const SCOPES = ['vault', 'folders', 'selection'];
 
 	/**
 	 * Constructor for ExportController.

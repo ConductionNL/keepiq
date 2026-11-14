@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ово није кључ аутентификатора. Налепите везу otpauth://totp/ или тајну у формату base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Овај QR код не садржи кључ аутентификатора. Користите QR код који сајт приказује када подешавате пријаву у два корака.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ова тајна чека проверу својих дељења која још није завршена. Ништа није сачувано; покушајте поново касније или замолите администратора да провери да ли раде позадински послови.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само власник може да промени управника или чланство које обухвата управника.",
+        "Other side": "Друга страна",
+        "Keepiq on this Nextcloud": "Keepiq на овом Nextcloud-у",
+        "Another provider (files)": "Други пружалац (датотеке)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Преузмите датотеку захтева и предајте је другом пружаоцу. Овде учитајте запечаћену датотеку коју врати; може да је отвори само овај прозор.",
+        "Download request file": "Преузми датотеку захтева",
+        "Sealed file from the other provider": "Запечаћена датотека другог пружаоца",
+        "Request file from the receiving provider": "Датотека захтева пружаоца који прима",
+        "Request loaded. The transfer is sealed for that provider only.": "Захтев учитан. Пренос је запечаћен само за тог пружаоца.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Запечаћена датотека преузета. Може да је отвори само пружалац који је направио захтев.",
+        "Selected items ({count})": "Изабране ставке ({count})",
+        "The file could not be verified. Nothing was imported.": "Датотеку није могуће проверити. Ништа није увезено.",
+        "This is not a transfer request file.": "Ово није датотека захтева за пренос.",
+        "What to send": "Шта послати"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

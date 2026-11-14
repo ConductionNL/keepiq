@@ -1863,7 +1863,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Din mhijiex ċavetta tal-awtentikatur. Waħħal link otpauth://totp/ jew is-sigriet base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dan il-kodiċi QR ma fihx ċavetta tal-awtentikatur. Uża l-kodiċi QR li s-sit juri meta tissettja l-awtentikazzjoni b'żewġ fatturi.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dan is-sigriet qed jistenna verifika tal-qsim tiegħu li għadha ma ntemmitx. Ma ġie ssejvjat xejn; erġa' pprova aktar tard, jew staqsi lil amministratur jiċċekkja li x-xogħlijiet fl-isfond qed jaħdmu.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Is-sid biss jista' jibdel maniġer, jew sħubija li tkopri maniġer."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Is-sid biss jista' jibdel maniġer, jew sħubija li tkopri maniġer.",
+        "Other side": "In-naħa l-oħra",
+        "Keepiq on this Nextcloud": "Keepiq fuq dan in-Nextcloud",
+        "Another provider (files)": "Fornitur ieħor (fajls)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Niżżel fajl ta' talba u agħtih lill-fornitur l-ieħor. Tella' hawn il-fajl issiġillat li jirritorna; din it-tieqa biss tista' tiftħu.",
+        "Download request file": "Niżżel il-fajl tat-talba",
+        "Sealed file from the other provider": "Fajl issiġillat mill-fornitur l-ieħor",
+        "Request file from the receiving provider": "Fajl tat-talba mill-fornitur riċevitur",
+        "Request loaded. The transfer is sealed for that provider only.": "It-talba ttellgħet. It-trasferiment jiġi ssiġillat għal dak il-fornitur biss.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Il-fajl issiġillat tniżżel. Il-fornitur li għamel it-talba biss jista' jiftħu.",
+        "Selected items ({count})": "Elementi magħżula ({count})",
+        "The file could not be verified. Nothing was imported.": "Il-fajl ma setax jiġi vverifikat. Ma ġie importat xejn.",
+        "This is not a transfer request file.": "Dan mhuwiex fajl ta' talba għal trasferiment.",
+        "What to send": "X’għandu jintbagħat"
     },
     "plurals": null
 }

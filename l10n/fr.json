@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ce n'est pas une clé d'authentificateur. Collez un lien otpauth://totp/ ou le secret en base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ce code QR ne contient pas de clé d'authentificateur. Utilisez le code QR que le site affiche lorsque vous configurez la connexion à deux facteurs.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ce secret attend une vérification de ses partages qui n'est pas encore terminée. Rien n'a été enregistré ; réessayez plus tard ou demandez à un administrateur de vérifier que les tâches de fond s'exécutent.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Seul le propriétaire peut modifier un gestionnaire, ou une adhésion qui couvre un gestionnaire."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Seul le propriétaire peut modifier un gestionnaire, ou une adhésion qui couvre un gestionnaire.",
+        "Other side": "Autre partie",
+        "Keepiq on this Nextcloud": "Keepiq sur ce Nextcloud",
+        "Another provider (files)": "Un autre fournisseur (fichiers)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Téléchargez un fichier de demande et remettez-le à l'autre fournisseur. Chargez ici le fichier scellé qu'il renvoie ; seule cette fenêtre peut l'ouvrir.",
+        "Download request file": "Télécharger le fichier de demande",
+        "Sealed file from the other provider": "Fichier scellé de l'autre fournisseur",
+        "Request file from the receiving provider": "Fichier de demande du fournisseur destinataire",
+        "Request loaded. The transfer is sealed for that provider only.": "Demande chargée. Le transfert est scellé pour ce fournisseur uniquement.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Fichier scellé téléchargé. Seul le fournisseur à l'origine de la demande peut l'ouvrir.",
+        "Selected items ({count})": "Éléments sélectionnés ({count})",
+        "The file could not be verified. Nothing was imported.": "Le fichier n'a pas pu être vérifié. Rien n'a été importé.",
+        "This is not a transfer request file.": "Ce n'est pas un fichier de demande de transfert.",
+        "What to send": "Ce qu’il faut envoyer"
     },
     "plurals": null
 }

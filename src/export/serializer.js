@@ -166,9 +166,11 @@ function exportEntry(secret, pathMap) {
  *   additionalFields, totp, passkeys, type, folderId).
  * @param {Array<object>} folders Folder rows ({ id, name, parentId }).
  * @param {object} [scope] Scope selector.
- * @param {string} [scope.mode] 'vault' (default) or 'folders'.
+ * @param {string} [scope.mode] 'vault' (default), 'folders' or 'selection'.
  * @param {Array<string>} [scope.folderIds] Selected folder IDs when mode is 'folders'.
+ * @param {Array<string>} [scope.secretIds] Selected secret IDs when mode is 'selection'.
  * @return {object} The `{ format, version, secrets, folders }` payload.
+ * @spec openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp/spec.md#requirement-choose-what-to-send
  */
 export function serializeVault(secrets, folders, scope = { mode: 'vault' }) {
 	const pathMap = buildPathMap(folders)
@@ -176,17 +178,32 @@ export function serializeVault(secrets, folders, scope = { mode: 'vault' }) {
 		scope && scope.mode === 'folders'
 			? collectSubtree(folders, scope.folderIds || [])
 			: null
+	const selectedIds =
+		scope && scope.mode === 'selection'
+			? new Set((scope.secretIds || []).map(String))
+			: null
+
+	const exported = secrets.filter(
+		(secret) =>
+			isExported(secret, includedFolderIds)
+			&& (selectedIds === null || selectedIds.has(String(secret.id))),
+	)
+	// A selection carries the folders its secrets sit in, so their paths
+	// travel; the folder scope carries its subtree, the vault every folder.
+	const usedFolderIds =
+		selectedIds === null
+			? null
+			: new Set(exported.map((secret) => secret.folderId).filter((id) => id !== null && id !== undefined))
 
 	return {
 		format: PAYLOAD_FORMAT,
 		version: PAYLOAD_VERSION,
-		secrets: secrets
-			.filter((secret) => isExported(secret, includedFolderIds))
-			.map((secret) => exportEntry(secret, pathMap)),
+		secrets: exported.map((secret) => exportEntry(secret, pathMap)),
 		folders: folders
 			.filter(
 				(folder) =>
-					includedFolderIds === null || includedFolderIds.has(folder.id),
+					(includedFolderIds === null || includedFolderIds.has(folder.id))
+					&& (usedFolderIds === null || usedFolderIds.has(folder.id)),
 			)
 			.map((folder) => ({ path: pathMap.get(folder.id) ?? folder.name })),
 	}

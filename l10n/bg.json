@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Това не е ключ на удостоверител. Поставете връзка otpauth://totp/ или тайната във формат base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Този QR код не съдържа ключ на удостоверител. Използвайте QR кода, който сайтът показва при настройване на двуфакторното влизане.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Тази тайна изчаква проверка на споделянията си, която още не е завършила. Нищо не беше запазено; опитайте отново по-късно или помолете администратор да провери дали фоновите задачи се изпълняват.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само собственикът може да промени мениджър или членство, което обхваща мениджър."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само собственикът може да промени мениджър или членство, което обхваща мениджър.",
+        "Other side": "Другата страна",
+        "Keepiq on this Nextcloud": "Keepiq на този Nextcloud",
+        "Another provider (files)": "Друг доставчик (файлове)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Изтеглете файл със заявка и го дайте на другия доставчик. Заредете тук запечатания файл, който той върне; само този прозорец може да го отвори.",
+        "Download request file": "Изтегляне на файл със заявка",
+        "Sealed file from the other provider": "Запечатан файл от другия доставчик",
+        "Request file from the receiving provider": "Файл със заявка от получаващия доставчик",
+        "Request loaded. The transfer is sealed for that provider only.": "Заявката е заредена. Преносът се запечатва само за този доставчик.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Запечатаният файл е изтеглен. Само доставчикът, създал заявката, може да го отвори.",
+        "Selected items ({count})": "Избрани елементи ({count})",
+        "The file could not be verified. Nothing was imported.": "Файлът не можа да бъде проверен. Нищо не е импортирано.",
+        "This is not a transfer request file.": "Това не е файл със заявка за пренос.",
+        "What to send": "Какво да се изпрати"
     },
     "plurals": null
 }

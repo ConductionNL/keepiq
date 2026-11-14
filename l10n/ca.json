@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Això no és una clau d'autenticador. Enganxeu un enllaç otpauth://totp/ o el secret en base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Aquest codi QR no conté cap clau d'autenticador. Feu servir el codi QR que el lloc mostra quan configureu l'inici de sessió en dos passos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Aquest secret està esperant una comprovació de les seves comparticions que encara no ha acabat. No s'ha desat res; torneu-ho a provar més tard o demaneu a un administrador que comprovi que les tasques en segon pla s'executen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Només el propietari pot canviar un gestor o una pertinença que inclogui un gestor."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Només el propietari pot canviar un gestor o una pertinença que inclogui un gestor.",
+        "Other side": "Altra part",
+        "Keepiq on this Nextcloud": "Keepiq en aquest Nextcloud",
+        "Another provider (files)": "Un altre proveïdor (fitxers)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Baixeu un fitxer de sol·licitud i doneu-lo a l'altre proveïdor. Carregueu aquí el fitxer segellat que us retorni; només aquesta finestra el pot obrir.",
+        "Download request file": "Baixa el fitxer de sol·licitud",
+        "Sealed file from the other provider": "Fitxer segellat de l'altre proveïdor",
+        "Request file from the receiving provider": "Fitxer de sol·licitud del proveïdor receptor",
+        "Request loaded. The transfer is sealed for that provider only.": "Sol·licitud carregada. La transferència només se segella per a aquest proveïdor.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Fitxer segellat baixat. Només el proveïdor que ha fet la sol·licitud el pot obrir.",
+        "Selected items ({count})": "Elements seleccionats ({count})",
+        "The file could not be verified. Nothing was imported.": "No s'ha pogut verificar el fitxer. No s'ha importat res.",
+        "This is not a transfer request file.": "Aquest no és un fitxer de sol·licitud de transferència.",
+        "What to send": "Què cal enviar"
     },
     "plurals": null
 }

@@ -1837,7 +1837,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Гэта не ключ аўтэнтыфікатара. Уставіце спасылку otpauth://totp/ або сакрэт у фармаце base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Гэты QR-код не ўтрымлівае ключ аўтэнтыфікатара. Выкарыстоўвайце QR-код, які сайт паказвае пры наладзе двухфактарнага ўваходу.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Гэты сакрэт чакае праверкі сваіх абагульванняў, якая яшчэ не скончылася. Нічога не захавана; паспрабуйце пазней або папрасіце адміністратара праверыць, ці працуюць фонавыя задачы.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Толькі ўладальнік можа змяніць кіраўніка або членства, якое ахоплівае кіраўніка."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Толькі ўладальнік можа змяніць кіраўніка або членства, якое ахоплівае кіраўніка.",
+        "Other side": "Іншы бок",
+        "Keepiq on this Nextcloud": "Keepiq на гэтым Nextcloud",
+        "Another provider (files)": "Іншы пастаўшчык (файлы)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Спампуйце файл запыту і перадайце яго іншаму пастаўшчыку. Загрузіце сюды запячатаны файл, які ён верне; адкрыць яго можа толькі гэта акно.",
+        "Download request file": "Спампаваць файл запыту",
+        "Sealed file from the other provider": "Запячатаны файл ад іншага пастаўшчыка",
+        "Request file from the receiving provider": "Файл запыту ад пастаўшчыка, які атрымлівае",
+        "Request loaded. The transfer is sealed for that provider only.": "Запыт загружаны. Перадача запячатваецца толькі для гэтага пастаўшчыка.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Запячатаны файл спампаваны. Адкрыць яго можа толькі пастаўшчык, які стварыў запыт.",
+        "Selected items ({count})": "Выбраныя элементы ({count})",
+        "The file could not be verified. Nothing was imported.": "Не ўдалося праверыць файл. Нічога не імпартавана.",
+        "This is not a transfer request file.": "Гэта не файл запыту на перадачу.",
+        "What to send": "Што адправіць"
     },
     "plurals": null
 }

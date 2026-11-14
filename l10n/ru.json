@@ -1837,7 +1837,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Это не ключ аутентификатора. Вставьте ссылку otpauth://totp/ или секрет в формате base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Этот QR-код не содержит ключ аутентификатора. Используйте QR-код, который сайт показывает при настройке двухфакторного входа.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Этот секрет ожидает проверки своих общих доступов, которая ещё не завершена. Ничего не сохранено; повторите попытку позже или попросите администратора проверить, работают ли фоновые задания.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Только владелец может изменить менеджера или членство, которое охватывает менеджера."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Только владелец может изменить менеджера или членство, которое охватывает менеджера.",
+        "Other side": "Другая сторона",
+        "Keepiq on this Nextcloud": "Keepiq на этом Nextcloud",
+        "Another provider (files)": "Другой поставщик (файлы)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Скачайте файл запроса и передайте его другому поставщику. Загрузите сюда запечатанный файл, который он вернёт; открыть его может только это окно.",
+        "Download request file": "Скачать файл запроса",
+        "Sealed file from the other provider": "Запечатанный файл от другого поставщика",
+        "Request file from the receiving provider": "Файл запроса от принимающего поставщика",
+        "Request loaded. The transfer is sealed for that provider only.": "Запрос загружен. Передача запечатывается только для этого поставщика.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Запечатанный файл скачан. Открыть его может только поставщик, создавший запрос.",
+        "Selected items ({count})": "Выбранные элементы ({count})",
+        "The file could not be verified. Nothing was imported.": "Не удалось проверить файл. Ничего не импортировано.",
+        "This is not a transfer request file.": "Это не файл запроса на передачу.",
+        "What to send": "Что отправить"
     },
     "plurals": null
 }

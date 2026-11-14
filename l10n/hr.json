@@ -1837,7 +1837,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ovo nije ključ autentifikatora. Zalijepite poveznicu otpauth://totp/ ili tajnu u formatu base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ovaj QR kod ne sadrži ključ autentifikatora. Upotrijebite QR kod koji stranica prikazuje kad postavljate prijavu u dva koraka.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ova tajna čeka provjeru svojih dijeljenja koja još nije završena. Ništa nije spremljeno; pokušajte ponovno kasnije ili zamolite administratora da provjeri rade li pozadinski poslovi.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Samo vlasnik može promijeniti upravitelja ili članstvo koje obuhvaća upravitelja."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Samo vlasnik može promijeniti upravitelja ili članstvo koje obuhvaća upravitelja.",
+        "Other side": "Druga strana",
+        "Keepiq on this Nextcloud": "Keepiq na ovom Nextcloudu",
+        "Another provider (files)": "Drugi pružatelj (datoteke)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Preuzmite datoteku zahtjeva i predajte je drugom pružatelju. Ovdje učitajte zapečaćenu datoteku koju vrati; može je otvoriti samo ovaj prozor.",
+        "Download request file": "Preuzmi datoteku zahtjeva",
+        "Sealed file from the other provider": "Zapečaćena datoteka drugog pružatelja",
+        "Request file from the receiving provider": "Datoteka zahtjeva pružatelja koji prima",
+        "Request loaded. The transfer is sealed for that provider only.": "Zahtjev učitan. Prijenos je zapečaćen samo za tog pružatelja.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Zapečaćena datoteka preuzeta. Može je otvoriti samo pružatelj koji je izradio zahtjev.",
+        "Selected items ({count})": "Odabrane stavke ({count})",
+        "The file could not be verified. Nothing was imported.": "Datoteku nije moguće provjeriti. Ništa nije uvezeno.",
+        "This is not a transfer request file.": "Ovo nije datoteka zahtjeva za prijenos.",
+        "What to send": "Što poslati"
     },
     "plurals": null
 }

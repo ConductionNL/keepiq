@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Det här är inte en autentiserarnyckel. Klistra in en otpauth://totp/-länk eller base32-hemligheten.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Den här QR-koden innehåller ingen autentiserarnyckel. Använd den QR-kod som webbplatsen visar när du ställer in tvåstegsinloggning.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Den här hemligheten väntar på en kontroll av sina delningar som inte är klar än. Inget sparades; försök igen senare eller be en administratör kontrollera att bakgrundsjobb körs.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Endast ägaren kan ändra en ansvarig, eller ett medlemskap som omfattar en ansvarig."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Endast ägaren kan ändra en ansvarig, eller ett medlemskap som omfattar en ansvarig.",
+        "Other side": "Andra parten",
+        "Keepiq on this Nextcloud": "Keepiq på detta Nextcloud",
+        "Another provider (files)": "En annan leverantör (filer)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Ladda ner en begäransfil och ge den till den andra leverantören. Läs in den sigillerade fil den returnerar här; bara detta fönster kan öppna den.",
+        "Download request file": "Ladda ner begäransfil",
+        "Sealed file from the other provider": "Sigillerad fil från den andra leverantören",
+        "Request file from the receiving provider": "Begäransfil från den mottagande leverantören",
+        "Request loaded. The transfer is sealed for that provider only.": "Begäran inläst. Överföringen sigilleras bara för den leverantören.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Den sigillerade filen har laddats ner. Bara leverantören som skapade begäran kan öppna den.",
+        "Selected items ({count})": "Valda objekt ({count})",
+        "The file could not be verified. Nothing was imported.": "Filen kunde inte verifieras. Inget importerades.",
+        "This is not a transfer request file.": "Det här är ingen begäransfil för överföring.",
+        "What to send": "Vad som ska skickas"
     },
     "plurals": null
 }

@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Tämä ei ole autentikaattoriavain. Liitä otpauth://totp/-linkki tai base32-salaisuus.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tämä QR-koodi ei sisällä autentikaattoriavainta. Käytä QR-koodia, jonka sivusto näyttää, kun otat kaksivaiheisen kirjautumisen käyttöön.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Tämä salaisuus odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei tallennettu; yritä myöhemmin uudelleen tai pyydä ylläpitäjää tarkistamaan, että taustatyöt ovat käynnissä.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Vain omistaja voi muuttaa ylläpitäjää tai jäsenyyttä, joka kattaa ylläpitäjän."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Vain omistaja voi muuttaa ylläpitäjää tai jäsenyyttä, joka kattaa ylläpitäjän.",
+        "Other side": "Toinen osapuoli",
+        "Keepiq on this Nextcloud": "Keepiq tässä Nextcloudissa",
+        "Another provider (files)": "Toinen palveluntarjoaja (tiedostot)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Lataa pyyntötiedosto ja anna se toiselle palveluntarjoajalle. Lataa tähän sinetöity tiedosto, jonka se palauttaa; vain tämä ikkuna voi avata sen.",
+        "Download request file": "Lataa pyyntötiedosto",
+        "Sealed file from the other provider": "Sinetöity tiedosto toiselta palveluntarjoajalta",
+        "Request file from the receiving provider": "Pyyntötiedosto vastaanottavalta palveluntarjoajalta",
+        "Request loaded. The transfer is sealed for that provider only.": "Pyyntö ladattu. Siirto sinetöidään vain tälle palveluntarjoajalle.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Sinetöity tiedosto ladattu. Vain pyynnön tehnyt palveluntarjoaja voi avata sen.",
+        "Selected items ({count})": "Valitut kohteet ({count})",
+        "The file could not be verified. Nothing was imported.": "Tiedostoa ei voitu vahvistaa. Mitään ei tuotu.",
+        "This is not a transfer request file.": "Tämä ei ole siirtopyyntötiedosto.",
+        "What to send": "Mitä lähetetään"
     },
     "plurals": null
 }

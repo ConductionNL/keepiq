@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Only the owner can change a manager, or a membership that covers a manager."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Only the owner can change a manager, or a membership that covers a manager.",
+        "Other side": "Other side",
+        "Keepiq on this Nextcloud": "Keepiq on this Nextcloud",
+        "Another provider (files)": "Another provider (files)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.",
+        "Download request file": "Download request file",
+        "Sealed file from the other provider": "Sealed file from the other provider",
+        "Request file from the receiving provider": "Request file from the receiving provider",
+        "Request loaded. The transfer is sealed for that provider only.": "Request loaded. The transfer is sealed for that provider only.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Sealed file downloaded. Only the provider that made the request can open it.",
+        "Selected items ({count})": "Selected items ({count})",
+        "The file could not be verified. Nothing was imported.": "The file could not be verified. Nothing was imported.",
+        "This is not a transfer request file.": "This is not a transfer request file.",
+        "What to send": "What to send"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Questa non è una chiave dell'autenticatore. Incolla un link otpauth://totp/ o il segreto base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Questo codice QR non contiene una chiave dell'autenticatore. Usa il codice QR che il sito mostra quando configuri l'accesso a due fattori.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Questo segreto è in attesa di un controllo delle sue condivisioni che non è ancora terminato. Non è stato salvato nulla; riprova più tardi o chiedi a un amministratore di verificare che i processi in background siano in esecuzione.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Solo il proprietario può modificare un gestore o un'appartenenza che include un gestore."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Solo il proprietario può modificare un gestore o un'appartenenza che include un gestore.",
+        "Other side": "Altra parte",
+        "Keepiq on this Nextcloud": "Keepiq su questo Nextcloud",
+        "Another provider (files)": "Un altro fornitore (file)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Scarica un file di richiesta e consegnalo all'altro fornitore. Carica qui il file sigillato che restituisce; solo questa finestra può aprirlo.",
+        "Download request file": "Scarica il file di richiesta",
+        "Sealed file from the other provider": "File sigillato dell'altro fornitore",
+        "Request file from the receiving provider": "File di richiesta del fornitore ricevente",
+        "Request loaded. The transfer is sealed for that provider only.": "Richiesta caricata. Il trasferimento è sigillato solo per quel fornitore.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "File sigillato scaricato. Solo il fornitore che ha creato la richiesta può aprirlo.",
+        "Selected items ({count})": "Elementi selezionati ({count})",
+        "The file could not be verified. Nothing was imported.": "Impossibile verificare il file. Non è stato importato nulla.",
+        "This is not a transfer request file.": "Questo non è un file di richiesta di trasferimento.",
+        "What to send": "Cosa inviare"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1710,7 +1710,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Quai n'è nagina clav d'autentificatur. Plaza ina colliaziun otpauth://totp/ u il secret base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Quest code QR na cuntegna nagina clav d'autentificatur. Utilisescha il code QR che la website mussa cura che ti configuresch l'annunzia en dus pass.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Quest secret spetga sin ina controlla da ses parts che n'è anc betg terminada. Nagut n'è vegnì memorisà; empruvai pli tard anc ina giada, u dumandai in administratur da controllar sch'ils lavurs en il fund funcziunan.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Mo il possessur po midar in administratur u ina commembranza che cumpiglia in administratur."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Mo il possessur po midar in administratur u ina commembranza che cumpiglia in administratur.",
+        "Other side": "Autra vart",
+        "Keepiq on this Nextcloud": "Keepiq sin quest Nextcloud",
+        "Another provider (files)": "In auter purschider (datotecas)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Chargiai giu ina datoteca da dumonda e la dai a l'auter purschider. Chargiai qua la datoteca sigillada ch'el returna; mo questa fanestra la po avrir.",
+        "Download request file": "Chargiar giu la datoteca da dumonda",
+        "Sealed file from the other provider": "Datoteca sigillada da l'auter purschider",
+        "Request file from the receiving provider": "Datoteca da dumonda dal purschider che retschaiva",
+        "Request loaded. The transfer is sealed for that provider only.": "Dumonda chargiada. Il transferiment vegn sigillà mo per quel purschider.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Datoteca sigillada chargiada giu. Mo il purschider ch'ha fatg la dumonda la po avrir.",
+        "Selected items ({count})": "Elements tschernids ({count})",
+        "The file could not be verified. Nothing was imported.": "La datoteca n'ha betg pudì vegnir verifitgada. Nagut n'è vegnì importà.",
+        "This is not a transfer request file.": "Quai n'è nagina datoteca da dumonda da transferiment.",
+        "What to send": "Tge trametter"
     },
     "nplurals=1; plural=0;"
 )

@@ -1739,7 +1739,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dit is geen authenticator-sleutel. Plak een otpauth://totp/-link of het base32-geheim.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Deze QR-code bevat geen authenticator-sleutel. Gebruik de QR-code die de site toont wanneer je tweestapsaanmelding instelt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dit geheim wacht op een controle van zijn delingen die nog niet klaar is. Er is niets opgeslagen; probeer het later opnieuw, of vraag een beheerder te controleren of achtergrondtaken draaien.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Alleen de eigenaar kan een beheerder wijzigen, of een lidmaatschap dat een beheerder omvat.",
+        "Other side": "Andere kant",
+        "Keepiq on this Nextcloud": "Keepiq op deze Nextcloud",
+        "Another provider (files)": "Een andere aanbieder (bestanden)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Download een aanvraagbestand en geef het aan de andere aanbieder. Laad hier het verzegelde bestand dat die teruggeeft; alleen dit venster kan het openen.",
+        "Download request file": "Aanvraagbestand downloaden",
+        "Sealed file from the other provider": "Verzegeld bestand van de andere aanbieder",
+        "Request file from the receiving provider": "Aanvraagbestand van de ontvangende aanbieder",
+        "Request loaded. The transfer is sealed for that provider only.": "Aanvraag geladen. De overdracht wordt alleen voor die aanbieder verzegeld.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Verzegeld bestand gedownload. Alleen de aanbieder die de aanvraag maakte kan het openen.",
+        "Selected items ({count})": "Geselecteerde items ({count})",
+        "The file could not be verified. Nothing was imported.": "Het bestand kon niet worden geverifieerd. Er is niets geïmporteerd.",
+        "This is not a transfer request file.": "Dit is geen aanvraagbestand voor een overdracht.",
+        "What to send": "Wat versturen"
     },
     "nplurals=2; plural=(n != 1);"
 )

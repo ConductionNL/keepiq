@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Þetta er ekki lykill auðkennara. Límdu inn otpauth://totp/-tengil eða base32-leyndarmálið.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Þessi QR-kóði inniheldur ekki lykil auðkennara. Notaðu QR-kóðann sem vefsvæðið sýnir þegar þú setur upp tveggja þátta innskráningu.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Þetta leyndarmál bíður eftir athugun á deilingum sínum sem er ekki lokið. Ekkert var vistað; reyndu aftur síðar eða biddu kerfisstjóra að athuga hvort bakgrunnsverk keyri.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Aðeins eigandinn getur breytt stjórnanda, eða aðild sem nær yfir stjórnanda."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Aðeins eigandinn getur breytt stjórnanda, eða aðild sem nær yfir stjórnanda.",
+        "Other side": "Hinn aðilinn",
+        "Keepiq on this Nextcloud": "Keepiq á þessu Nextcloud",
+        "Another provider (files)": "Annar veitandi (skrár)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Sæktu beiðniskrá og afhentu hinum veitandanum hana. Hladdu hér inn innsigluðu skránni sem hann skilar; aðeins þessi gluggi getur opnað hana.",
+        "Download request file": "Sækja beiðniskrá",
+        "Sealed file from the other provider": "Innsigluð skrá frá hinum veitandanum",
+        "Request file from the receiving provider": "Beiðniskrá frá veitandanum sem tekur á móti",
+        "Request loaded. The transfer is sealed for that provider only.": "Beiðni hlaðið inn. Flutningurinn er aðeins innsiglaður fyrir þann veitanda.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Innsigluð skrá sótt. Aðeins veitandinn sem gerði beiðnina getur opnað hana.",
+        "Selected items ({count})": "Valin atriði ({count})",
+        "The file could not be verified. Nothing was imported.": "Ekki tókst að staðfesta skrána. Ekkert var flutt inn.",
+        "This is not a transfer request file.": "Þetta er ekki beiðniskrá fyrir flutning.",
+        "What to send": "Hvað á að senda"
     },
     "nplurals=2; plural=(n != 1);"
 )

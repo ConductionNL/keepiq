@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dette er ikke en autentikatornøkkel. Lim inn en otpauth://totp/-lenke eller base32-hemmeligheten.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Denne QR-koden inneholder ikke en autentikatornøkkel. Bruk QR-koden nettstedet viser når du setter opp totrinnspålogging.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Denne hemmeligheten venter på en kontroll av delingene sine som ikke er ferdig ennå. Ingenting ble lagret; prøv igjen senere, eller be en administrator kontrollere at bakgrunnsjobber kjører.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Bare eieren kan endre en administrator, eller et medlemskap som omfatter en administrator."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Bare eieren kan endre en administrator, eller et medlemskap som omfatter en administrator.",
+        "Other side": "Den andre parten",
+        "Keepiq on this Nextcloud": "Keepiq på denne Nextcloud",
+        "Another provider (files)": "En annen tilbyder (filer)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Last ned en forespørselsfil og gi den til den andre tilbyderen. Last inn den forseglede filen den returnerer her; bare dette vinduet kan åpne den.",
+        "Download request file": "Last ned forespørselsfil",
+        "Sealed file from the other provider": "Forseglet fil fra den andre tilbyderen",
+        "Request file from the receiving provider": "Forespørselsfil fra tilbyderen som mottar",
+        "Request loaded. The transfer is sealed for that provider only.": "Forespørselen er lastet inn. Overføringen forsegles bare for den tilbyderen.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Den forseglede filen er lastet ned. Bare tilbyderen som laget forespørselen, kan åpne den.",
+        "Selected items ({count})": "Valgte elementer ({count})",
+        "The file could not be verified. Nothing was imported.": "Filen kunne ikke verifiseres. Ingenting ble importert.",
+        "This is not a transfer request file.": "Dette er ikke en forespørselsfil for overføring.",
+        "What to send": "Hva som skal sendes"
     },
     "plurals": null
 }

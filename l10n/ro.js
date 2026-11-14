@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Aceasta nu este o cheie de autentificator. Lipiți un link otpauth://totp/ sau secretul base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Acest cod QR nu conține o cheie de autentificator. Folosiți codul QR pe care îl afișează site-ul când configurați autentificarea cu doi factori.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Acest secret așteaptă o verificare a partajărilor sale care nu s-a încheiat încă. Nu s-a salvat nimic; încercați din nou mai târziu sau cereți unui administrator să verifice dacă rulează sarcinile de fundal.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Doar proprietarul poate modifica un manager sau o apartenență care include un manager."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Doar proprietarul poate modifica un manager sau o apartenență care include un manager.",
+        "Other side": "Cealaltă parte",
+        "Keepiq on this Nextcloud": "Keepiq pe acest Nextcloud",
+        "Another provider (files)": "Alt furnizor (fișiere)",
+        "Download a request file and give it to the other provider. Load the sealed file it returns here; only this window can open it.": "Descărcați un fișier de cerere și dați-l celuilalt furnizor. Încărcați aici fișierul sigilat pe care îl returnează; doar această fereastră îl poate deschide.",
+        "Download request file": "Descărcați fișierul de cerere",
+        "Sealed file from the other provider": "Fișier sigilat de la celălalt furnizor",
+        "Request file from the receiving provider": "Fișier de cerere de la furnizorul care primește",
+        "Request loaded. The transfer is sealed for that provider only.": "Cererea a fost încărcată. Transferul este sigilat doar pentru acel furnizor.",
+        "Sealed file downloaded. Only the provider that made the request can open it.": "Fișierul sigilat a fost descărcat. Doar furnizorul care a făcut cererea îl poate deschide.",
+        "Selected items ({count})": "Elemente selectate ({count})",
+        "The file could not be verified. Nothing was imported.": "Fișierul nu a putut fi verificat. Nu s-a importat nimic.",
+        "This is not a transfer request file.": "Acesta nu este un fișier de cerere de transfer.",
+        "What to send": "Ce se trimite"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )
