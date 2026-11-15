@@ -329,9 +329,9 @@ class GdprServiceSectionsTest extends TestCase {
 
 		$this->assertSame(
 			[
-				['secretId' => 'fav', 'favourite' => true, 'tags' => [], 'lastUsedAt' => null],
-				['secretId' => 'tagged', 'favourite' => false, 'tags' => ['work'], 'lastUsedAt' => null],
-				['secretId' => 'used', 'favourite' => false, 'tags' => [], 'lastUsedAt' => '2026-04-01T00:00:00+00:00'],
+				['secretId' => 'fav', 'favourite' => true, 'tags' => [], 'lastUsedAt' => null, 'additionalUrls' => []],
+				['secretId' => 'tagged', 'favourite' => false, 'tags' => ['work'], 'lastUsedAt' => null, 'additionalUrls' => []],
+				['secretId' => 'used', 'favourite' => false, 'tags' => [], 'lastUsedAt' => '2026-04-01T00:00:00+00:00', 'additionalUrls' => []],
 			],
 			$this->service()->collectMetadata(userId: 'alice')['organisation']
 		);
