@@ -283,6 +283,15 @@ $extra = [
     ['name' => 'honey#acknowledge', 'url' => '/api/v1/honey/alerts/{id}/acknowledge', 'verb' => 'POST'],
     ['name' => 'honey#snooze',      'url' => '/api/v1/honey/alerts/{id}/snooze',     'verb' => 'POST'],
 
+    // Privileged logins (capability-requirements-from-the-matrix 3.1):
+    // ownership and holding are checked in the service.
+    ['name' => 'privilegedAccess#status',  'url' => '/api/v1/secrets/{id}/privileged',                 'verb' => 'GET'],
+    ['name' => 'privilegedAccess#update',  'url' => '/api/v1/secrets/{id}/privileged',                 'verb' => 'PUT'],
+    ['name' => 'privilegedAccess#request', 'url' => '/api/v1/secrets/{id}/access-requests',            'verb' => 'POST'],
+    ['name' => 'privilegedAccess#pending', 'url' => '/api/v1/access-requests',                         'verb' => 'GET'],
+    ['name' => 'privilegedAccess#approve', 'url' => '/api/v1/access-requests/{requestId}/approve',     'verb' => 'POST'],
+    ['name' => 'privilegedAccess#deny',    'url' => '/api/v1/access-requests/{requestId}/deny',        'verb' => 'POST'],
+
     // Offline cache (offline-readonly-cache §1.4) — owner-scoped
     // consolidated snapshot; 403 when the admin off switch is set.
     ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],

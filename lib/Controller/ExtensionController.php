@@ -29,6 +29,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCA\Keepiq\Service\SecretUrlService;
 use OCA\Keepiq\Kernel\Contracts\AdminSettingsServiceInterface;
 use OCP\App\IAppManager;
@@ -81,6 +82,7 @@ class ExtensionController extends Controller {
 	 * @param AdminSettingsServiceInterface $adminSettings The admin settings (extension idle maximum)
 	 * @param IAppManager $appManager The app manager (server version for the pairing handshake)
 	 * @param SecretUrlService|null $urls The extra website addresses a match carries
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 *
 	 * @return void
 	 */
@@ -91,6 +93,7 @@ class ExtensionController extends Controller {
 		private AdminSettingsServiceInterface $adminSettings,
 		private IAppManager $appManager,
 		private ?SecretUrlService $urls = null,
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -232,7 +235,17 @@ class ExtensionController extends Controller {
 		$term = $this->registrableDomain(host: $host);
 		$secrets = $this->secretMapper->searchByNameOrUrl(ownerType: 'user', ownerId: $uid, term: $term, limit: self::MATCH_LIMIT);
 
-		$items = array_map(static fn ($secret) => $secret->jsonSerialize(), $secrets);
+		// A recipient's copy of a privileged login fills only inside an approved
+		// window and address range; a refused fill is audited (capability-requirements-from-the-matrix 3.1).
+		$items = [];
+		foreach ($secrets as $secret) {
+			$item = $secret->jsonSerialize();
+			if ($this->privilegedGate !== null) {
+				$item = $this->privilegedGate->servable(secret: $secret, data: $item, userId: $uid, channel: 'extension', audit: true);
+			}
+
+			$items[] = $item;
+		}
 		if ($this->urls !== null) {
 			// Every address of a login, so the extension scores each (vault-website-addresses).
 			$items = $this->urls->withUrls(items: $items);
