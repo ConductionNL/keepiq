@@ -121,6 +121,48 @@ describe('CertificateInventoryView rendered', () => {
 		expect(wrapper.find('.loading').exists()).toBe(false)
 	})
 
+	it('shows the vault certificate key type, size and signature algorithm', async () => {
+		store.inventory.suites = [
+			{
+				...SUITE,
+				metadata: {
+					subject: 'CN=alice',
+					keyType: 'RSA',
+					keyBits: 4096,
+					signatureAlgorithm: 'sha256WithRSAEncryption',
+				},
+			},
+		]
+
+		const wrapper = await mountView()
+
+		expect(wrapper.find('[data-testid="cert-suite-key-v1"]').text()).toBe(
+			'RSA, 4096-bit',
+		)
+		expect(
+			wrapper.find('[data-testid="cert-suite-signature-v1"]').text(),
+		).toBe('sha256WithRSAEncryption')
+		const headers = wrapper
+			.find('[data-testid="cert-suites-section"]')
+			.findAll('th')
+			.map((th) => th.text())
+		expect(headers.slice(0, 4)).toEqual([
+			'Owner',
+			'Subject',
+			'Key',
+			'Signature algorithm',
+		])
+	})
+
+	it('shows a dash for a certificate whose key the server could not read', async () => {
+		const wrapper = await mountView()
+
+		expect(wrapper.find('[data-testid="cert-suite-key-v1"]').text()).toBe('—')
+		expect(
+			wrapper.find('[data-testid="cert-suite-signature-v1"]').text(),
+		).toBe('—')
+	})
+
 	it('renders the CA rows when the inventory carries them', async () => {
 		store.inventory.ca = [{ caRole: 'root', metadata: null }]
 

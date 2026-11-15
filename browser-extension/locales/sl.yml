@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 identiteta Keepiq. Za izbiro pritisnite puščico dol.
         n: "Identitete Keepiq: $1. Za izbiro pritisnite puščico dol."
+  newPassword:
+    frameTitle: Močno geslo Keepiq
+    offer: Uporabi močno geslo
+    locked: Odklenite Keepiq za močno geslo
+    status: Uporabi močno geslo. Za izbiro pritisnite puščico dol.
 
 notificationBar:
   label: Obvestilo Keepiq

@@ -32,7 +32,7 @@
 
 ## 5. Docs
 
-- [ ] 5.1 Document the Authenticator key field, the passkeys on a login, the use-only behaviour and that new Authenticator and Passkey items are no longer created, in `docs/`. Verify: docs build.
+- [x] 5.1 Document the Authenticator key field, the passkeys on a login, the use-only behaviour and that new Authenticator and Passkey items are no longer created, in `docs/`. Verify: docs build.
 
 ## 6. Import and export (keepiq#1327)
 

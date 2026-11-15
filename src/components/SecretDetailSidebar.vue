@@ -142,6 +142,18 @@
 							</template>
 							{{ t('keepiq', 'Move') }}
 						</NcActionButton>
+						<!-- vault-item-clone-preview-and-print: a prefilled create of a
+						     new secret; never for a passkey item or a use-only copy. -->
+						<NcActionButton
+							v-if="canClone"
+							:closeAfterClick="true"
+							data-testid="secret-detail-clone"
+							@click="openClone">
+							<template #icon>
+								<ContentDuplicate :size="20" />
+							</template>
+							{{ t('keepiq', 'Clone') }}
+						</NcActionButton>
 						<NcActionButton
 							v-if="!offlineReadOnly && !federatedReadOnly"
 							:closeAfterClick="true"
@@ -663,6 +675,14 @@
 			</template>
 
 			<div v-if="secret.url" class="secret-detail__box">
+				<img
+					v-if="previewSrc"
+					:src="previewSrc"
+					:alt="t('keepiq', 'Preview of {site}', { site: secret.url })"
+					class="secret-detail__preview"
+					referrerpolicy="no-referrer"
+					loading="lazy"
+					data-testid="secret-detail-preview">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<Web :size="20" />
@@ -679,6 +699,40 @@
 								{{ secret.url }}
 							</a>
 						</div>
+						<a
+							v-if="changePasswordHref"
+							:href="changePasswordHref"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="secret-detail__change-password"
+							data-testid="secret-detail-change-password">
+							{{ t('keepiq', 'Change password') }}
+						</a>
+					</div>
+				</div>
+				<div
+					v-if="extraUrls.length > 0"
+					class="secret-detail__row secret-detail__row--block"
+					data-testid="secret-detail-extra-urls">
+					<span class="secret-detail__row-icon">
+						<Web :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'More website addresses')
+						}}</span>
+						<ul class="secret-detail__row-value secret-detail__url-list">
+							<li v-for="extra in extraUrls" :key="extra.url">
+								<a
+									v-if="extra.href"
+									:href="extra.href"
+									target="_blank"
+									rel="noopener noreferrer">
+									{{ extra.url }}
+								</a>
+								<span v-else>{{ extra.url }}</span>
+							</li>
+						</ul>
 					</div>
 				</div>
 			</div>
@@ -1026,6 +1080,7 @@ import CalendarMonthOutline from 'vue-material-design-icons/CalendarMonthOutline
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ClockOutline from 'vue-material-design-icons/ClockOutline.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import ContentDuplicate from 'vue-material-design-icons/ContentDuplicate.vue'
 import CreditCardOutline from 'vue-material-design-icons/CreditCardOutline.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Dialpad from 'vue-material-design-icons/Dialpad.vue'
@@ -1071,10 +1126,12 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { extraUrlLinks } from '../utils/additionalUrls.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { isRefusal } from '../utils/refusal.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
+import { changePasswordUrl, previewImageUrl, previewTemplate } from '../utils/siteImages.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 import { rootVaultOf } from '../utils/vaultList.js'
 
@@ -1113,6 +1170,7 @@ export default {
 		Delete,
 		Fingerprint,
 		Flash,
+		ContentDuplicate,
 		FolderMove,
 		FormatListBulleted,
 		History,
@@ -1207,6 +1265,50 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The login's extra website addresses, each with a link only when it
+		 * is a web address, so a typed `javascript:` never becomes one.
+		 *
+		 * @return {Array<{url: string, href: string|null}>}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+		 */
+		extraUrls() {
+			return extraUrlLinks(this.secret?.additionalUrls)
+		},
+
+		/**
+		 * The site preview image, only when an admin set a preview service:
+		 * with no template nothing is requested.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+		 */
+		previewSrc() {
+			return previewImageUrl(previewTemplate(), this.secret?.url)
+		},
+
+		/**
+		 * The site's change-password page, null without a web address.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+		 */
+		changePasswordHref() {
+			return changePasswordUrl(this.secret?.url)
+		},
+
+		/**
+		 * Whether the secret may be cloned: online, its value visible to the
+		 * holder (not a use-only copy), and not a passkey item, whose
+		 * credential is bound to one item.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		canClone() {
+			return Boolean(this.secret) && !this.offlineReadOnly && !this.useOnly && !this.isPasskey
+		},
+
 		/**
 		 * Whether the open secret is archived (vault-trash-and-archive).
 		 *
@@ -1881,6 +1983,32 @@ export default {
 		},
 
 		/**
+		 * Open the create dialog prefilled from this secret's decrypted fields.
+		 * Saving is an ordinary create: a new id, fresh ciphertext, no shares,
+		 * attachments, history, passkeys or one-time code.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		openClone() {
+			if (!this.secret) {
+				return
+			}
+			this.cnOpenModal('secret-create', {
+				folderId: this.secret.folderId || null,
+				prefill: {
+					typeId: this.secret.typeId || null,
+					name: this.secret.name || '',
+					url: this.secret.url || '',
+					login: this.secret.login || '',
+					key: this.secret.key || '',
+					additionalFields: this.secret.additionalFields ?? null,
+				},
+				onSaved: () => this.reloadWithList(),
+			})
+		},
+
+		/**
 		 * Open the move dialog for this secret; reload the detail and the
 		 * list behind it on success (the row may leave the visible folder).
 		 *
@@ -2363,5 +2491,26 @@ details[open] > summary .secret-detail__accordion-chevron {
 	font-weight: 600;
 	background-color: var(--color-primary-element-light, #dbe9f5);
 	color: var(--color-main-text, #222);
+}
+
+.secret-detail__url-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.secret-detail__preview {
+	display: block;
+	width: 100%;
+	max-height: 160px;
+	object-fit: cover;
+	border-radius: var(--border-radius-large);
+	margin-bottom: 8px;
+}
+
+.secret-detail__change-password {
+	display: inline-block;
+	margin-top: 4px;
+	color: var(--color-primary-element);
 }
 </style>

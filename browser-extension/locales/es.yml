@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 identidad de Keepiq. Pulsa Flecha abajo para elegir.
         n: $1 identidades de Keepiq. Pulsa Flecha abajo para elegir.
+  newPassword:
+    frameTitle: Contraseña segura de Keepiq
+    offer: Usar una contraseña segura
+    locked: Desbloquea Keepiq para obtener una contraseña segura
+    status: Usar una contraseña segura. Pulsa Flecha abajo para elegir.
 
 notificationBar:
   label: Notificación de Keepiq
