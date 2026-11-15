@@ -567,7 +567,7 @@ async function awaitWriteBack(store, save) {
  */
 function plainPatch(store, data) {
 	const payload = {}
-	for (const field of ['name', 'url', 'typeId', 'folderId']) {
+	for (const field of ['name', 'url', 'additionalUrls', 'typeId', 'folderId']) {
 		if (data[field] !== undefined) {
 			payload[field] = data[field]
 		}
@@ -1245,6 +1245,10 @@ export const useSecretStore = defineStore('secret', {
 			// set, so an unflagged create carries exactly what it did before.
 			if (data.reprompt === true) {
 				payload.reprompt = true
+			}
+			// Plain text like `url`, so search and the extension match (vault-website-addresses D1).
+			if (Array.isArray(data.additionalUrls) && data.additionalUrls.length > 0) {
+				payload.additionalUrls = data.additionalUrls
 			}
 			await encryptOptionalFields(payload, { data, publicKey })
 

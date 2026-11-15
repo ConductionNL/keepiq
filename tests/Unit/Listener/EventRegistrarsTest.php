@@ -25,6 +25,8 @@ namespace OCA\Keepiq\Tests\Unit\Listener;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Listener\AuditListener;
 use OCA\Keepiq\Listener\AuditStreamEventRegistrar;
+use OCA\Keepiq\Listener\FlowTriggerCatalogListener;
+use OCA\Keepiq\Listener\FlowTriggerForwardListener;
 use OCA\Keepiq\Listener\HoneyTripwireListener;
 use OCA\Keepiq\Listener\SiemForwardListener;
 use OCA\Keepiq\Listener\UserLifecycleEventRegistrar;
@@ -99,8 +101,15 @@ class EventRegistrarsTest extends TestCase {
 			],
 			actual: array_slice($pairs, 0, 3)
 		);
-		$this->assertCount(expectedCount: 6, haystack: $pairs);
-		foreach (array_slice($pairs, 3) as [$event, $listener]) {
+		$this->assertSame(
+			expected: [
+				[AuditEvent::class, FlowTriggerForwardListener::class],
+				[FlowTriggerCatalogListener::REGISTER_EVENT, FlowTriggerCatalogListener::class],
+			],
+			actual: array_slice($pairs, 3, 2)
+		);
+		$this->assertCount(expectedCount: 8, haystack: $pairs);
+		foreach (array_slice($pairs, 5) as [$event, $listener]) {
 			$this->assertTrue(condition: class_exists($event), message: $event);
 			$this->assertSame(expected: AuditListener::class, actual: $listener);
 		}
@@ -131,7 +140,11 @@ class EventRegistrarsTest extends TestCase {
 		(new AuditStreamEventRegistrar())->register(context: $context);
 		(new UserLifecycleEventRegistrar())->register(context: $context);
 		foreach ($this->listeners() as [$event, $listener]) {
-			$this->assertTrue(condition: is_subclass_of($event, Event::class), message: $event.' is not an event');
+			// OpenRegister's catalog event is bound by name and is not loadable without OpenRegister.
+			if ($event !== FlowTriggerCatalogListener::REGISTER_EVENT) {
+				$this->assertTrue(condition: is_subclass_of($event, Event::class), message: $event.' is not an event');
+			}
+
 			$this->assertTrue(condition: is_subclass_of($listener, IEventListener::class), message: $listener.' is not a listener');
 		}
 	}//end testEveryListenerIsAnEventListener()

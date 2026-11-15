@@ -92,6 +92,10 @@
 
 			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
+			<AdditionalUrlsField
+				v-model="additionalUrls"
+				:disabled="saving || loading || viewOnly || isCopy" />
+
 			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
 
 			<TypedFieldsForm
@@ -155,6 +159,7 @@ import {
 } from '@nextcloud/vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
@@ -178,6 +183,7 @@ import {
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import { sameUrls } from '../utils/additionalUrls.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
@@ -195,6 +201,7 @@ export default {
 	components: {
 		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
+		AdditionalUrlsField,
 		AuthenticatorKeyField,
 		PolicyBlockedNote,
 		SecretPayloadFields,
@@ -242,6 +249,10 @@ export default {
 			name: '',
 			typeId: null,
 			url: '',
+			/** The extra website addresses (vault-website-addresses). */
+			additionalUrls: [],
+			/** A received copy: its addresses are the owner's to change. */
+			isCopy: false,
 			login: '',
 			/** What happens to a saved authenticator key: keep, replace or remove. */
 			totpMode: 'keep',
@@ -416,6 +427,7 @@ export default {
 				this.typeId = secret.typeId || null
 				this.value = secret.key || ''
 				this.url = secret.url || ''
+				this.additionalUrls = Array.isArray(secret.additionalUrls) ? [...secret.additionalUrls] : []
 				this.login = secret.login || ''
 				this.tags = Array.isArray(secret.tags) ? [...secret.tags] : []
 				this.reprompt = secret.reprompt === true
@@ -491,6 +503,7 @@ export default {
 				useSecretStore().writeBackSettled(this.secretId),
 			])
 			this.viewOnly = isViewOnlyCopy(context, this.secretId)
+			this.isCopy = Boolean(context?.sourceSecretId) && context.sourceSecretId !== this.secretId
 			if (context?.sourceSecretId === this.secretId) {
 				return null
 			}
@@ -552,6 +565,9 @@ export default {
 				// with a payload built for the old shape.
 				if ((this.url || '') !== (o.url || '')) {
 					diff.url = this.url || null
+				}
+				if (!this.isCopy && !sameUrls(this.additionalUrls, o.additionalUrls)) {
+					diff.additionalUrls = [...this.additionalUrls]
 				}
 				if ((this.effectiveValue || '') !== (o.key || '')) {
 					diff.key = this.effectiveValue

@@ -17,6 +17,8 @@ interface SecretBase {
 	id: string
 	name: string
 	url: string | null
+	/** Extra website addresses, plain text like `url`. Absent from servers before vault-website-addresses. */
+	additionalUrls?: string[]
 	typeId: string | null
 	folderId: string | null
 	encryptionSuiteId: string
