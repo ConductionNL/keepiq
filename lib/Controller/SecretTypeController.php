@@ -24,11 +24,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\SecretTypeServiceInterface;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -45,19 +45,19 @@ class SecretTypeController extends OCSController {
 	 * Constructor for SecretTypeController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretTypeService $typeService The secret type service
+	 * @param SecretTypeServiceInterface $typeService The secret type service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the General admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the General admin area
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretTypeService $typeService,
+		private SecretTypeServiceInterface $typeService,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

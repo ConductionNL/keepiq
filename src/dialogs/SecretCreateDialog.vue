@@ -19,6 +19,17 @@
 			<NcNoteCard v-if="locked" type="warning">
 				{{ t('keepiq', 'Unlock the vault before creating a secret.') }}
 			</NcNoteCard>
+			<NcNoteCard
+				v-if="prefill"
+				type="info"
+				data-testid="secret-create-clone-note">
+				{{
+					t(
+						'keepiq',
+						'This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.',
+					)
+				}}
+			</NcNoteCard>
 
 			<NcTextField
 				v-model="name"
@@ -43,6 +54,8 @@
 				:disabled="saving" />
 
 			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
+
+			<AdditionalUrlsField v-model="additionalUrls" :disabled="saving" />
 
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
@@ -125,12 +138,18 @@ import {
 } from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
+import {
+	CARD_FIELDS,
+	IDENTITY_FIELDS,
+	parsePayload,
+} from '../cardIdentity/cardIdentity.js'
 import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
 import { secretSaveGuards } from '../mixins/secretSaveGuards.js'
 import { evaluateScore } from '../policy/policy.js'
@@ -147,10 +166,21 @@ import {
 	authenticatorKeyError,
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
-import { membersToObject } from '../utils/additionalFields.js'
+import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
-import { mergeTypedValues } from '../utils/typedFields.js'
+import { mergeTypedValues, splitTypedValues } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
+
+/**
+ * The name of a clone: the source's name with " (copy)".
+ *
+ * @param {string} name The source's name.
+ * @return {string}
+ * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+ */
+export function cloneName(name) {
+	return t('keepiq', '{name} (copy)', { name: String(name || '').trim() })
+}
 
 /**
  * Every folder id at or below the given roots.
@@ -184,6 +214,7 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		AdditionalUrlsField,
 		AuthenticatorKeyField,
 		TypedFieldsForm,
 		DestinationSelect,
@@ -213,20 +244,33 @@ export default {
 			type: Function,
 			default: null,
 		},
+
+		/**
+		 * A decrypted secret to clone: the form starts from its type, name
+		 * (with " (copy)"), URL, login, value, additional fields and folder.
+		 * Attachments, shares, history, passkeys and the one-time code are not
+		 * taken over; saving is an ordinary create of a new secret.
+		 */
+		prefill: {
+			type: Object,
+			default: null,
+		},
 	},
 
 	data() {
 		return {
 			open: true,
-			name: '',
-			typeId: null,
-			url: '',
-			login: '',
+			name: this.prefill ? cloneName(this.prefill.name) : '',
+			typeId: this.prefill?.typeId || null,
+			url: this.prefill?.url || '',
+			/** The extra website addresses (vault-website-addresses). */
+			additionalUrls: Array.isArray(this.prefill?.additionalUrls) ? [...this.prefill.additionalUrls] : [],
+			login: this.prefill?.login || '',
 			/** The authenticator key being entered on a login. */
 			totpInput: '',
 			additionalFields: [],
 			tags: [],
-			selectedFolderId: this.folderId,
+			selectedFolderId: this.folderId ?? this.prefill?.folderId ?? null,
 			/** Team folders the user can write to but does not own (admin-vault-policies §4.3). */
 			contributable: [],
 			/** The chosen contributable team folder, or null. */
@@ -368,6 +412,9 @@ export default {
 	 */
 	async mounted() {
 		await this.loadPolicyAndTypes()
+		if (this.prefill) {
+			this.applyPrefillPayload(this.prefill)
+		}
 		const typeStore = useSecretTypeStore()
 		if (this.typeId === null && typeStore.types.length > 0) {
 			// The user's saved default type; Login when it no longer exists (vault-20).
@@ -389,6 +436,34 @@ export default {
 
 	methods: {
 		t,
+
+		/**
+		 * Seed the value, the composite card or identity fields and the
+		 * additional fields from the secret being cloned. Runs once the types
+		 * are loaded, so the typed fields of an administrator-defined type
+		 * come out of the blob into their own form.
+		 *
+		 * @param {object} source The decrypted secret.
+		 * @return {void}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		applyPrefillPayload(source) {
+			this.value = source.key || ''
+			const split = splitTypedValues(source.additionalFields, this.typedFields)
+			this.typedValues = split.values
+			this.additionalFields = objectToMembers(split.rest)
+			const payload = parsePayload(source.key || '')
+			if (payload !== null && this.isCard) {
+				for (const field of CARD_FIELDS) {
+					this.card[field] = payload[field] === null || payload[field] === undefined ? '' : String(payload[field])
+				}
+			}
+			if (payload !== null && this.isIdentity) {
+				for (const field of IDENTITY_FIELDS) {
+					this.identity[field] = payload[field] === null || payload[field] === undefined ? '' : String(payload[field])
+				}
+			}
+		},
 
 		/**
 		 * Where a covered type may go: folders inside the user's own team
@@ -444,6 +519,7 @@ export default {
 		valueFields() {
 			return {
 				url: this.url || null,
+				...(this.additionalUrls.length > 0 ? { additionalUrls: [...this.additionalUrls] } : {}),
 				login: this.login || '',
 				key: this.effectiveValue,
 				// Only when there ARE members: the store encrypts whatever it is

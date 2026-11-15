@@ -130,6 +130,47 @@ describe('FolderMoveDialog', () => {
 		expect(wrapper.vm.open).toBe(true)
 	})
 
+	it('lists failed secrets before failed subfolders and refreshes the list once', async () => {
+		vi.spyOn(secretStore, 'updateSecret').mockImplementation((id) =>
+			id === 'secret-2'
+				? Promise.reject(new Error('secret refused'))
+				: Promise.resolve(undefined),
+		)
+		folderStore.updateFolder.mockRejectedValue(new Error('folder refused'))
+
+		const wrapper = mountDialog()
+		await wrapper.vm.$nextTick()
+		wrapper.vm.target = 'target-vault'
+
+		await wrapper.vm.submit()
+
+		expect(wrapper.vm.failures.map((f) => [f.id, f.message])).toEqual([
+			['secret-2', 'secret refused'],
+			['sub-1', 'folder refused'],
+		])
+		expect(wrapper.vm.error).toBe(
+			'Failed to move the vault contents — some items may have moved already.',
+		)
+		expect(wrapper.vm.saving).toBe(false)
+		expect(secretStore.fetchSecrets).toHaveBeenCalledTimes(1)
+	})
+
+	it('names the server reason when the contents cannot be read', async () => {
+		folderStore.fetchChildren.mockRejectedValue({
+			response: { data: { message: 'Vault not found' } },
+		})
+
+		const wrapper = mountDialog()
+		await wrapper.vm.$nextTick()
+		wrapper.vm.target = 'target-vault'
+
+		await wrapper.vm.submit()
+
+		expect(wrapper.vm.error).toBe('Vault not found')
+		expect(wrapper.vm.failures).toEqual([])
+		expect(secretStore.fetchSecrets).toHaveBeenCalledTimes(1)
+	})
+
 	it('reports that nothing moved when the contents cannot be read', async () => {
 		folderStore.fetchChildren.mockRejectedValue(new Error('network down'))
 		vi.spyOn(secretStore, 'updateSecret').mockResolvedValue(undefined)

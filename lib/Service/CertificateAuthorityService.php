@@ -31,9 +31,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\CertificateAuthorityServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\Security\ICrypto;
@@ -44,7 +45,7 @@ use RuntimeException;
 /**
  * Manages the private Certificate Authority (root + intermediate).
  */
-class CertificateAuthorityService {
+class CertificateAuthorityService implements CertificateAuthorityServiceInterface {
 	private const ROOT_LIFETIME_DAYS = 7300;
 	private const INTERMEDIATE_LIFETIME_DAYS = 1095;
 
@@ -146,7 +147,7 @@ class CertificateAuthorityService {
 			$this->logger->info('Keepiq: CA already bootstrapped, skipping');
 			// Healthy state — make sure ca_status reflects it in case a prior
 			// partial-state install left it unset or degraded.
-			$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
+			$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
 		} catch (DoesNotExistException) {
 			// Partial state: root exists but intermediate does not.
 			// Recover by issuing only the missing intermediate against the existing root.
@@ -155,7 +156,7 @@ class CertificateAuthorityService {
 			);
 			$recovered = $this->recoverIntermediate(root: $root);
 			$this->logger->info('Keepiq: CA partial-state recovery: intermediate issued', ['id' => $recovered->getId()]);
-			$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
+			$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
 			$this->logger->info('Keepiq: CA partial-state recovery complete');
 		}//end try
 	}//end ensureIntermediate()
@@ -181,7 +182,7 @@ class CertificateAuthorityService {
 		// Generate and sign the intermediate certificate.
 		$this->generateIntermediate(rootKey: $rootKey, rootCert: $rootCert);
 
-		$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'healthy');
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'healthy');
 		$this->logger->info('Keepiq: CA bootstrap complete');
 	}//end bootstrapFresh()
 
@@ -551,7 +552,7 @@ class CertificateAuthorityService {
 	 * @codeCoverageIgnore
 	 */
 	private function setDegraded(): void {
-		$this->appConfig->setValueString(Application::APP_ID, 'ca_status', 'degraded');
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'ca_status', 'degraded');
 		$this->logger->error('Keepiq: CA bootstrap failed, entering degraded state');
 	}//end setDegraded()
 }//end class

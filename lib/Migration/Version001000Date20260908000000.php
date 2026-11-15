@@ -789,6 +789,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 				['keepiq_st_name_idx', ['name']],
 			],
 		],
+		'secret_urls' => Version001020Date20261114090000::DEFINITION,
 		'secret_versions' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

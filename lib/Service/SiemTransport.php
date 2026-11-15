@@ -30,8 +30,8 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use OCA\Keepiq\Db\SiemSink;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Exception\SiemDeliveryException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\Siem\CefFormatter;
 use OCA\Keepiq\Service\Siem\SentinelRowFormatter;
 use OCA\Keepiq\Service\Siem\SplunkHecFormatter;
@@ -146,7 +146,7 @@ class SiemTransport {
 	 * @return string
 	 */
 	private function appVersion(): string {
-		$version = $this->appManager?->getAppVersion(KeepiqApp::APP_ID);
+		$version = $this->appManager?->getAppVersion(AppIdentity::APP_ID);
 		if ($version === null || $version === '') {
 			return 'unknown';
 		}

@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\LinkShareServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -41,15 +41,15 @@ class LinkShareAccessController extends OCSController {
 	 * Constructor for LinkShareAccessController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param LinkShareService $linkShareService The link share service
+	 * @param LinkShareServiceInterface $linkShareService The link share service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private LinkShareService $linkShareService,
+		private LinkShareServiceInterface $linkShareService,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

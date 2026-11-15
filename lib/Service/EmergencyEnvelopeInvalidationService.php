@@ -41,12 +41,13 @@ use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\EmergencyEnvelopeInvalidationServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
  * Key-change invalidation of break-glass recovery envelopes.
  */
-class EmergencyEnvelopeInvalidationService {
+class EmergencyEnvelopeInvalidationService implements EmergencyEnvelopeInvalidationServiceInterface {
 	/**
 	 * The recovery-envelope format this service knows how to shape-check.
 	 *

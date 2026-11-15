@@ -75,8 +75,15 @@ export interface CandidateRow {
 	id: string
 	name: string
 	url: string | null
+	/** The extra website addresses; absent from servers before vault-website-addresses. */
+	additionalUrls?: readonly string[]
 	typeId: string | null
 	blocked: boolean
+}
+
+/** Whether any of the row's addresses matches the page; each scores as the main address does. */
+function rowMatches(row: CandidateRow, page: string, rule: UriMatch): boolean {
+	return [row.url, ...(row.additionalUrls ?? [])].some((url) => matches(url, page, rule))
 }
 
 /** The `login` rows matching the page, last used first, then by name. `lastUsed` is item id to epoch ms. */
@@ -88,7 +95,7 @@ export function candidatesFor<T extends CandidateRow>(
 ): T[] {
 	if (page === undefined) return []
 	const loginTypes = new Set(vault.types.filter((type) => type.name === 'login').map((type) => type.id))
-	const found = vault.secrets.filter((row) => !row.blocked && row.typeId !== null && loginTypes.has(row.typeId) && matches(row.url, page, rule))
+	const found = vault.secrets.filter((row) => !row.blocked && row.typeId !== null && loginTypes.has(row.typeId) && rowMatches(row, page, rule))
 	return byLastUsed(found, lastUsed)
 }
 

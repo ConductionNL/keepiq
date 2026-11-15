@@ -32,8 +32,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Repair;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IUserManager;
@@ -103,8 +103,8 @@ class SeedDemoVaults implements IRepairStep {
 	 * @spec openspec/specs/demo-vault/spec.md#requirement-a-demo-vault-is-minted-only-for-a-named-cast-account
 	 */
 	public function run(IOutput $output): void {
-		$owners   = array_filter(array_map('trim', explode(',', $this->appConfig->getValueString(Application::APP_ID, self::OWNERS_KEY, ''))));
-		$password = $this->appConfig->getValueString(Application::APP_ID, self::PASSWORD_KEY, '');
+		$owners   = array_filter(array_map('trim', explode(',', $this->appConfig->getValueString(AppIdentity::APP_ID, self::OWNERS_KEY, ''))));
+		$password = $this->appConfig->getValueString(AppIdentity::APP_ID, self::PASSWORD_KEY, '');
 		if ($owners === [] || $password === '') {
 			return;
 		}

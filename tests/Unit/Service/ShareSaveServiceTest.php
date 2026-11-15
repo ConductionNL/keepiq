@@ -875,6 +875,21 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame('source_base_required', $refusal->getError());
 	}
 
+	public function testACopyEditorNamingPartnerSharesIsRefusedBeforeTheMissingSourceVersion(): void {
+		$this->bobWritesOnAGrade();
+		$request = $this->bobRequest(
+			[
+				'suspend' => [['shareId' => 'fs-1', 'reason' => 'unverified']],
+				'sourceBaseUpdatedAt' => null,
+			]
+		);
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $request, userId: 'bob'));
+
+		$this->assertSame('federated_owner_only', $refusal->getError());
+		$this->assertSame('Only the owner writes partner shares', $refusal->getMessage());
+	}
+
 	public function testACopyHolderWithoutAWriteGradeIsSentToTheirOwnRow(): void {
 		$this->auth->method('isOwnerOrDelegate')->willReturn(false);
 		$this->auth->method('resolveGrade')->willReturn('read');

@@ -30,9 +30,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\VaultPolicyServiceInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
@@ -41,11 +42,7 @@ use OCP\IUserSession;
 /**
  * Reads, writes and evaluates the vault policies.
  */
-class VaultPolicyService {
-	/**
-	 * Policy: block personal vault export.
-	 */
-	public const EXPORT_DISABLED = 'vault_export_disabled';
+class VaultPolicyService implements VaultPolicyServiceInterface {
 
 	/**
 	 * Policy: require Nextcloud two-factor login before the vault unlocks.
@@ -113,7 +110,7 @@ class VaultPolicyService {
 	public function read(): array {
 		$settings = [];
 		foreach (self::POLICIES as $policy) {
-			$settings[$policy] = $this->appConfig->getValueBool(Application::APP_ID, $policy, false);
+			$settings[$policy] = $this->appConfig->getValueBool(AppIdentity::APP_ID, $policy, false);
 			$settings[$policy . '_groups'] = $this->readList(key: $policy . '_groups', default: []);
 		}
 
@@ -166,11 +163,11 @@ class VaultPolicyService {
 	private function store(array $writes): void {
 		foreach ($writes as $key => $value) {
 			if (is_bool($value) === true) {
-				$this->appConfig->setValueBool(Application::APP_ID, $key, $value);
+				$this->appConfig->setValueBool(AppIdentity::APP_ID, $key, $value);
 				continue;
 			}
 
-			$this->appConfig->setValueString(Application::APP_ID, $key, (string)json_encode($value));
+			$this->appConfig->setValueString(AppIdentity::APP_ID, $key, (string)json_encode($value));
 		}
 	}//end store()
 
@@ -210,7 +207,7 @@ class VaultPolicyService {
 	 */
 	public function appliesTo(string $policy, string $userId): bool {
 		if (in_array($policy, self::POLICIES, true) === false
-			|| $this->appConfig->getValueBool(Application::APP_ID, $policy, false) === false
+			|| $this->appConfig->getValueBool(AppIdentity::APP_ID, $policy, false) === false
 		) {
 			return false;
 		}
@@ -364,7 +361,7 @@ class VaultPolicyService {
 	 */
 	private function readList(string $key, array $default): array {
 		$decoded = json_decode(
-			$this->appConfig->getValueString(Application::APP_ID, $key, (string)json_encode($default)),
+			$this->appConfig->getValueString(AppIdentity::APP_ID, $key, (string)json_encode($default)),
 			true
 		);
 		if (is_array($decoded) === false) {

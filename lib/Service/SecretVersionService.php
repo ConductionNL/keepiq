@@ -37,6 +37,7 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Kernel\Contracts\SecretVersionServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -54,7 +55,7 @@ use Ramsey\Uuid\Uuid;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A restore joins the version,
  *   the head, the read gate, the stale check and the audit in one step.
  */
-class SecretVersionService {
+class SecretVersionService implements SecretVersionServiceInterface {
 	use TTransactional;
 
 	/**

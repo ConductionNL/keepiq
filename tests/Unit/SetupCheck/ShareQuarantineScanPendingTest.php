@@ -94,4 +94,43 @@ class ShareQuarantineScanPendingTest extends TestCase {
 		$this->assertSame('security', $check->getCategory());
 		$this->assertSame(SetupResult::WARNING, $this->check(completed: 'an-earlier-generation')->run()->getSeverity());
 	}//end testPassesOnceTheScanCompleted()
+
+	/**
+	 * The check's name and its success text are the app's translations of
+	 * those exact source strings, so the admin overview shows them localized.
+	 *
+	 * @return void
+	 */
+	public function testNameAndSuccessTextAreTranslated(): void {
+		$appConfig = $this->createMock(originalClassName: IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnMap(
+			[
+				['keepiq', ShareQuarantineScanner::COMPLETED_KEY, '', ShareQuarantineScanner::INITIAL_GENERATION],
+				['keepiq', ShareQuarantineScanner::GENERATION_KEY, ShareQuarantineScanner::INITIAL_GENERATION, ShareQuarantineScanner::INITIAL_GENERATION],
+			]
+		);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
+		$l10n->method('t')->willReturnMap(
+			[
+				['Keepiq share quarantine scan', [], 'Keepiq-scan op quarantaine van shares'],
+				['The share quarantine scan has completed.', [], 'De quarantainescan van shares is voltooid.'],
+			]
+		);
+
+		$check = new ShareQuarantineScanPending(
+			scanner: new ShareQuarantineScanner(
+				db: $this->createMock(originalClassName: IDBConnection::class),
+				appConfig: $appConfig,
+				logger: new NullLogger(),
+				auditService: $this->createMock(originalClassName: AuditService::class),
+				siem: $this->createMock(originalClassName: SiemService::class),
+			),
+			l10n: $l10n,
+		);
+
+		$this->assertSame(expected: 'Keepiq-scan op quarantaine van shares', actual: $check->getName());
+		$result = $check->run();
+		$this->assertSame(expected: SetupResult::SUCCESS, actual: $result->getSeverity());
+		$this->assertSame(expected: 'De quarantainescan van shares is voltooid.', actual: $result->getDescription());
+	}//end testNameAndSuccessTextAreTranslated()
 }//end class

@@ -169,6 +169,31 @@ describe('team folder fan-out (golden)', () => {
 		expect(store.fanOut).toEqual({ total: 3, done: 3, running: false })
 	})
 
+	it("reads a manager's own copy once per source and names an unknown refused source by its id", async () => {
+		const store = useTeamFolderStore()
+		const reconciled = state(1, ['bob', 'eve'])
+		reconciled.secrets[0].copyId = 'copy-s0'
+		reconciled.missing.push({ secretId: 's-unknown', userId: 'bob' })
+		wire(store, reconciled, (shares) => ({
+			created: shares.length,
+			rows: [],
+			skipped: [{ sourceSecretId: 's-gone', reason: 'copy_fields_mismatch' }],
+		}))
+		const result = await store.runFanOut('tf-1')
+
+		expect(events.filter((e) => e[0] === 'decrypt')).toEqual([
+			['decrypt', 'copy-s0'],
+			['decrypt', 's-unknown'],
+		])
+		expect(result).toEqual({
+			created: 3,
+			cancelled: false,
+			skipped: [],
+			refused: ['s-gone'],
+		})
+		expect(store.fanOut).toEqual({ total: 3, done: 3, running: false })
+	})
+
 	it('fans out to one member only when asked', async () => {
 		const store = useTeamFolderStore()
 		wire(store, state(2, ['bob', 'eve']), createAll)

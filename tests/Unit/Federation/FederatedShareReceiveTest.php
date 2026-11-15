@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Federation;
 
-use OCA\Keepiq\AppInfo\FederationEventRegistrar;
+use OCA\Keepiq\Listener\FederationEventRegistrar;
 use OCA\Keepiq\Db\FederatedInbound;
 use OCA\Keepiq\Db\FederatedInboundMapper;
 use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;

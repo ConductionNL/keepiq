@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Listener;
 
-use OCA\Keepiq\Service\GroupShareService;
-use OCA\Keepiq\Service\TeamFolderService;
+use OCA\Keepiq\Kernel\Contracts\GroupShareServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Group\Events\UserRemovedEvent;
@@ -40,15 +40,15 @@ class UserRemovedFromGroupListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param GroupShareService $groupShareService The group-share service
-	 * @param TeamFolderService $teamFolderService The team-folder service
+	 * @param GroupShareServiceInterface $groupShareService The group-share service
+	 * @param TeamFolderServiceInterface $teamFolderService The team-folder service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private GroupShareService $groupShareService,
-		private TeamFolderService $teamFolderService,
+		private GroupShareServiceInterface $groupShareService,
+		private TeamFolderServiceInterface $teamFolderService,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

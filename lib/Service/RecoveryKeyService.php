@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\RecoveryOfficer;
 use OCA\Keepiq\Db\RecoveryOfficerMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\RecoveryKeyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 
@@ -42,7 +43,7 @@ use Ramsey\Uuid\Uuid;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The key lifecycle touches the
  *   CA, the suites and both recovery tables.
  */
-class RecoveryKeyService {
+class RecoveryKeyService implements RecoveryKeyServiceInterface {
 
 	public const STATUS_ACTIVE = 'active';
 

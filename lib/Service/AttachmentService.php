@@ -28,7 +28,6 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\Attachment;
 use OCA\Keepiq\Db\AttachmentGrant;
 use OCA\Keepiq\Db\AttachmentGrantMapper;
@@ -39,6 +38,8 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AttachmentServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\AppData\IAppDataFactory;
@@ -53,7 +54,7 @@ use Ramsey\Uuid\Uuid;
  *   attachment/grant/secret/suite mappers plus app-data and config so the
  *   blob + grant invariants live in one place.
  */
-class AttachmentService {
+class AttachmentService implements AttachmentServiceInterface {
 	/**
 	 * The IAppData folder holding attachment ciphertext blobs.
 	 */
@@ -66,7 +67,7 @@ class AttachmentService {
 	 * relocated by OCA\Keepiq\Repair\MoveAttachmentBlobs before this is
 	 * read — see blobFolder().
 	 */
-	private const BLOB_APP_DATA_NAMESPACE = Application::APP_ID;
+	private const BLOB_APP_DATA_NAMESPACE = AppIdentity::APP_ID;
 
 	/**
 	 * The pre-rename AppData namespace, still consulted on READ.
@@ -82,7 +83,7 @@ class AttachmentService {
 	 * migration having completed, which is what makes the migration safe to
 	 * make non-fatal. Writes never come here; this is a read-only tail that
 	 * goes away with the rest of the pre-stable compatibility, per
-	 * Application::PRE_STABLE_COMPAT_REMOVED_IN.
+	 * AppIdentity::PRE_STABLE_COMPAT_REMOVED_IN.
 	 *
 	 * @var string
 	 */
@@ -252,14 +253,14 @@ class AttachmentService {
 	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
 	 */
 	private function assertWithinLimits(AttachmentUpload $upload, int $size): void {
-		$maxBytes = $this->appConfig->getValueInt(Application::APP_ID, 'attachment_max_bytes', 26214400);
+		$maxBytes = $this->appConfig->getValueInt(AppIdentity::APP_ID, 'attachment_max_bytes', 26214400);
 		if ($size > $maxBytes) {
 			throw new InvalidArgumentException(
 				'Attachment exceeds the per-attachment limit of ' . $maxBytes . ' bytes'
 			);
 		}
 
-		$quota = $this->appConfig->getValueInt(Application::APP_ID, 'attachment_user_quota_bytes', 104857600);
+		$quota = $this->appConfig->getValueInt(AppIdentity::APP_ID, 'attachment_user_quota_bytes', 104857600);
 		$used = $this->mapper->sumBytesForOwner(ownerId: $upload->userId);
 		if (($used + $size) > $quota) {
 			throw new InvalidArgumentException(

@@ -240,7 +240,8 @@ describe('sign-up and password change', () => {
 		expect(classifyField($('#u'))).toBe('username')
 		expect(classifyField($('#p'))).toBe('newPassword')
 		expect(classifyField($('#c'))).toBe('newPassword')
-		for (const id of ['#e', '#u', '#p', '#c']) expect(isQualifying($(id))).toBeNull()
+		for (const id of ['#e', '#u']) expect(isQualifying($(id))).toBeNull()
+		for (const id of ['#p', '#c']) expect(isQualifying($(id))).toBe('newPassword')
 	})
 
 	it('classifies a sign-up with one password and no tokens by its submit text', () => {
@@ -266,7 +267,9 @@ describe('sign-up and password change', () => {
 		expect(group?.username).toBe($('#u'))
 		expect(group?.currentPassword).toBe($('#cur'))
 		expect(group?.newPasswords).toEqual([$('#new'), $('#c')])
-		for (const id of ['#u', '#cur', '#new', '#c']) expect(isQualifying($(id))).toBeNull()
+		// The current password gets no offer; the new one and its confirmation do.
+		for (const id of ['#u', '#cur']) expect(isQualifying($(id))).toBeNull()
+		for (const id of ['#new', '#c']) expect(isQualifying($(id))).toBe('newPassword')
 	})
 
 	it('reads three unlabelled password fields as current, new and confirm by their shape', () => {
@@ -298,7 +301,8 @@ describe('sign-up and password change', () => {
 			<button>Save</button>
 		</form>`)
 		expect(groupOf($('#new'))?.kind).toBe('passwordChange')
-		expect(isQualifying($('#new'))).toBeNull()
+		expect(isQualifying($('#new'))).toBe('newPassword')
+		expect(isQualifying($('#c'))).toBe('newPassword')
 	})
 })
 
@@ -540,9 +544,9 @@ describe('formless groups', () => {
 			expect(submits).not.toContain(document.getElementById('header-signup'))
 		})
 
-		it('qualifies the login panel fields only', () => {
-			const qualifying = ['#lu', '#lp', '#su', '#sp', '#sc', '#ne'].filter((id) => isQualifying($(id)))
-			expect(qualifying).toEqual(['#lu', '#lp'])
+		it('qualifies the login panel fields, and the sign-up panel\'s new passwords for the offer', () => {
+			const qualifying = ['#lu', '#lp', '#su', '#sp', '#sc', '#ne'].map((id) => [id, isQualifying($(id))]).filter(([, mode]) => mode)
+			expect(qualifying).toEqual([['#lu', 'login'], ['#lp', 'login'], ['#sp', 'newPassword'], ['#sc', 'newPassword']])
 		})
 
 		it('finds the login panel as the only login', () => {

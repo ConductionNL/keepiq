@@ -198,4 +198,19 @@ class SeedDemoVaultsTest extends TestCase {
 		$this->assertSame(expected: '{{cast:pieter.uid}}', actual: $config[SeedDemoVaults::OWNERS_KEY]);
 		$this->assertStringContainsString(needle: 'demo', haystack: strtolower($config[SeedDemoVaults::PASSWORD_KEY]));
 	}//end testTheExampleSetNamesTheDemoEmployee()
+
+	/**
+	 * When no suite can be minted, nothing is seeded into it.
+	 *
+	 * @return void
+	 */
+	public function testNoSecretsAreSeededWhenNoSuiteIsMinted(): void {
+		$this->suiteMapper->method('findByOwner')->willReturn([]);
+		$this->suites->expects($this->once())->method('mintSuite')
+			->with('pieter', 'demo', $this->anything())
+			->willReturn(null);
+		$this->secrets->expects($this->never())->method('seedSecrets');
+
+		$this->step(owners: 'pieter', password: 'demo')->run($this->createMock(originalClassName: IOutput::class));
+	}//end testNoSecretsAreSeededWhenNoSuiteIsMinted()
 }//end class

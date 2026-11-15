@@ -20,11 +20,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Service\RecoveryEnrolmentService;
-use OCA\Keepiq\Service\RecoveryRequestService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\RecoveryEnrolmentServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RecoveryRequestServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -42,8 +42,8 @@ class RecoveryUserController extends Controller {
 	 * Constructor for RecoveryUserController.
 	 *
 	 * @param IRequest                 $request     The request
-	 * @param RecoveryEnrolmentService $enrolments  The enrolment service
-	 * @param RecoveryRequestService   $requests    The request service
+	 * @param RecoveryEnrolmentServiceInterface $enrolments  The enrolment service
+	 * @param RecoveryRequestServiceInterface   $requests    The request service
 	 * @param IUserSession             $userSession The user session
 	 *
 	 * @return void
@@ -52,11 +52,11 @@ class RecoveryUserController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private RecoveryEnrolmentService $enrolments,
-		private RecoveryRequestService $requests,
+		private RecoveryEnrolmentServiceInterface $enrolments,
+		private RecoveryRequestServiceInterface $requests,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

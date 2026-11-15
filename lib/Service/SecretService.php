@@ -37,6 +37,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
+use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
@@ -46,6 +47,7 @@ use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
+use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\TTransactional;
@@ -78,15 +80,8 @@ use Throwable;
  *   names the collaborator exactly; abbreviating it would obscure the
  *   sharing-graph cascade.
  */
-class SecretService {
+class SecretService implements SecretServiceInterface {
 	use TTransactional;
-
-	/**
-	 * The default page size.
-	 *
-	 * @var int
-	 */
-	public const DEFAULT_LIMIT = 50;
 
 	/**
 	 * Rows fetched per page during the Stage-2 fuzzy Levenshtein scan
@@ -117,14 +112,6 @@ class SecretService {
 	 * @var int
 	 */
 	public const MAX_LIMIT = 100;
-
-	/**
-	 * The fields a client may change through update(); `mergedPending` and
-	 * `baseUpdatedAt` ride along but are not fields of the row.
-	 *
-	 * @var string[]
-	 */
-	public const UPDATABLE_FIELDS = ['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'totp', 'passkeys'];
 
 	/**
 	 * The suite statuses that block access to encrypted fields.
@@ -161,6 +148,7 @@ class SecretService {
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
+	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
 	 *
 	 * @return void
 	 */
@@ -188,6 +176,7 @@ class SecretService {
 		private ?OrgOwnershipGuard $orgOwnership = null,
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 		private ?FederatedShareService $federatedShares = null,
+		private ?SecretUrlMapper $urlMapper = null,
 	) {
 	}//end __construct()
 
@@ -1491,6 +1480,7 @@ class SecretService {
 		$this->versionService?->deleteForSecret($secretId);
 		$this->rotationService?->deleteForSecret($secretId);
 		$this->tagMapper?->deleteBySecret($secretId);
+		$this->urlMapper?->deleteBySecret($secretId);
 	}//end deleteSecretData()
 
 	/**
