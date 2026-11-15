@@ -37,15 +37,15 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Service\MachineSecretEnvelopeService;
-use OCA\Keepiq\Service\MachineSecretResponseService;
-use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\MachineSecretEnvelopeServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\MachineSecretResponseServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -86,9 +86,9 @@ class ApplicationSecretsController extends ApplicationApiController {
 	 * @param IRequest $request The HTTP request
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param FolderMapper $folderMapper The folder mapper
-	 * @param SecretService $secretService The secret write service
-	 * @param MachineSecretEnvelopeService $envelopeService The envelope serializer
-	 * @param MachineSecretResponseService $responseService The single-secret response builder
+	 * @param SecretServiceInterface $secretService The secret write service
+	 * @param MachineSecretEnvelopeServiceInterface $envelopeService The envelope serializer
+	 * @param MachineSecretResponseServiceInterface $responseService The single-secret response builder
 	 *
 	 * @return void
 	 */
@@ -96,11 +96,11 @@ class ApplicationSecretsController extends ApplicationApiController {
 		IRequest $request,
 		private SecretMapper $secretMapper,
 		private FolderMapper $folderMapper,
-		private SecretService $secretService,
-		private MachineSecretEnvelopeService $envelopeService,
-		private MachineSecretResponseService $responseService,
+		private SecretServiceInterface $secretService,
+		private MachineSecretEnvelopeServiceInterface $envelopeService,
+		private MachineSecretResponseServiceInterface $responseService,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -139,7 +139,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 
 		return new JSONResponse(
 			data: [
-				'format' => MachineSecretEnvelopeService::FORMAT,
+				'format' => MachineSecretEnvelopeServiceInterface::FORMAT,
 				'items' => array_map(
 					fn (Secret $secret) => $this->envelopeService->serialize($secret),
 					$secrets

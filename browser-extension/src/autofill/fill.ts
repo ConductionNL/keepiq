@@ -89,12 +89,25 @@ async function framesFor(tabId: number, row: OpenSecretRow, types: VaultSnapshot
 	return (await tabFrames(tabId)).filter((frame) => fits(row, types, rule, frame.url))
 }
 
-// A bare host reads as https, as everywhere else; a url that does not parse (a regular expression) never warns.
-export const isInsecure = (row: OpenSecretRow, frames: FrameRecord[]) =>
-	webUrl(row.url)?.protocol === 'https:' && frames.some((frame) => new URL(frame.url).protocol === 'http:')
+/**
+ * Any http frame asks first, whatever address the login was saved with (spec `health-site-checks`
+ * § Flag logins saved with an unencrypted address).
+ *
+ * @spec openspec/changes/health-site-security-checks
+ */
+export const isInsecure = (_row: OpenSecretRow, frames: FrameRecord[]) =>
+	frames.some((frame) => new URL(frame.url).protocol === 'http:')
 
-async function confirmInPage(tabId: number, itemUrl: string | null): Promise<boolean> {
-	const message: BackgroundToContent = { kind: 'fill.confirmInsecure', itemHost: webUrl(itemUrl)?.host ?? '' }
+/**
+ * Whether the login was saved on an https page, so the question can say so; a bare host reads as https,
+ * as everywhere else, and a url that does not parse (a regular expression) does not.
+ *
+ * @spec openspec/changes/health-site-security-checks
+ */
+export const savedSecure = (row: OpenSecretRow) => webUrl(row.url)?.protocol === 'https:'
+
+async function confirmInPage(tabId: number, row: OpenSecretRow): Promise<boolean> {
+	const message: BackgroundToContent = { kind: 'fill.confirmInsecure', itemHost: webUrl(row.url)?.host ?? '', savedSecure: savedSecure(row) }
 	return await browser.tabs.sendMessage(tabId, message, { frameId: 0 }).catch(() => false) === true
 }
 
@@ -147,8 +160,8 @@ async function loginFrames({ target, row, types, rule }: LoginFill): Promise<Fra
 		: await framesFor(target.tabId, row, types, rule)
 	if (!frames.length) return NO_FIELDS
 	if (target.confirmedInsecure || !isInsecure(row, frames)) return frames
-	if (target.ask === 'reply') return { ...NONE, needsInsecureConfirm: true }
-	return await confirmInPage(target.tabId, row.url) ? frames : NONE
+	if (target.ask === 'reply') return { ...NONE, needsInsecureConfirm: true, savedSecure: savedSecure(row) }
+	return await confirmInPage(target.tabId, row) ? frames : NONE
 }
 
 async function credentialOf(row: OpenSecretRow, key: CryptoKey): Promise<{ username: string | null; password: string } | null> {
@@ -194,25 +207,52 @@ async function afterLoginFill({ tabId, accountId, row, seed, settings }: LoginFi
 	if (copied) await writeFromBackground(copied, settings.clearClipboardMs, { codeOf: accountId })
 }
 
+/** The unlocked account's vault and the row a fill is for. */
+interface FillSource {
+	accountId: string
+	vault: VaultSnapshot
+	row: OpenSecretRow
+}
+
 export async function fill(target: FillTarget): Promise<FillResult> {
+	const source = await fillSource(target)
+	if (!source) return NONE
+	const kind = walletKind(source.row, source.vault.types)
+	if (kind) return await fillForm({ target, accountId: source.accountId, row: source.row, kind })
+	return fillLogin(target, source)
+}
+
+async function fillSource(target: FillTarget): Promise<FillSource | null> {
 	const accountId = await activeUnlockedId()
 	const vault = accountId ? await readSnapshot(accountId) : undefined
-	const row = vault?.secrets.find((secret) => secret.id === target.itemId)
-	if (!accountId || !vault || !row || row.blocked) return NONE
-	const kind = walletKind(row, vault.types)
-	if (kind) return await fillForm({ target, accountId, row, kind })
+	if (!accountId || !vault) return null
+	const row = unblockedRow(vault, target.itemId)
+	return row ? { accountId, vault, row } : null
+}
+
+function unblockedRow(vault: VaultSnapshot, itemId: string): OpenSecretRow | null {
+	const row = vault.secrets.find((secret) => secret.id === itemId)
+	return row && !row.blocked ? row : null
+}
+
+async function fillLogin(target: FillTarget, { accountId, vault, row }: FillSource): Promise<FillResult> {
 	const settings = await readSettings(accountId)
 	const frames = await loginFrames({ target, row, types: vault.types, rule: settings.uriMatch })
 	if (!Array.isArray(frames)) return frames
 	// Read after the question, so a lock while it was open still stops the fill.
 	const key = await getKey(accountId)
-	const credential = key ? await credentialOf(row, key) : null
-	if (!key || !credential) return NONE
+	if (!key) return NONE
+	const credential = await credentialOf(row, key)
+	if (!credential) return NONE
 	const seed = target.code ? await seedOf(row, key) : null
 	const replies = await sendLogin({ target, frames, credential, code: await codeOf(seed) })
+	return loginResult(replies, { tabId: target.tabId, accountId, row, seed, settings })
+}
+
+async function loginResult(replies: Awaited<ReturnType<typeof sendLogin>>, filled: LoginFilled): Promise<FillResult> {
 	if (replies.every(answeredNone)) return NO_FIELDS
 	const result = combine(replies)
-	if (filledSomething(result)) await afterLoginFill({ tabId: target.tabId, accountId, row, seed, settings })
+	if (filledSomething(result)) await afterLoginFill(filled)
 	return result
 }
 

@@ -38,6 +38,8 @@ use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use InvalidArgumentException;
+use OCA\Keepiq\Exception\NotFoundException;
 
 /**
  * The update route forwards only the fields the request carries, maps a
@@ -229,4 +231,43 @@ class SecretUpdateControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 		$this->assertSame(['message' => Secret::VIEW_ONLY_REFUSAL, 'code' => 'view_only'], $response->getData());
 	}//end testAValueChangeOfAViewOnlyCopyAnswers403()
+
+	/**
+	 * Without a user nothing is updated and the answer is 401.
+	 *
+	 * @return void
+	 */
+	public function testWithoutAUserTheAnswerIs401(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
+		$service = $this->createMock(SecretService::class);
+		$service->expects($this->never())->method('update');
+		$controller = new SecretUpdateController(request: $this->createMock(IRequest::class), secretService: $service, userSession: $session);
+
+		$response = $controller->update('s-1');
+
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		$this->assertSame(['message' => 'Unauthorized'], $response->getData());
+	}//end testWithoutAUserTheAnswerIs401()
+
+	/**
+	 * An unknown secret answers 404, and invalid input 400, each with the service's message.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownSecretIs404AndInvalidInputIs400(): void {
+		$controller = $this->controller(['name' => 'X']);
+		$this->secretService->method('update')->willThrowException(new NotFoundException('Secret not found'));
+
+		$response = $controller->update('s-1');
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame(['message' => 'Secret not found'], $response->getData());
+
+		$controller = $this->controller(['name' => '']);
+		$this->secretService->method('update')->willThrowException(new InvalidArgumentException('Name is required'));
+
+		$response = $controller->update('s-1');
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(['message' => 'Name is required'], $response->getData());
+	}//end testAnUnknownSecretIs404AndInvalidInputIs400()
 }//end class

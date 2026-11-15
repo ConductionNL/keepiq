@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
-use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
+use OCA\Keepiq\Kernel\Contracts\EmergencyEnvelopeInvalidationServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -44,13 +44,13 @@ class EmergencyAccessSuiteRevocationListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param EmergencyEnvelopeInvalidationService $service The envelope-invalidation service
+	 * @param EmergencyEnvelopeInvalidationServiceInterface $service The envelope-invalidation service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private EmergencyEnvelopeInvalidationService $service,
+		private EmergencyEnvelopeInvalidationServiceInterface $service,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

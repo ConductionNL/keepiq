@@ -441,4 +441,77 @@ class X509CertificateAssemblerTest extends TestCase {
 		);
 
 	}//end testResignReturnsNullForAnUnparseableCertificate()
+
+	/**
+	 * A renewal starts a day back, runs a year and gets a new serial.
+	 *
+	 * @return void
+	 */
+	public function testResignSetsTheValidityWindowAndANewSerial(): void {
+		$original = $this->assembler->issueForPublicKey(
+			$this->publicKeyPem(2048),
+			['id-at-commonName' => 'window@example.com'],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
+		$before = time();
+		$renewed = $this->assembler->resignPreservingSubject(
+			$original,
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
+		$after = time();
+
+		$this->assertNotNull($renewed);
+		$parsed = openssl_x509_parse($renewed);
+		$this->assertGreaterThanOrEqual($before - 86400 - 1, $parsed['validFrom_time_t']);
+		$this->assertLessThanOrEqual($after - 86400 + 1, $parsed['validFrom_time_t']);
+		$this->assertGreaterThanOrEqual($before + (365 * 86400) - 1, $parsed['validTo_time_t']);
+		$this->assertLessThanOrEqual($after + (365 * 86400) + 1, $parsed['validTo_time_t']);
+		$this->assertNotSame(openssl_x509_parse($original)['serialNumber'], $parsed['serialNumber']);
+	}//end testResignSetsTheValidityWindowAndANewSerial()
+
+	/**
+	 * A re-sign that fails logs the reason under the app and returns null.
+	 *
+	 * @return void
+	 */
+	public function testAFailedResignLogsTheReasonUnderTheApp(): void {
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())->method('warning')->with(
+			$this->stringStartsWith('Keepiq: phpseclib re-sign failed: '),
+			['app' => 'keepiq']
+		);
+		$assembler = new X509CertificateAssembler($logger);
+
+		$this->assertNull(
+			$assembler->resignPreservingSubject(
+				'-----BEGIN CERTIFICATE-----\nnope\n-----END CERTIFICATE-----',
+				$this->intermediateCertPem,
+				$this->intermediatePrivPem,
+			)
+		);
+	}//end testAFailedResignLogsTheReasonUnderTheApp()
+
+	/**
+	 * A signing key that is not a private key gives null, and the old certificate is not re-signed.
+	 *
+	 * @return void
+	 */
+	public function testResignWithAPublicKeyAsTheSigningKeyIsNull(): void {
+		$original = $this->assembler->issueForPublicKey(
+			$this->publicKeyPem(2048),
+			['id-at-commonName' => 'nokey@example.com'],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
+
+		$this->assertNull(
+			$this->assembler->resignPreservingSubject(
+				$original,
+				$this->intermediateCertPem,
+				$this->publicKeyPem(2048),
+			)
+		);
+	}//end testResignWithAPublicKeyAsTheSigningKeyIsNull()
 }//end class

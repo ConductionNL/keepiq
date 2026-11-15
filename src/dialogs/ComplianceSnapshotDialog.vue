@@ -113,6 +113,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog } from '@nextcloud/vue'
+import { localDateTime } from '../utils/dateTime.js'
 
 export default {
 	name: 'ComplianceSnapshotDialog',
@@ -246,19 +247,8 @@ export default {
 			return titles[section] || section
 		},
 
-		/**
-		 * Locale date-time display.
-		 *
-		 * @param {string} iso The ISO timestamp.
-		 * @return {string}
-		 * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
-		 */
-		formatDate(iso) {
-			const parsed = Date.parse(iso ?? '')
-			return Number.isNaN(parsed)
-				? (iso ?? '')
-				: new Date(parsed).toLocaleString()
-		},
+		/** Locale date-time display of an ISO timestamp. */
+		formatDate: localDateTime,
 	},
 }
 </script>

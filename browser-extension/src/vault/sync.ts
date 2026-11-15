@@ -156,30 +156,59 @@ async function run(accountId: string, mode: SyncMode): Promise<void> {
 	const policy = fetchPolicies(client)
 	// The policy does not depend on the vault, so a failed vault sync keeps a policy that arrived.
 	try {
-		await runVault(accountId, mode, client, account)
+		await runVault({ accountId, mode, client, account })
 	} finally {
 		await storePolicy(accountId, policy)
 	}
 }
 
-async function runVault(accountId: string, mode: SyncMode, client: Client, account: AccountRecord): Promise<void> {
-	const cached = await readSnapshot(accountId)
-	if (mode === 'probe' && cached) {
-		const [same, suite] = await Promise.all([unchanged(client, cached), client.listSuites().then(activeRow)])
-		// An unchanged vault skips the manifest, so the two-factor policy and a new key are read here.
-		if (typeof suite.privateKey !== 'string' || suite.unlockBlocked) return blockUnlock(accountId)
-		if (same && suite.id === cached.suite.id && suite.unlockKeyEpoch === cached.suite.unlockKeyEpoch) {
-			await markChecked(accountId, new Date().toISOString())
-			if (!(await loggedIn(accountId))) await undoWrites(accountId)
-			return
-		}
+/** One vault sync: the account, how far it goes, and the client it asks with. */
+interface VaultSync {
+	accountId: string
+	mode: SyncMode
+	client: Client
+	account: AccountRecord
+}
+
+async function runVault(sync: VaultSync): Promise<void> {
+	const cached = await readSnapshot(sync.accountId)
+	if (await settledByProbe(sync, cached)) return
+	const fetched = await fetchFresh(sync, cached)
+	// A logout during the fetch must not bring the suite or the vault back.
+	if (!fetched) return
+	if (fetched.unlockBlocked) return blockUnlock(sync.accountId)
+	return storeFetched(sync.accountId, fetched)
+}
+
+/** A probe of a cached vault ends the sync when the vault is unchanged, or the two-factor policy now blocks the unlock. */
+async function settledByProbe(sync: VaultSync, cached: VaultSnapshot | undefined): Promise<boolean> {
+	if (sync.mode !== 'probe' || !cached) return false
+	return settleProbe(sync, cached)
+}
+
+async function settleProbe({ accountId, client }: VaultSync, cached: VaultSnapshot): Promise<boolean> {
+	const [same, suite] = await Promise.all([unchanged(client, cached), client.listSuites().then(activeRow)])
+	// An unchanged vault skips the manifest, so the two-factor policy and a new key are read here.
+	if (!isUnlockable(suite)) {
+		await blockUnlock(accountId)
+		return true
 	}
+	if (!(same && sameSuiteAs(suite, cached))) return false
+	await markChecked(accountId, new Date().toISOString())
+	if (!(await loggedIn(accountId))) await undoWrites(accountId)
+	return true
+}
+
+const sameSuiteAs = (suite: SuiteRow, cached: VaultSnapshot) => suite.id === cached.suite.id && suite.unlockKeyEpoch === cached.suite.unlockKeyEpoch
+
+/** The fetched vault, or `null` when the account logged out meanwhile. */
+async function fetchFresh({ accountId, client, account }: VaultSync, cached: VaultSnapshot | undefined): Promise<Fetched | null> {
 	const [fetched] = await Promise.all([fetchSnapshot(client, (cached?.total ?? 0) >= MANIFEST_ROW_CAP), refreshVersion(client, account)])
-	// A logout during the fetch must not bring the suite or the vault back. Logout marks the
-	// account before it purges, so checking after each write catches one that lands in between.
-	if (!(await loggedIn(accountId))) return
-	if (fetched.unlockBlocked) return blockUnlock(accountId)
-	const { suite, snapshot } = fetched
+	return (await loggedIn(accountId)) ? fetched : null
+}
+
+/** Logout marks the account before it purges, so checking after each write catches one that lands in between. */
+async function storeFetched(accountId: string, { suite, snapshot }: Extract<Fetched, { unlockBlocked: false }>): Promise<void> {
 	const changed = await checkSuite(accountId, { id: suite.id, status: suite.status, certificate: suite.certificate, privateKey: suite.privateKey, unlockKeyEpoch: suite.unlockKeyEpoch })
 	if (!(await loggedIn(accountId))) return undoWrites(accountId)
 	if (changed) return
@@ -232,82 +261,112 @@ type Fetched =
 	| { unlockBlocked: true }
 	| { unlockBlocked: false; suite: SuiteRow & { privateKey: string }; snapshot: VaultSnapshot }
 
+/** The vault's rows and lists, with the server's count of the rows. */
+interface VaultLists {
+	secrets: FetchedRow[]
+	folders: FolderRow[]
+	types: SecretTypeRow[]
+	total: number
+}
+
+/** A suite with its key, which neither the two-factor policy nor a missing key blocks. */
+type UnlockableSuite = SuiteRow & { privateKey: string }
+
+function isUnlockable(suite: SuiteRow): suite is UnlockableSuite {
+	return typeof suite.privateKey === 'string' && !suite.unlockBlocked
+}
+
 async function fetchSnapshot(client: Client, skipManifest: boolean): Promise<Fetched> {
-	let manifest: Manifest | null = null
-	try {
-		if (!skipManifest) manifest = await client.keepiq<Manifest>('GET', '/api/v1/offline/manifest')
-	} catch (error) {
-		// Refused: the admin disabled offline caching. 404: no active suite.
-		if (!(error instanceof ApiError) || (!error.refused && error.status !== 404)) throw error
-	}
+	const manifest = await readManifest(client, skipManifest)
 	// The two-factor policy withholds the suite; the web app drops its snapshot on this signal.
 	if (manifest?.unlockBlocked) return { unlockBlocked: true }
-
-	let suites: Promise<SuiteRow[]> | undefined
-	const listSuites = () => (suites ??= client.listSuites())
-	let secrets: FetchedRow[]
-	let folders: FolderRow[]
-	let types: SecretTypeRow[]
-	let total: number
-	if (manifest && manifest.secrets.length < MANIFEST_ROW_CAP) {
-		;({ secrets, folders, types } = manifest)
-		total = secrets.length
-	} else {
-		let paged: Paged
-		;[paged, folders, types] = await Promise.all([
-			fetchAllSecrets(client),
-			manifest?.folders ?? client.keepiq<FolderRow[]>('GET', '/api/v1/folders'),
-			manifest?.types ?? client.keepiq<SecretTypeRow[]>('GET', '/api/v1/secret-types'),
-		])
-		;({ secrets, total } = paged)
-	}
+	const listSuites = suitesOnce(client)
+	const lists = await vaultLists(client, manifest)
 	const suite = manifest?.suite ?? activeRow(await listSuites())
-	if (typeof suite.privateKey !== 'string' || suite.unlockBlocked) return { unlockBlocked: true }
+	if (!isUnlockable(suite)) return { unlockBlocked: true }
 	// The manifest never sends the blocked shape, so rows on another suite are checked here.
-	const stored = secrets.some((row) => row.blocked || row.encryptionSuiteId !== suite.id)
-		? withheld(secrets, await listSuites())
-		: secrets as OpenSecretRow[]
+	const stored = lists.secrets.some((row) => row.blocked || row.encryptionSuiteId !== suite.id)
+		? withheld(lists.secrets, await listSuites())
+		: lists.secrets as OpenSecretRow[]
+	return { unlockBlocked: false, suite: { ...suite, privateKey: suite.privateKey }, snapshot: snapshotOf(suite, { ...lists, secrets: stored }) }
+}
 
+/** Refused: the admin disabled offline caching. 404: no active suite. Either way the lists are fetched one by one. */
+const isNoManifest = (error: unknown) => error instanceof ApiError && (error.refused || error.status === 404)
+
+async function readManifest(client: Client, skipManifest: boolean): Promise<Manifest | null> {
+	try {
+		return skipManifest ? null : await client.keepiq<Manifest>('GET', '/api/v1/offline/manifest')
+	} catch (error) {
+		if (!isNoManifest(error)) throw error
+		return null
+	}
+}
+
+/** The suites, fetched at most once per sync and only when asked for. */
+function suitesOnce(client: Client): () => Promise<SuiteRow[]> {
+	let suites: Promise<SuiteRow[]> | undefined
+	return () => (suites ??= client.listSuites())
+}
+
+/** The manifest's lists when it holds every row; otherwise the rows paged, and what the manifest lacks fetched. */
+async function vaultLists(client: Client, manifest: Manifest | null): Promise<VaultLists> {
+	if (manifest && manifest.secrets.length < MANIFEST_ROW_CAP) return { secrets: manifest.secrets, folders: manifest.folders, types: manifest.types, total: manifest.secrets.length }
+	const [paged, folders, types] = await Promise.all([
+		fetchAllSecrets(client),
+		manifest?.folders ?? client.keepiq<FolderRow[]>('GET', '/api/v1/folders'),
+		manifest?.types ?? client.keepiq<SecretTypeRow[]>('GET', '/api/v1/secret-types'),
+	])
+	return { secrets: paged.secrets, folders, types, total: paged.total }
+}
+
+function snapshotOf(suite: SuiteRow, lists: Omit<VaultLists, 'secrets'> & { secrets: StoredSecretRow[] }): VaultSnapshot {
 	const now = new Date().toISOString()
 	return {
-		unlockBlocked: false,
-		suite: { ...suite, privateKey: suite.privateKey },
-		snapshot: {
-			suite: { id: suite.id, unlockKeyEpoch: suite.unlockKeyEpoch },
-			secrets: stored,
-			folders,
-			types,
-			// Client time, so staleness never depends on the server's clock.
-			syncedAt: now,
-			listsSyncedAt: now,
-			newestUpdatedAt: newest(stored),
-			// The server's count, so a row lost to paging does not make every probe download again.
-			total,
-		},
+		suite: { id: suite.id, unlockKeyEpoch: suite.unlockKeyEpoch },
+		secrets: lists.secrets,
+		folders: lists.folders,
+		types: lists.types,
+		// Client time, so staleness never depends on the server's clock.
+		syncedAt: now,
+		listsSyncedAt: now,
+		newestUpdatedAt: newest(lists.secrets),
+		// The server's count, so a row lost to paging does not make every probe download again.
+		total: lists.total,
 	}
 }
 
 /** The server's block rule (`SecretService::suiteBlockReason`) as a reason code, for every row. */
 function withheld(rows: FetchedRow[], suites: SuiteRow[]): StoredSecretRow[] {
 	const statuses = new Map(suites.map((suite) => [suite.id, suite.status]))
-	return rows.map((row) => {
-		const status = statuses.get(row.encryptionSuiteId)
-		if (!row.blocked && status !== undefined && !BLOCKING_STATUSES.includes(status)) return row
-		let blockedReason: BlockReason | undefined
-		if (status === undefined) blockedReason = 'suite_missing'
-		// Only the fallback list sends `migrationError`; without it a compromised row may still be one recovery could not save.
-		else if (row.migrationError) blockedReason = 'migration_failed'
-		else if (status === 'compromised') blockedReason = 'suite_compromised'
-		else if (status === 'revoked') blockedReason = 'suite_revoked'
-		const meta: Partial<Omit<OpenSecretRow, 'blocked'> & Omit<BlockedSecretRow, 'blocked'>> = { ...row }
-		delete meta.key
-		delete meta.login
-		delete meta.additionalFields
-		delete meta.totp
-		delete meta.passkeys
-		delete meta.blockedReason
-		return { ...(meta as Omit<StoredBlockedRow, 'blocked' | 'blockedReason'>), blocked: true, blockedReason }
-	})
+	return rows.map((row) => withheldRow(row, statuses.get(row.encryptionSuiteId)))
+}
+
+/** The row as sent while its suite is known and not blocking, else its metadata blocked with the reason. */
+function withheldRow(row: FetchedRow, status: SuiteRow['status'] | undefined): StoredSecretRow {
+	if (!row.blocked && status !== undefined && !BLOCKING_STATUSES.includes(status)) return row
+	return blockedWithout(row, blockReasonOf(row, status))
+}
+
+const SUITE_BLOCK_REASONS = new Map<string, BlockReason>([['compromised', 'suite_compromised'], ['revoked', 'suite_revoked']])
+
+function blockReasonOf(row: FetchedRow, status: SuiteRow['status'] | undefined): BlockReason | undefined {
+	if (status === undefined) return 'suite_missing'
+	// Only the fallback list sends `migrationError`; without it a compromised row may still be one recovery could not save.
+	if (row.migrationError) return 'migration_failed'
+	return SUITE_BLOCK_REASONS.get(status)
+}
+
+/** The row's metadata alone: no ciphertext of any value field. */
+function blockedWithout(row: FetchedRow, blockedReason: BlockReason | undefined): StoredBlockedRow {
+	const meta: Partial<Omit<OpenSecretRow, 'blocked'> & Omit<BlockedSecretRow, 'blocked'>> = { ...row }
+	delete meta.key
+	delete meta.login
+	delete meta.additionalFields
+	delete meta.totp
+	delete meta.passkeys
+	delete meta.blockedReason
+	return { ...(meta as Omit<StoredBlockedRow, 'blocked' | 'blockedReason'>), blocked: true, blockedReason }
 }
 
 interface Paged {

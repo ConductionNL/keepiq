@@ -70,7 +70,7 @@ export function serializeIdentity(input) {
  * @return {object|null} The payload object or null.
  */
 export function parsePayload(raw) {
-	if (typeof raw !== 'string' || raw === '' || raw[0] !== '{') {
+	if (!looksLikeJsonObject(raw)) {
 		return null
 	}
 	try {
@@ -79,6 +79,16 @@ export function parsePayload(raw) {
 	} catch {
 		return null
 	}
+}
+
+/**
+ * Whether a value is a non-empty string that opens like a JSON object.
+ *
+ * @param {unknown} raw The decrypted `key` value.
+ * @return {boolean} True when it may hold a payload object.
+ */
+function looksLikeJsonObject(raw) {
+	return typeof raw === 'string' && raw !== '' && raw[0] === '{'
 }
 
 const digitsOf = (number) => String(number ?? '').replace(/\D/g, '')
@@ -102,22 +112,38 @@ const BRAND_RANGES = CARD_BRANDS.brands.flatMap((brand) => brand.ranges.map((ran
  */
 export function cardBrandInfo(number) {
 	const digits = digitsOf(number)
-	let best = null
-	let tied = false
-	for (const range of BRAND_RANGES) {
-		const head = digits.slice(0, range.start.length)
-		// Equal-length digit strings compare as numbers do.
-		if (head.length < range.start.length || head < range.start || head > range.end) {
-			continue
-		}
-		if (best === null || range.width < best.width) {
-			best = range
-			tied = false
-		} else if (range.width === best.width && range.brand !== best.brand) {
-			tied = true
-		}
+	return narrowestBrand(BRAND_RANGES.filter((range) => rangeCovers(range, digits)))
+}
+
+/**
+ * Whether a brand range covers the leading digits of a number.
+ *
+ * @param {{start: string, end: string}} range A brand range.
+ * @param {string} digits Digits only.
+ * @return {boolean} True when the number falls in the range.
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
+ */
+function rangeCovers(range, digits) {
+	const head = digits.slice(0, range.start.length)
+	// Equal-length digit strings compare as numbers do.
+	return head.length === range.start.length && head >= range.start && head <= range.end
+}
+
+/**
+ * The brand of the narrowest of the matching ranges, or null when none
+ * matches or two brands share the narrowest width.
+ *
+ * @param {Array<{brand: object, width: number}>} ranges The matching ranges.
+ * @return {object|null} The `card-brands.json` entry.
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
+ */
+function narrowestBrand(ranges) {
+	if (ranges.length === 0) {
+		return null
 	}
-	return best !== null && !tied ? best.brand : null
+	const width = Math.min(...ranges.map((range) => range.width))
+	const brands = new Set(ranges.filter((range) => range.width === width).map((range) => range.brand))
+	return brands.size === 1 ? [...brands][0] : null
 }
 
 /**
@@ -203,9 +229,33 @@ export function cardNumberHint(number) {
 		return null
 	}
 	const brand = cardBrandInfo(digits)
-	if (brand ? !brand.lengths.includes(digits.length) : digits.length < 12 || digits.length > 19) {
-		return brand ? { code: 'length', brand: brand.label } : { code: 'lengthUnknown' }
+	return lengthHint(brand, digits.length) ?? luhnHint(brand, digits)
+}
+
+/**
+ * The hint for a length the brand does not issue, or outside 12–19 without a brand.
+ *
+ * @param {object|null} brand The brand table entry.
+ * @param {number} length The number of digits.
+ * @return {{code: string, brand?: string}|null}
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+ */
+function lengthHint(brand, length) {
+	if (!brand) {
+		return length < 12 || length > 19 ? { code: 'lengthUnknown' } : null
 	}
+	return brand.lengths.includes(length) ? null : { code: 'length', brand: brand.label }
+}
+
+/**
+ * The hint for a failed Luhn check, which a brand marked `luhn: false` need not pass.
+ *
+ * @param {object|null} brand The brand table entry.
+ * @param {string} digits Digits only.
+ * @return {{code: string}|null}
+ * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+ */
+function luhnHint(brand, digits) {
 	return brand?.luhn !== false && !luhnValid(digits) ? { code: 'luhn' } : null
 }
 

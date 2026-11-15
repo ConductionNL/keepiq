@@ -30,7 +30,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
-use OCA\Keepiq\Service\SecretRequestSuiteLockService;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestSuiteLockServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -45,13 +45,13 @@ class SuiteMigrationAbortedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SecretRequestSuiteLockService $secretRequestService The SecretRequest suite-lock service
+	 * @param SecretRequestSuiteLockServiceInterface $secretRequestService The SecretRequest suite-lock service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private SecretRequestSuiteLockService $secretRequestService,
+		private SecretRequestSuiteLockServiceInterface $secretRequestService,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

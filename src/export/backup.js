@@ -21,6 +21,7 @@
  */
 
 import { deriveAesKeyArgon2id } from '../crypto/argon2.js'
+import { fromBase64, toBase64 } from '../crypto/base64.js'
 
 /**
  * The backup envelope format identifier.
@@ -50,35 +51,6 @@ const IV_LENGTH = 12
 
 /** Argon2id salt length in bytes. */
 const SALT_LENGTH = 16
-
-/**
- * Encode a Uint8Array as base64.
- *
- * @param {Uint8Array} bytes The bytes.
- * @return {string} Base64 string.
- */
-function toBase64(bytes) {
-	let binary = ''
-	for (let i = 0; i < bytes.length; i++) {
-		binary += String.fromCharCode(bytes[i])
-	}
-	return btoa(binary)
-}
-
-/**
- * Decode a base64 string to a Uint8Array.
- *
- * @param {string} base64 The base64 string.
- * @return {Uint8Array} The bytes.
- */
-function fromBase64(base64) {
-	const binary = atob(base64)
-	const bytes = new Uint8Array(binary.length)
-	for (let i = 0; i < binary.length; i++) {
-		bytes[i] = binary.charCodeAt(i)
-	}
-	return bytes
-}
 
 /**
  * Encrypt a serialized vault payload into a backup envelope.

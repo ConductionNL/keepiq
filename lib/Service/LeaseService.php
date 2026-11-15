@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\MachineLease;
 use OCA\Keepiq\Db\MachineLeaseMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\LeaseServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
@@ -38,7 +39,7 @@ use Ramsey\Uuid\Uuid;
 /**
  * Business logic for the machine-lease lifecycle.
  */
-class LeaseService {
+class LeaseService implements LeaseServiceInterface {
 	/**
 	 * Constructor for LeaseService.
 	 *

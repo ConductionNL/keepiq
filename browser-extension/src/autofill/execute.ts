@@ -2,7 +2,7 @@
 import { i18n } from '#i18n'
 import {
 	isFormKind, kindSet, type BackgroundToContent, type FillConfirmForm, type FillConfirmInsecure, type FillExecute, type FillExecuteForm, type FillExecuteFormReply,
-	type FillExecuteReply, type FillOutcome, type FillProbe, type FillProbeReply, type FormKind, type FormValues,
+	type FillExecuteReply, type FillNewPassword, type FillNewPasswordReply, type FillOutcome, type FillProbe, type FillProbeReply, type FormKind, type FormValues,
 } from '@/src/messages'
 import {
 	codeGroup, fillField, fillSelect, findCodeGroups, findGroups, findLoginFields, formRolesIn, groupOf, type FieldGroup, type FormControl,
@@ -33,14 +33,16 @@ function chooseGroup(): FieldGroup | null {
 
 /** The list's own code group, else one in the list's form, else the focused one, else the first empty one. */
 function chooseCodeGroup(anchor: Element | null): HTMLInputElement[] | null {
-	if (anchor) {
-		const own = codeGroup(anchor)
-		const form = groupOf(anchor)
-		return own ?? (form ? findCodeGroups(document, form).find(isEmpty) ?? null : null)
-	}
+	if (anchor) return anchoredCodeGroup(anchor)
 	const focused = deepActiveElement()
 	const groups = findCodeGroups(document)
 	return groups.find((run) => run.includes(focused as HTMLInputElement)) ?? groups.find(isEmpty) ?? null
+}
+
+function anchoredCodeGroup(anchor: Element): HTMLInputElement[] | null {
+	const own = codeGroup(anchor)
+	const form = groupOf(anchor)
+	return own ?? (form ? findCodeGroups(document, form).find(isEmpty) ?? null : null)
 }
 
 const isEmpty = (run: HTMLInputElement[]) => run.every((input) => input.value === '')
@@ -60,32 +62,61 @@ export function executeFill(message: FillExecute, list: OpenList | null = null):
 	try {
 		// The frame navigated since the background matched it.
 		if (location.origin !== message.origin) return { filled: 'none', code: false }
-		if (message.anchorKey !== undefined && message.anchorKey !== list?.key) return { filled: 'none', code: false }
-		const anchor = message.anchorKey !== undefined ? list!.field : null
+		const anchor = anchorFor(message.anchorKey, list)
+		if (anchor === undefined) return { filled: 'none', code: false }
 		const group = anchor ? groupOf(anchor) : chooseGroup()
-		let user = false
-		let pass = false
-		if (group?.kind === 'login' && group.username && message.username !== null) {
-			fillField(group.username, message.username)
-			user = true
-		}
-		if (group?.kind === 'login' && group.currentPassword && message.password !== null) {
-			fillField(group.currentPassword, message.password)
-			pass = true
-		}
-		let code = false
-		const run = typeof message.code === 'string' && message.code !== '' ? chooseCodeGroup(anchor) : null
-		// A code group that already holds a value is the user's.
-		if (run && isEmpty(run)) {
-			fillCode(run, message.code!)
-			code = true
-		}
-		const filled: FillOutcome = user && pass ? 'both' : user ? 'username' : pass ? 'password' : 'none'
-		return { filled, code }
+		const user = fillUsername(group, message)
+		const pass = fillPassword(group, message)
+		const code = fillLoginCode(message, anchor)
+		return { filled: outcomeOf(user, pass), code }
 	} finally {
-		message.username = null
-		message.password = null
-		message.code = null
+		forgetCredential(message)
+	}
+}
+
+/** Nothing of the credential stays with the message once the fields hold it. */
+function forgetCredential(message: FillExecute): void {
+	message.username = null
+	message.password = null
+	message.code = null
+}
+
+function fillUsername(group: FieldGroup | null, message: FillExecute): boolean {
+	if (group?.kind !== 'login' || !group.username || message.username === null) return false
+	fillField(group.username, message.username)
+	return true
+}
+
+function fillPassword(group: FieldGroup | null, message: FillExecute): boolean {
+	if (group?.kind !== 'login' || !group.currentPassword || message.password === null) return false
+	fillField(group.currentPassword, message.password)
+	return true
+}
+
+/** A code group that already holds a value is the user's. */
+function fillLoginCode(message: FillExecute, anchor: Element | null): boolean {
+	const run = typeof message.code === 'string' && message.code !== '' ? chooseCodeGroup(anchor) : null
+	if (!run || !isEmpty(run)) return false
+	fillCode(run, message.code!)
+	return true
+}
+
+const outcomeOf = (user: boolean, pass: boolean): FillOutcome => (user && pass ? 'both' : user ? 'username' : pass ? 'password' : 'none')
+
+/**
+ * A generated password into the new-password field the list is open on and its confirmation, in that form only.
+ * Never into a current-password field, and nothing without the open list's anchor.
+ */
+export function fillNewPassword(message: FillNewPassword, list: OpenList | null = null): FillNewPasswordReply {
+	try {
+		if (location.origin !== message.origin) return { filled: 0 }
+		const anchor = anchorFor(message.anchorKey, list)
+		const group = anchor ? groupOf(anchor) : null
+		if (!group || (group.kind !== 'signUp' && group.kind !== 'passwordChange') || !group.newPasswords.includes(anchor as HTMLInputElement)) return { filled: 0 }
+		for (const field of group.newPasswords) fillField(field, message.password)
+		return { filled: group.newPasswords.length }
+	} finally {
+		message.password = ''
 	}
 }
 
@@ -164,6 +195,7 @@ export function confirmForm(message: FillConfirmForm): boolean {
 
 /** The insecure-page question of a login fill from the menu, shortcut or page load. */
 function confirmInsecure(message: FillConfirmInsecure): boolean {
+	if (message.savedSecure === false) return window.confirm(`${i18n.t('inlineList.insecureQuestion')}\n\n${i18n.t('inlineList.insecureDetail')}`)
 	const host = typeof message.itemHost === 'string' ? message.itemHost : ''
 	return window.confirm(host ? i18n.t('pageFill.insecure', { host }) : i18n.t('pageFill.insecureNoHost'))
 }
@@ -171,18 +203,19 @@ function confirmInsecure(message: FillConfirmInsecure): boolean {
 type FillMessage = Extract<BackgroundToContent, { kind: `fill.${string}` }>
 
 const FILL_KINDS = kindSet<FillMessage['kind']>({
-	'fill.confirmInsecure': true, 'fill.execute': true, 'fill.probe': true, 'fill.executeForm': true, 'fill.confirmForm': true,
+	'fill.confirmInsecure': true, 'fill.execute': true, 'fill.probe': true, 'fill.executeForm': true, 'fill.confirmForm': true, 'fill.newPassword': true,
 })
 
 export const isFillMessage = (message: BackgroundToContent | null): message is FillMessage => typeof message?.kind === 'string' && FILL_KINDS.has(message.kind)
 
 /** The content script's answer to every fill message from the background. */
-export function answerFill(message: FillMessage, list: OpenList | null): FillExecuteReply | FillProbeReply | FillExecuteFormReply | boolean {
+export function answerFill(message: FillMessage, list: OpenList | null): FillExecuteReply | FillProbeReply | FillExecuteFormReply | FillNewPasswordReply | boolean {
 	switch (message.kind) {
 		case 'fill.confirmInsecure': return confirmInsecure(message)
 		case 'fill.execute': return executeFill(message, list)
 		case 'fill.probe': return probeForm(message, list)
 		case 'fill.executeForm': return executeForm(message, list)
 		case 'fill.confirmForm': return confirmForm(message)
+		case 'fill.newPassword': return fillNewPassword(message, list)
 	}
 }

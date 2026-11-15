@@ -175,24 +175,39 @@ class ShareWriteContext {
 			return $this->ownRowContext(row: $secret, userId: $userId, unjudged: false);
 		}
 
-		$ownerCertificate = null;
-		if ($grade === 'owner' || in_array($grade, TeamFolderMember::WRITE_GRADES, true) === true) {
-			try {
-				$ownerCertificate = $this->suites
-					->findActiveByOwner(ownerType: $source->getOwnerType(), ownerId: $source->getOwnerId())
-					->getCertificate();
-			} catch (DoesNotExistException) {
-				// Owner without an active suite — fan-out skips the source row.
-			}
-		}
-
 		return [
 			'sourceSecretId' => $source->getId(),
 			'effectiveGrade' => $grade,
-			'ownerCertificate' => $ownerCertificate,
+			'ownerCertificate' => $this->ownerCertificateFor(source: $source, grade: $grade),
 			'sourceUpdatedAt' => $source->getUpdatedAt()?->format(DateTime::ATOM),
 		];
 	}//end writeContext()
+
+	/**
+	 * The source owner's certificate for a caller who writes the source: the
+	 * owner or a write grade. Null for anyone else, and when the owner has no
+	 * active suite (fan-out then skips the source row).
+	 *
+	 * @param Secret $source The source secret
+	 * @param string $grade  The caller's grade on it
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+	 */
+	private function ownerCertificateFor(Secret $source, string $grade): ?string {
+		if ($grade !== 'owner' && in_array($grade, TeamFolderMember::WRITE_GRADES, true) === false) {
+			return null;
+		}
+
+		try {
+			return $this->suites
+				->findActiveByOwner(ownerType: $source->getOwnerType(), ownerId: $source->getOwnerId())
+				->getCertificate();
+		} catch (DoesNotExistException) {
+			return null;
+		}
+	}//end ownerCertificateFor()
 
 	/**
 	 * The source a save of a secret goes to: the secret itself when no live

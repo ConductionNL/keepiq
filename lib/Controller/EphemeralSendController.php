@@ -24,9 +24,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EphemeralSend;
-use OCA\Keepiq\Service\EphemeralSendService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\EphemeralSendServiceInterface;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -44,17 +44,17 @@ class EphemeralSendController extends OCSController {
 	 * Constructor for EphemeralSendController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param EphemeralSendService $service The send service
+	 * @param EphemeralSendServiceInterface $service The send service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private EphemeralSendService $service,
+		private EphemeralSendServiceInterface $service,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

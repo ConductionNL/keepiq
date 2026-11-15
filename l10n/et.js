@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "See ei ole autentija võti. Kleebi otpauth://totp/-link või base32-saladus.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "See QR-kood ei sisalda autentija võtit. Kasuta QR-koodi, mida sait näitab kaheastmelise sisselogimise seadistamisel.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "See saladus ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei salvestatud; proovige hiljem uuesti või paluge administraatoril kontrollida, kas taustatööd töötavad.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Ainult omanik saab muuta haldurit või liikmesust, mis hõlmab haldurit."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Ainult omanik saab muuta haldurit või liikmesust, mis hõlmab haldurit.",
+        "Additional fields after the merge": "Lisaväljad pärast ühendamist",
+        "Duplicates": "Duplikaadid",
+        "Exact duplicates": "Täpsed duplikaadid",
+        "Item to keep": "Alles jäetav kirje",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Kirjed, mis sisaldavad sama sisselogimist rohkem kui üks kord. Ühendamine jätab ühe alles ja eemaldab teised.",
+        "Likely duplicates": "Tõenäolised duplikaadid",
+        "Merge": "Ühenda",
+        "Merge duplicates": "Ühenda duplikaadid",
+        "People who lose access: {count}": "Inimesed, kes kaotavad juurdepääsu: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Sama aadress ja kasutajanimi, teine parool. Kaks eraldi kontot võivad niimoodi välja näha, seega kontrolli enne ühendamist.",
+        "The merge did not complete. Check the items of this group in your vault.": "Ühendamine ei lõppenud. Kontrolli selle rühma kirjeid oma hoidlas.",
+        "The merge failed. Nothing was removed.": "Ühendamine ebaõnnestus. Midagi ei eemaldatud.",
+        "The other items move to the trash, where you can restore them.": "Teised kirjed lähevad prügikasti, kust saad need taastada."
     },
     "nplurals=2; plural=(n != 1);"
 )

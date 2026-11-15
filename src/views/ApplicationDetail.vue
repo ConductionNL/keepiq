@@ -270,14 +270,14 @@ export default {
 		 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
 		 */
 		statusLabel() {
-			switch (this.application?.status) {
-				case 'active':
-					return this.t('keepiq', 'Active')
-				case 'pending':
-					return this.t('keepiq', 'Pending')
-				default:
-					return this.application?.status || ''
+			const status = this.application?.status
+			const labels = {
+				active: this.t('keepiq', 'Active'),
+				pending: this.t('keepiq', 'Pending'),
 			}
+			return Object.hasOwn(labels, status)
+				? labels[status]
+				: status || ''
 		},
 
 		/**

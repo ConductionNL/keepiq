@@ -235,50 +235,17 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 		return () => document.removeEventListener('keydown', onKey)
 	}, [])
 
-	let title = ''
-	let body: ReactNode
-	let ways = true
-	if (!view) {
-		body = notice ? <ErrorBanner>{notice}</ErrorBanner> : <Loading />
-	} else if (view.locked || confirming || held) {
-		title = view.locked ? i18n.t('titles.unlock') : i18n.t('passkey.verifyTitle')
-		const intro = view.locked
-			? i18n.t(view.kind === 'get' ? 'passkey.unlockGet' : 'passkey.unlockCreate', { rpId: view.rpId })
-			: undefined
-		const picked = confirming?.kind === 'passkey.pick' ? confirming : held
-		const subject = view.locked ? undefined : view.rows.find((row) => row.itemId === picked?.itemId && row.credentialId === picked.credentialId)
-		body = account
-			? <SecretForm key={view.locked ? 'unlock' : 'verify'} account={account} intro={intro} subject={subject} submitLabel={view.locked ? i18n.t('unlock.submit') : i18n.t('passkey.confirm')} ready={ready} onSubmit={verify} />
-			: <Loading />
-	} else if (view.alreadySaved) {
-		title = i18n.t('passkey.alreadySavedTitle')
-		ways = false
-		body = (
-			<div className="stack">
-				<p className="passkey__text">{i18n.t('passkey.alreadySaved')}</p>
-				<Button autoFocus busy={busy === 'cancel'} onClick={() => void cancel()}>{i18n.t('passkey.close')}</Button>
-			</div>
-		)
-	} else if (view.kind === 'get') {
-		title = i18n.t('passkey.signInTitle')
-		body = <SignIn view={view} busy={busy} focus={!retryable} onPick={guarded(pick)} />
-	} else {
-		title = i18n.t('passkey.saveTitle')
-		body = (
-			<SaveTo
-				view={view} busy={busy} adding={adding} name={name ?? (view.rpName || view.rpId)} folderId={folderId} onName={setName} onFolder={setFolderId}
-				// Opening New login focuses its Name even under a failure; coming back from it focuses its button instead.
-				focus={adding ? newLogin === 'opened' || !retryable : !retryable && newLogin !== 'left'}
-				onTarget={guarded((target: PasskeySaveTarget) => {
-					// A later return to the list, as from "Confirm it's you", focuses its first row again.
-					setNewLogin(null)
-					if (target.replace) setReplacing(target)
-					else save({ itemId: target.itemId }, `save:${target.itemId}`)
-				})}
-				onNew={guarded(() => save({ name: name ?? (view.rpName || view.rpId), folderId: folderId || null }, 'new'))}
-			/>
-		)
-	}
+	const { title, body, ways } = passkeyScreen({
+		view, notice, confirming, held, account, busy, retryable, adding, newLogin, name, folderId, ready, guarded,
+		onVerify: verify, onCancel: () => void cancel(), onPick: pick, onName: setName, onFolder: setFolderId,
+		onTarget: (target: PasskeySaveTarget) => {
+			// A later return to the list, as from "Confirm it's you", focuses its first row again.
+			setNewLogin(null)
+			if (target.replace) setReplacing(target)
+			else save({ itemId: target.itemId }, `save:${target.itemId}`)
+		},
+		onNew: (fallbackName: string) => save({ name: name ?? fallbackName, folderId: folderId || null }, 'new'),
+	})
 
 	useEffect(() => {
 		if (title) document.title = title
@@ -328,6 +295,93 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 			)}
 		</main>
 	)
+}
+
+interface ScreenState {
+	view: PasskeyView | null
+	notice: string | null
+	confirming: Act | null
+	held: PasskeyRow | null
+	account: AccountSummary | null
+	busy: string | null
+	retryable: boolean
+	adding: boolean
+	newLogin: 'opened' | 'only' | 'left' | null
+	name: string | null
+	folderId: string
+	ready: () => boolean
+	guarded: <A extends unknown[]>(action: (...args: A) => void) => (...args: A) => void
+	onVerify: (method: UnlockMethod) => Promise<PasskeyWindowReply | undefined>
+	onCancel: () => void
+	onPick: (row: PasskeyRow) => void
+	onName: (name: string) => void
+	onFolder: (folderId: string) => void
+	onTarget: (target: PasskeySaveTarget) => void
+	onNew: (fallbackName: string) => void
+}
+
+interface Screen {
+	title: string
+	body: ReactNode
+	/** Whether the fallback and Cancel buttons show under it. */
+	ways: boolean
+}
+
+/** The step the window shows: loading, unlock or "Confirm it's you", already saved, sign in, or save. */
+function passkeyScreen(s: ScreenState): Screen {
+	const { view } = s
+	if (!view) return { title: '', body: s.notice ? <ErrorBanner>{s.notice}</ErrorBanner> : <Loading />, ways: true }
+	if (view.locked || s.confirming || s.held) return verifyScreen(view, s)
+	if (view.alreadySaved) {
+		return {
+			title: i18n.t('passkey.alreadySavedTitle'),
+			ways: false,
+			body: (
+				<div className="stack">
+					<p className="passkey__text">{i18n.t('passkey.alreadySaved')}</p>
+					<Button autoFocus busy={s.busy === 'cancel'} onClick={s.onCancel}>{i18n.t('passkey.close')}</Button>
+				</div>
+			),
+		}
+	}
+	if (view.kind === 'get') {
+		return { title: i18n.t('passkey.signInTitle'), body: <SignIn view={view} busy={s.busy} focus={!s.retryable} onPick={s.guarded(s.onPick)} />, ways: true }
+	}
+	return saveScreen(view, s)
+}
+
+/** Unlock, or "Confirm it's you" for a pick or save, naming the login a pick signs with. */
+function verifyScreen(view: PasskeyView, s: ScreenState): Screen {
+	const intro = view.locked
+		? i18n.t(view.kind === 'get' ? 'passkey.unlockGet' : 'passkey.unlockCreate', { rpId: view.rpId })
+		: undefined
+	const picked = s.confirming?.kind === 'passkey.pick' ? s.confirming : s.held
+	const subject = view.locked ? undefined : view.rows.find((row) => row.itemId === picked?.itemId && row.credentialId === picked.credentialId)
+	return {
+		title: view.locked ? i18n.t('titles.unlock') : i18n.t('passkey.verifyTitle'),
+		body: s.account
+			? <SecretForm key={view.locked ? 'unlock' : 'verify'} account={s.account} intro={intro} subject={subject} submitLabel={view.locked ? i18n.t('unlock.submit') : i18n.t('passkey.confirm')} ready={s.ready} onSubmit={s.onVerify} />
+			: <Loading />,
+		ways: true,
+	}
+}
+
+/** Save to an existing login or a new one. */
+function saveScreen(view: PasskeyView, s: ScreenState): Screen {
+	const fallbackName = view.rpName || view.rpId
+	return {
+		title: i18n.t('passkey.saveTitle'),
+		ways: true,
+		body: (
+			<SaveTo
+				view={view} busy={s.busy} adding={s.adding} name={s.name ?? fallbackName} folderId={s.folderId} onName={s.onName} onFolder={s.onFolder}
+				// Opening New login focuses its Name even under a failure; coming back from it focuses its button instead.
+				focus={s.adding ? s.newLogin === 'opened' || !s.retryable : !s.retryable && s.newLogin !== 'left'}
+				onTarget={s.guarded(s.onTarget)}
+				onNew={s.guarded(() => s.onNew(fallbackName))}
+			/>
+		),
+	}
 }
 
 /**

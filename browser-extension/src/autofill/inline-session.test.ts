@@ -693,6 +693,13 @@ describe('card and identity lists', () => {
 })
 
 describe('the list page’s other messages', () => {
+	it.each(['inline.bogus', 'constructor', '__proto__'])('answers %s, a kind it does not know, with nothing and sends nothing', async (kind) => {
+		const { key } = await openWithState()
+		sent = []
+		expect(await list({ kind, key } as unknown as InlineListToBackground)).toBeUndefined()
+		expect(sent).toEqual([])
+	})
+
 	it('forwards inline.refocus to the host with the key', async () => {
 		const { key } = await openWithState()
 		sent = []

@@ -328,6 +328,7 @@ $extra = [
     ['name' => 'passkey#challenge',    'url' => '/api/v1/passkeys/challenge',     'verb' => 'GET'],
     ['name' => 'passkey#create',       'url' => '/api/v1/passkeys',               'verb' => 'POST'],
     ['name' => 'passkey#loginOptions', 'url' => '/api/v1/passkeys/login-options', 'verb' => 'GET'],
+    ['name' => 'passkey#unlock',       'url' => '/api/v1/passkeys/unlock',        'verb' => 'POST'],
     ['name' => 'passkey#used',         'url' => '/api/v1/passkeys/{id}/used',     'verb' => 'POST'],
     ['name' => 'passkey#destroy',      'url' => '/api/v1/passkeys/{id}',          'verb' => 'DELETE'],
 
@@ -537,7 +538,8 @@ $extra = [
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
 ];
 
-return [
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\Keepiq\Middleware\Support\ApiPathAliases::withVersionedAliases([
     'routes' => array_merge(
         [
             ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
@@ -550,6 +552,8 @@ return [
             // Observability (hydra ADR-006): health is public, metrics admin-only.
             ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
             ['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
+            // The OpenAPI document of the versioned API (NL API Design Rules /core/doc-openapi).
+            ['name' => 'openApi#show', 'url' => '/api/v1/openapi.json', 'verb' => 'GET'],
         ],
         $extra,
         [
@@ -562,4 +566,4 @@ return [
             ],
         ]
     ),
-];
+]);

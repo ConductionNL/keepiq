@@ -33,6 +33,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
+use OpenSSLAsymmetricKey;
 use OCA\Keepiq\Db\CACertificateMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
@@ -138,55 +139,16 @@ class CertificateIssuanceService {
 		string $commonName = 'Keepiq User',
 		?string $privateKeyPem = null,
 	): string {
-		$intermediate = $this->caCertificateMapper->findActiveIntermediate();
-		$intermediatePriv = $this->crypto->decrypt($intermediate->getPrivateKey());
-		$intermediateKey = openssl_pkey_get_private(private_key: $intermediatePriv);
-		$intermediateCert = $intermediate->getCertificate();
-		$submittedPub = openssl_pkey_get_public(public_key: $publicKeyPem);
-
-		if ($submittedPub === false) {
-			throw new InvalidArgumentException('Invalid public key PEM');
-		}
-
-		// Build the CSR. openssl_csr_new() needs a PRIVATE key: when the caller
-		// owns the keypair (server-side generation) we use it directly so the
-		// signed certificate carries the caller's real public key.
-		$csrKey = $submittedPub;
-		if ($privateKeyPem !== null) {
-			$csrKey = openssl_pkey_get_private(private_key: $privateKeyPem);
-			if ($csrKey === false) {
-				throw new InvalidArgumentException('Invalid private key PEM');
-			}
-		}
-
-		// On some OpenSSL builds a public-only key works here; on others
-		// openssl_csr_new() SILENTLY generates a throwaway keypair. The
-		// modulus guard below catches that case and reroutes to phpseclib.
-		// The openssl_csr_new() call warns when the key it is handed is
-		// unusable for a CSR; the false return below is the branch we act on.
-		$csrDn = array_merge(self::DEFAULT_DN, ['commonName' => $commonName]);
-		$csr = $this->withoutDiagnostics(
-			call: static fn () => openssl_csr_new(
-				distinguished_names: $csrDn,
-				private_key: $csrKey,
-				options: ['digest_alg' => 'sha256']
-			)
+		$issuance = new LeafIssuance(
+			publicKeyPem: $publicKeyPem,
+			commonName: $commonName,
+			intermediate: $this->signingIntermediate(),
 		);
 
-		$certPem = null;
-		if ($csr !== false) {
-			$cert = openssl_csr_sign(
-				csr: $csr,
-				ca_certificate: $intermediateCert,
-				private_key: $intermediateKey,
-				days: 365,
-				options: self::LEAF_SIGN_OPTIONS,
-				serial: random_int(1, PHP_INT_MAX)
-			);
-			if ($cert !== false) {
-				openssl_x509_export(certificate: $cert, output: $certPem);
-			}
-		}
+		$certPem = $this->opensslLeaf(
+			issuance: $issuance,
+			csrKey: $this->csrKey(publicKeyPem: $publicKeyPem, privateKeyPem: $privateKeyPem)
+		);
 
 		// Zero-knowledge invariant: the issued certificate MUST carry the
 		// SUBMITTED public key. If openssl invented a throwaway keypair
@@ -196,16 +158,7 @@ class CertificateIssuanceService {
 		// 2026-07-18: PHP 8.4/OpenSSL minted an RSA-2048 throwaway for an
 		// RSA-4096 browser key on the first-run suite-creation path.
 		if ($certPem === null || $this->certCarriesPublicKey(certPem: $certPem, publicKeyPem: $publicKeyPem) === false) {
-			$certPem = $this->assembler->issueForPublicKey(
-				publicKeyPem: $publicKeyPem,
-				subjectDn: [
-					'id-at-countryName' => self::DEFAULT_DN['countryName'],
-					'id-at-organizationName' => self::DEFAULT_DN['organizationName'],
-					'id-at-commonName' => $commonName,
-				],
-				intermediateCertPem: $intermediateCert,
-				intermediatePrivPem: $intermediatePriv,
-			);
+			$certPem = $this->assembledLeaf(issuance: $issuance);
 		}
 
 		if ($this->certCarriesPublicKey(certPem: $certPem, publicKeyPem: $publicKeyPem) === false) {
@@ -217,6 +170,105 @@ class CertificateIssuanceService {
 
 		return $certPem;
 	}//end signPublicKey()
+
+	/**
+	 * The key to build the CSR with: the caller's own private key when they
+	 * hold the keypair, else the submitted public key.
+	 *
+	 * The CSR needs a PRIVATE key for openssl_csr_new(): when the caller owns the keypair
+	 * (server-side generation) it is used directly so the signed certificate
+	 * carries the caller's real public key.
+	 *
+	 * @param string $publicKeyPem The PEM-encoded public key
+	 * @param string|null $privateKeyPem The PEM-encoded matching private key, when available
+	 *
+	 * @return OpenSSLAsymmetricKey
+	 *
+	 * @throws InvalidArgumentException When either key PEM is malformed
+	 */
+	private function csrKey(string $publicKeyPem, ?string $privateKeyPem): OpenSSLAsymmetricKey {
+		$submittedPub = openssl_pkey_get_public(public_key: $publicKeyPem);
+		if ($submittedPub === false) {
+			throw new InvalidArgumentException('Invalid public key PEM');
+		}
+
+		if ($privateKeyPem === null) {
+			return $submittedPub;
+		}
+
+		$csrKey = openssl_pkey_get_private(private_key: $privateKeyPem);
+		if ($csrKey === false) {
+			throw new InvalidArgumentException('Invalid private key PEM');
+		}
+
+		return $csrKey;
+	}//end csrKey()
+
+	/**
+	 * Issue the leaf through openssl: a CSR signed by the intermediate.
+	 *
+	 * On some OpenSSL builds a public-only key works here; on others
+	 * openssl_csr_new() SILENTLY generates a throwaway keypair. The modulus
+	 * guard in signPublicKey catches that case and reroutes to phpseclib. The
+	 * openssl_csr_new() call warns when the key it is handed is unusable for a
+	 * CSR; the false return is the branch acted on.
+	 *
+	 * @param LeafIssuance $issuance The issuance
+	 * @param OpenSSLAsymmetricKey $csrKey The key to build the CSR with
+	 *
+	 * @return string|null The PEM certificate, or null when openssl could not issue one
+	 */
+	private function opensslLeaf(LeafIssuance $issuance, OpenSSLAsymmetricKey $csrKey): ?string {
+		$intermediateKey = openssl_pkey_get_private(private_key: $issuance->intermediate->privateKeyPem);
+		$csrDn = array_merge(self::DEFAULT_DN, ['commonName' => $issuance->commonName]);
+		$csr = $this->withoutDiagnostics(
+			call: static fn () => openssl_csr_new(
+				distinguished_names: $csrDn,
+				private_key: $csrKey,
+				options: ['digest_alg' => 'sha256']
+			)
+		);
+		if ($csr === false) {
+			return null;
+		}
+
+		$cert = openssl_csr_sign(
+			csr: $csr,
+			ca_certificate: $issuance->intermediate->certificate,
+			private_key: $intermediateKey,
+			days: 365,
+			options: self::LEAF_SIGN_OPTIONS,
+			serial: random_int(1, PHP_INT_MAX)
+		);
+
+		$certPem = null;
+		if ($cert !== false) {
+			openssl_x509_export(certificate: $cert, output: $certPem);
+		}
+
+		return $certPem;
+	}//end opensslLeaf()
+
+	/**
+	 * Issue the leaf through the phpseclib assembler, which always carries
+	 * the submitted public key.
+	 *
+	 * @param LeafIssuance $issuance The issuance
+	 *
+	 * @return string The PEM certificate
+	 */
+	private function assembledLeaf(LeafIssuance $issuance): string {
+		return $this->assembler->issueForPublicKey(
+			publicKeyPem: $issuance->publicKeyPem,
+			subjectDn: [
+				'id-at-countryName' => self::DEFAULT_DN['countryName'],
+				'id-at-organizationName' => self::DEFAULT_DN['organizationName'],
+				'id-at-commonName' => $issuance->commonName,
+			],
+			intermediateCertPem: $issuance->intermediate->certificate,
+			intermediatePrivPem: $issuance->intermediate->privateKeyPem,
+		);
+	}//end assembledLeaf()
 
 	/**
 	 * Sign a PKCS#10 CSR with the active intermediate certificate.
@@ -275,30 +327,17 @@ class CertificateIssuanceService {
 		}
 
 		try {
-			$intermediate = $this->caCertificateMapper->findActiveIntermediate();
+			$intermediate = $this->signingIntermediate();
 		} catch (DoesNotExistException) {
 			return false;
 		}
 
-		$newCertPem = $this->resignPreservingPublicKey(
-			oldCert: $oldCert,
-			fallbackCn: $suite->getOwnerId(),
-			intermediateCert: $intermediate->getCertificate(),
-			intermediateKeyPem: $this->crypto->decrypt($intermediate->getPrivateKey()),
-		);
+		$newCertPem = $this->resignPreservingPublicKey(suite: $suite, intermediate: $intermediate);
 		if ($newCertPem === null) {
-			$this->logger->warning(
-				"Keepiq: re-issue kept existing certificate for suite {$suite->getId()} — "
-				. 'could not re-sign while preserving its public key'
-			);
-
-			return false;
+			return $this->keptExisting(suite: $suite, outcome: 're-issue kept');
 		}
 
-		$suite->setCertificate($newCertPem);
-		$this->suiteMapper->update($suite);
-
-		return true;
+		return $this->storeCertificate(suite: $suite, certPem: $newCertPem);
 	}//end reissueSuiteCertificate()
 
 	/**
@@ -309,9 +348,7 @@ class CertificateIssuanceService {
 	 * @spec openspec/changes/certificate-lifecycle/specs/certificate-lifecycle/spec.md#requirement-guided-renewal
 	 */
 	public function resignAllActiveSuites(): int {
-		$intermediate = $this->caCertificateMapper->findActiveIntermediate();
-		$intermediateKeyPem = $this->crypto->decrypt($intermediate->getPrivateKey());
-		$intermediateCert = $intermediate->getCertificate();
+		$intermediate = $this->signingIntermediate();
 
 		$offset = 0;
 		$total = 0;
@@ -320,47 +357,10 @@ class CertificateIssuanceService {
 			$suites = $this->suiteMapper->findAllActiveWithLimit(self::RESIGN_BATCH_SIZE, $offset);
 
 			foreach ($suites as $suite) {
-				$oldCert = $suite->getCertificate();
-				if ($oldCert === null) {
-					continue;
+				if ($this->resignSuite(suite: $suite, intermediate: $intermediate) === true) {
+					$total++;
 				}
-
-				$pubKey = openssl_pkey_get_public(public_key: $oldCert);
-				// @codeCoverageIgnoreStart
-				if ($pubKey === false) {
-					$this->logger->warning("Keepiq: Could not extract public key from suite {$suite->getId()}");
-					continue;
-				}
-
-				// @codeCoverageIgnoreEnd
-				$newCertPem = $this->resignPreservingPublicKey(
-					oldCert: $oldCert,
-					fallbackCn: $suite->getOwnerId(),
-					intermediateCert: $intermediateCert,
-					intermediateKeyPem: $intermediateKeyPem,
-				);
-
-				// A null result means it could not mint a certificate that
-				// carries the suite's ORIGINAL public key. In
-				// the zero-knowledge model the server never holds the suite's
-				// private key, so it must never replace the certificate with one
-				// bound to a different key pair — doing so silently makes every
-				// value the browser encrypts under the new certificate
-				// undecryptable with the user's wrapped private key (the
-				// read-after-write decrypt failure). When we can't preserve the
-				// key, we keep the existing certificate untouched.
-				if ($newCertPem === null) {
-					$this->logger->warning(
-						"Keepiq: kept existing certificate for suite {$suite->getId()} — "
-						. 'could not re-sign while preserving its public key'
-					);
-					continue;
-				}
-
-				$suite->setCertificate($newCertPem);
-				$this->suiteMapper->update($suite);
-				$total++;
-			}//end foreach
+			}
 
 			$suiteCount = count($suites);
 			$offset += self::RESIGN_BATCH_SIZE;
@@ -368,6 +368,96 @@ class CertificateIssuanceService {
 
 		return $total;
 	}//end resignAllActiveSuites()
+
+	/**
+	 * The active intermediate with its private key decrypted.
+	 *
+	 * @return SigningIntermediate
+	 *
+	 * @throws DoesNotExistException When there is no active intermediate
+	 */
+	private function signingIntermediate(): SigningIntermediate {
+		$intermediate = $this->caCertificateMapper->findActiveIntermediate();
+
+		return new SigningIntermediate(
+			privateKeyPem: $this->crypto->decrypt($intermediate->getPrivateKey()),
+			certificate: $intermediate->getCertificate(),
+		);
+	}//end signingIntermediate()
+
+	/**
+	 * Re-sign one suite's certificate and store it; a suite without a usable
+	 * certificate, or one whose public key cannot be preserved, is kept as is.
+	 *
+	 * @param EncryptionSuite $suite The suite
+	 * @param SigningIntermediate $intermediate The intermediate that signs
+	 *
+	 * @return bool Whether a new certificate was stored
+	 */
+	private function resignSuite(EncryptionSuite $suite, SigningIntermediate $intermediate): bool {
+		$oldCert = $suite->getCertificate();
+		if ($oldCert === null) {
+			return false;
+		}
+
+		$pubKey = openssl_pkey_get_public(public_key: $oldCert);
+		// @codeCoverageIgnoreStart
+		if ($pubKey === false) {
+			$this->logger->warning("Keepiq: Could not extract public key from suite {$suite->getId()}");
+			return false;
+		}
+
+		// @codeCoverageIgnoreEnd
+		$newCertPem = $this->resignPreservingPublicKey(suite: $suite, intermediate: $intermediate);
+
+		// A null result means it could not mint a certificate that
+		// carries the suite's ORIGINAL public key. In
+		// the zero-knowledge model the server never holds the suite's
+		// private key, so it must never replace the certificate with one
+		// bound to a different key pair — doing so silently makes every
+		// value the browser encrypts under the new certificate
+		// undecryptable with the user's wrapped private key (the
+		// read-after-write decrypt failure). When we can't preserve the
+		// key, we keep the existing certificate untouched.
+		if ($newCertPem === null) {
+			return $this->keptExisting(suite: $suite, outcome: 'kept');
+		}
+
+		return $this->storeCertificate(suite: $suite, certPem: $newCertPem);
+	}//end resignSuite()
+
+	/**
+	 * Log that a suite keeps its certificate because no re-sign could
+	 * preserve its public key.
+	 *
+	 * @param EncryptionSuite $suite The suite
+	 * @param string $outcome How the log line names what happened
+	 *
+	 * @return bool Always false: nothing was stored
+	 */
+	private function keptExisting(EncryptionSuite $suite, string $outcome): bool {
+		$this->logger->warning(
+			"Keepiq: {$outcome} existing certificate for suite {$suite->getId()} — "
+			. 'could not re-sign while preserving its public key'
+		);
+
+		return false;
+	}//end keptExisting()
+
+	/**
+	 * Store a suite's re-signed certificate.
+	 *
+	 * @param EncryptionSuite $suite The suite
+	 * @param string $certPem The new PEM certificate
+	 *
+	 * @return bool Always true: the certificate was stored
+	 */
+	private function storeCertificate(EncryptionSuite $suite, string $certPem): bool {
+		$suite->setCertificate($certPem);
+		$this->suiteMapper->update($suite);
+
+		return true;
+	}//end storeCertificate()
 
 	/**
 	 * Whether an X.509 certificate carries exactly the given RSA public key.
@@ -416,20 +506,14 @@ class CertificateIssuanceService {
 	 * by the intermediate. The openssl modulus guard remains as belt-and-braces:
 	 * a result whose public key differs is still rejected.
 	 *
-	 * @param string $oldCert The current PEM certificate to re-sign
-	 * @param string $fallbackCn CN to add when the old cert has none
-	 * @param string $intermediateCert The signing intermediate certificate (PEM)
-	 * @param string $intermediateKeyPem The decrypted intermediate private key (PEM)
+	 * @param EncryptionSuite $suite The suite whose current certificate to re-sign; its owner is the CN when the certificate has none
+	 * @param SigningIntermediate $intermediate The signing intermediate
 	 *
 	 * @return string|null The new PEM certificate, or null when the public key
 	 *                     could not be preserved.
 	 */
-	private function resignPreservingPublicKey(
-		string $oldCert,
-		string $fallbackCn,
-		string $intermediateCert,
-		string $intermediateKeyPem,
-	): ?string {
+	private function resignPreservingPublicKey(EncryptionSuite $suite, SigningIntermediate $intermediate): ?string {
+		$oldCert = (string)$suite->getCertificate();
 		$oldModulus = $this->rsaModulusOf(pemCertificate: $oldCert);
 		if ($oldModulus === null) {
 			return null;
@@ -437,9 +521,9 @@ class CertificateIssuanceService {
 
 		$newCertPem = $this->assembler->resignPreservingSubject(
 			oldCert: $oldCert,
-			intermediateCert: $intermediateCert,
-			intermediateKeyPem: $intermediateKeyPem,
-			fallbackCn: $fallbackCn
+			intermediateCert: $intermediate->certificate,
+			intermediateKeyPem: $intermediate->privateKeyPem,
+			fallbackCn: $suite->getOwnerId()
 		);
 
 		// The saveX509() helper is declared `: string`, so the only failure

@@ -148,3 +148,26 @@ describe('other members', () => {
 		expect(FORMATTERS.securityCode(input('<input>'), {})).toEqual([])
 	})
 })
+
+describe('expiry and number, refusals', () => {
+	it.each([
+		[{ expMonth: '03' }],
+		[{ expYear: '2027' }],
+		[{ expMonth: '13', expYear: '2027' }],
+		[{ expMonth: '03', expYear: '27' }],
+	])('fills no expiry for %j', (given) => {
+		expect(FORMATTERS.expiry(input('<input>'), given)).toEqual([])
+	})
+
+	it('fills no expiry into a select, and fills a single expiry input', () => {
+		expect(FORMATTERS.expiry(input('<select><option>03/27</option></select>'), values)).toEqual([])
+		expect(FORMATTERS.expiry(input('<input>'), values).length).toBeGreaterThan(0)
+	})
+
+	it('splits a number over parts, and takes none that is no text', () => {
+		const parts = [4, 4, 4, 4].map(() => input('<input maxlength="4">') as HTMLInputElement)
+		expect(numberParts(parts, '4111 1111 1111 1111')).toEqual(['4111', '1111', '1111', '1111'])
+		expect(numberParts(parts, 4111)).toBeNull()
+		expect(numberParts([], '4111')).toBeNull()
+	})
+})

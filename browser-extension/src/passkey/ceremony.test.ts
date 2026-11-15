@@ -541,6 +541,14 @@ describe('the passkey window', () => {
 			.toEqual({ ok: false, code: 'pin_forgotten' })
 	})
 
+	it.each(['passkey.sign', 'toString', 'constructor'])('answers unknown to the kind %s, changing nothing', async (kind) => {
+		const { ceremonyId } = await start()
+		expect(await window({ kind, ceremonyId } as never, windowOf(ceremonyId!))).toEqual({ ok: false, code: 'unknown' })
+		await settle()
+		expect(await record()).toMatchObject({ id: ceremonyId, verified: false })
+		expect(delivered()).toEqual([])
+	})
+
 	it.each([null, { type: 'pin' }, { type: 'pin', pin: 7 }, { type: 'masterPassword' }, { type: 'biometric', pin: 'x' }])('refuses the method %j without unlocking', async (method) => {
 		const { ceremonyId } = await start()
 		expect(await window({ kind: 'passkey.verify', ceremonyId, method }, windowOf(ceremonyId!))).toEqual({ ok: false, code: 'unknown' })

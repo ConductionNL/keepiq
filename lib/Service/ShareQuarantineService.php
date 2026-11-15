@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\ShareQuarantineServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -47,7 +48,7 @@ use OCP\EventDispatcher\IEventDispatcher;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A release judges the row against its copy, its group share and the
  *   live shares, and every release or drop is audited; each collaborator is one of those.
  */
-class ShareQuarantineService {
+class ShareQuarantineService implements ShareQuarantineServiceInterface {
 	/**
 	 * Constructor.
 	 *
@@ -128,24 +129,7 @@ class ShareQuarantineService {
 			$this->assertReleasableWithoutForce(row: $row);
 		}
 
-		try {
-			$this->mapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $row->getSourceSecretId(),
-				targetUserId: $row->getTargetUserId()
-			);
-			$replaced = true;
-		} catch (DoesNotExistException) {
-			$replaced = false;
-		} catch (MultipleObjectsReturnedException) {
-			$replaced = true;
-		}
-
-		if ($replaced === true) {
-			throw new InvalidArgumentException(
-				message: 'The source is shared with this recipient again; drop this row instead'
-			);
-		}
-
+		$this->assertNotSharedAgain(row: $row);
 		$row->setQuarantinedAt(null);
 		$released = $this->quarantined->update($row);
 		$this->audit(
@@ -156,6 +140,35 @@ class ShareQuarantineService {
 
 		return $released;
 	}//end release()
+
+	/**
+	 * Refuse a row whose source is shared with its recipient again through a
+	 * live row (or more than one): that row replaces it.
+	 *
+	 * @param ShareTarget $row The quarantined row
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a live share replaces the row
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-planted-share-rows-are-quarantined
+	 */
+	private function assertNotSharedAgain(ShareTarget $row): void {
+		try {
+			$this->mapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $row->getSourceSecretId(),
+				targetUserId: $row->getTargetUserId()
+			);
+		} catch (DoesNotExistException) {
+			return;
+		} catch (MultipleObjectsReturnedException) {
+			// More than one live row replaces it as surely as one.
+		}
+
+		throw new InvalidArgumentException(
+			message: 'The source is shared with this recipient again; drop this row instead'
+		);
+	}//end assertNotSharedAgain()
 
 	/**
 	 * Refuse, whatever the force, to release a team-folder row whose folder

@@ -1,0 +1,83 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CxpTransferDialog.doSend > fetches the request once, reports first, then seals and posts the envelope 1`] = `
+{
+  "busy": false,
+  "get": [
+    [
+      "/apps/keepiq/api/v1/cxp/relay/pair/request",
+    ],
+  ],
+  "masterPassword": "",
+  "post": [
+    [
+      "/apps/keepiq/api/v1/cxp/relay",
+      {
+        "pairingId": "pair",
+        "payload": "{"sealed":true}",
+        "slot": "response",
+      },
+    ],
+  ],
+  "sealed": [
+    [
+      {
+        "req": 1,
+      },
+      [
+        {
+          "id": "s1",
+        },
+      ],
+      [
+        {
+          "id": "f1",
+          "name": "F",
+        },
+      ],
+      {
+        "mode": "vault",
+      },
+      {
+        "dryRun": true,
+        "typeNamesById": {},
+      },
+    ],
+    [
+      {
+        "req": 1,
+      },
+      [
+        {
+          "id": "s1",
+        },
+      ],
+      [
+        {
+          "id": "f1",
+          "name": "F",
+        },
+      ],
+      {
+        "mode": "vault",
+      },
+      {
+        "typeNamesById": {},
+      },
+    ],
+  ],
+  "sent": true,
+}
+`;
+
+exports[`ExportDialog.onExport > shows the unmapped-item report first, then exports on the second pass 1`] = `
+[
+  {
+    "dryRun": true,
+    "typeNamesById": {},
+  },
+  {
+    "typeNamesById": {},
+  },
+]
+`;

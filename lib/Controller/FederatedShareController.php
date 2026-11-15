@@ -25,13 +25,13 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
-use OCA\Keepiq\Service\FederatedShareService;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,7 +50,7 @@ class FederatedShareController extends Controller {
 	 * Constructor for FederatedShareController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param FederatedShareService $shares The outbound federated shares
+	 * @param FederatedShareServiceInterface $shares The outbound federated shares
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
@@ -59,10 +59,10 @@ class FederatedShareController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private FederatedShareService $shares,
+		private FederatedShareServiceInterface $shares,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -89,7 +89,7 @@ class FederatedShareController extends Controller {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['secretId', 'recipientCloudId'], purpose: VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT)]
+	#[VaultKeyProofRequired(binds: ['secretId', 'recipientCloudId'], purpose: VaultKeyProofServiceInterface::PURPOSE_SHARE_NEW_RECIPIENT)]
 	public function create(
 		string $secretId,
 		string $recipientCloudId = '',

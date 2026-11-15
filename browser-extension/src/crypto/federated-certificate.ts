@@ -157,40 +157,82 @@ function time(bytes: Uint8Array, element: Element | undefined): number {
 	return Date.UTC(year, Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]), Number(match[6]))
 }
 
+/** What the extensions read so far say about issuing, and which extensions were seen. */
+interface ExtensionsRun {
+	bytes: Uint8Array
+	seen: Set<string>
+	ca: boolean
+	keyCertSign: boolean
+	pathLen: number | null
+}
+
+/** One extension: its id, its criticality flag if it has one, and its OCTET STRING value. */
+interface ExtensionParts {
+	id: string
+	critical: Element | undefined
+	value: Element
+}
+
 /** RFC 5280 § 4.2: each extension at most once, and none critical that this doesn't read. § 4.2.1.3 and § 4.2.1.9: without basicConstraints a certificate is no CA. */
 function issuing(bytes: Uint8Array, extensions: Element | undefined): Pick<Parsed, 'ca' | 'mayIssue' | 'pathLen'> {
-	let ca = false
-	let keyCertSign = true
-	let pathLen: number | null = null
-	const seen = new Set<string>()
-	for (const extension of extensions ? children(bytes, only(bytes, extensions, 0x30)) : []) {
-		if (extension.tag !== 0x30) throw malformed()
-		const [extnId, ...rest] = children(bytes, extension)
-		const value = rest.pop()
-		const [critical, extra] = rest
-		if (value?.tag !== 0x04 || extra) throw malformed()
-		const id = oid(bytes, extnId)
-		if (seen.has(id)) throw malformed()
-		seen.add(id)
-		if (critical && presentFlag(bytes, critical) && id !== OID_BASIC_CONSTRAINTS && id !== OID_KEY_USAGE) throw malformed()
-		if (id === OID_BASIC_CONSTRAINTS) {
-			const fields = children(bytes, only(bytes, value, 0x30))
-			let next = 0
-			if (fields[next]?.tag === 0x01) ca = presentFlag(bytes, fields[next++]!)
-			if (fields[next]?.tag === 0x02) pathLen = uint(bytes, fields[next++]!)
-			if (next !== fields.length) throw malformed()
-		} else if (id === OID_KEY_USAGE) {
-			const bits = only(bytes, value, 0x03)
-			const length = bits.end - bits.start
-			const unused = length > 0 ? byteAt(bytes, bits.start) : 0
-			if (length === 0 || unused > 7 || (length === 1 && unused !== 0)) throw malformed()
-			// After the unused-bits count, keyCertSign is bit 5 of the first byte; when that byte is also the last, its unused bits are padding.
-			const first = length > 1 ? byteAt(bytes, bits.start + 1) : 0
-			const mask = length === 2 ? (0xff << unused) & 0xff : 0xff
-			keyCertSign = (first & mask & 0x04) !== 0
-		}
-	}
-	return { ca, mayIssue: ca && keyCertSign, pathLen: ca ? pathLen : null }
+	const run: ExtensionsRun = { bytes, seen: new Set<string>(), ca: false, keyCertSign: true, pathLen: null }
+	for (const extension of extensions ? children(bytes, only(bytes, extensions, 0x30)) : []) readExtension(run, extension)
+	return { ca: run.ca, mayIssue: run.ca && run.keyCertSign, pathLen: run.ca ? run.pathLen : null }
+}
+
+function readExtension(run: ExtensionsRun, extension: Element): void {
+	const parts = extensionParts(run.bytes, extension)
+	if (run.seen.has(parts.id)) throw malformed()
+	run.seen.add(parts.id)
+	if (criticalUnread(run.bytes, parts)) throw malformed()
+	EXTENSION_READERS.get(parts.id)?.(run, parts.value)
+}
+
+function extensionParts(bytes: Uint8Array, extension: Element): ExtensionParts {
+	if (extension.tag !== 0x30) throw malformed()
+	const [extnId, ...rest] = children(bytes, extension)
+	const value = rest.pop()
+	const [critical, extra] = rest
+	if (value?.tag !== 0x04 || extra) throw malformed()
+	return { id: oid(bytes, extnId), critical, value }
+}
+
+const criticalUnread = (bytes: Uint8Array, { id, critical }: ExtensionParts) => !!critical && presentFlag(bytes, critical) && !EXTENSION_READERS.has(id)
+
+function readBasicConstraints(run: ExtensionsRun, value: Element): void {
+	const fields = children(run.bytes, only(run.bytes, value, 0x30))
+	let next = 0
+	if (fields[next]?.tag === 0x01) run.ca = presentFlag(run.bytes, fields[next++]!)
+	if (fields[next]?.tag === 0x02) run.pathLen = uint(run.bytes, fields[next++]!)
+	if (next !== fields.length) throw malformed()
+}
+
+function readKeyUsage(run: ExtensionsRun, value: Element): void {
+	const bits = only(run.bytes, value, 0x03)
+	const length = bits.end - bits.start
+	const unused = length > 0 ? byteAt(run.bytes, bits.start) : 0
+	if (badUnusedBits(length, unused)) throw malformed()
+	// After the unused-bits count, keyCertSign is bit 5 of the first byte; when that byte is also the last, its unused bits are padding.
+	const first = length > 1 ? byteAt(run.bytes, bits.start + 1) : 0
+	const mask = length === 2 ? (0xff << unused) & 0xff : 0xff
+	run.keyCertSign = (first & mask & 0x04) !== 0
+}
+
+const badUnusedBits = (length: number, unused: number) => length === 0 || unused > 7 || (length === 1 && unused !== 0)
+
+/** The extensions this reads; any other one must not be critical. */
+const EXTENSION_READERS = new Map<string, (run: ExtensionsRun, value: Element) => void>([
+	[OID_BASIC_CONSTRAINTS, readBasicConstraints],
+	[OID_KEY_USAGE, readKeyUsage],
+])
+
+/** The RSASSA-PSS parameters read so far, with the PSS defaults for what is absent. */
+interface PssRun {
+	bytes: Uint8Array
+	hash: string | null
+	mask: string | null
+	maskHash: string | null
+	saltLength: number
 }
 
 /** Only SHA-256, and for PSS only with MGF1-SHA-256: the PSS default is SHA-1. Parameters that don't decode are malformed. */
@@ -203,27 +245,46 @@ function algorithmOf(bytes: Uint8Array, algorithm: Element): Algorithm | null {
 		return { import: pkcs1, verify: pkcs1 }
 	}
 	if (name !== OID_RSA_PSS || !params) return null
-	if (params.tag !== 0x30) throw malformed()
-	const algorithmId = (element: Element) => oid(bytes, children(bytes, element.tag === 0x30 ? element : undefined)[0])
-	let hash: string | null = null
-	let mask: string | null = null
-	let maskHash: string | null = null
-	let saltLength = 20
-	// RSASSA-PSS-params: [0] hash, [1] mask generation, [2] salt length, [3] trailer field.
-	for (const field of children(bytes, params)) {
-		const inner = only(bytes, field)
-		if (field.tag === 0xa0) hash = algorithmId(inner)
-		else if (field.tag === 0xa1) {
-			if (inner.tag !== 0x30) throw malformed()
-			const [maskId, maskParams] = children(bytes, inner)
-			mask = oid(bytes, maskId)
-			maskHash = maskParams ? algorithmId(maskParams) : null
-		} else if (field.tag === 0xa2) saltLength = uint(bytes, inner)
-		else if (field.tag !== 0xa3 || uint(bytes, inner) !== 1) throw malformed()
-	}
-	if (hash !== OID_SHA256 || mask !== OID_MGF1 || maskHash !== OID_SHA256) return null
-	return { import: { name: 'RSA-PSS', hash: 'SHA-256' }, verify: { name: 'RSA-PSS', saltLength } }
+	return pssAlgorithm(bytes, params)
 }
+
+function pssAlgorithm(bytes: Uint8Array, params: Element): Algorithm | null {
+	if (params.tag !== 0x30) throw malformed()
+	const pss: PssRun = { bytes, hash: null, mask: null, maskHash: null, saltLength: 20 }
+	for (const field of children(bytes, params)) readPssField(pss, field)
+	if (!sha256Throughout(pss)) return null
+	return { import: { name: 'RSA-PSS', hash: 'SHA-256' }, verify: { name: 'RSA-PSS', saltLength: pss.saltLength } }
+}
+
+const sha256Throughout = (pss: PssRun) => pss.hash === OID_SHA256 && pss.mask === OID_MGF1 && pss.maskHash === OID_SHA256
+
+function readPssField(pss: PssRun, field: Element): void {
+	const inner = only(pss.bytes, field)
+	const read = PSS_FIELDS.get(field.tag)
+	if (!read) throw malformed()
+	read(pss, inner)
+}
+
+const algorithmIdOf = (bytes: Uint8Array, element: Element) => oid(bytes, children(bytes, element.tag === 0x30 ? element : undefined)[0])
+
+function readMaskGeneration(pss: PssRun, inner: Element): void {
+	if (inner.tag !== 0x30) throw malformed()
+	const [maskId, maskParams] = children(pss.bytes, inner)
+	pss.mask = oid(pss.bytes, maskId)
+	pss.maskHash = maskParams ? algorithmIdOf(pss.bytes, maskParams) : null
+}
+
+function readTrailerField(pss: PssRun, inner: Element): void {
+	if (uint(pss.bytes, inner) !== 1) throw malformed()
+}
+
+/** RSASSA-PSS-params: [0] hash, [1] mask generation, [2] salt length, [3] trailer field. */
+const PSS_FIELDS = new Map<number, (pss: PssRun, inner: Element) => void>([
+	[0xa0, (pss, inner) => { pss.hash = algorithmIdOf(pss.bytes, inner) }],
+	[0xa1, readMaskGeneration],
+	[0xa2, (pss, inner) => { pss.saltLength = uint(pss.bytes, inner) }],
+	[0xa3, readTrailerField],
+])
 
 const ASCII_STRINGS = new Set([PRINTABLE_STRING, TELETEX_STRING, IA5_STRING])
 
@@ -248,33 +309,89 @@ function commonNameOf(subject: Uint8Array): string | null {
 	return commonName
 }
 
+/** The three parts of a certificate: what is signed, the algorithm it is signed with, and the signature. */
+interface CertificateParts {
+	tbs: Element
+	algorithm: Element
+	signature: Element
+}
+
+/** The fields of the signed part, after the version. */
+interface TbsFields {
+	issuer: Element
+	validity: Element
+	subject: Element
+	spki: Element
+	optional: Element[]
+}
+
 function parse(pem: unknown): Parsed {
 	const der = pemToDer(pem)
+	const parts = certificateParts(der)
+	const fields = tbsFields(der, parts)
+	return {
+		der,
+		...signedParts(der, parts),
+		issuer: whole(der, fields.issuer),
+		subject: whole(der, fields.subject),
+		...validityOf(der, fields.validity),
+		spki: whole(der, fields.spki),
+		...issuing(der, fields.optional.find((field) => field.tag === 0xa3)),
+	}
+}
+
+function certificateParts(der: Uint8Array): CertificateParts {
 	const outer = tlv(der, 0)
 	if (outer.tag !== 0x30 || outer.end !== der.length) throw malformed()
 	const [tbs, algorithm, signature, extra] = children(der, outer)
-	// A BIT STRING value starts with its unused-bits count, which a signature never has.
-	if (tbs?.tag !== 0x30 || algorithm?.tag !== 0x30 || signature?.tag !== 0x03 || extra || signature.end === signature.start || byteAt(der, signature.start) !== 0) throw malformed()
-	const fields = children(der, tbs)
-	const [, signed, issuer, validity, subject, spki, ...optional] = fields.slice(fields[0]?.tag === 0xa0 ? 1 : 0)
-	if (!signed || !issuer || !validity || !subject || spki?.tag !== 0x30) throw malformed()
+	if (tbs?.tag !== 0x30 || algorithm?.tag !== 0x30) throw malformed()
+	return { tbs, algorithm, signature: bareSignature(der, [signature, extra]) }
+}
+
+/** A BIT STRING value starts with its unused-bits count, which a signature never has. */
+function bareSignature(der: Uint8Array, [signature, extra]: Array<Element | undefined>): Element {
+	if (signature?.tag !== 0x03 || extra || signature.end === signature.start || byteAt(der, signature.start) !== 0) throw malformed()
+	return signature
+}
+
+function tbsFields(der: Uint8Array, parts: CertificateParts): TbsFields {
+	const { signed, issuer, validity, subject, spki, optional } = presentFields(afterVersion(children(der, parts.tbs)))
+	if (spki?.tag !== 0x30) throw malformed()
 	// RFC 5280 § 4.1.1.2: the algorithm the signature covers is the one it is checked with.
-	if (!equalBytes(der.subarray(signed.offset, signed.end), der.subarray(algorithm.offset, algorithm.end))) throw malformed()
+	if (!equalBytes(der.subarray(signed.offset, signed.end), der.subarray(parts.algorithm.offset, parts.algorithm.end))) throw malformed()
 	// The unique IDs and the extensions, each at most once and in order, so no second extensions block goes unread.
-	if (!optional.every((field, i) => [0x81, 0x82, 0xa3].includes(field.tag) && field.tag > (optional[i - 1]?.tag ?? 0))) throw malformed()
-	const [notBefore, notAfter] = children(der, validity)
+	if (!inOrderOnce(optional)) throw malformed()
+	return { issuer, validity, subject, spki, optional }
+}
+
+/** The signed part's fields that must be there; the key is checked by the caller. */
+interface PresentFields extends Omit<TbsFields, 'spki'> {
+	signed: Element
+	spki: Element | undefined
+}
+
+/** The serial number is skipped; the signature algorithm, issuer, validity and subject must be there. */
+function presentFields(fields: Element[]): PresentFields {
+	const [, signed, issuer, validity, subject, spki, ...optional] = fields
+	if (!signed || !issuer || !validity || !subject) throw malformed()
+	return { signed, issuer, validity, subject, spki, optional }
+}
+
+const afterVersion = (fields: Element[]) => fields.slice(fields[0]?.tag === 0xa0 ? 1 : 0)
+
+const inOrderOnce = (optional: Element[]) => optional.every((field, i) => [0x81, 0x82, 0xa3].includes(field.tag) && field.tag > (optional[i - 1]?.tag ?? 0))
+
+function signedParts(der: Uint8Array<ArrayBuffer>, parts: CertificateParts): Pick<Parsed, 'tbs' | 'algorithm' | 'signature'> {
 	return {
-		der,
-		tbs: whole(der, tbs),
-		algorithm: algorithmOf(der, algorithm),
-		signature: der.slice(signature.start + 1, signature.end),
-		issuer: whole(der, issuer),
-		subject: whole(der, subject),
-		notBefore: time(der, notBefore),
-		notAfter: time(der, notAfter),
-		spki: whole(der, spki),
-		...issuing(der, optional.find((field) => field.tag === 0xa3)),
+		tbs: whole(der, parts.tbs),
+		algorithm: algorithmOf(der, parts.algorithm),
+		signature: der.slice(parts.signature.start + 1, parts.signature.end),
 	}
+}
+
+function validityOf(der: Uint8Array, validity: Element): Pick<Parsed, 'notBefore' | 'notAfter'> {
+	const [notBefore, notAfter] = children(der, validity)
+	return { notBefore: time(der, notBefore), notAfter: time(der, notAfter) }
 }
 
 async function signedBy(cert: Parsed, issuer: Parsed): Promise<boolean> {

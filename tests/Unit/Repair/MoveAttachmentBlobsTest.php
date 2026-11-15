@@ -267,4 +267,67 @@ class MoveAttachmentBlobsTest extends TestCase {
 		$this->assertCount(1, $this->warnings);
 		$this->assertStringContainsString('disk full', $this->warnings[0]);
 	}//end testReportsRatherThanThrowsWhenTheCopyFails()
+	/**
+	 * One run over every per-blob outcome, with the output lines, the deletes
+	 * and the writes pinned in order.
+	 *
+	 * @return void
+	 */
+	public function testPinsEveryOutcomeOfOneRun(): void {
+		$events = [];
+		$files = [];
+		foreach (['moved' => 10, 'short' => 20, 'same' => 30, 'clash' => 40, 'broken' => 50] as $name => $size) {
+			$file = $this->blob($name, $size);
+			$file->method('delete')->willReturnCallback(function () use (&$events, $name): void {
+				$events[] = 'delete ' . $name;
+			});
+			$files[] = $file;
+		}
+
+		$source = $this->createMock(ISimpleFolder::class);
+		$source->method('getDirectoryListing')->willReturn($files);
+		$existing = ['same' => 30, 'clash' => 41];
+		$target = $this->createMock(ISimpleFolder::class);
+		$target->method('fileExists')->willReturnCallback(static fn (string $name): bool => isset($existing[$name]));
+		$target->method('getFile')->willReturnCallback(function (string $name) use ($existing): ISimpleFile {
+			$file = $this->createMock(ISimpleFile::class);
+			$file->method('getSize')->willReturn($existing[$name]);
+			return $file;
+		});
+		$target->method('newFile')->willReturnCallback(function (string $name, $content) use (&$events): ISimpleFile {
+			$events[] = 'write ' . $name . ' ' . strlen((string)$content);
+			if ($name === 'broken') {
+				throw new \RuntimeException('disk full');
+			}
+
+			$file = $this->createMock(ISimpleFile::class);
+			$file->method('getSize')->willReturn($name === 'short' ? 7 : strlen((string)$content));
+			return $file;
+		});
+		$output = $this->createMock(IOutput::class);
+		foreach (['info', 'warning'] as $level) {
+			$output->method($level)->willReturnCallback(function (string $message) use (&$events, $level): void {
+				$events[] = $level . ' ' . $message;
+			});
+		}
+
+		(new MoveAttachmentBlobs($this->factory($source, $target)))->run($output);
+
+		$this->assertSame(
+			[
+				'write moved 10',
+				'delete moved',
+				'write short 20',
+				'warning Blob "short" copied as 7 bytes but the source is 20 - keeping the source, remove the partial copy by hand.',
+				'delete same',
+				'warning Blob "clash" exists under BOTH namespaces with different sizes (40 vs 41 bytes). '
+				. 'Leaving both untouched: reads resolve the new namespace first, so verify by hand '
+				. 'which is correct before removing either.',
+				'write broken 50',
+				'warning Could not move blob "broken": disk full',
+				'info Moved 2 attachment blob(s), skipped 3.',
+			],
+			$events
+		);
+	}//end testPinsEveryOutcomeOfOneRun()
 }//end class

@@ -30,6 +30,7 @@ const FIVE_ROWS = inlineHeight(5)
 const LOGIN = `
 	<form id="first"><input id="u" name="username"><input id="p" type="password"><button>Log in</button></form>
 	<form id="second"><input id="u2" name="username"><input id="p2" type="password"><button>Log in</button></form>`
+const CHANGE_PASSWORD = '<form><input id="u" name="username" autocomplete="username"><input id="cur" type="password" autocomplete="current-password"><input id="p" type="password" autocomplete="new-password"><input id="c" type="password" autocomplete="new-password"><button>Change password</button></form>'
 const SIGN_UP = '<form><input id="u" name="username"><input id="p" type="password" autocomplete="new-password"><input id="c" type="password" autocomplete="new-password"><button>Create account</button></form>'
 
 interface Box { top: number; left: number; width: number; height: number }
@@ -231,8 +232,7 @@ describe('opening', () => {
 
 	it.each([
 		['the username of a sign-up form', SIGN_UP, '#u'],
-		['a new-password field', SIGN_UP, '#p'],
-		['a confirm field', SIGN_UP, '#c'],
+		['the current password of a password change', CHANGE_PASSWORD, '#cur'],
 		['a newsletter field', '<form><input id="u" type="email" name="email"><button>Subscribe</button></form>', '#u'],
 		['a recovery code field', '<form><label>Recovery code <input id="u" name="code" maxlength="8" autocomplete="one-time-code"></label><button>Verify</button></form>', '#u'],
 		['a disabled password field', '<form><input id="u" name="username"><input id="p" type="password" disabled><button>Log in</button></form>', '#p'],
@@ -242,6 +242,19 @@ describe('opening', () => {
 		$(selector).dispatchEvent(new MouseEvent('click', { bubbles: true }))
 		await settle()
 		expect(request).not.toHaveBeenCalled()
+	})
+
+	it.each([
+		['a new-password field', SIGN_UP, '#p'],
+		['its confirmation', SIGN_UP, '#c'],
+		['the new password of a password change', CHANGE_PASSWORD, '#p'],
+	])('opens in new-password mode on %s, titled for the offer', async (_, html, selector) => {
+		rects.set('c', { top: 180, left: 100, width: 200, height: 30 })
+		start(html)
+		$(selector).focus()
+		await settle()
+		expect(request).toHaveBeenCalledExactlyOnceWith({ kind: 'inline.open', mode: 'newPassword' })
+		expect(host().frame.title).toBe('Keepiq strong password')
 	})
 
 	it.each([
@@ -954,7 +967,10 @@ describe('visibility guard', () => {
 		inline.handle({ kind: 'inline.ready', key: KEY })
 		expect(inline.handle({ kind: 'inline.verify', key: 'b'.repeat(32), input: press() })).toBe(false)
 		expect(verify(press({ x: 240 }))).toBe(false)
+		expect(verify(press({ x: -1 }))).toBe(false)
 		expect(verify(press({ y: -1 }))).toBe(false)
+		expect(verify(press({ y: FIVE_ROWS }))).toBe(false)
+		expect(verify(press({ x: 239, y: FIVE_ROWS - 1 }))).toBe(true)
 		expect(verify({ kind: 'pointer', at: 'now' } as never)).toBe(false)
 		hit = $('#u')
 		expect(verify()).toBe(false)

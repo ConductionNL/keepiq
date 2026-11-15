@@ -139,18 +139,9 @@ import {
 	NcNoteCard,
 	NcTextField,
 } from '@nextcloud/vue'
+import { confirmPasswordFirst } from '../../utils/passwordConfirmation.js'
 
 const BASE = '/apps/keepiq/api/v1/federation/partners'
-
-/**
- * Ask for the Nextcloud password before a change, as the server requires.
- *
- * @return {Promise<void>}
- */
-async function confirmPasswordFirst() {
-	const { confirmPassword } = await import('@nextcloud/password-confirmation')
-	await confirmPassword()
-}
 
 export default {
 	name: 'FederationPartnersSection',
@@ -288,21 +279,13 @@ export default {
 		 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 		 */
 		async updatePartner(partner, change) {
-			this.error = null
-			try {
-				await confirmPasswordFirst()
-				await axios.put(
-					generateUrl(BASE + '/' + encodeURIComponent(partner.id)),
-					{
-						allowOutbound: partner.allowOutbound,
-						allowInbound: partner.allowInbound,
-						...change,
-					},
-				)
-			} catch (e) {
-				this.fail(e)
-			}
-			await this.load()
+			await this.changePartner(() =>
+				axios.put(generateUrl(BASE + '/' + encodeURIComponent(partner.id)), {
+					allowOutbound: partner.allowOutbound,
+					allowInbound: partner.allowInbound,
+					...change,
+				}),
+			)
 		},
 
 		/**
@@ -313,12 +296,25 @@ export default {
 		 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 		 */
 		async removePartner(partner) {
+			await this.changePartner(() =>
+				axios.delete(generateUrl(BASE + '/' + encodeURIComponent(partner.id))),
+			)
+		},
+
+		/**
+		 * Run one change to the partner list: confirm the password first, as
+		 * the server requires, show a refusal or failure, and read the list
+		 * again whatever happened.
+		 *
+		 * @param {function(): Promise<object>} request The change request.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+		 */
+		async changePartner(request) {
 			this.error = null
 			try {
 				await confirmPasswordFirst()
-				await axios.delete(
-					generateUrl(BASE + '/' + encodeURIComponent(partner.id)),
-				)
+				await request()
 			} catch (e) {
 				this.fail(e)
 			}

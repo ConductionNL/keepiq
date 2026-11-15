@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Kernel\Contracts\TwoFactorGateInterface;
 use OCP\Authentication\TwoFactorAuth\IRegistry;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -34,7 +35,7 @@ use OCP\IUserManager;
 /**
  * Decides whether the two-factor policy blocks a user's unlock.
  */
-class TwoFactorGate {
+class TwoFactorGate implements TwoFactorGateInterface {
 	/**
 	 * The code every refusal and withheld suite carries.
 	 */

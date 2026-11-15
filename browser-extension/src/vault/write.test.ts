@@ -1520,3 +1520,24 @@ describe('folders', () => {
 		expect(plans).toEqual([undefined, undefined, undefined, JSON.stringify({ directSecrets: 'move', subfolders: { c: 'keep' } })])
 	})
 })
+
+describe('who may write', () => {
+	it('refuses a logged-out account as session revoked, before it reads the key', async () => {
+		await updateAccount(accountId, { appPassword: null })
+		expect(await createItem(draft())).toEqual({ ok: false, error: { code: 'session_revoked' } })
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	it('refuses without an active account as locked, and another account than the one shown as changed', async () => {
+		expect(await createItem(draft(), 'another')).toEqual({ ok: false, error: { code: 'account_changed' } })
+		await browser.storage.local.clear()
+		expect(await createItem(draft())).toEqual({ ok: false, error: { code: 'locked' } })
+		expect(await createItem(draft(), 'another')).toEqual({ ok: false, error: { code: 'account_changed' } })
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	it.each(['toString', 'constructor', 'hasOwnProperty'])('refuses a passkey change of kind %s before any request', async (kind) => {
+		expect(await writeLoginPasskeys('s1', { kind, credentialId: 'cred-a', seen: 1 } as never)).toEqual({ ok: false, error: { code: 'invalid' } })
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})

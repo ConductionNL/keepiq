@@ -31,6 +31,7 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
+use OCA\Keepiq\Db\SecretUrlMapper;
 
 /**
  * Cascades attachment, grant and version-history removal for secrets.
@@ -43,6 +44,7 @@ class SecretChildDataCleaner {
 	 * @param AttachmentService|null $attachmentService The attachment service (delete cascade)
 	 * @param SecretVersionService|null $versionService The version-history service (delete cascade)
 	 * @param SecretTagMapper|null $tagMapper The tag mapper (delete cascade)
+	 * @param SecretUrlMapper|null $urlMapper The extra addresses (delete cascade)
 	 *
 	 * @return void
 	 *
@@ -53,6 +55,7 @@ class SecretChildDataCleaner {
 		private ?AttachmentService $attachmentService = null,
 		private ?SecretVersionService $versionService = null,
 		private ?SecretTagMapper $tagMapper = null,
+		private ?SecretUrlMapper $urlMapper = null,
 	) {
 	}//end __construct()
 
@@ -65,7 +68,7 @@ class SecretChildDataCleaner {
 	 * @spec exclude Predicate over injected collaborators; no spec behaviour of its own.
 	 */
 	public function hasCascades(): bool {
-		return $this->attachmentService !== null || $this->versionService !== null || $this->tagMapper !== null;
+		return $this->attachmentService !== null || $this->versionService !== null || $this->tagMapper !== null || $this->urlMapper !== null;
 	}//end hasCascades()
 
 	/**
@@ -85,6 +88,8 @@ class SecretChildDataCleaner {
 		$this->versionService?->deleteForSecret($secretId);
 		// The holder's tags (vault-favourites-tags-and-last-used).
 		$this->tagMapper?->deleteBySecret($secretId);
+		// The login's extra addresses (vault-website-addresses).
+		$this->urlMapper?->deleteBySecret($secretId);
 	}//end purgeForSecret()
 
 	/**
@@ -121,6 +126,7 @@ class SecretChildDataCleaner {
 	public function purgeForOwnerUser(string $userId): void {
 		// Every tag the user set, on rows they own or hold as a copy.
 		$this->tagMapper?->deleteByOwner($userId);
+		$this->urlMapper?->deleteByOwner($userId);
 
 		if ($this->hasCascades() === false) {
 			return;

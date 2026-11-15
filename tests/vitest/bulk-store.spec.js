@@ -103,6 +103,48 @@ describe('bulk store: chunked runner', () => {
 		).toHaveLength(35)
 	})
 
+	it('keeps what each item answered, ok for no answer, and why a failure failed', async () => {
+		const bulk = useBulkStore()
+		const answers = {
+			a: { status: 'skipped', reason: 'already deleted' },
+			b: undefined,
+			c: { status: 'ok', extra: 1 },
+		}
+		const failures = {
+			d: { response: { data: { message: 'server says' } } },
+			e: new Error('plain'),
+			f: {},
+		}
+		const seen = []
+		const report = await bulk.run(
+			['a', 'b', 'c', 'd', 'e', 'f', 'a'],
+			async (id) => {
+				seen.push([id, bulk.progress.done])
+				if (id in failures) {
+					throw failures[id]
+				}
+				return answers[id]
+			},
+			'label',
+		)
+		expect(report).toEqual([
+			{ secretId: 'a', status: 'skipped', reason: 'already deleted' },
+			{ secretId: 'b', status: 'ok' },
+			{ secretId: 'c', status: 'ok', extra: 1 },
+			{ secretId: 'd', status: 'failed', reason: 'server says' },
+			{ secretId: 'e', status: 'failed', reason: 'plain' },
+			{ secretId: 'f', status: 'failed', reason: 'failed' },
+		])
+		expect(seen).toEqual([['a', 0], ['b', 1], ['c', 2], ['d', 3], ['e', 4], ['f', 5]])
+		expect(bulk.progress).toEqual({
+			running: false,
+			done: 6,
+			total: 6,
+			label: 'label',
+			cancelled: false,
+		})
+	})
+
 	it('retryFailed re-runs ONLY the failed subset and merges the report', async () => {
 		const bulk = useBulkStore()
 		let failOnce = true

@@ -94,6 +94,7 @@
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import { NcButton, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import OffboardingConfirmDialog from '../../dialogs/OffboardingConfirmDialog.vue'
+import { busyRequest } from '../../mixins/busyRequest.js'
 import { useMemberOverviewStore } from '../../store/modules/memberOverview.js'
 import { useTeamFolderStore } from '../../store/modules/teamFolder.js'
 
@@ -106,6 +107,8 @@ export default {
 		NcSelect,
 		OffboardingConfirmDialog,
 	},
+
+	mixins: [busyRequest],
 
 	data() {
 		return {
@@ -192,7 +195,7 @@ export default {
 			if (!this.summary) {
 				return ''
 			}
-			let base = this.t(
+			const counts = this.t(
 				'keepiq',
 				'Revoked {revoked} shares, transferred {transferred} secrets.',
 				{
@@ -200,28 +203,46 @@ export default {
 					transferred: this.summary.transferred,
 				},
 			)
-			if (this.summary.membershipsRemoved > 0) {
-				base +=
-					' '
-					+ this.n(
-						'keepiq',
-						'Removed the user from %n team folder.',
-						'Removed the user from %n team folders.',
-						this.summary.membershipsRemoved,
-					)
+			return [counts, this.membershipsSentence, this.skippedSentence]
+				.filter(Boolean)
+				.join(' ')
+		},
+
+		/**
+		 * How many direct team-folder memberships the run removed, or ''
+		 * when it removed none.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-offboarding-removes-the-leavers-direct-team-folder-memberships
+		 */
+		membershipsSentence() {
+			if (!(this.summary?.membershipsRemoved > 0)) {
+				return ''
 			}
-			if (this.summary.skipped.length === 0) {
-				return base
+			return this.n(
+				'keepiq',
+				'Removed the user from %n team folder.',
+				'Removed the user from %n team folders.',
+				this.summary.membershipsRemoved,
+			)
+		},
+
+		/**
+		 * The skipped-secrets caveat the admin has to act on, or '' when
+		 * nothing was skipped.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-admin-offboarding
+		 */
+		skippedSentence() {
+			if (!this.summary?.skipped.length) {
+				return ''
 			}
-			return (
-				base
-				+ ' '
-				+ this.n(
-					'keepiq',
-					'%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
-					'%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
-					this.summary.skipped.length,
-				)
+			return this.n(
+				'keepiq',
+				'%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
+				'%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run.',
+				this.summary.skipped.length,
 			)
 		},
 	},
@@ -270,19 +291,13 @@ export default {
 		 */
 		async run() {
 			this.confirmOpen = false
-			this.busy = true
-			this.error = null
-			this.summary = null
-			try {
+			await this.runBusy(async () => {
+				this.summary = null
 				this.summary = await useTeamFolderStore().offboard(
 					this.leavingUserId,
 					this.successorUserId,
 				)
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-			} finally {
-				this.busy = false
-			}
+			})
 		},
 	},
 }

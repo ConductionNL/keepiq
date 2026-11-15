@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`OffboardingSection summaryText > builds the sentence for {"revoked":0,"transferred":1,"skipped":[],"membershipsRemoved":1} 1`] = `"[keepiq] Revoked {revoked} shares, transferred {transferred} secrets. {"revoked":0,"transferred":1} [keepiq] Removed the user from %n team folder. (1)"`;
+
+exports[`OffboardingSection summaryText > builds the sentence for {"revoked":1,"transferred":0,"skipped":[],"membershipsRemoved":4} 1`] = `"[keepiq] Revoked {revoked} shares, transferred {transferred} secrets. {"revoked":1,"transferred":0} [keepiq] Removed the user from %n team folders. (4)"`;
+
+exports[`OffboardingSection summaryText > builds the sentence for {"revoked":2,"transferred":2,"skipped":["s-1","s-2"],"membershipsRemoved":3} 1`] = `"[keepiq] Revoked {revoked} shares, transferred {transferred} secrets. {"revoked":2,"transferred":2} [keepiq] Removed the user from %n team folders. (3) [keepiq] %n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run. (2)"`;
+
+exports[`OffboardingSection summaryText > builds the sentence for {"revoked":2,"transferred":2,"skipped":["s-1"],"membershipsRemoved":0} 1`] = `"[keepiq] Revoked {revoked} shares, transferred {transferred} secrets. {"revoked":2,"transferred":2} [keepiq] %n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run. (1)"`;
+
+exports[`OffboardingSection summaryText > builds the sentence for {"revoked":3,"transferred":2,"skipped":[],"membershipsRemoved":0} 1`] = `"[keepiq] Revoked {revoked} shares, transferred {transferred} secrets. {"revoked":3,"transferred":2}"`;

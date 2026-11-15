@@ -26,11 +26,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\ComplianceReport;
 use OCA\Keepiq\Db\ComplianceReportMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ComplianceReportServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -46,7 +47,7 @@ use Throwable;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The aggregator's whole
  *   job is composing counts across the domain tables.
  */
-class ComplianceReportService {
+class ComplianceReportService implements ComplianceReportServiceInterface {
 	/**
 	 * Section keys the aggregate may carry — anything else is rejected
 	 * before persistence (compliance-reporting §2.4).
@@ -121,7 +122,7 @@ class ComplianceReportService {
 			],
 			'rotationPosture' => $this->rotationPostureSection(),
 			'auditIntegrity' => [
-				'retentionDays' => $this->appConfig->getValueInt(Application::APP_ID, 'audit_retention_days', 365),
+				'retentionDays' => $this->appConfig->getValueInt(AppIdentity::APP_ID, 'audit_retention_days', 365),
 				'totalEntries' => $this->countAll(table: 'keepiq_audit_log'),
 				'firstEntryAt' => $this->scalar(sql: 'SELECT MIN(occurred_at) FROM *PREFIX*keepiq_audit_log'),
 				'appendOnly' => true,
@@ -151,7 +152,7 @@ class ComplianceReportService {
 	 * @spec openspec/changes/compliance-reporting/specs/compliance-reporting/spec.md
 	 */
 	public function generate(string $adminUid): ComplianceReport {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		$config = [
 			'auditRetentionDays' => $this->appConfig->getValueInt($appId, 'audit_retention_days', 365),
 			'breachCheckEnabled' => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
@@ -230,7 +231,7 @@ class ComplianceReportService {
 	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
 	 */
 	public function refreshMetricsCache(): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		$this->appConfig->setValueString($appId, 'compliance_metrics_cache', (string)json_encode($this->aggregate()));
 		$this->appConfig->setValueString($appId, 'compliance_metrics_computed_at', (new DateTime())->format('c'));
 	}//end refreshMetricsCache()
@@ -243,7 +244,7 @@ class ComplianceReportService {
 	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
 	 */
 	public function cachedMetrics(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		$cached = $this->appConfig->getValueString($appId, 'compliance_metrics_cache', '');
 		if ($cached === '') {
 			$this->refreshMetricsCache();
@@ -472,7 +473,7 @@ class ComplianceReportService {
 	 */
 	private function appVersion(): string {
 		try {
-			return $this->appManager->getAppVersion(Application::APP_ID);
+			return $this->appManager->getAppVersion(AppIdentity::APP_ID);
 		} catch (Throwable) {
 			return 'unknown';
 		}

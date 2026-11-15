@@ -25,10 +25,13 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Service\RecipientCiphertext;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\SecretUrlService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -147,8 +150,8 @@ class RecipientSecretCopyServiceTest extends TestCase {
 		);
 		$this->secretMapper->method('insert')->willReturnArgument(0);
 
-		$copy = $service->create('src-1', 'bob', 'K', 'L', 'F', 'T', 'P');
-		$legacy = $service->create('src-2', 'bob', 'K', null, null);
+		$copy = $service->createCopy('src-1', new RecipientCiphertext('bob', 'K', 'L', 'F', 'T', 'P'));
+		$legacy = $service->createCopy('src-2', new RecipientCiphertext('bob', 'K', null, null, null, null));
 
 		$this->assertInstanceOf(Secret::class, $copy);
 		$this->assertInstanceOf(Secret::class, $legacy);
@@ -156,8 +159,8 @@ class RecipientSecretCopyServiceTest extends TestCase {
 		$this->assertSame([null, null], [$legacy->getTotp(), $legacy->getPasskeys()]);
 
 		// A row without the source's fields, or with ones it does not hold, mints nothing and says why.
-		$this->assertSame('copy_fields_mismatch', $service->create('src-1', 'bob', 'K', null, null));
-		$this->assertSame('copy_fields_mismatch', $service->create('src-2', 'bob', 'K', null, null, 'PLANTED'));
+		$this->assertSame('copy_fields_mismatch', $service->createCopy('src-1', new RecipientCiphertext('bob', 'K', null, null, null, null)));
+		$this->assertSame('copy_fields_mismatch', $service->createCopy('src-2', new RecipientCiphertext('bob', 'K', null, null, 'PLANTED', null)));
 	}//end testCreateSetsEveryValueFieldOnTheCopy()
 
 	/**
@@ -181,6 +184,48 @@ class RecipientSecretCopyServiceTest extends TestCase {
 
 		$this->assertSame(['K', 'L', 'F', 'T', 'P'], [$copy?->getKey(), $copy?->getLogin(), $copy?->getAdditionalFields(), $copy?->getTotp(), $copy?->getPasskeys()]);
 	}//end testTheCopyFactorySetsEveryValueFieldOnTheCopy()
+
+	/**
+	 * A new copy carries the extra addresses of its source, written under the
+	 * copy's own id for its recipient (vault-website-addresses 1.3).
+	 *
+	 * @return void
+	 */
+	public function testANewCopyCarriesTheSourcesExtraAddresses(): void {
+		$this->secretMapper->method('insert')->willReturnArgument(0);
+		$urlMapper = $this->createMock(SecretUrlMapper::class);
+		$urlMapper->method('findUrlsBySecretIds')->with(['src-1'])->willReturn(['src-1' => ['https://login.example.net', 'https://example.org']]);
+		$written = [];
+		$urlMapper->expects($this->once())->method('replaceForSecret')->willReturnCallback(
+			function (string $secretId, string $ownerId, array $urls) use (&$written): void {
+				$written = [$secretId, $ownerId, $urls];
+			}
+		);
+		$factory = new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->activeSuiteMapper(), urls: new SecretUrlService($urlMapper));
+
+		$copy = $factory->create(source: $this->secret('src-1', 'user', 'alice'), targetUserId: 'bob', encryptedKey: 'K', encryptedLogin: null, encryptedExtras: null);
+
+		$this->assertNotNull($copy);
+		$this->assertSame([$copy->getId(), 'bob', ['https://login.example.net', 'https://example.org']], $written);
+		$this->assertNotSame('src-1', $copy->getId());
+	}//end testANewCopyCarriesTheSourcesExtraAddresses()
+
+	/**
+	 * A source without extra addresses writes none onto its copy.
+	 *
+	 * @return void
+	 */
+	public function testASourceWithoutExtraAddressesWritesNoneOntoItsCopy(): void {
+		$this->secretMapper->method('insert')->willReturnArgument(0);
+		$urlMapper = $this->createMock(SecretUrlMapper::class);
+		$urlMapper->method('findUrlsBySecretIds')->willReturn([]);
+		$urlMapper->expects($this->never())->method('replaceForSecret');
+		$factory = new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->activeSuiteMapper(), urls: new SecretUrlService($urlMapper));
+
+		$copy = $factory->create(source: $this->secret('src-1', 'user', 'alice'), targetUserId: 'bob', encryptedKey: 'K', encryptedLogin: null, encryptedExtras: null);
+
+		$this->assertSame('bob', $copy?->getOwnerId());
+	}//end testASourceWithoutExtraAddressesWritesNoneOntoItsCopy()
 
 	/**
 	 * A suite mapper that finds an active suite for anyone.

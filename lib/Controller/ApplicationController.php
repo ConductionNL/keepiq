@@ -25,10 +25,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\Application;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\ApplicationService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\ApplicationServiceInterface;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
@@ -50,21 +50,21 @@ class ApplicationController extends OCSController {
 	 * Constructor for ApplicationController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param ApplicationService $service The application service
+	 * @param ApplicationServiceInterface $service The application service
 	 * @param IUserSession $session The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Applications admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Applications admin area
 	 * @param IAppConfig $appConfig The app config
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private ApplicationService $service,
+		private ApplicationServiceInterface $service,
 		private IUserSession $session,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 		private IAppConfig $appConfig,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -210,7 +210,7 @@ class ApplicationController extends OCSController {
 			// app-config. The flag is read on every call (cheap key
 			// lookup) so toggling it takes effect immediately.
 			$anonEnabled = $this->appConfig->getValueString(
-				KeepiqApp::APP_ID,
+				AppIdentity::APP_ID,
 				'anonymous_application_registration_enabled',
 				'0'
 			);

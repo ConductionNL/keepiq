@@ -108,21 +108,30 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 			return;
 		}
 
-		try {
-			$suite = $this->suiteMapper->findActiveByOwner('user', self::DEV_USER_ID);
-		} catch (DoesNotExistException) {
-			$output->info('Keepiq: no dev EncryptionSuite, skipping secret-request seed');
+		$vault = (new DevVaultLoader(suiteMapper: $this->suiteMapper, secretMapper: $this->secretMapper))
+			->load(output: $output, seedName: 'secret-request seed');
+		if ($vault === null) {
 			return;
 		}
 
-		$secrets = $this->secretMapper->findByOwner('user', self::DEV_USER_ID);
-		if ($secrets === []) {
-			$output->info('Keepiq: no dev secrets, skipping secret-request seed');
-			return;
-		}
+		$seeded = $this->seedRequests(vault: $vault);
 
+		$this->seedGate->markSeeded(key: self::SEED_VERSION_KEY, version: $appVersion);
+		$output->info('Keepiq: seeded ' . $seeded . ' development secret requests');
+		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' secret requests');
+	}//end run()
+
+	/**
+	 * Seed the pending, re-request and expired development secret requests.
+	 *
+	 * @param DevVault $vault The dev user's suite and secrets
+	 *
+	 * @return int Number of rows seeded
+	 */
+	private function seedRequests(DevVault $vault): int {
+		$secrets = $vault->secrets;
 		$first = $secrets[0];
-		$suiteId = $suite->getId();
+		$suiteId = $vault->suiteId;
 		$seeded = 0;
 		$now = new DateTime();
 
@@ -160,10 +169,8 @@ class SeedDevelopmentSecretRequests implements IRepairStep {
 			);
 		}
 
-		$this->seedGate->markSeeded(key: self::SEED_VERSION_KEY, version: $appVersion);
-		$output->info('Keepiq: seeded ' . $seeded . ' development secret requests');
-		$this->logger->info('Keepiq dev seed: created ' . $seeded . ' secret requests');
-	}//end run()
+		return $seeded;
+	}//end seedRequests()
 
 	/**
 	 * Produce a deterministic UUIDv5 from a seed string.

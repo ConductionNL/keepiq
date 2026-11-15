@@ -19,6 +19,7 @@ export function account(overrides: Partial<AccountSummary> = {}): AccountSummary
 		active: true,
 		pin: false,
 		pinAfterRestart: false,
+		passkeyUnlock: false,
 		...overrides,
 	}
 }

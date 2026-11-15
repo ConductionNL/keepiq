@@ -584,6 +584,7 @@ describe('verifyFederatedCertificate on chains built here', () => {
 		keyUsage: [0x55, 0x1d, 0x0f],
 		subjectKeyId: [0x55, 0x1d, 0x0e],
 		authorityKeyId: [0x55, 0x1d, 0x23],
+		nameConstraints: [0x55, 0x1d, 0x1e],
 	}
 	const ascii = (text) => Array.from(new TextEncoder().encode(text))
 	const utf8 = (text) => derElement(0x0c, ascii(text))
@@ -1003,6 +1004,27 @@ describe('verifyFederatedCertificate on chains built here', () => {
 		const subject = derElement(0x30, rdn, [0x31, 0x84])
 
 		expect(await reasonOf(verifyBuilt({ leaf: { subject } }))).toBe('malformed')
+	})
+
+	it.each([
+		['not critical', false],
+		['critical', true],
+	])('refuses an issuer with nameConstraints, %s', async (_, critical) => {
+		// permittedSubtrees: one dNSName, cloud.partner.example.
+		const nameConstraints = extension(
+			OID.nameConstraints,
+			derElement(
+				0x30,
+				derElement(0xa0, derElement(0x30, derElement(0x82, ascii('cloud.partner.example')))),
+			),
+			critical,
+		)
+
+		expect(
+			await reasonOf(
+				verifyBuilt({ intermediate: { extensions: [CA, nameConstraints] } }),
+			),
+		).toBe('malformed')
 	})
 
 	it('refuses a leaf marked CA even when its keyUsage lacks keyCertSign', async () => {

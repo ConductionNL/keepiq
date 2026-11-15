@@ -25,11 +25,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\AuditService;
-use OCA\Keepiq\Service\ComplianceReportService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\ComplianceReportServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCA\Keepiq\Service\Siem\SiemSinkRequest;
-use OCA\Keepiq\Service\SiemService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -48,9 +48,9 @@ class AdminAuditController extends Controller {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request
-	 * @param AuditService $audit The audit query the admin screen uses
-	 * @param ComplianceReportService $reports The compliance reports
-	 * @param SiemService $siem The SIEM sinks
+	 * @param AuditServiceInterface $audit The audit query the admin screen uses
+	 * @param ComplianceReportServiceInterface $reports The compliance reports
+	 * @param SiemServiceInterface $siem The SIEM sinks
 	 * @param IUserSession $userSession The acting administrator
 	 *
 	 * @return void
@@ -59,12 +59,12 @@ class AdminAuditController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private AuditService $audit,
-		private ComplianceReportService $reports,
-		private SiemService $siem,
+		private AuditServiceInterface $audit,
+		private ComplianceReportServiceInterface $reports,
+		private SiemServiceInterface $siem,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

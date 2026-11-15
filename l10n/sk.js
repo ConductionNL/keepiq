@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Toto nie je kľúč autentifikátora. Vložte odkaz otpauth://totp/ alebo tajomstvo vo formáte base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tento QR kód neobsahuje kľúč autentifikátora. Použite QR kód, ktorý web zobrazí pri nastavovaní dvojfázového prihlásenia.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Toto tajomstvo čaká na kontrolu svojich zdieľaní, ktorá ešte neskončila. Nič sa neuložilo; skúste to neskôr alebo požiadajte správcu, aby overil, že bežia úlohy na pozadí.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Správcu alebo členstvo, ktoré zahŕňa správcu, môže zmeniť len vlastník."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Správcu alebo členstvo, ktoré zahŕňa správcu, môže zmeniť len vlastník.",
+        "Additional fields after the merge": "Ďalšie polia po zlúčení",
+        "Duplicates": "Duplikáty",
+        "Exact duplicates": "Presné duplikáty",
+        "Item to keep": "Položka na ponechanie",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Položky, ktoré obsahujú rovnaké prihlásenie viac ako raz. Zlúčenie jednu ponechá a ostatné odstráni.",
+        "Likely duplicates": "Pravdepodobné duplikáty",
+        "Merge": "Zlúčiť",
+        "Merge duplicates": "Zlúčiť duplikáty",
+        "People who lose access: {count}": "Ľudia, ktorí stratia prístup: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Rovnaká adresa a používateľské meno, iné heslo. Takto môžu vyzerať dva samostatné účty, preto to pred zlúčením skontrolujte.",
+        "The merge did not complete. Check the items of this group in your vault.": "Zlúčenie sa nedokončilo. Skontrolujte položky tejto skupiny vo svojom trezore.",
+        "The merge failed. Nothing was removed.": "Zlúčenie zlyhalo. Nič sa neodstránilo.",
+        "The other items move to the trash, where you can restore them.": "Ostatné položky sa presunú do koša, odkiaľ ich môžete obnoviť."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

@@ -51,6 +51,13 @@ class LegacyRegisterPlanner {
 	public const DATA_TABLE_PREFIX = 'openregister_table_';
 
 	/**
+	 * Reads the stored JSON id lists of registers and configurations.
+	 *
+	 * @var StoredIdList
+	 */
+	private readonly StoredIdList $idLists;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IDBConnection   $db     Database connection
@@ -64,6 +71,7 @@ class LegacyRegisterPlanner {
 		private readonly IConfig $config,
 		private readonly LoggerInterface $logger,
 	) {
+		$this->idLists = new StoredIdList();
 	}//end __construct()
 
 	/**
@@ -116,64 +124,164 @@ class LegacyRegisterPlanner {
 	 * @spec openspec/specs/app-shell/spec.md#requirement-legacy-openregister-rows-are-removed-when-empty
 	 */
 	public function plan(array $dataTables): array {
-		$plan = ['schemas' => [], 'registers' => [], 'rewrites' => [], 'configurations' => [], 'dropTables' => []];
-
-		foreach ($this->rowsByApplication(table: 'openregister_schemas', columns: ['id', 'slug', 'application']) as $schema) {
-			$schemaId = (int)$schema['id'];
-			$tables = array_column(array_filter($dataTables, static fn (array $t): bool => $t[1] === $schemaId), 2);
-			$rows = $this->countObjects(column: 'schema', id: $schemaId) + $this->sumRows(tables: $tables);
-			if ($rows > 0) {
-				$this->logger->warning(
-					'RemoveLegacyRegisterRows: schema "{slug}" ({id}) still holds {count} row(s); kept.',
-					['slug' => (string)$schema['slug'], 'id' => $schemaId, 'count' => $rows]
-				);
-				continue;
-			}
-
-			$plan['schemas'][$schemaId] = $schema + ['tables' => $tables];
-			$plan['dropTables'] = array_merge($plan['dropTables'], $tables);
+		$schemas = $this->removableSchemas(tablesBySchema: $this->tablesBy(dataTables: $dataTables, column: 1));
+		$sweep = new LegacyRegisterSweep(
+			removedSchemas: array_keys($schemas),
+			tablesByRegister: $this->tablesBy(dataTables: $dataTables, column: 0)
+		);
+		$sweep->registers = $this->allRegisters();
+		foreach (array_keys($sweep->registers) as $registerId) {
+			$this->sweepRegister(sweep: $sweep, registerId: $registerId);
 		}
 
-		$removedSchemas = array_keys($plan['schemas']);
-		$registers = $this->allRegisters();
-		foreach ($registers as $registerId => $register) {
-			$isKeepiq = in_array($register['application'], self::APP_IDS, true);
-			// A Keepiq register also loses entries whose schema row no longer
-			// exists, so an interrupted earlier run still converges.
-			$drop = $removedSchemas;
-			if ($isKeepiq === true) {
-				$drop = array_merge($drop, $this->missingSchemaIds(ids: $register['ids']));
-			}
-
-			$remaining = $this->withoutIds(list: $register['list'], ids: $drop);
-			if ($isKeepiq === true && $remaining === []) {
-				$tables = array_column(array_filter($dataTables, static fn (array $t): bool => $t[0] === $registerId), 2);
-				$rows = $this->countObjects(column: 'register', id: $registerId) + $this->sumRows(tables: $tables);
-				if ($rows === 0) {
-					$plan['registers'][$registerId] = $register;
-					$plan['dropTables'] = array_merge($plan['dropTables'], $tables);
-					continue;
-				}
-
-				$this->logger->warning(
-					'RemoveLegacyRegisterRows: register "{slug}" ({id}) still holds {count} row(s); kept.',
-					['slug' => $register['slug'], 'id' => $registerId, 'count' => $rows]
-				);
-			}
-
-			if (count($remaining) !== count($register['list'])) {
-				$plan['rewrites'][$registerId] = $remaining;
-			}
-		}//end foreach
-
-		$plan['configurations'] = $this->staleConfigurations(
-			keptRegisters: array_diff(array_keys($registers), array_keys($plan['registers'])),
-			removedSchemas: $removedSchemas
-		);
-		$plan['dropTables'] = array_values(array_unique($plan['dropTables']));
-
-		return $plan;
+		return [
+			'schemas'        => $schemas,
+			'registers'      => $sweep->removed,
+			'rewrites'       => $sweep->rewrites,
+			'configurations' => $this->staleConfigurations(
+				keptRegisters: $sweep->keptRegisters(),
+				removedSchemas: $sweep->removedSchemas
+			),
+			'dropTables'     => array_values(
+				array_unique(array_merge(array_merge([], ...array_column($schemas, 'tables')), $sweep->removedTables()))
+			),
+		];
 	}//end plan()
+
+	/**
+	 * Data table names grouped by their register or schema id.
+	 *
+	 * @param array<int,array{0:int,1:int,2:string}> $dataTables Every data table
+	 * @param int                                    $column     0 for the register id, 1 for the schema id
+	 *
+	 * @return array<int,array<int,string>> Id => unprefixed table names, in catalogue order
+	 */
+	private function tablesBy(array $dataTables, int $column): array {
+		$tables = [];
+		foreach ($dataTables as $dataTable) {
+			$tables[$dataTable[$column]][] = $dataTable[2];
+		}
+
+		return $tables;
+	}//end tablesBy()
+
+	/**
+	 * The Keepiq schemas that hold no rows, each with its data tables.
+	 *
+	 * @param array<int,array<int,string>> $tablesBySchema Schema id => its data tables
+	 *
+	 * @return array<int,array<string,mixed>> Schema id => schema row plus `tables`
+	 */
+	private function removableSchemas(array $tablesBySchema): array {
+		$schemas = [];
+		foreach ($this->rowsByApplication(table: 'openregister_schemas', columns: ['id', 'slug', 'application']) as $schema) {
+			$tables = $tablesBySchema[(int)$schema['id']] ?? [];
+			if ($this->schemaHeld(schema: $schema, tables: $tables) === false) {
+				$schemas[(int)$schema['id']] = $schema + ['tables' => $tables];
+			}
+		}
+
+		return $schemas;
+	}//end removableSchemas()
+
+	/**
+	 * Whether a schema still holds rows; logs the schema it keeps.
+	 *
+	 * @param array<string,mixed> $schema The schema row
+	 * @param string[]            $tables Its data tables
+	 *
+	 * @return bool True when the schema is kept
+	 */
+	private function schemaHeld(array $schema, array $tables): bool {
+		$schemaId = (int)$schema['id'];
+		$rows = $this->countObjects(column: 'schema', id: $schemaId) + $this->sumRows(tables: $tables);
+		if ($rows > 0) {
+			$this->logger->warning(
+				'RemoveLegacyRegisterRows: schema "{slug}" ({id}) still holds {count} row(s); kept.',
+				['slug' => (string)$schema['slug'], 'id' => $schemaId, 'count' => $rows]
+			);
+			return true;
+		}
+
+		return false;
+	}//end schemaHeld()
+
+	/**
+	 * Decide one register: remove it, rewrite its list, or leave it.
+	 *
+	 * An empty Keepiq register goes when it holds no rows; any register loses
+	 * the entries of the schemas this plan removes.
+	 *
+	 * @param LegacyRegisterSweep $sweep      The sweep in progress
+	 * @param int                 $registerId The register id
+	 *
+	 * @return void
+	 */
+	private function sweepRegister(LegacyRegisterSweep $sweep, int $registerId): void {
+		$register = $sweep->registers[$registerId];
+		$remaining = $this->idLists->without(list: $register['list'], ids: $this->droppedSchemaIds(sweep: $sweep, register: $register));
+		if ($this->isKeepiq(register: $register) === true && $remaining === []
+			&& $this->registerHeld(sweep: $sweep, registerId: $registerId) === false
+		) {
+			$sweep->removed[$registerId] = $register;
+			return;
+		}
+
+		if (count($remaining) !== count($register['list'])) {
+			$sweep->rewrites[$registerId] = $remaining;
+		}
+	}//end sweepRegister()
+
+	/**
+	 * The schema ids a register's list loses.
+	 *
+	 * A Keepiq register also loses entries whose schema row no longer exists,
+	 * so an interrupted earlier run still converges.
+	 *
+	 * @param LegacyRegisterSweep  $sweep    The sweep in progress
+	 * @param array<string,mixed>  $register The register
+	 *
+	 * @return int[]
+	 */
+	private function droppedSchemaIds(LegacyRegisterSweep $sweep, array $register): array {
+		if ($this->isKeepiq(register: $register) === true) {
+			return array_merge($sweep->removedSchemas, $this->missingSchemaIds(ids: $register['ids']));
+		}
+
+		return $sweep->removedSchemas;
+	}//end droppedSchemaIds()
+
+	/**
+	 * Whether a register was written under a Keepiq application id.
+	 *
+	 * @param array<string,mixed> $register The register
+	 *
+	 * @return bool
+	 */
+	private function isKeepiq(array $register): bool {
+		return in_array($register['application'], self::APP_IDS, true);
+	}//end isKeepiq()
+
+	/**
+	 * Whether an emptied Keepiq register still holds rows; logs the register it keeps.
+	 *
+	 * @param LegacyRegisterSweep $sweep      The sweep in progress
+	 * @param int                 $registerId The register id
+	 *
+	 * @return bool True when the register is kept
+	 */
+	private function registerHeld(LegacyRegisterSweep $sweep, int $registerId): bool {
+		$rows = $this->countObjects(column: 'register', id: $registerId) + $this->sumRows(tables: $sweep->tablesOf(registerId: $registerId));
+		if ($rows === 0) {
+			return false;
+		}
+
+		$this->logger->warning(
+			'RemoveLegacyRegisterRows: register "{slug}" ({id}) still holds {count} row(s); kept.',
+			['slug' => $sweep->registers[$registerId]['slug'], 'id' => $registerId, 'count' => $rows]
+		);
+		return true;
+	}//end registerHeld()
 
 	/**
 	 * Rows of an OpenRegister table whose `application` is a Keepiq id.
@@ -205,7 +313,7 @@ class LegacyRegisterPlanner {
 		$result = $qb->executeQuery();
 		$registers = [];
 		while (($row = $result->fetch()) !== false) {
-			$list = $this->decodeList(stored: $row['schemas'] ?? null);
+			$list = $this->idLists->decode(stored: $row['schemas'] ?? null);
 			$application = null;
 			if (($row['application'] ?? null) !== null) {
 				$application = (string)$row['application'];
@@ -215,7 +323,7 @@ class LegacyRegisterPlanner {
 				'slug'        => (string)$row['slug'],
 				'application' => $application,
 				'list'        => $list,
-				'ids'         => $this->numericIds(list: $list),
+				'ids'         => $this->idLists->numericIds(list: $list),
 			];
 		}
 
@@ -243,10 +351,10 @@ class LegacyRegisterPlanner {
 
 		$stale = [];
 		foreach ($this->configurationsByApp() as $row) {
-			$registers = $this->decodeList(stored: $row['registers'] ?? null);
-			$schemas = $this->decodeList(stored: $row['schemas'] ?? null);
-			$registerIds = $this->numericIds(list: $registers);
-			$schemaIds = $this->numericIds(list: $schemas);
+			$registers = $this->idLists->decode(stored: $row['registers'] ?? null);
+			$schemas = $this->idLists->decode(stored: $row['schemas'] ?? null);
+			$registerIds = $this->idLists->numericIds(list: $registers);
+			$schemaIds = $this->idLists->numericIds(list: $schemas);
 			$liveSchemas = array_diff($schemaIds, $this->missingSchemaIds(ids: $schemaIds), $removedSchemas);
 			if (count($registerIds) !== count($registers)
 				|| count($schemaIds) !== count($schemas)
@@ -357,67 +465,4 @@ class LegacyRegisterPlanner {
 		$result->closeCursor();
 		return $count;
 	}//end countRows()
-
-	/**
-	 * Decode a stored JSON id list.
-	 *
-	 * @param mixed $stored The stored value, or null
-	 *
-	 * @return array<int,mixed> The list, as stored
-	 */
-	private function decodeList(mixed $stored): array {
-		$list = json_decode((string)($stored ?? '[]'), true);
-		if (is_array($list) === false) {
-			return [];
-		}
-
-		return array_values($list);
-	}//end decodeList()
-
-	/**
-	 * The numeric ids in a list.
-	 *
-	 * @param array<int,mixed> $list A stored id list
-	 *
-	 * @return int[] The numeric entries, as ints
-	 */
-	private function numericIds(array $list): array {
-		$ids = [];
-		foreach ($list as $entry) {
-			if ($this->isNumericId(entry: $entry) === true) {
-				$ids[] = (int)$entry;
-			}
-		}
-
-		return $ids;
-	}//end numericIds()
-
-	/**
-	 * Whether a list entry is a numeric id.
-	 *
-	 * @param mixed $entry A list entry
-	 *
-	 * @return bool True for an int or a digit string
-	 */
-	private function isNumericId(mixed $entry): bool {
-		return is_int($entry) === true || (is_string($entry) === true && ctype_digit($entry) === true);
-	}//end isNumericId()
-
-	/**
-	 * A stored id list without the given numeric ids; other entries untouched.
-	 *
-	 * @param array<int,mixed> $list The stored list
-	 * @param int[]            $ids  The ids to remove
-	 *
-	 * @return array<int,mixed> The remaining entries, re-indexed
-	 */
-	private function withoutIds(array $list, array $ids): array {
-		return array_values(
-			array_filter(
-				$list,
-				fn (mixed $entry): bool => $this->isNumericId(entry: $entry) === false
-					|| in_array((int)$entry, $ids, true) === false
-			)
-		);
-	}//end withoutIds()
 }//end class

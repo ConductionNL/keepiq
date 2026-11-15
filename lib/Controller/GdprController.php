@@ -30,12 +30,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Event\GdprExportPerformedEvent;
-use OCA\Keepiq\Service\AccountDeletionService;
-use OCA\Keepiq\Service\GdprService;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AccountDeletionServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\GdprServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -59,8 +59,8 @@ class GdprController extends Controller {
 	 * Constructor for GdprController.
 	 *
 	 * @param IRequest $request The request
-	 * @param GdprService $gdprService The GDPR metadata service
-	 * @param AccountDeletionService $deletionService The deletion-cascade service
+	 * @param GdprServiceInterface $gdprService The GDPR metadata service
+	 * @param AccountDeletionServiceInterface $deletionService The deletion-cascade service
 	 * @param IUserSession $userSession The user session
 	 * @param IEventDispatcher $dispatcher The event dispatcher
 	 *
@@ -68,12 +68,12 @@ class GdprController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private GdprService $gdprService,
-		private AccountDeletionService $deletionService,
+		private GdprServiceInterface $gdprService,
+		private AccountDeletionServiceInterface $deletionService,
 		private IUserSession $userSession,
 		private IEventDispatcher $dispatcher,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -131,7 +131,7 @@ class GdprController extends Controller {
 	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['confirmation'], subject: 'active', purpose: VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA)]
+	#[VaultKeyProofRequired(binds: ['confirmation'], subject: 'active', purpose: VaultKeyProofServiceInterface::PURPOSE_DELETE_ACCOUNT_DATA)]
 	public function deleteAccountData(): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

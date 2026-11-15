@@ -17,31 +17,84 @@ import { Menu, type MenuItem } from './Menu'
 /** Types whose `key` is a structured payload or a seed, not something to paste as a password. */
 const NO_PASSWORD = new Set(['totp', 'card', 'identity', 'passkey'])
 
-/** Edit, Clone, Move, Send and Delete with the reason each is unavailable, for the More menu and item detail alike. `viewOnly`: the detail's `item.editable` answer, which the list does not ask. Send is for logins only. */
-export function itemActions(item: ItemMeta, type: TypeMeta | undefined, offline: boolean, actions: ItemActions, viewOnly = false) {
-	const offlineReason = offline ? i18n.t('form.offline') : undefined
-	const blockedReason = item.blocked ? i18n.t('blocked.generic') : undefined
-	const passkeyReason = type?.name === 'passkey' ? i18n.t('item.passkeyNoClone') : undefined
-	// The share's limits, which the background enforces too (Keepiq `use-only-shares`, `expiring-shares`).
-	const useOnly = item.useOnly ? i18n.t('item.useOnly') : undefined
-	const readOnly = item.readOnly ? i18n.t('item.readOnly') : undefined
-	const viewOnlyReason = viewOnly ? i18n.t('item.viewOnly') : undefined
-	const accessEnds = item.accessExpiresAt ? new Date(item.accessExpiresAt).toLocaleDateString(language()) : undefined
-	const expiring = accessEnds && i18n.t('item.expiringNoClone', { date: accessEnds })
+/** What `itemActions` needs. `viewOnly`: the detail's `item.editable` answer, which the list does not ask. */
+interface ActionsRequest {
+	item: ItemMeta
+	type: TypeMeta | undefined
+	offline: boolean
+	actions: ItemActions
+	viewOnly?: boolean
+}
+
+type Reasons = ReturnType<typeof refusalReasons>
+
+/** The date access to a shared copy ends, as the user reads dates. */
+function accessEndDate(item: ItemMeta) {
+	return item.accessExpiresAt ? new Date(item.accessExpiresAt).toLocaleDateString(language()) : undefined
+}
+
+/** The share's limits, which the background enforces too (Keepiq `use-only-shares`, `expiring-shares`). */
+function shareReasons(item: ItemMeta) {
+	const accessEnds = accessEndDate(item)
+	return {
+		blocked: item.blocked ? i18n.t('blocked.generic') : undefined,
+		useOnly: item.useOnly ? i18n.t('item.useOnly') : undefined,
+		readOnly: item.readOnly ? i18n.t('item.readOnly') : undefined,
+		accessEnds,
+		expiring: accessEnds && i18n.t('item.expiringNoClone', { date: accessEnds }),
+	}
+}
+
+/** Every reason an action can be unavailable, each `undefined` where it does not apply. */
+function refusalReasons({ item, type, offline, viewOnly }: ActionsRequest) {
+	return {
+		offline: offline ? i18n.t('form.offline') : undefined,
+		passkey: type?.name === 'passkey' ? i18n.t('item.passkeyNoClone') : undefined,
+		...shareReasons(item),
+		viewOnly: viewOnly ? i18n.t('item.viewOnly') : undefined,
+	}
+}
+
+/** Blocked, use-only or read-only: what keeps an item from being changed. */
+function changeRefusal(reasons: Reasons) {
+	return reasons.blocked ?? reasons.useOnly ?? reasons.readOnly
+}
+
+function cloneRefusal(reasons: Reasons) {
+	return reasons.passkey ?? changeRefusal(reasons) ?? reasons.expiring ?? reasons.offline
+}
+
+function sendExpiry(accessEnds: string | undefined) {
+	return accessEnds && i18n.t('item.expiringNoSend', { date: accessEnds })
+}
+
+function sendOffline(offline: boolean) {
+	return offline ? i18n.t('send.offline') : undefined
+}
+
+/** A use-only copy's password can't be revealed, and an expiring one would outlive the access in a send. */
+function sendRefusal(reasons: Reasons, offline: boolean) {
+	return reasons.blocked ?? reasons.useOnly ?? sendExpiry(reasons.accessEnds) ?? sendOffline(offline)
+}
+
+/** Send is for logins only. */
+function sendAction(request: ActionsRequest, reasons: Reasons): MenuItem | undefined {
+	if (request.type?.name !== 'login') return undefined
+	const { item, actions, offline } = request
+	return { label: i18n.t('item.send'), onSelect: () => actions.send(item), disabledReason: sendRefusal(reasons, offline) }
+}
+
+/** Edit, Clone, Move, Send and Delete with the reason each is unavailable, for the More menu and item detail alike. */
+export function itemActions(request: ActionsRequest) {
+	const { item, actions } = request
+	const reasons = refusalReasons(request)
 	return {
 		// Edit reads the item first and refuses there when offline, so it is not refused for that up front.
-		edit: { label: i18n.t('item.edit'), onSelect: () => actions.edit(item.id), disabledReason: blockedReason ?? useOnly ?? readOnly ?? viewOnlyReason },
-		clone: { label: i18n.t('item.clone'), onSelect: () => actions.clone(item.id), disabledReason: passkeyReason ?? blockedReason ?? useOnly ?? readOnly ?? expiring ?? offlineReason },
-		move: { label: i18n.t('item.move'), onSelect: () => actions.move(item), disabledReason: useOnly ?? offlineReason },
-		remove: { label: i18n.t('item.delete'), onSelect: () => actions.remove(item), disabledReason: offlineReason },
-		// A use-only copy's password can't be revealed, and an expiring one would outlive the access in a send.
-		send: type?.name === 'login'
-			? {
-				label: i18n.t('item.send'),
-				onSelect: () => actions.send(item),
-				disabledReason: blockedReason ?? useOnly ?? (accessEnds && i18n.t('item.expiringNoSend', { date: accessEnds })) ?? (offline ? i18n.t('send.offline') : undefined),
-			}
-			: undefined,
+		edit: { label: i18n.t('item.edit'), onSelect: () => actions.edit(item.id), disabledReason: changeRefusal(reasons) ?? reasons.viewOnly },
+		clone: { label: i18n.t('item.clone'), onSelect: () => actions.clone(item.id), disabledReason: cloneRefusal(reasons) },
+		move: { label: i18n.t('item.move'), onSelect: () => actions.move(item), disabledReason: reasons.useOnly ?? reasons.offline },
+		remove: { label: i18n.t('item.delete'), onSelect: () => actions.remove(item), disabledReason: reasons.offline },
+		send: sendAction(request, reasons),
 	} satisfies Record<string, MenuItem | undefined>
 }
 
@@ -92,7 +145,7 @@ export function ItemCard({ item, type, login, onOpen, onFill }: Props) {
 	if (item.hasLogin) copyItems.push({ label: i18n.t('item.copyUsername'), onSelect: () => void copyField('login', i18n.t('detail.username')) })
 	if (!item.useOnly && !NO_PASSWORD.has(type?.name ?? '')) copyItems.push({ label: i18n.t('item.copyPassword'), onSelect: () => void copyField('key', i18n.t('detail.password')) })
 	if (!item.useOnly && type?.name === 'totp') copyItems.push({ label: i18n.t('item.copyCode'), onSelect: () => void copyCode() })
-	const actions = itemActions(item, type, shell.offline, shell.items)
+	const actions = itemActions({ item, type, offline: shell.offline, actions: shell.items })
 
 	const subtitle = item.hasLogin ? login : type?.label
 
