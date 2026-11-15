@@ -154,6 +154,8 @@ item:
   fillName: Vyplniť {name}
   insecureTitle: Naozaj chcete tieto prihlasovacie údaje vyplniť?
   insecureWarning: "Upozornenie: Toto je nezabezpečená stránka HTTP a akékoľvek odoslané informácie môžu ostatní vidieť a meniť. Tieto prihlasovacie údaje boli pôvodne uložené na zabezpečenej stránke (HTTPS)."
+  repromptTitle: "Zadajte hlavné heslo na vyplnenie tejto položky"
+  repromptHelp: "Táto položka žiada o hlavné heslo pri každom vyplnení. Chráni odomknutú obrazovku, nie upravené rozšírenie."
   cardInsecureTitle: Vyplniť túto kartu na nezabezpečenom webe?
   cardInsecureWarning: Tento web nie je zabezpečený. Ktokoľvek v sieti môže vyplnené údaje karty prečítať.
   crossSiteTitle: Vyplniť aj na {hosts}?

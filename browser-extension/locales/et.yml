@@ -154,6 +154,8 @@ item:
   fillName: Täida {name}
   insecureTitle: Kas soovid selle kasutajakonto ikkagi täita?
   insecureWarning: "Hoiatus: see on turvamata HTTP-leht ja kõiki sinu saadetud andmeid võivad teised näha ja muuta. See kasutajakonto salvestati algselt turvalisel (HTTPS) lehel."
+  repromptTitle: "Selle kirje täitmiseks sisesta oma peasalasõna"
+  repromptHelp: "See kirje küsib peasalasõna iga kord, kui see täidetakse. See kaitseb lukustamata ekraani, mitte muudetud laiendust."
   cardInsecureTitle: Kas täita see kaart turvamata saidil?
   cardInsecureWarning: See sait pole turvaline. Igaüks võrgus võib täidetud kaardiandmeid lugeda.
   crossSiteTitle: Kas täita ka saitidel {hosts}?

@@ -311,6 +311,13 @@ async function masterPem(suite: CachedSuite, masterPassword: string): Promise<st
 	}
 }
 
+/** Whether `masterPassword` opens the cached key, for a flagged item's fill; nothing is stored or replaced. */
+export async function verifyMasterPassword(accountId: string, masterPassword: string): Promise<boolean> {
+	if (typeof masterPassword !== 'string' || masterPassword === '') return false
+	const suite = await cachedSuite(accountId)
+	return suite !== undefined && await masterPem(suite, masterPassword) !== null
+}
+
 async function storeNewPin({ accountId, pin, epoch, generation, suite }: NewPin, pem: string): Promise<PinSetReply> {
 	const pkcs8 = pemToPkcs8(pem)
 	const [record, seal] = await Promise.all([wrapPin(pin, pkcs8, suite), sealPin(accountId, pin, pkcs8, suite)])

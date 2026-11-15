@@ -83,6 +83,15 @@ export default {
 			type: Number,
 			default: 30,
 		},
+
+		/**
+		 * Awaited before every copy; a rejection copies nothing. A flagged
+		 * item passes its master password re-prompt here (crypto-item-reprompt).
+		 */
+		guard: {
+			type: Function,
+			default: null,
+		},
 	},
 
 	data() {
@@ -118,7 +127,8 @@ export default {
 		 * @spec openspec/specs/mobile-pwa/spec.md#scenario-copy-inside-the-tap-gesture-honest-failure-without-a-secure-context
 		 */
 		async prewarm() {
-			if (this.useOnly) {
+			// A guarded copy decrypts only after its guard allowed it.
+			if (this.useOnly || this.guard) {
 				return
 			}
 			if (this.resolve && this.prewarmed === null) {
@@ -141,6 +151,14 @@ export default {
 		async onCopy() {
 			if (this.useOnly) {
 				return
+			}
+			if (this.guard) {
+				try {
+					await this.guard()
+				} catch {
+					// The person closed the re-prompt: nothing is copied.
+					return
+				}
 			}
 			let text = this.value
 			if (this.resolve) {
