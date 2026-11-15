@@ -1318,16 +1318,16 @@
         },
         {
             "name": "conduction/hydra-gates",
-            "version": "v1.18.0",
+            "version": "v1.19.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ConductionNL/.github.git",
-                "reference": "477f930e84f1b3e709d2fb645d7c303d8d39a994"
+                "reference": "9e35872e977a619df71b1956eb8a5418106349ec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ConductionNL/.github/zipball/477f930e84f1b3e709d2fb645d7c303d8d39a994",
-                "reference": "477f930e84f1b3e709d2fb645d7c303d8d39a994",
+                "url": "https://api.github.com/repos/ConductionNL/.github/zipball/9e35872e977a619df71b1956eb8a5418106349ec",
+                "reference": "9e35872e977a619df71b1956eb8a5418106349ec",
                 "shasum": ""
             },
             "require": {
@@ -1366,9 +1366,9 @@
             "support": {
                 "docs": "https://github.com/ConductionNL/.github/blob/main/hydra-gates/README.md",
                 "issues": "https://github.com/ConductionNL/.github/issues",
-                "source": "https://github.com/ConductionNL/.github/tree/v1.18.0"
+                "source": "https://github.com/ConductionNL/.github/tree/v1.19.0"
             },
-            "time": "2026-09-10T10:15:53+00:00"
+            "time": "2026-11-03T13:10:23+00:00"
         },
         {
             "name": "consolidation/annotated-command",
@@ -7057,8 +7057,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-11-04T08:27:22+00:00",
-            "published-time": "2026-11-04T11:27:33+00:00"
+            "time": "2026-11-04T08:27:22+00:00"
         },
         {
             "name": "symfony/console",
@@ -7475,8 +7474,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-11-04T08:27:22+00:00",
-            "published-time": "2026-11-04T11:28:00+00:00"
+            "time": "2026-11-04T08:27:22+00:00"
         },
         {
             "name": "symfony/finder",
@@ -8599,8 +8597,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-11-04T08:27:22+00:00",
-            "published-time": "2026-11-04T11:28:41+00:00"
+            "time": "2026-11-04T08:27:22+00:00"
         },
         {
             "name": "theseer/tokenizer",
@@ -8920,5 +8917,5 @@
         "php": "8.3",
         "ext-xsl": "1"
     },
-    "plugin-api-version": "2.11.0"
+    "plugin-api-version": "2.9.0"
 }
