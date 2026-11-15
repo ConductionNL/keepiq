@@ -11,7 +11,7 @@
 
 ## 3. Privileged login access (sharing-26)
 
-- [ ] 3.1 Add a "needs approval" flag on a shared login, an access request with a time window, and an approval with an optional address range; refuse to serve the recipient's copy outside it and record the refusal in the audit trail. Verify: PHPUnit on the window and range checks, including an IPv6 range, and on the audit event.
+- [ ] 3.1 Add a "needs approval" flag on a shared login, an access request with a time window, and an approval with an optional address range; refuse to serve the recipient's copy outside it and record the refusal in the audit trail. Verify: PHPUnit on the window and range checks, including an IPv6 range, and on the audit event. Started: the window and range checks are built and tested (`lib/Service/PrivilegedAccess/AccessWindow.php`, `AddressRange.php`: start inclusive, end exclusive, an approval only narrows the request, IPv4 and IPv6 CIDR, no IPv4/IPv6 crossover; `tests/Unit/Service/PrivilegedAccess/`). Left: the flag and request tables, the request/approve/deny service with its notification and audit events, the refusal on every path that serves a recipient copy, and the request and approval screens.
 
 ## 4. Application secrets list (apps-14)
 
