@@ -21,6 +21,24 @@ function renderNotifications(options: Parameters<typeof fakeBackground>[0] = {})
 }
 
 describe('Notifications', () => {
+	it('says the settings did not load instead of showing them', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		renderNotifications({ unanswered: ['account.settings.get'] })
+		expect(await screen.findByText('Keepiq is not responding. Reload the extension and reopen this popup.')).toBeTruthy()
+		expect(screen.queryByRole('checkbox')).toBeNull()
+	})
+
+	it('opens Excluded domains and leaves passkeys open while only passkeys come later', async () => {
+		const { onOpen, user } = renderNotifications({ accountSettings: { autofillFeatures: ['savePrompts'] } })
+		await screen.findByRole('checkbox', { name: 'Ask to add login' })
+		expect(checkbox('Ask to add login').getAttribute('aria-disabled')).toBeNull()
+		expect(described(checkbox('Ask to save and use passkeys'))).toEqual(['Coming later'])
+		const excluded = screen.getByRole('button', { name: 'Excluded domains' })
+		expect([excluded.getAttribute('aria-disabled'), excluded.getAttribute('aria-describedby')]).toEqual([null, null])
+		await user.click(excluded)
+		expect(onOpen).toHaveBeenCalledWith('excludedDomains')
+	})
+
 	it('shows the prompts as coming later while save prompts are not delivered', async () => {
 		const { sent, onOpen, user } = renderNotifications({ accountSettings: { autofillFeatures: [], values: { askToUpdate: false } } })
 		await screen.findByRole('checkbox', { name: 'Ask to add login' })

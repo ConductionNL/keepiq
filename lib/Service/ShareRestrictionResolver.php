@@ -24,6 +24,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Kernel\Contracts\ShareRestrictionResolverInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
@@ -41,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The resolver reads every grant reaching a copy, writes the copy
  *   and asks the pending share quarantine scan whether it may (GHSA-m5p9-6pw7-pf3g); each collaborator is one of those.
  */
-class ShareRestrictionResolver {
+class ShareRestrictionResolver implements ShareRestrictionResolverInterface {
 
 	/**
 	 * Share rows read per page by resolveAll().

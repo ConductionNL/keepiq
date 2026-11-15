@@ -43,9 +43,11 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\UsedProofNonceMapper;
 use OCA\Keepiq\Exception\KeyProofRequiredException;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IConfig;
 use OCP\Security\ISecureRandom;
+use OpenSSLAsymmetricKey;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -53,56 +55,15 @@ use Throwable;
 /**
  * Stateless issuance and verification of vault-key proofs.
  */
-class VaultKeyProofService {
+class VaultKeyProofService implements VaultKeyProofServiceInterface {
 	/**
 	 * How long a challenge is valid, in seconds.
 	 */
 	private const TTL = 300;
 
-	/**
-	 * Stable public purpose identifiers. Both the guarded method's attribute and
-	 * the client's challenge request name one of these, and the challenge is
-	 * bound to it, so a proof for one operation cannot be presented to another.
-	 */
-	public const PURPOSE_COMPROMISE_RECOVERY = 'compromise-recovery';
-	public const PURPOSE_UPDATE_PRIVATE_KEY = 'update-private-key';
-	public const PURPOSE_COMPLETE_MIGRATION = 'complete-migration';
-	public const PURPOSE_EMERGENCY_DESTROY = 'emergency-access-destroy';
-	public const PURPOSE_REVOKE_SUITE = 'revoke-suite';
-	public const PURPOSE_EMERGENCY_DESIGNATE = 'emergency-access-designate';
-	public const PURPOSE_EMERGENCY_RE_ENVELOPE = 'emergency-access-re-envelope';
-	public const PURPOSE_DELETE_ACCOUNT_DATA = 'delete-account-data';
-	public const PURPOSE_ABORT_MIGRATION = 'abort-migration';
 	// Keepiq#818: a session alone must not subscribe a new party to future
 	// values of a secret. A share to a new recipient, a batch registration and
 	// every delegation need a proof; a share to a known recipient does not.
-	public const PURPOSE_SHARE_NEW_RECIPIENT = 'share-new-recipient';
-	public const PURPOSE_SHARE_REGISTER_BATCH = 'share-register-batch';
-	public const PURPOSE_DELEGATION_CREATE = 'delegation-create';
-	public const PURPOSE_DELEGATION_HANDOVER = 'delegation-handover';
-	public const PURPOSE_APPROVE_DEVICE = 'approve-device';
-	public const PURPOSE_APPROVE_ACCOUNT_RECOVERY = 'approve-account-recovery';
-
-	/**
-	 * The purposes a challenge may be issued for.
-	 */
-	public const ALLOWED_PURPOSES = [
-		self::PURPOSE_COMPROMISE_RECOVERY,
-		self::PURPOSE_UPDATE_PRIVATE_KEY,
-		self::PURPOSE_COMPLETE_MIGRATION,
-		self::PURPOSE_EMERGENCY_DESTROY,
-		self::PURPOSE_REVOKE_SUITE,
-		self::PURPOSE_EMERGENCY_DESIGNATE,
-		self::PURPOSE_EMERGENCY_RE_ENVELOPE,
-		self::PURPOSE_DELETE_ACCOUNT_DATA,
-		self::PURPOSE_ABORT_MIGRATION,
-		self::PURPOSE_SHARE_NEW_RECIPIENT,
-		self::PURPOSE_SHARE_REGISTER_BATCH,
-		self::PURPOSE_DELEGATION_CREATE,
-		self::PURPOSE_DELEGATION_HANDOVER,
-		self::PURPOSE_APPROVE_DEVICE,
-		self::PURPOSE_APPROVE_ACCOUNT_RECOVERY,
-	];
 
 	/**
 	 * Constructor.
@@ -188,16 +149,8 @@ class VaultKeyProofService {
 			throw new KeyProofRequiredException(message: 'Challenge has expired');
 		}
 
-		$publicKey = openssl_pkey_get_public($certificatePem);
-		if ($publicKey === false) {
-			throw new KeyProofRequiredException(message: 'Subject public key unreadable');
-		}
-
-		$signature = base64_decode($signatureB64, true);
-		if ($signature === false) {
-			throw new KeyProofRequiredException(message: 'Malformed proof');
-		}
-
+		$publicKey = $this->subjectKey(certificatePem: $certificatePem);
+		$signature = $this->signatureBytes(signatureB64: $signatureB64);
 		$verified = openssl_verify(
 			$this->signedMessage(nonce: $nonce, boundValues: $boundValues),
 			$signature,
@@ -213,6 +166,46 @@ class VaultKeyProofService {
 		// nonce it could not have used.
 		$this->consume(nonce: $nonce, expiresAt: (int)$claims['e']);
 	}//end verify()
+
+	/**
+	 * The subject suite's public key, or a refusal.
+	 *
+	 * @param string $certificatePem The subject suite's certificate
+	 *
+	 * @return OpenSSLAsymmetricKey
+	 *
+	 * @throws KeyProofRequiredException When the key cannot be read
+	 *
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+	 */
+	private function subjectKey(string $certificatePem): OpenSSLAsymmetricKey {
+		$publicKey = openssl_pkey_get_public($certificatePem);
+		if ($publicKey === false) {
+			throw new KeyProofRequiredException(message: 'Subject public key unreadable');
+		}
+
+		return $publicKey;
+	}//end subjectKey()
+
+	/**
+	 * The proof's signature bytes, or a refusal.
+	 *
+	 * @param string $signatureB64 The base64 signature
+	 *
+	 * @return string
+	 *
+	 * @throws KeyProofRequiredException When the signature is not strict base64
+	 *
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+	 */
+	private function signatureBytes(string $signatureB64): string {
+		$signature = base64_decode($signatureB64, true);
+		if ($signature === false) {
+			throw new KeyProofRequiredException(message: 'Malformed proof');
+		}
+
+		return $signature;
+	}//end signatureBytes()
 
 	/**
 	 * Mark a nonce used for the rest of its lifetime, or refuse a reuse.

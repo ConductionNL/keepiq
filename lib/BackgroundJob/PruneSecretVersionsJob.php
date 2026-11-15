@@ -25,8 +25,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SecretVersionMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
@@ -71,13 +71,13 @@ class PruneSecretVersionsJob extends TimedJob {
 	 */
 	protected function run($argument): void {
 		try {
-			$keep = max(1, $this->appConfig->getValueInt(Application::APP_ID, 'version_retention_count', 20));
+			$keep = max(1, $this->appConfig->getValueInt(AppIdentity::APP_ID, 'version_retention_count', 20));
 			$pruned = 0;
 			foreach ($this->mapper->findSecretIdsWithVersions() as $secretId) {
 				$pruned += $this->mapper->pruneByCount(secretId: (string)$secretId, keep: $keep);
 			}
 
-			$days = $this->appConfig->getValueInt(Application::APP_ID, 'version_retention_days', 365);
+			$days = $this->appConfig->getValueInt(AppIdentity::APP_ID, 'version_retention_days', 365);
 			if ($days > 0) {
 				$cutoff = new DateTime('-' . $days . ' days');
 				$pruned += $this->mapper->pruneOlderThan(cutoff: $cutoff);
@@ -86,13 +86,13 @@ class PruneSecretVersionsJob extends TimedJob {
 			if ($pruned > 0) {
 				$this->logger->info(
 					'Keepiq: pruned ' . $pruned . ' secret versions beyond retention',
-					['app' => Application::APP_ID]
+					['app' => AppIdentity::APP_ID]
 				);
 			}
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: version prune failed: ' . $exception->getMessage(),
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}//end try
 	}//end run()

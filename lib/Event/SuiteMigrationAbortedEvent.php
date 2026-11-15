@@ -27,53 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Event;
 
-use OCP\EventDispatcher\Event;
-
 /**
  * Fired when a compromise-recovery migration is aborted with nothing migrated.
  */
-class SuiteMigrationAbortedEvent extends Event {
-	/**
-	 * Constructor.
-	 *
-	 * @param string $oldSuiteId   The suite the vault returns to (still active)
-	 * @param string $newSuiteId   The discarded successor suite's id
-	 * @param string $migrationId  The aborted migration's id
-	 *
-	 * @return void
-	 */
-	public function __construct(
-		private string $oldSuiteId,
-		private string $newSuiteId,
-		private string $migrationId,
-	) {
-		parent::__construct();
-	}//end __construct()
-
-	/**
-	 * The suite the vault returns to.
-	 *
-	 * @return string
-	 */
-	public function getOldSuiteId(): string {
-		return $this->oldSuiteId;
-	}//end getOldSuiteId()
-
-	/**
-	 * The discarded successor suite's id.
-	 *
-	 * @return string
-	 */
-	public function getNewSuiteId(): string {
-		return $this->newSuiteId;
-	}//end getNewSuiteId()
-
-	/**
-	 * The aborted migration's id.
-	 *
-	 * @return string
-	 */
-	public function getMigrationId(): string {
-		return $this->migrationId;
-	}//end getMigrationId()
+class SuiteMigrationAbortedEvent extends SuiteMigrationEvent {
 }//end class

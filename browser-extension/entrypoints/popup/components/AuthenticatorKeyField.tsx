@@ -1,9 +1,10 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { i18n } from '#i18n'
 import { scanVisibleTab, type ScanFailure } from '@/src/totp/qr-scan'
 import type { AuthKeyMode } from '@/src/vault/fields'
 import { isPopout } from '../hooks/useCurrentTab'
 import { Button, IconButton } from './Button'
+import type { IconName } from './Icon'
 import { TextField } from './TextField'
 
 interface Props {
@@ -29,87 +30,168 @@ const SCAN_FAILURES: Record<ScanFailure, () => string> = {
 	not_totp: () => i18n.t('authKey.notTotp'),
 }
 
-export function AuthenticatorKeyField({ saved, mode, removeOnly, value, error, leftOut = false, onMode, onValue, scan = scanVisibleTab, popout = isPopout }: Props) {
-	const id = useId()
+interface Scanned {
+	failure?: ScanFailure
+	read?: boolean
+}
+
+/** Props with their defaults applied. */
+type Field = Required<Props>
+
+type QrScan = ReturnType<typeof useQrScan>
+
+interface KeyInputProps {
+	field: Field
+	qr: QrScan
+	input: RefObject<HTMLInputElement | null>
+	keep: ReactNode
+}
+
+interface ChoiceProps {
+	id: string
+	choose: (next: AuthKeyMode) => void
+}
+
+interface SavedProps extends ChoiceProps {
+	removeOnly: boolean
+}
+
+function useQrScan(scan: typeof scanVisibleTab, onValue: (value: string) => void) {
 	const [scanning, setScanning] = useState(false)
-	const [scanned, setScanned] = useState<{ failure?: ScanFailure; read?: boolean }>({})
-	const input = useRef<HTMLInputElement>(null)
-	// Set by a choice, so the control that replaced the one chosen gets focus, never the page (as the web app's field).
-	const focusAfter = useRef(false)
-
-	useEffect(() => {
-		if (!focusAfter.current) return
-		focusAfter.current = false
-		const target = mode === 'replace' ? input.current : document.getElementById(`${id}-${mode === 'remove' ? 'keep' : 'remove'}`)
-		target?.focus()
-	}, [mode, id])
-
-	const choose = (next: AuthKeyMode) => {
-		focusAfter.current = true
-		setScanned({})
-		onMode(next)
-	}
-
+	const [scanned, setScanned] = useState<Scanned>({})
 	async function scanPage() {
 		setScanning(true)
 		setScanned({})
 		const result = await scan()
 		setScanning(false)
-		if ('key' in result) {
-			onValue(result.key)
-			setScanned({ read: true })
-		} else {
-			setScanned({ failure: result.failure })
-		}
+		if ('key' in result) onValue(result.key)
+		setScanned('key' in result ? { read: true } : { failure: result.failure })
 	}
-
-	const keep = <Button variant="link" id={`${id}-keep`} onClick={() => choose('keep')}>{i18n.t('authKey.keep')}</Button>
-
-	if (saved && mode === 'keep') {
-		return (
-			<div className="field" role="group" aria-labelledby={`${id}-label`}>
-				<span className="field__label" id={`${id}-label`}>{i18n.t('authKey.label')}</span>
-				<div className="field__box">
-					<span className="auth-key__saved">{i18n.t('authKey.saved')}</span>
-					{/* A login's removal brings the input back, so a new key replaces it and an empty one removes it. */}
-					<IconButton icon="trash" id={`${id}-remove`} label={i18n.t('authKey.remove')} onClick={() => choose(removeOnly ? 'remove' : 'replace')} />
-				</div>
-			</div>
-		)
+	const edit = (next: string) => {
+		setScanned({})
+		onValue(next)
 	}
+	return { scanning, scanned, failure: scanFailure(scanned), setScanned, scanPage, edit }
+}
 
-	if (saved && mode === 'remove') {
-		return (
-			<div className="field" role="group" aria-labelledby={`${id}-label`}>
-				<span className="field__label" id={`${id}-label`}>{i18n.t('authKey.label')}</span>
-				<p className="field__hint">{i18n.t('authKey.removedOnSave')}</p>
-				{keep}
-			</div>
-		)
+/** The id of the button that replaces the one chosen, for a choice that does not bring the input. */
+function otherChoiceId(mode: AuthKeyMode, id: string) {
+	return `${id}-${mode === 'remove' ? 'keep' : 'remove'}`
+}
+
+/** Focus for the control that replaced the one chosen, never the page (as the web app's field). Set by a choice. */
+function useChoiceFocus(mode: AuthKeyMode, id: string) {
+	const inputRef = useRef<HTMLInputElement>(null)
+	const focusAfterRef = useRef(false)
+	useEffect(() => {
+		if (!focusAfterRef.current) return
+		focusAfterRef.current = false
+		const target = mode === 'replace' ? inputRef.current : document.getElementById(otherChoiceId(mode, id))
+		target?.focus()
+	}, [mode, id])
+	const focusNext = () => {
+		focusAfterRef.current = true
 	}
+	return { inputRef, focusNext }
+}
 
-	const failure = scanned.failure && SCAN_FAILURES[scanned.failure]()
+function scanFailure(scanned: Scanned) {
+	return scanned.failure && SCAN_FAILURES[scanned.failure]()
+}
+
+function keyHint(field: Field) {
+	return [field.saved ? i18n.t('authKey.replaceHelp') : i18n.t('authKey.help'), field.popout && i18n.t('authKey.popout')].filter(Boolean).join(' ')
+}
+
+/** The label and hint, which say whether a new key replaces a saved one. */
+function keyTexts(field: Field) {
+	return { label: field.saved ? i18n.t('authKey.newLabel') : i18n.t('authKey.optionalLabel'), hint: keyHint(field) }
+}
+
+function scanAction(qr: QrScan, popout: boolean): { icon: IconName, label: string, onClick: () => void, disabled: boolean } {
+	return { icon: 'scanQr', label: i18n.t('authKey.scan'), onClick: () => void qr.scanPage(), disabled: popout || qr.scanning }
+}
+
+function SavedKey({ id, removeOnly, choose }: SavedProps) {
+	// A login's removal brings the input back, so a new key replaces it and an empty one removes it.
+	const next = removeOnly ? 'remove' : 'replace'
 	return (
-		<div className="stack stack--tight">
-			<TextField
-				ref={input}
-				label={saved ? i18n.t('authKey.newLabel') : i18n.t('authKey.optionalLabel')}
-				type="password"
-				value={value}
-				onChange={(next) => {
-					setScanned({})
-					onValue(next)
-				}}
-				hint={[saved ? i18n.t('authKey.replaceHelp') : i18n.t('authKey.help'), popout && i18n.t('authKey.popout')].filter(Boolean).join(' ')}
-				error={failure || error}
-				announce={!!failure}
-				autoComplete="off"
-				action={{ icon: 'scanQr', label: i18n.t('authKey.scan'), onClick: () => void scanPage(), disabled: popout || scanning }}
-			/>
-			{saved && <div className="auth-key__actions">{keep}</div>}
-			{/* Present while empty, so screen readers announce what appears in it. */}
-			<p className={scanned.read ? 'field__hint' : 'sr-only'} role="status">{scanned.read ? i18n.t('authKey.read') : ''}</p>
-			{leftOut && <p className="field__hint">{i18n.t('authKey.notCloned')}</p>}
+		<div className="field" role="group" aria-labelledby={`${id}-label`}>
+			<span className="field__label" id={`${id}-label`}>{i18n.t('authKey.label')}</span>
+			<div className="field__box">
+				<span className="auth-key__saved">{i18n.t('authKey.saved')}</span>
+				<IconButton icon="trash" id={`${id}-remove`} label={i18n.t('authKey.remove')} onClick={() => choose(next)} />
+			</div>
 		</div>
 	)
+}
+
+function RemovedKey({ id, keep }: { id: string, keep: ReactNode }) {
+	return (
+		<div className="field" role="group" aria-labelledby={`${id}-label`}>
+			<span className="field__label" id={`${id}-label`}>{i18n.t('authKey.label')}</span>
+			<p className="field__hint">{i18n.t('authKey.removedOnSave')}</p>
+			{keep}
+		</div>
+	)
+}
+
+function KeyTextField({ field, qr, input }: KeyInputProps) {
+	return (
+		<TextField
+			ref={input}
+			{...keyTexts(field)}
+			type="password"
+			value={field.value}
+			onChange={qr.edit}
+			error={qr.failure || field.error}
+			announce={!!qr.failure}
+			autoComplete="off"
+			action={scanAction(qr, field.popout)}
+		/>
+	)
+}
+
+function ScanStatus({ read }: Scanned) {
+	return <p className={read ? 'field__hint' : 'sr-only'} role="status">{read ? i18n.t('authKey.read') : ''}</p>
+}
+
+function KeyInput(props: KeyInputProps) {
+	const { field, qr, keep } = props
+	const actions = field.saved && <div className="auth-key__actions">{keep}</div>
+	const notCloned = field.leftOut && <p className="field__hint">{i18n.t('authKey.notCloned')}</p>
+	return (
+		<div className="stack stack--tight">
+			<KeyTextField {...props} />
+			{actions}
+			{/* Present while empty, so screen readers announce what appears in it. */}
+			<ScanStatus read={qr.scanned.read} />
+			{notCloned}
+		</div>
+	)
+}
+
+function KeepButton({ id, choose }: ChoiceProps) {
+	return <Button variant="link" id={`${id}-keep`} onClick={() => choose('keep')}>{i18n.t('authKey.keep')}</Button>
+}
+
+function withDefaults({ leftOut = false, popout = isPopout, scan = scanVisibleTab, ...rest }: Props) {
+	return { ...rest, leftOut, popout, scan }
+}
+
+export function AuthenticatorKeyField(props: Props) {
+	const field = withDefaults(props)
+	const id = useId()
+	const qr = useQrScan(field.scan, field.onValue)
+	const { inputRef, focusNext } = useChoiceFocus(field.mode, id)
+	const choose = (next: AuthKeyMode) => {
+		focusNext()
+		qr.setScanned({})
+		field.onMode(next)
+	}
+	const keep = <KeepButton id={id} choose={choose} />
+	const shown = field.saved ? field.mode : 'replace'
+	if (shown === 'keep') return <SavedKey id={id} removeOnly={field.removeOnly} choose={choose} />
+	if (shown === 'remove') return <RemovedKey id={id} keep={keep} />
+	return <KeyInput field={field} qr={qr} input={inputRef} keep={keep} />
 }

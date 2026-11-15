@@ -1,5 +1,6 @@
 // The test site's authenticator key, as totp-setup.html shows it. The code pages check what was filled against it.
-export const SECRET = 'JBSWY3DPEHPK3PXP'
+export const SECRET =
+	'JBSWY3DPEHPK3PXP'
 
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 

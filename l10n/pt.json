@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Isto não é uma chave de autenticador. Cole uma ligação otpauth://totp/ ou o segredo base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Este código QR não contém uma chave de autenticador. Utilize o código QR que o site mostra quando configura a autenticação de dois fatores.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Este segredo aguarda uma verificação das suas partilhas que ainda não terminou. Nada foi guardado; tente novamente mais tarde ou peça a um administrador que verifique se as tarefas em segundo plano estão a ser executadas.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Só o proprietário pode alterar um gestor ou uma associação que inclua um gestor."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Só o proprietário pode alterar um gestor ou uma associação que inclua um gestor.",
+        "Additional fields after the merge": "Campos adicionais após a fusão",
+        "Duplicates": "Duplicados",
+        "Exact duplicates": "Duplicados exatos",
+        "Item to keep": "Item a manter",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Itens que contêm o mesmo início de sessão mais de uma vez. A fusão mantém um e remove os outros.",
+        "Likely duplicates": "Duplicados prováveis",
+        "Merge": "Fundir",
+        "Merge duplicates": "Fundir duplicados",
+        "People who lose access: {count}": "Pessoas que perdem o acesso: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Mesmo endereço e mesmo nome de utilizador, outra palavra-passe. Duas contas distintas podem ter este aspeto, por isso verifique antes de fundir.",
+        "The merge did not complete. Check the items of this group in your vault.": "A fusão não foi concluída. Verifique os itens deste grupo no seu cofre.",
+        "The merge failed. Nothing was removed.": "A fusão falhou. Nada foi removido.",
+        "The other items move to the trash, where you can restore them.": "Os outros itens vão para o lixo, de onde os pode restaurar."
     },
     "plurals": null
 }

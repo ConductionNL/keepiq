@@ -27,10 +27,11 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\HoneyFlagMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\HoneyTripwireServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
@@ -40,7 +41,7 @@ use Throwable;
 /**
  * Decoy tripwire detection: alert, page and audit a honey access.
  */
-class HoneyTripwireService {
+class HoneyTripwireService implements HoneyTripwireServiceInterface {
 	/**
 	 * Constructor for HoneyTripwireService.
 	 *
@@ -77,49 +78,22 @@ class HoneyTripwireService {
 	 * again. A snoozed accessor never pages but IS still audited — the
 	 * forensic trail stays complete.
 	 *
-	 * @param string $secretId The accessed secret UUID
-	 * @param string $accessorType user|application|link_visitor|system
-	 * @param string|null $accessorId The accessor id (null = anonymous)
-	 * @param string $channel ui|machine_api|link|share
-	 * @param string|null $remoteIp Remote address when available
-	 * @param string|null $userAgent User agent when available
+	 * @param HoneyAccess $access The observed access
 	 *
 	 * @return bool Whether the secret was honey-flagged (a tripwire hit)
 	 *
 	 * @spec openspec/changes/honey-credentials/specs/honey-credentials/spec.md
 	 */
-	public function raiseAlert(
-		string $secretId,
-		string $accessorType,
-		?string $accessorId,
-		string $channel,
-		?string $remoteIp = null,
-		?string $userAgent = null,
-	): bool {
+	public function raiseAlert(HoneyAccess $access): bool {
 		try {
-			$flag = $this->flagMapper->findBySecretId($secretId);
+			$flag = $this->flagMapper->findBySecretId($access->secretId);
 		} catch (DoesNotExistException) {
 			return false;
 		}
 
 		try {
-			$raised = $this->alertRecorder->record(
-				flag: $flag,
-				secretId: $secretId,
-				accessorType: $accessorType,
-				accessorId: $accessorId,
-				channel: $channel,
-				remoteIp: $remoteIp,
-				userAgent: $userAgent
-			);
-
-			if ($raised === true) {
-				$this->pageOwnerAndAdmins(
-					ownerId: (string)$flag->getOwnerId(),
-					secretId: (string)$flag->getSecretId(),
-					channel: $channel,
-					accessorLabel: ($accessorId ?? 'anonymous')
-				);
+			if ($this->alertRecorder->record(flag: $flag, access: $access) === true) {
+				$this->pageOwnerAndAdmins(ownerId: (string)$flag->getOwnerId(), access: $access);
 			}
 
 			// The distinguished audit marker fires on EVERY honey access —
@@ -128,16 +102,16 @@ class HoneyTripwireService {
 				$this->auditEvents->forSystem(
 					eventType: AuditEventTypes::HONEY_ACCESSED,
 					objectType: 'secret',
-					objectId: $secretId,
+					objectId: $access->secretId,
 					objectName: '',
-					metadata: ['channel' => $channel],
+					metadata: ['channel' => $access->channel],
 				)
 			);
 		} catch (Throwable $exception) {
 			// Fail-soft: the tripwire must never break the audited access.
 			$this->logger->error(
-				'Keepiq: honey alert failed for secret ' . $secretId . ': ' . $exception->getMessage(),
-				['app' => Application::APP_ID]
+				'Keepiq: honey alert failed for secret ' . $access->secretId . ': ' . $exception->getMessage(),
+				['app' => AppIdentity::APP_ID]
 			);
 		}//end try
 
@@ -149,13 +123,11 @@ class HoneyTripwireService {
 	 * tripwire is worthless, so honey_access bypasses notify_* prefs.
 	 *
 	 * @param string $ownerId The decoy owner
-	 * @param string $secretId The tripped secret
-	 * @param string $channel The access channel
-	 * @param string $accessorLabel Human accessor label
+	 * @param HoneyAccess $access The access: the tripped secret, its channel and accessor
 	 *
 	 * @return void
 	 */
-	private function pageOwnerAndAdmins(string $ownerId, string $secretId, string $channel, string $accessorLabel): void {
+	private function pageOwnerAndAdmins(string $ownerId, HoneyAccess $access): void {
 		if ($this->notificationService === null) {
 			return;
 		}
@@ -174,16 +146,16 @@ class HoneyTripwireService {
 					subject: 'honey_access',
 					recipientId: $recipientId,
 					params: [
-						'channel' => $channel,
-						'accessor' => $accessorLabel,
+						'channel' => $access->channel,
+						'accessor' => $access->accessorLabel(),
 					],
 					objectType: 'secret',
-					objectId: $secretId,
+					objectId: $access->secretId,
 				);
 			} catch (Throwable $exception) {
 				$this->logger->warning(
 					'Keepiq: honey page failed for ' . $recipientId . ': ' . $exception->getMessage(),
-					['app' => Application::APP_ID]
+					['app' => AppIdentity::APP_ID]
 				);
 			}
 		}

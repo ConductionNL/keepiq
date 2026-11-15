@@ -75,6 +75,13 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 	private array $rows = [];
 
 	/**
+	 * Owners without an active suite (no vault key).
+	 *
+	 * @var list<string>
+	 */
+	private array $keyless = [];
+
+	/**
 	 * Seed S_a, owned by Alice, and V, owned by Bob.
 	 *
 	 * @return void
@@ -232,7 +239,10 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 				return $suite;
 			}
 		);
-		$suites->method('countActiveByOwner')->willReturn(1);
+		$keyless = $this->keyless;
+		$suites->method('countActiveByOwner')->willReturnCallback(
+			static fn (string $ownerType, string $ownerId): int => (in_array($ownerId, $keyless, true) === true ? 0 : 1)
+		);
 
 		return $suites;
 	}//end suites()
@@ -679,6 +689,64 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 			$this->assertSame([], $this->written);
 		}
 	}//end testASyncWaitsForAnUnjudgedRowRegisteredBeforeItsLock()
+
+	/**
+	 * Refusal cases of a group write's body, by what it names.
+	 *
+	 * @return array<string, array{0: list<array<string,string>>}>
+	 */
+	public static function misnamedBodies(): array {
+		return [
+			'a copy left out'     => [[['secretId' => 'S_a', 'key' => 'k-a'], ['secretId' => 'C_r', 'key' => 'k-r']]],
+			'the source left out' => [[['secretId' => 'C_r', 'key' => 'k-r'], ['secretId' => 'C_x', 'key' => 'k-x']]],
+			'a stranger named'    => [[['secretId' => 'S_a', 'key' => 'k-a'], ['secretId' => 'C_r', 'key' => 'k-r'], ['secretId' => 'C_x', 'key' => 'k-x'], ['secretId' => 'C_z', 'key' => 'k-z']]],
+		];
+	}//end misnamedBodies()
+
+	/**
+	 * A group write must name the source and every live copy, and nothing else.
+	 *
+	 * @param list<array<string,string>> $updates The body
+	 *
+	 * @return void
+	 */
+	#[DataProvider('misnamedBodies')]
+	public function testAGroupWriteNamingTheWrongRowsIsRefused(array $updates): void {
+		$this->secret(id: 'C_r', ownerId: 'recipient');
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->row(target: 'recipient', copyId: 'C_r');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		[, , $guards, $sync] = $this->services(scanner: $this->scannerFor(verdicts: []));
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Name the source and every copy whose access has not ended, and nothing else');
+		$guards->assertGroupWrite(sync: $sync, source: $this->secrets['S_a'], updates: $updates, userId: 'recipient');
+	}//end testAGroupWriteNamingTheWrongRowsIsRefused()
+
+	/**
+	 * A valueless row is refused when its holder has a vault key, and left out
+	 * of the write when its holder has none.
+	 *
+	 * @return void
+	 */
+	public function testAValuelessRowIsLeftOutOnlyForAHolderWithoutAVaultKey(): void {
+		$this->secret(id: 'C_r', ownerId: 'recipient');
+		$this->secret(id: 'C_x', ownerId: 'xavier');
+		$this->row(target: 'recipient', copyId: 'C_r');
+		$this->row(target: 'xavier', copyId: 'C_x');
+		$updates = [['secretId' => 'S_a', 'key' => 'k-a'], ['secretId' => 'C_r', 'key' => 'k-r'], ['secretId' => 'C_x']];
+
+		$this->keyless = ['xavier'];
+		[, , $guards, $sync] = $this->services(scanner: $this->scannerFor(verdicts: []));
+		[, $ids] = $guards->assertGroupWrite(sync: $sync, source: $this->secrets['S_a'], updates: $updates, userId: 'recipient');
+		$this->assertSame(['S_a' => true, 'C_r' => true], $ids);
+
+		$this->keyless = [];
+		[, , $guards, $sync] = $this->services(scanner: $this->scannerFor(verdicts: []));
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Every holder with a vault key must get the new value');
+		$guards->assertGroupWrite(sync: $sync, source: $this->secrets['S_a'], updates: $updates, userId: 'recipient');
+	}//end testAValuelessRowIsLeftOutOnlyForAHolderWithoutAVaultKey()
 
 	/**
 	 * A group-write body naming S_a and both copies.

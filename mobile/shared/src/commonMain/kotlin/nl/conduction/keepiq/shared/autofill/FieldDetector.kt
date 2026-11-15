@@ -52,32 +52,47 @@ object FieldDetector {
     private val OTP_HINTS = setOf("smsotpcode", "2faappotpcode", "emailotpcode", "otpcode", "one-time-code", "onetimecode")
     private val TEXT_TYPES = setOf("text", "email", "tel", "")
 
+    private val NOT_TYPED_IN = setOf("hidden", "submit", "button", "checkbox", "radio")
+
     fun classify(field: FieldFacts): FieldKind {
         if (!field.editable || !field.visible) return FieldKind.OTHER
         val type = field.htmlAttributes["type"]?.lowercase()
-        if (type == "hidden" || type == "submit" || type == "button" || type == "checkbox" || type == "radio") return FieldKind.OTHER
+        if (type in NOT_TYPED_IN) return FieldKind.OTHER
+        return declaredKind(field) ?: otpByShape(field) ?: kindByShape(field, type)
+    }
+
+    /** An explicit autocomplete token or autofill hint decides. */
+    private fun declaredKind(field: FieldFacts): FieldKind? {
         val autocomplete = field.htmlAttributes["autocomplete"]?.lowercase()?.split(' ')?.filter { it.isNotEmpty() } ?: emptyList()
         val hints = field.autofillHints.map { it.lowercase().replace("_", "") }
+        return when {
+            "one-time-code" in autocomplete || hints.any { it in OTP_HINTS || it.contains("otp") } -> FieldKind.ONE_TIME_CODE
+            "new-password" in autocomplete || hints.any { it in NEW_PASSWORD_HINTS } -> FieldKind.NEW_PASSWORD
+            "current-password" in autocomplete || hints.any { it in PASSWORD_HINTS } -> FieldKind.PASSWORD
+            "username" in autocomplete || "email" in autocomplete || hints.any { it in USERNAME_HINTS } -> FieldKind.USERNAME
+            else -> null
+        }
+    }
 
-        // An explicit autocomplete token or autofill hint decides.
-        if ("one-time-code" in autocomplete || hints.any { it in OTP_HINTS || it.contains("otp") }) return FieldKind.ONE_TIME_CODE
-        if ("new-password" in autocomplete || hints.any { it in NEW_PASSWORD_HINTS }) return FieldKind.NEW_PASSWORD
-        if ("current-password" in autocomplete || hints.any { it in PASSWORD_HINTS }) return FieldKind.PASSWORD
-        if ("username" in autocomplete || "email" in autocomplete || hints.any { it in USERNAME_HINTS }) return FieldKind.USERNAME
+    private fun nameOf(field: FieldFacts): String = field.htmlAttributes["name"]?.lowercase() ?: ""
 
-        // OTP_SELECTORS: name or id with "otp" or "totp", or a six-digit numeric input.
-        val name = field.htmlAttributes["name"]?.lowercase() ?: ""
-        val id = (field.htmlAttributes["id"] ?: field.idEntry ?: "").lowercase()
-        if (name.contains("otp") || id.contains("otp")) return FieldKind.ONE_TIME_CODE
+    private fun idOf(field: FieldFacts): String = (field.htmlAttributes["id"] ?: field.idEntry ?: "").lowercase()
+
+    /** OTP_SELECTORS: name or id with "otp" or "totp", or a six-digit numeric input. */
+    private fun otpByShape(field: FieldFacts): FieldKind? {
+        if (nameOf(field).contains("otp") || idOf(field).contains("otp")) return FieldKind.ONE_TIME_CODE
         if (field.htmlAttributes["inputmode"]?.lowercase() == "numeric" && field.htmlAttributes["maxlength"] == "6") return FieldKind.ONE_TIME_CODE
+        return null
+    }
 
-        // PASSWORD_SELECTORS, and Android's password input types.
+    /** PASSWORD_SELECTORS and Android's password input types, then USERNAME_SELECTORS. */
+    private fun kindByShape(field: FieldFacts, type: String?): FieldKind {
         if (type == "password" || field.passwordInput) return FieldKind.PASSWORD
-
-        // USERNAME_SELECTORS.
         val textual = type == null || type in TEXT_TYPES
         if (!textual) return FieldKind.OTHER
         if (type == "email") return FieldKind.USERNAME
+        val name = nameOf(field)
+        val id = idOf(field)
         if (listOf("user", "email", "login").any { name.contains(it) || id.contains(it) }) return FieldKind.USERNAME
         return FieldKind.OTHER
     }

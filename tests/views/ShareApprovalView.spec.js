@@ -130,4 +130,39 @@ describe('ShareApprovalView', () => {
 			false,
 		)
 	})
+
+	it.each([
+		['created', 'success', 'Shared. The recipient can now open the secret.', true],
+		['no_suite', 'warning', 'The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.', false],
+		['copy_fields_mismatch', 'warning', 'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.', false],
+		['refused', 'error', 'Could not share the secret. Only its owner can approve this.', false],
+	])('an approval answered %s shows its outcome', async (status, type, text, done) => {
+		const store = useShareApprovalStore()
+		store.approveShareRequest = vi.fn().mockResolvedValue(status)
+		const wrapper = mountOn('share-request', {
+			sourceSecretId: 's-1',
+			requesterId: 'bob',
+			targetUserId: 'carol',
+		})
+		await wrapper.vm.approve()
+		expect(wrapper.vm.outcome).toEqual({ type, text })
+		expect(wrapper.vm.done).toBe(done)
+		expect(wrapper.vm.busy).toBe(false)
+	})
+
+	it('an approval that fails shows that it can be tried again', async () => {
+		const store = useShareApprovalStore()
+		store.approveShareRequest = vi.fn().mockRejectedValue(new Error('down'))
+		const wrapper = mountOn('share-request', {
+			sourceSecretId: 's-1',
+			requesterId: 'bob',
+			targetUserId: 'carol',
+		})
+		await wrapper.vm.approve()
+		expect(wrapper.vm.outcome).toEqual({
+			type: 'error',
+			text: 'Could not share the secret. Try again.',
+		})
+		expect(wrapper.vm.busy).toBe(false)
+	})
 })

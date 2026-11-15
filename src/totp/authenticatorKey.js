@@ -34,47 +34,116 @@ const OTPAUTH_SCHEME = /^otpauth:\/\//i
  * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 export function authenticatorKeyFromParts(parts) {
-	const secret = String(parts.secret ?? '')
-		.replace(/\s+/g, '')
-		.toUpperCase()
+	const secret = compactSecret(parts.secret)
 	if (secret === '') {
 		return ''
 	}
-	const given = (value, fallback) =>
-		value === null || value === undefined || value === '' ? fallback : value
-	const period = Number(given(parts.period, TOTP_DEFAULTS.period))
-	const digits = Number(given(parts.digits, TOTP_DEFAULTS.digits))
-	const algorithm = String(given(parts.algorithm, TOTP_DEFAULTS.algorithm))
-		.toUpperCase()
-		.replace(/^HMAC-/, '')
-		.replaceAll('-', '')
-	const issuer = String(parts.issuer ?? '')
-	const label = [issuer, String(parts.account ?? '')]
-		.filter((part) => part !== '')
-		.join(':')
-	if (
-		period === TOTP_DEFAULTS.period
-		&& digits === TOTP_DEFAULTS.digits
-		&& algorithm === TOTP_DEFAULTS.algorithm
-		&& label === ''
-	) {
+	const totp = totpParameters(parts)
+	if (isBareSecret(totp)) {
 		parseOtpauth(secret)
 		return secret
 	}
+	return otpauthLink(secret, totp)
+}
+
+/**
+ * A base32 secret without its spacing, upper-cased.
+ *
+ * @param {string|null|undefined} raw The secret as held.
+ * @return {string} The compacted secret, '' when there is none.
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ */
+function compactSecret(raw) {
+	return String(raw ?? '')
+		.replace(/\s+/g, '')
+		.toUpperCase()
+}
+
+/**
+ * A parameter as given, or its fallback when it is missing or empty.
+ *
+ * @param {number|string|null|undefined} value The given parameter.
+ * @param {number|string} fallback The default.
+ * @return {number|string} The value to use.
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ */
+function given(value, fallback) {
+	return value === null || value === undefined || value === '' ? fallback : value
+}
+
+/**
+ * An algorithm name in the generator's token form: `HMAC-SHA-256` becomes `SHA256`.
+ *
+ * @param {string|null|undefined} algorithm The algorithm as held.
+ * @return {string} The token.
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ */
+function algorithmToken(algorithm) {
+	return String(given(algorithm, TOTP_DEFAULTS.algorithm))
+		.toUpperCase()
+		.replace(/^HMAC-/, '')
+		.replaceAll('-', '')
+}
+
+/**
+ * The period, digits, algorithm, issuer and label the parts describe.
+ *
+ * @param {object} parts The parameters, as authenticatorKeyFromParts takes them.
+ * @return {{period: number, digits: number, algorithm: string, issuer: string, label: string}} The parameters.
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ */
+function totpParameters(parts) {
+	const issuer = String(parts.issuer ?? '')
+	return {
+		period: Number(given(parts.period, TOTP_DEFAULTS.period)),
+		digits: Number(given(parts.digits, TOTP_DEFAULTS.digits)),
+		algorithm: algorithmToken(parts.algorithm),
+		issuer,
+		label: [issuer, String(parts.account ?? '')]
+			.filter((part) => part !== '')
+			.join(':'),
+	}
+}
+
+/**
+ * Whether the parameters are the defaults with no label, so the bare secret says it all.
+ *
+ * @param {{period: number, digits: number, algorithm: string, label: string}} totp The parameters.
+ * @return {boolean} True when the bare secret is the key.
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ */
+function isBareSecret(totp) {
+	return totp.period === TOTP_DEFAULTS.period
+		&& totp.digits === TOTP_DEFAULTS.digits
+		&& totp.algorithm === TOTP_DEFAULTS.algorithm
+		&& totp.label === ''
+}
+
+/**
+ * The `otpauth://totp/` link carrying the secret and its parameters, checked
+ * against the parser that later generates the codes.
+ *
+ * @param {string} secret The compacted base32 secret.
+ * @param {{period: number, digits: number, algorithm: string, issuer: string, label: string}} totp The parameters.
+ * @return {string} The link.
+ * @throws {Error} When the code generator cannot use these parameters.
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ */
+function otpauthLink(secret, totp) {
 	const params = new URLSearchParams({
 		secret,
-		period: String(period),
-		digits: String(digits),
-		algorithm,
+		period: String(totp.period),
+		digits: String(totp.digits),
+		algorithm: totp.algorithm,
 	})
-	if (issuer !== '') {
-		params.set('issuer', issuer)
+	if (totp.issuer !== '') {
+		params.set('issuer', totp.issuer)
 	}
-	const key = `otpauth://totp/${encodeURIComponent(label)}?${params}`
+	const key = `otpauth://totp/${encodeURIComponent(totp.label)}?${params}`
 	const parsed = parseOtpauth(key)
-	if (parsed.period !== period || parsed.digits !== digits) {
+	if (parsed.period !== totp.period || parsed.digits !== totp.digits) {
 		throw new Error(
-			`Unsupported TOTP parameters: ${digits} digits every ${period} seconds`,
+			`Unsupported TOTP parameters: ${totp.digits} digits every ${totp.period} seconds`,
 		)
 	}
 	return key

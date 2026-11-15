@@ -70,7 +70,7 @@ describe('pickCode', () => {
 	it('asks first for an https login on an http frame, then fills once confirmed', async () => {
 		await vault()
 		const insecure = { frameId: 3, url: 'http://example.test/2fa', anchorKey: 'k1' }
-		expect(await pickCode(target({ only: insecure }))).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true })
+		expect(await pickCode(target({ only: insecure }))).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true, savedSecure: true })
 		expect(sent).toEqual([])
 		expect(await pickCode(target({ only: insecure, confirmedInsecure: true }))).toEqual({ filled: 'none', code: true })
 	})
@@ -93,5 +93,20 @@ describe('pickCode', () => {
 		await lock(accountId)
 		expect(await pickCode(target())).toEqual({ filled: 'none', code: false })
 		expect(sent).toEqual([])
+	})
+
+	it('sends nothing for an item the vault does not hold, or one on a blocked suite', async () => {
+		await vault()
+		expect(await pickCode(target({ itemId: 'missing' }))).toEqual({ filled: 'none', code: false })
+		await vault({ blocked: true, blockedReason: 'suite_revoked' } as never)
+		expect(await pickCode(target())).toEqual({ filled: 'none', code: false })
+		expect(sent).toEqual([])
+	})
+
+	it('records nothing when the tab does not answer', async () => {
+		await vault()
+		vi.mocked(browser.tabs.sendMessage).mockRejectedValue(new Error('no receiver'))
+		expect(await pickCode(target())).toEqual({ filled: 'none', code: false })
+		expect(await browser.storage.local.get(lastUsedKey(accountId))).toEqual({})
 	})
 })

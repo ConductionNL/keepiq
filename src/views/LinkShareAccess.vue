@@ -12,12 +12,12 @@
 
    Phase 2 — recipient types the access password; the page derives the
      AES-GCM key via Argon2id, decrypts the snapshot client-side, and
-     POSTs a /confirm so the server can increment the usage count and
-     auto-delete on cap.
+     POSTs a /confirm so the server resets the attempt counter.
 
-  The blob is decrypted in the browser; the password NEVER reaches the
-  server. A wrong password records a failed attempt via the `failed=1`
-  re-fetch so the brute-force counter ticks.
+  The server counts the use and the attempt when it serves the blob in
+  phase 1, and deletes the share once either limit is reached. The blob is
+  decrypted in the browser; the password NEVER reaches the server. A wrong
+  password is retried against the blob already fetched.
 
   The revealed secret renders as labelled FIELD ROWS with a per-field
   copy button — the way the detail sidebar (and Proton Pass/Passwork)
@@ -195,6 +195,31 @@ import { objectToMembers } from '../utils/additionalFields.js'
  */
 const MASKED_COMPOSITE_FIELDS = ['number', 'cvv', 'pin', 'bsn']
 
+/**
+ * @param {string|number|boolean|null|undefined} value A composite member's value.
+ * @return {boolean} Whether it holds something to show.
+ */
+function isFilled(value) {
+	return value !== null && value !== undefined && value !== ''
+}
+
+/**
+ * The additional fields as rows. They live in the encrypted blob by design,
+ * so they are treated as sensitive until the recipient reveals them.
+ *
+ * @param {object|undefined} additionalFields The name→value blob.
+ * @return {Array<object>} Display rows.
+ * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
+ */
+function additionalFieldRows(additionalFields) {
+	return objectToMembers(additionalFields).map((member) => ({
+		id: `extra-${member.name}`,
+		label: member.name,
+		value: member.value,
+		secret: true,
+	}))
+}
+
 export default {
 	name: 'LinkShareAccess',
 
@@ -217,7 +242,6 @@ export default {
 			busy: false,
 			loadError: '',
 			unlockError: '',
-			priorFailure: false,
 			/** @type {Object<string, boolean>} Per-field reveal state. */
 			revealed: {},
 		}
@@ -240,68 +264,11 @@ export default {
 			if (!this.snapshot) {
 				return []
 			}
-
-			const fields = []
-			if (this.snapshot.name) {
-				fields.push({
-					id: 'name',
-					label: this.t('keepiq', 'Name'),
-					value: String(this.snapshot.name),
-					secret: false,
-				})
-			}
-			if (this.snapshot.login) {
-				fields.push({
-					id: 'login',
-					label: this.t('keepiq', 'Login'),
-					value: String(this.snapshot.login),
-					secret: false,
-				})
-			}
-			if (this.snapshot.url) {
-				fields.push({
-					id: 'url',
-					label: this.t('keepiq', 'URL'),
-					value: String(this.snapshot.url),
-					secret: false,
-				})
-			}
-
-			const composite = parsePayload(this.snapshot.key ?? '')
-			if (composite !== null) {
-				for (const [member, value] of Object.entries(composite)) {
-					if (value === null || value === undefined || value === '') {
-						continue
-					}
-					fields.push({
-						id: `key-${member}`,
-						label: this.compositeLabel(member),
-						value: String(value),
-						secret: MASKED_COMPOSITE_FIELDS.includes(member),
-					})
-				}
-			} else if (this.snapshot.key) {
-				fields.push({
-					id: 'key',
-					label: this.t('keepiq', 'Secret value'),
-					value: String(this.snapshot.key),
-					secret: true,
-					testid: 'link-share-value',
-				})
-			}
-
-			for (const member of objectToMembers(this.snapshot.additionalFields)) {
-				fields.push({
-					id: `extra-${member.name}`,
-					label: member.name,
-					value: member.value,
-					// Additional fields live in the encrypted blob by design, so
-					// they are treated as sensitive until the recipient reveals them.
-					secret: true,
-				})
-			}
-
-			return fields
+			return [
+				...this.headerFields(),
+				...this.keyFields(),
+				...additionalFieldRows(this.snapshot.additionalFields),
+			]
 		},
 	},
 
@@ -332,6 +299,72 @@ export default {
 				/share\/link\/([^/?#]+)/,
 			)
 			return m ? decodeURIComponent(m[1]) : ''
+		},
+
+		/**
+		 * The name, login and URL rows, each only when the snapshot has it.
+		 *
+		 * @return {Array<object>} Display rows.
+		 * @spec openspec/changes/implement-link-sharing/tasks.md#task-8.1
+		 */
+		headerFields() {
+			const labels = {
+				name: this.t('keepiq', 'Name'),
+				login: this.t('keepiq', 'Login'),
+				url: this.t('keepiq', 'URL'),
+			}
+			return Object.entries(labels)
+				.filter(([id]) => this.snapshot[id])
+				.map(([id, label]) => ({
+					id,
+					label,
+					value: String(this.snapshot[id]),
+					secret: false,
+				}))
+		},
+
+		/**
+		 * The rows of the secret's value: a card/identity composite member by
+		 * member, else one masked "Secret value" row when there is a value.
+		 *
+		 * @return {Array<object>} Display rows.
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 */
+		keyFields() {
+			const composite = parsePayload(this.snapshot.key ?? '')
+			if (composite !== null) {
+				return this.compositeFields(composite)
+			}
+			if (!this.snapshot.key) {
+				return []
+			}
+			return [
+				{
+					id: 'key',
+					label: this.t('keepiq', 'Secret value'),
+					value: String(this.snapshot.key),
+					secret: true,
+					testid: 'link-share-value',
+				},
+			]
+		},
+
+		/**
+		 * One row per filled composite member, the sensitive ones masked.
+		 *
+		 * @param {object} composite The parsed card/identity composite.
+		 * @return {Array<object>} Display rows.
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 */
+		compositeFields(composite) {
+			return Object.entries(composite)
+				.filter(([, value]) => isFilled(value))
+				.map(([member, value]) => ({
+					id: `key-${member}`,
+					label: this.compositeLabel(member),
+					value: String(value),
+					secret: MASKED_COMPOSITE_FIELDS.includes(member),
+				}))
 		},
 
 		/**
@@ -386,10 +419,7 @@ export default {
 			this.loadError = ''
 			try {
 				const store = useLinkShareStore()
-				this.share = await store.fetchPublicLinkShare(
-					this.token,
-					this.priorFailure,
-				)
+				this.share = await store.fetchPublicLinkShare(this.token)
 			} catch (e) {
 				this.share = null
 				this.loadError =
@@ -405,8 +435,8 @@ export default {
 
 		/**
 		 * Phase 2: derive the Argon2id key from the supplied password,
-		 * decrypt the snapshot in the browser, then confirm the view so the
-		 * server can count (and auto-delete at) the usage cap.
+		 * decrypt the snapshot in the browser, then confirm so the server
+		 * resets the attempts.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/link-sharing/spec.md#requirement-kdf-for-snapshot-encryption
@@ -426,8 +456,10 @@ export default {
 					this.share,
 					this.password,
 				)
-				// Phase 2: confirm so the server can increment usage.
-				await store.confirmPublicLinkShare(this.token)
+				// The use was counted when the blob was served; a share that
+				// reached its limit is already gone, so a failed confirm is
+				// not a failed unlock.
+				await store.confirmPublicLinkShare(this.token).catch(() => null)
 			} catch (e) {
 				// "Invalid password", NOT "does not match": nothing is being
 				// compared against a second entry here — the recipient typed
@@ -436,13 +468,6 @@ export default {
 					'keepiq',
 					'Invalid password. Please try again.',
 				)
-				// Re-fetch with failed=1 so the brute-force counter ticks
-				// server-side. We swallow re-fetch errors so a now-deleted
-				// share simply surfaces as a load error on the next try.
-				this.priorFailure = true
-				try {
-					await this.loadShare()
-				} catch {}
 			} finally {
 				this.busy = false
 			}

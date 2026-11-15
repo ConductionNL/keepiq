@@ -52,6 +52,7 @@ use OCA\Keepiq\Listener\HoneyTripwireListener;
 use OCA\Keepiq\Service\DelegationAuthorizer;
 use OCA\Keepiq\Service\DelegationService;
 use OCA\Keepiq\Service\DirectShareRegistrar;
+use OCA\Keepiq\Service\HoneyAccess;
 use OCA\Keepiq\Service\HoneyTripwireService;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
@@ -268,9 +269,9 @@ class QuarantinedRowIsInertTest extends TestCase {
 		$alerted = [];
 		$honey   = $this->createMock(HoneyTripwireService::class);
 		$honey->method('raiseAlert')->willReturnCallback(
-			function (string $secretId) use (&$alerted): bool {
-				$alerted[] = $secretId;
-				return $secretId === $this->sourceA->getId();
+			function (HoneyAccess $access) use (&$alerted): bool {
+				$alerted[] = $access->secretId;
+				return $access->secretId === $this->sourceA->getId();
 			}
 		);
 		$listener = new HoneyTripwireListener(

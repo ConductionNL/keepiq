@@ -66,14 +66,11 @@
 							<td>{{ row.metadata?.subject || '—' }}</td>
 							<td>{{ row.metadata?.issuer || '—' }}</td>
 							<td>
-								<span
-									v-if="row.metadata?.notAfter"
-									:class="expiryClass(row.metadata.notAfter)">
-									{{ formatDate(row.metadata.notAfter) }}
-								</span>
-								<span v-else class="cert-inventory__muted">{{
-									t('keepiq', 'not parsed yet')
-								}}</span>
+								<CertificateExpiry :notAfter="row.metadata?.notAfter">
+									<span class="cert-inventory__muted">{{
+										t('keepiq', 'not parsed yet')
+									}}</span>
+								</CertificateExpiry>
 							</td>
 							<td class="cert-inventory__actions">
 								<NcButton
@@ -134,6 +131,12 @@
 								{{ t('keepiq', 'Subject') }}
 							</th>
 							<th scope="col">
+								{{ t('keepiq', 'Key') }}
+							</th>
+							<th scope="col">
+								{{ t('keepiq', 'Signature algorithm') }}
+							</th>
+							<th scope="col">
 								{{ t('keepiq', 'Expires') }}
 							</th>
 							<th scope="col" />
@@ -146,13 +149,14 @@
 							:data-testid="`cert-suite-${row.id}`">
 							<td>{{ row.ownerType }}: {{ row.ownerId }}</td>
 							<td>{{ row.metadata?.subject || '—' }}</td>
+							<td :data-testid="`cert-suite-key-${row.id}`">
+								{{ keyLabel(row.metadata) }}
+							</td>
+							<td :data-testid="`cert-suite-signature-${row.id}`">
+								{{ row.metadata?.signatureAlgorithm || '—' }}
+							</td>
 							<td>
-								<span
-									v-if="row.metadata?.notAfter"
-									:class="expiryClass(row.metadata.notAfter)">
-									{{ formatDate(row.metadata.notAfter) }}
-								</span>
-								<span v-else>—</span>
+								<CertificateExpiry :notAfter="row.metadata?.notAfter" />
 							</td>
 							<td>
 								<NcButton
@@ -196,12 +200,7 @@
 							<td>{{ row.caRole }}</td>
 							<td>{{ row.metadata?.subject || '—' }}</td>
 							<td>
-								<span
-									v-if="row.metadata?.notAfter"
-									:class="expiryClass(row.metadata.notAfter)">
-									{{ formatDate(row.metadata.notAfter) }}
-								</span>
-								<span v-else>—</span>
+								<CertificateExpiry :notAfter="row.metadata?.notAfter" />
 							</td>
 						</tr>
 					</tbody>
@@ -218,7 +217,9 @@
 
 <script>
 import { showError, showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
+import CertificateExpiry from '../components/CertificateExpiry.vue'
 import CertificateRenewalChecklistDialog from '../dialogs/CertificateRenewalChecklistDialog.vue'
 import { useCertificateStore } from '../store/modules/certificate.js'
 import { useSessionStore } from '../store/modules/session.js'
@@ -227,6 +228,7 @@ export default {
 	name: 'CertificateInventoryView',
 
 	components: {
+		CertificateExpiry,
 		CertificateRenewalChecklistDialog,
 		NcButton,
 		NcEmptyContent,
@@ -260,6 +262,24 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * A certificate's key as "RSA, 4096-bit", or a dash when the server
+		 * could not read it.
+		 *
+		 * @param {object|null} metadata The server-parsed certificate metadata.
+		 * @return {string}
+		 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
+		 */
+		keyLabel(metadata) {
+			if (!metadata?.keyType || !metadata?.keyBits) {
+				return '—'
+			}
+			return t('keepiq', '{type}, {bits}-bit', {
+				type: metadata.keyType,
+				bits: metadata.keyBits,
+			})
+		},
+
 		/**
 		 * Decrypt + parse a stored certificate in the browser and submit
 		 * its display metadata.
@@ -321,37 +341,6 @@ export default {
 			} finally {
 				this.busy = false
 			}
-		},
-
-		/**
-		 * Style expiry: red when past/inside 7 days, orange inside 30.
-		 *
-		 * @param {string} iso The notAfter ISO timestamp.
-		 * @return {string} CSS class.
-		 *
-		 * @spec exclude Presentation-only: maps days-to-expiry to a CSS warning class.
-		 */
-		expiryClass(iso) {
-			const daysLeft = (new Date(iso).getTime() - Date.now()) / 86400000
-			if (daysLeft < 7) {
-				return 'cert-inventory__expiry--critical'
-			}
-			if (daysLeft < 30) {
-				return 'cert-inventory__expiry--warning'
-			}
-			return ''
-		},
-
-		/**
-		 * Render an ISO date briefly.
-		 *
-		 * @param {string} iso The ISO timestamp.
-		 * @return {string} Localised date.
-		 *
-		 * @spec exclude Presentation-only formatter: renders an ISO date as locale text.
-		 */
-		formatDate(iso) {
-			return new Date(iso).toLocaleDateString()
 		},
 	},
 }

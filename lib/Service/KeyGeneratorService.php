@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
+use OCA\Keepiq\Kernel\Contracts\KeyGeneratorServiceInterface;
 use RuntimeException;
 
 /**
@@ -30,7 +31,7 @@ use RuntimeException;
  * All randomness is derived from PHP's CSPRNG via random_int(); no non-CSPRNG
  * randomness source is used anywhere in this service.
  */
-class KeyGeneratorService {
+class KeyGeneratorService implements KeyGeneratorServiceInterface {
 	/**
 	 * Minimum permitted output length.
 	 *

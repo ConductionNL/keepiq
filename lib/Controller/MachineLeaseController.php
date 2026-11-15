@@ -26,9 +26,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\MachineLease;
-use OCA\Keepiq\Service\LeaseService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\LeaseServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -45,15 +45,15 @@ class MachineLeaseController extends ApplicationApiController {
 	 * Constructor for MachineLeaseController.
 	 *
 	 * @param IRequest $request The HTTP request
-	 * @param LeaseService $leaseService The lease service
+	 * @param LeaseServiceInterface $leaseService The lease service
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private LeaseService $leaseService,
+		private LeaseServiceInterface $leaseService,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

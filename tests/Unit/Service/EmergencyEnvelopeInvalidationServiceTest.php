@@ -561,4 +561,95 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 
 		$this->assertSame(0, $this->service->countUsableForGrantorSuite('old-suite'));
 	}//end testCountUsableIsZeroWhenNoContacts()
+
+	/**
+	 * Every refusal of a carry names its reason, and nothing is written.
+	 *
+	 * @return void
+	 */
+	public function testEveryCarryRefusalCarriesItsMessage(): void {
+		$this->mapper->expects($this->never())->method('update');
+		$contacts = [
+			'missing' => null,
+			'foreign' => $this->contact(grantor: 'mallory'),
+			'other-suite' => $this->contact(grantorSuite: 'another-suite'),
+			'requested' => $this->contact(state: EmergencyContact::STATE_REQUESTED),
+			'no-grantee-suite' => $this->contact(),
+			'stale-seal' => $this->contact(),
+		];
+		$this->mapper->method('findById')->willReturnCallback(static function (string $id) use ($contacts): EmergencyContact {
+			if ($contacts[$id] === null) {
+				throw new DoesNotExistException('none');
+			}
+
+			return $contacts[$id];
+		});
+		$calls = 0;
+		$this->suiteMapper->method('findActiveByOwner')->willReturnCallback(function () use (&$calls): EncryptionSuite {
+			$calls++;
+			if ($calls === 1) {
+				throw new DoesNotExistException('none');
+			}
+
+			return $this->suite('grantee-active');
+		});
+
+		$messages = [];
+		foreach (array_keys($contacts) as $contactId) {
+			try {
+				$this->service->reEnvelopeForRotation(
+					ownerId: 'alice',
+					oldSuiteId: 'old-suite',
+					newSuiteId: 'new-suite',
+					contactId: $contactId,
+					recoveryEnvelope: $this->envelope(),
+					sealedSuiteId: 'grantee-stale',
+				);
+			} catch (\Throwable $e) {
+				$messages[$contactId] = [get_class($e), $e->getMessage()];
+			}
+		}
+
+		$this->assertSame(
+			[
+				'missing' => [NotFoundException::class, 'Emergency contact not found'],
+				'foreign' => [ForbiddenException::class, 'Emergency contact does not belong to you'],
+				'other-suite' => [ForbiddenException::class, 'Emergency contact is not bound to this migration\'s old suite'],
+				'requested' => [ForbiddenException::class, 'Only a granted emergency contact is carried across a key rotation'],
+				'no-grantee-suite' => [InvalidArgumentException::class, 'The grantee has no active encryption suite to seal to'],
+				'stale-seal' => [InvalidArgumentException::class, 'The declared grantee suite does not match the grantee\'s active suite'],
+			],
+			$messages
+		);
+	}//end testEveryCarryRefusalCarriesItsMessage()
+
+	/**
+	 * A carry writes the envelope and both suites once and audits both ends of the move.
+	 *
+	 * @return void
+	 */
+	public function testACarryWritesOnceAndAuditsBothSuites(): void {
+		$this->mapper->method('findById')->willReturn($this->contact());
+		$this->suiteMapper->method('findActiveByOwner')->with('user', 'bob')->willReturn($this->suite('grantee-active'));
+		$written = [];
+		$this->mapper->expects($this->once())->method('update')->willReturnCallback(static function (EmergencyContact $contact) use (&$written): EmergencyContact {
+			$written = [$contact->getRecoveryEnvelope(), $contact->getGrantorSuiteId(), $contact->getGranteeSuiteId(), $contact->getInvalidatedReason(), $contact->getUpdatedAt() !== null, $contact->getState()];
+			return $contact;
+		});
+
+		$this->service->reEnvelopeForRotation(
+			ownerId: 'alice',
+			oldSuiteId: 'old-suite',
+			newSuiteId: 'new-suite',
+			contactId: 'rel-1',
+			recoveryEnvelope: $this->envelope(),
+			sealedSuiteId: 'grantee-active',
+		);
+
+		$this->assertSame([$this->envelope(), 'new-suite', 'grantee-active', null, true, EmergencyContact::STATE_GRANTED], $written);
+		$carried = array_values(array_filter($this->dispatched, static fn (AuditEvent $e): bool => $e->getEventType() === AuditEventTypes::EMERGENCY_ACCESS_CARRIED))[0];
+		$this->assertSame('alice', $carried->getActorId());
+		$this->assertSame('old-suite', $carried->getMetadata()['fromSuiteId'] ?? null);
+		$this->assertSame('new-suite', $carried->getMetadata()['toSuiteId'] ?? null);
+	}//end testACarryWritesOnceAndAuditsBothSuites()
 }//end class

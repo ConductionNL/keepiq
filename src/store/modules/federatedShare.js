@@ -209,6 +209,57 @@ function upgradeRefusal(error) {
  * against the pinned partner root and the cloud id, and only then encrypts.
  * Only ciphertext goes to the server.
  */
+/**
+ * What a federated share sends: the recipient, the certificate it was
+ * verified against, and only ciphertext, with null for what the secret lacks.
+ *
+ * @param {{cloudId: string, fingerprint: string}} recipient The verified recipient.
+ * @param {object} encrypted The fields encrypted for it.
+ * @return {object}
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ */
+function federatedShareBody(recipient, encrypted) {
+	return {
+		recipientCloudId: recipient.cloudId,
+		certFingerprint: fingerprintHex(recipient.fingerprint),
+		key: encrypted.key ?? '',
+		login: encrypted.login ?? null,
+		additionalFields: encrypted.additionalFields ?? null,
+		totp: encrypted.totp ?? null,
+		passkeys: encrypted.passkeys ?? null,
+	}
+}
+
+/**
+ * Every recipient at another organisation is a new party, so the server asks
+ * for the vault key proof (keepiq#818): send the same body once more with
+ * it. Any other refusal, and a refusal of the retry, is passed on, a partner
+ * too old for a field as the partner-upgrade error.
+ *
+ * @param {object} refusal The first post's failure.
+ * @param {{url: string, body: object, secretId: string, recipient: object}} attempt The share being sent.
+ * @return {Promise<object>} The federated share.
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ */
+async function postWithKeyProof(refusal, attempt) {
+	if (refusal?.response?.data?.error !== 'key_proof_required') {
+		throw upgradeRefusal(refusal)
+	}
+	const { headers } = await sessionKeyProofHeaders({
+		purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
+		reason: t(
+			'keepiq',
+			'You are sharing with someone new. Enter your master password to confirm.',
+		),
+		boundValues: [attempt.secretId, attempt.recipient.cloudId],
+	})
+	try {
+		return (await axios.post(attempt.url, attempt.body, { headers })).data
+	} catch (e) {
+		throw upgradeRefusal(e)
+	}
+}
+
 export const useFederatedShareStore = defineStore('federatedShare', {
 	state: () => ({
 		/** @type {boolean|null} Whether any outbound partner exists; null until asked. */
@@ -333,36 +384,11 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 			const url = generateUrl(
 				`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`,
 			)
-			const body = {
-				recipientCloudId: recipient.cloudId,
-				certFingerprint: fingerprintHex(recipient.fingerprint),
-				key: encrypted.key ?? '',
-				login: encrypted.login ?? null,
-				additionalFields: encrypted.additionalFields ?? null,
-				totp: encrypted.totp ?? null,
-				passkeys: encrypted.passkeys ?? null,
-			}
+			const body = federatedShareBody(recipient, encrypted)
 			try {
 				return (await axios.post(url, body)).data
 			} catch (refusal) {
-				// Every recipient at another organisation is a new party, so the
-				// server asks for the vault key proof (keepiq#818).
-				if (refusal?.response?.data?.error !== 'key_proof_required') {
-					throw upgradeRefusal(refusal)
-				}
-				const { headers } = await sessionKeyProofHeaders({
-					purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
-					reason: t(
-						'keepiq',
-						'You are sharing with someone new. Enter your master password to confirm.',
-					),
-					boundValues: [secretId, recipient.cloudId],
-				})
-				try {
-					return (await axios.post(url, body, { headers })).data
-				} catch (e) {
-					throw upgradeRefusal(e)
-				}
+				return postWithKeyProof(refusal, { url, body, secretId, recipient })
 			}
 		},
 	},

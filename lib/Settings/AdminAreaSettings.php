@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Settings;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IL10N;
@@ -42,7 +42,7 @@ abstract class AdminAreaSettings implements IDelegatedSettings {
 	 *
 	 * @var string
 	 */
-	public const SECTION = Application::APP_ID;
+	public const SECTION = AppIdentity::APP_ID;
 
 	/**
 	 * Constructor.
@@ -80,7 +80,7 @@ abstract class AdminAreaSettings implements IDelegatedSettings {
 		$this->initialState->provideInitialState('area-' . $this->getArea(), true);
 		$this->provideAreaState();
 
-		return new TemplateResponse(Application::APP_ID, 'settings/admin', ['area' => $this->getArea()]);
+		return new TemplateResponse(AppIdentity::APP_ID, 'settings/admin', ['area' => $this->getArea()]);
 	}//end getForm()
 
 	/**

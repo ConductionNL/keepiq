@@ -29,11 +29,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 
@@ -41,6 +42,17 @@ use OCP\IAppConfig;
  * Read-only health and issued-certificate counts for the private CA.
  */
 class CertificateAuthorityStatusService {
+	/**
+	 * The status of a CA that is degraded or has no root or intermediate.
+	 *
+	 * @var array{status: string, root: null, intermediate: null}
+	 */
+	private const NOT_CONFIGURED = [
+		'status' => 'not_configured',
+		'root' => null,
+		'intermediate' => null,
+	];
+
 	/**
 	 * Constructor for CertificateAuthorityStatusService.
 	 *
@@ -74,51 +86,52 @@ class CertificateAuthorityStatusService {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
 	 */
 	public function getStatus(): array {
-		$caStatus = $this->appConfig->getValueString(Application::APP_ID, 'ca_status', 'unknown');
+		$caStatus = $this->appConfig->getValueString(AppIdentity::APP_ID, 'ca_status', 'unknown');
 
 		if ($caStatus === 'degraded') {
-			return [
-				'status' => 'not_configured',
-				'root' => null,
-				'intermediate' => null,
-			];
+			return self::NOT_CONFIGURED;
 		}
 
 		try {
 			$root = $this->caCertificateMapper->findRoot();
 			$intermediate = $this->caCertificateMapper->findActiveIntermediate();
 		} catch (DoesNotExistException) {
-			return [
-				'status' => 'not_configured',
-				'root' => null,
-				'intermediate' => null,
-			];
-		}
-
-		$now = new DateTime();
-		$intermediateExpiry = $intermediate->getExpiresAt();
-		$rootExpiry = $root->getExpiresAt();
-
-		$status = 'healthy';
-		if ($intermediateExpiry !== null && $intermediateExpiry->diff($now)->days < 30) {
-			$status = 'expiring_soon';
-		}
-
-		if ($rootExpiry !== null && $rootExpiry->diff($now)->days < 90) {
-			$status = 'action_required';
-		}
-
-		if ($intermediate->getRevokedAt() !== null) {
-			$status = 'action_required';
+			return self::NOT_CONFIGURED;
 		}
 
 		return [
-			'status' => $status,
+			'status' => $this->health(root: $root, intermediate: $intermediate),
 			'root' => $root->jsonSerialize(),
 			'intermediate' => $intermediate->jsonSerialize(),
 			'issued' => $this->issuedCounts(),
 		];
 	}//end getStatus()
+
+	/**
+	 * The health of a configured CA.
+	 *
+	 * An intermediate within 30 days of expiry is expiring soon; a root within
+	 * 90 days of expiry, or a revoked intermediate, needs action.
+	 *
+	 * @param CACertificate $root         The root certificate
+	 * @param CACertificate $intermediate The active intermediate
+	 *
+	 * @return string `healthy`, `expiring_soon` or `action_required`
+	 */
+	private function health(CACertificate $root, CACertificate $intermediate): string {
+		$now = new DateTime();
+		$intermediateExpiry = $intermediate->getExpiresAt();
+		$rootExpiry = $root->getExpiresAt();
+		if (($rootExpiry !== null && $rootExpiry->diff($now)->days < 90) || $intermediate->getRevokedAt() !== null) {
+			return 'action_required';
+		}
+
+		if ($intermediateExpiry !== null && $intermediateExpiry->diff($now)->days < 30) {
+			return 'expiring_soon';
+		}
+
+		return 'healthy';
+	}//end health()
 
 	/**
 	 * Issued-certificate counts (certificate-lifecycle §2.6): active

@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Questa non è una chiave dell'autenticatore. Incolla un link otpauth://totp/ o il segreto base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Questo codice QR non contiene una chiave dell'autenticatore. Usa il codice QR che il sito mostra quando configuri l'accesso a due fattori.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Questo segreto è in attesa di un controllo delle sue condivisioni che non è ancora terminato. Non è stato salvato nulla; riprova più tardi o chiedi a un amministratore di verificare che i processi in background siano in esecuzione.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Solo il proprietario può modificare un gestore o un'appartenenza che include un gestore."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Solo il proprietario può modificare un gestore o un'appartenenza che include un gestore.",
+        "Additional fields after the merge": "Campi aggiuntivi dopo l'unione",
+        "Duplicates": "Duplicati",
+        "Exact duplicates": "Duplicati esatti",
+        "Item to keep": "Elemento da mantenere",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementi che contengono lo stesso accesso più di una volta. L'unione ne mantiene uno e rimuove gli altri.",
+        "Likely duplicates": "Probabili duplicati",
+        "Merge": "Unisci",
+        "Merge duplicates": "Unisci i duplicati",
+        "People who lose access: {count}": "Persone che perdono l'accesso: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Stesso indirizzo e stesso nome utente, ma una password diversa. Due account distinti possono apparire così, quindi controlla prima di unire.",
+        "The merge did not complete. Check the items of this group in your vault.": "L'unione non è stata completata. Controlla gli elementi di questo gruppo nella tua cassaforte.",
+        "The merge failed. Nothing was removed.": "L'unione non è riuscita. Non è stato rimosso nulla.",
+        "The other items move to the trash, where you can restore them.": "Gli altri elementi vanno nel cestino, da cui puoi ripristinarli."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -160,7 +160,7 @@ describe('key hand-off', () => {
 	})
 
 	it('shows nothing when the background refuses, answers nonsense or cannot be reached', async () => {
-		for (const reply of [null, { mode: 'add' }, { ...update(), itemName: undefined }, { ...update(), username: 3 }, { ...add(), folders: [{ id: 1 }] }, { ...add(), theme: 'pink' }, 'add']) {
+		for (const reply of [null, { mode: 'add' }, { ...update(), itemName: undefined }, { ...update(), username: 3 }, { ...add(), folders: [{ id: 1 }] }, { ...add(), theme: 'pink' }, { ...add(), host: 3 }, { ...add(), tabHost: 3 }, { ...add(), shortcut: 3 }, { ...add(), folders: 'f1' }, { ...add(), mode: 'remove' }, 'add']) {
 			document.body.innerHTML = BODY
 			await open(reply)
 			expect(bar().children).toHaveLength(0)
@@ -720,12 +720,34 @@ describe('errors', () => {
 			expect(bar().textContent).toBe('Login saved')
 		})
 
+		it('leaves the focus where it was when the bar had none', async () => {
+			await open(update())
+			writeReply = failure('not_found')
+			await click(button('Update'))
+			expect(buttonNames()).toEqual(['Never for this site', 'Save', 'Close'])
+			expect(document.activeElement).toBe(document.body)
+			await wait(250)
+			expect(status().textContent).toBe('This login no longer exists. Save it as a new login?')
+		})
+
 		it('on Save, names the folder instead', async () => {
 			await open()
 			writeReply = failure('not_found')
 			await click(button('Save'))
 			expect(error()!.textContent).toBe('This folder no longer exists')
 			expect(buttonNames()).toEqual(['Never for this site', 'Save', 'Close'])
+		})
+
+		it('on Save, keeps the folder chosen and the focus, as the bar is not built anew', async () => {
+			await open()
+			writeReply = failure('not_found')
+			select()!.value = 'f-work'
+			button('Save').focus()
+			key(button('Save'), 'Enter')
+			await flush()
+			expect(error()!.textContent).toBe('This folder no longer exists')
+			expect(select()!.value).toBe('f-work')
+			expect(document.activeElement).toBe(button('Save'))
 		})
 	})
 })

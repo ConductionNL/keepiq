@@ -37,6 +37,7 @@ use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\Contracts\DelegationServiceInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 use Ramsey\Uuid\Uuid;
 
@@ -47,7 +48,7 @@ use Ramsey\Uuid\Uuid;
  * and the pre-existing-share precondition — live in DelegationAuthorizer;
  * this class owns the delegation ROWS and their audit trail.
  */
-class DelegationService {
+class DelegationService implements DelegationServiceInterface {
 	/**
 	 * Constructor for DelegationService.
 	 *

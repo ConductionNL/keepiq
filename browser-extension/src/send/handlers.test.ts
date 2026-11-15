@@ -198,6 +198,9 @@ describe('send.create', () => {
 		['an expiry under an hour', { ttlSeconds: 3599 }],
 		['a credential without a password', { payloadType: 'credential', content: 'Username: alice\nPassword:  ' }],
 		['a credential body that is not one', { payloadType: 'credential', content: 'alice / hunter2' }],
+		['content other than text', { content: 42 as never }],
+		['an expiry other than a whole number', { ttlSeconds: 3600.5 }],
+		['a password other than text', { password: 42 as never }],
 	])('refuses %s without a request', async (_name, overrides) => {
 		expect(await createSendFor(input(overrides), accountId)).toEqual({ ok: false, error: { code: 'invalid' } })
 		expect(fetchMock).not.toHaveBeenCalled()

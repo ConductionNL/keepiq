@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\SecretType;
 use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Kernel\Contracts\SecretTypeServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -37,7 +38,7 @@ use Ramsey\Uuid\Uuid;
 /**
  * Business logic for SecretType lifecycle.
  */
-class SecretTypeService {
+class SecretTypeService implements SecretTypeServiceInterface {
 
 	/**
 	 * The kinds a field of a type can have (admin-18).
@@ -161,17 +162,8 @@ class SecretTypeService {
 			throw new InvalidArgumentException('Type name and label are required');
 		}
 
-		if (in_array($scope, ['user', 'global'], true) === false) {
-			throw new InvalidArgumentException('Scope must be user or global');
-		}
-
-		if ($scope === 'global' && $isAdmin === false) {
-			throw new ForbiddenException(message: 'Only administrators can create global types');
-		}
-
-		if ($this->mapper->countByName($name) > 0) {
-			throw new ConflictException(message: 'A secret type with this name already exists');
-		}
+		$this->assertScopeAllowed(scope: $scope, isAdmin: $isAdmin);
+		$this->assertNameFree(name: $name);
 
 		$ownerScopeId = null;
 		if ($scope === 'user') {
@@ -192,6 +184,46 @@ class SecretTypeService {
 
 		return $type;
 	}//end createType()
+
+	/**
+	 * Refuse a scope other than user or global, and a global type for a non-admin.
+	 *
+	 * @param string $scope   The requested scope
+	 * @param bool   $isAdmin Whether the requester is an administrator
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the scope is unknown
+	 * @throws ForbiddenException When a non-admin requests a global type
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+	 */
+	private function assertScopeAllowed(string $scope, bool $isAdmin): void {
+		if (in_array($scope, ['user', 'global'], true) === false) {
+			throw new InvalidArgumentException('Scope must be user or global');
+		}
+
+		if ($scope === 'global' && $isAdmin === false) {
+			throw new ForbiddenException(message: 'Only administrators can create global types');
+		}
+	}//end assertScopeAllowed()
+
+	/**
+	 * Refuse a name another secret type already has.
+	 *
+	 * @param string $name The trimmed type name
+	 *
+	 * @return void
+	 *
+	 * @throws ConflictException When the name already exists
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+	 */
+	private function assertNameFree(string $name): void {
+		if ($this->mapper->countByName($name) > 0) {
+			throw new ConflictException(message: 'A secret type with this name already exists');
+		}
+	}//end assertNameFree()
 
 	/**
 	 * Rename (relabel) a custom SecretType the requester is allowed to manage.

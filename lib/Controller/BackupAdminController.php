@@ -27,10 +27,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use InvalidArgumentException;
 use OCA\Keepiq\Backup\BackupService;
 use OCA\Keepiq\Backup\BackupSettings;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -58,7 +58,7 @@ class BackupAdminController extends Controller {
 		private BackupService $backups,
 		private BackupSettings $settings,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

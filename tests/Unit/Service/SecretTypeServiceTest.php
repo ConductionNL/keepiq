@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use InvalidArgumentException;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretType;
 use OCA\Keepiq\Db\SecretTypeMapper;
@@ -28,6 +29,7 @@ use OCA\Keepiq\Service\SecretTypeService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Tests for SecretTypeService.
@@ -238,4 +240,55 @@ class SecretTypeServiceTest extends TestCase {
 
 		$this->service->resolveTypeForSecret(typeId: 'ghost', userId: 'alice');
 	}//end testResolveUnknownTypeRejected()
+
+	/**
+	 * Golden: the refusals of a new type, in check order, each with its
+	 * message, and none of them reaches the name lookup.
+	 *
+	 * @return void
+	 */
+	public function testCreateTypeRefusesInCheckOrder(): void {
+		$this->mapper->expects($this->never())->method('countByName');
+		$this->mapper->expects($this->never())->method('insert');
+		$cases = [
+			['   ', 'L', 'user', false, InvalidArgumentException::class, 'Type name and label are required'],
+			['n', '', 'user', false, InvalidArgumentException::class, 'Type name and label are required'],
+			['n', 'L', 'team', false, InvalidArgumentException::class, 'Scope must be user or global'],
+			['', 'L', 'team', false, InvalidArgumentException::class, 'Type name and label are required'],
+			['n', 'L', 'global', false, ForbiddenException::class, 'Only administrators can create global types'],
+		];
+		foreach ($cases as [$name, $label, $scope, $isAdmin, $class, $message]) {
+			try {
+				$this->service->createType(name: $name, label: $label, scope: $scope, userId: 'alice', isAdmin: $isAdmin);
+				$this->fail('created ' . $name . '/' . $scope);
+			} catch (Throwable $exception) {
+				$this->assertInstanceOf($class, $exception);
+				$this->assertSame($message, $exception->getMessage());
+			}
+		}
+	}//end testCreateTypeRefusesInCheckOrder()
+
+	/**
+	 * Golden: a new type carries the trimmed name, the label, its scope and
+	 * owner, a fresh id and a creation time, and is checked for its trimmed name.
+	 *
+	 * @return void
+	 */
+	public function testCreateTypeStoresTheTrimmedNameAndItsOwner(): void {
+		$this->mapper->expects($this->once())->method('countByName')->with('wifi')->willReturn(0);
+		$inserted = [];
+		$this->mapper->method('insert')->willReturnCallback(
+			static function (SecretType $type) use (&$inserted): SecretType {
+				$inserted[] = $type;
+				return $type;
+			}
+		);
+
+		$type = $this->service->createType(name: '  wifi ', label: ' WiFi ', scope: 'user', userId: 'alice', isAdmin: true);
+
+		$this->assertSame([$type], $inserted);
+		$this->assertSame(['wifi', ' WiFi ', 'user', 'alice'], [$type->getName(), $type->getLabel(), $type->getScope(), $type->getOwnerId()]);
+		$this->assertMatchesRegularExpression('/^[0-9a-f-]{36}$/', $type->getId());
+		$this->assertNotNull($type->getCreatedAt());
+	}//end testCreateTypeStoresTheTrimmedNameAndItsOwner()
 }//end class

@@ -24,6 +24,7 @@ use OCA\Keepiq\Service\DelegationAuthorizer;
 use OCA\Keepiq\Service\DelegationService;
 use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\NewLinkShare;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\NotificationService;
@@ -160,7 +161,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 		);
 
 		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
-		$service->create('copy', 'BLOB', 'SALT', 'suite-1', 1, null, 'bob');
+		$service->create(new NewLinkShare('copy', 'BLOB', 'SALT', 'suite-1', 1, null, 'bob'));
 	}
 
 	/**

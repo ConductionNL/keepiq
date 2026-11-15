@@ -21,10 +21,12 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Service\FolderService;
 use OCA\Keepiq\Service\ImportService;
 use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Service\SecretUrlService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -128,6 +130,44 @@ class ImportServiceTest extends TestCase {
 		$this->assertSame(1, $results[1]['index']);
 		$this->assertStringContainsStringIgnoringCase('name', $results[1]['error']);
 	}//end testPartialFailureReturnsPerIndexResults()
+
+	/**
+	 * A restored login gets its extra website addresses once it is created;
+	 * a malformed list fails that item before anything is written.
+	 *
+	 * @return void
+	 */
+	public function testExtraAddressesReachTheCreatedLoginAndAMalformedListFailsTheItem(): void {
+		$secretService = $this->createMock(SecretService::class);
+		$folderService = $this->createMock(FolderService::class);
+		$folderService->method('listForUser')->willReturn([]);
+		$secretService->expects($this->once())->method('create')->willReturnCallback(
+			function (array $data, string $userId): Secret {
+				$secret = $this->secret('s-' . $data['name']);
+				$secret->setOwnerType('user');
+				$secret->setOwnerId($userId);
+				return $secret;
+			}
+		);
+		$urlMapper = $this->createMock(SecretUrlMapper::class);
+		$urlMapper->expects($this->once())->method('replaceForSecret')
+			->with('s-Good', 'alice', ['https://login.example.com', 'https://example.net']);
+
+		$service = new ImportService(
+			$secretService,
+			$folderService,
+			$this->createMock(LoggerInterface::class),
+			new SecretUrlService($urlMapper)
+		);
+
+		$good = $this->item('Good') + ['additionalUrls' => [' https://login.example.com ', 'https://example.net', 'HTTPS://example.net']];
+		$bad  = $this->item('Bad') + ['additionalUrls' => 'https://example.org'];
+		$results = $service->commitChunk([$good, $bad], 'alice')['results'];
+
+		$this->assertSame('created', $results[0]['status']);
+		$this->assertSame('failed', $results[1]['status']);
+		$this->assertStringContainsString('additionalUrls', $results[1]['error']);
+	}//end testExtraAddressesReachTheCreatedLoginAndAMalformedListFailsTheItem()
 
 	/**
 	 * The owner is the supplied session user; no owner param is honoured.

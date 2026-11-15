@@ -1,0 +1,101 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LinkShareAccess snapshot rows > shows a card composite member by member, skipping empty ones 1`] = `
+[
+  {
+    "id": "name",
+    "label": "Name",
+    "secret": false,
+    "value": "Visa",
+  },
+  {
+    "id": "key-number",
+    "label": "Card number",
+    "secret": true,
+    "value": "4111",
+  },
+  {
+    "id": "key-expiry",
+    "label": "Expiry",
+    "secret": false,
+    "value": "12/30",
+  },
+  {
+    "id": "key-cvv",
+    "label": "CVV",
+    "secret": true,
+    "value": "123",
+  },
+  {
+    "id": "key-custom",
+    "label": "custom",
+    "secret": false,
+    "value": "kept",
+  },
+]
+`;
+
+exports[`LinkShareAccess snapshot rows > shows a plain login with its value masked and its additional fields 1`] = `
+[
+  {
+    "id": "name",
+    "label": "Name",
+    "secret": false,
+    "value": "Bank",
+  },
+  {
+    "id": "login",
+    "label": "Login",
+    "secret": false,
+    "value": "me",
+  },
+  {
+    "id": "url",
+    "label": "URL",
+    "secret": false,
+    "value": "https://bank",
+  },
+  {
+    "id": "key",
+    "label": "Secret value",
+    "secret": true,
+    "testid": "link-share-value",
+    "value": "hunter2",
+  },
+  {
+    "id": "extra-pin",
+    "label": "pin",
+    "secret": true,
+    "value": "1234",
+  },
+  {
+    "id": "extra-note",
+    "label": "note",
+    "secret": true,
+    "value": "n",
+  },
+]
+`;
+
+exports[`LinkShareAccess snapshot rows > shows only the rows that are set, and a number as text 1`] = `
+[
+  {
+    "id": "key",
+    "label": "Secret value",
+    "secret": true,
+    "testid": "link-share-value",
+    "value": "42",
+  },
+]
+`;
+
+exports[`LinkShareAccess snapshot rows > shows only the rows that are set, and a number as text 2`] = `
+[
+  {
+    "id": "url",
+    "label": "URL",
+    "secret": false,
+    "value": "u",
+  },
+]
+`;
