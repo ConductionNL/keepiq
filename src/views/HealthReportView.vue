@@ -99,6 +99,7 @@
 					:title="t('keepiq', 'Weak passwords')"
 					:findings="store.weakFindings"
 					testid="category-weak"
+					changePassword
 					@open="openSecret" />
 				<HealthCategory
 					:title="t('keepiq', 'Reused passwords')"
@@ -107,6 +108,7 @@
 					"
 					:findings="store.reusedFindings"
 					testid="category-reused"
+					changePassword
 					@open="openSecret" />
 				<HealthCategory
 					:title="t('keepiq', 'Old passwords')"
@@ -118,6 +120,7 @@
 					:title="t('keepiq', 'Breached passwords')"
 					:findings="store.breachedFindings"
 					testid="category-breached"
+					changePassword
 					@open="openSecret" />
 				<NcButton
 					v-if="breachActive && store.breachedFindings.length"
@@ -177,6 +180,13 @@
 					:findings="rotationFindings"
 					testid="category-rotation"
 					@open="openSecret" />
+				<!-- vault-duplicate-finder: grouped in the same browser pass; off when copies could not be told apart. -->
+				<HealthDuplicates
+					v-if="store.duplicatesAvailable"
+					:exact="store.duplicates.exact"
+					:likely="store.duplicates.likely"
+					@open="openSecret"
+					@merged="reanalyse" />
 			</div>
 
 			<div
@@ -195,6 +205,7 @@ import { loadState } from '@nextcloud/initial-state'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcSelect } from '@nextcloud/vue'
 import HealthCategory from '../components/HealthCategory.vue'
+import HealthDuplicates from '../components/HealthDuplicates.vue'
 import OwnershipFindings from '../components/OwnershipFindings.vue'
 import { httpsAddress } from '../health/insecureAddress.js'
 import { useHealthStore } from '../store/modules/health.js'
@@ -205,7 +216,7 @@ import { secretDetailLocation } from '../utils/detailRoute.js'
 
 export default {
 	name: 'HealthReportView',
-	components: { NcSelect, NcButton, HealthCategory, OwnershipFindings },
+	components: { NcSelect, NcButton, HealthCategory, HealthDuplicates, OwnershipFindings },
 
 	data() {
 		return {

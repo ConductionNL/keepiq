@@ -4,7 +4,8 @@
  * Keepiq audit-stream event registrar
  *
  * Binds every consumer of the typed AuditEvent stream: the append-only audit
- * log, the SIEM forwarder, and the honey-credential tripwire.
+ * log, the SIEM forwarder, the honey-credential tripwire and the flow
+ * trigger forwarder, which stays inert without OpenRegister.
  *
  * @category Listener
  * @package  OCA\Keepiq\Listener
@@ -24,6 +25,8 @@ namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Listener\AuditListener;
+use OCA\Keepiq\Listener\FlowTriggerCatalogListener;
+use OCA\Keepiq\Listener\FlowTriggerForwardListener;
 use OCA\Keepiq\Listener\HoneyTripwireListener;
 use OCA\Keepiq\Listener\SiemForwardListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -93,6 +96,8 @@ final class AuditStreamEventRegistrar {
 			listener: HoneyTripwireListener::class
 		);
 
+		$this->registerFlowTriggers(context: $context);
+
 		foreach (self::SCOPED_AUDIT_EVENTS as $exportEventClass) {
 			if (class_exists($exportEventClass) === true) {
 				$context->registerEventListener(
@@ -103,4 +108,37 @@ final class AuditStreamEventRegistrar {
 		}
 
 	}//end register()
+
+	/**
+	 * Vault events as flow triggers (clients-vault-event-flow-triggers D5).
+	 *
+	 * Bound inertly, like every integration with another app (see
+	 * Application): the forwarder returns before touching anything when
+	 * OpenRegister is not enabled, so a plain Nextcloud fires nothing, logs
+	 * nothing and loads no OpenRegister class. The registration phase cannot
+	 * ask the app manager without a global container lookup.
+	 *
+	 * The catalog contribution is bound by name without class_exists():
+	 * OpenRegister registers after Keepiq, so its classes may not be
+	 * autoloadable yet here. A name that is never dispatched costs nothing,
+	 * and the listener checks the event's addTrigger() before calling it.
+	 *
+	 * @param IRegistrationContext $context The registration context
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.3
+	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#requirement-keepiq-runs-without-openregister
+	 */
+	private function registerFlowTriggers(IRegistrationContext $context): void {
+		$context->registerEventListener(
+			event: AuditEvent::class,
+			listener: FlowTriggerForwardListener::class
+		);
+
+		$context->registerEventListener(
+			event: FlowTriggerCatalogListener::REGISTER_EVENT,
+			listener: FlowTriggerCatalogListener::class
+		);
+	}//end registerFlowTriggers()
 }//end class
