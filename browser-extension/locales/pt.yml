@@ -341,6 +341,7 @@ blocked:
   suiteRevoked: A respetiva chave de encriptação foi revogada.
   suiteCompromised: Encriptado com uma chave comprometida, pelo que não pode ser aberto aqui. A aplicação web do Keepiq mostra se pode ser recuperado.
   migrationFailed: Não foi possível transferi-lo para a sua nova chave durante a recuperação do comprometimento. O valor guardado é mantido, mas não pode ser aberto.
+  privilegedAccess: O proprietário não aprovou uma janela de tempo para si agora, ou não a partir deste endereço.
 
 detail:
   item: Item

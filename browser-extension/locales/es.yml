@@ -341,6 +341,7 @@ blocked:
   suiteRevoked: Su clave de cifrado se revocó.
   suiteCompromised: Está cifrado con una clave comprometida, así que no se puede abrir aquí. La aplicación web de Keepiq indica si se puede recuperar.
   migrationFailed: No se pudo trasladar a tu nueva clave durante la recuperación tras el compromiso. El valor almacenado se conserva, pero no se puede abrir.
+  privilegedAccess: Su propietario no te ha aprobado una franja horaria ahora, o no desde esta dirección.
 
 detail:
   item: Elemento

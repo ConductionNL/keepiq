@@ -341,6 +341,7 @@ blocked:
   suiteRevoked: Sa clé de chiffrement a été révoquée.
   suiteCompromised: Chiffré avec une clé compromise, il ne peut donc pas être ouvert ici. L’application web Keepiq indique s’il peut être récupéré.
   migrationFailed: Il n’a pas pu être transféré vers votre nouvelle clé lors de la récupération après compromission. La valeur stockée est conservée mais ne peut pas être ouverte.
+  privilegedAccess: Son propriétaire ne vous a pas accordé de créneau pour le moment, ou pas depuis cette adresse.
 
 detail:
   item: Élément

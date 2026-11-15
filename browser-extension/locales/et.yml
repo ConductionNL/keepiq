@@ -341,6 +341,7 @@ blocked:
   suiteRevoked: Selle krüpteerimisvõti on tühistatud.
   suiteCompromised: Krüpteeritud ohustatud võtmega, seega ei saa seda siin avada. Keepiqi veebirakendus näitab, kas seda saab taastada.
   migrationFailed: Seda ei õnnestunud ohujärgse taastamise käigus sinu uuele võtmele üle viia. Salvestatud väärtus säilib, kuid seda ei saa avada.
+  privilegedAccess: Omanik ei ole sulle praegu ajavahemikku kinnitanud või mitte sellelt aadressilt.
 
 detail:
   item: Kirje

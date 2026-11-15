@@ -341,6 +341,7 @@ blocked:
   suiteRevoked: Tā šifrēšanas atslēga tika atsaukta.
   suiteCompromised: Šifrēts ar apdraudētu atslēgu, tāpēc šeit to nevar atvērt. Keepiq tīmekļa lietotne parāda, vai to var atgūt.
   migrationFailed: Apdraudējuma atkopšanas laikā to nevarēja pārvietot uz jūsu jauno atslēgu. Saglabātā vērtība ir paturēta, bet to nevar atvērt.
+  privilegedAccess: Īpašnieks pašlaik nav apstiprinājis jums laika logu vai ne no šīs adreses.
 
 detail:
   item: Vienums

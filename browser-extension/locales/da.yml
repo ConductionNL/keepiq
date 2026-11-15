@@ -341,6 +341,7 @@ blocked:
   suiteRevoked: Dets krypteringsnøgle er tilbagekaldt.
   suiteCompromised: Krypteret med en kompromitteret nøgle, så det kan ikke åbnes her. Keepiq-webappen viser, om det kan gendannes.
   migrationFailed: Det kunne ikke flyttes til din nye nøgle under gendannelsen efter kompromitteringen. Den gemte værdi bevares, men kan ikke åbnes.
+  privilegedAccess: Ejeren har ikke godkendt et tidsrum for dig nu, eller ikke fra denne adresse.
 
 detail:
   item: Element

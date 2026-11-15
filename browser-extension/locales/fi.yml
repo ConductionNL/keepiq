@@ -341,6 +341,7 @@ blocked:
   suiteRevoked: Sen salausavain on mitätöity.
   suiteCompromised: Salattu vaarantuneella avaimella, joten sitä ei voi avata täällä. Keepiq-verkkosovellus näyttää, voiko sen palauttaa.
   migrationFailed: Sitä ei voitu siirtää uudelle avaimellesi vaarantumisen jälkeisen palautuksen aikana. Tallennettu arvo säilytetään, mutta sitä ei voi avata.
+  privilegedAccess: Omistaja ei ole hyväksynyt sinulle aikaikkunaa nyt, tai ei tästä osoitteesta.
 
 detail:
   item: Kohde

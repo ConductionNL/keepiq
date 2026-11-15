@@ -341,6 +341,7 @@ blocked:
   suiteRevoked: Jego klucz szyfrowania został unieważniony.
   suiteCompromised: Zaszyfrowany przejętym kluczem, więc nie można go tu otworzyć. Aplikacja webowa Keepiq pokazuje, czy można go odzyskać.
   migrationFailed: Nie udało się go przenieść na nowy klucz podczas odzyskiwania po przejęciu klucza. Zapisana wartość została zachowana, ale nie można jej otworzyć.
+  privilegedAccess: Właściciel nie zatwierdził teraz dla Ciebie przedziału czasu lub nie z tego adresu.
 
 detail:
   item: Element

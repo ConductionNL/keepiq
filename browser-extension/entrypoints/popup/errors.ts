@@ -166,5 +166,6 @@ export function blockedText(reason: BlockReason | undefined): string {
 		case 'suite_revoked': return i18n.t('blocked.suiteRevoked')
 		case 'suite_compromised': return i18n.t('blocked.suiteCompromised')
 		case 'migration_failed': return i18n.t('blocked.migrationFailed')
+		case 'privileged_access': return i18n.t('blocked.privilegedAccess')
 	}
 }
