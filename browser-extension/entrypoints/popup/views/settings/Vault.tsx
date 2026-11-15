@@ -23,30 +23,52 @@ interface Props {
 }
 
 /** Bitwarden's Settings → Vault; Import and Export open the Keepiq web app (ADR-003). */
+type AccountSettings = ReturnType<typeof useAccountSettings>
+
 export function Vault({ onOpen, snapshot, snapshotFailed, reload }: Props) {
 	const id = useId()
-	const { snapshot: settings, failed, update } = useAccountSettings()
-	const webAppUrl = snapshot?.webAppUrl ?? settings?.webAppUrl
+	const account = useAccountSettings()
+	const webAppUrl = snapshot?.webAppUrl ?? account.snapshot?.webAppUrl
+	const unanswered = account.failed || (snapshotFailed && !snapshot)
 
 	return (
 		<div className="stack">
-			{(failed || (snapshotFailed && !snapshot)) && <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner>}
+			<NotResponding shown={unanswered} />
 			<ul className="card menu">
-				<li>
-					<button type="button" className="menu__item" onClick={() => onOpen('folders')}>
-						<Icon name="folder" />
-						<span className="menu__label">{i18n.t('settings.folders')}</span>
-						<Icon name="chevronRight" />
-					</button>
-				</li>
+				<FoldersItem onOpen={onOpen} />
 				<SyncItem id={id} sync={snapshot?.sync} />
-				{webAppUrl && <WebAppItems id={id} webAppUrl={webAppUrl} exportDisabled={settings?.exportDisabled ?? false} />}
+				<WebAppItems id={id} webAppUrl={webAppUrl} exportDisabled={account.snapshot?.exportDisabled ?? false} />
 			</ul>
-			{settings && snapshot
-				? <DefaultType settings={settings} types={snapshot.types} update={update} reload={reload} />
-				: !failed && !snapshotFailed && <Loading />}
+			<DefaultTypeCard account={account} snapshot={snapshot} snapshotFailed={snapshotFailed} reload={reload} />
 		</div>
 	)
+}
+
+function NotResponding({ shown }: { shown: boolean }) {
+	return shown ? <ErrorBanner>{errorText('not_responding', '')}</ErrorBanner> : null
+}
+
+function FoldersItem({ onOpen }: Pick<Props, 'onOpen'>) {
+	return (
+		<li>
+			<button type="button" className="menu__item" onClick={() => onOpen('folders')}>
+				<Icon name="folder" />
+				<span className="menu__label">{i18n.t('settings.folders')}</span>
+				<Icon name="chevronRight" />
+			</button>
+		</li>
+	)
+}
+
+interface DefaultTypeCardProps extends Pick<Props, 'snapshot' | 'snapshotFailed' | 'reload'> {
+	account: AccountSettings
+}
+
+/** The default type once both the settings and the snapshot are in; the spinner while either still loads. */
+function DefaultTypeCard({ account, snapshot, snapshotFailed, reload }: DefaultTypeCardProps) {
+	const { snapshot: settings, failed, update } = account
+	if (settings && snapshot) return <DefaultType settings={settings} types={snapshot.types} update={update} reload={reload} />
+	return !failed && !snapshotFailed ? <Loading /> : null
 }
 
 function syncErrorOf(after: VaultSnapshotReply | undefined): string | null {
@@ -56,8 +78,23 @@ function syncErrorOf(after: VaultSnapshotReply | undefined): string | null {
 	return ended.lastError ? i18n.t('settings.syncFailed') : null
 }
 
+function lastSyncText(syncedAt: string | null): string {
+	return syncedAt
+		? i18n.t('settings.lastSync', { time: new Date(syncedAt).toLocaleString(language(), { dateStyle: 'short', timeStyle: 'short' }) })
+		: i18n.t('settings.lastSyncNever')
+}
+
+interface SyncProps {
+	id: string
+	sync: SyncStatus | undefined
+}
+
+function SyncHint({ id, sync }: SyncProps) {
+	return sync ? <span className="menu__hint" id={`${id}-sync`}>{lastSyncText(sync.syncedAt)}</span> : null
+}
+
 /** `id` is the page's, which the item's ids extend. */
-function SyncItem({ id, sync }: { id: string; sync: SyncStatus | undefined }) {
+function SyncItem({ id, sync }: SyncProps) {
 	const { syncNow } = useShell()
 	// Only the sync started here reports its failure here, not one a later re-read shows.
 	const [syncError, setSyncError] = useState<string | null>(null)
@@ -75,13 +112,7 @@ function SyncItem({ id, sync }: { id: string; sync: SyncStatus | undefined }) {
 				<Icon name="refresh" />
 				<span className="menu__label">
 					<span id={`${id}-sync-label`}>{i18n.t('vault.syncNow')}</span>
-					{sync && (
-						<span className="menu__hint" id={`${id}-sync`}>
-							{sync.syncedAt
-								? i18n.t('settings.lastSync', { time: new Date(sync.syncedAt).toLocaleString(language(), { dateStyle: 'short', timeStyle: 'short' }) })
-								: i18n.t('settings.lastSyncNever')}
-						</span>
-					)}
+					<SyncHint id={id} sync={sync} />
 				</span>
 			</button>
 			{syncError && <p className="field__error menu__error" role="alert">{syncError}</p>}
@@ -89,7 +120,9 @@ function SyncItem({ id, sync }: { id: string; sync: SyncStatus | undefined }) {
 	)
 }
 
-function WebAppItems({ id, webAppUrl, exportDisabled }: { id: string; webAppUrl: string; exportDisabled: boolean }) {
+/** Nothing until the web app's address is known. */
+function WebAppItems({ id, webAppUrl, exportDisabled }: { id: string; webAppUrl: string | undefined; exportDisabled: boolean }) {
+	if (!webAppUrl) return null
 	return (
 		<>
 			<li>

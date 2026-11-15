@@ -101,9 +101,8 @@ import {
 	NcPasswordField,
 	NcTextField,
 } from '@nextcloud/vue'
-import { verifyMasterPassword } from '../crypto/reauth.js'
-import { useExportStore } from '../store/modules/export.js'
-import { useSessionStore } from '../store/modules/session.js'
+import exportStoreDialog from '../mixins/exportStoreDialog.js'
+import masterPasswordCheck from '../mixins/masterPasswordCheck.js'
 
 /** The exact phrase the user must type (mirrors GdprController). */
 const CONFIRMATION_PHRASE = 'DELETE MY KEEPIQ DATA'
@@ -118,6 +117,8 @@ export default {
 		NcPasswordField,
 	},
 
+	mixins: [exportStoreDialog, masterPasswordCheck],
+
 	props: {
 		open: {
 			type: Boolean,
@@ -126,19 +127,6 @@ export default {
 	},
 
 	emits: ['update:open', 'export-first'],
-	/**
-	 * Provide the export + session Pinia stores to the component.
-	 *
-	 * @return {object}
-	 * @spec openspec/specs/gdpr-compliance/spec.md
-	 */
-	setup() {
-		return {
-			exportStore: useExportStore(),
-			sessionStore: useSessionStore(),
-		}
-	},
-
 	data() {
 		return {
 			masterPassword: '',
@@ -149,16 +137,6 @@ export default {
 	},
 
 	computed: {
-		/**
-		 * Whether a deletion is in flight (from the store).
-		 *
-		 * @return {boolean}
-		 * @spec openspec/specs/gdpr-compliance/spec.md
-		 */
-		loading() {
-			return this.exportStore.loading
-		},
-
 		/**
 		 * The confirmation-field label including the exact required phrase.
 		 *
@@ -196,12 +174,7 @@ export default {
 		 */
 		async onDelete() {
 			this.error = null
-			const ok = await verifyMasterPassword(
-				this.sessionStore.encryptedPrivateKey,
-				this.masterPassword,
-			)
-			if (!ok) {
-				this.error = this.t('keepiq', 'Incorrect master password')
+			if (!(await this.masterPasswordVerified())) {
 				return
 			}
 			try {
@@ -232,19 +205,6 @@ export default {
 			this.error = null
 		},
 
-		/**
-		 * Handle open-state changes, clearing state on close.
-		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 * @spec openspec/specs/gdpr-compliance/spec.md
-		 */
-		onUpdateOpen(value) {
-			if (!value) {
-				this.reset()
-			}
-			this.$emit('update:open', value)
-		},
 	},
 }
 </script>

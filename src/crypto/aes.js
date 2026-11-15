@@ -13,6 +13,35 @@ import {
 } from './envelope.js'
 
 const PBKDF2_ITERATIONS = 600000
+const PBKDF2_HASH = 'SHA-256'
+const AES_ALGORITHM = 'AES-GCM'
+const AES_KEY_BITS = 256
+
+/**
+ * How the private key is protected by the master password, as the functions
+ * below do it. Read by the encryption overview.
+ *
+ * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ */
+export const MASTER_KEY_PARAMETERS = Object.freeze({
+	cipher: AES_ALGORITHM,
+	keyBits: AES_KEY_BITS,
+	kdf: 'PBKDF2',
+	kdfHash: PBKDF2_HASH,
+	iterations: PBKDF2_ITERATIONS,
+	saltBytes: SALT_LENGTH,
+})
+
+/**
+ * The algorithm of a fresh content key (an attachment's file key). Passed to
+ * `crypto.subtle.generateKey` as is.
+ *
+ * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ */
+export const CONTENT_KEY_PARAMETERS = Object.freeze({
+	name: AES_ALGORITHM,
+	length: AES_KEY_BITS,
+})
 
 /**
  * Derive an AES-256-GCM CryptoKey from a master password using PBKDF2-SHA256.
@@ -36,10 +65,10 @@ export async function deriveAesKey(password, salt) {
 			name: 'PBKDF2',
 			salt,
 			iterations: PBKDF2_ITERATIONS,
-			hash: 'SHA-256',
+			hash: PBKDF2_HASH,
 		},
 		keyMaterial,
-		{ name: 'AES-GCM', length: 256 },
+		{ name: AES_ALGORITHM, length: AES_KEY_BITS },
 		false,
 		['encrypt', 'decrypt'],
 	)
@@ -111,7 +140,7 @@ export async function deriveUnlockKeyRaw(password, salt) {
 		['deriveBits'],
 	)
 	const bits = await crypto.subtle.deriveBits(
-		{ name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+		{ name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: PBKDF2_HASH },
 		keyMaterial,
 		256,
 	)

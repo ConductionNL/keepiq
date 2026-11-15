@@ -112,6 +112,7 @@ import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
+import { confirmPasswordFirst } from '../../utils/passwordConfirmation.js'
 
 const API = '/apps/keepiq/api/v1/recovery/admin'
 
@@ -183,9 +184,7 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				const { confirmPassword } =
-					await import('@nextcloud/password-confirmation')
-				await confirmPassword()
+				await confirmPasswordFirst()
 				const response = await axios.put(generateUrl(API), {
 					policy: this.policy,
 					officers: this.officerList,
@@ -210,9 +209,7 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				const { confirmPassword } =
-					await import('@nextcloud/password-confirmation')
-				await confirmPassword()
+				await confirmPasswordFirst()
 				await axios.post(
 					generateUrl(`${API}/keys/${this.activeKey.id}/retire`),
 				)

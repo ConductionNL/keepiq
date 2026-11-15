@@ -37,11 +37,12 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\DuplicateFolderNameException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\FolderServiceInterface;
 
 /**
  * Business logic for the folder tree.
  */
-class FolderService {
+class FolderService implements FolderServiceInterface {
 	/**
 	 * Constructor for FolderService.
 	 *
@@ -292,10 +293,7 @@ class FolderService {
 		$folder = $this->ownership->requireOwned(id: $id, userId: $userId);
 
 		$this->deletion->delete(
-			folder: $folder,
-			cascade: $cascade,
-			resolution: $resolution,
-			userId: $userId
+			deletion: new FolderDeletion(folder: $folder, cascade: $cascade, resolution: $resolution, userId: $userId)
 		);
 	}//end delete()
 }//end class

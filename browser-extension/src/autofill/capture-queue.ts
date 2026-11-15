@@ -10,7 +10,7 @@ import type { OpenSecretRow } from '@/src/api/types'
 import { onBroadcast } from '@/src/background/broadcast'
 import { rsaDecrypt } from '@/src/crypto'
 import type {
-	BackgroundToContent, CaptureRefused, CaptureStateReply, CaptureSubmitted, NotificationReplies, NotificationToBackground, PickInput, UriMatch, WriteResult,
+	BackgroundToContent, CaptureRefused, CaptureStateReply, CaptureSubmitted, NotificationReplies, NotificationToBackground, PickInput, UriMatch, VaultWriteError, WriteResult,
 } from '@/src/messages'
 import { readGlobalSettings } from '@/src/settings/global'
 import { getKey, hasKey } from '@/src/vault/key-store'
@@ -113,18 +113,22 @@ async function open(ciphertext: string | null, key: CryptoKey): Promise<string |
 }
 
 /** The frame's logins in the vault: on its base domain, or under the user's rule where that reaches further. */
-async function siteLogins(accountId: string, frameUrl: string, rule: UriMatch): Promise<OpenSecretRow[]> {
+async function siteLogins(frameUrl: string, scope: MatchScope): Promise<OpenSecretRow[]> {
+	const { accountId, rule } = scope
 	const vault = await readSnapshot(accountId)
 	if (!vault) return []
 	const found = new Set([...candidatesFor(frameUrl, vault, 'baseDomain', {}), ...candidatesFor(frameUrl, vault, rule, {})])
 	return [...found].filter((row): row is OpenSecretRow => !row.blocked)
 }
 
+/** A path, query or fragment starts at `char`, or the url ends there (`char` is empty). */
+const atBoundary = (char: string): boolean => char === '' || '/?#'.includes(char)
+
 /** Whether the login's normalised url is a prefix of the frame's that ends at a path boundary, so `/jira` is not under `/jira-test`. */
 function under(itemUrl: string | null, frame: URL): boolean {
 	const prefix = webUrl(itemUrl)?.href
 	if (!prefix || !frame.href.startsWith(prefix)) return false
-	return /[/?#]$/.test(prefix) || /^[/?#]?$/.test(frame.href.charAt(prefix.length))
+	return atBoundary(prefix.slice(-1)) || atBoundary(frame.href.charAt(prefix.length))
 }
 
 /** Whether the login is for a bare host the frame's is a subdomain of, so its `login.` page updates it; a sibling subdomain is not. */
@@ -140,11 +144,12 @@ function onParentHost(itemUrl: string | null, frame: URL): boolean {
  * a sibling app's password is never overwritten; a change form, which may sit on another path, first falls back to the
  * frame's host. A password that no login can take is offered as a new login rather than lost.
  */
-async function decide(accountId: string, tabId: number, frameUrl: string, report: CaptureSubmitted, rule: UriMatch): Promise<Decision> {
-	const key = await getKey(accountId)
+async function decide(submit: Submit, scope: MatchScope): Promise<Decision> {
+	const { tabId, frameUrl, message: report } = submit
+	const key = await getKey(scope.accountId)
 	if (!key) return null
 	const frame = new URL(frameUrl)
-	const rows = await siteLogins(accountId, frameUrl, rule)
+	const rows = await siteLogins(frameUrl, scope)
 	const logins = await Promise.all(rows.map((row) => open(row.login, key)))
 	const loginOf = (row: OpenSecretRow) => logins[rows.indexOf(row)]
 	// An empty username and none are the same.
@@ -195,43 +200,106 @@ async function tabUrlOf(sender: Browser.runtime.MessageSender, tabId: number): P
 	return sender.tab?.url ?? (await browser.tabs.get(tabId).catch(() => undefined))?.url
 }
 
-/** `capture.submitted` from a content script, already routed by sender page. URL, tab and frame come from `sender`. */
-export async function captureSubmitted(message: CaptureSubmitted, sender: Browser.runtime.MessageSender): Promise<void> {
+/** The vault a submit is matched against, and the user's match rule. */
+interface MatchScope {
+	accountId: string
+	rule: UriMatch
+}
+
+/** One accepted `capture.submitted`, numbered so a slower decision on an older one never replaces a newer one. */
+interface Submit {
+	message: CaptureSubmitted
+	sender: Browser.runtime.MessageSender
+	tabId: number
+	frameUrl: string
+	order: number
+}
+
+/** What a submit was decided to be, with the domains the capture is matched and shown under. */
+interface Decided {
+	accountId: string
+	domain: string
+	tabDomain: string
+	tabHost: string
+	decision: NonNullable<Decision>
+}
+
+type CaptureSettings = Awaited<ReturnType<typeof readSettings>>
+
+/** The submitting tab and web frame, from `sender`; nothing for a frame without a web URL. */
+function submittingFrame(sender: Browser.runtime.MessageSender): { tabId: number; frameUrl: string } | null {
 	const tabId = sender.tab?.id
 	const frameUrl = sender.url
-	if (tabId === undefined || sender.frameId === undefined || !frameUrl || !isWebUrl(frameUrl)) return
-	const { username, password, changed } = message
-	if (typeof password !== 'string' || password === '' || (username !== null && typeof username !== 'string') || typeof changed !== 'boolean') return
-	const submit = ++submits
-	newest.set(tabId, submit)
-	const decided = await (async () => {
-		await enforce()
-		const accountId = await activeUnlockedId()
-		if (!accountId) return null
-		const domain = baseDomain(frameUrl)
-		const tabUrl = await tabUrlOf(sender, tabId)
-		const tabDomain = tabUrl ? baseDomain(tabUrl) : null
-		if (!domain || !tabDomain) return null
-		const settings = await readSettings(accountId)
-		if (settings.excludedDomains.includes(domain) || (!settings.askToAdd && !settings.askToUpdate)) return null
-		const decision = await decide(accountId, tabId, frameUrl, message, settings.uriMatch)
-		if (!decision || !(decision.mode === 'add' ? settings.askToAdd : settings.askToUpdate)) return null
-		return { accountId, domain, tabDomain, tabHost: new URL(tabUrl!).host, decision }
-	})()
-	if (newest.get(tabId) !== submit) return
-	// A newer submit replaces the older capture, whose bar would answer for a capture that is gone.
-	drop(tabId)
-	// A lock while deciding must not leave a capture behind.
-	if (!decided || !(await hasKey(decided.accountId)) || newest.get(tabId) !== submit) return
-	hide(tabId, closing.get(tabId) ?? [])
-	closing.delete(tabId)
+	if (tabId === undefined || sender.frameId === undefined || !frameUrl || !isWebUrl(frameUrl)) return null
+	return { tabId, frameUrl }
+}
+
+function isWellFormed({ username, password, changed }: CaptureSubmitted): boolean {
+	if (typeof password !== 'string' || password === '') return false
+	return (username === null || typeof username === 'string') && typeof changed === 'boolean'
+}
+
+/** Numbers the submit as its tab's newest; nothing for a malformed report or a frame it cannot come from. */
+function acceptSubmit(message: CaptureSubmitted, sender: Browser.runtime.MessageSender): Submit | null {
+	const frame = submittingFrame(sender)
+	if (!frame || !isWellFormed(message)) return null
+	const order = ++submits
+	newest.set(frame.tabId, order)
+	return { message, sender, ...frame, order }
+}
+
+const isNewest = (submit: Submit): boolean => newest.get(submit.tabId) === submit.order
+
+/** The frame's and the tab's base domains, and the tab's url; nothing when either has no base domain. */
+async function siteOf(submit: Submit): Promise<{ domain: string; tabDomain: string; tabUrl: string } | null> {
+	const domain = baseDomain(submit.frameUrl)
+	const tabUrl = await tabUrlOf(submit.sender, submit.tabId)
+	const tabDomain = tabUrl ? baseDomain(tabUrl) : null
+	if (!domain || !tabDomain) return null
+	return { domain, tabDomain, tabUrl: tabUrl! }
+}
+
+const ignoresSite = (settings: CaptureSettings, domain: string): boolean =>
+	settings.excludedDomains.includes(domain) || (!settings.askToAdd && !settings.askToUpdate)
+
+const asksFor = (settings: CaptureSettings, decision: Decision): decision is NonNullable<Decision> =>
+	decision !== null && (decision.mode === 'add' ? settings.askToAdd : settings.askToUpdate)
+
+async function decideCapture(submit: Submit): Promise<Decided | null> {
+	await enforce()
+	const accountId = await activeUnlockedId()
+	if (!accountId) return null
+	const site = await siteOf(submit)
+	if (!site) return null
+	const settings = await readSettings(accountId)
+	if (ignoresSite(settings, site.domain)) return null
+	const decision = await decide(submit, { accountId, rule: settings.uriMatch })
+	if (!asksFor(settings, decision)) return null
+	return { accountId, domain: site.domain, tabDomain: site.tabDomain, tabHost: new URL(site.tabUrl).host, decision }
+}
+
+/** A lock while deciding must not leave a capture behind. */
+async function stillWanted(submit: Submit, decided: Decided): Promise<boolean> {
+	return (await hasKey(decided.accountId)) && isNewest(submit)
+}
+
+function captureOf(submit: Submit, decided: Decided): Capture {
+	const { tabId, frameUrl, message } = submit
 	const entry: Capture = {
 		id: newKey(), accountId: decided.accountId, frameUrl, baseDomain: decided.domain, tabBaseDomain: decided.tabDomain, tabHost: decided.tabHost,
-		username: username || null, password, ...decided.decision, keys: new Map(), navigated: false, expiresAt: Date.now() + CAPTURE_LIFESPAN_MS,
+		username: message.username || null, password: message.password, ...decided.decision, keys: new Map(), navigated: false, expiresAt: Date.now() + CAPTURE_LIFESPAN_MS,
 		timer: setTimeout(() => {
 			if (pending.get(tabId) === entry) drop(tabId)
 		}, CAPTURE_LIFESPAN_MS),
 	}
+	return entry
+}
+
+function enqueue(submit: Submit, decided: Decided): void {
+	const { tabId } = submit
+	hide(tabId, closing.get(tabId) ?? [])
+	closing.delete(tabId)
+	const entry = captureOf(submit, decided)
 	pending.set(tabId, entry)
 	// A page that navigates after the submit is not shown the bar, which would only flash before it unloads.
 	setTimeout(() => {
@@ -239,29 +307,64 @@ export async function captureSubmitted(message: CaptureSubmitted, sender: Browse
 	}, SHOW_DELAY_MS)
 }
 
+/** `capture.submitted` from a content script, already routed by sender page. URL, tab and frame come from `sender`. */
+export async function captureSubmitted(message: CaptureSubmitted, sender: Browser.runtime.MessageSender): Promise<void> {
+	const submit = acceptSubmit(message, sender)
+	if (!submit) return
+	const decided = await decideCapture(submit)
+	if (!isNewest(submit)) return
+	// A newer submit replaces the older capture, whose bar would answer for a capture that is gone.
+	drop(submit.tabId)
+	if (decided && (await stillWanted(submit, decided))) enqueue(submit, decided)
+}
+
 /** Shows the bar in the top frame once the tab has loaded, while it stays on the base domain it had at the submit. */
 export async function showPending(tabId: number): Promise<void> {
 	const entry = live(tabId)
 	if (!entry) return
+	const url = await loadedUrl(tabId, entry)
+	if (url === undefined) return
+	if (baseDomain(url) !== entry.tabBaseDomain) return drop(tabId)
+	await present(tabId, entry)
+}
+
+/** The tab's url once it has loaded, while the capture is still its pending one. */
+async function loadedUrl(tabId: number, entry: Capture): Promise<string | undefined> {
 	const tab = await browser.tabs.get(tabId).catch(() => undefined)
-	if (pending.get(tabId) !== entry || tab?.status !== 'complete' || !tab.url) return
-	if (baseDomain(tab.url) !== entry.tabBaseDomain) return drop(tabId)
+	if (pending.get(tabId) !== entry || tab?.status !== 'complete' || !tab.url) return undefined
+	return tab.url
+}
+
+async function present(tabId: number, entry: Capture): Promise<void> {
 	for (let attempt = 0; attempt < 2 && pending.get(tabId) === entry; attempt++) {
-		const key = newKey()
-		entry.keys.set(key, null)
-		const held: unknown = await toTop(tabId, { kind: 'capture.show', key, capture: entry.id })
-		// A new bar, or no answer, as when the page has no content script yet.
-		if (held === key || typeof held !== 'string') return dropOlder(entry, key)
-		entry.keys.delete(key)
-		if (entry.keys.has(held)) {
-			const frameId = entry.keys.get(held)!
-			entry.keys.delete(held)
-			entry.keys.set(held, frameId)
-			return
-		}
-		// A bar holding no key this capture issued, as one back from the back/forward cache, is replaced.
-		await toTop(tabId, { kind: 'capture.hide', key: held })
+		if (await offerBar(tabId, entry)) return
 	}
+}
+
+/** One show under a new key; true once a bar holds a key of this capture or the page did not answer. */
+async function offerBar(tabId: number, entry: Capture): Promise<boolean> {
+	const key = newKey()
+	entry.keys.set(key, null)
+	const held: unknown = await toTop(tabId, { kind: 'capture.show', key, capture: entry.id })
+	// A new bar, or no answer, as when the page has no content script yet.
+	if (held === key || typeof held !== 'string') {
+		dropOlder(entry, key)
+		return true
+	}
+	entry.keys.delete(key)
+	if (entry.keys.has(held)) {
+		keepAsNewest(entry, held)
+		return true
+	}
+	// A bar holding no key this capture issued, as one back from the back/forward cache, is replaced.
+	await toTop(tabId, { kind: 'capture.hide', key: held })
+	return false
+}
+
+function keepAsNewest(entry: Capture, key: string): void {
+	const frameId = entry.keys.get(key)!
+	entry.keys.delete(key)
+	entry.keys.set(key, frameId)
 }
 
 /** Only keys older than the show's own, so a reply never drops its bar's key, nor one a show still in flight brings. */
@@ -275,18 +378,40 @@ export function focusBar(tabId: number): void {
 	if (live(tabId)) void toTop(tabId, { kind: 'capture.focus' })
 }
 
-async function state(entry: Capture): Promise<CaptureStateReply | null> {
+type Vault = NonNullable<Awaited<ReturnType<typeof readSnapshot>>>
+
+/** The capture's vault, while its account is still the active, unlocked one. */
+async function unlockedVault(entry: Capture): Promise<Vault | null> {
 	const vault = await readSnapshot(entry.accountId)
 	if (!vault || (await activeUnlockedId()) !== entry.accountId) return null
+	return vault
+}
+
+/** An update's item name; a sync dropped the item since the submit: as when Update finds it gone, the capture becomes an add. */
+function itemNameOf(entry: Capture, vault: Vault): string | undefined {
+	if (entry.mode !== 'update') return undefined
+	const itemName = vault.secrets.find((row) => row.id === entry.itemId)?.name
+	if (itemName === undefined) toAdd(entry)
+	return itemName
+}
+
+async function stateReply(entry: Capture, vault: Vault): Promise<CaptureStateReply> {
 	const folders = flattenFolders(vault.folders).map((folder) => ({ id: folder.id, name: folderPath(vault.folders, folder.id) ?? folder.name }))
-	const itemName = entry.mode === 'update' ? vault.secrets.find((row) => row.id === entry.itemId)?.name : undefined
-	// A sync dropped the item since the submit: as when Update finds it gone, the capture becomes an add.
-	if (entry.mode === 'update' && itemName === undefined) toAdd(entry)
+	const itemName = itemNameOf(entry, vault)
 	const host = new URL(entry.frameUrl).host
 	const reply: CaptureStateReply = { mode: entry.mode, host, folders, theme: (await readGlobalSettings()).theme }
 	if (entry.tabHost !== host) reply.tabHost = entry.tabHost
-	if (itemName !== undefined) reply.itemName = itemName
-	if (itemName !== undefined && entry.itemUsername) reply.username = entry.itemUsername
+	if (itemName !== undefined) {
+		reply.itemName = itemName
+		if (entry.itemUsername) reply.username = entry.itemUsername
+	}
+	return reply
+}
+
+async function state(entry: Capture): Promise<CaptureStateReply | null> {
+	const vault = await unlockedVault(entry)
+	if (!vault) return null
+	const reply = await stateReply(entry, vault)
 	const shortcut = await barShortcut()
 	if (shortcut) reply.shortcut = shortcut
 	return reply
@@ -309,8 +434,16 @@ function toAdd(entry: Capture): void {
 	delete entry.itemUsername
 }
 
+/** One bar message's capture, its tab and the key the bar holds. */
+interface AnswerRun {
+	tabId: number
+	entry: Capture
+	key: string
+}
+
 /** The bar shows its confirmation, then the background closes it; a newer capture that needs a bar closes it at once. */
-function finish(tabId: number, entry: Capture, itemId: string, key: string): void {
+function finish(bar: AnswerRun, itemId: string): void {
+	const { tabId, entry, key } = bar
 	rememberItem(tabId, itemId)
 	if (pending.get(tabId) === entry) drop(tabId, false)
 	closing.set(tabId, new Set([key]))
@@ -322,9 +455,9 @@ function finish(tabId: number, entry: Capture, itemId: string, key: string): voi
 }
 
 /** The host's visibility guard at the press (design.md § Visibility guard), before anything is decided. */
-async function visibleAt(tabId: number, key: string, input: unknown): Promise<boolean> {
+async function visibleAt(bar: AnswerRun, input: unknown): Promise<boolean> {
 	if (!isPickInput(input)) return false
-	return await toTop(tabId, { kind: 'capture.verify', key, input }) === true
+	return await toTop(bar.tabId, { kind: 'capture.verify', key: bar.key, input }) === true
 }
 
 /** A decision is a user's action, so it counts as interaction, after the timeout had its say. */
@@ -335,9 +468,17 @@ async function interact(tabId: number, entry: Capture): Promise<boolean> {
 	return true
 }
 
-async function save(tabId: number, entry: Capture, key: string, folderId: unknown): Promise<WriteResult<null>> {
-	if (entry.mode !== 'add' || (folderId !== null && typeof folderId !== 'string')) return refused('invalid')
+const isFolderChoice = (folderId: unknown): folderId is string | null => folderId === null || typeof folderId === 'string'
+
+async function save(bar: AnswerRun, folderId: unknown): Promise<WriteResult<null>> {
+	const { tabId, entry } = bar
+	if (entry.mode !== 'add' || !isFolderChoice(folderId)) return refused('invalid')
 	if (!(await interact(tabId, entry))) return refused('locked')
+	return createLogin(bar, folderId)
+}
+
+async function createLogin(bar: AnswerRun, folderId: string | null): Promise<WriteResult<null>> {
+	const { entry } = bar
 	const typeId = (await readSnapshot(entry.accountId))?.types.find((type) => type.name === 'login')?.id
 	if (!typeId) return refused('unknown')
 	const page = new URL(entry.frameUrl)
@@ -345,25 +486,32 @@ async function save(tabId: number, entry: Capture, key: string, folderId: unknow
 		typeId, name: page.host, url: page.origin, folderId, key: entry.password, login: entry.username, additionalFields: {},
 	}, entry.accountId)
 	if (!result.ok) return result
-	finish(tabId, entry, result.value.id, key)
+	finish(bar, result.value.id)
 	return { ok: true, value: null }
 }
 
 /** Only `key`, through `updateItem` and so share-save, on a fresh version; with no edit form behind it, partner shares fail as `unverified`. */
-async function update(tabId: number, entry: Capture, key: string): Promise<WriteResult<null>> {
+async function update(bar: AnswerRun): Promise<WriteResult<null>> {
+	const { tabId, entry } = bar
 	const itemId = entry.itemId
 	if (entry.mode !== 'update' || itemId === undefined) return refused('invalid')
 	if (!(await interact(tabId, entry))) return refused('locked')
+	const result = await writePassword(entry, itemId)
+	if (!result.ok) return updateFailed(bar, result.error)
+	finish(bar, itemId)
+	return { ok: true, value: null }
+}
+
+async function writePassword(entry: Capture, itemId: string): Promise<WriteResult<unknown>> {
 	const fetched = await run(({ client }) => client.keepiq<OpenSecretRow | null>('GET', `/api/v1/secrets/${encodeURIComponent(itemId)}`), 'reply', entry.accountId)
 	if (fetched.ok && typeof fetched.value?.updatedAt !== 'string') return refused('unknown')
-	const result = fetched.ok ? await updateItem(itemId, { key: entry.password }, fetched.value!.updatedAt, entry.accountId) : fetched
-	if (!result.ok) {
-		// Deleted meanwhile: the bar offers Save, and this capture becomes an add.
-		if (result.error.code === 'not_found' && pending.get(tabId) === entry) toAdd(entry)
-		return { ok: false, error: result.error }
-	}
-	finish(tabId, entry, itemId, key)
-	return { ok: true, value: null }
+	return fetched.ok ? await updateItem(itemId, { key: entry.password }, fetched.value!.updatedAt, entry.accountId) : fetched
+}
+
+/** Deleted meanwhile: the bar offers Save, and this capture becomes an add. */
+function updateFailed(bar: AnswerRun, error: VaultWriteError): WriteResult<null> {
+	if (error.code === 'not_found' && pending.get(bar.tabId) === bar.entry) toAdd(bar.entry)
+	return { ok: false, error }
 }
 
 const writing = (entry: Capture, write: () => Promise<WriteResult<null> | CaptureRefused>) => {
@@ -371,18 +519,29 @@ const writing = (entry: Capture, write: () => Promise<WriteResult<null> | Captur
 	return entry.writing
 }
 
+/** A bar message's key and kind, and the frame it came from. */
+interface BarClaim {
+	key: unknown
+	kind: string
+	frameId: number | undefined
+}
+
 /**
  * Only the bar frame that first presented a key this tab's capture issued; the first `capture.state` binds it.
  * A copy of the bar the page frames itself never gets a key.
  */
-function bound(entry: Capture, key: unknown, kind: string, frameId: number | undefined): key is string {
-	if (typeof key !== 'string' || frameId === undefined || !entry.keys.has(key)) return false
+function bound(entry: Capture, claim: BarClaim): boolean {
+	if (!issued(entry, claim)) return false
+	const { key, frameId } = claim
 	if (entry.keys.get(key) === null) {
-		if (kind !== 'capture.state') return false
+		if (claim.kind !== 'capture.state') return false
 		entry.keys.set(key, frameId)
 	}
 	return entry.keys.get(key) === frameId
 }
+
+const issued = (entry: Capture, claim: BarClaim): claim is BarClaim & { key: string; frameId: number } =>
+	typeof claim.key === 'string' && claim.frameId !== undefined && entry.keys.has(claim.key)
 
 /** A bar page message, routed by sender page; the capture is the sender tab's. */
 export async function handleNotification<K extends NotificationToBackground['kind']>(
@@ -392,33 +551,40 @@ export async function handleNotification<K extends NotificationToBackground['kin
 	return reply as NotificationReplies[K]
 }
 
+type Answers = { [K in NotificationToBackground['kind']]: (bar: AnswerRun, m: Extract<NotificationToBackground, { kind: K }>) => Promise<NotificationReplies[K]> | NotificationReplies[K] }
+
+async function dismiss(bar: AnswerRun, m: Extract<NotificationToBackground, { kind: 'capture.dismiss' }>): Promise<CaptureRefused | null> {
+	if (m.never === true && !(await visibleAt(bar, m.input))) return NOT_VISIBLE
+	drop(bar.tabId)
+	if (m.never === true) await addExcludedDomain(bar.entry.accountId, bar.entry.baseDomain)
+	return null
+}
+
+const ANSWERS: Answers = {
+	'capture.state': (bar) => state(bar.entry),
+	'capture.save': (bar, m) => writing(bar.entry, async () => (await visibleAt(bar, m.input) ? save(bar, m.folderId) : NOT_VISIBLE)),
+	'capture.update': (bar, m) => writing(bar.entry, async () => (await visibleAt(bar, m.input) ? update(bar) : NOT_VISIBLE)),
+	'capture.dismiss': dismiss,
+	'capture.expand': (bar) => {
+		void toTop(bar.tabId, { kind: 'capture.expand', key: bar.key })
+		return null
+	},
+}
+
+/** A bar whose capture was saved or updated still closes at once on Close. */
+function closeSaved(tabId: number, m: NotificationToBackground): null {
+	if (m.kind === 'capture.dismiss' && typeof m.key === 'string' && closing.get(tabId)?.delete(m.key)) hide(tabId, [m.key])
+	return null
+}
+
 async function handle(m: NotificationToBackground, sender: Browser.runtime.MessageSender): Promise<NotificationReplies[NotificationToBackground['kind']]> {
 	const tabId = sender.tab?.id
 	if (tabId === undefined) return null
 	const entry = live(tabId)
-	if (!entry) {
-		// A bar whose capture was saved or updated still closes at once on Close.
-		if (m.kind === 'capture.dismiss' && typeof m.key === 'string' && closing.get(tabId)?.delete(m.key)) hide(tabId, [m.key])
-		return null
-	}
-	if (!bound(entry, m.key, m.kind, sender.frameId)) return null
-	const key = m.key
-	switch (m.kind) {
-		case 'capture.state':
-			return state(entry)
-		case 'capture.save':
-			return writing(entry, async () => (await visibleAt(tabId, key, m.input) ? save(tabId, entry, key, m.folderId) : NOT_VISIBLE))
-		case 'capture.update':
-			return writing(entry, async () => (await visibleAt(tabId, key, m.input) ? update(tabId, entry, key) : NOT_VISIBLE))
-		case 'capture.dismiss':
-			if (m.never === true && !(await visibleAt(tabId, key, m.input))) return NOT_VISIBLE
-			drop(tabId)
-			if (m.never === true) await addExcludedDomain(entry.accountId, entry.baseDomain)
-			return null
-		case 'capture.expand':
-			void toTop(tabId, { kind: 'capture.expand', key })
-			return null
-	}
+	if (!entry) return closeSaved(tabId, m)
+	if (!bound(entry, { key: m.key, kind: m.kind, frameId: sender.frameId })) return null
+	const answer = ANSWERS[m.kind] as (bar: AnswerRun, m: NotificationToBackground) => ReturnType<Answers[typeof m.kind]>
+	return answer({ tabId, entry, key: m.key }, m)
 }
 
 /** `capture.reshow` from the top frame's host, which closed its bar to show it again inside a modal. */
@@ -433,6 +599,12 @@ export function dropAllCaptures(): void {
 	forgetAllItems()
 }
 
+/** The tab's url after an update: the new one, or the tab's own when only its status changed. */
+const changedUrl = (change: { url?: string; status?: string }, tab: { url?: string } | undefined): string | undefined =>
+	change.url ?? (change.status !== undefined ? tab?.url : undefined)
+
+const leftSite = (entry: Capture, url: string | undefined): boolean => url !== undefined && baseDomain(url) !== entry.tabBaseDomain
+
 export function registerCaptureQueue(): void {
 	browser.tabs.onRemoved.addListener((tabId) => {
 		drop(tabId, false)
@@ -443,8 +615,7 @@ export function registerCaptureQueue(): void {
 	browser.tabs.onUpdated.addListener((tabId, change, tab) => {
 		const entry = pending.get(tabId)
 		if (!entry) return
-		const url = change.url ?? (change.status !== undefined ? tab?.url : undefined)
-		if (url !== undefined && baseDomain(url) !== entry.tabBaseDomain) return drop(tabId)
+		if (leftSite(entry, changedUrl(change, tab))) return drop(tabId)
 		if (change.status === 'loading') entry.navigated = true
 		if (change.status === 'complete') void showPending(tabId)
 	})

@@ -15,6 +15,8 @@
  *   memory 64 MiB (65536 KiB), iterations 3, parallelism 1, output 32 bytes.
  */
 
+import { fromBase64, toBase64 } from './base64.js'
+
 /** Argon2id memory cost in KiB (64 MiB). */
 const ARGON2_MEMORY_KIB = 65536
 
@@ -34,33 +36,20 @@ const IV_LENGTH = 12
 const SALT_LENGTH = 16
 
 /**
- * Encode a Uint8Array as a base64 string.
+ * How backups, link shares and password-protected sends are protected, as
+ * `deriveAesKeyArgon2id` does it. Read by the encryption overview.
  *
- * @param {Uint8Array} bytes The bytes to encode
- * @return {string} Base64 string
+ * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
-function toBase64(bytes) {
-	let binary = ''
-	for (let i = 0; i < bytes.length; i++) {
-		binary += String.fromCharCode(bytes[i])
-	}
-	return btoa(binary)
-}
-
-/**
- * Decode a base64 string into a Uint8Array.
- *
- * @param {string} base64 The base64 string
- * @return {Uint8Array} Decoded bytes
- */
-function fromBase64(base64) {
-	const binary = atob(base64)
-	const bytes = new Uint8Array(binary.length)
-	for (let i = 0; i < binary.length; i++) {
-		bytes[i] = binary.charCodeAt(i)
-	}
-	return bytes
-}
+export const ARGON2_PARAMETERS = Object.freeze({
+	kdf: 'Argon2id',
+	memoryKiB: ARGON2_MEMORY_KIB,
+	iterations: ARGON2_ITERATIONS,
+	parallelism: ARGON2_PARALLELISM,
+	saltBytes: SALT_LENGTH,
+	cipher: 'AES-GCM',
+	keyBits: KEY_LENGTH * 8,
+})
 
 /**
  * Whether the runtime supports WebAssembly (required for Argon2id).
@@ -75,23 +64,16 @@ export function isArgon2Supported() {
 }
 
 /**
- * Derive a 256-bit AES key from a password and salt via Argon2id (WASM).
+ * Resolve the webpack-emitted argon2.wasm URL. The webpack `asset/resource`
+ * rule turns `require('argon2.wasm')` into the hashed asset URL (served from
+ * `/custom_apps/keepiq/js/argon2.wasm`). argon2-browser's own loader would
+ * otherwise `atob()` that URL string as if it were embedded base64 and throw
+ * "string to be decoded is not correctly encoded". Provide a binary loader so
+ * it fetches the real .wasm bytes instead, once.
  *
- * @param {string} password The link password
- * @param {Uint8Array} salt The 16-byte salt
- * @return {Promise<CryptoKey>} An importable AES-GCM key
+ * @return {Promise<void>}
  */
-export async function deriveAesKeyArgon2id(password, salt) {
-	if (!isArgon2Supported()) {
-		throw new Error('WebAssembly is required for Argon2id but is not available')
-	}
-
-	// Resolve the webpack-emitted argon2.wasm URL. The webpack `asset/resource`
-	// rule turns `require('argon2.wasm')` into the hashed asset URL (served from
-	// `/custom_apps/keepiq/js/argon2.wasm`). argon2-browser's own loader would
-	// otherwise `atob()` that URL string as if it were embedded base64 and throw
-	// "string to be decoded is not correctly encoded". Provide a binary loader so
-	// it fetches the real .wasm bytes instead.
+async function provideWasmBinaryLoader() {
 	const globalScope =
 		(typeof globalThis !== 'undefined' && globalThis)
 		|| (typeof window !== 'undefined' && window)
@@ -103,6 +85,21 @@ export async function deriveAesKeyArgon2id(password, salt) {
 				.then((res) => res.arrayBuffer())
 				.then((ab) => new Uint8Array(ab))
 	}
+}
+
+/**
+ * Derive a 256-bit AES key from a password and salt via Argon2id (WASM).
+ *
+ * @param {string} password The link password
+ * @param {Uint8Array} salt The 16-byte salt
+ * @return {Promise<CryptoKey>} An importable AES-GCM key
+ */
+export async function deriveAesKeyArgon2id(password, salt) {
+	if (!isArgon2Supported()) {
+		throw new Error('WebAssembly is required for Argon2id but is not available')
+	}
+
+	await provideWasmBinaryLoader()
 
 	// Lazy-load the WASM KDF so it is excluded from the initial vault bundle.
 	// argon2-browser is installed with the secrets-feature wiring (tasks.md §6.1);
@@ -122,7 +119,7 @@ export async function deriveAesKeyArgon2id(password, salt) {
 	return crypto.subtle.importKey(
 		'raw',
 		result.hash,
-		{ name: 'AES-GCM', length: 256 },
+		{ name: ARGON2_PARAMETERS.cipher, length: ARGON2_PARAMETERS.keyBits },
 		false,
 		['encrypt', 'decrypt'],
 	)

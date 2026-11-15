@@ -43,6 +43,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
+use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Federation\ICloudIdManager;
@@ -61,13 +62,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
-class FederatedShareService {
-	/**
-	 * The OCM resource type Keepiq registers and sends.
-	 *
-	 * @var string
-	 */
-	public const RESOURCE_TYPE = 'keepiq-secret';
+class FederatedShareService implements FederatedShareServiceInterface {
 
 	/**
 	 * Length of a share's shared secret.

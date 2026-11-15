@@ -561,20 +561,7 @@ function assertPolicyReachable(policy, pattern) {
  * @return {string}
  */
 function generateFromRegex(regex, policy, rand) {
-	const compiled = compilePattern(regex)
-	const [minLength, maxLength] = extractLength(regex)
-	const pattern = {
-		compiled,
-		minLength,
-		maxLength,
-		charset: extractCharset(regex),
-	}
-
-	if (pattern.minLength < MIN_LENGTH) {
-		throw new GeneratorError(
-			`The regex length must be at least ${MIN_LENGTH} characters`,
-		)
-	}
+	const pattern = regexPattern(regex)
 	if (policy !== null) {
 		assertPolicyReachable(policy, pattern)
 		pattern.minLength = Math.max(
@@ -583,7 +570,42 @@ function generateFromRegex(regex, policy, rand) {
 		)
 	}
 	assertCharsetViable(pattern.charset)
+	return matchingCandidate(pattern, rand)
+}
 
+/**
+ * A pattern's compiled form, its quantifier's length range and its first
+ * class's characters; a range shorter than the minimum length is refused.
+ *
+ * @param {string} regex The pattern.
+ * @return {{compiled: RegExp, minLength: number, maxLength: number, charset: string}}
+ */
+function regexPattern(regex) {
+	const compiled = compilePattern(regex)
+	const [minLength, maxLength] = extractLength(regex)
+	const pattern = {
+		compiled,
+		minLength,
+		maxLength,
+		charset: extractCharset(regex),
+	}
+	if (pattern.minLength < MIN_LENGTH) {
+		throw new GeneratorError(
+			`The regex length must be at least ${MIN_LENGTH} characters`,
+		)
+	}
+	return pattern
+}
+
+/**
+ * A candidate within the pattern's length range that the pattern itself
+ * accepts, after at most MAX_REGEX_ATTEMPTS tries.
+ *
+ * @param {object} pattern The pattern.
+ * @param {(min: number, max: number) => number} rand The random-integer source.
+ * @return {string}
+ */
+function matchingCandidate(pattern, rand) {
 	for (let attempt = 0; attempt < MAX_REGEX_ATTEMPTS; attempt++) {
 		const candidate = buildString(
 			pattern.charset,

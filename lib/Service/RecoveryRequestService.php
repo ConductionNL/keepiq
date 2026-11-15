@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\RecoveryRequest;
 use OCA\Keepiq\Db\RecoveryRequestMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Kernel\Contracts\RecoveryRequestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 
@@ -45,7 +46,7 @@ use Ramsey\Uuid\Uuid;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Every step re-checks who may
  *   act on which state; keeping those checks next to each other is the point.
  */
-class RecoveryRequestService {
+class RecoveryRequestService implements RecoveryRequestServiceInterface {
 
 	public const STATUS_PENDING = 'pending';
 
@@ -125,15 +126,7 @@ class RecoveryRequestService {
 	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	public function create(string $userId, string $publicKey, string $purpose = 'password'): RecoveryRequest {
-		if (in_array($purpose, self::PURPOSES, true) === false) {
-			throw new InvalidArgumentException(message: 'purpose must be password or device');
-		}
-
-		$raw = base64_decode($publicKey, true);
-		if ($raw === false || strlen($raw) !== 32) {
-			throw new InvalidArgumentException(message: 'publicKey must be a raw X25519 public key');
-		}
-
+		$this->assertRequestKey(publicKey: $publicKey, purpose: $purpose);
 		$enrolment = $this->enrolment->current(userId: $userId);
 		if ($enrolment === null || $this->policy->policy() === 'off') {
 			throw new ForbiddenException(message: 'You are not enrolled in account recovery');
@@ -155,7 +148,6 @@ class RecoveryRequestService {
 		$request = $this->requests->insert($request);
 
 		$this->notifyOfficers(request: $request);
-
 		$this->audit->record(
 			actorId: $userId,
 			eventType: RecoveryAudit::REQUESTED,
@@ -165,6 +157,30 @@ class RecoveryRequestService {
 
 		return $request;
 	}//end create()
+
+	/**
+	 * Refuse a purpose other than password or device, and a one-time key that
+	 * is no raw 32-byte X25519 public key.
+	 *
+	 * @param string $publicKey The one-time X25519 public key (base64)
+	 * @param string $purpose   `password` or `device`
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When either is malformed
+	 *
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 */
+	private function assertRequestKey(string $publicKey, string $purpose): void {
+		if (in_array($purpose, self::PURPOSES, true) === false) {
+			throw new InvalidArgumentException(message: 'purpose must be password or device');
+		}
+
+		$raw = base64_decode($publicKey, true);
+		if ($raw === false || strlen($raw) !== 32) {
+			throw new InvalidArgumentException(message: 'publicKey must be a raw X25519 public key');
+		}
+	}//end assertRequestKey()
 
 	/**
 	 * The open requests an officer may act on, with the approval count.

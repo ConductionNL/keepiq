@@ -30,6 +30,7 @@ use DateTime;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\FederatedNotificationDeliveryInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
@@ -37,7 +38,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
  */
-class FederatedNotificationDelivery {
+class FederatedNotificationDelivery implements FederatedNotificationDeliveryInterface {
 	/**
 	 * A share changed: the receiver pulls again.
 	 *

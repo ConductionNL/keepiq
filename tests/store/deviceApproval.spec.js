@@ -117,6 +117,26 @@ describe('device approval store', () => {
 		expect(raw).toEqual(await unlockKeyFromPassword('correct horse', envelope))
 	})
 
+	it('refuses while locked, and drops only the approved request from the pending list', async () => {
+		const store = useDeviceApprovalStore()
+		const session = useSessionStore()
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
+		session.encryptedPrivateKey = null
+		session.suiteId = 'suite-1'
+		await expect(store.approve({ id: 'r-1' }, 'pw')).rejects.toThrow('Vault is locked')
+		session.encryptedPrivateKey = await encryptPrivateKey(PEM, 'correct horse')
+		session.suiteId = null
+		await expect(store.approve({ id: 'r-1' }, 'pw')).rejects.toThrow('Vault is locked')
+		expect(post).not.toHaveBeenCalled()
+
+		session.suiteId = 'suite-1'
+		const pair = await generateRecipientKeyPair()
+		const request = { id: 'r-1', requestPublicKey: toBase64(pair.publicKeyRaw) }
+		store.pending = [request, { id: 'r-2' }]
+		await store.approve(request, 'correct horse')
+		expect(store.pending).toEqual([{ id: 'r-2' }])
+	})
+
 	it('unlocks this session after a mocked approval and drops the one-time key', async () => {
 		const store = useDeviceApprovalStore()
 		let publicKey = null

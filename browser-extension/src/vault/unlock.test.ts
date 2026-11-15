@@ -4,7 +4,7 @@ import { addAccount, getAccount, markLoggedOut, removeAccount, removeAllAccounts
 import { writeSettings } from '@/src/accounts/settings'
 import { fromBase64, importPublicKey, pemToPkcs8, rsaEncrypt, toBase64 } from '@/src/crypto'
 import { decodeEnvelope, encodeEnvelope } from '@/src/crypto/envelope'
-import { decryptPrivateKeyPem, deriveUnlockKey } from '@/src/crypto/kdf'
+import { decryptPrivateKeyPem, deriveUnlockKey, deriveUnlockKeyBits } from '@/src/crypto/kdf'
 import { envelope, suiteRow } from '@/src/testing/vectors'
 import { provenCertificateKey, readProvenCertificate } from './certificate'
 import { generatorSealedKey, getKey, hasKey, LAST_TAB_KEY, sessionValues } from './key-store'
@@ -162,6 +162,24 @@ describe('unlock', () => {
 		await markLoggedOut(account.id)
 		await expect(unlock(account.id, password)).rejects.toMatchObject({ code: 'session_revoked' })
 		expect(fetchMock).not.toHaveBeenCalled()
+	})
+})
+
+describe('unlock with the key a passkey released', () => {
+	const released = async (password = envelope.password) =>
+		({ type: 'unlockKey' as const, unlockKey: toBase64(await deriveUnlockKeyBits(password, decodeEnvelope(envelope.envelope).salt)) })
+
+	it('opens the cached suite with the raw unlock key', async () => {
+		const account = await newAccount()
+		await unlock(account.id, await released())
+		expect(await hasKey(account.id)).toBe(true)
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	it('refuses a key that does not open the suite and stays locked', async () => {
+		const account = await newAccount()
+		await expect(unlock(account.id, await released('another password'))).rejects.toMatchObject({ code: 'passkey_failed' })
+		expect(await hasKey(account.id)).toBe(false)
 	})
 })
 

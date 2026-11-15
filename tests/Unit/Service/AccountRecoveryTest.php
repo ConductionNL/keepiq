@@ -366,6 +366,67 @@ class AccountRecoveryTest extends TestCase {
 		$this->assertSame('declined', $this->rows['requests'][$id]->getStatus());
 	}
 
+	public function testEnrolmentRefusalsAndReplacement(): void {
+		$envelope = json_encode(['encKey' => 'K', 'ct' => 'C']);
+		$this->config = [];
+		try {
+			$this->enrolments->enrol('bob', 'any', $envelope);
+			$this->fail('Enrolling while recovery is off must be refused');
+		} catch (\OCA\Keepiq\Exception\ForbiddenException $e) {
+			$this->assertSame('Account recovery is off', $e->getMessage());
+		}
+
+		$this->policy->update('optional', ['olga', 'omar'], 2);
+		$key = $this->keys->createKey('olga', 'PUBLIC', ['olga' => 'A', 'omar' => 'B']);
+		$refusals = [
+			['bob', 'other-key', $envelope, 'Enrol with the active recovery key'],
+			['bob', $key->getId(), 'not json', 'envelope is not a recovery envelope'],
+			['bob', $key->getId(), json_encode(['encKey' => 'K']), 'envelope is not a recovery envelope'],
+			['nosuite', $key->getId(), $envelope, 'You have no active encryption suite'],
+		];
+		foreach ($refusals as [$uid, $keyId, $body, $message]) {
+			try {
+				$this->enrolments->enrol($uid, $keyId, $body);
+				$this->fail('The enrolment must be refused: '.$message);
+			} catch (\InvalidArgumentException $e) {
+				$this->assertSame($message, $e->getMessage());
+			}
+		}
+		$this->assertSame([], $this->rows['enrolments']);
+
+		$first  = $this->enrolments->enrol('bob', $key->getId(), $envelope);
+		$this->audits = [];
+		$second = $this->enrolments->enrol('bob', $key->getId(), json_encode(['encKey' => 'K2', 'ct' => 'C2']));
+		$this->assertSame([$second->getId()], array_keys($this->rows['enrolments']));
+		$this->assertNotSame($first->getId(), $second->getId());
+		$this->assertSame(['bob', 'suite-bob', $key->getId()], [$second->getUserId(), $second->getSuiteId(), $second->getRecoveryKeyId()]);
+		$this->assertNotNull($second->getEnrolledAt());
+		$this->assertCount(1, $this->audits);
+		$this->assertSame(['bob', $second->getId(), ['suiteId' => 'suite-bob']], [$this->audits[0]->getActorId(), $this->audits[0]->getObjectId(), $this->audits[0]->getMetadata()]);
+	}
+
+	public function testARequestRefusesABadPurposeOrKeyBeforeTheEnrolmentIsRead(): void {
+		$this->policy->update('optional', ['olga', 'omar'], 2);
+		$refusals = [
+			[base64_encode(str_repeat('p', 32)), 'root', 'purpose must be password or device'],
+			['not base64!', 'password', 'publicKey must be a raw X25519 public key'],
+			[base64_encode(str_repeat('p', 31)), 'device', 'publicKey must be a raw X25519 public key'],
+		];
+		foreach ($refusals as [$key, $purpose, $message]) {
+			try {
+				$this->requests->create('nobody', $key, $purpose);
+				$this->fail('The request must be refused: '.$message);
+			} catch (\InvalidArgumentException $e) {
+				$this->assertSame($message, $e->getMessage());
+			}
+		}
+
+		$request = $this->bobAsks();
+		$this->assertSame(['bob', 'suite-bob', 'pending', 'password'], [$request->getUserId(), $request->getSuiteId(), $request->getStatus(), $request->getPurpose()]);
+		$requested = array_values(array_filter($this->audits, static fn ($a) => $a->getObjectId() === $request->getId()));
+		$this->assertSame(['bob', ['userId' => 'bob']], [$requested[0]->getActorId(), $requested[0]->getMetadata()]);
+	}
+
 	public function testARetiredKeyTakesNoNewEnrolments(): void {
 		$this->policy->update('optional', ['olga', 'omar'], 2);
 		$key = $this->keys->createKey('olga', 'PUBLIC', ['olga' => 'A', 'omar' => 'B']);

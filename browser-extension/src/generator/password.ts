@@ -13,7 +13,12 @@ const MIN_CHARSET_SIZE = 2
 export type PasswordRequest = Partial<PasswordOptions> & { excludedCharacters?: string }
 
 /** Refusals the popup can't cause: `sanitize` and `effective` keep its options valid. */
-export type InvalidPassword = 'length_too_short' | 'length_too_long' | 'no_kind' | 'charset_empty' | 'charset_too_small'
+export type InvalidPassword =
+	| 'length_too_short'
+	| 'length_too_long'
+	| 'no_kind'
+	| 'charset_empty'
+	| 'charset_too_small'
 
 export function intersects(a: string, b: string): boolean {
 	for (const char of b) if (a.includes(char)) return true

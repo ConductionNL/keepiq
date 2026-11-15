@@ -47,6 +47,7 @@ use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Event\AccountDataDeletedEvent;
+use OCA\Keepiq\Kernel\Contracts\AccountDeletionServiceInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 
 /**
@@ -61,7 +62,7 @@ use OCP\EventDispatcher\IEventDispatcher;
  *   touches every entity that references a user; one orchestrator that sequences
  *   the steps is clearer than scattering the ordering itself.
  */
-class AccountDeletionService {
+class AccountDeletionService implements AccountDeletionServiceInterface {
 	/**
 	 * The non-personal tombstone reason written to detached recipient copies.
 	 *

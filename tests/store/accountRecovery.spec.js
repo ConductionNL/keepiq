@@ -355,6 +355,22 @@ describe('account recovery store', () => {
 		expect(post.mock.calls[0][0]).toContain('/recovery/requests/req-1/complete')
 		expect(session.unlock).toHaveBeenCalledWith('a brand new password')
 		expect(stored.has('req-1')).toBe(false)
+		expect(store.myRequest).toEqual({
+			id: 'req-1',
+			suiteId: 'suite-bob',
+			status: 'fulfilled',
+			sealedResult: undefined,
+		})
+		expect(post.mock.invocationCallOrder[0]).toBeLessThan(
+			session.unlock.mock.invocationCallOrder[0],
+		)
+
+		// A second browser, without the one-time key, cannot complete it.
+		store.myRequest = { id: 'req-1', suiteId: 'suite-bob', sealedResult: sealed }
+		await expect(store.complete('pw')).rejects.toThrow(
+			'Finish the recovery in the browser you asked from.',
+		)
+		expect(put).toHaveBeenCalledTimes(1)
 	}, 60000)
 
 	it('warns before revoking the suite of an enrolled user', async () => {
@@ -473,6 +489,15 @@ describe('the officer path for a new device', () => {
 		expect(await store.unlockDevice()).toBe('olga')
 		expect(session.unlockWithPrivateKeyPem).toHaveBeenCalledWith(user.pem)
 		expect(put).not.toHaveBeenCalled()
+		expect(store.myRequest).toEqual({
+			id: 'req-d',
+			purpose: 'device',
+			status: 'fulfilled',
+			sealedResult: undefined,
+		})
+		expect(session.unlockWithPrivateKeyPem.mock.invocationCallOrder[0]).toBeLessThan(
+			axios.post.mock.invocationCallOrder[0],
+		)
 
 		store.myRequest = {
 			id: 'req-p',

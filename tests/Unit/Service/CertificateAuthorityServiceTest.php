@@ -324,6 +324,134 @@ class CertificateAuthorityServiceTest extends TestCase {
 	}//end testBootstrapCreatesRootAndIntermediate()
 
 	/**
+	 * Bootstrap stores the root inactive for twenty years and the intermediate
+	 * active for three, each with its private key encrypted and matching its
+	 * certificate.
+	 *
+	 * @return void
+	 */
+	public function testBootstrapStoresAnInactiveRootAndAnActiveIntermediate(): void {
+		$this->caCertMapper->method('findRoot')
+			->willThrowException(new DoesNotExistException('No root'));
+		$inserted = $this->captureInserts();
+
+		$this->service->bootstrap();
+
+		$this->assertSame(expected: ['root', 'intermediate'], actual: array_keys($inserted->getArrayCopy()));
+		$this->assertStoredCa(entity: $inserted['root'], expected: ['active' => false, 'days' => 7300]);
+		$this->assertStoredCa(entity: $inserted['intermediate'], expected: ['active' => true, 'days' => 1095]);
+	}//end testBootstrapStoresAnInactiveRootAndAnActiveIntermediate()
+
+	/**
+	 * Renewing the root stores a new inactive root and a new active
+	 * intermediate, deactivates the old intermediate and links it to the new one.
+	 *
+	 * @return void
+	 */
+	public function testRenewRootStoresANewRootAndIntermediateAndLinksTheOldOnes(): void {
+		[$oldRoot, $oldIntermediate] = $this->persistedCa();
+		$this->caCertMapper->method('findRoot')->willReturn($oldRoot);
+		$this->caCertMapper->method('findActiveIntermediate')->willReturn($oldIntermediate);
+		$this->suiteMapper->method('findAllActiveWithLimit')->willReturn([]);
+		$inserted = $this->captureInserts();
+
+		$this->service->renewRoot();
+
+		$this->assertStoredCa(entity: $inserted['root'], expected: ['active' => false, 'days' => 7300]);
+		$this->assertStoredCa(entity: $inserted['intermediate'], expected: ['active' => true, 'days' => 1095]);
+		$this->assertSame(expected: $inserted['root']->getId(), actual: $oldRoot->getSuccessorId());
+		$this->assertFalse(condition: $oldIntermediate->getIsActive());
+		$this->assertSame(expected: $inserted['intermediate']->getId(), actual: $oldIntermediate->getSuccessorId());
+	}//end testRenewRootStoresANewRootAndIntermediateAndLinksTheOldOnes()
+
+	/**
+	 * Renewing the root without an active intermediate still issues one and
+	 * updates only the old root.
+	 *
+	 * @return void
+	 */
+	public function testRenewRootWithoutAnActiveIntermediate(): void {
+		[$oldRoot] = $this->persistedCa();
+		$this->caCertMapper->method('findRoot')->willReturn($oldRoot);
+		$inserted = $this->captureInserts();
+		// None while the root is renewed; the new one once re-signing asks for it.
+		$this->caCertMapper->method('findActiveIntermediate')->willReturnCallback(
+			function () use ($inserted): CACertificate {
+				if (isset($inserted['intermediate']) === false) {
+					throw new DoesNotExistException('No intermediate');
+				}
+
+				return $inserted['intermediate'];
+			}
+		);
+		$this->suiteMapper->method('findAllActiveWithLimit')->willReturn([]);
+		$this->caCertMapper->expects($this->once())->method('update')->with($oldRoot);
+
+		$this->assertSame(expected: 0, actual: $this->service->renewRoot());
+		$this->assertSame(expected: ['root', 'intermediate'], actual: array_keys($inserted->getArrayCopy()));
+	}//end testRenewRootWithoutAnActiveIntermediate()
+
+	/**
+	 * Collect inserted CA certificates by type.
+	 *
+	 * @return \ArrayObject<string,CACertificate>
+	 */
+	private function captureInserts(): \ArrayObject {
+		$inserted = new \ArrayObject();
+		$this->caCertMapper->method('insert')->willReturnCallback(
+			function (CACertificate $entity) use ($inserted): CACertificate {
+				$inserted[$entity->getType()] = $entity;
+				return $entity;
+			}
+		);
+
+		return $inserted;
+	}//end captureInserts()
+
+	/**
+	 * A persisted root and active intermediate, as renewRoot finds them.
+	 *
+	 * @return CACertificate[]
+	 */
+	private function persistedCa(): array {
+		$rootKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+		openssl_pkey_export($rootKey, $rootKeyPem);
+		$rootCert = openssl_csr_sign(openssl_csr_new(['commonName' => 'Root CA'], $rootKey), null, $rootKey, 365);
+		openssl_x509_export($rootCert, $rootCertPem);
+
+		$oldRoot = new CACertificate();
+		$oldRoot->setId('root-old');
+		$oldRoot->setCertificate($rootCertPem);
+		$oldRoot->setPrivateKey('enc:' . $rootKeyPem);
+
+		$oldIntermediate = new CACertificate();
+		$oldIntermediate->setId('int-old');
+		$oldIntermediate->setIsActive(true);
+		$oldIntermediate->setCertificate($rootCertPem);
+		$oldIntermediate->setPrivateKey('enc:' . $rootKeyPem);
+
+		return [$oldRoot, $oldIntermediate];
+	}//end persistedCa()
+
+	/**
+	 * Assert what one stored CA certificate holds.
+	 *
+	 * @param CACertificate $entity The inserted entity
+	 * @param array{active: bool, days: int} $expected Whether it is active, and its lifetime in days
+	 *
+	 * @return void
+	 */
+	private function assertStoredCa(CACertificate $entity, array $expected): void {
+		$this->assertMatchesRegularExpression(pattern: '/^[0-9a-f-]{36}$/', string: (string)$entity->getId());
+		$this->assertSame(expected: $expected['active'], actual: (bool)$entity->getIsActive());
+		$lifetime = $entity->getExpiresAt()->getTimestamp() - $entity->getCreatedAt()->getTimestamp();
+		$this->assertEqualsWithDelta(expected: $expected['days'] * 86400, actual: $lifetime, delta: 3602);
+		$key = substr((string)$entity->getPrivateKey(), 4);
+		$this->assertStringStartsWith(prefix: 'enc:', string: (string)$entity->getPrivateKey());
+		$this->assertTrue(condition: openssl_x509_check_private_key((string)$entity->getCertificate(), $key));
+	}//end assertStoredCa()
+
+	/**
 	 * The root and the intermediate carry their CA constraints from Keepiq's
 	 * own openssl config, not from the host openssl.cnf: a partner verifying
 	 * the chain refuses an issuer without them, and the intermediate signs

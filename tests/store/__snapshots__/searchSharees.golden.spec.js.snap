@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`searchSharees > merges exact and other matches, drops empty and repeated ids, labels and caps them 1`] = `
+[
+  "/ocs/v2.phpapps/files_sharing/api/v1/sharees",
+  {
+    "headers": {
+      "OCS-APIRequest": "true",
+    },
+    "params": {
+      "format": "json",
+      "itemType": "file",
+      "lookup": false,
+      "perPage": 5,
+      "search": "u",
+      "shareType": 0,
+    },
+  },
+]
+`;

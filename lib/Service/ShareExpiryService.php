@@ -24,6 +24,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Kernel\Contracts\ShareExpiryServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Throwable;
 
@@ -33,7 +34,7 @@ use Throwable;
  * grants whose end date passed, clean up copies left expired, and tell the
  * holder and the owner of every copy whose access ended.
  */
-class ShareExpiryService {
+class ShareExpiryService implements ShareExpiryServiceInterface {
 
 	/**
 	 * Constructor for ShareExpiryService.

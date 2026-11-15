@@ -6,6 +6,7 @@
 
 import type { AccountSettings, VaultTimeout } from '@/src/accounts/settings'
 import type { GeneratorHistoryEntry, GeneratorOptions, GeneratorPolicy } from '@/src/generator/options'
+import type { CredentialJson, EnrolmentBody, EnrolOptions, ReleasedKey, UnlockOptions } from '@/src/vault/passkey-unlock'
 
 /** A kind set that must name every kind of the union `K`, and nothing else. */
 export const kindSet = <K extends string>(kinds: Record<K, true>): ReadonlySet<string> => new Set(Object.keys(kinds))
@@ -212,7 +213,8 @@ export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number
  * `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`.
  * `form`: a card or identity filled at least one field. `noFields`: no frame of the tab had a field for the item.
  */
-export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; needsFormConfirm?: FormQuestion; noFields?: true }
+/** `savedSecure` comes with `needsInsecureConfirm`: the login was saved on an https page, so the question can say so. */
+export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; savedSecure?: boolean; needsFormConfirm?: FormQuestion; noFields?: true }
 
 /** What a menu fill without a form says in the page (ext-context-menu). */
 export type PageNoticeCode = 'no_login_form' | 'no_card_form' | 'no_identity_form'
@@ -266,7 +268,8 @@ export type FillExecuteFormReply = { filled: number }
 export type FillConfirmForm = { kind: 'fill.confirmForm' } & FormQuestion
 
 /** Background → the top frame. Reply: whether the user accepted. */
-export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: string }
+/** `savedSecure` false: the login was itself saved with http, so the question does not claim an https origin. */
+export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: string; savedSecure?: boolean }
 
 /**
  * Background → one frame; the only message to a content script carrying vault data.
@@ -275,10 +278,21 @@ export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: stri
  */
 export type FillExecute = { kind: 'fill.execute'; username: string | null; password: string | null; code: string | null; origin: string; anchorKey?: string }
 export type FillExecuteReply = { filled: FillOutcome; code: boolean }
+/**
+ * Background → the list's frame, after a verified pick in a `newPassword` list: the generated password, for the new-password
+ * field the list is open on and its confirmation, in that form only. Reply `FillNewPasswordReply`, the fields filled.
+ */
+export type FillNewPassword = { kind: 'fill.newPassword'; password: string; origin: string; anchorKey: string }
+export type FillNewPasswordReply = { filled: number }
 
-/** What the list shows: logins, logins with a code on a code field, or the cards or identities of a card or identity field. */
-export type InlineMode = 'login' | 'code' | FormKind
-export const INLINE_MODES: readonly InlineMode[] = ['login', 'code', 'card', 'identity']
+/**
+ * What the list shows: logins, logins with a code on a code field, the cards or identities of a card or identity field,
+ * or, on a new-password field of a sign-up or change-password form, the one offer to use a strong password.
+ */
+export type InlineMode = 'login' | 'code' | FormKind | 'newPassword'
+export const INLINE_MODES: readonly InlineMode[] = ['login', 'code', 'card', 'identity', 'newPassword']
+/** The one row a `newPassword` list offers; the background generates only for this id. */
+export const GENERATE_ROW_ID = 'generate'
 export const isFormKind = (mode: unknown): mode is FormKind => mode === 'card' || mode === 'identity'
 /** The list frame's title key per mode, for the host's frame and the list page's document alike. */
 export const INLINE_FRAME_TITLES = {
@@ -286,6 +300,7 @@ export const INLINE_FRAME_TITLES = {
 	code: 'inlineList.code.frameTitle',
 	card: 'inlineList.card.frameTitle',
 	identity: 'inlineList.identity.frameTitle',
+	newPassword: 'inlineList.newPassword.frameTitle',
 } as const satisfies Record<InlineMode, string>
 /**
  * Request/response. Without a valid `mode` it reads as `login`. `webauthn`: a field that qualifies only by its
@@ -497,6 +512,8 @@ export type BackgroundToContent =
 	| FillProbe
 	| FillExecuteForm
 	| FillConfirmForm
+	/** Request/response, reply `FillNewPasswordReply`. */
+	| FillNewPassword
 	/**
 	 * To the frame hosting the list; `inline.verify` replies `boolean`, the others are fire-and-forget.
 	 * `key`: the session's, so a message meant for a list that has since closed cannot reach the next one.
@@ -545,6 +562,8 @@ export interface AccountSummary {
 	pin: boolean
 	/** Only the seal exists, after a restart: the master password once, then the PIN. */
 	pinAfterRestart: boolean
+	/** A passkey was enrolled for this extension and the server still offered it at the last look. */
+	passkeyUnlock: boolean
 }
 
 export type PopupScreen = 'add_account' | 'reauthenticate' | 'unlock' | 'unlocked'
@@ -575,9 +594,12 @@ export type ErrorCode =
 	| 'pin_forgotten'
 	/** The PIN wraps a key from another suite or epoch than the cached one, so it was forgotten. */
 	| 'pin_key_changed'
+	/** A passkey ceremony was refused or its key did not open the vault; the master password still does. */
+	| 'passkey_failed'
 
 // Codes, never text: the popup words them in the browser's language (ext-i18n).
-export type NoticeCode = 'session_revoked' | 'key_changed'
+/** `file_access`: shown until the first unlock of an account added through the browser sign-in. */
+export type NoticeCode = 'session_revoked' | 'key_changed' | 'file_access'
 
 export type BlockReason = 'suite_missing' | 'suite_revoked' | 'suite_compromised' | 'migration_failed'
 
@@ -586,6 +608,8 @@ export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorC
 export type UnlockMethod =
 	| { type: 'masterPassword'; masterPassword: string }
 	| { type: 'pin'; pin: string }
+	/** base64 of the raw unlock key a passkey released, unwrapped in the extension window. */
+	| { type: 'unlockKey'; unlockKey: string }
 
 /** In code points, any characters. Here so the popup can name it without importing the PIN code. */
 export const PIN_MIN_LENGTH = 6
@@ -594,6 +618,8 @@ export const PIN_MIN_LENGTH = 6
 export type PopupToBackground =
 	| { kind: 'accounts.list' }
 	| { kind: 'accounts.add'; serverUrl: string; username: string; appPassword: string }
+	/** Starts Nextcloud Login Flow v2; the background adds the account once the user signed in. */
+	| { kind: 'accounts.loginFlow'; serverUrl: string }
 	| { kind: 'accounts.reauthenticate'; accountId: string; appPassword: string }
 	| { kind: 'accounts.remove'; accountId: string }
 	| { kind: 'accounts.removeAll' }
@@ -605,7 +631,7 @@ export type PopupToBackground =
 	| { kind: 'vault.status'; passive?: boolean }
 
 export const POPUP_MESSAGE_KINDS = kindSet<PopupToBackground['kind']>({
-	'accounts.list': true, 'accounts.add': true, 'accounts.reauthenticate': true, 'accounts.remove': true, 'accounts.removeAll': true,
+	'accounts.list': true, 'accounts.add': true, 'accounts.loginFlow': true, 'accounts.reauthenticate': true, 'accounts.remove': true, 'accounts.removeAll': true,
 	'accounts.switch': true, 'vault.unlock': true, 'vault.lock': true, 'vault.lockAll': true, 'vault.status': true,
 })
 
@@ -1033,6 +1059,27 @@ export const POPUP_REQUEST_KINDS: ReadonlySet<string> = new Set<keyof PopupRepli
 	'generator.context', 'generator.saveOptions', 'generator.history.list', 'generator.history.add', 'generator.history.clear',
 	'send.list', 'send.create', 'send.delete',
 ])
+
+/** Extension window → background: the server calls of the vault's own passkey unlock (extension-biometric-unlock). */
+export type VaultPasskeyRequest = { accountId: string } & (
+	| { kind: 'vaultPasskey.enrolOptions' }
+	| { kind: 'vaultPasskey.enrol'; body: EnrolmentBody }
+	| { kind: 'vaultPasskey.unlockOptions' }
+	| { kind: 'vaultPasskey.release'; assertion: CredentialJson }
+)
+
+export interface VaultPasskeyReplies {
+	'vaultPasskey.enrolOptions': EnrolOptions
+	'vaultPasskey.enrol': null
+	'vaultPasskey.unlockOptions': UnlockOptions
+	'vaultPasskey.release': ReleasedKey
+}
+
+export type VaultPasskeyReply<K extends VaultPasskeyRequest['kind']> = { ok: true; value: VaultPasskeyReplies[K] } | { ok: false; code: ErrorCode }
+
+export const VAULT_PASSKEY_KINDS = kindSet<VaultPasskeyRequest['kind']>({
+	'vaultPasskey.enrolOptions': true, 'vaultPasskey.enrol': true, 'vaultPasskey.unlockOptions': true, 'vaultPasskey.release': true,
+})
 
 /** Background → popup broadcasts; nobody listens while the popup is closed. */
 export type BackgroundToPopup =

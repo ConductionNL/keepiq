@@ -30,6 +30,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\DiscoveryController;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
+use OCA\Keepiq\Kernel\Contracts\FederationPartnerServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
@@ -45,7 +46,7 @@ use Throwable;
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
-class FederationPartnerService {
+class FederationPartnerService implements FederationPartnerServiceInterface {
 	/**
 	 * Seconds to wait for a partner's discovery document.
 	 *

@@ -2,18 +2,26 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { AccountSummary } from '@/src/messages'
+import type { PasskeySupport } from '@/src/vault/passkey-support'
 import { DEFAULT_SHELL, ShellContext } from '../../shell-context'
 import { account, accountSettingsSnapshot, fakeBackground, sentOf } from '../../testing'
 import { AccountSecurity } from './AccountSecurity'
 
-afterEach(cleanup)
+let support: PasskeySupport = 'unsupported'
+vi.mock('@/src/vault/passkey-support', () => ({ passkeySupport: async () => support }))
 
-function renderView(options: Parameters<typeof fakeBackground>[0] = {}) {
+afterEach(() => {
+	cleanup()
+	support = 'unsupported'
+})
+
+function renderView(options: Parameters<typeof fakeBackground>[0] = {}, summary: Partial<AccountSummary> = {}) {
 	const sent = fakeBackground(options)
 	const refreshState = vi.fn()
 	render(
 		<ShellContext.Provider value={{ ...DEFAULT_SHELL, refreshState }}>
-			<AccountSecurity account={account({ status: 'unlocked' })} />
+			<AccountSecurity account={account({ status: 'unlocked', ...summary })} />
 		</ShellContext.Provider>,
 	)
 	return { sent, refreshState, user: userEvent.setup() }
@@ -36,10 +44,38 @@ describe('AccountSecurity', () => {
 		const pin = screen.getByRole<HTMLInputElement>('checkbox', { name: 'Unlock with PIN' })
 		expect(pin.checked).toBe(false)
 		expect(described(pin)).toEqual(['After a browser restart you enter your master password once; then your PIN works again.'])
-		const biometrics = screen.getByRole<HTMLInputElement>('checkbox', { name: 'Unlock with biometrics' })
-		expect(biometrics.checked).toBe(false)
-		expect(biometrics.getAttribute('aria-disabled')).toBe('true')
-		expect(described(biometrics)).toEqual(['Not available yet'])
+	})
+
+	describe('fingerprint or face unlock', () => {
+		const option = () => screen.findByRole<HTMLInputElement>('checkbox', { name: 'Unlock with fingerprint or face' })
+
+		it('says why a browser that cannot run the ceremony keeps the master password', async () => {
+			renderView()
+			await waitFor(async () => expect(described(await option())).toEqual(['This browser or device cannot unlock Keepiq with fingerprint or face. Use your master password.']))
+			expect((await option()).getAttribute('aria-disabled')).toBe('true')
+			cleanup()
+			support = 'browser_too_old'
+			renderView()
+			await waitFor(async () => expect(described(await option())).toEqual(['Fingerprint or face unlock needs Chrome or Edge 122, or Firefox 150, or later. Use your master password.']))
+		})
+
+		it('opens the enrolment window for this account', async () => {
+			support = 'supported'
+			const created = vi.spyOn(browser.windows, 'create').mockResolvedValue({} as never)
+			const { user } = renderView()
+			await waitFor(async () => expect((await option()).getAttribute('aria-disabled')).toBeNull())
+			await user.click(await option())
+			const url = new URL((created.mock.calls[0]![0] as { url: string }).url)
+			expect([url.pathname, url.searchParams.get('vaultPasskey'), url.searchParams.get('account')]).toEqual(['/popup.html', 'enrol', 'a1'])
+		})
+
+		it('points to the web app to turn an enrolled passkey off', async () => {
+			support = 'supported'
+			renderView({}, { passkeyUnlock: true })
+			const enrolled = await option()
+			expect(enrolled.checked).toBe(true)
+			expect(described(enrolled)).toEqual(['To turn it off, revoke this passkey in the Keepiq web app.'])
+		})
 	})
 
 	it('links Change master password to the account\'s Keepiq web app', async () => {

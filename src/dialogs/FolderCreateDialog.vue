@@ -18,18 +18,10 @@
 		size="normal"
 		@update:open="onUpdateOpen">
 		<div class="folder-form">
-			<NcNoteCard v-if="error" type="error">
-				{{ error }}
-			</NcNoteCard>
-
-			<NcTextField
+			<FolderNameField
 				v-model="name"
-				:label="
-					isVaultLevel
-						? t('keepiq', 'Vault name')
-						: t('keepiq', 'Folder name')
-				"
-				:required="true" />
+				:vaultLevel="isVaultLevel"
+				:error="error" />
 
 			<NcSelect
 				v-if="!isVaultLevel"
@@ -72,9 +64,9 @@
 
 <script>
 import { CnDialogActions, CnIconColorPicker } from '@conduction/nextcloud-vue'
-import { NcDialog, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
-import { markRaw } from 'vue'
-import Safe from 'vue-material-design-icons/Safe.vue'
+import { NcDialog, NcSelect } from '@nextcloud/vue'
+import FolderNameField from '../components/FolderNameField.vue'
+import folderDialog from '../mixins/folderDialog.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { folderPathLabel } from '../utils/vaultList.js'
 
@@ -88,11 +80,12 @@ export default {
 	components: {
 		CnDialogActions,
 		CnIconColorPicker,
+		FolderNameField,
 		NcDialog,
-		NcNoteCard,
 		NcSelect,
-		NcTextField,
 	},
+
+	mixins: [folderDialog],
 
 	props: {
 		/** The parent folder to create under (defaults to root / current view). */
@@ -112,16 +105,11 @@ export default {
 
 	data() {
 		return {
-			open: true,
 			name: '',
 			selectedParentId: this.parentId,
-			saving: false,
-			error: '',
 			/** Picked customization keys (vault level only; null = default). */
 			customIcon: null,
 			customColor: null,
-			/** The vaults' default glyph, for the picker's Default cell. */
-			safeIcon: markRaw(Safe),
 		}
 	},
 
@@ -156,13 +144,6 @@ export default {
 				label: folderPathLabel(folders, folder.id) || folder.name,
 			}))
 		},
-
-		/**
-		 * @spec openspec/specs/secrets-write-ui/spec.md#scenario-create-a-folder
-		 */
-		canSubmit() {
-			return !this.saving && this.name.trim() !== ''
-		},
 	},
 
 	/**
@@ -176,35 +157,6 @@ export default {
 	},
 
 	methods: {
-		t,
-
-		/**
-		 * Translate a picker label through keepiq's catalog (the picker's
-		 * labels are library-side English source strings).
-		 *
-		 * @param {string} label The English source label.
-		 * @return {string} The translated label.
-		 * @spec exclude Pure i18n pass-through.
-		 */
-		translateLabel(label) {
-			return t('keepiq', label)
-		},
-
-		/**
-		 * Forward the open-state change; emit `close` when dismissed.
-		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 *
-		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
-		 */
-		onUpdateOpen(value) {
-			this.open = value
-			if (!value) {
-				this.$emit('close')
-			}
-		},
-
 		/**
 		 * Create the folder via the store.
 		 *
@@ -212,48 +164,45 @@ export default {
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
 		 */
 		async submit() {
-			if (!this.canSubmit) {
-				return
-			}
-			this.saving = true
-			this.error = ''
-			try {
-				const created = await useFolderStore().createFolder(
+			await this.saveFolder(
+				() => useFolderStore().createFolder(
 					this.name.trim(),
 					this.selectedParentId,
-					// Customization only exists at vault level — a picker
-					// choice made before switching to a nested parent must
-					// not ride along.
-					this.isVaultLevel
-						? {
-								customIcon: this.customIcon,
-								customColor: this.customColor,
-							}
-						: {},
-				)
-				this.$emit('saved', created)
-				if (this.onSaved) {
-					this.onSaved(created)
-				}
-				this.onUpdateOpen(false)
-			} catch (e) {
-				this.error =
-					e?.response?.data?.message
-					|| e?.message
-					|| t('keepiq', 'Failed to create folder')
-			} finally {
-				this.saving = false
+					this.customization(),
+				),
+				t('keepiq', 'Failed to create folder'),
+			)
+		},
+
+		/**
+		 * The customization to create with. It only exists at vault level —
+		 * a picker choice made before switching to a nested parent must not
+		 * ride along.
+		 *
+		 * @return {object} The customization keys, or none.
+		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+		 */
+		customization() {
+			return this.isVaultLevel
+				? { customIcon: this.customIcon, customColor: this.customColor }
+				: {}
+		},
+
+		/**
+		 * Tell the parent of the created folder, and the optional callback.
+		 *
+		 * @param {object} created The created folder.
+		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
+		 */
+		onFolderSaved(created) {
+			this.$emit('saved', created)
+			if (this.onSaved) {
+				this.onSaved(created)
 			}
 		},
 	},
 }
 </script>
 
-<style scoped>
-.folder-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 4px 0;
-}
-</style>
+<style scoped src="./folderForm.css"></style>

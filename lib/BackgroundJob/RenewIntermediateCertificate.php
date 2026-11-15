@@ -23,7 +23,7 @@ namespace OCA\Keepiq\BackgroundJob;
 
 use Exception;
 use OCA\Keepiq\Db\CACertificateMapper;
-use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Kernel\Contracts\CertificateAuthorityServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -37,7 +37,7 @@ class RenewIntermediateCertificate extends TimedJob {
 	 *
 	 * @param ITimeFactory $time The time factory
 	 * @param CACertificateMapper $caCertMapper The CA certificate mapper
-	 * @param CertificateAuthorityService $caService The CA service
+	 * @param CertificateAuthorityServiceInterface $caService The CA service
 	 * @param LoggerInterface $logger The logger interface
 	 *
 	 * @return void
@@ -45,7 +45,7 @@ class RenewIntermediateCertificate extends TimedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private CACertificateMapper $caCertMapper,
-		private CertificateAuthorityService $caService,
+		private CertificateAuthorityServiceInterface $caService,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

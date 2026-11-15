@@ -1837,7 +1837,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Гэта не ключ аўтэнтыфікатара. Уставіце спасылку otpauth://totp/ або сакрэт у фармаце base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Гэты QR-код не ўтрымлівае ключ аўтэнтыфікатара. Выкарыстоўвайце QR-код, які сайт паказвае пры наладзе двухфактарнага ўваходу.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Гэты сакрэт чакае праверкі сваіх абагульванняў, якая яшчэ не скончылася. Нічога не захавана; паспрабуйце пазней або папрасіце адміністратара праверыць, ці працуюць фонавыя задачы.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Толькі ўладальнік можа змяніць кіраўніка або членства, якое ахоплівае кіраўніка."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Толькі ўладальнік можа змяніць кіраўніка або членства, якое ахоплівае кіраўніка.",
+        "Additional fields after the merge": "Дадатковыя палі пасля аб'яднання",
+        "Duplicates": "Дублікаты",
+        "Exact duplicates": "Дакладныя дублікаты",
+        "Item to keep": "Элемент, які застаецца",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Элементы, што змяшчаюць той самы ўваход больш за адзін раз. Аб'яднанне пакідае адзін і выдаляе астатнія.",
+        "Likely duplicates": "Верагодныя дублікаты",
+        "Merge": "Аб'яднаць",
+        "Merge duplicates": "Аб'яднаць дублікаты",
+        "People who lose access: {count}": "Людзі, якія страцяць доступ: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Той самы адрас і імя карыстальніка, іншы пароль. Так могуць выглядаць два асобныя ўліковыя запісы, таму праверце перад аб'яднаннем.",
+        "The merge did not complete. Check the items of this group in your vault.": "Аб'яднанне не завершана. Праверце элементы гэтай групы ў сваім сховішчы.",
+        "The merge failed. Nothing was removed.": "Не ўдалося аб'яднаць. Нічога не выдалена.",
+        "The other items move to the trash, where you can restore them.": "Астатнія элементы трапляюць у сметніцу, адкуль іх можна аднавіць."
     },
     "plurals": null
 }

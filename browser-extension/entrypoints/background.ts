@@ -21,12 +21,13 @@ import { onBroadcast } from '@/src/background/broadcast'
 import { CLIPBOARD_ALARM, clearClipboard, clearCodeAfterLock } from '@/src/clipboard'
 import { rebuildMenus, registerMenus } from '@/src/menus'
 import {
-	PASSKEY_POPUP_KINDS, POPUP_PORT, POPUP_REQUEST_KINDS,
-	type BackgroundToContent, type ContentToBackground, type FillRequest, type InlineListToBackground, type NoticeToBackground, type NotificationToBackground, type PasskeyPopupRequest, type PopupToBackground,
+	PASSKEY_POPUP_KINDS, POPUP_PORT, POPUP_REQUEST_KINDS, VAULT_PASSKEY_KINDS,
+	type BackgroundToContent, type ContentToBackground, type FillRequest, type InlineListToBackground, type NoticeToBackground, type NotificationToBackground, type PasskeyPopupRequest, type PopupToBackground, type VaultPasskeyRequest,
 } from '@/src/messages'
 import { endForAccountChange, handlePasskeyContent, handlePasskeyWindow, registerPasskeyCeremonies } from '@/src/passkey/ceremony'
 import { hasIdle } from '@/src/platform'
 import { refreshToolbar, registerToolbarListeners } from '@/src/toolbar-icon'
+import { handleVaultPasskey } from '@/src/vault/passkey-api'
 import { SYNC_ALARM } from '@/src/vault/sync'
 import { enforce, onIdleStateChanged, onPopupClosed, onPopupOpened, syncAlarm, TIMEOUT_ALARM } from '@/src/vault/timeout'
 
@@ -49,7 +50,7 @@ function onPageReady(msg: Extract<ContentToBackground, { kind: 'page_ready' }>, 
 }
 
 type Sender = Browser.runtime.MessageSender
-type PopupMessage = PopupToBackground | HandledRequest | FillRequest | PasskeyPopupRequest
+type PopupMessage = PopupToBackground | HandledRequest | FillRequest | PasskeyPopupRequest | VaultPasskeyRequest
 
 /** The reply to a content script's question; `null` for the fire-and-forget kinds. */
 function contentReply(m: ContentToBackground, sender: Sender): Promise<unknown> | null {
@@ -117,6 +118,7 @@ function applyPopupChanges(kind: string): void {
 
 function popupReply(m: PopupMessage, sender: Sender): Promise<unknown> {
 	if (PASSKEY_POPUP_KINDS.has(m.kind)) return handlePasskeyWindow(m as PasskeyPopupRequest, sender)
+	if (VAULT_PASSKEY_KINDS.has(m.kind)) return handleVaultPasskey(m as VaultPasskeyRequest)
 	if (m.kind === 'fill.request') return handleFillRequest(m as FillRequest)
 	if (POPUP_REQUEST_KINDS.has(m.kind)) return handlePopupRequest(m as HandledRequest)
 	return handlePopupMessage(m as PopupToBackground)

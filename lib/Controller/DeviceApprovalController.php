@@ -20,12 +20,13 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Service\DeviceApprovalService;
-use OCA\Keepiq\Service\VaultKeyProofService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\DeviceApprovalServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\VaultKeyProofServiceInterface;
+use OCA\Keepiq\Service\DeviceApprovalRequest;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -44,7 +45,7 @@ class DeviceApprovalController extends Controller {
 	 * Constructor for DeviceApprovalController.
 	 *
 	 * @param IRequest              $request     The request
-	 * @param DeviceApprovalService $approvals   The approval service
+	 * @param DeviceApprovalServiceInterface $approvals   The approval service
 	 * @param IUserSession          $userSession The user session
 	 *
 	 * @return void
@@ -53,10 +54,10 @@ class DeviceApprovalController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private DeviceApprovalService $approvals,
+		private DeviceApprovalServiceInterface $approvals,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -96,12 +97,14 @@ class DeviceApprovalController extends Controller {
 
 		try {
 			$created = $this->approvals->create(
-				userId: $user->getUID(),
-				publicKey: $publicKey,
-				clientKind: $clientKind,
-				label: $deviceLabel,
-				address: $this->request->getRemoteAddress(),
-				agent: (string)$this->request->getHeader('User-Agent'),
+				request: new DeviceApprovalRequest(
+					userId: $user->getUID(),
+					publicKey: $publicKey,
+					clientKind: $clientKind,
+					label: $deviceLabel,
+					address: $this->request->getRemoteAddress(),
+					agent: (string)$this->request->getHeader('User-Agent'),
+				)
 			);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
@@ -169,7 +172,7 @@ class DeviceApprovalController extends Controller {
 	 * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['id', 'sealedUnlockKey'], subject: 'active', purpose: VaultKeyProofService::PURPOSE_APPROVE_DEVICE)]
+	#[VaultKeyProofRequired(binds: ['id', 'sealedUnlockKey'], subject: 'active', purpose: VaultKeyProofServiceInterface::PURPOSE_APPROVE_DEVICE)]
 	public function approve(string $id, string $sealedUnlockKey = ''): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

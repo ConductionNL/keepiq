@@ -243,3 +243,25 @@ describe('import mapper: Bitwarden card/identity routing', () => {
 		expect(rows[1].errors.length).toBeGreaterThan(0)
 	})
 })
+
+describe('card identity edge cases', () => {
+	it('finds no brand for no digits, too few digits or an unknown prefix', () => {
+		expect(cardBrandInfo('')).toBeNull()
+		expect(cardBrandInfo(null)).toBeNull()
+		expect(cardBrandInfo('0000000000000000')).toBeNull()
+		expect(cardBrandInfo('4')?.id).toBe('visa')
+	})
+
+	it('hints the length of an unknown number outside 12 to 19 digits only', () => {
+		expect(cardNumberHint('00000000000000000000')).toEqual({ code: 'lengthUnknown' })
+		expect(cardNumberHint('000000000000')).toBeNull()
+		expect(cardNumberHint('000000000001')).toEqual({ code: 'luhn' })
+	})
+
+	it('parses only a JSON object', () => {
+		expect(parsePayload(5)).toBeNull()
+		expect(parsePayload('{bad')).toBeNull()
+		expect(parsePayload('{"a":1}')).toEqual({ a: 1 })
+		expect(parsePayload('[1]')).toBeNull()
+	})
+})

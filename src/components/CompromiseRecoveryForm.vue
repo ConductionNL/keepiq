@@ -29,20 +29,11 @@
 				:label="t('keepiq', 'Old (compromised) password')"
 				:disabled="loading" />
 
-			<NcPasswordField
-				v-model="newPassword"
-				:label="t('keepiq', 'New password')"
-				:disabled="loading" />
-
-			<PasswordStrengthMeter
-				v-if="newPassword"
-				:password="newPassword"
+			<NewPasswordFields
+				v-model:newPassword="newPassword"
+				v-model:confirmPassword="confirmPassword"
+				:disabled="loading"
 				@strengthChange="onStrengthChange" />
-
-			<NcPasswordField
-				v-model="confirmPassword"
-				:label="t('keepiq', 'Confirm new password')"
-				:disabled="loading" />
 
 			<!-- keepiq#800: carrying a contact hands them the NEW key, and this
 			     runs when someone else may have held the session. The owner
@@ -352,19 +343,19 @@ import {
 	NcPasswordField,
 	NcProgressBar,
 } from '@nextcloud/vue'
-import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
+import NewPasswordFields from './NewPasswordFields.vue'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 import { useSessionStore } from '../store/modules/session.js'
 
 export default {
 	name: 'CompromiseRecoveryForm',
 	components: {
+		NewPasswordFields,
 		NcButton,
 		NcCheckboxRadioSwitch,
 		NcNoteCard,
 		NcPasswordField,
 		NcProgressBar,
-		PasswordStrengthMeter,
 	},
 
 	data() {

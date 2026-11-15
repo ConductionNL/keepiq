@@ -649,84 +649,159 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 
 		$count = count($tokens);
 		for ($i = 0; $i < $count; $i++) {
-			$token = $tokens[$i];
-			if ($token->is(T_FOREACH) === true) {
-				$close = $this->matching(tokens: $tokens, open: $i + 1);
-				$as = false;
-				for ($j = $i + 2; $j < $close; $j++) {
-					$as = ($as || $tokens[$j]->is(T_AS));
-					if ($as === true && $tokens[$j]->is(T_VARIABLE) === true) {
-						$types[substr($tokens[$j]->text, 1)][] = 'unknown';
-					}
-				}
+			$this->typesAt(tokens: $tokens, i: $i, context: $context, types: $types);
+		}
 
-				continue;
+		$this->docTagTypes(all: $all, context: $context, types: $types);
+
+		return $types;
+	}//end receiverTypes()
+
+	/**
+	 * Add what the construct starting at token `$i` says a name may hold: a
+	 * foreach, a destructuring, a `global`, or a variable.
+	 *
+	 * @param list<PhpToken>                                                 $tokens  The significant tokens
+	 * @param int                                                            $i       The token index
+	 * @param array{namespace:string,uses:array<string,string>,class:?string} $context The file's context
+	 * @param array<string,list<string>>                                     $types   What each name may hold, extended
+	 *
+	 * @return void
+	 */
+	private function typesAt(array $tokens, int $i, array $context, array &$types): void {
+		$token = $tokens[$i];
+		if ($token->is(T_FOREACH) === true) {
+			$this->foreachTypes(tokens: $tokens, i: $i, types: $types);
+		} else if ($token->text === '=' && in_array($tokens[$i - 1]->text, [']', ')'], true) === true) {
+			$this->destructuringTypes(tokens: $tokens, i: $i, types: $types);
+		} else if ($token->is(T_GLOBAL) === true) {
+			$this->globalTypes(tokens: $tokens, i: $i, types: $types);
+		} else if ($token->is(T_VARIABLE) === true) {
+			$this->variableTypes(tokens: $tokens, i: $i, context: $context, types: $types);
+		}
+	}//end typesAt()
+
+	/**
+	 * A foreach's value and key variables may hold anything.
+	 *
+	 * @param list<PhpToken>             $tokens The significant tokens
+	 * @param int                        $i      The index of the `foreach`
+	 * @param array<string,list<string>> $types  What each name may hold, extended
+	 *
+	 * @return void
+	 */
+	private function foreachTypes(array $tokens, int $i, array &$types): void {
+		$close = $this->matching(tokens: $tokens, open: $i + 1);
+		$as = false;
+		for ($j = $i + 2; $j < $close; $j++) {
+			$as = ($as || $tokens[$j]->is(T_AS));
+			if ($as === true && $tokens[$j]->is(T_VARIABLE) === true) {
+				$types[substr($tokens[$j]->text, 1)][] = 'unknown';
+			}
+		}
+	}//end foreachTypes()
+
+	/**
+	 * The names a destructuring assignment (`[$a, $this->b] = ...`,
+	 * `list(...) = ...`) writes may hold anything.
+	 *
+	 * @param list<PhpToken>             $tokens The significant tokens
+	 * @param int                        $i      The index of the `=`
+	 * @param array<string,list<string>> $types  What each name may hold, extended
+	 *
+	 * @return void
+	 */
+	private function destructuringTypes(array $tokens, int $i, array &$types): void {
+		$open = $this->matching(tokens: $tokens, open: $i - 1);
+		$before = ($tokens[$open - 1] ?? null);
+		if ($before !== null && $before->is(T_LIST) === false
+			&& ($tokens[$i - 1]->text !== ']' || $before->is([T_VARIABLE, T_STRING]) === true || in_array($before->text, [']', ')', '}'], true) === true)
+		) {
+			return;
+		}
+
+		for ($j = $open; $j < $i; $j++) {
+			if ($tokens[$j]->text === '$this' && ($tokens[$j + 2] ?? null)?->is(T_STRING) === true) {
+				$types['->'.$tokens[$j + 2]->text][] = 'unknown';
+			} else if ($tokens[$j]->is(T_VARIABLE) === true) {
+				$types[substr($tokens[$j]->text, 1)][] = 'unknown';
+			}
+		}
+	}//end destructuringTypes()
+
+	/**
+	 * The variables a `global` statement imports may hold anything.
+	 *
+	 * @param list<PhpToken>             $tokens The significant tokens
+	 * @param int                        $i      The index of the `global`
+	 * @param array<string,list<string>> $types  What each name may hold, extended
+	 *
+	 * @return void
+	 */
+	private function globalTypes(array $tokens, int $i, array &$types): void {
+		$count = count($tokens);
+		for ($j = $i + 1; $j < $count && $tokens[$j]->text !== ';'; $j++) {
+			if ($tokens[$j]->is(T_VARIABLE) === true) {
+				$types[substr($tokens[$j]->text, 1)][] = 'unknown';
+			}
+		}
+	}//end globalTypes()
+
+	/**
+	 * What a variable at `$i` is assigned or declared as. `$this->name = ...`
+	 * types the property; a property declaration types the property, and a
+	 * promoted parameter is both. A plain parameter or local never types a
+	 * property.
+	 *
+	 * @param list<PhpToken>                                                 $tokens  The significant tokens
+	 * @param int                                                            $i       The index of the variable
+	 * @param array{namespace:string,uses:array<string,string>,class:?string} $context The file's context
+	 * @param array<string,list<string>>                                     $types   What each name may hold, extended
+	 *
+	 * @return void
+	 */
+	private function variableTypes(array $tokens, int $i, array $context, array &$types): void {
+		if ($tokens[$i]->text === '$this') {
+			if (($tokens[$i + 1] ?? null)?->is(self::OBJECT_OPERATORS) === true && ($tokens[$i + 2] ?? null)?->is(T_STRING) === true
+				&& ($tokens[$i + 3] ?? null)?->is(['=', T_COALESCE_EQUAL]) === true
+			) {
+				$types['->'.$tokens[$i + 2]->text][] = $this->assigned(tokens: $tokens, start: $i + 4, context: $context);
 			}
 
-			if ($token->text === '=' && in_array($tokens[$i - 1]->text, [']', ')'], true) === true) {
-				$open = $this->matching(tokens: $tokens, open: $i - 1);
-				$before = ($tokens[$open - 1] ?? null);
-				if ($before === null || $before->is(T_LIST) === true
-					|| ($tokens[$i - 1]->text === ']' && $before->is([T_VARIABLE, T_STRING]) === false && in_array($before->text, [']', ')', '}'], true) === false)
-				) {
-					for ($j = $open; $j < $i; $j++) {
-						if ($tokens[$j]->text === '$this' && ($tokens[$j + 2] ?? null)?->is(T_STRING) === true) {
-							$types['->'.$tokens[$j + 2]->text][] = 'unknown';
-						} elseif ($tokens[$j]->is(T_VARIABLE) === true) {
-							$types[substr($tokens[$j]->text, 1)][] = 'unknown';
-						}
-					}
-				}
+			return;
+		}
 
-				continue;
+		$name = substr($tokens[$i]->text, 1);
+		if (($tokens[$i + 1] ?? null)?->is(['=', T_COALESCE_EQUAL]) === true && ($tokens[$i - 1] ?? null)?->is(self::OBJECT_OPERATORS) !== true) {
+			$types[$name][] = $this->assigned(tokens: $tokens, start: $i + 2, context: $context);
+		}
+
+		$keys = [$name];
+		if ($this->declaresProperty(tokens: $tokens, variable: $i) === true) {
+			$keys = ['->'.$name];
+			if ($this->isParameter(tokens: $tokens, variable: $i) === true) {
+				$keys[] = $name;
 			}
+		}
 
-			if ($token->is(T_GLOBAL) === true) {
-				for ($j = $i + 1; $j < $count && $tokens[$j]->text !== ';'; $j++) {
-					if ($tokens[$j]->is(T_VARIABLE) === true) {
-						$types[substr($tokens[$j]->text, 1)][] = 'unknown';
-					}
-				}
-
-				continue;
+		foreach ($this->declaredTypes(tokens: $tokens, variable: $i, context: $context) as $type) {
+			foreach ($keys as $key) {
+				$types[$key][] = $type;
 			}
+		}
+	}//end variableTypes()
 
-			if ($token->is(T_VARIABLE) === false) {
-				continue;
-			}
-
-			if ($token->text === '$this') {
-				if (($tokens[$i + 1] ?? null)?->is(self::OBJECT_OPERATORS) === true && ($tokens[$i + 2] ?? null)?->is(T_STRING) === true
-					&& ($tokens[$i + 3] ?? null)?->is(['=', T_COALESCE_EQUAL]) === true
-				) {
-					$types['->'.$tokens[$i + 2]->text][] = $this->assigned(tokens: $tokens, start: $i + 4, context: $context);
-				}
-
-				continue;
-			}
-
-			$name = substr($token->text, 1);
-			if (($tokens[$i + 1] ?? null)?->is(['=', T_COALESCE_EQUAL]) === true && ($tokens[$i - 1] ?? null)?->is(self::OBJECT_OPERATORS) !== true) {
-				$types[$name][] = $this->assigned(tokens: $tokens, start: $i + 2, context: $context);
-			}
-
-			// A property declaration types the property; a promoted parameter is
-			// both. A plain parameter or local never types a property.
-			$keys = [$name];
-			if ($this->declaresProperty(tokens: $tokens, variable: $i) === true) {
-				$keys = ['->'.$name];
-				if ($this->isParameter(tokens: $tokens, variable: $i) === true) {
-					$keys[] = $name;
-				}
-			}
-
-			foreach ($this->declaredTypes(tokens: $tokens, variable: $i, context: $context) as $type) {
-				foreach ($keys as $key) {
-					$types[$key][] = $type;
-				}
-			}
-		}//end for
-
+	/**
+	 * What the `@var`, `@param` and `@property` tags of every doc comment
+	 * say a name may hold.
+	 *
+	 * @param list<PhpToken>                                                 $all     All tokens
+	 * @param array{namespace:string,uses:array<string,string>,class:?string} $context The file's context
+	 * @param array<string,list<string>>                                     $types   What each name may hold, extended
+	 *
+	 * @return void
+	 */
+	private function docTagTypes(array $all, array $context, array &$types): void {
 		foreach ($all as $d => $doc) {
 			if ($doc->is(T_DOC_COMMENT) === false) {
 				continue;
@@ -740,37 +815,52 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 			$onProperty = (($all[$next] ?? null)?->is(self::MODIFIERS) === true);
 			preg_match_all('/@(var|param|property(?:-read|-write)?)\s+(\S+)(?:\s+&?\s*(?:\.\.\.)?\$(\w+))?/', $doc->text, $tags, PREG_SET_ORDER);
 			foreach ($tags as $tag) {
-				$property = (str_starts_with($tag[1], 'property') === true || ($tag[1] === 'var' && $onProperty === true));
-				array_shift($tag);
-				$name = ($tag[2] ?? '');
-				if ($name === '') {
-					$name = $this->nextVariable(all: $all, after: $d);
-				}
-
-				if ($name === null) {
-					continue;
-				}
-
-				if ($property === true) {
-					$name = '->'.$name;
-				}
-
-				$expression = $tag[1];
-				do {
-					$expression = preg_replace('/<[^<>]*>|\{[^{}]*\}/', '', (string)$expression, -1, $stripped);
-				} while ($stripped > 0);
-
-				foreach (preg_split('/[|&()]/', (string)$expression) as $part) {
-					$part = ltrim(trim($part), '?');
-					if (preg_match('/^\\\\?[\w\\\\]+$/', $part) === 1) {
-						$types[$name][] = $this->classify(type: $part, context: $context);
-					}
-				}
+				$this->docTagType(tag: $tag, onProperty: $onProperty, all: $all, d: $d, context: $context, types: $types);
 			}
-		}//end foreach
+		}
+	}//end docTagTypes()
 
-		return $types;
-	}//end receiverTypes()
+	/**
+	 * What one doc tag says its name may hold: every class in its type
+	 * expression, with generics and shapes stripped.
+	 *
+	 * @param list<string>                                                   $tag        The tag match
+	 * @param bool                                                           $onProperty Whether the comment documents a property
+	 * @param list<PhpToken>                                                 $all        All tokens
+	 * @param int                                                            $d          The comment's token index
+	 * @param array{namespace:string,uses:array<string,string>,class:?string} $context    The file's context
+	 * @param array<string,list<string>>                                     $types      What each name may hold, extended
+	 *
+	 * @return void
+	 */
+	private function docTagType(array $tag, bool $onProperty, array $all, int $d, array $context, array &$types): void {
+		$property = (str_starts_with($tag[1], 'property') === true || ($tag[1] === 'var' && $onProperty === true));
+		array_shift($tag);
+		$name = ($tag[2] ?? '');
+		if ($name === '') {
+			$name = $this->nextVariable(all: $all, after: $d);
+		}
+
+		if ($name === null) {
+			return;
+		}
+
+		if ($property === true) {
+			$name = '->'.$name;
+		}
+
+		$expression = $tag[1];
+		do {
+			$expression = preg_replace('/<[^<>]*>|\{[^{}]*\}/', '', (string)$expression, -1, $stripped);
+		} while ($stripped > 0);
+
+		foreach (preg_split('/[|&()]/', (string)$expression) as $part) {
+			$part = ltrim(trim($part), '?');
+			if (preg_match('/^\\\\?[\w\\\\]+$/', $part) === 1) {
+				$types[$name][] = $this->classify(type: $part, context: $context);
+			}
+		}
+	}//end docTagType()
 
 	/**
 	 * The variables a file passes, as a bare argument, to a function or
@@ -990,24 +1080,7 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 	 * @return string
 	 */
 	private function assigned(array $tokens, int $start, array $context): string {
-		$count = count($tokens);
-		$end = $start;
-		$depth = 0;
-		for (; $end < $count; $end++) {
-			$text = $tokens[$end]->text;
-			if (in_array($text, ['(', '[', '{'], true) === true || $tokens[$end]->is([T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES]) === true) {
-				$depth++;
-			} elseif (in_array($text, [')', ']', '}'], true) === true) {
-				if ($depth === 0) {
-					break;
-				}
-
-				$depth--;
-			} elseif ($depth === 0 && ($text === ';' || $text === ',')) {
-				break;
-			}
-		}
-
+		$end = $this->expressionEnd(tokens: $tokens, start: $start);
 		if (($tokens[$start] ?? null)?->text === '&') {
 			$start++;
 		}
@@ -1019,17 +1092,11 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 		}
 
 		// A literal (also a parameter default such as `= null`) holds no object.
-		if (($size === 1 && ($rhs[0]->is([T_LNUMBER, T_DNUMBER, T_CONSTANT_ENCAPSED_STRING]) === true
-			|| in_array(strtolower($rhs[0]->text), ['null', 'true', 'false'], true) === true))
-			|| ($size === 2 && $rhs[0]->text === '[' && $rhs[1]->text === ']')
-		) {
+		if ($this->isLiteral(rhs: $rhs) === true) {
 			return 'none';
 		}
 
-		$property = ($size === 3 && $rhs[0]->text === '$this' && $rhs[1]->is(self::OBJECT_OPERATORS) === true && $rhs[2]->is(T_STRING) === true);
-		$static = ($size === 3 && in_array(strtolower($rhs[0]->text), ['self', 'static'], true) === true
-			&& $rhs[1]->is(T_DOUBLE_COLON) === true && $rhs[2]->is(T_VARIABLE) === true);
-		if ($property === true || $static === true) {
+		if ($this->isPropertyRead(rhs: $rhs) === true) {
 			return '$->'.ltrim($rhs[2]->text, '$');
 		}
 
@@ -1048,6 +1115,72 @@ class ShareRowLookupsAreJudgedTest extends TestCase {
 
 		return 'unknown';
 	}//end assigned()
+
+	/**
+	 * The index just past the expression starting at `$start`: the first `;`,
+	 * `,` or unmatched closer at bracket depth zero.
+	 *
+	 * @param list<PhpToken> $tokens The significant tokens
+	 * @param int            $start  The first token of the expression
+	 *
+	 * @return int
+	 */
+	private function expressionEnd(array $tokens, int $start): int {
+		$count = count($tokens);
+		$depth = 0;
+		for ($end = $start; $end < $count; $end++) {
+			$text = $tokens[$end]->text;
+			if (in_array($text, ['(', '[', '{'], true) === true || $tokens[$end]->is([T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES]) === true) {
+				$depth++;
+			} elseif (in_array($text, [')', ']', '}'], true) === true) {
+				if ($depth === 0) {
+					return $end;
+				}
+
+				$depth--;
+			} elseif ($depth === 0 && ($text === ';' || $text === ',')) {
+				return $end;
+			}
+		}
+
+		return $end;
+	}//end expressionEnd()
+
+	/**
+	 * Whether an expression is a scalar literal, `null`, a boolean or `[]`.
+	 *
+	 * @param list<PhpToken> $rhs The expression's tokens
+	 *
+	 * @return bool
+	 */
+	private function isLiteral(array $rhs): bool {
+		$size = count($rhs);
+		if ($size === 1) {
+			return $rhs[0]->is([T_LNUMBER, T_DNUMBER, T_CONSTANT_ENCAPSED_STRING]) === true
+				|| in_array(strtolower($rhs[0]->text), ['null', 'true', 'false'], true) === true;
+		}
+
+		return $size === 2 && $rhs[0]->text === '[' && $rhs[1]->text === ']';
+	}//end isLiteral()
+
+	/**
+	 * Whether an expression reads a property: `$this->name`, or
+	 * `self::$name` / `static::$name`.
+	 *
+	 * @param list<PhpToken> $rhs The expression's tokens
+	 *
+	 * @return bool
+	 */
+	private function isPropertyRead(array $rhs): bool {
+		if (count($rhs) !== 3) {
+			return false;
+		}
+
+		$property = ($rhs[0]->text === '$this' && $rhs[1]->is(self::OBJECT_OPERATORS) === true && $rhs[2]->is(T_STRING) === true);
+		$static = (in_array(strtolower($rhs[0]->text), ['self', 'static'], true) === true
+			&& $rhs[1]->is(T_DOUBLE_COLON) === true && $rhs[2]->is(T_VARIABLE) === true);
+		return $property === true || $static === true;
+	}//end isPropertyRead()
 
 	/**
 	 * What the receiver of a finder call holds.

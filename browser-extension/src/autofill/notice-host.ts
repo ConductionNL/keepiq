@@ -43,6 +43,22 @@ export interface NoticeHost {
 const covers = (place: Place, rect: DOMRect) =>
 	rect.bottom > place.top && rect.top < place.top + place.height && rect.right > place.left && rect.left < place.left + place.width
 
+/** Above the bar in the bottom corner when it shares it, else at the corner's inset; below it in the top corner likewise. */
+function noticeTop(bottom: boolean, { view, height, shown }: { view: { height: number }; height: number; shown: BarPlace | null }): number {
+	const sharing = shown !== null && shown.bottom === bottom
+	if (bottom) return (sharing ? shown.top - GAP_PX : view.height - BAR_INSET_PX) - height
+	return sharing ? shown.top + shown.height + GAP_PX : BAR_INSET_PX
+}
+
+/** Focus that is the notice itself, or the page as a whole, never moves it. */
+const isOutsideFocus = (active: Element, shown: Shown) => active === shown.host.element || active === document.body || active === document.documentElement
+
+const hasBox = (rect: DOMRect) => !(rect.width === 0 && rect.height === 0)
+
+function samePlace(old: Place | null, place: Place): boolean {
+	return !!old && old.top === place.top && old.left === place.left && old.width === place.width && old.height === place.height
+}
+
 /** `bar`: where the save bar is now, so the notice sits beside it in its corner, never over it. */
 export function createNoticeHost(bar: () => BarPlace | null): NoticeHost {
 	let current: Shown | null = null
@@ -51,29 +67,28 @@ export function createNoticeHost(bar: () => BarPlace | null): NoticeHost {
 		const view = viewport()
 		const width = barWidth(view.width)
 		const height = width < BAR_WIDTH_PX ? NOTICE_NARROW_HEIGHT_PX : NOTICE_HEIGHT_PX
-		const shown = bar()
-		const sharing = shown !== null && shown.bottom === bottom
-		const top = bottom
-			? (sharing ? shown.top - GAP_PX : view.height - BAR_INSET_PX) - height
-			: sharing ? shown.top + shown.height + GAP_PX : BAR_INSET_PX
+		const top = noticeTop(bottom, { view, height, shown: bar() })
 		return { top: Math.max(0, top), left: Math.max(0, view.width - BAR_INSET_PX - width), width, height }
 	}
 
 	/** Moves only when the focused element is under it here and would not be in the other corner, so it never flips back and forth. */
 	function avoidFocus(shown: Shown): void {
 		const active = deepActiveElement()
-		if (!active || active === shown.host.element || active === document.body || active === document.documentElement) return
+		if (!active || isOutsideFocus(active, shown)) return
 		const rect = active.getBoundingClientRect()
-		if (rect.width === 0 && rect.height === 0) return
-		if (covers(placeNow(shown.bottom), rect) && !covers(placeNow(!shown.bottom), rect)) shown.bottom = !shown.bottom
+		if (!hasBox(rect)) return
+		if (coveredOnlyHere(shown.bottom, rect)) shown.bottom = !shown.bottom
+	}
+
+	function coveredOnlyHere(bottom: boolean, rect: DOMRect): boolean {
+		return covers(placeNow(bottom), rect) && !covers(placeNow(!bottom), rect)
 	}
 
 	function style(): void {
 		if (!current) return
 		avoidFocus(current)
 		const place = placeNow(current.bottom)
-		const old = current.place
-		if (old && old.top === place.top && old.left === place.left && old.width === place.width && old.height === place.height) return
+		if (samePlace(current.place, place)) return
 		current.place = place
 		current.host.style({
 			'position': 'fixed', 'top': `${place.top}px`, 'left': `${place.left}px`, 'width': `${place.width}px`, 'height': `${place.height}px`,

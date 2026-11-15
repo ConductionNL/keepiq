@@ -17,6 +17,7 @@ import { LogInAgain } from './views/LogInAgain'
 import { PasskeyWindow } from './views/PasskeyWindow'
 import { Shell } from './views/Shell'
 import { Unlock } from './views/Unlock'
+import { VaultPasskeyWindow } from './views/VaultPasskeyWindow'
 
 /** Panels the popup opens on top of the background's screen. */
 type Panel = 'switcher' | 'add_account' | 'generator' | null
@@ -24,8 +25,15 @@ type Panel = 'switcher' | 'add_account' | 'generator' | null
 /** The stored theme and appearance apply to every screen, the ones before an account is chosen included. */
 export default function App() {
 	// The window the background opens for a site's passkey request names its ceremony.
-	const ceremonyId = new URLSearchParams(location.search).get('passkey')
-	return <SettingsProvider>{ceremonyId ? <PasskeyWindow ceremonyId={ceremonyId} /> : <Popup />}</SettingsProvider>
+	const query = new URLSearchParams(location.search)
+	const ceremonyId = query.get('passkey')
+	// The window the popup opens for the vault's own fingerprint or face unlock.
+	const vaultPasskey = query.get('vaultPasskey')
+	const accountId = query.get('account')
+	let page = <Popup />
+	if (ceremonyId) page = <PasskeyWindow ceremonyId={ceremonyId} />
+	else if ((vaultPasskey === 'enrol' || vaultPasskey === 'unlock') && accountId) page = <VaultPasskeyWindow accountId={accountId} mode={vaultPasskey} />
+	return <SettingsProvider>{page}</SettingsProvider>
 }
 
 function Popup() {
