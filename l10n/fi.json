@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Tämä ei ole autentikaattoriavain. Liitä otpauth://totp/-linkki tai base32-salaisuus.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Tämä QR-koodi ei sisällä autentikaattoriavainta. Käytä QR-koodia, jonka sivusto näyttää, kun otat kaksivaiheisen kirjautumisen käyttöön.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Tämä salaisuus odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei tallennettu; yritä myöhemmin uudelleen tai pyydä ylläpitäjää tarkistamaan, että taustatyöt ovat käynnissä.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Vain omistaja voi muuttaa ylläpitäjää tai jäsenyyttä, joka kattaa ylläpitäjän."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Vain omistaja voi muuttaa ylläpitäjää tai jäsenyyttä, joka kattaa ylläpitäjän.",
+        "Additional fields after the merge": "Lisäkentät yhdistämisen jälkeen",
+        "Duplicates": "Kaksoiskappaleet",
+        "Exact duplicates": "Täsmälliset kaksoiskappaleet",
+        "Item to keep": "Säilytettävä kohde",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Kohteet, joissa on sama kirjautuminen useammin kuin kerran. Yhdistäminen säilyttää yhden ja poistaa muut.",
+        "Likely duplicates": "Todennäköiset kaksoiskappaleet",
+        "Merge": "Yhdistä",
+        "Merge duplicates": "Yhdistä kaksoiskappaleet",
+        "People who lose access: {count}": "Pääsyn menettävät henkilöt: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Sama osoite ja käyttäjätunnus, eri salasana. Kaksi erillistä tiliä voi näyttää tältä, joten tarkista ennen yhdistämistä.",
+        "The merge did not complete. Check the items of this group in your vault.": "Yhdistäminen ei valmistunut. Tarkista tämän ryhmän kohteet holvistasi.",
+        "The merge failed. Nothing was removed.": "Yhdistäminen epäonnistui. Mitään ei poistettu.",
+        "The other items move to the trash, where you can restore them.": "Muut kohteet siirtyvät roskakoriin, josta voit palauttaa ne."
     },
     "plurals": null
 }

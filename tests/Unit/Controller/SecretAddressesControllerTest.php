@@ -143,6 +143,24 @@ class SecretAddressesControllerTest extends TestCase {
 	}//end testTooManyAddressesAreRefusedBeforeTheLoginIsCreated()
 
 	/**
+	 * The list answers each row's extra addresses in one lookup, an empty
+	 * list for a row without them.
+	 *
+	 * @return void
+	 */
+	public function testTheListAnswersEachRowsExtraAddresses(): void {
+		$this->secretService->method('list')->willReturn(['items' => [['id' => 's1'], ['id' => 's2']], 'total' => 2]);
+		$this->urlMapper->expects($this->once())->method('findUrlsBySecretIds')->with(['s1', 's2'])
+			->willReturn(['s2' => ['https://example.net']]);
+		$controller = new SecretController(request: $this->request(), secretService: $this->secretService, userSession: $this->session(), urls: new SecretUrlService($this->urlMapper));
+
+		$data = $controller->index()->getData();
+
+		$this->assertSame([[], ['https://example.net']], array_column($data['items'], 'additionalUrls'));
+		$this->assertSame(2, $data['total']);
+	}//end testTheListAnswersEachRowsExtraAddresses()
+
+	/**
 	 * Show answers the login with its extra addresses.
 	 *
 	 * @return void

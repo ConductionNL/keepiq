@@ -24,6 +24,7 @@
 import AccountRecoverySection from '../../components/settings/AccountRecoverySection.vue'
 import AdminAreasSection from '../../components/settings/AdminAreasSection.vue'
 import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
+import AdminFlowTriggersSection from '../../components/settings/AdminFlowTriggersSection.vue'
 import AdminSuiteSection from '../../components/settings/AdminSuiteSection.vue'
 import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
 import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsSection.vue'
@@ -45,6 +46,7 @@ import RetentionPolicySection from '../../components/settings/RetentionPolicySec
 import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
 import SiemSection from '../../components/settings/SiemSection.vue'
 import SiteDirectorySection from '../../components/settings/SiteDirectorySection.vue'
+import SiteImagesSection from '../../components/settings/SiteImagesSection.vue'
 import TeamFolderAutoConfirmSection from '../../components/settings/TeamFolderAutoConfirmSection.vue'
 import VaultBackupSection from '../../components/settings/VaultBackupSection.vue'
 import VaultPolicySection from '../../components/settings/VaultPolicySection.vue'
@@ -60,6 +62,7 @@ export default {
 		TeamFolderAutoConfirmSection,
 		BreachCheckSection,
 		SiteDirectorySection,
+		SiteImagesSection,
 		CaHealthSection,
 		ApplicationQueueSection,
 		AttachmentLimitsSection,
@@ -78,6 +81,7 @@ export default {
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,
+		AdminFlowTriggersSection,
 		VaultPolicySection,
 		VaultBackupSection,
 	},

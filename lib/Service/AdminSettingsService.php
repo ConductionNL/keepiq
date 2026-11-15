@@ -34,6 +34,7 @@ namespace OCA\Keepiq\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\AdminSettingsServiceInterface;
+use OCA\Keepiq\Service\Flow\VaultFlowTriggerCatalog;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -101,6 +102,8 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 			'device_approval_enabled',
 			'attachment_max_bytes',
 			'attachment_user_quota_bytes',
+			'favicon_service_url',
+			'site_preview_service_url',
 		],
 		'applications' => [
 			'lease_default_ttl_seconds',
@@ -108,7 +111,7 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 			'lease_renewable',
 			'lease_revocation_blocks_refetch',
 		],
-		'audit' => ['audit_retention_days'],
+		'audit' => ['audit_retention_days', 'flow_trigger_groups'],
 	];
 
 	/**
@@ -218,7 +221,8 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 			// shared with the user-visible getPolicy() floor.
 			$this->policyService->readAdminPolicyKeys(),
 			$this->leaseAndDeviceSettings(),
-			$this->offlineSettings()
+			$this->offlineSettings(),
+			(new SiteImageSettings(appConfig: $this->appConfig))->read()
 		);
 
 		return $this->withCaStatus(settings: $settings);
@@ -247,6 +251,9 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 			),
 			'breach_check_enabled' => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
 			'site_directory_enabled' => $this->appConfig->getValueBool($appId, 'site_directory_enabled', false),
+			'flow_trigger_groups' => (new VaultFlowTriggerCatalog())->parseEnabledGroups(
+				stored: $this->appConfig->getValueString($appId, 'flow_trigger_groups', '[]')
+			),
 		];
 	}//end sessionAndAuditSettings()
 
@@ -494,6 +501,7 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 			case 'general':
 				$this->updateInstanceSettings(data: $data);
 				$this->updateAttachmentSettings(data: $data);
+				(new SiteImageSettings(appConfig: $this->appConfig))->update(data: $data);
 				return;
 			case 'policies':
 				$this->updateAuthenticationSettings(data: $data);
@@ -613,7 +621,7 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 	}//end updateInstanceSettings()
 
 	/**
-	 * Audit retention (add-secret-audit-trail §4.2), the one Audit area key.
+	 * Audit retention (add-secret-audit-trail §4.2) and the flow trigger groups.
 	 *
 	 * @param array<string,mixed> $data The admin-settings input
 	 *
@@ -622,6 +630,7 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 	 * @throws InvalidArgumentException When the window is below the minimum.
 	 */
 	private function updateAuditSettings(array $data): void {
+		$this->updateFlowTriggerGroups(data: $data);
 		if (isset($data['audit_retention_days']) === false) {
 			return;
 		}
@@ -636,6 +645,38 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 
 		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'audit_retention_days', $days);
 	}//end updateAuditSettings()
+
+	/**
+	 * The trigger groups whose vault events may start OpenRegister flows
+	 * (clients-vault-event-flow-triggers D4): a list of known groups, stored
+	 * as JSON. An empty list, the default, fires nothing.
+	 *
+	 * @param array<string,mixed> $data The admin-settings input
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the value is not a list of known groups.
+	 *
+	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-2.1
+	 */
+	private function updateFlowTriggerGroups(array $data): void {
+		if (array_key_exists('flow_trigger_groups', $data) === false) {
+			return;
+		}
+
+		$groups = $data['flow_trigger_groups'];
+		if (is_array($groups) === false || array_is_list($groups) === false) {
+			throw new InvalidArgumentException('flow_trigger_groups must be a list of trigger groups');
+		}
+
+		$unknown = array_values(array_diff($groups, VaultFlowTriggerCatalog::GROUPS));
+		if ($unknown !== []) {
+			throw new InvalidArgumentException('Unknown flow trigger group: ' . (string)json_encode($unknown[0]));
+		}
+
+		$enabled = array_values(array_intersect(VaultFlowTriggerCatalog::GROUPS, $groups));
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'flow_trigger_groups', (string)json_encode($enabled));
+	}//end updateFlowTriggerGroups()
 
 	/**
 	 * Expiry defaults (rotation-expiry-policies §2.2): admin max age ships

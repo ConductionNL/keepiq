@@ -1811,7 +1811,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Das ist kein Authenticator-Schlüssel. Fügen Sie einen otpauth://totp/-Link oder das base32-Geheimnis ein.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dieser QR-Code enthält keinen Authenticator-Schlüssel. Verwenden Sie den QR-Code, den die Website beim Einrichten der Zwei-Faktor-Anmeldung anzeigt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dieses Geheimnis wartet auf eine Prüfung seiner Freigaben, die noch nicht abgeschlossen ist. Es wurde nichts gespeichert; versuchen Sie es später erneut oder bitten Sie eine Administratorin oder einen Administrator zu prüfen, ob Hintergrundjobs laufen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Nur der Eigentümer kann einen Verwalter ändern oder eine Mitgliedschaft, die einen Verwalter umfasst."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Nur der Eigentümer kann einen Verwalter ändern oder eine Mitgliedschaft, die einen Verwalter umfasst.",
+        "Additional fields after the merge": "Zusätzliche Felder nach dem Zusammenführen",
+        "Duplicates": "Duplikate",
+        "Exact duplicates": "Exakte Duplikate",
+        "Item to keep": "Zu behaltendes Element",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elemente, die dieselbe Anmeldung mehr als einmal enthalten. Beim Zusammenführen bleibt eines erhalten, die anderen werden entfernt.",
+        "Likely duplicates": "Wahrscheinliche Duplikate",
+        "Merge": "Zusammenführen",
+        "Merge duplicates": "Duplikate zusammenführen",
+        "People who lose access: {count}": "Personen, die den Zugriff verlieren: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Gleiche Adresse und gleicher Benutzername, ein anderes Passwort. Zwei getrennte Konten können so aussehen, prüfe das also vor dem Zusammenführen.",
+        "The merge did not complete. Check the items of this group in your vault.": "Das Zusammenführen wurde nicht abgeschlossen. Prüfe die Elemente dieser Gruppe in deinem Tresor.",
+        "The merge failed. Nothing was removed.": "Das Zusammenführen ist fehlgeschlagen. Es wurde nichts entfernt.",
+        "The other items move to the trash, where you can restore them.": "Die anderen Elemente kommen in den Papierkorb, wo du sie wiederherstellen kannst."
     },
     "plurals": null
 }
