@@ -29,6 +29,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Listener\HoneyTripwireListener;
+use OCA\Keepiq\Service\HoneyAccess;
 use OCA\Keepiq\Service\HoneyTripwireService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRowJudge;
@@ -94,14 +95,7 @@ class HoneyTripwireListenerTest extends TestCase {
 	 */
 	public function testSecretReadTripsUiChannel(): void {
 		$this->honeyService->expects($this->once())->method('raiseAlert')
-			->with(
-				$this->equalTo('secret-1'),
-				$this->equalTo('user'),
-				$this->equalTo('bob'),
-				$this->equalTo('ui'),
-				$this->equalTo('192.0.2.7'),
-				$this->equalTo('TestAgent/1.0'),
-			)
+			->with($this->callback(static fn (HoneyAccess $access): bool => [$access->secretId, $access->accessorType, $access->accessorId, $access->channel, $access->remoteIp, $access->userAgent] === ['secret-1', 'user', 'bob', 'ui', '192.0.2.7', 'TestAgent/1.0']))
 			->willReturn(true);
 		$this->shareTargetMapper->expects($this->never())->method('findByRecipientSecret');
 
@@ -121,7 +115,8 @@ class HoneyTripwireListenerTest extends TestCase {
 
 		$calls = [];
 		$this->honeyService->method('raiseAlert')
-			->willReturnCallback(static function (string $secretId, string $accessorType, ?string $accessorId, string $channel) use (&$calls): bool {
+			->willReturnCallback(static function (HoneyAccess $access) use (&$calls): bool {
+				[$secretId, $accessorType, $accessorId, $channel] = [$access->secretId, $access->accessorType, $access->accessorId, $access->channel];
 				$calls[] = [$secretId, $channel];
 
 				return ($secretId === 'source-1');
@@ -151,7 +146,8 @@ class HoneyTripwireListenerTest extends TestCase {
 
 		$calls = [];
 		$this->honeyService->method('raiseAlert')
-			->willReturnCallback(static function (string $secretId, string $accessorType, ?string $accessorId, string $channel) use (&$calls): bool {
+			->willReturnCallback(static function (HoneyAccess $access) use (&$calls): bool {
+				[$secretId, $accessorType, $accessorId, $channel] = [$access->secretId, $access->accessorType, $access->accessorId, $access->channel];
 				$calls[] = [$secretId, $channel];
 
 				// The copy itself is not flagged, so the read reaches its share row.
@@ -197,7 +193,7 @@ class HoneyTripwireListenerTest extends TestCase {
 	 */
 	public function testApplicationRetrievalTripsMachineChannel(): void {
 		$this->honeyService->expects($this->once())->method('raiseAlert')
-			->with($this->anything(), $this->equalTo('application'), $this->equalTo('app-9'), $this->equalTo('machine_api'))
+			->with($this->callback(static fn (HoneyAccess $access): bool => [$access->accessorType, $access->accessorId, $access->channel] === ['application', 'app-9', 'machine_api']))
 			->willReturn(true);
 
 		$this->listener->handle(
@@ -222,7 +218,7 @@ class HoneyTripwireListenerTest extends TestCase {
 		$this->linkShareMapper->method('findById')->with('link-1')->willReturn($linkShare);
 
 		$this->honeyService->expects($this->once())->method('raiseAlert')
-			->with($this->equalTo('secret-1'), $this->equalTo('link_visitor'), $this->isNull(), $this->equalTo('link'))
+			->with($this->callback(static fn (HoneyAccess $access): bool => [$access->secretId, $access->accessorType, $access->accessorId, $access->channel] === ['secret-1', 'link_visitor', null, 'link']))
 			->willReturn(true);
 
 		$this->listener->handle(

@@ -7,6 +7,8 @@ import { account, dispatchReturning } from '../testing'
 import { LogInAgain } from './LogInAgain'
 import { Unlock } from './Unlock'
 
+vi.mock('@/src/vault/passkey-support', () => ({ passkeySupport: async () => 'supported' }))
+
 afterEach(cleanup)
 
 describe('Unlock in a Dutch browser', () => {
@@ -178,5 +180,17 @@ describe('LogInAgain', () => {
 		expect(screen.queryByLabelText('Server URL')).toBeNull()
 		await userEvent.setup().type(screen.getByLabelText('App password'), 'new{Enter}')
 		expect(dispatch).toHaveBeenCalledWith({ kind: 'accounts.reauthenticate', accountId: 'a1', appPassword: 'new' })
+	})
+})
+
+describe('fingerprint or face unlock', () => {
+	it('is offered only for an account with an enrolled passkey, and opens its window', async () => {
+		const created = vi.spyOn(browser.windows, 'create').mockResolvedValue({} as never)
+		render(<Unlock account={account({ passkeyUnlock: true })} dispatch={dispatchReturning()} />)
+		await userEvent.setup().click(await screen.findByRole('button', { name: 'Unlock with fingerprint or face' }))
+		expect(new URL((created.mock.calls[0]![0] as { url: string }).url).searchParams.get('vaultPasskey')).toBe('unlock')
+		cleanup()
+		render(<Unlock account={account()} dispatch={dispatchReturning()} />)
+		expect(screen.queryByRole('button', { name: 'Unlock with fingerprint or face' })).toBeNull()
 	})
 })

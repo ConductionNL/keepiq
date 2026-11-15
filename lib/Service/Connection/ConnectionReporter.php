@@ -29,8 +29,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service\Connection;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ConnectionReporterInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -46,14 +47,14 @@ use Throwable;
  *
  * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
  */
-class ConnectionReporter {
+class ConnectionReporter implements ConnectionReporterInterface {
 
 	/**
 	 * The app id integriq keys the rows by.
 	 *
 	 * @var string
 	 */
-	public const APP_ID = Application::APP_ID;
+	public const APP_ID = AppIdentity::APP_ID;
 
 	/**
 	 * Integriq's report event (ADR-041). Named by string so Keepiq stays
@@ -340,12 +341,7 @@ class ConnectionReporter {
 
 			$sent = $this->send(
 				key: $key,
-				build: static fn (): object => new $eventClass(
-					app: self::APP_ID,
-					key: $key,
-					status: $status,
-					message: $message,
-				)
+				build: static fn (): object => new $eventClass(app: self::APP_ID, key: $key, status: $status, message: $message)
 			);
 			if ($sent === true) {
 				$this->appConfig->setValueString(self::APP_ID, self::MEMORY_KEY_PREFIX . $key, $status . '|' . $now);
@@ -353,13 +349,25 @@ class ConnectionReporter {
 
 			return $sent;
 		} catch (Throwable $e) {
-			$this->logger->warning(
-				'Keepiq: could not report a connection to integriq',
-				['key' => $key, 'exception' => $e::class]
-			);
+			$this->warnUnreported(key: $key, exception: $e);
 			return false;
 		}//end try
 	}//end reportObserved()
+
+	/**
+	 * Log that a report could not be made: only the key and the exception class.
+	 *
+	 * @param string    $key       One of {@see self::KEYS}.
+	 * @param Throwable $exception What stopped the report.
+	 *
+	 * @return void
+	 */
+	private function warnUnreported(string $key, Throwable $exception): void {
+		$this->logger->warning(
+			'Keepiq: could not report a connection to integriq',
+			['key' => $key, 'exception' => $exception::class]
+		);
+	}//end warnUnreported()
 
 	/**
 	 * Whether the report memory allows a report with this status now.

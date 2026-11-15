@@ -11,6 +11,26 @@ import { generateUrl } from '@nextcloud/router'
  */
 import { defineStore } from 'pinia'
 
+/**
+ * Run one honey write: clear the last error first, then report whether the
+ * write succeeded, keeping the server's message (else the error's own) when
+ * it did not.
+ *
+ * @param {object} store The honey store.
+ * @param {function(): Promise<void>} write The request and its state update.
+ * @return {Promise<boolean>} Whether the write succeeded.
+ */
+async function succeeded(store, write) {
+	store.error = null
+	try {
+		await write()
+		return true
+	} catch (e) {
+		store.error = e?.response?.data?.message || e?.message
+		return false
+	}
+}
+
 export const useHoneyStore = defineStore('honey', {
 	state: () => ({
 		/** @type {object|null} {flagged, flag} of the inspected secret. */
@@ -54,18 +74,13 @@ export const useHoneyStore = defineStore('honey', {
 		 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 		 */
 		async flag(secretId, note = '') {
-			this.error = null
-			try {
+			return succeeded(this, async () => {
 				const response = await axios.post(
 					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/honey`),
 					{ note },
 				)
 				this.status = { flagged: true, flag: response.data }
-				return true
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-				return false
-			}
+			})
 		},
 
 		/**
@@ -76,17 +91,12 @@ export const useHoneyStore = defineStore('honey', {
 		 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 		 */
 		async unflag(secretId) {
-			this.error = null
-			try {
+			return succeeded(this, async () => {
 				await axios.delete(
 					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/honey`),
 				)
 				this.status = { flagged: false, flag: null }
-				return true
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-				return false
-			}
+			})
 		},
 
 		/**
@@ -121,8 +131,7 @@ export const useHoneyStore = defineStore('honey', {
 		 * @spec openspec/specs/honey-credentials/spec.md#requirement-any-access-to-a-honey-secret-raises-a-high-severity-alert
 		 */
 		async acknowledge(alertId) {
-			this.error = null
-			try {
+			return succeeded(this, async () => {
 				const response = await axios.post(
 					generateUrl(
 						`/apps/keepiq/api/v1/honey/alerts/${alertId}/acknowledge`,
@@ -131,11 +140,7 @@ export const useHoneyStore = defineStore('honey', {
 				this.alerts = this.alerts.map((a) =>
 					a.id === alertId ? response.data : a,
 				)
-				return true
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-				return false
-			}
+			})
 		},
 
 		/**
@@ -147,8 +152,7 @@ export const useHoneyStore = defineStore('honey', {
 		 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 		 */
 		async snooze(alertId, hours = 24) {
-			this.error = null
-			try {
+			return succeeded(this, async () => {
 				const response = await axios.post(
 					generateUrl(
 						`/apps/keepiq/api/v1/honey/alerts/${alertId}/snooze`,
@@ -158,11 +162,7 @@ export const useHoneyStore = defineStore('honey', {
 				this.alerts = this.alerts.map((a) =>
 					a.id === alertId ? response.data : a,
 				)
-				return true
-			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message
-				return false
-			}
+			})
 		},
 	},
 })

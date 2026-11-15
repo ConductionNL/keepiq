@@ -234,4 +234,40 @@ describe('useShareStore — recipient candidates', () => {
 		])
 		expect(store.candidatesLoading).toBe(false)
 	})
+
+	it('names each user once, offers only the shareable ones, and keeps the probe answer order', async () => {
+		mockSharees({ exact: [['bob', 'Bob']], users: ['bob', ['carol', 'Carol'], 'dave'] })
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: {
+				recipients: [
+					{ userId: 'carol', shareable: true },
+					{ userId: 'dave', shareable: false },
+					{ userId: 'bob', shareable: true },
+					null,
+				],
+			},
+		})
+		const store = useShareStore()
+		const options = await store.searchShareableRecipients('x')
+		expect(post.mock.calls[0][1]).toEqual({ userIds: ['bob', 'carol', 'dave'] })
+		expect(options).toEqual([
+			{ id: 'carol', label: 'Carol' },
+			{ id: 'bob', label: 'Bob' },
+		])
+		expect(store.shareableRecipients).toEqual(options)
+	})
+
+	it("records the server's message, else its own text, for a failed search", async () => {
+		mockSharees({ users: ['carol'] })
+		const post = vi.spyOn(axios, 'post')
+		const store = useShareStore()
+		post.mockRejectedValueOnce({ response: { data: { message: 'no' } } })
+		await expect(store.searchShareableRecipients('c')).rejects.toBeTruthy()
+		expect(store.candidatesError).toBe('no')
+		post.mockRejectedValueOnce({})
+		await expect(store.searchShareableRecipients('c')).rejects.toBeTruthy()
+		expect(store.candidatesError).toBe('Failed to search recipients')
+		post.mockResolvedValueOnce({ data: { recipients: 'none' } })
+		await expect(store.searchShareableRecipients('c')).resolves.toEqual([])
+	})
 })

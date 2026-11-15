@@ -162,6 +162,22 @@ describe('WriteSecretForAppDialog', () => {
 		expect(wrapper.emitted('written')).toBeFalsy()
 	})
 
+	it("submit: falls back to the error's own message, then to the dialog's text", async () => {
+		const store = useApplicationStore()
+		const wrapper = mount(WriteSecretForAppDialog, {
+			propsData: { open: true, applicationId: 'app-1', applicationName: 'Test App' },
+			global: { stubs: ncStubs },
+		})
+		await wrapper.setData({ name: 'GitHub PAT', value: 'ghp_AAA' })
+		store.writeSecretForApplication = vi.fn().mockRejectedValue(new Error('down'))
+		await wrapper.vm.submit()
+		expect(wrapper.vm.error).toBe('down')
+		store.writeSecretForApplication = vi.fn().mockRejectedValue({})
+		await wrapper.vm.submit()
+		expect(wrapper.vm.error).toBe('Write failed')
+		expect(wrapper.vm.busy).toBe(false)
+	})
+
 	it('submit: parses JSON additionalFields and forwards the object to the store', async () => {
 		const store = useApplicationStore()
 		store.writeSecretForApplication = vi.fn().mockResolvedValue({ id: 'sec-2' })

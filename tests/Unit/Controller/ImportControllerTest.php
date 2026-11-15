@@ -27,6 +27,7 @@ use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
+use InvalidArgumentException;
 
 /**
  * Tests for the batch-import endpoint.
@@ -119,4 +120,21 @@ class ImportControllerTest extends TestCase {
 		$data = $response->getData();
 		$this->assertSame('created', $data['results'][0]['status']);
 	}//end testSuccessReturnsResultsWithSessionOwner()
+
+	/**
+	 * A chunk the service refuses as too large answers 413 with its message.
+	 *
+	 * @return void
+	 */
+	public function testAChunkTheServiceRefusesIs413(): void {
+		[$controller, $service] = $this->build();
+		$service->expects($this->once())->method('commitChunk')
+			->with([['name' => 'X']], 'alice')
+			->willThrowException(new InvalidArgumentException('Item 0 is too large'));
+
+		$response = $controller->batchCreate([['name' => 'X']]);
+
+		$this->assertSame(413, $response->getStatus());
+		$this->assertSame(['message' => 'Item 0 is too large'], $response->getData());
+	}//end testAChunkTheServiceRefusesIs413()
 }//end class

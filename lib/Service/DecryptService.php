@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Exception\DecryptionException;
+use OCA\Keepiq\Kernel\Contracts\DecryptServiceInterface;
 
 /**
  * Stateless decryption service. No database access, no entity awareness.
@@ -32,13 +33,12 @@ use OCA\Keepiq\Exception\DecryptionException;
  *
  * The encrypted blobs are base64-encoded.
  */
-class DecryptService {
+class DecryptService implements DecryptServiceInterface {
 	private const ENVELOPE_VERSION = 1;
 	private const RSA_BLOCK_SIZE = 512;
 	private const AES_SALT_LENGTH = 16;
 	private const AES_IV_LENGTH = 12;
 	private const AES_TAG_LENGTH = 16;
-	private const PBKDF2_ITERATIONS = 600000;
 
 	/**
 	 * Decrypt RSA-OAEP-SHA256 chunked ciphertext with a private key.
@@ -123,10 +123,10 @@ class DecryptService {
 		$maskedSeed = substr($encoded, 1, $hLen);
 		$maskedDb = substr($encoded, 1 + $hLen);
 
-		$seedMask = $this->mgf1Sha256(seed: $maskedDb, length: $hLen);
+		$seedMask = (new CryptoPrimitives())->mgf1Sha256(seed: $maskedDb, length: $hLen);
 		$seed = $maskedSeed ^ $seedMask;
 
-		$dbMask = $this->mgf1Sha256(seed: $seed, length: ($blockSize - $hLen - 1));
+		$dbMask = (new CryptoPrimitives())->mgf1Sha256(seed: $seed, length: ($blockSize - $hLen - 1));
 		$dataBlock = $maskedDb ^ $dbMask;
 
 		// DB = lHash' || PS || 0x01 || M. Verify lHash and locate the 0x01 marker.
@@ -156,26 +156,6 @@ class DecryptService {
 	}//end oaepSha256Unpad()
 
 	/**
-	 * MGF1 mask generation function (RFC 8017 §B.2.1) using SHA-256.
-	 *
-	 * @param string $seed The seed from which the mask is generated
-	 * @param int $length The intended length in bytes of the mask
-	 *
-	 * @return string The generated mask of $length bytes
-	 */
-	private function mgf1Sha256(string $seed, int $length): string {
-		$output = '';
-		$counter = 0;
-
-		while (strlen($output) < $length) {
-			$output .= hash('sha256', $seed . pack('N', $counter), true);
-			$counter++;
-		}
-
-		return substr($output, 0, $length);
-	}//end mgf1Sha256()
-
-	/**
 	 * Decrypt AES-256-GCM envelope with a raw 32-byte key.
 	 *
 	 * @param string $envelope Base64-encoded envelope
@@ -188,37 +168,7 @@ class DecryptService {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
 	 */
 	public function aesDecrypt(string $envelope, string $key): string {
-		$raw = base64_decode($envelope, true);
-		if ($raw === false) {
-			throw new DecryptionException(message:'Invalid base64 envelope');
-		}
-
-		$minLength = 4 + self::AES_SALT_LENGTH + self::AES_IV_LENGTH + self::AES_TAG_LENGTH;
-		if (strlen($raw) < $minLength) {
-			throw new DecryptionException(message:'Envelope too short');
-		}
-
-		$version = unpack('N', substr($raw, 0, 4))[1];
-		if ($version !== self::ENVELOPE_VERSION) {
-			throw new DecryptionException(message:"Unsupported envelope version: {$version}");
-		}
-
-		$offset = 4 + self::AES_SALT_LENGTH;
-		$ivector = substr($raw, $offset, self::AES_IV_LENGTH);
-		$offset += self::AES_IV_LENGTH;
-
-		$ciphertext = substr($raw, $offset, -self::AES_TAG_LENGTH);
-		$tag = substr($raw, -self::AES_TAG_LENGTH);
-
-		$plaintext = openssl_decrypt(
-			data: $ciphertext,
-			cipher_algo: 'aes-256-gcm',
-			passphrase: $key,
-			options: OPENSSL_RAW_DATA,
-			iv: $ivector,
-			tag: $tag
-		);
-
+		$plaintext = $this->gcmOpen(raw: $this->openedEnvelope(envelope: $envelope), key: $key);
 		if ($plaintext === false) {
 			throw new DecryptionException(message:'AES-256-GCM decryption failed (authentication tag mismatch)');
 		}
@@ -239,7 +189,30 @@ class DecryptService {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
 	 */
 	public function decryptPrivateKey(string $blob, string $password): string {
-		$raw = base64_decode($blob, true);
+		$raw = $this->openedEnvelope(envelope: $blob);
+
+		$salt = substr($raw, 4, self::AES_SALT_LENGTH);
+		$key = $this->deriveKey(password: $password, salt: $salt);
+
+		$plaintext = $this->gcmOpen(raw: $raw, key: $key);
+		if ($plaintext === false) {
+			throw new DecryptionException(message:'Private key decryption failed (wrong password or corrupted blob)');
+		}
+
+		return $plaintext;
+	}//end decryptPrivateKey()
+
+	/**
+	 * The raw envelope, once it decodes, is long enough and has this version.
+	 *
+	 * @param string $envelope Base64-encoded envelope: version(4) + salt(16) + IV(12) + ciphertext + tag(16)
+	 *
+	 * @return string The raw envelope
+	 *
+	 * @throws DecryptionException
+	 */
+	private function openedEnvelope(string $envelope): string {
+		$raw = base64_decode($envelope, true);
 		if ($raw === false) {
 			throw new DecryptionException(message:'Invalid base64 envelope');
 		}
@@ -254,9 +227,18 @@ class DecryptService {
 			throw new DecryptionException(message:"Unsupported envelope version: {$version}");
 		}
 
-		$salt = substr($raw, 4, self::AES_SALT_LENGTH);
-		$key = $this->deriveKey(password: $password, salt: $salt);
+		return $raw;
+	}//end openedEnvelope()
 
+	/**
+	 * AES-256-GCM decryption of a raw envelope's ciphertext with its IV and tag.
+	 *
+	 * @param string $raw The raw envelope
+	 * @param string $key Raw 32-byte AES key
+	 *
+	 * @return string|false The plaintext, or false when the tag does not match
+	 */
+	private function gcmOpen(string $raw, string $key): string|false {
 		$offset = 4 + self::AES_SALT_LENGTH;
 		$ivector = substr($raw, $offset, self::AES_IV_LENGTH);
 		$offset += self::AES_IV_LENGTH;
@@ -264,7 +246,7 @@ class DecryptService {
 		$ciphertext = substr($raw, $offset, -self::AES_TAG_LENGTH);
 		$tag = substr($raw, -self::AES_TAG_LENGTH);
 
-		$plaintext = openssl_decrypt(
+		return openssl_decrypt(
 			data: $ciphertext,
 			cipher_algo: 'aes-256-gcm',
 			passphrase: $key,
@@ -272,13 +254,7 @@ class DecryptService {
 			iv: $ivector,
 			tag: $tag
 		);
-
-		if ($plaintext === false) {
-			throw new DecryptionException(message:'Private key decryption failed (wrong password or corrupted blob)');
-		}
-
-		return $plaintext;
-	}//end decryptPrivateKey()
+	}//end gcmOpen()
 
 	/**
 	 * Derive a 256-bit AES key from a password using PBKDF2-SHA256.
@@ -291,13 +267,6 @@ class DecryptService {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-3
 	 */
 	public function deriveKey(string $password, string $salt): string {
-		return hash_pbkdf2(
-			'sha256',
-			$password,
-			$salt,
-			self::PBKDF2_ITERATIONS,
-			32,
-			true
-		);
+		return (new CryptoPrimitives())->pbkdf2Sha256(password: $password, salt: $salt);
 	}//end deriveKey()
 }//end class

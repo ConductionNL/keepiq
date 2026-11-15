@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Sections;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IURLGenerator;
 use OCP\Settings\IIconSection;
 
@@ -58,7 +58,7 @@ class SettingsSection implements IIconSection {
 	 * @spec openspec/specs/app-shell/spec.md#requirement-native-admin-section-and-version-card
 	 */
 	public function getID(): string {
-		return Application::APP_ID;
+		return AppIdentity::APP_ID;
 	}//end getID()
 
 	/**
@@ -91,6 +91,6 @@ class SettingsSection implements IIconSection {
 	 * @spec openspec/specs/app-shell/spec.md#requirement-native-admin-section-and-version-card
 	 */
 	public function getIcon(): string {
-		return $this->urlGenerator->imagePath(appName: Application::APP_ID, file: 'app-dark.svg');
+		return $this->urlGenerator->imagePath(appName: AppIdentity::APP_ID, file: 'app-dark.svg');
 	}//end getIcon()
 }//end class

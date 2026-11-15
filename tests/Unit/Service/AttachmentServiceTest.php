@@ -27,7 +27,9 @@ use OCA\Keepiq\Db\AttachmentMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Service\AttachmentGrantRequest;
 use OCA\Keepiq\Service\AttachmentService;
+use OCA\Keepiq\Service\AttachmentUpload;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Files\AppData\IAppDataFactory;
@@ -138,11 +140,13 @@ class AttachmentServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessageMatches('/per-attachment limit/');
 		$this->service->upload(
-			secretId: 'sec-1',
-			userId: 'alice',
-			blob: str_repeat('x', 11),
-			encryptedMetadata: 'META',
-			wrappedFileKey: 'WRAPPED_KEY_PLACEHOLDER',
+			upload: new AttachmentUpload(
+				secretId: 'sec-1',
+				userId: 'alice',
+				blob: str_repeat('x', 11),
+				encryptedMetadata: 'META',
+				wrappedFileKey: 'WRAPPED_KEY_PLACEHOLDER',
+			)
 		);
 	}//end testUploadRejectsOverSizeLimit()
 
@@ -159,11 +163,13 @@ class AttachmentServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessageMatches('/quota exceeded/');
 		$this->service->upload(
-			secretId: 'sec-1',
-			userId: 'alice',
-			blob: str_repeat('x', 10),
-			encryptedMetadata: 'META',
-			wrappedFileKey: 'WRAPPED_KEY_PLACEHOLDER',
+			upload: new AttachmentUpload(
+				secretId: 'sec-1',
+				userId: 'alice',
+				blob: str_repeat('x', 10),
+				encryptedMetadata: 'META',
+				wrappedFileKey: 'WRAPPED_KEY_PLACEHOLDER',
+			)
 		);
 	}//end testUploadEnforcesQuota()
 
@@ -189,11 +195,13 @@ class AttachmentServiceTest extends TestCase {
 		);
 
 		$result = $this->service->upload(
-			secretId: 'sec-1',
-			userId: 'alice',
-			blob: 'CIPHERTEXT',
-			encryptedMetadata: 'META',
-			wrappedFileKey: 'WRAPPED_KEY_PLACEHOLDER',
+			upload: new AttachmentUpload(
+				secretId: 'sec-1',
+				userId: 'alice',
+				blob: 'CIPHERTEXT',
+				encryptedMetadata: 'META',
+				wrappedFileKey: 'WRAPPED_KEY_PLACEHOLDER',
+			)
 		);
 
 		$this->assertSame(10, $result['attachment']->getSizeBytes());
@@ -360,22 +368,26 @@ class AttachmentServiceTest extends TestCase {
 		$this->grantMapper->expects($this->never())->method('insert');
 
 		$grant = $this->service->addGrant(
-			attachmentId: 'att-1',
-			userId: 'alice',
-			copySecretId: 'copy-1',
-			recipientId: 'bob',
-			wrappedFileKey: 'REWRAPPED_KEY_PLACEHOLDER',
+			request: new AttachmentGrantRequest(
+				attachmentId: 'att-1',
+				userId: 'alice',
+				copySecretId: 'copy-1',
+				recipientId: 'bob',
+				wrappedFileKey: 'REWRAPPED_KEY_PLACEHOLDER',
+			)
 		);
 		$this->assertSame('g-1', $grant->getId());
 
 		// Non-owner: rejected.
 		$this->expectException(InvalidArgumentException::class);
 		$this->service->addGrant(
-			attachmentId: 'att-1',
-			userId: 'mallory',
-			copySecretId: 'copy-1',
-			recipientId: 'bob',
-			wrappedFileKey: 'REWRAPPED_KEY_PLACEHOLDER',
+			request: new AttachmentGrantRequest(
+				attachmentId: 'att-1',
+				userId: 'mallory',
+				copySecretId: 'copy-1',
+				recipientId: 'bob',
+				wrappedFileKey: 'REWRAPPED_KEY_PLACEHOLDER',
+			)
 		);
 	}//end testAddGrantIdempotentAndOwnerGated()
 }//end class

@@ -20,7 +20,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Mcp;
 
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
-use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -41,7 +41,7 @@ class EntryMetadataTools {
 	/**
 	 * Constructor.
 	 *
-	 * @param SecretService $secretService The vault read path
+	 * @param SecretServiceInterface $secretService The vault read path
 	 * @param EncryptionSuiteMapper $suiteMapper To tell a vault without an active suite
 	 * @param McpToolContext $context The principal and the audit
 	 * @param MetadataAllowList $allowList The keys a result may carry
@@ -49,7 +49,7 @@ class EntryMetadataTools {
 	 * @return void
 	 */
 	public function __construct(
-		private SecretService $secretService,
+		private SecretServiceInterface $secretService,
 		private EncryptionSuiteMapper $suiteMapper,
 		private McpToolContext $context,
 		private MetadataAllowList $allowList = new MetadataAllowList(),
@@ -65,7 +65,8 @@ class EntryMetadataTools {
 		idempotentHint: true,
 		scope: 'read',
 		subject: 'entry',
-		action: 'list'
+		action: 'list',
+		reach: 'user'
 	)]
 	/**
 	 * List the entries in your Keepiq vault: names, URLs, types, folders and

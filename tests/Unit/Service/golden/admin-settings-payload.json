@@ -7,6 +7,7 @@
             "ca_auto_renew_enabled",
             "audit_retention_days",
             "breach_check_enabled",
+            "flow_trigger_groups",
             "expiry_default_max_age_days",
             "expiry_reminder_days",
             "version_retention_count",
@@ -30,9 +31,14 @@
             "lease_renewable",
             "lease_revocation_blocks_refetch",
             "extension_max_idle_minutes",
+            "extension_passkeys_enabled",
+            "extension_passkey_origins",
+            "extension_passkey_pinned_origins",
             "device_approval_enabled",
             "offline_cache_enabled",
             "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url",
             "ca_status"
         ],
         "payload": {
@@ -42,6 +48,7 @@
             "ca_auto_renew_enabled": true,
             "audit_retention_days": 365,
             "breach_check_enabled": false,
+            "flow_trigger_groups": [],
             "expiry_default_max_age_days": 0,
             "expiry_reminder_days": [
                 30,
@@ -76,9 +83,14 @@
             "lease_renewable": true,
             "lease_revocation_blocks_refetch": false,
             "extension_max_idle_minutes": 240,
+            "extension_passkeys_enabled": true,
+            "extension_passkey_origins": [],
+            "extension_passkey_pinned_origins": [],
             "device_approval_enabled": true,
             "offline_cache_enabled": true,
             "offline_edits_enabled": false,
+            "favicon_service_url": "",
+            "site_preview_service_url": "",
             "ca_status": {
                 "status": "active",
                 "expires": "2027-01-01"
@@ -91,6 +103,7 @@
             "bool keepiq ca_auto_renew_enabled true",
             "int keepiq audit_retention_days 365",
             "bool keepiq breach_check_enabled false",
+            "string keepiq flow_trigger_groups []",
             "int keepiq expiry_default_max_age_days 0",
             "string keepiq expiry_reminder_days [30,7,1]",
             "int keepiq version_retention_count 20",
@@ -114,9 +127,13 @@
             "bool keepiq lease_renewable true",
             "bool keepiq lease_revocation_blocks_refetch false",
             "int keepiq extension_max_idle_minutes 240",
+            "bool keepiq extension_passkeys_enabled true",
+            "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
             "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url ",
             "container OCA\\Keepiq\\Service\\CertificateAuthorityService"
         ],
         "debug": []
@@ -129,6 +146,7 @@
             "ca_auto_renew_enabled",
             "audit_retention_days",
             "breach_check_enabled",
+            "flow_trigger_groups",
             "expiry_default_max_age_days",
             "expiry_reminder_days",
             "version_retention_count",
@@ -152,9 +170,14 @@
             "lease_renewable",
             "lease_revocation_blocks_refetch",
             "extension_max_idle_minutes",
+            "extension_passkeys_enabled",
+            "extension_passkey_origins",
+            "extension_passkey_pinned_origins",
             "device_approval_enabled",
             "offline_cache_enabled",
             "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url",
             "ca_status"
         ],
         "payload": {
@@ -164,6 +187,7 @@
             "ca_auto_renew_enabled": false,
             "audit_retention_days": 29,
             "breach_check_enabled": true,
+            "flow_trigger_groups": [],
             "expiry_default_max_age_days": 81,
             "expiry_reminder_days": [
                 14,
@@ -190,9 +214,14 @@
             "lease_renewable": false,
             "lease_revocation_blocks_refetch": true,
             "extension_max_idle_minutes": 240,
+            "extension_passkeys_enabled": true,
+            "extension_passkey_origins": [],
+            "extension_passkey_pinned_origins": [],
             "device_approval_enabled": false,
             "offline_cache_enabled": false,
             "offline_edits_enabled": false,
+            "favicon_service_url": "favicon_service_url-5",
+            "site_preview_service_url": "site_preview_service_url-5",
             "ca_status": {
                 "status": "active",
                 "expires": "2027-01-01"
@@ -205,6 +234,7 @@
             "bool keepiq ca_auto_renew_enabled true",
             "int keepiq audit_retention_days 365",
             "bool keepiq breach_check_enabled false",
+            "string keepiq flow_trigger_groups []",
             "int keepiq expiry_default_max_age_days 0",
             "string keepiq expiry_reminder_days [30,7,1]",
             "int keepiq version_retention_count 20",
@@ -228,9 +258,13 @@
             "bool keepiq lease_renewable true",
             "bool keepiq lease_revocation_blocks_refetch false",
             "int keepiq extension_max_idle_minutes 240",
+            "bool keepiq extension_passkeys_enabled true",
+            "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
             "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url ",
             "container OCA\\Keepiq\\Service\\CertificateAuthorityService"
         ],
         "debug": []
@@ -243,6 +277,7 @@
             "ca_auto_renew_enabled",
             "audit_retention_days",
             "breach_check_enabled",
+            "flow_trigger_groups",
             "expiry_default_max_age_days",
             "expiry_reminder_days",
             "version_retention_count",
@@ -266,9 +301,14 @@
             "lease_renewable",
             "lease_revocation_blocks_refetch",
             "extension_max_idle_minutes",
+            "extension_passkeys_enabled",
+            "extension_passkey_origins",
+            "extension_passkey_pinned_origins",
             "device_approval_enabled",
             "offline_cache_enabled",
-            "offline_edits_enabled"
+            "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url"
         ],
         "payload": {
             "min_password_length": 12,
@@ -277,6 +317,7 @@
             "ca_auto_renew_enabled": true,
             "audit_retention_days": 365,
             "breach_check_enabled": false,
+            "flow_trigger_groups": [],
             "expiry_default_max_age_days": 0,
             "expiry_reminder_days": [
                 30,
@@ -311,9 +352,14 @@
             "lease_renewable": true,
             "lease_revocation_blocks_refetch": false,
             "extension_max_idle_minutes": 240,
+            "extension_passkeys_enabled": true,
+            "extension_passkey_origins": [],
+            "extension_passkey_pinned_origins": [],
             "device_approval_enabled": true,
             "offline_cache_enabled": true,
-            "offline_edits_enabled": false
+            "offline_edits_enabled": false,
+            "favicon_service_url": "",
+            "site_preview_service_url": ""
         },
         "reads": [
             "int keepiq min_password_length 12",
@@ -322,6 +368,7 @@
             "bool keepiq ca_auto_renew_enabled true",
             "int keepiq audit_retention_days 365",
             "bool keepiq breach_check_enabled false",
+            "string keepiq flow_trigger_groups []",
             "int keepiq expiry_default_max_age_days 0",
             "string keepiq expiry_reminder_days [30,7,1]",
             "int keepiq version_retention_count 20",
@@ -345,9 +392,13 @@
             "bool keepiq lease_renewable true",
             "bool keepiq lease_revocation_blocks_refetch false",
             "int keepiq extension_max_idle_minutes 240",
+            "bool keepiq extension_passkeys_enabled true",
+            "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
-            "bool keepiq offline_edits_enabled false"
+            "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url "
         ],
         "debug": []
     },
@@ -359,6 +410,7 @@
             "ca_auto_renew_enabled",
             "audit_retention_days",
             "breach_check_enabled",
+            "flow_trigger_groups",
             "expiry_default_max_age_days",
             "expiry_reminder_days",
             "version_retention_count",
@@ -382,9 +434,14 @@
             "lease_renewable",
             "lease_revocation_blocks_refetch",
             "extension_max_idle_minutes",
+            "extension_passkeys_enabled",
+            "extension_passkey_origins",
+            "extension_passkey_pinned_origins",
             "device_approval_enabled",
             "offline_cache_enabled",
-            "offline_edits_enabled"
+            "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url"
         ],
         "payload": {
             "min_password_length": 79,
@@ -393,6 +450,7 @@
             "ca_auto_renew_enabled": false,
             "audit_retention_days": 29,
             "breach_check_enabled": true,
+            "flow_trigger_groups": [],
             "expiry_default_max_age_days": 81,
             "expiry_reminder_days": [
                 14,
@@ -419,9 +477,14 @@
             "lease_renewable": false,
             "lease_revocation_blocks_refetch": true,
             "extension_max_idle_minutes": 240,
+            "extension_passkeys_enabled": true,
+            "extension_passkey_origins": [],
+            "extension_passkey_pinned_origins": [],
             "device_approval_enabled": false,
             "offline_cache_enabled": false,
-            "offline_edits_enabled": false
+            "offline_edits_enabled": false,
+            "favicon_service_url": "favicon_service_url-5",
+            "site_preview_service_url": "site_preview_service_url-5"
         },
         "reads": [
             "int keepiq min_password_length 12",
@@ -430,6 +493,7 @@
             "bool keepiq ca_auto_renew_enabled true",
             "int keepiq audit_retention_days 365",
             "bool keepiq breach_check_enabled false",
+            "string keepiq flow_trigger_groups []",
             "int keepiq expiry_default_max_age_days 0",
             "string keepiq expiry_reminder_days [30,7,1]",
             "int keepiq version_retention_count 20",
@@ -453,9 +517,13 @@
             "bool keepiq lease_renewable true",
             "bool keepiq lease_revocation_blocks_refetch false",
             "int keepiq extension_max_idle_minutes 240",
+            "bool keepiq extension_passkeys_enabled true",
+            "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
-            "bool keepiq offline_edits_enabled false"
+            "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url "
         ],
         "debug": []
     },
@@ -467,6 +535,7 @@
             "ca_auto_renew_enabled",
             "audit_retention_days",
             "breach_check_enabled",
+            "flow_trigger_groups",
             "expiry_default_max_age_days",
             "expiry_reminder_days",
             "version_retention_count",
@@ -490,9 +559,14 @@
             "lease_renewable",
             "lease_revocation_blocks_refetch",
             "extension_max_idle_minutes",
+            "extension_passkeys_enabled",
+            "extension_passkey_origins",
+            "extension_passkey_pinned_origins",
             "device_approval_enabled",
             "offline_cache_enabled",
             "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url",
             "ca_status"
         ],
         "payload": {
@@ -502,6 +576,7 @@
             "ca_auto_renew_enabled": true,
             "audit_retention_days": 365,
             "breach_check_enabled": false,
+            "flow_trigger_groups": [],
             "expiry_default_max_age_days": 0,
             "expiry_reminder_days": [
                 30,
@@ -536,9 +611,14 @@
             "lease_renewable": true,
             "lease_revocation_blocks_refetch": false,
             "extension_max_idle_minutes": 240,
+            "extension_passkeys_enabled": true,
+            "extension_passkey_origins": [],
+            "extension_passkey_pinned_origins": [],
             "device_approval_enabled": true,
             "offline_cache_enabled": true,
             "offline_edits_enabled": false,
+            "favicon_service_url": "",
+            "site_preview_service_url": "",
             "ca_status": {
                 "status": "unknown"
             }
@@ -550,6 +630,7 @@
             "bool keepiq ca_auto_renew_enabled true",
             "int keepiq audit_retention_days 365",
             "bool keepiq breach_check_enabled false",
+            "string keepiq flow_trigger_groups []",
             "int keepiq expiry_default_max_age_days 0",
             "string keepiq expiry_reminder_days [30,7,1]",
             "int keepiq version_retention_count 20",
@@ -573,9 +654,13 @@
             "bool keepiq lease_renewable true",
             "bool keepiq lease_revocation_blocks_refetch false",
             "int keepiq extension_max_idle_minutes 240",
+            "bool keepiq extension_passkeys_enabled true",
+            "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
-            "bool keepiq offline_edits_enabled false"
+            "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url "
         ],
         "debug": [
             "Keepiq: CA status unavailable: no CA"
@@ -589,6 +674,7 @@
             "ca_auto_renew_enabled",
             "audit_retention_days",
             "breach_check_enabled",
+            "flow_trigger_groups",
             "expiry_default_max_age_days",
             "expiry_reminder_days",
             "version_retention_count",
@@ -612,9 +698,14 @@
             "lease_renewable",
             "lease_revocation_blocks_refetch",
             "extension_max_idle_minutes",
+            "extension_passkeys_enabled",
+            "extension_passkey_origins",
+            "extension_passkey_pinned_origins",
             "device_approval_enabled",
             "offline_cache_enabled",
             "offline_edits_enabled",
+            "favicon_service_url",
+            "site_preview_service_url",
             "ca_status"
         ],
         "payload": {
@@ -624,6 +715,7 @@
             "ca_auto_renew_enabled": false,
             "audit_retention_days": 29,
             "breach_check_enabled": true,
+            "flow_trigger_groups": [],
             "expiry_default_max_age_days": 81,
             "expiry_reminder_days": [
                 14,
@@ -650,9 +742,14 @@
             "lease_renewable": false,
             "lease_revocation_blocks_refetch": true,
             "extension_max_idle_minutes": 240,
+            "extension_passkeys_enabled": true,
+            "extension_passkey_origins": [],
+            "extension_passkey_pinned_origins": [],
             "device_approval_enabled": false,
             "offline_cache_enabled": false,
             "offline_edits_enabled": false,
+            "favicon_service_url": "favicon_service_url-5",
+            "site_preview_service_url": "site_preview_service_url-5",
             "ca_status": {
                 "status": "unknown"
             }
@@ -664,6 +761,7 @@
             "bool keepiq ca_auto_renew_enabled true",
             "int keepiq audit_retention_days 365",
             "bool keepiq breach_check_enabled false",
+            "string keepiq flow_trigger_groups []",
             "int keepiq expiry_default_max_age_days 0",
             "string keepiq expiry_reminder_days [30,7,1]",
             "int keepiq version_retention_count 20",
@@ -687,9 +785,13 @@
             "bool keepiq lease_renewable true",
             "bool keepiq lease_revocation_blocks_refetch false",
             "int keepiq extension_max_idle_minutes 240",
+            "bool keepiq extension_passkeys_enabled true",
+            "string keepiq extension_passkey_origins []",
             "bool keepiq device_approval_enabled true",
             "bool keepiq offline_cache_enabled true",
-            "bool keepiq offline_edits_enabled false"
+            "bool keepiq offline_edits_enabled false",
+            "string keepiq favicon_service_url ",
+            "string keepiq site_preview_service_url "
         ],
         "debug": [
             "Keepiq: CA status unavailable: no CA"

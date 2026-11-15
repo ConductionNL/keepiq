@@ -39,6 +39,7 @@ use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -235,4 +236,59 @@ class SecretRequestControllerTest extends TestCase {
 			$controller->create(requestedFields: ['key'])->getStatus()
 		);
 	}//end testUnauthenticatedCreateIsRefused()
+	/**
+	 * Service refusal codes map to an HTTP status: 403, 404 and 409 pass
+	 * through, anything else is a 400; the message is returned as-is.
+	 *
+	 * @return array<string, array{int, int}>
+	 */
+	public static function refusalCodes(): array {
+		return [
+			'forbidden' => [403, Http::STATUS_FORBIDDEN],
+			'not found' => [404, Http::STATUS_NOT_FOUND],
+			'conflict' => [409, Http::STATUS_CONFLICT],
+			'no code' => [0, Http::STATUS_BAD_REQUEST],
+			'unauthorized code' => [401, Http::STATUS_BAD_REQUEST],
+			'server code' => [500, Http::STATUS_BAD_REQUEST],
+		];
+	}//end refusalCodes()
+
+	/**
+	 * A service refusal becomes the mapped status with the service message.
+	 *
+	 * @param int $code The exception code the service throws
+	 * @param int $expected The expected HTTP status
+	 *
+	 * @return void
+	 */
+	#[DataProvider('refusalCodes')]
+	public function testAServiceRefusalMapsToItsStatus(int $code, int $expected): void {
+		$this->service->method('createForUserVault')
+			->willThrowException(new \InvalidArgumentException('Refused for a reason', $code));
+
+		$response = $this->controller->create(requestedFields: ['key'], name: 'N');
+
+		$this->assertSame($expected, $response->getStatus());
+		$this->assertSame(['message' => 'Refused for a reason'], $response->getData());
+	}//end testAServiceRefusalMapsToItsStatus()
+
+	/**
+	 * An empty applicationId does not select the application path.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyApplicationIdKeepsThePlainPath(): void {
+		$this->service->expects($this->once())
+			->method('create')
+			->willReturn($this->made());
+		$this->service->expects($this->never())->method('createForApplication');
+
+		$response = $this->controller->create(
+			secretId: 'sec-1',
+			requestedFields: ['key'],
+			applicationId: '',
+		);
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+	}//end testAnEmptyApplicationIdKeepsThePlainPath()
 }//end class

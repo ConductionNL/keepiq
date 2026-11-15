@@ -30,23 +30,34 @@ const RANGES = BRANDS.flatMap((brand) => brand.ranges.map((range) => {
 
 const digitsOf = (number: string) => number.replace(/\D/g, '')
 
+type BrandRange = typeof RANGES[number]
+
+/** The narrowest range matched so far, and whether another brand matched one as narrow. */
+interface RangePick {
+	best: BrandRange | null
+	tied: boolean
+}
+
+/** Equal-length digit strings compare as numbers do. */
+function inRange(digits: string, range: BrandRange): boolean {
+	const head = digits.slice(0, range.start.length)
+	return head.length >= range.start.length && head >= range.start && head <= range.end
+}
+
+function narrower(pick: RangePick, range: BrandRange): RangePick {
+	if (!pick.best || range.width < pick.best.width) return { best: range, tied: false }
+	if (range.width === pick.best.width && range.brand !== pick.best.brand) return { best: pick.best, tied: true }
+	return pick
+}
+
 /** The brand of the narrowest matching range; null when none matches or two brands tie. */
 export function cardBrandInfo(number: string): CardBrand | null {
 	const digits = digitsOf(number)
-	let best: typeof RANGES[number] | null = null
-	let tied = false
+	let pick: RangePick = { best: null, tied: false }
 	for (const range of RANGES) {
-		const head = digits.slice(0, range.start.length)
-		// Equal-length digit strings compare as numbers do.
-		if (head.length < range.start.length || head < range.start || head > range.end) continue
-		if (!best || range.width < best.width) {
-			best = range
-			tied = false
-		} else if (range.width === best.width && range.brand !== best.brand) {
-			tied = true
-		}
+		if (inRange(digits, range)) pick = narrower(pick, range)
 	}
-	return best && !tied ? best.brand : null
+	return pick.best && !pick.tied ? pick.best.brand : null
 }
 
 /** The brand's name; `null` where the popup says "Card". */

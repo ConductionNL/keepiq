@@ -49,6 +49,15 @@ to the server.
 - WHEN they complete the "Unlock with passkey" ceremony
 - THEN the vault MUST reach the same unlocked state as a master-password unlock
 
+#### Scenario: The vault key is released only after a verified assertion
+- GIVEN a user with an enrolled, active passkey and a locked vault
+- WHEN the lock screen asks for the unlock options
+- THEN the response MUST carry the challenge and the allowed credential ids but no wrapped unlock key
+- AND the server MUST return the wrapped unlock key of the answering passkey only after it verified the assertion's type, challenge, origin, relying party, user presence, signature and counter
+- AND any failed check MUST be refused without a wrapped unlock key
+
+@e2e exclude An API scenario that needs a WebAuthn authenticator; covered by PHPUnit tests/Unit/Service/PasskeyUnlockTest.php with a software authenticator and vitest tests/store/passkeyUnlock.spec.js.
+
 ### Requirement: Master password remains the canonical fallback
 The system MUST keep the master-password unlock envelope intact and available at
 all times; a lost or removed authenticator MUST NOT cause any loss of vault data

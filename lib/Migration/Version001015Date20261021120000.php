@@ -35,7 +35,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Migration;
 
 use Closure;
-use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Kernel\Contracts\ShareQuarantineScannerInterface;
 use OCP\DB\ISchemaWrapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\DB\Types;
@@ -102,7 +102,7 @@ class Version001015Date20261021120000 extends SimpleMigrationStep {
 	 *
 	 * @param IDBConnection $connection The database connection
 	 * @param LoggerInterface|null $logger The logger (durable record of deleted duplicates)
-	 * @param ShareQuarantineScanner|null $scanner Quarantines planted rows (left to the background job when null)
+	 * @param ShareQuarantineScannerInterface|null $scanner Quarantines planted rows (left to the background job when null)
 	 *
 	 * @return void
 	 *
@@ -111,7 +111,7 @@ class Version001015Date20261021120000 extends SimpleMigrationStep {
 	public function __construct(
 		private IDBConnection $connection,
 		private ?LoggerInterface $logger = null,
-		private ?ShareQuarantineScanner $scanner = null,
+		private ?ShareQuarantineScannerInterface $scanner = null,
 	) {
 	}//end __construct()
 

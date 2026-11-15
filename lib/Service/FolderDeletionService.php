@@ -32,7 +32,6 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ConflictException;
@@ -74,19 +73,6 @@ class FolderDeletionService {
 	}//end __construct()
 
 	/**
-	 * Dispatch a typed audit event, fail-soft.
-	 *
-	 * @param AuditEvent $event The audit event
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3
-	 */
-	private function dispatchAudit(AuditEvent $event): void {
-		$this->eventDispatcher?->dispatchTyped($event);
-	}//end dispatchAudit()
-
-	/**
 	 * Build the children payload for the resolution dialog: the folder's
 	 * direct secret count and its direct subfolders with recursive counts.
 	 *
@@ -119,10 +105,7 @@ class FolderDeletionService {
 	 * before the first write, and the writes commit together or not at all;
 	 * attachment blobs are files, so a rollback cannot bring those back.
 	 *
-	 * @param Folder $folder The folder to delete (ownership verified)
-	 * @param string|null $cascade The shorthand cascade mode (delete/move) for leaf folders
-	 * @param array<string,mixed>|null $resolution The per-subfolder resolution body
-	 * @param string $userId The requesting Nextcloud user ID
+	 * @param FolderDeletion $deletion The owned folder, cascade, resolution and user
 	 *
 	 * @return void
 	 *
@@ -131,57 +114,95 @@ class FolderDeletionService {
 	 *
 	 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 	 */
-	public function delete(Folder $folder, ?string $cascade, ?array $resolution, string $userId): void {
-		$id = $folder->getId();
+	public function delete(FolderDeletion $deletion): void {
+		$id = $deletion->folder->getId();
 		$children = $this->mapper->findChildren($id);
 		$secretCount = $this->secretMapper->countByFolder($id);
-		$hasSecrets = ($secretCount > 0);
-
-		if ($children === [] && $hasSecrets === false) {
+		if ($children === [] && ($secretCount > 0) === false) {
 			// Empty folder — direct delete. No cascade event.
-			$this->mapper->delete($folder);
-			$this->logger->info("Keepiq: empty folder {$id} deleted by {$userId}");
+			$this->mapper->delete($deletion->folder);
+			$this->logger->info("Keepiq: empty folder {$id} deleted by {$deletion->userId}");
 			return;
 		}
 
 		if ($children !== []) {
-			$plan = $this->resolutionPlan(folder: $folder, children: $children, resolution: $resolution);
-			$purgeSecrets = (($resolution['directSecrets'] ?? 'move') === 'delete');
-			$this->atomic(
-				fn: fn () => $this->deleteWithSubfolders(
-					folder: $folder,
-					children: $children,
-					plan: $plan,
-					purgeSecrets: $purgeSecrets,
-					userId: $userId
-				),
-				db: $this->db
-			);
+			$this->deleteBranch(deletion: $deletion, children: $children);
 		}
 
 		if ($children === []) {
-			// Non-empty leaf folder (secrets, no subfolders) — requires cascade.
-			if ($cascade !== 'delete' && $cascade !== 'move') {
-				throw new ConflictException(message: 'Folder is not empty');
-			}
-
-			$this->atomic(fn: fn () => $this->deleteLeafWithSecrets(folder: $folder, cascade: $cascade), db: $this->db);
+			$this->deleteLeaf(deletion: $deletion);
 		}
 
-		$this->dispatchAudit(
-			event: $this->auditEvents->forUser(
-				actorId: $userId,
-				eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
-				objectType: 'folder',
-				objectId: $id,
-				objectName: $folder->getName(),
-				metadata: [
-					'secretCount' => $secretCount,
-					'subfolderCount' => count($children),
-				],
-			)
+		$this->auditCascade(
+			deletion: $deletion,
+			metadata: ['secretCount' => $secretCount, 'subfolderCount' => count($children)]
 		);
 	}//end delete()
+
+	/**
+	 * Delete a folder with subfolders by its checked resolution plan.
+	 *
+	 * @param FolderDeletion $deletion The deletion request
+	 * @param Folder[]       $children The direct subfolders
+	 *
+	 * @return void
+	 *
+	 * @throws ConflictException When no resolution body is supplied
+	 * @throws InvalidArgumentException When the plan is incomplete or invalid
+	 */
+	private function deleteBranch(FolderDeletion $deletion, array $children): void {
+		$plan = $this->resolutionPlan(folder: $deletion->folder, children: $children, resolution: $deletion->resolution);
+		$purgeSecrets = (($deletion->resolution['directSecrets'] ?? 'move') === 'delete');
+		$this->atomic(
+			fn: fn () => $this->deleteWithSubfolders(
+				folder: $deletion->folder,
+				children: $children,
+				plan: $plan,
+				purgeSecrets: $purgeSecrets,
+				userId: $deletion->userId
+			),
+			db: $this->db
+		);
+	}//end deleteBranch()
+
+	/**
+	 * Delete a non-empty leaf folder (secrets, no subfolders), which requires a cascade.
+	 *
+	 * @param FolderDeletion $deletion The deletion request
+	 *
+	 * @return void
+	 *
+	 * @throws ConflictException When the cascade is neither delete nor move
+	 */
+	private function deleteLeaf(FolderDeletion $deletion): void {
+		$cascade = $deletion->cascade;
+		if ($cascade !== 'delete' && $cascade !== 'move') {
+			throw new ConflictException(message: 'Folder is not empty');
+		}
+
+		$this->atomic(fn: fn () => $this->deleteLeafWithSecrets(folder: $deletion->folder, cascade: $cascade), db: $this->db);
+	}//end deleteLeaf()
+
+	/**
+	 * Audit a cascading folder deletion.
+	 *
+	 * @param FolderDeletion     $deletion The deletion request
+	 * @param array<string,int> $metadata The direct secret and subfolder counts
+	 *
+	 * @return void
+	 */
+	private function auditCascade(FolderDeletion $deletion, array $metadata): void {
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forUser(
+				actorId: $deletion->userId,
+				eventType: AuditEventTypes::FOLDER_DELETED_CASCADE,
+				objectType: 'folder',
+				objectId: $deletion->folder->getId(),
+				objectName: $deletion->folder->getName(),
+				metadata: $metadata,
+			)
+		);
+	}//end auditCascade()
 
 	/**
 	 * Delete a leaf folder that contains secrets but no subfolders.

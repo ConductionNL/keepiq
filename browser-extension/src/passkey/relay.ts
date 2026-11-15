@@ -31,6 +31,8 @@ function forPage(result: unknown): RelayToPage {
 	return FALLBACK
 }
 
+const isPasskeyCall = (data: Record<string, unknown> | null): boolean => typeof data === 'object' && data !== null && data.channel === PASSKEY_CHANNEL
+
 export function createPasskeyRelay({ win, request, crossOriginAncestor }: PasskeyRelayOptions) {
 	const live = new Set<Ceremony>()
 
@@ -52,11 +54,21 @@ export function createPasskeyRelay({ win, request, crossOriginAncestor }: Passke
 		if (ceremony.id !== null) void request({ kind: 'passkey.abort', ceremonyId: ceremony.id })
 	}
 
+	async function answerAvailable(port: Port): Promise<void> {
+		const available = await request({ kind: 'passkey.available', crossOriginAncestor: crossOriginAncestor() })
+		return answer(port, available === true ? { type: 'available' } : FALLBACK)
+	}
+
+	/** An aborted or ended ceremony drops the id the background sent; a missing one is a fallback. */
+	function settleStart(ceremony: Ceremony, id: string | null): void {
+		if (ceremony.ended) {
+			if (id !== null) void request({ kind: 'passkey.abort', ceremonyId: id })
+		} else if (id === null) end(ceremony, FALLBACK)
+		else ceremony.id = id
+	}
+
 	async function relay(port: Port, data: Record<string, unknown>): Promise<void> {
-		if (data.kind === 'available') {
-			const available = await request({ kind: 'passkey.available', crossOriginAncestor: crossOriginAncestor() })
-			return answer(port, available === true ? { type: 'available' } : FALLBACK)
-		}
+		if (data.kind === 'available') return answerAvailable(port)
 		const parsed = parsePasskeyRequest({ type: data.kind, options: data.options, mediation: data.mediation })
 		if (!parsed) return answer(port, FALLBACK)
 		const ceremony: Ceremony = { port, id: null, ended: false }
@@ -65,27 +77,29 @@ export function createPasskeyRelay({ win, request, crossOriginAncestor }: Passke
 			if ((event.data as { kind?: unknown } | null)?.kind === 'abort') abort(ceremony)
 		}
 		const reply = await request({ kind: 'passkey.start', request: parsed, crossOriginAncestor: crossOriginAncestor() }) as { ceremonyId?: unknown } | null
-		const id = typeof reply?.ceremonyId === 'string' ? reply.ceremonyId : null
-		if (ceremony.ended) {
-			if (id !== null) void request({ kind: 'passkey.abort', ceremonyId: id })
-		} else if (id === null) end(ceremony, FALLBACK)
-		else ceremony.id = id
+		settleStart(ceremony, typeof reply?.ceremonyId === 'string' ? reply.ceremonyId : null)
+	}
+
+	/** The port and request of a call from this frame's own scripts on the passkey channel, acknowledged; null for any other. */
+	function acceptedCall(event: MessageEvent): { port: Port; data: Record<string, unknown> } | null {
+		try {
+			// Only this frame's own scripts: another window holding a port must not start a ceremony as this frame.
+			if (event.source !== win) return null
+			const data = event.data as Record<string, unknown>
+			if (!isPasskeyCall(data)) return null
+			const port = event.ports[0]
+			if (!port) return null
+			port.postMessage({ type: 'ack' } satisfies RelayToPage)
+			return { port, data }
+		} catch {
+			return null
+		}
 	}
 
 	win.addEventListener('message', (event: MessageEvent) => {
-		let port: Port | undefined
-		let data: Record<string, unknown>
-		try {
-			// Only this frame's own scripts: another window holding a port must not start a ceremony as this frame.
-			if (event.source !== win) return
-			data = event.data as Record<string, unknown>
-			if (typeof data !== 'object' || data === null || data.channel !== PASSKEY_CHANNEL) return
-			port = event.ports[0]
-			if (!port) return
-			port.postMessage({ type: 'ack' } satisfies RelayToPage)
-		} catch {
-			return
-		}
+		const call = acceptedCall(event)
+		if (!call) return
+		const { port, data } = call
 		void relay(port, data).catch(() => {
 			const ceremony = [...live].find((c) => c.port === port)
 			if (ceremony) end(ceremony, FALLBACK)

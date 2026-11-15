@@ -7,20 +7,11 @@
 			:label="t('keepiq', 'Current password')"
 			:disabled="loading" />
 
-		<NcPasswordField
-			v-model="newPassword"
-			:label="t('keepiq', 'New password')"
-			:disabled="loading" />
-
-		<PasswordStrengthMeter
-			v-if="newPassword"
-			:password="newPassword"
+		<NewPasswordFields
+			v-model:newPassword="newPassword"
+			v-model:confirmPassword="confirmPassword"
+			:disabled="loading"
 			@strengthChange="onStrengthChange" />
-
-		<NcPasswordField
-			v-model="confirmPassword"
-			:label="t('keepiq', 'Confirm new password')"
-			:disabled="loading" />
 
 		<NcNoteCard
 			v-if="confirmPassword && newPassword !== confirmPassword"
@@ -47,12 +38,12 @@
 
 <script>
 import { NcButton, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
-import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
+import NewPasswordFields from './NewPasswordFields.vue'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 
 export default {
 	name: 'MasterPasswordForm',
-	components: { NcButton, NcNoteCard, NcPasswordField, PasswordStrengthMeter },
+	components: { NcButton, NcNoteCard, NcPasswordField, NewPasswordFields },
 
 	data() {
 		return {

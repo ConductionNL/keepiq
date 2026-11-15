@@ -546,4 +546,92 @@ class ApplicationSecretRequestServiceTest extends TestCase {
 		$suites->method('findById')->willReturn($suite);
 		return $suites;
 	}//end activeSuites()
+
+	/**
+	 * The guards, the shell, the stored request and the log line of one
+	 * creation, in order; a failed cleanup is logged and the original failure
+	 * still thrown.
+	 *
+	 * @return void
+	 */
+	public function testCreationCallsInOrderAndAFailedCleanupKeepsTheOriginalFailure(): void {
+		$calls = [];
+		$policy = $this->createMock(SecretRequestPolicy::class);
+		$policy->method('requireApplicationSuiteId')->willReturnCallback(static function (string $applicationId) use (&$calls): string {
+			$calls[] = ['suite', $applicationId];
+			return 'suite-app-1';
+		});
+		$writeLock = $this->createMock(WriteLockService::class);
+		$writeLock->method('assertNotWriteLocked')->willReturnCallback(static function (string $ownerId, string $ownerType) use (&$calls): void {
+			$calls[] = ['lock', $ownerId, $ownerType];
+		});
+		$shell = new Secret();
+		$shell->setId('sec-shell');
+		$this->secretService->method('createByApplication')->willReturnCallback(static function (array $data, string $applicationId, bool $allowUnfilled) use (&$calls, $shell): Secret {
+			$calls[] = ['shell', $data, $applicationId, $allowUnfilled];
+			return $shell;
+		});
+		$inserts = 0;
+		$this->mapper->method('insert')->willReturnCallback(static function (SecretRequest $row) use (&$calls, &$inserts): SecretRequest {
+			$inserts++;
+			$calls[] = ['insert', strlen((string)$row->getId()), $row->getSecretId(), $row->getEncryptionSuiteId(), $row->getRequestedFields(), $row->getStatus(), $row->getIsReRequest(), $row->getExpiresAt()?->format('Y-m-d'), $row->getCreatedBy(), strlen((string)$row->getToken())];
+			if ($inserts === 2) {
+				throw new RuntimeException('insert failed');
+			}
+
+			$row->setId('req-1');
+			return $row;
+		});
+		$this->secretService->method('deleteByApplication')->willReturnCallback(static function (string $secretId, string $applicationId) use (&$calls): void {
+			$calls[] = ['deleteShell', $secretId, $applicationId];
+			throw new RuntimeException('cleanup failed');
+		});
+		$logger = $this->createMock(LoggerInterface::class);
+		foreach (['info', 'error'] as $level) {
+			$logger->method($level)->willReturnCallback(static function (string $message, array $context = []) use (&$calls, $level): void {
+				unset($context['exception']);
+				$calls[] = [$level, $message, $context];
+			});
+		}
+
+		$service = new ApplicationSecretRequestService(
+			mapper: $this->mapper,
+			policy: $policy,
+			outbox: new SecretRequestOutbox(),
+			logger: $logger,
+			writeLockService: $writeLock,
+			container: $this->container,
+		);
+
+		$service->createForApplicationVault(
+			applicationId: 'app-1',
+			requestedFields: ['k' => 'key', 'u' => 'url'],
+			name: 'DB password',
+			folderId: 'folder-1',
+			expiresAt: new DateTime('2099-02-03'),
+		);
+		try {
+			$service->createForApplicationVault(applicationId: 'app-1', requestedFields: ['key']);
+			$this->fail('the insert failure was swallowed');
+		} catch (RuntimeException $exception) {
+			$this->assertSame('insert failed', $exception->getMessage());
+		}
+
+		$this->assertSame(
+			[
+				['suite', 'app-1'],
+				['lock', 'app-1', 'application'],
+				['shell', ['name' => 'DB password', 'folderId' => 'folder-1', 'key' => ''], 'app-1', true],
+				['insert', 36, 'sec-shell', 'suite-app-1', '["key","url"]', SecretRequest::STATUS_PENDING, false, '2099-02-03', 'application:app-1', 32],
+				['info', 'Created application-initiated secret request req-1', ['app' => 'keepiq', 'applicationId' => 'app-1']],
+				['suite', 'app-1'],
+				['lock', 'app-1', 'application'],
+				['shell', ['name' => 'Unfilled request', 'folderId' => null, 'key' => ''], 'app-1', true],
+				['insert', 36, 'sec-shell', 'suite-app-1', '["key"]', SecretRequest::STATUS_PENDING, false, null, 'application:app-1', 32],
+				['deleteShell', 'sec-shell', 'app-1'],
+				['error', 'Keepiq: failed to remove the shell of a failed application request', ['secretId' => 'sec-shell', 'applicationId' => 'app-1']],
+			],
+			$calls
+		);
+	}//end testCreationCallsInOrderAndAFailedCleanupKeepsTheOriginalFailure()
 }//end class

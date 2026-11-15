@@ -33,6 +33,7 @@ use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Service\ShareQuarantineService;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\TestCase;
 
@@ -47,6 +48,13 @@ class ShareQuarantineReleaseTest extends TestCase {
 	 * @var ShareTarget
 	 */
 	private ShareTarget $row;
+
+	/**
+	 * What the live lookup for the row's pair answers, or null for none.
+	 *
+	 * @var (callable(): ShareTarget)|null
+	 */
+	private $liveLookup = null;
 
 	/**
 	 * Seed the row.
@@ -112,6 +120,29 @@ class ShareQuarantineReleaseTest extends TestCase {
 	}//end testARowTheFolderStillGrantsIsReleased()
 
 	/**
+	 * Golden: a row whose pair is live again, once or more, is never released,
+	 * even when forced; it is dropped instead.
+	 *
+	 * @return void
+	 */
+	public function testARowWhosePairIsSharedAgainIsNotReleased(): void {
+		$answers = [
+			'one live row' => static fn (): ShareTarget => new ShareTarget(),
+			'several live rows' => static fn (): ShareTarget => throw new MultipleObjectsReturnedException('two'),
+		];
+		foreach ($answers as $name => $answer) {
+			$this->liveLookup = $answer;
+			try {
+				$this->service(folderExists: true, members: ['bob'])->release(id: 'row-V', force: true);
+				$this->fail($name . ' was released');
+			} catch (InvalidArgumentException $exception) {
+				$this->assertSame('The source is shared with this recipient again; drop this row instead', $exception->getMessage());
+				$this->assertNotNull($this->row->getQuarantinedAt());
+			}
+		}
+	}//end testARowWhosePairIsSharedAgainIsNotReleased()
+
+	/**
 	 * The quarantine service over the one row and a folder that does or does
 	 * not exist and covers the given members.
 	 *
@@ -126,7 +157,9 @@ class ShareQuarantineReleaseTest extends TestCase {
 		$quarantined->method('findQuarantinedById')->willReturn($this->row);
 		$quarantined->method('update')->willReturnArgument(0);
 		$live = $this->createMock(ShareTargetMapper::class);
-		$live->method('findBySourceSecretAndTargetUser')->willThrowException(new DoesNotExistException('none'));
+		$live->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			fn (): ShareTarget => ($this->liveLookup ?? static fn (): ShareTarget => throw new DoesNotExistException('none'))()
+		);
 		$folders = $this->createMock(TeamFolderMapper::class);
 		if ($folderExists === true) {
 			$folders->method('findById')->willReturn(new TeamFolder());

@@ -303,4 +303,63 @@ class SeedDevelopmentSharesTest extends TestCase {
 		$this->assertSame($groupShareInserted[0]->getId(), $groupShareRow[0]->getGroupShareId());
 		$this->assertSame('dev-user-3', $groupShareRow[0]->getTargetUserId());
 	}//end testHappyPathInsertsAllRows()
+
+	/**
+	 * A rerun over three secrets whose rows all exist inserts nothing, logs
+	 * each skipped direct, group and fan-out row, and reports zero seeded.
+	 *
+	 * @return void
+	 */
+	public function testARerunSkipsEveryExistingRow(): void {
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueBool')->willReturn(true);
+
+		$suiteMapper = $this->createMock(EncryptionSuiteMapper::class);
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suiteMapper->method('findActiveByOwner')->willReturn($suite);
+
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$secretMapper->method('findByOwner')->willReturn(
+			[$this->devSecret('s-1'), $this->devSecret('s-2'), $this->devSecret('s-3')]
+		);
+
+		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+		$shareTargetMapper->expects($this->exactly(3))->method('findById')->willReturn(new ShareTarget());
+		$shareTargetMapper->expects($this->never())->method('insert');
+		$groupShareMapper = $this->createMock(GroupShareMapper::class);
+		$groupShareMapper->expects($this->once())->method('findById')->willReturn(new GroupShare());
+		$groupShareMapper->expects($this->never())->method('insert');
+
+		$debug = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('debug')->willReturnCallback(
+			static function (string $message) use (&$debug): void {
+				$debug[] = preg_replace('/[0-9a-f-]{36}/', '<id>', $message);
+			}
+		);
+		$logger->expects($this->once())->method('info')->with('Keepiq dev seed: created 0 user share rows');
+		$output = $this->createMock(IOutput::class);
+		$output->expects($this->once())->method('info')->with('Keepiq: seeded 0 development user shares');
+
+		$step = new SeedDevelopmentShares(
+			secretMapper: $secretMapper,
+			shareTargetMapper: $shareTargetMapper,
+			groupShareMapper: $groupShareMapper,
+			suiteMapper: $suiteMapper,
+			seedGate: new SeedVersionGate(config: $config, appConfig: $this->unseededAppConfig()),
+			logger: $logger,
+		);
+		$step->run($output);
+
+		$this->assertSame(
+			[
+				'Keepiq dev seed: share target <id> already exists, skipping',
+				'Keepiq dev seed: share target <id> already exists, skipping',
+				'Keepiq dev seed: group share <id> already exists, skipping',
+				'Keepiq dev seed: fan-out share target <id> already exists, skipping',
+			],
+			$debug
+		);
+	}//end testARerunSkipsEveryExistingRow()
 }//end class

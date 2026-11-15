@@ -23,12 +23,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Event;
 
-use OCP\EventDispatcher\Event;
-
 /**
  * Fired when compromise recovery for an EncryptionSuite completes.
  */
-class SuiteMigrationCompletedEvent extends Event {
+class SuiteMigrationCompletedEvent extends SuiteMigrationEvent {
 	/**
 	 * Constructor for SuiteMigrationCompletedEvent.
 	 *
@@ -45,40 +43,13 @@ class SuiteMigrationCompletedEvent extends Event {
 	 *   POST body on MigrationController::complete().
 	 */
 	public function __construct(
-		private string $oldSuiteId,
-		private string $newSuiteId,
-		private string $migrationId,
+		string $oldSuiteId,
+		string $newSuiteId,
+		string $migrationId,
 		private bool $hasErrors = false,
 	) {
-		parent::__construct();
+		parent::__construct(oldSuiteId: $oldSuiteId, newSuiteId: $newSuiteId, migrationId: $migrationId);
 	}//end __construct()
-
-	/**
-	 * Get the compromised suite ID.
-	 *
-	 * @return string
-	 */
-	public function getOldSuiteId(): string {
-		return $this->oldSuiteId;
-	}//end getOldSuiteId()
-
-	/**
-	 * Get the replacement suite ID.
-	 *
-	 * @return string
-	 */
-	public function getNewSuiteId(): string {
-		return $this->newSuiteId;
-	}//end getNewSuiteId()
-
-	/**
-	 * Get the migration record ID.
-	 *
-	 * @return string
-	 */
-	public function getMigrationId(): string {
-		return $this->migrationId;
-	}//end getMigrationId()
 
 	/**
 	 * Whether the migration completed with errors.

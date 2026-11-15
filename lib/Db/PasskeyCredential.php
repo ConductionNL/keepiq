@@ -57,10 +57,18 @@ use OCP\AppFramework\Db\Entity;
  * @method void setRpId(?string $rpId)
  * @method string getStatus()
  * @method void setStatus(string $status)
+ * @method int|null getTokenId()
+ * @method void setTokenId(?int $tokenId)
+ * @method string|null getUserHandle()
+ * @method void setUserHandle(?string $userHandle)
+ * @method int getSignCount()
+ * @method void setSignCount(int $signCount)
  * @method DateTime|null getLastUsedAt()
  * @method void setLastUsedAt(?DateTime $lastUsedAt)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
+ *
+ * @SuppressWarnings(PHPMD.TooManyFields) One field per column of the credential row.
  */
 class PasskeyCredential extends Entity implements JsonSerializable {
 
@@ -152,6 +160,29 @@ class PasskeyCredential extends Entity implements JsonSerializable {
 	protected string $status = 'active';
 
 	/**
+	 * The token id of the app password an extension credential was enrolled
+	 * under; null for a web credential.
+	 *
+	 * @var integer|null
+	 */
+	protected ?int $tokenId = null;
+
+	/**
+	 * The random WebAuthn user handle of an extension credential (base64url);
+	 * null for a web credential, whose handle is the uid.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $userHandle = null;
+
+	/**
+	 * The WebAuthn signature counter of the last verified assertion.
+	 *
+	 * @var integer
+	 */
+	protected int $signCount = 0;
+
+	/**
 	 * Last successful unlock.
 	 *
 	 * @var DateTime|null
@@ -191,6 +222,9 @@ class PasskeyCredential extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'clientKind', type: 'string');
 		$this->addType(fieldName: 'rpId', type: 'string');
 		$this->addType(fieldName: 'status', type: 'string');
+		$this->addType(fieldName: 'tokenId', type: 'integer');
+		$this->addType(fieldName: 'userHandle', type: 'string');
+		$this->addType(fieldName: 'signCount', type: 'integer');
 		$this->addType(fieldName: 'lastUsedAt', type: 'datetime');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 	}//end __construct()

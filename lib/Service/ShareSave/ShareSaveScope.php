@@ -245,18 +245,7 @@ class ShareSaveScope {
 			'skipRefused' => $this->refusedSkips(path: $path, skipped: $entries->skipped, required: $required['copies']),
 		];
 
-		$namedShares = array_flip($entries->shareIds());
-		$federated = [
-			'required' => array_values(array_map(
-				static fn (FederatedShare $share): array => [
-					'shareId' => $share->getId(),
-					'recipientCloudId' => $share->getRecipientCloudId(),
-				],
-				$required['federated']
-			)),
-			'missing' => array_keys(array_diff_key($required['federated'], $namedShares)),
-			'unexpected' => array_keys(array_diff_key($namedShares, $required['federated'])),
-		];
+		$federated = $this->federatedLists(required: $required['federated'], entries: $entries);
 
 		if ($copies['missing'] !== [] || $copies['unexpected'] !== [] || $copies['skipRefused'] !== []
 			|| $federated['missing'] !== [] || $federated['unexpected'] !== []
@@ -271,6 +260,31 @@ class ShareSaveScope {
 
 		return $required;
 	}//end assertComplete()
+
+	/**
+	 * The partner shares a save must name, and those it left out or added.
+	 *
+	 * @param array<string,FederatedShare> $required The required partner shares, keyed by id
+	 * @param ShareSaveEntries             $entries  The lists, staged ones included
+	 *
+	 * @return array{required:list<array{shareId:string,recipientCloudId:string}>,missing:list<string>,unexpected:list<string>}
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	private function federatedLists(array $required, ShareSaveEntries $entries): array {
+		$namedShares = array_flip($entries->shareIds());
+		return [
+			'required' => array_values(array_map(
+				static fn (FederatedShare $share): array => [
+					'shareId' => $share->getId(),
+					'recipientCloudId' => $share->getRecipientCloudId(),
+				],
+				$required
+			)),
+			'missing' => array_keys(array_diff_key($required, $namedShares)),
+			'unexpected' => array_keys(array_diff_key($namedShares, $required)),
+		];
+	}//end federatedLists()
 
 	/**
 	 * Refuse a stage that grows past the rows the save could ever name, or

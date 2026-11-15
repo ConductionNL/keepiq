@@ -23,10 +23,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\ComplianceReport;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\ComplianceReportService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\ComplianceReportServiceInterface;
 use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -44,19 +44,19 @@ class ComplianceReportController extends OCSController {
 	 * Constructor for ComplianceReportController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param ComplianceReportService $service The compliance service
+	 * @param ComplianceReportServiceInterface $service The compliance service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Audit admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Audit admin area
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private ComplianceReportService $service,
+		private ComplianceReportServiceInterface $service,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

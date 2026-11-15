@@ -240,7 +240,8 @@ describe('sign-up and password change', () => {
 		expect(classifyField($('#u'))).toBe('username')
 		expect(classifyField($('#p'))).toBe('newPassword')
 		expect(classifyField($('#c'))).toBe('newPassword')
-		for (const id of ['#e', '#u', '#p', '#c']) expect(isQualifying($(id))).toBeNull()
+		for (const id of ['#e', '#u']) expect(isQualifying($(id))).toBeNull()
+		for (const id of ['#p', '#c']) expect(isQualifying($(id))).toBe('newPassword')
 	})
 
 	it('classifies a sign-up with one password and no tokens by its submit text', () => {
@@ -266,7 +267,9 @@ describe('sign-up and password change', () => {
 		expect(group?.username).toBe($('#u'))
 		expect(group?.currentPassword).toBe($('#cur'))
 		expect(group?.newPasswords).toEqual([$('#new'), $('#c')])
-		for (const id of ['#u', '#cur', '#new', '#c']) expect(isQualifying($(id))).toBeNull()
+		// The current password gets no offer; the new one and its confirmation do.
+		for (const id of ['#u', '#cur']) expect(isQualifying($(id))).toBeNull()
+		for (const id of ['#new', '#c']) expect(isQualifying($(id))).toBe('newPassword')
 	})
 
 	it('reads three unlabelled password fields as current, new and confirm by their shape', () => {
@@ -298,7 +301,8 @@ describe('sign-up and password change', () => {
 			<button>Save</button>
 		</form>`)
 		expect(groupOf($('#new'))?.kind).toBe('passwordChange')
-		expect(isQualifying($('#new'))).toBeNull()
+		expect(isQualifying($('#new'))).toBe('newPassword')
+		expect(isQualifying($('#c'))).toBe('newPassword')
 	})
 })
 
@@ -405,6 +409,13 @@ describe('one-time codes', () => {
 })
 
 describe('newsletters', () => {
+	it('anchors formless fields at the document when the only loose button is a newsletter Subscribe', () => {
+		mount(`<main><label>Username <input id="u" type="text"></label><label>Password <input id="p" type="password"></label></main>
+			<footer><label>Email <input id="ne" type="email"></label><button type="button">Subscribe</button></footer>`)
+		expect(groupOf($('#u'))?.anchor).toBe(document)
+		expect(groupOf($('#p'))?.anchor).toBe(document)
+	})
+
 	it('does not treat an "Email" + "Subscribe" form as a login', () => {
 		mount(`<form>
 			<label>Email <input id="e" name="email" type="email"></label>
@@ -533,9 +544,9 @@ describe('formless groups', () => {
 			expect(submits).not.toContain(document.getElementById('header-signup'))
 		})
 
-		it('qualifies the login panel fields only', () => {
-			const qualifying = ['#lu', '#lp', '#su', '#sp', '#sc', '#ne'].filter((id) => isQualifying($(id)))
-			expect(qualifying).toEqual(['#lu', '#lp'])
+		it('qualifies the login panel fields, and the sign-up panel\'s new passwords for the offer', () => {
+			const qualifying = ['#lu', '#lp', '#su', '#sp', '#sc', '#ne'].map((id) => [id, isQualifying($(id))]).filter(([, mode]) => mode)
+			expect(qualifying).toEqual([['#lu', 'login'], ['#lp', 'login'], ['#sp', 'newPassword'], ['#sc', 'newPassword']])
 		})
 
 		it('finds the login panel as the only login', () => {
@@ -1415,5 +1426,32 @@ describe('fillSelect', () => {
 		const select = document.getElementById('s') as HTMLSelectElement
 		expect(fillSelect(select, ['2031', '31', ''])).toBe(false)
 		expect(select.value).toBe('2026')
+	})
+})
+
+describe('signals that tip a field', () => {
+	it.each([
+		['six characters', '6', 'oneTimeCode'],
+		['four characters', '4', 'oneTimeCode'],
+		['eight characters', '8', 'oneTimeCode'],
+		['nine characters', '9', 'other'],
+		['three characters', '3', 'other'],
+	])('takes a field named as a code of %s as a one-time code only between four and eight', (_name, maxlength, role) => {
+		mount(`<form><label>Verification code <input id="c" maxlength="${maxlength}"></label><button>Verify</button></form>`)
+		expect(classifyField($('#c'))).toBe(role)
+	})
+
+	it.each(['Postal code', 'Zip code'])('never takes "%s" as a one-time code, numeric and short as it is', (label) => {
+		mount(`<form><label>${label} <input id="c" inputmode="numeric" maxlength="6"></label><button>Send</button></form>`)
+		expect(classifyField($('#c'))).toBe('other')
+	})
+
+	it('reads an email token as an identity email outside a login, whatever its label', () => {
+		mount(`<form>
+			<label>Contact <input id="e" autocomplete="email"></label>
+			<label>Voornaam <input id="f"></label>
+			<button>Opslaan</button>
+		</form>`)
+		expect(roles('#e', '#f')).toEqual(['email', 'firstName'])
 	})
 })

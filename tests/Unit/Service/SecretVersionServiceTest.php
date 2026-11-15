@@ -275,6 +275,46 @@ class SecretVersionServiceTest extends TestCase {
 	}//end testRestoreSnapshotsHeadThenSetsFields()
 
 	/**
+	 * Golden: a restore writes every value field of the version onto the
+	 * head, the empty ones included, and moves the head past its stored version.
+	 *
+	 * @return void
+	 */
+	public function testARestoreWritesEveryValueFieldOfTheVersion(): void {
+		$version = new SecretVersion();
+		$version->setId('v-1');
+		$version->setSecretId('sec-1');
+		$version->setVersionNumber(2);
+		$version->setName('Old wiki');
+		$version->setUrl('https://old.example');
+		$version->setKey('OLD_CIPHERTEXT');
+		$version->setLogin('OLD_LOGIN');
+		$version->setAdditionalFields(null);
+		$version->setEncryptionSuiteId('suite-1');
+		$this->mapper->method('findById')->willReturn($version);
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('active');
+		$this->suiteMapper->method('findById')->willReturn($suite);
+		$head = $this->ownedSecret();
+		$head->setUrl('https://head.example');
+		$head->setLogin('HEAD_LOGIN');
+		$head->setAdditionalFields('HEAD_FIELDS');
+		$this->secretMapper->method('findById')->willReturn($head);
+		$this->mapper->method('nextVersionNumber')->willReturn(5);
+		$this->mapper->method('insert')->willReturnArgument(0);
+		$this->secretMapper->method('update')->willReturnArgument(0);
+
+		$result = $this->service->restore(versionId: 'v-1', userId: 'alice');
+
+		$this->assertSame(
+			['Old wiki', 'https://old.example', 'OLD_CIPHERTEXT', 'OLD_LOGIN', null],
+			[$result->getName(), $result->getUrl(), $result->getKey(), $result->getLogin(), $result->getAdditionalFields()]
+		);
+		$this->assertGreaterThanOrEqual(time() - 1, $result->getUpdatedAt()->getTimestamp());
+	}//end testARestoreWritesEveryValueFieldOfTheVersion()
+
+	/**
 	 * A version holding totp and passkeys ciphertext restores both onto the head.
 	 *
 	 * @return void

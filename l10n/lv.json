@@ -1837,7 +1837,20 @@
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Šī nav autentifikatora atslēga. Ielīmējiet saiti otpauth://totp/ vai noslēpumu base32 formātā.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Šis QR kods nesatur autentifikatora atslēgu. Izmantojiet QR kodu, ko vietne rāda, iestatot divpakāpju pieteikšanos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Šis noslēpums gaida savu kopīgojumu pārbaudi, kas vēl nav pabeigta. Nekas netika saglabāts; mēģiniet vēlāk vai lūdziet administratoram pārbaudīt, vai darbojas fona uzdevumi.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Tikai īpašnieks var mainīt pārvaldnieku vai dalību, kas aptver pārvaldnieku."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tikai īpašnieks var mainīt pārvaldnieku vai dalību, kas aptver pārvaldnieku.",
+        "Additional fields after the merge": "Papildu lauki pēc apvienošanas",
+        "Duplicates": "Dublikāti",
+        "Exact duplicates": "Precīzi dublikāti",
+        "Item to keep": "Paturamais vienums",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Vienumi, kuros tas pats pieteikšanās ieraksts ir vairāk nekā vienu reizi. Apvienošana patur vienu un noņem pārējos.",
+        "Likely duplicates": "Iespējamie dublikāti",
+        "Merge": "Apvienot",
+        "Merge duplicates": "Apvienot dublikātus",
+        "People who lose access: {count}": "Cilvēki, kas zaudē piekļuvi: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Tā pati adrese un lietotājvārds, cita parole. Tā var izskatīties divi atsevišķi konti, tāpēc pārbaudiet pirms apvienošanas.",
+        "The merge did not complete. Check the items of this group in your vault.": "Apvienošana netika pabeigta. Pārbaudiet šīs grupas vienumus savā glabātavā.",
+        "The merge failed. Nothing was removed.": "Apvienošana neizdevās. Nekas netika noņemts.",
+        "The other items move to the trash, where you can restore them.": "Pārējie vienumi nonāk miskastē, no kurienes tos var atjaunot."
     },
     "plurals": null
 }

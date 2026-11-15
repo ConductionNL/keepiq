@@ -1,0 +1,185 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`createSuite > registers a wrapped key pair and unlocks the session with it 1`] = `
+{
+  "calls": [
+    "generateKeyPair",
+    "encryptPrivateKey",
+  ],
+  "loading": false,
+  "post": [
+    [
+      {
+        "encryptedPrivateKey": "WRAP(192|pw)",
+        "publicKey": "PUB",
+      },
+    ],
+  ],
+  "session": {
+    "certificate": "CERT",
+    "cryptoKey": "KEY(192)",
+    "encryptedPrivateKey": "WRAP(192|pw)",
+    "suiteId": "s1",
+  },
+  "suite": {
+    "certificate": "CERT",
+    "id": "s1",
+  },
+}
+`;
+
+exports[`initiateCompromiseRecovery > runs the rotation in order and returns the outcome with the residual contacts 1`] = `
+{
+  "calls": [
+    "loadQueue",
+    "assertNoPendingChanges",
+    "generateKeyPair",
+    "encryptPrivateKey",
+    "proof:compromise-recovery",
+    "post",
+    "evict",
+    "runMigration",
+    "migrateEmergencyContacts",
+    "proof:complete-migration",
+    "finaliseMigration",
+  ],
+  "contacts": [
+    [
+      {
+        "carryContactIds": [
+          "c1",
+        ],
+        "migrationId": "m1",
+        "newEncryptedPrivateKey": "WRAP(192|new-pw)",
+        "newPassword": "new-pw",
+        "newPrivateKeyPem": "-----BEGIN PRIVATE KEY-----
+AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4v
+MDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5f
+YGFiYw==
+-----END PRIVATE KEY-----",
+        "newSuiteId": "new-suite",
+        "oldSuiteId": "old-suite",
+      },
+    ],
+  ],
+  "dropped": 0,
+  "failures": [],
+  "finalise": [
+    [
+      "m1",
+      {
+        "failed": 1,
+        "failures": [],
+        "migrated": 3,
+        "residualContacts": [
+          {
+            "granteeUserId": "g",
+            "reason": "r",
+          },
+        ],
+      },
+      {
+        "X-Proof": "{"suiteId":"old-suite","purpose":"complete-migration","encryptedPrivateKey":"OLD-WRAPPED-SERVER","masterPassword":"old-pw","boundValues":["m1","1",""]}",
+      },
+    ],
+  ],
+  "outcome": {
+    "failed": 1,
+    "failures": [],
+    "migrated": 3,
+    "residualContacts": [
+      {
+        "granteeUserId": "g",
+        "reason": "r",
+      },
+    ],
+  },
+  "post": [
+    [
+      "/apps/keepiq/api/v1/suites/compromise-recovery",
+      {
+        "encryptedPrivateKey": "WRAP(192|new-pw)",
+        "publicKey": "PUB",
+      },
+      {
+        "headers": {
+          "X-Proof": "{"suiteId":"old-suite","purpose":"compromise-recovery","encryptedPrivateKey":"OLD-WRAPPED","masterPassword":"old-pw","boundValues":["PUB","WRAP(192|new-pw)"]}",
+        },
+      },
+    ],
+  ],
+  "progress": {
+    "done": 0,
+    "phase": "starting",
+    "total": 0,
+  },
+  "run": [
+    [
+      {
+        "migrationId": "m1",
+        "newPrivateKey": "KEY(192)",
+        "newPublicKeyPem": "PUB",
+        "oldEncryptedPrivateKey": "OLD-WRAPPED-SERVER",
+        "oldPassword": "old-pw",
+      },
+    ],
+  ],
+  "session": {
+    "active": "number",
+    "certificate": "NEW-CERT",
+    "cryptoKey": "KEY(192)",
+    "encryptedPrivateKey": "WRAP(192|new-pw)",
+    "suiteId": "new-suite",
+  },
+  "status": {
+    "id": "m1",
+    "oldSuiteId": "old-suite",
+  },
+  "suite": {
+    "certificate": "NEW-CERT",
+    "id": "new-suite",
+  },
+}
+`;
+
+exports[`resumeMigration > migrates with the suites of the migration and finalises with a proof over the old key 1`] = `
+{
+  "dropped": 0,
+  "failures": [],
+  "finalise": [
+    [
+      "m1",
+      {
+        "failed": 2,
+        "residualContacts": [],
+      },
+      {
+        "X-Proof": "{"suiteId":"old","purpose":"complete-migration","encryptedPrivateKey":"OLD-WRAPPED","masterPassword":"old-pw","boundValues":["m1","1",""]}",
+      },
+    ],
+  ],
+  "get": [
+    [
+      "/apps/keepiq/api/v1/suites/old",
+    ],
+    [
+      "/apps/keepiq/api/v1/suites/new",
+    ],
+  ],
+  "outcome": {
+    "failed": 2,
+    "residualContacts": [],
+  },
+  "run": [
+    [
+      {
+        "migrationId": "m1",
+        "newPrivateKey": "SESSION-KEY",
+        "newPublicKeyPem": "NEW-PUB",
+        "oldEncryptedPrivateKey": "OLD-WRAPPED",
+        "oldPassword": "old-pw",
+      },
+    ],
+  ],
+}
+`;

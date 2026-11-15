@@ -149,32 +149,60 @@ class EphemeralSendServiceTest extends TestCase {
 	}//end liveSend()
 
 	/**
-	 * 6.2: confirmView increments and burns (deletes) at max_views;
-	 * access itself never consumes a view.
+	 * Serving a one-view send counts the view atomically and burns it
+	 * before the ciphertext leaves, with no confirm from the client.
 	 *
 	 * @return void
 	 */
-	public function testConfirmViewBurnsAtCap(): void {
-		$send = $this->liveSend(maxViews: 1);
-		$this->mapper->method('findByToken')->willReturn($send);
+	public function testAccessBurnsAOneViewSendWithoutAConfirm(): void {
+		$before = $this->liveSend(maxViews: 1);
+		$after = $this->liveSend(maxViews: 1);
+		$after->setViewCount(1);
+		$this->mapper->method('findByToken')->willReturnOnConsecutiveCalls($before, $after);
+		$this->mapper->expects($this->once())
+			->method('countServeIfAllowed')
+			->with($before->getToken(), 5, $before->getHasPassword())
+			->willReturn(1);
+		$this->mapper->expects($this->once())->method('delete')->with($after);
 
-		$deleted = false;
-		$this->mapper->method('delete')->willReturnCallback(
-			static function (EphemeralSend $row) use (&$deleted) {
-				$deleted = true;
-				return $row;
-			}
-		);
+		$payload = $this->service->access(token: $before->getToken());
 
-		// Access returns ciphertext without consuming.
-		$payload = $this->service->access(token: $send->getToken());
 		$this->assertSame('CIPHERTEXT', $payload['encryptedPayload']);
-		$this->assertFalse($deleted);
+		$this->assertTrue($payload['burned']);
+		$this->assertSame(0, $payload['remainingViews']);
+	}//end testAccessBurnsAOneViewSendWithoutAConfirm()
+
+	/**
+	 * When the atomic count affects no row, no ciphertext is served.
+	 *
+	 * @return void
+	 */
+	public function testAccessServesNothingWhenTheCountAffectsNoRow(): void {
+		$send = $this->liveSend(maxViews: 3);
+		$this->mapper->method('findByToken')->willReturn($send);
+		$this->mapper->method('countServeIfAllowed')->willReturn(0);
+
+		$this->expectException(DoesNotExistException::class);
+		$this->service->access(token: $send->getToken());
+	}//end testAccessServesNothingWhenTheCountAffectsNoRow()
+
+	/**
+	 * A confirm resets the attempts and counts no view.
+	 *
+	 * @return void
+	 */
+	public function testConfirmViewResetsAttemptsAndCountsNoView(): void {
+		$send = $this->liveSend(maxViews: 3);
+		$send->setViewCount(1);
+		$this->mapper->method('findByToken')->willReturn($send);
+		$this->mapper->expects($this->once())->method('resetFailedAttempts')->with($send->getToken());
+		$this->mapper->expects($this->never())->method('update');
+		$this->mapper->expects($this->never())->method('delete');
 
 		$result = $this->service->confirmView(token: $send->getToken());
-		$this->assertTrue($result['burned']);
-		$this->assertTrue($deleted);
-	}//end testConfirmViewBurnsAtCap()
+
+		$this->assertSame(['burned' => false, 'remainingViews' => 2], $result);
+	}//end testConfirmViewResetsAttemptsAndCountsNoView()
 
 	/**
 	 * 6.2: an expired send is deleted and rejected as the SAME

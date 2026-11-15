@@ -22,11 +22,6 @@
       "count": 2
     }
   },
-  "src/components/SecretActivityTab.vue": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    }
-  },
   "src/components/application/ApplicationSecretsPanel.vue": {
     "vue/custom-event-name-casing": {
       "count": 1
@@ -39,7 +34,7 @@
   },
   "src/components/settings/AdminAuditSection.vue": {
     "@typescript-eslint/no-unused-vars": {
-      "count": 2
+      "count": 1
     }
   },
   "src/components/settings/ApplicationQueueSection.vue": {
@@ -129,7 +124,7 @@
   },
   "src/import/model.js": {
     "eqeqeq": {
-      "count": 7
+      "count": 2
     }
   },
   "src/import/parsers/bitwarden.js": {
@@ -172,7 +167,7 @@
   },
   "src/passkey/passkey.js": {
     "eqeqeq": {
-      "count": 5
+      "count": 2
     }
   },
   "src/router/guards.js": {
@@ -206,11 +201,6 @@
   "src/store/modules/export.js": {
     "eqeqeq": {
       "count": 1
-    }
-  },
-  "src/store/modules/health.js": {
-    "no-useless-assignment": {
-      "count": 2
     }
   },
   "src/store/modules/import.js": {
@@ -256,11 +246,6 @@
       "count": 1
     },
     "no-empty": {
-      "count": 1
-    }
-  },
-  "src/views/PersonalActivityView.vue": {
-    "@typescript-eslint/no-unused-vars": {
       "count": 1
     }
   },

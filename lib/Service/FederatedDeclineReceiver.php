@@ -41,6 +41,7 @@ use DateTime;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\FederatedDeclineReceiverInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\OCM\IOCMDiscoveryService;
 use OCP\Share\Exceptions\ShareNotFound;
@@ -51,7 +52,7 @@ use Throwable;
  *
  * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
  */
-class FederatedDeclineReceiver {
+class FederatedDeclineReceiver implements FederatedDeclineReceiverInterface {
 	/**
 	 * Constructor for FederatedDeclineReceiver.
 	 *

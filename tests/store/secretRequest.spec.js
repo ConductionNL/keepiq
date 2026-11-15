@@ -147,3 +147,68 @@ describe('useSecretRequestStore', () => {
 		})
 	})
 })
+
+describe('submitFill step by step', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+	})
+
+	it('sends url in plain, key and login encrypted, the rest as one encrypted blob', async () => {
+		const get = vi.spyOn(axios, 'get')
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { ok: 1 } })
+		const store = useSecretRequestStore()
+		store.publicRequest = { token: 'tok-1', public_certificate: 'PEM' }
+		const result = await store.submitFill('tok-1', {
+			url: 'https://x',
+			key: 'p',
+			pin: 1234,
+			note: 'n',
+			login: 'me',
+		})
+		expect(get).not.toHaveBeenCalled()
+		expect(result).toEqual({ ok: 1 })
+		expect(post.mock.calls).toEqual([
+			[
+				'/apps/keepiq/api/v1/public/secret-requests/tok-1/fill',
+				{
+					encryptedFields: {
+						key: 'ENC(p)',
+						login: 'ENC(me)',
+						additionalFields: 'ENC({"pin":"1234","note":"n"})',
+					},
+					plainFields: { url: 'https://x' },
+				},
+			],
+		])
+	})
+
+	it('reads the request again for another token, and sends no blob without members', async () => {
+		const get = vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { token: 'tok-2', public_certificate: 'PEM2' },
+		})
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
+		const store = useSecretRequestStore()
+		store.publicRequest = { token: 'tok-1', public_certificate: 'PEM' }
+		await store.submitFill('tok-2', { key: 'p' })
+		expect(get).toHaveBeenCalledTimes(1)
+		expect(post.mock.calls[0][1]).toEqual({
+			encryptedFields: { key: 'ENC(p)' },
+			plainFields: {},
+		})
+	})
+
+	it('refuses a missing value and a request without a certificate before posting', async () => {
+		const post = vi.spyOn(axios, 'post')
+		const store = useSecretRequestStore()
+		store.publicRequest = { token: 'tok-1', public_certificate: 'PEM' }
+		await expect(store.submitFill('tok-1', { url: 'u', note: null })).rejects.toThrow(
+			'Field "note" is required',
+		)
+		store.publicRequest = { token: 'tok-1' }
+		await expect(store.submitFill('tok-1', { key: 'k' })).rejects.toThrow(
+			'Public certificate is missing for this request',
+		)
+		expect(post).not.toHaveBeenCalled()
+	})
+})

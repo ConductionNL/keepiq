@@ -1219,6 +1219,81 @@ class ShareServiceTest extends TestCase {
 	}//end directRow()
 
 	/**
+	 * Golden: an unknown share id is refused as not found, before anything else.
+	 *
+	 * @return void
+	 */
+	public function testARestrictionChangeOfAnUnknownShareIsNotFound(): void {
+		$service = $this->delegateScenario(daveUseOnly: false);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Share not found');
+		$service->updateRestriction(shareId: 'row-zed', restriction: new ShareRestriction(useOnly: false), userId: 'alice');
+	}//end testARestrictionChangeOfAnUnknownShareIsNotFound()
+
+	/**
+	 * Golden: the owner sets the flag and the end date of a direct share.
+	 *
+	 * @return void
+	 */
+	public function testTheOwnerChangesTheFlagAndTheEndDateOfADirectShare(): void {
+		$service = $this->delegateScenario(daveUseOnly: false);
+		$this->mapper->expects($this->once())->method('update')->willReturnArgument(0);
+		$ends = new DateTime('2031-01-02T03:04:05+00:00');
+
+		$updated = $service->updateRestriction(
+			shareId: 'row-bob',
+			restriction: new ShareRestriction(useOnly: false, expiresAt: $ends),
+			userId: 'alice'
+		);
+
+		$this->assertSame('row-bob', $updated->getId());
+		$this->assertFalse($updated->getUseOnly());
+		$this->assertSame($ends, $updated->getExpiresAt());
+	}//end testTheOwnerChangesTheFlagAndTheEndDateOfADirectShare()
+
+	/**
+	 * Golden: someone who is neither owner nor delegate is refused, and nothing changes.
+	 *
+	 * @return void
+	 */
+	public function testAStrangerCannotChangeAShare(): void {
+		$service = $this->delegateScenario(daveUseOnly: false);
+		$this->mapper->expects($this->never())->method('update');
+
+		try {
+			$service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'eve');
+			$this->fail('eve changed a share');
+		} catch (InvalidArgumentException) {
+			$this->assertTrue($this->mapper->findById('row-bob')->getUseOnly());
+		}
+	}//end testAStrangerCannotChangeAShare()
+
+	/**
+	 * Golden: a share that came from a group share or a team folder is changed there, even by the owner.
+	 *
+	 * @return void
+	 */
+	public function testAGroupOrTeamFolderShareIsChangedWhereItCameFrom(): void {
+		$service = $this->delegateScenario(daveUseOnly: false);
+		$this->mapper->expects($this->never())->method('update');
+		$row = $this->mapper->findById('row-bob');
+
+		foreach (['setGroupShareId' => 'gs-1', 'setTeamFolderId' => 'tf-1'] as $setter => $value) {
+			$row->setGroupShareId(null);
+			$row->setTeamFolderId(null);
+			$row->{$setter}($value);
+			try {
+				$service->updateRestriction(shareId: 'row-bob', restriction: new ShareRestriction(useOnly: false), userId: 'alice');
+				$this->fail('changed a share through ' . $setter);
+			} catch (InvalidArgumentException $exception) {
+				$this->assertSame('Change this share on its group share or team folder', $exception->getMessage());
+			}
+		}
+	}//end testAGroupOrTeamFolderShareIsChangedWhereItCameFrom()
+
+	/**
 	 * A delegate whose own copy is use-only cannot lift it through
 	 * PATCH /shares/{id} (GHSA-m5p9-6pw7-pf3g): the copy stays use-only.
 	 *

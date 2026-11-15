@@ -35,33 +35,85 @@ const REQUIRED_FIELDS = ['credentialId', 'rpId', 'privateKey']
  *   required field is missing.
  */
 export function buildPasskeyCredential(input) {
-	if (input == null || typeof input !== 'object') {
+	if (!hasRequiredFields(input)) {
 		return null
-	}
-	for (const field of REQUIRED_FIELDS) {
-		if (typeof input[field] !== 'string' || input[field] === '') {
-			return null
-		}
 	}
 	return {
 		credentialId: String(input.credentialId),
 		rpId: String(input.rpId),
-		rpName: input.rpName != null ? String(input.rpName) : '',
-		userName: input.userName != null ? String(input.userName) : '',
-		userDisplayName:
-			input.userDisplayName != null ? String(input.userDisplayName) : '',
-		userHandle: input.userHandle != null ? String(input.userHandle) : '',
+		rpName: optionalString(input.rpName),
+		userName: optionalString(input.userName),
+		userDisplayName: optionalString(input.userDisplayName),
+		userHandle: optionalString(input.userHandle),
 		privateKey: String(input.privateKey),
-		algorithm: Number.isInteger(input.algorithm) ? input.algorithm : -7,
-		counter: Number.isInteger(input.counter) ? input.counter : 0,
-		transports: Array.isArray(input.transports)
-			? input.transports.map(String)
-			: [],
-		createdAt:
-			typeof input.createdAt === 'string' && input.createdAt !== ''
-				? input.createdAt
-				: new Date().toISOString(),
+		algorithm: integerOr(input.algorithm, -7),
+		counter: integerOr(input.counter, 0),
+		transports: transportsOf(input.transports),
+		createdAt: createdAtOf(input.createdAt),
 	}
+}
+
+/**
+ * Whether the input is an object carrying every required field as a non-empty string.
+ *
+ * @param {unknown} input Loose credential fields.
+ * @return {boolean} True when the credential can be built.
+ * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-canonical-cxf-aligned-passkey-credential-schema
+ */
+function hasRequiredFields(input) {
+	if (input == null || typeof input !== 'object') {
+		return false
+	}
+	return REQUIRED_FIELDS.every(
+		(field) => typeof input[field] === 'string' && input[field] !== '',
+	)
+}
+
+/**
+ * An optional text field: the value as a string, '' when it is absent.
+ *
+ * @param {unknown} value The given value.
+ * @return {string} The text.
+ * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-canonical-cxf-aligned-passkey-credential-schema
+ */
+function optionalString(value) {
+	return value != null ? String(value) : ''
+}
+
+/**
+ * An integer field, or its default when the value is no integer.
+ *
+ * @param {unknown} value The given value.
+ * @param {number} fallback The default.
+ * @return {number} The integer.
+ * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-canonical-cxf-aligned-passkey-credential-schema
+ */
+function integerOr(value, fallback) {
+	return Number.isInteger(value) ? value : fallback
+}
+
+/**
+ * The transports as strings, none when the value is no list.
+ *
+ * @param {unknown} value The given transports.
+ * @return {string[]} The transports.
+ * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-canonical-cxf-aligned-passkey-credential-schema
+ */
+function transportsOf(value) {
+	return Array.isArray(value) ? value.map(String) : []
+}
+
+/**
+ * The creation time as given, or now when it is no non-empty string.
+ *
+ * @param {unknown} value The given creation time.
+ * @return {string} An ISO 8601 timestamp.
+ * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-canonical-cxf-aligned-passkey-credential-schema
+ */
+function createdAtOf(value) {
+	return typeof value === 'string' && value !== ''
+		? value
+		: new Date().toISOString()
 }
 
 /**

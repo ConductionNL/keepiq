@@ -57,6 +57,38 @@ const DEFAULT_CUSTOM_HOURS = '24'
 /** A whole number from a field that may hold anything while typed. */
 const whole = (text: string) => (/^\d+$/.test(text.trim()) ? Number(text.trim()) : NaN)
 
+interface SendForm {
+	type: SendPayloadType
+	text: string
+	username: string
+	password: string
+	maxViews: string
+	expiry: ExpiryPreset
+	customHours: string
+	accessPassword: string
+}
+
+/** Whether the form differs from how it opened. */
+function isChanged(form: SendForm, prefill: SendPrefill | undefined): boolean {
+	return form.type !== (prefill ? 'credential' : 'text') || form.text !== '' || form.username !== (prefill?.username ?? '') || form.password !== (prefill?.password ?? '')
+		|| form.maxViews !== String(DEFAULT_MAX_VIEWS) || form.expiry !== DEFAULT_EXPIRY || form.customHours !== DEFAULT_CUSTOM_HOURS || form.accessPassword !== ''
+}
+
+/** The form's parsed values and field errors, and whether they block a create. */
+function checkSendForm(form: SendForm, passwordProtection: boolean) {
+	const views = whole(form.maxViews)
+	const viewsError = isValidMaxViews(views) ? null : i18n.t('send.maxViewsRange', { max: String(MAX_VIEWS_CAP) })
+	const hours = whole(form.customHours)
+	const ttlSeconds = presetToTtlSeconds(form.expiry, hours)
+	let hoursError: string | null = null
+	if (form.expiry === 'custom' && ttlSeconds === null) hoursError = hours > CUSTOM_HOURS.max ? i18n.t('send.customHoursMax') : i18n.t('send.customHoursMin')
+	const passwordError = form.accessPassword !== '' && !passwordProtection ? i18n.t('writeErrors.argon2Unavailable') : null
+	// The background refuses a blank credential password too.
+	const empty = form.type === 'text' ? form.text.trim() === '' : form.password.trim() === ''
+	const blocked = empty || viewsError !== null || ttlSeconds === null || passwordError !== null
+	return { views, viewsError, ttlSeconds, hoursError, passwordError, blocked }
+}
+
 export function NewSend({ prefill, onCreated, onCancel, onBusy }: Props) {
 	const shell = useShell()
 	const { passwordProtection, load, create } = useSends()
@@ -97,21 +129,10 @@ export function NewSend({ prefill, onCreated, onCancel, onBusy }: Props) {
 		return () => onBusy(false)
 	}, [busy, onBusy])
 
-	useUnsavedChangesGuard(
-		type !== (prefill ? 'credential' : 'text') || text !== '' || username !== (prefill?.username ?? '') || password !== (prefill?.password ?? '')
-		|| maxViews !== String(DEFAULT_MAX_VIEWS) || expiry !== DEFAULT_EXPIRY || customHours !== DEFAULT_CUSTOM_HOURS || accessPassword !== '',
-	)
+	const form = { type, text, username, password, maxViews, expiry, customHours, accessPassword }
+	useUnsavedChangesGuard(isChanged(form, prefill))
 
-	const views = whole(maxViews)
-	const viewsError = isValidMaxViews(views) ? null : i18n.t('send.maxViewsRange', { max: String(MAX_VIEWS_CAP) })
-	const hours = whole(customHours)
-	const ttlSeconds = presetToTtlSeconds(expiry, hours)
-	let hoursError: string | null = null
-	if (expiry === 'custom' && ttlSeconds === null) hoursError = hours > CUSTOM_HOURS.max ? i18n.t('send.customHoursMax') : i18n.t('send.customHoursMin')
-	const passwordError = accessPassword !== '' && !passwordProtection ? i18n.t('writeErrors.argon2Unavailable') : null
-	// The background refuses a blank credential password too.
-	const empty = type === 'text' ? text.trim() === '' : password.trim() === ''
-	const blocked = empty || viewsError !== null || ttlSeconds === null || passwordError !== null
+	const { views, viewsError, ttlSeconds, hoursError, passwordError, blocked } = checkSendForm(form, passwordProtection)
 
 	async function submit() {
 		if (blocked || busy || shell.offline || ttlSeconds === null) return

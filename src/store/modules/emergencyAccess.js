@@ -26,6 +26,90 @@ import { decryptPrivateKey } from '../../crypto/index.js'
 import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../crypto/keyProof.js'
 import { useSessionStore } from './session.js'
 
+/**
+ * The grantee's public certificate; the request validates that the grantee
+ * has an active suite.
+ *
+ * @param {string} granteeUserId The grantee Nextcloud user ID.
+ * @return {Promise<string>}
+ * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-client-side-recovery-envelope-escrow
+ */
+async function granteeCertificateOf(granteeUserId) {
+	const certResponse = await axios.get(
+		generateUrl('/apps/keepiq/api/v1/emergency-access/grantee-certificate'),
+		{ params: { granteeUserId } },
+	)
+	return certResponse.data.certificate
+}
+
+/**
+ * Transiently re-derive the grantor's private-key PEM, build the recovery
+ * envelope for the grantee, and discard the raw key.
+ *
+ * @param {object} session The session store.
+ * @param {{masterPassword: string, granteeCertificate: string}} escrow The master password and the grantee's certificate.
+ * @return {Promise<string>} The grantee-encrypted envelope.
+ * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-client-side-recovery-envelope-escrow
+ */
+async function recoveryEnvelopeFor(session, escrow) {
+	let privateKeyPem = await decryptPrivateKey(
+		session.encryptedPrivateKey,
+		escrow.masterPassword,
+	)
+	try {
+		return await buildRecoveryEnvelope(privateKeyPem, escrow.granteeCertificate)
+	} finally {
+		privateKeyPem = null
+	}
+}
+
+/**
+ * The proof of the master password a designation carries. A designation
+ * names who a later rotation escrows the key to and overwrites an existing
+ * contact's envelope, so a session alone must not be enough. Bound in the
+ * order the server hashes them.
+ *
+ * @param {object} session The session store.
+ * @param {object} designation The grantee, wait period, master password and envelope.
+ * @return {Promise<object>} The proof headers.
+ * @spec openspec/specs/emergency-access/spec.md#requirement-designate-emergency-contact
+ */
+async function designationProof(session, designation) {
+	return buildKeyProofHeaders({
+		suiteId: session.suiteId,
+		purpose: PROOF_PURPOSE.EMERGENCY_DESIGNATE,
+		encryptedPrivateKey: session.encryptedPrivateKey,
+		masterPassword: designation.masterPassword,
+		boundValues: [
+			designation.granteeUserId,
+			String(designation.waitPeriodDays),
+			designation.recoveryEnvelope,
+		],
+	})
+}
+
+/**
+ * Persist a designation: only the grantee-encrypted envelope, never the
+ * master password.
+ *
+ * @param {object} designation The grantee, wait period and envelope.
+ * @param {object} headers The proof headers.
+ * @return {Promise<object>} The response.
+ * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-client-side-recovery-envelope-escrow
+ */
+function postContact(designation, headers) {
+	return axios.post(
+		generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
+		{
+			granteeUserId: designation.granteeUserId,
+			waitPeriodDays: designation.waitPeriodDays,
+			accessLevel: 'view',
+			recoveryEnvelope: designation.recoveryEnvelope,
+		},
+		{ headers },
+	)
+}
+
 export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 	state: () => ({
 		/** @type {Array<object>} Contacts the current user designated (as grantor). */
@@ -111,57 +195,22 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 			}
 
 			// 1. Fetch the grantee's public certificate (validates active suite).
-			const certResponse = await axios.get(
-				generateUrl(
-					'/apps/keepiq/api/v1/emergency-access/grantee-certificate',
-				),
-				{ params: { granteeUserId } },
-			)
-			const granteeCertificate = certResponse.data.certificate
-
-			// 2. Transiently re-derive the grantor's private-key PEM, build the
-			//    envelope, and discard the raw key. Only ciphertext leaves here.
-			let privateKeyPem = await decryptPrivateKey(
-				session.encryptedPrivateKey,
+			const granteeCertificate = await granteeCertificateOf(granteeUserId)
+			// 2. Build the envelope; only ciphertext leaves here.
+			const recoveryEnvelope = await recoveryEnvelopeFor(session, {
 				masterPassword,
-			)
-			let recoveryEnvelope
-			try {
-				recoveryEnvelope = await buildRecoveryEnvelope(
-					privateKeyPem,
-					granteeCertificate,
-				)
-			} finally {
-				privateKeyPem = null
-			}
-
-			// 3. Prove the master password (keepiq#800). A designation names who a
-			//    later rotation escrows the key to and overwrites an existing
-			//    contact's envelope, so a session alone must not be enough. Bound
-			//    in the order the server hashes them.
-			const headers = await buildKeyProofHeaders({
-				suiteId: session.suiteId,
-				purpose: PROOF_PURPOSE.EMERGENCY_DESIGNATE,
-				encryptedPrivateKey: session.encryptedPrivateKey,
-				masterPassword,
-				boundValues: [
-					granteeUserId,
-					String(waitPeriodDays),
-					recoveryEnvelope,
-				],
+				granteeCertificate,
 			})
-
+			const designation = {
+				granteeUserId,
+				waitPeriodDays,
+				masterPassword,
+				recoveryEnvelope,
+			}
+			// 3. Prove the master password (keepiq#800).
+			const headers = await designationProof(session, designation)
 			// 4. Persist only the grantee-encrypted envelope.
-			const response = await axios.post(
-				generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
-				{
-					granteeUserId,
-					waitPeriodDays,
-					accessLevel: 'view',
-					recoveryEnvelope,
-				},
-				{ headers },
-			)
+			const response = await postContact(designation, headers)
 			await this.fetchContacts()
 			return response.data
 		},

@@ -34,11 +34,12 @@ use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\AuditForbiddenMetadataException;
+use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
 
 /**
  * Single write path + query API for the append-only audit log.
  */
-class AuditService {
+class AuditService implements AuditServiceInterface {
 	/**
 	 * Constructor for AuditService.
 	 *

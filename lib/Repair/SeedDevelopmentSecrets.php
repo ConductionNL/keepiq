@@ -33,7 +33,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
-use OCA\Keepiq\Service\EncryptService;
+use OCA\Keepiq\Kernel\Contracts\EncryptServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IConfig;
 use OCP\Migration\IOutput;
@@ -129,7 +129,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param FolderMapper $folderMapper The folder mapper
 	 * @param SecretTypeMapper $typeMapper The secret type mapper
-	 * @param EncryptService $encryptService The encrypt service
+	 * @param EncryptServiceInterface $encryptService The encrypt service
 	 * @param IConfig $config The config interface
 	 * @param LoggerInterface $logger The logger interface
 	 * @param SecretTagMapper|null $tagMapper The tag mapper (seeds tags on a few secrets)
@@ -141,7 +141,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 		private SecretMapper $secretMapper,
 		private FolderMapper $folderMapper,
 		private SecretTypeMapper $typeMapper,
-		private EncryptService $encryptService,
+		private EncryptServiceInterface $encryptService,
 		private IConfig $config,
 		private LoggerInterface $logger,
 		private ?SecretTagMapper $tagMapper = null,

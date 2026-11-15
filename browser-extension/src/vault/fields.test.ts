@@ -279,3 +279,45 @@ describe('shownInFull', () => {
 		}
 	})
 })
+
+describe('diffDraft and validate, field by field', () => {
+	const draft = toDraft(values({ url: 'https://a.test', login: 'alice', secret: 'pw' }), 'login')
+
+	it.each([
+		['typeId', { typeId: 't-note' }],
+		['name', { name: 'Other' }],
+		['url', { url: null }],
+		['folderId', { folderId: 'f1' }],
+		['key', { key: 'other' }],
+		['login', { login: null }],
+		['additionalFields', { additionalFields: { pin: '1' } }],
+		['totp', { totp: 'JBSWY3DPEHPK3PXP' }],
+	] as const)('sends a changed %s alone', (_name, change) => {
+		expect(diffDraft(draft, { ...draft, ...change })).toEqual(change)
+	})
+
+	it('sends every change in the draft order, and no totp the after-draft leaves out', () => {
+		const after = { ...draft, login: null, key: 'other', folderId: 'f1', url: null, typeId: 't-note', additionalFields: { pin: '1' }, name: 'Other', totp: 'K' }
+		expect(Object.keys(diffDraft(draft, after))).toEqual(['typeId', 'name', 'url', 'folderId', 'key', 'login', 'additionalFields', 'totp'])
+		expect(diffDraft({ ...draft, totp: 'K' }, { ...draft, totp: undefined })).toEqual({})
+		expect(diffDraft({ ...draft, totp: 'K' }, { ...draft, totp: 'K' })).toEqual({})
+		expect(diffDraft({ ...draft, additionalFields: { a: '1' } }, { ...draft, additionalFields: { b: '1' } })).toEqual({ additionalFields: { b: '1' } })
+	})
+
+	it('reports errors in the order the form is read', () => {
+		const fields = [customField('Login', 'x'.repeat(4097))]
+		const errors = validate(values({ name: '', url: 'x'.repeat(4097), login: 'x'.repeat(4097), loginShown: true, fields, authKey: 'not a key!' }), 'login')
+		expect(Object.keys(errors)).toEqual(['name', 'url', 'login', 'authKey', `field.${fields[0]!.id}.name`, `field.${fields[0]!.id}.value`])
+	})
+
+	it('checks a card\'s members only while they show, and a TOTP seed', () => {
+		const long = 'x'.repeat(4097)
+		const card = fromItem(item({ typeId: 't-card', key: '' }), 'card')
+		expect(Object.keys(validate({ ...card, card: { ...card.card, number: long } }, 'card'))).toEqual(['card.number'])
+		expect(validate({ ...card, plainKey: true, card: { ...card.card, number: long } }, 'card')).toEqual({})
+		const identity = fromItem(item({ typeId: 't-identity', key: '' }), 'identity')
+		expect(Object.keys(validate({ ...identity, identity: { ...identity.identity, address: long } }, 'identity'))).toEqual(['identity.address'])
+		expect(validate(values({ typeId: 't-totp', secret: 'not base32 !' }), 'totp')).toEqual({ secret: { code: 'invalidTotp' } })
+		expect(validate(values({ typeId: 't-passkey', name: '', url: long, login: long }), 'passkey')).toEqual({ name: { code: 'required' }, url: { code: 'tooLong', max: 4096 } })
+	})
+})

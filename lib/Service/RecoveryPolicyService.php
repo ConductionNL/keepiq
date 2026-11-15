@@ -20,9 +20,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\RecoveryOfficerMapper;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\RecoveryPolicyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 
@@ -31,7 +32,7 @@ use OCP\IAppConfig;
  * (crypto-organisation-account-recovery D2, D5): the policy, the officers and
  * the approval threshold.
  */
-class RecoveryPolicyService {
+class RecoveryPolicyService implements RecoveryPolicyServiceInterface {
 
 	public const POLICY_KEY = 'account_recovery_policy';
 
@@ -74,7 +75,7 @@ class RecoveryPolicyService {
 	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
 	public function policy(): string {
-		$policy = $this->appConfig->getValueString(Application::APP_ID, self::POLICY_KEY, 'off');
+		$policy = $this->appConfig->getValueString(AppIdentity::APP_ID, self::POLICY_KEY, 'off');
 		if (in_array($policy, self::POLICIES, true) === false) {
 			return 'off';
 		}
@@ -90,7 +91,7 @@ class RecoveryPolicyService {
 	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
 	public function officers(): array {
-		$decoded = json_decode($this->appConfig->getValueString(Application::APP_ID, self::OFFICERS_KEY, '[]'), true);
+		$decoded = json_decode($this->appConfig->getValueString(AppIdentity::APP_ID, self::OFFICERS_KEY, '[]'), true);
 		if (is_array($decoded) === false) {
 			return [];
 		}
@@ -119,7 +120,7 @@ class RecoveryPolicyService {
 	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	public function threshold(): int {
-		return max(1, $this->appConfig->getValueInt(Application::APP_ID, self::THRESHOLD_KEY, 1));
+		return max(1, $this->appConfig->getValueInt(AppIdentity::APP_ID, self::THRESHOLD_KEY, 1));
 	}//end threshold()
 
 	/**
@@ -167,9 +168,9 @@ class RecoveryPolicyService {
 			$this->officerMapper->deleteByOfficer($uid);
 		}
 
-		$this->appConfig->setValueString(Application::APP_ID, self::POLICY_KEY, $policy);
-		$this->appConfig->setValueString(Application::APP_ID, self::OFFICERS_KEY, (string)json_encode($named));
-		$this->appConfig->setValueInt(Application::APP_ID, self::THRESHOLD_KEY, max(1, $threshold));
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::POLICY_KEY, $policy);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, self::OFFICERS_KEY, (string)json_encode($named));
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, self::THRESHOLD_KEY, max(1, $threshold));
 
 		foreach (array_diff($named, $before) as $uid) {
 			$this->notifications->notify(subject: 'recovery_officer_named', recipientId: $uid);

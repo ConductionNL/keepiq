@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Repair;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -88,9 +88,9 @@ class InitializeSettings implements IRepairStep {
 
 		// Seed default app config values for encryption settings.
 		foreach (self::DEFAULT_CONFIG as $key => $value) {
-			$existing = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+			$existing = $this->appConfig->getValueString(AppIdentity::APP_ID, $key, '');
 			if ($existing === '') {
-				$this->appConfig->setValueString(Application::APP_ID, $key, $value);
+				$this->appConfig->setValueString(AppIdentity::APP_ID, $key, $value);
 				$output->info("Set default config: {$key} = {$value}");
 			}
 		}
@@ -99,8 +99,8 @@ class InitializeSettings implements IRepairStep {
 		// with. Keepiq imports no configuration from another app (ADR-006), so
 		// seeding the defaults above IS the configuration step: once it has
 		// run, the configuration is current for this version.
-		$version = $this->appManager->getAppVersion(Application::APP_ID);
-		$this->appConfig->setValueString(Application::APP_ID, 'config_version', $version);
+		$version = $this->appManager->getAppVersion(AppIdentity::APP_ID);
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'config_version', $version);
 		$output->info('Keepiq configuration is current (version: ' . $version . ')');
 	}//end run()
 }//end class
