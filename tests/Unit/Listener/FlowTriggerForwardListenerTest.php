@@ -23,6 +23,7 @@ use OCA\Keepiq\Db\SiemQueueItemMapper;
 use OCA\Keepiq\Db\SiemSinkMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCA\Keepiq\Listener\FlowTriggerForwardListener;
 use OCA\Keepiq\Service\Flow\VaultFlowTriggerCatalog;
 use OCA\Keepiq\Service\SiemService;
@@ -245,4 +246,54 @@ class FlowTriggerForwardListenerTest extends TestCase {
 		$this->assertCount(1, $this->flows->calls);
 		$this->assertNull($this->flows->calls[0][2]);
 	}//end testANonUserActorFiresWithoutAUserAndOtherEventsAreIgnored()
+
+	/**
+	 * An event type in no trigger group fires nothing and never reads the
+	 * enabled groups, even with OpenRegister enabled.
+	 *
+	 * @return void
+	 */
+	public function testAnEventTypeInNoGroupFiresNothing(): void {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->expects($this->never())->method('getValueString');
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isEnabledForUser')->willReturn(true);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->expects($this->never())->method('get');
+		$siem = $this->createMock(SiemServiceInterface::class);
+		$siem->expects($this->never())->method('buildPayload');
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method('error');
+
+		$listener = new FlowTriggerForwardListener(
+			siemService: $siem,
+			catalog: new VaultFlowTriggerCatalog(),
+			appConfig: $appConfig,
+			appManager: $appManager,
+			container: $container,
+			logger: $logger,
+		);
+		$listener->handle(
+			new AuditEvent(actorType: 'user', actorId: 'alice', eventType: 'unheard_of.happened', objectType: 'secret', objectId: '1')
+		);
+
+		$this->assertSame([], $this->flows->calls);
+	}//end testAnEventTypeInNoGroupFiresNothing()
+
+	/**
+	 * An event of an enabled group that yields no SIEM payload (not on the
+	 * payload whitelist) fires nothing and never fetches the flow service.
+	 *
+	 * @return void
+	 */
+	public function testAnEventWithoutAPayloadFiresNothing(): void {
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method('error');
+
+		$this->listener('["sharing"]', true, $logger)->handle(
+			new AuditEvent(actorType: 'user', actorId: 'alice', eventType: 'share.not_a_known_type', objectType: 'secret', objectId: '42')
+		);
+
+		$this->assertSame([], $this->flows->calls);
+	}//end testAnEventWithoutAPayloadFiresNothing()
 }//end class
