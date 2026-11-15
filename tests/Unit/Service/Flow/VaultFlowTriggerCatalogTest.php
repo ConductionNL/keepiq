@@ -116,4 +116,83 @@ class VaultFlowTriggerCatalogTest extends TestCase {
 			$this->catalog->parseEnabledGroups(stored: '["emergency_access","bogus","sharing"]')
 		);
 	}//end testParseEnabledGroups()
+	/**
+	 * A type without an action reads as its noun alone; an unknown category
+	 * reads as its words, capitalised.
+	 *
+	 * @return void
+	 */
+	public function testLabelsOfABareCategoryAndAnUnknownOne(): void {
+		$this->assertSame('A share', $this->catalog->label(eventType: 'share'));
+		$this->assertSame('A share', $this->catalog->label(eventType: 'share.'));
+		$this->assertSame('Some thing is done', $this->catalog->label(eventType: 'some_thing.done'));
+		$this->assertSame('Some thing: went wrong twice', $this->catalog->label(eventType: 'some_thing.went_wrong_twice'));
+		$this->assertSame('Widget', $this->catalog->label(eventType: 'widget'));
+	}//end testLabelsOfABareCategoryAndAnUnknownOne()
+
+	/**
+	 * A per-type group wins over its category's group; a category with a noun
+	 * but no group has no group of its own.
+	 *
+	 * @return void
+	 */
+	public function testTypeGroupsOverrideCategoryGroups(): void {
+		$this->assertSame('item_reads', $this->catalog->groupOf(eventType: AuditEventTypes::HONEY_ACCESSED));
+		$this->assertSame('item_reads', $this->catalog->groupOf(eventType: AuditEventTypes::ATTACHMENT_DOWNLOADED));
+		$this->assertSame('items', $this->catalog->groupOf(eventType: 'attachment.uploaded'));
+		$this->assertNull($this->catalog->groupOf(eventType: 'honey.planted'));
+		$this->assertSame('keys', $this->catalog->groupOf(eventType: 'device_approval.anything'));
+	}//end testTypeGroupsOverrideCategoryGroups()
+
+	/**
+	 * Entries skip an event type without a group and keep the order of the
+	 * event types.
+	 *
+	 * @return void
+	 */
+	public function testEntriesSkipATypeWithoutAGroup(): void {
+		$catalog = new class extends VaultFlowTriggerCatalog {
+			/**
+			 * A fixed list with one type that has no group.
+			 *
+			 * @return string[]
+			 */
+			public function eventTypes(): array {
+				return ['share.granted', 'honey.planted', 'secret.read'];
+			}//end eventTypes()
+		};
+
+		$this->assertSame(
+			[
+				['id' => 'keepiq.share.granted', 'label' => 'A share is granted', 'group' => 'sharing', 'eventType' => 'share.granted'],
+				['id' => 'keepiq.secret.read', 'label' => 'An item is read', 'group' => 'item_reads', 'eventType' => 'secret.read'],
+			],
+			$catalog->entries()
+		);
+	}//end testEntriesSkipATypeWithoutAGroup()
+
+	/**
+	 * Every event type is listed once, as a string.
+	 *
+	 * @return void
+	 */
+	public function testEventTypesAreUniqueStrings(): void {
+		$types = $this->catalog->eventTypes();
+
+		$this->assertSame(array_values(array_unique($types)), $types);
+		$this->assertContains(AuditEventTypes::SHARE_GRANTED, $types);
+		$this->assertContainsOnly('string', $types);
+	}//end testEventTypesAreUniqueStrings()
+
+	/**
+	 * A JSON object or a list with non-strings enables only the known groups it names.
+	 *
+	 * @return void
+	 */
+	public function testParseEnabledGroupsIgnoresNonGroupValues(): void {
+		$this->assertSame(['keys'], $this->catalog->parseEnabledGroups(stored: '{"a":"keys","b":7}'));
+		$this->assertSame([], $this->catalog->parseEnabledGroups(stored: '[1,null,true]'));
+		$this->assertSame([], $this->catalog->parseEnabledGroups(stored: ''));
+		$this->assertSame(VaultFlowTriggerCatalog::GROUPS, $this->catalog->parseEnabledGroups(stored: json_encode(array_reverse(VaultFlowTriggerCatalog::GROUPS))));
+	}//end testParseEnabledGroupsIgnoresNonGroupValues()
 }//end class
