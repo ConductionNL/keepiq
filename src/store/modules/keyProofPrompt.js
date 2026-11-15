@@ -16,9 +16,9 @@
  * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
  */
 
-import { translate as t } from '@nextcloud/l10n'
 import { defineStore } from 'pinia'
 import { decryptPrivateKey } from '../../crypto/index.js'
+import { createPromptSlot } from './promptSlot.js'
 import { useSessionStore } from './session.js'
 
 /**
@@ -37,7 +37,23 @@ export class KeyProofPromptCancelled extends Error {
 	}
 }
 
-let pending = null
+const slot = createPromptSlot(KeyProofPromptCancelled)
+
+/**
+ * Whether a password opens the session's private key envelope.
+ *
+ * @param {string} password The entered password.
+ * @return {Promise<boolean>}
+ * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+ */
+async function opensPrivateKey(password) {
+	try {
+		await decryptPrivateKey(useSessionStore().encryptedPrivateKey, password)
+		return true
+	} catch {
+		return false
+	}
+}
 
 export const useKeyProofPromptStore = defineStore('keyProofPrompt', {
 	state: () => ({
@@ -63,16 +79,8 @@ export const useKeyProofPromptStore = defineStore('keyProofPrompt', {
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 		 */
 		ask(reason) {
-			if (pending !== null) {
-				pending.reject(new KeyProofPromptCancelled())
-			}
 			this.reason = reason
-			this.error = ''
-			this.checking = false
-			this.open = true
-			return new Promise((resolve, reject) => {
-				pending = { resolve, reject }
-			})
+			return slot.open(this)
 		},
 
 		/**
@@ -82,28 +90,8 @@ export const useKeyProofPromptStore = defineStore('keyProofPrompt', {
 		 * @return {Promise<boolean>} Whether the password was accepted.
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 		 */
-		async submit(masterPassword) {
-			if (pending === null || !masterPassword) {
-				return false
-			}
-			this.checking = true
-			this.error = ''
-			try {
-				await decryptPrivateKey(
-					useSessionStore().encryptedPrivateKey,
-					masterPassword,
-				)
-			} catch {
-				this.error = t('keepiq', 'That master password is not right.')
-				return false
-			} finally {
-				this.checking = false
-			}
-			const { resolve } = pending
-			pending = null
-			this.open = false
-			resolve(masterPassword)
-			return true
+		submit(masterPassword) {
+			return slot.check(this, masterPassword, opensPrivateKey, masterPassword)
 		},
 
 		/**
@@ -113,13 +101,7 @@ export const useKeyProofPromptStore = defineStore('keyProofPrompt', {
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 		 */
 		cancel() {
-			this.open = false
-			this.error = ''
-			if (pending !== null) {
-				const { reject } = pending
-				pending = null
-				reject(new KeyProofPromptCancelled())
-			}
+			slot.cancel(this)
 		},
 	},
 })

@@ -15,9 +15,9 @@
  * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
  */
 
-import { translate as t } from '@nextcloud/l10n'
 import { defineStore } from 'pinia'
 import { verifyMasterPassword } from '../../crypto/reauth.js'
+import { createPromptSlot } from './promptSlot.js'
 import { useSessionStore } from './session.js'
 
 /**
@@ -36,7 +36,7 @@ export class RepromptCancelled extends Error {
 	}
 }
 
-let pending = null
+const slot = createPromptSlot(RepromptCancelled)
 
 export const useRepromptPromptStore = defineStore('repromptPrompt', {
 	state: () => ({
@@ -62,16 +62,8 @@ export const useRepromptPromptStore = defineStore('repromptPrompt', {
 		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		ask(itemName) {
-			if (pending !== null) {
-				pending.reject(new RepromptCancelled())
-			}
 			this.itemName = String(itemName || '')
-			this.error = ''
-			this.checking = false
-			this.open = true
-			return new Promise((resolve, reject) => {
-				pending = { resolve, reject }
-			})
+			return slot.open(this)
 		},
 
 		/**
@@ -82,23 +74,8 @@ export const useRepromptPromptStore = defineStore('repromptPrompt', {
 		 * @return {Promise<boolean>} Whether the password was accepted.
 		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
 		 */
-		async submit(masterPassword) {
-			if (pending === null || !masterPassword) {
-				return false
-			}
-			this.checking = true
-			this.error = ''
-			const ok = await verifyMasterPassword(useSessionStore().encryptedPrivateKey, masterPassword)
-			this.checking = false
-			if (!ok) {
-				this.error = t('keepiq', 'That master password is not right.')
-				return false
-			}
-			const { resolve } = pending
-			pending = null
-			this.open = false
-			resolve()
-			return true
+		submit(masterPassword) {
+			return slot.check(this, masterPassword, (password) => verifyMasterPassword(useSessionStore().encryptedPrivateKey, password))
 		},
 
 		/**
@@ -108,13 +85,7 @@ export const useRepromptPromptStore = defineStore('repromptPrompt', {
 		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		cancel() {
-			this.open = false
-			this.error = ''
-			if (pending !== null) {
-				const { reject } = pending
-				pending = null
-				reject(new RepromptCancelled())
-			}
+			slot.cancel(this)
 		},
 	},
 })

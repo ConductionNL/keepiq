@@ -12,48 +12,22 @@
   @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
 -->
 <template>
-	<NcDialog
-		v-if="prompt.open"
+	<MasterPasswordPromptDialog
+		:prompt="prompt"
 		:name="t('keepiq', 'Enter your master password')"
-		:open="prompt.open"
-		size="small"
-		data-testid="reprompt-dialog"
-		@update:open="onOpenChange">
-		<form class="reprompt-dialog" @submit.prevent="onSubmit">
-			<p>{{ t('keepiq', '"{name}" asks for your master password before it is shown, copied or filled.', { name: prompt.itemName }) }}</p>
-			<NcPasswordField
-				v-model="password"
-				:label="t('keepiq', 'Your master password')"
-				:disabled="prompt.checking"
-				autocomplete="current-password"
-				data-testid="reprompt-password" />
-			<NcNoteCard
-				v-if="prompt.error"
-				type="error"
-				data-testid="reprompt-error">
-				{{ prompt.error }}
-			</NcNoteCard>
+		testid="reprompt-dialog"
+		formClass="reprompt-dialog">
+		<p>{{ t('keepiq', '"{name}" asks for your master password before it is shown, copied or filled.', { name: prompt.itemName }) }}</p>
+		<template #hint>
 			<p class="reprompt-dialog__hint">
 				{{ t('keepiq', 'Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.') }}
 			</p>
-		</form>
-		<template #actions>
-			<NcButton :disabled="prompt.checking" data-testid="reprompt-cancel" @click="onCancel">
-				{{ t('keepiq', 'Cancel') }}
-			</NcButton>
-			<NcButton
-				variant="primary"
-				:disabled="prompt.checking || password === ''"
-				data-testid="reprompt-confirm"
-				@click="onSubmit">
-				{{ t('keepiq', 'Confirm') }}
-			</NcButton>
 		</template>
-	</NcDialog>
+	</MasterPasswordPromptDialog>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
+import MasterPasswordPromptDialog from './MasterPasswordPromptDialog.vue'
 import { useRepromptPromptStore } from '../store/modules/repromptPrompt.js'
 
 /**
@@ -65,16 +39,7 @@ export default {
 	name: 'RepromptDialog',
 
 	components: {
-		NcButton,
-		NcDialog,
-		NcNoteCard,
-		NcPasswordField,
-	},
-
-	data() {
-		return {
-			password: '',
-		}
+		MasterPasswordPromptDialog,
 	},
 
 	computed: {
@@ -88,74 +53,10 @@ export default {
 			return useRepromptPromptStore()
 		},
 	},
-
-	watch: {
-		/**
-		 * Clear the entered password whenever the prompt closes.
-		 *
-		 * @param {boolean} open Whether the prompt is open.
-		 * @return {void}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
-		 */
-		'prompt.open': function(open) {
-			if (!open) {
-				this.password = ''
-			}
-		},
-	},
-
-	methods: {
-		/**
-		 * Hand the password to the store to check; it is cleared either way
-		 * once accepted.
-		 *
-		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
-		 */
-		async onSubmit() {
-			if (this.password === '' || this.prompt.checking) {
-				return
-			}
-			const accepted = await this.prompt.submit(this.password)
-			if (accepted) {
-				this.password = ''
-			}
-		},
-
-		/**
-		 * Close the prompt; the waiting action does not run.
-		 *
-		 * @return {void}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
-		 */
-		onCancel() {
-			this.password = ''
-			this.prompt.cancel()
-		},
-
-		/**
-		 * NcDialog closed itself (Escape, the close button).
-		 *
-		 * @param {boolean} open The new open state.
-		 * @return {void}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
-		 */
-		onOpenChange(open) {
-			if (!open) {
-				this.onCancel()
-			}
-		},
-	},
 }
 </script>
 
 <style scoped lang="scss">
-.reprompt-dialog {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
 .reprompt-dialog__hint {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.9em;
