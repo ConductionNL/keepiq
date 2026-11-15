@@ -113,7 +113,7 @@ class AdminSettingsAreaTest extends TestCase {
 			$this->assertArrayHasKey($key, $general);
 		}
 
-		$this->assertSame(['audit_retention_days'], array_keys($this->service->getAreaSettings(area: 'audit')));
+		$this->assertSame(['audit_retention_days', 'flow_trigger_groups'], array_keys($this->service->getAreaSettings(area: 'audit')));
 	}//end testRetentionIsPoliciesAndAttachmentLimitsAreGeneral()
 
 	/**

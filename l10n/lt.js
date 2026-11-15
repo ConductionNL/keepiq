@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Tai nėra autentifikatoriaus raktas. Įklijuokite nuorodą otpauth://totp/ arba paslaptį base32 formatu.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Šiame QR kode nėra autentifikatoriaus rakto. Naudokite QR kodą, kurį svetainė rodo nustatant dviejų veiksnių prisijungimą.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ši paslaptis laukia savo bendrinimų patikros, kuri dar nebaigta. Niekas neišsaugota; bandykite vėliau arba paprašykite administratoriaus patikrinti, ar veikia foninės užduotys.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Tik savininkas gali keisti vadovą arba narystę, kuri apima vadovą."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Tik savininkas gali keisti vadovą arba narystę, kuri apima vadovą.",
+        "Additional fields after the merge": "Papildomi laukai po sujungimo",
+        "Duplicates": "Dublikatai",
+        "Exact duplicates": "Tikslūs dublikatai",
+        "Item to keep": "Paliekamas elementas",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementai, kuriuose tas pats prisijungimas yra daugiau nei kartą. Sujungus vienas paliekamas, o kiti pašalinami.",
+        "Likely duplicates": "Tikėtini dublikatai",
+        "Merge": "Sujungti",
+        "Merge duplicates": "Sujungti dublikatus",
+        "People who lose access: {count}": "Žmonės, kurie praras prieigą: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Tas pats adresas ir naudotojo vardas, kitas slaptažodis. Taip gali atrodyti dvi atskiros paskyros, todėl patikrinkite prieš sujungdami.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sujungimas nebaigtas. Patikrinkite šios grupės elementus savo saugykloje.",
+        "The merge failed. Nothing was removed.": "Sujungti nepavyko. Niekas nepašalinta.",
+        "The other items move to the trash, where you can restore them.": "Kiti elementai perkeliami į šiukšlinę, iš kurios galite juos atkurti."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

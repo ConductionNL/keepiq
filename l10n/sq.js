@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ky nuk është çelës autentikuesi. Ngjitni një lidhje otpauth://totp/ ose sekretin base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ky kod QR nuk përmban çelës autentikuesi. Përdorni kodin QR që shfaq faqja kur vendosni hyrjen me dy faktorë.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ky sekret po pret një kontroll të ndarjeve të tij që nuk ka përfunduar ende. Asgjë nuk u ruajt; provoni përsëri më vonë ose kërkojini një administratori të kontrollojë që punët në sfond po ekzekutohen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Vetëm pronari mund të ndryshojë një menaxher, ose një anëtarësim që përfshin një menaxher."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Vetëm pronari mund të ndryshojë një menaxher, ose një anëtarësim që përfshin një menaxher.",
+        "Additional fields after the merge": "Fusha shtesë pas bashkimit",
+        "Duplicates": "Dublikatë",
+        "Exact duplicates": "Dublikatë të sakta",
+        "Item to keep": "Elementi që mbahet",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elemente që përmbajnë të njëjtin hyrje më shumë se një herë. Bashkimi mban njërin dhe heq të tjerët.",
+        "Likely duplicates": "Dublikatë të mundshme",
+        "Merge": "Bashko",
+        "Merge duplicates": "Bashko dublikatët",
+        "People who lose access: {count}": "Persona që humbasin aksesin: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "E njëjta adresë dhe emër përdoruesi, fjalëkalim tjetër. Dy llogari të veçanta mund të duken kështu, prandaj kontrolloni para bashkimit.",
+        "The merge did not complete. Check the items of this group in your vault.": "Bashkimi nuk përfundoi. Kontrolloni elementet e këtij grupi në kasafortën tuaj.",
+        "The merge failed. Nothing was removed.": "Bashkimi dështoi. Asgjë nuk u hoq.",
+        "The other items move to the trash, where you can restore them.": "Elementet e tjera shkojnë në kosh, prej nga mund t'i riktheni."
     },
     "nplurals=2; plural=(n != 1);"
 )

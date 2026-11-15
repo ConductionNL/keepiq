@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Това не е ключ на удостоверител. Поставете връзка otpauth://totp/ или тайната във формат base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Този QR код не съдържа ключ на удостоверител. Използвайте QR кода, който сайтът показва при настройване на двуфакторното влизане.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Тази тайна изчаква проверка на споделянията си, която още не е завършила. Нищо не беше запазено; опитайте отново по-късно или помолете администратор да провери дали фоновите задачи се изпълняват.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Само собственикът може да промени мениджър или членство, което обхваща мениджър."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Само собственикът може да промени мениджър или членство, което обхваща мениджър.",
+        "Additional fields after the merge": "Допълнителни полета след обединяването",
+        "Duplicates": "Дубликати",
+        "Exact duplicates": "Точни дубликати",
+        "Item to keep": "Елемент за запазване",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Елементи, които съдържат един и същ вход повече от веднъж. Обединяването запазва един и премахва останалите.",
+        "Likely duplicates": "Вероятни дубликати",
+        "Merge": "Обединяване",
+        "Merge duplicates": "Обединяване на дубликати",
+        "People who lose access: {count}": "Хора, които губят достъп: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Същият адрес и потребителско име, друга парола. Два отделни акаунта може да изглеждат така, затова проверете преди обединяване.",
+        "The merge did not complete. Check the items of this group in your vault.": "Обединяването не завърши. Проверете елементите на тази група в своя трезор.",
+        "The merge failed. Nothing was removed.": "Обединяването е неуспешно. Нищо не е премахнато.",
+        "The other items move to the trash, where you can restore them.": "Останалите елементи отиват в кошчето, откъдето можете да ги възстановите."
     },
     "nplurals=2; plural=(n != 1);"
 )

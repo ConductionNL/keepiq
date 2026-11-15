@@ -25,8 +25,10 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
  * Checks, stores and attaches a login's extra addresses.
@@ -47,7 +49,9 @@ class SecretUrlService {
 	/**
 	 * Constructor.
 	 *
-	 * @param SecretUrlMapper $mapper The addresses table
+	 * @param SecretUrlMapper    $mapper       The addresses table
+	 * @param ShareRowJudge|null $rowJudge     Judged share rows: the recipient copies a list follows to
+	 * @param SecretMapper|null  $secretMapper The secrets, to read a recipient copy before writing its list
 	 *
 	 * @return void
 	 *
@@ -55,6 +59,8 @@ class SecretUrlService {
 	 */
 	public function __construct(
 		private SecretUrlMapper $mapper,
+		private ?ShareRowJudge $rowJudge = null,
+		private ?SecretMapper $secretMapper = null,
 	) {
 	}//end __construct()
 
@@ -109,7 +115,9 @@ class SecretUrlService {
 	}//end normalise()
 
 	/**
-	 * Replace the extra addresses of the caller's own login.
+	 * Replace the extra addresses of the caller's own login, and of every
+	 * recipient copy of it (vault-website-addresses D2). A received copy's
+	 * list follows its owner, so its holder does not change it.
 	 *
 	 * @param Secret       $secret The login, as just saved
 	 * @param string       $userId The caller
@@ -117,7 +125,7 @@ class SecretUrlService {
 	 *
 	 * @return list<string> The list now stored
 	 *
-	 * @throws ForbiddenException When the login is not the caller's own
+	 * @throws ForbiddenException When the login is not the caller's own, or is a received copy
 	 *
 	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
@@ -126,10 +134,69 @@ class SecretUrlService {
 			throw new ForbiddenException(message: 'Only the owner of a login changes its addresses');
 		}
 
+		if ($this->rowJudge !== null && $this->rowJudge->forCopy(copy: $secret)->countsAsCopy() === true) {
+			throw new ForbiddenException(message: 'The addresses of a shared login are changed by its owner');
+		}
+
 		$this->mapper->replaceForSecret(secretId: $secret->getId(), ownerId: $userId, urls: $urls);
+		$this->replaceOnCopies(source: $secret, urls: $urls);
 
 		return $urls;
 	}//end replace()
+
+	/**
+	 * Give a new recipient copy the extra addresses of its source.
+	 *
+	 * @param Secret $source The owner's source secret
+	 * @param Secret $copy   The recipient's copy, as just inserted
+	 *
+	 * @return list<string> The list the copy now carries
+	 *
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	public function copyOnto(Secret $source, Secret $copy): array {
+		$urls = ($this->mapper->findUrlsBySecretIds(secretIds: [$source->getId()])[$source->getId()] ?? []);
+		if ($urls !== []) {
+			$this->mapper->replaceForSecret(secretId: $copy->getId(), ownerId: $copy->getOwnerId(), urls: $urls);
+		}
+
+		return $urls;
+	}//end copyOnto()
+
+	/**
+	 * Write the owner's list onto every recipient copy whose share row the
+	 * pending scan does not hold back and whose target holds the copy.
+	 *
+	 * @param Secret       $source The owner's login
+	 * @param list<string> $urls   The owner's new list
+	 *
+	 * @return int The number of copies written
+	 *
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	private function replaceOnCopies(Secret $source, array $urls): int {
+		if ($this->rowJudge === null || $this->secretMapper === null) {
+			return 0;
+		}
+
+		$written = 0;
+		foreach ($this->rowJudge->rowsOfSource(sourceId: $source->getId())->notHeldBack() as $row) {
+			try {
+				$copy = $this->secretMapper->findById((string)$row->getSecretId());
+			} catch (DoesNotExistException) {
+				continue;
+			}
+
+			if ($copy->getId() === $source->getId() || $row->isHeldByTarget(copy: $copy) === false) {
+				continue;
+			}
+
+			$this->mapper->replaceForSecret(secretId: $copy->getId(), ownerId: $copy->getOwnerId(), urls: $urls);
+			$written++;
+		}
+
+		return $written;
+	}//end replaceOnCopies()
 
 	/**
 	 * Serialised secrets with their `additionalUrls`, an empty list for one

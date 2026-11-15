@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Dëst ass kee Authentifikatorschlëssel. Plakt en otpauth://totp/-Link oder dat base32-Geheimnis an.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Dëse QR-Code huet keen Authentifikatorschlëssel dran. Benotzt de QR-Code, deen de Site weist, wann Dir d'Zwee-Faktor-Umeldung ariichtt.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Dëst Geheimnis waart op eng Kontroll vu senge Fräigaben, déi nach net fäerdeg ass. Näischt gouf gespäichert; probéiert méi spéit nach eng Kéier, oder frot en Administrateur ze kontrolléieren, ob d'Hannergrondaufgaben lafen.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Nëmmen de Besëtzer kann e Manager änneren, oder eng Memberschaft, déi e Manager ëmfaasst."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Nëmmen de Besëtzer kann e Manager änneren, oder eng Memberschaft, déi e Manager ëmfaasst.",
+        "Additional fields after the merge": "Zousätzlech Felder no dem Zesummeféieren",
+        "Duplicates": "Duplikater",
+        "Exact duplicates": "Exakt Duplikater",
+        "Item to keep": "Element dat bleift",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementer, déi dee selwechte Login méi wéi eemol enthalen. Beim Zesummeféiere bleift eent an déi aner ginn ewechgeholl.",
+        "Likely duplicates": "Wahrscheinlech Duplikater",
+        "Merge": "Zesummeféieren",
+        "Merge duplicates": "Duplikater zesummeféieren",
+        "People who lose access: {count}": "Leit, déi den Zougrëff verléieren: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Selwecht Adress a selwechte Benotzernumm, en anert Passwuert. Zwee separat Konte kënnen esou ausgesinn, kontrolléier dat also ier s du zesummeféiers.",
+        "The merge did not complete. Check the items of this group in your vault.": "D'Zesummeféiere gouf net ofgeschloss. Kontrolléier d'Elementer vun dëser Grupp an dengem Tresor.",
+        "The merge failed. Nothing was removed.": "D'Zesummeféieren ass feelgeschloen. Et gouf näischt ewechgeholl.",
+        "The other items move to the trash, where you can restore them.": "Déi aner Elementer kommen an de Pabeierkuerf, wou s du se restauréiere kanns."
     },
     "nplurals=2; plural=(n != 1);"
 )

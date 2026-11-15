@@ -43,6 +43,29 @@ class Version001020Date20261114090000 extends SimpleMigrationStep {
 	public const TABLE = 'keepiq_secret_urls';
 
 	/**
+	 * The table's shape, also declared in the consolidated schema
+	 * (Version001000Date20260908000000::SCHEMA) so a fresh install and the
+	 * backup registry know it.
+	 *
+	 * @var array<string, list<mixed>>
+	 */
+	public const DEFINITION = [
+		'columns' => [
+			['id', Types::BIGINT, ['autoincrement' => true, 'notnull' => true]],
+			['secret_id', Types::STRING, ['notnull' => true, 'length' => 36]],
+			['owner_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+			['url', Types::STRING, ['notnull' => true, 'length' => 512]],
+			['position', Types::SMALLINT, ['notnull' => true, 'default' => 0]],
+		],
+		'primary' => ['id'],
+		'indexes' => [
+			['keepiq_su_owner_url', ['owner_id', 'url']],
+			['keepiq_su_secret', ['secret_id']],
+		],
+		'uniqueIndexes' => [],
+	];
+
+	/**
 	 * Create the table when it is missing.
 	 *
 	 * @param IOutput $output        The migration output
@@ -62,14 +85,14 @@ class Version001020Date20261114090000 extends SimpleMigrationStep {
 		}
 
 		$table = $schema->createTable(self::TABLE);
-		$table->addColumn('id', Types::BIGINT, ['autoincrement' => true, 'notnull' => true]);
-		$table->addColumn('secret_id', Types::STRING, ['notnull' => true, 'length' => 36]);
-		$table->addColumn('owner_id', Types::STRING, ['notnull' => true, 'length' => 64]);
-		$table->addColumn('url', Types::STRING, ['notnull' => true, 'length' => 512]);
-		$table->addColumn('position', Types::SMALLINT, ['notnull' => true, 'default' => 0]);
-		$table->setPrimaryKey(['id']);
-		$table->addIndex(['owner_id', 'url'], 'keepiq_su_owner_url');
-		$table->addIndex(['secret_id'], 'keepiq_su_secret');
+		foreach (self::DEFINITION['columns'] as [$column, $type, $columnOptions]) {
+			$table->addColumn($column, $type, $columnOptions);
+		}
+
+		$table->setPrimaryKey(self::DEFINITION['primary']);
+		foreach (self::DEFINITION['indexes'] as [$indexName, $columns]) {
+			$table->addIndex($columns, $indexName);
+		}
 
 		return $schema;
 	}//end changeSchema()

@@ -100,6 +100,11 @@ class DashboardController extends Controller {
 		// Privacy-respecting default: favicons disabled unless an admin opts in.
 		$faviconServiceUrl = $this->appConfig->getValueString(AppIdentity::APP_ID, 'favicon_service_url', '');
 		$this->initialState->provideInitialState(key: 'faviconServiceUrl', data: $faviconServiceUrl);
+		// Site previews (vault-website-addresses D4): off unless an admin sets a template with {url}.
+		$this->initialState->provideInitialState(
+			key: 'sitePreviewServiceUrl',
+			data: $this->appConfig->getValueString(AppIdentity::APP_ID, 'site_preview_service_url', ''),
+		);
 
 		// Password-health breach-check admin gate (password-health §1.4). The
 		// per-user opt-in lives in user prefs; the breach UI shows only when

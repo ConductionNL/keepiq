@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "No es una clave de autenticador. Pegue un enlace otpauth://totp/ o el secreto en base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Este código QR no contiene una clave de autenticador. Use el código QR que muestra el sitio al configurar el inicio de sesión en dos pasos.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Este secreto está esperando una comprobación de sus comparticiones que aún no ha terminado. No se ha guardado nada; inténtelo de nuevo más tarde o pida a un administrador que compruebe que se ejecutan las tareas en segundo plano.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Solo el propietario puede cambiar un gestor o una membresía que incluya a un gestor."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Solo el propietario puede cambiar un gestor o una membresía que incluya a un gestor.",
+        "Additional fields after the merge": "Campos adicionales después de combinar",
+        "Duplicates": "Duplicados",
+        "Exact duplicates": "Duplicados exactos",
+        "Item to keep": "Elemento que se conserva",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementos que contienen el mismo inicio de sesión más de una vez. Combinar conserva uno y elimina los demás.",
+        "Likely duplicates": "Duplicados probables",
+        "Merge": "Combinar",
+        "Merge duplicates": "Combinar duplicados",
+        "People who lose access: {count}": "Personas que pierden el acceso: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Misma dirección y mismo nombre de usuario, otra contraseña. Dos cuentas distintas pueden verse así, así que compruébalo antes de combinar.",
+        "The merge did not complete. Check the items of this group in your vault.": "La combinación no se completó. Revisa los elementos de este grupo en tu caja fuerte.",
+        "The merge failed. Nothing was removed.": "La combinación ha fallado. No se ha eliminado nada.",
+        "The other items move to the trash, where you can restore them.": "Los demás elementos van a la papelera, desde donde puedes restaurarlos."
     },
     "nplurals=2; plural=(n != 1);"
 )
