@@ -11,11 +11,11 @@
 
 ## 3. Browser extension
 
-- [ ] 3.1 Ask for and verify the master password in the popup before `doFill()` of a flagged item. Verify: extension unit test that a flagged fill without the password fills nothing. Not built: the extension is a separate WXT project; until this lands a flagged item is protected in the web app only, which the docs say.
+- [x] 3.1 Ask for and verify the master password in the popup before `doFill()` of a flagged item. Verify: extension unit test that a flagged fill without the password fills nothing. Built: the background's `fill()` (`browser-extension/src/autofill/fill.ts`) answers a flagged item with `needsReprompt` until the popup's `fill.request` carries a master password that `verifyMasterPassword()` (`src/vault/unlock.ts`) checks against the cached suite envelope, on every fill; a wrong one answers `wrongMasterPassword` and fills nothing. The popup's `useFill` shows `RepromptDialog.tsx` and carries the password only to the end of that one fill. The inline list, the context menu, the shortcut and page load cannot ask, so they fill nothing for a flagged item (also the inline code fill). Tests: `src/autofill/fill.test.ts`, `src/autofill/code-fill.test.ts`, `entrypoints/popup/views/VaultList.test.tsx`.
 
 ## 4. Docs
 
-- [ ] 4.1 Document the flag and what it does and does not protect against. Verify: docs build. Page written at `docs/master-password-reprompt.md`; the docs build was not run.
+- [x] 4.1 Document the flag and what it does and does not protect against. Verify: docs build. Page written at `docs/master-password-reprompt.md`, with the extension's behaviour; `docusaurus build` succeeds (installed without the lockfile, which is out of sync with `docs/package.json` on development).
 
 ## Acceptance criteria
 

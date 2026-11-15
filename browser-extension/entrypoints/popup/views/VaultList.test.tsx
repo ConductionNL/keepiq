@@ -365,6 +365,83 @@ describe('filling from the suggestions', () => {
 			])
 		})
 	})
+
+	// Spec `item-master-password-reprompt`: the popup asks, the background checks, every fill asks again.
+	describe('for an item flagged to ask for the master password', () => {
+		type Sent = { masterPassword?: string; confirmedInsecure?: boolean }
+		const flagged = (message: Sent) => {
+			if (message.masterPassword === undefined) return { filled: 'none', code: false, needsReprompt: true }
+			if (message.masterPassword !== 'right one') return { filled: 'none', code: false, needsReprompt: true, wrongMasterPassword: true }
+			return { filled: 'both', code: false }
+		}
+		const repromptDialog = () => screen.findByRole('dialog', { name: 'Enter your master password to fill this item' })
+
+		it('asks, says what it protects, and cancelling sends nothing more', async () => {
+			const close = closeSpy()
+			const { sent, toast } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': flagged } })
+			const user = userEvent.setup()
+			await user.click(within(suggestions()).getByRole('button', { name: 'Fill GitHub' }))
+			const dialog = await repromptDialog()
+			expect(within(dialog).getByText(/protects an unlocked screen, not a modified extension/)).toBeTruthy()
+			expect(document.activeElement).toBe(within(dialog).getByLabelText('Master password'))
+			await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+			expect(screen.queryByRole('dialog')).toBeNull()
+			expect(sentOf(sent, 'fill.request')).toEqual([{ kind: 'fill.request', itemId: '1', tabId: 7 }])
+			expect(toast).not.toHaveBeenCalled()
+			expect(close).not.toHaveBeenCalled()
+		})
+
+		it('sends nothing for an empty password and says one is needed', async () => {
+			const { sent } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': flagged } })
+			const user = userEvent.setup()
+			await user.click(within(suggestions()).getByRole('button', { name: 'Fill GitHub' }))
+			const dialog = await repromptDialog()
+			await user.click(within(dialog).getByRole('button', { name: 'Fill' }))
+			expect(within(dialog).getByText('Enter your master password')).toBeTruthy()
+			expect(sentOf(sent, 'fill.request')).toHaveLength(1)
+		})
+
+		it('asks again after a wrong password and fills after the right one', async () => {
+			const close = closeSpy()
+			const { sent } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': flagged } })
+			const user = userEvent.setup()
+			await user.click(within(suggestions()).getByRole('button', { name: 'Fill GitHub' }))
+			await user.type(within(await repromptDialog()).getByLabelText('Master password'), 'wrong one{Enter}')
+			const again = await repromptDialog()
+			await vi.waitFor(() => expect(within(again).getByText('Invalid master password')).toBeTruthy())
+			expect(close).not.toHaveBeenCalled()
+			await user.type(within(again).getByLabelText('Master password'), 'right one')
+			await user.click(within(again).getByRole('button', { name: 'Fill' }))
+			await vi.waitFor(() => expect(close).toHaveBeenCalled())
+			expect(sentOf(sent, 'fill.request')).toEqual([
+				{ kind: 'fill.request', itemId: '1', tabId: 7 },
+				{ kind: 'fill.request', itemId: '1', tabId: 7, masterPassword: 'wrong one' },
+				{ kind: 'fill.request', itemId: '1', tabId: 7, masterPassword: 'right one' },
+			])
+		})
+
+		it('carries the password to the insecure question of the same fill, and asks again for the next fill', async () => {
+			closeSpy()
+			const insecureToo = (message: Sent) => {
+				if (message.masterPassword === undefined) return { filled: 'none', code: false, needsReprompt: true }
+				return message.confirmedInsecure ? { filled: 'both', code: false } : { filled: 'none', code: false, needsInsecureConfirm: true }
+			}
+			const { sent } = renderList(snapshot(), { tab: githubTab, replies: { 'fill.request': insecureToo } })
+			const user = userEvent.setup()
+			await user.click(within(suggestions()).getByRole('button', { name: 'Fill GitHub' }))
+			await user.type(within(await repromptDialog()).getByLabelText('Master password'), 'right one{Enter}')
+			await user.click(within(await screen.findByRole('dialog', { name: 'Do you still wish to fill this login?' })).getByRole('button', { name: 'Fill' }))
+			await vi.waitFor(() => expect(sentOf(sent, 'fill.request')).toHaveLength(3))
+			expect(sentOf(sent, 'fill.request')).toEqual([
+				{ kind: 'fill.request', itemId: '1', tabId: 7 },
+				{ kind: 'fill.request', itemId: '1', tabId: 7, masterPassword: 'right one' },
+				{ kind: 'fill.request', itemId: '1', tabId: 7, confirmedInsecure: true, masterPassword: 'right one' },
+			])
+			await user.click(within(suggestions()).getByRole('button', { name: 'Fill GitHub' }))
+			await repromptDialog()
+			expect(sentOf(sent, 'fill.request')[3]).toEqual({ kind: 'fill.request', itemId: '1', tabId: 7 })
+		})
+	})
 })
 
 describe('filling a card or identity', () => {

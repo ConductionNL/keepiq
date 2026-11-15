@@ -44,5 +44,11 @@ own copy.
 
 ## Browser extension
 
-The browser extension does not ask yet before it fills a flagged item. Until
-it does, a flagged item is protected in the web app only.
+When you pick a flagged item in the extension's popup, the popup asks for your
+master password before it fills the page. The extension checks it against the
+key it already holds, on your device; a wrong password fills nothing. Every
+fill asks again.
+
+The inline list on a sign-in form, the right-click menu, the keyboard shortcut
+and fill on page load cannot ask, so they do not fill a flagged item at all.
+Open the popup to fill it.
