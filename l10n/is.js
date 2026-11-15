@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Þetta er ekki lykill auðkennara. Límdu inn otpauth://totp/-tengil eða base32-leyndarmálið.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Þessi QR-kóði inniheldur ekki lykil auðkennara. Notaðu QR-kóðann sem vefsvæðið sýnir þegar þú setur upp tveggja þátta innskráningu.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Þetta leyndarmál bíður eftir athugun á deilingum sínum sem er ekki lokið. Ekkert var vistað; reyndu aftur síðar eða biddu kerfisstjóra að athuga hvort bakgrunnsverk keyri.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Aðeins eigandinn getur breytt stjórnanda, eða aðild sem nær yfir stjórnanda."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Aðeins eigandinn getur breytt stjórnanda, eða aðild sem nær yfir stjórnanda.",
+        "Additional fields after the merge": "Viðbótarsvið eftir sameiningu",
+        "Duplicates": "Tvítök",
+        "Exact duplicates": "Nákvæm tvítök",
+        "Item to keep": "Atriði sem er haldið",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Atriði sem geyma sömu innskráningu oftar en einu sinni. Sameining heldur einu og fjarlægir hin.",
+        "Likely duplicates": "Líkleg tvítök",
+        "Merge": "Sameina",
+        "Merge duplicates": "Sameina tvítök",
+        "People who lose access: {count}": "Fólk sem missir aðgang: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Sama vistfang og notandanafn, annað lykilorð. Tveir aðskildir aðgangar geta litið svona út, svo athugaðu áður en þú sameinar.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sameiningunni lauk ekki. Athugaðu atriði þessa hóps í hólfinu þínu.",
+        "The merge failed. Nothing was removed.": "Sameiningin mistókst. Ekkert var fjarlægt.",
+        "The other items move to the trash, where you can restore them.": "Hin atriðin fara í ruslið, þar sem þú getur endurheimt þau."
     },
     "nplurals=2; plural=(n != 1);"
 )

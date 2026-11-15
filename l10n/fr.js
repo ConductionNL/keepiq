@@ -1734,7 +1734,20 @@ OC.L10N.register(
         "This is not an authenticator key. Paste an otpauth://totp/ link or the base32 secret.": "Ce n'est pas une clé d'authentificateur. Collez un lien otpauth://totp/ ou le secret en base32.",
         "This QR code does not hold an authenticator key. Use the QR code the site shows when you set up two-factor sign-in.": "Ce code QR ne contient pas de clé d'authentificateur. Utilisez le code QR que le site affiche lorsque vous configurez la connexion à deux facteurs.",
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was saved; try again later, or ask an administrator to check that background jobs run.": "Ce secret attend une vérification de ses partages qui n'est pas encore terminée. Rien n'a été enregistré ; réessayez plus tard ou demandez à un administrateur de vérifier que les tâches de fond s'exécutent.",
-        "Only the owner can change a manager, or a membership that covers a manager.": "Seul le propriétaire peut modifier un gestionnaire, ou une adhésion qui couvre un gestionnaire."
+        "Only the owner can change a manager, or a membership that covers a manager.": "Seul le propriétaire peut modifier un gestionnaire, ou une adhésion qui couvre un gestionnaire.",
+        "Additional fields after the merge": "Champs supplémentaires après la fusion",
+        "Duplicates": "Doublons",
+        "Exact duplicates": "Doublons exacts",
+        "Item to keep": "Élément à conserver",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Éléments qui contiennent le même identifiant plus d'une fois. La fusion en conserve un et supprime les autres.",
+        "Likely duplicates": "Doublons probables",
+        "Merge": "Fusionner",
+        "Merge duplicates": "Fusionner les doublons",
+        "People who lose access: {count}": "Personnes qui perdent l'accès : {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Même adresse et même nom d'utilisateur, mais un autre mot de passe. Deux comptes distincts peuvent ressembler à cela, vérifiez donc avant de fusionner.",
+        "The merge did not complete. Check the items of this group in your vault.": "La fusion n'a pas abouti. Vérifiez les éléments de ce groupe dans votre coffre.",
+        "The merge failed. Nothing was removed.": "La fusion a échoué. Rien n'a été supprimé.",
+        "The other items move to the trash, where you can restore them.": "Les autres éléments vont dans la corbeille, d'où vous pouvez les restaurer."
     },
     "nplurals=2; plural=(n > 1);"
 )
