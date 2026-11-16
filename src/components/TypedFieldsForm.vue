@@ -15,10 +15,12 @@
 			<NcPasswordField
 				v-if="field.kind === 'hidden'"
 				v-bind="fieldProps(field)"
+				:label="fieldLabel(field)"
 				@update:modelValue="set(field.key, $event)" />
 			<NcTextField
 				v-else
 				v-bind="fieldProps(field)"
+				:label="fieldLabel(field)"
 				:type="inputType(field.kind)"
 				@update:modelValue="set(field.key, $event)" />
 		</template>
@@ -77,9 +79,9 @@ export default {
 		},
 
 		/**
-		 * What every typed field gets, whatever its kind: the value, the
-		 * label with the required marker, required, disabled, the missing
-		 * error with its helper text, and the test id.
+		 * What every typed field gets, whatever its kind: the value,
+		 * required, disabled, the missing error with its helper text, and
+		 * the test id. The label is bound in the template.
 		 *
 		 * @param {object} field The field definition.
 		 * @return {object} The field's props and test id.
@@ -89,7 +91,6 @@ export default {
 			const missing = this.isMissing(field)
 			return {
 				modelValue: this.values[field.key] || '',
-				label: this.fieldLabel(field),
 				required: field.required,
 				disabled: this.disabled,
 				error: missing,
