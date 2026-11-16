@@ -33,6 +33,9 @@ vi.mock('../../src/store/modules/session.js', () => ({
 vi.mock('../../src/store/modules/rotation.js', () => ({
 	useRotationStore: () => rotationStore,
 }))
+vi.mock('../../src/store/modules/secret.js', () => ({
+	useSecretStore: () => ({ updateSecret: vi.fn() }),
+}))
 
 const { default: HealthReportView } =
 	await import('../../src/views/HealthReportView.vue')
