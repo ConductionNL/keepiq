@@ -90,6 +90,7 @@ paths = [
   '''(^|/)tests/components/SecretDetailSidebar\.loginTotpPasskeys\.spec\.js$''',
   '''(^|/)tests/components/SecretRequestList\.spec\.js$''',
   '''(^|/)tests/components/TotpDisplay\.spec\.js$''',
+  '''(^|/)tests/components/TotpDisplay\.reprompt\.spec\.js$''',
   '''(^|/)tests/dialogs/SecretEditDialog\.totp\.spec\.js$''',
   '''(^|/)tests/dialogs/VersionDetailsDialog\.loginFields\.spec\.js$''',
   '''(^|/)tests/store/__snapshots__/suiteRotationSteps\.spec\.js\.snap$''',
