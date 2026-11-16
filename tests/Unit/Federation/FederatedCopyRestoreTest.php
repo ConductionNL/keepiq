@@ -42,6 +42,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\FederatedCopyDeclineService;
@@ -367,8 +368,8 @@ class FederatedCopyRestoreTest extends TestCase {
 			foreach (['NEW-CIPHER-FOR-BOB', 'OLD-CIPHER-FOR-BOB', self::SHARED_SECRET, hash('sha256', self::SHARED_SECRET)] as $secret) {
 				$this->assertStringNotContainsString($secret, $entry);
 			}
-			$this->assertArrayHasKey($event->getEventType(), AuditEventTypes::WHITELIST);
-			$this->assertSame([], array_diff(array_keys($event->getMetadata()), AuditEventTypes::WHITELIST[$event->getEventType()]));
+			$this->assertArrayHasKey($event->getEventType(), AuditMetadataPolicy::WHITELIST);
+			$this->assertSame([], array_diff(array_keys($event->getMetadata()), AuditMetadataPolicy::WHITELIST[$event->getEventType()]));
 		}
 	}
 
