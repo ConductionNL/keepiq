@@ -28,15 +28,28 @@ export function hostOf(raw) {
 	}
 	// `localhost:8080` is a host and port, not a scheme.
 	const withScheme = /^[a-z][a-z\d+.-]*:(?!\d)/i.test(trimmed) ? trimmed : `https://${trimmed}`
+	return webHostname(withScheme)
+}
+
+/**
+ * The lowercase hostname of an absolute http(s) address, null for any other
+ * scheme, an empty host or an unparsable address.
+ *
+ * @param {string} address An address with a scheme.
+ * @return {string|null}
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function webHostname(address) {
+	let url
 	try {
-		const url = new URL(withScheme)
-		if ((url.protocol !== 'https:' && url.protocol !== 'http:') || !url.hostname) {
-			return null
-		}
-		return url.hostname.toLowerCase()
+		url = new URL(address)
 	} catch {
 		return null
 	}
+	if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+		return null
+	}
+	return url.hostname ? url.hostname.toLowerCase() : null
 }
 
 /**
@@ -60,22 +73,23 @@ export function siteDomain(raw) {
  * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
  */
 export function directoryEntry(list, raw) {
-	if (!list || typeof list !== 'object') {
-		return null
-	}
-	const host = hostOf(raw)
+	const host = list && typeof list === 'object' ? hostOf(raw) : null
 	if (host === null) {
 		return null
 	}
-	for (const domain of [host, siteDomain(raw)]) {
-		if (domain && Object.hasOwn(list, domain)) {
-			const documentation = typeof list[domain] === 'string' && list[domain].startsWith('https://')
-				? list[domain]
-				: null
-			return { domain, documentation }
-		}
-	}
-	return null
+	const domain = [host, siteDomain(raw)].find((candidate) => candidate && Object.hasOwn(list, candidate))
+	return domain ? { domain, documentation: httpsOrNull(list[domain]) } : null
+}
+
+/**
+ * A directory documentation value when it is an https address, else null.
+ *
+ * @param {string|null|undefined} value The directory's value for a domain.
+ * @return {string|null}
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function httpsOrNull(value) {
+	return typeof value === 'string' && value.startsWith('https://') ? value : null
 }
 
 /**
@@ -92,16 +106,12 @@ export function directoryEntry(list, raw) {
 export function vaultSiteFacts(secrets, typeNameById) {
 	const seedDomains = new Set()
 	const passkeyDomains = new Set()
+	const setByType = new Map([['totp', seedDomains], ['passkey', passkeyDomains]])
 	for (const secret of secrets) {
-		const typeName = typeNameById.get(secret?.typeId)
-		const domain = typeName === 'totp' || typeName === 'passkey' ? siteDomain(secret.url) : null
-		if (domain === null) {
-			continue
-		}
-		if (typeName === 'totp') {
-			seedDomains.add(domain)
-		} else {
-			passkeyDomains.add(domain)
+		const set = setByType.get(typeNameById.get(secret?.typeId))
+		const domain = set ? siteDomain(secret.url) : null
+		if (domain !== null) {
+			set.add(domain)
 		}
 	}
 	return { seedDomains, passkeyDomains }

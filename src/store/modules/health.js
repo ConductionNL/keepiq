@@ -195,12 +195,8 @@ async function recipientCopyIds() {
  * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
  */
 function healthRow(secret, value, facts, login = null) {
-	const domain = siteDomain(secret.url)
 	return {
-		// Whether the vault already holds a second factor or a passkey for this
-		// login: on the login itself, or as an item for its site (design D4).
-		hasSeed: rowHasCode(secret) || (domain !== null && facts.seedDomains.has(domain)),
-		hasPasskey: rowHasPasskeys(secret) || (domain !== null && facts.passkeyDomains.has(domain)),
+		...secondFactorsHeld(secret, facts),
 		id: secret.id,
 		name: secret.name,
 		url: secret.url ?? null,
@@ -211,6 +207,33 @@ function healthRow(secret, value, facts, login = null) {
 		keyUpdatedAt: keyChangedAt(secret),
 		possiblyCompromisedAt: secret.possiblyCompromisedAt ?? null,
 	}
+}
+
+/**
+ * Whether the vault already holds a second factor or a passkey for this
+ * login: on the login itself, or as an item for its site (design D4).
+ *
+ * @param {object} secret A listed secret.
+ * @param {{seedDomains: Set<string>, passkeyDomains: Set<string>}} facts The vault's own seed and passkey items by domain.
+ * @return {{hasSeed: boolean, hasPasskey: boolean}}
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function secondFactorsHeld(secret, facts) {
+	const domain = siteDomain(secret.url)
+	return {
+		hasSeed: rowHasCode(secret) || listsDomain(facts.seedDomains, domain),
+		hasPasskey: rowHasPasskeys(secret) || listsDomain(facts.passkeyDomains, domain),
+	}
+}
+
+/**
+ * @param {Set<string>} domains Registrable domains the vault holds an item for.
+ * @param {string|null} domain A row's registrable domain.
+ * @return {boolean} Whether the domain is known and in the set.
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function listsDomain(domains, domain) {
+	return domain !== null && domains.has(domain)
 }
 
 /**
@@ -271,6 +294,30 @@ async function scoreRows(store, analysis) {
 		// Drop plaintext references held in this scope after the pass.
 		analysis.rows.length = 0
 	}
+}
+
+/**
+ * The site directory copy the server sent, with both lists present, or null
+ * when the response is not a directory copy.
+ *
+ * @param {object|null|undefined} copy The response body.
+ * @return {{totp: object, passkeys: object}|null}
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function usableDirectory(copy) {
+	if (!isDirectoryCopy(copy)) {
+		return null
+	}
+	return { totp: copy.totp ?? {}, passkeys: copy.passkeys ?? {} }
+}
+
+/**
+ * @param {object|null|undefined} copy The response body.
+ * @return {boolean} Whether it holds an object-typed totp and passkeys list.
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function isDirectoryCopy(copy) {
+	return Boolean(copy) && typeof copy.totp === 'object' && typeof copy.passkeys === 'object'
 }
 
 export const useHealthStore = defineStore('health', {
@@ -447,13 +494,9 @@ export const useHealthStore = defineStore('health', {
 		async loadSiteDirectory() {
 			try {
 				const response = await axios.get(generateUrl('/apps/keepiq/api/v1/site-directory'))
-				const copy = response?.data
-				if (!copy || typeof copy.totp !== 'object' || typeof copy.passkeys !== 'object') {
-					this.siteDirectoryStatus = 'unavailable'
-					return null
-				}
-				this.siteDirectoryStatus = 'ready'
-				return { totp: copy.totp ?? {}, passkeys: copy.passkeys ?? {} }
+				const directory = usableDirectory(response?.data)
+				this.siteDirectoryStatus = directory === null ? 'unavailable' : 'ready'
+				return directory
 			} catch (e) {
 				this.siteDirectoryStatus = e?.response?.status === 404 ? 'off' : 'unavailable'
 				return null

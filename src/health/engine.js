@@ -159,21 +159,7 @@ function analyseRow(row, ctx) {
 	const age = ageInDays(row.keyUpdatedAt, ctx.now)
 	const { breach, breached } = breachVerdict(d, ctx.breachResults)
 	const site = siteSuggestions(row, ctx.siteDirectory)
-	const flags = [
-		[score !== null && score <= WEAK_SCORE_THRESHOLD, 'weak'],
-		[shareCount >= 2, 'reused'],
-		[isStale(age, ctx.cutoff), 'stale'],
-		// Possibly-compromised (the one server-known finding, from suite recovery).
-		[Boolean(row.possiblyCompromisedAt), 'compromised'],
-		[breached, 'breached'],
-		// A plain-http address sends the password in the clear (health-site-security-checks D1).
-		[isInsecureAddress(row.url), 'insecure-address'],
-		// The site offers what the vault does not hold yet (health-site-security-checks D4).
-		[site.twoFactor !== null, 'two-factor-available'],
-		[site.passkey !== null, 'passkey-available'],
-	]
-		.filter(([on]) => on)
-		.map(([, flag]) => flag)
+	const flags = rowFlags(row, { score, shareCount, age, breached, site, cutoff: ctx.cutoff })
 
 	if (flags.length === 0 && score === null) {
 		return null
@@ -189,14 +175,54 @@ function analyseRow(row, ctx) {
 		ageDays: age,
 		breach,
 	}
-	if (site.twoFactor !== null || site.passkey !== null) {
-		// The directory's own page for the site, so the user can check the entry (design, Risks).
-		finding.siteDocs = {
-			twoFactor: site.twoFactor?.documentation ?? null,
-			passkey: site.passkey?.documentation ?? null,
-		}
+	const docs = siteDocs(site)
+	if (docs !== null) {
+		finding.siteDocs = docs
 	}
 	return finding
+}
+
+/**
+ * The flags of one row, in the fixed order {@link analyseRow} documents.
+ *
+ * @param {object} row One row passed to {@link analyse}.
+ * @param {object} facts The row's score, shareCount, age, breached, site suggestions and stale cutoff.
+ * @return {Array<string>}
+ */
+function rowFlags(row, facts) {
+	const { score, shareCount, age, breached, site, cutoff } = facts
+	return [
+		[score !== null && score <= WEAK_SCORE_THRESHOLD, 'weak'],
+		[shareCount >= 2, 'reused'],
+		[isStale(age, cutoff), 'stale'],
+		// Possibly-compromised (the one server-known finding, from suite recovery).
+		[Boolean(row.possiblyCompromisedAt), 'compromised'],
+		[breached, 'breached'],
+		// A plain-http address sends the password in the clear (health-site-security-checks D1).
+		[isInsecureAddress(row.url), 'insecure-address'],
+		// The site offers what the vault does not hold yet (health-site-security-checks D4).
+		[site.twoFactor !== null, 'two-factor-available'],
+		[site.passkey !== null, 'passkey-available'],
+	]
+		.filter(([on]) => on)
+		.map(([, flag]) => flag)
+}
+
+/**
+ * The directory's own pages for the site, so the user can check the entry
+ * (health-site-security-checks design, Risks), or null without a suggestion.
+ *
+ * @param {{twoFactor: object|null, passkey: object|null}} site The row's site suggestions.
+ * @return {{twoFactor: string|null, passkey: string|null}|null}
+ */
+function siteDocs(site) {
+	if (site.twoFactor === null && site.passkey === null) {
+		return null
+	}
+	return {
+		twoFactor: site.twoFactor?.documentation ?? null,
+		passkey: site.passkey?.documentation ?? null,
+	}
 }
 
 /**

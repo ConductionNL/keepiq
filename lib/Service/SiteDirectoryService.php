@@ -202,20 +202,35 @@ class SiteDirectoryService {
 				continue;
 			}
 
-			$documentation = '';
-			if (is_array($entry) === true && is_string($entry['documentation'] ?? null) === true
-				&& str_starts_with($entry['documentation'], 'https://') === true
-			) {
-				$documentation = $entry['documentation'];
-			}
-
-			$domains[$domain] = $documentation;
+			$domains[$domain] = $this->documentationOf(entry: $entry);
 		}
 
 		ksort($domains);
 
 		return $domains;
 	}//end documentationByDomain()
+
+	/**
+	 * The https documentation address of one directory entry, '' for none.
+	 *
+	 * @param mixed $entry One entry of the directory list
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+	 */
+	private function documentationOf(mixed $entry): string {
+		$documentation = '';
+		if (is_array($entry) === true) {
+			$documentation = $entry['documentation'] ?? '';
+		}
+
+		if (is_string($documentation) === false || str_starts_with($documentation, 'https://') === false) {
+			return '';
+		}
+
+		return $documentation;
+	}//end documentationOf()
 
 	/**
 	 * The copy's file in app data.
