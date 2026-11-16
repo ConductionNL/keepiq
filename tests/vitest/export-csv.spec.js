@@ -63,3 +63,18 @@ describe('generateCsv -> parseCsv round-trip', () => {
 		expect(rows[1].folder).toBe('Work/Sub')
 	})
 })
+
+describe('generateCsv and field schemas', () => {
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	it('leaves the schemas out of the notes column', () => {
+		const csv = generateCsv([
+			{
+				name: 'a',
+				additionalFields: { a: '1', '@schema': { a: { type: 'integer' } } },
+			},
+		])
+
+		expect(csv).toContain('"{""a"":""1""}"')
+		expect(csv).not.toContain('@schema')
+	})
+})
