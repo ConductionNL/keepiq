@@ -9,8 +9,8 @@
  *    (the key/login defaults are always present);
  *  - submitting the form delegates to `useSecretRequestStore().createRequest`
  *    with the selected `requested_fields` + ISO `expires_at`;
- *  - the re-request mode dispatches the `createReRequest` action instead and
- *    forwards the secret's encryption_suite_id;
+ *  - the re-request mode sends `isReRequest: true` with the requested fields'
+ *    schemas and forwards the secret's encryption_suite_id;
  *  - on success the dialog populates a `fillUrl` from the returned token and
  *    emits a `created` event with the store's response;
  *  - copyUrl() writes the fill URL to the clipboard and flips `copied`;
@@ -127,9 +127,9 @@ describe('SecretRequestCreateDialog', () => {
 		expect(wrapper.vm.error).toBe('')
 	})
 
-	it('submit() in re-request mode calls createReRequest with the suite ID', async () => {
+	it('submit() in re-request mode asks for a re-request with the suite ID', async () => {
 		const store = useSecretRequestStore()
-		store.createReRequest = vi.fn().mockResolvedValue({
+		store.createRequest = vi.fn().mockResolvedValue({
 			id: 'req-2',
 			token: 'tok-rerequest',
 		})
@@ -151,13 +151,14 @@ describe('SecretRequestCreateDialog', () => {
 
 		await wrapper.vm.submit()
 
-		expect(store.createReRequest).toHaveBeenCalledWith(
-			'secret-1',
-			'suite-9',
-			['key'],
-			null, // no expiry → null (not empty string)
-			{}, // no custom field with a schema
-		)
+		expect(store.createRequest).toHaveBeenCalledWith({
+			secretId: 'secret-1',
+			encryptionSuiteId: 'suite-9',
+			requestedFields: ['key'],
+			fieldSchemas: {}, // no custom field with a schema
+			isReRequest: true,
+			expiresAt: null, // no expiry → null (not empty string)
+		})
 		expect(wrapper.vm.fillUrl).toContain(
 			'/apps/keepiq/public/share/request/tok-rerequest',
 		)

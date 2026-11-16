@@ -442,6 +442,17 @@ export default {
 		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		canSubmit() {
+			return this.formReady && this.valueReady
+		},
+
+		/**
+		 * Whether the form around the value is ready: not busy, named, every
+		 * field value fitting its schema, a folder chosen and no code error.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 */
+		formReady() {
 			if (this.saving || this.locked || this.name.trim() === '') {
 				return false
 			}
@@ -454,9 +465,16 @@ export default {
 			if (!this.selectedFolderId && !this.contributeTo) {
 				return false
 			}
-			if (this.totpError !== '') {
-				return false
-			}
+			return this.totpError === ''
+		},
+
+		/**
+		 * Whether the type's own required value is present and policy-compliant.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 */
+		valueReady() {
 			if (this.isCard) {
 				return this.card.number !== ''
 			}

@@ -593,6 +593,36 @@ export default {
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 		 */
 		availableFields() {
+			const fields = [...this.builtinRequestFields]
+			const seen = new Set(fields.map((f) => f.key))
+			for (const field of this.extraRequestFields) {
+				if (seen.has(field.key) === false) {
+					seen.add(field.key)
+					fields.push(field)
+				}
+			}
+
+			// Filled-ness is decided HERE, by the requester's client, and never
+			// travels to the fill recipient: telling an anonymous party which
+			// fields already hold a value is vault metadata about a credential.
+			// The server could not do it anyway — it never decrypts the
+			// additionalFields blob (ADR-003), so only this side can see members.
+			return fields.map((f) => ({
+				...f,
+				filled: this.isFieldFilled(f.key),
+				locked: this.lockedFields.includes(f.key),
+			}))
+		},
+
+		/**
+		 * The value, login and URL rows, as the target type names them; a type
+		 * that leaves out the login or URL does not offer it.
+		 *
+		 * @return {Array<{key: string, label: string, plaintext?: boolean}>} Field options.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 */
+		builtinRequestFields() {
 			const typeName = this.targetTypeName
 			const fields = [
 				{
@@ -618,12 +648,25 @@ export default {
 					plaintext: true,
 				})
 			}
+			return fields
+		},
 
-			const seen = new Set(fields.map((f) => f.key))
-			// The type's own fields come first, stored under their fixed name.
-			// An existing Secret adds the members it already holds: from the
-			// explicit key list when the server sent one, else from the
-			// decrypted blob's own keys. A fresh request has no Secret yet.
+		/**
+		 * The rows after the built-in ones, possibly repeating a name, which
+		 * availableFields keeps once.
+		 *
+		 * The type's own fields come first, stored under their fixed name. An
+		 * existing Secret adds the members it already holds: from the explicit
+		 * key list when the server sent one, else from the decrypted blob's own
+		 * keys. A fresh request has no Secret yet. Names typed in this dialog,
+		 * for fields the secret does not have yet, come last.
+		 *
+		 * @return {Array<{key: string, label: string, custom?: boolean}>} Field options.
+		 *
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 */
+		extraRequestFields() {
+			const typeName = this.targetTypeName
 			const members = typeFieldsOf(this.targetType).map((f) => f.label)
 			if (this.isFreshRequest === false) {
 				members.push(
@@ -631,30 +674,17 @@ export default {
 						|| Object.keys(fieldsOf(this.secret?.additionalFields))),
 				)
 			}
-			for (const key of members) {
-				if (seen.has(key) === false) {
-					seen.add(key)
-					fields.push({ key, label: memberLabel(typeName, key) })
-				}
-			}
-			// Names typed in this dialog for fields the secret does not have yet.
-			for (const key of this.customFields) {
-				if (seen.has(key) === false) {
-					seen.add(key)
-					fields.push({ key, label: key, custom: true })
-				}
-			}
-
-			// Filled-ness is decided HERE, by the requester's client, and never
-			// travels to the fill recipient: telling an anonymous party which
-			// fields already hold a value is vault metadata about a credential.
-			// The server could not do it anyway — it never decrypts the
-			// additionalFields blob (ADR-003), so only this side can see members.
-			return fields.map((f) => ({
-				...f,
-				filled: this.isFieldFilled(f.key),
-				locked: this.lockedFields.includes(f.key),
-			}))
+			return [
+				...members.map((key) => ({
+					key,
+					label: memberLabel(typeName, key),
+				})),
+				...this.customFields.map((key) => ({
+					key,
+					label: key,
+					custom: true,
+				})),
+			]
 		},
 
 		/**
@@ -968,13 +998,14 @@ export default {
 				? new Date(this.expiresAt).toISOString()
 				: null
 			if (this.isReRequest) {
-				return store.createReRequest(
-					this.secret.id,
-					this.secret.encryption_suite_id,
-					this.requestedFields,
-					expires,
-					this.requestedSchemas,
-				)
+				return store.createRequest({
+					secretId: this.secret.id,
+					encryptionSuiteId: this.secret.encryption_suite_id,
+					requestedFields: this.requestedFields,
+					fieldSchemas: this.requestedSchemas,
+					isReRequest: true,
+					expiresAt: expires,
+				})
 			}
 			return store.createRequest(this.requestPayload(expires))
 		},

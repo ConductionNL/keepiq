@@ -530,6 +530,77 @@ function extraFieldsText(fields) {
 }
 
 /**
+ * The decrypted secret a write starts from: the open one once its pending
+ * write-back has settled, since its version and pending count move when that
+ * saves, else the secret as the server has it.
+ *
+ * @param {object} store The secret store.
+ * @param {string} id The secret ID.
+ * @return {Promise<object>} The decrypted secret.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+async function openForWrite(store, id) {
+	if (store.currentSecret?.id === id) {
+		await store.writeBackSettled(id)
+		return store.currentSecret
+	}
+	const response = await axios.get(
+		generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
+	)
+	return store.decryptSecret(response.data)
+}
+
+/**
+ * Whether decrypted additional fields hold members a field can be added to:
+ * none yet, or an object; text and lists do not.
+ *
+ * @param {object|Array|string|null|undefined} fields The decrypted additional fields.
+ * @return {boolean}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+function holdsMembers(fields) {
+	if (fields === null || fields === undefined) {
+		return true
+	}
+	return typeof fields === 'object' && !Array.isArray(fields)
+}
+
+/**
+ * The additional fields with the requested fields added, empty, with their
+ * schemas; null when there is nothing to write, as when the fields are text
+ * rather than members or the requested fields are already there.
+ *
+ * @param {object|Array|string|null|undefined} own The secret's decrypted additional fields.
+ * @param {Array<string>} names The requested custom field names.
+ * @param {object} schemas The requested schemas by field name.
+ * @return {object|null} The blob to save, or null.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+function requestedBlob(own, names, schemas) {
+	if (!holdsMembers(own)) {
+		return null
+	}
+	const blob = withRequestedFields(own, names, schemas)
+	return JSON.stringify(blob) === JSON.stringify(own || {}) ? null : blob
+}
+
+/**
+ * Show saved additional fields on the open secret, when it is the one saved.
+ *
+ * @param {object} store The secret store.
+ * @param {string} id The saved secret's ID.
+ * @param {object} blob The saved additional fields.
+ * @return {void}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+function showSavedFields(store, id, blob) {
+	if (store.currentSecret && store.currentSecret.id === id) {
+		store.currentSecret.additionalFields = blob
+		store.currentSecret.mergedPending = 0
+	}
+}
+
+/**
  * Put a create into the sealed offline queue.
  *
  * @param {object} offline The offline store.
@@ -1327,28 +1398,9 @@ export const useSecretStore = defineStore('secret', {
 			if (names.length === 0) {
 				return
 			}
-			let open
-			if (this.currentSecret?.id === id) {
-				// Its version and pending count move when a write-back saves.
-				await this.writeBackSettled(id)
-				open = this.currentSecret
-			} else {
-				const response = await axios.get(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
-				)
-				open = await this.decryptSecret(response.data)
-			}
-			const own = open.additionalFields
-			if (
-				own !== null
-				&& own !== undefined
-				&& (typeof own !== 'object' || Array.isArray(own))
-			) {
-				// Text, not members: there is nothing to add a field to.
-				return
-			}
-			const blob = withRequestedFields(own, names, schemas)
-			if (JSON.stringify(blob) === JSON.stringify(own ?? {})) {
+			const open = await openForWrite(this, id)
+			const blob = requestedBlob(open.additionalFields, names, schemas)
+			if (blob === null) {
 				return
 			}
 			await this.updateSecret(
@@ -1356,10 +1408,7 @@ export const useSecretStore = defineStore('secret', {
 				{ additionalFields: blob, mergedPending: open.mergedPending ?? 0 },
 				{ baseUpdatedAt: open.updatedAt },
 			)
-			if (this.currentSecret?.id === id) {
-				this.currentSecret.additionalFields = blob
-				this.currentSecret.mergedPending = 0
-			}
+			showSavedFields(this, id, blob)
 		},
 
 		/**
