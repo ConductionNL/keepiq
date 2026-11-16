@@ -82,6 +82,10 @@ class AttachmentController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+	 *
+	 * @no-admin-idor-exempt scoped in the service. AttachmentService::upload()
+	 * loads the secret through loadOwnedSecret() with the session user, which
+	 * refuses a secret the caller does not own before anything is stored.
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -187,6 +191,10 @@ class AttachmentController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
+	 *
+	 * @no-admin-idor-exempt scoped in the service. AttachmentService::addGrant()
+	 * loads the attachment's source secret through loadOwnedSecret() with the
+	 * session user, so only the owner adds a grant.
 	 */
 	#[NoAdminRequired]
 	public function addGrant(

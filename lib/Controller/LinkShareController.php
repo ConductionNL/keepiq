@@ -121,6 +121,10 @@ class LinkShareController extends OCSController {
 	 * @spec openspec/changes/implement-link-sharing/tasks.md#task-4.1
 	 *
 	 * @SuppressWarnings(PHPMD.LongVariable) Parameter names mirror the API payload fields.
+	 *
+	 * @no-admin-idor-exempt scoped in the service. LinkShareService::create()
+	 * calls ShareAuthorizationService::assertMayReshare() with the session
+	 * user, which refuses a secret the caller may not share.
 	 */
 	#[NoAdminRequired]
 	public function create(
