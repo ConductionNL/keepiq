@@ -154,6 +154,8 @@ item:
   fillName: Líon {name}
   insecureTitle: An bhfuil tú fós ag iarraidh an logáil isteach seo a líonadh?
   insecureWarning: "Rabhadh: Is leathanach HTTP neamhdhaingean é seo, agus d'fhéadfadh daoine eile aon fhaisnéis a sheolann tú a fheiceáil agus a athrú. Sábháladh an logáil isteach seo ar leathanach daingean (HTTPS) ar dtús."
+  repromptTitle: "Cuir isteach do mháistirphasfhocal chun an mhír seo a líonadh"
+  repromptHelp: "Iarrann an mhír seo do mháistirphasfhocal gach uair a líontar í. Cosnaíonn sé seo scáileán díghlasáilte, ní síneadh athraithe."
   cardInsecureTitle: An líonfar an cárta seo ar shuíomh neamhdhaingean?
   cardInsecureWarning: Níl an suíomh seo daingean. D'fhéadfadh duine ar bith ar an líonra sonraí an chárta a líontar a léamh.
   crossSiteTitle: Líon ar {hosts} freisin?

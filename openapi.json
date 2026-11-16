@@ -15438,6 +15438,9 @@
                                     "passkeys": {
                                         "type": "string"
                                     },
+                                    "reprompt": {
+                                        "type": "boolean"
+                                    },
                                     "additionalUrls": {
                                         "type": "string"
                                     }

@@ -116,6 +116,15 @@
 				:disabled="saving || loading"
 				@update:modelValue="tags = $event" />
 
+			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
+			<NcCheckboxRadioSwitch
+				:modelValue="reprompt"
+				:disabled="saving || loading"
+				data-testid="secret-reprompt"
+				@update:modelValue="reprompt = $event">
+				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
+			</NcCheckboxRadioSwitch>
+
 			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
 
@@ -142,6 +151,7 @@
 <script>
 import {
 	NcButton,
+	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
@@ -189,6 +199,7 @@ export default {
 	name: 'SecretEditDialog',
 
 	components: {
+		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
 		AuthenticatorKeyField,
@@ -249,6 +260,7 @@ export default {
 			totpInput: '',
 			additionalFields: [],
 			tags: [],
+			reprompt: false,
 			policy: null,
 		}
 	},
@@ -418,6 +430,7 @@ export default {
 				this.additionalUrls = Array.isArray(secret.additionalUrls) ? [...secret.additionalUrls] : []
 				this.login = secret.login || ''
 				this.tags = Array.isArray(secret.tags) ? [...secret.tags] : []
+				this.reprompt = secret.reprompt === true
 				// From the DECRYPTED blob the store already parsed. Pre-filling from
 				// the current decrypted copy is also what bounds the known
 				// last-writer-wins window: the whole blob is rewritten on save, so an
@@ -541,6 +554,9 @@ export default {
 				const o = this.original
 				if (this.name.trim() !== (o.name || '')) {
 					diff.name = this.name.trim()
+				}
+				if (this.reprompt !== (o.reprompt === true)) {
+					diff.reprompt = this.reprompt
 				}
 				// No `typeId` branch: type is read-only in this dialog (see the
 				// template), so it cannot differ from the original — and if a

@@ -154,6 +154,8 @@ item:
   fillName: Wypełnij {name}
   insecureTitle: Czy nadal chcesz wypełnić te dane logowania?
   insecureWarning: "Uwaga: to niezabezpieczona strona HTTP i wszelkie przesłane informacje mogą zostać podejrzane i zmienione przez inne osoby. Te dane logowania zostały pierwotnie zapisane na bezpiecznej stronie (HTTPS)."
+  repromptTitle: "Wpisz hasło główne, aby wypełnić ten element"
+  repromptHelp: "Ten element prosi o hasło główne przy każdym wypełnieniu. Chroni to odblokowany ekran, a nie zmodyfikowane rozszerzenie."
   cardInsecureTitle: Wypełnić tę kartę na niezabezpieczonej witrynie?
   cardInsecureWarning: Ta witryna nie jest bezpieczna. Każdy w sieci może odczytać wypełnione dane karty.
   crossSiteTitle: Wypełnić także na {hosts}?

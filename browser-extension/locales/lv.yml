@@ -154,6 +154,8 @@ item:
   fillName: Aizpildīt {name}
   insecureTitle: Vai tomēr aizpildīt šo pieteikšanās vienumu?
   insecureWarning: "Brīdinājums: šī ir nedroša HTTP lapa, un citi var redzēt un mainīt jebkuru jūsu iesniegto informāciju. Šis pieteikšanās vienums sākotnēji tika saglabāts drošā (HTTPS) lapā."
+  repromptTitle: "Ievadiet galveno paroli, lai aizpildītu šo vienumu"
+  repromptHelp: "Šis vienums katru reizi pirms aizpildīšanas prasa galveno paroli. Tas aizsargā atbloķētu ekrānu, nevis pārveidotu paplašinājumu."
   cardInsecureTitle: Aizpildīt šo karti nedrošā vietnē?
   cardInsecureWarning: Šī vietne nav droša. Ikviens tīklā var nolasīt aizpildītos kartes datus.
   crossSiteTitle: Aizpildīt arī citās vietnēs ({hosts})?
