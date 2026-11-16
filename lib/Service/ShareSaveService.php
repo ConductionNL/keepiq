@@ -34,6 +34,7 @@ use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Kernel\Contracts\ShareSaveServiceInterface;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
 use OCA\Keepiq\Service\ShareSave\ShareSaveHistory;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCA\Keepiq\Service\ShareSave\ShareSavePath;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
@@ -76,6 +77,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 	 * @param ShareSaveScope $scope The rows to write
 	 * @param ShareSaveStages $stages Staged chunks
 	 * @param IDBConnection $db The transaction
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 *
 	 * @return void
 	 *
@@ -91,6 +93,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 		private ShareSaveScope $scope,
 		private ShareSaveStages $stages,
 		private IDBConnection $db,
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 	}//end __construct()
 
@@ -187,7 +190,10 @@ class ShareSaveService implements ShareSaveServiceInterface {
 		$notified = $this->notify(rows: $written['federatedRows']);
 
 		return [
-			'secret' => $written['secret']->jsonSerialize(),
+			// A privileged copy outside its window comes back without its
+			// ciphertext (capability-requirements-from-the-matrix 3.1).
+			'secret' => $this->privilegedGate?->serialisedFor(secret: $written['secret'], userId: $userId)
+				?? $written['secret']->jsonSerialize(),
 			'sourceUpdatedAt' => $savedAt->format(DATE_ATOM),
 			'copies' => ['written' => $written['copies'], 'skipped' => count($entries->skipped)],
 			'federated' => [

@@ -271,6 +271,37 @@ class PrivilegedCopyGateTest extends TestCase {
 	}//end testAListedCopyOutsideItsWindowIsWithheldWithoutAudit()
 
 	/**
+	 * A copy returned after a write or in a conflict body, outside its
+	 * window, loses its ciphertext, without an audit.
+	 *
+	 * @return void
+	 */
+	public function testACopyReturnedOutsideItsWindowLosesItsCiphertext(): void {
+		$this->flags->method('privilegedAmong')->willReturn(['s1']);
+		$this->requests->method('findApproved')->willReturn([]);
+
+		$served = $this->gate()->serialisedFor(secret: self::secret(id: 'c1'), userId: 'bob');
+
+		$this->assertTrue($served['blocked']);
+		$this->assertSame('privileged_access_required', $served['privilegedAccess']);
+		$this->assertArrayNotHasKey('key', $served);
+		$this->assertSame([], $this->recorded);
+	}//end testACopyReturnedOutsideItsWindowLosesItsCiphertext()
+
+	/**
+	 * A copy returned inside its window keeps its full serialisation.
+	 *
+	 * @return void
+	 */
+	public function testACopyReturnedInsideItsWindowIsUnchanged(): void {
+		$this->flags->method('privilegedAmong')->willReturn(['s1']);
+		$this->requests->method('findApproved')->willReturn([self::approved()]);
+
+		$secret = self::secret(id: 'c1');
+		$this->assertSame($secret->jsonSerialize(), $this->gate()->serialisedFor(secret: $secret, userId: 'bob'));
+	}//end testACopyReturnedInsideItsWindowIsUnchanged()
+
+	/**
 	 * Without any approved request the copy is refused.
 	 *
 	 * @return void

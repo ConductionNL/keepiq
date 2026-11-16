@@ -129,6 +129,23 @@ class PrivilegedCopyGate {
 	}//end servable()
 
 	/**
+	 * A row serialised for the user it is returned to, after a write or in a
+	 * conflict body: without any ciphertext when it is a privileged copy
+	 * outside its window. Not audited, as a listing.
+	 *
+	 * @param Secret $secret  The row
+	 * @param string $userId  The user it is returned to
+	 * @param string $channel Which client path returns it
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	public function serialisedFor(Secret $secret, string $userId, string $channel = 'web'): array {
+		return $this->servable(secret: $secret, data: $secret->jsonSerialize(), userId: $userId, channel: $channel);
+	}//end serialisedFor()
+
+	/**
 	 * Whether the row may be served with its ciphertext now, to this address.
 	 *
 	 * @param Secret $secret  The row
