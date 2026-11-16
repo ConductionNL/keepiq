@@ -448,7 +448,7 @@ class SecretRequestService {
 			throw new InvalidArgumentException(message: 'userId is required');
 		}
 
-		$this->requireRequestableSecret(secretId: $secretId);
+		$this->requireRequestableSecret(secretId: $secretId, userId: $userId);
 		$shape   = new FieldSchemaShape();
 		$schemas = $shape->normalize(schemas: $fieldSchemas, requestedFields: $requestedFields);
 
@@ -487,20 +487,27 @@ class SecretRequestService {
 	 * Every user path that creates a request ends in create(), so a fresh
 	 * request, a plain fill-in and a re-request all meet this one rule. A missing
 	 * Secret is not refused here: the path that names one reports that itself.
+	 * A user's Secret is checked to be the requester's first, so the answer for
+	 * someone else's Secret does not tell its type.
 	 *
 	 * @param string $secretId The Secret the request would write to
+	 * @param string|null $userId The requester; null when no one is asking, as on the public fill link
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException With code 403 for a type that cannot be requested.
+	 * @throws InvalidArgumentException For another user's Secret, or with code 403 for a type that cannot be requested.
 	 *
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
-	private function requireRequestableSecret(string $secretId): void {
+	private function requireRequestableSecret(string $secretId, ?string $userId = null): void {
 		try {
 			$secret = $this->secretMapper->findById($secretId);
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			return;
+		}
+
+		if ($userId !== null && $secret->getOwnerType() === 'user' && $secret->getOwnerId() !== $userId) {
+			throw new InvalidArgumentException(message: 'Not authorized for this secret');
 		}
 
 		$this->policy->requireRequestableType(typeId: $secret->getTypeId());
@@ -622,12 +629,14 @@ class SecretRequestService {
 	 * @param array<string> $requestedFields Field names to be filled in
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the request
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
 	 * @throws InvalidArgumentException When the application has no active suite
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.3
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createForApplication(
 		string $secretId,
@@ -635,6 +644,7 @@ class SecretRequestService {
 		array $requestedFields,
 		?DateTime $expiresAt,
 		string $userId,
+		array $fieldSchemas = [],
 	): SecretRequest {
 		$suiteId = $this->policy->requireApplicationSuiteId(applicationId: $applicationId);
 
@@ -645,6 +655,7 @@ class SecretRequestService {
 			isReRequest: false,
 			expiresAt: $expiresAt,
 			userId: $userId,
+			fieldSchemas: $fieldSchemas,
 		);
 	}//end createForApplication()
 

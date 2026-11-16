@@ -163,6 +163,28 @@ class SecretRequestFillControllerTest extends TestCase {
 	}//end testShowNamesTheTypeOfTheSecretBeingFilled()
 
 	/**
+	 * Show hands the fill page the requested fields' schemas, and an empty
+	 * object when the request has none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testShowReturnsTheFieldSchemas(): void {
+		$request = $this->makeRequest();
+		$request->setFieldSchemas('{"PIN":{"type":"string","hidden":true}}');
+		$plain = $this->makeRequest();
+		$this->secretRequestService->method('getByToken')->willReturnOnConsecutiveCalls($request, $plain);
+		$this->encryptionSuiteService->method('getSuite')->willReturn($this->makeSuite());
+
+		$typed = $this->controller->show(token: 'tok-1')->getData();
+		$none  = $this->controller->show(token: 'tok-1')->getData();
+
+		$this->assertEquals(expected: (object)['PIN' => ['type' => 'string', 'hidden' => true]], actual: $typed['field_schemas']);
+		$this->assertSame(expected: '{}', actual: json_encode($none['field_schemas']));
+	}//end testShowReturnsTheFieldSchemas()
+
+	/**
 	 * Show propagates the InvalidArgumentException HTTP code (e.g. 410 Gone).
 	 *
 	 * @return void

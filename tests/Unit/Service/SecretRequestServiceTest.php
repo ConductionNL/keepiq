@@ -1929,6 +1929,65 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testTheSchemaMemberCannotBeRequested()
 
 	/**
+	 * Another user's Secret is refused before its type is looked at, so the
+	 * answer does not tell whether it is a card.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testAnotherUsersCardIsRefusedWithoutNamingItsType(): void {
+		$this->secretMapper->method('findById')->willReturn($this->cardSecret());
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Not authorized for this secret');
+
+		$this->service->create(
+			secretId: 'sec-1',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: ['key'],
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'mallory',
+		);
+	}//end testAnotherUsersCardIsRefusedWithoutNamingItsType()
+
+	/**
+	 * A re-request on the owner's own payment card is refused.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testReRequestOnACardSecretIsRefused(): void {
+		$this->secretMapper->method('findById')->willReturn($this->cardSecret());
+		$this->mapper->method('findPendingBySecretId')->willThrowException(new DoesNotExistException('none'));
+		$this->mapper->expects($this->never())->method('insert');
+		$service = new SecretRequestService(
+			mapper: $this->mapper,
+			policy: new SecretRequestPolicy(
+				mapper: $this->mapper,
+				suiteMapper: $this->activeSuites(),
+				secretMapper: $this->secretMapper,
+				typeMapper: $this->namedTypes()
+			),
+			outbox: new SecretRequestOutbox(),
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+		);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionCode(403);
+
+		$service->createReRequest(secretId: 'sec-1', requestedFields: ['key'], expiresAt: null, userId: 'requester');
+	}//end testReRequestOnACardSecretIsRefused()
+
+	/**
 	 * A fill whose Secret was changed to a type that cannot be requested
 	 * after the request was made is refused, with nothing written and the
 	 * request left pending.
@@ -1966,6 +2025,7 @@ class SecretRequestServiceTest extends TestCase {
 		$card->setOwnerType('user');
 		$card->setOwnerId('requester');
 		$card->setTypeId('type-card');
+		$card->setEncryptionSuiteId('suite-1');
 		return $card;
 	}//end cardSecret()
 

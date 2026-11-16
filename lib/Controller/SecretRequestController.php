@@ -298,8 +298,7 @@ class SecretRequestController extends OCSController {
 	 * @param string $userId The requesting user
 	 * @param array{name: ?string, folderId: ?string, typeId: ?string} $placeholder What a
 	 *        FRESH request's created Secret is made from; unused by the other modes
-	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields; an
-	 *        application request carries none
+	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields
 	 *
 	 * @return \OCA\Keepiq\Db\SecretRequest
 	 *
@@ -325,6 +324,7 @@ class SecretRequestController extends OCSController {
 				requestedFields: $requestedFields,
 				expiresAt: $expiry,
 				userId: $userId,
+				fieldSchemas: $fieldSchemas,
 			);
 		}
 

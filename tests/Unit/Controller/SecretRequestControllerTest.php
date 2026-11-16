@@ -81,6 +81,26 @@ class SecretRequestControllerTest extends TestCase {
 	}//end setUp()
 
 	/**
+	 * A controller whose request body carries this `fieldSchemas` value.
+	 *
+	 * @param mixed $fieldSchemas The body value
+	 *
+	 * @return SecretRequestController
+	 */
+	private function controllerWithSchemas(mixed $fieldSchemas): SecretRequestController {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static fn (string $key) => $key === 'fieldSchemas' ? $fieldSchemas : null
+		);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+
+		return new SecretRequestController(request: $request, service: $this->service, session: $session);
+	}//end controllerWithSchemas()
+
+	/**
 	 * Build a persisted request for the service mocks to return.
 	 *
 	 * @return SecretRequest
@@ -234,6 +254,47 @@ class SecretRequestControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
 	}//end testAnApplicationIdTakesTheApplicationPath()
+
+	/**
+	 * The schemas in the body's `fieldSchemas` reach the service, also on
+	 * an application's request.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testTheBodySchemasReachTheService(): void {
+		$schemas = ['PIN' => ['type' => 'string', 'hidden' => true]];
+		$this->service->expects($this->once())
+			->method('create')
+			->with('sec-1', 'suite-1', ['PIN'], false, null, 'alice', $schemas)
+			->willReturn($this->made());
+		$this->service->expects($this->once())
+			->method('createForApplication')
+			->with('sec-1', 'app-1', ['PIN'], null, 'alice', $schemas)
+			->willReturn($this->made());
+
+		$controller = $this->controllerWithSchemas(fieldSchemas: $schemas);
+		$controller->create(secretId: 'sec-1', encryptionSuiteId: 'suite-1', requestedFields: ['PIN']);
+		$controller->create(secretId: 'sec-1', requestedFields: ['PIN'], applicationId: 'app-1');
+	}//end testTheBodySchemasReachTheService()
+
+	/**
+	 * A `fieldSchemas` that is not an object is read as none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testABodySchemaThatIsNoObjectIsReadAsNone(): void {
+		$this->service->expects($this->once())
+			->method('create')
+			->with('sec-1', 'suite-1', ['PIN'], false, null, 'alice', [])
+			->willReturn($this->made());
+
+		$this->controllerWithSchemas(fieldSchemas: 'PIN')
+			->create(secretId: 'sec-1', encryptionSuiteId: 'suite-1', requestedFields: ['PIN']);
+	}//end testABodySchemaThatIsNoObjectIsReadAsNone()
 
 	/**
 	 * An unauthenticated caller is refused before any service call.
