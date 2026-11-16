@@ -105,6 +105,11 @@ export default {
 		},
 	},
 
+	/**
+	 * Read whether the user already has a kit.
+	 *
+	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+	 */
 	async created() {
 		try {
 			this.kit = await recoveryKitStatus()
@@ -140,6 +145,7 @@ export default {
 
 		/**
 		 * @return {string} The kit as text.
+		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 		 */
 		kitText() {
 			return recoveryKitText({ code: this.code, account: getCurrentUser()?.uid ?? '', createdAt: this.madeOn }, t)

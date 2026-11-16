@@ -108,6 +108,7 @@ export default {
 	computed: {
 		/**
 		 * @return {boolean} Whether the code reads as a code and the new password is long enough and repeated.
+		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
 		 */
 		canRecover() {
 			return !this.busy
@@ -117,6 +118,11 @@ export default {
 		},
 	},
 
+	/**
+	 * Read whether the user has a kit to recover with.
+	 *
+	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+	 */
 	async created() {
 		try {
 			this.hasKit = (await recoveryKitStatus()) !== null
