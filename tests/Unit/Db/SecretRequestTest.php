@@ -163,4 +163,26 @@ class SecretRequestTest extends TestCase {
 
 		$this->assertSame([], $serialized['requestedFields']);
 	}//end testJsonSerializeFallsBackOnInvalidJson()
+
+	/**
+	 * A request belongs to the application that created it; an empty
+	 * application id never matches, not even a request stored with an empty
+	 * application actor.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+	 */
+	public function testBelongsToApplication(): void {
+		$entity = new SecretRequest();
+		$entity->setCreatedByApplication(applicationId: 'app-1');
+
+		$this->assertTrue($entity->belongsToApplication('app-1'));
+		$this->assertFalse($entity->belongsToApplication('app-2'));
+		$this->assertFalse($entity->belongsToApplication(''));
+
+		$entity->setCreatedByApplication(applicationId: '');
+		$this->assertSame(SecretRequest::actorForApplication(applicationId: ''), $entity->getCreatedBy());
+		$this->assertFalse($entity->belongsToApplication(''));
+	}//end testBelongsToApplication()
 }//end class
