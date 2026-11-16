@@ -46,6 +46,10 @@ use OCP\IUserSession;
  * Updates one secret.
  *
  * @spec openspec/specs/secrets/spec.md#requirement-update-secret
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Thin transport layer: each
+ *   type is a request, a response or a refusal it maps to a status, and the
+ *   extra website addresses of a login (vault-website-addresses) add one.
  */
 class SecretUpdateController extends OCSController {
 	/**
@@ -114,13 +118,7 @@ class SecretUpdateController extends OCSController {
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException $e) {
-			// A vault policy refusal carries its code (admin-vault-policies D4).
-			$body = ['message' => $e->getMessage()];
-			if ($e->policyCode() !== null) {
-				$body['code'] = $e->policyCode();
-			}
-
-			return new JSONResponse(data: $body, statusCode: Http::STATUS_FORBIDDEN);
+			return $this->forbidden(exception: $e);
 		} catch (WriteLockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
 		} catch (InvalidArgumentException $e) {
@@ -129,6 +127,25 @@ class SecretUpdateController extends OCSController {
 
 		return new JSONResponse(data: $data);
 	}//end update()
+
+	/**
+	 * The 403 of a refused update. A vault policy refusal carries its code
+	 * (admin-vault-policies D4).
+	 *
+	 * @param ForbiddenException $exception The refusal
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
+	 */
+	private function forbidden(ForbiddenException $exception): JSONResponse {
+		$body = ['message' => $exception->getMessage()];
+		if ($exception->policyCode() !== null) {
+			$body['code'] = $exception->policyCode();
+		}
+
+		return new JSONResponse(data: $body, statusCode: Http::STATUS_FORBIDDEN);
+	}//end forbidden()
 
 	/**
 	 * The extra addresses the request carries, normalised, or null when it
