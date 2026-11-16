@@ -25,6 +25,7 @@ namespace OCA\Keepiq\Service;
 use DateTimeInterface;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Kernel\Contracts\RecentlyUsedServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
@@ -33,7 +34,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
  *
  * @spec openspec/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
  */
-class RecentlyUsedService {
+class RecentlyUsedService implements RecentlyUsedServiceInterface {
 
 	/**
 	 * How many read events are scanned to find the distinct secrets. A secret

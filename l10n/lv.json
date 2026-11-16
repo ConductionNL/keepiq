@@ -1887,7 +1887,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Ievadiet UUID, piemēram, 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Ievadiet krāsu, piemēram, #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimums ir lielāks par maksimumu.",
-        "This is not a valid regular expression.": "Šī nav derīga regulārā izteiksme."
+        "This is not a valid regular expression.": "Šī nav derīga regulārā izteiksme.",
+        "Additional fields after the merge": "Papildu lauki pēc apvienošanas",
+        "Duplicates": "Dublikāti",
+        "Exact duplicates": "Precīzi dublikāti",
+        "Item to keep": "Paturamais vienums",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Vienumi, kuros tas pats pieteikšanās ieraksts ir vairāk nekā vienu reizi. Apvienošana patur vienu un noņem pārējos.",
+        "Likely duplicates": "Iespējamie dublikāti",
+        "Merge": "Apvienot",
+        "Merge duplicates": "Apvienot dublikātus",
+        "People who lose access: {count}": "Cilvēki, kas zaudē piekļuvi: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Tā pati adrese un lietotājvārds, cita parole. Tā var izskatīties divi atsevišķi konti, tāpēc pārbaudiet pirms apvienošanas.",
+        "The merge did not complete. Check the items of this group in your vault.": "Apvienošana netika pabeigta. Pārbaudiet šīs grupas vienumus savā glabātavā.",
+        "The merge failed. Nothing was removed.": "Apvienošana neizdevās. Nekas netika noņemts.",
+        "The other items move to the trash, where you can restore them.": "Pārējie vienumi nonāk miskastē, no kurienes tos var atjaunot."
     },
     "plurals": null
 }

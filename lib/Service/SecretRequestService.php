@@ -33,6 +33,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerInterface;
@@ -65,7 +66,7 @@ use Throwable;
  * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
-class SecretRequestService {
+class SecretRequestService implements SecretRequestServiceInterface {
 	/*
 	 * The field model lives on SecretRequestPolicy so validation and persistence
 	 * cannot drift apart: the validator decides which bucket a requested name

@@ -21,12 +21,13 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use DateTimeInterface;
+use OCA\Keepiq\Kernel\Contracts\ShareRestrictionInterface;
 
 /**
  * The two restrictions a grant can carry: use-only and an end date
  * (sharing-use-only-and-expiring-shares D1). Immutable.
  */
-final class ShareRestriction {
+final class ShareRestriction implements ShareRestrictionInterface {
 
 	/**
 	 * Constructor for ShareRestriction.

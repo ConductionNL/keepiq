@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Εισαγάγετε ένα UUID, π.χ. 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Εισαγάγετε ένα χρώμα, π.χ. #1a2b3c.",
         "The minimum is higher than the maximum.": "Το ελάχιστο είναι μεγαλύτερο από το μέγιστο.",
-        "This is not a valid regular expression.": "Αυτή δεν είναι έγκυρη κανονική έκφραση."
+        "This is not a valid regular expression.": "Αυτή δεν είναι έγκυρη κανονική έκφραση.",
+        "Additional fields after the merge": "Πρόσθετα πεδία μετά τη συγχώνευση",
+        "Duplicates": "Διπλότυπα",
+        "Exact duplicates": "Ακριβή διπλότυπα",
+        "Item to keep": "Στοιχείο προς διατήρηση",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Στοιχεία που περιέχουν την ίδια σύνδεση περισσότερες από μία φορές. Η συγχώνευση κρατά ένα και αφαιρεί τα υπόλοιπα.",
+        "Likely duplicates": "Πιθανά διπλότυπα",
+        "Merge": "Συγχώνευση",
+        "Merge duplicates": "Συγχώνευση διπλοτύπων",
+        "People who lose access: {count}": "Άτομα που χάνουν την πρόσβαση: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Ίδια διεύθυνση και όνομα χρήστη, διαφορετικός κωδικός πρόσβασης. Δύο ξεχωριστοί λογαριασμοί μπορεί να μοιάζουν έτσι, οπότε ελέγξτε πριν από τη συγχώνευση.",
+        "The merge did not complete. Check the items of this group in your vault.": "Η συγχώνευση δεν ολοκληρώθηκε. Ελέγξτε τα στοιχεία αυτής της ομάδας στο θησαυροφυλάκιό σας.",
+        "The merge failed. Nothing was removed.": "Η συγχώνευση απέτυχε. Δεν αφαιρέθηκε τίποτα.",
+        "The other items move to the trash, where you can restore them.": "Τα υπόλοιπα στοιχεία μεταφέρονται στον κάδο, από όπου μπορείτε να τα επαναφέρετε."
     },
     "nplurals=2; plural=(n != 1);"
 )

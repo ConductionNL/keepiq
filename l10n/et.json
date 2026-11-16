@@ -1861,7 +1861,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Sisestage UUID, näiteks 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Sisestage värv, näiteks #1a2b3c.",
         "The minimum is higher than the maximum.": "Miinimum on suurem kui maksimum.",
-        "This is not a valid regular expression.": "See ei ole kehtiv regulaaravaldis."
+        "This is not a valid regular expression.": "See ei ole kehtiv regulaaravaldis.",
+        "Additional fields after the merge": "Lisaväljad pärast ühendamist",
+        "Duplicates": "Duplikaadid",
+        "Exact duplicates": "Täpsed duplikaadid",
+        "Item to keep": "Alles jäetav kirje",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Kirjed, mis sisaldavad sama sisselogimist rohkem kui üks kord. Ühendamine jätab ühe alles ja eemaldab teised.",
+        "Likely duplicates": "Tõenäolised duplikaadid",
+        "Merge": "Ühenda",
+        "Merge duplicates": "Ühenda duplikaadid",
+        "People who lose access: {count}": "Inimesed, kes kaotavad juurdepääsu: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Sama aadress ja kasutajanimi, teine parool. Kaks eraldi kontot võivad niimoodi välja näha, seega kontrolli enne ühendamist.",
+        "The merge did not complete. Check the items of this group in your vault.": "Ühendamine ei lõppenud. Kontrolli selle rühma kirjeid oma hoidlas.",
+        "The merge failed. Nothing was removed.": "Ühendamine ebaõnnestus. Midagi ei eemaldatud.",
+        "The other items move to the trash, where you can restore them.": "Teised kirjed lähevad prügikasti, kust saad need taastada."
     },
     "plurals": null
 }

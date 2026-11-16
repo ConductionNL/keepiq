@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 identitate Keepiq. Apăsați Săgeată în jos pentru a alege.
         n: "Identități Keepiq: $1. Apăsați Săgeată în jos pentru a alege."
+  newPassword:
+    frameTitle: Parolă puternică Keepiq
+    offer: Folosiți o parolă puternică
+    locked: Deblocați Keepiq pentru a obține o parolă puternică
+    status: Folosiți o parolă puternică. Apăsați Săgeată în jos pentru a alege.
 
 notificationBar:
   label: Notificare Keepiq

@@ -546,6 +546,53 @@ class LinkShareServiceTest extends TestCase {
 	}//end testCreateGeneratesTokenAndPersists()
 
 	/**
+	 * A link share whose end date has already passed is refused before anything is stored.
+	 *
+	 * @return void
+	 */
+	public function testCreateRejectsAnEndDateInThePast(): void {
+		$this->mapper->expects($this->never())->method('insert');
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('The end date must lie in the future');
+
+		$this->service->create(
+			link: new NewLinkShare(
+				secretId: 'secret-9',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-42',
+				usageLimit: 1,
+				expiresAt: new DateTime('-1 day'),
+				userId: 'alice'
+			)
+		);
+	}//end testCreateRejectsAnEndDateInThePast()
+
+	/**
+	 * A link share with an end date in the future is stored with that end date.
+	 *
+	 * @return void
+	 */
+	public function testCreateKeepsAnEndDateInTheFuture(): void {
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+		$end = new DateTime('+2 days');
+
+		$result = $this->service->create(
+			link: new NewLinkShare(
+				secretId: 'secret-9',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-42',
+				usageLimit: 1,
+				expiresAt: $end,
+				userId: 'alice'
+			)
+		);
+
+		$this->assertSame($end, $result->getExpiresAt());
+	}//end testCreateKeepsAnEndDateInTheFuture()
+
+	/**
 	 * Test create rejects a usage limit below the minimum.
 	 *
 	 * @return void

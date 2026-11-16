@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Zadajte UUID, napríklad 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Zadajte farbu, napríklad #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimum je vyššie ako maximum.",
-        "This is not a valid regular expression.": "Toto nie je platný regulárny výraz."
+        "This is not a valid regular expression.": "Toto nie je platný regulárny výraz.",
+        "Additional fields after the merge": "Ďalšie polia po zlúčení",
+        "Duplicates": "Duplikáty",
+        "Exact duplicates": "Presné duplikáty",
+        "Item to keep": "Položka na ponechanie",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Položky, ktoré obsahujú rovnaké prihlásenie viac ako raz. Zlúčenie jednu ponechá a ostatné odstráni.",
+        "Likely duplicates": "Pravdepodobné duplikáty",
+        "Merge": "Zlúčiť",
+        "Merge duplicates": "Zlúčiť duplikáty",
+        "People who lose access: {count}": "Ľudia, ktorí stratia prístup: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Rovnaká adresa a používateľské meno, iné heslo. Takto môžu vyzerať dva samostatné účty, preto to pred zlúčením skontrolujte.",
+        "The merge did not complete. Check the items of this group in your vault.": "Zlúčenie sa nedokončilo. Skontrolujte položky tejto skupiny vo svojom trezore.",
+        "The merge failed. Nothing was removed.": "Zlúčenie zlyhalo. Nič sa neodstránilo.",
+        "The other items move to the trash, where you can restore them.": "Ostatné položky sa presunú do koša, odkiaľ ich môžete obnoviť."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

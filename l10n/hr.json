@@ -1887,7 +1887,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Unesite UUID, npr. 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Unesite boju, npr. #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimum je veći od maksimuma.",
-        "This is not a valid regular expression.": "Ovo nije ispravan regularni izraz."
+        "This is not a valid regular expression.": "Ovo nije ispravan regularni izraz.",
+        "Additional fields after the merge": "Dodatna polja nakon spajanja",
+        "Duplicates": "Duplikati",
+        "Exact duplicates": "Točni duplikati",
+        "Item to keep": "Stavka koja ostaje",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Stavke koje sadrže istu prijavu više puta. Spajanje zadržava jednu i uklanja ostale.",
+        "Likely duplicates": "Vjerojatni duplikati",
+        "Merge": "Spoji",
+        "Merge duplicates": "Spoji duplikate",
+        "People who lose access: {count}": "Osobe koje gube pristup: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Ista adresa i korisničko ime, druga lozinka. Dva odvojena računa mogu tako izgledati, pa provjerite prije spajanja.",
+        "The merge did not complete. Check the items of this group in your vault.": "Spajanje nije dovršeno. Provjerite stavke ove grupe u svojem trezoru.",
+        "The merge failed. Nothing was removed.": "Spajanje nije uspjelo. Ništa nije uklonjeno.",
+        "The other items move to the trash, where you can restore them.": "Ostale stavke idu u smeće, odakle ih možete vratiti."
     },
     "plurals": null
 }

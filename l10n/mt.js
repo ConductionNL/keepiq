@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Daħħal UUID, pereżempju 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Daħħal kulur, pereżempju #1a2b3c.",
         "The minimum is higher than the maximum.": "Il-minimu huwa ogħla mill-massimu.",
-        "This is not a valid regular expression.": "Din mhix espressjoni regolari valida."
+        "This is not a valid regular expression.": "Din mhix espressjoni regolari valida.",
+        "Additional fields after the merge": "Oqsma addizzjonali wara l-għaqda",
+        "Duplicates": "Duplikati",
+        "Exact duplicates": "Duplikati eżatti",
+        "Item to keep": "Oġġett li jinżamm",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Oġġetti li fihom l-istess login aktar minn darba. L-għaqda żżomm wieħed u tneħħi l-oħrajn.",
+        "Likely duplicates": "Duplikati probabbli",
+        "Merge": "Għaqqad",
+        "Merge duplicates": "Għaqqad id-duplikati",
+        "People who lose access: {count}": "Nies li jitilfu l-aċċess: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "L-istess indirizz u l-istess isem tal-utent, password oħra. Żewġ kontijiet separati jistgħu jidhru hekk, għalhekk iċċekkja qabel tgħaqqad.",
+        "The merge did not complete. Check the items of this group in your vault.": "L-għaqda ma tlestietx. Iċċekkja l-oġġetti ta' dan il-grupp fil-kaxxa forti tiegħek.",
+        "The merge failed. Nothing was removed.": "L-għaqda falliet. Ma tneħħa xejn.",
+        "The other items move to the trash, where you can restore them.": "L-oġġetti l-oħra jmorru fil-barmil, minn fejn tista' terġa' ġġibhom."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

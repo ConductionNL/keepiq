@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Middleware;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Middleware;
@@ -74,7 +74,7 @@ class ApiVersionMiddleware extends Middleware {
 			return $response;
 		}
 
-		$response->addHeader(name: self::HEADER, value: $this->appManager->getAppVersion(appId: Application::APP_ID));
+		$response->addHeader(name: self::HEADER, value: $this->appManager->getAppVersion(appId: AppIdentity::APP_ID));
 		return $response;
 	}//end afterController()
 }//end class

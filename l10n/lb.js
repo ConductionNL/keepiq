@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Gitt eng UUID an, z. B. 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Gitt eng Faarf an, z. B. #1a2b3c.",
         "The minimum is higher than the maximum.": "De Minimum ass méi héich wéi de Maximum.",
-        "This is not a valid regular expression.": "Dat ass keen gëltege reegelméissegen Ausdrock."
+        "This is not a valid regular expression.": "Dat ass keen gëltege reegelméissegen Ausdrock.",
+        "Additional fields after the merge": "Zousätzlech Felder no dem Zesummeféieren",
+        "Duplicates": "Duplikater",
+        "Exact duplicates": "Exakt Duplikater",
+        "Item to keep": "Element dat bleift",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementer, déi dee selwechte Login méi wéi eemol enthalen. Beim Zesummeféiere bleift eent an déi aner ginn ewechgeholl.",
+        "Likely duplicates": "Wahrscheinlech Duplikater",
+        "Merge": "Zesummeféieren",
+        "Merge duplicates": "Duplikater zesummeféieren",
+        "People who lose access: {count}": "Leit, déi den Zougrëff verléieren: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Selwecht Adress a selwechte Benotzernumm, en anert Passwuert. Zwee separat Konte kënnen esou ausgesinn, kontrolléier dat also ier s du zesummeféiers.",
+        "The merge did not complete. Check the items of this group in your vault.": "D'Zesummeféiere gouf net ofgeschloss. Kontrolléier d'Elementer vun dëser Grupp an dengem Tresor.",
+        "The merge failed. Nothing was removed.": "D'Zesummeféieren ass feelgeschloen. Et gouf näischt ewechgeholl.",
+        "The other items move to the trash, where you can restore them.": "Déi aner Elementer kommen an de Pabeierkuerf, wou s du se restauréiere kanns."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -32,7 +32,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminSettingsServiceInterface;
+use OCA\Keepiq\Service\Flow\VaultFlowTriggerCatalog;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -50,7 +52,7 @@ use Throwable;
  *   removes this; a separate service now would add a dependency to a class
  *   that sits at its coupling limit.
  */
-class AdminSettingsService {
+class AdminSettingsService implements AdminSettingsServiceInterface {
 	/**
 	 * Admin default bounds for validation.
 	 */
@@ -99,6 +101,8 @@ class AdminSettingsService {
 			'device_approval_enabled',
 			'attachment_max_bytes',
 			'attachment_user_quota_bytes',
+			'favicon_service_url',
+			'site_preview_service_url',
 		],
 		'applications' => [
 			'lease_default_ttl_seconds',
@@ -106,7 +110,7 @@ class AdminSettingsService {
 			'lease_renewable',
 			'lease_revocation_blocks_refetch',
 		],
-		'audit' => ['audit_retention_days'],
+		'audit' => ['audit_retention_days', 'flow_trigger_groups'],
 	];
 
 	/**
@@ -216,7 +220,8 @@ class AdminSettingsService {
 			// shared with the user-visible getPolicy() floor.
 			$this->policyService->readAdminPolicyKeys(),
 			$this->leaseAndDeviceSettings(),
-			$this->offlineSettings()
+			$this->offlineSettings(),
+			(new SiteImageSettings(appConfig: $this->appConfig))->read()
 		);
 
 		return $this->withCaStatus(settings: $settings);
@@ -228,7 +233,7 @@ class AdminSettingsService {
 	 * @return array<string,mixed>
 	 */
 	private function sessionAndAuditSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			'min_password_length' => $this->appConfig->getValueInt($appId, 'min_password_length', 12),
 			'min_password_score' => $this->appConfig->getValueInt($appId, 'min_password_score', 3),
@@ -244,6 +249,9 @@ class AdminSettingsService {
 				self::AUDIT_RETENTION_DEFAULT
 			),
 			'breach_check_enabled' => $this->appConfig->getValueBool($appId, 'breach_check_enabled', false),
+			'flow_trigger_groups' => (new VaultFlowTriggerCatalog())->parseEnabledGroups(
+				stored: $this->appConfig->getValueString($appId, 'flow_trigger_groups', '[]')
+			),
 		];
 	}//end sessionAndAuditSettings()
 
@@ -253,7 +261,7 @@ class AdminSettingsService {
 	 * @return array<string,mixed>
 	 */
 	private function expiryAndVersionSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			'expiry_default_max_age_days' => $this->appConfig->getValueInt(
 				$appId,
@@ -275,7 +283,7 @@ class AdminSettingsService {
 	 * @return array<string,int>
 	 */
 	private function storageSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			// Trash retention (vault-trash-and-archive D4), 1 to 365 days.
 			'trash_retention_days' => $this->appConfig->getValueInt(
@@ -302,7 +310,7 @@ class AdminSettingsService {
 	 * @return array<string,mixed>
 	 */
 	private function leaseAndDeviceSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			// Machine leases (machine-secret-leases §2.4).
 			'lease_default_ttl_seconds' => $this->appConfig->getValueInt(
@@ -364,7 +372,7 @@ class AdminSettingsService {
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-administrators-control-offline-edits
 	 */
 	private function offlineSettings(): array {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 		return [
 			'offline_cache_enabled' => $this->appConfig->getValueBool($appId, 'offline_cache_enabled', true),
 			'offline_edits_enabled' => $this->appConfig->getValueBool($appId, 'offline_edits_enabled', false),
@@ -491,6 +499,7 @@ class AdminSettingsService {
 			case 'general':
 				$this->updateInstanceSettings(data: $data);
 				$this->updateAttachmentSettings(data: $data);
+				(new SiteImageSettings(appConfig: $this->appConfig))->update(data: $data);
 				return;
 			case 'policies':
 				$this->updateAuthenticationSettings(data: $data);
@@ -526,7 +535,6 @@ class AdminSettingsService {
 		return $this->policyService->getPolicy(userId: $userId);
 	}//end getPolicy()
 
-
 	/**
 	 * Password-strength and session keys (implement-dashboard-settings §1.4).
 	 *
@@ -537,7 +545,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateAuthenticationSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['min_password_length']) === true) {
 			$length = (int)$data['min_password_length'];
@@ -583,7 +591,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateInstanceSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['ca_auto_renew_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'ca_auto_renew_enabled', (bool)$data['ca_auto_renew_enabled']);
@@ -607,7 +615,7 @@ class AdminSettingsService {
 	}//end updateInstanceSettings()
 
 	/**
-	 * Audit retention (add-secret-audit-trail §4.2), the one Audit area key.
+	 * Audit retention (add-secret-audit-trail §4.2) and the flow trigger groups.
 	 *
 	 * @param array<string,mixed> $data The admin-settings input
 	 *
@@ -616,6 +624,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException When the window is below the minimum.
 	 */
 	private function updateAuditSettings(array $data): void {
+		$this->updateFlowTriggerGroups(data: $data);
 		if (isset($data['audit_retention_days']) === false) {
 			return;
 		}
@@ -628,8 +637,40 @@ class AdminSettingsService {
 			);
 		}
 
-		$this->appConfig->setValueInt(Application::APP_ID, 'audit_retention_days', $days);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'audit_retention_days', $days);
 	}//end updateAuditSettings()
+
+	/**
+	 * The trigger groups whose vault events may start OpenRegister flows
+	 * (clients-vault-event-flow-triggers D4): a list of known groups, stored
+	 * as JSON. An empty list, the default, fires nothing.
+	 *
+	 * @param array<string,mixed> $data The admin-settings input
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the value is not a list of known groups.
+	 *
+	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-2.1
+	 */
+	private function updateFlowTriggerGroups(array $data): void {
+		if (array_key_exists('flow_trigger_groups', $data) === false) {
+			return;
+		}
+
+		$groups = $data['flow_trigger_groups'];
+		if (is_array($groups) === false || array_is_list($groups) === false) {
+			throw new InvalidArgumentException('flow_trigger_groups must be a list of trigger groups');
+		}
+
+		$unknown = array_values(array_diff($groups, VaultFlowTriggerCatalog::GROUPS));
+		if ($unknown !== []) {
+			throw new InvalidArgumentException('Unknown flow trigger group: ' . (string)json_encode($unknown[0]));
+		}
+
+		$enabled = array_values(array_intersect(VaultFlowTriggerCatalog::GROUPS, $groups));
+		$this->appConfig->setValueString(AppIdentity::APP_ID, 'flow_trigger_groups', (string)json_encode($enabled));
+	}//end updateFlowTriggerGroups()
 
 	/**
 	 * Expiry defaults (rotation-expiry-policies §2.2): admin max age ships
@@ -642,7 +683,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateExpirySettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['expiry_default_max_age_days']) === true) {
 			$maxAge = (int)$data['expiry_default_max_age_days'];
@@ -679,7 +720,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateLeaseSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		foreach (['lease_default_ttl_seconds', 'lease_max_ttl_seconds'] as $leaseKey) {
 			if (isset($data[$leaseKey]) === true) {
@@ -716,7 +757,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 */
 	private function updateRetentionSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['version_retention_count']) === true) {
 			$count = (int)$data['version_retention_count'];
@@ -748,7 +789,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On a non-positive byte count.
 	 */
 	private function updateAttachmentSettings(array $data): void {
-		$appId = Application::APP_ID;
+		$appId = AppIdentity::APP_ID;
 
 		if (isset($data['attachment_max_bytes']) === true) {
 			$maxBytes = (int)$data['attachment_max_bytes'];
@@ -790,7 +831,7 @@ class AdminSettingsService {
 			throw new InvalidArgumentException('trash_retention_days must be between 1 and 365');
 		}
 
-		$this->appConfig->setValueInt(Application::APP_ID, 'trash_retention_days', $days);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'trash_retention_days', $days);
 	}//end updateTrashSettings()
 
 	/**
@@ -804,7 +845,7 @@ class AdminSettingsService {
 	 */
 	public function extensionMaxIdleMinutes(): int {
 		$minutes = $this->appConfig->getValueInt(
-			Application::APP_ID,
+			AppIdentity::APP_ID,
 			'extension_max_idle_minutes',
 			self::EXTENSION_MAX_IDLE_DEFAULT
 		);
@@ -837,7 +878,7 @@ class AdminSettingsService {
 			throw new InvalidArgumentException('extension_max_idle_minutes must be one of 1, 5, 15, 30, 60 or 240');
 		}
 
-		$this->appConfig->setValueInt(Application::APP_ID, 'extension_max_idle_minutes', $minutes);
+		$this->appConfig->setValueInt(AppIdentity::APP_ID, 'extension_max_idle_minutes', $minutes);
 	}//end updateExtensionSettings()
 
 	/**
@@ -857,7 +898,7 @@ class AdminSettingsService {
 		if (array_key_exists('extension_passkey_origins', $data) === true) {
 			$origins = $this->extensionOrigins->validate(entries: $data['extension_passkey_origins']);
 			$this->appConfig->setValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				TrustedExtensionOrigins::ORIGINS_KEY,
 				(string)json_encode($origins)
 			);
@@ -868,7 +909,7 @@ class AdminSettingsService {
 				throw new InvalidArgumentException('extension_passkeys_enabled must be true or false');
 			}
 
-			$this->appConfig->setValueBool(Application::APP_ID, TrustedExtensionOrigins::ENABLED_KEY, $data['extension_passkeys_enabled']);
+			$this->appConfig->setValueBool(AppIdentity::APP_ID, TrustedExtensionOrigins::ENABLED_KEY, $data['extension_passkeys_enabled']);
 		}
 	}//end updateExtensionPasskeySettings()
 }//end class

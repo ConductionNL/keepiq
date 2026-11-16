@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Anna UUID, esimerkiksi 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Anna väri, esimerkiksi #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimi on suurempi kuin maksimi.",
-        "This is not a valid regular expression.": "Tämä ei ole kelvollinen säännöllinen lauseke."
+        "This is not a valid regular expression.": "Tämä ei ole kelvollinen säännöllinen lauseke.",
+        "Additional fields after the merge": "Lisäkentät yhdistämisen jälkeen",
+        "Duplicates": "Kaksoiskappaleet",
+        "Exact duplicates": "Täsmälliset kaksoiskappaleet",
+        "Item to keep": "Säilytettävä kohde",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Kohteet, joissa on sama kirjautuminen useammin kuin kerran. Yhdistäminen säilyttää yhden ja poistaa muut.",
+        "Likely duplicates": "Todennäköiset kaksoiskappaleet",
+        "Merge": "Yhdistä",
+        "Merge duplicates": "Yhdistä kaksoiskappaleet",
+        "People who lose access: {count}": "Pääsyn menettävät henkilöt: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Sama osoite ja käyttäjätunnus, eri salasana. Kaksi erillistä tiliä voi näyttää tältä, joten tarkista ennen yhdistämistä.",
+        "The merge did not complete. Check the items of this group in your vault.": "Yhdistäminen ei valmistunut. Tarkista tämän ryhmän kohteet holvistasi.",
+        "The merge failed. Nothing was removed.": "Yhdistäminen epäonnistui. Mitään ei poistettu.",
+        "The other items move to the trash, where you can restore them.": "Muut kohteet siirtyvät roskakoriin, josta voit palauttaa ne."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -32,6 +32,7 @@ use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
 use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
+use OCA\Keepiq\Kernel\Contracts\MigrationServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -45,7 +46,7 @@ use Ramsey\Uuid\Uuid;
  *   passkeys, the outstanding-row gate and the completion event — and the order
  *   is the security property. Keeping the sequence in one place is the point.
  */
-class MigrationService {
+class MigrationService implements MigrationServiceInterface {
 	/**
 	 * Constructor for MigrationService.
 	 *

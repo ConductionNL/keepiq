@@ -213,7 +213,8 @@ export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number
  * `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`.
  * `form`: a card or identity filled at least one field. `noFields`: no frame of the tab had a field for the item.
  */
-export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; needsFormConfirm?: FormQuestion; noFields?: true }
+/** `savedSecure` comes with `needsInsecureConfirm`: the login was saved on an https page, so the question can say so. */
+export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; savedSecure?: boolean; needsFormConfirm?: FormQuestion; noFields?: true }
 
 /** What a menu fill without a form says in the page (ext-context-menu). */
 export type PageNoticeCode = 'no_login_form' | 'no_card_form' | 'no_identity_form'
@@ -267,7 +268,8 @@ export type FillExecuteFormReply = { filled: number }
 export type FillConfirmForm = { kind: 'fill.confirmForm' } & FormQuestion
 
 /** Background → the top frame. Reply: whether the user accepted. */
-export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: string }
+/** `savedSecure` false: the login was itself saved with http, so the question does not claim an https origin. */
+export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: string; savedSecure?: boolean }
 
 /**
  * Background → one frame; the only message to a content script carrying vault data.
@@ -276,10 +278,21 @@ export type FillConfirmInsecure = { kind: 'fill.confirmInsecure'; itemHost: stri
  */
 export type FillExecute = { kind: 'fill.execute'; username: string | null; password: string | null; code: string | null; origin: string; anchorKey?: string }
 export type FillExecuteReply = { filled: FillOutcome; code: boolean }
+/**
+ * Background → the list's frame, after a verified pick in a `newPassword` list: the generated password, for the new-password
+ * field the list is open on and its confirmation, in that form only. Reply `FillNewPasswordReply`, the fields filled.
+ */
+export type FillNewPassword = { kind: 'fill.newPassword'; password: string; origin: string; anchorKey: string }
+export type FillNewPasswordReply = { filled: number }
 
-/** What the list shows: logins, logins with a code on a code field, or the cards or identities of a card or identity field. */
-export type InlineMode = 'login' | 'code' | FormKind
-export const INLINE_MODES: readonly InlineMode[] = ['login', 'code', 'card', 'identity']
+/**
+ * What the list shows: logins, logins with a code on a code field, the cards or identities of a card or identity field,
+ * or, on a new-password field of a sign-up or change-password form, the one offer to use a strong password.
+ */
+export type InlineMode = 'login' | 'code' | FormKind | 'newPassword'
+export const INLINE_MODES: readonly InlineMode[] = ['login', 'code', 'card', 'identity', 'newPassword']
+/** The one row a `newPassword` list offers; the background generates only for this id. */
+export const GENERATE_ROW_ID = 'generate'
 export const isFormKind = (mode: unknown): mode is FormKind => mode === 'card' || mode === 'identity'
 /** The list frame's title key per mode, for the host's frame and the list page's document alike. */
 export const INLINE_FRAME_TITLES = {
@@ -287,6 +300,7 @@ export const INLINE_FRAME_TITLES = {
 	code: 'inlineList.code.frameTitle',
 	card: 'inlineList.card.frameTitle',
 	identity: 'inlineList.identity.frameTitle',
+	newPassword: 'inlineList.newPassword.frameTitle',
 } as const satisfies Record<InlineMode, string>
 /**
  * Request/response. Without a valid `mode` it reads as `login`. `webauthn`: a field that qualifies only by its
@@ -498,6 +512,8 @@ export type BackgroundToContent =
 	| FillProbe
 	| FillExecuteForm
 	| FillConfirmForm
+	/** Request/response, reply `FillNewPasswordReply`. */
+	| FillNewPassword
 	/**
 	 * To the frame hosting the list; `inline.verify` replies `boolean`, the others are fire-and-forget.
 	 * `key`: the session's, so a message meant for a list that has since closed cannot reach the next one.

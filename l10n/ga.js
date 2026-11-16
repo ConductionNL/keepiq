@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Cuir isteach UUID, mar shampla 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Cuir isteach dath, mar shampla #1a2b3c.",
         "The minimum is higher than the maximum.": "Tá an t-íosmhéid níos airde ná an t-uasmhéid.",
-        "This is not a valid regular expression.": "Ní slonn ionadaíochta bailí é seo."
+        "This is not a valid regular expression.": "Ní slonn ionadaíochta bailí é seo.",
+        "Additional fields after the merge": "Réimsí breise tar éis an chumaisc",
+        "Duplicates": "Dúblaigh",
+        "Exact duplicates": "Dúblaigh chruinne",
+        "Item to keep": "Mír le coinneáil",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Míreanna a bhfuil an logáil isteach chéanna iontu níos mó ná uair amháin. Coinníonn cumasc ceann amháin agus baintear na cinn eile.",
+        "Likely duplicates": "Dúblaigh dhóchúla",
+        "Merge": "Cumaisc",
+        "Merge duplicates": "Cumaisc dúblaigh",
+        "People who lose access: {count}": "Daoine a chailleann rochtain: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "An seoladh agus an t-ainm úsáideora céanna, pasfhocal eile. Is féidir le dhá chuntas ar leith a bheith mar seo, mar sin seiceáil roimh chumasc.",
+        "The merge did not complete. Check the items of this group in your vault.": "Níor críochnaíodh an cumasc. Seiceáil míreanna an ghrúpa seo i do thaisceadán.",
+        "The merge failed. Nothing was removed.": "Theip ar an gcumasc. Níor baineadh aon rud.",
+        "The other items move to the trash, where you can restore them.": "Téann na míreanna eile chuig an mbruscar, áit ar féidir leat iad a athchóiriú."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

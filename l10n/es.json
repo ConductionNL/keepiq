@@ -1861,7 +1861,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Introduce un UUID, por ejemplo 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Introduce un color, por ejemplo #1a2b3c.",
         "The minimum is higher than the maximum.": "El mínimo es mayor que el máximo.",
-        "This is not a valid regular expression.": "Esto no es una expresión regular válida."
+        "This is not a valid regular expression.": "Esto no es una expresión regular válida.",
+        "Additional fields after the merge": "Campos adicionales después de combinar",
+        "Duplicates": "Duplicados",
+        "Exact duplicates": "Duplicados exactos",
+        "Item to keep": "Elemento que se conserva",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementos que contienen el mismo inicio de sesión más de una vez. Combinar conserva uno y elimina los demás.",
+        "Likely duplicates": "Duplicados probables",
+        "Merge": "Combinar",
+        "Merge duplicates": "Combinar duplicados",
+        "People who lose access: {count}": "Personas que pierden el acceso: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Misma dirección y mismo nombre de usuario, otra contraseña. Dos cuentas distintas pueden verse así, así que compruébalo antes de combinar.",
+        "The merge did not complete. Check the items of this group in your vault.": "La combinación no se completó. Revisa los elementos de este grupo en tu caja fuerte.",
+        "The merge failed. Nothing was removed.": "La combinación ha fallado. No se ha eliminado nada.",
+        "The other items move to the trash, where you can restore them.": "Los demás elementos van a la papelera, desde donde puedes restaurarlos."
     },
     "plurals": null
 }

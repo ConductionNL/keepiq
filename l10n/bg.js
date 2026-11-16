@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Въведете UUID, например 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Въведете цвят, например #1a2b3c.",
         "The minimum is higher than the maximum.": "Минимумът е по-голям от максимума.",
-        "This is not a valid regular expression.": "Това не е валиден регулярен израз."
+        "This is not a valid regular expression.": "Това не е валиден регулярен израз.",
+        "Additional fields after the merge": "Допълнителни полета след обединяването",
+        "Duplicates": "Дубликати",
+        "Exact duplicates": "Точни дубликати",
+        "Item to keep": "Елемент за запазване",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Елементи, които съдържат един и същ вход повече от веднъж. Обединяването запазва един и премахва останалите.",
+        "Likely duplicates": "Вероятни дубликати",
+        "Merge": "Обединяване",
+        "Merge duplicates": "Обединяване на дубликати",
+        "People who lose access: {count}": "Хора, които губят достъп: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Същият адрес и потребителско име, друга парола. Два отделни акаунта може да изглеждат така, затова проверете преди обединяване.",
+        "The merge did not complete. Check the items of this group in your vault.": "Обединяването не завърши. Проверете елементите на тази група в своя трезор.",
+        "The merge failed. Nothing was removed.": "Обединяването е неуспешно. Нищо не е премахнато.",
+        "The other items move to the trash, where you can restore them.": "Останалите елементи отиват в кошчето, откъдето можете да ги възстановите."
     },
     "nplurals=2; plural=(n != 1);"
 )

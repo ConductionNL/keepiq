@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Middleware;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Middleware\Support\ApiPathAliases;
 use OCA\Keepiq\Middleware\Support\StandardProtocolPaths;
 use OCP\App\IAppManager;
@@ -40,6 +40,10 @@ use OCP\IRequest;
  * their JSON error bodies into problem details. A route the app declares itself,
  * unversioned or under `/api/v1/`, is left exactly as it is. Paths that speak a protocol defined elsewhere
  * ({@see StandardProtocolPaths}) are left exactly as they are.
+ *
+ * A route the app declares under `/api/v1/` serves its JSON errors as problem
+ * details only to a request whose `Accept` header asks for
+ * `application/problem+json`; any other request gets the error as before.
  *
  * An error body keeps every member it already had, so existing callers that
  * read `error` or `message` see no change. A body that already uses `type`,
@@ -149,10 +153,17 @@ class ApiContractMiddleware extends Middleware {
 		// declares itself, unversioned or already under /api/v1/, keeps its
 		// body, its content type and its headers exactly as before.
 		if ($this->isAliasRequest() === false) {
+			if ($response instanceof JSONResponse
+				&& $this->isVersionedRequest() === true
+				&& $this->asksForProblemDetails() === true
+			) {
+				$this->decorateError(response: $response);
+			}
+
 			return $response;
 		}
 
-		$response->addHeader(name: 'API-Version', value: $this->appManager->getAppVersion(appId: Application::APP_ID));
+		$response->addHeader(name: 'API-Version', value: $this->appManager->getAppVersion(appId: AppIdentity::APP_ID));
 		if ($response instanceof JSONResponse) {
 			$this->decorateError(response: $response);
 		}
@@ -187,13 +198,10 @@ class ApiContractMiddleware extends Middleware {
 	 *
 	 * @return bool True for a request on an alias.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) StandardProtocolPaths is a pure lookup that routes.php shares, outside any container.
-	 *
 	 * @spec openspec/specs/api-contract/spec.md
 	 */
 	private function isAliasRequest(): bool {
-		$relative = StandardProtocolPaths::appRelative(path: (string) $this->request->getPathInfo());
-		if (str_starts_with($relative, ApiPathAliases::VERSION_PREFIX.'/') === false) {
+		if ($this->isVersionedRequest() === false) {
 			return false;
 		}
 
@@ -201,6 +209,32 @@ class ApiContractMiddleware extends Middleware {
 
 		return is_string($route) === true && str_ends_with($route, ApiPathAliases::ALIAS_POSTFIX) === true;
 	}//end isAliasRequest()
+
+	/**
+	 * Whether the request path lies under the app's `/api/v1/`.
+	 *
+	 * @return bool True for a versioned API path.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) StandardProtocolPaths is a pure lookup that routes.php shares, outside any container.
+	 *
+	 * @spec openspec/specs/api-contract/spec.md
+	 */
+	private function isVersionedRequest(): bool {
+		$relative = StandardProtocolPaths::appRelative(path: (string) $this->request->getPathInfo());
+
+		return str_starts_with($relative, ApiPathAliases::VERSION_PREFIX.'/');
+	}//end isVersionedRequest()
+
+	/**
+	 * Whether the request's `Accept` header lists `application/problem+json`.
+	 *
+	 * @return bool True when the caller asks for problem details.
+	 *
+	 * @spec openspec/specs/api-contract/spec.md
+	 */
+	private function asksForProblemDetails(): bool {
+		return str_contains(strtolower($this->request->getHeader(name: 'Accept')), 'application/problem+json');
+	}//end asksForProblemDetails()
 
 	/**
 	 * Serve a JSON error response as problem details when its body allows it.

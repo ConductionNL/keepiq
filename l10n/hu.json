@@ -1861,7 +1861,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Adjon meg egy UUID-t, például 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Adjon meg egy színt, például #1a2b3c.",
         "The minimum is higher than the maximum.": "A minimum nagyobb, mint a maximum.",
-        "This is not a valid regular expression.": "Ez nem érvényes reguláris kifejezés."
+        "This is not a valid regular expression.": "Ez nem érvényes reguláris kifejezés.",
+        "Additional fields after the merge": "További mezők az egyesítés után",
+        "Duplicates": "Kettőzések",
+        "Exact duplicates": "Pontos kettőzések",
+        "Item to keep": "Megtartandó elem",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elemek, amelyek ugyanazt a bejelentkezést többször tartalmazzák. Az egyesítés egyet megtart, a többit eltávolítja.",
+        "Likely duplicates": "Valószínű kettőzések",
+        "Merge": "Egyesítés",
+        "Merge duplicates": "Kettőzések egyesítése",
+        "People who lose access: {count}": "Akik elveszítik a hozzáférést: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Ugyanaz a cím és felhasználónév, más jelszó. Két külön fiók is kinézhet így, ezért egyesítés előtt ellenőrizze.",
+        "The merge did not complete. Check the items of this group in your vault.": "Az egyesítés nem fejeződött be. Ellenőrizze a csoport elemeit a széfjében.",
+        "The merge failed. Nothing was removed.": "Az egyesítés nem sikerült. Semmi sem lett eltávolítva.",
+        "The other items move to the trash, where you can restore them.": "A többi elem a kukába kerül, ahonnan visszaállíthatja őket."
     },
     "plurals": null
 }

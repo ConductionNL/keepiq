@@ -4,8 +4,8 @@
 
   One finding category in the password-health report. Renders a titled list of
   affected secrets (name + folder path) that deep-link to the secret detail, or
-  an "all clear" line when empty. Presentation only — all analysis is upstream in
-  the health store.
+  an "all clear" line when empty, and optionally one action button per finding.
+  Presentation only — all analysis is upstream in the health store.
 
   @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-vault-health-report
 -->
@@ -59,14 +59,34 @@
 						}}
 					</span>
 				</button>
+				<a
+					v-if="changePassword && changePasswordHref(finding)"
+					:href="changePasswordHref(finding)"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="health-category__change-password"
+					:data-testid="`finding-change-password-${finding.id}`">
+					{{ t('keepiq', 'Change password') }}
+				</a>
+				<NcButton
+					v-if="actionLabel"
+					variant="secondary"
+					:data-testid="`finding-action-${finding.id}`"
+					@click="$emit('action', finding)">
+					{{ actionLabel }}
+				</NcButton>
 			</li>
 		</ul>
 	</section>
 </template>
 
 <script>
+import { NcButton } from '@nextcloud/vue'
+import { changePasswordUrl } from '../utils/siteImages.js'
+
 export default {
 	name: 'HealthCategory',
+	components: { NcButton },
 
 	props: {
 		title: {
@@ -88,9 +108,40 @@ export default {
 			type: String,
 			default: 'health-category',
 		},
+
+		/**
+		 * Label of a button beside each finding that emits `action` with the
+		 * finding; no button when empty.
+		 */
+		actionLabel: {
+			type: String,
+			default: '',
+		},
+
+		/**
+		 * Offer each finding with a web address a link to its site's
+		 * change-password page (vault-website-addresses D3).
+		 */
+		changePassword: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
-	emits: ['open'],
+	emits: ['open', 'action'],
+
+	methods: {
+		/**
+		 * The finding's change-password page, null without a web address.
+		 *
+		 * @param {object} finding The finding.
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+		 */
+		changePasswordHref(finding) {
+			return changePasswordUrl(finding?.url)
+		},
+	},
 }
 </script>
 
@@ -113,6 +164,13 @@ export default {
 		&:hover {
 			background-color: var(--color-background-hover);
 		}
+	}
+
+	&__change-password {
+		align-self: center;
+		margin-inline-end: 8px;
+		white-space: nowrap;
+		color: var(--color-primary-element);
 	}
 
 	&__path,

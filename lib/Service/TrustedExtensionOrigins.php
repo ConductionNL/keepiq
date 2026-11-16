@@ -26,8 +26,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\PasskeyVerificationException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCP\IAppConfig;
 
 /**
@@ -111,7 +111,7 @@ class TrustedExtensionOrigins {
 		}
 
 		try {
-			$added = $this->parse(value: $this->appConfig->getValueString(Application::APP_ID, self::ORIGINS_KEY, '[]'));
+			$added = $this->parse(value: $this->appConfig->getValueString(AppIdentity::APP_ID, self::ORIGINS_KEY, '[]'));
 		} catch (InvalidArgumentException $exception) {
 			throw new PasskeyVerificationException(message: 'The trusted extension origins setting is unreadable', code: 0, previous: $exception);
 		}
@@ -127,7 +127,7 @@ class TrustedExtensionOrigins {
 	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-passkeys-fail-closed
 	 */
 	public function isEnabled(): bool {
-		return $this->appConfig->getValueBool(Application::APP_ID, self::ENABLED_KEY, true);
+		return $this->appConfig->getValueBool(AppIdentity::APP_ID, self::ENABLED_KEY, true);
 	}//end isEnabled()
 
 	/**
@@ -140,7 +140,7 @@ class TrustedExtensionOrigins {
 	 */
 	public function adminOrigins(): array {
 		try {
-			return $this->parse(value: $this->appConfig->getValueString(Application::APP_ID, self::ORIGINS_KEY, '[]'));
+			return $this->parse(value: $this->appConfig->getValueString(AppIdentity::APP_ID, self::ORIGINS_KEY, '[]'));
 		} catch (InvalidArgumentException) {
 			return [];
 		}

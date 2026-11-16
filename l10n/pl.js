@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Wpisz UUID, np. 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Wpisz kolor, np. #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimum jest większe niż maksimum.",
-        "This is not a valid regular expression.": "To nie jest poprawne wyrażenie regularne."
+        "This is not a valid regular expression.": "To nie jest poprawne wyrażenie regularne.",
+        "Additional fields after the merge": "Pola dodatkowe po scaleniu",
+        "Duplicates": "Duplikaty",
+        "Exact duplicates": "Dokładne duplikaty",
+        "Item to keep": "Element do zachowania",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementy, które zawierają ten sam login więcej niż raz. Scalenie zachowuje jeden i usuwa pozostałe.",
+        "Likely duplicates": "Prawdopodobne duplikaty",
+        "Merge": "Scal",
+        "Merge duplicates": "Scal duplikaty",
+        "People who lose access: {count}": "Osoby, które stracą dostęp: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Ten sam adres i nazwa użytkownika, inne hasło. Tak mogą wyglądać dwa osobne konta, więc sprawdź przed scaleniem.",
+        "The merge did not complete. Check the items of this group in your vault.": "Scalanie nie zostało ukończone. Sprawdź elementy tej grupy w swoim sejfie.",
+        "The merge failed. Nothing was removed.": "Scalanie nie powiodło się. Nic nie zostało usunięte.",
+        "The other items move to the trash, where you can restore them.": "Pozostałe elementy trafiają do kosza, z którego możesz je przywrócić."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

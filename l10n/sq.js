@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Fut një UUID, p.sh. 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Fut një ngjyrë, p.sh. #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimumi është më i lartë se maksimumi.",
-        "This is not a valid regular expression.": "Kjo nuk është një shprehje e rregullt e vlefshme."
+        "This is not a valid regular expression.": "Kjo nuk është një shprehje e rregullt e vlefshme.",
+        "Additional fields after the merge": "Fusha shtesë pas bashkimit",
+        "Duplicates": "Dublikatë",
+        "Exact duplicates": "Dublikatë të sakta",
+        "Item to keep": "Elementi që mbahet",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elemente që përmbajnë të njëjtin hyrje më shumë se një herë. Bashkimi mban njërin dhe heq të tjerët.",
+        "Likely duplicates": "Dublikatë të mundshme",
+        "Merge": "Bashko",
+        "Merge duplicates": "Bashko dublikatët",
+        "People who lose access: {count}": "Persona që humbasin aksesin: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "E njëjta adresë dhe emër përdoruesi, fjalëkalim tjetër. Dy llogari të veçanta mund të duken kështu, prandaj kontrolloni para bashkimit.",
+        "The merge did not complete. Check the items of this group in your vault.": "Bashkimi nuk përfundoi. Kontrolloni elementet e këtij grupi në kasafortën tuaj.",
+        "The merge failed. Nothing was removed.": "Bashkimi dështoi. Asgjë nuk u hoq.",
+        "The other items move to the trash, where you can restore them.": "Elementet e tjera shkojnë në kosh, prej nga mund t'i riktheni."
     },
     "nplurals=2; plural=(n != 1);"
 )

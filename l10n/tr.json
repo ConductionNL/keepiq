@@ -1835,7 +1835,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Bir UUID girin, örneğin 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Bir renk girin, örneğin #1a2b3c.",
         "The minimum is higher than the maximum.": "En küçük değer en büyük değerden yüksek.",
-        "This is not a valid regular expression.": "Bu geçerli bir düzenli ifade değil."
+        "This is not a valid regular expression.": "Bu geçerli bir düzenli ifade değil.",
+        "Additional fields after the merge": "Birleştirmeden sonraki ek alanlar",
+        "Duplicates": "Yinelemeler",
+        "Exact duplicates": "Tam yinelemeler",
+        "Item to keep": "Tutulacak öğe",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Aynı oturum açma bilgisini birden fazla kez içeren öğeler. Birleştirme birini tutar ve diğerlerini kaldırır.",
+        "Likely duplicates": "Olası yinelemeler",
+        "Merge": "Birleştir",
+        "Merge duplicates": "Yinelemeleri birleştir",
+        "People who lose access: {count}": "Erişimini kaybedecek kişiler: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Aynı adres ve kullanıcı adı, farklı bir parola. İki ayrı hesap böyle görünebilir, bu yüzden birleştirmeden önce kontrol edin.",
+        "The merge did not complete. Check the items of this group in your vault.": "Birleştirme tamamlanmadı. Kasanızda bu gruptaki öğeleri kontrol edin.",
+        "The merge failed. Nothing was removed.": "Birleştirme başarısız oldu. Hiçbir şey kaldırılmadı.",
+        "The other items move to the trash, where you can restore them.": "Diğer öğeler çöp kutusuna taşınır; oradan geri yükleyebilirsiniz."
     },
     "plurals": null
 }

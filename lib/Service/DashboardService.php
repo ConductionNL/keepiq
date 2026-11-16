@@ -30,6 +30,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\DashboardSetting;
 use OCA\Keepiq\Db\DashboardSettingMapper;
+use OCA\Keepiq\Kernel\Contracts\DashboardServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -41,7 +42,7 @@ use Ramsey\Uuid\Uuid;
  * takes an explicit $userId and the caller (controller) is responsible
  * for resolving the current user. Cross-user reads are not exposed.
  */
-class DashboardService {
+class DashboardService implements DashboardServiceInterface {
 	/**
 	 * Allowed setting keys for the scaffold. The full dashboard summary
 	 * aggregator and admin-vs-user split land with the dedicated build

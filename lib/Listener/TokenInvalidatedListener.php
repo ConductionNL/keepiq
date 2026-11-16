@@ -22,7 +22,7 @@ namespace OCA\Keepiq\Listener;
 use OCA\Keepiq\Db\PasskeyMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
-use OCA\Keepiq\Service\ExtensionChallengeStore;
+use OCA\Keepiq\Kernel\Contracts\ExtensionChallengeStoreInterface;
 use OCP\Authentication\Events\TokenInvalidatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -43,7 +43,7 @@ class TokenInvalidatedListener implements IEventListener {
 	 * Constructor for TokenInvalidatedListener.
 	 *
 	 * @param PasskeyMapper $passkeys The passkey credentials
-	 * @param ExtensionChallengeStore $challenges The extension challenges
+	 * @param ExtensionChallengeStoreInterface $challenges The extension challenges
 	 * @param IEventDispatcher $dispatcher The audit dispatcher
 	 * @param AuditEventFactory $auditEvents The audit-event factory
 	 *
@@ -51,7 +51,7 @@ class TokenInvalidatedListener implements IEventListener {
 	 */
 	public function __construct(
 		private PasskeyMapper $passkeys,
-		private ExtensionChallengeStore $challenges,
+		private ExtensionChallengeStoreInterface $challenges,
 		private IEventDispatcher $dispatcher,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {

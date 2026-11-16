@@ -1362,3 +1362,37 @@ describe('reply checks', () => {
 		expect(shown()).toBe(false)
 	})
 })
+
+// Spec `extension-generator`, Suggest a strong password in a sign-up field.
+describe('the strong-password offer', () => {
+	const offer = (state: 'locked' | 'unlocked' = 'unlocked'): NonNullable<InlineStateReply> => ({ state, mode: 'newPassword', host: 'shop.example.test', rows: [], theme: 'system' })
+
+	it('shows one option, "Use a strong password", titled and announced for the offer', async () => {
+		await open(offer())
+		expect(options().map((option) => option.textContent)).toEqual(['Use a strong password'])
+		expect(listbox()?.getAttribute('aria-label')).toBe('Keepiq strong password')
+		expect(document.title).toBe('Keepiq strong password')
+		await wait(1000)
+		expect(status().textContent).toBe('Use a strong password. Press Down Arrow to choose.')
+	})
+
+	it('asks the background to generate on a click of the offer, naming only its id', async () => {
+		pickReply = { filled: 'password', code: false }
+		await open(offer())
+		click(row(0))
+		await flush()
+		expect(picks()).toEqual([{ kind: 'inline.pick', key: KEY, itemId: 'generate', input: expect.objectContaining({ kind: 'pointer' }) }])
+	})
+
+	it('offers nothing while locked, only the unlock', async () => {
+		await open(offer('locked'))
+		expect(options()).toEqual([])
+		expect(document.body.textContent).toContain('Unlock Keepiq to get a strong password')
+		expect(unlockButton()).toBeDefined()
+	})
+
+	it('refuses a state that carries vault rows in this mode', async () => {
+		await open({ ...offer(), rows: [{ id: 'p', name: 'Personal', username: 'alice' }] })
+		expect(options()).toEqual([])
+	})
+})

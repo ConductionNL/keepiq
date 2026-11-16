@@ -32,6 +32,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\Contracts\SecretTrashServiceInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -44,27 +45,7 @@ use Throwable;
  *   Each is one injected collaborator; splitting them out would scatter the
  *   one trash step over several classes.
  */
-class SecretTrashService {
-	/**
-	 * Default days a trashed secret is kept (design D4).
-	 *
-	 * @var int
-	 */
-	public const RETENTION_DEFAULT = 30;
-
-	/**
-	 * Smallest retention an administrator may set.
-	 *
-	 * @var int
-	 */
-	public const RETENTION_MIN = 1;
-
-	/**
-	 * Largest retention an administrator may set.
-	 *
-	 * @var int
-	 */
-	public const RETENTION_MAX = 365;
+class SecretTrashService implements SecretTrashServiceInterface {
 
 	/**
 	 * Builds the audit events this service records.

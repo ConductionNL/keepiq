@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Sláðu inn UUID, t.d. 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Sláðu inn lit, t.d. #1a2b3c.",
         "The minimum is higher than the maximum.": "Lágmarkið er hærra en hámarkið.",
-        "This is not a valid regular expression.": "Þetta er ekki gild regluleg segð."
+        "This is not a valid regular expression.": "Þetta er ekki gild regluleg segð.",
+        "Additional fields after the merge": "Viðbótarsvið eftir sameiningu",
+        "Duplicates": "Tvítök",
+        "Exact duplicates": "Nákvæm tvítök",
+        "Item to keep": "Atriði sem er haldið",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Atriði sem geyma sömu innskráningu oftar en einu sinni. Sameining heldur einu og fjarlægir hin.",
+        "Likely duplicates": "Líkleg tvítök",
+        "Merge": "Sameina",
+        "Merge duplicates": "Sameina tvítök",
+        "People who lose access: {count}": "Fólk sem missir aðgang: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Sama vistfang og notandanafn, annað lykilorð. Tveir aðskildir aðgangar geta litið svona út, svo athugaðu áður en þú sameinar.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sameiningunni lauk ekki. Athugaðu atriði þessa hóps í hólfinu þínu.",
+        "The merge failed. Nothing was removed.": "Sameiningin mistókst. Ekkert var fjarlægt.",
+        "The other items move to the trash, where you can restore them.": "Hin atriðin fara í ruslið, þar sem þú getur endurheimt þau."
     },
     "nplurals=2; plural=(n != 1);"
 )

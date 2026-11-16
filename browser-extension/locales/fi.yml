@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 Keepiq-henkilöllisyys. Valitse alanuolella.
         n: $1 Keepiq-henkilöllisyyttä. Valitse alanuolella.
+  newPassword:
+    frameTitle: Keepiqin vahva salasana
+    offer: Käytä vahvaa salasanaa
+    locked: Avaa Keepiqin lukitus saadaksesi vahvan salasanan
+    status: Käytä vahvaa salasanaa. Valitse alanuolella.
 
 notificationBar:
   label: Keepiq-ilmoitus

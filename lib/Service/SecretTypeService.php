@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\SecretType;
 use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Kernel\Contracts\SecretTypeServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -37,7 +38,7 @@ use Ramsey\Uuid\Uuid;
 /**
  * Business logic for SecretType lifecycle.
  */
-class SecretTypeService {
+class SecretTypeService implements SecretTypeServiceInterface {
 
 	/**
 	 * The kinds a field of a type can have (admin-18).

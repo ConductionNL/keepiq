@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Introduïu un UUID, com ara 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Introduïu un color, com ara #1a2b3c.",
         "The minimum is higher than the maximum.": "El mínim és més alt que el màxim.",
-        "This is not a valid regular expression.": "Aquesta no és una expressió regular vàlida."
+        "This is not a valid regular expression.": "Aquesta no és una expressió regular vàlida.",
+        "Additional fields after the merge": "Camps addicionals després de combinar",
+        "Duplicates": "Duplicats",
+        "Exact duplicates": "Duplicats exactes",
+        "Item to keep": "Element que es conserva",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elements que contenen el mateix inici de sessió més d'una vegada. Combinar-los en conserva un i suprimeix els altres.",
+        "Likely duplicates": "Duplicats probables",
+        "Merge": "Combina",
+        "Merge duplicates": "Combina els duplicats",
+        "People who lose access: {count}": "Persones que perden l'accés: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Mateixa adreça i mateix nom d'usuari, una altra contrasenya. Dos comptes diferents poden semblar així, per tant comproveu-ho abans de combinar.",
+        "The merge did not complete. Check the items of this group in your vault.": "La combinació no s'ha completat. Comproveu els elements d'aquest grup a la vostra caixa forta.",
+        "The merge failed. Nothing was removed.": "La combinació ha fallat. No s'ha suprimit res.",
+        "The other items move to the trash, where you can restore them.": "Els altres elements van a la paperera, d'on els podeu restaurar."
     },
     "nplurals=2; plural=(n != 1);"
 )

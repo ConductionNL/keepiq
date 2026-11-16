@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use OCA\Keepiq\Service\ExtensionChallengeStore;
+use OCA\Keepiq\Kernel\Contracts\ExtensionChallengeStoreInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -34,7 +34,7 @@ class PurgeExtensionChallengesJob extends TimedJob {
 	 * Constructor for PurgeExtensionChallengesJob.
 	 *
 	 * @param ITimeFactory            $time       The time factory
-	 * @param ExtensionChallengeStore $challenges The challenge store
+	 * @param ExtensionChallengeStoreInterface $challenges The challenge store
 	 * @param LoggerInterface         $logger     The logger
 	 *
 	 * @return void
@@ -43,7 +43,7 @@ class PurgeExtensionChallengesJob extends TimedJob {
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private ExtensionChallengeStore $challenges,
+		private ExtensionChallengeStoreInterface $challenges,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

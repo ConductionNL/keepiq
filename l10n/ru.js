@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Введите UUID, например 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Введите цвет, например #1a2b3c.",
         "The minimum is higher than the maximum.": "Минимум больше максимума.",
-        "This is not a valid regular expression.": "Это не корректное регулярное выражение."
+        "This is not a valid regular expression.": "Это не корректное регулярное выражение.",
+        "Additional fields after the merge": "Дополнительные поля после объединения",
+        "Duplicates": "Дубликаты",
+        "Exact duplicates": "Точные дубликаты",
+        "Item to keep": "Сохраняемый элемент",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Элементы, которые содержат один и тот же вход больше одного раза. При объединении один сохраняется, остальные удаляются.",
+        "Likely duplicates": "Вероятные дубликаты",
+        "Merge": "Объединить",
+        "Merge duplicates": "Объединить дубликаты",
+        "People who lose access: {count}": "Люди, которые потеряют доступ: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Тот же адрес и имя пользователя, другой пароль. Так могут выглядеть две разные учётные записи, поэтому проверьте перед объединением.",
+        "The merge did not complete. Check the items of this group in your vault.": "Объединение не завершено. Проверьте элементы этой группы в своём хранилище.",
+        "The merge failed. Nothing was removed.": "Не удалось объединить. Ничего не удалено.",
+        "The other items move to the trash, where you can restore them.": "Остальные элементы попадут в корзину, откуда их можно восстановить."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

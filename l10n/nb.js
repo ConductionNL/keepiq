@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Skriv inn en UUID, for eksempel 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Skriv inn en farge, for eksempel #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimum er høyere enn maksimum.",
-        "This is not a valid regular expression.": "Dette er ikke et gyldig regulært uttrykk."
+        "This is not a valid regular expression.": "Dette er ikke et gyldig regulært uttrykk.",
+        "Additional fields after the merge": "Tilleggsfelter etter sammenslåingen",
+        "Duplicates": "Duplikater",
+        "Exact duplicates": "Eksakte duplikater",
+        "Item to keep": "Element som beholdes",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementer som inneholder samme innlogging mer enn én gang. Sammenslåing beholder ett og fjerner de andre.",
+        "Likely duplicates": "Sannsynlige duplikater",
+        "Merge": "Slå sammen",
+        "Merge duplicates": "Slå sammen duplikater",
+        "People who lose access: {count}": "Personer som mister tilgang: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Samme adresse og brukernavn, et annet passord. To separate kontoer kan se slik ut, så sjekk før du slår sammen.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sammenslåingen ble ikke fullført. Sjekk elementene i denne gruppen i hvelvet ditt.",
+        "The merge failed. Nothing was removed.": "Sammenslåingen mislyktes. Ingenting ble fjernet.",
+        "The other items move to the trash, where you can restore them.": "De andre elementene flyttes til papirkurven, der du kan gjenopprette dem."
     },
     "nplurals=2; plural=(n != 1);"
 )

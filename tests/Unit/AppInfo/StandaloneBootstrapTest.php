@@ -30,7 +30,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\AppInfo;
 
 use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\AppInfo\McpRegistrar;
+use OCA\Keepiq\Mcp\McpRegistrar;
 use OCA\Keepiq\Mcp\KeepiqScannableServices;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Settings\AdminSettings;

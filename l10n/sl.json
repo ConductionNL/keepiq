@@ -1913,7 +1913,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Vnesite UUID, na primer 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Vnesite barvo, na primer #1a2b3c.",
         "The minimum is higher than the maximum.": "Najmanjša vrednost je večja od največje.",
-        "This is not a valid regular expression.": "To ni veljaven regularni izraz."
+        "This is not a valid regular expression.": "To ni veljaven regularni izraz.",
+        "Additional fields after the merge": "Dodatna polja po združitvi",
+        "Duplicates": "Podvojeni elementi",
+        "Exact duplicates": "Natančni podvojeni elementi",
+        "Item to keep": "Element, ki ostane",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementi, ki vsebujejo isto prijavo več kot enkrat. Združitev enega ohrani in druge odstrani.",
+        "Likely duplicates": "Verjetni podvojeni elementi",
+        "Merge": "Združi",
+        "Merge duplicates": "Združi podvojene elemente",
+        "People who lose access: {count}": "Osebe, ki izgubijo dostop: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Isti naslov in uporabniško ime, drugo geslo. Tako sta lahko videti dva ločena računa, zato pred združitvijo preverite.",
+        "The merge did not complete. Check the items of this group in your vault.": "Združitev ni bila dokončana. Preverite elemente te skupine v svojem trezorju.",
+        "The merge failed. Nothing was removed.": "Združitev ni uspela. Nič ni bilo odstranjeno.",
+        "The other items move to the trash, where you can restore them.": "Drugi elementi gredo v koš, od koder jih lahko obnovite."
     },
     "plurals": null
 }

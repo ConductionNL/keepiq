@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Introduza um UUID, por exemplo 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Introduza uma cor, por exemplo #1a2b3c.",
         "The minimum is higher than the maximum.": "O mínimo é superior ao máximo.",
-        "This is not a valid regular expression.": "Esta não é uma expressão regular válida."
+        "This is not a valid regular expression.": "Esta não é uma expressão regular válida.",
+        "Additional fields after the merge": "Campos adicionais após a fusão",
+        "Duplicates": "Duplicados",
+        "Exact duplicates": "Duplicados exatos",
+        "Item to keep": "Item a manter",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Itens que contêm o mesmo início de sessão mais de uma vez. A fusão mantém um e remove os outros.",
+        "Likely duplicates": "Duplicados prováveis",
+        "Merge": "Fundir",
+        "Merge duplicates": "Fundir duplicados",
+        "People who lose access: {count}": "Pessoas que perdem o acesso: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Mesmo endereço e mesmo nome de utilizador, outra palavra-passe. Duas contas distintas podem ter este aspeto, por isso verifique antes de fundir.",
+        "The merge did not complete. Check the items of this group in your vault.": "A fusão não foi concluída. Verifique os itens deste grupo no seu cofre.",
+        "The merge failed. Nothing was removed.": "A fusão falhou. Nada foi removido.",
+        "The other items move to the trash, where you can restore them.": "Os outros itens vão para o lixo, de onde os pode restaurar."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -38,6 +38,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\Contracts\ShareRowJudgeInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
@@ -46,7 +47,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
  *
  * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
  */
-class ShareRowJudge {
+class ShareRowJudge implements ShareRowJudgeInterface {
 	/**
 	 * Constructor.
 	 *
@@ -158,8 +159,6 @@ class ShareRowJudge {
 
 		return $this->judgeRow(row: $row, copy: $copy);
 	}//end forPair()
-
-
 
 	/**
 	 * The live share rows of a source, each judged when the caller asks. Given

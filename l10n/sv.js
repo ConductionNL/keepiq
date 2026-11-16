@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Ange ett UUID, till exempel 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Ange en färg, till exempel #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimum är högre än maximum.",
-        "This is not a valid regular expression.": "Detta är inte ett giltigt reguljärt uttryck."
+        "This is not a valid regular expression.": "Detta är inte ett giltigt reguljärt uttryck.",
+        "Additional fields after the merge": "Ytterligare fält efter sammanslagningen",
+        "Duplicates": "Dubbletter",
+        "Exact duplicates": "Exakta dubbletter",
+        "Item to keep": "Objekt att behålla",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Objekt som innehåller samma inloggning mer än en gång. Sammanslagning behåller ett och tar bort de andra.",
+        "Likely duplicates": "Troliga dubbletter",
+        "Merge": "Slå samman",
+        "Merge duplicates": "Slå samman dubbletter",
+        "People who lose access: {count}": "Personer som förlorar åtkomst: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Samma adress och användarnamn, ett annat lösenord. Två separata konton kan se ut så, så kontrollera innan du slår samman.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sammanslagningen slutfördes inte. Kontrollera objekten i den här gruppen i ditt valv.",
+        "The merge failed. Nothing was removed.": "Sammanslagningen misslyckades. Inget togs bort.",
+        "The other items move to the trash, where you can restore them.": "De andra objekten flyttas till papperskorgen, där du kan återställa dem."
     },
     "nplurals=2; plural=(n != 1);"
 )

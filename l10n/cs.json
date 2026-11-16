@@ -1887,7 +1887,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Zadejte UUID, například 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Zadejte barvu, například #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimum je vyšší než maximum.",
-        "This is not a valid regular expression.": "Toto není platný regulární výraz."
+        "This is not a valid regular expression.": "Toto není platný regulární výraz.",
+        "Additional fields after the merge": "Další pole po sloučení",
+        "Duplicates": "Duplikáty",
+        "Exact duplicates": "Přesné duplikáty",
+        "Item to keep": "Položka k ponechání",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Položky, které obsahují stejné přihlášení více než jednou. Sloučení jednu ponechá a ostatní odstraní.",
+        "Likely duplicates": "Pravděpodobné duplikáty",
+        "Merge": "Sloučit",
+        "Merge duplicates": "Sloučit duplikáty",
+        "People who lose access: {count}": "Lidé, kteří ztratí přístup: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Stejná adresa a uživatelské jméno, jiné heslo. Takto mohou vypadat dva samostatné účty, proto to před sloučením zkontrolujte.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sloučení nebylo dokončeno. Zkontrolujte položky této skupiny ve svém trezoru.",
+        "The merge failed. Nothing was removed.": "Sloučení se nezdařilo. Nic nebylo odstraněno.",
+        "The other items move to the trash, where you can restore them.": "Ostatní položky se přesunou do koše, odkud je můžete obnovit."
     },
     "plurals": null
 }

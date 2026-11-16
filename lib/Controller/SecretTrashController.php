@@ -25,12 +25,12 @@ namespace OCA\Keepiq\Controller;
 
 use Closure;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
-use OCA\Keepiq\Service\SecretTrashService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\SecretTrashServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -46,7 +46,7 @@ class SecretTrashController extends Controller {
 	 * Constructor for SecretTrashController.
 	 *
 	 * @param IRequest $request The request
-	 * @param SecretTrashService $trashService The trash service
+	 * @param SecretTrashServiceInterface $trashService The trash service
 	 * @param IUserSession $userSession The user session
 	 *
 	 * @return void
@@ -55,10 +55,10 @@ class SecretTrashController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretTrashService $trashService,
+		private SecretTrashServiceInterface $trashService,
 		private IUserSession $userSession,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

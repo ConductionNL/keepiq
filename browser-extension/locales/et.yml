@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 Keepiqi identiteet. Valimiseks vajuta allanoolt.
         n: $1 Keepiqi identiteeti. Valimiseks vajuta allanoolt.
+  newPassword:
+    frameTitle: Keepiqi tugev parool
+    offer: Kasuta tugevat parooli
+    locked: Tugeva parooli saamiseks ava Keepiq
+    status: Kasuta tugevat parooli. Valimiseks vajuta allanoolt.
 
 notificationBar:
   label: Keepiqi teavitus

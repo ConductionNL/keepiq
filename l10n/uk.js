@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Введіть UUID, наприклад 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Введіть колір, наприклад #1a2b3c.",
         "The minimum is higher than the maximum.": "Мінімум більший за максимум.",
-        "This is not a valid regular expression.": "Це не коректний регулярний вираз."
+        "This is not a valid regular expression.": "Це не коректний регулярний вираз.",
+        "Additional fields after the merge": "Додаткові поля після об'єднання",
+        "Duplicates": "Дублікати",
+        "Exact duplicates": "Точні дублікати",
+        "Item to keep": "Елемент, який залишиться",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Елементи, що містять той самий вхід більше одного разу. Об'єднання залишає один і вилучає решту.",
+        "Likely duplicates": "Імовірні дублікати",
+        "Merge": "Об'єднати",
+        "Merge duplicates": "Об'єднати дублікати",
+        "People who lose access: {count}": "Люди, які втратять доступ: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Та сама адреса й ім'я користувача, інший пароль. Так можуть виглядати два окремі облікові записи, тож перевірте перед об'єднанням.",
+        "The merge did not complete. Check the items of this group in your vault.": "Об'єднання не завершено. Перевірте елементи цієї групи у своєму сховищі.",
+        "The merge failed. Nothing was removed.": "Не вдалося об'єднати. Нічого не вилучено.",
+        "The other items move to the trash, where you can restore them.": "Інші елементи потрапляють до кошика, звідки їх можна відновити."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

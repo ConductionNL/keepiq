@@ -33,13 +33,14 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Kernel\Contracts\ShareRequestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Psr\Log\LoggerInterface;
 
 /**
  * Business logic for the share-request lifecycle.
  */
-class ShareRequestService {
+class ShareRequestService implements ShareRequestServiceInterface {
 	/**
 	 * Constructor for ShareRequestService.
 	 *

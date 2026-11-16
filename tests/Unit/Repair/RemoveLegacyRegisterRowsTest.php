@@ -150,6 +150,13 @@ final class RemoveLegacyRegisterRowsTest extends TestCase {
 	private bool $openRegisterTables = true;
 
 	/**
+	 * Whether OpenRegister's configurations table exists.
+	 *
+	 * @var bool
+	 */
+	private bool $configurationsTable = true;
+
+	/**
 	 * The database provider the fake reports.
 	 *
 	 * @var string
@@ -232,6 +239,29 @@ final class RemoveLegacyRegisterRowsTest extends TestCase {
 		self::assertSame([15], array_keys($this->configurations), 'both Keepiq configurations go, shillinq stays');
 		self::assertSame(['openregister_table_40_70'], array_keys($this->dataTables), 'the empty Keepiq data table is dropped');
 	}//end testRemovesEmptyLeftoversAndNothingElse()
+
+	/**
+	 * Without a configurations table the empty schemas and registers still go,
+	 * no configuration is planned and that table is never read or written.
+	 *
+	 * @return void
+	 */
+	public function testWorksWithoutAConfigurationsTable(): void {
+		$this->seedDevInstance();
+		$this->configurationsTable = false;
+		$configurations = $this->configurations;
+
+		$output = $this->createMock(originalClassName: IOutput::class);
+		$output->expects(self::once())->method('info')->with(self::stringContains(string: '1 schema(s), 2 register(s) and 0 configuration(s) removed'));
+		$this->step()->run($output);
+
+		self::assertSame(expected: [40], actual: array_keys($this->registers));
+		self::assertSame(expected: [70], actual: array_keys($this->schemas));
+		self::assertSame(expected: $configurations, actual: $this->configurations);
+		self::assertSame(expected: ['openregister_table_40_70'], actual: array_keys($this->dataTables));
+		$configurationReads = array_filter($this->touched, static fn (string $t): bool => str_contains($t, 'configurations'));
+		self::assertSame(expected: [], actual: array_values($configurationReads));
+	}//end testWorksWithoutAConfigurationsTable()
 
 	/**
 	 * Rows change inside one transaction; the table is dropped after the commit.
@@ -552,7 +582,8 @@ final class RemoveLegacyRegisterRowsTest extends TestCase {
 		$db->method('getDatabaseProvider')->willReturnCallback(fn (): string => $this->provider);
 		$db->method('tableExists')->willReturnCallback(
 			fn (string $table): bool => $this->openRegisterTables === true
-				&& (in_array($table, ['openregister_registers', 'openregister_schemas', 'openregister_configurations'], true) === true
+				&& (in_array($table, ['openregister_registers', 'openregister_schemas'], true) === true
+					|| ($table === 'openregister_configurations' && $this->configurationsTable === true)
 					|| ($table === 'openregister_objects' && $this->objects !== null)
 					|| array_key_exists($table, $this->dataTables) === true)
 		);

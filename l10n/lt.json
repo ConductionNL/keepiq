@@ -1887,7 +1887,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Įveskite UUID, pavyzdžiui, 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Įveskite spalvą, pavyzdžiui, #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimumas didesnis už maksimumą.",
-        "This is not a valid regular expression.": "Tai nėra tinkamas reguliarusis reiškinys."
+        "This is not a valid regular expression.": "Tai nėra tinkamas reguliarusis reiškinys.",
+        "Additional fields after the merge": "Papildomi laukai po sujungimo",
+        "Duplicates": "Dublikatai",
+        "Exact duplicates": "Tikslūs dublikatai",
+        "Item to keep": "Paliekamas elementas",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elementai, kuriuose tas pats prisijungimas yra daugiau nei kartą. Sujungus vienas paliekamas, o kiti pašalinami.",
+        "Likely duplicates": "Tikėtini dublikatai",
+        "Merge": "Sujungti",
+        "Merge duplicates": "Sujungti dublikatus",
+        "People who lose access: {count}": "Žmonės, kurie praras prieigą: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Tas pats adresas ir naudotojo vardas, kitas slaptažodis. Taip gali atrodyti dvi atskiros paskyros, todėl patikrinkite prieš sujungdami.",
+        "The merge did not complete. Check the items of this group in your vault.": "Sujungimas nebaigtas. Patikrinkite šios grupės elementus savo saugykloje.",
+        "The merge failed. Nothing was removed.": "Sujungti nepavyko. Niekas nepašalinta.",
+        "The other items move to the trash, where you can restore them.": "Kiti elementai perkeliami į šiukšlinę, iš kurios galite juos atkurti."
     },
     "plurals": null
 }

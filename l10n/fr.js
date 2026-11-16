@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Saisissez un UUID, par exemple 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Saisissez une couleur, par exemple #1a2b3c.",
         "The minimum is higher than the maximum.": "Le minimum est supérieur au maximum.",
-        "This is not a valid regular expression.": "Ce n'est pas une expression régulière valide."
+        "This is not a valid regular expression.": "Ce n'est pas une expression régulière valide.",
+        "Additional fields after the merge": "Champs supplémentaires après la fusion",
+        "Duplicates": "Doublons",
+        "Exact duplicates": "Doublons exacts",
+        "Item to keep": "Élément à conserver",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Éléments qui contiennent le même identifiant plus d'une fois. La fusion en conserve un et supprime les autres.",
+        "Likely duplicates": "Doublons probables",
+        "Merge": "Fusionner",
+        "Merge duplicates": "Fusionner les doublons",
+        "People who lose access: {count}": "Personnes qui perdent l'accès : {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Même adresse et même nom d'utilisateur, mais un autre mot de passe. Deux comptes distincts peuvent ressembler à cela, vérifiez donc avant de fusionner.",
+        "The merge did not complete. Check the items of this group in your vault.": "La fusion n'a pas abouti. Vérifiez les éléments de ce groupe dans votre coffre.",
+        "The merge failed. Nothing was removed.": "La fusion a échoué. Rien n'a été supprimé.",
+        "The other items move to the trash, where you can restore them.": "Les autres éléments vont dans la corbeille, d'où vous pouvez les restaurer."
     },
     "nplurals=2; plural=(n > 1);"
 )

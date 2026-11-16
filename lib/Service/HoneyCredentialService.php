@@ -34,6 +34,7 @@ use OCA\Keepiq\Db\HoneyAlertMapper;
 use OCA\Keepiq\Db\HoneyFlag;
 use OCA\Keepiq\Db\HoneyFlagMapper;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Kernel\Contracts\HoneyCredentialServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Ramsey\Uuid\Uuid;
 
@@ -44,7 +45,7 @@ use Ramsey\Uuid\Uuid;
  * in HoneyTripwireService; this class owns the flag lifecycle and the
  * owner/admin-guarded views onto the alerts it produced.
  */
-class HoneyCredentialService {
+class HoneyCredentialService implements HoneyCredentialServiceInterface {
 	/**
 	 * Constructor for HoneyCredentialService.
 	 *

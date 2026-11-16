@@ -1887,7 +1887,20 @@
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Introduceți un UUID, de exemplu 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Introduceți o culoare, de exemplu #1a2b3c.",
         "The minimum is higher than the maximum.": "Minimul este mai mare decât maximul.",
-        "This is not a valid regular expression.": "Aceasta nu este o expresie regulată validă."
+        "This is not a valid regular expression.": "Aceasta nu este o expresie regulată validă.",
+        "Additional fields after the merge": "Câmpuri suplimentare după combinare",
+        "Duplicates": "Duplicate",
+        "Exact duplicates": "Duplicate exacte",
+        "Item to keep": "Elementul păstrat",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elemente care conțin aceeași autentificare de mai multe ori. Combinarea păstrează unul și le elimină pe celelalte.",
+        "Likely duplicates": "Duplicate probabile",
+        "Merge": "Combinați",
+        "Merge duplicates": "Combinați duplicatele",
+        "People who lose access: {count}": "Persoane care pierd accesul: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Aceeași adresă și același nume de utilizator, altă parolă. Două conturi separate pot arăta așa, deci verificați înainte de a combina.",
+        "The merge did not complete. Check the items of this group in your vault.": "Combinarea nu s-a încheiat. Verificați elementele acestui grup în seiful dumneavoastră.",
+        "The merge failed. Nothing was removed.": "Combinarea a eșuat. Nu a fost eliminat nimic.",
+        "The other items move to the trash, where you can restore them.": "Celelalte elemente ajung în coșul de gunoi, de unde le puteți restaura."
     },
     "plurals": null
 }

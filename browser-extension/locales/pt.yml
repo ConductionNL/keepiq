@@ -730,6 +730,11 @@ inlineList:
       count:
         1: 1 identidade do Keepiq. Prima Seta para baixo para escolher.
         n: $1 identidades do Keepiq. Prima Seta para baixo para escolher.
+  newPassword:
+    frameTitle: Palavra-passe forte do Keepiq
+    offer: Usar uma palavra-passe forte
+    locked: Desbloqueie o Keepiq para obter uma palavra-passe forte
+    status: Usar uma palavra-passe forte. Prima Seta para baixo para escolher.
 
 notificationBar:
   label: Notificação do Keepiq

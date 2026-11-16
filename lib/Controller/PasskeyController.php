@@ -27,9 +27,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\PasskeyCredential;
-use OCA\Keepiq\Service\PasskeyService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\PasskeyServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\BruteForceProtection;
@@ -63,7 +63,7 @@ class PasskeyController extends OCSController {
 	 * Constructor for PasskeyController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param PasskeyService $service The passkey service
+	 * @param PasskeyServiceInterface $service The passkey service
 	 * @param IUserSession $userSession The user session
 	 * @param IThrottler $throttler Nextcloud's brute-force throttler
 	 *
@@ -71,11 +71,11 @@ class PasskeyController extends OCSController {
 	 */
 	public function __construct(
 		IRequest $request,
-		private PasskeyService $service,
+		private PasskeyServiceInterface $service,
 		private IUserSession $userSession,
 		private IThrottler $throttler,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

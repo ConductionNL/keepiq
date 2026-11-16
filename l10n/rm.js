@@ -1760,7 +1760,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Endatescha in UUID, per exempel 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Endatescha ina colur, per exempel #1a2b3c.",
         "The minimum is higher than the maximum.": "Il minimum è pli aut ch’il maximum.",
-        "This is not a valid regular expression.": "Quai n'è betg ina expressiun regulara valida."
+        "This is not a valid regular expression.": "Quai n'è betg ina expressiun regulara valida.",
+        "Additional fields after the merge": "Champs supplementars suenter l'unificaziun",
+        "Duplicates": "Duplicats",
+        "Exact duplicates": "Duplicats exacts",
+        "Item to keep": "Element che resta",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elements che cuntegnan il medem login pliras giadas. L'unificaziun tegna in e allontanescha ils auters.",
+        "Likely duplicates": "Duplicats probabels",
+        "Merge": "Unifitgar",
+        "Merge duplicates": "Unifitgar ils duplicats",
+        "People who lose access: {count}": "Persunas che perdan l'access: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Medema adressa e medem num d'utilisader, in auter pled-clav. Dus contos separads pon guardar ora uschia, controllescha pia avant che unifitgar.",
+        "The merge did not complete. Check the items of this group in your vault.": "L'unificaziun n'è betg vegnida terminada. Controllescha ils elements da questa gruppa en tia chascha forta.",
+        "The merge failed. Nothing was removed.": "L'unificaziun n'è betg reussida. I n'è vegnì allontanà nagut.",
+        "The other items move to the trash, where you can restore them.": "Ils auters elements van en il chanaster da rument, nua che ti als pos restaurar."
     },
     "nplurals=1; plural=0;"
 )

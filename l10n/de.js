@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Gib eine UUID ein, z. B. 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Gib eine Farbe ein, z. B. #1a2b3c.",
         "The minimum is higher than the maximum.": "Das Minimum ist größer als das Maximum.",
-        "This is not a valid regular expression.": "Das ist kein gültiger regulärer Ausdruck."
+        "This is not a valid regular expression.": "Das ist kein gültiger regulärer Ausdruck.",
+        "Additional fields after the merge": "Zusätzliche Felder nach dem Zusammenführen",
+        "Duplicates": "Duplikate",
+        "Exact duplicates": "Exakte Duplikate",
+        "Item to keep": "Zu behaltendes Element",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Elemente, die dieselbe Anmeldung mehr als einmal enthalten. Beim Zusammenführen bleibt eines erhalten, die anderen werden entfernt.",
+        "Likely duplicates": "Wahrscheinliche Duplikate",
+        "Merge": "Zusammenführen",
+        "Merge duplicates": "Duplikate zusammenführen",
+        "People who lose access: {count}": "Personen, die den Zugriff verlieren: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Gleiche Adresse und gleicher Benutzername, ein anderes Passwort. Zwei getrennte Konten können so aussehen, prüfe das also vor dem Zusammenführen.",
+        "The merge did not complete. Check the items of this group in your vault.": "Das Zusammenführen wurde nicht abgeschlossen. Prüfe die Elemente dieser Gruppe in deinem Tresor.",
+        "The merge failed. Nothing was removed.": "Das Zusammenführen ist fehlgeschlagen. Es wurde nichts entfernt.",
+        "The other items move to the trash, where you can restore them.": "Die anderen Elemente kommen in den Papierkorb, wo du sie wiederherstellen kannst."
     },
     "nplurals=2; plural=(n != 1);"
 )

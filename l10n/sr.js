@@ -1784,7 +1784,20 @@ OC.L10N.register(
         "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Унесите UUID, нпр. 123e4567-e89b-12d3-a456-426614174000.",
         "Enter a colour, such as #1a2b3c.": "Унесите боју, нпр. #1a2b3c.",
         "The minimum is higher than the maximum.": "Минимум је већи од максимума.",
-        "This is not a valid regular expression.": "Ово није исправан регуларни израз."
+        "This is not a valid regular expression.": "Ово није исправан регуларни израз.",
+        "Additional fields after the merge": "Додатна поља након спајања",
+        "Duplicates": "Дупликати",
+        "Exact duplicates": "Тачни дупликати",
+        "Item to keep": "Ставка која остаје",
+        "Items that hold the same login more than once. Merging keeps one and removes the others.": "Ставке које садрже исту пријаву више пута. Спајање задржава једну и уклања остале.",
+        "Likely duplicates": "Вероватни дупликати",
+        "Merge": "Спој",
+        "Merge duplicates": "Спој дупликате",
+        "People who lose access: {count}": "Особе које губе приступ: {count}",
+        "Same address and username, a different password. Two separate accounts can look like this, so check before you merge.": "Иста адреса и корисничко име, друга лозинка. Два одвојена налога могу тако да изгледају, па проверите пре спајања.",
+        "The merge did not complete. Check the items of this group in your vault.": "Спајање није довршено. Проверите ставке ове групе у свом трезору.",
+        "The merge failed. Nothing was removed.": "Спајање није успело. Ништа није уклоњено.",
+        "The other items move to the trash, where you can restore them.": "Остале ставке иду у отпад, одакле их можете вратити."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

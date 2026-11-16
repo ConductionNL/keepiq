@@ -58,14 +58,15 @@ final class NewLinkShare {
 	}//end __construct()
 
 	/**
-	 * Refuse a link share without its secret, snapshot or salt, or with a
-	 * usage limit outside 1-10.
+	 * Refuse a link share without its secret, snapshot or salt, with a
+	 * usage limit outside 1-10, or with an end date that has already passed.
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When validation fails
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-2.2
 	 */
 	public function assertValid(): void {
 		if ($this->secretId === '' || $this->encryptedSnapshot === '' || $this->salt === '') {
@@ -76,6 +77,12 @@ final class NewLinkShare {
 			throw new InvalidArgumentException(
 				'Usage limit must be between ' . LinkShareService::MIN_USAGE_LIMIT . ' and ' . LinkShareService::MAX_USAGE_LIMIT
 			);
+		}
+
+		// The dialog's date picker only hints at a future date; the server is
+		// where a past end date is refused, so a link is never created already expired.
+		if ($this->expiresAt !== null && $this->expiresAt <= new DateTime()) {
+			throw new InvalidArgumentException('The end date must lie in the future');
 		}
 	}//end assertValid()
 
