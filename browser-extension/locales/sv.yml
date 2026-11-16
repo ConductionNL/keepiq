@@ -154,6 +154,8 @@ item:
   fillName: Fyll i {name}
   insecureTitle: Vill du ändå fylla i den här inloggningen?
   insecureWarning: "Varning: Det här är en osäker HTTP-sida, och all information du skickar kan eventuellt ses och ändras av andra. Den här inloggningen sparades ursprungligen på en säker (HTTPS-)sida."
+  repromptTitle: "Ange ditt huvudlösenord för att fylla i det här objektet"
+  repromptHelp: "Det här objektet ber om ditt huvudlösenord varje gång det fylls i. Det skyddar en olåst skärm, inte ett ändrat tillägg."
   cardInsecureTitle: Fyll i det här kortet på en osäker webbplats?
   cardInsecureWarning: Den här webbplatsen är inte säker. Vem som helst i nätverket kan läsa kortuppgifterna som fylls i.
   crossSiteTitle: Fyll även i på {hosts}?

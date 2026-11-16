@@ -154,6 +154,8 @@ item:
   fillName: Rellenar {name}
   insecureTitle: "¿Seguro que quieres rellenar este inicio de sesión?"
   insecureWarning: "Advertencia: esta página HTTP no es segura y otras personas podrían ver y modificar la información que envíes. Este inicio de sesión se guardó originalmente en una página segura (HTTPS)."
+  repromptTitle: "Introduce tu contraseña maestra para rellenar este elemento"
+  repromptHelp: "Este elemento pide tu contraseña maestra cada vez que se rellena. Protege una pantalla desbloqueada, no una extensión modificada."
   cardInsecureTitle: "¿Rellenar esta tarjeta en un sitio no seguro?"
   cardInsecureWarning: Este sitio no es seguro. Cualquiera en la red podría leer los datos de la tarjeta que se rellenen.
   crossSiteTitle: "¿Rellenar también en {hosts}?"

@@ -154,6 +154,8 @@ item:
   fillName: Izpolni {name}
   insecureTitle: Ali želite to prijavo vseeno izpolniti?
   insecureWarning: "Opozorilo: to je nezavarovana stran HTTP, zato lahko drugi morda vidijo in spremenijo vse, kar pošljete. Ta prijava je bila prvotno shranjena na varni strani (HTTPS)."
+  repromptTitle: "Vnesite glavno geslo, da izpolnite ta element"
+  repromptHelp: "Ta element ob vsakem izpolnjevanju zahteva glavno geslo. To ščiti odklenjen zaslon, ne spremenjene razširitve."
   cardInsecureTitle: Želite izpolniti to kartico na nevarnem spletnem mestu?
   cardInsecureWarning: To spletno mesto ni varno. Kdorkoli v omrežju bi lahko prebral izpolnjene podatke kartice.
   crossSiteTitle: Želite izpolniti tudi na {hosts}?

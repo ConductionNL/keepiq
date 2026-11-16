@@ -154,6 +154,8 @@ item:
   fillName: Preencher {name}
   insecureTitle: Pretende mesmo preencher esta credencial?
   insecureWarning: "Aviso: esta é uma página HTTP não segura e qualquer informação que submeta pode ser vista e alterada por terceiros. Esta credencial foi originalmente guardada numa página segura (HTTPS)."
+  repromptTitle: "Introduza a sua palavra-passe mestra para preencher este item"
+  repromptHelp: "Este item pede a sua palavra-passe mestra sempre que é preenchido. Protege um ecrã desbloqueado, não uma extensão modificada."
   cardInsecureTitle: Preencher este cartão num site não seguro?
   cardInsecureWarning: Este site não é seguro. Qualquer pessoa na rede pode ler os dados do cartão que forem preenchidos.
   crossSiteTitle: Preencher também em {hosts}?

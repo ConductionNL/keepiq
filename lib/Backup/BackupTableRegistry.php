@@ -76,6 +76,7 @@ final class BackupTableRegistry {
 		'recovery_approvals',
 		'recovery_enrolments',
 		'recovery_keys',
+		'recovery_kits',
 		'recovery_officers',
 		'recovery_requests',
 		'rotation_flags',

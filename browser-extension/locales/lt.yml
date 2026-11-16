@@ -154,6 +154,8 @@ item:
   fillName: Užpildyti {name}
   insecureTitle: Ar vis tiek norite užpildyti šį prisijungimą?
   insecureWarning: "Įspėjimas: tai neapsaugotas HTTP puslapis, todėl kiti gali matyti ir pakeisti bet kokią jūsų pateiktą informaciją. Šis prisijungimas iš pradžių buvo įrašytas saugiame (HTTPS) puslapyje."
+  repromptTitle: "Įveskite pagrindinį slaptažodį, kad užpildytumėte šį elementą"
+  repromptHelp: "Šis elementas kaskart prieš užpildant prašo pagrindinio slaptažodžio. Tai apsaugo atrakintą ekraną, bet ne pakeistą plėtinį."
   cardInsecureTitle: Užpildyti šią kortelę nesaugioje svetainėje?
   cardInsecureWarning: Ši svetainė nėra saugi. Bet kas tinkle gali perskaityti užpildytus kortelės duomenis.
   crossSiteTitle: Užpildyti ir kitose svetainėse ({hosts})?

@@ -25,6 +25,7 @@
 		<CopyButton
 			:resolve="resolvePlain"
 			:useOnly="useOnly"
+			:guard="guard"
 			:label="t('keepiq', 'Copy password')" />
 	</div>
 </template>
@@ -84,6 +85,15 @@ export default {
 			type: Function,
 			required: true,
 		},
+
+		/**
+		 * Awaited before every reveal; a rejection shows nothing. A flagged
+		 * item passes its master password re-prompt here (crypto-item-reprompt).
+		 */
+		guard: {
+			type: Function,
+			default: null,
+		},
 	},
 
 	data() {
@@ -116,6 +126,14 @@ export default {
 		async toggle() {
 			if (this.useOnly) {
 				return
+			}
+			if (!this.revealed && this.guard) {
+				// Every reveal asks again; hiding never does.
+				try {
+					await this.guard()
+				} catch {
+					return
+				}
 			}
 			if (!this.revealed && this.plain === null) {
 				this.plain = await this.resolve()

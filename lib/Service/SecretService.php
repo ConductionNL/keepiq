@@ -580,6 +580,7 @@ class SecretService implements SecretServiceInterface {
 		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
 		$secret->setTotp($this->nullableString(value: $data['totp'] ?? null));
 		$secret->setPasskeys($this->nullableString(value: $data['passkeys'] ?? null));
+		$secret->setReprompt(($data['reprompt'] ?? false) === true);
 	}//end applyOptionalFields()
 
 	/**
@@ -1139,6 +1140,10 @@ class SecretService implements SecretServiceInterface {
 		$this->applyOwnedFolder(run: $run);
 		if ($run->sends('typeId') === true) {
 			$secret->setTypeId($this->typeService->resolveTypeForSecret($run->data['typeId'], $run->userId));
+		}
+
+		if ($run->sends('reprompt') === true) {
+			$secret->setReprompt($run->data['reprompt'] === true);
 		}
 	}//end applyDetailFields()
 

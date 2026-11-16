@@ -154,6 +154,8 @@ item:
   fillName: Udfyld {name}
   insecureTitle: Vil du stadig udfylde dette login?
   insecureWarning: "Advarsel: Dette er en usikret HTTP-side, og alt, hvad du sender, kan muligvis ses og ændres af andre. Dette login blev oprindeligt gemt på en sikker (HTTPS-)side."
+  repromptTitle: "Indtast din hovedadgangskode for at udfylde dette element"
+  repromptHelp: "Dette element beder om din hovedadgangskode, hver gang det udfyldes. Det beskytter en ulåst skærm, ikke en ændret udvidelse."
   cardInsecureTitle: Udfyld dette kort på et usikkert websted?
   cardInsecureWarning: Dette websted er ikke sikkert. Alle på netværket kan læse de kortoplysninger, der udfyldes.
   crossSiteTitle: Udfyld også på {hosts}?

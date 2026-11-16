@@ -75,6 +75,15 @@
 				:disabled="saving"
 				@update:modelValue="tags = $event" />
 
+			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
+			<NcCheckboxRadioSwitch
+				:modelValue="reprompt"
+				:disabled="saving"
+				data-testid="secret-reprompt"
+				@update:modelValue="reprompt = $event">
+				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
+			</NcCheckboxRadioSwitch>
+
 			<!-- The shared destination picker (no "Vault root" option, by
 			     design): a secret always lives in a vault, so creating one
 			     at the root cannot be offered. Replaces a local NcSelect
@@ -130,6 +139,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
+	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
@@ -213,6 +223,7 @@ export default {
 	name: 'SecretCreateDialog',
 
 	components: {
+		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
 		AuthenticatorKeyField,
@@ -270,6 +281,7 @@ export default {
 			totpInput: '',
 			additionalFields: [],
 			tags: [],
+			reprompt: false,
 			selectedFolderId: this.folderId ?? this.prefill?.folderId ?? null,
 			/** Team folders the user can write to but does not own (admin-vault-policies §4.3). */
 			contributable: [],
@@ -576,6 +588,7 @@ export default {
 					name: this.name.trim(),
 					typeId: this.typeId,
 					folderId: this.selectedFolderId,
+					...(this.reprompt ? { reprompt: true } : {}),
 					...this.valueFields(),
 				})
 				// Tags are stored apart from the value (vault-favourites-tags-and-last-used).
