@@ -11,6 +11,8 @@ A FRESH request MUST NOT require the requester to name an existing Secret. The r
 
 A RE-REQUEST is the only creation path that targets an existing Secret, per the Re-request requirement. `secret_id` is therefore mandatory for a re-request and optional for a fresh request.
 
+(Previously: a fresh request asked by type listed the type's fields with none of them ticked. Now the fields the type requires, such as a Login's password, are ticked and locked.)
+
 #### Scenario: Create request for own secret
 - GIVEN a user has an active EncryptionSuite
 - WHEN they create a SecretRequest specifying which fields to request

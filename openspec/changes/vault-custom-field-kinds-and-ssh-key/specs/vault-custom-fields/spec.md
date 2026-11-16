@@ -4,11 +4,11 @@
 
 The system MUST let the owner of a secret give each custom field a schema in the create and edit dialogs, using the JSON Schema vocabulary of OpenRegister's property editor. A schema MUST have a `type` of `string`, `integer`, `number`, `boolean` or `object`. A `string` MAY have a `format` of `text`, `password`, `uri`, `email`, `hostname`, `ipv4`, `ipv6`, `date`, `date-time`, `time`, `uuid` or `color-hex`, and MAY have `minLength`, `maxLength` and `pattern`. An `integer` MAY have `minimum` and `maximum`; a `number` MAY also have `multipleOf`. A `boolean` and an `object` have no limits.
 
-The schemas MUST be stored inside the same encrypted additional-fields blob as the values, under the reserved member `@schema`, as a map from field name to schema. A field without an entry in `@schema`, and every field of a blob saved before this change, MUST be read as `{"type": "string"}`. Every value MUST stay a string in the blob: an integer or number as its decimal text, a boolean as `"true"` or `"false"`, an object as JSON text. The name `@schema` MUST be refused as a field name, and every reader that lists fields MUST leave it out.
+The schemas MUST be stored inside the same encrypted additional-fields blob as the values, under the reserved member `@schema`, as a map from field name to schema. A field without an entry in `@schema`, and every field of a blob saved before this change, MUST be read as `{"type": "string"}`. Every value MUST stay a string in the blob: an integer or number as its decimal text, a boolean as `"true"` or `"false"`, an object as JSON text. The name `@schema` MUST be refused as a field name, and every reader that lists fields MUST leave it out; a field already called `@schema` whose value is not a map of schemas, from before the name was reserved or from an import, MUST be kept under the name "@schema (imported)". A custom field MUST NOT take the name of one of the type's own fields, which are stored under the same names.
 
 #### Scenario: An owner limits a port number
 
-- **GIVEN** an owner editing a Database secret with a custom field named Port
+- **GIVEN** an owner editing a Login secret with a custom field named Port
 - **WHEN** the owner sets its type to integer with a minimum of 1 and a maximum of 65535, and saves
 - **THEN** the blob holds `"Port": "5432"` and `"@schema": {"Port": {"type": "integer", "minimum": 1, "maximum": 65535}}`
 - **AND** the detail sidebar lists Port but no field named `@schema`
@@ -95,7 +95,7 @@ The schemas on the secret MUST come from its owner only, because whoever holds a
 
 ### Requirement: Schemas survive export and import
 
-Export and import through CXF MUST carry each field's schema: a hidden field MUST be exported as a concealed field and imported back with `hidden` set, also a built-in type's own masked field without a stored schema, and the type, format and limits MUST round-trip. Formats without a CXF counterpart MUST be carried in the field's extension data. An imported field whose label is a reserved name (`key`, `login`, `url` or `@schema`, in any case) MUST be stored under that label with " (imported)" added, so its value is kept. An SSH key's public key MUST be imported under the SSH Key form's own field, "Public key", and exported from it.
+Export and import through CXF MUST carry each field's schema: a hidden field MUST be exported as a concealed field and imported back with `hidden` set, also a built-in type's own masked field without a stored schema, and the type, format and limits MUST round-trip. Formats without a CXF counterpart MUST be carried in the field's extension data. An import that drops a schema a value does not fit MUST keep a hidden field hidden. An imported field whose label is a reserved name (`key`, `login`, `url` or `@schema`, in any case) MUST be stored under that label with " (imported)" added, so its value is kept. An SSH key's public key MUST be imported under the SSH Key form's own field, "Public key", and exported from it.
 
 #### Scenario: A schema survives a CXF round trip
 

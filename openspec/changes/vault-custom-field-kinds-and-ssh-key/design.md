@@ -47,11 +47,11 @@ No Keepiq screen stores a value that does not fit its schema: the dialogs and th
 
 ### D5: Requests carry the schemas in plain text
 
-The fill page can only enforce a schema it receives, so each requested field's schema is stored with the request, in a new nullable `field_schemas` column next to `requested_fields`. A separate column leaves the list of names as it is, so nothing that reads `requested_fields` changes. The column is plain text on the server, as the names already are, so the server learns a requested field's type, limits and whether it is hidden; it never learns the value. The schema is merged into the secret's `@schema` with the submitted value.
+The fill page can only enforce a schema it receives, so each requested field's schema is stored with the request, in a new nullable `field_schemas` column next to `requested_fields`. A separate column leaves the list of names as it is, so nothing that reads `requested_fields` changes. The column is plain text on the server, as the names already are, so the server learns a requested field's type, limits and whether it is hidden; it never learns the value. The owner's browser writes each requested custom field into the secret, empty, with its schema when the request is made; a fill carries only the values, and the merge ignores a `@schema` in a filled blob, because whoever holds the link seals that blob.
 
 ### D6: Built-in type fields use the same schemas
 
-The fields of the built-in types (`src/utils/builtinTypeFields.js`, change `vault-builtin-type-fields`) describe themselves with the same schemas, so a Database's Port is an integer from 1 to 65535 and a certificate's private key a multi-line hidden string. The built-in definitions stay in code; only custom fields store a schema in the blob.
+The fields of the built-in types (`src/utils/builtinTypeFields.js`, change `vault-builtin-type-fields`) describe themselves with the same schemas, so a Database's Port is an integer from 1 to 65535 and a certificate's private key a multi-line hidden string: a multi-line field is hidden unless it is public, as a certificate or an SSH public key is. The built-in definitions stay in code; only custom fields store a schema in the blob.
 
 ### D7: Generate the SSH key in the browser
 
