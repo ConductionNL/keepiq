@@ -27,6 +27,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * SiemSinkRequest.
  *
+ * @covers \OCA\Keepiq\Service\Siem\SiemSinkRequest
+ *
  * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
  */
 class SiemSinkRequestTest extends TestCase {
@@ -77,4 +79,89 @@ class SiemSinkRequestTest extends TestCase {
 			$this->request(['name' => 'Renamed', 'tls' => false, 'queueCap' => 20, 'credential' => 'new', 'connectorOptions' => []])->forUpdate()
 		);
 	}//end testUpdateCarriesOnlySuppliedFields()
+
+	/**
+	 * A blank format on create falls back to json; a supplied one is kept.
+	 *
+	 * @return void
+	 */
+	public function testCreateBlankFormatFallsBackToJson(): void {
+		$this->assertSame('json', $this->request(params: ['format' => ''])->forCreate()['format']);
+		$this->assertSame('json', $this->request(params: [])->forCreate()['format']);
+		$this->assertSame('splunk', $this->request(params: ['format' => 'splunk'])->forCreate()['format']);
+	}//end testCreateBlankFormatFallsBackToJson()
+
+	/**
+	 * Malformed fields read as absent on create: a non-scalar string is '',
+	 * a non-numeric cap and a non-array list take the defaults.
+	 *
+	 * @return void
+	 */
+	public function testCreateTreatsMalformedFieldsAsAbsent(): void {
+		$created = $this->request(params:
+			[
+				'name' => ['nested'],
+				'endpoint' => 12,
+				'queueCap' => 'many',
+				'categoryFilter' => 'auth',
+				'connectorOptions' => 'x',
+				'tls' => '',
+				'enabled' => '',
+			]
+		)->forCreate();
+
+		$this->assertSame('', $created['name']);
+		$this->assertSame('12', $created['endpoint']);
+		$this->assertSame(1000, $created['queueCap']);
+		$this->assertSame([], $created['categoryFilter']);
+		$this->assertSame([], $created['connectorOptions']);
+		$this->assertTrue($created['tls']);
+		$this->assertTrue($created['enabled']);
+	}//end testCreateTreatsMalformedFieldsAsAbsent()
+
+	/**
+	 * Boolean fields accept the usual string spellings.
+	 *
+	 * @return void
+	 */
+	public function testCreateReadsBooleanSpellings(): void {
+		$on = $this->request(params: ['tls' => 'yes', 'enabled' => '1'])->forCreate();
+		$this->assertTrue($on['tls']);
+		$this->assertTrue($on['enabled']);
+
+		$off = $this->request(params: ['tls' => 'off', 'enabled' => 0])->forCreate();
+		$this->assertFalse($off['tls']);
+		$this->assertFalse($off['enabled']);
+	}//end testCreateReadsBooleanSpellings()
+
+	/**
+	 * An update carries format, enabled and categoryFilter when supplied,
+	 * and drops a non-numeric cap and a non-array list.
+	 *
+	 * @return void
+	 */
+	public function testUpdateCarriesRemainingFieldsAndDropsMalformedOnes(): void {
+		$this->assertSame(
+			[
+				'hmacSecret' => 'h', 'credential' => '', 'endpoint' => 'https://e', 'format' => 'cef',
+				'enabled' => true, 'categoryFilter' => ['auth'],
+			],
+			$this->request(params:
+				[
+					'hmacSecret' => 'h', 'endpoint' => 'https://e', 'format' => 'cef', 'enabled' => 'true',
+					'categoryFilter' => ['auth'], 'queueCap' => 'lots', 'connectorOptions' => 'x', 'tls' => '',
+				]
+			)->forUpdate()
+		);
+	}//end testUpdateCarriesRemainingFieldsAndDropsMalformedOnes()
+
+	/**
+	 * A numeric-string cap is cast to an int; zero is supplied, not absent.
+	 *
+	 * @return void
+	 */
+	public function testUpdateKeepsAZeroCap(): void {
+		$this->assertSame(0, $this->request(params: ['queueCap' => '0'])->forUpdate()['queueCap']);
+		$this->assertSame(7, $this->request(params: ['queueCap' => '7.9'])->forUpdate()['queueCap']);
+	}//end testUpdateKeepsAZeroCap()
 }//end class

@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Užsirašykite arba išsaugokite šį kodą dabar. Jis rodomas tik vieną kartą.",
         "You have no recovery kit.": "Neturite atkūrimo rinkinio.",
         "Your recovery kit was made on {date}.": "Jūsų atkūrimo rinkinys sukurtas {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Jūsų saugykla atidaryta, o atkūrimo rinkinys panaudotas. Dabar sukurkite naują rinkinį su nauju pagrindiniu slaptažodžiu."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Jūsų saugykla atidaryta, o atkūrimo rinkinys panaudotas. Dabar sukurkite naują rinkinį su nauju pagrindiniu slaptažodžiu.",
+        "Field kind": "Lauko rūšis",
+        "Yes or no": "Taip arba ne",
+        "Public key": "Viešasis raktas",
+        "Fingerprint": "Kontrolinis kodas",
+        "Copy public key": "Kopijuoti viešąjį raktą",
+        "Copy fingerprint": "Kopijuoti kontrolinį kodą",
+        "Generate key pair": "Generuoti raktų porą",
+        "Import from file": "Importuoti iš failo",
+        "Derived from the public key.": "Gautas iš viešojo rakto.",
+        "The file could not be read.": "Nepavyko perskaityti failo.",
+        "This browser could not generate a key pair.": "Ši naršyklė negalėjo sugeneruoti raktų poros.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Tai nėra privatusis raktas. Įklijuokite OpenSSH arba PEM privatųjį raktą arba sugeneruokite naują.",
+        "This is not an OpenSSH public key.": "Tai nėra OpenSSH viešasis raktas.",
+        "This public key does not belong to the private key.": "Šis viešasis raktas nepriklauso privačiajam raktui."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

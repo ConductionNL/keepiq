@@ -1877,7 +1877,21 @@
         "Write down or save this code now. It is shown only once.": "Pierakstiet vai saglabājiet šo kodu tagad. Tas tiek parādīts tikai vienreiz.",
         "You have no recovery kit.": "Jums nav atkopšanas komplekta.",
         "Your recovery kit was made on {date}.": "Jūsu atkopšanas komplekts izveidots {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Jūsu glabātava ir atvērta, un atkopšanas komplekts ir izlietots. Tagad izveidojiet jaunu komplektu ar jauno galveno paroli."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Jūsu glabātava ir atvērta, un atkopšanas komplekts ir izlietots. Tagad izveidojiet jaunu komplektu ar jauno galveno paroli.",
+        "Field kind": "Lauka veids",
+        "Yes or no": "Jā vai nē",
+        "Public key": "Publiskā atslēga",
+        "Fingerprint": "Pirkstu nospiedums",
+        "Copy public key": "Kopēt publisko atslēgu",
+        "Copy fingerprint": "Kopēt pirkstu nospiedumu",
+        "Generate key pair": "Ģenerēt atslēgu pāri",
+        "Import from file": "Importēt no faila",
+        "Derived from the public key.": "Atvasināts no publiskās atslēgas.",
+        "The file could not be read.": "Failu neizdevās nolasīt.",
+        "This browser could not generate a key pair.": "Šī pārlūkprogramma nevarēja ģenerēt atslēgu pāri.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Šī nav privātā atslēga. Ielīmējiet OpenSSH vai PEM privāto atslēgu vai ģenerējiet jaunu.",
+        "This is not an OpenSSH public key.": "Šī nav OpenSSH publiskā atslēga.",
+        "This public key does not belong to the private key.": "Šī publiskā atslēga nepieder privātajai atslēgai."
     },
     "plurals": null
 }

@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Scríobh síos nó sábháil an cód seo anois. Ní thaispeántar é ach uair amháin.",
         "You have no recovery kit.": "Níl trealamh aisghabhála agat.",
         "Your recovery kit was made on {date}.": "Rinneadh do threalamh aisghabhála ar {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Tá do thaisceadán oscailte agus tá do threalamh aisghabhála ídithe. Déan trealamh nua anois le do mháistirfhocal faire nua."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Tá do thaisceadán oscailte agus tá do threalamh aisghabhála ídithe. Déan trealamh nua anois le do mháistirfhocal faire nua.",
+        "Field kind": "Cineál réimse",
+        "Yes or no": "Tá nó níl",
+        "Public key": "Eochair phoiblí",
+        "Fingerprint": "Méarlorg",
+        "Copy public key": "Cóipeáil an eochair phoiblí",
+        "Copy fingerprint": "Cóipeáil an méarlorg",
+        "Generate key pair": "Gin péire eochracha",
+        "Import from file": "Iompórtáil ó chomhad",
+        "Derived from the public key.": "Díorthaithe ón eochair phoiblí.",
+        "The file could not be read.": "Níorbh fhéidir an comhad a léamh.",
+        "This browser could not generate a key pair.": "Níorbh fhéidir leis an mbrabhsálaí seo péire eochracha a ghiniúint.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ní eochair phríobháideach í seo. Greamaigh eochair phríobháideach OpenSSH nó PEM, nó gin ceann.",
+        "This is not an OpenSSH public key.": "Ní eochair phoiblí OpenSSH í seo.",
+        "This public key does not belong to the private key.": "Ní bhaineann an eochair phoiblí seo leis an eochair phríobháideach."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

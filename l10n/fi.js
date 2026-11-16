@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Kirjoita koodi muistiin tai tallenna se nyt. Se näytetään vain kerran.",
         "You have no recovery kit.": "Sinulla ei ole palautuspakettia.",
         "Your recovery kit was made on {date}.": "Palautuspakettisi tehtiin {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Holvisi on auki ja palautuspakettisi on käytetty. Tee nyt uusi paketti uudella pääsalasanallasi."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Holvisi on auki ja palautuspakettisi on käytetty. Tee nyt uusi paketti uudella pääsalasanallasi.",
+        "Field kind": "Kentän laji",
+        "Yes or no": "Kyllä tai ei",
+        "Public key": "Julkinen avain",
+        "Fingerprint": "Sormenjälki",
+        "Copy public key": "Kopioi julkinen avain",
+        "Copy fingerprint": "Kopioi sormenjälki",
+        "Generate key pair": "Luo avainpari",
+        "Import from file": "Tuo tiedostosta",
+        "Derived from the public key.": "Johdettu julkisesta avaimesta.",
+        "The file could not be read.": "Tiedostoa ei voitu lukea.",
+        "This browser could not generate a key pair.": "Tämä selain ei pystynyt luomaan avainparia.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Tämä ei ole yksityinen avain. Liitä OpenSSH- tai PEM-muotoinen yksityinen avain tai luo uusi.",
+        "This is not an OpenSSH public key.": "Tämä ei ole OpenSSH-muotoinen julkinen avain.",
+        "This public key does not belong to the private key.": "Tämä julkinen avain ei kuulu yksityiseen avaimeen."
     },
     "nplurals=2; plural=(n != 1);"
 )

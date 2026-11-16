@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Apunteu o deseu aquest codi ara. Només es mostra una vegada.",
         "You have no recovery kit.": "No teniu cap kit de recuperació.",
         "Your recovery kit was made on {date}.": "El vostre kit de recuperació es va crear el {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "La vostra caixa forta és oberta i el kit de recuperació s'ha esgotat. Creeu ara un kit nou amb la contrasenya mestra nova."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "La vostra caixa forta és oberta i el kit de recuperació s'ha esgotat. Creeu ara un kit nou amb la contrasenya mestra nova.",
+        "Field kind": "Tipus de camp",
+        "Yes or no": "Sí o no",
+        "Public key": "Clau pública",
+        "Fingerprint": "Empremta",
+        "Copy public key": "Copia la clau pública",
+        "Copy fingerprint": "Copia l’empremta",
+        "Generate key pair": "Genera un parell de claus",
+        "Import from file": "Importa des d’un fitxer",
+        "Derived from the public key.": "Derivada de la clau pública.",
+        "The file could not be read.": "No s’ha pogut llegir el fitxer.",
+        "This browser could not generate a key pair.": "Aquest navegador no ha pogut generar un parell de claus.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Això no és una clau privada. Enganxeu una clau privada OpenSSH o PEM, o genereu-ne una.",
+        "This is not an OpenSSH public key.": "Això no és una clau pública OpenSSH.",
+        "This public key does not belong to the private key.": "Aquesta clau pública no correspon a la clau privada."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Zapíšte si alebo uložte tento kód teraz. Zobrazí sa len raz.",
         "You have no recovery kit.": "Nemáte súpravu na obnovenie.",
         "Your recovery kit was made on {date}.": "Vaša súprava na obnovenie bola vytvorená {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Váš trezor je otvorený a súprava na obnovenie je spotrebovaná. Vytvorte si teraz novú súpravu s novým hlavným heslom."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Váš trezor je otvorený a súprava na obnovenie je spotrebovaná. Vytvorte si teraz novú súpravu s novým hlavným heslom.",
+        "Field kind": "Druh poľa",
+        "Yes or no": "Áno alebo nie",
+        "Public key": "Verejný kľúč",
+        "Fingerprint": "Odtlačok",
+        "Copy public key": "Kopírovať verejný kľúč",
+        "Copy fingerprint": "Kopírovať odtlačok",
+        "Generate key pair": "Vygenerovať pár kľúčov",
+        "Import from file": "Importovať zo súboru",
+        "Derived from the public key.": "Odvodené z verejného kľúča.",
+        "The file could not be read.": "Súbor sa nepodarilo prečítať.",
+        "This browser could not generate a key pair.": "Tento prehliadač nedokázal vygenerovať pár kľúčov.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Toto nie je privátny kľúč. Vložte privátny kľúč OpenSSH alebo PEM, alebo nejaký vygenerujte.",
+        "This is not an OpenSSH public key.": "Toto nie je verejný kľúč OpenSSH.",
+        "This public key does not belong to the private key.": "Tento verejný kľúč nepatrí k privátnemu kľúču."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

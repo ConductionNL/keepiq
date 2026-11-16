@@ -1851,7 +1851,21 @@
         "Write down or save this code now. It is shown only once.": "Skriv ned eller spara koden nu. Den visas bara en gång.",
         "You have no recovery kit.": "Du har inget återställningskit.",
         "Your recovery kit was made on {date}.": "Ditt återställningskit skapades {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ditt valv är öppet och ditt återställningskit är förbrukat. Skapa nu ett nytt kit med ditt nya huvudlösenord."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ditt valv är öppet och ditt återställningskit är förbrukat. Skapa nu ett nytt kit med ditt nya huvudlösenord.",
+        "Field kind": "Fälttyp",
+        "Yes or no": "Ja eller nej",
+        "Public key": "Publik nyckel",
+        "Fingerprint": "Fingeravtryck",
+        "Copy public key": "Kopiera publik nyckel",
+        "Copy fingerprint": "Kopiera fingeravtryck",
+        "Generate key pair": "Generera nyckelpar",
+        "Import from file": "Importera från fil",
+        "Derived from the public key.": "Härlett från den publika nyckeln.",
+        "The file could not be read.": "Filen kunde inte läsas.",
+        "This browser could not generate a key pair.": "Den här webbläsaren kunde inte generera ett nyckelpar.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Det här är ingen privat nyckel. Klistra in en privat OpenSSH- eller PEM-nyckel, eller generera en.",
+        "This is not an OpenSSH public key.": "Det här är ingen publik OpenSSH-nyckel.",
+        "This public key does not belong to the private key.": "Den här publika nyckeln hör inte till den privata nyckeln."
     },
     "plurals": null
 }

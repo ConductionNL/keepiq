@@ -14,8 +14,11 @@
 
 import { describe, expect, it } from 'vitest'
 import {
+	fieldKindOf,
+	fieldValueOf,
 	memberNameError,
 	membersToObject,
+	normaliseKind,
 	objectToMembers,
 	RESERVED_MEMBER_NAMES,
 } from '../../src/utils/additionalFields.js'
@@ -104,8 +107,61 @@ describe('additional-field shape conversion', () => {
 
 	it('stringifies non-string member values', () => {
 		expect(objectToMembers({ port: 8080, on: true })).toEqual([
-			{ name: 'port', value: '8080' },
-			{ name: 'on', value: 'true' },
+			{ name: 'port', value: '8080', kind: 'text' },
+			{ name: 'on', value: 'true', kind: 'text' },
 		])
+	})
+})
+
+/**
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ */
+describe('custom field kinds', () => {
+	it('reads an old blob without kinds as text, exactly as before', () => {
+		expect(
+			objectToMembers({ 'Recovery code': 'abc-123', tenant: 'acme' }),
+		).toEqual([
+			{ name: 'Recovery code', value: 'abc-123', kind: 'text' },
+			{ name: 'tenant', value: 'acme', kind: 'text' },
+		])
+	})
+
+	it('stores a text field as a bare string, so the blob shape is unchanged', () => {
+		expect(
+			membersToObject([{ name: 'tenant', value: 'acme', kind: 'text' }]),
+		).toEqual({ tenant: 'acme' })
+		expect(membersToObject([{ name: 'tenant', value: 'acme' }])).toEqual({
+			tenant: 'acme',
+		})
+	})
+
+	it('stores hidden and boolean fields with their kind in the blob', () => {
+		expect(
+			membersToObject([
+				{ name: 'Recovery code', value: 'abc-123', kind: 'hidden' },
+				{ name: 'Active', value: 'true', kind: 'boolean' },
+			]),
+		).toEqual({
+			'Recovery code': { value: 'abc-123', kind: 'hidden' },
+			Active: { value: 'true', kind: 'boolean' },
+		})
+	})
+
+	it('round-trips every kind through the blob', () => {
+		const members = [
+			{ name: 'a', value: 'plain', kind: 'text' },
+			{ name: 'b', value: 's3cret', kind: 'hidden' },
+			{ name: 'c', value: 'false', kind: 'boolean' },
+		]
+		expect(
+			objectToMembers(JSON.parse(JSON.stringify(membersToObject(members)))),
+		).toEqual(members)
+	})
+
+	it('reads an unknown kind as text', () => {
+		expect(normaliseKind('linked')).toBe('text')
+		expect(fieldKindOf({ value: 'x', kind: 'linked' })).toBe('text')
+		expect(fieldValueOf({ value: 'x', kind: 'linked' })).toBe('x')
+		expect(fieldValueOf(undefined)).toBe('')
 	})
 })
