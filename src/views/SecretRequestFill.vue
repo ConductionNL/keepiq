@@ -61,9 +61,7 @@
 			v-else-if="loadError"
 			class="keepiq-secret-request-fill__unavailable"
 			data-testid="fill-load-error">
-			<div class="keepiq-secret-request-fill__unavailable-icon">
-				<LinkVariantOff :size="36" />
-			</div>
+			<LinkUnavailableIcon />
 			<p>{{ loadMessage }}</p>
 		</div>
 
@@ -71,9 +69,7 @@
 			v-else-if="store.publicRequest && unavailableMessage"
 			class="keepiq-secret-request-fill__unavailable"
 			data-testid="fill-unavailable">
-			<div class="keepiq-secret-request-fill__unavailable-icon">
-				<LinkVariantOff :size="36" />
-			</div>
+			<LinkUnavailableIcon />
 			<p>{{ unavailableMessage }}</p>
 		</div>
 
@@ -219,7 +215,7 @@
 <script>
 import { CnJsonViewer } from '@conduction/nextcloud-vue'
 import { NcButton } from '@nextcloud/vue'
-import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
+import LinkUnavailableIcon from '../components/LinkUnavailableIcon.vue'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import {
 	builtinFieldNamed,
@@ -251,8 +247,8 @@ export default {
 	name: 'SecretRequestFill',
 	components: {
 		CnJsonViewer,
+		LinkUnavailableIcon,
 		NcButton,
-		LinkVariantOff,
 	},
 
 	props: {
@@ -691,19 +687,6 @@ export default {
 .keepiq-secret-request-fill__unavailable {
 	padding: 16px 0 8px;
 	text-align: center;
-}
-
-.keepiq-secret-request-fill__unavailable-icon {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 72px;
-	height: 72px;
-	margin: 0 auto 16px;
-	border-radius: 50%;
-	background: var(--color-background-dark, #ededed);
-	background: color-mix(in srgb, var(--color-error, #d91f2d) 12%, transparent);
-	color: var(--color-error, #d91f2d);
 }
 
 .keepiq-secret-request-fill__unavailable p {
