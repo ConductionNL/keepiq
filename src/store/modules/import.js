@@ -164,7 +164,8 @@ function additionalFieldsJson(value) {
 	if (value == null) {
 		return ''
 	}
-	const json = typeof value === 'string' ? value : JSON.stringify(fitImportedBlob(value))
+	const json =
+		typeof value === 'string' ? value : JSON.stringify(fitImportedBlob(value))
 	return json && json !== '{}' && json !== 'null' ? json : ''
 }
 

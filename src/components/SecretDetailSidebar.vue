@@ -1777,7 +1777,9 @@ export default {
 		valueShownAtOnce() {
 			return (
 				this.valueField?.public === true
-				&& !/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/.test(this.secret?.key || '')
+				&& !/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/.test(
+					this.secret?.key || '',
+				)
 			)
 		},
 
