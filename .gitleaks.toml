@@ -94,6 +94,7 @@ paths = [
   '''(^|/)tests/dialogs/VersionDetailsDialog\.loginFields\.spec\.js$''',
   '''(^|/)tests/store/__snapshots__/suiteRotationSteps\.spec\.js\.snap$''',
   '''(^|/)tests/store/accountRecovery\.spec\.js$''',
+  '''(^|/)tests/store/emergencyAccess\.more\.spec\.js$''',
   '''(^|/)tests/store/import\.spec\.js$''',
   '''(^|/)tests/store/linkShare\.spec\.js$''',
   '''(^|/)tests/vectors/crypto/envelope\.json$''',
