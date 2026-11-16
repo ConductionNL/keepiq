@@ -40,6 +40,7 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\AttachmentServiceInterface;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\AppData\IAppDataFactory;
@@ -101,6 +102,7 @@ class AttachmentService implements AttachmentServiceInterface {
 	 * @param WriteLockService $writeLockService The compromise-recovery write lock
 	 * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
 	 * @param AuditEventFactory $auditEvents The audit-event factory
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy's attachments outside its approved window
 	 *
 	 * @return void
 	 */
@@ -114,6 +116,7 @@ class AttachmentService implements AttachmentServiceInterface {
 		private WriteLockService $writeLockService,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 	}//end __construct()
 
@@ -372,6 +375,12 @@ class AttachmentService implements AttachmentServiceInterface {
 				continue;
 			}
 
+			// A privileged copy outside its approved window lists no
+			// attachment key (capability-requirements-from-the-matrix 3.1).
+			if ($this->privilegedCopyWithheld(copySecretId: $grant->getSecretId(), userId: $userId, audit: false) === true) {
+				continue;
+			}
+
 			$row = $attachment->jsonSerialize();
 			$row['wrappedFileKey'] = $grant->getWrappedFileKey();
 			$out[] = $row;
@@ -397,9 +406,15 @@ class AttachmentService implements AttachmentServiceInterface {
 		$attachment = $this->loadAttachment(attachmentId: $attachmentId);
 
 		try {
-			$this->grantMapper->findForRecipient(attachmentId: $attachmentId, recipientId: $userId);
+			$grant = $this->grantMapper->findForRecipient(attachmentId: $attachmentId, recipientId: $userId);
 		} catch (DoesNotExistException) {
 			throw new InvalidArgumentException('No grant held for this attachment');
+		}
+
+		// A privileged copy outside its approved window gets no attachment
+		// ciphertext, and the refusal is audited (capability-requirements-from-the-matrix 3.1).
+		if ($this->privilegedCopyWithheld(copySecretId: $grant->getSecretId(), userId: $userId, audit: true) === true) {
+			throw new InvalidArgumentException(PrivilegedCopyGate::REASON);
 		}
 
 		try {
@@ -650,4 +665,33 @@ class AttachmentService implements AttachmentServiceInterface {
 
 		return $secret;
 	}//end loadOwnedSecret()
+
+	/**
+	 * Whether the attachments a grant opens belong to a privileged copy used
+	 * outside its approved window or address range. A copy row that cannot be
+	 * read fails closed.
+	 *
+	 * @param string $copySecretId The secret the caller's grant is for
+	 * @param string $userId       The caller
+	 * @param bool   $audit        Whether to audit the use or the refusal (a download), or not (a listing)
+	 *
+	 * @return bool
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) A listing withholds as a download does, it only does not audit.
+	 *
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	private function privilegedCopyWithheld(string $copySecretId, string $userId, bool $audit): bool {
+		if ($this->privilegedGate === null) {
+			return false;
+		}
+
+		try {
+			$copy = $this->secretMapper->findById($copySecretId);
+		} catch (DoesNotExistException) {
+			return true;
+		}
+
+		return $this->privilegedGate->allows(secret: $copy, userId: $userId, channel: 'web', audit: $audit) === false;
+	}//end privilegedCopyWithheld()
 }//end class

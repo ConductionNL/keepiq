@@ -603,7 +603,7 @@ export type ErrorCode =
 /** `file_access`: shown until the first unlock of an account added through the browser sign-in. */
 export type NoticeCode = 'session_revoked' | 'key_changed' | 'file_access'
 
-export type BlockReason = 'suite_missing' | 'suite_revoked' | 'suite_compromised' | 'migration_failed'
+export type BlockReason = 'suite_missing' | 'suite_revoked' | 'suite_compromised' | 'migration_failed' | 'privileged_access'
 
 export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorCode; attemptsLeft?: number }
 

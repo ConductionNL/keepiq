@@ -48,6 +48,7 @@ use ReflectionMethod;
  * @covers \OCA\Keepiq\Service\RecoveryKitService
  * @covers \OCA\Keepiq\Controller\RecoveryKitController
  * @uses   \OCA\Keepiq\Db\RecoveryKit
+ * @uses   \OCA\Keepiq\Db\EncryptionSuite
  */
 class RecoveryKitServiceTest extends TestCase {
 

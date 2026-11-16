@@ -54,6 +54,8 @@ export interface OpenSecretRow extends SecretBase {
 export interface BlockedSecretRow extends SecretBase {
 	blocked: true
 	blockedReason: string
+	/** `privileged_access_required` on a privileged login outside the window its owner approved. */
+	privilegedAccess?: string
 }
 
 export type SecretRow = OpenSecretRow | BlockedSecretRow

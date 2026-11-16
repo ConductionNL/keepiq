@@ -47,6 +47,7 @@ use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -149,6 +150,7 @@ class SecretService implements SecretServiceInterface {
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
 	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 *
 	 * @return void
 	 */
@@ -177,6 +179,7 @@ class SecretService implements SecretServiceInterface {
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 		private ?FederatedShareService $federatedShares = null,
 		private ?SecretUrlMapper $urlMapper = null,
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 	}//end __construct()
 
@@ -991,6 +994,10 @@ class SecretService implements SecretServiceInterface {
 			throw new SuiteBlockedException(message: $blockReason);
 		}
 
+		// A recipient's copy of a privileged login is served only inside an
+		// approved window and address range (capability-requirements-from-the-matrix 3.1).
+		$this->privilegedGate?->assertServable(secret: $secret, userId: $userId, channel: 'web');
+
 		// The secret.read event fires on an individual encrypted-blob fetch only — never
 		// on list/search (those do not call get()). Audit-trail §3.1.
 		$this->dispatchAudit(
@@ -1563,7 +1570,7 @@ class SecretService implements SecretServiceInterface {
 		$total = $this->mapper->countByOwner('user', $userId, $folderId, $typeId, $state, $favourite, $tag);
 
 		return [
-			'items' => $this->withTags(items: array_map([$this, 'serialiseWithBlocking'], $secrets), userId: $userId),
+			'items' => $this->withTags(items: $this->serialiseAllFor(secrets: $secrets, userId: $userId), userId: $userId),
 			'total' => $total,
 			'page' => $page,
 			'limit' => $limit,
@@ -1600,7 +1607,7 @@ class SecretService implements SecretServiceInterface {
 		$window = array_slice($matched, $offset, $limit);
 
 		return [
-			'items' => $this->withTags(items: array_map([$this, 'serialiseWithBlocking'], $window), userId: $userId),
+			'items' => $this->withTags(items: $this->serialiseAllFor(secrets: $window, userId: $userId), userId: $userId),
 			'total' => $total,
 			'page' => $page,
 			'limit' => $limit,
@@ -1778,14 +1785,46 @@ class SecretService implements SecretServiceInterface {
 	}//end withTags()
 
 	/**
-	 * Serialise a secret, withholding encrypted blobs when its suite blocks.
+	 * Serialise listed secrets for their holder, withholding encrypted blobs
+	 * when its suite blocks, or when it is a recipient's copy of a privileged
+	 * login outside an approved window (capability-requirements-from-the-matrix 3.1).
+	 *
+	 * @param Secret[] $secrets The secrets
+	 * @param string   $userId  The holder they are listed for
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	private function serialiseAllFor(array $secrets, string $userId): array {
+		return array_map(fn (Secret $secret): array => $this->serialiseFor(secret: $secret, userId: $userId), $secrets);
+	}//end serialiseAllFor()
+
+	/**
+	 * Serialise one listed secret for its holder (see serialiseAllFor()).
 	 *
 	 * @param Secret $secret The secret
+	 * @param string $userId The holder it is listed for
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedPrivateMethod) Invoked as a callable via
-	 *   array_map([$this, 'serialiseWithBlocking'], ...) in list()/search().
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	private function serialiseFor(Secret $secret, string $userId): array {
+		$data = $this->serialiseWithBlocking(secret: $secret);
+		if ($this->privilegedGate === null || ($data['blocked'] ?? false) === true) {
+			return $data;
+		}
+
+		return $this->privilegedGate->servable(secret: $secret, data: $data, userId: $userId, channel: 'web');
+	}//end serialiseFor()
+
+	/**
+	 * Serialise one listed row, without its ciphertext when its suite blocks it.
+	 *
+	 * @param Secret $secret The row
+	 *
+	 * @return array<string,mixed>
 	 */
 	private function serialiseWithBlocking(Secret $secret): array {
 		$reason = $this->suiteBlockReason(secret: $secret);

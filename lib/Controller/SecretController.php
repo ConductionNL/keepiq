@@ -187,7 +187,14 @@ class SecretController extends OCSController {
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException|SuiteBlockedException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+			// A privileged copy outside its window carries a code, so the
+			// client offers to ask for access (capability-requirements-from-the-matrix 3.1).
+			$body = ['message' => $e->getMessage()];
+			if ($e instanceof ForbiddenException && $e->policyCode() !== null) {
+				$body['code'] = $e->policyCode();
+			}
+
+			return new JSONResponse(data: $body, statusCode: Http::STATUS_FORBIDDEN);
 		}
 
 		// The holder's tags ride along for the edit dialog (vault-favourites-tags-and-last-used).

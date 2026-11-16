@@ -343,6 +343,7 @@ blocked:
   suiteRevoked: A titkosítási kulcsát visszavonták.
   suiteCompromised: Feltört kulccsal van titkosítva, ezért itt nem nyitható meg. A Keepiq webalkalmazás mutatja, hogy helyreállítható-e.
   migrationFailed: A feltörés utáni helyreállításkor nem sikerült áttenni az új kulcsodra. A tárolt érték megmarad, de nem nyitható meg.
+  privilegedAccess: A tulajdonos most nem hagyott jóvá számodra időablakot, vagy nem erről a címről.
 
 detail:
   item: Elem

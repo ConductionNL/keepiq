@@ -343,6 +343,7 @@ blocked:
   suiteRevoked: Zijn versleutelingssleutel is ingetrokken.
   suiteCompromised: Versleuteld met een gecompromitteerde sleutel, dus het kan hier niet worden geopend. In de Keepiq-webapp zie je of het te herstellen is.
   migrationFailed: Het kon tijdens het compromisherstel niet naar je nieuwe sleutel worden overgezet. De opgeslagen waarde blijft bewaard, maar kan niet worden geopend.
+  privilegedAccess: De eigenaar heeft nu geen tijdvak voor je goedgekeurd, of niet vanaf dit adres.
 
 detail:
   item: Item

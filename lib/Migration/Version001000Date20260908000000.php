@@ -95,6 +95,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 	 * @var array<string, TableSpec>
 	 */
 	private const SCHEMA = [
+		'access_requests' => Version001021Date20261115090000::REQUESTS_DEFINITION,
 		'app_lease_policies' => [
 			'columns' => [
 				['application_id', Types::STRING, ['notnull' => true, 'length' => 36]],
@@ -603,6 +604,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [],
 		],
+		'privileged_logins' => Version001021Date20261115090000::FLAGS_DEFINITION,
 		'rotation_flags' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
