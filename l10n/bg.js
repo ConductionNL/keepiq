@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Запишете или запазете този код сега. Показва се само веднъж.",
         "You have no recovery kit.": "Нямате комплект за възстановяване.",
         "Your recovery kit was made on {date}.": "Комплектът ви за възстановяване е създаден на {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Трезорът ви е отворен, а комплектът за възстановяване е изразходван. Създайте сега нов комплект с новата си главна парола."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Трезорът ви е отворен, а комплектът за възстановяване е изразходван. Създайте сега нов комплект с новата си главна парола.",
+        "Field kind": "Вид поле",
+        "Yes or no": "Да или не",
+        "Public key": "Публичен ключ",
+        "Fingerprint": "Отпечатък",
+        "Copy public key": "Копиране на публичния ключ",
+        "Copy fingerprint": "Копиране на отпечатъка",
+        "Generate key pair": "Генериране на двойка ключове",
+        "Import from file": "Внасяне от файл",
+        "Derived from the public key.": "Изведен от публичния ключ.",
+        "The file could not be read.": "Файлът не можа да бъде прочетен.",
+        "This browser could not generate a key pair.": "Този браузър не успя да генерира двойка ключове.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Това не е частен ключ. Поставете частен ключ във формат OpenSSH или PEM или генерирайте нов.",
+        "This is not an OpenSSH public key.": "Това не е публичен ключ във формат OpenSSH.",
+        "This public key does not belong to the private key.": "Този публичен ключ не принадлежи на частния ключ."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Ikteb jew issejvja dan il-kodiċi issa. Jintwera darba biss.",
         "You have no recovery kit.": "M'għandekx kit ta' rkupru.",
         "Your recovery kit was made on {date}.": "Il-kit ta' rkupru tiegħek sar fi {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Il-kaxxaforti tiegħek hija miftuħa u l-kit ta' rkupru ntuża. Agħmel kit ġdid issa, bil-password prinċipali l-ġdida tiegħek."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Il-kaxxaforti tiegħek hija miftuħa u l-kit ta' rkupru ntuża. Agħmel kit ġdid issa, bil-password prinċipali l-ġdida tiegħek.",
+        "Field kind": "Tip ta’ qasam",
+        "Yes or no": "Iva jew le",
+        "Public key": "Ċavetta pubblika",
+        "Fingerprint": "Marka tas-swaba’",
+        "Copy public key": "Ikkopja ċ-ċavetta pubblika",
+        "Copy fingerprint": "Ikkopja l-marka tas-swaba’",
+        "Generate key pair": "Iġġenera par ta’ ċwievet",
+        "Import from file": "Importa minn fajl",
+        "Derived from the public key.": "Derivata miċ-ċavetta pubblika.",
+        "The file could not be read.": "Il-fajl ma setax jinqara.",
+        "This browser could not generate a key pair.": "Dan il-browser ma setax jiġġenera par ta’ ċwievet.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Din mhijiex ċavetta privata. Waħħal ċavetta privata OpenSSH jew PEM, jew iġġenera waħda.",
+        "This is not an OpenSSH public key.": "Din mhijiex ċavetta pubblika OpenSSH.",
+        "This public key does not belong to the private key.": "Din iċ-ċavetta pubblika ma tappartjenix liċ-ċavetta privata."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

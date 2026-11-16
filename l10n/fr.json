@@ -1851,7 +1851,21 @@
         "Write down or save this code now. It is shown only once.": "Notez ou enregistrez ce code maintenant. Il n'est affiché qu'une seule fois.",
         "You have no recovery kit.": "Vous n'avez pas de kit de récupération.",
         "Your recovery kit was made on {date}.": "Votre kit de récupération a été créé le {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Votre coffre est ouvert et votre kit de récupération est épuisé. Créez maintenant un nouveau kit, avec votre nouveau mot de passe maître."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Votre coffre est ouvert et votre kit de récupération est épuisé. Créez maintenant un nouveau kit, avec votre nouveau mot de passe maître.",
+        "Field kind": "Type de champ",
+        "Yes or no": "Oui ou non",
+        "Public key": "Clé publique",
+        "Fingerprint": "Empreinte",
+        "Copy public key": "Copier la clé publique",
+        "Copy fingerprint": "Copier l’empreinte",
+        "Generate key pair": "Générer une paire de clés",
+        "Import from file": "Importer depuis un fichier",
+        "Derived from the public key.": "Dérivée de la clé publique.",
+        "The file could not be read.": "Le fichier n’a pas pu être lu.",
+        "This browser could not generate a key pair.": "Ce navigateur n’a pas pu générer de paire de clés.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ceci n’est pas une clé privée. Collez une clé privée OpenSSH ou PEM, ou générez-en une.",
+        "This is not an OpenSSH public key.": "Ceci n’est pas une clé publique OpenSSH.",
+        "This public key does not belong to the private key.": "Cette clé publique n’appartient pas à la clé privée."
     },
     "plurals": null
 }

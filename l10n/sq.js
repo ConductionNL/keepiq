@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Shënojeni ose ruajeni këtë kod tani. Shfaqet vetëm një herë.",
         "You have no recovery kit.": "Nuk keni paketë rikuperimi.",
         "Your recovery kit was made on {date}.": "Paketa juaj e rikuperimit u krijua më {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Kasaforta juaj është e hapur dhe paketa e rikuperimit u përdor. Krijoni tani një paketë të re me fjalëkalimin e ri kryesor."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Kasaforta juaj është e hapur dhe paketa e rikuperimit u përdor. Krijoni tani një paketë të re me fjalëkalimin e ri kryesor.",
+        "Field kind": "Lloji i fushës",
+        "Yes or no": "Po ose jo",
+        "Public key": "Çelësi publik",
+        "Fingerprint": "Gjurma",
+        "Copy public key": "Kopjo çelësin publik",
+        "Copy fingerprint": "Kopjo gjurmën",
+        "Generate key pair": "Gjenero një çift çelësash",
+        "Import from file": "Importo nga skedari",
+        "Derived from the public key.": "Nxjerrë nga çelësi publik.",
+        "The file could not be read.": "Skedari nuk mund të lexohej.",
+        "This browser could not generate a key pair.": "Ky shfletues nuk mundi të gjenerojë një çift çelësash.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ky nuk është çelës privat. Ngjitni një çelës privat OpenSSH ose PEM, ose gjeneroni një të ri.",
+        "This is not an OpenSSH public key.": "Ky nuk është çelës publik OpenSSH.",
+        "This public key does not belong to the private key.": "Ky çelës publik nuk i përket çelësit privat."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Anote o guarde este código ahora. Solo se muestra una vez.",
         "You have no recovery kit.": "No tiene ningún kit de recuperación.",
         "Your recovery kit was made on {date}.": "Su kit de recuperación se creó el {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Su bóveda está abierta y su kit de recuperación se ha agotado. Cree ahora un nuevo kit con su nueva contraseña maestra."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Su bóveda está abierta y su kit de recuperación se ha agotado. Cree ahora un nuevo kit con su nueva contraseña maestra.",
+        "Field kind": "Tipo de campo",
+        "Yes or no": "Sí o no",
+        "Public key": "Clave pública",
+        "Fingerprint": "Huella digital",
+        "Copy public key": "Copiar clave pública",
+        "Copy fingerprint": "Copiar huella digital",
+        "Generate key pair": "Generar par de claves",
+        "Import from file": "Importar desde archivo",
+        "Derived from the public key.": "Derivada de la clave pública.",
+        "The file could not be read.": "No se ha podido leer el archivo.",
+        "This browser could not generate a key pair.": "Este navegador no ha podido generar un par de claves.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Esto no es una clave privada. Pegue una clave privada OpenSSH o PEM, o genere una.",
+        "This is not an OpenSSH public key.": "Esto no es una clave pública OpenSSH.",
+        "This public key does not belong to the private key.": "Esta clave pública no corresponde a la clave privada."
     },
     "nplurals=2; plural=(n != 1);"
 )

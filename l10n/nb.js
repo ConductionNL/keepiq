@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Skriv ned eller lagre koden nå. Den vises bare én gang.",
         "You have no recovery kit.": "Du har ikke noe gjenopprettingssett.",
         "Your recovery kit was made on {date}.": "Gjenopprettingssettet ditt ble laget {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Hvelvet ditt er åpent, og gjenopprettingssettet er brukt opp. Lag et nytt sett nå med det nye hovedpassordet ditt."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Hvelvet ditt er åpent, og gjenopprettingssettet er brukt opp. Lag et nytt sett nå med det nye hovedpassordet ditt.",
+        "Field kind": "Felttype",
+        "Yes or no": "Ja eller nei",
+        "Public key": "Offentlig nøkkel",
+        "Fingerprint": "Fingeravtrykk",
+        "Copy public key": "Kopier offentlig nøkkel",
+        "Copy fingerprint": "Kopier fingeravtrykk",
+        "Generate key pair": "Generer nøkkelpar",
+        "Import from file": "Importer fra fil",
+        "Derived from the public key.": "Avledet fra den offentlige nøkkelen.",
+        "The file could not be read.": "Filen kunne ikke leses.",
+        "This browser could not generate a key pair.": "Denne nettleseren kunne ikke generere et nøkkelpar.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dette er ikke en privat nøkkel. Lim inn en privat OpenSSH- eller PEM-nøkkel, eller generer en.",
+        "This is not an OpenSSH public key.": "Dette er ikke en offentlig OpenSSH-nøkkel.",
+        "This public key does not belong to the private key.": "Denne offentlige nøkkelen hører ikke til den private nøkkelen."
     },
     "nplurals=2; plural=(n != 1);"
 )

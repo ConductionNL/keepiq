@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Notieren oder speichern Sie diesen Code jetzt. Er wird nur einmal angezeigt.",
         "You have no recovery kit.": "Sie haben kein Wiederherstellungskit.",
         "Your recovery kit was made on {date}.": "Ihr Wiederherstellungskit wurde am {date} erstellt.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ihr Tresor ist offen und Ihr Wiederherstellungskit ist verbraucht. Erstellen Sie jetzt mit Ihrem neuen Master-Passwort ein neues Kit."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ihr Tresor ist offen und Ihr Wiederherstellungskit ist verbraucht. Erstellen Sie jetzt mit Ihrem neuen Master-Passwort ein neues Kit.",
+        "Field kind": "Feldart",
+        "Yes or no": "Ja oder nein",
+        "Public key": "Öffentlicher Schlüssel",
+        "Fingerprint": "Fingerabdruck",
+        "Copy public key": "Öffentlichen Schlüssel kopieren",
+        "Copy fingerprint": "Fingerabdruck kopieren",
+        "Generate key pair": "Schlüsselpaar erzeugen",
+        "Import from file": "Aus Datei importieren",
+        "Derived from the public key.": "Aus dem öffentlichen Schlüssel abgeleitet.",
+        "The file could not be read.": "Die Datei konnte nicht gelesen werden.",
+        "This browser could not generate a key pair.": "Dieser Browser konnte kein Schlüsselpaar erzeugen.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dies ist kein privater Schlüssel. Fügen Sie einen privaten OpenSSH- oder PEM-Schlüssel ein oder erzeugen Sie einen.",
+        "This is not an OpenSSH public key.": "Dies ist kein öffentlicher OpenSSH-Schlüssel.",
+        "This public key does not belong to the private key.": "Dieser öffentliche Schlüssel gehört nicht zum privaten Schlüssel."
     },
     "nplurals=2; plural=(n != 1);"
 )

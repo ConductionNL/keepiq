@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Notați sau salvați acest cod acum. Este afișat o singură dată.",
         "You have no recovery kit.": "Nu aveți un kit de recuperare.",
         "Your recovery kit was made on {date}.": "Kitul dvs. de recuperare a fost creat la {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Seiful este deschis, iar kitul de recuperare a fost consumat. Creați acum un kit nou, cu noua parolă principală."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Seiful este deschis, iar kitul de recuperare a fost consumat. Creați acum un kit nou, cu noua parolă principală.",
+        "Field kind": "Tipul câmpului",
+        "Yes or no": "Da sau nu",
+        "Public key": "Cheie publică",
+        "Fingerprint": "Amprentă",
+        "Copy public key": "Copiați cheia publică",
+        "Copy fingerprint": "Copiați amprenta",
+        "Generate key pair": "Generați o pereche de chei",
+        "Import from file": "Importați din fișier",
+        "Derived from the public key.": "Derivată din cheia publică.",
+        "The file could not be read.": "Fișierul nu a putut fi citit.",
+        "This browser could not generate a key pair.": "Acest browser nu a putut genera o pereche de chei.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Aceasta nu este o cheie privată. Lipiți o cheie privată OpenSSH sau PEM ori generați una.",
+        "This is not an OpenSSH public key.": "Aceasta nu este o cheie publică OpenSSH.",
+        "This public key does not belong to the private key.": "Această cheie publică nu aparține cheii private."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

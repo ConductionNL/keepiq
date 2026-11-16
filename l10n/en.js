@@ -1844,7 +1844,20 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.",
+        "Field kind": "Field kind",
+        "Yes or no": "Yes or no",
+        "Public key": "Public key",
+        "Copy public key": "Copy public key",
+        "Copy fingerprint": "Copy fingerprint",
+        "Generate key pair": "Generate key pair",
+        "Import from file": "Import from file",
+        "Derived from the public key.": "Derived from the public key.",
+        "The file could not be read.": "The file could not be read.",
+        "This browser could not generate a key pair.": "This browser could not generate a key pair.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.",
+        "This is not an OpenSSH public key.": "This is not an OpenSSH public key.",
+        "This public key does not belong to the private key.": "This public key does not belong to the private key."
     },
     "nplurals=2; plural=(n != 1);"
 )

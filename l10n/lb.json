@@ -1851,7 +1851,21 @@
         "Write down or save this code now. It is shown only once.": "Schreift dëse Code elo op oder späichert en. E gëtt nëmmen eemol gewisen.",
         "You have no recovery kit.": "Dir hutt kee Recuperatiouns-Kit.",
         "Your recovery kit was made on {date}.": "Äre Recuperatiouns-Kit gouf den {date} gemaach.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ären Tresor ass op an Äre Recuperatiouns-Kit ass opgebraucht. Maacht elo en neie Kit mat Ärem neie Master-Passwuert."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ären Tresor ass op an Äre Recuperatiouns-Kit ass opgebraucht. Maacht elo en neie Kit mat Ärem neie Master-Passwuert.",
+        "Field kind": "Feldaart",
+        "Yes or no": "Jo oder nee",
+        "Public key": "Ëffentleche Schlëssel",
+        "Fingerprint": "Fangerofdrock",
+        "Copy public key": "Ëffentleche Schlëssel kopéieren",
+        "Copy fingerprint": "Fangerofdrock kopéieren",
+        "Generate key pair": "Schlësselpuer generéieren",
+        "Import from file": "Aus enger Datei importéieren",
+        "Derived from the public key.": "Vum ëffentleche Schlëssel ofgeleet.",
+        "The file could not be read.": "D’Datei konnt net gelies ginn.",
+        "This browser could not generate a key pair.": "Dëse Browser konnt kee Schlësselpuer generéieren.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dat ass kee private Schlëssel. Fügt e private OpenSSH- oder PEM-Schlëssel an oder generéiert een.",
+        "This is not an OpenSSH public key.": "Dat ass keen ëffentlechen OpenSSH-Schlëssel.",
+        "This public key does not belong to the private key.": "Dësen ëffentleche Schlëssel gehéiert net zum private Schlëssel."
     },
     "plurals": null
 }
