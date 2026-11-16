@@ -49,6 +49,7 @@
  *   L10N_APP_ID   override the app id (default: package.json "name")
  *   L10N_SRC_DIR  override the source dir to scan (default: src)
  *   L10N_FILE     override the en.json path (default: l10n/en.json)
+ *   L10N_SKIP_PARITY  1 skips the locale parity gate (single-catalogue callers only)
  *
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -279,10 +280,10 @@ function seedLocalePlurals (keys) {
 
 console.log(`l10n-check [${appId}]: scanned ${files.length} files, `
 	+ `${used.size} distinct literal keys used, `
-	+ `${Object.keys(translations).length} keys in en.json`)
+	+ `${Object.keys(translations).length} keys in ${path.basename(enFile)}`)
 
 if (missing.length === 0) {
-	console.log('l10n-check: OK — every used translation key is present in l10n/en.json')
+	console.log(`l10n-check: OK — every used translation key is present in ${path.relative(ROOT, enFile)}`)
 	const shape = pluralShapeProblems()
 	if (shape.length > 0) {
 		console.error(`\nl10n-check: FAIL — ${shape.length} plural entr(y/ies) with the wrong number of forms:`)
@@ -298,8 +299,12 @@ if (missing.length === 0) {
 	// other locales. Without this require the parity gate has no caller at all
 	// and `test:l10n` reports green over every missing translation; that was
 	// this repo's state until keepiq#180. The parity script exits the process
-	// itself, so its verdict is this script's verdict.
-	require('./check-l10n-parity.js')
+	// itself, so its verdict is this script's verdict. A caller that checks a
+	// single catalogue (check-l10n-nl.js) sets L10N_SKIP_PARITY=1: parity stays
+	// the job of test:l10n, which never sets it.
+	if (process.env.L10N_SKIP_PARITY !== '1') {
+		require('./check-l10n-parity.js')
+	}
 	process.exit(0)
 }
 
@@ -334,7 +339,7 @@ if (WRITE) {
 }
 
 console.error(`\nl10n-check: FAIL — ${missing.length} translation key(s) used in source `
-	+ 'but MISSING from l10n/en.json:')
+	+ `but MISSING from ${path.relative(ROOT, enFile)}:`)
 for (const { key, locations, malformed } of missing.sort((a, b) => a.key.localeCompare(b.key))) {
 	console.error(`  • ${JSON.stringify(key)}${malformed ? ` (present, but not an array of ${EN_FORMS} forms)` : ''}`)
 	for (const loc of locations.slice(0, 5)) {

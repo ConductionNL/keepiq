@@ -43,6 +43,12 @@ use OCP\IURLGenerator;
  */
 class WebManifestController extends Controller {
 	/**
+	 * The Keepiq brand colour, used only when the instance theme yields no
+	 * usable colour (theming off or misconfigured).
+	 */
+	public const FALLBACK_THEME_COLOR = '#21468B';
+
+	/**
 	 * Constructor for WebManifestController.
 	 *
 	 * @param IRequest $request The HTTP request
@@ -88,7 +94,7 @@ class WebManifestController extends Controller {
 		);
 		// The instance theme colour (nldesign or the admin's theming), so an
 		// organisation theme reaches the browser chrome too.
-		$themeColor = $this->defaults->getColorPrimary();
+		$themeColor = self::themeColor(defaults: $this->defaults);
 
 		$manifest = [
 			'name' => 'Keepiq',
@@ -128,4 +134,26 @@ class WebManifestController extends Controller {
 			]
 		);
 	}//end manifest()
+
+	/**
+	 * The browser chrome colour: the instance's primary theme colour, or the
+	 * Keepiq brand colour when theming yields no valid hex colour.
+	 *
+	 * Shared with templates/index.php so the theme-color meta and the web
+	 * app manifest always agree.
+	 *
+	 * @param Defaults $defaults The instance theming
+	 *
+	 * @return string A hex colour
+	 *
+	 * @spec openspec/changes/platform-properties/specs/platform-properties/spec.md#requirement-the-look-comes-from-the-nextcloud-theme
+	 */
+	public static function themeColor(Defaults $defaults): string {
+		$primary = trim($defaults->getColorPrimary());
+		if (preg_match('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $primary) === 1) {
+			return $primary;
+		}
+
+		return self::FALLBACK_THEME_COLOR;
+	}//end themeColor()
 }//end class
