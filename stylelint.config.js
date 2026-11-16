@@ -6,7 +6,10 @@ const path = require('path')
 // (openspec/changes/platform-properties, task 1.3).
 module.exports = {
 	...base,
-	plugins: [...(base.plugins || []), path.join(__dirname, 'scripts/stylelint/no-bare-hex-color.mjs')],
+	plugins: [
+		...(base.plugins || []),
+		path.join(__dirname, 'scripts/stylelint/no-bare-hex-color.mjs'),
+	],
 	rules: {
 		...base.rules,
 		'keepiq/no-bare-hex-color': true,
