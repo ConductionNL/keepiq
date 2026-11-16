@@ -191,6 +191,9 @@
 						<MasterPasswordForm />
 					</div>
 					<div class="user-settings__field">
+						<RecoveryKitPanel />
+					</div>
+					<div class="user-settings__field">
 						<PasskeyManager />
 					</div>
 					<div class="user-settings__field">
@@ -452,6 +455,7 @@ import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import OfflineSyncPanel from './components/OfflineSyncPanel.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
+import RecoveryKitPanel from './components/RecoveryKitPanel.vue'
 import RecoveryOfficerPanel from './components/RecoveryOfficerPanel.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
@@ -524,6 +528,7 @@ export default {
 		KeyIcon,
 		// PuzzleIcon, // browser-extension section, hidden until it ships
 		MasterPasswordForm,
+		RecoveryKitPanel,
 		PasskeyManager,
 		CompromiseRecoveryForm,
 		KeepiqAppNav,

@@ -79,6 +79,7 @@ use OCA\Keepiq\Kernel\Contracts\RecentlyUsedServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\RecipientStatusServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\RecoveryAuditInterface;
 use OCA\Keepiq\Kernel\Contracts\RecoveryEnrolmentServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\RecoveryKitServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\RecoveryKeyServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\RecoveryPolicyServiceInterface;
 use OCA\Keepiq\Kernel\Contracts\RecoveryRequestServiceInterface;
@@ -201,6 +202,7 @@ final class ContractBindings {
 		$context->registerServiceAlias(RecipientStatusServiceInterface::class, RecipientStatusService::class);
 		$context->registerServiceAlias(RecoveryAuditInterface::class, RecoveryAudit::class);
 		$context->registerServiceAlias(RecoveryEnrolmentServiceInterface::class, RecoveryEnrolmentService::class);
+		$context->registerServiceAlias(RecoveryKitServiceInterface::class, RecoveryKitService::class);
 		$context->registerServiceAlias(RecoveryKeyServiceInterface::class, RecoveryKeyService::class);
 		$context->registerServiceAlias(RecoveryPolicyServiceInterface::class, RecoveryPolicyService::class);
 		$context->registerServiceAlias(RecoveryRequestServiceInterface::class, RecoveryRequestService::class);
