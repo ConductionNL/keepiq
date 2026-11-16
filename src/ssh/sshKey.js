@@ -217,29 +217,77 @@ function reader(bytes) {
  * @throws {SshKeyError} When the blob does not hold that key type.
  */
 function checkBlobBody(type, blobReader) {
-	if (type === 'ssh-ed25519') {
-		if (blobReader.string().length !== 32) {
-			throw new SshKeyError('bad ed25519 key')
-		}
-	} else if (type === 'ssh-rsa') {
-		blobReader.string()
-		if (blobReader.string().length < 64) {
-			throw new SshKeyError('bad rsa modulus')
-		}
-	} else if (type.startsWith('ecdsa-sha2-')) {
-		if (blobReader.text() !== type.slice('ecdsa-sha2-'.length)) {
-			throw new SshKeyError('curve mismatch')
-		}
-		const point = blobReader.string()
-		if (point.length === 0 || point[0] !== 0x04) {
-			throw new SshKeyError('bad ec point')
-		}
-	} else {
+	const check = blobBodyCheck(type)
+	if (!check) {
 		return
 	}
+	check(type, blobReader)
 	if (!blobReader.done()) {
 		throw new SshKeyError('trailing bytes')
 	}
+}
+
+/**
+ * Check an ed25519 public key body.
+ *
+ * @param {string} type The key type.
+ * @param {object} blobReader A reader positioned after the type string.
+ * @return {void}
+ */
+function checkEd25519Body(type, blobReader) {
+	if (blobReader.string().length !== 32) {
+		throw new SshKeyError('bad ed25519 key')
+	}
+}
+
+/**
+ * Check an RSA public key body.
+ *
+ * @param {string} type The key type.
+ * @param {object} blobReader A reader positioned after the type string.
+ * @return {void}
+ */
+function checkRsaBody(type, blobReader) {
+	blobReader.string()
+	if (blobReader.string().length < 64) {
+		throw new SshKeyError('bad rsa modulus')
+	}
+}
+
+/**
+ * Check an ECDSA public key body.
+ *
+ * @param {string} type The key type.
+ * @param {object} blobReader A reader positioned after the type string.
+ * @return {void}
+ */
+function checkEcdsaBody(type, blobReader) {
+	if (blobReader.text() !== type.slice('ecdsa-sha2-'.length)) {
+		throw new SshKeyError('curve mismatch')
+	}
+	const point = blobReader.string()
+	if (point.length === 0 || point[0] !== 0x04) {
+		throw new SshKeyError('bad ec point')
+	}
+}
+
+/** The body checks of the fixed-shape key types other than ECDSA. */
+const BLOB_BODY_CHECKS = {
+	'ssh-ed25519': checkEd25519Body,
+	'ssh-rsa': checkRsaBody,
+}
+
+/**
+ * The inner-structure check for a key type, or null when its shape is not fixed.
+ *
+ * @param {string} type The key type.
+ * @return {((type: string, blobReader: object) => void)|null}
+ */
+function blobBodyCheck(type) {
+	if (type.startsWith('ecdsa-sha2-')) {
+		return checkEcdsaBody
+	}
+	return BLOB_BODY_CHECKS[type] ?? null
 }
 
 /**
@@ -386,15 +434,28 @@ function opensshPublicBlob(bytes) {
 	}
 	const privateSection = keyReader.string()
 	if (cipher === 'none') {
-		const privateReader = reader(privateSection)
-		if (
-			privateReader.uint32() !== privateReader.uint32()
-			|| privateReader.text() !== type
-		) {
-			throw new SshKeyError('damaged private section')
-		}
+		checkPrivateSection(privateSection, type)
 	}
 	return blob
+}
+
+/**
+ * Check an unencrypted private section: its two check words match and it
+ * holds the key type the public blob names.
+ *
+ * @param {Uint8Array} privateSection The private section.
+ * @param {string} type The key type of the public blob.
+ * @return {void}
+ * @throws {SshKeyError} When the section is damaged.
+ */
+function checkPrivateSection(privateSection, type) {
+	const privateReader = reader(privateSection)
+	if (
+		privateReader.uint32() !== privateReader.uint32()
+		|| privateReader.text() !== type
+	) {
+		throw new SshKeyError('damaged private section')
+	}
 }
 
 /**
@@ -448,27 +509,47 @@ function blobOfJwk(jwk) {
 		return concat([sshString('ssh-ed25519'), sshString(fromBase64Url(jwk.x))])
 	}
 	if (jwk.kty === 'RSA') {
-		return concat([
-			sshString('ssh-rsa'),
-			sshMpint(fromBase64Url(jwk.e)),
-			sshMpint(fromBase64Url(jwk.n)),
-		])
+		return rsaBlobOfJwk(jwk)
 	}
 	if (jwk.kty === 'EC' && EC_CURVES[jwk.crv]) {
-		const curve = EC_CURVES[jwk.crv]
-		return concat([
-			sshString(`ecdsa-sha2-${curve}`),
-			sshString(curve),
-			sshString(
-				concat([
-					new Uint8Array([4]),
-					fromBase64Url(jwk.x),
-					fromBase64Url(jwk.y),
-				]),
-			),
-		])
+		return ecBlobOfJwk(jwk)
 	}
 	throw new SshKeyError('unsupported key type')
+}
+
+/**
+ * The public key blob of an RSA JWK.
+ *
+ * @param {object} jwk The JWK.
+ * @return {Uint8Array}
+ */
+function rsaBlobOfJwk(jwk) {
+	return concat([
+		sshString('ssh-rsa'),
+		sshMpint(fromBase64Url(jwk.e)),
+		sshMpint(fromBase64Url(jwk.n)),
+	])
+}
+
+/**
+ * The public key blob of an EC JWK on a curve SSH knows.
+ *
+ * @param {object} jwk The JWK.
+ * @return {Uint8Array}
+ */
+function ecBlobOfJwk(jwk) {
+	const curve = EC_CURVES[jwk.crv]
+	return concat([
+		sshString(`ecdsa-sha2-${curve}`),
+		sshString(curve),
+		sshString(
+			concat([
+				new Uint8Array([4]),
+				fromBase64Url(jwk.x),
+				fromBase64Url(jwk.y),
+			]),
+		),
+	])
 }
 
 /**

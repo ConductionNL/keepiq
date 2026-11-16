@@ -538,30 +538,55 @@ function attachCustomFields(ctx, target, entry) {
 	const fields = Array.isArray(entry.credential.fields)
 		? entry.credential.fields
 		: []
-	const members =
-		target.additionalFields && typeof target.additionalFields === 'object'
-			? { ...target.additionalFields }
-			: {}
+	const members = existingMembers(target)
 	for (const [index, field] of fields.entries()) {
 		const label = fieldValue(field?.label).trim() || `Field ${index + 1}`
-		if (
-			RESERVED_MEMBER_NAMES.includes(label.toLowerCase())
-			|| Object.hasOwn(members, label)
-		) {
+		if (clashesWithMember(label, members)) {
 			rejectEntry(ctx, {
 				sourceRow: entry.sourceRow,
 				reason: `CXF custom field "${label}" clashes with a field the secret already has`,
 			})
 			continue
 		}
-		const kind = CXF_FIELD_KINDS[String(field?.fieldType ?? '')] ?? 'text'
-		const value = fieldValue(field)
-		members[label] = fieldEntry(
-			kind === 'boolean' ? String(value === 'true') : value,
-			kind,
-		)
+		members[label] = customFieldEntry(field)
 	}
 	target.additionalFields = members
+}
+
+/**
+ * A copy of the additional fields already on a row, or an empty object.
+ *
+ * @param {object} target The row.
+ * @return {object}
+ */
+function existingMembers(target) {
+	return target.additionalFields && typeof target.additionalFields === 'object'
+		? { ...target.additionalFields }
+		: {}
+}
+
+/**
+ * Whether a custom field label names a built-in field or one already on the row.
+ *
+ * @param {string} label The field label.
+ * @param {object} members The row's additional fields so far.
+ * @return {boolean}
+ */
+function clashesWithMember(label, members) {
+	return RESERVED_MEMBER_NAMES.includes(label.toLowerCase())
+		|| Object.hasOwn(members, label)
+}
+
+/**
+ * The additional-field entry of one CXF custom field, keeping its kind.
+ *
+ * @param {object} field The CXF field.
+ * @return {object}
+ */
+function customFieldEntry(field) {
+	const kind = CXF_FIELD_KINDS[String(field?.fieldType ?? '')] ?? 'text'
+	const value = fieldValue(field)
+	return fieldEntry(kind === 'boolean' ? String(value === 'true') : value, kind)
 }
 
 /**
