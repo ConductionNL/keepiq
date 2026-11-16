@@ -222,6 +222,52 @@ describe('field schemas', () => {
 		expect(withRequestedFields(null, ['Note'], {})).toEqual({ Note: '' })
 	})
 
+	it('keeps a field a person named @schema, under a name of its own', () => {
+		expect(fieldsOf({ '@schema': 'my value', a: '1' })).toEqual({
+			a: '1',
+			'@schema (imported)': 'my value',
+		})
+		expect(objectToMembers({ '@schema': 'v' })).toEqual([
+			{ name: '@schema (imported)', value: 'v', schema: { type: 'string' } },
+		])
+		expect(fitImportedBlob({ '@schema': 'my value', a: '1' })).toEqual({
+			a: '1',
+			'@schema (imported)': 'my value',
+		})
+	})
+
+	it('keeps an imported field hidden when its value does not fit the rest', () => {
+		expect(
+			fitImportedBlob({
+				PIN: 'abcde',
+				'@schema': {
+					PIN: { type: 'string', hidden: true, pattern: '^\\d{4}$' },
+				},
+			}),
+		).toEqual({
+			PIN: 'abcde',
+			'@schema': { PIN: { type: 'string', hidden: true } },
+		})
+	})
+
+	it('refuses dates and times that do not exist, in plain words', () => {
+		const date = { type: 'string', format: 'date' }
+		expect(schemaError('2026-02-28', date)).toBe('')
+		expect(schemaError('2026-02-31', date)).toBe(
+			'Enter a real date, such as 2026-03-31.',
+		)
+		expect(schemaError('2026-13-45', date)).not.toBe('')
+		expect(
+			schemaError('2026-03-31T25:00', { type: 'string', format: 'date-time' }),
+		).not.toBe('')
+		expect(schemaError('99:99', { type: 'string', format: 'time' })).toBe(
+			'Enter a time, such as 14:30.',
+		)
+		expect(schemaError('nope', { type: 'string', format: 'color-hex' })).toBe(
+			'Enter a colour, such as #1a2b3c.',
+		)
+	})
+
 	it('blocks a form while a value or a built-in field does not fit', () => {
 		const database = typeFieldsOf({ name: 'database' })
 

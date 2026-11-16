@@ -120,6 +120,20 @@ describe('SecretDetailSidebar custom field schemas', () => {
 		expect(await field.props('resolve')()).toBe('481516')
 	})
 
+	it('warns about a hidden value that does not fit, and keeps it masked', async () => {
+		const wrapper = await mountWith({
+			PIN: 'abcde',
+			'@schema': {
+				PIN: { type: 'string', hidden: true, pattern: '^[0-9]{4}$' },
+			},
+		})
+
+		expect(wrapper.find('[data-testid="schema-value-misfit"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.html()).not.toContain('abcde')
+	})
+
 	it('warns about a value that does not fit its schema', async () => {
 		const wrapper = await mountWith({
 			Port: 'n/a',

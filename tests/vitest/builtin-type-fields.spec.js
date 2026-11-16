@@ -19,6 +19,11 @@ import {
 	valueFieldOf,
 	valueLockedInRequests,
 } from '../../src/utils/builtinTypeFields.js'
+import {
+	inputOf,
+	isHiddenSchema,
+	typeFieldSchema,
+} from '../../src/utils/fieldSchema.js'
 
 describe('builtinTypeFields', () => {
 	it('gives a certificate a public multi-line value and no login', () => {
@@ -107,5 +112,21 @@ describe('builtinTypeFields', () => {
 		expect(builtinFieldNamed('certificate', 'private-key')).toBeNull()
 		expect(memberLabel('api_key', 'API secret')).toBe('API secret')
 		expect(memberLabel('api_key', 'client-id')).toBe('client-id')
+	})
+})
+
+describe('the schema of a built-in field', () => {
+	it('hides a private key and keeps its lines', () => {
+		const schema = typeFieldSchema(
+			builtinFieldNamed('certificate', 'Private key'),
+		)
+		expect(isHiddenSchema(schema)).toBe(true)
+		expect(inputOf(schema)).toBe('multiline')
+	})
+
+	it('shows an SSH public key, which is public', () => {
+		const field = builtinFieldNamed('ssh_key', 'Public key')
+		expect(field.public).toBe(true)
+		expect(isHiddenSchema(typeFieldSchema(field))).toBe(false)
 	})
 })

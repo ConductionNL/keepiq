@@ -1860,7 +1860,6 @@
         "Use at least {min} characters.": "Koristite najmanje {min} znakova.",
         "Use at most {max} characters.": "Koristite najviše {max} znakova.",
         "This does not match the required pattern.": "Ovo ne odgovara traženom uzorku.",
-        "Enter a valid {format} value.": "Unesite ispravnu vrijednost {format}.",
         "Choose yes or no.": "Odaberite da ili ne.",
         "“{name}” is reserved — choose a different name.": "„{name}” je rezervirano — odaberite drugi naziv.",
         "Kind": "Oblik",
@@ -1876,7 +1875,19 @@
         "Field not added": "Polje nije dodano",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}” još nije dodano, pa primatelj neće biti upitan za njega.",
         "Add and create": "Dodaj i stvori",
-        "Create without it": "Stvori bez njega"
+        "Create without it": "Stvori bez njega",
+        "Enter a web address, such as https://example.com.": "Unesite web-adresu, npr. https://example.com.",
+        "Enter an email address, such as name@example.com.": "Unesite adresu e-pošte, npr. name@example.com.",
+        "Enter a host name, such as example.com.": "Unesite naziv hosta, npr. example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Unesite IPv4 adresu, npr. 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Unesite IPv6 adresu, npr. 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Unesite postojeći datum, npr. 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Unesite postojeći datum i vrijeme, npr. 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Unesite vrijeme, npr. 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Unesite UUID, npr. 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Unesite boju, npr. #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimum je veći od maksimuma.",
+        "This is not a valid regular expression.": "Ovo nije ispravan regularni izraz."
     },
     "plurals": null
 }

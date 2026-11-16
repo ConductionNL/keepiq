@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Χρησιμοποιήστε τουλάχιστον {min} χαρακτήρες.",
         "Use at most {max} characters.": "Χρησιμοποιήστε το πολύ {max} χαρακτήρες.",
         "This does not match the required pattern.": "Αυτό δεν ταιριάζει με το απαιτούμενο μοτίβο.",
-        "Enter a valid {format} value.": "Εισαγάγετε μια έγκυρη τιμή {format}.",
         "Choose yes or no.": "Επιλέξτε ναι ή όχι.",
         "“{name}” is reserved — choose a different name.": "«{name}» είναι δεσμευμένο — επιλέξτε άλλο όνομα.",
         "Kind": "Είδος",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Το πεδίο δεν προστέθηκε",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "Το «{name}» δεν έχει προστεθεί ακόμα, οπότε ο παραλήπτης δεν θα ερωτηθεί γι' αυτό.",
         "Add and create": "Προσθήκη και δημιουργία",
-        "Create without it": "Δημιουργία χωρίς αυτό"
+        "Create without it": "Δημιουργία χωρίς αυτό",
+        "Enter a web address, such as https://example.com.": "Εισαγάγετε μια διεύθυνση ιστού, π.χ. https://example.com.",
+        "Enter an email address, such as name@example.com.": "Εισαγάγετε μια διεύθυνση email, π.χ. name@example.com.",
+        "Enter a host name, such as example.com.": "Εισαγάγετε ένα όνομα κεντρικού υπολογιστή, π.χ. example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Εισαγάγετε μια διεύθυνση IPv4, π.χ. 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Εισαγάγετε μια διεύθυνση IPv6, π.χ. 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Εισαγάγετε μια υπαρκτή ημερομηνία, π.χ. 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Εισαγάγετε υπαρκτή ημερομηνία και ώρα, π.χ. 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Εισαγάγετε μια ώρα, π.χ. 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Εισαγάγετε ένα UUID, π.χ. 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Εισαγάγετε ένα χρώμα, π.χ. #1a2b3c.",
+        "The minimum is higher than the maximum.": "Το ελάχιστο είναι μεγαλύτερο από το μέγιστο.",
+        "This is not a valid regular expression.": "Αυτή δεν είναι έγκυρη κανονική έκφραση."
     },
     "nplurals=2; plural=(n != 1);"
 )

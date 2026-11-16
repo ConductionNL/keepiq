@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Használjon legalább {min} karaktert.",
         "Use at most {max} characters.": "Használjon legfeljebb {max} karaktert.",
         "This does not match the required pattern.": "Ez nem felel meg a kötelező mintának.",
-        "Enter a valid {format} value.": "Adjon meg érvényes {format} értéket.",
         "Choose yes or no.": "Válasszon igent vagy nemet.",
         "“{name}” is reserved — choose a different name.": "„{name}” foglalt — válasszon másik nevet.",
         "Kind": "Fajta",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "A mező nincs hozzáadva",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "A(z) „{name}” még nincs hozzáadva, ezért a címzettet nem kérik meg rá.",
         "Add and create": "Hozzáadás és létrehozás",
-        "Create without it": "Létrehozás nélküle"
+        "Create without it": "Létrehozás nélküle",
+        "Enter a web address, such as https://example.com.": "Adjon meg egy webcímet, például https://example.com.",
+        "Enter an email address, such as name@example.com.": "Adjon meg egy e-mail-címet, például name@example.com.",
+        "Enter a host name, such as example.com.": "Adjon meg egy gépnevet, például example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Adjon meg egy IPv4-címet, például 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Adjon meg egy IPv6-címet, például 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Adjon meg egy létező dátumot, például 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Adjon meg egy létező dátumot és időpontot, például 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Adjon meg egy időpontot, például 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Adjon meg egy UUID-t, például 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Adjon meg egy színt, például #1a2b3c.",
+        "The minimum is higher than the maximum.": "A minimum nagyobb, mint a maximum.",
+        "This is not a valid regular expression.": "Ez nem érvényes reguláris kifejezés."
     },
     "nplurals=2; plural=(n != 1);"
 )

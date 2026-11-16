@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Folosiți cel puțin {min} caractere.",
         "Use at most {max} characters.": "Folosiți cel mult {max} caractere.",
         "This does not match the required pattern.": "Aceasta nu corespunde modelului cerut.",
-        "Enter a valid {format} value.": "Introduceți o valoare {format} validă.",
         "Choose yes or no.": "Alegeți da sau nu.",
         "“{name}” is reserved — choose a different name.": "„{name}” este rezervat — alegeți alt nume.",
         "Kind": "Fel",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Câmpul nu a fost adăugat",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}” nu a fost încă adăugat, așa că destinatarului nu i se va cere.",
         "Add and create": "Adaugă și creează",
-        "Create without it": "Creează fără el"
+        "Create without it": "Creează fără el",
+        "Enter a web address, such as https://example.com.": "Introduceți o adresă web, de exemplu https://example.com.",
+        "Enter an email address, such as name@example.com.": "Introduceți o adresă de e-mail, de exemplu name@example.com.",
+        "Enter a host name, such as example.com.": "Introduceți un nume de gazdă, de exemplu example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Introduceți o adresă IPv4, de exemplu 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Introduceți o adresă IPv6, de exemplu 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Introduceți o dată care există, de exemplu 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Introduceți o dată și o oră care există, de exemplu 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Introduceți o oră, de exemplu 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Introduceți un UUID, de exemplu 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Introduceți o culoare, de exemplu #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimul este mai mare decât maximul.",
+        "This is not a valid regular expression.": "Aceasta nu este o expresie regulată validă."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Use at least {min} characters.",
         "Use at most {max} characters.": "Use at most {max} characters.",
         "This does not match the required pattern.": "This does not match the required pattern.",
-        "Enter a valid {format} value.": "Enter a valid {format} value.",
         "Choose yes or no.": "Choose yes or no.",
         "“{name}” is reserved — choose a different name.": "“{name}” is reserved — choose a different name.",
         "Kind": "Kind",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Field not added",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "“{name}” has not been added yet, so the recipient will not be asked for it.",
         "Add and create": "Add and create",
-        "Create without it": "Create without it"
+        "Create without it": "Create without it",
+        "Enter a web address, such as https://example.com.": "Enter a web address, such as https://example.com.",
+        "Enter an email address, such as name@example.com.": "Enter an email address, such as name@example.com.",
+        "Enter a host name, such as example.com.": "Enter a host name, such as example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Enter an IPv4 address, such as 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Enter an IPv6 address, such as 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Enter a real date, such as 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Enter a real date and time, such as 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Enter a time, such as 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Enter a colour, such as #1a2b3c.",
+        "The minimum is higher than the maximum.": "The minimum is higher than the maximum.",
+        "This is not a valid regular expression.": "This is not a valid regular expression."
     },
     "nplurals=2; plural=(n != 1);"
 )

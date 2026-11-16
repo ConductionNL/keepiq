@@ -51,12 +51,20 @@
 				type="number"
 				min="0"
 				:label="t('keepiq', 'Maximum length')"
+				:error="lengthsConflict"
+				:helperText="lengthsConflict ? conflictText : ''"
 				:disabled="disabled"
 				data-testid="schema-max-length"
 				@update:modelValue="set('maxLength', $event)" />
 			<NcTextField
 				:modelValue="schema.pattern ?? ''"
 				:label="t('keepiq', 'Pattern')"
+				:error="patternInvalid"
+				:helperText="
+					patternInvalid
+						? t('keepiq', 'This is not a valid regular expression.')
+						: ''
+				"
 				:disabled="disabled"
 				data-testid="schema-pattern"
 				@update:modelValue="set('pattern', $event)" />
@@ -73,6 +81,8 @@
 				:modelValue="numberText(schema.maximum)"
 				type="number"
 				:label="t('keepiq', 'Maximum')"
+				:error="rangeConflict"
+				:helperText="rangeConflict ? conflictText : ''"
 				:disabled="disabled"
 				data-testid="schema-maximum"
 				@update:modelValue="set('maximum', $event)" />
@@ -134,6 +144,63 @@ export default {
 	emits: ['update:schema'],
 
 	computed: {
+		/**
+		 * Whether the minimum length is above the maximum length, which no
+		 * value could fit.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 */
+		lengthsConflict() {
+			const { minLength, maxLength } = this.schema
+			return (
+				minLength !== undefined
+				&& maxLength !== undefined
+				&& minLength > maxLength
+			)
+		},
+
+		/**
+		 * Whether the minimum is above the maximum.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 */
+		rangeConflict() {
+			const { minimum, maximum } = this.schema
+			return (
+				minimum !== undefined && maximum !== undefined && minimum > maximum
+			)
+		},
+
+		/**
+		 * The message under a maximum below its minimum.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 */
+		conflictText() {
+			return t('keepiq', 'The minimum is higher than the maximum.')
+		},
+
+		/**
+		 * Whether the pattern is no regular expression a browser can run.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 */
+		patternInvalid() {
+			if (!this.schema.pattern) {
+				return false
+			}
+			try {
+				new RegExp(this.schema.pattern, 'u')
+				return false
+			} catch {
+				return true
+			}
+		},
+
 		/**
 		 * The type options, by their JSON Schema names.
 		 *

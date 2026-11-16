@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Выкарыстайце не менш за {min} сімвалаў.",
         "Use at most {max} characters.": "Выкарыстайце не больш за {max} сімвалаў.",
         "This does not match the required pattern.": "Гэта не адпавядае патрэбнаму шаблону.",
-        "Enter a valid {format} value.": "Увядзіце правільнае значэнне {format}.",
         "Choose yes or no.": "Выберыце «так» ці «не».",
         "“{name}” is reserved — choose a different name.": "«{name}» зарэзерваваны — выберыце іншую назву.",
         "Kind": "Від",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Поле не дададзена",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "«{name}» яшчэ не дададзена, таму атрымальніка пра яго не спытаюць.",
         "Add and create": "Дадаць і стварыць",
-        "Create without it": "Стварыць без яго"
+        "Create without it": "Стварыць без яго",
+        "Enter a web address, such as https://example.com.": "Увядзіце вэб-адрас, напрыклад https://example.com.",
+        "Enter an email address, such as name@example.com.": "Увядзіце адрас электроннай пошты, напрыклад name@example.com.",
+        "Enter a host name, such as example.com.": "Увядзіце імя хоста, напрыклад example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Увядзіце адрас IPv4, напрыклад 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Увядзіце адрас IPv6, напрыклад 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Увядзіце існуючую дату, напрыклад 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Увядзіце існуючыя дату і час, напрыклад 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Увядзіце час, напрыклад 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Увядзіце UUID, напрыклад 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Увядзіце колер, напрыклад #1a2b3c.",
+        "The minimum is higher than the maximum.": "Мінімум большы за максімум.",
+        "This is not a valid regular expression.": "Гэта не правільны рэгулярны выраз."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

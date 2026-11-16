@@ -1834,10 +1834,9 @@
         "Use at least {min} characters.": "Utilisez au moins {min} caractères.",
         "Use at most {max} characters.": "Utilisez au plus {max} caractères.",
         "This does not match the required pattern.": "Cela ne correspond pas au motif requis.",
-        "Enter a valid {format} value.": "Saisissez une valeur {format} valide.",
         "Choose yes or no.": "Choisissez oui ou non.",
         "“{name}” is reserved — choose a different name.": "« {name} » est réservé — choisissez un autre nom.",
-        "Kind": "Genre",
+        "Kind": "Type",
         "Custom": "Personnalisé",
         "Format": "Format",
         "None": "Aucun",
@@ -1850,7 +1849,19 @@
         "Field not added": "Champ non ajouté",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "« {name} » n'a pas encore été ajouté, le destinataire ne sera donc pas invité à le fournir.",
         "Add and create": "Ajouter et créer",
-        "Create without it": "Créer sans"
+        "Create without it": "Créer sans",
+        "Enter a web address, such as https://example.com.": "Saisissez une adresse web, par exemple https://example.com.",
+        "Enter an email address, such as name@example.com.": "Saisissez une adresse e-mail, par exemple name@example.com.",
+        "Enter a host name, such as example.com.": "Saisissez un nom d'hôte, par exemple example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Saisissez une adresse IPv4, par exemple 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Saisissez une adresse IPv6, par exemple 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Saisissez une date qui existe, par exemple 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Saisissez une date et une heure qui existent, par exemple 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Saisissez une heure, par exemple 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Saisissez un UUID, par exemple 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Saisissez une couleur, par exemple #1a2b3c.",
+        "The minimum is higher than the maximum.": "Le minimum est supérieur au maximum.",
+        "This is not a valid regular expression.": "Ce n'est pas une expression régulière valide."
     },
     "plurals": null
 }

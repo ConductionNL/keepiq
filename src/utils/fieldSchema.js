@@ -16,6 +16,12 @@ import { translate as t } from '@nextcloud/l10n'
 /** The reserved member holding the schemas. */
 export const SCHEMA_MEMBER = '@schema'
 
+/**
+ * The name a field called `@schema` is shown and saved under: a secret saved
+ * before the member was reserved, or an import, may have one.
+ */
+export const RENAMED_SCHEMA_FIELD = `${SCHEMA_MEMBER} (imported)`
+
 /** The types a field can have, in the order Advanced offers them. */
 export const SCHEMA_TYPES = Object.freeze([
 	'string',
@@ -80,7 +86,7 @@ const FORMAT_PATTERNS = Object.freeze({
 	date: /^\d{4}-\d{2}-\d{2}$/,
 	'date-time':
 		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?$/,
-	time: /^\d{2}:\d{2}(?::\d{2})?$/,
+	time: /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/,
 	uuid: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
 	'color-hex': /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i,
 })
@@ -317,6 +323,51 @@ function numberError(value, schema) {
 }
 
 /**
+ * Whether a date, or a date-time's date, is a real day: the pattern lets
+ * 2026-02-31 through, which a calendar does not have.
+ *
+ * @param {string} value The value.
+ * @return {boolean} True for a real day.
+ */
+function isRealDay(value) {
+	const day = value.slice(0, 10)
+	const date = new Date(`${day}T00:00:00Z`)
+	return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(day)
+}
+
+/**
+ * Whether a date-time's time of day is a real one.
+ *
+ * @param {string} value The value.
+ * @return {boolean} True when the hours, minutes and seconds exist.
+ */
+function isRealTime(value) {
+	const [, hours, minutes, seconds = '0'] =
+		/T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(value) ?? []
+	return Number(hours) < 24 && Number(minutes) < 60 && Number(seconds) < 60
+}
+
+/**
+ * Whether a value fits a string format.
+ *
+ * @param {string} value The value.
+ * @param {string|undefined} format The format.
+ * @return {boolean} True when it fits, or when the format has no check.
+ */
+function fitsFormat(value, format) {
+	if (format === 'uri') {
+		return isUrl(value)
+	}
+	if (!(FORMAT_PATTERNS[format]?.test(value) ?? true)) {
+		return false
+	}
+	if (format === 'date') {
+		return isRealDay(value)
+	}
+	return format !== 'date-time' || (isRealDay(value) && isRealTime(value))
+}
+
+/**
  * Whether a value is a URL with a scheme.
  *
  * @param {string} value The value.
@@ -360,13 +411,39 @@ function stringError(value, schema) {
 			return t('keepiq', 'This does not match the required pattern.')
 		}
 	}
-	const formatFits =
-		schema.format === 'uri'
-			? isUrl(value)
-			: (FORMAT_PATTERNS[schema.format]?.test(value) ?? true)
-	return formatFits
-		? ''
-		: t('keepiq', 'Enter a valid {format} value.', { format: schema.format })
+	return fitsFormat(value, schema.format) ? '' : formatError(schema.format)
+}
+
+/**
+ * What to enter for a format, in words a recipient without the JSON Schema
+ * names understands.
+ *
+ * @param {string} format The format.
+ * @return {string} The reason.
+ */
+function formatError(format) {
+	const messages = {
+		uri: () => t('keepiq', 'Enter a web address, such as https://example.com.'),
+		email: () =>
+			t('keepiq', 'Enter an email address, such as name@example.com.'),
+		hostname: () => t('keepiq', 'Enter a host name, such as example.com.'),
+		ipv4: () => t('keepiq', 'Enter an IPv4 address, such as 192.0.2.1.'),
+		ipv6: () => t('keepiq', 'Enter an IPv6 address, such as 2001:db8::1.'),
+		date: () => t('keepiq', 'Enter a real date, such as 2026-03-31.'),
+		'date-time': () =>
+			t('keepiq', 'Enter a real date and time, such as 2026-03-31T14:30.'),
+		time: () => t('keepiq', 'Enter a time, such as 14:30.'),
+		uuid: () =>
+			t(
+				'keepiq',
+				'Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.',
+			),
+		'color-hex': () => t('keepiq', 'Enter a colour, such as #1a2b3c.'),
+	}
+	return (
+		messages[format]?.()
+		?? t('keepiq', 'This value does not fit its field type.')
+	)
 }
 
 /**
@@ -399,6 +476,18 @@ export function schemaError(value, schema) {
 }
 
 /**
+ * Whether a value is a schema map: an object of objects. Anything else under
+ * `@schema` is a field a person named so.
+ *
+ * @param {unknown} value The value.
+ * @return {boolean} True for a schema map.
+ */
+function isSchemaMap(value) {
+	const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+	return isObject(value) && Object.values(value).every(isObject)
+}
+
+/**
  * The schemas stored in a blob, by field name.
  *
  * @param {object|null|undefined} blob The decrypted additional fields.
@@ -407,13 +496,12 @@ export function schemaError(value, schema) {
  */
 export function schemasOf(blob) {
 	const stored = blob?.[SCHEMA_MEMBER]
-	return stored !== null && typeof stored === 'object' && !Array.isArray(stored)
-		? stored
-		: {}
+	return isSchemaMap(stored) ? stored : {}
 }
 
 /**
- * The fields of a blob without the reserved schema member.
+ * The fields of a blob without the reserved schema member. A field a person
+ * named `@schema` is kept, under RENAMED_SCHEMA_FIELD, so it is not lost.
  *
  * @param {object|null|undefined} blob The decrypted additional fields.
  * @return {object} The fields by name.
@@ -424,7 +512,15 @@ export function fieldsOf(blob) {
 		return {}
 	}
 	const fields = { ...blob }
+	const stored = fields[SCHEMA_MEMBER]
 	delete fields[SCHEMA_MEMBER]
+	if (
+		stored !== undefined
+		&& !isSchemaMap(stored)
+		&& !Object.hasOwn(fields, RENAMED_SCHEMA_FIELD)
+	) {
+		fields[RENAMED_SCHEMA_FIELD] = stored
+	}
 	return fields
 }
 
@@ -452,7 +548,8 @@ export function withSchemas(fields, schemas) {
 
 /**
  * An imported blob with the schema dropped from every field whose value does
- * not fit it, so the value is kept and reads as text.
+ * not fit it, so the value is kept and reads as text. A hidden field stays
+ * hidden: a mask is not a limit a value can fail.
  *
  * @param {object|null|undefined} blob The imported additional fields.
  * @return {object|null|undefined} The blob to store.
@@ -463,11 +560,16 @@ export function fitImportedBlob(blob) {
 		return blob
 	}
 	const fields = fieldsOf(blob)
-	const schemas = schemasOf(blob)
 	const fitting = Object.fromEntries(
-		Object.entries(schemas).filter(
-			([name, schema]) => schemaError(fields[name], schema) === '',
-		),
+		Object.entries(schemasOf(blob)).map(([name, schema]) => {
+			if (schemaError(fields[name], schema) === '') {
+				return [name, schema]
+			}
+			return [
+				name,
+				isHiddenSchema(schema) ? { type: 'string', hidden: true } : PLAIN,
+			]
+		}),
 	)
 	return withSchemas(fields, fitting)
 }
@@ -524,7 +626,8 @@ export function withRequestedFields(own, names, schemas) {
 
 /**
  * The schema of a type's own field: its stated schema, else the one its kind
- * implies (`hidden`, `multiline`, `url`, `email` or plain text).
+ * implies (`hidden`, `multiline`, `url`, `email` or plain text). A
+ * multi-line field, such as a private key, is hidden unless it is public.
  *
  * @param {{schema?: object, kind?: string}} field The type field.
  * @return {object} The schema.
@@ -536,7 +639,9 @@ export function typeFieldSchema(field) {
 	}
 	const byKind = {
 		hidden: { type: 'string', hidden: true },
-		multiline: { type: 'string', format: 'text' },
+		multiline: field?.public
+			? { type: 'string', format: 'text' }
+			: { type: 'string', format: 'text', hidden: true },
 		url: { type: 'string', format: 'uri' },
 		email: { type: 'string', format: 'email' },
 	}

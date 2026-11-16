@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Kasutage vähemalt {min} märki.",
         "Use at most {max} characters.": "Kasutage kõige rohkem {max} märki.",
         "This does not match the required pattern.": "See ei vasta nõutud mustrile.",
-        "Enter a valid {format} value.": "Sisestage kehtiv {format}-väärtus.",
         "Choose yes or no.": "Valige jah või ei.",
         "“{name}” is reserved — choose a different name.": "„{name}“ on reserveeritud — valige mõni teine nimi.",
         "Kind": "Liik",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Välja ei lisatud",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}” pole veel lisatud, seega saajalt seda ei küsita.",
         "Add and create": "Lisa ja loo",
-        "Create without it": "Loo ilma selleta"
+        "Create without it": "Loo ilma selleta",
+        "Enter a web address, such as https://example.com.": "Sisestage veebiaadress, näiteks https://example.com.",
+        "Enter an email address, such as name@example.com.": "Sisestage e-posti aadress, näiteks name@example.com.",
+        "Enter a host name, such as example.com.": "Sisestage hostinimi, näiteks example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Sisestage IPv4-aadress, näiteks 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Sisestage IPv6-aadress, näiteks 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Sisestage olemasolev kuupäev, näiteks 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Sisestage olemasolev kuupäev ja kellaaeg, näiteks 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Sisestage kellaaeg, näiteks 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Sisestage UUID, näiteks 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Sisestage värv, näiteks #1a2b3c.",
+        "The minimum is higher than the maximum.": "Miinimum on suurem kui maksimum.",
+        "This is not a valid regular expression.": "See ei ole kehtiv regulaaravaldis."
     },
     "nplurals=2; plural=(n != 1);"
 )

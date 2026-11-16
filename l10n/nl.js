@@ -1762,7 +1762,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Gebruik minstens {min} tekens.",
         "Use at most {max} characters.": "Gebruik hoogstens {max} tekens.",
         "This does not match the required pattern.": "Dit komt niet overeen met het vereiste patroon.",
-        "Enter a valid {format} value.": "Voer een geldige {format}-waarde in.",
         "Choose yes or no.": "Kies ja of nee.",
         "“{name}” is reserved — choose a different name.": "‘{name}’ is gereserveerd — kies een andere naam.",
         "Kind": "Soort",
@@ -1778,7 +1777,19 @@ OC.L10N.register(
         "Field not added": "Veld niet toegevoegd",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "‘{name}’ is nog niet toegevoegd, dus de ontvanger wordt er niet om gevraagd.",
         "Add and create": "Toevoegen en aanmaken",
-        "Create without it": "Aanmaken zonder"
+        "Create without it": "Aanmaken zonder",
+        "Enter a web address, such as https://example.com.": "Voer een webadres in, zoals https://example.com.",
+        "Enter an email address, such as name@example.com.": "Voer een e-mailadres in, zoals name@example.com.",
+        "Enter a host name, such as example.com.": "Voer een hostnaam in, zoals example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Voer een IPv4-adres in, zoals 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Voer een IPv6-adres in, zoals 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Voer een bestaande datum in, zoals 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Voer een bestaande datum en tijd in, zoals 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Voer een tijd in, zoals 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Voer een UUID in, zoals 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Voer een kleur in, zoals #1a2b3c.",
+        "The minimum is higher than the maximum.": "Het minimum is hoger dan het maximum.",
+        "This is not a valid regular expression.": "Dit is geen geldige reguliere expressie."
     },
     "nplurals=2; plural=(n != 1);"
 )

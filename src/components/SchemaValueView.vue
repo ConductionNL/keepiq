@@ -62,12 +62,20 @@
 			<CopyButton :value="value" />
 		</template>
 		<span v-else class="schema-value-view__text">{{ shown }}</span>
+		<!-- A masked value keeps its mask; the warning still says it does
+		     not fit. -->
+		<span
+			v-if="hidden && fits === false"
+			class="schema-value-view__warning"
+			data-testid="schema-value-misfit">
+			{{ t('keepiq', 'This value does not fit its field type.') }}
+		</span>
 	</div>
 </template>
 
 <script>
 import { CnJsonViewer } from '@conduction/nextcloud-vue'
-import { translate as t } from '@nextcloud/l10n'
+import { getCanonicalLocale, translate as t } from '@nextcloud/l10n'
 import { NcButton } from '@nextcloud/vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import EyeOff from 'vue-material-design-icons/EyeOff.vue'
@@ -166,11 +174,14 @@ export default {
 			if (this.input === 'boolean') {
 				return this.value === 'true' ? t('keepiq', 'Yes') : t('keepiq', 'No')
 			}
+			// The Nextcloud user's locale, not the browser's.
 			if (this.input === 'date') {
-				return new Date(`${this.value}T00:00:00`).toLocaleDateString()
+				return new Date(`${this.value}T00:00:00`).toLocaleDateString(
+					getCanonicalLocale(),
+				)
 			}
 			if (this.input === 'datetime') {
-				return new Date(this.value).toLocaleString()
+				return new Date(this.value).toLocaleString(getCanonicalLocale())
 			}
 			return this.value
 		},

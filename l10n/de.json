@@ -1834,7 +1834,6 @@
         "Use at least {min} characters.": "Verwende mindestens {min} Zeichen.",
         "Use at most {max} characters.": "Verwende höchstens {max} Zeichen.",
         "This does not match the required pattern.": "Das entspricht nicht dem geforderten Muster.",
-        "Enter a valid {format} value.": "Gib einen gültigen {format}-Wert ein.",
         "Choose yes or no.": "Wähle Ja oder Nein.",
         "“{name}” is reserved — choose a different name.": "„{name}“ ist reserviert – wähle einen anderen Namen.",
         "Kind": "Art",
@@ -1850,7 +1849,19 @@
         "Field not added": "Feld nicht hinzugefügt",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}“ wurde noch nicht hinzugefügt, daher wird der Empfänger nicht danach gefragt.",
         "Add and create": "Hinzufügen und erstellen",
-        "Create without it": "Ohne erstellen"
+        "Create without it": "Ohne erstellen",
+        "Enter a web address, such as https://example.com.": "Gib eine Webadresse ein, z. B. https://example.com.",
+        "Enter an email address, such as name@example.com.": "Gib eine E-Mail-Adresse ein, z. B. name@example.com.",
+        "Enter a host name, such as example.com.": "Gib einen Hostnamen ein, z. B. example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Gib eine IPv4-Adresse ein, z. B. 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Gib eine IPv6-Adresse ein, z. B. 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Gib ein existierendes Datum ein, z. B. 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Gib ein existierendes Datum mit Uhrzeit ein, z. B. 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Gib eine Uhrzeit ein, z. B. 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Gib eine UUID ein, z. B. 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Gib eine Farbe ein, z. B. #1a2b3c.",
+        "The minimum is higher than the maximum.": "Das Minimum ist größer als das Maximum.",
+        "This is not a valid regular expression.": "Das ist kein gültiger regulärer Ausdruck."
     },
     "plurals": null
 }

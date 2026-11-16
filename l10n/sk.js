@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Použite aspoň {min} znakov.",
         "Use at most {max} characters.": "Použite najviac {max} znakov.",
         "This does not match the required pattern.": "Toto nezodpovedá požadovanému vzoru.",
-        "Enter a valid {format} value.": "Zadajte platnú hodnotu {format}.",
         "Choose yes or no.": "Zvoľte áno alebo nie.",
         "“{name}” is reserved — choose a different name.": "„{name}“ je vyhradené — zvoľte iný názov.",
         "Kind": "Druh",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Pole nebolo pridané",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}“ ešte nebolo pridané, takže o neho príjemca nebude požiadaný.",
         "Add and create": "Pridať a vytvoriť",
-        "Create without it": "Vytvoriť bez neho"
+        "Create without it": "Vytvoriť bez neho",
+        "Enter a web address, such as https://example.com.": "Zadajte webovú adresu, napríklad https://example.com.",
+        "Enter an email address, such as name@example.com.": "Zadajte e-mailovú adresu, napríklad name@example.com.",
+        "Enter a host name, such as example.com.": "Zadajte názov hostiteľa, napríklad example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Zadajte adresu IPv4, napríklad 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Zadajte adresu IPv6, napríklad 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Zadajte existujúci dátum, napríklad 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Zadajte existujúci dátum a čas, napríklad 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Zadajte čas, napríklad 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Zadajte UUID, napríklad 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Zadajte farbu, napríklad #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimum je vyššie ako maximum.",
+        "This is not a valid regular expression.": "Toto nie je platný regulárny výraz."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

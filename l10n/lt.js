@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Naudokite ne mažiau kaip {min} simbolius.",
         "Use at most {max} characters.": "Naudokite ne daugiau kaip {max} simbolius.",
         "This does not match the required pattern.": "Tai neatitinka reikiamo šablono.",
-        "Enter a valid {format} value.": "Įveskite tinkamą {format} reikšmę.",
         "Choose yes or no.": "Pasirinkite taip arba ne.",
         "“{name}” is reserved — choose a different name.": "„{name}“ yra rezervuotas — pasirinkite kitą pavadinimą.",
         "Kind": "Rūšis",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Laukas nepridėtas",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}“ dar nepridėtas, todėl gavėjo jo neprašys.",
         "Add and create": "Pridėti ir sukurti",
-        "Create without it": "Sukurti be jo"
+        "Create without it": "Sukurti be jo",
+        "Enter a web address, such as https://example.com.": "Įveskite žiniatinklio adresą, pavyzdžiui, https://example.com.",
+        "Enter an email address, such as name@example.com.": "Įveskite el. pašto adresą, pavyzdžiui, name@example.com.",
+        "Enter a host name, such as example.com.": "Įveskite pagrindinio kompiuterio vardą, pavyzdžiui, example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Įveskite IPv4 adresą, pavyzdžiui, 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Įveskite IPv6 adresą, pavyzdžiui, 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Įveskite egzistuojančią datą, pavyzdžiui, 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Įveskite egzistuojančią datą ir laiką, pavyzdžiui, 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Įveskite laiką, pavyzdžiui, 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Įveskite UUID, pavyzdžiui, 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Įveskite spalvą, pavyzdžiui, #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimumas didesnis už maksimumą.",
+        "This is not a valid regular expression.": "Tai nėra tinkamas reguliarusis reiškinys."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

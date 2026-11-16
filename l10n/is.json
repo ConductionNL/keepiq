@@ -1834,7 +1834,6 @@
         "Use at least {min} characters.": "Notaðu að minnsta kosti {min} stafi.",
         "Use at most {max} characters.": "Notaðu í mesta lagi {max} stafi.",
         "This does not match the required pattern.": "Þetta passar ekki við tilskilið mynstur.",
-        "Enter a valid {format} value.": "Sláðu inn gilt {format}-gildi.",
         "Choose yes or no.": "Veldu já eða nei.",
         "“{name}” is reserved — choose a different name.": "„{name}“ er frátekið — veldu annað nafn.",
         "Kind": "Gerð",
@@ -1850,7 +1849,19 @@
         "Field not added": "Reit ekki bætt við",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}“ hefur ekki verið bætt við enn, svo viðtakandinn verður ekki beðinn um það.",
         "Add and create": "Bæta við og búa til",
-        "Create without it": "Búa til án þess"
+        "Create without it": "Búa til án þess",
+        "Enter a web address, such as https://example.com.": "Sláðu inn veffang, t.d. https://example.com.",
+        "Enter an email address, such as name@example.com.": "Sláðu inn netfang, t.d. name@example.com.",
+        "Enter a host name, such as example.com.": "Sláðu inn hýsilheiti, t.d. example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Sláðu inn IPv4-vistfang, t.d. 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Sláðu inn IPv6-vistfang, t.d. 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Sláðu inn dagsetningu sem er til, t.d. 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Sláðu inn dagsetningu og tíma sem eru til, t.d. 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Sláðu inn tíma, t.d. 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Sláðu inn UUID, t.d. 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Sláðu inn lit, t.d. #1a2b3c.",
+        "The minimum is higher than the maximum.": "Lágmarkið er hærra en hámarkið.",
+        "This is not a valid regular expression.": "Þetta er ekki gild regluleg segð."
     },
     "plurals": null
 }

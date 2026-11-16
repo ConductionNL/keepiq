@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Përdorni të paktën {min} karaktere.",
         "Use at most {max} characters.": "Përdorni jo më shumë se {max} karaktere.",
         "This does not match the required pattern.": "Kjo nuk përputhet me modelin e kërkuar.",
-        "Enter a valid {format} value.": "Fut një vlerë {format} të vlefshme.",
         "Choose yes or no.": "Zgjidhni po ose jo.",
         "“{name}” is reserved — choose a different name.": "“{name}” është i rezervuar — zgjidhni një emër tjetër.",
         "Kind": "Natyra",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Fusha nuk u shtua",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "“{name}” nuk është shtuar ende, ndaj marrësit nuk do t'i kërkohet.",
         "Add and create": "Shto dhe krijo",
-        "Create without it": "Krijo pa të"
+        "Create without it": "Krijo pa të",
+        "Enter a web address, such as https://example.com.": "Fut një adresë web, p.sh. https://example.com.",
+        "Enter an email address, such as name@example.com.": "Fut një adresë email, p.sh. name@example.com.",
+        "Enter a host name, such as example.com.": "Fut një emër hosti, p.sh. example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Fut një adresë IPv4, p.sh. 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Fut një adresë IPv6, p.sh. 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Fut një datë që ekziston, p.sh. 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Fut një datë dhe orë që ekzistojnë, p.sh. 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Fut një orë, p.sh. 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Fut një UUID, p.sh. 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Fut një ngjyrë, p.sh. #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimumi është më i lartë se maksimumi.",
+        "This is not a valid regular expression.": "Kjo nuk është një shprehje e rregullt e vlefshme."
     },
     "nplurals=2; plural=(n != 1);"
 )

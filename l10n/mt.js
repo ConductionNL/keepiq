@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Uża mill-inqas {min} karattri.",
         "Use at most {max} characters.": "Uża l-iktar {max} karattri.",
         "This does not match the required pattern.": "Dan ma jaqbilx mal-mudell meħtieġ.",
-        "Enter a valid {format} value.": "Daħħal valur {format} validu.",
         "Choose yes or no.": "Agħżel iva jew le.",
         "“{name}” is reserved — choose a different name.": "“{name}” huwa riżervat — agħżel isem ieħor.",
         "Kind": "Għamla",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Il-qasam ma ġiex miżjud",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "“{name}” għadu ma ġiex miżjud, għalhekk ir-riċevitur mhux se jintalab għalih.",
         "Add and create": "Żid u oħloq",
-        "Create without it": "Oħloq mingħajru"
+        "Create without it": "Oħloq mingħajru",
+        "Enter a web address, such as https://example.com.": "Daħħal indirizz tal-web, pereżempju https://example.com.",
+        "Enter an email address, such as name@example.com.": "Daħħal indirizz tal-email, pereżempju name@example.com.",
+        "Enter a host name, such as example.com.": "Daħħal isem ta’ host, pereżempju example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Daħħal indirizz IPv4, pereżempju 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Daħħal indirizz IPv6, pereżempju 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Daħħal data li teżisti, pereżempju 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Daħħal data u ħin li jeżistu, pereżempju 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Daħħal ħin, pereżempju 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Daħħal UUID, pereżempju 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Daħħal kulur, pereżempju #1a2b3c.",
+        "The minimum is higher than the maximum.": "Il-minimu huwa ogħla mill-massimu.",
+        "This is not a valid regular expression.": "Din mhix espressjoni regolari valida."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

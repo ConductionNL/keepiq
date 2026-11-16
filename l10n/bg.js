@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Използвайте поне {min} знака.",
         "Use at most {max} characters.": "Използвайте най-много {max} знака.",
         "This does not match the required pattern.": "Това не съответства на изисквания шаблон.",
-        "Enter a valid {format} value.": "Въведете валидна стойност {format}.",
         "Choose yes or no.": "Изберете „да“ или „не“.",
         "“{name}” is reserved — choose a different name.": "„{name}“ е запазено — изберете друго име.",
         "Kind": "Вид",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Полето не е добавено",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}“ още не е добавено, така че получателят няма да бъде помолен за него.",
         "Add and create": "Добавяне и създаване",
-        "Create without it": "Създаване без него"
+        "Create without it": "Създаване без него",
+        "Enter a web address, such as https://example.com.": "Въведете уеб адрес, например https://example.com.",
+        "Enter an email address, such as name@example.com.": "Въведете имейл адрес, например name@example.com.",
+        "Enter a host name, such as example.com.": "Въведете име на хост, например example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Въведете IPv4 адрес, например 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Въведете IPv6 адрес, например 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Въведете съществуваща дата, например 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Въведете съществуващи дата и час, например 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Въведете час, например 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Въведете UUID, например 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Въведете цвят, например #1a2b3c.",
+        "The minimum is higher than the maximum.": "Минимумът е по-голям от максимума.",
+        "This is not a valid regular expression.": "Това не е валиден регулярен израз."
     },
     "nplurals=2; plural=(n != 1);"
 )

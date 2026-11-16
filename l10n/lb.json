@@ -1834,7 +1834,6 @@
         "Use at least {min} characters.": "Benotzt mindestens {min} Zeechen.",
         "Use at most {max} characters.": "Benotzt héchstens {max} Zeechen.",
         "This does not match the required pattern.": "Dat entsprécht net dem verlaangte Muster.",
-        "Enter a valid {format} value.": "Gitt e gëltege {format}-Wäert an.",
         "Choose yes or no.": "Wielt Jo oder Neen.",
         "“{name}” is reserved — choose a different name.": "„{name}“ ass reservéiert — wielt en aneren Numm.",
         "Kind": "Aart",
@@ -1850,7 +1849,19 @@
         "Field not added": "Feld net derbäigesat",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}“ ass nach net derbäigesat, dofir gëtt den Empfänger net dono gefrot.",
         "Add and create": "Derbäisetzen an erstellen",
-        "Create without it": "Ouni erstellen"
+        "Create without it": "Ouni erstellen",
+        "Enter a web address, such as https://example.com.": "Gitt eng Webadress an, z. B. https://example.com.",
+        "Enter an email address, such as name@example.com.": "Gitt eng E-Mail-Adress an, z. B. name@example.com.",
+        "Enter a host name, such as example.com.": "Gitt en Hostnumm an, z. B. example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Gitt eng IPv4-Adress an, z. B. 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Gitt eng IPv6-Adress an, z. B. 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Gitt en existéierenden Datum an, z. B. 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Gitt en existéierenden Datum mat Auerzäit an, z. B. 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Gitt eng Auerzäit an, z. B. 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Gitt eng UUID an, z. B. 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Gitt eng Faarf an, z. B. #1a2b3c.",
+        "The minimum is higher than the maximum.": "De Minimum ass méi héich wéi de Maximum.",
+        "This is not a valid regular expression.": "Dat ass keen gëltege reegelméissegen Ausdrock."
     },
     "plurals": null
 }

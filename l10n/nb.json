@@ -1834,7 +1834,6 @@
         "Use at least {min} characters.": "Bruk minst {min} tegn.",
         "Use at most {max} characters.": "Bruk høyst {max} tegn.",
         "This does not match the required pattern.": "Dette samsvarer ikke med det påkrevde mønsteret.",
-        "Enter a valid {format} value.": "Skriv inn en gyldig {format}-verdi.",
         "Choose yes or no.": "Velg ja eller nei.",
         "“{name}” is reserved — choose a different name.": "«{name}» er reservert – velg et annet navn.",
         "Kind": "Art",
@@ -1850,7 +1849,19 @@
         "Field not added": "Feltet er ikke lagt til",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "«{name}» er ikke lagt til ennå, så mottakeren blir ikke bedt om det.",
         "Add and create": "Legg til og opprett",
-        "Create without it": "Opprett uten det"
+        "Create without it": "Opprett uten det",
+        "Enter a web address, such as https://example.com.": "Skriv inn en nettadresse, for eksempel https://example.com.",
+        "Enter an email address, such as name@example.com.": "Skriv inn en e-postadresse, for eksempel name@example.com.",
+        "Enter a host name, such as example.com.": "Skriv inn et vertsnavn, for eksempel example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Skriv inn en IPv4-adresse, for eksempel 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Skriv inn en IPv6-adresse, for eksempel 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Skriv inn en dato som finnes, for eksempel 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Skriv inn en dato og et klokkeslett som finnes, for eksempel 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Skriv inn et klokkeslett, for eksempel 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Skriv inn en UUID, for eksempel 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Skriv inn en farge, for eksempel #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimum er høyere enn maksimum.",
+        "This is not a valid regular expression.": "Dette er ikke et gyldig regulært uttrykk."
     },
     "plurals": null
 }

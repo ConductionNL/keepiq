@@ -1860,7 +1860,6 @@
         "Use at least {min} characters.": "Úsáid {min} carachtar ar a laghad.",
         "Use at most {max} characters.": "Úsáid {max} carachtar ar a mhéad.",
         "This does not match the required pattern.": "Ní hionann é seo agus an patrún riachtanach.",
-        "Enter a valid {format} value.": "Cuir isteach luach bailí {format}.",
         "Choose yes or no.": "Roghnaigh tá nó níl.",
         "“{name}” is reserved — choose a different name.": "Tá “{name}” in áirithe — roghnaigh ainm eile.",
         "Kind": "Saghas",
@@ -1876,7 +1875,19 @@
         "Field not added": "Níor cuireadh an pháirc leis",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "Níor cuireadh “{name}” leis fós, mar sin ní iarrfar é ar an bhfaighteoir.",
         "Add and create": "Cuir leis agus cruthaigh",
-        "Create without it": "Cruthaigh gan é"
+        "Create without it": "Cruthaigh gan é",
+        "Enter a web address, such as https://example.com.": "Cuir isteach seoladh gréasáin, mar shampla https://example.com.",
+        "Enter an email address, such as name@example.com.": "Cuir isteach seoladh ríomhphoist, mar shampla name@example.com.",
+        "Enter a host name, such as example.com.": "Cuir isteach ainm óstríomhaire, mar shampla example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Cuir isteach seoladh IPv4, mar shampla 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Cuir isteach seoladh IPv6, mar shampla 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Cuir isteach dáta atá ann, mar shampla 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Cuir isteach dáta agus am atá ann, mar shampla 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Cuir isteach am, mar shampla 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Cuir isteach UUID, mar shampla 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Cuir isteach dath, mar shampla #1a2b3c.",
+        "The minimum is higher than the maximum.": "Tá an t-íosmhéid níos airde ná an t-uasmhéid.",
+        "This is not a valid regular expression.": "Ní slonn ionadaíochta bailí é seo."
     },
     "plurals": null
 }

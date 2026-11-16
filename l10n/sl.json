@@ -1886,7 +1886,6 @@
         "Use at least {min} characters.": "Uporabite vsaj {min} znakov.",
         "Use at most {max} characters.": "Uporabite največ {max} znakov.",
         "This does not match the required pattern.": "To se ne ujema z zahtevanim vzorcem.",
-        "Enter a valid {format} value.": "Vnesite veljavno vrednost {format}.",
         "Choose yes or no.": "Izberite da ali ne.",
         "“{name}” is reserved — choose a different name.": "»{name}« je rezervirano — izberite drugo ime.",
         "Kind": "Oblika",
@@ -1902,7 +1901,19 @@
         "Field not added": "Polje ni dodano",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "»{name}« še ni dodano, zato prejemnika ne bomo prosili zanj.",
         "Add and create": "Dodaj in ustvari",
-        "Create without it": "Ustvari brez njega"
+        "Create without it": "Ustvari brez njega",
+        "Enter a web address, such as https://example.com.": "Vnesite spletni naslov, na primer https://example.com.",
+        "Enter an email address, such as name@example.com.": "Vnesite e-poštni naslov, na primer name@example.com.",
+        "Enter a host name, such as example.com.": "Vnesite ime gostitelja, na primer example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Vnesite naslov IPv4, na primer 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Vnesite naslov IPv6, na primer 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Vnesite obstoječ datum, na primer 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Vnesite obstoječ datum in čas, na primer 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Vnesite čas, na primer 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Vnesite UUID, na primer 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Vnesite barvo, na primer #1a2b3c.",
+        "The minimum is higher than the maximum.": "Najmanjša vrednost je večja od največje.",
+        "This is not a valid regular expression.": "To ni veljaven regularni izraz."
     },
     "plurals": null
 }

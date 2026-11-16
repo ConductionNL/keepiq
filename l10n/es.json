@@ -1834,7 +1834,6 @@
         "Use at least {min} characters.": "Usa al menos {min} caracteres.",
         "Use at most {max} characters.": "Usa como máximo {max} caracteres.",
         "This does not match the required pattern.": "Esto no coincide con el patrón requerido.",
-        "Enter a valid {format} value.": "Introduce un valor {format} válido.",
         "Choose yes or no.": "Elige sí o no.",
         "“{name}” is reserved — choose a different name.": "«{name}» está reservado: elige otro nombre.",
         "Kind": "Clase",
@@ -1850,7 +1849,19 @@
         "Field not added": "Campo no añadido",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "«{name}» aún no se ha añadido, así que no se le pedirá al destinatario.",
         "Add and create": "Añadir y crear",
-        "Create without it": "Crear sin él"
+        "Create without it": "Crear sin él",
+        "Enter a web address, such as https://example.com.": "Introduce una dirección web, por ejemplo https://example.com.",
+        "Enter an email address, such as name@example.com.": "Introduce una dirección de correo electrónico, por ejemplo name@example.com.",
+        "Enter a host name, such as example.com.": "Introduce un nombre de host, por ejemplo example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Introduce una dirección IPv4, por ejemplo 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Introduce una dirección IPv6, por ejemplo 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Introduce una fecha que exista, por ejemplo 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Introduce una fecha y hora que existan, por ejemplo 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Introduce una hora, por ejemplo 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Introduce un UUID, por ejemplo 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Introduce un color, por ejemplo #1a2b3c.",
+        "The minimum is higher than the maximum.": "El mínimo es mayor que el máximo.",
+        "This is not a valid regular expression.": "Esto no es una expresión regular válida."
     },
     "plurals": null
 }

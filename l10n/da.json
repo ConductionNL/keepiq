@@ -1834,7 +1834,6 @@
         "Use at least {min} characters.": "Brug mindst {min} tegn.",
         "Use at most {max} characters.": "Brug højst {max} tegn.",
         "This does not match the required pattern.": "Dette matcher ikke det krævede mønster.",
-        "Enter a valid {format} value.": "Indtast en gyldig {format}-værdi.",
         "Choose yes or no.": "Vælg ja eller nej.",
         "“{name}” is reserved — choose a different name.": "“{name}” er reserveret — vælg et andet navn.",
         "Kind": "Art",
@@ -1850,7 +1849,19 @@
         "Field not added": "Feltet er ikke tilføjet",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "“{name}” er ikke tilføjet endnu, så modtageren bliver ikke bedt om det.",
         "Add and create": "Tilføj og opret",
-        "Create without it": "Opret uden det"
+        "Create without it": "Opret uden det",
+        "Enter a web address, such as https://example.com.": "Indtast en webadresse, f.eks. https://example.com.",
+        "Enter an email address, such as name@example.com.": "Indtast en e-mailadresse, f.eks. name@example.com.",
+        "Enter a host name, such as example.com.": "Indtast et værtsnavn, f.eks. example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Indtast en IPv4-adresse, f.eks. 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Indtast en IPv6-adresse, f.eks. 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Indtast en dato, der findes, f.eks. 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Indtast en dato og et klokkeslæt, der findes, f.eks. 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Indtast et klokkeslæt, f.eks. 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Indtast et UUID, f.eks. 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Indtast en farve, f.eks. #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimum er højere end maksimum.",
+        "This is not a valid regular expression.": "Dette er ikke et gyldigt regulært udtryk."
     },
     "plurals": null
 }

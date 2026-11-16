@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Користите најмање {min} знакова.",
         "Use at most {max} characters.": "Користите највише {max} знакова.",
         "This does not match the required pattern.": "Ово не одговара траженом обрасцу.",
-        "Enter a valid {format} value.": "Унесите исправну вредност {format}.",
         "Choose yes or no.": "Изаберите да или не.",
         "“{name}” is reserved — choose a different name.": "„{name}“ је резервисано — изаберите други назив.",
         "Kind": "Врста",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Поље није додато",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}” још није додато, па прималац неће бити питан за њега.",
         "Add and create": "Додај и направи",
-        "Create without it": "Направи без њега"
+        "Create without it": "Направи без њега",
+        "Enter a web address, such as https://example.com.": "Унесите веб адресу, нпр. https://example.com.",
+        "Enter an email address, such as name@example.com.": "Унесите адресу е-поште, нпр. name@example.com.",
+        "Enter a host name, such as example.com.": "Унесите назив хоста, нпр. example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Унесите IPv4 адресу, нпр. 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Унесите IPv6 адресу, нпр. 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Унесите постојећи датум, нпр. 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Унесите постојећи датум и време, нпр. 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Унесите време, нпр. 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Унесите UUID, нпр. 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Унесите боју, нпр. #1a2b3c.",
+        "The minimum is higher than the maximum.": "Минимум је већи од максимума.",
+        "This is not a valid regular expression.": "Ово није исправан регуларни израз."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

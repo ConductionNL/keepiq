@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "En az {min} karakter kullanın.",
         "Use at most {max} characters.": "En fazla {max} karakter kullanın.",
         "This does not match the required pattern.": "Bu, gerekli kalıpla eşleşmiyor.",
-        "Enter a valid {format} value.": "Geçerli bir {format} değeri girin.",
         "Choose yes or no.": "Evet veya hayır seçin.",
         "“{name}” is reserved — choose a different name.": "“{name}” ayrılmış — farklı bir ad seçin.",
         "Kind": "Çeşit",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Alan eklenmedi",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "“{name}” henüz eklenmedi, bu yüzden alıcıdan istenmeyecek.",
         "Add and create": "Ekle ve oluştur",
-        "Create without it": "Onsuz oluştur"
+        "Create without it": "Onsuz oluştur",
+        "Enter a web address, such as https://example.com.": "Bir web adresi girin, örneğin https://example.com.",
+        "Enter an email address, such as name@example.com.": "Bir e-posta adresi girin, örneğin name@example.com.",
+        "Enter a host name, such as example.com.": "Bir ana bilgisayar adı girin, örneğin example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Bir IPv4 adresi girin, örneğin 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Bir IPv6 adresi girin, örneğin 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Var olan bir tarih girin, örneğin 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Var olan bir tarih ve saat girin, örneğin 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Bir saat girin, örneğin 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Bir UUID girin, örneğin 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Bir renk girin, örneğin #1a2b3c.",
+        "The minimum is higher than the maximum.": "En küçük değer en büyük değerden yüksek.",
+        "This is not a valid regular expression.": "Bu geçerli bir düzenli ifade değil."
     },
     "nplurals=1; plural=0;"
 )

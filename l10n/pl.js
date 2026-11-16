@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Użyj co najmniej {min} znaków.",
         "Use at most {max} characters.": "Użyj co najwyżej {max} znaków.",
         "This does not match the required pattern.": "To nie pasuje do wymaganego wzorca.",
-        "Enter a valid {format} value.": "Wpisz poprawną wartość {format}.",
         "Choose yes or no.": "Wybierz tak lub nie.",
         "“{name}” is reserved — choose a different name.": "„{name}” jest zarezerwowane — wybierz inną nazwę.",
         "Kind": "Rodzaj",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Pole nie zostało dodane",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}” nie zostało jeszcze dodane, więc odbiorca nie zostanie o nie poproszony.",
         "Add and create": "Dodaj i utwórz",
-        "Create without it": "Utwórz bez niego"
+        "Create without it": "Utwórz bez niego",
+        "Enter a web address, such as https://example.com.": "Wpisz adres internetowy, np. https://example.com.",
+        "Enter an email address, such as name@example.com.": "Wpisz adres e-mail, np. name@example.com.",
+        "Enter a host name, such as example.com.": "Wpisz nazwę hosta, np. example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Wpisz adres IPv4, np. 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Wpisz adres IPv6, np. 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Wpisz istniejącą datę, np. 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Wpisz istniejącą datę i godzinę, np. 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Wpisz godzinę, np. 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Wpisz UUID, np. 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Wpisz kolor, np. #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimum jest większe niż maksimum.",
+        "This is not a valid regular expression.": "To nie jest poprawne wyrażenie regularne."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

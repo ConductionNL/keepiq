@@ -1834,7 +1834,6 @@
         "Use at least {min} characters.": "Använd minst {min} tecken.",
         "Use at most {max} characters.": "Använd högst {max} tecken.",
         "This does not match the required pattern.": "Detta matchar inte det krävda mönstret.",
-        "Enter a valid {format} value.": "Ange ett giltigt {format}-värde.",
         "Choose yes or no.": "Välj ja eller nej.",
         "“{name}” is reserved — choose a different name.": "”{name}” är reserverat – välj ett annat namn.",
         "Kind": "Sort",
@@ -1850,7 +1849,19 @@
         "Field not added": "Fältet har inte lagts till",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "”{name}” har inte lagts till än, så mottagaren kommer inte att tillfrågas om det.",
         "Add and create": "Lägg till och skapa",
-        "Create without it": "Skapa utan det"
+        "Create without it": "Skapa utan det",
+        "Enter a web address, such as https://example.com.": "Ange en webbadress, till exempel https://example.com.",
+        "Enter an email address, such as name@example.com.": "Ange en e-postadress, till exempel name@example.com.",
+        "Enter a host name, such as example.com.": "Ange ett värdnamn, till exempel example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Ange en IPv4-adress, till exempel 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Ange en IPv6-adress, till exempel 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Ange ett datum som finns, till exempel 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Ange ett datum och en tid som finns, till exempel 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Ange en tid, till exempel 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Ange ett UUID, till exempel 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Ange en färg, till exempel #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimum är högre än maximum.",
+        "This is not a valid regular expression.": "Detta är inte ett giltigt reguljärt uttryck."
     },
     "plurals": null
 }

@@ -1732,7 +1732,6 @@
         "Use at least {min} characters.": "Duvra almain {min} caracters.",
         "Use at most {max} characters.": "Duvra maximalmain {max} caracters.",
         "This does not match the required pattern.": "Quai na correspunda betg al muster necessari.",
-        "Enter a valid {format} value.": "Endatescha ina valur {format} valida.",
         "Choose yes or no.": "Tscherna gea u na.",
         "“{name}” is reserved — choose a different name.": "«{name}» è reservà — tscherna in auter num.",
         "Kind": "Gener",
@@ -1748,7 +1747,19 @@
         "Field not added": "Champ betg agiuntà",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "«{name}» n'è anc betg agiuntà, perquai na vegn il destinatari betg dumandà per quai.",
         "Add and create": "Agiuntar e crear",
-        "Create without it": "Crear senza"
+        "Create without it": "Crear senza",
+        "Enter a web address, such as https://example.com.": "Endatescha ina adressa web, per exempel https://example.com.",
+        "Enter an email address, such as name@example.com.": "Endatescha ina adressa dad e-mail, per exempel name@example.com.",
+        "Enter a host name, such as example.com.": "Endatescha in num da host, per exempel example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Endatescha ina adressa IPv4, per exempel 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Endatescha ina adressa IPv6, per exempel 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Endatescha ina data che exista, per exempel 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Endatescha ina data ed in'ura che existan, per exempel 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Endatescha in'ura, per exempel 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Endatescha in UUID, per exempel 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Endatescha ina colur, per exempel #1a2b3c.",
+        "The minimum is higher than the maximum.": "Il minimum è pli aut ch’il maximum.",
+        "This is not a valid regular expression.": "Quai n'è betg ina expressiun regulara valida."
     },
     "plurals": null
 }

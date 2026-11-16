@@ -1860,7 +1860,6 @@
         "Use at least {min} characters.": "Použijte alespoň {min} znaků.",
         "Use at most {max} characters.": "Použijte nejvýše {max} znaků.",
         "This does not match the required pattern.": "Toto neodpovídá požadovanému vzoru.",
-        "Enter a valid {format} value.": "Zadejte platnou hodnotu {format}.",
         "Choose yes or no.": "Zvolte ano, nebo ne.",
         "“{name}” is reserved — choose a different name.": "„{name}“ je vyhrazeno — zvolte jiný název.",
         "Kind": "Druh",
@@ -1876,7 +1875,19 @@
         "Field not added": "Pole nebylo přidáno",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "„{name}“ zatím nebylo přidáno, takže o ně příjemce nebude požádán.",
         "Add and create": "Přidat a vytvořit",
-        "Create without it": "Vytvořit bez něj"
+        "Create without it": "Vytvořit bez něj",
+        "Enter a web address, such as https://example.com.": "Zadejte webovou adresu, například https://example.com.",
+        "Enter an email address, such as name@example.com.": "Zadejte e-mailovou adresu, například name@example.com.",
+        "Enter a host name, such as example.com.": "Zadejte název hostitele, například example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Zadejte adresu IPv4, například 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Zadejte adresu IPv6, například 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Zadejte existující datum, například 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Zadejte existující datum a čas, například 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Zadejte čas, například 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Zadejte UUID, například 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Zadejte barvu, například #1a2b3c.",
+        "The minimum is higher than the maximum.": "Minimum je vyšší než maximum.",
+        "This is not a valid regular expression.": "Toto není platný regulární výraz."
     },
     "plurals": null
 }

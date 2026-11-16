@@ -1757,7 +1757,6 @@ OC.L10N.register(
         "Use at least {min} characters.": "Feu servir com a mínim {min} caràcters.",
         "Use at most {max} characters.": "Feu servir com a màxim {max} caràcters.",
         "This does not match the required pattern.": "Això no coincideix amb el patró requerit.",
-        "Enter a valid {format} value.": "Introduïu un valor {format} vàlid.",
         "Choose yes or no.": "Trieu sí o no.",
         "“{name}” is reserved — choose a different name.": "«{name}» està reservat — trieu un altre nom.",
         "Kind": "Classe",
@@ -1773,7 +1772,19 @@ OC.L10N.register(
         "Field not added": "Camp no afegit",
         "“{name}” has not been added yet, so the recipient will not be asked for it.": "«{name}» encara no s'ha afegit, de manera que no es demanarà al destinatari.",
         "Add and create": "Afegeix i crea",
-        "Create without it": "Crea sense aquest camp"
+        "Create without it": "Crea sense aquest camp",
+        "Enter a web address, such as https://example.com.": "Introduïu una adreça web, com ara https://example.com.",
+        "Enter an email address, such as name@example.com.": "Introduïu una adreça electrònica, com ara name@example.com.",
+        "Enter a host name, such as example.com.": "Introduïu un nom d'amfitrió, com ara example.com.",
+        "Enter an IPv4 address, such as 192.0.2.1.": "Introduïu una adreça IPv4, com ara 192.0.2.1.",
+        "Enter an IPv6 address, such as 2001:db8::1.": "Introduïu una adreça IPv6, com ara 2001:db8::1.",
+        "Enter a real date, such as 2026-03-31.": "Introduïu una data que existeixi, com ara 2026-03-31.",
+        "Enter a real date and time, such as 2026-03-31T14:30.": "Introduïu una data i hora que existeixin, com ara 2026-03-31T14:30.",
+        "Enter a time, such as 14:30.": "Introduïu una hora, com ara 14:30.",
+        "Enter a UUID, such as 123e4567-e89b-12d3-a456-426614174000.": "Introduïu un UUID, com ara 123e4567-e89b-12d3-a456-426614174000.",
+        "Enter a colour, such as #1a2b3c.": "Introduïu un color, com ara #1a2b3c.",
+        "The minimum is higher than the maximum.": "El mínim és més alt que el màxim.",
+        "This is not a valid regular expression.": "Aquesta no és una expressió regular vàlida."
     },
     "nplurals=2; plural=(n != 1);"
 )
