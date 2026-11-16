@@ -183,6 +183,11 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * Reload when the panel shows another secret.
+		 *
+		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 */
 		secretId() {
 			this.load()
 		},
@@ -198,6 +203,7 @@ export default {
 		 *
 		 * @param {string} path The path after /api/v1.
 		 * @return {string}
+		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		url(path) {
 			return generateUrl(`/apps/keepiq/api/v1${path}`)
@@ -261,6 +267,7 @@ export default {
 		 *
 		 * @param {object} request The request.
 		 * @return {void}
+		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		startApproval(request) {
 			this.answering = request.id
@@ -307,6 +314,7 @@ export default {
 		 *
 		 * @param {() => Promise<void>} step The call.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		async run(step) {
 			this.busy = true
@@ -325,6 +333,7 @@ export default {
 		 *
 		 * @param {object} request The request.
 		 * @return {string}
+		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		windowText(request) {
 			const start = request.approvedStart || request.requestedStart
@@ -337,6 +346,7 @@ export default {
 		 *
 		 * @param {object} request The request.
 		 * @return {string}
+		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		stateLabel(request) {
 			const labels = {
