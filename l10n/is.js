@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Skrifaðu kóðann niður eða vistaðu hann núna. Hann birtist aðeins einu sinni.",
         "You have no recovery kit.": "Þú átt engan endurheimtarpakka.",
         "Your recovery kit was made on {date}.": "Endurheimtarpakkinn þinn var búinn til {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Hvelfingin þín er opin og endurheimtarpakkinn er notaður. Búðu núna til nýjan pakka með nýja aðallykilorðinu."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Hvelfingin þín er opin og endurheimtarpakkinn er notaður. Búðu núna til nýjan pakka með nýja aðallykilorðinu.",
+        "Field kind": "Tegund reits",
+        "Yes or no": "Já eða nei",
+        "Public key": "Dreifilykill",
+        "Fingerprint": "Fingrafar",
+        "Copy public key": "Afrita dreifilykil",
+        "Copy fingerprint": "Afrita fingrafar",
+        "Generate key pair": "Búa til lyklapar",
+        "Import from file": "Flytja inn úr skrá",
+        "Derived from the public key.": "Leitt af dreifilyklinum.",
+        "The file could not be read.": "Ekki tókst að lesa skrána.",
+        "This browser could not generate a key pair.": "Þessi vafri gat ekki búið til lyklapar.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Þetta er ekki einkalykill. Límdu inn OpenSSH- eða PEM-einkalykil, eða búðu til nýjan.",
+        "This is not an OpenSSH public key.": "Þetta er ekki OpenSSH-dreifilykill.",
+        "This public key does not belong to the private key.": "Þessi dreifilykill tilheyrir ekki einkalyklinum."
     },
     "nplurals=2; plural=(n != 1);"
 )

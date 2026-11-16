@@ -31,6 +31,7 @@ import {
 	buildPasskeyCredential,
 	serializePasskey,
 } from '../../src/passkey/passkey.js'
+import { generateKeyPair, withDerivedFingerprint } from '../../src/ssh/sshKey.js'
 import { parseOtpauth } from '../../src/totp/totp.js'
 
 import '../../src/import/parsers/index.js'
@@ -425,7 +426,7 @@ describe('CXF import: a code and passkeys in the same item as a login', () => {
 	describe('picks the target from accepted rows, whatever the order', () => {
 		const totp = { type: 'totp', secret: 'JBSWY3DPEHPK3PXP' }
 		const brokenPasskey = { type: 'passkey', rpId: 'partial.example.com' }
-		const unsupported = { type: 'custom-fields', fields: [] }
+		const unsupported = { type: 'drivers-license' }
 		const md5Totp = {
 			type: 'totp',
 			secret: 'JBSWY3DPEHPK3PXP',
@@ -773,5 +774,165 @@ describe('CXF export of a login with a code and passkeys', () => {
 			['P1', 'KEY_P1'],
 			['P2', 'KEY_P2'],
 		])
+	})
+})
+
+/**
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
+ */
+describe('CXF custom fields keep their kind', () => {
+	const row = {
+		name: 'Supplier',
+		type: 'login',
+		url: 'https://supplier.example',
+		login: 'alice',
+		password: 'pw',
+		folder: '',
+		additionalFields: {
+			tenant: 'acme',
+			'Recovery code': { value: 'abc-123', kind: 'hidden' },
+			Active: { value: 'true', kind: 'boolean' },
+		},
+	}
+
+	it('exports a hidden field as a concealed string field', () => {
+		const { document } = buildCxfDocument([row])
+		const custom = document.accounts[0].items[0].credentials.find(
+			(credential) => credential.type === 'custom-fields',
+		)
+
+		expect(custom.fields).toEqual([
+			{ fieldType: 'string', label: 'tenant', value: 'acme' },
+			{
+				fieldType: 'concealed-string',
+				label: 'Recovery code',
+				value: 'abc-123',
+			},
+			{ fieldType: 'boolean', label: 'Active', value: 'true' },
+		])
+	})
+
+	it('round-trips one text and one hidden field into an empty vault', () => {
+		const { document } = buildCxfDocument([
+			{
+				...row,
+				additionalFields: {
+					tenant: 'acme',
+					'Recovery code': { value: 'abc-123', kind: 'hidden' },
+				},
+			},
+		])
+		const rows = cxfToRows(parseCxfDocument(JSON.stringify(document)))
+
+		expect(rows).toHaveLength(1)
+		expect(rows[0].errors).toEqual([])
+		expect(rows[0].password).toBe('pw')
+		expect(rows[0].additionalFields).toEqual({
+			tenant: 'acme',
+			'Recovery code': { value: 'abc-123', kind: 'hidden' },
+		})
+	})
+
+	it('rejects a custom field that would overwrite a built-in field, with a reason', () => {
+		const rows = cxfToRows({
+			accounts: [
+				{
+					items: [
+						{
+							id: 'i1',
+							title: 'Clash',
+							credentials: [
+								{ type: 'basic-auth', username: 'u', password: 'p' },
+								{
+									type: 'custom-fields',
+									fields: [
+										{
+											fieldType: 'string',
+											label: 'url',
+											value: 'x',
+										},
+										{
+											fieldType: 'string',
+											label: 'kept',
+											value: 'y',
+										},
+									],
+								},
+							],
+						},
+					],
+				},
+			],
+		})
+
+		const accepted = rows.filter((r) => r.errors.length === 0)
+		const rejected = rows.filter((r) => r.errors.length > 0)
+		expect(accepted[0].additionalFields).toEqual({ kept: 'y' })
+		expect(rejected).toHaveLength(1)
+		expect(rejected[0].errors[0]).toMatch(/"url"/)
+	})
+})
+
+/**
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ */
+describe('CXF SSH key round trip', () => {
+	it('exports the key type, comment and public key, and imports them back', async () => {
+		const pair = await generateKeyPair({ comment: 'deploy@ci' })
+		const { document, unmapped } = buildCxfDocument([
+			{
+				name: 'Deploy key',
+				type: 'ssh_key',
+				password: pair.privateKey,
+				folder: '',
+				additionalFields: {
+					publicKey: pair.publicKey,
+					fingerprint: pair.fingerprint,
+					Host: 'git.example',
+				},
+			},
+		])
+
+		const credentials = document.accounts[0].items[0].credentials
+		expect(credentials[0]).toMatchObject({
+			type: 'ssh-key',
+			keyType: 'ssh-ed25519',
+			keyComment: 'deploy@ci',
+			privateKey: { value: pair.privateKey },
+			publicKey: { value: pair.publicKey },
+		})
+		// The fingerprint is derived, so it is not exported as a custom field.
+		expect(credentials[1].fields).toEqual([
+			{ fieldType: 'string', label: 'Host', value: 'git.example' },
+		])
+		expect(unmapped).toEqual([])
+
+		const [imported] = cxfToRows(parseCxfDocument(JSON.stringify(document)))
+		expect(imported.errors).toEqual([])
+		expect(imported.type).toBe('ssh_key')
+		expect(imported.password).toBe(pair.privateKey)
+		expect(imported.additionalFields).toEqual({
+			publicKey: pair.publicKey,
+			Host: 'git.example',
+		})
+		// The fingerprint comes back derived from the public key on commit.
+		expect(
+			await withDerivedFingerprint(imported.type, imported.additionalFields),
+		).toEqual({
+			publicKey: pair.publicKey,
+			Host: 'git.example',
+			fingerprint: pair.fingerprint,
+		})
+	})
+
+	it('drops a fingerprint that came without a usable public key', async () => {
+		expect(
+			await withDerivedFingerprint('ssh_key', {
+				publicKey: 'garbage',
+				fingerprint: 'SHA256:forged',
+			}),
+		).toEqual({ publicKey: 'garbage' })
+		const login = { fingerprint: 'kept' }
+		expect(await withDerivedFingerprint('login', login)).toBe(login)
 	})
 })

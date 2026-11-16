@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Zapisz ten kod teraz. Jest pokazywany tylko raz.",
         "You have no recovery kit.": "Nie masz zestawu odzyskiwania.",
         "Your recovery kit was made on {date}.": "Twój zestaw odzyskiwania utworzono {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Twój sejf jest otwarty, a zestaw odzyskiwania został zużyty. Utwórz teraz nowy zestaw z nowym hasłem głównym."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Twój sejf jest otwarty, a zestaw odzyskiwania został zużyty. Utwórz teraz nowy zestaw z nowym hasłem głównym.",
+        "Field kind": "Rodzaj pola",
+        "Yes or no": "Tak lub nie",
+        "Public key": "Klucz publiczny",
+        "Fingerprint": "Odcisk klucza",
+        "Copy public key": "Kopiuj klucz publiczny",
+        "Copy fingerprint": "Kopiuj odcisk klucza",
+        "Generate key pair": "Wygeneruj parę kluczy",
+        "Import from file": "Importuj z pliku",
+        "Derived from the public key.": "Wyliczony z klucza publicznego.",
+        "The file could not be read.": "Nie udało się odczytać pliku.",
+        "This browser could not generate a key pair.": "Ta przeglądarka nie mogła wygenerować pary kluczy.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "To nie jest klucz prywatny. Wklej klucz prywatny OpenSSH lub PEM albo wygeneruj nowy.",
+        "This is not an OpenSSH public key.": "To nie jest klucz publiczny OpenSSH.",
+        "This public key does not belong to the private key.": "Ten klucz publiczny nie należy do klucza prywatnego."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

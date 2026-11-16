@@ -129,3 +129,10 @@ targetRules = ["curl-auth-user"]
 paths = [
   '''(^|/)tests/server/setup\.sh$''',
 ]
+
+[[allowlists]]
+description = "SSH key parser unit test: armour around junk and a truncated OpenSSH header, which the parser must refuse. Not keys."
+targetRules = ["private-key"]
+paths = [
+  '''(^|/)tests/vitest/sshKey\.spec\.js$''',
+]

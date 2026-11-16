@@ -1903,7 +1903,21 @@
         "Write down or save this code now. It is shown only once.": "To kodo zdaj zapišite ali shranite. Prikaže se samo enkrat.",
         "You have no recovery kit.": "Nimate kompleta za obnovitev.",
         "Your recovery kit was made on {date}.": "Vaš komplet za obnovitev je bil narejen {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Vaš trezor je odprt, komplet za obnovitev pa porabljen. Zdaj naredite nov komplet z novim glavnim geslom."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Vaš trezor je odprt, komplet za obnovitev pa porabljen. Zdaj naredite nov komplet z novim glavnim geslom.",
+        "Field kind": "Vrsta polja",
+        "Yes or no": "Da ali ne",
+        "Public key": "Javni ključ",
+        "Fingerprint": "Prstni odtis",
+        "Copy public key": "Kopiraj javni ključ",
+        "Copy fingerprint": "Kopiraj prstni odtis",
+        "Generate key pair": "Ustvari par ključev",
+        "Import from file": "Uvozi iz datoteke",
+        "Derived from the public key.": "Izpeljano iz javnega ključa.",
+        "The file could not be read.": "Datoteke ni bilo mogoče prebrati.",
+        "This browser could not generate a key pair.": "Ta brskalnik ni mogel ustvariti para ključev.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "To ni zasebni ključ. Prilepite zasebni ključ OpenSSH ali PEM ali pa ustvarite novega.",
+        "This is not an OpenSSH public key.": "To ni javni ključ OpenSSH.",
+        "This public key does not belong to the private key.": "Ta javni ključ ne pripada zasebnemu ključu."
     },
     "plurals": null
 }

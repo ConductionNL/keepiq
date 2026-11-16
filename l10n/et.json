@@ -1851,7 +1851,21 @@
         "Write down or save this code now. It is shown only once.": "Kirjutage see kood kohe üles või salvestage. Seda näidatakse ainult üks kord.",
         "You have no recovery kit.": "Teil pole taastekomplekti.",
         "Your recovery kit was made on {date}.": "Teie taastekomplekt loodi {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Teie hoidla on avatud ja taastekomplekt on ära kasutatud. Looge nüüd uue ülemparooliga uus komplekt."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Teie hoidla on avatud ja taastekomplekt on ära kasutatud. Looge nüüd uue ülemparooliga uus komplekt.",
+        "Field kind": "Välja liik",
+        "Yes or no": "Jah või ei",
+        "Public key": "Avalik võti",
+        "Fingerprint": "Sõrmejälg",
+        "Copy public key": "Kopeeri avalik võti",
+        "Copy fingerprint": "Kopeeri sõrmejälg",
+        "Generate key pair": "Loo võtmepaar",
+        "Import from file": "Impordi failist",
+        "Derived from the public key.": "Tuletatud avalikust võtmest.",
+        "The file could not be read.": "Faili ei õnnestunud lugeda.",
+        "This browser could not generate a key pair.": "See brauser ei suutnud võtmepaari luua.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "See ei ole privaatvõti. Kleepige OpenSSH- või PEM-vormingus privaatvõti või looge uus.",
+        "This is not an OpenSSH public key.": "See ei ole OpenSSH avalik võti.",
+        "This public key does not belong to the private key.": "See avalik võti ei kuulu selle privaatvõtme juurde."
     },
     "plurals": null
 }

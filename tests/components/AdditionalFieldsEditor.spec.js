@@ -29,6 +29,29 @@ const stubs = {
 		template:
 			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
+	NcPasswordField: {
+		props: ['modelValue', 'label', 'disabled'],
+		emits: ['update:modelValue'],
+		template:
+			'<input type="password" :aria-label="label" :value="modelValue" :disabled="disabled" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+	},
+	NcSelect: {
+		props: ['modelValue', 'options', 'inputLabel', 'disabled', 'clearable'],
+		emits: ['update:modelValue'],
+		template:
+			'<select :aria-label="inputLabel" :value="modelValue && modelValue.value" :disabled="disabled" @change="$emit(\'update:modelValue\', options.find((o) => o.value === $event.target.value))"><option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option></select>',
+	},
+	NcCheckboxRadioSwitch: {
+		props: ['modelValue', 'disabled'],
+		emits: ['update:modelValue'],
+		template:
+			'<label><input type="checkbox" :checked="modelValue" :disabled="disabled" @change="$emit(\'update:modelValue\', $event.target.checked)" /><slot /></label>',
+	},
+	CopyButton: {
+		props: ['value', 'label'],
+		template:
+			'<button class="copy-stub" :aria-label="label" :data-value="value" />',
+	},
 }
 
 function mountEditor(members = []) {
@@ -76,7 +99,7 @@ describe('AdditionalFieldsEditor', () => {
 		await wrapper.find('[data-testid="additional-field-add"]').trigger('click')
 
 		expect(wrapper.emitted('update:members')[0][0]).toEqual([
-			{ name: 'client-id', value: '' },
+			{ name: 'client-id', value: '', kind: 'text' },
 		])
 		// The input clears, so the next name does not have to be deleted first.
 		expect(wrapper.vm.newName).toBe('')
@@ -207,5 +230,93 @@ describe('AdditionalFieldsEditor', () => {
 			locked.find('[data-testid="additional-field-new-name"]').element
 				.disabled,
 		).toBe(true)
+	})
+
+	/**
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+	 */
+	describe('field kinds', () => {
+		it('shows a member without a kind as a text field', () => {
+			const wrapper = mountEditor([{ name: 'Recovery code', value: 'abc' }])
+
+			expect(
+				wrapper.find('[data-testid="additional-field-kind-0"]').element
+					.value,
+			).toBe('text')
+			const value = wrapper.find('[data-testid="additional-field-value-0"]')
+			expect(value.attributes('type')).not.toBe('password')
+			expect(value.element.value).toBe('abc')
+		})
+
+		it('emits {name, value, kind} when a field is made hidden', async () => {
+			const wrapper = mountEditor([
+				{ name: 'Recovery code', value: 'abc', kind: 'text' },
+			])
+
+			await wrapper
+				.find('[data-testid="additional-field-kind-0"]')
+				.setValue('hidden')
+
+			expect(wrapper.emitted('update:members')[0][0]).toEqual([
+				{ name: 'Recovery code', value: 'abc', kind: 'hidden' },
+			])
+		})
+
+		it('masks a hidden value and offers Copy of the real value', () => {
+			const wrapper = mountEditor([
+				{ name: 'PIN', value: '4711', kind: 'hidden' },
+			])
+
+			const value = wrapper.find('[data-testid="additional-field-value-0"]')
+			expect(value.attributes('type')).toBe('password')
+			expect(wrapper.text()).not.toContain('4711')
+			const copy = wrapper.find('[data-testid="additional-field-copy-0"]')
+			expect(copy.attributes('data-value')).toBe('4711')
+			expect(copy.attributes('aria-label')).toBe('Copy value')
+		})
+
+		it('keeps the kind when a hidden value changes', async () => {
+			const wrapper = mountEditor([
+				{ name: 'PIN', value: '4711', kind: 'hidden' },
+			])
+
+			await wrapper
+				.find('[data-testid="additional-field-value-0"]')
+				.setValue('0815')
+
+			expect(wrapper.emitted('update:members')[0][0]).toEqual([
+				{ name: 'PIN', value: '0815', kind: 'hidden' },
+			])
+		})
+
+		it('edits a yes or no field as a checkbox holding true or false', async () => {
+			const wrapper = mountEditor([
+				{ name: 'Active', value: 'false', kind: 'boolean' },
+			])
+
+			const box = wrapper.find(
+				'[data-testid="additional-field-value-0"] input[type="checkbox"]',
+			)
+			expect(box.element.checked).toBe(false)
+			await box.setValue(true)
+
+			expect(wrapper.emitted('update:members')[0][0]).toEqual([
+				{ name: 'Active', value: 'true', kind: 'boolean' },
+			])
+		})
+
+		it('does not invent a yes when a text value becomes yes or no', async () => {
+			const wrapper = mountEditor([
+				{ name: 'x', value: 'maybe', kind: 'text' },
+			])
+
+			await wrapper
+				.find('[data-testid="additional-field-kind-0"]')
+				.setValue('boolean')
+
+			expect(wrapper.emitted('update:members')[0][0]).toEqual([
+				{ name: 'x', value: 'false', kind: 'boolean' },
+			])
+		})
 	})
 })

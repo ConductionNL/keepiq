@@ -1749,7 +1749,21 @@
         "Write down or save this code now. It is shown only once.": "Notai u memorisai quest code ussa. El vegn mussà mo ina giada.",
         "You have no recovery kit.": "Vus n'avais nagin kit da recuperaziun.",
         "Your recovery kit was made on {date}.": "Voss kit da recuperaziun è vegnì creà ils {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Voss tresor è avert e Voss kit da recuperaziun è consumà. Creai ussa in nov kit cun Voss nov pled-clav principal."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Voss tresor è avert e Voss kit da recuperaziun è consumà. Creai ussa in nov kit cun Voss nov pled-clav principal.",
+        "Field kind": "Gener da champ",
+        "Yes or no": "Gea u na",
+        "Public key": "Clav publica",
+        "Fingerprint": "Impronta",
+        "Copy public key": "Copiar la clav publica",
+        "Copy fingerprint": "Copiar l’impronta",
+        "Generate key pair": "Generar in pèr da clavs",
+        "Import from file": "Importar d’ina datoteca",
+        "Derived from the public key.": "Derivà da la clav publica.",
+        "The file could not be read.": "La datoteca n’ha betg pudì vegnir legida.",
+        "This browser could not generate a key pair.": "Quest navigatur n’ha betg pudì generar in pèr da clavs.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Quai n’è nagina clav privata. Encollescha ina clav privata OpenSSH u PEM, u genera ina.",
+        "This is not an OpenSSH public key.": "Quai n’è nagina clav publica OpenSSH.",
+        "This public key does not belong to the private key.": "Questa clav publica na fa betg part da la clav privata."
     },
     "plurals": null
 }

@@ -1851,7 +1851,21 @@
         "Write down or save this code now. It is shown only once.": "Skriv koden ned, eller gem den nu. Den vises kun én gang.",
         "You have no recovery kit.": "Du har intet gendannelsessæt.",
         "Your recovery kit was made on {date}.": "Dit gendannelsessæt blev lavet den {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Din boks er åben, og dit gendannelsessæt er brugt. Lav nu et nyt sæt med din nye hovedadgangskode."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Din boks er åben, og dit gendannelsessæt er brugt. Lav nu et nyt sæt med din nye hovedadgangskode.",
+        "Field kind": "Felttype",
+        "Yes or no": "Ja eller nej",
+        "Public key": "Offentlig nøgle",
+        "Fingerprint": "Fingeraftryk",
+        "Copy public key": "Kopiér offentlig nøgle",
+        "Copy fingerprint": "Kopiér fingeraftryk",
+        "Generate key pair": "Generer nøglepar",
+        "Import from file": "Importér fra fil",
+        "Derived from the public key.": "Afledt af den offentlige nøgle.",
+        "The file could not be read.": "Filen kunne ikke læses.",
+        "This browser could not generate a key pair.": "Denne browser kunne ikke generere et nøglepar.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dette er ikke en privat nøgle. Indsæt en privat OpenSSH- eller PEM-nøgle, eller generer en.",
+        "This is not an OpenSSH public key.": "Dette er ikke en offentlig OpenSSH-nøgle.",
+        "This public key does not belong to the private key.": "Denne offentlige nøgle hører ikke til den private nøgle."
     },
     "plurals": null
 }

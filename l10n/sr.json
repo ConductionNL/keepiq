@@ -1877,7 +1877,21 @@
         "Write down or save this code now. It is shown only once.": "Запишите или сачувајте овај код сада. Приказује се само једном.",
         "You have no recovery kit.": "Немате комплет за опоравак.",
         "Your recovery kit was made on {date}.": "Ваш комплет за опоравак направљен је {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ваш трезор је отворен, а комплет за опоравак је потрошен. Направите сада нови комплет са новом главном лозинком."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ваш трезор је отворен, а комплет за опоравак је потрошен. Направите сада нови комплет са новом главном лозинком.",
+        "Field kind": "Врста поља",
+        "Yes or no": "Да или не",
+        "Public key": "Јавни кључ",
+        "Fingerprint": "Отисак",
+        "Copy public key": "Копирај јавни кључ",
+        "Copy fingerprint": "Копирај отисак",
+        "Generate key pair": "Генериши пар кључева",
+        "Import from file": "Увези из датотеке",
+        "Derived from the public key.": "Изведен из јавног кључа.",
+        "The file could not be read.": "Датотека није могла да се прочита.",
+        "This browser could not generate a key pair.": "Овај прегледач није могао да генерише пар кључева.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ово није приватни кључ. Налепите приватни кључ у формату OpenSSH или PEM или генеришите нови.",
+        "This is not an OpenSSH public key.": "Ово није јавни кључ у формату OpenSSH.",
+        "This public key does not belong to the private key.": "Овај јавни кључ не припада приватном кључу."
     },
     "plurals": null
 }

@@ -20,7 +20,13 @@
   store owns turning that into one encrypted blob, which is the only place that
   knows the blob is the storage unit.
 
+  Each member has a kind (text, hidden or boolean). A hidden value is edited in
+  a masked field with its own reveal toggle and a Copy action that copies it
+  without revealing it. The kind rides in the same encrypted blob as the name
+  and value; a member without one is text.
+
   @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 -->
 <template>
 	<section class="keepiq-additional-fields" data-testid="additional-fields-editor">
@@ -47,7 +53,38 @@
 					:disabled="disabled"
 					:data-testid="`additional-field-name-${index}`"
 					@update:modelValue="onRename(index, $event)" />
+				<NcSelect
+					class="keepiq-additional-fields__kind"
+					:modelValue="kindOption(member.kind)"
+					:options="kindOptions"
+					:inputLabel="t('keepiq', 'Field kind')"
+					:clearable="false"
+					:disabled="disabled"
+					:data-testid="`additional-field-kind-${index}`"
+					@update:modelValue="onRekind(index, $event)" />
+				<NcCheckboxRadioSwitch
+					v-if="member.kind === 'boolean'"
+					:modelValue="member.value === 'true'"
+					:disabled="disabled"
+					:data-testid="`additional-field-value-${index}`"
+					@update:modelValue="onRevalue(index, $event ? 'true' : 'false')">
+					{{ member.name || t('keepiq', 'Value') }}
+				</NcCheckboxRadioSwitch>
+				<template v-else-if="member.kind === 'hidden'">
+					<NcPasswordField
+						:modelValue="member.value"
+						:label="t('keepiq', 'Value')"
+						:disabled="disabled"
+						autocomplete="off"
+						:data-testid="`additional-field-value-${index}`"
+						@update:modelValue="onRevalue(index, $event)" />
+					<CopyButton
+						:value="member.value"
+						:label="t('keepiq', 'Copy value')"
+						:data-testid="`additional-field-copy-${index}`" />
+				</template>
 				<NcTextField
+					v-else
 					:modelValue="member.value"
 					:label="t('keepiq', 'Value')"
 					:disabled="disabled"
@@ -97,20 +134,33 @@
 </template>
 
 <script>
-import { NcButton, NcTextField } from '@nextcloud/vue'
-import { memberNameError } from '../utils/additionalFields.js'
+import { translate as t } from '@nextcloud/l10n'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcPasswordField,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
+import CopyButton from './CopyButton.vue'
+import { memberNameError, normaliseKind } from '../utils/additionalFields.js'
 
 export default {
 	name: 'AdditionalFieldsEditor',
 
 	components: {
+		CopyButton,
 		NcButton,
+		NcCheckboxRadioSwitch,
+		NcPasswordField,
+		NcSelect,
 		NcTextField,
 	},
 
 	props: {
 		/**
-		 * The member list being edited, as `{ name, value }` pairs.
+		 * The member list being edited, as `{ name, value, kind }` entries. A
+		 * member without a kind is text.
 		 *
 		 * A list rather than an object so a rename is an edit in place: keying the
 		 * rows by name would make renaming a member indistinguishable from removing
@@ -137,7 +187,38 @@ export default {
 		}
 	},
 
+	computed: {
+		/**
+		 * The kinds a field can have, as select options.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 *
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 */
+		kindOptions() {
+			return [
+				{ value: 'text', label: t('keepiq', 'Text') },
+				{ value: 'hidden', label: t('keepiq', 'Hidden') },
+				{ value: 'boolean', label: t('keepiq', 'Yes or no') },
+			]
+		},
+	},
+
 	methods: {
+		/**
+		 * The select option of a member's kind; a member without one is text.
+		 *
+		 * @param {string|undefined} kind The member's kind.
+		 *
+		 * @return {{value: string, label: string}}
+		 *
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 */
+		kindOption(kind) {
+			const normalised = normaliseKind(kind)
+			return this.kindOptions.find((option) => option.value === normalised)
+		},
+
 		/**
 		 * Emit a new member list, leaving the prop untouched.
 		 *
@@ -175,7 +256,7 @@ export default {
 
 			this.nameError = ''
 			this.newName = ''
-			this.emitMembers([...this.members, { name, value: '' }])
+			this.emitMembers([...this.members, { name, value: '', kind: 'text' }])
 		},
 
 		/**
@@ -222,6 +303,35 @@ export default {
 		},
 
 		/**
+		 * Change a member's kind. The value is kept; a value turned into a yes
+		 * or no field becomes `'true'` only when it already read true, so a
+		 * switch never invents a yes.
+		 *
+		 * @param {number} index The row being changed.
+		 * @param {{value: string}|string|null} option The chosen kind option.
+		 *
+		 * @return {void}
+		 *
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 */
+		onRekind(index, option) {
+			const kind = normaliseKind(
+				typeof option === 'string' ? option : option?.value,
+			)
+			const next = this.members.map((member, position) => {
+				if (position !== index) {
+					return member
+				}
+				const value =
+					kind === 'boolean'
+						? String(member.value === 'true')
+						: member.value
+				return { ...member, value, kind }
+			})
+			this.emitMembers(next)
+		},
+
+		/**
 		 * Remove a member.
 		 *
 		 * Removing the last one leaves an EMPTY list, which the caller turns into an
@@ -261,6 +371,10 @@ export default {
 	align-items: flex-end;
 	gap: 0.5rem;
 	margin-block-end: 0.5rem;
+}
+
+.keepiq-additional-fields__kind {
+	min-width: 10rem;
 }
 
 .keepiq-additional-fields__empty {

@@ -6,6 +6,7 @@ import {
 import { typeIcon } from '@/src/vault/icons'
 import { folderPath, launchUrl } from '@/src/vault/list'
 import { cardBrand, formatCardNumber, maskCardNumber } from '@/src/vault/cards'
+import { fieldText } from '@/src/vault/fields'
 import { parseObject, parsePayload, text } from '@/src/vault/payloads'
 import { Button, IconButton } from '../components/Button'
 import { Banner, ErrorBanner } from '../components/ErrorBanner'
@@ -194,7 +195,8 @@ function Values({ item, type, values, passkeys }: { item: ItemMeta; type: TypeMe
 	let extra: Array<[string, string]> | null = []
 	if (values.additionalFields) {
 		const parsed = parseObject(values.additionalFields)
-		extra = parsed && Object.entries(parsed).map(([field, value]) => [field, typeof value === 'string' ? value : JSON.stringify(value)])
+		// A hidden or yes-or-no field is `{ value, kind }`: its value shows, masked like every field here.
+		extra = parsed && Object.entries(parsed).map(([field, value]) => [field, fieldText(value)])
 	}
 	const notes = [...(name === 'note' && key ? [key] : []), ...(extra ?? []).filter(([field]) => field.toLowerCase() === 'notes').map(([, value]) => value)]
 	const fields = (extra ?? []).filter(([field]) => field.toLowerCase() !== 'notes')

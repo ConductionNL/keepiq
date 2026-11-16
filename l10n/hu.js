@@ -1774,7 +1774,21 @@ OC.L10N.register(
         "Write down or save this code now. It is shown only once.": "Írja fel vagy mentse el ezt a kódot most. Csak egyszer jelenik meg.",
         "You have no recovery kit.": "Nincs helyreállítási csomagja.",
         "Your recovery kit was made on {date}.": "A helyreállítási csomagja ekkor készült: {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "A széfje nyitva van, a helyreállítási csomagja pedig elhasználódott. Készítsen most új csomagot az új mesterjelszavával."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "A széfje nyitva van, a helyreállítási csomagja pedig elhasználódott. Készítsen most új csomagot az új mesterjelszavával.",
+        "Field kind": "Mező fajtája",
+        "Yes or no": "Igen vagy nem",
+        "Public key": "Nyilvános kulcs",
+        "Fingerprint": "Ujjlenyomat",
+        "Copy public key": "Nyilvános kulcs másolása",
+        "Copy fingerprint": "Ujjlenyomat másolása",
+        "Generate key pair": "Kulcspár generálása",
+        "Import from file": "Importálás fájlból",
+        "Derived from the public key.": "A nyilvános kulcsból származtatva.",
+        "The file could not be read.": "A fájlt nem sikerült beolvasni.",
+        "This browser could not generate a key pair.": "Ez a böngésző nem tudott kulcspárt generálni.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ez nem titkos kulcs. Illesszen be egy OpenSSH vagy PEM formátumú titkos kulcsot, vagy generáljon egyet.",
+        "This is not an OpenSSH public key.": "Ez nem OpenSSH nyilvános kulcs.",
+        "This public key does not belong to the private key.": "Ez a nyilvános kulcs nem a titkos kulcshoz tartozik."
     },
     "nplurals=2; plural=(n != 1);"
 )

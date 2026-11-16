@@ -1877,7 +1877,21 @@
         "Write down or save this code now. It is shown only once.": "Запишіть або збережіть цей код зараз. Він показується лише один раз.",
         "You have no recovery kit.": "У вас немає набору відновлення.",
         "Your recovery kit was made on {date}.": "Ваш набір відновлення створено {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ваше сховище відкрито, а набір відновлення використано. Створіть зараз новий набір із новим головним паролем."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Ваше сховище відкрито, а набір відновлення використано. Створіть зараз новий набір із новим головним паролем.",
+        "Field kind": "Вид поля",
+        "Yes or no": "Так або ні",
+        "Public key": "Відкритий ключ",
+        "Fingerprint": "Відбиток",
+        "Copy public key": "Копіювати відкритий ключ",
+        "Copy fingerprint": "Копіювати відбиток",
+        "Generate key pair": "Згенерувати пару ключів",
+        "Import from file": "Імпортувати з файлу",
+        "Derived from the public key.": "Обчислено з відкритого ключа.",
+        "The file could not be read.": "Не вдалося прочитати файл.",
+        "This browser could not generate a key pair.": "Цей браузер не зміг згенерувати пару ключів.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Це не закритий ключ. Вставте закритий ключ OpenSSH або PEM чи згенеруйте новий.",
+        "This is not an OpenSSH public key.": "Це не відкритий ключ OpenSSH.",
+        "This public key does not belong to the private key.": "Цей відкритий ключ не відповідає закритому ключу."
     },
     "plurals": null
 }

@@ -1825,7 +1825,21 @@
         "Write down or save this code now. It is shown only once.": "Bu kodu şimdi not edin ya da kaydedin. Yalnızca bir kez gösterilir.",
         "You have no recovery kit.": "Kurtarma kitiniz yok.",
         "Your recovery kit was made on {date}.": "Kurtarma kitiniz {date} tarihinde oluşturuldu.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Kasanız açık ve kurtarma kitiniz kullanıldı. Yeni ana parolanızla şimdi yeni bir kit oluşturun."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Kasanız açık ve kurtarma kitiniz kullanıldı. Yeni ana parolanızla şimdi yeni bir kit oluşturun.",
+        "Field kind": "Alan türü",
+        "Yes or no": "Evet veya hayır",
+        "Public key": "Açık anahtar",
+        "Fingerprint": "Parmak izi",
+        "Copy public key": "Açık anahtarı kopyala",
+        "Copy fingerprint": "Parmak izini kopyala",
+        "Generate key pair": "Anahtar çifti oluştur",
+        "Import from file": "Dosyadan içe aktar",
+        "Derived from the public key.": "Açık anahtardan türetilir.",
+        "The file could not be read.": "Dosya okunamadı.",
+        "This browser could not generate a key pair.": "Bu tarayıcı bir anahtar çifti oluşturamadı.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Bu bir özel anahtar değil. Bir OpenSSH veya PEM özel anahtarı yapıştırın ya da yeni bir tane oluşturun.",
+        "This is not an OpenSSH public key.": "Bu bir OpenSSH açık anahtarı değil.",
+        "This public key does not belong to the private key.": "Bu açık anahtar bu özel anahtara ait değil."
     },
     "plurals": null
 }

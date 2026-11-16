@@ -1851,7 +1851,21 @@
         "Write down or save this code now. It is shown only once.": "Σημειώστε ή αποθηκεύστε αυτόν τον κωδικό τώρα. Εμφανίζεται μόνο μία φορά.",
         "You have no recovery kit.": "Δεν έχετε κιτ ανάκτησης.",
         "Your recovery kit was made on {date}.": "Το κιτ ανάκτησής σας δημιουργήθηκε στις {date}.",
-        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Το θησαυροφυλάκιό σας είναι ανοιχτό και το κιτ ανάκτησης έχει χρησιμοποιηθεί. Δημιουργήστε τώρα νέο κιτ με τον νέο κύριο κωδικό σας."
+        "Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.": "Το θησαυροφυλάκιό σας είναι ανοιχτό και το κιτ ανάκτησης έχει χρησιμοποιηθεί. Δημιουργήστε τώρα νέο κιτ με τον νέο κύριο κωδικό σας.",
+        "Field kind": "Είδος πεδίου",
+        "Yes or no": "Ναι ή όχι",
+        "Public key": "Δημόσιο κλειδί",
+        "Fingerprint": "Αποτύπωμα",
+        "Copy public key": "Αντιγραφή δημόσιου κλειδιού",
+        "Copy fingerprint": "Αντιγραφή αποτυπώματος",
+        "Generate key pair": "Δημιουργία ζεύγους κλειδιών",
+        "Import from file": "Εισαγωγή από αρχείο",
+        "Derived from the public key.": "Προκύπτει από το δημόσιο κλειδί.",
+        "The file could not be read.": "Δεν ήταν δυνατή η ανάγνωση του αρχείου.",
+        "This browser could not generate a key pair.": "Αυτό το πρόγραμμα περιήγησης δεν μπόρεσε να δημιουργήσει ζεύγος κλειδιών.",
+        "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Αυτό δεν είναι ιδιωτικό κλειδί. Επικολλήστε ένα ιδιωτικό κλειδί OpenSSH ή PEM ή δημιουργήστε ένα.",
+        "This is not an OpenSSH public key.": "Αυτό δεν είναι δημόσιο κλειδί OpenSSH.",
+        "This public key does not belong to the private key.": "Αυτό το δημόσιο κλειδί δεν ανήκει στο ιδιωτικό κλειδί."
     },
     "plurals": null
 }
