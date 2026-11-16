@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Event\Audit;
 
 /**
- * Audit event-type constants and the metadata whitelist.
+ * Audit event-type constants; the metadata policy is AuditMetadataPolicy.
  */
 final class AuditEventTypes {
 	// Secret lifecycle.
@@ -267,217 +267,25 @@ final class AuditEventTypes {
 	public const FEDERATION_PARTNER_VALUE_FIELDS_CHANGED = 'federation_partner.value_fields_changed';
 
 	/**
-	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
-	 * Recording any of these is rejected with an exception — defense in depth so
-	 * a future dispatch site cannot accidentally leak secret material (design D3).
+	 * Metadata keys that may never appear in an audit entry.
 	 *
 	 * @var string[]
 	 */
-	public const FORBIDDEN_KEYS = [
-		'key',
-		'login',
-		'password',
-		'value',
-		'additionalFields',
-		'totp',
-		'passkeys',
-		'ciphertext',
-		'payload',
-	];
+	public const FORBIDDEN_KEYS = AuditMetadataPolicy::FORBIDDEN_KEYS;
 
 	/**
-	 * Per-event-type whitelist of permitted metadata keys. Unknown keys are
-	 * dropped by AuditService::record; only the listed keys survive.
-	 *
-	 * A constant rather than a static accessor: the table is a compile-time
-	 * literal, and constant access is a value read at the call site instead
-	 * of a static method call the caller cannot substitute
-	 * (rulesets/cleancode.xml/StaticAccess).
+	 * Per-event-type whitelist of permitted metadata keys.
 	 *
 	 * @var array<string,string[]>
 	 */
-	public const WHITELIST = [
-		self::SECRET_CREATED => ['typeId', 'folderId'],
-		self::SECRET_UPDATED => ['changedFields', 'skippedUserIds'],
-		self::SECRET_READ => [],
-		self::SECRET_DELETED => [],
-		self::SECRET_TRASHED => [],
-		self::SECRET_RESTORED => [],
-		self::SECRET_PURGED => ['reason'],
-		self::SECRET_ARCHIVED => [],
-		self::SECRET_UNARCHIVED => [],
-		self::SECRET_USED => ['copyId'],
-		self::FOLDER_DELETED_CASCADE => ['secretCount', 'subfolderCount'],
-		self::SHARE_GRANTED => ['recipientType', 'recipientId'],
-		self::SHARE_REVOKED => ['recipientType', 'recipientId'],
-		self::SHARE_DELEGATED => ['delegatedTo', 'isPermanent'],
-		self::SHARE_DELEGATION_RECLAIMED => ['delegatedTo'],
-		self::SHARE_QUARANTINED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'copyUseOnly', 'copyAccessEndsAt'],
-		self::SHARE_QUARANTINE_RELEASED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'forced'],
-		self::SHARE_QUARANTINE_DROPPED => ['sourceSecretId', 'recipientId', 'copyId', 'reason', 'restrictionsCleared'],
-		self::LINK_SHARE_CREATED => ['hasPassword', 'expiresAt'],
-		self::LINK_SHARE_ACCESSED => [],
-		self::LINK_SHARE_ACCESS_FAILED => ['reason'],
-		self::LINK_SHARE_REVOKED => [],
-		self::LINK_SHARE_AUTO_DELETED => ['reason'],
-		self::REQUEST_CREATED => ['recipientType', 'recipientId'],
-		self::REQUEST_FULFILLED => [],
-		self::REQUEST_RE_REQUESTED => [],
-		self::REQUEST_REVOKED => [],
-		// No metadata: the request id is the object, and WHY it expired is the
-		// event type itself. Adding expires_at here would put a timestamp in the
-		// trail that the request row already carries.
-		self::REQUEST_EXPIRED => [],
-		self::SUITE_REVOKED => ['reason', 'markCompromised', 'emergencyContactsDestroyed'],
-		self::SUITE_REINSTATED => [],
-		self::SUITE_RECOVERY_STARTED => ['migrationId', 'newSuiteId'],
-		self::SUITE_RECOVERY_COMPLETED => ['reSuitedCount'],
-		self::SUITE_RECOVERY_ABORTED => ['migrationId', 'newSuiteId'],
-		self::SUITE_MIGRATION_TERMINATED => ['migrationId', 'oldSuiteId', 'newSuiteId'],
-		self::SUITE_REVOKE_REFUSED => ['reasonCode', 'markCompromised'],
-		self::SUITE_COMPROMISE_CONTAINED => ['stamped', 'notified', 'failed', 'incomplete', 'migrationEndFailed'],
-		// The guarded route, its purpose and why the proof was refused; never
-		// the proof, the nonce or the signature.
-		self::KEY_PROOF_REFUSED => ['route', 'purpose', 'reason'],
-		self::APPLICATION_REGISTERED => [],
-		self::APPLICATION_APPROVED => [],
-		self::APPLICATION_REJECTED => ['reason'],
-		self::APPLICATION_DELETED => [],
-		self::APPLICATION_TOKEN_ISSUED => [],
-		self::APPLICATION_SECRET_RETRIEVED => [],
-		self::APPLICATION_SECRET_REQUEST_CREATED => ['secretId', 'requestedFieldCount'],
-		self::VAULT_EXPORTED => ['mode', 'scope', 'secretCount'],
-		self::VAULT_GDPR_EXPORTED => ['mode', 'scope', 'secretCount'],
-		self::VAULT_ACCOUNT_DELETED => ['trigger', 'secretCount', 'shareCount', 'requestCount', 'suiteCount'],
-		// Emergency access — only non-sensitive relationship references; the
-		// recovery envelope and any key material are NEVER recorded (design D8).
-		self::EMERGENCY_ACCESS_GRANTED => ['grantorUserId', 'granteeUserId', 'accessLevel', 'waitPeriodDays'],
-		self::EMERGENCY_ACCESS_REQUESTED => ['grantorUserId', 'granteeUserId', 'waitPeriodDays'],
-		self::EMERGENCY_ACCESS_DECLINED => ['grantorUserId', 'granteeUserId'],
-		self::EMERGENCY_ACCESS_APPROVED => ['grantorUserId', 'granteeUserId'],
-		self::EMERGENCY_ACCESS_ACCESSED => ['grantorUserId', 'granteeUserId'],
-		self::EMERGENCY_ACCESS_REVOKED => ['grantorUserId', 'granteeUserId'],
-		self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
-		self::EMERGENCY_ACCESS_CARRIED => ['grantorUserId', 'granteeUserId', 'fromSuiteId', 'toSuiteId'],
-		// `via: share-save` marks a version number the client asserted.
-		self::SECRET_VERSION_RESTORED => ['versionNumber', 'via'],
-		// Rotation & expiry — ids/reasons only (§5.2).
-		self::SECRET_EXPIRY_SET => ['expiresAt'],
-		self::SECRET_ROTATION_FLAGGED => ['reason'],
-		self::SECRET_ROTATED => ['reason'],
-		self::SECRET_ROTATION_DISMISSED => ['reason'],
-		self::POLICY_EXPIRY_CHANGED => ['scope', 'scopeId'],
-		// Org password policy — before/after config values (§3.1).
-		self::PASSWORD_POLICY_UPDATED => ['before', 'after'],
-		self::VAULT_POLICY_UPDATED => ['before', 'after'],
-		// Backups: archive name, flags, sizes and counts only (§2.3).
-		self::BACKUP_CREATED => ['archive', 'encrypted', 'bytes'],
-		self::BACKUP_FAILED => ['error'],
-		self::BACKUP_RESTORED => ['archive', 'createdAt', 'tables', 'rows', 'blobs'],
-		// Compliance reporting — identifiers + format only (§5.1).
-		self::COMPLIANCE_REPORT_GENERATED => ['reportId'],
-		self::COMPLIANCE_REPORT_EXPORTED => ['reportId', 'format'],
-		// Machine leases — ids + lifetimes only (§5.2).
-		self::LEASE_GRANTED => ['leaseId', 'secretId', 'expiresAt', 'ttl'],
-		self::LEASE_RENEWED => ['leaseId', 'secretId', 'expiresAt', 'renewedCount'],
-		self::LEASE_REVOKED => ['leaseId', 'secretId', 'expiresAt'],
-		self::LEASE_EXPIRED => ['leaseId', 'secretId', 'expiresAt'],
-		// Encrypted attachments — id/size only (§5.1).
-		self::ATTACHMENT_UPLOADED => ['secretId', 'sizeBytes'],
-		self::ATTACHMENT_DOWNLOADED => ['secretId', 'sizeBytes'],
-		self::ATTACHMENT_DELETED => ['secretId', 'sizeBytes'],
-		// Team folder sharing — identifiers only, never key material (§4.2).
-		self::TEAM_FOLDER_SHARED => ['folderId'],
-		self::TEAM_FOLDER_UNSHARED => ['folderId', 'revokedCount'],
-		self::TEAM_FOLDER_MEMBER_ADDED => ['memberType', 'memberId'],
-		self::TEAM_FOLDER_MEMBER_REMOVED => ['memberType', 'memberId', 'revokedCount'],
-		self::TEAM_FOLDER_OFFBOARDED => [
-			'leavingUserId',
-			'successorUserId',
-			'revokedCount',
-			'transferredCount',
-			'linkSharesTransferredCount',
-			// Member offboarding (admin-member-overview-and-offboarding §1.3): counts and group ids only.
-			'membershipsRemovedCount',
-			'coveringGroupIds',
-		],
-		// Grade changes — identifiers + the new grade only (§3.3).
-		self::TEAM_FOLDER_GRADE_CHANGED => ['memberType', 'memberId', 'grade'],
-		// Automatic confirmation: counts only, the actor is the confirmer.
-		self::TEAM_FOLDER_MEMBERS_CONFIRMED => ['confirmedCount', 'memberCount'],
-		// SIEM sinks — sink id/type/outcome only (§5.1).
-		self::SIEM_SINK_CREATED => ['sinkId', 'type'],
-		self::SIEM_SINK_UPDATED => ['sinkId', 'type'],
-		self::SIEM_SINK_DELETED => ['sinkId'],
-		self::SIEM_SINK_TESTED => ['sinkId', 'outcome'],
-		self::MCP_TOOL_INVOKED => ['tool', 'resultCount'],
-		// Certificate lifecycle — identifiers only, never PEM/key.
-		self::CERTIFICATE_REISSUED => ['suiteId'],
-		self::CERTIFICATE_RENEWAL_MARKED => [],
-		// Honey tripwire — the access channel only (§D6).
-		self::HONEY_ACCESSED => ['channel'],
-		self::DEVICE_APPROVAL_REQUESTED => ['clientKind'],
-		self::DEVICE_APPROVAL_APPROVED => [],
-		self::DEVICE_APPROVAL_DENIED => [],
-		self::DEVICE_APPROVAL_EXPIRED => [],
-		self::DEVICE_APPROVAL_PICKED_UP => [],
-		self::PRIVILEGED_ACCESS_MARKED => [],
-		self::PRIVILEGED_ACCESS_UNMARKED => [],
-		self::PRIVILEGED_ACCESS_REQUESTED => ['requestId', 'startsAt', 'endsAt'],
-		self::PRIVILEGED_ACCESS_APPROVED => ['requestId', 'requesterId', 'startsAt', 'endsAt', 'ranges'],
-		self::PRIVILEGED_ACCESS_DENIED => ['requestId', 'requesterId'],
-		self::PRIVILEGED_ACCESS_USED => ['requestId', 'address', 'channel'],
-		self::PRIVILEGED_ACCESS_REFUSED => ['address', 'channel'],
-		self::PASSKEY_REVOKED_WITH_APP_PASSWORD => ['credentialCount'],
-		self::PASSKEY_ENROLLED => ['clientKind'],
-		self::PASSKEY_UNLOCKED => ['clientKind'],
-		self::PASSKEY_REFUSED => ['clientKind', 'ceremony'],
-		self::PASSKEY_SUSPENDED => ['clientKind'],
-		self::RECOVERY_SETTINGS_CHANGED => ['policy', 'threshold', 'officerCount'],
-		self::RECOVERY_KEY_CREATED => [],
-		self::RECOVERY_KEY_RETIRED => [],
-		self::RECOVERY_ENROLLED => ['suiteId'],
-		self::RECOVERY_WITHDRAWN => [],
-		self::RECOVERY_REQUESTED => ['userId'],
-		self::RECOVERY_APPROVED => ['userId', 'approvals', 'threshold'],
-		self::RECOVERY_DECLINED => ['userId'],
-		self::RECOVERY_HANDED_OFF => ['userId'],
-		self::RECOVERY_COMPLETED => ['handledBy'],
-		self::RECOVERY_EXPIRED => ['userId'],
-		// The other side by cloud id and partner, the share by id; nothing else.
-		self::FEDERATED_SHARE_SENT => ['federatedShareId', 'recipientCloudId', 'partnerId'],
-		self::FEDERATED_SHARE_UPDATED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
-		self::FEDERATED_SHARE_REVOKED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
-		self::FEDERATED_SHARE_SUSPENDED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'reason'],
-		self::FEDERATED_SHARE_FAILED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'notification'],
-		self::FEDERATED_SHARE_RECEIVED => ['inboundShareId', 'senderCloudId', 'partnerId'],
-		self::FEDERATED_SHARE_ACCEPTED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
-		self::FEDERATED_SHARE_DECLINED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
-		self::FEDERATED_COPY_UPDATED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
-		self::FEDERATED_COPY_REMOVED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
-		self::FEDERATED_SHARE_RECIPIENT_DECLINED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'kept'],
-		self::FEDERATED_SHARE_RECIPIENT_RESUMED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
-		// Field names only, never a value.
-		self::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED => ['partnerId', 'from', 'to'],
-	];
+	public const WHITELIST = AuditMetadataPolicy::WHITELIST;
 
 	/**
-	 * The whitelisted metadata keys whose VALUES reference a user id and must
-	 * be scrubbed on account-deletion anonymization (design D6). A value is
-	 * one user id or a list of them.
+	 * The whitelisted metadata keys whose values reference a user id.
 	 *
 	 * @var string[]
 	 */
-	public const USER_REFERENCING_METADATA_KEYS = [
-		'recipientId',
-		'delegatedTo',
-		'grantorUserId',
-		'granteeUserId',
-		'memberId',
-		'leavingUserId',
-		'successorUserId',
-		'skippedUserIds',
-	];
+	public const USER_REFERENCING_METADATA_KEYS = AuditMetadataPolicy::USER_REFERENCING_METADATA_KEYS;
 
 	/**
 	 * Whether an event type is known to the whitelist.
