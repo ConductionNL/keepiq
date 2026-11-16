@@ -8,6 +8,7 @@
  */
 
 import { RESERVED_MEMBER_NAMES } from './additionalFields.js'
+import { fieldsOf, schemasOf, withSchemas } from './fieldSchema.js'
 
 /** The kinds a field can have, in the order the editor offers them. */
 export const FIELD_KINDS = Object.freeze(['text', 'hidden', 'url', 'email'])
@@ -122,23 +123,42 @@ export function splitTypedValues(blob, fields) {
 
 /**
  * The additional-fields object to encrypt: the free members plus every
- * non-empty typed value, named by its field label.
+ * non-empty typed value, named by its field label. With the blob the form
+ * was opened from, a typed member it held stays, also when empty, keeps its
+ * stored value when unchanged (a number stays a number), and keeps its
+ * stored schema.
  *
  * @param {object} rest The free members, by name.
  * @param {Array<{key: string, label: string}>} fields The type's fields.
  * @param {object} values Typed values by field key.
+ * @param {object|null} [original] The blob the form was opened from.
  * @return {object} The blob.
  * @spec openspec/specs/admin-secret-types/spec.md#requirement-typed-fields-storage
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
-export function mergeTypedValues(rest, fields, values) {
+export function mergeTypedValues(rest, fields, values, original = null) {
 	const out = { ...rest }
+	const had =
+		original !== null && typeof original === 'object' ? fieldsOf(original) : {}
+	const stored = schemasOf(original)
+	const kept = {}
 	for (const field of fields) {
 		const value = values?.[field.key] ?? ''
-		if (value !== '') {
-			out[field.label] = value
+		const held = Object.hasOwn(had, field.label)
+		if (value === '' && !held) {
+			continue
+		}
+		out[field.label] =
+			held && String(had[field.label] ?? '') === value
+				? had[field.label]
+				: value
+		if (stored[field.label]) {
+			kept[field.label] = stored[field.label]
 		}
 	}
-	return out
+	return Object.keys(kept).length === 0
+		? out
+		: withSchemas(fieldsOf(out), { ...schemasOf(out), ...kept })
 }
 
 /**

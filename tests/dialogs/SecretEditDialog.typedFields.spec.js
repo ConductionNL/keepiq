@@ -156,3 +156,109 @@ describe('SecretEditDialog typed fields', () => {
 		expect(wrapper.vm.typedMissing).toEqual(['host'])
 	})
 })
+
+/**
+ * Mount the edit dialog over a secret.
+ *
+ * @param {object} secret The decrypted secret.
+ * @return {Promise<object>} The mounted wrapper.
+ */
+async function mountSecret(secret) {
+	useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
+		id: 's1',
+		name: 'Main database',
+		key: 'pw',
+		url: '',
+		login: '',
+		...secret,
+	})
+	const wrapper = mount(SecretEditDialog, {
+		propsData: { secretId: 's1' },
+		global: { stubs },
+	})
+	await wrapper.vm.$nextTick()
+	await new Promise((resolve) => setTimeout(resolve, 0))
+	await wrapper.vm.$nextTick()
+	return wrapper
+}
+
+// openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+describe('SecretEditDialog on a built-in type with data from before', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		const typeStore = useSecretTypeStore()
+		typeStore.types = [
+			{ id: 'type-db', name: 'database', label: 'Database', scope: 'system' },
+			{ id: 'type-note', name: 'note', label: 'Secure Note', scope: 'system' },
+		]
+		typeStore.fetchTypes = vi.fn().mockResolvedValue()
+		const session = useSessionStore()
+		session.cryptoKey = 'UNLOCKED'
+		session.certificate = 'PEM'
+	})
+
+	it('lets a Port that does not fit stay until it is changed', async () => {
+		const wrapper = await mountSecret({
+			typeId: 'type-db',
+			additionalFields: { Port: 'default' },
+		})
+
+		wrapper.vm.name = 'Renamed'
+		expect(wrapper.vm.canSubmit).toBe(true)
+
+		wrapper.vm.typedValues = { ...wrapper.vm.typedValues, port: 'abc' }
+		expect(wrapper.vm.canSubmit).toBe(false)
+	})
+
+	it('keeps an empty member and the schema of a field now typed', async () => {
+		const wrapper = await mountSecret({
+			typeId: 'type-db',
+			additionalFields: {
+				Port: '5432',
+				Host: '',
+				'@schema': { Port: { type: 'integer' } },
+			},
+		})
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
+
+		wrapper.vm.name = 'Renamed'
+		await wrapper.vm.submit()
+		expect(update.mock.calls[0][1].additionalFields).toBeUndefined()
+
+		wrapper.vm.typedValues = { ...wrapper.vm.typedValues, database: 'crm' }
+		await wrapper.vm.submit()
+		expect(update.mock.calls[1][1].additionalFields).toEqual({
+			Port: '5432',
+			Host: '',
+			Database: 'crm',
+			'@schema': { Port: { type: 'integer' } },
+		})
+	})
+
+	it('keeps the login of a note and the URL of a database that had one', async () => {
+		const note = await mountSecret({
+			typeId: 'type-note',
+			login: 'alice',
+			additionalFields: null,
+		})
+		expect(note.vm.showLogin).toBe(true)
+		expect(note.vm.showUrl).toBe(false)
+
+		const database = await mountSecret({
+			typeId: 'type-db',
+			url: 'https://db.example',
+			additionalFields: null,
+		})
+		expect(database.vm.showUrl).toBe(true)
+
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
+		database.vm.name = 'Renamed'
+		await database.vm.submit()
+		expect(update.mock.calls[0][1]).not.toHaveProperty('url')
+	})
+})

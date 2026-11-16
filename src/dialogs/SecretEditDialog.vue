@@ -108,6 +108,7 @@
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving || loading"
+				:reservedNames="typedFields.map((f) => f.label)"
 				@update:members="additionalFields = $event" />
 
 			<SecretTagsField
@@ -242,6 +243,8 @@ export default {
 			/** A new authenticator key being entered; the saved one is never loaded here. */
 			totpInput: '',
 			additionalFields: [],
+			/** The type fields' values as loaded, so only a changed one must fit. */
+			loadedTypedValues: {},
 			tags: [],
 			policy: null,
 		}
@@ -397,9 +400,26 @@ export default {
 				&& this.totpError === ''
 				&& valuesFit(
 					this.additionalFields,
-					this.typedFields,
+					this.changedTypedFields,
 					this.typedValues,
 				)
+			)
+		},
+
+		/**
+		 * The type's fields whose value changed in this dialog. Only those must
+		 * fit their schema to save: a value stored before the field had one,
+		 * such as a Database Port of "default", shows its warning but does not
+		 * block a rename or a password change.
+		 *
+		 * @return {Array<object>} The fields.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 */
+		changedTypedFields() {
+			return this.typedFields.filter(
+				(f) =>
+					(this.typedValues[f.key] ?? '')
+					!== (this.loadedTypedValues[f.key] ?? ''),
 			)
 		},
 	},
@@ -457,6 +477,7 @@ export default {
 					this.typedFields,
 				)
 				this.typedValues = split.values
+				this.loadedTypedValues = { ...split.values }
 				this.additionalFields = objectToMembers(split.rest)
 
 				// Seed the per-type composite fields from the decrypted
@@ -597,6 +618,7 @@ export default {
 					membersToObject(this.additionalFields),
 					this.typedFields,
 					this.typedValues,
+					o.additionalFields,
 				)
 				// The prior blob in the same shape (free members, then typed values),
 				// so a blob whose typed members only moved is not read as changed.
@@ -608,6 +630,7 @@ export default {
 					membersToObject(objectToMembers(priorSplit.rest)),
 					this.typedFields,
 					priorSplit.values,
+					o.additionalFields,
 				)
 				if (JSON.stringify(nextMembers) !== JSON.stringify(priorMembers)) {
 					diff.additionalFields = nextMembers

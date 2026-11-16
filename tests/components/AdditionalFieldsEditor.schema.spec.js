@@ -13,6 +13,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import AdditionalFieldsEditor from '../../src/components/AdditionalFieldsEditor.vue'
+import SchemaAdvanced from '../../src/components/SchemaAdvanced.vue'
 
 /**
  * Mount the editor over a member list.
@@ -78,5 +79,46 @@ describe('AdditionalFieldsEditor schemas', () => {
 
 		const input = wrapper.findComponent({ name: 'SchemaValueInput' })
 		expect(input.props('error')).toBe('Enter at most 65535.')
+	})
+})
+
+describe('AdditionalFieldsEditor names of the type', () => {
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	it('refuses a custom field named like one of the type\u2019s own fields', async () => {
+		const wrapper = mount(AdditionalFieldsEditor, {
+			propsData: { members: [], reservedNames: ['Port'] },
+		})
+
+		wrapper.vm.newName = 'Port'
+		wrapper.vm.onAdd()
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.emitted('update:members')).toBeUndefined()
+		expect(wrapper.find('[data-testid="additional-field-error"]').exists()).toBe(
+			true,
+		)
+	})
+})
+
+describe('SchemaAdvanced limits', () => {
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+	it('says so when a minimum is above its maximum or a pattern is invalid', () => {
+		const wrapper = mount(SchemaAdvanced, {
+			propsData: {
+				schema: { type: 'string', minLength: 5, maxLength: 4, pattern: '[' },
+			},
+		})
+
+		expect(wrapper.vm.lengthsConflict).toBe(true)
+		expect(wrapper.vm.patternInvalid).toBe(true)
+		expect(wrapper.vm.conflictText).toBe(
+			'The minimum is higher than the maximum.',
+		)
+
+		const fine = mount(SchemaAdvanced, {
+			propsData: { schema: { type: 'integer', minimum: 1, maximum: 9 } },
+		})
+		expect(fine.vm.rangeConflict).toBe(false)
+		expect(fine.vm.patternInvalid).toBe(false)
 	})
 })

@@ -58,6 +58,7 @@
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving"
+				:reservedNames="typedFields.map((f) => f.label)"
 				@update:members="additionalFields = $event" />
 
 			<SecretTagsField

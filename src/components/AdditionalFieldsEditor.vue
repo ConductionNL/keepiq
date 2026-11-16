@@ -172,6 +172,15 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
+		/**
+		 * Names a member may not take: the labels of the type's own fields,
+		 * which are stored under the same names.
+		 */
+		reservedNames: {
+			type: Array,
+			default: () => [],
+		},
 	},
 
 	emits: ['update:members'],
@@ -308,10 +317,10 @@ export default {
 		 */
 		onAdd() {
 			const name = (this.newName || '').trim()
-			const error = memberNameError(
-				name,
-				this.members.map((member) => member.name),
-			)
+			const error = memberNameError(name, [
+				...this.members.map((member) => member.name),
+				...this.reservedNames,
+			])
 
 			if (error !== '') {
 				this.nameError = error
@@ -340,9 +349,12 @@ export default {
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		onRename(index, name) {
-			const others = this.members
-				.filter((_, position) => position !== index)
-				.map((member) => member.name)
+			const others = [
+				...this.members
+					.filter((_, position) => position !== index)
+					.map((member) => member.name),
+				...this.reservedNames,
+			]
 
 			this.nameError = memberNameError(name, others)
 
