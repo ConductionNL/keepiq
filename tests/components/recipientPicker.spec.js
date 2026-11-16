@@ -2,178 +2,176 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * The recipient field of the user share dialogs (keepiq#37): Nextcloud's
- * sharee search, with each result marked when that user has no vault yet.
- * The marks come from one call per search that names the term and that
- * page's ids; there is no list of vault holders.
+ * RecipientPicker: it searches after a pause, lets only the newest search fill
+ * the list, shows why a search failed, and never passes up a user without a vault.
  *
  * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-search-marks-who-cannot-receive-a-share
  */
 
-import axios from '@nextcloud/axios'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import RecipientPicker from '../../src/components/share/RecipientPicker.vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import RecipientPicker, { RECIPIENT_SEARCH_DEBOUNCE_MS } from '../../src/components/share/RecipientPicker.vue'
 import { useShareStore } from '../../src/store/modules/share.js'
 
-/**
- * Answer the sharee search with these users, as `[id, displayName]`.
- *
- * @param {Array<Array<string>>} users The users.
- * @return {object} The spy.
- */
-function mockSharees(users) {
-	return vi.spyOn(axios, 'get').mockResolvedValue({
-		data: {
-			ocs: {
-				data: {
-					exact: { users: [] },
-					users: users.map(([id, label]) => ({
-						label,
-						value: { shareType: 0, shareWith: id },
-					})),
-				},
-			},
-		},
-	})
+const ALICE = { id: 'alice', label: 'Alice', hasSuite: true }
+const BOB = { id: 'bob', label: 'Bob', hasSuite: false }
+
+// A select that exposes its props and lets the test emit what vue-select would.
+const NcSelect = {
+	name: 'NcSelect',
+	props: ['modelValue', 'options', 'selectable', 'loading', 'disabled', 'error', 'helperText'],
+	emits: ['update:modelValue', 'search'],
+	template: '<div data-testid="select"><slot name="option" v-for="o in options" v-bind="o" /></div>',
 }
 
 /**
- * Answer the recipient-status call.
+ * Mount the picker with the given props.
  *
- * @param {Array<object>} recipients The `{userId, hasSuite}` rows.
- * @return {object} The spy.
+ * @param {object} props The props.
+ * @return {object} The wrapper.
  */
-function mockStatus(recipients) {
-	return vi.spyOn(axios, 'post').mockResolvedValue({ data: { recipients } })
+function mountPicker(props = {}) {
+	return mount(RecipientPicker, { props, global: { stubs: { NcSelect } } })
 }
-
-describe('useShareStore().searchRecipients', () => {
-	beforeEach(() => {
-		setActivePinia(createPinia())
-		vi.restoreAllMocks()
-	})
-
-	it('asks about one search page by term and ids, and marks who has a vault', async () => {
-		const get = mockSharees([
-			['alice', 'Alice Adams'],
-			['albert', 'Albert Ames'],
-		])
-		const post = mockStatus([
-			{ userId: 'alice', hasSuite: true },
-			{ userId: 'albert', hasSuite: false },
-		])
-
-		const found = await useShareStore().searchRecipients('al')
-
-		expect(get.mock.calls[0][1].params).toMatchObject({
-			search: 'al',
-			shareType: 0,
-			perPage: 25,
-			lookup: false,
-		})
-		expect(post).toHaveBeenCalledTimes(1)
-		expect(post.mock.calls[0][0]).toContain(
-			'/apps/keepiq/api/v1/shares/recipient-status',
-		)
-		expect(post.mock.calls[0][1]).toEqual({
-			search: 'al',
-			userIds: ['alice', 'albert'],
-		})
-		expect(found).toEqual([
-			{ id: 'alice', label: 'Alice Adams', hasSuite: true },
-			{ id: 'albert', label: 'Albert Ames', hasSuite: false },
-		])
-	})
-
-	it('leaves out a user the server did not answer about', async () => {
-		mockSharees([
-			['alice', 'Alice'],
-			['ghost', 'Ghost'],
-		])
-		mockStatus([{ userId: 'alice', hasSuite: true }])
-
-		const found = await useShareStore().searchRecipients('a')
-
-		expect(found.map((row) => row.id)).toEqual(['alice'])
-	})
-
-	it('makes no status call when the search finds nobody', async () => {
-		mockSharees([])
-		const post = mockStatus([])
-
-		expect(await useShareStore().searchRecipients('zz')).toEqual([])
-		expect(post).not.toHaveBeenCalled()
-	})
-})
 
 describe('RecipientPicker', () => {
-	const NcSelectStub = {
-		props: ['options', 'selectable', 'inputLabel', 'modelValue'],
-		emits: ['update:modelValue', 'search'],
-		template: `<div class="stub-select" :data-label="inputLabel">
-			<div v-for="o in options" :key="o.id" class="opt" :data-selectable="String(selectable(o))">
-				<slot name="option" v-bind="o" />
-			</div>
-		</div>`,
-	}
+	let store
 
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
+		vi.useFakeTimers()
+		store = useShareStore()
 	})
 
-	/**
-	 * Mount the picker and run one search.
-	 *
-	 * @return {Promise<object>} The wrapper.
-	 */
-	async function searched() {
-		mockSharees([
-			['alice', 'Alice Adams'],
-			['albert', 'Albert Ames'],
-		])
-		mockStatus([
-			{ userId: 'alice', hasSuite: true },
-			{ userId: 'albert', hasSuite: false },
-		])
-		const wrapper = mount(RecipientPicker, {
-			global: { stubs: { NcSelect: NcSelectStub } },
-		})
+	afterEach(() => {
+		vi.useRealTimers()
+	})
+
+	it('searches only after the pause since the last keystroke', async () => {
+		const search = vi.spyOn(store, 'searchRecipients').mockResolvedValue([ALICE, BOB])
+		const wrapper = mountPicker()
+		const select = wrapper.findComponent({ name: 'NcSelect' })
+
+		select.vm.$emit('search', 'a')
+		vi.advanceTimersByTime(RECIPIENT_SEARCH_DEBOUNCE_MS - 1)
+		select.vm.$emit('search', 'al')
+		vi.advanceTimersByTime(RECIPIENT_SEARCH_DEBOUNCE_MS - 1)
+		expect(search).not.toHaveBeenCalled()
+
+		vi.advanceTimersByTime(1)
+		await flushPromises()
+
+		expect(search).toHaveBeenCalledTimes(1)
+		expect(search).toHaveBeenCalledWith('al')
+		expect(select.props('options')).toEqual([ALICE, BOB])
+		expect(select.props('loading')).toBe(false)
+		expect(RECIPIENT_SEARCH_DEBOUNCE_MS).toBe(300)
+	})
+
+	it('keeps the list when vue-select emits an empty term after a pick', async () => {
+		const search = vi.spyOn(store, 'searchRecipients').mockResolvedValue([ALICE])
+		const wrapper = mountPicker()
+		const select = wrapper.findComponent({ name: 'NcSelect' })
+
+		select.vm.$emit('search', 'al')
+		select.vm.$emit('search', '')
+		vi.advanceTimersByTime(RECIPIENT_SEARCH_DEBOUNCE_MS * 2)
+		await flushPromises()
+
+		expect(search).not.toHaveBeenCalled()
+	})
+
+	it('lets only the newest search fill the list', async () => {
+		let answerFirst
+		vi.spyOn(store, 'searchRecipients')
+			.mockImplementationOnce(() => new Promise((resolve) => { answerFirst = resolve }))
+			.mockResolvedValueOnce([ALICE])
+		const wrapper = mountPicker()
+
+		const first = wrapper.vm.search('b')
 		await wrapper.vm.search('al')
-		return wrapper
-	}
+		answerFirst([BOB])
+		await first
 
-	it('marks a user without a vault and does not let them be picked', async () => {
-		const wrapper = await searched()
-		const rows = wrapper.findAll('.opt')
-
-		expect(rows).toHaveLength(2)
-		expect(rows[0].text()).toBe('Alice Adams')
-		expect(rows[0].attributes('data-selectable')).toBe('true')
-		expect(rows[1].text()).toContain('Albert Ames')
-		expect(rows[1].find('[data-testid="recipient-no-vault"]').text()).toBe(
-			'No vault yet',
-		)
-		expect(rows[1].attributes('data-selectable')).toBe('false')
+		expect(wrapper.vm.options).toEqual([ALICE])
+		expect(wrapper.vm.loading).toBe(false)
 	})
 
-	it('passes only a user with a vault up as the recipient', async () => {
-		const wrapper = await searched()
-		const [alice, albert] = wrapper.vm.options
+	it('shows why a search failed and empties the list', async () => {
+		vi.spyOn(store, 'searchRecipients')
+			.mockRejectedValueOnce({ response: { data: { message: 'Search is disabled' } } })
+			.mockRejectedValueOnce(new Error('Network Error'))
+			.mockRejectedValueOnce({})
+		const wrapper = mountPicker()
+		wrapper.vm.options = [ALICE]
 
-		wrapper.vm.onPick(albert)
-		expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+		await wrapper.vm.search('a')
+		await flushPromises()
+		const select = wrapper.findComponent({ name: 'NcSelect' })
+		expect(select.props('helperText')).toBe('Search is disabled')
+		expect(select.props('error')).toBe(true)
+		expect(select.props('options')).toEqual([])
 
-		wrapper.vm.onPick(alice)
-		expect(wrapper.emitted('update:modelValue')).toEqual([['alice']])
+		await wrapper.vm.search('a')
+		expect(wrapper.vm.error).toBe('Network Error')
+
+		await wrapper.vm.search('a')
+		await flushPromises()
+		expect(wrapper.vm.error).toBe('')
+		expect(select.props('error')).toBe(false)
 	})
 
-	it('labels the field', async () => {
-		const wrapper = await searched()
-		expect(wrapper.find('.stub-select').attributes('data-label')).toBe(
-			'Recipient',
-		)
+	it('passes up a user with a vault, or none, but never a user without one', () => {
+		const wrapper = mountPicker({ modelValue: 'alice' })
+		const select = wrapper.findComponent({ name: 'NcSelect' })
+
+		select.vm.$emit('update:modelValue', BOB)
+		select.vm.$emit('update:modelValue', ALICE)
+		select.vm.$emit('update:modelValue', null)
+
+		expect(wrapper.emitted('update:modelValue')).toEqual([['alice'], ['']])
+		expect(select.props('selectable')(ALICE)).toBe(true)
+		expect(select.props('selectable')(BOB)).toBe(false)
+	})
+
+	it('keeps showing the picked user after a search drops them', async () => {
+		vi.spyOn(store, 'searchRecipients').mockResolvedValue([BOB])
+		const wrapper = mountPicker({ modelValue: 'carol', disabled: true })
+		const select = wrapper.findComponent({ name: 'NcSelect' })
+
+		expect(select.props('modelValue')).toEqual({ id: 'carol', label: 'carol', hasSuite: true })
+		expect(select.props('disabled')).toBe(true)
+
+		await wrapper.vm.search('b')
+		await wrapper.setProps({ modelValue: 'bob' })
+		expect(select.props('modelValue')).toEqual(BOB)
+
+		await wrapper.setProps({ modelValue: '' })
+		expect(select.props('modelValue')).toBeNull()
+	})
+
+	it('marks the users who have no vault yet', async () => {
+		vi.spyOn(store, 'searchRecipients').mockResolvedValue([ALICE, BOB])
+		const wrapper = mountPicker()
+
+		await wrapper.vm.search('a')
+		await flushPromises()
+
+		const marks = wrapper.findAll('[data-testid="recipient-no-vault"]')
+		expect(marks).toHaveLength(1)
+		expect(marks[0].element.parentElement.textContent).toContain('Bob')
+	})
+
+	it('cancels a pending search when it is unmounted', async () => {
+		const search = vi.spyOn(store, 'searchRecipients').mockResolvedValue([])
+		const wrapper = mountPicker()
+
+		wrapper.findComponent({ name: 'NcSelect' }).vm.$emit('search', 'al')
+		wrapper.unmount()
+		vi.advanceTimersByTime(RECIPIENT_SEARCH_DEBOUNCE_MS * 2)
+
+		expect(search).not.toHaveBeenCalled()
 	})
 })
