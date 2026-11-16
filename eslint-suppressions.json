@@ -193,11 +193,6 @@
       "count": 1
     }
   },
-  "src/store/modules/encryptionSuite.js": {
-    "no-unused-vars": {
-      "count": 3
-    }
-  },
   "src/store/modules/export.js": {
     "eqeqeq": {
       "count": 1
@@ -243,9 +238,6 @@
   },
   "src/views/LinkShareAccess.vue": {
     "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    },
-    "no-empty": {
       "count": 1
     }
   },
