@@ -43,6 +43,7 @@ export function createPromptSlot(Cancelled) {
 		 *
 		 * @param {object} store The prompt store's state.
 		 * @return {Promise<string|undefined>}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		open(store) {
 			if (pending !== null) {
@@ -66,6 +67,7 @@ export function createPromptSlot(Cancelled) {
 		 * @param {(password: string) => Promise<boolean>} verify Whether the password is right.
 		 * @param {string} [value] What the caller's promise resolves with.
 		 * @return {Promise<boolean>} Whether the password was accepted.
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		async check(store, password, verify, value) {
 			if (pending === null || !password) {
@@ -92,6 +94,7 @@ export function createPromptSlot(Cancelled) {
 		 *
 		 * @param {object} store The prompt store's state.
 		 * @return {void}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		cancel(store) {
 			store.open = false
