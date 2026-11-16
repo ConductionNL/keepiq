@@ -60,6 +60,7 @@
 				ref="file"
 				type="file"
 				class="keepiq-ssh-key__file"
+				:aria-label="t('keepiq', 'Import from file')"
 				data-testid="ssh-import-file"
 				@change="onFile" />
 		</div>
