@@ -169,6 +169,18 @@ describe('SecretRequestCreateDialog field schemas', () => {
 			})
 		})
 
+		it('Add and create ticks a field that is already listed', async () => {
+			const { wrapper, createRequest } = mountTyped()
+			wrapper.vm.customFieldInput = 'url'
+
+			wrapper.vm.onCreate()
+			await wrapper.vm.addAndCreate()
+			await wrapper.vm.$nextTick()
+
+			expect(createRequest.mock.calls[0][0].requestedFields).toContain('url')
+			expect(wrapper.vm.customFieldInput).toBe('')
+		})
+
 		it('Create without it leaves the field out', async () => {
 			const { wrapper, createRequest } = mountTyped()
 

@@ -305,8 +305,6 @@ import {
 } from '@nextcloud/vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import SchemaAdvanced from '../components/SchemaAdvanced.vue'
-import { CARD_TYPE_NAME, IDENTITY_TYPE_NAME } from '../cardIdentity/cardIdentity.js'
-import { PASSKEY_TYPE_NAME } from '../passkey/passkey.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
@@ -335,25 +333,11 @@ import {
 	typeFieldSchema,
 } from '../utils/fieldSchema.js'
 import { fillLinkFor } from '../utils/fillLink.js'
-import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
-
-/**
- * Types a request is not offered as.
- *
- * Asking a stranger for their payment card or identity details through a fill
- * link is what a scam looks like, and there is no legitimate use the request
- * flow needs to serve (backend review, 2026-11-04). Their fields also live
- * packed together in the one encrypted `key`, which a fill cannot address part
- * of. A passkey holds its private key, which signs in as its owner, so the
- * server refuses it as well.
- *
- * @type {Array<string>}
- */
-const NOT_REQUESTABLE_TYPE_NAMES = [
-	CARD_TYPE_NAME,
-	IDENTITY_TYPE_NAME,
-	PASSKEY_TYPE_NAME,
-]
+import {
+	isCreatableType,
+	isRequestableTypeName,
+	secretTypeLabel,
+} from '../utils/secretTypes.js'
 
 /**
  * Whether a request may be asked for as this type.
@@ -365,7 +349,7 @@ const NOT_REQUESTABLE_TYPE_NAMES = [
  * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
  */
 function isRequestableType(type) {
-	return isCreatableType(type) && !NOT_REQUESTABLE_TYPE_NAMES.includes(type.name)
+	return isCreatableType(type) && isRequestableTypeName(type.name)
 }
 
 /**
@@ -874,14 +858,24 @@ export default {
 		},
 
 		/**
-		 * Add the typed field, then create the request. A name the field
-		 * rules refuse closes the question so its reason shows by the input.
+		 * Add the typed field, then create the request. A name already in
+		 * the list is ticked instead. A name the field rules refuse closes
+		 * the question so its reason shows by the input.
 		 *
 		 * @return {void}
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
 		addAndCreate() {
 			this.unaddedOpen = false
+			const name = (this.customFieldInput || '').trim()
+			if (this.availableFields.some((f) => f.key === name)) {
+				if (!this.requestedFields.includes(name)) {
+					this.requestedFields = [...this.requestedFields, name]
+				}
+				this.customFieldInput = ''
+				this.submit()
+				return
+			}
 			this.addCustomField()
 			if (this.customFieldError === '') {
 				this.submit()
