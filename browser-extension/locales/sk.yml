@@ -343,6 +343,7 @@ blocked:
   suiteRevoked: Jej šifrovací kľúč bol zneplatnený.
   suiteCompromised: Zašifrované kompromitovaným kľúčom, preto ju tu nemožno otvoriť. Webová aplikácia Keepiq ukáže, či ju možno obnoviť.
   migrationFailed: Pri obnove po kompromitácii ju nebolo možné previesť na váš nový kľúč. Uložená hodnota je zachovaná, ale nemožno ju otvoriť.
+  privilegedAccess: Vlastník vám teraz neschválil časové okno, alebo nie z tejto adresy.
 
 detail:
   item: Položka

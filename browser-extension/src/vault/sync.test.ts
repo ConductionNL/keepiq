@@ -117,6 +117,19 @@ describe('full sync', () => {
 		expect((await readSnapshot(accountId))?.secrets).toEqual([blockedRow(), { ...failed, blockedReason: 'migration_failed' }])
 	})
 
+	it('names a privileged login withheld outside its approved window', async () => {
+		const withheld = { ...blockedRow({ id: 'p1', encryptionSuiteId: suiteRow.id }), blockedReason: 'Privileged login: an approved access window is required', privilegedAccess: 'privileged_access_required' }
+		server({
+			'/api/v1/offline/manifest': () => json({ message: 'No active suite' }, 404),
+			'/api/v1/secrets': () => json({ items: [withheld], total: 1, page: 1, limit: 100 }),
+			'/api/v1/folders': () => json([]),
+			'/api/v1/secret-types': () => json(typeRows),
+			'/api/v1/suites': () => json([suiteRow]),
+		})
+		await sync(accountId)
+		expect((await readSnapshot(accountId))?.secrets).toEqual([{ ...withheld, blockedReason: 'privileged_access' }])
+	})
+
 	it('leaves the previous snapshot untouched when a fallback page fails', async () => {
 		const before = cached()
 		await writeSnapshot(accountId, before)

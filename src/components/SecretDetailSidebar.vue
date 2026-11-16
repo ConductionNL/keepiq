@@ -204,6 +204,16 @@
 			</template>
 		</NcEmptyContent>
 
+		<!-- A privileged login outside an approved window: the detail panel
+		     offers to ask the owner for access (capability-requirements-from-
+		     the-matrix 3.1). -->
+		<div
+			v-if="error && privilegedRefused"
+			class="secret-detail__box"
+			data-testid="secret-detail-privileged-refused">
+			<PrivilegedAccessPanel :secretId="secretId" />
+		</div>
+
 		<div v-if="!error && secret" class="secret-detail__card">
 			<!-- Use-only copy (sharing-use-only-and-expiring-shares D3): the
 			     value is never shown or copied here, only filled by the
@@ -1163,6 +1173,20 @@
 							</div>
 						</div>
 					</div>
+
+					<div class="secret-detail__row secret-detail__row--block">
+						<span class="secret-detail__row-icon">
+							<ShieldOutline :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<span class="secret-detail__row-label">{{
+								t('keepiq', 'Privileged access')
+							}}</span>
+							<div class="secret-detail__row-value">
+								<PrivilegedAccessPanel :secretId="secretId" />
+							</div>
+						</div>
+					</div>
 				</div>
 			</details>
 		</div>
@@ -1218,6 +1242,7 @@ import HoneyPanel from './HoneyPanel.vue'
 import PasskeyDisplay from './PasskeyDisplay.vue'
 import PasskeyList from './PasskeyList.vue'
 import PasswordField from './PasswordField.vue'
+import PrivilegedAccessPanel from './PrivilegedAccessPanel.vue'
 import RotationPanel from './RotationPanel.vue'
 import SecretActivityTab from './SecretActivityTab.vue'
 import SecretRequestList from './secretRequest/SecretRequestList.vue'
@@ -1245,7 +1270,7 @@ import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { fieldValueOf, objectToMembers } from '../utils/additionalFields.js'
 import { extraUrlLinks } from '../utils/additionalUrls.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
-import { isRefusal } from '../utils/refusal.js'
+import { isRefusal, refusalCode } from '../utils/refusal.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
 import { changePasswordUrl, previewImageUrl, previewTemplate } from '../utils/siteImages.js'
@@ -1305,6 +1330,7 @@ export default {
 		CopyButton,
 		DelegationManager,
 		HoneyPanel,
+		PrivilegedAccessPanel,
 		PasskeyDisplay,
 		PasskeyList,
 		PasswordField,
@@ -1344,6 +1370,9 @@ export default {
 			loading: true,
 			error: '',
 			requestDialogOpen: false,
+			// The server refused this copy of a privileged login outside an
+			// approved window (capability-requirements-from-the-matrix 3.1).
+			privilegedRefused: false,
 			teamWritable: false,
 			/** A copy without a write grade: no edit, restore or new request. */
 			viewOnlyCopy: false,
@@ -2028,6 +2057,7 @@ export default {
 			const id = this.secretId
 			this.loading = true
 			this.error = ''
+			this.privilegedRefused = false
 			try {
 				// Fetched together and applied together, so the flags below
 				// always describe the secret on show and a view-only copy
@@ -2056,7 +2086,13 @@ export default {
 				if (id !== this.secretId) {
 					return
 				}
-				if (isRefusal(e)) {
+				if (isRefusal(e) && refusalCode(e) === 'privileged_access_required') {
+					this.privilegedRefused = true
+					this.error = t(
+						'keepiq',
+						'This login can only be used in a time window its owner approved.',
+					)
+				} else if (isRefusal(e)) {
 					this.error = t(
 						'keepiq',
 						'This secret is locked because its encryption suite was revoked.',

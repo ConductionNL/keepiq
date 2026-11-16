@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\PrivilegedAccessRequiredException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Kernel\AppIdentity;
@@ -115,6 +116,13 @@ class SecretVersionController extends OCSController {
 
 		try {
 			$version = $this->versionService->getVersion(versionId: $id, userId: $userId);
+		} catch (PrivilegedAccessRequiredException $exception) {
+			// A privileged copy outside its window carries a code, so the
+			// client offers to ask for access (capability-requirements-from-the-matrix 3.1).
+			return new JSONResponse(
+				data: ['message' => $exception->getMessage(), 'code' => $exception->policyCode()],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
 		} catch (InvalidArgumentException $exception) {
 			$status = Http::STATUS_NOT_FOUND;
 			if (str_contains($exception->getMessage(), 'locked') === true) {

@@ -343,6 +343,7 @@ blocked:
   suiteRevoked: Njegov šifrirni ključ je bil preklican.
   suiteCompromised: Šifriran je z ogroženim ključem, zato ga tukaj ni mogoče odpreti. Spletna aplikacija Keepiq prikaže, ali ga je mogoče obnoviti.
   migrationFailed: Med obnovitvijo po ogroženosti ga ni bilo mogoče prenesti na vaš novi ključ. Shranjena vrednost je ohranjena, vendar je ni mogoče odpreti.
+  privilegedAccess: Lastnik vam zdaj ni odobril časovnega okna ali ne s tega naslova.
 
 detail:
   item: Element

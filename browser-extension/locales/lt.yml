@@ -343,6 +343,7 @@ blocked:
   suiteRevoked: Jo šifravimo raktas atšauktas.
   suiteCompromised: Užšifruotas pažeistu raktu, todėl čia jo atidaryti negalima. Keepiq žiniatinklio programėlė parodo, ar jį galima atkurti.
   migrationFailed: Atkuriant po pažeidimo jo nepavyko perkelti į jūsų naują raktą. Įrašyta reikšmė išsaugota, tačiau jos atidaryti negalima.
+  privilegedAccess: Savininkas dabar jums nepatvirtino laiko lango arba ne iš šio adreso.
 
 detail:
   item: Elementas

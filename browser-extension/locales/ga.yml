@@ -343,6 +343,7 @@ blocked:
   suiteRevoked: Cúlghaireadh a heochair chriptithe.
   suiteCompromised: Criptithe le heochair a cuireadh i gcontúirt, mar sin ní féidir í a oscailt anseo. Taispeánann aip ghréasáin Keepiq an féidir í a aisghabháil.
   migrationFailed: Níorbh fhéidir í a aistriú chuig d'eochair nua le linn an athshlánaithe. Coinnítear an luach stóráilte ach ní féidir é a oscailt.
+  privilegedAccess: Níor cheadaigh an t-úinéir fuinneog ama duit anois, nó ní ón seoladh seo.
 
 detail:
   item: Mír

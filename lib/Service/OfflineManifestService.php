@@ -32,6 +32,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCA\Keepiq\Kernel\Contracts\OfflineManifestServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -59,6 +60,7 @@ class OfflineManifestService implements OfflineManifestServiceInterface {
 	 * @param SecretTypeMapper $typeMapper The secret type mapper
 	 * @param TwoFactorGate $twoFactor The two-factor vault policy
 	 * @param ShareTargetMapper $shareTargets The user's copies and their sources
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 *
 	 * @return void
 	 */
@@ -69,6 +71,7 @@ class OfflineManifestService implements OfflineManifestServiceInterface {
 		private SecretTypeMapper $typeMapper,
 		private TwoFactorGate $twoFactor,
 		private ShareTargetMapper $shareTargets,
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 	}//end __construct()
 
@@ -133,14 +136,36 @@ class OfflineManifestService implements OfflineManifestServiceInterface {
 	 */
 	private function liveSecrets(string $userId): array {
 		$sourceVersions = $this->sourceVersions(userId: $userId);
+		// A privileged copy outside its approved window is not cached offline
+		// with its ciphertext (capability-requirements-from-the-matrix 3.1).
 		return array_map(
-			static fn (Secret $secret) => [
-				...$secret->jsonSerialize(),
+			fn (Secret $secret) => [
+				...$this->servable(secret: $secret, userId: $userId),
 				'sourceUpdatedAt' => $sourceVersions[$secret->getId()] ?? null,
 			],
 			$this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, state: SecretMapper::STATE_LIVE)
 		);
 	}//end liveSecrets()
+
+	/**
+	 * A row as it may be cached offline: without its ciphertext when it is a
+	 * privileged copy outside its approved window.
+	 *
+	 * @param Secret $secret The row
+	 * @param string $userId The holder
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	private function servable(Secret $secret, string $userId): array {
+		$data = $secret->jsonSerialize();
+		if ($this->privilegedGate === null) {
+			return $data;
+		}
+
+		return $this->privilegedGate->servable(secret: $secret, data: $data, userId: $userId, channel: 'offline');
+	}//end servable()
 
 	/**
 	 * Each row in its serialised form.

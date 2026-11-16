@@ -215,6 +215,16 @@ final class AuditEventTypes {
 	public const DEVICE_APPROVAL_EXPIRED = 'device_approval.expired';
 	public const DEVICE_APPROVAL_PICKED_UP = 'device_approval.picked_up';
 
+	// Privileged logins (capability-requirements-from-the-matrix 3.1): the
+	// window, the address and the request, never secret material.
+	public const PRIVILEGED_ACCESS_MARKED = 'privileged_access.marked';
+	public const PRIVILEGED_ACCESS_UNMARKED = 'privileged_access.unmarked';
+	public const PRIVILEGED_ACCESS_REQUESTED = 'privileged_access.requested';
+	public const PRIVILEGED_ACCESS_APPROVED = 'privileged_access.approved';
+	public const PRIVILEGED_ACCESS_DENIED = 'privileged_access.denied';
+	public const PRIVILEGED_ACCESS_USED = 'privileged_access.used';
+	public const PRIVILEGED_ACCESS_REFUSED = 'privileged_access.refused';
+
 	// Browser-extension passkeys (extension-passkey-enrolment D3), identifiers only.
 	public const PASSKEY_REVOKED_WITH_APP_PASSWORD =
 		'passkey.revoked_with_app_password';
@@ -411,6 +421,13 @@ final class AuditEventTypes {
 		self::DEVICE_APPROVAL_DENIED => [],
 		self::DEVICE_APPROVAL_EXPIRED => [],
 		self::DEVICE_APPROVAL_PICKED_UP => [],
+		self::PRIVILEGED_ACCESS_MARKED => [],
+		self::PRIVILEGED_ACCESS_UNMARKED => [],
+		self::PRIVILEGED_ACCESS_REQUESTED => ['requestId', 'startsAt', 'endsAt'],
+		self::PRIVILEGED_ACCESS_APPROVED => ['requestId', 'requesterId', 'startsAt', 'endsAt', 'ranges'],
+		self::PRIVILEGED_ACCESS_DENIED => ['requestId', 'requesterId'],
+		self::PRIVILEGED_ACCESS_USED => ['requestId', 'address', 'channel'],
+		self::PRIVILEGED_ACCESS_REFUSED => ['address', 'channel'],
 		self::PASSKEY_REVOKED_WITH_APP_PASSWORD => ['credentialCount'],
 		self::PASSKEY_ENROLLED => ['clientKind'],
 		self::PASSKEY_UNLOCKED => ['clientKind'],

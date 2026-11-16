@@ -343,6 +343,7 @@ blocked:
   suiteRevoked: Sein Verschlüsselungsschlüssel wurde widerrufen.
   suiteCompromised: Mit einem kompromittierten Schlüssel verschlüsselt, daher kann er hier nicht geöffnet werden. Die Keepiq-Web-App zeigt, ob er wiederhergestellt werden kann.
   migrationFailed: Er konnte bei der Wiederherstellung nach der Kompromittierung nicht auf deinen neuen Schlüssel übertragen werden. Der gespeicherte Wert bleibt erhalten, kann aber nicht geöffnet werden.
+  privilegedAccess: Der Eigentümer hat für dich jetzt kein Zeitfenster freigegeben, oder nicht von dieser Adresse aus.
 
 detail:
   item: Eintrag

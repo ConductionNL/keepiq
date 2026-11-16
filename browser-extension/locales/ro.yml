@@ -343,6 +343,7 @@ blocked:
   suiteRevoked: Cheia sa de criptare a fost revocată.
   suiteCompromised: Criptat cu o cheie compromisă, deci nu poate fi deschis aici. Aplicația web Keepiq arată dacă poate fi recuperat.
   migrationFailed: Nu a putut fi mutat la cheia dvs. nouă în timpul recuperării după compromitere. Valoarea stocată este păstrată, dar nu poate fi deschisă.
+  privilegedAccess: Proprietarul nu ți-a aprobat acum un interval de timp sau nu de la această adresă.
 
 detail:
   item: Element
