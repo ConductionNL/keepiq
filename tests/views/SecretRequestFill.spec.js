@@ -143,6 +143,9 @@ describe('SecretRequestFill', () => {
 				status: 'pending',
 				requested_fields: ['key', 'Private key', 'Passphrase'],
 				secret_type: 'certificate',
+				// What the dialog sent before the private key was hidden: the
+				// type still masks it.
+				field_schemas: { 'Private key': { type: 'string', format: 'text' } },
 				public_certificate: 'PEM',
 			},
 		})

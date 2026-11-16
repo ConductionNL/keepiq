@@ -143,7 +143,7 @@ const stubs = {
 		template: '<div class="typed" />',
 	},
 	AdditionalFieldsEditor: {
-		props: ['members', 'disabled'],
+		props: ['members', 'disabled', 'reservedNames'],
 		template: '<div class="additional" />',
 	},
 	SecretTagsField: {

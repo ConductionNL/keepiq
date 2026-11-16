@@ -467,11 +467,7 @@ export default {
 			if (fromSchema !== null) {
 				return fromSchema
 			}
-			const typeName = this.store.publicRequest?.secret_type ?? ''
-			const kind =
-				field === 'key'
-					? valueFieldOf(typeName)?.kind
-					: builtinFieldNamed(typeName, field)?.kind
+			const kind = this.ownField(field)?.kind
 			if (kind === 'multiline') {
 				return 'multiline'
 			}
@@ -503,7 +499,7 @@ export default {
 		 */
 		schemaInputType(field) {
 			const schema = this.schemaOf(field)
-			if (schema === null) {
+			if (schema === null || this.typeDecidesMasking(field)) {
 				return null
 			}
 			const input = inputOf(schema)
@@ -547,11 +543,38 @@ export default {
 			if (schema !== null && this.schemaInputType(field) !== null) {
 				return isHiddenSchema(schema)
 			}
-			const typeName = this.store.publicRequest?.secret_type ?? ''
-			if (field === 'key' && valueFieldOf(typeName)?.public === true) {
+			if (this.ownField(field)?.public === true) {
 				return false
 			}
 			return this.inputType(field) !== 'text'
+		},
+
+		/**
+		 * The secret's type's own definition of a field: its value field for
+		 * `key`, else the extra field of that name; null for any other.
+		 *
+		 * @param {string} field The requested field name.
+		 * @return {object|null} The field definition.
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 */
+		ownField(field) {
+			const typeName = this.store.publicRequest?.secret_type ?? ''
+			return field === 'key'
+				? valueFieldOf(typeName)
+				: builtinFieldNamed(typeName, field)
+		},
+
+		/**
+		 * Whether the type, not a schema, decides how a field is masked: a
+		 * type's own masked or multi-line field, such as a certificate's
+		 * private key, stays masked whatever schema the request sent.
+		 *
+		 * @param {string} field The requested field name.
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 */
+		typeDecidesMasking(field) {
+			return ['hidden', 'multiline'].includes(this.ownField(field)?.kind)
 		},
 
 		/**

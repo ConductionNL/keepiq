@@ -5,7 +5,7 @@
   The fields an administrator defined on an item type (admin-18), rendered
   by kind: text, hidden (a password field), url and email, and the extra
   fields of a built-in type, which add multiline (a text area that keeps the
-  line breaks of a key or certificate). The parent keeps
+  line breaks of a key or certificate, masked until shown unless public). The parent keeps
   the values by field key and stores them in the encrypted additional-fields
   blob; this component only edits them.
 
@@ -18,9 +18,11 @@
 				v-if="field.kind === 'hidden'"
 				v-bind="fieldProps(field)"
 				@update:modelValue="set(field.key, $event)" />
-			<NcTextArea
+			<!-- A private key starts masked; a public key does not. -->
+			<MaskedTextArea
 				v-else-if="field.kind === 'multiline'"
 				v-bind="fieldProps(field)"
+				:public="field.public === true"
 				rows="4"
 				@update:modelValue="set(field.key, $event)" />
 			<NcTextField
@@ -34,12 +36,13 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
-import { NcPasswordField, NcTextArea, NcTextField } from '@nextcloud/vue'
+import { NcPasswordField, NcTextField } from '@nextcloud/vue'
+import MaskedTextArea from './MaskedTextArea.vue'
 import { schemaError } from '../utils/fieldSchema.js'
 
 export default {
 	name: 'TypedFieldsForm',
-	components: { NcPasswordField, NcTextArea, NcTextField },
+	components: { MaskedTextArea, NcPasswordField, NcTextField },
 
 	props: {
 		/**

@@ -110,6 +110,8 @@ function definitions() {
 					label: 'Public key',
 					displayLabel: t('keepiq', 'Public key'),
 					kind: 'multiline',
+					// Public by design, like a certificate: never masked.
+					public: true,
 				},
 				{
 					key: 'passphrase',

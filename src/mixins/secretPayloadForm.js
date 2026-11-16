@@ -72,6 +72,17 @@ export const secretPayloadForm = {
 		},
 
 		/**
+		 * Whether the value is public, as a certificate is, so it is never
+		 * masked.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		valuePublic() {
+			return valueFieldOf(this.selectedTypeName)?.public === true
+		},
+
+		/**
 		 * The login field's label: "Username" on a database, else "Login".
 		 *
 		 * @return {string}
@@ -135,6 +146,7 @@ export const secretPayloadForm = {
 					: this.valueLabel,
 				valueRequired: required,
 				valueMultiline: this.valueMultiline,
+				valuePublic: this.valuePublic,
 			}
 		},
 

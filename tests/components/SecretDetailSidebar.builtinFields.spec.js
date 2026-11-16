@@ -42,14 +42,15 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
  *
  * @param {string} typeId The secret's type.
  * @param {object} additionalFields The decrypted members.
+ * @param {string} [key] The decrypted value.
  * @return {Promise<object>} The wrapper.
  */
-async function mountOn(typeId, additionalFields) {
+async function mountOn(typeId, additionalFields, key = PEM) {
 	useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
 		id: 's-1',
 		name: 'example.org',
 		typeId,
-		key: PEM,
+		key,
 		additionalFields,
 	})
 	const wrapper = mount(SecretDetailSidebar, {
@@ -88,6 +89,7 @@ describe('SecretDetailSidebar built-in type fields', () => {
 		typeStore.types = [
 			{ id: 't-certificate', name: 'certificate', label: 'Certificate' },
 			{ id: 't-login', name: 'login', label: 'Login' },
+			{ id: 't-ssh', name: 'ssh_key', label: 'SSH Key' },
 		]
 		typeStore.fetchTypes = vi.fn().mockResolvedValue()
 	})
@@ -126,6 +128,28 @@ describe('SecretDetailSidebar built-in type fields', () => {
 		expect(own).toHaveLength(1)
 		expect(own[0].find('dt').text()).toBe('serial-note')
 		expect(own[0].find('dd').element.textContent).toBe('line one\nline two')
+	})
+
+	it('masks a certificate that holds a private key, as one saved before it had its own field', async () => {
+		const bundle = `${PEM}\n-----BEGIN PRIVATE KEY-----\nMIIE\n-----END PRIVATE KEY-----`
+		const wrapper = await mountOn('t-certificate', {}, bundle)
+
+		expect(fieldsByLabel(wrapper).Certificate).toEqual({
+			multiline: true,
+			alwaysShown: false,
+		})
+	})
+
+	it('shows an SSH public key at once, and masks its passphrase', async () => {
+		const wrapper = await mountOn(
+			't-ssh',
+			{ 'Public key': 'ssh-ed25519 AAAA', Passphrase: 'pp' },
+			'PRIVATE',
+		)
+
+		const fields = fieldsByLabel(wrapper)
+		expect(fields['Public key']).toEqual({ multiline: true, alwaysShown: true })
+		expect(fields.Passphrase).toEqual({ multiline: false, alwaysShown: false })
 	})
 
 	it('shows no additional fields box when only the type fields hold values', async () => {

@@ -31,11 +31,12 @@
 		</template>
 	</template>
 	<!-- A certificate or note is several lines: a password input would
-	     drop the line breaks of a PEM block. -->
-	<NcTextArea
+	     drop the line breaks of a PEM block. A secret one starts masked. -->
+	<MaskedTextArea
 		v-else-if="valueMultiline"
 		:modelValue="value"
 		:label="valueLabel"
+		:public="valuePublic"
 		:required="valueRequired"
 		rows="6"
 		data-testid="secret-value-multiline"
@@ -67,9 +68,10 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
-import { NcButton, NcPasswordField, NcTextArea, NcTextField } from '@nextcloud/vue'
+import { NcButton, NcPasswordField, NcTextField } from '@nextcloud/vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import KeyGeneratorModal from '../dialogs/KeyGeneratorModal.vue'
+import MaskedTextArea from './MaskedTextArea.vue'
 import { cardNumberHint, securityCodeHint } from '../cardIdentity/cardIdentity.js'
 
 export default {
@@ -78,9 +80,9 @@ export default {
 	components: {
 		Dice5,
 		KeyGeneratorModal,
+		MaskedTextArea,
 		NcButton,
 		NcPasswordField,
-		NcTextArea,
 		NcTextField,
 	},
 
@@ -129,6 +131,12 @@ export default {
 
 		/** Whether the value spans several lines, such as a certificate. */
 		valueMultiline: {
+			type: Boolean,
+			default: false,
+		},
+
+		/** Whether the value is public, as a certificate is, so never masked. */
+		valuePublic: {
 			type: Boolean,
 			default: false,
 		},

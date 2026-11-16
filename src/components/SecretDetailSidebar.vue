@@ -333,7 +333,7 @@
 								:label="keyLabel"
 								:useOnly="useOnly"
 								:multiline="valueField?.kind === 'multiline'"
-								:alwaysShown="valueField?.public === true"
+								:alwaysShown="valueShownAtOnce"
 								:resolve="resolveKey" />
 						</div>
 					</div>
@@ -356,13 +356,19 @@
 							<FormatListBulleted v-else :size="20" />
 						</span>
 						<div class="secret-detail__row-main">
+							<!-- A public multi-line field, such as an SSH public
+							     key, keeps its lines but is not masked. -->
 							<div
-								v-if="isMaskedField(member.field)"
+								v-if="
+									isMaskedField(member.field)
+									|| member.field.public
+								"
 								class="secret-detail__row-value">
 								<PasswordField
 									:key="`${secretLoadToken}-${member.field.label}`"
 									:label="member.label"
 									:multiline="member.field.kind === 'multiline'"
+									:alwaysShown="member.field.public === true"
 									:resolve="memberResolver(member.value)" />
 							</div>
 							<template v-else>
@@ -970,10 +976,7 @@
 								<div
 									v-if="
 										!viewOnlyCopy
-										&& !isCard
-										&& !isIdentity
-										&& !isTotp
-										&& !isPasskey
+										&& isRequestableTypeName(typeName)
 									"
 									class="secret-detail__requests-actions">
 									<!-- This action always targets THIS Secret, so the label
@@ -1179,7 +1182,7 @@ import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { fieldsOf, schemasOf } from '../utils/fieldSchema.js'
 import { isRefusal } from '../utils/refusal.js'
 import { linkHref } from '../utils/safeLink.js'
-import { secretTypeLabel } from '../utils/secretTypes.js'
+import { isRequestableTypeName, secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 import { rootVaultOf } from '../utils/vaultList.js'
@@ -1662,6 +1665,21 @@ export default {
 		},
 
 		/**
+		 * Whether the value shows at once: only a public one, such as a
+		 * certificate, and not when it holds a private key, which a
+		 * certificate saved before it had its own Private key field may do.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		valueShownAtOnce() {
+			return (
+				this.valueField?.public === true
+				&& !/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/.test(this.secret?.key || '')
+			)
+		},
+
+		/**
 		 * The login row's label: "Username" on a database, else "Login".
 		 *
 		 * @return {string}
@@ -1928,17 +1946,22 @@ export default {
 
 	methods: {
 		t,
+		isRequestableTypeName,
 
 		/**
 		 * Whether a field of the type is shown masked: a hidden or
-		 * multi-line field, such as a passphrase or a private key.
+		 * multi-line field, such as a passphrase or a private key, unless
+		 * it is public, as an SSH public key is.
 		 *
-		 * @param {{kind: string}} field The field.
+		 * @param {{kind: string, public?: boolean}} field The field.
 		 * @return {boolean} True when the field is masked.
 		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 		 */
 		isMaskedField(field) {
-			return field.kind === 'hidden' || field.kind === 'multiline'
+			return (
+				field.kind === 'hidden'
+				|| (field.kind === 'multiline' && field.public !== true)
+			)
 		},
 
 		/**
