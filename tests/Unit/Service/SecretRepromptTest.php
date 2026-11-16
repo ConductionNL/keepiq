@@ -50,6 +50,14 @@ use Psr\Log\LoggerInterface;
  * @covers \OCA\Keepiq\Service\SecretService
  * @covers \OCA\Keepiq\Db\Secret
  * @covers \OCA\Keepiq\Migration\Version001021Date20261114130000
+ * @uses   \OCA\Keepiq\Db\EncryptionSuite
+ * @uses   \OCA\Keepiq\Event\Audit\AuditEvent
+ * @uses   \OCA\Keepiq\Event\Audit\AuditEventFactory
+ * @uses   \OCA\Keepiq\Service\CredentialFields
+ * @uses   \OCA\Keepiq\Service\FolderOwnershipGuard
+ * @uses   \OCA\Keepiq\Service\OfflineEditGuard
+ * @uses   \OCA\Keepiq\Service\SecretPlacement
+ * @uses   \OCA\Keepiq\Service\SecretUpdateRun
  */
 class SecretRepromptTest extends TestCase {
 
