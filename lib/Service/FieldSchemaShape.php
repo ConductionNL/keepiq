@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
+use JsonException;
 
 /**
  * The shape rules for a request's field schemas.
@@ -67,11 +68,24 @@ class FieldSchemaShape {
 	];
 
 	/**
-	 * The numeric limits a schema may carry.
+	 * The keys a schema of each type may carry, besides `type` and `hidden`.
 	 *
-	 * @var string[]
+	 * @var array<string,string[]>
 	 */
-	public const LIMITS = ['minLength', 'maxLength', 'minimum', 'maximum', 'multipleOf'];
+	public const KEYS_BY_TYPE = [
+		'string'  => ['format', 'minLength', 'maxLength', 'pattern'],
+		'integer' => ['minimum', 'maximum'],
+		'number'  => ['minimum', 'maximum', 'multipleOf'],
+		'boolean' => [],
+		'object'  => [],
+	];
+
+	/**
+	 * The pairs of limits whose first may not exceed its second.
+	 *
+	 * @var array<int,array{0:string,1:string}>
+	 */
+	private const RANGES = [['minLength', 'maxLength'], ['minimum', 'maximum']];
 
 	/**
 	 * The longest pattern a schema may carry.
@@ -99,10 +113,11 @@ class FieldSchemaShape {
 	/**
 	 * Check the schemas against the requested fields and return them as stored.
 	 *
-	 * Each schema must belong to a requested custom field and have a known type, a known format, numeric limits, a
-	 * pattern that compiles, is of reasonable length and has no quantified group with a quantifier inside, and a
-	 * boolean `hidden`. Unknown keys are refused rather than dropped, so a
-	 * client learns its schema was not stored as sent.
+	 * Each schema must belong to a requested custom field and have a known type, and only the keys that type allows:
+	 * a known format, non-negative whole lengths, finite numeric limits, a `multipleOf` above zero, a minimum no
+	 * higher than its maximum, a pattern that compiles, is of reasonable length and has no quantified group with a
+	 * quantifier inside, and a boolean `hidden`. Anything else is refused rather than dropped, so a client learns its
+	 * schema was not stored as sent.
 	 *
 	 * @param array<mixed>  $schemas         The schemas by field name, as the client sent them
 	 * @param array<string> $requestedFields The requested field names
@@ -117,7 +132,9 @@ class FieldSchemaShape {
 		$checked = [];
 		foreach ($schemas as $field => $schema) {
 			$name = (string)$field;
-			if (in_array($name, $requestedFields, true) === false || in_array($name, self::COLUMN_FIELDS, true) === true) {
+			if (in_array($name, $requestedFields, true) === false
+				|| in_array($name, [...self::COLUMN_FIELDS, self::SCHEMA_MEMBER], true) === true
+			) {
 				throw new InvalidArgumentException(message: 'A field schema must belong to a requested custom field: ' . $name);
 			}
 
@@ -138,6 +155,8 @@ class FieldSchemaShape {
 	 *
 	 * @return string|null
 	 *
+	 * @throws InvalidArgumentException When a schema cannot be written as JSON.
+	 *
 	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function encode(array $schemas): ?string {
@@ -145,7 +164,11 @@ class FieldSchemaShape {
 			return null;
 		}
 
-		return (string)json_encode($schemas);
+		try {
+			return json_encode($schemas, JSON_THROW_ON_ERROR);
+		} catch (JsonException $e) {
+			throw new InvalidArgumentException(message: 'The field schemas cannot be stored: ' . $e->getMessage());
+		}
 	}//end encode()
 
 	/**
@@ -165,9 +188,17 @@ class FieldSchemaShape {
 			throw new InvalidArgumentException(message: 'The schema of ' . $name . ' needs a known type');
 		}
 
+		$keys = ['type', 'hidden', ...self::KEYS_BY_TYPE[$schema['type']]];
 		foreach ($schema as $key => $value) {
-			if ($this->allows(key: (string)$key, value: $value) === false) {
+			$key = (string)$key;
+			if (in_array($key, $keys, true) === false || $this->allows(key: $key, value: $value) === false) {
 				throw new InvalidArgumentException(message: 'The schema of ' . $name . ' has an invalid ' . $key);
+			}
+		}
+
+		foreach (self::RANGES as [$low, $high]) {
+			if (isset($schema[$low], $schema[$high]) === true && $schema[$low] > $schema[$high]) {
+				throw new InvalidArgumentException(message: 'The schema of ' . $name . ' has a ' . $low . ' above its ' . $high);
 			}
 		}
 
@@ -185,15 +216,16 @@ class FieldSchemaShape {
 	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function allows(string $key, mixed $value): bool {
-		if (in_array($key, self::LIMITS, true) === true) {
-			return is_int($value) === true || is_float($value) === true;
-		}
+		$finite = (is_int($value) === true || is_float($value) === true) && is_finite((float)$value) === true;
 
 		return match ($key) {
 			'type' => true,
 			'format' => in_array($value, self::FORMATS, true),
 			'pattern' => is_string($value) === true && $this->isUsablePattern(pattern: $value),
 			'hidden' => is_bool($value),
+			'minLength', 'maxLength' => is_int($value) === true && $value >= 0,
+			'minimum', 'maximum' => $finite,
+			'multipleOf' => $finite === true && $value > 0,
 			default => false,
 		};
 	}//end allows()

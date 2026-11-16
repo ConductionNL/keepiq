@@ -73,6 +73,15 @@ class FieldSchemaShapeTest extends TestCase {
 			'a nested quantifier'       => [['PIN' => ['type' => 'string', 'pattern' => '^(a+)+$']]],
 			'a nested quantified range' => [['PIN' => ['type' => 'string', 'pattern' => '^(\d{1,3})*$']]],
 			'an empty pattern'          => [['PIN' => ['type' => 'string', 'pattern' => '']]],
+			'an infinite limit'         => [['PIN' => ['type' => 'integer', 'maximum' => INF]]],
+			'a format on an integer'    => [['PIN' => ['type' => 'integer', 'format' => 'uri']]],
+			'a pattern on a boolean'    => [['PIN' => ['type' => 'boolean', 'pattern' => 'x']]],
+			'a multipleOf of zero'      => [['PIN' => ['type' => 'number', 'multipleOf' => 0]]],
+			'a negative length'         => [['PIN' => ['type' => 'string', 'minLength' => -1]]],
+			'a fractional length'       => [['PIN' => ['type' => 'string', 'maxLength' => 1.5]]],
+			'a minimum above its maximum' => [['PIN' => ['type' => 'integer', 'minimum' => 10, 'maximum' => 1]]],
+			'a minLength above its maxLength' => [['PIN' => ['type' => 'string', 'minLength' => 5, 'maxLength' => 4]]],
+			'a schema for the schema member' => [['@schema' => ['type' => 'string']]],
 		];
 	}//end malformed()
 
@@ -87,6 +96,17 @@ class FieldSchemaShapeTest extends TestCase {
 	public function testRefusesAMalformedSchema(array $schemas): void {
 		$this->expectException(exception: InvalidArgumentException::class);
 
-		(new FieldSchemaShape())->normalize(schemas: $schemas, requestedFields: ['key', 'PIN']);
+		(new FieldSchemaShape())->normalize(schemas: $schemas, requestedFields: ['key', 'PIN', '@schema']);
 	}//end testRefusesAMalformedSchema()
+
+	/**
+	 * A schema that cannot be written as JSON is refused, not stored as an empty string.
+	 *
+	 * @return void
+	 */
+	public function testRefusesToEncodeAnInfiniteLimit(): void {
+		$this->expectException(exception: InvalidArgumentException::class);
+
+		(new FieldSchemaShape())->encode(schemas: ['PIN' => ['type' => 'integer', 'maximum' => INF]]);
+	}//end testRefusesToEncodeAnInfiniteLimit()
 }//end class
