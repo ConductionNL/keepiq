@@ -33,7 +33,9 @@ use Psr\Log\LoggerInterface;
  * refused with its message before anything of its group is written.
  *
  * @covers \OCA\Keepiq\Service\AdminSettingsService
+ * @uses \OCA\Keepiq\Service\Flow\VaultFlowTriggerCatalog
  * @uses \OCA\Keepiq\Service\PasswordPolicyService
+ * @uses \OCA\Keepiq\Service\SiteImageSettings
  * @uses \OCA\Keepiq\Service\TrustedExtensionOrigins
  */
 final class AdminSettingsValidationTest extends TestCase {
