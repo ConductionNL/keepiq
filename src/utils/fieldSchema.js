@@ -145,27 +145,52 @@ function isNumeric(value) {
  * @param {string|number|boolean} value Its value.
  * @param {string} type The schema's type.
  * @return {boolean} True to keep it.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 function keeps(key, value, type) {
 	if (key === 'hidden') {
 		return value === true
 	}
 	if (['format', 'minLength', 'maxLength', 'pattern'].includes(key)) {
-		if (type !== 'string') {
-			return false
-		}
-		if (key === 'format') {
-			return STRING_FORMATS.includes(value)
-		}
-		if (key === 'pattern') {
-			return typeof value === 'string' && value !== ''
-		}
-		return isNumeric(value) && Number(value) >= 0
+		return type === 'string' && keepsStringKey(key, value)
 	}
+	return keepsNumberKey(key, value, type)
+}
+
+/**
+ * Keep a number schema's `minimum`, `maximum` or `multipleOf`: a number, and
+ * a step above zero that only a `number` takes.
+ *
+ * @param {string} key The key.
+ * @param {string|number|boolean} value Its value.
+ * @param {string} type The schema's type.
+ * @return {boolean} True to keep it.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ */
+function keepsNumberKey(key, value, type) {
 	if (key === 'multipleOf') {
 		return type === 'number' && isNumeric(value) && Number(value) > 0
 	}
 	return ['integer', 'number'].includes(type) && isNumeric(value)
+}
+
+/**
+ * Keep a string schema's `format`, `pattern`, `minLength` or `maxLength`:
+ * a known format, a pattern that is not empty, a length of zero or more.
+ *
+ * @param {string} key The key.
+ * @param {string|number|boolean} value Its value.
+ * @return {boolean} True to keep it.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ */
+function keepsStringKey(key, value) {
+	if (key === 'format') {
+		return STRING_FORMATS.includes(value)
+	}
+	if (key === 'pattern') {
+		return typeof value === 'string' && value !== ''
+	}
+	return isNumeric(value) && Number(value) >= 0
 }
 
 /**
@@ -177,16 +202,14 @@ function keeps(key, value, type) {
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function cleanSchema(schema) {
-	const type = SCHEMA_TYPES.includes(schema?.type) ? schema.type : 'string'
+	const source = schema || {}
+	const type = SCHEMA_TYPES.includes(source.type) ? source.type : 'string'
 	const clean = { type }
 	for (const key of SCHEMA_KEYS) {
-		if (key === 'type' || schema?.[key] === undefined) {
-			continue
-		}
-		if (keeps(key, schema[key], type)) {
+		if (key !== 'type' && keeps(key, source[key], type)) {
 			clean[key] = ['format', 'pattern', 'hidden'].includes(key)
-				? schema[key]
-				: Number(schema[key])
+				? source[key]
+				: Number(source[key])
 		}
 	}
 	return clean
@@ -296,30 +319,61 @@ function objectError(value) {
  * @return {string} The reason.
  */
 function numberError(value, schema) {
+	return (
+		numberTypeError(value, schema)
+		|| boundError(Number(value), schema)
+		|| stepError(Number(value), schema.multipleOf)
+	)
+}
+
+/**
+ * Why a value is not a number of the schema's type, or ''.
+ *
+ * @param {string} value The value.
+ * @param {object} schema The clean schema.
+ * @return {string} The message, or ''.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ */
+function numberTypeError(value, schema) {
 	if (schema.type === 'integer' && !/^-?\d+$/.test(value.trim())) {
 		return t('keepiq', 'Enter a whole number.')
 	}
-	if (!isNumeric(value.trim())) {
-		return t('keepiq', 'Enter a number.')
-	}
-	const number = Number(value)
+	return isNumeric(value.trim()) ? '' : t('keepiq', 'Enter a number.')
+}
+
+/**
+ * Why a number is below the schema's minimum or above its maximum, or ''.
+ *
+ * @param {number} number The number.
+ * @param {object} schema The clean schema.
+ * @return {string} The message, or ''.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ */
+function boundError(number, schema) {
 	if (schema.minimum !== undefined && number < schema.minimum) {
 		return t('keepiq', 'Enter at least {min}.', { min: schema.minimum })
 	}
 	if (schema.maximum !== undefined && number > schema.maximum) {
 		return t('keepiq', 'Enter at most {max}.', { max: schema.maximum })
 	}
-	if (
-		schema.multipleOf !== undefined
-		&& Math.abs(
-			number / schema.multipleOf - Math.round(number / schema.multipleOf),
-		) > 1e-9
-	) {
-		return t('keepiq', 'Enter a multiple of {step}.', {
-			step: schema.multipleOf,
-		})
-	}
 	return ''
+}
+
+/**
+ * Why a number is not a multiple of the schema's step, or ''.
+ *
+ * @param {number} number The number.
+ * @param {number|undefined} step The schema's `multipleOf`.
+ * @return {string} The message, or ''.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ */
+function stepError(number, step) {
+	if (step === undefined) {
+		return ''
+	}
+	return Math.abs(number / step - Math.round(number / step)) > 1e-9
+		? t('keepiq', 'Enter a multiple of {step}.', { step })
+		: ''
 }
 
 /**
@@ -389,7 +443,22 @@ function isUrl(value) {
  * @return {string} The reason.
  */
 function stringError(value, schema) {
-	const length = [...value].length
+	return (
+		lengthError([...value].length, schema)
+		|| patternError(value, schema.pattern)
+		|| (fitsFormat(value, schema.format) ? '' : formatError(schema.format))
+	)
+}
+
+/**
+ * Why a text's length is below the schema's minimum or above its maximum, or ''.
+ *
+ * @param {number} length The text's length in characters.
+ * @param {object} schema The clean schema.
+ * @return {string} The message, or ''.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ */
+function lengthError(length, schema) {
 	if (schema.minLength !== undefined && length < schema.minLength) {
 		return t('keepiq', 'Use at least {min} characters.', {
 			min: schema.minLength,
@@ -400,18 +469,29 @@ function stringError(value, schema) {
 			max: schema.maxLength,
 		})
 	}
-	if (schema.pattern !== undefined) {
-		let fits = true
-		try {
-			fits = new RegExp(schema.pattern, 'u').test(value)
-		} catch {
-			// An invalid pattern cannot refuse anything.
-		}
-		if (!fits) {
-			return t('keepiq', 'This does not match the required pattern.')
-		}
+	return ''
+}
+
+/**
+ * Why a text does not match the schema's pattern, or ''. An invalid pattern
+ * cannot refuse anything.
+ *
+ * @param {string} value The text.
+ * @param {string|undefined} pattern The schema's pattern.
+ * @return {string} The message, or ''.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ */
+function patternError(value, pattern) {
+	if (pattern === undefined) {
+		return ''
 	}
-	return fitsFormat(value, schema.format) ? '' : formatError(schema.format)
+	let fits = true
+	try {
+		fits = new RegExp(pattern, 'u').test(value)
+	} catch {
+		// An invalid pattern cannot refuse anything.
+	}
+	return fits ? '' : t('keepiq', 'This does not match the required pattern.')
 }
 
 /**
@@ -457,22 +537,39 @@ function formatError(format) {
  */
 export function schemaError(value, schema) {
 	const text = value === null || value === undefined ? '' : String(value)
-	if (text === '') {
-		return ''
-	}
-	const clean = cleanSchema(schema)
+	return text === '' ? '' : typedError(text, cleanSchema(schema))
+}
+
+/**
+ * Why a value that is not empty does not fit its clean schema, or ''.
+ *
+ * @param {string} text The value.
+ * @param {object} clean The clean schema.
+ * @return {string} The message, or ''.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ */
+function typedError(text, clean) {
 	if (clean.type === 'object') {
 		return objectError(text)
 	}
 	if (clean.type === 'boolean') {
-		return ['true', 'false'].includes(text)
-			? ''
-			: t('keepiq', 'Choose yes or no.')
+		return booleanError(text)
 	}
 	if (clean.type === 'integer' || clean.type === 'number') {
 		return numberError(text, clean)
 	}
 	return stringError(text, clean)
+}
+
+/**
+ * Why a value is not yes or no, or ''.
+ *
+ * @param {string} text The value.
+ * @return {string} The message, or ''.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ */
+function booleanError(text) {
+	return ['true', 'false'].includes(text) ? '' : t('keepiq', 'Choose yes or no.')
 }
 
 /**
@@ -514,6 +611,20 @@ export function fieldsOf(blob) {
 	const fields = { ...blob }
 	const stored = fields[SCHEMA_MEMBER]
 	delete fields[SCHEMA_MEMBER]
+	keepMisnamedField(fields, stored)
+	return fields
+}
+
+/**
+ * Keep a `@schema` member that holds no schema map, as a person's own field
+ * may, under RENAMED_SCHEMA_FIELD, unless that name is taken.
+ *
+ * @param {object} fields The fields, added to.
+ * @param {object|string|number|boolean|null|undefined} stored The `@schema` member.
+ * @return {void}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ */
+function keepMisnamedField(fields, stored) {
 	if (
 		stored !== undefined
 		&& !isSchemaMap(stored)
@@ -521,7 +632,6 @@ export function fieldsOf(blob) {
 	) {
 		fields[RENAMED_SCHEMA_FIELD] = stored
 	}
-	return fields
 }
 
 /**
@@ -535,15 +645,28 @@ export function fieldsOf(blob) {
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function withSchemas(fields, schemas) {
+	const kept = schemasFor(fields, schemas)
+	return Object.keys(kept).length === 0
+		? { ...fields }
+		: { ...fields, [SCHEMA_MEMBER]: kept }
+}
+
+/**
+ * The clean schemas of the fields that exist and are not plain text.
+ *
+ * @param {object} fields The fields, by name.
+ * @param {object|null|undefined} schemas The schemas, by field name.
+ * @return {object} The kept schemas, by field name.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ */
+function schemasFor(fields, schemas) {
 	const kept = {}
 	for (const [name, schema] of Object.entries(schemas || {})) {
 		if (Object.hasOwn(fields, name) && !isPlainSchema(schema)) {
 			kept[name] = cleanSchema(schema)
 		}
 	}
-	return Object.keys(kept).length === 0
-		? { ...fields }
-		: { ...fields, [SCHEMA_MEMBER]: kept }
+	return kept
 }
 
 /**

@@ -30,103 +30,148 @@ function definitions() {
 			leaveOut: [],
 			fields: [],
 		},
-		certificate: {
-			// A certificate is public by design, so it is never masked.
-			value: {
-				label: t('keepiq', 'Certificate'),
-				kind: 'multiline',
-				public: true,
-			},
-			lockedInRequests: true,
-			leaveOut: ['login'],
-			fields: [
-				{
-					key: 'private-key',
-					label: 'Private key',
-					displayLabel: t('keepiq', 'Private key'),
-					kind: 'multiline',
-				},
-				{
-					key: 'passphrase',
-					label: 'Passphrase',
-					displayLabel: t('keepiq', 'Passphrase'),
-					kind: 'hidden',
-				},
-			],
-		},
-		api_key: {
-			value: { label: t('keepiq', 'API key'), kind: 'hidden' },
-			lockedInRequests: true,
-			leaveOut: [],
-			fields: [
-				{
-					key: 'api-secret',
-					label: 'API secret',
-					displayLabel: t('keepiq', 'API secret'),
-					kind: 'hidden',
-				},
-			],
-		},
-		database: {
-			value: { label: t('keepiq', 'Password'), kind: 'hidden' },
-			loginLabel: {
-				short: t('keepiq', 'Username'),
-				optional: t('keepiq', 'Username (optional)'),
-			},
-			lockedInRequests: true,
-			leaveOut: ['url'],
-			fields: [
-				{
-					key: 'host',
-					label: 'Host',
-					displayLabel: t('keepiq', 'Host'),
-					kind: 'text',
-				},
-				{
-					key: 'port',
-					label: 'Port',
-					displayLabel: t('keepiq', 'Port'),
-					kind: 'text',
-					// A port is a whole number from 1 to 65535.
-					schema: { type: 'integer', minimum: 1, maximum: 65535 },
-				},
-				{
-					key: 'database',
-					label: 'Database',
-					displayLabel: t('keepiq', 'Database'),
-					kind: 'text',
-				},
-			],
-		},
-		// An OpenSSH private key is several lines; a key pair generator and a
-		// fingerprint follow in vault-custom-field-kinds-and-ssh-key.
-		ssh_key: {
-			value: { label: t('keepiq', 'Private key'), kind: 'multiline' },
-			lockedInRequests: true,
-			leaveOut: [],
-			fields: [
-				{
-					key: 'public-key',
-					label: 'Public key',
-					displayLabel: t('keepiq', 'Public key'),
-					kind: 'multiline',
-					// Public by design, like a certificate: never masked.
-					public: true,
-				},
-				{
-					key: 'passphrase',
-					label: 'Passphrase',
-					displayLabel: t('keepiq', 'Passphrase'),
-					kind: 'hidden',
-				},
-			],
-		},
+		certificate: certificateDefinition(),
+		api_key: apiKeyDefinition(),
+		database: databaseDefinition(),
+		ssh_key: sshKeyDefinition(),
 		note: {
 			value: { label: t('keepiq', 'Note'), kind: 'multiline' },
 			lockedInRequests: true,
 			leaveOut: ['login', 'url'],
 			fields: [],
 		},
+	}
+}
+
+/**
+ * The passphrase of a private key, as a certificate and an SSH key keep it.
+ *
+ * @return {object} The field.
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ */
+function passphraseField() {
+	return {
+		key: 'passphrase',
+		label: 'Passphrase',
+		displayLabel: t('keepiq', 'Passphrase'),
+		kind: 'hidden',
+	}
+}
+
+/**
+ * A certificate: public by design, so never masked, with its private key
+ * and that key's passphrase.
+ *
+ * @return {object} The definition.
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ */
+function certificateDefinition() {
+	return {
+		value: {
+			label: t('keepiq', 'Certificate'),
+			kind: 'multiline',
+			public: true,
+		},
+		lockedInRequests: true,
+		leaveOut: ['login'],
+		fields: [
+			{
+				key: 'private-key',
+				label: 'Private key',
+				displayLabel: t('keepiq', 'Private key'),
+				kind: 'multiline',
+			},
+			passphraseField(),
+		],
+	}
+}
+
+/**
+ * An API key, with its API secret.
+ *
+ * @return {object} The definition.
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ */
+function apiKeyDefinition() {
+	return {
+		value: { label: t('keepiq', 'API key'), kind: 'hidden' },
+		lockedInRequests: true,
+		leaveOut: [],
+		fields: [
+			{
+				key: 'api-secret',
+				label: 'API secret',
+				displayLabel: t('keepiq', 'API secret'),
+				kind: 'hidden',
+			},
+		],
+	}
+}
+
+/**
+ * A database: a username, host, port and database name instead of a URL.
+ *
+ * @return {object} The definition.
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ */
+function databaseDefinition() {
+	return {
+		value: { label: t('keepiq', 'Password'), kind: 'hidden' },
+		loginLabel: {
+			short: t('keepiq', 'Username'),
+			optional: t('keepiq', 'Username (optional)'),
+		},
+		lockedInRequests: true,
+		leaveOut: ['url'],
+		fields: [
+			{
+				key: 'host',
+				label: 'Host',
+				displayLabel: t('keepiq', 'Host'),
+				kind: 'text',
+			},
+			{
+				key: 'port',
+				label: 'Port',
+				displayLabel: t('keepiq', 'Port'),
+				kind: 'text',
+				// A port is a whole number from 1 to 65535.
+				schema: { type: 'integer', minimum: 1, maximum: 65535 },
+			},
+			{
+				key: 'database',
+				label: 'Database',
+				displayLabel: t('keepiq', 'Database'),
+				kind: 'text',
+			},
+		],
+	}
+}
+
+/**
+ * An SSH key: an OpenSSH private key is several lines; a key pair generator
+ * and a fingerprint follow in vault-custom-field-kinds-and-ssh-key. The
+ * public key is public by design, like a certificate: never masked.
+ *
+ * @return {object} The definition.
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ */
+function sshKeyDefinition() {
+	return {
+		value: { label: t('keepiq', 'Private key'), kind: 'multiline' },
+		lockedInRequests: true,
+		leaveOut: [],
+		fields: [
+			{
+				key: 'public-key',
+				label: 'Public key',
+				displayLabel: t('keepiq', 'Public key'),
+				kind: 'multiline',
+				public: true,
+			},
+			passphraseField(),
+		],
 	}
 }
 

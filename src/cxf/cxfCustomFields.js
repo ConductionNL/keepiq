@@ -41,6 +41,13 @@ const SCHEMA_BY_FIELD_TYPE = Object.freeze({
 	date: { type: 'string', format: 'date' },
 })
 
+/** The CXF field type of each schema type that has one of its own. */
+const FIELD_TYPE_BY_SCHEMA_TYPE = Object.freeze({
+	boolean: 'boolean',
+	integer: 'number',
+	number: 'number',
+})
+
 /**
  * The CXF field type closest to a schema.
  *
@@ -53,16 +60,10 @@ export function cxfFieldType(schema) {
 	if (isHiddenSchema(clean)) {
 		return 'concealed-string'
 	}
-	if (clean.type === 'boolean') {
-		return 'boolean'
+	if (Object.hasOwn(FIELD_TYPE_BY_SCHEMA_TYPE, clean.type)) {
+		return FIELD_TYPE_BY_SCHEMA_TYPE[clean.type]
 	}
-	if (clean.type === 'integer' || clean.type === 'number') {
-		return 'number'
-	}
-	if (clean.format === 'email' || clean.format === 'date') {
-		return clean.format
-	}
-	return 'string'
+	return ['email', 'date'].includes(clean.format) ? clean.format : 'string'
 }
 
 /**
@@ -81,23 +82,57 @@ export function customFieldsCredential(additionalFields, used = [], typeName = '
 	const schemas = schemasOf(additionalFields)
 	const fields = Object.entries(fieldsOf(additionalFields))
 		.filter(([name]) => !used.includes(name))
-		.map(([name, value], index) => {
-			const builtin = builtinFieldNamed(typeName, name)
-			const schema = cleanSchema(
-				schemas[name] ?? (builtin ? typeFieldSchema(builtin) : null),
-			)
-			const field = {
-				id: `field-${index + 1}`,
-				label: name,
-				fieldType: cxfFieldType(schema),
-				value: value === null || value === undefined ? '' : String(value),
-			}
-			if (!isPlainSchema(schema)) {
-				field.extensions = [{ name: SCHEMA_EXTENSION, schema }]
-			}
-			return field
-		})
+		.map(([name, value], index) =>
+			customField(
+				name,
+				value,
+				index + 1,
+				fieldSchemaFor(schemas, typeName, name),
+			),
+		)
 	return fields.length === 0 ? null : { type: 'custom-fields', fields }
+}
+
+/**
+ * The schema a field goes out with: its stored one, else the one its type
+ * gives a built-in field, else plain text.
+ *
+ * @param {object} schemas The stored schemas, by field name.
+ * @param {string} typeName The secret's type name.
+ * @param {string} name The field's name.
+ * @return {object} The clean schema.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ */
+function fieldSchemaFor(schemas, typeName, name) {
+	if (schemas[name]) {
+		return cleanSchema(schemas[name])
+	}
+	const builtin = builtinFieldNamed(typeName, name)
+	return cleanSchema(builtin ? typeFieldSchema(builtin) : null)
+}
+
+/**
+ * One field of the `custom-fields` credential, with its schema in the
+ * extensions when it is more than plain text.
+ *
+ * @param {string} name The field's name.
+ * @param {string|number|boolean|null|undefined} value The field's value.
+ * @param {number} number The field's place, from 1.
+ * @param {object} schema The field's clean schema.
+ * @return {object} The CXF field.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ */
+function customField(name, value, number, schema) {
+	const field = {
+		id: `field-${number}`,
+		label: name,
+		fieldType: cxfFieldType(schema),
+		value: value === null || value === undefined ? '' : String(value),
+	}
+	if (!isPlainSchema(schema)) {
+		field.extensions = [{ name: SCHEMA_EXTENSION, schema }]
+	}
+	return field
 }
 
 /**
@@ -145,19 +180,29 @@ function importedName(label, fields) {
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 export function readCustomFields(credential) {
-	const fields = {}
-	const schemas = {}
+	const read = { fields: {}, schemas: {} }
 	for (const field of Array.isArray(credential?.fields) ? credential.fields : []) {
-		const label = String(field?.label ?? field?.id ?? '').trim()
-		if (label === '') {
-			continue
-		}
-		const name = importedName(label, fields)
-		fields[name] =
-			field?.value === null || field?.value === undefined
-				? ''
-				: String(field.value)
-		schemas[name] = schemaOfField(field)
+		readCustomField(read, field || {})
 	}
-	return withSchemas(fields, schemas)
+	return withSchemas(read.fields, read.schemas)
+}
+
+/**
+ * Add one CXF field to the fields and schemas read so far; a field without a
+ * label or id is skipped.
+ *
+ * @param {{fields: object, schemas: object}} read The fields and schemas read so far.
+ * @param {object} field The CXF field.
+ * @return {void}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ */
+function readCustomField(read, field) {
+	const label = String(field.label ?? field.id ?? '').trim()
+	if (label === '') {
+		return
+	}
+	const name = importedName(label, read.fields)
+	read.fields[name] =
+		field.value === null || field.value === undefined ? '' : String(field.value)
+	read.schemas[name] = schemaOfField(field)
 }

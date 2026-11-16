@@ -34,32 +34,20 @@
 		</template>
 		<NcPasswordField
 			v-else-if="hidden && input !== 'multiline'"
-			:modelValue="modelValue"
+			v-bind="fieldAttrs"
 			:label="label"
-			:disabled="disabled"
-			:error="error !== ''"
-			:helperText="error"
-			:data-testid="testid"
 			@update:modelValue="$emit('update:modelValue', $event)" />
 		<NcTextArea
 			v-else-if="input === 'multiline'"
-			:modelValue="modelValue"
+			v-bind="fieldAttrs"
 			:label="label"
-			:disabled="disabled"
-			:error="error !== ''"
-			:helperText="error"
 			rows="4"
-			:data-testid="testid"
 			@update:modelValue="$emit('update:modelValue', $event)" />
 		<NcTextField
 			v-else
-			:modelValue="modelValue"
-			:type="htmlType"
+			v-bind="fieldAttrs"
 			:label="label"
-			:disabled="disabled"
-			:error="error !== ''"
-			:helperText="error"
-			:data-testid="testid"
+			:type="htmlType"
 			@update:modelValue="$emit('update:modelValue', $event)" />
 	</div>
 </template>
@@ -165,6 +153,23 @@ export default {
 		 */
 		htmlType() {
 			return HTML_TYPES[this.input] ?? 'text'
+		},
+
+		/**
+		 * What the password, text area and text inputs share: the value, the
+		 * disabled state, the error and the test id.
+		 *
+		 * @return {object} The attributes.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		fieldAttrs() {
+			return {
+				modelValue: this.modelValue,
+				disabled: this.disabled,
+				error: this.error !== '',
+				helperText: this.error,
+				'data-testid': this.testid,
+			}
 		},
 	},
 }
