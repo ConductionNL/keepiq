@@ -515,6 +515,10 @@ $extra = [
     // request URI next to the user id on every log line (keepiq#866).
     ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range', 'verb' => 'POST'],
 
+    // Site directory copy for the health report's site checks
+    // (health-site-security-checks D2). Takes nothing from the browser.
+    ['name' => 'siteDirectory#index', 'url' => '/api/v1/site-directory', 'verb' => 'GET'],
+
     // GDPR data-subject endpoints (secret-export-gdpr D3/D4). All self-scoped
     // to the session user — no user selector. Master-password re-auth on the
     // delete is enforced client-side (ADR-003); the typed confirmation phrase

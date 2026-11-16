@@ -1919,7 +1919,21 @@
         "Unencrypted address": "Onversleuteld adres",
         "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "Deze logins zijn opgeslagen met een http-adres, dus het wachtwoord wordt onversleuteld verstuurd. Wijzig het adres in https als de site dat aanbiedt.",
         "Change to https": "Wijzigen in https",
-        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen."
+        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen.",
+        "Site directory": "Sitedirectory",
+        "Show users which of their sites offer one-time codes or passkeys they have not set up.": "Laat gebruikers zien welke van hun sites eenmalige codes of passkeys aanbieden die ze nog niet hebben ingesteld.",
+        "Use the site directory in the password health report": "De sitedirectory gebruiken in het wachtwoordgezondheidsrapport",
+        "Once a day the server downloads the whole public list from api.2fa.directory and passkeys-api.2fa.directory. Matching happens in each user's browser: no login, address or result is sent to the directories or stored on the server. Leave this off for air-gapped instances.": "Eén keer per dag downloadt de server de hele openbare lijst van api.2fa.directory en passkeys-api.2fa.directory. Het vergelijken gebeurt in de browser van elke gebruiker: geen login, adres of uitkomst wordt naar de directory's gestuurd of op de server opgeslagen. Laat dit uit voor instanties zonder internetverbinding.",
+        "Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Gegevens: 2FA Directory (MIT) en Passkeys Directory (CC BY 4.0), door 2factorauth en bijdragers.",
+        "Two-factor available": "Tweestapsaanmelding beschikbaar",
+        "Passkey available": "Passkey beschikbaar",
+        "How to turn it on": "Zo zet je het aan",
+        "How to add a passkey": "Zo voeg je een passkey toe",
+        "These sites offer one-time codes, and your vault holds no code for these logins. Turn on two-factor sign-in at the site and save the code with the login.": "Deze sites bieden eenmalige codes aan, en je kluis bevat geen code voor deze logins. Zet tweestapsaanmelding aan bij de site en sla de code op bij de login.",
+        "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Deze sites bieden passkeys aan, en je kluis bevat er geen voor deze sites. Een passkey kan niet worden gephisht of hergebruikt.",
+        "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Sitegegevens: 2FA Directory (MIT) en Passkeys Directory (CC BY 4.0), door 2factorauth en bijdragers.",
+        "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: de sitedirectory kon niet worden geladen. Andere bevindingen blijven gelden.",
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: je beheerder heeft de sitedirectory niet aangezet."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

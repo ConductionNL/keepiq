@@ -240,6 +240,9 @@
             "name": "siem-sink"
         },
         {
+            "name": "site-directory"
+        },
+        {
             "name": "team-folder"
         },
         {
@@ -20742,6 +20745,78 @@
                             "type": "string"
                         }
                     }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/site-directory": {
+            "get": {
+                "operationId": "site-directory-index",
+                "summary": "The site directory copy, the same for every user",
+                "description": "The site directory copy, the same for every user.",
+                "tags": [
+                    "site-directory"
                 ],
                 "responses": {
                     "200": {
