@@ -1884,7 +1884,14 @@
         "Unencrypted address": "Onversleuteld adres",
         "These logins are saved with an http address, so the password is sent unencrypted. Change the address to https when the site offers it.": "Deze logins zijn opgeslagen met een http-adres, dus het wachtwoord wordt onversleuteld verstuurd. Wijzig het adres in https als de site dat aanbiedt.",
         "Change to https": "Wijzigen in https",
-        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen."
+        "Could not save the https address for {name}.": "Het https-adres voor {name} kon niet worden opgeslagen.",
+        "A passkey was suspended because its authenticator reported an unexpected sign-in count. It no longer unlocks your vault. If you do not recognise the device, revoke the passkey and change your Nextcloud app passwords.": "Een passkey is opgeschort omdat de authenticator een onverwacht aantal aanmeldingen meldde. Je kluis is er niet meer mee te ontgrendelen. Herken je het apparaat niet, trek de passkey dan in en wijzig je Nextcloud-app-wachtwoorden.",
+        "Allow passkey unlock in the extension": "Ontgrendelen met een passkey in de extensie toestaan",
+        "Needs enrolling again": "Opnieuw registreren nodig",
+        "Official extension builds": "Officiële extensiebuilds",
+        "One exact origin per line, such as chrome-extension:// followed by the 32-letter extension id. Wildcards are not accepted.": "Eén exacte origin per regel, zoals chrome-extension:// gevolgd door de extensie-id van 32 letters. Jokertekens worden niet geaccepteerd.",
+        "Other extension builds allowed to use passkeys": "Andere extensiebuilds die passkeys mogen gebruiken",
+        "Suspended": "Opgeschort"
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"
