@@ -41,6 +41,8 @@ describe('theme colours', () => {
 			'utf8',
 		)
 		expect(template).not.toMatch(/#[0-9a-fA-F]{6}/)
-		expect(template).toContain('getColorPrimary()')
+		// Through the controller helper that reads Defaults::getColorPrimary(),
+		// so the meta and the web app manifest share one colour and one fallback.
+		expect(template).toContain('WebManifestController::themeColor(\\OCP\\Server::get(\\OCP\\Defaults::class))')
 	})
 })
