@@ -231,7 +231,10 @@ export const PREVIEW_KINDS = Object.freeze({
  * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
  */
 export function previewKind(contentType) {
-	const type = String(contentType || '').split(';')[0].trim().toLowerCase()
+	const type = String(contentType || '')
+		.split(';')[0]
+		.trim()
+		.toLowerCase()
 	return Object.hasOwn(PREVIEW_KINDS, type) ? PREVIEW_KINDS[type] : null
 }
 
@@ -417,10 +420,21 @@ export const useAttachmentStore = defineStore('attachment', {
 			try {
 				const plaintext = await decryptedBlob(this, attachment)
 				if (kind === 'text') {
-					return { kind, url: null, text: new TextDecoder().decode(plaintext) }
+					return {
+						kind,
+						url: null,
+						text: new TextDecoder().decode(plaintext),
+					}
 				}
-				const type = String(attachment.contentType).split(';')[0].trim().toLowerCase()
-				return { kind, url: URL.createObjectURL(new Blob([plaintext], { type })), text: null }
+				const type = String(attachment.contentType)
+					.split(';')[0]
+					.trim()
+					.toLowerCase()
+				return {
+					kind,
+					url: URL.createObjectURL(new Blob([plaintext], { type })),
+					text: null,
+				}
 			} catch (e) {
 				this.error = failureText(e, 'Preview failed')
 				throw e
@@ -473,9 +487,7 @@ export const useAttachmentStore = defineStore('attachment', {
 			if (!session.cryptoKey) {
 				throw new Error('Vault is locked')
 			}
-			const response = await axios.get(
-				attachmentsUrl(regrant.sourceSecretId),
-			)
+			const response = await axios.get(attachmentsUrl(regrant.sourceSecretId))
 			const grant = {
 				session,
 				recipientKey: await importPublicKey(regrant.recipientCertificate),

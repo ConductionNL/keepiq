@@ -55,7 +55,13 @@ const stubs = {
 
 const MANIFEST = {
 	menu: [
-		{ id: 'Secrets', label: 'All secrets', route: 'secrets', icon: 'Key', order: 1 },
+		{
+			id: 'Secrets',
+			label: 'All secrets',
+			route: 'secrets',
+			icon: 'Key',
+			order: 1,
+		},
 		{ id: 'Tools', type: 'caption', label: 'Tools', order: 2 },
 		{ id: 'Health', label: 'Password health', route: 'health', order: 3 },
 		{

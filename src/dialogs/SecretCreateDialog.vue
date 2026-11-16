@@ -264,7 +264,10 @@ export default {
 			typeId: this.prefill?.typeId || null,
 			url: this.prefill?.url || '',
 			/** The extra website addresses (vault-website-addresses). */
-			additionalUrls: Array.isArray(this.prefill?.additionalUrls) ? [...this.prefill.additionalUrls] : [],
+			additionalUrls: Array.isArray(this.prefill?.additionalUrls)
+				? [...this.prefill.additionalUrls]
+				: [],
+
 			login: this.prefill?.login || '',
 			/** The authenticator key being entered on a login. */
 			totpInput: '',
@@ -455,12 +458,18 @@ export default {
 			const payload = parsePayload(source.key || '')
 			if (payload !== null && this.isCard) {
 				for (const field of CARD_FIELDS) {
-					this.card[field] = payload[field] === null || payload[field] === undefined ? '' : String(payload[field])
+					this.card[field] =
+						payload[field] === null || payload[field] === undefined
+							? ''
+							: String(payload[field])
 				}
 			}
 			if (payload !== null && this.isIdentity) {
 				for (const field of IDENTITY_FIELDS) {
-					this.identity[field] = payload[field] === null || payload[field] === undefined ? '' : String(payload[field])
+					this.identity[field] =
+						payload[field] === null || payload[field] === undefined
+							? ''
+							: String(payload[field])
 				}
 			}
 		},
@@ -519,7 +528,10 @@ export default {
 		valueFields() {
 			return {
 				url: this.url || null,
-				...(this.additionalUrls.length > 0 ? { additionalUrls: [...this.additionalUrls] } : {}),
+				...(this.additionalUrls.length > 0
+					? { additionalUrls: [...this.additionalUrls] }
+					: {}),
+
 				login: this.login || '',
 				key: this.effectiveValue,
 				// Only when there ARE members: the store encrypts whatever it is
@@ -554,7 +566,11 @@ export default {
 			this.saving = true
 			this.error = ''
 			try {
-				if (!this.isCard && !this.isIdentity && (await this.breachBlocked())) {
+				if (
+					!this.isCard
+					&& !this.isIdentity
+					&& (await this.breachBlocked())
+				) {
 					return
 				}
 				if (this.contributeTo) {

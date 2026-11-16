@@ -265,9 +265,7 @@ export default {
 				unavailable: t('keepiq', 'This request is no longer available.'),
 				'not-found': t('keepiq', 'This request could not be found.'),
 			}
-			return Object.hasOwn(messages, reason)
-				? messages[reason]
-				: null
+			return Object.hasOwn(messages, reason) ? messages[reason] : null
 		},
 
 		/**

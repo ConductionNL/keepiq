@@ -23,7 +23,15 @@ function recorder(kind) {
 	return {
 		name: kind,
 		inheritAttrs: false,
-		props: ['modelValue', 'label', 'required', 'disabled', 'error', 'helperText', 'type'],
+		props: [
+			'modelValue',
+			'label',
+			'required',
+			'disabled',
+			'error',
+			'helperText',
+			'type',
+		],
 		emits: ['update:modelValue'],
 		template: `<input data-kind="${kind}" v-bind="$attrs" @input="$emit('update:modelValue', $event.target.value)" />`,
 	}
@@ -48,7 +56,9 @@ function rendered(wrapper) {
 			component: field.vm.$options.name,
 			props: { ...field.props() },
 			attrs: Object.fromEntries(
-				Object.entries(field.attributes()).filter(([key]) => !key.startsWith('data-v-')),
+				Object.entries(field.attributes()).filter(
+					([key]) => !key.startsWith('data-v-'),
+				),
 			),
 		}))
 		.sort((a, b) => a.attrs['data-testid'].localeCompare(b.attrs['data-testid']))
@@ -57,8 +67,18 @@ function rendered(wrapper) {
 describe('TypedFieldsForm (golden)', () => {
 	it('renders each kind with its props, marking a missing required field', () => {
 		const wrapper = mount(TypedFieldsForm, {
-			props: { fields: FIELDS, values: { host: 'db1', site: 'https://x' }, missing: ['pin'], disabled: false },
-			global: { stubs: { NcPasswordField: recorder('NcPasswordField'), NcTextField: recorder('NcTextField') } },
+			props: {
+				fields: FIELDS,
+				values: { host: 'db1', site: 'https://x' },
+				missing: ['pin'],
+				disabled: false,
+			},
+			global: {
+				stubs: {
+					NcPasswordField: recorder('NcPasswordField'),
+					NcTextField: recorder('NcTextField'),
+				},
+			},
 		})
 		expect(rendered(wrapper)).toMatchSnapshot()
 	})
@@ -66,7 +86,12 @@ describe('TypedFieldsForm (golden)', () => {
 	it('renders every field disabled, and reports typing by key', async () => {
 		const wrapper = mount(TypedFieldsForm, {
 			props: { fields: FIELDS, values: { pin: '1234' }, disabled: true },
-			global: { stubs: { NcPasswordField: recorder('NcPasswordField'), NcTextField: recorder('NcTextField') } },
+			global: {
+				stubs: {
+					NcPasswordField: recorder('NcPasswordField'),
+					NcTextField: recorder('NcTextField'),
+				},
+			},
 		})
 		expect(rendered(wrapper)).toMatchSnapshot()
 		const pin = wrapper.find('[data-testid="typed-field-pin"]')

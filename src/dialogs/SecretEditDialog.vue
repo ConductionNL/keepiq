@@ -415,7 +415,9 @@ export default {
 				this.typeId = secret.typeId || null
 				this.value = secret.key || ''
 				this.url = secret.url || ''
-				this.additionalUrls = Array.isArray(secret.additionalUrls) ? [...secret.additionalUrls] : []
+				this.additionalUrls = Array.isArray(secret.additionalUrls)
+					? [...secret.additionalUrls]
+					: []
 				this.login = secret.login || ''
 				this.tags = Array.isArray(secret.tags) ? [...secret.tags] : []
 				// From the DECRYPTED blob the store already parsed. Pre-filling from
@@ -490,7 +492,9 @@ export default {
 				useSecretStore().writeBackSettled(this.secretId),
 			])
 			this.viewOnly = isViewOnlyCopy(context, this.secretId)
-			this.isCopy = Boolean(context?.sourceSecretId) && context.sourceSecretId !== this.secretId
+			this.isCopy =
+				Boolean(context?.sourceSecretId)
+				&& context.sourceSecretId !== this.secretId
 			if (context?.sourceSecretId === this.secretId) {
 				return null
 			}
@@ -550,7 +554,10 @@ export default {
 				if ((this.url || '') !== (o.url || '')) {
 					diff.url = this.url || null
 				}
-				if (!this.isCopy && !sameUrls(this.additionalUrls, o.additionalUrls)) {
+				if (
+					!this.isCopy
+					&& !sameUrls(this.additionalUrls, o.additionalUrls)
+				) {
 					diff.additionalUrls = [...this.additionalUrls]
 				}
 				if ((this.effectiveValue || '') !== (o.key || '')) {

@@ -390,8 +390,7 @@ export default {
 				return
 			}
 			this.error =
-				e.message
-				|| this.t('keepiq', 'Could not open the sealed transfer')
+				e.message || this.t('keepiq', 'Could not open the sealed transfer')
 		},
 
 		/**

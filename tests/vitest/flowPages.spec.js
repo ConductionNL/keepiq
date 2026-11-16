@@ -12,16 +12,26 @@ import * as path from 'path'
 import { describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
-const { pages } = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../src/manifest.json'), 'utf8'))
+const { pages } = JSON.parse(
+	fs.readFileSync(path.resolve(__dirname, '../../src/manifest.json'), 'utf8'),
+)
 const byId = new Map(pages.map((page) => [page.id, page]))
 const router = createRouter({
 	history: createMemoryHistory(),
-	routes: pages.map((page) => ({ name: page.id, path: page.route, component: {} })),
+	routes: pages.map((page) => ({
+		name: page.id,
+		path: page.route,
+		component: {},
+	})),
 })
 
 describe('flow pages', () => {
 	it('names no deprecated flow page type', () => {
-		expect(pages.filter((page) => ['flows', 'flow-detail'].includes(page.type)).map((page) => page.id)).toEqual([])
+		expect(
+			pages
+				.filter((page) => ['flows', 'flow-detail'].includes(page.type))
+				.map((page) => page.id),
+		).toEqual([])
 	})
 
 	it('Flows is an index over the flows source, scoped to this app', () => {

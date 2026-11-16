@@ -22,7 +22,7 @@
 				class="attachment-preview__image"
 				:src="preview.url"
 				:alt="filename || t('keepiq', 'Attachment')"
-				data-testid="attachment-preview-image">
+				data-testid="attachment-preview-image" />
 			<iframe
 				v-else-if="preview.kind === 'pdf'"
 				class="attachment-preview__frame"
@@ -33,10 +33,14 @@
 			<pre
 				v-else-if="preview.kind === 'text'"
 				class="attachment-preview__text"
-				data-testid="attachment-preview-text">{{ preview.text }}</pre>
+				data-testid="attachment-preview-text"
+				>{{ preview.text }}</pre>
 		</div>
 		<template #actions>
-			<NcButton variant="primary" data-testid="attachment-preview-close" @click="onUpdateOpen(false)">
+			<NcButton
+				variant="primary"
+				data-testid="attachment-preview-close"
+				@click="onUpdateOpen(false)">
 				{{ t('keepiq', 'Close') }}
 			</NcButton>
 		</template>

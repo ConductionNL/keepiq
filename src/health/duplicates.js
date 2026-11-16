@@ -43,11 +43,13 @@ export function hostOf(url) {
  * @return {boolean}
  */
 function isGroupable(row) {
-	return Boolean(row)
+	return (
+		Boolean(row)
 		&& row.copy !== true
 		&& row.machineMaterial !== true
 		&& typeof row.value === 'string'
 		&& row.value !== ''
+	)
 }
 
 /**
@@ -74,7 +76,8 @@ function buckets(rows) {
 		}
 		const host = hostOf(row.url)
 		const username = usernameOf(row.login)
-		const place = host !== null ? `host:${host}` : `name:${String(row.name ?? '')}`
+		const place =
+			host !== null ? `host:${host}` : `name:${String(row.name ?? '')}`
 		const key = `${place}\u0000${username}`
 		if (!out.has(key)) {
 			out.set(key, { host, username, rows: [] })
@@ -186,7 +189,10 @@ export function foldFields(kept, others) {
  */
 function holdsAlready(fields, name, value) {
 	return Object.entries(fields).some(
-		([n, v]) => v === value && (n === name || /^ \(\d+\)$/.test(n.slice(name.length)) && n.startsWith(name)),
+		([n, v]) =>
+			v === value
+			&& (n === name
+				|| (/^ \(\d+\)$/.test(n.slice(name.length)) && n.startsWith(name))),
 	)
 }
 

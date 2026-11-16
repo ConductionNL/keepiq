@@ -526,7 +526,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			await bindSessionToNewSuite(rotation, session)
 			await evictOfflineSnapshot()
 
-			const outcome = await this.runMigration(await rotationMigration(rotation))
+			const outcome = await this.runMigration(
+				await rotationMigration(rotation),
+			)
 
 			// Migrate emergency-access recovery envelopes BEFORE completion. The
 			// completion sweep (SuiteMigrationCompletedEvent) invalidates every
@@ -1065,7 +1067,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			this.migrationFailures = []
 			this.migrationDroppedVersions = 0
-			const outcome = await this.runMigration(resumedMigration(resume, session))
+			const outcome = await this.runMigration(
+				resumedMigration(resume, session),
+			)
 
 			// A resumed run finalises without any extra prompt, exactly like the
 			// initiate path: completion's proof is over the OLD key, which resume

@@ -52,7 +52,7 @@ async function mountView() {
 				NcSelect: {
 					props: ['modelValue'],
 					emits: ['update:modelValue'],
-					template: `<div class="select" @click="$emit('update:modelValue', ${JSON.stringify(PICKED).replace(/"/g, '\'')})" />`,
+					template: `<div class="select" @click="$emit('update:modelValue', ${JSON.stringify(PICKED).replace(/"/g, "'")})" />`,
 				},
 				NcButton: { template: '<button><slot /></button>' },
 				HealthCategory: { template: '<section />' },
@@ -72,7 +72,13 @@ describe('HealthReportView controls', () => {
 			score: 50,
 			error: '',
 			breachStatus: 'ok',
-			summary: { weakCount: 0, reusedCount: 0, staleCount: 0, breachedCount: 0, compromisedCount: 0 },
+			summary: {
+				weakCount: 0,
+				reusedCount: 0,
+				staleCount: 0,
+				breachedCount: 0,
+				compromisedCount: 0,
+			},
 			weakFindings: [],
 			reusedFindings: [],
 			staleFindings: [],
@@ -87,7 +93,9 @@ describe('HealthReportView controls', () => {
 			fetchFlags: vi.fn().mockResolvedValue(),
 			flagSecrets: vi.fn().mockResolvedValue(),
 		}
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { breach_check_opt_in: '0' } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { breach_check_opt_in: '0' },
+		})
 		vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 	})
 
@@ -112,7 +120,9 @@ describe('HealthReportView controls', () => {
 	it('saves the ticked breach opt-in and re-runs the analysis with breach checking on', async () => {
 		const wrapper = await mountView()
 		healthStore.analyseVault.mockClear()
-		const box = wrapper.find('[data-testid="breach-optin"] input[type="checkbox"]')
+		const box = wrapper.find(
+			'[data-testid="breach-optin"] input[type="checkbox"]',
+		)
 
 		await box.setValue(true)
 		await flushPromises()
@@ -131,7 +141,9 @@ describe('HealthReportView controls', () => {
 		axios.get.mockResolvedValue({ data: { breach_check_opt_in: '1' } })
 		const wrapper = await mountView()
 
-		await wrapper.find('[data-testid="breach-optin"] input[type="checkbox"]').setValue(false)
+		await wrapper
+			.find('[data-testid="breach-optin"] input[type="checkbox"]')
+			.setValue(false)
 		await flushPromises()
 
 		expect(axios.put).toHaveBeenCalledWith('/apps/keepiq/api/settings/user', {

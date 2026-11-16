@@ -13,7 +13,12 @@
 	<section class="health-duplicates" data-testid="category-duplicates">
 		<h3>{{ t('keepiq', 'Duplicates') }}</h3>
 		<p class="health-duplicates__description">
-			{{ t('keepiq', 'Items that hold the same login more than once. Merging keeps one and removes the others.') }}
+			{{
+				t(
+					'keepiq',
+					'Items that hold the same login more than once. Merging keeps one and removes the others.',
+				)
+			}}
 		</p>
 		<p v-if="!exact.length && !likely.length" data-testid="duplicates-empty">
 			{{ t('keepiq', 'No duplicates found') }}
@@ -27,15 +32,21 @@
 				</p>
 				<ul class="health-duplicates__groups">
 					<li
-v-for="(group, index) in list.groups"
+						v-for="(group, index) in list.groups"
 						:key="`${list.kind}-${index}`"
 						class="health-duplicates__group"
 						:data-testid="`duplicate-group-${list.kind}`">
 						<div class="health-duplicates__head">
-							<span class="health-duplicates__host">{{ group.host || group.items[0].name }}</span>
-							<span v-if="group.username" class="health-duplicates__meta">{{ group.username }}</span>
+							<span class="health-duplicates__host">{{
+								group.host || group.items[0].name
+							}}</span>
+							<span
+								v-if="group.username"
+								class="health-duplicates__meta"
+								>{{ group.username }}</span
+							>
 							<NcButton
-variant="secondary"
+								variant="secondary"
 								:data-testid="`duplicate-merge-${list.kind}-${index}`"
 								@click="merging = group">
 								{{ t('keepiq', 'Merge') }}
@@ -44,12 +55,16 @@ variant="secondary"
 						<ul class="health-duplicates__items">
 							<li v-for="item in group.items" :key="item.id">
 								<button
-type="button"
+									type="button"
 									class="health-duplicates__link"
 									:data-testid="`duplicate-item-${item.id}`"
 									@click="$emit('open', item.id)">
 									<span>{{ item.name }}</span>
-									<span v-if="item.folderId" class="health-duplicates__meta">{{ item.folderId }}</span>
+									<span
+										v-if="item.folderId"
+										class="health-duplicates__meta"
+										>{{ item.folderId }}</span
+									>
 								</button>
 							</li>
 						</ul>
@@ -59,7 +74,7 @@ type="button"
 		</template>
 
 		<DuplicateMergeModal
-v-if="merging"
+			v-if="merging"
 			:open="true"
 			:group="merging"
 			@close="merging = null"
@@ -102,11 +117,20 @@ export default {
 		 */
 		lists() {
 			return [
-				{ kind: 'exact', title: this.t('keepiq', 'Exact duplicates'), hint: '', groups: this.exact },
+				{
+					kind: 'exact',
+					title: this.t('keepiq', 'Exact duplicates'),
+					hint: '',
+					groups: this.exact,
+				},
 				{
 					kind: 'likely',
 					title: this.t('keepiq', 'Likely duplicates'),
-					hint: this.t('keepiq', 'Same address and username, a different password. Two separate accounts can look like this, so check before you merge.'),
+					hint: this.t(
+						'keepiq',
+						'Same address and username, a different password. Two separate accounts can look like this, so check before you merge.',
+					),
+
 					groups: this.likely,
 				},
 			]

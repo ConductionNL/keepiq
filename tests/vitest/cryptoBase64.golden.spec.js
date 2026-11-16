@@ -23,7 +23,9 @@ describe('device approval base64', () => {
 	})
 
 	it('reads it back byte for byte', () => {
-		expect(fromBase64(Buffer.from(ALL_BYTES).toString('base64'))).toEqual(ALL_BYTES)
+		expect(fromBase64(Buffer.from(ALL_BYTES).toString('base64'))).toEqual(
+			ALL_BYTES,
+		)
 		expect(fromBase64('/w==')).toEqual(Uint8Array.from([0xff]))
 		expect(fromBase64('')).toEqual(new Uint8Array(0))
 	})

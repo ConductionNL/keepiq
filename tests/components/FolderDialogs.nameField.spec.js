@@ -33,7 +33,10 @@ const stubs = {
 		template:
 			'<input :aria-label="label" :value="modelValue" :data-required="String(required)" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 	},
-	NcSelect: { props: ['options', 'inputLabel'], template: '<div class="select" />' },
+	NcSelect: {
+		props: ['options', 'inputLabel'],
+		template: '<div class="select" />',
+	},
 	CnIconColorPicker: { template: '<div class="picker" />' },
 	CnDialogActions: { template: '<div class="actions" />' },
 }

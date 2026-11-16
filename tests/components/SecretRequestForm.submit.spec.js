@@ -35,9 +35,15 @@ describe('SecretRequestForm submit', () => {
 
 	it('sends the exact payload with an expiry and builds the link', async () => {
 		const store = useSecretRequestStore()
-		const create = vi.spyOn(store, 'createRequest').mockResolvedValue({ id: 'r1', token: 'tok-9' })
+		const create = vi
+			.spyOn(store, 'createRequest')
+			.mockResolvedValue({ id: 'r1', token: 'tok-9' })
 		const wrapper = mountForm({ linkBaseUrl: '/base' })
-		wrapper.setData({ selectedFields: ['key', 'url'], expiresAt: '2030-01-02T03:04', isReRequest: true })
+		wrapper.setData({
+			selectedFields: ['key', 'url'],
+			expiresAt: '2030-01-02T03:04',
+			isReRequest: true,
+		})
 		await wrapper.vm.onSubmit()
 		expect(create).toHaveBeenCalledWith({
 			secretId: 'sec-1',
@@ -46,7 +52,13 @@ describe('SecretRequestForm submit', () => {
 			isReRequest: true,
 			expiresAt: new Date('2030-01-02T03:04').toISOString(),
 		})
-		expect(Object.keys(create.mock.calls[0][0])).toEqual(['secretId', 'encryptionSuiteId', 'requestedFields', 'isReRequest', 'expiresAt'])
+		expect(Object.keys(create.mock.calls[0][0])).toEqual([
+			'secretId',
+			'encryptionSuiteId',
+			'requestedFields',
+			'isReRequest',
+			'expiresAt',
+		])
 		expect(wrapper.vm.createdLink).toBe('/base/tok-9')
 		expect(wrapper.emitted('created')[0]).toEqual([{ id: 'r1', token: 'tok-9' }])
 		expect(wrapper.vm.busy).toBe(false)
@@ -55,7 +67,9 @@ describe('SecretRequestForm submit', () => {
 
 	it('sends a null expiry and keeps no link without a token', async () => {
 		const store = useSecretRequestStore()
-		const create = vi.spyOn(store, 'createRequest').mockResolvedValue({ id: 'r2' })
+		const create = vi
+			.spyOn(store, 'createRequest')
+			.mockResolvedValue({ id: 'r2' })
 		const wrapper = mountForm()
 		wrapper.setData({ selectedFields: ['login'] })
 		await wrapper.vm.onSubmit()
@@ -76,7 +90,10 @@ describe('SecretRequestForm submit', () => {
 	})
 
 	it.each([
-		[{ response: { data: { message: 'server says no' } }, message: 'x' }, 'server says no'],
+		[
+			{ response: { data: { message: 'server says no' } }, message: 'x' },
+			'server says no',
+		],
 		[{ message: 'plain error' }, 'plain error'],
 		[{}, 'Failed to create request'],
 	])('shows the failure text %#', async (failure, text) => {

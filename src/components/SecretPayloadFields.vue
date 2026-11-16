@@ -202,7 +202,11 @@ export default {
 			return {
 				number: number ? this.numberHintText(number) : '',
 				cvv: code
-					? t('keepiq', '{brand} cards use a {size}-digit {name}. Saving is not blocked.', code)
+					? t(
+							'keepiq',
+							'{brand} cards use a {size}-digit {name}. Saving is not blocked.',
+							code,
+						)
 					: '',
 			}
 		},
@@ -220,12 +224,22 @@ export default {
 		 */
 		numberHintText(hint) {
 			if (hint.code === 'length') {
-				return t('keepiq', '{brand} does not issue card numbers of this length. Saving is not blocked.', { brand: hint.brand })
+				return t(
+					'keepiq',
+					'{brand} does not issue card numbers of this length. Saving is not blocked.',
+					{ brand: hint.brand },
+				)
 			}
 			if (hint.code === 'lengthUnknown') {
-				return t('keepiq', 'Card numbers have 12 to 19 digits. Saving is not blocked.')
+				return t(
+					'keepiq',
+					'Card numbers have 12 to 19 digits. Saving is not blocked.',
+				)
 			}
-			return t('keepiq', 'This number does not pass the card checksum — double-check it (saving is not blocked).')
+			return t(
+				'keepiq',
+				'This number does not pass the card checksum — double-check it (saving is not blocked).',
+			)
 		},
 
 		/**

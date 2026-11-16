@@ -12,7 +12,10 @@
 
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { PAGE_PATH, renderOverview } from '../../docs/scripts/encryption-overview.mjs'
+import {
+	PAGE_PATH,
+	renderOverview,
+} from '../../docs/scripts/encryption-overview.mjs'
 import { CRYPTO_PARAMETERS, technicalNames } from '../../src/crypto/parameters.js'
 
 describe('docs/encryption-overview.md', () => {

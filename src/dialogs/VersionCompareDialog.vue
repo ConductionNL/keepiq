@@ -24,7 +24,9 @@
 			<p v-if="!changed" data-testid="version-compare-same">
 				{{ t('keepiq', 'No field changed between these two.') }}
 			</p>
-			<table class="version-compare__table" data-testid="version-compare-table">
+			<table
+				class="version-compare__table"
+				data-testid="version-compare-table">
 				<thead>
 					<tr>
 						<th scope="col">

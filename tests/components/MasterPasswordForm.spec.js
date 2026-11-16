@@ -69,7 +69,15 @@ function mountForm() {
  * @param {boolean} values.strong Whether the strength meter accepts it.
  * @return {Promise<void>}
  */
-async function fill(wrapper, { current = 'old-pw', next = 'N3w-long-pw!', confirm = next, strong = true } = {}) {
+async function fill(
+	wrapper,
+	{
+		current = 'old-pw',
+		next = 'N3w-long-pw!',
+		confirm = next,
+		strong = true,
+	} = {},
+) {
 	await wrapper.find('.current').setValue(current)
 	await wrapper.find('.new').setValue(next)
 	await wrapper.find('.confirm').setValue(confirm)
@@ -87,9 +95,7 @@ async function fill(wrapper, { current = 'old-pw', next = 'N3w-long-pw!', confir
  * @return {Array<string>}
  */
 function notes(wrapper, type) {
-	return wrapper
-		.findAll(`.note-card[data-type="${type}"]`)
-		.map((n) => n.text())
+	return wrapper.findAll(`.note-card[data-type="${type}"]`).map((n) => n.text())
 }
 
 describe('MasterPasswordForm', () => {
@@ -155,9 +161,10 @@ describe('MasterPasswordForm', () => {
 	it('disables the form and says it is changing while the request runs', async () => {
 		let release
 		store.changePassword = vi.fn(
-			() => new Promise((resolve) => {
-				release = resolve
-			}),
+			() =>
+				new Promise((resolve) => {
+					release = resolve
+				}),
 		)
 		const wrapper = mountForm()
 		await fill(wrapper)

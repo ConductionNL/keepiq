@@ -134,7 +134,11 @@ describe('VaultEncryptionDetails', () => {
 	})
 
 	it('shows dashes for facts the server could not read', async () => {
-		store.inventory = { stored: [], ca: [], suites: [{ id: 'v1', metadata: {} }] }
+		store.inventory = {
+			stored: [],
+			ca: [],
+			suites: [{ id: 'v1', metadata: {} }],
+		}
 
 		const wrapper = await mountDetails()
 
@@ -150,7 +154,9 @@ describe('VaultEncryptionDetails', () => {
 
 		const wrapper = await mountDetails()
 
-		expect(wrapper.find('[data-testid="vault-encryption-certificate"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="vault-encryption-certificate"]').exists(),
+		).toBe(false)
 		expect(wrapper.text()).toContain(
 			'No certificate details are available for this vault.',
 		)

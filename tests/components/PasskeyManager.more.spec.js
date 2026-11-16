@@ -48,7 +48,8 @@ const stubs = {
 	NcButton: {
 		props: ['disabled', 'variant'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcTextField: {
 		props: ['modelValue', 'label'],
@@ -79,7 +80,10 @@ async function mountManager() {
 describe('PasskeyManager more', () => {
 	beforeEach(() => {
 		window.PublicKeyCredential = function PublicKeyCredential() {}
-		Object.defineProperty(navigator, 'credentials', { value: {}, configurable: true })
+		Object.defineProperty(navigator, 'credentials', {
+			value: {},
+			configurable: true,
+		})
 		setActivePinia(createPinia())
 		vi.mocked(showSuccess).mockClear()
 	})
@@ -104,7 +108,12 @@ describe('PasskeyManager more', () => {
 	it('lists credentials with stale warning, fallbacks and usage text', async () => {
 		const get = vi.spyOn(axios, 'get').mockResolvedValue({
 			data: [
-				{ id: 'p1', label: '', status: 'stale', lastUsedAt: '2026-05-01T12:00:00Z' },
+				{
+					id: 'p1',
+					label: '',
+					status: 'stale',
+					lastUsedAt: '2026-05-01T12:00:00Z',
+				},
 				{ id: 'p2', label: 'Key', status: 'retired', lastUsedAt: null },
 			],
 		})
@@ -112,23 +121,29 @@ describe('PasskeyManager more', () => {
 		const wrapper = await mountManager()
 
 		expect(get).toHaveBeenCalledExactlyOnceWith('/apps/keepiq/api/v1/passkeys')
-		expect(wrapper.find('[data-testid="passkey-stale-note"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="passkey-suspended-note"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="passkey-stale-note"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.find('[data-testid="passkey-suspended-note"]').exists()).toBe(
+			false,
+		)
 
 		const p1 = wrapper.find('[data-testid="passkey-p1"]')
 		expect(p1.find('.passkey-manager__label').text()).toBe('Passkey')
 		expect(wrapper.find('[data-testid="passkey-status-p1"]').text()).toBe(
 			'Needs enrolling again',
 		)
-		expect(wrapper.find('[data-testid="passkey-status-p1"]').classes()).toContain(
-			'passkey-manager__status--stale',
-		)
+		expect(
+			wrapper.find('[data-testid="passkey-status-p1"]').classes(),
+		).toContain('passkey-manager__status--stale')
 		// The test t() stub returns the source string, placeholder included.
 		expect(p1.find('.passkey-manager__muted').text()).toBe('last used {when}')
 
 		const p2 = wrapper.find('[data-testid="passkey-p2"]')
 		expect(p2.find('.passkey-manager__label').text()).toBe('Key')
-		expect(wrapper.find('[data-testid="passkey-status-p2"]').text()).toBe('retired')
+		expect(wrapper.find('[data-testid="passkey-status-p2"]').text()).toBe(
+			'retired',
+		)
 		expect(p2.find('.passkey-manager__muted').text()).toBe('never used')
 	})
 
@@ -146,7 +161,9 @@ describe('PasskeyManager more', () => {
 		usePasskeyStore().error = 'Could not load passkeys'
 		await wrapper.vm.$nextTick()
 
-		const note = wrapper.findAll('.note').find((n) => n.text() === 'Could not load passkeys')
+		const note = wrapper
+			.findAll('.note')
+			.find((n) => n.text() === 'Could not load passkeys')
 		expect(note.attributes('data-type')).toBe('error')
 		expect(wrapper.find('[data-testid="passkey-list"]').exists()).toBe(false)
 	})
@@ -156,7 +173,9 @@ describe('PasskeyManager more', () => {
 		const wrapper = await mountManager()
 
 		expect(useSessionStore().isLocked).toBe(true)
-		expect(wrapper.find('[data-testid="passkey-add"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper.find('[data-testid="passkey-add"]').attributes('disabled'),
+		).toBeDefined()
 		expect(wrapper.find('.passkey-manager__add').text()).toContain(
 			'Unlock your vault to add a passkey.',
 		)
@@ -180,7 +199,9 @@ describe('PasskeyManager more', () => {
 			const wrapper = await mountManager()
 			const add = wrapper.find('[data-testid="passkey-add"]')
 			expect(add.attributes('disabled')).toBeUndefined()
-			expect(wrapper.find('.passkey-manager__add').text()).not.toContain('Unlock')
+			expect(wrapper.find('.passkey-manager__add').text()).not.toContain(
+				'Unlock',
+			)
 			await add.trigger('click')
 			await wrapper.find('.label-field').setValue('Laptop')
 			await wrapper.find('.master-field').setValue('pw')
@@ -201,9 +222,12 @@ describe('PasskeyManager more', () => {
 
 		it('enrols, toasts, then closes and clears the form', async () => {
 			let finish
-			store.enroll = vi.fn(() => new Promise((resolve) => {
-				finish = resolve
-			}))
+			store.enroll = vi.fn(
+				() =>
+					new Promise((resolve) => {
+						finish = resolve
+					}),
+			)
 			const wrapper = await openFilledForm()
 
 			await wrapper.find('[data-testid="passkey-enroll"]').trigger('click')
@@ -217,14 +241,18 @@ describe('PasskeyManager more', () => {
 			await flush()
 
 			expect(showSuccess).toHaveBeenCalledExactlyOnceWith('Passkey enrolled.')
-			expect(wrapper.find('[data-testid="passkey-enroll-form"]').exists()).toBe(false)
+			expect(
+				wrapper.find('[data-testid="passkey-enroll-form"]').exists(),
+			).toBe(false)
 			expect(wrapper.vm.masterPassword).toBe('')
 			expect(wrapper.vm.label).toBe('')
 			expect(wrapper.vm.busy).toBe(false)
 		})
 
 		it('surfaces a failed ceremony and keeps the form open', async () => {
-			store.enroll = vi.fn().mockRejectedValue(new Error('Authenticator has no PRF'))
+			store.enroll = vi
+				.fn()
+				.mockRejectedValue(new Error('Authenticator has no PRF'))
 			const wrapper = await openFilledForm()
 
 			await wrapper.find('[data-testid="passkey-enroll"]').trigger('click')
@@ -232,9 +260,13 @@ describe('PasskeyManager more', () => {
 
 			expect(store.error).toBe('Authenticator has no PRF')
 			expect(showSuccess).not.toHaveBeenCalled()
-			expect(wrapper.find('[data-testid="passkey-enroll-form"]').exists()).toBe(true)
+			expect(
+				wrapper.find('[data-testid="passkey-enroll-form"]').exists(),
+			).toBe(true)
 			expect(wrapper.vm.masterPassword).toBe('pw')
-			expect(wrapper.find('[data-testid="passkey-enroll"]').text()).toBe('Enroll passkey')
+			expect(wrapper.find('[data-testid="passkey-enroll"]').text()).toBe(
+				'Enroll passkey',
+			)
 		})
 
 		it('falls back to a generic error when the failure has no message', async () => {
@@ -257,7 +289,9 @@ describe('PasskeyManager more', () => {
 			await cancel.trigger('click')
 
 			expect(store.enroll).not.toHaveBeenCalled()
-			expect(wrapper.find('[data-testid="passkey-enroll-form"]').exists()).toBe(false)
+			expect(
+				wrapper.find('[data-testid="passkey-enroll-form"]').exists(),
+			).toBe(false)
 			expect(wrapper.vm.masterPassword).toBe('')
 			expect(wrapper.vm.label).toBe('')
 		})

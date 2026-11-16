@@ -96,11 +96,16 @@ const digitsOf = (number) => String(number ?? '').replace(/\D/g, '')
 // Ranges are compared at this many digits to find the narrowest (design D3).
 const RANGE_WIDTH = 8
 
-const BRAND_RANGES = CARD_BRANDS.brands.flatMap((brand) => brand.ranges.map((range) => {
-	const [start, end] = Array.isArray(range) ? range : [range, range]
-	const width = Number(end.padEnd(RANGE_WIDTH, '9')) - Number(start.padEnd(RANGE_WIDTH, '0')) + 1
-	return { brand, start, end, width }
-}))
+const BRAND_RANGES = CARD_BRANDS.brands.flatMap((brand) =>
+	brand.ranges.map((range) => {
+		const [start, end] = Array.isArray(range) ? range : [range, range]
+		const width =
+			Number(end.padEnd(RANGE_WIDTH, '9'))
+			- Number(start.padEnd(RANGE_WIDTH, '0'))
+			+ 1
+		return { brand, start, end, width }
+	}),
+)
 
 /**
  * The brand table entry for a (decrypted) card number: the brand of the
@@ -126,7 +131,11 @@ export function cardBrandInfo(number) {
 function rangeCovers(range, digits) {
 	const head = digits.slice(0, range.start.length)
 	// Equal-length digit strings compare as numbers do.
-	return head.length === range.start.length && head >= range.start && head <= range.end
+	return (
+		head.length === range.start.length
+		&& head >= range.start
+		&& head <= range.end
+	)
 }
 
 /**
@@ -142,7 +151,9 @@ function narrowestBrand(ranges) {
 		return null
 	}
 	const width = Math.min(...ranges.map((range) => range.width))
-	const brands = new Set(ranges.filter((range) => range.width === width).map((range) => range.brand))
+	const brands = new Set(
+		ranges.filter((range) => range.width === width).map((range) => range.brand),
+	)
 	return brands.size === 1 ? [...brands][0] : null
 }
 
@@ -207,11 +218,17 @@ export function maskCardNumber(number) {
 	const groups = cardGroups(digits)
 	const shown = groups[0].length
 	let index = 0
-	return groups.map((group) => [...group].map((digit) => {
-		const keep = index < shown || index >= digits.length - 4
-		index++
-		return keep ? digit : '•'
-	}).join('')).join(' ')
+	return groups
+		.map((group) =>
+			[...group]
+				.map((digit) => {
+					const keep = index < shown || index >= digits.length - 4
+					index++
+					return keep ? digit : '•'
+				})
+				.join(''),
+		)
+		.join(' ')
 }
 
 /**
@@ -244,7 +261,9 @@ function lengthHint(brand, length) {
 	if (!brand) {
 		return length < 12 || length > 19 ? { code: 'lengthUnknown' } : null
 	}
-	return brand.lengths.includes(length) ? null : { code: 'length', brand: brand.label }
+	return brand.lengths.includes(length)
+		? null
+		: { code: 'length', brand: brand.label }
 }
 
 /**

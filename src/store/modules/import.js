@@ -117,7 +117,11 @@ export async function resolveRowTypes(rows, typeStore) {
 			return null
 		}
 		try {
-			const type = await typeStore.createType({ name: row.typeName, label: row.typeLabel, scope: 'user' })
+			const type = await typeStore.createType({
+				name: row.typeName,
+				label: row.typeLabel,
+				scope: 'user',
+			})
 			if (type && type.id) {
 				idsByName.set(row.typeName, type.id)
 				ids.add(type.id)
@@ -135,7 +139,11 @@ export async function resolveRowTypes(rows, typeStore) {
 		let id = null
 		if (typeof row.typeName === 'string' && row.typeName !== '') {
 			id = idsByName.get(row.typeName) ?? null
-			if (id === null && typeof row.typeLabel === 'string' && row.typeLabel !== '') {
+			if (
+				id === null
+				&& typeof row.typeLabel === 'string'
+				&& row.typeLabel !== ''
+			) {
 				id = await createFor(row)
 			}
 		}
@@ -143,7 +151,10 @@ export async function resolveRowTypes(rows, typeStore) {
 			id = ids.has(row.type) ? row.type : (idsByName.get(row.type) ?? null)
 		}
 		if (id === null && namesAnotherType(row)) {
-			fallbacks.push({ sourceRow: row.sourceRow, type: row.typeLabel || row.typeName || row.type })
+			fallbacks.push({
+				sourceRow: row.sourceRow,
+				type: row.typeLabel || row.typeName || row.type,
+			})
 		}
 		byRow.set(row, id)
 	}
@@ -198,7 +209,8 @@ async function encryptOptionalFields(item, row, publicKey) {
  */
 function namesAnotherType(row) {
 	return [row.typeName, row.type].some(
-		(type) => typeof type === 'string' && type !== '' && type !== DEFAULT_TYPE_NAME,
+		(type) =>
+			typeof type === 'string' && type !== '' && type !== DEFAULT_TYPE_NAME,
 	)
 }
 
@@ -255,16 +267,15 @@ async function ensureTypesLoaded(typeStore, rows) {
  * @param {string} context.rootFolder Root folder name, or ''.
  * @return {Promise<Array<object>>} The encrypted items.
  */
-async function encryptRows(store, rows, { publicKey, dupRows, typeIdFor, rootFolder }) {
+async function encryptRows(
+	store,
+	rows,
+	{ publicKey, dupRows, typeIdFor, rootFolder },
+) {
 	const items = []
 	for (const row of rows) {
 		const asCopy = dupRows.has(row.sourceRow)
-		const item = await store.encryptRow(
-			row,
-			publicKey,
-			asCopy,
-			typeIdFor(row),
-		)
+		const item = await store.encryptRow(row, publicKey, asCopy, typeIdFor(row))
 		if (rootFolder !== '') {
 			item.folderPath = [rootFolder, ...item.folderPath]
 		}
@@ -282,9 +293,7 @@ async function encryptRows(store, rows, { publicKey, dupRows, typeIdFor, rootFol
 function chunkFolders(chunk) {
 	return [
 		...new Set(
-			chunk
-				.map((it) => it.folderPath.join('/'))
-				.filter((p) => p !== ''),
+			chunk.map((it) => it.folderPath.join('/')).filter((p) => p !== ''),
 		),
 	].map((p) => p.split('/'))
 }
@@ -345,12 +354,27 @@ function rejectChunk(rejected, chunk) {
  * @return {Promise<object>} The rows, mapping, headers, adjustableMapping and sourceText.
  */
 async function readWithParser(parser, text, options) {
-	if (parser.adjustableMapping === true && typeof parser.parseDetailed === 'function') {
+	if (
+		parser.adjustableMapping === true
+		&& typeof parser.parseDetailed === 'function'
+	) {
 		const detailed = await parser.parseDetailed(text, options)
-		return { rows: detailed.rows, mapping: detailed.mapping, headers: detailed.headers, adjustableMapping: true, sourceText: text }
+		return {
+			rows: detailed.rows,
+			mapping: detailed.mapping,
+			headers: detailed.headers,
+			adjustableMapping: true,
+			sourceText: text,
+		}
 	}
 	const rows = await parser.parse(text, options)
-	return { rows, mapping: [], headers: [], adjustableMapping: false, sourceText: null }
+	return {
+		rows,
+		mapping: [],
+		headers: [],
+		adjustableMapping: false,
+		sourceText: null,
+	}
 }
 
 /**
@@ -363,7 +387,9 @@ async function readWithParser(parser, text, options) {
 function partialFieldsOf(rows) {
 	const fields = new Set()
 	for (const row of rows) {
-		for (const field of Array.isArray(row.omittedFields) ? row.omittedFields : []) {
+		for (const field of Array.isArray(row.omittedFields)
+			? row.omittedFields
+			: []) {
 			fields.add(field)
 		}
 	}
@@ -387,7 +413,11 @@ function rowIsClean(row) {
  * @return {object} The rejection ({ sourceRow, reason, name }).
  */
 function parseRejection(row) {
-	return { sourceRow: row.sourceRow, reason: row.errors.join('; '), name: row.name }
+	return {
+		sourceRow: row.sourceRow,
+		reason: row.errors.join('; '),
+		name: row.name,
+	}
 }
 
 /**
@@ -401,7 +431,8 @@ function typeNameResolver(types) {
 	const nameById = new Map(
 		(Array.isArray(types) ? types : []).map((type) => [type.id, type.name]),
 	)
-	return (row) => row.typeName || nameById.get(row.type) || row.type || DEFAULT_TYPE_NAME
+	return (row) =>
+		row.typeName || nameById.get(row.type) || row.type || DEFAULT_TYPE_NAME
 }
 
 /**
@@ -688,7 +719,11 @@ export const useImportStore = defineStore('import', {
 			const typeNameOf = typeNameResolver(types)
 			const kept = []
 			for (const row of rows) {
-				const verdict = evaluateScore(policy, typeNameOf(row), rowPassword(row))
+				const verdict = evaluateScore(
+					policy,
+					typeNameOf(row),
+					rowPassword(row),
+				)
 				if (verdict.compliant) {
 					kept.push(row)
 				} else {
@@ -736,14 +771,19 @@ export const useImportStore = defineStore('import', {
 			await ensureTypesLoaded(typeStore, rows)
 			await this.dropPolicyRejected(rows, typeStore.types)
 			// A backup's type names find, or create, each row's type (D3).
-			const { typeIdFor, created: createdTypes, fallbacks: typeFallbacks } = await resolveRowTypes(rows, typeStore)
+			const {
+				typeIdFor,
+				created: createdTypes,
+				fallbacks: typeFallbacks,
+			} = await resolveRowTypes(rows, typeStore)
 
 			// Encrypt every row client-side BEFORE any request leaves the browser.
-			const items = await encryptRows(
-				this,
-				rows,
-				{ publicKey, dupRows, typeIdFor, rootFolder },
-			)
+			const items = await encryptRows(this, rows, {
+				publicKey,
+				dupRows,
+				typeIdFor,
+				rootFolder,
+			})
 
 			const chunks = inChunks(items)
 			this.totalChunks = chunks.length
@@ -757,13 +797,21 @@ export const useImportStore = defineStore('import', {
 					folders: chunkFolders(chunk),
 					items: chunk,
 				})
-				created += foldChunkResult(this.rejected, chunk, result, foldersCreated)
+				created += foldChunkResult(
+					this.rejected,
+					chunk,
+					result,
+					foldersCreated,
+				)
 				this.committedChunks += 1
 			}
 
 			this.summary = {
 				imported: created,
-				skippedDuplicates: skippedDuplicateCount(this.duplicates, this.duplicateResolutions),
+				skippedDuplicates: skippedDuplicateCount(
+					this.duplicates,
+					this.duplicateResolutions,
+				),
 				rejected: this.rejected.length,
 				foldersCreated: foldersCreated.size,
 				rejectedRows: [...this.rejected],

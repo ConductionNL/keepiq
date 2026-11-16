@@ -24,11 +24,13 @@ const stubs = {
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
+		template:
+			'<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
 	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
@@ -61,12 +63,18 @@ describe('CertificateRenewalChecklistDialog', () => {
 
 	it('opens on a checklist and lists its steps in order', () => {
 		const wrapper = mountDialog({
-			steps: ['Generate a CSR', 'Submit it to the issuer', 'Import the result'],
+			steps: [
+				'Generate a CSR',
+				'Submit it to the issuer',
+				'Import the result',
+			],
 		})
 
 		expect(wrapper.find('[data-open]').attributes('data-open')).toBe('true')
 		expect(
-			wrapper.findAll('[data-testid="cert-checklist"] li').map((li) => li.text()),
+			wrapper
+				.findAll('[data-testid="cert-checklist"] li')
+				.map((li) => li.text()),
 		).toEqual(['Generate a CSR', 'Submit it to the issuer', 'Import the result'])
 	})
 

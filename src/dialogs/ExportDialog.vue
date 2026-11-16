@@ -514,7 +514,6 @@ export default {
 			this.error = null
 			this.cxfReport = null
 		},
-
 	},
 }
 </script>

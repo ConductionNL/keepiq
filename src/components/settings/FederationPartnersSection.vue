@@ -297,7 +297,9 @@ export default {
 		 */
 		async removePartner(partner) {
 			await this.changePartner(() =>
-				axios.delete(generateUrl(BASE + '/' + encodeURIComponent(partner.id))),
+				axios.delete(
+					generateUrl(BASE + '/' + encodeURIComponent(partner.id)),
+				),
 			)
 		},
 

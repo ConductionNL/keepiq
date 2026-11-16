@@ -86,7 +86,13 @@ export const useExportStore = defineStore('export', {
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-export/spec.md
 		 */
-		async exportBackup(secrets, folders, passphrase, scope = { mode: 'vault' }, options = {}) {
+		async exportBackup(
+			secrets,
+			folders,
+			passphrase,
+			scope = { mode: 'vault' },
+			options = {},
+		) {
 			this.loading = true
 			this.error = null
 			try {

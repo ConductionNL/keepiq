@@ -21,7 +21,10 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 const substitutingT = {
 	methods: {
 		t: (_app, key, vars) =>
-			Object.entries(vars || {}).reduce((acc, [name, value]) => acc.replace(`{${name}}`, value), key),
+			Object.entries(vars || {}).reduce(
+				(acc, [name, value]) => acc.replace(`{${name}}`, value),
+				key,
+			),
 	},
 }
 
@@ -29,7 +32,8 @@ const stubs = {
 	NcButton: {
 		props: ['disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcNoteCard: { template: '<div><slot /></div>' },
 	History: true,
@@ -43,9 +47,24 @@ const stubs = {
 }
 
 const VERSIONS = [
-	{ id: 'v-3', versionNumber: 3, actorId: 'alice', createdAt: '2026-05-02T10:00:00Z' },
-	{ id: 'v-2', versionNumber: 2, actorId: 'bob', createdAt: '2026-04-01T09:30:00Z' },
-	{ id: 'v-1', versionNumber: 1, actorId: 'bob', createdAt: '2026-03-01T09:30:00Z' },
+	{
+		id: 'v-3',
+		versionNumber: 3,
+		actorId: 'alice',
+		createdAt: '2026-05-02T10:00:00Z',
+	},
+	{
+		id: 'v-2',
+		versionNumber: 2,
+		actorId: 'bob',
+		createdAt: '2026-04-01T09:30:00Z',
+	},
+	{
+		id: 'v-1',
+		versionNumber: 1,
+		actorId: 'bob',
+		createdAt: '2026-03-01T09:30:00Z',
+	},
 ]
 
 describe('VersionHistoryPanel compare', () => {
@@ -56,9 +75,15 @@ describe('VersionHistoryPanel compare', () => {
 		store = useSecretVersionStore()
 		store.versions = VERSIONS.map((v) => ({ ...v }))
 		store.fetchVersions = vi.fn().mockResolvedValue()
-		store.viewVersion = vi.fn(async (id) => ({ id, name: `name-${id}`, key: `key-${id}` }))
+		store.viewVersion = vi.fn(async (id) => ({
+			id,
+			name: `name-${id}`,
+			key: `key-${id}`,
+		}))
 		store.reset = vi.fn()
-		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({ id: 'secret-1', name: 'now', key: 'key-now' })
+		useSecretStore().fetchSecret = vi
+			.fn()
+			.mockResolvedValue({ id: 'secret-1', name: 'now', key: 'key-now' })
 	})
 
 	async function mountPanel(props = {}) {
@@ -73,7 +98,9 @@ describe('VersionHistoryPanel compare', () => {
 	it('offers no comparison to a viewer who does not own the secret', async () => {
 		const wrapper = await mountPanel({ canManage: false })
 
-		expect(wrapper.find('[data-testid="version-compare-bar"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="version-compare-bar"]').exists()).toBe(
+			false,
+		)
 		expect(wrapper.find('[data-testid="version-pick-2"]').exists()).toBe(false)
 	})
 
@@ -86,8 +113,14 @@ describe('VersionHistoryPanel compare', () => {
 		expect(compare().attributes('disabled')).toBeDefined()
 		await wrapper.find('[data-testid="version-pick-1"]').setValue(true)
 		expect(compare().attributes('disabled')).toBeUndefined()
-		expect(wrapper.find('[data-testid="version-pick-2"]').attributes('disabled')).toBeDefined()
-		expect(wrapper.find('[data-testid="version-pick-current"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper.find('[data-testid="version-pick-2"]').attributes('disabled'),
+		).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="version-pick-current"]')
+				.attributes('disabled'),
+		).toBeDefined()
 	})
 
 	it('compares two versions, the older on the left, decrypting both through the version store', async () => {
@@ -119,8 +152,16 @@ describe('VersionHistoryPanel compare', () => {
 
 		expect(useSecretStore().fetchSecret).toHaveBeenCalledWith('secret-1')
 		expect(store.viewVersion).toHaveBeenCalledWith('v-2')
-		expect(wrapper.vm.comparison.left).toEqual({ id: 'v-2', name: 'name-v-2', key: 'key-v-2' })
-		expect(wrapper.vm.comparison.right).toEqual({ id: 'secret-1', name: 'now', key: 'key-now' })
+		expect(wrapper.vm.comparison.left).toEqual({
+			id: 'v-2',
+			name: 'name-v-2',
+			key: 'key-v-2',
+		})
+		expect(wrapper.vm.comparison.right).toEqual({
+			id: 'secret-1',
+			name: 'now',
+			key: 'key-now',
+		})
 		expect(wrapper.vm.comparison.rightLabel).toBe('Current value')
 	})
 

@@ -42,12 +42,16 @@ const stubs = {
 	NcButton: {
 		props: ['disabled', 'variant', 'ariaLabel', 'title'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcSelect: { props: ['options', 'modelValue'], template: '<div />' },
 	NcTextField: { props: ['modelValue', 'label'], template: '<input />' },
 	NcPasswordField: { props: ['modelValue', 'label'], template: '<input />' },
-	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div class="note" :data-type="type"><slot /></div>',
+	},
 	NcLoadingIcon: { template: '<span />' },
 	Plus: { template: '<i />' },
 	ContentSave: { template: '<i />' },
@@ -219,7 +223,14 @@ describe('create dialog payload', () => {
 		const wrapper = await create('type-login')
 		await wrapper.vm.submit()
 		const body = useSecretStore().createSecret.mock.calls[0][0]
-		expect(Object.keys(body)).toEqual(['name', 'typeId', 'folderId', 'url', 'login', 'key'])
+		expect(Object.keys(body)).toEqual([
+			'name',
+			'typeId',
+			'folderId',
+			'url',
+			'login',
+			'key',
+		])
 		expect(body).toEqual({
 			name: 'Item',
 			typeId: 'type-login',
@@ -235,7 +246,15 @@ describe('create dialog payload', () => {
 		await fillExtras(wrapper)
 		await wrapper.vm.submit()
 		const body = useSecretStore().createSecret.mock.calls[0][0]
-		expect(Object.keys(body)).toEqual(['name', 'typeId', 'folderId', 'url', 'login', 'key', 'additionalFields'])
+		expect(Object.keys(body)).toEqual([
+			'name',
+			'typeId',
+			'folderId',
+			'url',
+			'login',
+			'key',
+			'additionalFields',
+		])
 		expect(body.url).toBe('https://example.org')
 		expect(body.login).toBe('ada')
 		expect(body.additionalFields).toEqual({ Pin: '1234' })
@@ -251,7 +270,14 @@ describe('create dialog payload', () => {
 		await wrapper.vm.submit()
 		const [teamFolderId, body] = contribute.mock.calls[0]
 		expect(teamFolderId).toBe('tf-ops')
-		expect(Object.keys(body)).toEqual(['name', 'typeId', 'url', 'login', 'key', 'additionalFields'])
+		expect(Object.keys(body)).toEqual([
+			'name',
+			'typeId',
+			'url',
+			'login',
+			'key',
+			'additionalFields',
+		])
 		expect(body).toEqual({
 			name: 'Item',
 			typeId: 'type-login',

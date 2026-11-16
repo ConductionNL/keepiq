@@ -41,7 +41,9 @@ function plain(value) {
  */
 function additionalOf(state) {
 	const fields = state && state.additionalFields
-	return fields && typeof fields === 'object' && !Array.isArray(fields) ? fields : {}
+	return fields && typeof fields === 'object' && !Array.isArray(fields)
+		? fields
+		: {}
 }
 
 /**
@@ -61,18 +63,34 @@ export function compareStates(left, right) {
 	const rows = COMPARED_FIELDS.map(({ field, masked }) => {
 		const a = plain(left && left[field])
 		const b = plain(right && right[field])
-		return { field, additional: false, masked, left: a, right: b, changed: a !== b }
+		return {
+			field,
+			additional: false,
+			masked,
+			left: a,
+			right: b,
+			changed: a !== b,
+		}
 	})
 
 	const leftExtra = additionalOf(left)
 	const rightExtra = additionalOf(right)
-	const names = [...new Set([...Object.keys(leftExtra), ...Object.keys(rightExtra)])]
-		.sort((x, y) => x.localeCompare(y))
+	const names = [
+		...new Set([...Object.keys(leftExtra), ...Object.keys(rightExtra)]),
+	].sort((x, y) => x.localeCompare(y))
 	for (const name of names) {
 		const a = plain(leftExtra[name])
 		const b = plain(rightExtra[name])
-		const presenceDiffers = Object.hasOwn(leftExtra, name) !== Object.hasOwn(rightExtra, name)
-		rows.push({ field: name, additional: true, masked: true, left: a, right: b, changed: presenceDiffers || a !== b })
+		const presenceDiffers =
+			Object.hasOwn(leftExtra, name) !== Object.hasOwn(rightExtra, name)
+		rows.push({
+			field: name,
+			additional: true,
+			masked: true,
+			left: a,
+			right: b,
+			changed: presenceDiffers || a !== b,
+		})
 	}
 
 	return rows

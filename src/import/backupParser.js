@@ -27,7 +27,13 @@ function toRows(payload) {
 	// Number every row: duplicate choices, preview keys and rejected-row
 	// reports are all keyed by sourceRow (keepiq#749).
 	return secrets.map((s, index) =>
-		withPartial(withExtraUrls(withTypeNames(withBlobFields(baseRow(s, index + 1), s), s), s), omitted),
+		withPartial(
+			withExtraUrls(
+				withTypeNames(withBlobFields(baseRow(s, index + 1), s), s),
+				s,
+			),
+			omitted,
+		),
 	)
 }
 

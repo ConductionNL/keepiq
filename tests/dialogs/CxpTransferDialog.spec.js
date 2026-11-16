@@ -28,17 +28,22 @@ vi.mock('../../src/policy/policy.js', () => ({
 const stub = { template: '<div><slot /><slot name="actions" /></div>' }
 const stubs = {
 	NcDialog: stub,
-	NcNoteCard: { props: ['type'], template: '<div :class="`note--${type}`" v-bind="$attrs"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div :class="`note--${type}`" v-bind="$attrs"><slot /></div>',
+	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcTextField: { template: '<input v-bind="$attrs">' },
 	NcPasswordField: { template: '<input v-bind="$attrs">' },
 	NcCheckboxRadioSwitch: {
 		props: ['modelValue', 'value'],
 		emits: ['update:modelValue'],
-		template: '<label v-bind="$attrs" @click="$emit(\'update:modelValue\', value)"><slot /></label>',
+		template:
+			'<label v-bind="$attrs" @click="$emit(\'update:modelValue\', value)"><slot /></label>',
 	},
 	SkippedSecretsNotice: stub,
 }
@@ -46,7 +51,10 @@ const stubs = {
 function mountCxp(props = {}) {
 	return mount(CxpTransferDialog, {
 		props: { open: true, secrets: [{ id: 's1' }], folders: [], ...props },
-		global: { stubs, mocks: { t: (app, s) => s, n: (app, s, p, c) => (c === 1 ? s : p) } },
+		global: {
+			stubs,
+			mocks: { t: (app, s) => s, n: (app, s, p, c) => (c === 1 ? s : p) },
+		},
 	})
 }
 
@@ -66,7 +74,9 @@ describe('CxpTransferDialog.startReceive', () => {
 			request: { pub: 'k' },
 			session: { ephemeral: true },
 		})
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { pairingId: 'PAIR-1' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { pairingId: 'PAIR-1' } })
 		const get = vi.spyOn(axios, 'get').mockReturnValue(new Promise(() => {}))
 		const wrapper = mountCxp()
 
@@ -82,12 +92,18 @@ describe('CxpTransferDialog.startReceive', () => {
 		expect(wrapper.vm.busy).toBe(false)
 		expect(wrapper.vm.error).toBe(null)
 		await wrapper.vm.$nextTick()
-		expect(wrapper.find('[data-testid="cxp-pairing-code"]').text()).toBe('PAIR-1')
-		expect(wrapper.find('[data-testid="cxp-start-receive"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="cxp-pairing-code"]').text()).toBe(
+			'PAIR-1',
+		)
+		expect(wrapper.find('[data-testid="cxp-start-receive"]').exists()).toBe(
+			false,
+		)
 
 		expect(get).not.toHaveBeenCalled()
 		await vi.advanceTimersByTimeAsync(2000)
-		expect(get).toHaveBeenCalledWith('/apps/keepiq/api/v1/cxp/relay/PAIR-1/response')
+		expect(get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/cxp/relay/PAIR-1/response',
+		)
 		expect(wrapper.vm.pollCount).toBe(1)
 	})
 
@@ -120,8 +136,12 @@ describe('CxpTransferDialog direction', () => {
 		await wrapper.find('[data-testid="cxp-direction-send"]').trigger('click')
 
 		expect(wrapper.vm.direction).toBe('send')
-		expect(wrapper.find('[data-testid="cxp-start-receive"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="cxp-do-send"]').text()).toBe('Seal and send')
+		expect(wrapper.find('[data-testid="cxp-start-receive"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.find('[data-testid="cxp-do-send"]').text()).toBe(
+			'Seal and send',
+		)
 
 		await wrapper.find('[data-testid="cxp-direction-receive"]').trigger('click')
 		expect(wrapper.vm.direction).toBe('receive')
@@ -131,10 +151,15 @@ describe('CxpTransferDialog direction', () => {
 describe('CxpTransferDialog.typeNamesById', () => {
 	it('maps every secret type id to its name for the sealed export', async () => {
 		const types = useSecretTypeStore()
-		types.types = [{ id: 't1', name: 'Login' }, { id: 't2', name: 'Card' }]
+		types.types = [
+			{ id: 't1', name: 'Login' },
+			{ id: 't2', name: 'Card' },
+		]
 		vi.spyOn(reauth, 'verifyMasterPassword').mockResolvedValue(true)
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: { payload: '{}' } })
-		const sealed = vi.spyOn(useExportStore(), 'exportCxpSealed').mockResolvedValue({ unmapped: [{ id: 'x' }] })
+		const sealed = vi
+			.spyOn(useExportStore(), 'exportCxpSealed')
+			.mockResolvedValue({ unmapped: [{ id: 'x' }] })
 		const wrapper = mountCxp()
 		wrapper.vm.sendPairingId = 'pair'
 		wrapper.vm.masterPassword = 'pw'
@@ -142,7 +167,10 @@ describe('CxpTransferDialog.typeNamesById', () => {
 		await wrapper.vm.doSend()
 
 		expect(wrapper.vm.typeNamesById).toEqual({ t1: 'Login', t2: 'Card' })
-		expect(sealed.mock.calls[0][4]).toEqual({ typeNamesById: { t1: 'Login', t2: 'Card' }, dryRun: true })
+		expect(sealed.mock.calls[0][4]).toEqual({
+			typeNamesById: { t1: 'Login', t2: 'Card' },
+			dryRun: true,
+		})
 	})
 
 	it('is empty without types', () => {
@@ -172,7 +200,10 @@ describe('CxpTransferDialog closing', () => {
 		})
 		wrapper.vm.pollForEnvelope()
 
-		await wrapper.findAll('button').find((b) => b.text() === 'Close').trigger('click')
+		await wrapper
+			.findAll('button')
+			.find((b) => b.text() === 'Close')
+			.trigger('click')
 		await vi.advanceTimersByTimeAsync(5000)
 
 		expect(get).not.toHaveBeenCalled()

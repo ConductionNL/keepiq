@@ -174,7 +174,11 @@ async function recipientCopyIds() {
 		}
 		return new Set(
 			secrets
-				.filter((secret) => secret?.sourceUpdatedAt !== null && secret?.sourceUpdatedAt !== undefined)
+				.filter(
+					(secret) =>
+						secret?.sourceUpdatedAt !== null
+						&& secret?.sourceUpdatedAt !== undefined,
+				)
 				.map((secret) => String(secret.id)),
 		)
 	} catch {
@@ -449,7 +453,10 @@ export const useHealthStore = defineStore('health', {
 		 */
 		async runEngine(rows, options) {
 			if (typeof Worker === 'undefined') {
-				return { ...(await analyse(rows, options)), duplicates: duplicateGroups(rows) }
+				return {
+					...(await analyse(rows, options)),
+					duplicates: duplicateGroups(rows),
+				}
 			}
 			if (!this.worker) {
 				this.worker = new Worker(

@@ -25,9 +25,9 @@ describe('ShareList secret switch', () => {
 		get = vi.spyOn(axios, 'get').mockImplementation(async (url) => ({
 			data: url.includes('sec-2')
 				? [
-					{ id: 's2', target_user_id: 'bob', group_share_id: 'g1' },
-					{ id: 's3', target_user_id: 'carol' },
-				]
+						{ id: 's2', target_user_id: 'bob', group_share_id: 'g1' },
+						{ id: 's3', target_user_id: 'carol' },
+					]
 				: [{ id: 's1', target_user_id: 'alice' }],
 		}))
 	})
@@ -35,17 +35,18 @@ describe('ShareList secret switch', () => {
 	it('fetches the recipients of the secret it switches to', async () => {
 		const wrapper = mount(ShareList, { props: { secretId: 'sec-1' } })
 		await flushPromises()
-		expect(wrapper.findAll('[data-testid="share-row-target"]').map((r) => r.text())).toEqual(['alice'])
+		expect(
+			wrapper.findAll('[data-testid="share-row-target"]').map((r) => r.text()),
+		).toEqual(['alice'])
 
 		await wrapper.setProps({ secretId: 'sec-2' })
 		await flushPromises()
 
 		expect(get).toHaveBeenCalledTimes(2)
 		expect(get.mock.calls[1][0]).toContain('sec-2')
-		expect(wrapper.findAll('[data-testid="share-row-target"]').map((r) => r.text())).toEqual([
-			'bob',
-			'carol',
-		])
+		expect(
+			wrapper.findAll('[data-testid="share-row-target"]').map((r) => r.text()),
+		).toEqual(['bob', 'carol'])
 		expect(wrapper.find('[data-testid="share-list-count"]').text()).toBe('2')
 		const rows = wrapper.findAll('[data-testid="share-row"]')
 		expect(rows[0].text()).toContain('via group')
@@ -71,6 +72,8 @@ describe('ShareList secret switch', () => {
 		await flushPromises()
 
 		expect(get).toHaveBeenLastCalledWith(expect.stringContaining('sec-3'))
-		expect(wrapper.find('[data-testid="share-list-error"]').text()).toBe('Network Error')
+		expect(wrapper.find('[data-testid="share-list-error"]').text()).toBe(
+			'Network Error',
+		)
 	})
 })

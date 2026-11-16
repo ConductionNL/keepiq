@@ -268,10 +268,7 @@ function failureOf(e) {
 function replayBlocked(store) {
 	const session = useSessionStore()
 	return (
-		store.replaying
-		|| !store.online
-		|| store.servedFromCache
-		|| session.isLocked
+		store.replaying || !store.online || store.servedFromCache || session.isLocked
 	)
 }
 
@@ -383,10 +380,7 @@ async function queueChange(store, change) {
 	const existing = store.entries.find(
 		(e) => e.secretId === change.secretId && e.status !== 'failed',
 	)
-	const kept = coalesce(
-		existing || null,
-		incomingEntry(change, session.suiteId),
-	)
+	const kept = coalesce(existing || null, incomingEntry(change, session.suiteId))
 	if (existing && (!kept || kept.entryId !== existing.entryId)) {
 		await deleteQueueEntry(existing.entryId)
 	}

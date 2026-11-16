@@ -216,7 +216,13 @@ import { secretDetailLocation } from '../utils/detailRoute.js'
 
 export default {
 	name: 'HealthReportView',
-	components: { NcSelect, NcButton, HealthCategory, HealthDuplicates, OwnershipFindings },
+	components: {
+		NcSelect,
+		NcButton,
+		HealthCategory,
+		HealthDuplicates,
+		OwnershipFindings,
+	},
 
 	data() {
 		return {
@@ -367,9 +373,13 @@ export default {
 					url: httpsAddress(finding.url),
 				})
 			} catch {
-				this.httpsError = t('keepiq', 'Could not save the https address for {name}.', {
-					name: finding.name,
-				})
+				this.httpsError = t(
+					'keepiq',
+					'Could not save the https address for {name}.',
+					{
+						name: finding.name,
+					},
+				)
 				return
 			}
 			await this.reanalyse()

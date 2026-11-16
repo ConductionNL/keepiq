@@ -66,7 +66,8 @@
 							<td>{{ row.metadata?.subject || '—' }}</td>
 							<td>{{ row.metadata?.issuer || '—' }}</td>
 							<td>
-								<CertificateExpiry :notAfter="row.metadata?.notAfter">
+								<CertificateExpiry
+									:notAfter="row.metadata?.notAfter">
 									<span class="cert-inventory__muted">{{
 										t('keepiq', 'not parsed yet')
 									}}</span>
@@ -156,7 +157,8 @@
 								{{ row.metadata?.signatureAlgorithm || '—' }}
 							</td>
 							<td>
-								<CertificateExpiry :notAfter="row.metadata?.notAfter" />
+								<CertificateExpiry
+									:notAfter="row.metadata?.notAfter" />
 							</td>
 							<td>
 								<NcButton
@@ -200,7 +202,8 @@
 							<td>{{ row.caRole }}</td>
 							<td>{{ row.metadata?.subject || '—' }}</td>
 							<td>
-								<CertificateExpiry :notAfter="row.metadata?.notAfter" />
+								<CertificateExpiry
+									:notAfter="row.metadata?.notAfter" />
 							</td>
 						</tr>
 					</tbody>
