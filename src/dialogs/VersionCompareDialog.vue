@@ -186,7 +186,7 @@ export default {
 	text-align: start;
 	padding: 4px 8px;
 	border-bottom: 1px solid var(--color-border);
-	word-break: break-word;
+	overflow-wrap: anywhere;
 }
 
 .version-compare__row--changed {

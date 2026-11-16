@@ -153,7 +153,7 @@ export default {
 	margin: 0;
 	padding: 8px;
 	white-space: pre-wrap;
-	word-break: break-word;
+	overflow-wrap: anywhere;
 	background: var(--color-background-dark);
 	color: var(--color-main-text);
 }
