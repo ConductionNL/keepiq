@@ -28,6 +28,7 @@ namespace OCA\Keepiq\Service;
 use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\PasskeyMapper;
+use OCA\Keepiq\Db\RecoveryKitMapper;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
 
 /**
@@ -42,6 +43,7 @@ class AccountSuiteCleanupService {
 	 * @param SuiteMigrationMapper $migrationMapper The suite-migration mapper
 	 * @param EmergencyContactMapper $emergencyMapper The emergency-contact mapper
 	 * @param PasskeyMapper $passkeyMapper The passkey-credential mapper
+	 * @param RecoveryKitMapper|null $recoveryKitMapper The user's own recovery kits (crypto-recovery-kit)
 	 *
 	 * @return void
 	 *
@@ -52,6 +54,7 @@ class AccountSuiteCleanupService {
 		private SuiteMigrationMapper $migrationMapper,
 		private EmergencyContactMapper $emergencyMapper,
 		private PasskeyMapper $passkeyMapper,
+		private ?RecoveryKitMapper $recoveryKitMapper=null,
 	) {
 	}//end __construct()
 
@@ -79,7 +82,8 @@ class AccountSuiteCleanupService {
 	/**
 	 * Remove the key material held OUTSIDE the suite rows: every emergency
 	 * relationship the user is part of (a grantor row escrows the user's
-	 * private key to the grantee) and the user's passkey unlock envelopes.
+	 * private key to the grantee), the user's passkey unlock envelopes and
+	 * their own recovery kit.
 	 *
 	 * The suites are hard-deleted through the mapper, so the revoke listener
 	 * that clears envelopes never runs; this step does that work directly.
@@ -95,5 +99,7 @@ class AccountSuiteCleanupService {
 		$report->emergencyDeleted = $this->emergencyMapper->deleteByUser(userId: $userId);
 		$report->passkeysDeleted = count($this->passkeyMapper->findByOwner(ownerId: $userId));
 		$this->passkeyMapper->deleteByOwner(ownerId: $userId);
+		// The user's own recovery kit wraps their private key too.
+		$this->recoveryKitMapper?->deleteForUser($userId);
 	}//end removeEscrowedKeys()
 }//end class

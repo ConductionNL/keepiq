@@ -27,6 +27,15 @@ At development `4c214a9d`:
 
 **D2. The site directory is fetched whole by the server and matched in the browser.** Querying a directory per host would tell its operator which sites the user has. Downloading the whole list does not. The server fetches it, as the breach check reaches HIBP through the instance's own proxy, so the browser talks only to the Keepiq instance: Nextcloud's default content security policy limits an app page's connections to its own origin, and one cached copy serves every user. It stores the list in app data, refreshes it daily, and serves it at `GET /api/v1/site-directory` with a hash so the browser caches it. The first task confirms the directory's endpoints and licence (the 2FA Directory at 2fa.directory publishes TOTP and passkey support) and records them here before any code is written.
 
+**D2a. The two directories, confirmed (task 2.1).** The 2FA Directory publishes one-time code support but not passkeys; passkey support is in its sister project, the Passkeys Directory. Both are fetched whole:
+
+| Data | URL | Shape | Licence |
+| --- | --- | --- | --- |
+| Sites with one-time codes | `https://api.2fa.directory/v4/totp.json` | object keyed by domain (each additional domain repeated) of `{methods, documentation, recovery, notes, ...}` | MIT, © 2factorauth and contributors; distributing the data requires attribution (repository `2factorauth/twofactorauth`, `LICENSE.md`) |
+| Sites with passkeys | `https://passkeys-api.2fa.directory/v1/supported.json` | object keyed by domain of `{passwordless?, mfa?, documentation, ...}` (`allowed`/`required`) | Creative Commons Attribution 4.0 International (repository `2factorauth/passkeys`, `LICENSE.md`) |
+
+Both licences ask for attribution, so the admin switch and the report name "2FA Directory and Passkeys Directory by 2factorauth" with links to `https://2fa.directory/` and `https://passkeys.2fa.directory/`. The job keeps only each domain and its documentation link, the facts the report shows; icons are not fetched (the projects exclude them from their licences). The `.sig` PGP signatures beside each file are not checked: the copy is advisory and only ever adds a suggestion to the report.
+
 **D3. Gate it like breach checking.** `site_directory_enabled`, default off, in the admin section next to breach checking. With it off, the two directory categories show as unavailable and the http category still works.
 
 **D4. "Has a second factor" and "has a passkey" are vault facts.** A login has a second factor when it carries a seed or an authenticator item matches its host; it has a passkey when a passkey item's relying party id matches its registrable domain. Matching reuses the extension's registrable-domain helper, moved to a shared module.

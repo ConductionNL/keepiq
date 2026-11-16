@@ -660,6 +660,23 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [],
 		],
+		// A user's own recovery kit (crypto-recovery-kit); also created on
+		// existing installs by Version001020Date20261114120000.
+		'recovery_kits' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['user_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['suite_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['wrapped_key', Types::TEXT, ['notnull' => true]],
+				['kdf', Types::TEXT, ['notnull' => true]],
+				['created_at', Types::DATETIME, ['notnull' => false]],
+			],
+			'primary' => ['id'],
+			'indexes' => [],
+			'uniqueIndexes' => [
+				['keepiq_rk_user_suite', ['user_id', 'suite_id']],
+			],
+		],
 		'recovery_officers' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

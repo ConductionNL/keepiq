@@ -26543,6 +26543,72 @@
     },
     {
       "type": "library",
+      "name": "tldts-core",
+      "version": "7.5.3",
+      "bom-ref": "keepiq@0.1.0|tldts-core@7.5.3",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/tldts-core@7.5.3",
+      "externalReferences": [
+        {
+          "url": "https://registry.npmjs.org/tldts-core/-/tldts-core-7.5.3.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "1bd2bf334021f94db672501bd6bd1f60d85e4b2b2fed8e8e008ba777329c150c798c180f21ddc29c5978e2c0061aa240fa551730ead11055c75f596bb4402974"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/tldts-core"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "tldts",
+      "version": "7.4.15",
+      "bom-ref": "keepiq@0.1.0|tldts@7.4.15",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/tldts@7.4.15",
+      "externalReferences": [
+        {
+          "url": "https://registry.npmjs.org/tldts/-/tldts-7.4.15.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "4895417873b10db368ab5e02be902803698b11675b95d18af2747ecae9a98d8e67ae567139f95c03ba75423d606d31a66eef4363da8b8ff6c43525a10738f145"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/tldts"
+        }
+      ]
+    },
+    {
+      "type": "library",
       "name": "to-regex-range",
       "version": "5.0.1",
       "bom-ref": "keepiq@0.1.0|to-regex-range@5.0.1",

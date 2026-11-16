@@ -25,6 +25,7 @@ export const ADMIN_AREAS = [
 			'AttachmentLimitsSection',
 			'OfflineCacheSection',
 			'BreachCheckSection',
+			'SiteDirectorySection',
 			'SiteImagesSection',
 			'DeviceApprovalSection',
 			'ItemTypesSection',

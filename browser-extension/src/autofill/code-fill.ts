@@ -54,6 +54,8 @@ function codeRowOf(vault: VaultSnapshot, itemId: string): OpenSecretRow | null {
 
 /** A login that no longer matches the frame fills nothing; an insecure frame asks first. */
 async function refusalOf({ accountId, vault, row, frame, target }: CodePick): Promise<FillResult | null> {
+	// The inline list cannot ask for the master password (spec `item-master-password-reprompt`).
+	if (row.reprompt === true) return NONE
 	if (!fits(row, vault.types, (await readSettings(accountId)).uriMatch, frame.url)) return NONE
 	if (!target.confirmedInsecure && isInsecure(row, [frame])) return { ...NONE, needsInsecureConfirm: true, savedSecure: savedSecure(row) }
 	return null

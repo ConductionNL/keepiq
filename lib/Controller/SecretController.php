@@ -215,6 +215,7 @@ class SecretController extends OCSController {
 	 * @param string|null $ownerId The owner ID (required when ownerType=application)
 	 * @param string|null $totp The RSA-encrypted TOTP seed blob; refused for an application-owned secret
 	 * @param string|null $passkeys The RSA-encrypted passkeys blob; refused for an application-owned secret
+	 * @param bool        $reprompt Whether to ask for the master password again before the item is shown or filled
 	 * @param mixed $additionalUrls Up to 20 extra plain-text website addresses (vault-website-addresses); not for an application-owned secret
 	 *
 	 * @NoAdminRequired
@@ -222,6 +223,7 @@ class SecretController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
+	 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-1.1
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The parameters are the
 	 *   route's request body, bound by the framework one by one.
@@ -239,6 +241,7 @@ class SecretController extends OCSController {
 		?string $ownerId = null,
 		?string $totp = null,
 		?string $passkeys = null,
+		bool $reprompt = false,
 		mixed $additionalUrls = null,
 	): JSONResponse {
 		$userId = $this->uid();
@@ -250,20 +253,26 @@ class SecretController extends OCSController {
 			$this->assertCreatable(name: $name, key: $key, ownerType: $ownerType, ownerId: $ownerId);
 			$extraUrls = $this->extraUrls(urls: $additionalUrls, ownerType: $ownerType);
 
+			$input = [
+				'name' => $name,
+				'key' => $key,
+				'url' => $url,
+				'typeId' => $typeId,
+				'folderId' => $folderId,
+				'login' => $login,
+				'additionalFields' => $additionalFields,
+				'totp' => $totp,
+				'passkeys' => $passkeys,
+			];
+			// Only a flagged create carries it (crypto-item-reprompt D1).
+			if ($reprompt === true) {
+				$input['reprompt'] = true;
+			}
+
 			$secret = $this->createOwnedSecret(
 				ownerType: $ownerType,
 				ownerId: (string)$ownerId,
-				data: [
-					'name' => $name,
-					'key' => $key,
-					'url' => $url,
-					'typeId' => $typeId,
-					'folderId' => $folderId,
-					'login' => $login,
-					'additionalFields' => $additionalFields,
-					'totp' => $totp,
-					'passkeys' => $passkeys,
-				],
+				data: $input,
 				userId: $userId
 			);
 			$data = $secret->jsonSerialize();
