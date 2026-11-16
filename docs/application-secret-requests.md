@@ -46,8 +46,8 @@ user, registering it is a historical act rather than an ongoing responsibility, 
 the registrar may have left the organisation. Tying audit visibility to that would
 make "who may see this" depend on who happened to click Register months ago.
 
-What is shown is plaintext metadata — status, timestamps, and the names of the
-requested fields. **No submitted value is readable from the listing**, by anyone,
+What is shown is plaintext metadata — status, timestamps, the names of the
+requested fields and their kinds (the field schemas a request carries). **No submitted value is readable from the listing**, by anyone,
 including an administrator. That is the write-without-read property the whole
 feature rests on and it is unaffected by who is looking.
 

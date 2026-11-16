@@ -73,7 +73,8 @@ the fields**.
 ## Names you cannot use
 
 `key`, `login` and `url` are refused, with a reason shown, and so is `@schema`,
-which holds the kinds.
+which holds the kinds. So is the name of one of the type's own fields, such as
+Port on a Database, which is stored under that name already.
 
 Those names already belong to the secret's own fields. A field named `url` would
 not be a second field that happens to be called that — it would collide with the
@@ -99,6 +100,14 @@ You do not have to know the value yourself. A [secret
 request](./secret-request-expiry.md) can ask another person to fill in one or more
 named fields, and you never see what they submit — that is write-without-read. This
 page is about the case where you *do* know the value and simply want to store it.
+
+A request can give each field a kind, so the fill page checks what is typed. The
+kinds and limits of a request are stored in plain text with the request, as its
+field names are: the server and its administrators can read that a field is
+hidden, its length limits and its pattern, though never the value. Keep a pattern
+general enough that it does not give the value away. When you make the request,
+your browser writes the fields with their kinds into the secret, so what is filled
+in keeps them; a kind sent along with a fill is ignored.
 
 ## Reference
 
