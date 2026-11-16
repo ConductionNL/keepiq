@@ -50,6 +50,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
@@ -125,6 +126,20 @@ class PrivilegedAccessServiceTest extends TestCase {
 	private bool $privileged = true;
 
 	/**
+	 * Whether the audit trail refuses writes.
+	 *
+	 * @var bool
+	 */
+	private bool $auditFails = false;
+
+	/**
+	 * The logger handed to the service.
+	 *
+	 * @var LoggerInterface&MockObject
+	 */
+	private LoggerInterface $logger;
+
+	/**
 	 * Set up: alice owns s1, bob holds copy c1 of it.
 	 *
 	 * @return void
@@ -136,6 +151,7 @@ class PrivilegedAccessServiceTest extends TestCase {
 		];
 		$this->flags = $this->createMock(PrivilegedLoginMapper::class);
 		$this->flags->method('privilegedAmong')->willReturnCallback(fn (array $ids): array => $this->privileged === true ? array_values(array_intersect($ids, ['s1'])) : []);
+		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->requests = $this->createMock(AccessRequestMapper::class);
 		$this->requests->method('insert')->willReturnArgument(0);
 		$this->requests->method('update')->willReturnArgument(0);
@@ -186,6 +202,10 @@ class PrivilegedAccessServiceTest extends TestCase {
 
 		$audit = $this->createMock(AuditService::class);
 		$audit->method('record')->willReturnCallback(function (AuditEvent $event): AuditEntry {
+			if ($this->auditFails === true) {
+				throw new RuntimeException('audit store offline');
+			}
+
 			$this->recorded[] = $event;
 			return new AuditEntry();
 		});
@@ -200,7 +220,7 @@ class PrivilegedAccessServiceTest extends TestCase {
 			notifications: $this->notifications,
 			audit: $audit,
 			time: $time,
-			logger: $this->createMock(LoggerInterface::class),
+			logger: $this->logger,
 		);
 	}//end service()
 
@@ -470,4 +490,75 @@ class PrivilegedAccessServiceTest extends TestCase {
 		$this->assertSame('incident 4711', $pending[0]['reason']);
 		$this->assertSame([], $pending[0]['ranges']);
 	}//end testPendingForOwner()
+
+	/**
+	 * An unknown request id reads as not found, and nothing is updated.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownRequestIsNotFound(): void {
+		$this->requests->method('findById')->with('r404')->willThrowException(new DoesNotExistException('none'));
+		$this->requests->expects($this->never())->method('update');
+
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('Access request not found');
+		$this->service()->approve(requestId: 'r404', ownerId: 'alice');
+	}//end testAnUnknownRequestIsNotFound()
+
+	/**
+	 * A request whose login is a received copy of the caller cannot be
+	 * answered by them: it reads as not found, not as forbidden.
+	 *
+	 * @return void
+	 */
+	public function testARequestOnAReceivedCopyReadsAsNotFound(): void {
+		$request = new AccessRequest();
+		$request->setId('r2');
+		$request->setSecretId('c1');
+		$request->setOwnerId('bob');
+		$request->setRequesterId('carol');
+		$request->setStatus(AccessRequest::STATUS_PENDING);
+		$this->requests->method('findById')->with('r2')->willReturn($request);
+		$this->requests->expects($this->never())->method('update');
+
+		try {
+			$this->service()->deny(requestId: 'r2', ownerId: 'bob');
+			$this->fail('a copy holder answered a request');
+		} catch (NotFoundException $exception) {
+			$this->assertSame('Access request not found', $exception->getMessage());
+		}
+
+		$this->assertSame([], $this->recorded);
+		$this->assertSame([], $this->sent);
+	}//end testARequestOnAReceivedCopyReadsAsNotFound()
+
+	/**
+	 * A secret id nobody holds reads as a missing secret.
+	 *
+	 * @return void
+	 */
+	public function testAMissingSecretIsNotFound(): void {
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('Secret not found');
+		$this->service()->status(secretId: 'gone', userId: 'alice');
+	}//end testAMissingSecretIsNotFound()
+
+	/**
+	 * A failing audit write is logged with its event type, and the step
+	 * itself still completes.
+	 *
+	 * @return void
+	 */
+	public function testAFailingAuditWriteIsLoggedAndTheStepCompletes(): void {
+		$this->privileged = false;
+		$this->auditFails = true;
+		$this->flags->expects($this->once())->method('insert')->willReturnArgument(0);
+		$this->logger->expects($this->once())->method('error')->with(
+			'Keepiq: privileged access step could not be audited: audit store offline',
+			['app' => 'keepiq', 'eventType' => AuditEventTypes::PRIVILEGED_ACCESS_MARKED]
+		);
+
+		$this->assertTrue($this->service()->setPrivileged(secretId: 's1', ownerId: 'alice', privileged: true));
+		$this->assertSame([], $this->recorded);
+	}//end testAFailingAuditWriteIsLoggedAndTheStepCompletes()
 }//end class
