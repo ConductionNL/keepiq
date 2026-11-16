@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Kernel\Contracts;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\RequestedFields;
 
 /**
  * Contract of SecretRequestService.
@@ -65,7 +66,7 @@ interface SecretRequestServiceInterface {
 	 *
 	 * @param string $secretId The Secret ID (unfilled or re-request)
 	 * @param string $encryptionSuiteId The recipient's active suite ID
-	 * @param array<string> $requestedFields Field names to be filled in
+	 * @param RequestedFields $requestedFields Field names to be filled in, with the schemas of the custom ones
 	 * @param bool $isReRequest Whether this is a re-request
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the request
@@ -75,11 +76,12 @@ interface SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function create(
 		string $secretId,
 		string $encryptionSuiteId,
-		array $requestedFields,
+		RequestedFields $requestedFields,
 		bool $isReRequest,
 		?DateTime $expiresAt,
 		string $userId,
@@ -95,7 +97,7 @@ interface SecretRequestServiceInterface {
 	 *
 	 * @param string $secretId The Secret ID
 	 * @param string $applicationId The recipient application ID
-	 * @param array<string> $requestedFields Field names to be filled in
+	 * @param RequestedFields $requestedFields Field names to be filled in, with the schemas of the custom ones
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the request
 	 *
@@ -104,11 +106,12 @@ interface SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException When the application has no active suite
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.3
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createForApplication(
 		string $secretId,
 		string $applicationId,
-		array $requestedFields,
+		RequestedFields $requestedFields,
 		?DateTime $expiresAt,
 		string $userId,
 	): SecretRequest;
@@ -131,9 +134,10 @@ interface SecretRequestServiceInterface {
 	 * flows structurally distinct rather than distinguished by a boolean.
 	 *
 	 * @param string $userId The Nextcloud user creating the request
-	 * @param array<string> $requestedFields Field names to be filled in
-	 * @param string|null $name Name for the created Secret
-	 * @param string|null $folderId Optional folder to file it under
+	 * @param RequestedFields $requestedFields Field names to be filled in, with the schemas of the custom ones
+	 * @param array{name?: ?string, folderId?: ?string, typeId?: ?string} $placeholder The created
+	 *        Secret's name, the folder to file it under and its type; a missing type leaves
+	 *        SecretService's default (Login)
 	 * @param DateTime|null $expiresAt Optional expiry
 	 *
 	 * @return SecretRequest
@@ -141,12 +145,12 @@ interface SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException When userId or requestedFields are missing
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createForUserVault(
 		string $userId,
-		array $requestedFields,
-		?string $name = null,
-		?string $folderId = null,
+		RequestedFields $requestedFields,
+		array $placeholder = [],
 		?DateTime $expiresAt = null,
 	): SecretRequest;
 
@@ -163,7 +167,7 @@ interface SecretRequestServiceInterface {
 	 * (the recipient encrypts under their existing key material).
 	 *
 	 * @param string $secretId The Secret ID
-	 * @param array<string> $requestedFields Field names to be re-filled
+	 * @param RequestedFields $requestedFields Field names to be re-filled, with the schemas of the custom ones
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the re-request
 	 *
@@ -173,10 +177,11 @@ interface SecretRequestServiceInterface {
 	 *                                  or the caller is not the owner.
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.4
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createReRequest(
 		string $secretId,
-		array $requestedFields,
+		RequestedFields $requestedFields,
 		?DateTime $expiresAt,
 		string $userId,
 	): SecretRequest;
@@ -312,4 +317,19 @@ interface SecretRequestServiceInterface {
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 	 */
 	public function refusalReason(string $token): string;
+
+	/**
+	 * The system name of the type of the Secret a request fills.
+	 *
+	 * Pass-through to the policy, which holds the Secret and type lookups, so
+	 * the public fill page can show the requested fields with the type's own
+	 * labels and inputs.
+	 *
+	 * @param SecretRequest $request The request being filled
+	 *
+	 * @return string|null The type name, or null when it cannot be resolved
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 */
+	public function secretTypeName(SecretRequest $request): ?string;
 }//end interface

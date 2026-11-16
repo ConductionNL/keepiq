@@ -34,6 +34,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\SecretRequestController;
 use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\RequestedFields;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -82,16 +83,17 @@ class SecretRequestControllerTest extends TestCase {
 	}//end setUp()
 
 	/**
-	 * A controller whose request body carries this `fieldSchemas` value.
+	 * A controller whose request body carries these values, such as `fieldSchemas`
+	 * and `typeId`, which create() reads from the body rather than binding.
 	 *
-	 * @param mixed $fieldSchemas The body value
+	 * @param array<string,mixed> $body The body values by key
 	 *
 	 * @return SecretRequestController
 	 */
-	private function controllerWithSchemas(mixed $fieldSchemas): SecretRequestController {
+	private function controllerWithBody(array $body): SecretRequestController {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParam')->willReturnCallback(
-			static fn (string $key) => $key === 'fieldSchemas' ? $fieldSchemas : null
+			static fn (string $key) => $body[$key] ?? null
 		);
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -99,7 +101,7 @@ class SecretRequestControllerTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 
 		return new SecretRequestController(request: $request, service: $this->service, session: $session);
-	}//end controllerWithSchemas()
+	}//end controllerWithBody()
 
 	/**
 	 * Build a persisted request for the service mocks to return.
@@ -129,7 +131,12 @@ class SecretRequestControllerTest extends TestCase {
 	public function testCreateWithoutASecretIdTakesTheFreshPath(): void {
 		$this->service->expects($this->once())
 			->method('createForUserVault')
-			->with('alice', ['key', 'url'], 'Supplier API key', null, null)
+			->with(
+				'alice',
+				new RequestedFields(names: ['key', 'url']),
+				['name' => 'Supplier API key', 'folderId' => null, 'typeId' => null],
+				null
+			)
 			->willReturn($this->made());
 		$this->service->expects($this->never())->method('create');
 		$this->service->expects($this->never())->method('createReRequest');
@@ -152,14 +159,18 @@ class SecretRequestControllerTest extends TestCase {
 	public function testCreateForwardsTheChosenTypeToTheFreshPath(): void {
 		$this->service->expects($this->once())
 			->method('createForUserVault')
-			->with('alice', ['key'], 'Supplier TLS certificate', 'folder-1', null, 'type-certificate')
+			->with(
+				'alice',
+				new RequestedFields(names: ['key']),
+				['name' => 'Supplier TLS certificate', 'folderId' => 'folder-1', 'typeId' => 'type-certificate'],
+				null
+			)
 			->willReturn($this->made());
 
-		$response = $this->controller->create(
+		$response = $this->controllerWithBody(body: ['typeId' => 'type-certificate'])->create(
 			requestedFields: ['key'],
 			name: 'Supplier TLS certificate',
 			folderId: 'folder-1',
-			typeId: 'type-certificate',
 		);
 
 		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
@@ -268,14 +279,14 @@ class SecretRequestControllerTest extends TestCase {
 		$schemas = ['PIN' => ['type' => 'string', 'hidden' => true]];
 		$this->service->expects($this->once())
 			->method('create')
-			->with('sec-1', 'suite-1', ['PIN'], false, null, 'alice', $schemas)
+			->with('sec-1', 'suite-1', new RequestedFields(names: ['PIN'], schemas: $schemas), false, null, 'alice')
 			->willReturn($this->made());
 		$this->service->expects($this->once())
 			->method('createForApplication')
-			->with('sec-1', 'app-1', ['PIN'], null, 'alice', $schemas)
+			->with('sec-1', 'app-1', new RequestedFields(names: ['PIN'], schemas: $schemas), null, 'alice')
 			->willReturn($this->made());
 
-		$controller = $this->controllerWithSchemas(fieldSchemas: $schemas);
+		$controller = $this->controllerWithBody(body: ['fieldSchemas' => $schemas]);
 		$controller->create(secretId: 'sec-1', encryptionSuiteId: 'suite-1', requestedFields: ['PIN']);
 		$controller->create(secretId: 'sec-1', requestedFields: ['PIN'], applicationId: 'app-1');
 	}//end testTheBodySchemasReachTheService()
@@ -290,10 +301,10 @@ class SecretRequestControllerTest extends TestCase {
 	public function testABodySchemaThatIsNoObjectIsReadAsNone(): void {
 		$this->service->expects($this->once())
 			->method('create')
-			->with('sec-1', 'suite-1', ['PIN'], false, null, 'alice', [])
+			->with('sec-1', 'suite-1', new RequestedFields(names: ['PIN']), false, null, 'alice')
 			->willReturn($this->made());
 
-		$this->controllerWithSchemas(fieldSchemas: 'PIN')
+		$this->controllerWithBody(body: ['fieldSchemas' => 'PIN'])
 			->create(secretId: 'sec-1', encryptionSuiteId: 'suite-1', requestedFields: ['PIN']);
 	}//end testABodySchemaThatIsNoObjectIsReadAsNone()
 

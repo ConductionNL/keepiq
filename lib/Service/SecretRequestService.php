@@ -402,11 +402,10 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @param string $secretId The Secret ID (unfilled or re-request)
 	 * @param string $encryptionSuiteId The recipient's active suite ID
-	 * @param array<string> $requestedFields Field names to be filled in
+	 * @param RequestedFields $requestedFields Field names to be filled in, with the schemas of the custom ones
 	 * @param bool $isReRequest Whether this is a re-request
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the request
-	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
@@ -418,11 +417,10 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	public function create(
 		string $secretId,
 		string $encryptionSuiteId,
-		array $requestedFields,
+		RequestedFields $requestedFields,
 		bool $isReRequest,
 		?DateTime $expiresAt,
 		string $userId,
-		array $fieldSchemas = [],
 	): SecretRequest {
 		// Pending requests are locked for the duration of a migration and
 		// re-pointed to the new suite on completion. A request created now would
@@ -437,11 +435,12 @@ class SecretRequestService implements SecretRequestServiceInterface {
 			throw new InvalidArgumentException(message: 'encryptionSuiteId is required');
 		}
 
-		if ($requestedFields === []) {
+		$names = $requestedFields->names;
+		if ($names === []) {
 			throw new InvalidArgumentException(message: 'requestedFields cannot be empty');
 		}
 
-		if (in_array(FieldSchemaShape::SCHEMA_MEMBER, $requestedFields, true) === true) {
+		if (in_array(FieldSchemaShape::SCHEMA_MEMBER, $names, true) === true) {
 			throw new InvalidArgumentException(message: FieldSchemaShape::SCHEMA_MEMBER . ' holds the field schemas and cannot be requested');
 		}
 
@@ -451,14 +450,14 @@ class SecretRequestService implements SecretRequestServiceInterface {
 
 		$this->requireRequestableSecret(secretId: $secretId, userId: $userId);
 		$shape   = new FieldSchemaShape();
-		$schemas = $shape->normalize(schemas: $fieldSchemas, requestedFields: $requestedFields);
+		$schemas = $shape->normalize(schemas: $requestedFields->schemas, requestedFields: $names);
 
 		$entity = new SecretRequest();
 		$entity->setId(Uuid::uuid4()->toString());
 		$entity->setSecretId($secretId);
 		$entity->setEncryptionSuiteId($encryptionSuiteId);
 		$entity->setToken(bin2hex(random_bytes(16)));
-		$encodedFields = json_encode(array_values($requestedFields));
+		$encodedFields = json_encode(array_values($names));
 		if ($encodedFields === false) {
 			$encodedFields = '[]';
 		}
@@ -532,13 +531,11 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * flows structurally distinct rather than distinguished by a boolean.
 	 *
 	 * @param string $userId The Nextcloud user creating the request
-	 * @param array<string> $requestedFields Field names to be filled in
-	 * @param string|null $name Name for the created Secret
-	 * @param string|null $folderId Optional folder to file it under
+	 * @param RequestedFields $requestedFields Field names to be filled in, with the schemas of the custom ones
+	 * @param array{name?: ?string, folderId?: ?string, typeId?: ?string} $placeholder The created
+	 *        Secret's name, the folder to file it under and its type; a missing type leaves
+	 *        SecretService's default (Login)
 	 * @param DateTime|null $expiresAt Optional expiry
-	 * @param string|null $typeId Optional type for the created Secret; null
-	 *                            leaves SecretService's default (Login)
-	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
@@ -549,21 +546,19 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 */
 	public function createForUserVault(
 		string $userId,
-		array $requestedFields,
-		?string $name = null,
-		?string $folderId = null,
+		RequestedFields $requestedFields,
+		array $placeholder = [],
 		?DateTime $expiresAt = null,
-		?string $typeId = null,
-		array $fieldSchemas = [],
 	): SecretRequest {
 		if ($userId === '') {
 			throw new InvalidArgumentException(message: 'userId is required');
 		}
 
-		if ($requestedFields === []) {
+		if ($requestedFields->names === []) {
 			throw new InvalidArgumentException(message: 'requestedFields cannot be empty');
 		}
 
+		$typeId = ($placeholder['typeId'] ?? null);
 		// Before the placeholder exists, so a refused type leaves nothing behind.
 		$this->policy->requireRequestableType(typeId: $typeId);
 
@@ -571,8 +566,8 @@ class SecretRequestService implements SecretRequestServiceInterface {
 
 		$shell = $secretService->create(
 			data: [
-				'name' => ($name ?? 'Unfilled request'),
-				'folderId' => $folderId,
+				'name' => ($placeholder['name'] ?? 'Unfilled request'),
+				'folderId' => ($placeholder['folderId'] ?? null),
 				// The type the requester picked, so the placeholder is filed as
 				// what is being asked for. SecretService validates it (unknown, or
 				// another user's private type, is refused) and applies the team
@@ -598,8 +593,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 				requestedFields: $requestedFields,
 				isReRequest: false,
 				expiresAt: $expiresAt,
-				userId: $userId,
-				fieldSchemas: $fieldSchemas
+				userId: $userId
 			);
 		} catch (Throwable $exception) {
 			// No orphan shell: it holds no value and exists only for this
@@ -627,10 +621,9 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @param string $secretId The Secret ID
 	 * @param string $applicationId The recipient application ID
-	 * @param array<string> $requestedFields Field names to be filled in
+	 * @param RequestedFields $requestedFields Field names to be filled in, with the schemas of the custom ones
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the request
-	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
@@ -642,10 +635,9 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	public function createForApplication(
 		string $secretId,
 		string $applicationId,
-		array $requestedFields,
+		RequestedFields $requestedFields,
 		?DateTime $expiresAt,
 		string $userId,
-		array $fieldSchemas = [],
 	): SecretRequest {
 		$suiteId = $this->policy->requireApplicationSuiteId(applicationId: $applicationId);
 
@@ -656,7 +648,6 @@ class SecretRequestService implements SecretRequestServiceInterface {
 			isReRequest: false,
 			expiresAt: $expiresAt,
 			userId: $userId,
-			fieldSchemas: $fieldSchemas,
 		);
 	}//end createForApplication()
 
@@ -673,10 +664,9 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * (the recipient encrypts under their existing key material).
 	 *
 	 * @param string $secretId The Secret ID
-	 * @param array<string> $requestedFields Field names to be re-filled
+	 * @param RequestedFields $requestedFields Field names to be re-filled, with the schemas of the custom ones
 	 * @param DateTime|null $expiresAt Optional expiry
 	 * @param string $userId The Nextcloud user creating the re-request
-	 * @param array<mixed> $fieldSchemas The schemas of requested custom fields, by name
 	 *
 	 * @return SecretRequest
 	 *
@@ -688,10 +678,9 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 */
 	public function createReRequest(
 		string $secretId,
-		array $requestedFields,
+		RequestedFields $requestedFields,
 		?DateTime $expiresAt,
 		string $userId,
-		array $fieldSchemas = [],
 	): SecretRequest {
 		$secret = $this->policy->requireReRequestableSecret(secretId: $secretId, userId: $userId);
 		$this->policy->requireNoPendingRequest(secretId: $secretId);
@@ -703,7 +692,6 @@ class SecretRequestService implements SecretRequestServiceInterface {
 			isReRequest: true,
 			expiresAt: $expiresAt,
 			userId: $userId,
-			fieldSchemas: $fieldSchemas,
 		);
 
 		$this->outbox->recordReRequested(userId: $userId, requestId: $persisted->getId());

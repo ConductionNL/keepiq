@@ -14260,9 +14260,6 @@
                                     },
                                     "folderId": {
                                         "type": "string"
-                                    },
-                                    "typeId": {
-                                        "type": "string"
                                     }
                                 }
                             }

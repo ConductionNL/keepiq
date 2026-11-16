@@ -36,6 +36,7 @@ use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Listener\SuiteMigrationAbortedListener;
 use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RequestedFields;
 use OCA\Keepiq\Service\SecretPlaceholderCleaner;
 use OCA\Keepiq\Service\SecretRequestOutbox;
 use OCA\Keepiq\Service\SecretRequestPolicy;
@@ -157,7 +158,7 @@ class SecretRequestServiceTest extends TestCase {
 		$result = $this->service->create(
 			secretId: 'sec-1',
 			encryptionSuiteId: 'suite-1',
-			requestedFields: ['password', 'login'],
+			requestedFields: new RequestedFields(names: ['password', 'login']),
 			isReRequest: false,
 			expiresAt: null,
 			userId: 'alice'
@@ -188,7 +189,7 @@ class SecretRequestServiceTest extends TestCase {
 		$this->service->create(
 			secretId: 'sec-1',
 			encryptionSuiteId: 'suite-1',
-			requestedFields: [],
+			requestedFields: new RequestedFields(names: []),
 			isReRequest: false,
 			expiresAt: null,
 			userId: 'alice'
@@ -208,11 +209,10 @@ class SecretRequestServiceTest extends TestCase {
 		$result = $this->service->create(
 			secretId: 'sec-1',
 			encryptionSuiteId: 'suite-1',
-			requestedFields: ['key', 'PIN'],
+			requestedFields: new RequestedFields(names: ['key', 'PIN'], schemas: ['PIN' => ['type' => 'string', 'pattern' => '^[0-9]{4,6}$', 'hidden' => true]]),
 			isReRequest: false,
 			expiresAt: null,
 			userId: 'alice',
-			fieldSchemas: ['PIN' => ['type' => 'string', 'pattern' => '^[0-9]{4,6}$', 'hidden' => true]]
 		);
 
 		$this->assertSame(
@@ -240,11 +240,10 @@ class SecretRequestServiceTest extends TestCase {
 		$this->service->create(
 			secretId: 'sec-1',
 			encryptionSuiteId: 'suite-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key'], schemas: ['PIN' => ['type' => 'string']]),
 			isReRequest: false,
 			expiresAt: null,
 			userId: 'alice',
-			fieldSchemas: ['PIN' => ['type' => 'string']]
 		);
 	}//end testCreateRefusesASchemaForAFieldNotRequested()
 
@@ -1417,7 +1416,7 @@ class SecretRequestServiceTest extends TestCase {
 		$service->createForApplication(
 			secretId: 'sec-1',
 			applicationId: 'app-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'requester',
 		);
@@ -1466,7 +1465,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service->createReRequest(
 			secretId: 'sec-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'requester',
 		);
@@ -1517,7 +1516,7 @@ class SecretRequestServiceTest extends TestCase {
 		$result = $service->createForApplication(
 			secretId: 'sec-1',
 			applicationId: 'app-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'requester',
 		);
@@ -1562,7 +1561,7 @@ class SecretRequestServiceTest extends TestCase {
 		$service->createForApplication(
 			secretId: 'sec-1',
 			applicationId: 'app-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'requester',
 		);
@@ -1619,7 +1618,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$result = $service->createReRequest(
 			secretId: 'sec-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'alice',
 		);
@@ -1666,7 +1665,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service->createReRequest(
 			secretId: 'sec-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'alice',
 		);
@@ -1716,7 +1715,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service->createReRequest(
 			secretId: 'sec-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			expiresAt: null,
 			userId: 'alice',
 		);
@@ -1761,8 +1760,8 @@ class SecretRequestServiceTest extends TestCase {
 
 		$request = $this->service->createForUserVault(
 			userId: 'alice',
-			requestedFields: ['key', 'url'],
-			name: 'Supplier API key',
+			requestedFields: new RequestedFields(names: ['key', 'url']),
+			placeholder: ['name' => 'Supplier API key'],
 		);
 
 		$this->assertSame('sec-placeholder', $captured->getSecretId());
@@ -1799,9 +1798,8 @@ class SecretRequestServiceTest extends TestCase {
 
 		$this->service->createForUserVault(
 			userId: 'alice',
-			requestedFields: ['key'],
-			name: 'Supplier TLS certificate',
-			typeId: 'type-certificate',
+			requestedFields: new RequestedFields(names: ['key']),
+			placeholder: ['name' => 'Supplier TLS certificate', 'typeId' => 'type-certificate'],
 		);
 	}//end testFreshRequestFilesThePlaceholderAsTheChosenType()
 
@@ -1833,7 +1831,7 @@ class SecretRequestServiceTest extends TestCase {
 			->willReturn($shell);
 		$this->mapper->method('insert')->willReturnArgument(0);
 
-		$this->service->createForUserVault(userId: 'alice', requestedFields: ['key'], name: 'Anything');
+		$this->service->createForUserVault(userId: 'alice', requestedFields: new RequestedFields(names: ['key']), placeholder: ['name' => 'Anything']);
 	}//end testFreshRequestWithoutATypeLeavesTheDefault()
 
 	/**
@@ -1852,9 +1850,8 @@ class SecretRequestServiceTest extends TestCase {
 
 		$this->service->createForUserVault(
 			userId: 'alice',
-			requestedFields: ['key'],
-			name: 'Your passport',
-			typeId: 'type-identity',
+			requestedFields: new RequestedFields(names: ['key']),
+			placeholder: ['name' => 'Your passport', 'typeId' => 'type-identity'],
 		);
 	}//end testFreshRequestRefusesANotRequestableTypeWithoutAPlaceholder()
 
@@ -1880,7 +1877,7 @@ class SecretRequestServiceTest extends TestCase {
 		$this->service->create(
 			secretId: 'sec-card',
 			encryptionSuiteId: 'suite-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			isReRequest: false,
 			expiresAt: null,
 			userId: 'alice',
@@ -1921,7 +1918,7 @@ class SecretRequestServiceTest extends TestCase {
 		$this->service->create(
 			secretId: 'sec-1',
 			encryptionSuiteId: 'suite-1',
-			requestedFields: ['key', '@schema'],
+			requestedFields: new RequestedFields(names: ['key', '@schema']),
 			isReRequest: false,
 			expiresAt: null,
 			userId: 'alice',
@@ -1946,7 +1943,7 @@ class SecretRequestServiceTest extends TestCase {
 		$this->service->create(
 			secretId: 'sec-1',
 			encryptionSuiteId: 'suite-1',
-			requestedFields: ['key'],
+			requestedFields: new RequestedFields(names: ['key']),
 			isReRequest: false,
 			expiresAt: null,
 			userId: 'mallory',
@@ -1984,7 +1981,7 @@ class SecretRequestServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionCode(403);
 
-		$service->createReRequest(secretId: 'sec-1', requestedFields: ['key'], expiresAt: null, userId: 'requester');
+		$service->createReRequest(secretId: 'sec-1', requestedFields: new RequestedFields(names: ['key']), expiresAt: null, userId: 'requester');
 	}//end testReRequestOnACardSecretIsRefused()
 
 	/**
@@ -2052,8 +2049,8 @@ class SecretRequestServiceTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$this->service->createForUserVault(
 			userId: 'alice',
-			requestedFields: ['key'],
-			name: 'doomed',
+			requestedFields: new RequestedFields(names: ['key']),
+			placeholder: ['name' => 'doomed'],
 		);
 	}//end testFreshRequestRollsBackThePlaceholderOnFailure()
 
@@ -2068,7 +2065,7 @@ class SecretRequestServiceTest extends TestCase {
 		$this->secretService->expects($this->never())->method('create');
 
 		$this->expectException(InvalidArgumentException::class);
-		$this->service->createForUserVault(userId: 'alice', requestedFields: []);
+		$this->service->createForUserVault(userId: 'alice', requestedFields: new RequestedFields(names: []));
 	}//end testFreshRequestRefusesAnEmptyFieldList()
 
 	/**
@@ -2193,8 +2190,8 @@ class SecretRequestServiceTest extends TestCase {
 			}
 		);
 
-		$this->service->createForUserVault(userId: 'alice', requestedFields: ['key'], name: 'one');
-		$this->service->createForUserVault(userId: 'alice', requestedFields: ['key'], name: 'two');
+		$this->service->createForUserVault(userId: 'alice', requestedFields: new RequestedFields(names: ['key']), placeholder: ['name' => 'one']);
+		$this->service->createForUserVault(userId: 'alice', requestedFields: new RequestedFields(names: ['key']), placeholder: ['name' => 'two']);
 
 		$this->assertSame(['sec-a', 'sec-b'], $seen);
 		$this->assertCount(2, array_unique($seen));
@@ -2292,7 +2289,7 @@ class SecretRequestServiceTest extends TestCase {
 		$this->secretService->expects($this->never())->method('create');
 
 		$this->expectException(InvalidArgumentException::class);
-		$this->service->createForUserVault(userId: '', requestedFields: ['key']);
+		$this->service->createForUserVault(userId: '', requestedFields: new RequestedFields(names: ['key']));
 	}//end testFreshRequestRefusesAnEmptyUserId()
 
 	/**
@@ -2319,8 +2316,8 @@ class SecretRequestServiceTest extends TestCase {
 		try {
 			$this->service->createForUserVault(
 				userId: 'alice',
-				requestedFields: ['key'],
-				name: 'doomed',
+				requestedFields: new RequestedFields(names: ['key']),
+				placeholder: ['name' => 'doomed'],
 			);
 			$this->fail('the original failure must surface');
 		} catch (RuntimeException $e) {
