@@ -36,6 +36,8 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\PrivilegedAccess\AccessAsk;
+use OCA\Keepiq\Service\PrivilegedAccess\AccessNarrowing;
 use OCA\Keepiq\Service\PrivilegedAccess\AccessWindow;
 use OCA\Keepiq\Service\PrivilegedAccess\AddressRange;
 use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedAccessService;
@@ -53,6 +55,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 #[CoversClass(PrivilegedAccessService::class)]
+#[UsesClass(AccessAsk::class)]
+#[UsesClass(AccessNarrowing::class)]
 #[UsesClass(AccessRequest::class)]
 #[UsesClass(AccessWindow::class)]
 #[UsesClass(AddressRange::class)]
@@ -291,9 +295,7 @@ class PrivilegedAccessServiceTest extends TestCase {
 		$request = $this->service()->request(
 			copyId: 'c1',
 			requesterId: 'bob',
-			startsAt: self::at(time: '14:00'),
-			endsAt: self::at(time: '16:00'),
-			reason: '  incident 4711 '
+			ask: new AccessAsk(startsAt: self::at(time: '14:00'), endsAt: self::at(time: '16:00'), reason: '  incident 4711 ')
 		);
 
 		$this->assertSame('s1', $request->getSecretId());
@@ -331,7 +333,7 @@ class PrivilegedAccessServiceTest extends TestCase {
 		];
 		foreach ($cases as $message => [$copyId, $userId, $from, $to, $reason]) {
 			try {
-				$this->service()->request(copyId: $copyId, requesterId: $userId, startsAt: self::at(time: $from), endsAt: self::at(time: $to), reason: $reason);
+				$this->service()->request(copyId: $copyId, requesterId: $userId, ask: new AccessAsk(startsAt: self::at(time: $from), endsAt: self::at(time: $to), reason: $reason));
 				$this->fail('accepted: ' . $message);
 			} catch (InvalidArgumentException $exception) {
 				$this->assertSame($message, $exception->getMessage());
@@ -340,7 +342,7 @@ class PrivilegedAccessServiceTest extends TestCase {
 
 		$this->privileged = false;
 		$this->expectExceptionMessage('This login does not need approval');
-		$this->service()->request(copyId: 'c1', requesterId: 'bob', startsAt: self::at(time: '14:00'), endsAt: self::at(time: '16:00'), reason: 'x');
+		$this->service()->request(copyId: 'c1', requesterId: 'bob', ask: new AccessAsk(startsAt: self::at(time: '14:00'), endsAt: self::at(time: '16:00'), reason: 'x'));
 	}//end testInvalidRequestsAreRefused()
 
 	/**
@@ -355,8 +357,7 @@ class PrivilegedAccessServiceTest extends TestCase {
 		$approved = $this->service()->approve(
 			requestId: 'r1',
 			ownerId: 'alice',
-			startsAt: self::at(time: '14:30'),
-			ranges: ['192.0.2.7/24', '2001:db8::/32']
+			narrowing: new AccessNarrowing(startsAt: self::at(time: '14:30'), ranges: ['192.0.2.7/24', '2001:db8::/32'])
 		);
 
 		$this->assertSame(AccessRequest::STATUS_APPROVED, $approved->getStatus());
@@ -382,7 +383,7 @@ class PrivilegedAccessServiceTest extends TestCase {
 		$this->requests->expects($this->never())->method('update');
 
 		try {
-			$this->service()->approve(requestId: 'r1', ownerId: 'alice', endsAt: self::at(time: '17:00'));
+			$this->service()->approve(requestId: 'r1', ownerId: 'alice', narrowing: new AccessNarrowing(endsAt: self::at(time: '17:00')));
 			$this->fail('widened');
 		} catch (InvalidArgumentException $exception) {
 			$this->assertSame('An approval may only narrow the requested window', $exception->getMessage());

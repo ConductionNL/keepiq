@@ -25,6 +25,8 @@ use InvalidArgumentException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Service\PrivilegedAccess\AccessAsk;
+use OCA\Keepiq\Service\PrivilegedAccess\AccessNarrowing;
 use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedAccessService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -115,9 +117,11 @@ class PrivilegedAccessController extends OCSController {
 			step: fn (string $uid): array => $this->service->request(
 				copyId: $id,
 				requesterId: $uid,
-				startsAt: self::moment(value: $startsAt),
-				endsAt: self::moment(value: $endsAt),
-				reason: $reason
+				ask: new AccessAsk(
+					startsAt: self::moment(value: $startsAt),
+					endsAt: self::moment(value: $endsAt),
+					reason: $reason
+				)
 			)->jsonSerialize(),
 			status: Http::STATUS_CREATED
 		);
@@ -157,9 +161,11 @@ class PrivilegedAccessController extends OCSController {
 			step: fn (string $uid): array => $this->service->approve(
 				requestId: $requestId,
 				ownerId: $uid,
-				startsAt: self::optionalMoment(value: $startsAt),
-				endsAt: self::optionalMoment(value: $endsAt),
-				ranges: array_values(array_filter(array_map('strval', $ranges), static fn (string $range): bool => trim($range) !== ''))
+				narrowing: new AccessNarrowing(
+					startsAt: self::optionalMoment(value: $startsAt),
+					endsAt: self::optionalMoment(value: $endsAt),
+					ranges: array_values(array_filter(array_map('strval', $ranges), static fn (string $range): bool => trim($range) !== ''))
+				)
 			)->jsonSerialize()
 		);
 	}//end approve()

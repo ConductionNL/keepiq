@@ -162,11 +162,9 @@ class PrivilegedAccessService {
 	/**
 	 * A recipient asks for a time window on their copy of a privileged login.
 	 *
-	 * @param string            $copyId      The recipient's copy
-	 * @param string            $requesterId The caller, who must hold the copy
-	 * @param DateTimeImmutable $startsAt    The start asked for
-	 * @param DateTimeImmutable $endsAt      The end asked for
-	 * @param string            $reason      Why the login is needed
+	 * @param string    $copyId      The recipient's copy
+	 * @param string    $requesterId The caller, who must hold the copy
+	 * @param AccessAsk $ask         The window asked for and why the login is needed
 	 *
 	 * @return AccessRequest
 	 *
@@ -175,13 +173,7 @@ class PrivilegedAccessService {
 	 *
 	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
-	public function request(
-		string $copyId,
-		string $requesterId,
-		DateTimeImmutable $startsAt,
-		DateTimeImmutable $endsAt,
-		string $reason,
-	): AccessRequest {
+	public function request(string $copyId, string $requesterId, AccessAsk $ask): AccessRequest {
 		$copy     = $this->loadHeld(secretId: $copyId, userId: $requesterId);
 		$sourceId = $this->sourceOfCopy(copy: $copy);
 		if ($sourceId === null) {
@@ -192,12 +184,12 @@ class PrivilegedAccessService {
 			throw new InvalidArgumentException(message: 'This login does not need approval');
 		}
 
-		$window = new AccessWindow(startsAt: $startsAt, endsAt: $endsAt);
+		$window = new AccessWindow(startsAt: $ask->startsAt, endsAt: $ask->endsAt);
 		if ($window->endsAt <= $this->nowImmutable()) {
 			throw new InvalidArgumentException(message: 'The window must end in the future');
 		}
 
-		$reason = trim($reason);
+		$reason = trim($ask->reason);
 		if ($reason === '' || mb_strlen($reason) > self::MAX_REASON_LENGTH) {
 			throw new InvalidArgumentException(message: 'A reason of at most 500 characters is required');
 		}
@@ -247,11 +239,9 @@ class PrivilegedAccessService {
 	/**
 	 * The owner approves a pending request, optionally narrowed.
 	 *
-	 * @param string                 $requestId The request
-	 * @param string                 $ownerId   The caller, who must own the login
-	 * @param DateTimeImmutable|null $startsAt  A later start, or null to keep the requested one
-	 * @param DateTimeImmutable|null $endsAt    An earlier end, or null to keep the requested one
-	 * @param list<string>           $ranges    CIDR ranges to limit use to; empty for any address
+	 * @param string               $requestId The request
+	 * @param string               $ownerId   The caller, who must own the login
+	 * @param AccessNarrowing|null $narrowing A later start, an earlier end and address ranges; null approves as asked
 	 *
 	 * @return AccessRequest
 	 *
@@ -260,23 +250,18 @@ class PrivilegedAccessService {
 	 *
 	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
-	public function approve(
-		string $requestId,
-		string $ownerId,
-		?DateTimeImmutable $startsAt = null,
-		?DateTimeImmutable $endsAt = null,
-		array $ranges = [],
-	): AccessRequest {
+	public function approve(string $requestId, string $ownerId, ?AccessNarrowing $narrowing = null): AccessRequest {
 		[$request, $source] = $this->loadPending(requestId: $requestId, ownerId: $ownerId);
+		$narrowing ??= new AccessNarrowing();
 
 		$window = AccessWindow::approve(
 			requested: new AccessWindow(
 				startsAt: DateTimeImmutable::createFromMutable($request->getRequestedStart()),
 				endsAt: DateTimeImmutable::createFromMutable($request->getRequestedEnd())
 			),
-			startsAt: $startsAt,
-			endsAt: $endsAt,
-			ranges: array_values(array_map('strval', $ranges))
+			startsAt: $narrowing->startsAt,
+			endsAt: $narrowing->endsAt,
+			ranges: array_values(array_map('strval', $narrowing->ranges))
 		);
 		$cidrs = array_map(static fn (AddressRange $range): string => $range->toString(), $window->ranges);
 

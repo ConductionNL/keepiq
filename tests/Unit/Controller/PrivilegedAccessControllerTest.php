@@ -25,6 +25,8 @@ use OCA\Keepiq\Controller\PrivilegedAccessController;
 use OCA\Keepiq\Db\AccessRequest;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\PrivilegedAccess\AccessAsk;
+use OCA\Keepiq\Service\PrivilegedAccess\AccessNarrowing;
 use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedAccessService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -39,6 +41,8 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 #[CoversClass(PrivilegedAccessController::class)]
+#[UsesClass(AccessAsk::class)]
+#[UsesClass(AccessNarrowing::class)]
 #[UsesClass(AccessRequest::class)]
 class PrivilegedAccessControllerTest extends TestCase {
 
@@ -89,9 +93,11 @@ class PrivilegedAccessControllerTest extends TestCase {
 		$this->service->expects($this->once())->method('request')->with(
 			'c1',
 			'bob',
-			new DateTimeImmutable('2026-11-16T14:00:00+00:00'),
-			new DateTimeImmutable('2026-11-16T16:00:00+00:00'),
-			'incident 4711'
+			new AccessAsk(
+				startsAt: new DateTimeImmutable('2026-11-16T14:00:00+00:00'),
+				endsAt: new DateTimeImmutable('2026-11-16T16:00:00+00:00'),
+				reason: 'incident 4711'
+			)
 		)->willReturn($created);
 
 		$response = $this->controller()->request(id: 'c1', startsAt: '2026-11-16T14:00:00+00:00', endsAt: '2026-11-16T16:00:00+00:00', reason: 'incident 4711');
@@ -126,9 +132,11 @@ class PrivilegedAccessControllerTest extends TestCase {
 		$this->service->expects($this->once())->method('approve')->with(
 			'r1',
 			'alice',
-			null,
-			new DateTimeImmutable('2026-11-16T15:00:00+00:00'),
-			['192.0.2.0/24']
+			new AccessNarrowing(
+				startsAt: null,
+				endsAt: new DateTimeImmutable('2026-11-16T15:00:00+00:00'),
+				ranges: ['192.0.2.0/24']
+			)
 		)->willReturn(new AccessRequest());
 
 		$response = $this->controller(uid: 'alice')->approve(requestId: 'r1', startsAt: '', endsAt: '2026-11-16T15:00:00+00:00', ranges: ['192.0.2.0/24', ' ']);
