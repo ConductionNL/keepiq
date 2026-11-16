@@ -22,6 +22,7 @@ namespace OCA\Keepiq\Service\ShareSave;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretVersion;
+use OCA\Keepiq\Exception\PrivilegedAccessRequiredException;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareSyncService;
@@ -60,7 +61,7 @@ class ShareSaveHistory {
 	 *
 	 * @return SecretVersion
 	 *
-	 * @throws ShareSaveRefusal `version_refused`
+	 * @throws ShareSaveRefusal `version_refused`, or `privileged_access_required` for a privileged copy outside its window
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
@@ -69,6 +70,10 @@ class ShareSaveHistory {
 			$version = $this->versions->getVersion(versionId: $versionId, userId: $userId);
 		} catch (InvalidArgumentException $e) {
 			throw new ShareSaveRefusal(error: 'version_refused', message: $e->getMessage(), status: Http::STATUS_BAD_REQUEST);
+		} catch (PrivilegedAccessRequiredException $e) {
+			// A version of a privileged copy outside its approved window
+			// (capability-requirements-from-the-matrix 3.1).
+			throw new ShareSaveRefusal(error: PrivilegedAccessRequiredException::CODE, message: $e->getMessage(), status: Http::STATUS_FORBIDDEN);
 		}
 
 		if ($version->getSecretId() !== $row->getId()) {
