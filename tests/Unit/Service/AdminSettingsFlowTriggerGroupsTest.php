@@ -22,6 +22,9 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Service\AdminSettingsService;
 use OCA\Keepiq\Service\Flow\VaultFlowTriggerCatalog;
+use OCA\Keepiq\Service\PasswordPolicyService;
+use OCA\Keepiq\Service\SiteImageSettings;
+use OCA\Keepiq\Service\TrustedExtensionOrigins;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -35,6 +38,9 @@ use Psr\Log\LoggerInterface;
  */
 #[CoversClass(AdminSettingsService::class)]
 #[UsesClass(VaultFlowTriggerCatalog::class)]
+#[UsesClass(PasswordPolicyService::class)]
+#[UsesClass(SiteImageSettings::class)]
+#[UsesClass(TrustedExtensionOrigins::class)]
 class AdminSettingsFlowTriggerGroupsTest extends TestCase {
 	/** @var array<string,string> The stored string values, by key. */
 	private array $stored = [];
