@@ -52,6 +52,7 @@ final class BackupTableRegistry {
 		'attachment_grants',
 		'attachments',
 		'audit_log',
+		'broker_mints',
 		'ca_certs',
 		'certificate_metadata',
 		'compliance_reports',

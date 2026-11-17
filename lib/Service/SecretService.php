@@ -151,6 +151,7 @@ class SecretService implements SecretServiceInterface {
 	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
 	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
 	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
+	 * @param BrokerMintRecorder|null $brokerMints Stores a broker mint's notAfter and who it was minted for
 	 *
 	 * @return void
 	 */
@@ -180,6 +181,7 @@ class SecretService implements SecretServiceInterface {
 		private ?FederatedShareService $federatedShares = null,
 		private ?SecretUrlMapper $urlMapper = null,
 		private ?PrivilegedCopyGate $privilegedGate = null,
+		private ?BrokerMintRecorder $brokerMints = null,
 	) {
 	}//end __construct()
 
@@ -419,7 +421,11 @@ class SecretService implements SecretServiceInterface {
 		}
 
 		$secret = $this->newRow(data: $data, placement: $this->machinePlacement(data: $data, applicationId: $applicationId));
+		// A broker mint may carry the certificate's notAfter and who it was
+		// minted for (connection-certificate-expiry-for-integriq).
+		$this->brokerMints?->applyExpiry(secret: $secret, data: $data);
 		$this->mapper->insert($secret);
+		$this->brokerMints?->record(secret: $secret, data: $data);
 		$this->dispatchAudit(event: $this->createdEvent(secret: $secret, actor: $this->auditEvents->forApplication(...)));
 
 		return $secret;
@@ -636,6 +642,7 @@ class SecretService implements SecretServiceInterface {
 		$this->applyApplicationFields(run: $run);
 		$this->applyApplicationKey(run: $run);
 		$credentials = $this->storeApplicationUpdate(run: $run);
+		$this->brokerMints?->record(secret: $run->secret, data: $data);
 		$this->auditApplicationUpdate(run: $run, credentials: $credentials);
 
 		return $run->secret;
@@ -696,6 +703,8 @@ class SecretService implements SecretServiceInterface {
 		if ($run->sends('additionalFields') === true) {
 			$secret->setAdditionalFields($this->nullableString(value: $run->data['additionalFields']));
 		}
+
+		$this->brokerMints?->applyExpiry(secret: $secret, data: $run->data);
 	}//end applyApplicationFields()
 
 	/**
