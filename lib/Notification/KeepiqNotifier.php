@@ -159,6 +159,9 @@ class KeepiqNotifier implements INotifier {
 				return $this->renderShareRequest(r: $r);
 			case 'share_request_result':
 				return $this->renderShareRequestResult(r: $r);
+			case 'privileged_access_requested':
+			case 'privileged_access_result':
+				return $this->renderPrivilegedAccess(r: $r);
 		}//end switch
 
 		return false;
@@ -503,6 +506,42 @@ class KeepiqNotifier implements INotifier {
 		$this->withSecretLink(notification: $r->notification, params: $r->params);
 		return true;
 	}//end renderShareRequestResult()
+
+	/**
+	 * Render a request for a time window on a privileged login, to its owner,
+	 * and the owner's answer, to the requester. Both link to the secret.
+	 *
+	 * @param SubjectRendering $r The notification, its subject, parameters and translator
+	 *
+	 * @return bool Always true: the subject is recognised.
+	 *
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	private function renderPrivilegedAccess(SubjectRendering $r): bool {
+		$secretName = (string)($r->params['secret_name'] ?? $r->l->t('a secret'));
+		$startsAt   = (string)($r->params['starts_at'] ?? '');
+		$endsAt     = (string)($r->params['ends_at'] ?? '');
+		if ($r->subject === 'privileged_access_requested') {
+			$requester = (string)($r->params['requester'] ?? $r->l->t('a user'));
+			$r->notification->setParsedSubject(
+				(string)$r->l->t('%1$s asks for access to "%2$s"', [$requester, $secretName])
+			);
+			$r->notification->setParsedMessage(
+				(string)$r->l->t('From %1$s to %2$s. Reason: %3$s', [$startsAt, $endsAt, (string)($r->params['reason'] ?? '')])
+			);
+			$this->withSecretLink(notification: $r->notification, params: $r->params);
+			return true;
+		}
+
+		$r->notification->setParsedSubject((string)$r->l->t('Your access request for "%s" was denied', [$secretName]));
+		if (($r->params['result'] ?? '') === 'approved') {
+			$r->notification->setParsedSubject((string)$r->l->t('Your access request for "%s" was approved', [$secretName]));
+			$r->notification->setParsedMessage((string)$r->l->t('You may use it from %1$s to %2$s.', [$startsAt, $endsAt]));
+		}
+
+		$this->withSecretLink(notification: $r->notification, params: $r->params);
+		return true;
+	}//end renderPrivilegedAccess()
 
 	/**
 	 * Render a possibly compromised secret, to its owner.

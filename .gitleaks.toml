@@ -90,10 +90,12 @@ paths = [
   '''(^|/)tests/components/SecretDetailSidebar\.loginTotpPasskeys\.spec\.js$''',
   '''(^|/)tests/components/SecretRequestList\.spec\.js$''',
   '''(^|/)tests/components/TotpDisplay\.spec\.js$''',
+  '''(^|/)tests/components/TotpDisplay\.reprompt\.spec\.js$''',
   '''(^|/)tests/dialogs/SecretEditDialog\.totp\.spec\.js$''',
   '''(^|/)tests/dialogs/VersionDetailsDialog\.loginFields\.spec\.js$''',
   '''(^|/)tests/store/__snapshots__/suiteRotationSteps\.spec\.js\.snap$''',
   '''(^|/)tests/store/accountRecovery\.spec\.js$''',
+  '''(^|/)tests/store/emergencyAccess\.more\.spec\.js$''',
   '''(^|/)tests/store/import\.spec\.js$''',
   '''(^|/)tests/store/linkShare\.spec\.js$''',
   '''(^|/)tests/vectors/crypto/envelope\.json$''',
@@ -126,4 +128,11 @@ description = "Test setup script: the default admin:admin login of the throwaway
 targetRules = ["curl-auth-user"]
 paths = [
   '''(^|/)tests/server/setup\.sh$''',
+]
+
+[[allowlists]]
+description = "SSH key parser unit test: armour around junk and a truncated OpenSSH header, which the parser must refuse. Not keys."
+targetRules = ["private-key"]
+paths = [
+  '''(^|/)tests/vitest/sshKey\.spec\.js$''',
 ]

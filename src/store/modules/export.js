@@ -36,7 +36,7 @@ import { useSessionStore } from './session.js'
  * @param {string} mime The MIME type.
  * @return {void}
  */
-function downloadBlob(filename, content, mime) {
+export function downloadBlob(filename, content, mime) {
 	const blob = new Blob([content], { type: mime })
 	const url = URL.createObjectURL(blob)
 	const a = document.createElement('a')

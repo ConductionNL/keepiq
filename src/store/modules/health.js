@@ -24,6 +24,8 @@ import { isPasswordBearing } from '../../health/classify.js'
 import { duplicateGroups } from '../../health/duplicates.js'
 import { analyse, sha256Hex } from '../../health/engine.js'
 import { checkValue } from '../../health/hibp.js'
+import { siteDomain, vaultSiteFacts } from '../../health/siteDirectory.js'
+import { rowHasCode, rowHasPasskeys } from '../../utils/valueFieldMarkers.js'
 import { useSecretTypeStore } from './secretType.js'
 import { onVaultLock, useSessionStore } from './session.js'
 
@@ -122,17 +124,18 @@ function isAnalysable(secret, excludedTypeIds) {
  *
  * @param {object} secret A listed secret.
  * @param {object} session The session store (holds the CryptoKey).
+ * @param {{seedDomains: Set<string>, passkeyDomains: Set<string>}} facts The vault's own seed and passkey items by domain.
  * @return {Promise<object|null>}
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
  */
-async function decryptedRow(secret, session) {
+async function decryptedRow(secret, session, facts) {
 	let value
 	try {
 		value = await rsaDecrypt(secret.key, session.cryptoKey)
 	} catch {
 		return null
 	}
-	return healthRow(secret, value, await decryptedLogin(secret, session))
+	return healthRow(secret, value, facts, await decryptedLogin(secret, session))
 }
 
 /**
@@ -189,12 +192,15 @@ async function recipientCopyIds() {
 /**
  * @param {object} secret A listed secret.
  * @param {string} value Its decrypted value.
+ * @param {{seedDomains: Set<string>, passkeyDomains: Set<string>}} facts The vault's own seed and passkey items by domain.
  * @param {string|null} [login] Its decrypted username.
  * @return {object} The row the engine analyses.
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
  */
-function healthRow(secret, value, login = null) {
+function healthRow(secret, value, facts, login = null) {
 	return {
+		...secondFactorsHeld(secret, facts),
 		id: secret.id,
 		name: secret.name,
 		url: secret.url ?? null,
@@ -205,6 +211,33 @@ function healthRow(secret, value, login = null) {
 		keyUpdatedAt: keyChangedAt(secret),
 		possiblyCompromisedAt: secret.possiblyCompromisedAt ?? null,
 	}
+}
+
+/**
+ * Whether the vault already holds a second factor or a passkey for this
+ * login: on the login itself, or as an item for its site (design D4).
+ *
+ * @param {object} secret A listed secret.
+ * @param {{seedDomains: Set<string>, passkeyDomains: Set<string>}} facts The vault's own seed and passkey items by domain.
+ * @return {{hasSeed: boolean, hasPasskey: boolean}}
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function secondFactorsHeld(secret, facts) {
+	const domain = siteDomain(secret.url)
+	return {
+		hasSeed: rowHasCode(secret) || listsDomain(facts.seedDomains, domain),
+		hasPasskey: rowHasPasskeys(secret) || listsDomain(facts.passkeyDomains, domain),
+	}
+}
+
+/**
+ * @param {Set<string>} domains Registrable domains the vault holds an item for.
+ * @param {string|null} domain A row's registrable domain.
+ * @return {boolean} Whether the domain is known and in the set.
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function listsDomain(domains, domain) {
+	return domain !== null && domains.has(domain)
 }
 
 /**
@@ -239,7 +272,7 @@ async function loadRowsOrFail(store, session) {
  * record why it failed; the plaintext rows are dropped either way.
  *
  * @param {object} store The health store.
- * @param {{rows: Array<object>, stalenessThreshold: string|number, breachResults: ?Map, copiesKnown: boolean}} analysis The rows, the engine's options, and whether recipient copies could be told apart.
+ * @param {{rows: Array<object>, stalenessThreshold: string|number, breachResults: ?Map, siteDirectory: ?object, copiesKnown: boolean}} analysis The rows, the engine's options, and whether recipient copies could be told apart.
  * @return {Promise<void>}
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
  */
@@ -248,6 +281,7 @@ async function scoreRows(store, analysis) {
 		const result = await store.runEngine(analysis.rows, {
 			stalenessThreshold: analysis.stalenessThreshold,
 			breachResults: analysis.breachResults,
+			siteDirectory: analysis.siteDirectory ?? null,
 		})
 		store.findings = result.findings
 		store.summary = result.summary
@@ -266,6 +300,30 @@ async function scoreRows(store, analysis) {
 	}
 }
 
+/**
+ * The site directory copy the server sent, with both lists present, or null
+ * when the response is not a directory copy.
+ *
+ * @param {object|null|undefined} copy The response body.
+ * @return {{totp: object, passkeys: object}|null}
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function usableDirectory(copy) {
+	if (!isDirectoryCopy(copy)) {
+		return null
+	}
+	return { totp: copy.totp ?? {}, passkeys: copy.passkeys ?? {} }
+}
+
+/**
+ * @param {object|null|undefined} copy The response body.
+ * @return {boolean} Whether it holds an object-typed totp and passkeys list.
+ * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ */
+function isDirectoryCopy(copy) {
+	return Boolean(copy) && typeof copy.totp === 'object' && typeof copy.passkeys === 'object'
+}
+
 export const useHealthStore = defineStore('health', {
 	state: () => ({
 		/** @type {Array<object>} Per-secret findings (memory only). */
@@ -278,6 +336,8 @@ export const useHealthStore = defineStore('health', {
 		status: 'idle',
 		/** @type {string} Breach-check status: off | ready | unavailable. */
 		breachStatus: 'off',
+		/** @type {string} Site directory status: off | ready | unavailable (health-site-security-checks D3). */
+		siteDirectoryStatus: 'off',
 		/** @type {string|null} Last error message. */
 		error: null,
 		/** @type {{exact: Array<object>, likely: Array<object>}} Duplicate groups (memory only, vault-duplicate-finder). */
@@ -326,6 +386,20 @@ export const useHealthStore = defineStore('health', {
 		 */
 		insecureAddressFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('insecure-address')),
+		/**
+		 * @param {object} state The store state.
+		 * @return {Array<object>} Logins for sites offering one-time codes the vault holds no seed for.
+		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 */
+		twoFactorAvailableFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('two-factor-available')),
+		/**
+		 * @param {object} state The store state.
+		 * @return {Array<object>} Logins for sites offering passkeys the vault holds none for.
+		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 */
+		passkeyAvailableFindings: (state) =>
+			state.findings.filter((f) => f.flags.includes('passkey-available')),
 		/**
 		 * Map of secretId -> zxcvbn score for the StrengthBadge component.
 		 *
@@ -376,6 +450,7 @@ export const useHealthStore = defineStore('health', {
 				rows,
 				stalenessThreshold: opts.stalenessThreshold ?? '365',
 				breachResults,
+				siteDirectory: await this.loadSiteDirectory(),
 				copiesKnown: rows.copiesKnown === true,
 			})
 		},
@@ -390,15 +465,17 @@ export const useHealthStore = defineStore('health', {
 		 * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
 		 */
 		async loadDecryptedRows(session) {
-			const excludedTypeIds = machineMaterialTypeIds(await loadedTypes())
+			const types = await loadedTypes()
+			const excludedTypeIds = machineMaterialTypeIds(types)
 			const items = await fetchEverySecret()
+			const facts = vaultSiteFacts(items, new Map(types.filter(Boolean).map((type) => [type.id, type.name])))
 			const copies = await recipientCopyIds()
 			const rows = []
 			for (const secret of items) {
 				if (!isAnalysable(secret, excludedTypeIds)) {
 					continue
 				}
-				const row = await decryptedRow(secret, session)
+				const row = await decryptedRow(secret, session, facts)
 				if (row !== null) {
 					row.copy = copies === null || copies.has(String(secret.id))
 					rows.push(row)
@@ -407,6 +484,27 @@ export const useHealthStore = defineStore('health', {
 			// Not a row: whether copies could be told apart (duplicate detection needs it).
 			Object.defineProperty(rows, 'copiesKnown', { value: copies !== null })
 			return rows
+		},
+
+		/**
+		 * Fetch the site directory copy: the whole public list, the same for
+		 * every user, so the request says nothing about the vault. 404 means
+		 * the administrator left it off; any other failure leaves the two
+		 * directory categories unavailable and the rest of the report as is.
+		 *
+		 * @return {Promise<{totp: Object<string,string>, passkeys: Object<string,string>}|null>}
+		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-the-site-directory-is-fetched-whole-and-taught-nothing
+		 */
+		async loadSiteDirectory() {
+			try {
+				const response = await axios.get(generateUrl('/apps/keepiq/api/v1/site-directory'))
+				const directory = usableDirectory(response?.data)
+				this.siteDirectoryStatus = directory === null ? 'unavailable' : 'ready'
+				return directory
+			} catch (e) {
+				this.siteDirectoryStatus = e?.response?.status === 404 ? 'off' : 'unavailable'
+				return null
+			}
 		},
 
 		/**
@@ -473,6 +571,7 @@ export const useHealthStore = defineStore('health', {
 					breachResults: options.breachResults
 						? Array.from(options.breachResults.entries())
 						: null,
+					siteDirectory: options.siteDirectory ?? null,
 				},
 			}
 			return new Promise((resolve, reject) => {
@@ -509,6 +608,7 @@ export const useHealthStore = defineStore('health', {
 			this.duplicatesAvailable = false
 			this.status = 'idle'
 			this.breachStatus = 'off'
+			this.siteDirectoryStatus = 'off'
 			this.error = null
 			if (this.worker) {
 				this.worker.terminate()

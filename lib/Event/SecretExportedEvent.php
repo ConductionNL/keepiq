@@ -40,7 +40,7 @@ class SecretExportedEvent extends Event {
 	 *
 	 * @param string $userId The session user that performed the export
 	 * @param string $mode The export mode (encrypted-backup|plaintext-csv|cxf|cxp)
-	 * @param string $scope The export scope (vault|folders)
+	 * @param string $scope The export scope (vault|folders|selection)
 	 * @param int $secretCount The number of secrets exported
 	 *
 	 * @return void

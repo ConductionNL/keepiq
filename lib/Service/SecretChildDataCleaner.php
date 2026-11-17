@@ -29,6 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Db\AccessRequestMapper;
+use OCA\Keepiq\Db\PrivilegedLoginMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
 use OCA\Keepiq\Db\SecretUrlMapper;
@@ -45,6 +47,8 @@ class SecretChildDataCleaner {
 	 * @param SecretVersionService|null $versionService The version-history service (delete cascade)
 	 * @param SecretTagMapper|null $tagMapper The tag mapper (delete cascade)
 	 * @param SecretUrlMapper|null $urlMapper The extra addresses (delete cascade)
+	 * @param PrivilegedLoginMapper|null $privilegedFlags The privileged marks (delete cascade)
+	 * @param AccessRequestMapper|null $accessRequests The access requests (delete cascade)
 	 *
 	 * @return void
 	 *
@@ -56,6 +60,8 @@ class SecretChildDataCleaner {
 		private ?SecretVersionService $versionService = null,
 		private ?SecretTagMapper $tagMapper = null,
 		private ?SecretUrlMapper $urlMapper = null,
+		private ?PrivilegedLoginMapper $privilegedFlags = null,
+		private ?AccessRequestMapper $accessRequests = null,
 	) {
 	}//end __construct()
 
@@ -90,6 +96,9 @@ class SecretChildDataCleaner {
 		$this->tagMapper?->deleteBySecret($secretId);
 		// The login's extra addresses (vault-website-addresses).
 		$this->urlMapper?->deleteBySecret($secretId);
+		// The privileged mark and its access requests (capability-requirements-from-the-matrix 3.1).
+		$this->privilegedFlags?->deleteBySecret(secretId: $secretId);
+		$this->accessRequests?->deleteBySecret(secretId: $secretId);
 	}//end purgeForSecret()
 
 	/**
@@ -127,6 +136,8 @@ class SecretChildDataCleaner {
 		// Every tag the user set, on rows they own or hold as a copy.
 		$this->tagMapper?->deleteByOwner($userId);
 		$this->urlMapper?->deleteByOwner($userId);
+		$this->privilegedFlags?->deleteByUser(userId: $userId);
+		$this->accessRequests?->deleteByUser(userId: $userId);
 
 		if ($this->hasCascades() === false) {
 			return;

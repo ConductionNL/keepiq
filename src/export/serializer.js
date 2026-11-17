@@ -119,7 +119,7 @@ function isExported(secret, { folderIds, typeIds, secretIds }) {
 		(folderIds === null
 			|| (secret.folderId != null && folderIds.has(secret.folderId)))
 		&& (typeIds === null || typeIds.has(secretTypeId(secret)))
-		&& (secretIds === null || secretIds.has(secret.id))
+		&& (secretIds === null || secretIds.has(String(secret.id)))
 	)
 }
 
@@ -155,9 +155,25 @@ function scopeFilters(scope, folders) {
 	return {
 		folderIds: folderFilter(scope, folders),
 		typeIds: listed('typeIds') === null ? null : new Set(listed('typeIds')),
-		secretIds:
-			listed('secretIds') === null ? null : new Set(listed('secretIds')),
+		secretIds: secretFilter(scope, listed('secretIds')),
 	}
+}
+
+/**
+ * The secret filter. A `{ mode: 'selection', secretIds }` scope selects exactly
+ * the listed secrets, so no ids listed selects nothing; otherwise `secretIds`
+ * filters only when it lists any.
+ *
+ * @param {object} scope The scope.
+ * @param {Array<string>|null} listed The listed secret ids, null when none.
+ * @return {Set<string>|null} The selected ids, or null for every secret.
+ * @spec openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp/spec.md#requirement-choose-what-to-send
+ */
+function secretFilter(scope, listed) {
+	if (scope && scope.mode === 'selection') {
+		return new Set(listed ?? [])
+	}
+	return listed === null ? null : new Set(listed)
 }
 
 /**
@@ -304,13 +320,16 @@ function extraUrls(secret) {
  * @param {Array<object>} folders Folder rows ({ id, name, parentId }).
  * @param {object} [scope] The scope (D1): `folderIds` (with their
  *   subfolders), `typeIds`, `secretIds`; the filters combine, and none set is
- *   the whole vault. `{ mode: 'folders', folderIds }` still reads as a folder scope.
+ *   the whole vault. `{ mode: 'folders', folderIds }` still reads as a folder scope;
+ *   `{ mode: 'selection', secretIds }` exports exactly those secrets (none listed
+ *   exports nothing) and only the folders they sit in.
  * @param {object} [options] Options.
  * @param {Array<object>} [options.types] The vault's types ({ id, name, label, scope }), for `typeName`/`typeLabel`.
  * @param {Array<string>} [options.omitFields] Fields to leave out, from OMITTABLE_FIELDS (D2).
  * @return {object} The `{ format, version, secrets, folders }` payload, with
  *   `partial: true` and `omittedFields` when fields were left out.
  * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+ * @spec openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp/spec.md#requirement-choose-what-to-send
  */
 export function serializeVault(
 	secrets,
@@ -328,12 +347,18 @@ export function serializeVault(
 	const omitted = OMITTABLE_FIELDS.filter((field) =>
 		(options.omitFields || []).includes(field),
 	)
+	const exported = secrets.filter((secret) => isExported(secret, filters))
+	// A selection carries the folders its secrets sit in, so their paths
+	// travel; the folder scope carries its subtree, the vault every folder.
+	const usedFolderIds =
+		scope && scope.mode === 'selection'
+			? new Set(exported.map((secret) => secret.folderId).filter((id) => id !== null && id !== undefined))
+			: null
 
 	const payload = {
 		format: PAYLOAD_FORMAT,
 		version: PAYLOAD_VERSION,
-		secrets: secrets
-			.filter((secret) => isExported(secret, filters))
+		secrets: exported
 			.map((secret) =>
 				withoutFields(
 					{
@@ -346,7 +371,8 @@ export function serializeVault(
 		folders: folders
 			.filter(
 				(folder) =>
-					filters.folderIds === null || filters.folderIds.has(folder.id),
+					(filters.folderIds === null || filters.folderIds.has(folder.id))
+					&& (usedFolderIds === null || usedFolderIds.has(folder.id)),
 			)
 			.map((folder) => ({ path: pathMap.get(folder.id) ?? folder.name })),
 	}

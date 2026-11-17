@@ -2296,4 +2296,210 @@ class TeamFolderServiceTest extends TestCase {
 			rowJudge: new ShareRowJudge(targets: $this->shareTargetMapper, secrets: $this->secretMapper, scanner: ($scanner ?? $this->createMock(ShareQuarantineScanner::class))),
 		);
 	}//end serviceWithShareTargets()
+	/**
+	 * shareFolder attaches a new TeamFolder to a folder that is not shared yet,
+	 * owned by the caller and pointing at that folder.
+	 *
+	 * @return void
+	 */
+	public function testShareFolderCreatesATeamFolderForAnUnsharedFolder(): void {
+		$this->folderMapper->method('findById')->willReturn($this->buildFolder(id: 'folder-1'));
+		$this->mapper->method('findByFolder')->willThrowException(new DoesNotExistException(''));
+		$inserted = [];
+		$this->mapper->expects($this->once())->method('insert')->willReturnCallback(
+			static function (TeamFolder $entity) use (&$inserted): TeamFolder {
+				$inserted[] = $entity;
+				return $entity;
+			}
+		);
+
+		$result = $this->service->shareFolder(folderId: 'folder-1', userId: 'alice');
+
+		$this->assertSame($inserted[0], $result);
+		$this->assertSame('folder-1', $result->getFolderId());
+		$this->assertSame('alice', $result->getOwnerId());
+		$this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/', $result->getId());
+		$this->assertInstanceOf(DateTime::class, $result->getCreatedAt());
+		$this->assertInstanceOf(DateTime::class, $result->getUpdatedAt());
+	}//end testShareFolderCreatesATeamFolderForAnUnsharedFolder()
+
+	/**
+	 * shareFolder refuses a folder that does not exist.
+	 *
+	 * @return void
+	 */
+	public function testShareFolderRejectsAMissingFolder(): void {
+		$this->folderMapper->method('findById')->willThrowException(new DoesNotExistException(''));
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Folder not found');
+		$this->service->shareFolder(folderId: 'folder-1', userId: 'alice');
+	}//end testShareFolderRejectsAMissingFolder()
+
+	/**
+	 * unshareFolder revokes the folder's derived rows, removes its memberships
+	 * and the TeamFolder in one committed transaction, and returns the count.
+	 *
+	 * @return void
+	 */
+	public function testUnshareFolderRevokesRowsAndRemovesTheTeamFolder(): void {
+		$teamFolder = $this->buildTeamFolder();
+		$this->mapper->method('findById')->willReturn($teamFolder);
+		$this->bulkGrantMapper->method('findByTeamFolder')->willReturn([$this->carolsRow()]);
+		$this->secretMapper->method('findById')->willThrowException(new DoesNotExistException(''));
+		$deleted = [];
+		$this->shareTargetMapper->method('delete')->willReturnCallback(
+			static function (ShareTarget $row) use (&$deleted) {
+				$deleted[] = $row->getId();
+				return $row;
+			}
+		);
+		$this->memberMapper->expects($this->once())->method('deleteByTeamFolder')->with('tf-1');
+		$this->mapper->expects($this->once())->method('delete')->with($this->identicalTo($teamFolder));
+		$this->db->expects($this->once())->method('beginTransaction');
+		$this->db->expects($this->once())->method('commit');
+		$this->db->expects($this->never())->method('rollBack');
+
+		$this->assertSame(1, $this->service->unshareFolder(teamFolderId: 'tf-1', userId: 'alice'));
+		$this->assertSame(['st-carol'], $deleted);
+	}//end testUnshareFolderRevokesRowsAndRemovesTheTeamFolder()
+
+	/**
+	 * A failure inside the unshare cascade rolls the transaction back and is
+	 * rethrown; the TeamFolder row stays.
+	 *
+	 * @return void
+	 */
+	public function testUnshareFolderRollsBackWhenTheCascadeFails(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->bulkGrantMapper->method('findByTeamFolder')->willReturn([]);
+		$this->memberMapper->method('deleteByTeamFolder')->willThrowException(new \RuntimeException('db gone'));
+		$this->mapper->expects($this->never())->method('delete');
+		$this->db->expects($this->once())->method('beginTransaction');
+		$this->db->expects($this->once())->method('rollBack');
+		$this->db->expects($this->never())->method('commit');
+
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('db gone');
+		$this->service->unshareFolder(teamFolderId: 'tf-1', userId: 'alice');
+	}//end testUnshareFolderRollsBackWhenTheCascadeFails()
+
+	/**
+	 * unshareFolder refuses a caller who does not own the team folder, before
+	 * any transaction starts.
+	 *
+	 * @return void
+	 */
+	public function testUnshareFolderRejectsANonOwner(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder(ownerId: 'alice'));
+		$this->db->expects($this->never())->method('beginTransaction');
+		$this->mapper->expects($this->never())->method('delete');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Not authorized to manage this team folder');
+		$this->service->unshareFolder(teamFolderId: 'tf-1', userId: 'mallory');
+	}//end testUnshareFolderRejectsANonOwner()
+
+	/**
+	 * unshareFolder refuses a team folder that does not exist.
+	 *
+	 * @return void
+	 */
+	public function testUnshareFolderRejectsAMissingTeamFolder(): void {
+		$this->mapper->method('findById')->willThrowException(new DoesNotExistException(''));
+		$this->db->expects($this->never())->method('beginTransaction');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Team folder not found');
+		$this->service->unshareFolder(teamFolderId: 'tf-1', userId: 'alice');
+	}//end testUnshareFolderRejectsAMissingTeamFolder()
+
+	/**
+	 * Removing a membership id that does not exist is refused.
+	 *
+	 * @return void
+	 */
+	public function testRemoveMemberRejectsAMissingMembership(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->memberMapper->method('findById')->willThrowException(new DoesNotExistException(''));
+		$this->memberMapper->expects($this->never())->method('delete');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Membership not found');
+		$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'm-x', userId: 'alice');
+	}//end testRemoveMemberRejectsAMissingMembership()
+
+	/**
+	 * A membership of another team folder cannot be removed through this one.
+	 *
+	 * @return void
+	 */
+	public function testRemoveMemberRejectsAMembershipOfAnotherTeamFolder(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->memberMapper->method('findById')->willReturn($this->buildMember(type: 'user', id: 'carol', tfId: 'tf-other'));
+		$this->memberMapper->expects($this->never())->method('delete');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Membership does not belong to this team folder');
+		$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'm-user-carol', userId: 'alice');
+	}//end testRemoveMemberRejectsAMembershipOfAnotherTeamFolder()
+
+	/**
+	 * setMemberGrade refuses a membership id that does not exist, and one that
+	 * belongs to another team folder, with the same message.
+	 *
+	 * @return void
+	 */
+	public function testSetMemberGradeRejectsAnUnknownOrForeignMembership(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder());
+		$this->memberMapper->method('findById')->willReturnOnConsecutiveCalls(
+			$this->throwException(new DoesNotExistException('')),
+			$this->buildMember(type: 'user', id: 'carol', tfId: 'tf-other')
+		);
+		$this->memberMapper->expects($this->never())->method('update');
+
+		$messages = [];
+		foreach (['m-missing', 'm-user-carol'] as $memberId) {
+			try {
+				$this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: $memberId, grade: 'read', ownerId: 'alice');
+			} catch (InvalidArgumentException $exception) {
+				$messages[] = $exception->getMessage();
+			}
+		}
+
+		$this->assertSame(['Membership not found', 'Membership not found'], $messages);
+	}//end testSetMemberGradeRejectsAnUnknownOrForeignMembership()
+
+	/**
+	 * A group join skips a membership whose team folder is gone and one whose
+	 * owner is the joining user, and notifies the owner of every other one.
+	 *
+	 * @return void
+	 */
+	public function testGroupJoinSkipsAVanishedFolderAndTheOwnersOwnJoin(): void {
+		$this->memberMapper->method('findGroupMemberships')->willReturn([
+			$this->buildMember(type: 'group', id: 'devops', tfId: 'tf-gone'),
+			$this->buildMember(type: 'group', id: 'devops', tfId: 'tf-own'),
+			$this->buildMember(type: 'group', id: 'devops', tfId: 'tf-1'),
+		]);
+		$this->mapper->method('findById')->willReturnCallback(
+			function (string $id): TeamFolder {
+				if ($id === 'tf-gone') {
+					throw new DoesNotExistException('');
+				}
+
+				return $this->buildTeamFolder(id: $id, ownerId: $id === 'tf-own' ? 'bob' : 'alice');
+			}
+		);
+		$this->notificationService->expects($this->once())->method('notify')->with(
+			'team_folder_join_request',
+			'alice',
+			['newMemberId' => 'bob', 'groupId' => 'devops', 'teamFolderId' => 'tf-1'],
+			'team_folder',
+			'tf-1'
+		);
+
+		$this->assertSame(1, $this->service->handleGroupMemberJoin(userId: 'bob', groupId: 'devops'));
+	}//end testGroupJoinSkipsAVanishedFolderAndTheOwnersOwnJoin()
 }//end class

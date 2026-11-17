@@ -1,5 +1,5 @@
 /** The item form's model: per-type fields, the payloads they serialize to, and the limits Keepiq enforces. */
-import type { EditableItem, FormField, ItemDraft, ItemPatch } from '@/src/messages'
+import type { EditableItem, FieldShape, FormField, ItemDraft, ItemPatch } from '@/src/messages'
 import { isAuthenticatorKey, normaliseAuthenticatorKey } from '@/src/totp/authenticator-key'
 import { parseTotpSeed, type TotpAlgorithm } from '@/src/totp/totp'
 import { parseObject, parsePayload, text } from './payloads'
@@ -67,6 +67,8 @@ export interface CustomField {
 	id: number
 	name: string
 	value: string
+	/** How the field is stored when it is not plain text, kept through renames and edits. */
+	shape?: FieldShape
 }
 
 export interface FormValues {
@@ -88,6 +90,8 @@ export interface FormValues {
 	notes: string
 	/** The member the notes came from, so an edit writes them back under the same name. */
 	notesKey: string | null
+	/** How the notes member is stored when it is not plain text. */
+	notesShape?: FieldShape
 	fields: CustomField[]
 	/** A login's new authenticator key, as typed or scanned; a saved one is never loaded here. */
 	authKey: string
@@ -101,7 +105,7 @@ export type AuthKeyMode = 'keep' | 'replace' | 'remove'
 const blank = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((key) => [key, ''])) as Record<K, string>
 
 let nextFieldId = 0
-export const customField = (name = '', value = ''): CustomField => ({ id: ++nextFieldId, name, value })
+export const customField = (name = '', value = '', shape?: FieldShape): CustomField => ({ id: ++nextFieldId, name, value, ...(shape && { shape }) })
 
 export function emptyValues(typeId: string, url = '', folderId: string | null = null): FormValues {
 	return {
@@ -146,9 +150,44 @@ export function formSections(kind: FormKind, values: Pick<FormValues, 'loginShow
 	}
 }
 
-/** Additional fields as the form edits them: text, and any other JSON value as its JSON. */
+/** A `{ value, kind }` member, as the web app writes a hidden or yes-or-no field (Keepiq `vault-custom-fields`). */
+function kinded(value: unknown): { value: unknown; kind: unknown } | null {
+	return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.hasOwn(value, 'value') ? value as { value: unknown; kind: unknown } : null
+}
+
+/** One additional field as text: a kinded field as its value, a yes or no as `'true'` or `'false'`, any other JSON value as its JSON. */
+export function fieldText(value: unknown): string {
+	const inner = kinded(value)?.value ?? value
+	if (typeof inner === 'string') return inner
+	return inner === undefined || inner === null ? '' : typeof inner === 'object' ? JSON.stringify(inner) : String(inner)
+}
+
+/** Additional fields as the form edits them, by `fieldText`. */
 export const fieldTexts = (payload: Record<string, unknown>): Record<string, string> =>
-	Object.fromEntries(Object.entries(payload).map(([name, value]) => [name, typeof value === 'string' ? value : JSON.stringify(value)]))
+	Object.fromEntries(Object.entries(payload).map(([name, value]) => [name, fieldText(value)]))
+
+/** The kinded fields of a blob, by name, so a save writes them back with their kind. */
+export function fieldShapes(payload: Record<string, unknown>): Record<string, FieldShape> {
+	const shapes: Record<string, FieldShape> = {}
+	for (const [name, value] of Object.entries(payload)) {
+		const entry = kinded(value)
+		if (!entry) continue
+		const kind = typeof entry.kind === 'string' ? entry.kind : 'text'
+		shapes[name] = typeof entry.value === 'boolean' ? { kind, boolean: true } : { kind }
+	}
+	return shapes
+}
+
+/** The blob to store: each field with a shape wrapped back as `{ value, kind }`, every other one as its text. */
+export function withKinds(fields: Record<string, string>, kinds: Record<string, FieldShape> | undefined): Record<string, unknown> {
+	if (!kinds || typeof kinds !== 'object') return fields
+	return Object.fromEntries(Object.entries(fields).map(([name, value]) => {
+		const shape = Object.hasOwn(kinds, name) ? kinds[name] : undefined
+		if (!shape || typeof shape.kind !== 'string') return [name, value]
+		const stored = shape.boolean && (value === 'true' || value === 'false') ? value === 'true' : value
+		return [name, { value: stored, kind: shape.kind }]
+	}))
+}
 
 function members<K extends string>(raw: string, keys: readonly K[]): Record<K, string> {
 	const payload = parseObject(raw) ?? {}
@@ -161,13 +200,15 @@ function isPlainKey(kind: FormKind, key: string): boolean {
 }
 
 /** The first field named Notes, in any case, is the notes; every other one is an additional field. */
-function takeFields(values: FormValues, additionalFields: Record<string, string>): void {
+function takeFields(values: FormValues, additionalFields: Record<string, string>, shapes: Record<string, FieldShape> = {}): void {
 	for (const [name, value] of Object.entries(additionalFields)) {
+		const shape = Object.hasOwn(shapes, name) ? shapes[name] : undefined
 		if (values.notesKey === null && name.toLowerCase() === NOTES) {
 			values.notes = value
 			values.notesKey = name
+			if (shape) values.notesShape = shape
 		} else {
-			values.fields.push(customField(name, value))
+			values.fields.push(customField(name, value, shape))
 		}
 	}
 }
@@ -182,7 +223,7 @@ export function fromItem(item: EditableItem, typeName: string | undefined): Form
 	values.secret = item.key
 	values.card = members(item.key, CARD_FIELDS)
 	values.identity = members(item.key, IDENTITY_FIELDS)
-	takeFields(values, item.additionalFields)
+	takeFields(values, item.additionalFields, item.fieldKinds)
 	return values
 }
 
@@ -221,6 +262,13 @@ function fieldEntries(values: FormValues, sections: FormSections): Array<[string
 	return entries
 }
 
+/** The shapes of the fields the draft keeps, under the names they are saved by. */
+function kindEntries(values: FormValues, sections: FormSections): Array<[string, FieldShape]> {
+	const entries = sections.fields ? values.fields.filter((field) => field.name.trim() && field.shape).map((field): [string, FieldShape] => [field.name.trim(), field.shape!]) : []
+	if (sections.notes && values.notes !== '' && values.notesShape) entries.push([values.notesKey ?? NOTES, values.notesShape])
+	return entries
+}
+
 function loginOf(values: FormValues, sections: FormSections): string | null {
 	return sections.login && values.login !== '' ? values.login : null
 }
@@ -230,6 +278,7 @@ export function toDraft(values: FormValues, typeName: string | undefined): ItemD
 	const sections = formSections(kind, values)
 	// `fromEntries` defines each name, so a field called `__proto__` is kept rather than setting the prototype.
 	const additionalFields: Record<string, string> = Object.fromEntries(fieldEntries(values, sections))
+	const fieldKinds: Record<string, FieldShape> = Object.fromEntries(kindEntries(values, sections))
 	return {
 		typeId: values.typeId,
 		name: values.name,
@@ -238,6 +287,7 @@ export function toDraft(values: FormValues, typeName: string | undefined): ItemD
 		key: keyOf(values, kind),
 		login: loginOf(values, sections),
 		additionalFields,
+		...(Object.keys(fieldKinds).length > 0 && { fieldKinds }),
 		...totpPart(values, typeName),
 	}
 }
@@ -261,7 +311,11 @@ export function diffDraft(before: ItemDraft, after: ItemDraft): ItemPatch {
 	for (const field of SCALAR_FIELDS) {
 		if (before[field] !== after[field]) patch[field] = after[field]
 	}
-	if (!sameRecord(before.additionalFields, after.additionalFields)) patch.additionalFields = after.additionalFields
+	if (!sameRecord(before.additionalFields, after.additionalFields)) {
+		patch.additionalFields = after.additionalFields
+		// The blob is written whole, so the kinds it keeps go with it.
+		if (after.fieldKinds) patch.fieldKinds = after.fieldKinds
+	}
 	if (totpChanged(before, after)) patch.totp = after.totp
 	return patch as ItemPatch
 }

@@ -54,6 +54,7 @@
 
 <script>
 import { NcButton, NcDialog, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
+import masterPasswordPrompt from '../mixins/masterPasswordPrompt.js'
 import { useKeyProofPromptStore } from '../store/modules/keyProofPrompt.js'
 
 /**
@@ -64,18 +65,9 @@ import { useKeyProofPromptStore } from '../store/modules/keyProofPrompt.js'
 export default {
 	name: 'KeyProofPromptDialog',
 
-	components: {
-		NcButton,
-		NcDialog,
-		NcNoteCard,
-		NcPasswordField,
-	},
+	components: { NcButton, NcDialog, NcNoteCard, NcPasswordField },
 
-	data() {
-		return {
-			password: '',
-		}
-	},
+	mixins: [masterPasswordPrompt],
 
 	computed: {
 		/**
@@ -86,63 +78,6 @@ export default {
 		 */
 		prompt() {
 			return useKeyProofPromptStore()
-		},
-	},
-
-	watch: {
-		/**
-		 * Clear the entered password whenever the prompt closes.
-		 *
-		 * @param {boolean} open Whether the prompt is open.
-		 * @return {void}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
-		 */
-		'prompt.open': function (open) {
-			if (!open) {
-				this.password = ''
-			}
-		},
-	},
-
-	methods: {
-		/**
-		 * Hand the password to the store to check and resolve.
-		 *
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
-		 */
-		async onSubmit() {
-			if (this.password === '' || this.prompt.checking) {
-				return
-			}
-			const accepted = await this.prompt.submit(this.password)
-			if (accepted) {
-				this.password = ''
-			}
-		},
-
-		/**
-		 * Close the prompt; the waiting request is cancelled.
-		 *
-		 * @return {void}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
-		 */
-		onCancel() {
-			this.password = ''
-			this.prompt.cancel()
-		},
-
-		/**
-		 * NcDialog closed itself (Escape, the close button).
-		 *
-		 * @param {boolean} open The new open state.
-		 * @return {void}
-		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
-		 */
-		onOpenChange(open) {
-			if (!open) {
-				this.onCancel()
-			}
 		},
 	},
 }

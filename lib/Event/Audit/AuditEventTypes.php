@@ -4,9 +4,11 @@
  * Keepiq Audit Event Types
  *
  * The single source of truth for dot-namespaced audit event-type strings
- * (add-secret-audit-trail §2.2). A string event_type (not an enum column)
- * means new event families never require a database migration (design D2).
- * The metadata each type may carry is in AuditMetadataPolicy (design D3).
+ * (add-secret-audit-trail §2.2) and the per-event-type metadata whitelist.
+ * A string event_type (not an enum column) means new event families never
+ * require a database migration (design D2); the whitelist (design D3) makes
+ * the no-secret-material guarantee structural — AuditService validates every
+ * recorded entry against the map for its event type.
  *
  * @category Event
  * @package  OCA\Keepiq\Event\Audit
@@ -25,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Event\Audit;
 
 /**
- * Audit event-type constants.
+ * Audit event-type constants; the metadata policy is AuditMetadataPolicy.
  */
 final class AuditEventTypes {
 	// Secret lifecycle.
@@ -213,6 +215,16 @@ final class AuditEventTypes {
 	public const DEVICE_APPROVAL_EXPIRED = 'device_approval.expired';
 	public const DEVICE_APPROVAL_PICKED_UP = 'device_approval.picked_up';
 
+	// Privileged logins (capability-requirements-from-the-matrix 3.1): the
+	// window, the address and the request, never secret material.
+	public const PRIVILEGED_ACCESS_MARKED = 'privileged_access.marked';
+	public const PRIVILEGED_ACCESS_UNMARKED = 'privileged_access.unmarked';
+	public const PRIVILEGED_ACCESS_REQUESTED = 'privileged_access.requested';
+	public const PRIVILEGED_ACCESS_APPROVED = 'privileged_access.approved';
+	public const PRIVILEGED_ACCESS_DENIED = 'privileged_access.denied';
+	public const PRIVILEGED_ACCESS_USED = 'privileged_access.used';
+	public const PRIVILEGED_ACCESS_REFUSED = 'privileged_access.refused';
+
 	// Browser-extension passkeys (extension-passkey-enrolment D3), identifiers only.
 	public const PASSKEY_REVOKED_WITH_APP_PASSWORD =
 		'passkey.revoked_with_app_password';
@@ -253,4 +265,36 @@ final class AuditEventTypes {
 	public const FEDERATED_SHARE_RECIPIENT_RESUMED = 'federated_share.recipient_resumed';
 	// A partner's lookup answer advertised other value fields than recorded (keepiq#1325).
 	public const FEDERATION_PARTNER_VALUE_FIELDS_CHANGED = 'federation_partner.value_fields_changed';
+
+	/**
+	 * Metadata keys that may never appear in an audit entry.
+	 *
+	 * @var string[]
+	 */
+	public const FORBIDDEN_KEYS = AuditMetadataPolicy::FORBIDDEN_KEYS;
+
+	/**
+	 * Per-event-type whitelist of permitted metadata keys.
+	 *
+	 * @var array<string,string[]>
+	 */
+	public const WHITELIST = AuditMetadataPolicy::WHITELIST;
+
+	/**
+	 * The whitelisted metadata keys whose values reference a user id.
+	 *
+	 * @var string[]
+	 */
+	public const USER_REFERENCING_METADATA_KEYS = AuditMetadataPolicy::USER_REFERENCING_METADATA_KEYS;
+
+	/**
+	 * Whether an event type is known to the whitelist.
+	 *
+	 * @param string $eventType The event type
+	 *
+	 * @return bool
+	 */
+	public static function isKnown(string $eventType): bool {
+		return array_key_exists($eventType, self::WHITELIST);
+	}//end isKnown()
 }//end class

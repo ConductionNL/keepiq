@@ -178,4 +178,30 @@ class SecretTest extends TestCase {
 			'setOwnerType("user") must mark ownerType dirty so it is written on INSERT'
 		);
 	}//end testSetOwnerTypeUserMarksColumnDirtyForInsert()
+
+	/**
+	 * The pending extra-field fills read back as a list of strings only: none
+	 * stored, an empty value, non-list JSON and non-string entries all read as
+	 * nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testPendingAdditionalFieldListReadsOnlyStrings(): void {
+		$secret = new Secret();
+		$this->assertSame([], $secret->pendingAdditionalFieldList());
+
+		$secret->setPendingAdditionalFields('');
+		$this->assertSame([], $secret->pendingAdditionalFieldList());
+
+		$secret->setPendingAdditionalFields('"FILL_1"');
+		$this->assertSame([], $secret->pendingAdditionalFieldList());
+
+		$secret->setPendingAdditionalFields('not-json');
+		$this->assertSame([], $secret->pendingAdditionalFieldList());
+
+		$secret->setPendingAdditionalFields('{"a":"FILL_1","b":7,"c":"FILL_2","d":null}');
+		$this->assertSame(['FILL_1', 'FILL_2'], $secret->pendingAdditionalFieldList());
+	}//end testPendingAdditionalFieldListReadsOnlyStrings()
 }//end class

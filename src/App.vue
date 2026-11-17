@@ -106,6 +106,7 @@
 		<!-- The master password prompt for vault-key proofs on sharing and
 		     delegation (keepiq#818). One instance; stores await it. -->
 		<KeyProofPromptDialog />
+		<RepromptDialog />
 
 		<CnAppRoot
 			:aiCompanion="hermiqEnabled"
@@ -189,6 +190,9 @@
 					</template>
 					<div class="user-settings__field">
 						<MasterPasswordForm />
+					</div>
+					<div class="user-settings__field">
+						<RecoveryKitPanel />
 					</div>
 					<div class="user-settings__field">
 						<PasskeyManager />
@@ -453,6 +457,7 @@ import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import OfflineSyncPanel from './components/OfflineSyncPanel.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
+import RecoveryKitPanel from './components/RecoveryKitPanel.vue'
 import RecoveryOfficerPanel from './components/RecoveryOfficerPanel.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
@@ -461,6 +466,7 @@ import FederationReceiveSection from './components/settings/FederationReceiveSec
 import VaultEncryptionDetails from './components/settings/VaultEncryptionDetails.vue'
 import DeviceApprovalDialog from './dialogs/DeviceApprovalDialog.vue'
 import KeyProofPromptDialog from './dialogs/KeyProofPromptDialog.vue'
+import RepromptDialog from './dialogs/RepromptDialog.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -528,11 +534,13 @@ export default {
 		KeyIcon,
 		// PuzzleIcon, // browser-extension section, hidden until it ships
 		MasterPasswordForm,
+		RecoveryKitPanel,
 		PasskeyManager,
 		CompromiseRecoveryForm,
 		KeepiqAppNav,
 		MigrationResumeBanner,
 		KeyProofPromptDialog,
+		RepromptDialog,
 		OfflineSyncPanel,
 		SecretDetailSidebar,
 	},

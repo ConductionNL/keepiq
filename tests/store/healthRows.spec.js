@@ -95,6 +95,8 @@ describe('loadDecryptedRows', () => {
 				value: 'pw/k',
 				keyUpdatedAt: 'C1',
 				possiblyCompromisedAt: null,
+				hasSeed: false,
+				hasPasskey: false,
 			},
 			{
 				id: 'full',
@@ -106,6 +108,8 @@ describe('loadDecryptedRows', () => {
 				value: 'pw2/k',
 				keyUpdatedAt: 'K',
 				possiblyCompromisedAt: 'P',
+				hasSeed: false,
+				hasPasskey: false,
 			},
 			{
 				id: 'bare',
@@ -117,6 +121,8 @@ describe('loadDecryptedRows', () => {
 				value: 'pw3/k',
 				keyUpdatedAt: null,
 				possiblyCompromisedAt: null,
+				hasSeed: false,
+				hasPasskey: false,
 			},
 		])
 		expect(rows.copiesKnown).toBe(true)

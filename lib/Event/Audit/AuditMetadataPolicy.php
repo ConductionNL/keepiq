@@ -3,17 +3,16 @@
 /**
  * Keepiq Audit Metadata Policy
  *
- * What metadata an audit entry may carry: the keys no entry may hold, the
- * keys each event type keeps (design D3), and the keys whose values name a
- * user. AuditService validates every recorded entry against it, so the
- * no-secret-material guarantee is structural. The event-type names
- * themselves live in AuditEventTypes.
+ * Which metadata keys an audit entry may carry: the per-event-type whitelist
+ * (add-secret-audit-trail design D3), the keys that may never appear, and the
+ * keys whose values name a user. AuditService validates every recorded entry
+ * against it; the event-type strings themselves live in AuditEventTypes.
  *
  * @category Event
  * @package  OCA\Keepiq\Event\Audit
  *
  * @author    Conduction Development Team <dev@conductio.nl>
- * @copyright 2026 Conduction B.V.
+ * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @version GIT: <git-id>
@@ -26,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Event\Audit;
 
 /**
- * The metadata whitelist of the audit event types.
+ * The metadata keys an audit entry may, and may never, carry.
  *
  * @spec openspec/specs/secret-audit-trail/spec.md#requirement-no-secret-material-in-audit-entries
  */
@@ -186,6 +185,13 @@ final class AuditMetadataPolicy {
 		AuditEventTypes::DEVICE_APPROVAL_DENIED => [],
 		AuditEventTypes::DEVICE_APPROVAL_EXPIRED => [],
 		AuditEventTypes::DEVICE_APPROVAL_PICKED_UP => [],
+		AuditEventTypes::PRIVILEGED_ACCESS_MARKED => [],
+		AuditEventTypes::PRIVILEGED_ACCESS_UNMARKED => [],
+		AuditEventTypes::PRIVILEGED_ACCESS_REQUESTED => ['requestId', 'startsAt', 'endsAt'],
+		AuditEventTypes::PRIVILEGED_ACCESS_APPROVED => ['requestId', 'requesterId', 'startsAt', 'endsAt', 'ranges'],
+		AuditEventTypes::PRIVILEGED_ACCESS_DENIED => ['requestId', 'requesterId'],
+		AuditEventTypes::PRIVILEGED_ACCESS_USED => ['requestId', 'address', 'channel'],
+		AuditEventTypes::PRIVILEGED_ACCESS_REFUSED => ['address', 'channel'],
 		AuditEventTypes::PASSKEY_REVOKED_WITH_APP_PASSWORD => ['credentialCount'],
 		AuditEventTypes::PASSKEY_ENROLLED => ['clientKind'],
 		AuditEventTypes::PASSKEY_UNLOCKED => ['clientKind'],
