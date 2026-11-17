@@ -46,13 +46,16 @@ const tracked = execFileSync('git', ['ls-files', '-z'], {
 	.split('\0')
 	.filter(Boolean)
 
-// Every file and every directory above it, by lowercased spelling.
+// macOS also treats the NFC and NFD forms of a name as one file.
+const fold = (path) => path.normalize('NFC').toLowerCase()
+
+// Every file and every directory above it, by folded spelling.
 const spellings = new Map()
 for (const file of tracked) {
 	const parts = file.split('/')
 	for (let i = 1; i <= parts.length; i++) {
 		const path = parts.slice(0, i).join('/')
-		const key = path.toLowerCase()
+		const key = fold(path)
 		if (!spellings.has(key)) {
 			spellings.set(key, new Set())
 		}
@@ -68,8 +71,7 @@ const clashes = [...spellings.values()]
 		(set, _i, all) =>
 			!all.some(
 				(other) =>
-					other !== set
-					&& set[0].toLowerCase().startsWith(other[0].toLowerCase() + '/'),
+					other !== set && fold(set[0]).startsWith(fold(other[0]) + '/'),
 			),
 	)
 
@@ -81,7 +83,7 @@ if (clashes.length === 0) {
 }
 
 console.error(
-	'path-case: FAIL — these tracked paths differ only in case. On Windows and macOS they are one file:',
+	'path-case: FAIL — these tracked paths differ only in case or Unicode normalisation. On Windows or macOS they are one file:',
 )
 for (const set of clashes) {
 	console.error(`  • ${set.join('  ↔  ')}`)
