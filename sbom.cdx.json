@@ -23733,6 +23733,39 @@
     },
     {
       "type": "library",
+      "name": "qrcode-generator",
+      "version": "2.0.4",
+      "bom-ref": "keepiq@0.1.0|qrcode-generator@2.0.4",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "purl": "pkg:npm/qrcode-generator@2.0.4",
+      "externalReferences": [
+        {
+          "url": "https://registry.npmjs.org/qrcode-generator/-/qrcode-generator-2.0.4.tgz",
+          "type": "distribution",
+          "hashes": [
+            {
+              "alg": "SHA-512",
+              "content": "9994a23fa4676c7978c4bd80a791df9232e79b17ca70f5a959efdcfb95f10ae7ad11e9ea98d15fd451ff7ed5cf0ad146e7f4c3a1b8ec8f3eac48d2f44abf19f6"
+            }
+          ],
+          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
+        }
+      ],
+      "properties": [
+        {
+          "name": "cdx:npm:package:path",
+          "value": "node_modules/qrcode-generator"
+        }
+      ]
+    },
+    {
+      "type": "library",
       "name": "quansync",
       "version": "0.2.11",
       "bom-ref": "keepiq@0.1.0|quansync@0.2.11",
