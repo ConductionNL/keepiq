@@ -117,18 +117,10 @@
 				@update:modelValue="tags = $event" />
 
 			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
-			<NcCheckboxRadioSwitch
+			<RepromptSwitch
 				:modelValue="reprompt"
 				:disabled="saving || loading"
-				data-testid="secret-reprompt"
-				@update:modelValue="reprompt = $event">
-				{{
-					t(
-						'keepiq',
-						'Ask for my master password before showing or filling this item',
-					)
-				}}
-			</NcCheckboxRadioSwitch>
+				@update:modelValue="reprompt = $event" />
 
 			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
@@ -156,7 +148,6 @@
 <script>
 import {
 	NcButton,
-	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
@@ -167,6 +158,7 @@ import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
+import RepromptSwitch from '../components/RepromptSwitch.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -205,11 +197,11 @@ export default {
 	name: 'SecretEditDialog',
 
 	components: {
-		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
 		AuthenticatorKeyField,
 		PolicyBlockedNote,
+		RepromptSwitch,
 		SecretPayloadFields,
 		SecretTagsField,
 		TypedFieldsForm,
