@@ -133,6 +133,7 @@
 						v-else
 						v-model="values[field]"
 						:type="inputType(field)"
+						:step="schemaOf(field)?.type === 'number' ? 'any' : undefined"
 						autocomplete="off"
 						required
 						:aria-invalid="fieldError(field) !== '' ? 'true' : 'false'"
@@ -150,6 +151,7 @@
 				<p
 					v-if="submitError"
 					class="keepiq-secret-request-fill__submit-error"
+					role="alert"
 					data-testid="fill-submit-error">
 					{{ submitError }}
 				</p>
@@ -171,8 +173,13 @@
 			  never reveals a value or its length to whoever looks at the screen.
 			-->
 			<template v-else>
+				<!-- Focus moves here after Submit, which is gone, and a screen
+				     reader reads it out. -->
 				<p
+					ref="success"
 					class="keepiq-secret-request-fill__success"
+					role="status"
+					tabindex="-1"
 					data-testid="fill-success">
 					{{ t('keepiq', 'Thanks — the secret has been delivered.') }}
 				</p>
@@ -197,7 +204,7 @@
 								<span
 									v-else
 									class="keepiq-secret-request-fill__summary-value"
-									>{{ values[field] }}</span
+									>{{ summaryValue(field) }}</span
 								>
 							</td>
 						</tr>
@@ -504,8 +511,9 @@ export default {
 					? null
 					: (SCHEMA_INPUT_TYPES[input] ?? 'text')
 			}
-			// An object is edited as code, hidden or not, as in the dialogs.
-			return ['multiline', 'json'].includes(input)
+			// An object is edited as code and a yes/no is a box to tick, hidden
+			// or not, as in the dialogs; the summary masks them.
+			return ['multiline', 'json', 'boolean'].includes(input)
 				? SCHEMA_INPUT_TYPES[input]
 				: 'password'
 		},
@@ -631,14 +639,32 @@ export default {
 			try {
 				await this.store.submitFill(this.token, this.values)
 				this.submitted = true
+				await this.$nextTick()
+				this.$refs.success?.focus()
 			} catch (e) {
 				this.submitError =
-					e?.response?.data?.message
+					this.messageForReason(e?.response?.data?.reason)
+					|| e?.response?.data?.message
 					|| e?.message
 					|| t('keepiq', 'Failed to submit')
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * A value as the summary shows it: yes or no for a box that was
+		 * ticked or not, else as entered.
+		 *
+		 * @param {string} field The requested field name.
+		 * @return {string} The text.
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 */
+		summaryValue(field) {
+			if (this.inputType(field) === 'checkbox') {
+				return this.values[field] === 'true' ? t('keepiq', 'Yes') : t('keepiq', 'No')
+			}
+			return this.values[field]
 		},
 	},
 }
