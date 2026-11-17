@@ -12,7 +12,7 @@
 
 ## 3. Matrix
 
-- [ ] 3.1 When the tasks are done, archive this change and point `clients-16` and `clients-23` in `openspec/parity/capabilities.json` at `openspec/specs/platform-properties`.
+- [x] 3.1 When the tasks are done, archive this change and point `clients-16` and `clients-23` in `openspec/parity/capabilities.json` at `openspec/specs/platform-properties`.
 
 ## Acceptance criteria
 

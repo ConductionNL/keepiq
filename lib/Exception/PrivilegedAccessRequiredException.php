@@ -36,7 +36,7 @@ class PrivilegedAccessRequiredException extends ForbiddenException {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function policyCode(): ?string {
 		return self::CODE;

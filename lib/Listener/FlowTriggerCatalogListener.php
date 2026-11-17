@@ -68,8 +68,8 @@ class FlowTriggerCatalogListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#requirement-the-flow-builder-lists-vault-triggers
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.4
+	 * @spec openspec/specs/vault-event-flow-triggers/spec.md#requirement-the-flow-builder-lists-vault-triggers
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-1.4
 	 */
 	public function handle(Event $event): void {
 		if (method_exists($event, 'addTrigger') === false) {

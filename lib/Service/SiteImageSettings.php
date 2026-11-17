@@ -21,7 +21,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+ * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
  */
 
 declare(strict_types=1);
@@ -35,7 +35,7 @@ use OCP\IAppConfig;
 /**
  * Reads and validates the site icon and site preview templates.
  *
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+ * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
  */
 class SiteImageSettings {
 
@@ -71,7 +71,7 @@ class SiteImageSettings {
 	 *
 	 * @return array<string,string>
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
 	 */
 	public function read(): array {
 		$settings = [];
@@ -92,7 +92,7 @@ class SiteImageSettings {
 	 *
 	 * @throws InvalidArgumentException When a template is not an https address with its placeholder
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
 	 */
 	public function update(array $data): void {
 		$valid = [];

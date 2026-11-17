@@ -13,7 +13,7 @@
  *
  * Exit codes: 0 every used key is in nl.json, 1 one or more are missing.
  *
- * @spec openspec/changes/platform-properties/specs/platform-properties/spec.md#requirement-the-language-follows-the-users-nextcloud-setting
+ * @spec openspec/specs/platform-properties/spec.md#requirement-the-language-follows-the-users-nextcloud-setting
  *
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>

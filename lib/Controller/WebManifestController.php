@@ -146,7 +146,7 @@ class WebManifestController extends Controller {
 	 *
 	 * @return string A hex colour
 	 *
-	 * @spec openspec/changes/platform-properties/specs/platform-properties/spec.md#requirement-the-look-comes-from-the-nextcloud-theme
+	 * @spec openspec/specs/platform-properties/spec.md#requirement-the-look-comes-from-the-nextcloud-theme
 	 */
 	public static function themeColor(Defaults $defaults): string {
 		$primary = trim($defaults->getColorPrimary());

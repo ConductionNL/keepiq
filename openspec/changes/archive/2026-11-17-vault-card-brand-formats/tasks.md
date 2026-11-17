@@ -25,4 +25,4 @@
 ## 5. Spec and docs
 
 - [x] 5.1 No user documentation covers card items yet, so there is no card section to update; a card page is out of scope for this change.
-- [ ] 5.2 Run `hydra-gates` (spec coverage: `@spec openspec/specs/card-identity-items/spec.md#...` on every changed method). Verify: gates green.
+- [x] 5.2 Run `hydra-gates` (spec coverage: `@spec openspec/specs/card-identity-items/spec.md#...` on every changed method). Verify: gates green. Ran 2026-11-17 with `--scope-to-diff --base f884f5afb~1` on the feature commit f884f5afb: all 48 applicable gates passed, gate 16 spec-coverage PASS (gate 19 advisory warning only).

@@ -8,8 +8,8 @@
  * sent, no preview is built without a template, and Change password opens
  * the host's well-known address.
  *
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+ * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+ * @spec openspec/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
  */
 
 import axios from '@nextcloud/axios'

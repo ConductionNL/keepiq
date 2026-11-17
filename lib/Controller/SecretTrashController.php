@@ -208,7 +208,7 @@ class SecretTrashController extends Controller {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	private function serialised(Secret $secret, string $userId): array {
 		return $this->privilegedGate?->serialisedFor(secret: $secret, userId: $userId) ?? $secret->jsonSerialize();

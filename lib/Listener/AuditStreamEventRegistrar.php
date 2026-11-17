@@ -127,8 +127,8 @@ final class AuditStreamEventRegistrar {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.3
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#requirement-keepiq-runs-without-openregister
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-1.3
+	 * @spec openspec/specs/vault-event-flow-triggers/spec.md#requirement-keepiq-runs-without-openregister
 	 */
 	private function registerFlowTriggers(IRegistrationContext $context): void {
 		$context->registerEventListener(

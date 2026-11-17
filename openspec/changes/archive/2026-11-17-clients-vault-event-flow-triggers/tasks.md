@@ -20,7 +20,7 @@
 
 ## 3. End to end
 
-- [ ] 3.1 With OpenRegister enabled, publish a flow on `keepiq.share.granted`, enable the sharing group, share a login, and assert one run in the flow's run list with a payload free of secret material. Verify: Playwright or Newman against the dev stack.
+- [x] 3.1 With OpenRegister enabled, publish a flow on `keepiq.share.granted`, enable the sharing group, share a login, and assert one run in the flow's run list with a payload free of secret material. Verify: Playwright or Newman against the dev stack. Playwright done 2026-11-17 on a throwaway NC 34 rig with OpenRegister main 28ff9cf60: tests/e2e/workflows/vault-event-flow-trigger.spec.ts (the palette lists keepiq.share.granted, a published sync flow on it, the sharing group on, one login shared: exactly one run, naming share.granted and the actor, carrying neither the item name, its value nor the master password); passed.
 
 ## 4. Docs
 

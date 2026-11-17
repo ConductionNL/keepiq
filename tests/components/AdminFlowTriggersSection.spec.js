@@ -6,7 +6,7 @@
  * OpenRegister, every group off by default, and a switched group saved
  * through the audit area settings.
  *
- * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-2.2
  */
 
 import axios from '@nextcloud/axios'

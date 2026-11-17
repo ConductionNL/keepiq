@@ -7,7 +7,7 @@
  * site), and the directory copy fetched whole, with 404 read as switched off.
  * No request carries a login address.
  *
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+ * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
  */
 
 import axios from '@nextcloud/axios'

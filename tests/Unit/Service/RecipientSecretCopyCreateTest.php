@@ -236,7 +236,7 @@ class RecipientSecretCopyCreateTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-1.1
 	 */
 	public function testANewCopyStartsWithTheOwnersRepromptSetting(): void {
 		$factory = new RecipientSecretCopyFactory(secretMapper: $this->secretMapper, suiteMapper: $this->suiteMapper);

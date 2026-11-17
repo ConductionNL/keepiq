@@ -778,7 +778,7 @@ describe('CXF export of a login with a code and passkeys', () => {
 })
 
 /**
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
  */
 describe('CXF custom fields keep their kind', () => {
 	const row = {
@@ -874,7 +874,7 @@ describe('CXF custom fields keep their kind', () => {
 })
 
 /**
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 describe('CXF SSH key round trip', () => {
 	it('exports the key type, comment and public key, and imports them back', async () => {

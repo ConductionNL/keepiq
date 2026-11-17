@@ -1418,7 +1418,7 @@ export default {
 		 * or null when the holder did not flag it (crypto-item-reprompt D2).
 		 *
 		 * @return {Function|null}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
 		revealGuard() {
 			return needsReprompt(this.secret) ? useReprompt(() => this.secret) : null
@@ -1429,7 +1429,7 @@ export default {
 		 * is a web address, so a typed `javascript:` never becomes one.
 		 *
 		 * @return {Array<{url: string, href: string|null}>}
-		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 		 */
 		extraUrls() {
 			return extraUrlLinks(this.secret?.additionalUrls)
@@ -1440,7 +1440,7 @@ export default {
 		 * with no template nothing is requested.
 		 *
 		 * @return {string|null}
-		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
 		 */
 		previewSrc() {
 			return previewImageUrl(previewTemplate(), this.secret?.url)
@@ -1450,7 +1450,7 @@ export default {
 		 * The site's change-password page, null without a web address.
 		 *
 		 * @return {string|null}
-		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
 		 */
 		changePasswordHref() {
 			return changePasswordUrl(this.secret?.url)
@@ -1627,7 +1627,7 @@ export default {
 		 *
 		 * @return {Array<{name: string, value: string, kind: string}>}
 		 *
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 		 */
 		additionalFieldRows() {
 			const blob = this.secret?.additionalFields
@@ -1646,7 +1646,7 @@ export default {
 		 * Whether this secret is the `ssh_key` system type.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		isSshKey() {
 			const type = useSecretTypeStore().typesById[this.secret?.typeId]
@@ -1657,7 +1657,7 @@ export default {
 		 * The SSH key's public key line from the encrypted blob, '' when none.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		sshPublicKey() {
 			const blob = this.secret?.additionalFields
@@ -1670,7 +1670,7 @@ export default {
 		 * The SSH key's stored fingerprint, '' when none.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		sshFingerprint() {
 			const blob = this.secret?.additionalFields
@@ -1752,7 +1752,7 @@ export default {
 		 * of how the number was typed in.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberFormatted() {
 			return formatCardNumber(this.cardPayload?.number || '')
@@ -1762,7 +1762,7 @@ export default {
 		 * The number row's label, with the brand derived from the number.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberLabel() {
 			const brand = cardBrandInfo(this.cardPayload?.number || '')
@@ -1790,7 +1790,7 @@ export default {
 		 * digits visible in the brand's grouping, fully dotted when too short.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberMasked() {
 			return maskCardNumber(this.cardPayload?.number || '')
@@ -2158,7 +2158,7 @@ export default {
 		 * @param {string} field The field name (number | cvv | pin).
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
 		async toggleCardField(field) {
 			if (!this.cardRevealed[field] && !(await this.allowedToReveal())) {
@@ -2176,7 +2176,7 @@ export default {
 		 *
 		 * @param {string} name The field name.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 		 */
 		async toggleField(name) {
 			if (!this.revealedFields[name] && !(await this.allowedToReveal())) {
@@ -2192,7 +2192,7 @@ export default {
 		 * Show or hide the BSN; showing a flagged item's asks first.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
 		async toggleBsn() {
 			if (!this.bsnRevealed && !(await this.allowedToReveal())) {
@@ -2206,7 +2206,7 @@ export default {
 		 * flagged, after the master password re-prompt when it is.
 		 *
 		 * @return {Promise<boolean>}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
 		async allowedToReveal() {
 			if (!this.revealGuard) {

@@ -7,7 +7,7 @@
  * same for every user; which logins match it, and the vault facts it is
  * compared with, never leave the browser.
  *
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+ * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
  */
 
 import { getDomain } from 'tldts'
@@ -19,7 +19,7 @@ import { registrableDomainOf } from '../shared/registrableDomain.js'
  *
  * @param {string|null|undefined} raw The saved address.
  * @return {string|null} The lowercase hostname.
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 export function hostOf(raw) {
 	const trimmed = typeof raw === 'string' ? raw.trim() : ''
@@ -37,7 +37,7 @@ export function hostOf(raw) {
  *
  * @param {string} address An address with a scheme.
  * @return {string|null}
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 function webHostname(address) {
 	let url
@@ -57,7 +57,7 @@ function webHostname(address) {
  *
  * @param {string|null|undefined} raw The saved address.
  * @return {string|null}
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 export function siteDomain(raw) {
 	return registrableDomainOf(hostOf(raw), getDomain)
@@ -70,7 +70,7 @@ export function siteDomain(raw) {
  * @param {Object<string, string>|null|undefined} list Domain -> documentation URL ('' for none).
  * @param {string|null|undefined} raw The saved address.
  * @return {{domain: string, documentation: string|null}|null}
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 export function directoryEntry(list, raw) {
 	const host = list && typeof list === 'object' ? hostOf(raw) : null
@@ -86,7 +86,7 @@ export function directoryEntry(list, raw) {
  *
  * @param {string|null|undefined} value The directory's value for a domain.
  * @return {string|null}
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 function httpsOrNull(value) {
 	return typeof value === 'string' && value.startsWith('https://') ? value : null
@@ -101,7 +101,7 @@ function httpsOrNull(value) {
  * @param {Array<object>} secrets The listed secrets, plaintext fields only.
  * @param {Map<string|number, string>} typeNameById Secret type id -> type name.
  * @return {{seedDomains: Set<string>, passkeyDomains: Set<string>}}
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 export function vaultSiteFacts(secrets, typeNameById) {
 	const seedDomains = new Set()

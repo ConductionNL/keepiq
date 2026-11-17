@@ -88,7 +88,7 @@ export const FIELD_KINDS = ['text', 'hidden', 'boolean']
  *
  * @return {string} One of FIELD_KINDS.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
  */
 export function normaliseKind(kind) {
 	return FIELD_KINDS.includes(kind) ? kind : 'text'
@@ -118,7 +118,7 @@ function isKindedEntry(entry) {
  *
  * @return {string} The value, '' when absent.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
  */
 export function fieldValueOf(entry) {
 	const value = isKindedEntry(entry) ? entry.value : entry
@@ -133,7 +133,7 @@ export function fieldValueOf(entry) {
  *
  * @return {string} One of FIELD_KINDS.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
  */
 export function fieldKindOf(entry) {
 	return isKindedEntry(entry) ? normaliseKind(entry.kind) : 'text'
@@ -150,7 +150,7 @@ export function fieldKindOf(entry) {
  *
  * @return {string|{value: string, kind: string}}
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
  */
 export function fieldEntry(value, kind) {
 	const normalised = normaliseKind(kind)
@@ -170,7 +170,7 @@ export function fieldEntry(value, kind) {
  * @return {object} A plain object of name → entry, possibly empty.
  *
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
  */
 export function membersToObject(members = []) {
 	return members.reduce((acc, member) => {
@@ -197,7 +197,7 @@ export function membersToObject(members = []) {
  * @return {Array<{name: string, value: string, kind: string}>} The editable member list.
  *
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
  */
 export function objectToMembers(blob) {
 	if (blob === null || blob === undefined || typeof blob !== 'object') {
