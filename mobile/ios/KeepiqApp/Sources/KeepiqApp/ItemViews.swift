@@ -136,7 +136,8 @@ struct ItemDetailView: View {
             }
             if item.additionalFieldsError { Text(L("detail_fields_error")).foregroundStyle(.red) }
             ForEach(Array(item.extraFields.enumerated()), id: \.offset) { _, pair in
-                FieldRow(label: (pair.first as? String) ?? "", value: (pair.second as? String) ?? "", onCopy: model.copy)
+                let name = (pair.first as? String) ?? ""
+                FieldRow(label: name, value: (pair.second as? String) ?? "", masked: item.masksExtra(name: name), onCopy: model.copy)
             }
         }
     }
