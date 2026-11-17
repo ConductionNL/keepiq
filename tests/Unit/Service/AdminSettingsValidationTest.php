@@ -37,8 +37,6 @@ use Psr\Log\LoggerInterface;
  * @uses \OCA\Keepiq\Service\PasswordPolicyService
  * @uses \OCA\Keepiq\Service\SiteImageSettings
  * @uses \OCA\Keepiq\Service\TrustedExtensionOrigins
- * @uses \OCA\Keepiq\Service\Flow\VaultFlowTriggerCatalog
- * @uses \OCA\Keepiq\Service\SiteImageSettings
  */
 final class AdminSettingsValidationTest extends TestCase {
 
