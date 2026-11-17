@@ -84,7 +84,7 @@ export async function proveMasterPassword(
  * @param {string} nonce The server challenge.
  * @param {string[]} [boundValues] The request values the proof commits to, in order.
  * @return {Promise<string>} The base64 signature.
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
  */
 export async function provePrivateKey(pem, nonce, boundValues = []) {
 	const { der: pkcs8 } = decodePem(pem, ['PRIVATE KEY', 'RSA PRIVATE KEY'])

@@ -154,7 +154,7 @@ class VaultFlowTriggerCatalog {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-1.1
 	 */
 	public function eventTypes(): array {
 		$types = [];
@@ -174,7 +174,7 @@ class VaultFlowTriggerCatalog {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-1.1
 	 */
 	public function triggerId(string $eventType): string {
 		return self::TRIGGER_PREFIX . $eventType;
@@ -187,7 +187,7 @@ class VaultFlowTriggerCatalog {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-1.1
 	 */
 	public function groupOf(string $eventType): ?string {
 		if (isset(self::TYPE_GROUPS[$eventType]) === true) {
@@ -207,7 +207,7 @@ class VaultFlowTriggerCatalog {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-1.1
 	 */
 	public function label(string $eventType): string {
 		$category = $this->category(eventType: $eventType);
@@ -229,7 +229,7 @@ class VaultFlowTriggerCatalog {
 	 *
 	 * @return array<int,array{id:string,label:string,group:string,eventType:string}>
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-1.1
 	 */
 	public function entries(): array {
 		$entries = [];
@@ -258,7 +258,7 @@ class VaultFlowTriggerCatalog {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-2.1
 	 */
 	public function parseEnabledGroups(string $stored): array {
 		$decoded = json_decode($stored, true);

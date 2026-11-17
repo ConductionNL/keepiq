@@ -27,7 +27,7 @@ const GROUP = 4
  * A new random recovery code: 32 base32 characters in groups of four.
  *
  * @return {string} For example `7K3M-Q9TB-...`.
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
  */
 export function generateRecoveryCode() {
 	const bytes = crypto.getRandomValues(new Uint8Array(CODE_BYTES))
@@ -52,7 +52,7 @@ export function generateRecoveryCode() {
  *
  * @param {string} code The code as entered.
  * @return {string} The 32 code characters, or '' when it cannot be a code.
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
  */
 export function normaliseRecoveryCode(code) {
 	const plain = String(code ?? '')
@@ -72,7 +72,7 @@ export function normaliseRecoveryCode(code) {
  * @param {string} privateKeyPem The suite private key PEM.
  * @param {string} code The recovery code.
  * @return {Promise<{wrappedKey: string, kdf: string}>} What the server stores: the wrapped key and the derivation parameters, as text.
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
+ * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
  */
 export async function wrapWithRecoveryCode(privateKeyPem, code) {
 	const secret = normaliseRecoveryCode(code)
@@ -107,7 +107,7 @@ function parseKdf(text) {
  * @param {string} code The recovery code as entered.
  * @return {Promise<string>} The private key PEM.
  * @throws {Error} When the code is malformed or wrong, or the copy is not one this version reads.
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-wrong-code-opens-nothing
+ * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-wrong-code-opens-nothing
  */
 export async function unwrapWithRecoveryCode(copy, code) {
 	const secret = normaliseRecoveryCode(code)
@@ -134,7 +134,7 @@ export async function unwrapWithRecoveryCode(copy, code) {
  * @param {string} kit.createdAt When it was made (ISO date).
  * @param {(app: string, text: string) => string} t The translate function.
  * @return {string}
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
  */
 export function recoveryKitText({ code, account, createdAt }, t) {
 	return [

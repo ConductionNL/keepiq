@@ -118,7 +118,7 @@ const REQUEST_DEFAULTS = Object.freeze({
  * @param {object} payload The request fields.
  * @return {object} The body to post.
  * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 function requestBody(payload) {
 	const body = {
@@ -211,7 +211,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @return {Promise<object>} The created request.
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		async createRequest(payload) {
 			this.loading = true

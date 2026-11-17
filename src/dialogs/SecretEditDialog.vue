@@ -417,7 +417,7 @@ export default {
 
 		/**
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		canSubmit() {
 			return (
@@ -447,7 +447,7 @@ export default {
 		 * does not block an unrelated change.
 		 *
 		 * @return {Array<object>} The members.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		changedMembers() {
 			const key = (m) => JSON.stringify([m.name, m.value, cleanSchema(m.schema)])
@@ -462,7 +462,7 @@ export default {
 		 * block a rename or a password change.
 		 *
 		 * @return {Array<object>} The fields.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		changedTypedFields() {
 			return this.typedFields.filter(
@@ -619,7 +619,7 @@ export default {
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */

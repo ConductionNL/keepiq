@@ -736,7 +736,7 @@ export default {
 		 * schema set up under Advanced matches none.
 		 *
 		 * @return {Array<{label: string, value: string}>} The options.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		presetSelectOptions() {
 			const options = presetOptions().map((p) => ({
@@ -755,7 +755,7 @@ export default {
 		 * stores, else the one the type's own field states.
 		 *
 		 * @return {object} The schemas by field name.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		requestedSchemas() {
 			const stored = this.isFreshRequest
@@ -787,7 +787,7 @@ export default {
 		 * server refuses; Advanced then says what, and Add waits.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		customSchemaConflicts() {
 			return schemaConflicts(this.customFieldSchema)
@@ -866,7 +866,7 @@ export default {
 		 *
 		 * @param {string} id The preset.
 		 * @return {void}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		onCustomPreset(id) {
 			if (id !== 'custom') {
@@ -879,7 +879,7 @@ export default {
 		 *
 		 * @param {object|undefined} schema The field's schema.
 		 * @return {string} The label.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		kindLabel(schema) {
 			const id = presetOf(schema)
@@ -1037,7 +1037,7 @@ export default {
 		 * @param {string|null} expires The expiry, ISO.
 		 * @return {object}
 		 * @spec openspec/changes/implement-secret-requests/tasks.md#task-8.2
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		requestPayload(expires) {
 			const payload = {
@@ -1129,7 +1129,7 @@ export default {
 		 * @return {void}
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		addCustomField() {
 			const name = (this.customFieldInput || '').trim()

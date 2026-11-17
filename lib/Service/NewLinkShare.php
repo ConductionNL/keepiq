@@ -66,7 +66,7 @@ final class NewLinkShare {
 	 * @throws InvalidArgumentException When validation fails
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-2.2
 	 */
 	public function assertValid(): void {
 		if ($this->secretId === '' || $this->encryptedSnapshot === '' || $this->salt === '') {

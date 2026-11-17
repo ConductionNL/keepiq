@@ -20,7 +20,7 @@ import { typedFieldsOf } from './typedFields.js'
  *
  * @return {object} The definitions.
  * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function definitions() {
 	return {
@@ -113,7 +113,7 @@ function apiKeyDefinition() {
  *
  * @return {object} The definition.
  * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function databaseDefinition() {
 	return {

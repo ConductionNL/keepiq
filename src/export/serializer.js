@@ -296,7 +296,7 @@ function exportEntry(secret, pathMap) {
  *
  * @param {object} secret A decrypted secret.
  * @return {object} `{ additionalUrls }` or nothing.
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
  */
 function extraUrls(secret) {
 	const urls = Array.isArray(secret.additionalUrls)

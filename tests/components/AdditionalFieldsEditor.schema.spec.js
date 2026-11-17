@@ -6,8 +6,8 @@
  * a change under Advanced that no preset matches shows Custom, and a value
  * that does not fit is reported on its input.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 
 import { mount } from '@vue/test-utils'
@@ -83,7 +83,7 @@ describe('AdditionalFieldsEditor schemas', () => {
 })
 
 describe('AdditionalFieldsEditor hidden values', () => {
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	// openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 	it.each([
 		['multi-line', { type: 'string', format: 'text', hidden: true }, 'masked-text-area-toggle'],
 		['JSON', { type: 'object', hidden: true }, 'schema-value-input-json-toggle'],
@@ -126,7 +126,7 @@ describe('AdditionalFieldsEditor hidden values', () => {
 })
 
 describe('AdditionalFieldsEditor names of the type', () => {
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	// openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 	it('refuses a custom field named like one of the type\u2019s own fields', async () => {
 		const wrapper = mount(AdditionalFieldsEditor, {
 			propsData: { members: [], reservedNames: ['Port'] },
@@ -144,7 +144,7 @@ describe('AdditionalFieldsEditor names of the type', () => {
 })
 
 describe('SchemaAdvanced limits', () => {
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+	// openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 	it('says so when a minimum is above its maximum or a pattern is invalid', () => {
 		const wrapper = mount(SchemaAdvanced, {
 			propsData: {

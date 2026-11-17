@@ -76,7 +76,7 @@ interface SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function create(
 		string $secretId,
@@ -106,7 +106,7 @@ interface SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException When the application has no active suite
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.3
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createForApplication(
 		string $secretId,
@@ -145,7 +145,7 @@ interface SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException When userId or requestedFields are missing
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createForUserVault(
 		string $userId,
@@ -177,7 +177,7 @@ interface SecretRequestServiceInterface {
 	 *                                  or the caller is not the owner.
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.4
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createReRequest(
 		string $secretId,

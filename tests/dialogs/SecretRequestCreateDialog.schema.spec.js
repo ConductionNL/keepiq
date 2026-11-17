@@ -7,7 +7,7 @@
  * a field it already has, and none for plain text. Once the request is made,
  * it writes the requested fields into the secret with those schemas.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 
 import { mount } from '@vue/test-utils'
@@ -71,7 +71,7 @@ describe('SecretRequestCreateDialog field schemas', () => {
 		expect(secrets.updateSecret).not.toHaveBeenCalled()
 	})
 
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	// openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	it('adds no field whose schema the server refuses, and sends a stored one without its conflicts', async () => {
 		const store = useSecretRequestStore()
 		store.createRequest = vi.fn().mockResolvedValue({ id: 'r', token: 't' })

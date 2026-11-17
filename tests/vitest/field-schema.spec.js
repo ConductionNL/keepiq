@@ -6,10 +6,10 @@
  * format, the reserved `@schema` member in the blob, and what an import and a
  * request merge do with schemas.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 
 import { describe, expect, it } from 'vitest'
@@ -228,7 +228,7 @@ describe('field schemas', () => {
 		})
 	})
 
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	// openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	it('finds the conflicts the server refuses, reading a schema as stored', () => {
 		expect(schemaConflicts({ type: 'string', pattern: '(a+)+' })).toBe(true)
 		expect(schemaConflicts({ type: 'integer', minimum: 9, maximum: 1 })).toBe(true)
@@ -237,7 +237,7 @@ describe('field schemas', () => {
 		expect(schemaConflicts({ type: 'string', minLength: 1, maxLength: 9 })).toBe(false)
 	})
 
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+	// openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 	it('shows a value a number or date input cannot hold in a text input', () => {
 		expect(inputTypeFor('number', '5')).toBe('number')
 		expect(inputTypeFor('number', '-2.5e3')).toBe('number')

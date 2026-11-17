@@ -21,7 +21,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use Throwable;
 /**
  * Refreshes the site directory once a day.
  *
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
  */
 class RefreshSiteDirectoryJob extends TimedJob {
 
@@ -70,7 +70,7 @@ class RefreshSiteDirectoryJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by
 	 *   OCP\BackgroundJob\TimedJob::run(); this job carries no cron payload.
 	 *
-	 * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
 	 */
 	protected function run($argument): void {
 		try {

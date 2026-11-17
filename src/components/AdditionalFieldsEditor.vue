@@ -25,7 +25,7 @@
   schema says and refused, with the reason, when it does not fit.
 
   @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
-  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+  @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 -->
 <template>
 	<section class="keepiq-additional-fields" data-testid="additional-fields-editor">
@@ -204,7 +204,7 @@ export default {
 		 *
 		 * @param {Array<object>} members The members.
 		 * @return {void}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 		 */
 		members: {
 			immediate: true,
@@ -225,7 +225,7 @@ export default {
 		 *
 		 * @param {{schema?: object}} member The member.
 		 * @return {object} The schema.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		schemaOf(member) {
 			return cleanSchema(member.schema)
@@ -236,7 +236,7 @@ export default {
 		 *
 		 * @param {object} schema The member's schema.
 		 * @return {Array<{label: string, value: string}>} The options.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		kindOptions(schema) {
 			const options = presetOptions().map((p) => ({
@@ -254,7 +254,7 @@ export default {
 		 *
 		 * @param {{value: string, schema?: object}} member The member.
 		 * @return {string} The reason.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		valueError(member) {
 			return schemaError(member.value, member.schema)
@@ -266,7 +266,7 @@ export default {
 		 *
 		 * @param {number} index The row.
 		 * @return {boolean} True when open.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		isOpen(index) {
 			return (
@@ -280,7 +280,7 @@ export default {
 		 *
 		 * @param {number} index The row.
 		 * @return {void}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		toggleAdvanced(index) {
 			this.advancedOpen = this.isOpen(index)
@@ -294,7 +294,7 @@ export default {
 		 * @param {number} index The row.
 		 * @param {string} id The preset.
 		 * @return {void}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		onPreset(index, id) {
 			if (id === 'custom') {
@@ -309,7 +309,7 @@ export default {
 		 * @param {number} index The row.
 		 * @param {object} schema The new schema.
 		 * @return {void}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		onSchema(index, schema) {
 			const next = this.members.map((member, position) =>

@@ -89,7 +89,7 @@ export function memberNameError(name, taken = []) {
  * @param {Array<string>} reserved Names a member may not take: the type's own fields.
  * @param {Array<object>} checked The members to check, by default all of them.
  * @return {boolean}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function membersValid(members = [], reserved = [], checked = members) {
 	return checked.every((member) => {
@@ -121,7 +121,7 @@ export function membersValid(members = [], reserved = [], checked = members) {
  * @return {object} A plain object of name → value, possibly empty.
  *
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function membersToObject(members = []) {
 	const fields = {}
@@ -155,7 +155,7 @@ export function membersToObject(members = []) {
  * @return {Array<{name: string, value: string, schema: object}>} The editable member list.
  *
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function objectToMembers(blob) {
 	if (blob === null || blob === undefined || typeof blob !== 'object') {

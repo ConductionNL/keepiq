@@ -70,7 +70,7 @@ class SecretUrl extends Entity {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function __construct() {
 		$this->addType(fieldName: 'secretId', type: 'string');

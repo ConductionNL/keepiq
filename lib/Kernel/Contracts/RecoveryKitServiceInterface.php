@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md
+ * @spec openspec/specs/vault-recovery-kit/spec.md
  */
 
 declare(strict_types=1);
@@ -31,7 +31,7 @@ use OCA\Keepiq\Exception\NotFoundException;
  * Contract of RecoveryKitService: a user's own recovery kit, always for the
  * signed-in user's active suite.
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
  */
 interface RecoveryKitServiceInterface {
 
@@ -42,7 +42,7 @@ interface RecoveryKitServiceInterface {
 	 *
 	 * @return array{kit: array{suiteId: string, createdAt: string|null}|null}
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 	 */
 	public function status(string $userId): array;
 
@@ -57,7 +57,7 @@ interface RecoveryKitServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When a value is missing or too large, or the user has no active suite.
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 	 */
 	public function create(string $userId, string $wrappedKey, string $kdf): array;
 
@@ -70,7 +70,7 @@ interface RecoveryKitServiceInterface {
 	 *
 	 * @throws NotFoundException When there is none.
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
 	 */
 	public function fetch(string $userId): array;
 
@@ -83,7 +83,7 @@ interface RecoveryKitServiceInterface {
 	 *
 	 * @throws NotFoundException When there is none.
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
 	 */
 	public function spend(string $userId): void;
 
@@ -94,7 +94,7 @@ interface RecoveryKitServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
 	 */
 	public function revoke(string $userId): void;
 }//end interface

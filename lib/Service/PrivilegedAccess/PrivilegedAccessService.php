@@ -96,7 +96,7 @@ class PrivilegedAccessService {
 	 *
 	 * @throws NotFoundException When the caller holds neither the secret nor a copy of it
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function status(string $secretId, string $userId): array {
 		$secret = $this->loadHeld(secretId: $secretId, userId: $userId);
@@ -130,7 +130,7 @@ class PrivilegedAccessService {
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The flag is the state the owner asks for.
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function setPrivileged(string $secretId, string $ownerId, bool $privileged): bool {
 		$secret = $this->loadOwnSource(secretId: $secretId, ownerId: $ownerId);
@@ -171,7 +171,7 @@ class PrivilegedAccessService {
 	 * @throws NotFoundException When the caller holds no such copy
 	 * @throws InvalidArgumentException When the login needs no approval, or the window or reason is not valid
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function request(string $copyId, string $requesterId, AccessAsk $ask): AccessRequest {
 		$copy     = $this->loadHeld(secretId: $copyId, userId: $requesterId);
@@ -248,7 +248,7 @@ class PrivilegedAccessService {
 	 * @throws NotFoundException When the caller has no such request
 	 * @throws InvalidArgumentException When it was already answered, or the approval widens it or a range does not parse
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function approve(string $requestId, string $ownerId, ?AccessNarrowing $narrowing = null): AccessRequest {
 		[$request, $source] = $this->loadPending(requestId: $requestId, ownerId: $ownerId);
@@ -300,7 +300,7 @@ class PrivilegedAccessService {
 	 * @throws NotFoundException When the caller has no such request
 	 * @throws InvalidArgumentException When it was already answered
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function deny(string $requestId, string $ownerId): AccessRequest {
 		[$request, $source] = $this->loadPending(requestId: $requestId, ownerId: $ownerId);
@@ -327,7 +327,7 @@ class PrivilegedAccessService {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function pendingForOwner(string $ownerId): array {
 		return $this->serialise(requests: $this->requests->findPendingForOwner(ownerId: $ownerId));
@@ -340,7 +340,7 @@ class PrivilegedAccessService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function forget(string $secretId): void {
 		$this->flags->deleteBySecret(secretId: $secretId);

@@ -6,7 +6,7 @@
  * side-by-side view in the version history panel. Pure: it runs on values
  * already decrypted in the browser and sends nothing anywhere.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
  */
 
 import { fieldsOf } from './fieldSchema.js'
@@ -58,7 +58,7 @@ function additionalOf(state) {
  * @param {object} left The earlier (or left-hand) state.
  * @param {object} right The later (or right-hand) state.
  * @return {Array<{field: string, additional: boolean, masked: boolean, left: string, right: string, changed: boolean}>}
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
  */
 export function compareStates(left, right) {
 	const rows = COMPARED_FIELDS.map(({ field, masked }) => {

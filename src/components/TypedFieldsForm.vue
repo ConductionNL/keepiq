@@ -102,7 +102,7 @@ export default {
 		 * @param {object} field The field definition.
 		 * @return {object} The field's props and test id.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		fieldProps(field) {
 			const missing = this.isMissing(field)
@@ -125,7 +125,7 @@ export default {
 		 * @param {{kind: string, schema?: object}} field The field.
 		 * @return {string} The HTML input type.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		inputType(field) {
 			if (['integer', 'number'].includes(field.schema?.type)) {
@@ -142,7 +142,7 @@ export default {
 		 *
 		 * @param {{key: string, schema?: object}} field The field.
 		 * @return {string} The reason.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		fitError(field) {
 			return field.schema

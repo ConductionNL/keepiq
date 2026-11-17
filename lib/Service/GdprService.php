@@ -157,7 +157,7 @@ class GdprService implements GdprServiceInterface {
 	 * @return list<array{secretId: string, favourite: bool, tags: list<string>, lastUsedAt: string|null, additionalUrls: list<string>}>
 	 *
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	private function collectOrganisation(array $ownedSecrets, string $userId): array {
 		$ids  = array_map(static fn (\OCA\Keepiq\Db\Secret $secret): string => (string)$secret->getId(), $ownedSecrets);
@@ -205,7 +205,7 @@ class GdprService implements GdprServiceInterface {
 	 *
 	 * @return array<string,list<string>>
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	private function urlsOf(array $secretIds): array {
 		if ($this->urlMapper === null || $secretIds === []) {

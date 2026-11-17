@@ -9,7 +9,7 @@
   call. The disclosure says what is fetched and that nothing is sent; the
   attribution is what both directories' licences ask for (design D2a).
 
-  @spec openspec/changes/health-site-security-checks/tasks.md#task-2.3
+  @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.3
 -->
 <template>
 	<CnSettingsSection
@@ -58,7 +58,7 @@ export default {
 	 * Load the current site directory switch.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.3
 	 */
 	async created() {
 		try {
@@ -76,7 +76,7 @@ export default {
 		 * Persist the site directory switch.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.3
 		 */
 		async save() {
 			await axios.put(generateUrl('/apps/keepiq/api/settings/admin/general'), {

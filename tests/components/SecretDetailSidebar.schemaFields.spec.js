@@ -7,8 +7,8 @@
  * viewer, a value that does not fit shows a warning, and the `@schema` member
  * itself is never listed.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
  */
 
 import { mount } from '@vue/test-utils'

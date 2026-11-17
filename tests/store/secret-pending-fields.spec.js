@@ -11,7 +11,7 @@
  * store specs; the real crypto is covered in tests/vitest.
  *
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 
 import axios from '@nextcloud/axios'

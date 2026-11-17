@@ -147,7 +147,7 @@ export const secretPayloadForm = {
 		 * Whether the chosen type is an SSH key.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		isSshKey() {
 			return this.selectedTypeName === SSH_KEY_TYPE_NAME
@@ -159,7 +159,7 @@ export const secretPayloadForm = {
 		 * the SSH form writes over a custom field of that name.
 		 *
 		 * @return {Array<string>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 		 */
 		reservedMemberNames() {
 			const names = this.typedFields.map((f) => f.label)
@@ -256,7 +256,7 @@ export const secretPayloadForm = {
 		 * so the caller saves nothing.
 		 *
 		 * @return {Promise<object|null>} The members to put in the blob, or null.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async sshKeyToSave() {
 			this.sshErrors = { privateKey: '', publicKey: '' }
@@ -307,7 +307,7 @@ export const secretPayloadForm = {
 		 *
 		 * @param {object} rest The free members of the blob.
 		 * @return {object} The members without the SSH key's own.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		takeSshMembers(rest) {
 			if (!this.isSshKey || !rest || typeof rest !== 'object') {

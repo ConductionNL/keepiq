@@ -13,7 +13,7 @@
  * copies of other people's secrets and machine material (passkeys, one-time
  * code seeds) are never grouped.
  *
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 
 /**
@@ -127,7 +127,7 @@ function group(kind, bucket, rows) {
  *
  * @param {Array<object>} rows Decrypted health rows: id, name, url, login, value, copy, machineMaterial.
  * @return {{exact: Array<object>, likely: Array<object>}}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 export function duplicateGroups(rows) {
 	const exact = []
@@ -160,8 +160,8 @@ export function duplicateGroups(rows) {
  * @param {{fields: object|null, schemas?: object}} kept The kept secret's fields (name → value) and schemas.
  * @param {Array<{fields: object|null, schemas?: object}>} others The other secrets' fields and schemas, in order.
  * @return {{fields: object, schemas: object}} The folded fields and their schemas.
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
  */
 export function foldFields(kept, others) {
 	const fields = { ...(isFieldMap(kept?.fields) ? kept.fields : {}) }

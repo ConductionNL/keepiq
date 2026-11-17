@@ -9,7 +9,7 @@
   component until it is submitted and is cleared when the prompt closes.
   Lives in its own file per ADR-004 (hydra gate-13).
 
-  @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+  @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
 -->
 <template>
 	<MasterPasswordPromptDialog
@@ -33,7 +33,7 @@ import { useRepromptPromptStore } from '../store/modules/repromptPrompt.js'
 /**
  * The master password re-prompt for flagged items.
  *
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
  */
 export default {
 	name: 'RepromptDialog',
@@ -47,7 +47,7 @@ export default {
 		 * The prompt store.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		prompt() {
 			return useRepromptPromptStore()

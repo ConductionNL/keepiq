@@ -219,7 +219,7 @@ describe('SecretEditDialog on a built-in type with data from before', () => {
 		expect(certificate.vm.valuePublic).toBe(false)
 	})
 
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	// openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 	it('keeps a custom field from taking an SSH key\u2019s public key or fingerprint', async () => {
 		const wrapper = await mountSecret({ typeId: 'type-ssh', key: '', additionalFields: { note: 'x' } })
 		wrapper.vm.name = 'Deploy key'
@@ -242,7 +242,7 @@ describe('SecretEditDialog on a built-in type with data from before', () => {
 		expect(wrapper.vm.canSubmit).toBe(false)
 	})
 
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+	// openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 	it('lets a custom value that does not fit stay until it is changed', async () => {
 		const wrapper = await mountSecret({
 			typeId: 'type-db',
@@ -256,7 +256,7 @@ describe('SecretEditDialog on a built-in type with data from before', () => {
 		expect(wrapper.vm.canSubmit).toBe(false)
 	})
 
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	// openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 	it('blocks a rename onto one of the type’s own fields and a schema the server refuses', async () => {
 		const wrapper = await mountSecret({ typeId: 'type-db', additionalFields: { pass: 'x' } })
 		wrapper.vm.name = 'Renamed'

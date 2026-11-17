@@ -53,7 +53,7 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getFulfilledAt()
  * @method void setFulfilledAt(?DateTime $fulfilledAt)
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequest extends Entity implements JsonSerializable {
 
@@ -267,7 +267,7 @@ class SecretRequest extends Entity implements JsonSerializable {
 	 *
 	 * @return object
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function decodedFieldSchemas(): object {
 		$decoded = json_decode((string)$this->fieldSchemas, true);
@@ -283,7 +283,7 @@ class SecretRequest extends Entity implements JsonSerializable {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function jsonSerialize(): array {
 		$requested = json_decode($this->requestedFields, true);

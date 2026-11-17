@@ -112,7 +112,7 @@ describe('additional-field shape conversion', () => {
 })
 
 /**
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 describe('fields from a 0.3.14 test build', () => {
 	const legacy = {

@@ -96,7 +96,7 @@ const FORMAT_PATTERNS = Object.freeze({
  * The presets in the order the select offers them, with translated labels.
  *
  * @return {Array<{id: string, label: string}>} The presets.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
  */
 export function presetOptions() {
 	return [
@@ -117,7 +117,7 @@ export function presetOptions() {
  *
  * @param {string} id The preset id.
  * @return {object} A copy of its schema; plain text for an unknown id.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
  */
 export function presetSchema(id) {
 	return { ...(PRESET_SCHEMAS[id] ?? PLAIN) }
@@ -146,7 +146,7 @@ function isNumeric(value) {
  * @param {string|number|boolean} value Its value.
  * @param {string} type The schema's type.
  * @return {boolean} True to keep it.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 function keeps(key, value, type) {
 	if (key === 'hidden') {
@@ -166,7 +166,7 @@ function keeps(key, value, type) {
  * @param {string|number|boolean} value Its value.
  * @param {string} type The schema's type.
  * @return {boolean} True to keep it.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 function keepsNumberKey(key, value, type) {
 	if (key === 'multipleOf') {
@@ -182,7 +182,7 @@ function keepsNumberKey(key, value, type) {
  * @param {string} key The key.
  * @param {string|number|boolean} value Its value.
  * @return {boolean} True to keep it.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 function keepsStringKey(key, value) {
 	if (key === 'format') {
@@ -201,7 +201,7 @@ function keepsStringKey(key, value) {
  *
  * @param {object|null|undefined} schema The schema.
  * @return {object} The clean schema.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function cleanSchema(schema) {
 	const source = schema || {}
@@ -236,7 +236,7 @@ function sameSchema(a, b) {
  *
  * @param {object|null|undefined} schema The schema.
  * @return {string} The preset id, or `custom`.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
  */
 export function presetOf(schema) {
 	const match = Object.entries(PRESET_SCHEMAS).find(([, preset]) =>
@@ -250,7 +250,7 @@ export function presetOf(schema) {
  *
  * @param {object|null|undefined} schema The schema.
  * @return {boolean} True for plain text.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function isPlainSchema(schema) {
 	return sameSchema(schema, PLAIN)
@@ -262,7 +262,7 @@ export function isPlainSchema(schema) {
  *
  * @param {object|null|undefined} schema The schema.
  * @return {boolean} True when the value is masked until revealed.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
  */
 export function isHiddenSchema(schema) {
 	return schema?.hidden === true || schema?.format === 'password'
@@ -274,7 +274,7 @@ export function isHiddenSchema(schema) {
  *
  * @param {object|null|undefined} schema The schema.
  * @return {string} The input.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
  */
 export function inputOf(schema) {
 	const clean = cleanSchema(schema)
@@ -312,7 +312,7 @@ const BROWSER_VALUES = Object.freeze({
  * @param {string} type The HTML input type the schema asks for.
  * @param {string} value The value.
  * @return {string} The input type.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
  */
 export function inputTypeFor(type, value) {
 	const text = value === null || value === undefined ? '' : String(value)
@@ -359,7 +359,7 @@ function numberError(value, schema) {
  * @param {string} value The value.
  * @param {object} schema The clean schema.
  * @return {string} The message, or ''.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function numberTypeError(value, schema) {
 	if (schema.type === 'integer' && !/^-?\d+$/.test(value.trim())) {
@@ -374,7 +374,7 @@ function numberTypeError(value, schema) {
  * @param {number} number The number.
  * @param {object} schema The clean schema.
  * @return {string} The message, or ''.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function boundError(number, schema) {
 	if (schema.minimum !== undefined && number < schema.minimum) {
@@ -392,7 +392,7 @@ function boundError(number, schema) {
  * @param {number} number The number.
  * @param {number|undefined} step The schema's `multipleOf`.
  * @return {string} The message, or ''.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function stepError(number, step) {
 	if (step === undefined) {
@@ -483,7 +483,7 @@ function stringError(value, schema) {
  * @param {number} length The text's length in characters.
  * @param {object} schema The clean schema.
  * @return {string} The message, or ''.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function lengthError(length, schema) {
 	if (schema.minLength !== undefined && length < schema.minLength) {
@@ -507,7 +507,7 @@ function lengthError(length, schema) {
  * @param {string} value The text.
  * @param {string|undefined} pattern The schema's pattern.
  * @return {string} The message, or ''.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function patternError(value, pattern) {
 	if (pattern === undefined) {
@@ -559,7 +559,7 @@ function formatError(format) {
  * @param {string} value The value as stored.
  * @param {object|null|undefined} schema The field's schema.
  * @return {string} A translated reason, or ''.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 export function schemaError(value, schema) {
 	const text = value === null || value === undefined ? '' : String(value)
@@ -572,7 +572,7 @@ export function schemaError(value, schema) {
  * @param {string} text The value.
  * @param {object} clean The clean schema.
  * @return {string} The message, or ''.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function typedError(text, clean) {
 	if (clean.type === 'object') {
@@ -592,7 +592,7 @@ function typedError(text, clean) {
  *
  * @param {string} text The value.
  * @return {string} The message, or ''.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function booleanError(text) {
 	return ['true', 'false'].includes(text) ? '' : t('keepiq', 'Choose yes or no.')
@@ -640,7 +640,7 @@ function isKindedEntry(entry) {
  *
  * @param {object|null|undefined} blob The decrypted additional fields.
  * @return {object} The schemas; empty when the blob has none.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function schemasOf(blob) {
 	const stored = blob?.[SCHEMA_MEMBER]
@@ -669,7 +669,7 @@ function unwrapEntry(entry) {
  *
  * @param {unknown} entry One entry of the decrypted blob.
  * @return {string} The value.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function fieldValueOf(entry) {
 	const value = unwrapEntry(entry)
@@ -682,7 +682,7 @@ export function fieldValueOf(entry) {
  *
  * @param {object|null|undefined} blob The decrypted additional fields.
  * @return {object} The fields by name.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function fieldsOf(blob) {
 	if (blob === null || blob === undefined || typeof blob !== 'object') {
@@ -704,7 +704,7 @@ export function fieldsOf(blob) {
  * @param {object} fields The fields, added to.
  * @param {object|string|number|boolean|null|undefined} stored The `@schema` member.
  * @return {void}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 function keepMisnamedField(fields, stored) {
 	if (
@@ -724,7 +724,7 @@ function keepMisnamedField(fields, stored) {
  * @param {object} fields The fields by name.
  * @param {object} schemas The schemas by field name.
  * @return {object} The blob.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function withSchemas(fields, schemas) {
 	const kept = schemasFor(fields, schemas)
@@ -739,7 +739,7 @@ export function withSchemas(fields, schemas) {
  * @param {object} fields The fields, by name.
  * @param {object|null|undefined} schemas The schemas, by field name.
  * @return {object} The kept schemas, by field name.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 function schemasFor(fields, schemas) {
 	const kept = {}
@@ -764,7 +764,7 @@ const LIMIT_PAIRS = Object.freeze([
  *
  * @param {object|null|undefined} schema The schema.
  * @return {object} The schema to keep.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 export function withoutConflicts(schema) {
 	const kept = { ...(schema ?? {}) }
@@ -790,7 +790,7 @@ export function withoutConflicts(schema) {
  *
  * @param {object|null|undefined} schema The schema.
  * @return {boolean}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 export function schemaConflicts(schema) {
 	// Read as stored, so a key its type ignores, such as a pattern on an
@@ -810,7 +810,7 @@ export function schemaConflicts(schema) {
  *
  * @param {object|null|undefined} blob The imported additional fields.
  * @return {object|null|undefined} The blob to store.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 export function fitImportedBlob(blob) {
 	if (blob === null || blob === undefined || typeof blob !== 'object') {
@@ -839,7 +839,7 @@ export function fitImportedBlob(blob) {
  * @param {object} own The stored blob.
  * @param {object} incoming The imported members.
  * @return {object} The merged blob.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 export function mergeBlobs(own, incoming) {
 	const fields = { ...fieldsOf(own), ...fieldsOf(incoming) }
@@ -858,7 +858,7 @@ export function mergeBlobs(own, incoming) {
  * @param {object} incoming The members a request filled in.
  * @param {object} requested The schemas the filling request carried, by field name.
  * @return {object} The merged blob.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 export function mergeFilledBlob(own, incoming, requested = {}) {
 	const filled = fieldsOf(incoming)
@@ -878,7 +878,7 @@ export function mergeFilledBlob(own, incoming, requested = {}) {
  *
  * @param {{schema?: object, kind?: string}} field The type field.
  * @return {object} The schema.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function typeFieldSchema(field) {
 	if (field?.schema) {
@@ -903,7 +903,7 @@ export function typeFieldSchema(field) {
  * @param {Array<object>} typeFields The type's own fields.
  * @param {object} typedValues The type fields' values by key.
  * @return {boolean} True when the form may be saved.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 export function valuesFit(members = [], typeFields = [], typedValues = {}) {
 	return (

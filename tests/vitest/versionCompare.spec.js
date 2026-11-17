@@ -4,7 +4,7 @@
  *
  * The field-by-field comparison behind the side-by-side version view.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
  */
 
 import { describe, expect, it } from 'vitest'
@@ -55,7 +55,7 @@ describe('compareStates', () => {
 		expect(anyChanged(rows)).toBe(false)
 	})
 
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	// openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 	it('does not list the schema member as a field', () => {
 		const schemas = { '@schema': { a: { type: 'string', hidden: true } } }
 		const rows = compareStates({ additionalFields: { a: '1', ...schemas } }, { additionalFields: { a: '2' } })

@@ -9,7 +9,7 @@
  * this flow proves the same in a real browser, on a secret the app itself
  * encrypted, with the real clipboard.
  *
- * @e2e openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+ * @e2e openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
  */
 import { expect, test } from '@playwright/test'
 import { withStore } from './_vault-actions.ts'

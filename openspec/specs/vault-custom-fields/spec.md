@@ -1,10 +1,15 @@
-## ADDED Requirements
+# vault-custom-fields Specification
+
+## Purpose
+Give each custom field a schema, so the dialogs, the sidebar and the fill page enter, check and show it by its kind, a hidden field stays masked until the owner reveals it, and the schema survives requests, export and import.
+
+## Requirements
 
 ### Requirement: Custom fields carry a schema
 
 The system MUST let the owner of a secret give each custom field a schema in the create and edit dialogs, using the JSON Schema vocabulary of OpenRegister's property editor. A schema MUST have a `type` of `string`, `integer`, `number`, `boolean` or `object`. A `string` MAY have a `format` of `text`, `password`, `uri`, `email`, `hostname`, `ipv4`, `ipv6`, `date`, `date-time`, `time`, `uuid` or `color-hex`, and MAY have `minLength`, `maxLength` and `pattern`. An `integer` MAY have `minimum` and `maximum`; a `number` MAY also have `multipleOf`. A `boolean` and an `object` have no limits.
 
-The schemas MUST be stored inside the same encrypted additional-fields blob as the values, under the reserved member `@schema`, as a map from field name to schema. A field without an entry in `@schema`, and every field of a blob saved before this change, MUST be read as `{"type": "string"}`. Every value MUST stay a string in the blob: an integer or number as its decimal text, a boolean as `"true"` or `"false"`, an object as JSON text. The name `@schema` MUST be refused as a field name, and every reader that lists fields MUST leave it out; a field already called `@schema` whose value is not a map of schemas, from before the name was reserved or from an import, MUST be kept under the name "@schema (imported)". A custom field MUST NOT take the name of one of the type's own fields, which are stored under the same names.
+The schemas MUST be stored inside the same encrypted additional-fields blob as the values, under the reserved member `@schema`, as a map from field name to schema. A field without an entry in `@schema`, and every field of a blob saved before this change, MUST be read as `{"type": "string"}`. The web app MUST write every value as a string: an integer or number as its decimal text, a boolean as `"true"` or `"false"`, an object as JSON text; a reader MUST take a value stored as a JSON number by an older client as its text. A field that an unstable 0.3.14 build stored as `{"value": …, "kind": "hidden"}` or `"kind": "boolean"` MUST be read as its value with the schema that kind implies, hidden text or yes/no, unless `@schema` gives it one. The name `@schema` MUST be refused as a field name, and every reader that lists fields MUST leave it out; a field already called `@schema` whose value is not a map of schemas, from before the name was reserved or from an import, MUST be kept under the name "@schema (imported)". A custom field MUST NOT take the name of one of the type's own fields, which are stored under the same names.
 
 #### Scenario: An owner limits a port number
 
@@ -18,6 +23,12 @@ The schemas MUST be stored inside the same encrypted additional-fields blob as t
 - **GIVEN** a secret saved before this change whose additional fields have no `@schema` member
 - **WHEN** the owner opens its detail sidebar
 - **THEN** every custom field shows as plain text exactly as before
+
+#### Scenario: A hidden field from an earlier build
+
+- **GIVEN** a secret whose additional fields hold `"Recovery code": {"value": "RC-4711", "kind": "hidden"}`, as an unstable 0.3.14 build saved it
+- **WHEN** the owner opens its detail sidebar
+- **THEN** Recovery code shows masked until they choose Show, and Copy copies RC-4711
 
 ### Requirement: Presets pick a schema, Advanced shows it
 

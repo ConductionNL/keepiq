@@ -6,7 +6,7 @@
  * inclusive, end exclusive, as on the server), the datetime-local to ISO
  * conversion, the typed address ranges and the rotation offer.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+ * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 
 import { describe, expect, it } from 'vitest'

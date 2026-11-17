@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md
+ * @spec openspec/specs/vault-recovery-kit/spec.md
  */
 
 declare(strict_types=1);
@@ -34,7 +34,7 @@ use OCP\Migration\SimpleMigrationStep;
  * Adds keepiq_recovery_kits on an install that already ran the consolidated
  * schema, which declares the same table for a fresh install.
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
  */
 class Version001020Date20261114120000 extends SimpleMigrationStep {
 
@@ -49,7 +49,7 @@ class Version001020Date20261114120000 extends SimpleMigrationStep {
 	 *
 	 * @return ISchemaWrapper|null
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema = $schemaClosure();

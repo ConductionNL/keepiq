@@ -652,7 +652,7 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		async encryptRow(row, publicKey, asCopy, typeId = null) {
 			const name = asCopy ? `${row.name} (imported)` : row.name

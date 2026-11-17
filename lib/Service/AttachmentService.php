@@ -679,7 +679,7 @@ class AttachmentService implements AttachmentServiceInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) A listing withholds as a download does, it only does not audit.
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	private function privilegedCopyWithheld(string $copySecretId, string $userId, bool $audit): bool {
 		if ($this->privilegedGate === null) {

@@ -11,7 +11,7 @@
  * Private suffixes count, so one `github.io` site never matches another; IPs,
  * `localhost` and single-label hosts match only themselves.
  *
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.1
  */
 
 /**
@@ -21,7 +21,7 @@
  * @param {string|null|undefined} host A hostname, as URL#hostname gives it
  * @param {(host: string, options: {allowPrivateDomains: boolean}) => (string|null)} getDomain The public suffix lookup (`tldts` getDomain)
  * @return {string|null} The registrable domain, the host itself when it has none, null without a host
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.1
  */
 export function registrableDomainOf(host, getDomain) {
 	if (!host) {

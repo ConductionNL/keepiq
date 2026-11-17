@@ -152,7 +152,7 @@ class RecipientSecretCopyFactory {
 	 * @return Secret|null
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function createCopy(Secret $source, RecipientCiphertext $ciphertext): ?Secret {
 		try {

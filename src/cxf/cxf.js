@@ -21,7 +21,7 @@
  *
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 
 import {
@@ -487,7 +487,7 @@ function extrasTarget(ctx) {
  *
  * @param {object} ctx The item being read (itemToRows).
  * @return {void}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 function attachExtras(ctx) {
 	const target = extrasTarget(ctx)
@@ -846,7 +846,7 @@ const TYPE_NAMES = new Set([
  *   name map, used when a row's `type` carries an id rather than a name.
  * @param {string} [options.accountUserName] The exporting account's user name.
  * @return {{document: object, unmapped: Array<string>, itemCount: number}}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 export function buildCxfDocument(serializedSecrets, options = {}) {
 	const unmapped = []

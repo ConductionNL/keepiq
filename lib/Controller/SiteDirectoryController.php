@@ -23,7 +23,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -44,7 +44,7 @@ use OCP\IUserSession;
 /**
  * GET /api/v1/site-directory.
  *
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
  */
 class SiteDirectoryController extends Controller {
 
@@ -72,7 +72,7 @@ class SiteDirectoryController extends Controller {
 	 *                  it already, 401 without a user, 404 while switched off or
 	 *                  before the first refresh.
 	 *
-	 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-the-site-directory-is-fetched-whole-and-taught-nothing
+	 * @spec openspec/specs/health-site-checks/spec.md#requirement-the-site-directory-is-fetched-whole-and-taught-nothing
 	 */
 	#[NoAdminRequired]
 	public function index(): Response {

@@ -7,7 +7,7 @@
  * update path, the others go through the delete path, and the people who
  * lose access are the distinct recipients of the removed items' shares.
  *
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -93,7 +93,7 @@ describe('merging a duplicate group', () => {
 		expect(Object.keys(mergedFields(secrets.c, [secrets.a, secrets.b]))).toEqual(['pin', 'recovery email', 'pin (2)'])
 	})
 
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	// openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 	it('keeps the others\' hidden fields hidden and writes one schema member', () => {
 		const hidden = { type: 'string', hidden: true }
 		const kept = { additionalFields: { PIN: '1', '@schema': { PIN: hidden } } }

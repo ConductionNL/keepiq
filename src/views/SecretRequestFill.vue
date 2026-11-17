@@ -349,7 +349,7 @@ export default {
 		 * Whether every requested value fits its field's schema.
 		 *
 		 * @return {boolean} False while one does not, which blocks Submit.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		allFit() {
 			return (this.store.publicRequest?.requested_fields ?? []).every(
@@ -463,7 +463,7 @@ export default {
 		 * @return {string} The input kind.
 		 *
 		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		inputType(field) {
 			const fromSchema = this.schemaInputType(field)
@@ -498,7 +498,7 @@ export default {
 		 *
 		 * @param {string} field The requested field name.
 		 * @return {string|null} The input kind.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		schemaInputType(field) {
 			const schema = this.schemaOf(field)
@@ -525,7 +525,7 @@ export default {
 		 * @param {string} field The requested field name.
 		 * @param {number} index The field's place in the form.
 		 * @return {string|undefined} The id.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		errorId(field, index) {
 			return this.fieldError(field) !== '' ? `fill-error-${index}` : undefined
@@ -586,7 +586,7 @@ export default {
 		 *
 		 * @param {string} field The requested field name.
 		 * @return {object|null} The schema.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		schemaOf(field) {
 			const schema = this.store.publicRequest?.field_schemas?.[field]
@@ -599,7 +599,7 @@ export default {
 		 *
 		 * @param {string} field The requested field name.
 		 * @return {string} The reason.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		fieldError(field) {
 			if (
@@ -621,7 +621,7 @@ export default {
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-field-validation
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-write-once
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		async onSubmit() {
 			this.triedSubmit = true

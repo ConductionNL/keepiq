@@ -10,7 +10,7 @@
  * allowed, `color: #00679e` and `var(#00679e)` are not. Built-in
  * `color-no-hex` cannot express that exception, it rejects fallbacks too.
  *
- * @spec openspec/changes/platform-properties/specs/platform-properties/spec.md#requirement-the-look-comes-from-the-nextcloud-theme
+ * @spec openspec/specs/platform-properties/spec.md#requirement-the-look-comes-from-the-nextcloud-theme
  */
 import stylelint from 'stylelint'
 
@@ -35,7 +35,7 @@ const HEX = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/
  * function, whether its first top-level comma has been passed. Quoted
  * strings are skipped, so `content: "#1"` is not a colour.
  *
- * @spec openspec/changes/platform-properties/tasks.md#1.3
+ * @spec openspec/changes/archive/2026-11-17-platform-properties/tasks.md#1.3
  *
  * @param {string} value The declaration value
  * @return {Array<{hex: string, index: number}>} The rejected colours

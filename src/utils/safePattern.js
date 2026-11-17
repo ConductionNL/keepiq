@@ -13,7 +13,7 @@
  * milliseconds.
  * lib/Service/SafePattern.php holds the same rules.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 
 /** The longest pattern a schema may carry. */
@@ -33,7 +33,7 @@ const ESCAPES = 'dDwWsSbBtnrf^$\\.*+?()[]{}|/'
  *
  * @param {unknown} pattern The pattern.
  * @return {boolean}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 export function isSafePattern(pattern) {
 	return patternProblem(pattern) === ''
@@ -46,7 +46,7 @@ export function isSafePattern(pattern) {
  *
  * @param {unknown} pattern The pattern.
  * @return {''|'invalid'|'unsupported'}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 export function patternProblem(pattern) {
 	if (typeof pattern !== 'string' || pattern === '') {

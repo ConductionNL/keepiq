@@ -91,8 +91,8 @@ class FlowTriggerForwardListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#requirement-vault-events-fire-flow-triggers
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.2
+	 * @spec openspec/specs/vault-event-flow-triggers/spec.md#requirement-vault-events-fire-flow-triggers
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-1.2
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof AuditEvent === false) {

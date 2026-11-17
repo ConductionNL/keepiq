@@ -15,7 +15,7 @@ interface Props {
 /**
  * Asks for the master password before a flagged item fills; the background checks it, so a wrong one fills nothing.
  *
- * @spec openspec/changes/crypto-item-reprompt
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt
  */
 export function RepromptDialog({ wrong, onSubmit, onCancel }: Props) {
 	const [masterPassword, setMasterPassword] = useState('')

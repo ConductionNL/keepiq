@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for the field schema shape check.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class FieldSchemaShapeTest extends TestCase {
 

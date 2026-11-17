@@ -7,7 +7,7 @@
   are JSON Schema's, as in OpenRegister's property editor, so they are not
   translated. Emits the whole schema on every change.
 
-  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+  @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 -->
 <template>
 	<div class="schema-advanced" :data-testid="testid">
@@ -146,7 +146,7 @@ export default {
 		 * value could fit.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		lengthsConflict() {
 			const { minLength, maxLength } = this.schema
@@ -161,7 +161,7 @@ export default {
 		 * Whether the minimum is above the maximum.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		rangeConflict() {
 			const { minimum, maximum } = this.schema
@@ -174,7 +174,7 @@ export default {
 		 * The message under a maximum below its minimum.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		conflictText() {
 			return t('keepiq', 'The minimum is higher than the maximum.')
@@ -186,7 +186,7 @@ export default {
 		 * server.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		patternInvalid() {
 			return Boolean(this.schema.pattern) && patternProblem(this.schema.pattern) !== ''
@@ -196,7 +196,7 @@ export default {
 		 * Why the pattern cannot be used, or ''.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		patternHelp() {
 			const problem = this.schema.pattern ? patternProblem(this.schema.pattern) : ''
@@ -215,7 +215,7 @@ export default {
 		 * The type options, by their JSON Schema names.
 		 *
 		 * @return {Array<{label: string, value: string}>} The options.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		typeOptions() {
 			return SCHEMA_TYPES.map((type) => ({ label: type, value: type }))
@@ -225,7 +225,7 @@ export default {
 		 * The format options of a string, by their JSON Schema names.
 		 *
 		 * @return {Array<{label: string, value: string}>} The options.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		formatOptions() {
 			return STRING_FORMATS.map((format) => ({ label: format, value: format }))
@@ -235,7 +235,7 @@ export default {
 		 * Whether the type takes a minimum and maximum.
 		 *
 		 * @return {boolean} True for integer and number.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		isNumeric() {
 			return this.schema.type === 'integer' || this.schema.type === 'number'
@@ -250,7 +250,7 @@ export default {
 		 *
 		 * @param {number|undefined} value The limit.
 		 * @return {string} The text; '' when unset.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		numberText(value) {
 			return value === undefined ? '' : String(value)
@@ -262,7 +262,7 @@ export default {
 		 * @param {string} key The key.
 		 * @param {string|boolean|null|undefined} value Its new value.
 		 * @return {void}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		set(key, value) {
 			const next = { ...this.schema }

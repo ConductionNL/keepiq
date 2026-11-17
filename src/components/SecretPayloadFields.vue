@@ -10,7 +10,7 @@
 
   @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
   @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
-  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+  @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 -->
 <template>
 	<template v-if="isCard || isIdentity">
@@ -263,7 +263,7 @@ export default {
 		 * by field name; empty for every other field.
 		 *
 		 * @return {{number?: string, cvv?: string}}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
 		 */
 		hints() {
 			if (!this.isCard) {
@@ -288,7 +288,7 @@ export default {
 		 *
 		 * @param {{code: string, brand?: string}} hint From `cardNumberHint`.
 		 * @return {string}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
 		 */
 		numberHintText(hint) {
 			if (hint.code === 'length') {

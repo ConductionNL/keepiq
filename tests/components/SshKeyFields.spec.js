@@ -7,7 +7,7 @@
  * or generates, and shows a save refusal on its field. Key handling is real
  * WebCrypto; nothing is mocked but the Nextcloud components.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 
 import { mount } from '@vue/test-utils'

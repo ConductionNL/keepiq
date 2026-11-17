@@ -28,7 +28,7 @@ use InvalidArgumentException;
  * in an IPv6 range or the other way round, IPv4-mapped IPv6 addresses
  * included: the check compares the bytes the client was seen with.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
  */
 final class AddressRange {
 
@@ -53,7 +53,7 @@ final class AddressRange {
 	 *
 	 * @throws InvalidArgumentException When it is not an address or the prefix is out of range.
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
 	 */
 	public static function parse(string $cidr): self {
 		$parts   = explode('/', trim($cidr), 2);
@@ -83,7 +83,7 @@ final class AddressRange {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
 	 */
 	public function contains(string $address): bool {
 		$bytes = @inet_pton(trim($address));
@@ -99,7 +99,7 @@ final class AddressRange {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
 	 */
 	public function toString(): string {
 		return inet_ntop($this->network) . '/' . $this->prefixLength;

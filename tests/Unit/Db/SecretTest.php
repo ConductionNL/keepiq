@@ -217,7 +217,7 @@ class SecretTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function testPendingSchemasStayAlignedWithTheirBlobs(): void {
 		$hidden = ['PIN' => ['type' => 'string', 'hidden' => true]];

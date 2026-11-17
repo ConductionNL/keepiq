@@ -50,7 +50,7 @@ use Throwable;
  * Public controller for the SecretRequest fill-in flow.
  *
  * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.2
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequestFillController extends OCSController {
 	/**
@@ -86,7 +86,7 @@ class SecretRequestFillController extends OCSController {
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.2
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

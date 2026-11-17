@@ -5,7 +5,7 @@
  * Only a web or mail address becomes a link; any other stored URL shows as
  * text, so a `javascript:` or `data:` value from someone else never runs.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
  */
 
 import { describe, expect, it } from 'vitest'

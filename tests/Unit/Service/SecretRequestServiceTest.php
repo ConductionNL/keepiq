@@ -201,7 +201,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function testCreateStoresTheFieldSchemas(): void {
 		$this->mapper->method('insert')->willReturnArgument(0);
@@ -230,7 +230,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function testCreateRefusesASchemaForAFieldNotRequested(): void {
 		$this->mapper->expects($this->never())->method('insert');
@@ -710,7 +710,7 @@ class SecretRequestServiceTest extends TestCase {
 	 * @return void
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function testFillStoresCiphertextPlaintextAndTheAdditionalBlob(): void {
 		$entity = $this->buildPending();
@@ -1119,7 +1119,7 @@ class SecretRequestServiceTest extends TestCase {
 	 * @return void
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function testAFillOfOnlyExtraFieldsIsHeldBackWithoutAnUpdate(): void {
 		$entity = $this->buildPending();
@@ -1920,7 +1920,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 	 */
 	public function testTheSchemaMemberCannotBeRequested(): void {
 		$this->mapper->expects($this->never())->method('insert');

@@ -7,7 +7,7 @@
  * saying why when it is off or could not be loaded, and each finding's action
  * opening the directory's page for the site.
  *
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+ * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
  */
 
 import axios from '@nextcloud/axios'

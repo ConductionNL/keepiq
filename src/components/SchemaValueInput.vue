@@ -8,7 +8,7 @@
   multi-line or JSON value stays out of the page until Show. The value stays a
   string either way; the parent stores it.
 
-  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+  @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 -->
 <template>
 	<div class="schema-value-input" :data-input="input">
@@ -182,7 +182,7 @@ export default {
 		 * Show for a hidden one that holds a value.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 		 */
 		jsonShown() {
 			return !this.hidden || this.jsonRevealed
@@ -192,7 +192,7 @@ export default {
 		 * How the value is entered.
 		 *
 		 * @return {string} The input.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 		 */
 		input() {
 			return inputOf(this.schema)
@@ -202,7 +202,7 @@ export default {
 		 * Whether the value is masked while it is typed.
 		 *
 		 * @return {boolean} True for a hidden field.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 		 */
 		hidden() {
 			return isHiddenSchema(this.schema)
@@ -213,7 +213,7 @@ export default {
 		 * one that input could not show, so a stored value is never hidden.
 		 *
 		 * @return {string} The type.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 		 */
 		htmlType() {
 			return inputTypeFor(HTML_TYPES[this.input] ?? 'text', this.modelValue)
@@ -224,7 +224,7 @@ export default {
 		 * disabled state, the error and the test id.
 		 *
 		 * @return {object} The attributes.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 		 */
 		fieldAttrs() {
 			return {
@@ -245,7 +245,7 @@ export default {
 		 * @param {string} value The new value.
 		 * @param {string} previous The old value.
 		 * @return {void}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 		 */
 		modelValue(value, previous) {
 			if (!this.jsonTyped && previous === '' && value !== '') {
@@ -262,7 +262,7 @@ export default {
 		 *
 		 * @param {string} value The value.
 		 * @return {void}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 		 */
 		onJsonInput(value) {
 			this.jsonTyped = true

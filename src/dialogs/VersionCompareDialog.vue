@@ -11,7 +11,7 @@
 
   Lives in its own file per ADR-004.
 
-  @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+  @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
 -->
 <template>
 	<NcDialog
@@ -104,7 +104,7 @@ export default {
 		 * The compared rows.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
 		 */
 		rows() {
 			if (!this.comparison) {
@@ -117,7 +117,7 @@ export default {
 		 * Whether any field differs.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
 		 */
 		changed() {
 			return anyChanged(this.rows)

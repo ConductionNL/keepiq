@@ -53,7 +53,7 @@ const FIELD_TYPE_BY_SCHEMA_TYPE = Object.freeze({
  *
  * @param {object} schema The field's schema.
  * @return {string} The CXF field type.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 export function cxfFieldType(schema) {
 	const clean = cleanSchema(schema)
@@ -73,7 +73,7 @@ export function cxfFieldType(schema) {
  * @param {Array<string>} used Field names another credential already carries.
  * @param {string} typeName The secret's type name, for its built-in fields.
  * @return {object|null} The CXF credential.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 export function customFieldsCredential(additionalFields, used = [], typeName = '') {
 	if (additionalFields === null || typeof additionalFields !== 'object') {
@@ -101,7 +101,7 @@ export function customFieldsCredential(additionalFields, used = [], typeName = '
  * @param {string} typeName The secret's type name.
  * @param {string} name The field's name.
  * @return {object} The clean schema.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 function fieldSchemaFor(schemas, typeName, name) {
 	if (schemas[name]) {
@@ -120,7 +120,7 @@ function fieldSchemaFor(schemas, typeName, name) {
  * @param {number} number The field's place, from 1.
  * @param {object} schema The field's clean schema.
  * @return {object} The CXF field.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 function customField(name, value, number, schema) {
 	const field = {
@@ -182,7 +182,7 @@ function importedName(label, fields) {
  * @param {object|null|undefined} own The row's additional fields.
  * @param {object} blob The imported custom fields, with `@schema`.
  * @return {object} The blob to merge.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 export function withoutClashes(own, blob) {
 	const taken = fieldsOf(own)
@@ -207,7 +207,7 @@ export function withoutClashes(own, blob) {
  *
  * @param {object} credential The CXF credential.
  * @return {object} The blob, possibly empty.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 export function readCustomFields(credential) {
 	const read = { fields: {}, schemas: {} }
@@ -224,7 +224,7 @@ export function readCustomFields(credential) {
  * @param {{fields: object, schemas: object}} read The fields and schemas read so far.
  * @param {object} field The CXF field.
  * @return {void}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 function readCustomField(read, field) {
 	const label = String(field.label ?? field.id ?? '').trim()

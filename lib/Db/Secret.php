@@ -642,7 +642,7 @@ class Secret extends Entity implements JsonSerializable {
 	 *
 	 * @return list<object>
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function pendingFieldSchemaList(): array {
 		return array_map(static fn (array $entry): object => (object)$entry['schemas'], $this->pendingEntries());
@@ -658,7 +658,7 @@ class Secret extends Entity implements JsonSerializable {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function appendPendingAdditionalFields(string $ciphertext, array $schemas): void {
 		$entries   = $this->pendingEntries();

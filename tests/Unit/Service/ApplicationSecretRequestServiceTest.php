@@ -262,7 +262,7 @@ class ApplicationSecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 	 */
 	public function testCreateForApplicationVaultRefusesTheSchemaMember(): void {
 		$this->secretService->expects($this->never())->method('createByApplication');

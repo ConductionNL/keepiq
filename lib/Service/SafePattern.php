@@ -30,7 +30,7 @@ namespace OCA\Keepiq\Service;
  * `^`, is held to MAX_DEGREE, and the browser tests at most 256 characters, which keeps a test to milliseconds.
  * src/utils/safePattern.js holds the same rules for the browser.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 final class SafePattern {
 	/**
@@ -97,7 +97,7 @@ final class SafePattern {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function isSafe(string $pattern): bool {
 		if ($pattern === '' || mb_strlen($pattern) > self::MAX_LENGTH || str_contains($pattern, "\x01") === true) {

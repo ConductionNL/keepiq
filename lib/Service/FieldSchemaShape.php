@@ -29,7 +29,7 @@ use JsonException;
 /**
  * The shape rules for a request's field schemas.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class FieldSchemaShape {
 
@@ -109,7 +109,7 @@ class FieldSchemaShape {
 	 *
 	 * @throws InvalidArgumentException With a message naming the first problem.
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function normalize(array $schemas, array $requestedFields): array {
 		$checked = [];
@@ -140,7 +140,7 @@ class FieldSchemaShape {
 	 *
 	 * @throws InvalidArgumentException When a schema cannot be written as JSON.
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function encode(array $schemas): ?string {
 		if ($schemas === []) {
@@ -164,7 +164,7 @@ class FieldSchemaShape {
 	 *
 	 * @throws InvalidArgumentException When a key or value is not allowed.
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function checkSchema(string $name, array $schema): array {
 		if (in_array($schema['type'] ?? null, self::TYPES, true) === false) {
@@ -196,7 +196,7 @@ class FieldSchemaShape {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function allows(string $key, mixed $value): bool {
 		$finite = (is_int($value) === true || is_float($value) === true) && is_finite((float)$value) === true;

@@ -222,7 +222,7 @@ export default {
 		 *
 		 * @param {string} id A version id, or CURRENT.
 		 * @return {void}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
 		 */
 		togglePick(id) {
 			if (this.picked.includes(id)) {
@@ -239,7 +239,7 @@ export default {
 		 * older one on the left. Nothing decrypted is sent anywhere.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+		 * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
 		 */
 		async onCompare() {
 			if (this.picked.length !== 2) {

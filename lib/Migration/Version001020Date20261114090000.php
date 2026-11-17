@@ -32,7 +32,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @psalm-suppress UnusedClass Loaded by the Nextcloud migration framework.
  *
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
  */
 class Version001020Date20261114090000 extends SimpleMigrationStep {
 	/**
@@ -76,7 +76,7 @@ class Version001020Date20261114090000 extends SimpleMigrationStep {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by SimpleMigrationStep.
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema = $schemaClosure();

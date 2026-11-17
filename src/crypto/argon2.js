@@ -39,7 +39,7 @@ const SALT_LENGTH = 16
  * How backups, link shares and password-protected sends are protected, as
  * `deriveAesKeyArgon2id` does it. Read by the encryption overview.
  *
- * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
 export const ARGON2_PARAMETERS = Object.freeze({
 	kdf: 'Argon2id',

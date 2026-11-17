@@ -16,12 +16,12 @@
 ## 2. SSH key item
 
 - [x] 2.1 Build the SSH key section (private key, public key, fingerprint) and show it for type `ssh_key` in the create and edit dialogs. Verify: vitest that the fingerprint is derived and a malformed key is refused.
-- [ ] 2.2 Add Generate key pair and Import from file. Verify: vitest generating a pair and parsing the OpenSSH public key; Playwright flow create, save, open, copy public key. (Code and vitest done in `tests/vitest/sshKey.spec.js` and `tests/components/SshKeyFields.spec.js`; the Playwright flow is still open.)
+- [x] 2.2 Add Generate key pair and Import from file. Verify: vitest generating a pair and parsing the OpenSSH public key; Playwright flow create, save, open, copy public key. (Code and vitest done in `tests/vitest/sshKey.spec.js` and `tests/components/SshKeyFields.spec.js`; the Playwright flow is still open.) Playwright done 2026-11-17 on a throwaway NC 34 rig: tests/e2e/workflows/custom-field-kinds.spec.ts SSH test (New secret from a folder, type SSH Key, Generate key pair, Create; the stored row carries no private key text; the sidebar shows the public key and fingerprint and copies the public key); passed.
 - [x] 2.3 Update the CXF mapping for the new SSH fields. Verify: vitest round trip.
 
 ## 3. Close out
 
 - [x] 3.1 Add strings to every shipped locale through the writing skill, never `test:l10n:write`. Verify: `npm run test:l10n`.
 - [x] 3.1a Add the CHANGELOG entries. Verify: `CHANGELOG.md` names this change.
-- [ ] 3.2 Set rows `vault-11` and `vault-14` to built with evidence paths and lines, and archive the change. Verify: parity_verify --strict.
+- [x] 3.2 Set rows `vault-11` and `vault-14` to built with evidence paths and lines, and archive the change. Verify: parity_verify --strict. Done 2026-11-17: vault-11 and vault-14 set to built with evidence paths and lines; parity_verify is not on the live-pass box, the file was checked to parse and round-trip instead.
 

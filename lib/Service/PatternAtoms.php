@@ -25,7 +25,7 @@ namespace OCA\Keepiq\Service;
  * Each method answers the length of the construct at a position, or 0 (null for a group) when the two dialects
  * would read it differently.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 final class PatternAtoms {
 	/**
@@ -44,7 +44,7 @@ final class PatternAtoms {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function escapeLength(string $pattern, int $index): int {
 		$next = $pattern[$index + 1] ?? '';
@@ -84,7 +84,7 @@ final class PatternAtoms {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function classLength(string $pattern, int $index): int {
 		$pos = $index + 1;
@@ -123,7 +123,7 @@ final class PatternAtoms {
 	 *
 	 * @return array{length:int,look:bool}|null
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function groupOpening(string $pattern, int $index): ?array {
 		if (($pattern[$index + 1] ?? '') !== '?') {
@@ -153,7 +153,7 @@ final class PatternAtoms {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function isVariable(string $quantifier): bool {
 		if (preg_match('/^\{(\d+)(,(\d*))?\}$/', $quantifier, $match) !== 1) {
@@ -175,7 +175,7 @@ final class PatternAtoms {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function quantifierLength(string $pattern, int $index): int {
 		if (str_contains('*+?', $pattern[$index]) === true) {

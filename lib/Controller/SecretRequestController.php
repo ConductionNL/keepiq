@@ -41,7 +41,7 @@ use OCP\IUserSession;
  * Authenticated API controller for SecretRequest CRUD.
  *
  * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequestController extends OCSController {
 	/**
@@ -171,7 +171,7 @@ class SecretRequestController extends OCSController {
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $isReRequest is a field of the POST
 	 *   body that the Nextcloud router binds by name, not an internal switch a caller
@@ -239,7 +239,7 @@ class SecretRequestController extends OCSController {
 	 *
 	 * @return array<mixed>
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function fieldSchemas(): array {
 		$raw = $this->request->getParam('fieldSchemas');
@@ -347,7 +347,7 @@ class SecretRequestController extends OCSController {
 	 *
 	 * @throws InvalidArgumentException Propagated from the service.
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function dispatchCreate(
 		string $mode,

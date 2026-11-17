@@ -1,6 +1,6 @@
 {
 	"version": 1,
-	"source": "Payment card brands per openspec/changes/vault-card-brand-formats (design D1, D2, D7). Ranges from Discover's IIN range summary, Mastercard's BIN lookup FAQ and Wikipedia's payment card number table, and seeded from braintree/credit-card-type 10.3.1 (MIT, Copyright Braintree) where those agree. Researched 2026-11-05.",
+	"source": "Payment card brands per openspec/changes/archive/2026-11-17-vault-card-brand-formats (design D1, D2, D7). Ranges from Discover's IIN range summary, Mastercard's BIN lookup FAQ and Wikipedia's payment card number table, and seeded from braintree/credit-card-type 10.3.1 (MIT, Copyright Braintree) where those agree. Researched 2026-11-05.",
 	"brands": [
 		{
 			"id": "visa",

@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md
+ * @spec openspec/specs/vault-recovery-kit/spec.md
  */
 
 declare(strict_types=1);
@@ -32,7 +32,7 @@ use OCP\IDBConnection;
  *
  * @extends QBMapper<RecoveryKit>
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
  */
 class RecoveryKitMapper extends QBMapper {
 
@@ -41,7 +41,7 @@ class RecoveryKitMapper extends QBMapper {
 	 *
 	 * @param IDBConnection $db The database.
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
 	 */
 	public function __construct(IDBConnection $db) {
 		parent::__construct(db: $db, tableName: 'keepiq_recovery_kits', entityClass: RecoveryKit::class);
@@ -54,7 +54,7 @@ class RecoveryKitMapper extends QBMapper {
 	 *
 	 * @return RecoveryKit[]
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
 	 */
 	public function findByUser(string $userId): array {
 		$qb = $this->db->getQueryBuilder();
@@ -74,7 +74,7 @@ class RecoveryKitMapper extends QBMapper {
 	 *
 	 * @return int The number deleted.
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
 	 */
 	public function deleteForUser(string $userId, string $suiteId=''): int {
 		$qb = $this->db->getQueryBuilder();

@@ -64,7 +64,7 @@ use Throwable;
  * fresh-vs-re-request distinction that the spec turns on.
  *
  * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequestService implements SecretRequestServiceInterface {
 	/*
@@ -405,7 +405,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @return array<string,mixed> The values still to write through update()
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function holdBackAdditionalFields(Secret $secret, array $data, array $schemas): array {
 		$blob = $data[SecretRequestPolicy::ADDITIONAL_BLOB] ?? null;
@@ -436,7 +436,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function create(
 		string $secretId,
@@ -564,7 +564,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException When userId or requestedFields are missing
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createForUserVault(
 		string $userId,
@@ -652,7 +652,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException When the application has no active suite
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.3
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createForApplication(
 		string $secretId,
@@ -696,7 +696,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *                                  or the caller is not the owner.
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-3.4
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function createReRequest(
 		string $secretId,

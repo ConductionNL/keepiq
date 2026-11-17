@@ -65,7 +65,7 @@ describe('generateCsv -> parseCsv round-trip', () => {
 })
 
 describe('generateCsv and field schemas', () => {
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	// openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 	it('leaves the schemas out of the notes column', () => {
 		const csv = generateCsv([
 			{

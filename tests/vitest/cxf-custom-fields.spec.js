@@ -8,7 +8,7 @@
  * back. An SSH key's public key keeps the built-in form's name both ways, and
  * an imported field never takes a reserved name.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 
 import { describe, expect, it } from 'vitest'

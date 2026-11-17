@@ -15,7 +15,7 @@ const LINKED_SCHEMES = Object.freeze(['http:', 'https:', 'mailto:'])
  *
  * @param {string|null|undefined} value The stored URL.
  * @return {string|null} The URL when its scheme is linked, else null.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
  */
 export function linkHref(value) {
 	try {

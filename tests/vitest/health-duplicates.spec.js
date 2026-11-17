@@ -5,7 +5,7 @@
  * Unit tests for duplicate detection and the merge's field fold
  * (src/health/duplicates.js).
  *
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 
 import { describe, expect, it } from 'vitest'
@@ -140,7 +140,7 @@ describe('foldFields', () => {
 		expect(fold('text', [])).toEqual({})
 	})
 
-	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	// openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 	it('carries each schema to the name its value lands under', () => {
 		const hidden = { type: 'string', hidden: true }
 		const out = foldFields(

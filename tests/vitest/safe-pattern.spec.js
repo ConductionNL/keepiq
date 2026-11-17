@@ -7,7 +7,7 @@
  * differently, is refused. tests/Unit/Service/SafePatternTest.php checks the
  * same lists against the server's copy of the rules.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 
 import { describe, expect, it } from 'vitest'

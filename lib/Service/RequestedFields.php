@@ -27,7 +27,7 @@ use InvalidArgumentException;
  * The names of the fields a request asks for, and the schema of each requested
  * custom field by name. A name without a schema is plain text.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 final class RequestedFields {
 	/**
@@ -54,7 +54,7 @@ final class RequestedFields {
 	 *
 	 * @throws InvalidArgumentException With code 400 when `@schema` is among them
 	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 	 */
 	private function refuseSchemaMember(): void {
 		if (in_array(FieldSchemaShape::SCHEMA_MEMBER, $this->names, true) === true) {

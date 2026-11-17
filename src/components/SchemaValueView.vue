@@ -9,7 +9,7 @@
   value that does not fit its schema (written through the API, which cannot
   check) shows as plain text with a warning.
 
-  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+  @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 -->
 <template>
 	<div class="schema-value-view" :data-input="input">
@@ -134,7 +134,7 @@ export default {
 		 * How the value is shown.
 		 *
 		 * @return {string} The input.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 		 */
 		input() {
 			return inputOf(this.schema)
@@ -144,7 +144,7 @@ export default {
 		 * Whether the value is masked until revealed.
 		 *
 		 * @return {boolean} True for a hidden field.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 		 */
 		hidden() {
 			return isHiddenSchema(this.schema)
@@ -154,7 +154,7 @@ export default {
 		 * Whether the value fits its schema.
 		 *
 		 * @return {boolean} False for a value the API stored without a check.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		fits() {
 			return schemaError(this.value, this.schema) === ''
@@ -165,7 +165,7 @@ export default {
 		 * `javascript:` or `data:` value is never a live link.
 		 *
 		 * @return {string|null} The href, or null to show the value as text.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 		 */
 		href() {
 			return linkHref(this.value)
@@ -175,7 +175,7 @@ export default {
 		 * The value as read: Yes or No, a localized date, else as stored.
 		 *
 		 * @return {string} The text.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 		 */
 		shown() {
 			if (this.input === 'boolean') {
@@ -201,7 +201,7 @@ export default {
 		 * Hand the masked field its value.
 		 *
 		 * @return {Promise<string>} The value.
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 		 */
 		async resolve() {
 			return this.value
@@ -211,7 +211,7 @@ export default {
 		 * Show or hide a hidden JSON value; showing passes the guard first.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 		 */
 		async toggle() {
 			if (!this.revealed && this.guard) {

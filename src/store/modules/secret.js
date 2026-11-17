@@ -794,7 +794,7 @@ function keepOpenVersion(store, save) {
  * @param {Array<object>} schemas Each blob's request schemas by field name, in the same order.
  * @return {Promise<{fields: object|string|null, complete: boolean}>}
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 async function mergePendingFields(own, pending, cryptoKey, schemas) {
 	if (
