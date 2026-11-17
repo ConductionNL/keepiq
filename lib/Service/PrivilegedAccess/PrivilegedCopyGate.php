@@ -24,7 +24,7 @@ use OCA\Keepiq\Db\AccessRequest;
 use OCA\Keepiq\Db\AccessRequestMapper;
 use OCA\Keepiq\Db\PrivilegedLoginMapper;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\PrivilegedAccessRequiredException;
 use OCA\Keepiq\Service\AuditService;
@@ -70,7 +70,6 @@ class PrivilegedCopyGate {
 	 * @param IRequest              $request  The client address
 	 * @param ITimeFactory          $time     The clock
 	 * @param LoggerInterface       $logger   The logger
-	 * @param AuditEventFactory     $auditEvents The audit-event factory
 	 *
 	 * @return void
 	 */
@@ -82,7 +81,6 @@ class PrivilegedCopyGate {
 		private IRequest $request,
 		private ITimeFactory $time,
 		private LoggerInterface $logger,
-		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {
 	}//end __construct()
 
@@ -259,11 +257,15 @@ class PrivilegedCopyGate {
 	 * @param array<string,mixed> $metadata  The request, address and channel
 	 *
 	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AuditEvent::forUser() is the audit
+	 *   value object's named constructor. Injecting AuditEventFactory instead
+	 *   would add an eighth constructor parameter (Hydra gate 122).
 	 */
 	private function record(Secret $secret, string $userId, string $eventType, array $metadata): void {
 		try {
 			$this->audit->record(
-				$this->auditEvents->forUser(
+				AuditEvent::forUser(
 					actorId: $userId,
 					eventType: $eventType,
 					objectType: 'secret',
