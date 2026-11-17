@@ -181,11 +181,22 @@ function isPlainKey(kind: FormKind, key: string): boolean {
 	return (kind === 'card' || kind === 'identity') && key !== '' && !parsePayload(key)
 }
 
+/** The name a field called `@schema` that holds no schema map is kept under, as the web app does. */
+export const RENAMED_SCHEMA_FIELD = `${SCHEMA_MEMBER} (imported)`
+
+/** Whether `@schema` holds a schema map, an object of objects; anything else is a field a person named so. */
+function isSchemaMapText(value: string): boolean {
+	const parsed = parseObject(value)
+	return parsed !== null && Object.values(parsed).every((schema) => typeof schema === 'object' && schema !== null && !Array.isArray(schema))
+}
+
 /** The first field named Notes, in any case, is the notes; every other one is an additional field. */
 function takeFields(values: FormValues, additionalFields: Record<string, string>): void {
 	for (const [name, value] of Object.entries(additionalFields)) {
-		if (name === SCHEMA_MEMBER) {
+		if (name === SCHEMA_MEMBER && isSchemaMapText(value)) {
 			values.schemas = value
+		} else if (name === SCHEMA_MEMBER) {
+			if (!Object.hasOwn(additionalFields, RENAMED_SCHEMA_FIELD)) values.fields.push(customField(RENAMED_SCHEMA_FIELD, value))
 		} else if (values.notesKey === null && name.toLowerCase() === NOTES) {
 			values.notes = value
 			values.notesKey = name

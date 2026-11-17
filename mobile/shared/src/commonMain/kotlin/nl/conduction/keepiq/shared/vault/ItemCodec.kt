@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import nl.conduction.keepiq.shared.crypto.Encoding
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
@@ -124,6 +125,19 @@ class DecryptedItem(
         }
 
     /**
+     * Whether an extra field is shown masked until revealed: hidden in the
+     * web app's field schemas, a `{ value, kind: "hidden" }` entry, or a member
+     * a built-in type keeps a secret in.
+     */
+    fun masksExtra(name: String): Boolean {
+        val schema = (additionalFields?.get(ItemCodec.SCHEMA_FIELD) as? JsonObject)?.get(name) as? JsonObject
+        val hidden = (schema?.get("hidden") as? JsonPrimitive)?.booleanOrNull == true ||
+            (schema?.get("format") as? JsonPrimitive)?.contentOrNull == "password"
+        val kinded = ((additionalFields?.get(name) as? JsonObject)?.get("kind") as? JsonPrimitive)?.contentOrNull == "hidden"
+        return hidden || kinded || name in ItemCodec.SECRET_TYPE_MEMBERS
+    }
+
+    /**
      * The TOTP parameters: an Authenticator item's value, else the item's
      * own `totp` field; null when there is none or it is not readable.
      */
@@ -221,6 +235,8 @@ object ItemCodec {
     const val NOTES_FIELD = "notes"
     /** The web app's member holding each field's schema: not a field, kept as it is on save. */
     const val SCHEMA_FIELD = "@schema"
+    /** The members the web app's built-in types keep a secret in (src/utils/builtinTypeFields.js). */
+    val SECRET_TYPE_MEMBERS = setOf("Private key", "Passphrase", "API secret")
     const val MAX_NAME_CHARS = 255
     const val MAX_FIELD_CHARS = 4096
     const val MAX_PAYLOAD_BYTES = 65536

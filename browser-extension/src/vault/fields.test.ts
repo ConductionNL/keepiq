@@ -181,6 +181,14 @@ describe('fromItem and diffDraft', () => {
 		const patch = patchOf(fetched, 'login', (values) => ({ fields: [...values.fields, customField('port', '22')] }))
 		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ pin: '1234', port: '22', '@schema': { pin: { type: 'string', hidden: true } } })
 	})
+
+	it('keeps a field someone named @schema, under the name the web app gives it', () => {
+		const fetched = item({ additionalFields: { pin: '1234', '@schema': 'my value' } })
+		const form = fromItem(fetched, 'login')
+		expect(form.fields.map((field) => [field.name, field.value])).toEqual([['pin', '1234'], ['@schema (imported)', 'my value']])
+		expect(form.schemas).toBeNull()
+		expect(JSON.parse(blobText(toDraft(form, 'login').additionalFields!))).toEqual({ pin: '1234', '@schema (imported)': 'my value' })
+	})
 })
 
 describe('blobText', () => {
