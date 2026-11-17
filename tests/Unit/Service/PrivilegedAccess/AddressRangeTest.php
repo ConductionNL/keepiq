@@ -56,6 +56,7 @@ class AddressRangeTest extends TestCase {
 			'an IPv4-mapped address is not the IPv4 one' => ['192.0.2.0/24', '::ffff:192.0.2.1', false],
 			'garbage never falls in a range' => ['0.0.0.0/0', 'not-an-ip', false],
 			'an empty address never falls in a range' => ['0.0.0.0/0', '', false],
+			'an address with a NUL byte never falls in a range' => ['0.0.0.0/0', "192.0.2.1\0trailer", false],
 		];
 	}//end membership()
 
@@ -93,6 +94,7 @@ class AddressRangeTest extends TestCase {
 			'a prefix that is not a number' => ['192.0.2.0/abc'],
 			'an empty prefix' => ['192.0.2.0/'],
 			'an address out of range' => ['192.0.2.256/24'],
+			'an address with a NUL byte' => ["192.0.2.0\0/24"],
 		];
 	}//end invalid()
 
