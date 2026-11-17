@@ -194,7 +194,8 @@ class AttachmentController extends OCSController {
 	 *
 	 * @no-admin-idor-exempt scoped in the service. AttachmentService::addGrant()
 	 * loads the attachment's source secret through loadOwnedSecret() with the
-	 * session user, so only the owner adds a grant.
+	 * session user, so only the owner adds a grant. Not yet checked: that
+	 * copySecretId is a copy of that source held by recipientId (keepiq#1876).
 	 */
 	#[NoAdminRequired]
 	public function addGrant(
