@@ -261,6 +261,50 @@ class SecretRequestPolicy {
 	}//end requireRequestableType()
 
 	/**
+	 * Refuse a link whose Secret is now of a type that cannot be requested, as
+	 * requireRequestableType() does, but with a message that does not tell the
+	 * anonymous recipient what the Secret became.
+	 *
+	 * @param string|null $typeId The Secret's type id
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException With code 403 for a type in NOT_REQUESTABLE_TYPE_NAMES.
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function requireRequestableByLink(?string $typeId): void {
+		try {
+			$this->requireRequestableType(typeId: $typeId);
+		} catch (InvalidArgumentException $e) {
+			throw new InvalidArgumentException(
+				message: self::REFUSALS[self::REASON_UNAVAILABLE]['message'],
+				code: $e->getCode(),
+				previous: $e
+			);
+		}
+	}//end requireRequestableByLink()
+
+	/**
+	 * The reason a refused link gives: its classified reason, or, for a request
+	 * that is open but whose Secret became a type that cannot be requested,
+	 * `unavailable`, so the recipient is not told the type.
+	 *
+	 * @param string $reason The reason refusalReason() classified
+	 *
+	 * @return string One of self::REASONS
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function refusalOfLink(string $reason): string {
+		if ($reason === self::REASON_UNKNOWN) {
+			return self::REASON_UNAVAILABLE;
+		}
+
+		return $reason;
+	}//end refusalOfLink()
+
+	/**
 	 * The system name of a Secret's type, for the public fill page.
 	 *
 	 * The type is plaintext metadata on a Secret, and the fill page needs it to

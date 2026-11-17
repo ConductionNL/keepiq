@@ -1896,10 +1896,16 @@ class SecretRequestServiceTest extends TestCase {
 		$this->mapper->method('findByToken')->willReturn($this->buildPending());
 		$this->secretMapper->method('findById')->willReturn($this->cardSecret());
 
-		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionCode(403);
+		try {
+			$this->service->getByToken(token: 'tok-good');
+			$this->fail('A link onto a card must be refused');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(403, $e->getCode());
+			// The anonymous recipient is not told what the Secret became.
+			$this->assertSame('Request is no longer available', $e->getMessage());
+		}
 
-		$this->service->getByToken(token: 'tok-good');
+		$this->assertSame(SecretRequestPolicy::REASON_UNAVAILABLE, $this->service->refusalReason(token: 'tok-good'));
 	}//end testALinkIsRefusedOnceItsSecretBecameACard()
 
 	/**
@@ -1939,6 +1945,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage('Not authorized for this secret');
+		$this->expectExceptionCode(403);
 
 		$this->service->create(
 			secretId: 'sec-1',
@@ -2007,6 +2014,7 @@ class SecretRequestServiceTest extends TestCase {
 			$this->fail('A fill onto a card must be refused');
 		} catch (InvalidArgumentException $e) {
 			$this->assertSame(403, $e->getCode());
+			$this->assertSame('Request is no longer available', $e->getMessage());
 			$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
 		}
 	}//end testAFillIsRefusedOnceItsSecretBecameACard()

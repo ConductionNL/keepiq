@@ -123,10 +123,27 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 */
 	public function getByToken(string $token): SecretRequest {
 		$request = $this->policy->requireOpenByToken(token: $token);
-		$this->requireRequestableSecret(secretId: $request->getSecretId());
+		$this->policy->requireRequestableByLink(typeId: $this->typeIdOf(secretId: $request->getSecretId()));
 
 		return $request;
 	}//end getByToken()
+
+	/**
+	 * The type of a Secret, or null when it cannot be found.
+	 *
+	 * @param string $secretId The Secret ID
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	private function typeIdOf(string $secretId): ?string {
+		try {
+			return $this->secretMapper->findById($secretId)->getTypeId();
+		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
+			return null;
+		}
+	}//end typeIdOf()
 
 	/**
 	 * Why a token cannot be filled, as a machine-readable reason.
@@ -142,7 +159,14 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 	 */
 	public function refusalReason(string $token): string {
-		return $this->policy->refusalReason(token: $token);
+		$reason = $this->policy->refusalReason(token: $token);
+		try {
+			$this->getByToken(token: $token);
+		} catch (InvalidArgumentException) {
+			return $this->policy->refusalOfLink(reason: $reason);
+		}
+
+		return $reason;
 	}//end refusalReason()
 
 	/**
@@ -277,7 +301,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 
 		$secret = $this->fillTarget(request: $request);
 		// The owner may have changed the Secret's type since the request was made.
-		$this->policy->requireRequestableType(typeId: $secret->getTypeId());
+		$this->policy->requireRequestableByLink(typeId: $secret->getTypeId());
 		$this->writeFilledValues(secret: $secret, data: $data);
 	}//end persistFilledValues()
 
@@ -440,10 +464,6 @@ class SecretRequestService implements SecretRequestServiceInterface {
 			throw new InvalidArgumentException(message: 'requestedFields cannot be empty');
 		}
 
-		if (in_array(FieldSchemaShape::SCHEMA_MEMBER, $names, true) === true) {
-			throw new InvalidArgumentException(message: FieldSchemaShape::SCHEMA_MEMBER . ' holds the field schemas and cannot be requested');
-		}
-
 		if ($userId === '') {
 			throw new InvalidArgumentException(message: 'userId is required');
 		}
@@ -495,7 +515,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException For another user's Secret, or with code 403 for a type that cannot be requested.
+	 * @throws InvalidArgumentException With code 403 for another user's Secret or for a type that cannot be requested.
 	 *
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
@@ -507,7 +527,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		}
 
 		if ($userId !== null && $secret->getOwnerType() === 'user' && $secret->getOwnerId() !== $userId) {
-			throw new InvalidArgumentException(message: 'Not authorized for this secret');
+			throw new InvalidArgumentException(message: 'Not authorized for this secret', code: 403);
 		}
 
 		$this->policy->requireRequestableType(typeId: $secret->getTypeId());
