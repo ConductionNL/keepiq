@@ -25,7 +25,10 @@ namespace OCA\Keepiq\Service;
  * A requester sets a field's pattern and the recipient's browser runs it with no time limit, so a pattern that can
  * backtrack for ever is refused, and so is any construct only one of PCRE and JavaScript reads. A repeated group must
  * hold no quantifier and no alternation at any depth: `(a+)+`, `(a|aa)+` and `(a+){10}` are refused; `?` repeats
- * nothing, so it may follow such a group. src/utils/safePattern.js holds the same rules for the browser.
+ * nothing, so it may follow such a group. Runs of open-ended quantifiers backtrack polynomially, about n to the power
+ * of their count, plus one when the pattern is not anchored with `^`; that degree is held to MAX_DEGREE, and the
+ * browser tests at most 256 characters, which keeps a test to milliseconds. src/utils/safePattern.js holds the same
+ * rules for the browser.
  *
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
@@ -36,6 +39,13 @@ final class SafePattern {
 	 * @var integer
 	 */
 	public const MAX_LENGTH = 500;
+
+	/**
+	 * The most open-ended quantifiers, plus one for a pattern not anchored with `^`.
+	 *
+	 * @var integer
+	 */
+	private const MAX_DEGREE = 3;
 
 	/**
 	 * What a quantifier repeats: a plain atom.
@@ -57,6 +67,20 @@ final class SafePattern {
 	 * @var string
 	 */
 	private string $pattern = '';
+
+	/**
+	 * How many open-ended quantifiers the pattern has.
+	 *
+	 * @var integer
+	 */
+	private int $unbounded = 0;
+
+	/**
+	 * Whether the pattern has an alternation outside every group, which undoes a leading `^`.
+	 *
+	 * @var boolean
+	 */
+	private bool $topAlternation = false;
 
 	/**
 	 * Constructor for SafePattern.
@@ -105,10 +129,12 @@ final class SafePattern {
 	 * @return bool True when nothing unsafe was found
 	 */
 	private function scan(string $pattern): bool {
-		$this->pattern = $pattern;
-		$this->stack   = [['inner' => false, 'look' => false]];
-		$last          = null;
-		$index         = 0;
+		$this->pattern        = $pattern;
+		$this->stack          = [['inner' => false, 'look' => false]];
+		$this->unbounded      = 0;
+		$this->topAlternation = false;
+		$last  = null;
+		$index = 0;
 		while ($index < strlen($pattern)) {
 			$step = $this->token(index: $index, last: $last);
 			if ($step === null) {
@@ -118,8 +144,19 @@ final class SafePattern {
 			[$index, $last] = $step;
 		}
 
-		return count($this->stack) === 1;
+		return count($this->stack) === 1 && $this->withinDegree() === true;
 	}//end scan()
+
+	/**
+	 * Whether the open-ended quantifiers, plus one for a pattern not anchored with `^`, stay within MAX_DEGREE.
+	 *
+	 * @return bool
+	 */
+	private function withinDegree(): bool {
+		$anchored = str_starts_with($this->pattern, '^') === true && $this->topAlternation === false;
+
+		return $this->unbounded + (int)($anchored === false) <= self::MAX_DEGREE;
+	}//end withinDegree()
 
 	/**
 	 * Read one token.
@@ -226,6 +263,10 @@ final class SafePattern {
 	 */
 	private function alternate(int $index): array {
 		$this->stack[array_key_last($this->stack)]['inner'] = true;
+		if (count($this->stack) === 1) {
+			$this->topAlternation = true;
+		}
+
 		return [$index + 1, null];
 	}//end alternate()
 
@@ -272,6 +313,10 @@ final class SafePattern {
 		}
 
 		$this->stack[array_key_last($this->stack)]['inner'] = true;
+		if ($this->atoms->isOpenEnded(quantifier: substr($this->pattern, $index, $length)) === true) {
+			$this->unbounded++;
+		}
+
 		$next   = $index + $length;
 		$suffix = $this->pattern[$next] ?? '';
 		if ($suffix === '+') {

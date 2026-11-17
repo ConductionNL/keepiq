@@ -6,7 +6,11 @@
  * reads the same in JavaScript and in PHP's PCRE. A requester sets it, and the
  * recipient's browser runs it with no time limit, so a pattern that can
  * backtrack for ever is refused, and so is any construct only one of the two
- * dialects reads. lib/Service/SafePattern.php holds the same rules.
+ * dialects reads. Runs of open-ended quantifiers backtrack polynomially, about
+ * n to the power of their count, plus one when the pattern is not anchored
+ * with `^`; that degree is held to MAX_DEGREE and the value to
+ * MAX_PATTERN_INPUT, which keeps a test to milliseconds.
+ * lib/Service/SafePattern.php holds the same rules.
  *
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
@@ -15,7 +19,13 @@
 export const MAX_PATTERN_LENGTH = 500
 
 /** The longest value a pattern is tested against. */
-export const MAX_PATTERN_INPUT = 1000
+export const MAX_PATTERN_INPUT = 256
+
+/** The most open-ended quantifiers, plus one for a pattern not anchored with `^`. */
+const MAX_DEGREE = 3
+
+/** A counted quantifier with a higher upper bound counts as open-ended. */
+const MAX_BOUND = 64
 
 /** Escaped characters that read alike in both dialects, outside a class. */
 const ESCAPES = 'dDwWsSbBtnrf^$\\.*+?()[]{}|/'
@@ -31,7 +41,7 @@ export function isSafePattern(pattern) {
 	if (
 		typeof pattern !== 'string'
 		|| pattern === ''
-		|| pattern.length > MAX_PATTERN_LENGTH
+		|| [...pattern].length > MAX_PATTERN_LENGTH
 	) {
 		return false
 	}
@@ -53,7 +63,7 @@ export function isSafePattern(pattern) {
  * @return {boolean} True when nothing unsafe was found.
  */
 function scan(p) {
-	const stack = [{ inner: false, look: false }]
+	const stack = [{ inner: false, look: false, unbounded: 0, alternation: false }]
 	let last = null
 	let i = 0
 	while (i < p.length) {
@@ -64,7 +74,8 @@ function scan(p) {
 		i = step.next
 		last = step.last
 	}
-	return stack.length === 1
+	const anchored = p.startsWith('^') && !stack[0].alternation
+	return stack.length === 1 && stack[0].unbounded + (anchored ? 0 : 1) <= MAX_DEGREE
 }
 
 /**
@@ -95,11 +106,12 @@ function token(p, i, stack, last) {
 	}
 	if (c === '|') {
 		top.inner = true
+		stack[0].alternation ||= stack.length === 1
 		return { next: i + 1, last: null }
 	}
 	const length = quantifierLength(p, i)
 	if (length > 0) {
-		return quantify(p, i, length, top, last)
+		return quantify(p, i, length, stack, last)
 	}
 	if ('{}]'.includes(c)) {
 		// A lone brace or bracket is a literal in PCRE and an error in JavaScript.
@@ -161,18 +173,21 @@ function closeGroup(i, stack) {
  * @param {string} p The pattern.
  * @param {number} i Where the quantifier starts.
  * @param {number} length Its length.
- * @param {{inner: boolean}} top The group it is in.
+ * @param {Array<{inner: boolean, unbounded?: number}>} stack The open groups; the last is the one it is in.
  * @param {{group: boolean, inner: boolean}|null} last What it repeats.
  * @return {{next: number, last: null}|null}
  */
-function quantify(p, i, length, top, last) {
+function quantify(p, i, length, stack, last) {
 	if (last === null) {
 		return null
 	}
 	if (last.group && last.inner && p[i] !== '?') {
 		return null
 	}
-	top.inner = true
+	stack[stack.length - 1].inner = true
+	if (isOpenEnded(p.slice(i, i + length))) {
+		stack[0].unbounded += 1
+	}
 	let next = i + length
 	if (p[next] === '+') {
 		// Possessive: PCRE only.
@@ -182,6 +197,18 @@ function quantify(p, i, length, top, last) {
 		next += 1
 	}
 	return { next, last: null }
+}
+
+/**
+ * Whether a quantifier is open-ended: `*`, `+`, `{n,}`, or an upper bound
+ * above MAX_BOUND.
+ *
+ * @param {string} quantifier The quantifier.
+ * @return {boolean}
+ */
+function isOpenEnded(quantifier) {
+	const upper = /,(\d*)\}$/.exec(quantifier)
+	return '*+'.includes(quantifier) || (upper !== null && (upper[1] === '' || Number(upper[1]) > MAX_BOUND))
 }
 
 /**

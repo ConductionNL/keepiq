@@ -50,6 +50,10 @@ class SafePatternTest extends TestCase {
 			'a hex escape and an escaped dash' => ['^\x41[\-a-z]*$'],
 			'a lookahead'       => ['(?=.*\d)\w{8,}'],
 			'word boundaries'   => ['\bfoo\b'],
+			'three open-ended quantifiers, anchored' => ['^[^@\s]+@[^@\s]+\.[^@\s]+$'],
+			'two open-ended quantifiers, unanchored' => ['\d+-\d+'],
+			'small bounds'      => ['^\d{1,30}\d{1,30}\d{1,30}\d{1,30}$'],
+			'300 characters outside the BMP' => [str_repeat("\u{1F600}", 300)],
 		];
 	}//end safe()
 
@@ -66,6 +70,11 @@ class SafePatternTest extends TestCase {
 			'a counted nested quantifier' => ['^(a+){10}$'],
 			'a nested quantifier'         => ['^(a+)+$'],
 			'a repeated optional'         => ['(a?){5}'],
+			'four open-ended quantifiers' => ['^\d*\d*\d*\d*x$'],
+			'eight dot-stars'             => ['^.*.*.*.*.*.*.*.*=$'],
+			'three, unanchored'           => ['\d*\d*\d*x'],
+			'an anchor undone by an alternation' => ['a|^\d*\d*\d*x'],
+			'large bounds'                => ['^\d{0,99}\d{0,99}\d{0,99}\d{0,99}x$'],
 			'an inline flag'              => ['(?i)abc'],
 			'a possessive quantifier'     => ['a++b'],
 			'an atomic group'             => ['(?>a+)b'],

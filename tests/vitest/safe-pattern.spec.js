@@ -24,6 +24,12 @@ const SAFE = [
 	'^\\x41[\\-a-z]*$',
 	'(?=.*\\d)\\w{8,}',
 	'\\bfoo\\b',
+	// Three open-ended quantifiers, anchored; two, unanchored; small bounds.
+	'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$',
+	'\\d+-\\d+',
+	'^\\d{1,30}\\d{1,30}\\d{1,30}\\d{1,30}$',
+	// 300 characters, though 600 UTF-16 units.
+	'\u{1F600}'.repeat(300),
 ]
 
 const UNSAFE = [
@@ -34,6 +40,12 @@ const UNSAFE = [
 	'^(a+){10}$',
 	'^(a+)+$',
 	'(a?){5}',
+	// Polynomial backtracking: too many open-ended quantifiers.
+	'^\\d*\\d*\\d*\\d*x$',
+	'^.*.*.*.*.*.*.*.*=$',
+	'\\d*\\d*\\d*x',
+	'a|^\\d*\\d*\\d*x',
+	'^\\d{0,99}\\d{0,99}\\d{0,99}\\d{0,99}x$',
 	// PCRE only.
 	'(?i)abc',
 	'a++b',
@@ -77,6 +89,18 @@ describe('safe patterns', () => {
 		expect(schemaError('a'.repeat(MAX_PATTERN_INPUT + 1), schema)).toBe(
 			`Use at most ${MAX_PATTERN_INPUT} characters.`,
 		)
+	})
+
+	it('drops an imported unsafe pattern from an empty field, keeping the rest of its schema', () => {
+		const blob = {
+			Code: '',
+			'@schema': { Code: { type: 'string', maxLength: 8, pattern: '^\\d*\\d*\\d*\\d*x$' } },
+		}
+
+		expect(fitImportedBlob(blob)).toEqual({
+			Code: '',
+			'@schema': { Code: { type: 'string', maxLength: 8 } },
+		})
 	})
 
 	it('drops an imported unsafe pattern, keeping the value and its mask', () => {

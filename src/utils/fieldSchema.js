@@ -726,9 +726,26 @@ function schemasFor(fields, schemas) {
 }
 
 /**
+ * A schema without its pattern when the pattern is not safe to run.
+ *
+ * @param {object} schema The schema.
+ * @return {object} The schema to keep.
+ */
+function withoutUnsafePattern(schema) {
+	if (schema?.pattern === undefined || isSafePattern(schema.pattern)) {
+		return schema
+	}
+	const rest = { ...schema }
+	delete rest.pattern
+	return rest
+}
+
+/**
  * An imported blob with the schema dropped from every field whose value does
  * not fit it, so the value is kept and reads as text. A hidden field stays
- * hidden: a mask is not a limit a value can fail.
+ * hidden: a mask is not a limit a value can fail. A pattern that is not safe
+ * to run is dropped whatever the value, also from an empty field, which no
+ * value could ever fill.
  *
  * @param {object|null|undefined} blob The imported additional fields.
  * @return {object|null|undefined} The blob to store.
@@ -740,7 +757,8 @@ export function fitImportedBlob(blob) {
 	}
 	const fields = fieldsOf(blob)
 	const fitting = Object.fromEntries(
-		Object.entries(schemasOf(blob)).map(([name, schema]) => {
+		Object.entries(schemasOf(blob)).map(([name, stored]) => {
+			const schema = withoutUnsafePattern(stored)
 			if (schemaError(fields[name], schema) === '') {
 				return [name, schema]
 			}

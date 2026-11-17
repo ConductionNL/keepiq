@@ -36,6 +36,13 @@ final class PatternAtoms {
 	private const ESCAPES = 'dDwWsSbBtnrf^$\\.*+?()[]{}|/';
 
 	/**
+	 * A counted quantifier with a higher upper bound counts as open-ended.
+	 *
+	 * @var integer
+	 */
+	private const MAX_BOUND = 64;
+
+	/**
 	 * The length of an escape, 0 when it is not one both dialects read alike. Back-references are refused: they read
 	 * differently and backtrack.
 	 *
@@ -144,6 +151,27 @@ final class PatternAtoms {
 
 		return null;
 	}//end groupOpening()
+
+	/**
+	 * Whether a quantifier is open-ended: `*`, `+`, `{n,}`, or an upper bound above MAX_BOUND.
+	 *
+	 * @param string $quantifier The quantifier
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function isOpenEnded(string $quantifier): bool {
+		if ($quantifier === '*' || $quantifier === '+') {
+			return true;
+		}
+
+		if (preg_match('/,(\d*)\}$/', $quantifier, $match) !== 1) {
+			return false;
+		}
+
+		return $match[1] === '' || (int)$match[1] > self::MAX_BOUND;
+	}//end isOpenEnded()
 
 	/**
 	 * The length of a quantifier, 0 when there is none.
