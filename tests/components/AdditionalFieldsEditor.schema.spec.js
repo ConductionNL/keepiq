@@ -82,6 +82,36 @@ describe('AdditionalFieldsEditor schemas', () => {
 	})
 })
 
+describe('AdditionalFieldsEditor hidden values', () => {
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	it.each([
+		['multi-line', { type: 'string', format: 'text', hidden: true }, 'masked-text-area-toggle'],
+		['JSON', { type: 'object', hidden: true }, 'schema-value-input-json-toggle'],
+	])('keeps a hidden %s value out of the page until Show', async (_, schema, toggle) => {
+		const value = schema.type === 'object' ? '{"secret":"s3cr3t-recovery"}' : 's3cr3t-recovery'
+		const wrapper = mountEditor([{ name: 'Recovery', value, schema }])
+
+		const input = wrapper.findComponent({ name: 'SchemaValueInput' })
+		expect(wrapper.html()).not.toContain('s3cr3t-recovery')
+		expect(input.findComponent({ name: 'NcTextArea' }).exists()).toBe(false)
+		expect(input.findComponent({ name: 'CnJsonViewer' }).exists()).toBe(false)
+
+		await wrapper.find(`[data-testid="${toggle}"]`).trigger('click')
+		const shown = schema.type === 'object'
+			? input.findComponent({ name: 'CnJsonViewer' }).props('value')
+			: input.findComponent({ name: 'NcTextArea' }).props('modelValue')
+		expect(shown).toBe(value)
+	})
+
+	it('opens a hidden JSON value that is empty, so it can be typed at once', () => {
+		const wrapper = mountEditor([
+			{ name: 'Account', value: '', schema: { type: 'object', hidden: true } },
+		])
+
+		expect(wrapper.findComponent({ name: 'CnJsonViewer' }).exists()).toBe(true)
+	})
+})
+
 describe('AdditionalFieldsEditor names of the type', () => {
 	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
 	it('refuses a custom field named like one of the type\u2019s own fields', async () => {
