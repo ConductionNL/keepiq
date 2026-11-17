@@ -154,6 +154,8 @@ item:
   fillName: "{name} ausfüllen"
   insecureTitle: Möchtest du dieses Login trotzdem ausfüllen?
   insecureWarning: "Warnung: Dies ist eine ungesicherte HTTP-Seite. Alles, was du sendest, können andere möglicherweise sehen und ändern. Dieses Login wurde ursprünglich auf einer sicheren (HTTPS-)Seite gespeichert."
+  repromptTitle: "Gib dein Master-Passwort ein, um diesen Eintrag auszufüllen"
+  repromptHelp: "Dieser Eintrag fragt bei jedem Ausfüllen nach deinem Master-Passwort. Das schützt einen entsperrten Bildschirm, keine veränderte Erweiterung."
   cardInsecureTitle: Diese Karte auf einer unsicheren Website ausfüllen?
   cardInsecureWarning: Diese Website ist nicht sicher. Jeder im Netzwerk könnte die ausgefüllten Kartendaten lesen.
   crossSiteTitle: Auch auf {hosts} ausfüllen?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Sein Verschlüsselungsschlüssel wurde widerrufen.
   suiteCompromised: Mit einem kompromittierten Schlüssel verschlüsselt, daher kann er hier nicht geöffnet werden. Die Keepiq-Web-App zeigt, ob er wiederhergestellt werden kann.
   migrationFailed: Er konnte bei der Wiederherstellung nach der Kompromittierung nicht auf deinen neuen Schlüssel übertragen werden. Der gespeicherte Wert bleibt erhalten, kann aber nicht geöffnet werden.
+  privilegedAccess: Der Eigentümer hat für dich jetzt kein Zeitfenster freigegeben, oder nicht von dieser Adresse aus.
 
 detail:
   item: Eintrag

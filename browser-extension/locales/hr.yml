@@ -154,6 +154,8 @@ item:
   fillName: Ispuni {name}
   insecureTitle: Želite li ipak ispuniti ovu prijavu?
   insecureWarning: "Upozorenje: ovo je nezaštićena HTTP stranica i drugi bi mogli vidjeti i promijeniti sve što pošaljete. Ova je prijava izvorno spremljena na zaštićenoj (HTTPS) stranici."
+  repromptTitle: "Unesite glavnu lozinku da biste ispunili ovu stavku"
+  repromptHelp: "Ova stavka traži glavnu lozinku pri svakom ispunjavanju. To štiti otključan zaslon, a ne izmijenjeno proširenje."
   cardInsecureTitle: Ispuniti ovu karticu na nesigurnoj stranici?
   cardInsecureWarning: Ova stranica nije sigurna. Svatko na mreži mogao bi pročitati ispunjene podatke kartice.
   crossSiteTitle: Ispuniti i na {hosts}?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Njezin ključ za šifriranje je opozvan.
   suiteCompromised: Šifrirana je kompromitiranim ključem pa se ovdje ne može otvoriti. Web-aplikacija Keepiq prikazuje može li se oporaviti.
   migrationFailed: Tijekom oporavka od kompromitacije nije je bilo moguće prenijeti na vaš novi ključ. Spremljena vrijednost zadržava se, ali se ne može otvoriti.
+  privilegedAccess: Vlasnik vam sada nije odobrio vremenski okvir ili ne s ove adrese.
 
 detail:
   item: Stavka

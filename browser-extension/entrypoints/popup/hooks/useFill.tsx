@@ -4,12 +4,16 @@ import { answered, answeredOnlyHost } from '@/src/autofill/form-answers'
 import { GUARD_MS } from '@/src/autofill/visibility'
 import type { FillResult, FormConfirmation, FormQuestion } from '@/src/messages'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { RepromptDialog } from '../components/RepromptDialog'
 import { useShell } from '../shell-context'
 import { isPopout, type CurrentTab } from './useCurrentTab'
 import { request } from './useMessage'
 
-/** The answers a `fill.request` carries: a login's insecure page, or every answer so far for a card or identity. */
-type Answers = { confirmedInsecure?: true; confirmed?: FormConfirmation }
+/**
+ * The answers a `fill.request` carries: a login's insecure page, or every answer so far for a card or identity;
+ * a flagged item's master password rides along to the end of this one fill, and is asked again for the next.
+ */
+type Answers = { confirmedInsecure?: true; confirmed?: FormConfirmation; masterPassword?: string }
 
 /** A card's or identity's open question; `previous` the answers it builds on, since the background keeps none. */
 interface FormAsk {
@@ -17,7 +21,11 @@ interface FormAsk {
 	question: FormQuestion
 	previous: FormConfirmation | undefined
 	insecureAnswered: boolean
+	masterPassword?: string
 }
+
+/** The master password as a spreadable field, so a fill without one sends none. */
+const withPassword = (masterPassword: string | undefined): { masterPassword?: string } => masterPassword === undefined ? {} : { masterPassword }
 
 // A second-step page fills only the code.
 const filledSomething = (reply: FillResult | undefined) => reply != null && (reply.filled !== 'none' || reply.code)
@@ -29,8 +37,9 @@ const filledSomething = (reply: FillResult | undefined) => reply != null && (rep
 export function useFill(tab: CurrentTab | undefined): { fill: (itemId: string) => void; dialog: ReactNode } {
 	const { toast, refreshState } = useShell()
 	// `savedSecure` false: the login was saved with http, so the warning does not claim an https origin.
-	const [insecure, setInsecure] = useState<{ itemId: string; savedSecure: boolean } | null>(null)
+	const [insecure, setInsecure] = useState<{ itemId: string; savedSecure: boolean; masterPassword?: string } | null>(null)
 	const [form, setForm] = useState<FormAsk | null>(null)
+	const [reprompt, setReprompt] = useState<{ itemId: string; answers: Answers; wrong: boolean } | null>(null)
 	// A ref, not a disabled button: a focused button that becomes disabled drops focus to `<body>`.
 	const inFlight = useRef(false)
 	const tabId = tab?.id
@@ -40,8 +49,10 @@ export function useFill(tab: CurrentTab | undefined): { fill: (itemId: string) =
 		inFlight.current = true
 		try {
 			const reply = await request({ kind: 'fill.request', itemId, tabId, ...answers })
-			if (reply?.needsInsecureConfirm) return setInsecure({ itemId, savedSecure: reply.savedSecure !== false })
-			if (reply?.needsFormConfirm) return setForm({ itemId, question: reply.needsFormConfirm, previous: answers.confirmed, insecureAnswered: false })
+			if (reply?.needsReprompt) return setReprompt({ itemId, answers, wrong: reply.wrongMasterPassword === true })
+			const { masterPassword } = answers
+			if (reply?.needsInsecureConfirm) return setInsecure({ itemId, savedSecure: reply.savedSecure !== false, ...withPassword(masterPassword) })
+			if (reply?.needsFormConfirm) return setForm({ itemId, question: reply.needsFormConfirm, previous: answers.confirmed, insecureAnswered: false, ...withPassword(masterPassword) })
 			if (filledSomething(reply)) {
 				if (!isPopout) window.close()
 				return
@@ -57,7 +68,18 @@ export function useFill(tab: CurrentTab | undefined): { fill: (itemId: string) =
 	const fill = useCallback((itemId: string) => void send(itemId, {}), [send])
 
 	let dialog: ReactNode = null
-	if (insecure !== null) {
+	if (reprompt !== null) {
+		dialog = (
+			<RepromptDialog
+				wrong={reprompt.wrong}
+				onSubmit={(masterPassword) => {
+					setReprompt(null)
+					void send(reprompt.itemId, { ...reprompt.answers, masterPassword })
+				}}
+				onCancel={() => setReprompt(null)}
+			/>
+		)
+	} else if (insecure !== null) {
 		dialog = (
 			<ConfirmDialog
 				title={i18n.t('item.insecureTitle')}
@@ -65,7 +87,7 @@ export function useFill(tab: CurrentTab | undefined): { fill: (itemId: string) =
 					label: i18n.t('item.fill'),
 					onClick: () => {
 						setInsecure(null)
-						void send(insecure.itemId, { confirmedInsecure: true })
+						void send(insecure.itemId, { confirmedInsecure: true, ...withPassword(insecure.masterPassword) })
 					},
 				}]}
 				onCancel={() => setInsecure(null)}
@@ -78,7 +100,7 @@ export function useFill(tab: CurrentTab | undefined): { fill: (itemId: string) =
 	} else if (form !== null) {
 		const answer = (confirmed: FormConfirmation) => {
 			setForm(null)
-			void send(form.itemId, { confirmed })
+			void send(form.itemId, { confirmed, ...withPassword(form.masterPassword) })
 		}
 		dialog = <FormDialog ask={form} onNext={() => setForm({ ...form, insecureAnswered: true })} onAnswer={answer} onCancel={() => setForm(null)} />
 	}

@@ -154,6 +154,8 @@ item:
   fillName: Täida {name}
   insecureTitle: Kas soovid selle kasutajakonto ikkagi täita?
   insecureWarning: "Hoiatus: see on turvamata HTTP-leht ja kõiki sinu saadetud andmeid võivad teised näha ja muuta. See kasutajakonto salvestati algselt turvalisel (HTTPS) lehel."
+  repromptTitle: "Selle kirje täitmiseks sisesta oma peasalasõna"
+  repromptHelp: "See kirje küsib peasalasõna iga kord, kui see täidetakse. See kaitseb lukustamata ekraani, mitte muudetud laiendust."
   cardInsecureTitle: Kas täita see kaart turvamata saidil?
   cardInsecureWarning: See sait pole turvaline. Igaüks võrgus võib täidetud kaardiandmeid lugeda.
   crossSiteTitle: Kas täita ka saitidel {hosts}?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Selle krüpteerimisvõti on tühistatud.
   suiteCompromised: Krüpteeritud ohustatud võtmega, seega ei saa seda siin avada. Keepiqi veebirakendus näitab, kas seda saab taastada.
   migrationFailed: Seda ei õnnestunud ohujärgse taastamise käigus sinu uuele võtmele üle viia. Salvestatud väärtus säilib, kuid seda ei saa avada.
+  privilegedAccess: Omanik ei ole sulle praegu ajavahemikku kinnitanud või mitte sellelt aadressilt.
 
 detail:
   item: Kirje

@@ -14,6 +14,7 @@ import {
 	type FillRequest, type FillResult, type FormConfirmation, type FormKind, type FormQuestion, type FormRole, type FormValues, type UriMatch,
 } from '@/src/messages'
 import { getKey } from '@/src/vault/key-store'
+import { verifyMasterPassword } from '@/src/vault/unlock'
 import { parsePayload } from '@/src/vault/payloads'
 import { readSnapshot } from '@/src/vault/store'
 import { enforce, touch } from '@/src/vault/timeout'
@@ -69,6 +70,8 @@ export interface FillTarget {
 	 * `url`: the frame's, from the session, which outlives the frame registry across an MV3 worker restart.
 	 */
 	only?: { frameId: number; url: string; anchorKey: string }
+	/** The popup's answer to `needsReprompt`; no other surface can ask, so a flagged item fills nothing there. */
+	masterPassword?: string
 }
 
 export const NONE: FillResult = { filled: 'none', code: false }
@@ -139,7 +142,8 @@ export async function handleFillRequest(message: FillRequest): Promise<FillResul
 		const tabId = typeof message.tabId === 'number' ? message.tabId : (await activeTab())?.id
 		if (tabId === undefined) return NONE
 		const confirmed = parseConfirmation(message.confirmed)
-		return await fill({ itemId: message.itemId, tabId, ask: 'reply', code: true, confirmedInsecure: message.confirmedInsecure === true, confirmed })
+		const masterPassword = typeof message.masterPassword === 'string' ? message.masterPassword : undefined
+		return await fill({ itemId: message.itemId, tabId, ask: 'reply', code: true, confirmedInsecure: message.confirmedInsecure === true, confirmed, masterPassword })
 	} catch (error) {
 		console.error('[keepiq] fill.request', error)
 		return NONE
@@ -217,9 +221,23 @@ interface FillSource {
 export async function fill(target: FillTarget): Promise<FillResult> {
 	const source = await fillSource(target)
 	if (!source) return NONE
+	const reprompt = await repromptRefusal(target, source)
+	if (reprompt) return reprompt
 	const kind = walletKind(source.row, source.vault.types)
 	if (kind) return await fillForm({ target, accountId: source.accountId, row: source.row, kind })
 	return fillLogin(target, source)
+}
+
+/**
+ * A flagged item fills only with the master password the popup asked for, checked on every fill.
+ *
+ * @spec openspec/changes/crypto-item-reprompt
+ */
+async function repromptRefusal(target: FillTarget, { accountId, row }: FillSource): Promise<FillResult | null> {
+	if (row.reprompt !== true) return null
+	if (target.masterPassword === undefined) return target.ask === 'reply' && !target.only ? { ...NONE, needsReprompt: true } : NONE
+	if (await verifyMasterPassword(accountId, target.masterPassword)) return null
+	return { ...NONE, needsReprompt: true, wrongMasterPassword: true }
 }
 
 async function fillSource(target: FillTarget): Promise<FillSource | null> {

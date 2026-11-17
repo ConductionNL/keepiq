@@ -756,6 +756,16 @@
 										"fieldType": "concealed-string",
 										"value": "p"
 									}
+								},
+								{
+									"type": "custom-fields",
+									"fields": [
+										{
+											"fieldType": "string",
+											"label": "notes",
+											"value": "n"
+										}
+									]
 								}
 							]
 						},
@@ -1140,6 +1150,16 @@
 										"fieldType": "concealed-string",
 										"value": "p"
 									}
+								},
+								{
+									"type": "custom-fields",
+									"fields": [
+										{
+											"fieldType": "string",
+											"label": "notes",
+											"value": "n"
+										}
+									]
 								}
 							]
 						},
@@ -1516,6 +1536,16 @@
 										"fieldType": "concealed-string",
 										"value": "p"
 									}
+								},
+								{
+									"type": "custom-fields",
+									"fields": [
+										{
+											"fieldType": "string",
+											"label": "notes",
+											"value": "n"
+										}
+									]
 								}
 							]
 						},

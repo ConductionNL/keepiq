@@ -26,6 +26,7 @@ use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -140,6 +141,44 @@ class SecretUpdateControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
 		$this->assertSame('ENCRYPTED', $response->getData()['current']['key']);
 	}//end testAStaleBaseAnswers409WithTheCurrentRow()
+
+	/**
+	 * A privileged copy outside its window comes back without its ciphertext,
+	 * after an update and in a 409 body alike.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	public function testAPrivilegedCopyOutsideItsWindowComesBackWithoutCiphertext(): void {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static fn (string $name, $default = null) => ['name' => 'Renamed', 'baseUpdatedAt' => '2026-10-01T09:00:00+00:00'][$name] ?? $default
+		);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$service = $this->createMock(SecretService::class);
+		$service->method('update')->willReturnOnConsecutiveCalls(
+			$this->secret(),
+			$this->throwException(new StaleWriteException(current: $this->secret()))
+		);
+		$withheld = ['id' => 's-1', 'blocked' => true, 'privilegedAccess' => 'privileged_access_required'];
+		$gate = $this->createMock(PrivilegedCopyGate::class);
+		$gate->expects($this->exactly(2))->method('serialisedFor')
+			->with($this->isInstanceOf(Secret::class), 'alice')
+			->willReturn($withheld);
+		$controller = new SecretUpdateController(request: $request, secretService: $service, userSession: $session, privilegedGate: $gate);
+
+		$updated = $controller->update('s-1');
+		$this->assertSame(Http::STATUS_OK, $updated->getStatus());
+		$this->assertSame($withheld, $updated->getData());
+
+		$conflict = $controller->update('s-1');
+		$this->assertSame(Http::STATUS_CONFLICT, $conflict->getStatus());
+		$this->assertSame($withheld, $conflict->getData()['current']);
+	}//end testAPrivilegedCopyOutsideItsWindowComesBackWithoutCiphertext()
 
 	/**
 	 * A save that lands between the read and the write of an update without

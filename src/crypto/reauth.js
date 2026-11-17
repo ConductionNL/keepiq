@@ -30,7 +30,7 @@ import { decodePem } from './pem.js'
  * @param {string[]} boundValues The bound request-parameter values, in order.
  * @return {Promise<Uint8Array>} The UTF-8 bytes of the message to sign.
  */
-async function signedMessageBytes(nonce, boundValues) {
+export async function signedMessageBytes(nonce, boundValues) {
 	const encoder = new TextEncoder()
 	const lines = [nonce]
 	for (const value of boundValues) {
@@ -72,6 +72,21 @@ export async function proveMasterPassword(
 	// A wrong password throws here (AES-GCM tag mismatch) before anything signs.
 	const pem = await decryptPrivateKey(encryptedPrivateKey, masterPassword)
 
+	return provePrivateKey(pem, nonce, boundValues)
+}
+
+/**
+ * Sign a proof challenge with a private key the browser already holds, such
+ * as one just unwrapped from a recovery kit (crypto-recovery-kit 2.3). The
+ * signature is the one proveMasterPassword() makes.
+ *
+ * @param {string} pem The PKCS#8 private key PEM.
+ * @param {string} nonce The server challenge.
+ * @param {string[]} [boundValues] The request values the proof commits to, in order.
+ * @return {Promise<string>} The base64 signature.
+ * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+ */
+export async function provePrivateKey(pem, nonce, boundValues = []) {
 	const { der: pkcs8 } = decodePem(pem, ['PRIVATE KEY', 'RSA PRIVATE KEY'])
 
 	// Re-import for SIGNING specifically — a distinct capability from the

@@ -31,6 +31,39 @@ Two consequences follow from this, and both are deliberate:
   set — a field added in the other session is lost. The Edit dialog always loads
   the current values first, so the window is small, but it exists.
 
+## Hidden and yes-or-no fields
+
+Each field has a kind, chosen next to its name:
+
+- **Text** — shown as typed. Every field saved before kinds existed is text.
+- **Hidden** — for a recovery code, a PIN or anything else that must not be
+  read over your shoulder. The value is masked in the Edit dialog and on the
+  detail view until you choose **Show**, and **Copy value** copies it without
+  showing it.
+- **Yes or no** — a tick box, shown as Yes or No on the detail view.
+
+The kind is stored inside the same encrypted blob as the name and value, so the
+server cannot tell which of your fields are hidden. Hiding a field is a display
+control only: the value is exactly as encrypted as before.
+
+A CXF export carries the kind: a hidden field becomes a concealed field, and
+importing that file brings it back hidden.
+
+## SSH keys
+
+An item of type **SSH Key** has its own fields instead of one value: the
+private key, the public key and the fingerprint. **Generate key pair** creates a
+new pair in your browser (Ed25519, or RSA 4096 where the browser has no
+Ed25519), and **Import from file** reads a private key file in your browser and
+fills in the public key derived from it. Neither sends the private key anywhere
+before it is encrypted.
+
+The private key is stored as the item's value. The public key and its SHA256
+fingerprint are stored in the encrypted additional fields. The fingerprint is
+always worked out from the public key when you save, so it cannot disagree with
+the key, and text that is not a private key is refused with an error on the
+field.
+
 ## Three names you cannot use
 
 `key`, `login` and `url` are refused, with a reason shown.

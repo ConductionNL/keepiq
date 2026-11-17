@@ -154,6 +154,8 @@ item:
   fillName: Täytä {name}
   insecureTitle: Haluatko silti täyttää tämän kirjautumistiedon?
   insecureWarning: "Varoitus: Tämä on suojaamaton HTTP-sivu, ja muut voivat mahdollisesti nähdä ja muuttaa lähettämiäsi tietoja. Tämä kirjautumistieto tallennettiin alun perin suojatulla (HTTPS) sivulla."
+  repromptTitle: "Anna pääsalasanasi täyttääksesi tämän kohteen"
+  repromptHelp: "Tämä kohde kysyy pääsalasanaasi joka kerta, kun se täytetään. Se suojaa lukitsematonta näyttöä, ei muokattua laajennusta."
   cardInsecureTitle: Täytetäänkö tämä kortti suojaamattomalle sivustolle?
   cardInsecureWarning: Tämä sivusto ei ole suojattu. Kuka tahansa verkossa voi lukea täytetyt korttitiedot.
   crossSiteTitle: Täytetäänkö myös muualle ({hosts})?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Sen salausavain on mitätöity.
   suiteCompromised: Salattu vaarantuneella avaimella, joten sitä ei voi avata täällä. Keepiq-verkkosovellus näyttää, voiko sen palauttaa.
   migrationFailed: Sitä ei voitu siirtää uudelle avaimellesi vaarantumisen jälkeisen palautuksen aikana. Tallennettu arvo säilytetään, mutta sitä ei voi avata.
+  privilegedAccess: Omistaja ei ole hyväksynyt sinulle aikaikkunaa nyt, tai ei tästä osoitteesta.
 
 detail:
   item: Kohde

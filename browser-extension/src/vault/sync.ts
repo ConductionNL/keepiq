@@ -351,6 +351,7 @@ function withheldRow(row: FetchedRow, status: SuiteRow['status'] | undefined): S
 const SUITE_BLOCK_REASONS = new Map<string, BlockReason>([['compromised', 'suite_compromised'], ['revoked', 'suite_revoked']])
 
 function blockReasonOf(row: FetchedRow, status: SuiteRow['status'] | undefined): BlockReason | undefined {
+	if (row.blocked && row.privilegedAccess === 'privileged_access_required') return 'privileged_access'
 	if (status === undefined) return 'suite_missing'
 	// Only the fallback list sends `migrationError`; without it a compromised row may still be one recovery could not save.
 	if (row.migrationError) return 'migration_failed'

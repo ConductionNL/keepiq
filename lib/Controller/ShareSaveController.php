@@ -29,6 +29,7 @@ use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\ShareSaveServiceInterface;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
 use OCP\AppFramework\Http;
@@ -61,6 +62,7 @@ class ShareSaveController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param ShareSaveServiceInterface $service The share-save service
 	 * @param IUserSession $userSession The user session
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 *
 	 * @return void
 	 */
@@ -68,6 +70,7 @@ class ShareSaveController extends OCSController {
 		IRequest $request,
 		private ShareSaveServiceInterface $service,
 		private IUserSession $userSession,
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -98,7 +101,7 @@ class ShareSaveController extends OCSController {
 		} catch (ShareSaveRefusal $e) {
 			return new JSONResponse(data: $e->getBody(), statusCode: $e->getStatus());
 		} catch (StaleWriteException $e) {
-			return new JSONResponse(data: $this->staleBody(refusal: $e), statusCode: Http::STATUS_CONFLICT);
+			return new JSONResponse(data: $this->staleBody(refusal: $e, userId: $user->getUID()), statusCode: Http::STATUS_CONFLICT);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(
 				data: ['error' => 'not_found', 'message' => $e->getMessage()],
@@ -166,13 +169,19 @@ class ShareSaveController extends OCSController {
 	 * copy-editor path, the source version the conflict stands on.
 	 *
 	 * @param StaleWriteException $refusal The refusal
+	 * @param string $userId The caller (a privileged copy outside its window comes back without ciphertext)
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
-	private function staleBody(StaleWriteException $refusal): array {
-		$body = ['error' => 'stale', 'message' => $refusal->getMessage(), 'current' => $refusal->getCurrent()->jsonSerialize()];
+	private function staleBody(StaleWriteException $refusal, string $userId): array {
+		$current = $refusal->getCurrent();
+		$body = [
+			'error' => 'stale',
+			'message' => $refusal->getMessage(),
+			'current' => $this->privilegedGate?->serialisedFor(secret: $current, userId: $userId) ?? $current->jsonSerialize(),
+		];
 		$sourceUpdatedAt = $refusal->getSourceUpdatedAt();
 		if ($sourceUpdatedAt !== null) {
 			$body['sourceUpdatedAt'] = $sourceUpdatedAt->format(DATE_ATOM);

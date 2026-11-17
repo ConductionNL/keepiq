@@ -75,6 +75,7 @@ class VaultFlowTriggerCatalog {
 		AuditEventTypes::SECRET_USED          => 'item_reads',
 		AuditEventTypes::ATTACHMENT_DOWNLOADED => 'item_reads',
 		AuditEventTypes::HONEY_ACCESSED       => 'item_reads',
+		AuditEventTypes::PRIVILEGED_ACCESS_USED => 'item_reads',
 	];
 
 	/**
@@ -109,6 +110,7 @@ class VaultFlowTriggerCatalog {
 		'passkey'            => 'keys',
 		'certificate'        => 'keys',
 		'device_approval'    => 'keys',
+		'privileged_access'  => 'sharing',
 	];
 
 	/**
@@ -143,6 +145,7 @@ class VaultFlowTriggerCatalog {
 		'passkey'            => 'A passkey',
 		'certificate'        => 'A certificate',
 		'device_approval'    => 'A device approval',
+		'privileged_access'  => 'Access to a privileged login',
 		'honey'              => 'A honey item',
 	];
 

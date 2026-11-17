@@ -37,6 +37,8 @@ interface SecretBase {
 	accessExpiresAt?: string | null
 	/** A copy from another organisation, which may only be filed in a folder. */
 	readOnly?: boolean
+	/** Fill only after the master password is entered again (spec `item-master-password-reprompt`). Absent from servers before it. */
+	reprompt?: boolean
 }
 
 export interface OpenSecretRow extends SecretBase {
@@ -52,6 +54,8 @@ export interface OpenSecretRow extends SecretBase {
 export interface BlockedSecretRow extends SecretBase {
 	blocked: true
 	blockedReason: string
+	/** `privileged_access_required` on a privileged login outside the window its owner approved. */
+	privilegedAccess?: string
 }
 
 export type SecretRow = OpenSecretRow | BlockedSecretRow

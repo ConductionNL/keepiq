@@ -24,6 +24,7 @@ description:
       gebruikt end-to-end RSA-4096/AES-256-versleuteling met een eigen
       certificaatautoriteit. Je hoofdwachtwoord wordt nooit opgeslagen, dus
       zelfs de serverbeheerder kan je geheimen niet lezen.
+      Conduction onderhoudt dit component binnen het Nextcloud ISV-programma.
     features:
       - End-to-end versleuteling met een eigen certificaatautoriteit
       - Persoonlijke kluis met mappen en zoeken
@@ -37,6 +38,7 @@ description:
       applications. It uses end-to-end RSA-4096/AES-256 encryption backed by a
       private certificate authority. Your master password is never stored, so
       not even the server administrator can read your secrets.
+      Conduction maintains this component within the Nextcloud ISV programme.
     features:
       - End-to-end encryption with a private certificate authority
       - Personal vault with folders and search
@@ -53,7 +55,12 @@ localisation:
     - en
 
 maintenance:
-  type: internal
+  type: contract
+  contractors:
+    - name: Conduction B.V.
+      until: "2028-12-31"
+      email: info@conduction.nl
+      website: https://conduction.nl
   contacts:
     - name: Conduction Development Team
       email: info@conduction.nl

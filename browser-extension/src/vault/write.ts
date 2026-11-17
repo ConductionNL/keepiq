@@ -5,7 +5,7 @@ import { getAccount, getActiveAccountId, suiteKey, type AccountRecord } from '@/
 import { rsaDecrypt, rsaEncrypt } from '@/src/crypto'
 import type { EditableItem, FolderChildren, FolderDeletePlan, ItemDraft, ItemPatch, ShareSaveNote, WriteResult } from '@/src/messages'
 import { provenKey } from './certificate'
-import { fieldTexts, shownInFull } from './fields'
+import { fieldShapes, fieldTexts, shownInFull, withKinds } from './fields'
 import { editOpenedKey, getKey, hasKey, sessionValues } from './key-store'
 import { parseObject } from './payloads'
 import { buildPasskeyCredential, passkeyEntries, storedArray, withCounter, withPasskey, type PasskeyCredential } from '@/src/passkey/credential'
@@ -321,9 +321,16 @@ async function editableItem(opening: ItemOpening, additional: Record<string, unk
 		folderId: row.folderId,
 		...await secretValues(opening),
 		additionalFields: fieldTexts(additional),
+		...kindsOf(additional),
 		updatedAt: row.updatedAt,
 		...totpFlags(opening),
 	}
+}
+
+/** The kinded fields, so the form saves a hidden or yes-or-no field back with its kind; absent when there are none. */
+function kindsOf(additional: Record<string, unknown>): Pick<EditableItem, 'fieldKinds'> {
+	const fieldKinds = fieldShapes(additional)
+	return Object.keys(fieldKinds).length > 0 ? { fieldKinds } : {}
 }
 
 async function secretValues({ fetch: { ctx }, row, passkey }: ItemOpening): Promise<Pick<EditableItem, 'key' | 'login'>> {
@@ -368,7 +375,7 @@ async function sealedBody(draft: ItemDraft, sealing: { key: CryptoKey; totp: str
 		typeId: draft.typeId,
 		folderId: draft.folderId,
 		key: await rsaEncrypt(draft.key, key),
-		additionalFields: await rsaEncrypt(JSON.stringify(draft.additionalFields), key),
+		additionalFields: await rsaEncrypt(JSON.stringify(withKinds(draft.additionalFields, draft.fieldKinds)), key),
 	}
 	if (draft.login) body.login = await rsaEncrypt(draft.login, key)
 	if (totp) body.totp = await rsaEncrypt(totp, key)
@@ -470,7 +477,7 @@ async function plainValues(save: ItemSaveRun): Promise<Values> {
 	const { patch } = save.update
 	const plain: Values = await keyValue(save)
 	if (patch.login !== undefined) plain.login = patch.login || null
-	if (patch.additionalFields) plain.additionalFields = JSON.stringify(patch.additionalFields)
+	if (patch.additionalFields) plain.additionalFields = JSON.stringify(withKinds(patch.additionalFields, patch.fieldKinds))
 	// `''` removes the saved key, on any type.
 	if (patch.totp !== undefined) plain.totp = await authenticatorKey(save.ctx.account.id, patch.totp, save.cached.typeId)
 	return plain

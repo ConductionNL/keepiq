@@ -48,6 +48,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\Keepiq\Controller\ExtensionController
  * @uses   \OCA\Keepiq\Service\SecretUrlService
  * @uses   \OCA\Keepiq\Db\Secret
+ * @uses   \OCA\Keepiq\Exception\ForbiddenException
  */
 class SecretAddressesControllerTest extends TestCase {
 	private SecretUrlMapper&MockObject $urlMapper;

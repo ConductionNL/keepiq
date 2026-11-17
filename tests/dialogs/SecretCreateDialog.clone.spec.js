@@ -100,7 +100,7 @@ describe('SecretCreateDialog — clone', () => {
 		expect(wrapper.vm.url).toBe('https://grafana.staging.example')
 		expect(wrapper.vm.login).toBe('ops')
 		expect(wrapper.vm.value).toBe('Xk9#mQ2$vL7@pR4!zT6&')
-		expect(wrapper.vm.additionalFields).toEqual([{ name: 'team', value: 'platform' }])
+		expect(wrapper.vm.additionalFields).toEqual([{ name: 'team', value: 'platform', kind: 'text' }])
 		expect(wrapper.vm.selectedFolderId).toBe('folder-ops')
 		expect(wrapper.find('[data-testid="secret-create-clone-note"]').text()).toContain(
 			'Attachments, shares, history, passkeys and the one-time code are not copied.',
