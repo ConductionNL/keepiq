@@ -24,7 +24,7 @@ use OCA\Keepiq\Db\AccessRequest;
 use OCA\Keepiq\Db\AccessRequestMapper;
 use OCA\Keepiq\Db\PrivilegedLoginMapper;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\PrivilegedAccessRequiredException;
 use OCA\Keepiq\Service\AuditService;
@@ -40,6 +40,9 @@ use Throwable;
  * Such a copy is served without its ciphertext (or refused outright for a
  * single fetch), and the refusal is audited. The owner's own secret is never
  * a copy, so the owner always keeps full access.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One decision over marks,
+ *   requests, share rows, the client address and the audit trail.
  */
 class PrivilegedCopyGate {
 
@@ -67,6 +70,7 @@ class PrivilegedCopyGate {
 	 * @param IRequest              $request  The client address
 	 * @param ITimeFactory          $time     The clock
 	 * @param LoggerInterface       $logger   The logger
+	 * @param AuditEventFactory     $auditEvents The audit-event factory
 	 *
 	 * @return void
 	 */
@@ -78,6 +82,7 @@ class PrivilegedCopyGate {
 		private IRequest $request,
 		private ITimeFactory $time,
 		private LoggerInterface $logger,
+		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {
 	}//end __construct()
 
@@ -258,7 +263,7 @@ class PrivilegedCopyGate {
 	private function record(Secret $secret, string $userId, string $eventType, array $metadata): void {
 		try {
 			$this->audit->record(
-				AuditEvent::forUser(
+				$this->auditEvents->forUser(
 					actorId: $userId,
 					eventType: $eventType,
 					objectType: 'secret',

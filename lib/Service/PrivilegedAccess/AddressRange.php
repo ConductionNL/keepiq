@@ -57,7 +57,7 @@ final class AddressRange {
 	 */
 	public static function parse(string $cidr): self {
 		$parts   = explode('/', trim($cidr), 2);
-		$network = @inet_pton($parts[0]);
+		$network = self::packed(address: $parts[0]);
 		if ($network === false) {
 			throw new InvalidArgumentException('Not an IP address range');
 		}
@@ -86,7 +86,7 @@ final class AddressRange {
 	 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
 	 */
 	public function contains(string $address): bool {
-		$bytes = @inet_pton(trim($address));
+		$bytes = self::packed(address: trim($address));
 		if ($bytes === false || strlen($bytes) !== strlen($this->network)) {
 			return false;
 		}
@@ -104,6 +104,22 @@ final class AddressRange {
 	public function toString(): string {
 		return inet_ntop($this->network) . '/' . $this->prefixLength;
 	}//end toString()
+
+	/**
+	 * The packed bytes of an address, or false when it is not one. Validated
+	 * first, because inet_pton() warns on input it cannot parse.
+	 *
+	 * @param string $address An IPv4 or IPv6 address.
+	 *
+	 * @return string|false
+	 */
+	private static function packed(string $address): string|false {
+		if (filter_var($address, FILTER_VALIDATE_IP) === false) {
+			return false;
+		}
+
+		return inet_pton($address);
+	}//end packed()
 
 	/**
 	 * The bytes with every bit after the prefix cleared.

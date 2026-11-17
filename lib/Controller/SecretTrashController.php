@@ -42,6 +42,10 @@ use OCP\IUserSession;
 
 /**
  * Trash and archive actions on one secret.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Thin transport layer: each
+ *   refusal maps to its own status, and the privileged-copy gate that
+ *   withholds a returned copy adds one.
  */
 class SecretTrashController extends Controller {
 	/**
