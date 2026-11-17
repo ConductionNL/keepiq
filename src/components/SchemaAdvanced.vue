@@ -111,6 +111,7 @@
 import { translate as t } from '@nextcloud/l10n'
 import { NcCheckboxRadioSwitch, NcSelect, NcTextField } from '@nextcloud/vue'
 import { cleanSchema, SCHEMA_TYPES, STRING_FORMATS } from '../utils/fieldSchema.js'
+import { isSafePattern } from '../utils/safePattern.js'
 
 export default {
 	name: 'SchemaAdvanced',
@@ -184,21 +185,15 @@ export default {
 		},
 
 		/**
-		 * Whether the pattern is no regular expression a browser can run.
+		 * Whether the pattern is not one a value can be checked against: it
+		 * does not compile, could run for ever, or reads differently on the
+		 * server.
 		 *
 		 * @return {boolean}
 		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		patternInvalid() {
-			if (!this.schema.pattern) {
-				return false
-			}
-			try {
-				new RegExp(this.schema.pattern, 'u')
-				return false
-			} catch {
-				return true
-			}
+			return Boolean(this.schema.pattern) && !isSafePattern(this.schema.pattern)
 		},
 
 		/**

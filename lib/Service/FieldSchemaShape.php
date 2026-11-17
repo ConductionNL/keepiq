@@ -88,22 +88,6 @@ class FieldSchemaShape {
 	private const RANGES = [['minLength', 'maxLength'], ['minimum', 'maximum']];
 
 	/**
-	 * The longest pattern a schema may carry.
-	 *
-	 * @var integer
-	 */
-	public const MAX_PATTERN_LENGTH = 500;
-
-	/**
-	 * A quantified group with a quantifier inside, such as `(a+)+`: the shape
-	 * that backtracks for ever on a near match. The pattern runs on every
-	 * keystroke in the recipient's browser, which has no time limit.
-	 *
-	 * @var string
-	 */
-	private const NESTED_QUANTIFIER = '/\((?:\\\\.|[^()\\\\])*[*+}](?:\\\\.|[^()\\\\])*\)(?:[*+]|\{\d*,\d*\})/';
-
-	/**
 	 * Fields whose values live in their own columns and never carry a schema.
 	 *
 	 * @var string[]
@@ -115,9 +99,8 @@ class FieldSchemaShape {
 	 *
 	 * Each schema must belong to a requested custom field and have a known type, and only the keys that type allows:
 	 * a known format, non-negative whole lengths, finite numeric limits, a `multipleOf` above zero, a minimum no
-	 * higher than its maximum, a pattern that compiles, is of reasonable length and has no quantified group with a
-	 * quantifier inside, and a boolean `hidden`. Anything else is refused rather than dropped, so a client learns its
-	 * schema was not stored as sent.
+	 * higher than its maximum, a pattern SafePattern accepts, and a boolean `hidden`. Anything else is refused rather
+	 * than dropped, so a client learns its schema was not stored as sent.
 	 *
 	 * @param array<mixed>  $schemas         The schemas by field name, as the client sent them
 	 * @param array<string> $requestedFields The requested field names
@@ -221,7 +204,7 @@ class FieldSchemaShape {
 		return match ($key) {
 			'type' => true,
 			'format' => in_array($value, self::FORMATS, true),
-			'pattern' => is_string($value) === true && $this->isUsablePattern(pattern: $value),
+			'pattern' => is_string($value) === true && (new SafePattern())->isSafe(pattern: $value),
 			'hidden' => is_bool($value),
 			'minLength', 'maxLength' => is_int($value) === true && $value >= 0,
 			'minimum', 'maximum' => $finite,
@@ -229,33 +212,4 @@ class FieldSchemaShape {
 			default => false,
 		};
 	}//end allows()
-
-	/**
-	 * Whether a pattern can be used on the fill page: not too long, without a
-	 * nested quantifier, and one that compiles. It is only compiled here, never
-	 * run on a value.
-	 *
-	 * @param string $pattern The pattern
-	 *
-	 * @return bool
-	 *
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
-	 */
-	private function isUsablePattern(string $pattern): bool {
-		if ($pattern === '' || strlen($pattern) > self::MAX_PATTERN_LENGTH || str_contains($pattern, "\x01") === true) {
-			return false;
-		}
-
-		if (preg_match(self::NESTED_QUANTIFIER, $pattern) === 1) {
-			return false;
-		}
-
-		// A pattern that does not compile raises a warning; it only means no.
-		set_error_handler(static fn (): bool => true);
-		try {
-			return preg_match("\x01" . $pattern . "\x01u", '') !== false;
-		} finally {
-			restore_error_handler();
-		}
-	}//end isUsablePattern()
 }//end class

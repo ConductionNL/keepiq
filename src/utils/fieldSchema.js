@@ -12,6 +12,7 @@
  */
 
 import { translate as t } from '@nextcloud/l10n'
+import { isSafePattern, MAX_PATTERN_INPUT } from './safePattern.js'
 
 /** The reserved member holding the schemas. */
 export const SCHEMA_MEMBER = '@schema'
@@ -473,8 +474,9 @@ function lengthError(length, schema) {
 }
 
 /**
- * Why a text does not match the schema's pattern, or ''. An invalid pattern
- * cannot refuse anything.
+ * Why a text does not match the schema's pattern, or ''. A pattern that is
+ * not safe to run is never run, and no value fits it; nor is a pattern run on
+ * a text longer than MAX_PATTERN_INPUT.
  *
  * @param {string} value The text.
  * @param {string|undefined} pattern The schema's pattern.
@@ -485,12 +487,10 @@ function patternError(value, pattern) {
 	if (pattern === undefined) {
 		return ''
 	}
-	let fits = true
-	try {
-		fits = new RegExp(pattern, 'u').test(value)
-	} catch {
-		// An invalid pattern cannot refuse anything.
+	if ([...value].length > MAX_PATTERN_INPUT) {
+		return t('keepiq', 'Use at most {max} characters.', { max: MAX_PATTERN_INPUT })
 	}
+	const fits = isSafePattern(pattern) && new RegExp(pattern, 'u').test(value)
 	return fits ? '' : t('keepiq', 'This does not match the required pattern.')
 }
 
