@@ -136,6 +136,31 @@ class ExportControllerTest extends TestCase {
 	}//end testCxfModeAcceptedAndDispatched()
 
 	/**
+	 * A CXP send of a selection is accepted and reported with its scope.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp/spec.md#requirement-choose-what-to-send
+	 */
+	public function testSelectionScopeAcceptedAndDispatched(): void {
+		[$controller, $request, $dispatcher] = $this->build('alice');
+		$this->params($request, 'cxp', 'selection', 3);
+		$captured = null;
+		$dispatcher->expects($this->once())->method('dispatchTyped')
+			->willReturnCallback(
+				function ($e) use (&$captured) {
+					$captured = $e;
+				}
+			);
+
+		$response = $controller->events();
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertInstanceOf(SecretExportedEvent::class, $captured);
+		$this->assertSame('selection', $captured->getScope());
+		$this->assertSame(3, $captured->getSecretCount());
+	}//end testSelectionScopeAcceptedAndDispatched()
+
+	/**
 	 * An invalid mode is rejected with 400 and no event.
 	 *
 	 * @return void
