@@ -70,17 +70,29 @@ describe('ExportDialog.onExport', () => {
 		await wrapper.vm.onExport()
 		expect(backup).toHaveBeenCalledWith(SECRETS, FOLDERS, 'pass phrase', {
 			mode: 'vault',
-		})
+		}, { types: [], omitFields: [] })
 		expect(wrapper.emitted('update:open')).toEqual([[false]])
 		expect(wrapper.vm.passphrase).toBe('')
 	})
 
-	it('scopes the export to one folder', async () => {
+	it('scopes the export to the chosen folders and leaves out the chosen fields', async () => {
+		// @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		const wrapper = mountExport()
 		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
-		wrapper.vm.scopeFolder = 'f1'
+		wrapper.vm.scopeKind = 'folders'
+		wrapper.vm.scopeFolderIds = ['f1']
+		wrapper.vm.omitFields = ['totp']
 		await wrapper.vm.onExport()
-		expect(backup.mock.calls[0][3]).toEqual({ mode: 'folders', folderIds: ['f1'] })
+		expect(backup.mock.calls[0][3]).toEqual({ folderIds: ['f1'] })
+		expect(backup.mock.calls[0][4]).toEqual({ types: [], omitFields: ['totp'] })
+	})
+
+	it('exports only the selected items when opened from the bulk strip', async () => {
+		const wrapper = mountExport({ selectedIds: ['s1'], initialScope: 'selection' })
+		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
+		wrapper.vm.scopeKind = 'selection'
+		await wrapper.vm.onExport()
+		expect(backup.mock.calls[0][3]).toEqual({ mode: 'selection', secretIds: ['s1'] })
 	})
 
 	it('writes nothing while skipped secrets are not acknowledged', async () => {
@@ -114,7 +126,7 @@ describe('ExportDialog.onExport', () => {
 		const csv = vi.spyOn(useExportStore(), 'exportCsv').mockResolvedValue()
 		wrapper.vm.mode = 'csv'
 		await wrapper.vm.onExport()
-		expect(csv).toHaveBeenCalledWith(SECRETS, FOLDERS, { mode: 'vault' })
+		expect(csv).toHaveBeenCalledWith(SECRETS, FOLDERS, { mode: 'vault' }, { types: [], omitFields: [] })
 		expect(wrapper.emitted('update:open')).toEqual([[false]])
 	})
 

@@ -10,6 +10,8 @@
 				:secrets="decryptedSecrets"
 				:skipped="skippedSecrets"
 				:folders="folders"
+				:selectedIds="bulkStore.selectedIds"
+				:initialScope="exportScope"
 				@update:open="exportOpen = $event" />
 			<CxpTransferDialog
 				:open="cxpOpen"
@@ -178,7 +180,10 @@
 						@click="mySendsOpen = true">
 						{{ t('keepiq', 'My ephemeral sends') }}
 					</NcActionButton>
-					<NcActionButton :closeAfterClick="true" @click="openExport">
+					<NcActionButton
+						data-testid="open-export"
+						:closeAfterClick="true"
+						@click="openExport">
 						{{ t('keepiq', 'Export data') }}
 					</NcActionButton>
 					<NcActionButton
@@ -379,6 +384,16 @@
 					<NcButton
 						variant="secondary"
 						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-export"
+						@click="openExport('selection')">
+						<template #icon>
+							<Download :size="20" />
+						</template>
+						{{ t('keepiq', 'Export selected') }}
+					</NcButton>
+					<NcButton
+						variant="secondary"
+						:disabled="loading || folderSwitching"
 						data-testid="bulk-open-move"
 						@click="bulkDialog = 'move'">
 						<template #icon>
@@ -576,6 +591,7 @@ import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
 import ArchiveArrowUpOutline from 'vue-material-design-icons/ArchiveArrowUpOutline.vue'
 import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
 import DeleteRestore from 'vue-material-design-icons/DeleteRestore.vue'
+import Download from 'vue-material-design-icons/Download.vue'
 import FilterIcon from 'vue-material-design-icons/Filter.vue'
 import FilterOutline from 'vue-material-design-icons/FilterOutline.vue'
 import FolderMoveOutline from 'vue-material-design-icons/FolderMoveOutline.vue'
@@ -707,6 +723,7 @@ export default {
 		AccountGroup,
 		FilterIcon,
 		FilterOutline,
+		Download,
 		FolderMoveOutline,
 		FolderOutline,
 		ShareVariantOutline,
@@ -764,6 +781,8 @@ export default {
 			/** Only secrets with this tag, or null for all. */
 			tagFilter: null,
 			decryptedSecrets: [],
+			/** The scope the export dialog opens on: `vault`, or `selection` from the bulk strip. */
+			exportScope: 'vault',
 			/** Secrets the last decryptAllSecrets() could not decrypt (keepiq#794). */
 			skippedSecrets: 0,
 			bulkDialog: null,
@@ -1566,11 +1585,13 @@ export default {
 		/**
 		 * Open the export dialog after decrypting the vault client-side.
 		 *
+		 * @param {string|Event} [scope] `selection` when opened from the bulk strip; anything else opens on the whole vault.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-export/spec.md
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
-		async openExport() {
+		async openExport(scope = 'vault') {
+			this.exportScope = scope === 'selection' ? 'selection' : 'vault'
 			const { secrets, skipped } = await this.decryptAllSecrets()
 			this.decryptedSecrets = secrets
 			this.skippedSecrets = skipped

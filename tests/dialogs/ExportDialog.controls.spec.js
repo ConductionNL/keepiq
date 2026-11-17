@@ -118,22 +118,29 @@ describe('ExportDialog controls', () => {
 		expect(wrapper.find('.export-dialog__backup').exists()).toBe(true)
 	})
 
-	it('offers the whole vault and each folder as scope, and exports the picked folder', async () => {
+	it('offers the whole vault, chosen folders and chosen types as scope, and exports the picked folders', async () => {
+		// @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		const wrapper = await mountDialog()
 		const select = wrapper.findComponent({ name: 'NcSelect' })
 
 		expect(select.props('options')).toEqual([
 			{ label: 'Entire vault', value: 'vault' },
+			{ label: 'Chosen folders', value: 'folders' },
+			{ label: 'Chosen types', value: 'types' },
+		])
+		expect(select.props('modelValue')).toBe('vault')
+
+		select.vm.$emit('update:modelValue', 'folders')
+		await wrapper.vm.$nextTick()
+		const folders = wrapper.findAllComponents({ name: 'NcSelect' })[1]
+		expect(folders.props('options')).toEqual([
 			{ label: 'Work', value: 'f-1' },
 			{ label: 'Home', value: 'f-2' },
 		])
-		expect(select.props('reduce')({ label: 'Work', value: 'f-1' })).toBe('f-1')
-		expect(select.props('modelValue')).toBe('vault')
-
-		select.vm.$emit('update:modelValue', 'f-2')
+		folders.vm.$emit('update:modelValue', ['f-1', 'f-2'])
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.vm.buildScope()).toEqual({ mode: 'folders', folderIds: ['f-2'] })
+		expect(wrapper.vm.buildScope()).toEqual({ folderIds: ['f-1', 'f-2'] })
 	})
 
 	it('scores the typed passphrase and shows whether it is strong enough', async () => {
@@ -215,6 +222,11 @@ describe('ExportDialog controls', () => {
 		await wrapper.vm.onExport()
 
 		expect(cxf).toHaveBeenLastCalledWith([], folders, { mode: 'vault' }, {
+			types: [
+				{ id: 't-login', name: 'Login' },
+				{ id: 't-note', name: 'Secure note' },
+			],
+			omitFields: [],
 			typeNamesById: { 't-login': 'Login', 't-note': 'Secure note' },
 		})
 	})

@@ -4,16 +4,20 @@
 
 - [x] 1.1 Extend `serializeVault()` with the combined scope, the field deny list, `typeName` and `typeLabel`, and the partial marker; fix the test fixtures to use UUID type ids. Verify: vitest for each scope, each left-out field, a custom type, and a UUID type id resolving to its name.
 - [ ] 1.2 Rebuild the scope and fields part of `ExportDialog.vue` (entire vault, folders, types, selection; fields to leave out). Verify: vitest on `buildScope()`, and a Playwright flow export two folders and one type.
+  - Round 2 (2026-11-17): built. `src/export/exportScope.js` `buildScope()`; the dialog offers entire vault, chosen folders, chosen types and the selection, plus Leave out (usernames, additional fields, authenticator seeds), and passes the vault's types so the file names them. vitest `tests/vitest/export-scope.spec.js` against the real serializer. Playwright flow in `tests/e2e/workflows/export-choice.spec.ts`, not yet run live.
 - [ ] 1.3 Add Export selected to the bulk strip in `SecretList.vue`, and return and show the skipped count from `decryptAllSecrets()`. Verify: Playwright flow select three items, export, the file holds three; vitest that a secret failing to decrypt is counted.
+  - Round 2: Export selected on the selection strip opens the dialog on the selection; the skipped count was already returned and shown. Playwright "Export selected writes exactly the three selected items" written, not yet run live. Still owed: a vitest that a secret failing to decrypt is counted (decryptAllSecrets lives in SecretList.vue).
 
 ## 2. Restore
 
 - [x] 2.1 In `backupParser.js`, set `sourceRow` and read `typeName`, `typeLabel` and the partial marker. Verify: vitest on a new-format and an old-format fixture.
 - [ ] 2.2 In `import.js`, resolve types by D3's order, creating missing custom types through `POST /api/v1/secret-types`, and list created types and fallbacks in the summary. Verify: vitest for each resolution branch, and a Playwright round trip export then restore on a fresh user keeps every type.
+  - Round 2: the resolution was already in `import.js` (`resolveRowTypes`); vitest for every branch in `tests/vitest/import-resolveRowTypes.spec.js`. The Playwright round trip is a `test.fixme` in export-choice.spec.ts: not written yet.
 
 ## 3. Docs
 
 - [ ] 3.1 Update `docs/gdpr.md` and `docs/importing.md` with the scope, field and restore rules. Verify: docs build.
+  - Round 2: `docs/gdpr.md` (scope, fields left out, the skipped-secrets wait, types by name) and `docs/importing.md` (restore order) updated; the docs build was not run here.
 
 ## Acceptance criteria
 

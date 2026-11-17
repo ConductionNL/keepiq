@@ -112,11 +112,40 @@
 				</NcNoteCard>
 
 				<NcSelect
-					v-model="scopeFolder"
+					v-model="scopeKind"
+					data-testid="export-scope-kind"
 					:inputLabel="t('keepiq', 'Scope')"
 					:options="scopeOptions"
 					:reduce="(opt) => opt.value"
 					:clearable="false" />
+				<NcSelect
+					v-if="scopeKind === 'folders'"
+					v-model="scopeFolderIds"
+					data-testid="export-scope-folders"
+					multiple
+					:inputLabel="t('keepiq', 'Folders')"
+					:options="folderOptions"
+					:reduce="(opt) => opt.value" />
+				<NcSelect
+					v-if="scopeKind === 'types'"
+					v-model="scopeTypeIds"
+					data-testid="export-scope-types"
+					multiple
+					:inputLabel="t('keepiq', 'Types')"
+					:options="typeOptions"
+					:reduce="(opt) => opt.value" />
+				<fieldset class="export-dialog__omit" data-testid="export-omit-fields">
+					<legend>{{ t('keepiq', 'Leave out') }}</legend>
+					<NcCheckboxRadioSwitch
+						v-for="field in omitChoices"
+						:key="field.value"
+						v-model="omitFields"
+						type="checkbox"
+						:value="field.value"
+						:data-testid="'export-omit-' + field.value">
+						{{ field.label }}
+					</NcCheckboxRadioSwitch>
+				</fieldset>
 
 				<!-- Encrypted backup path -->
 				<div
@@ -206,6 +235,7 @@ import {
 import zxcvbn from 'zxcvbn'
 import RecoveryKitPanel from '../components/RecoveryKitPanel.vue'
 import SkippedSecretsNotice from '../components/SkippedSecretsNotice.vue'
+import { buildScope, serializerOptions } from '../export/exportScope.js'
 import exportSourceProps from '../mixins/exportSourceProps.js'
 import exportStoreDialog from '../mixins/exportStoreDialog.js'
 import masterPasswordCheck from '../mixins/masterPasswordCheck.js'
@@ -230,6 +260,20 @@ export default {
 
 	mixins: [exportSourceProps, exportStoreDialog, masterPasswordCheck],
 
+	props: {
+		/** The items selected on the list, for an export of just those. */
+		selectedIds: {
+			type: Array,
+			default: () => [],
+		},
+
+		/** The scope the dialog opens on: `vault`, or `selection` from the bulk strip. */
+		initialScope: {
+			type: String,
+			default: 'vault',
+		},
+	},
+
 	emits: ['update:open'],
 	data() {
 		return {
@@ -240,7 +284,14 @@ export default {
 			warningAcknowledged: false,
 			/** Whether the user chose to export without the skipped secrets. */
 			skippedAcknowledged: false,
-			scopeFolder: 'vault',
+			/** What the export covers: vault, folders, types or selection. */
+			scopeKind: 'vault',
+			/** The folders chosen when scopeKind is folders. */
+			scopeFolderIds: [],
+			/** The types chosen when scopeKind is types. */
+			scopeTypeIds: [],
+			/** The fields to leave out (OMITTABLE_FIELDS). */
+			omitFields: [],
 			error: null,
 			/** CXF pre-download unmapped-item report (null = not built yet). */
 			cxfReport: null,
@@ -270,11 +321,60 @@ export default {
 		scopeOptions() {
 			const opts = [
 				{ label: this.t('keepiq', 'Entire vault'), value: 'vault' },
+				{ label: this.t('keepiq', 'Chosen folders'), value: 'folders' },
+				{ label: this.t('keepiq', 'Chosen types'), value: 'types' },
 			]
-			for (const folder of this.folders) {
-				opts.push({ label: folder.name, value: folder.id })
+			if (this.selectedIds.length > 0) {
+				opts.push({
+					label: this.t('keepiq', 'Selected items ({count})', { count: this.selectedIds.length }),
+					value: 'selection',
+				})
 			}
 			return opts
+		},
+
+		/**
+		 * The folders to choose from.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		folderOptions() {
+			return this.folders.map((folder) => ({ label: folder.name, value: folder.id }))
+		},
+
+		/**
+		 * The types to choose from.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		typeOptions() {
+			return useSecretTypeStore().types.map((type) => ({ label: type.label || type.name, value: type.id }))
+		},
+
+		/**
+		 * The fields a user can leave out.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		 */
+		omitChoices() {
+			return [
+				{ label: this.t('keepiq', 'Usernames'), value: 'login' },
+				{ label: this.t('keepiq', 'Additional fields'), value: 'additionalFields' },
+				{ label: this.t('keepiq', 'Authenticator seeds'), value: 'totp' },
+			]
+		},
+
+		/**
+		 * The serializer options: the types, so the file names them, and the fields left out.
+		 *
+		 * @return {object}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 */
+		exportOptions() {
+			return serializerOptions(useSecretTypeStore().types, this.omitFields)
 		},
 
 		/**
@@ -338,11 +438,14 @@ export default {
 		 * @param {boolean} open Whether the dialog is open now.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/vault-policies/spec.md#requirement-personal-vault-export-can-be-blocked
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
 		async open(open) {
 			if (open !== true) {
 				return
 			}
+			// Opened from the bulk strip, the export starts on the selection.
+			this.scopeKind = this.initialScope === 'selection' && this.selectedIds.length > 0 ? 'selection' : 'vault'
 			resetPolicyCache()
 			this.exportBlocked =
 				(await fetchPolicy())?.vault_export_disabled === true
@@ -380,10 +483,12 @@ export default {
 		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		buildScope() {
-			if (this.scopeFolder === 'vault') {
-				return { mode: 'vault' }
-			}
-			return { mode: 'folders', folderIds: [this.scopeFolder] }
+			return buildScope({
+				kind: this.scopeKind,
+				folderIds: this.scopeFolderIds,
+				typeIds: this.scopeTypeIds,
+				secretIds: this.selectedIds,
+			})
 		},
 
 		/**
@@ -427,6 +532,7 @@ export default {
 					this.folders,
 					this.passphrase,
 					scope,
+					this.exportOptions,
 				)
 				return true
 			}
@@ -436,7 +542,7 @@ export default {
 			if (this.mode === 'cxf') {
 				return this.exportCxf(scope)
 			}
-			await this.exportStore.exportCsv(this.secrets, this.folders, scope)
+			await this.exportStore.exportCsv(this.secrets, this.folders, scope, this.exportOptions)
 			return true
 		},
 
@@ -454,6 +560,7 @@ export default {
 				return false
 			}
 			await this.exportStore.exportCxf(this.secrets, this.folders, scope, {
+				...this.exportOptions,
 				typeNamesById: this.typeNamesById,
 			})
 			return true
@@ -514,7 +621,10 @@ export default {
 			this.masterPassword = ''
 			this.warningAcknowledged = false
 			this.skippedAcknowledged = false
-			this.scopeFolder = 'vault'
+			this.scopeKind = 'vault'
+			this.scopeFolderIds = []
+			this.scopeTypeIds = []
+			this.omitFields = []
 			this.error = null
 			this.cxfReport = null
 		},

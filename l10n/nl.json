@@ -1979,7 +1979,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Deze sites bieden passkeys aan, en je kluis bevat er geen voor deze sites. Een passkey kan niet worden gephisht of hergebruikt.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Sitegegevens: 2FA Directory (MIT) en Passkeys Directory (CC BY 4.0), door 2factorauth en bijdragers.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: de sitedirectory kon niet worden geladen. Andere bevindingen blijven gelden.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: je beheerder heeft de sitedirectory niet aangezet."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: je beheerder heeft de sitedirectory niet aangezet.",
+        "Authenticator seeds": "Authenticatorsleutels",
+        "Chosen folders": "Gekozen mappen",
+        "Chosen types": "Gekozen typen",
+        "Export selected": "Selectie exporteren",
+        "Leave out": "Weglaten",
+        "Types": "Typen",
+        "Usernames": "Gebruikersnamen"
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"
