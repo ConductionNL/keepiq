@@ -182,6 +182,30 @@
 						</NcActionButton>
 						<NcActionSeparator />
 					</template>
+					<!-- vault-item-clone-preview-and-print D3: a login the user may
+					     reveal; works offline too, as it reads only the decrypted
+					     detail. Both ask for the master password first. -->
+					<template v-if="canPrintOrShowQr">
+						<NcActionButton
+							:closeAfterClick="true"
+							data-testid="secret-detail-print"
+							@click="openPrint">
+							<template #icon>
+								<Printer :size="20" />
+							</template>
+							{{ t('keepiq', 'Print') }}
+						</NcActionButton>
+						<NcActionButton
+							:closeAfterClick="true"
+							data-testid="secret-detail-qr"
+							@click="openQr">
+							<template #icon>
+								<Qrcode :size="20" />
+							</template>
+							{{ t('keepiq', 'Show as QR code') }}
+						</NcActionButton>
+						<NcActionSeparator />
+					</template>
 					<NcActionButton
 						:closeAfterClick="true"
 						data-testid="secret-detail-close"
@@ -1230,6 +1254,8 @@ import Lock from 'vue-material-design-icons/Lock.vue'
 import NoteTextOutline from 'vue-material-design-icons/NoteTextOutline.vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Printer from 'vue-material-design-icons/Printer.vue'
+import Qrcode from 'vue-material-design-icons/Qrcode.vue'
 import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import ShieldOutline from 'vue-material-design-icons/ShieldOutline.vue'
 import Star from 'vue-material-design-icons/Star.vue'
@@ -1313,6 +1339,8 @@ export default {
 		Fingerprint,
 		Flash,
 		ContentDuplicate,
+		Printer,
+		Qrcode,
 		FolderMove,
 		FormatListBulleted,
 		History,
@@ -1466,6 +1494,21 @@ export default {
 		 */
 		canClone() {
 			return Boolean(this.secret) && !this.offlineReadOnly && !this.useOnly && !this.isPasskey
+		},
+
+		/**
+		 * Whether Print and Show as QR code are offered: a login with a
+		 * password, on a copy the user may reveal (not use-only).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		canPrintOrShowQr() {
+			if (!this.secret || this.useOnly || typeof this.secret.key !== 'string' || this.secret.key === '') {
+				return false
+			}
+			const type = useSecretTypeStore().typesById[this.secret.typeId]
+			return Boolean(type) && type.name === 'login'
 		},
 
 		/**
@@ -2320,6 +2363,60 @@ export default {
 				},
 				onSaved: () => this.reloadWithList(),
 			})
+		},
+
+		/**
+		 * Open Print for this login. The modal asks for the master password
+		 * before it renders the sheet; a flagged item answers its re-prompt first.
+		 *
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		openPrint() {
+			return this.openRevealModal('secret-print', () => ({
+				name: this.secret.name || '',
+				url: this.secret.url || '',
+				login: this.secret.login || '',
+				password: this.secret.key,
+			}))
+		},
+
+		/**
+		 * Open Show as QR code for this login, behind the same check as Print.
+		 *
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		openQr() {
+			return this.openRevealModal('secret-qr', () => ({
+				secretName: this.secret.name || '',
+				password: this.secret.key,
+			}))
+		},
+
+		/**
+		 * Open a modal that shows this login's password, after a flagged
+		 * item's re-prompt where it has one. Only the fields the modal shows
+		 * are handed over; never the one-time code seed or passkeys (D4).
+		 *
+		 * @param {string} name The registry key.
+		 * @param {() => object} props Builds the modal's props.
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		openRevealModal(name, props) {
+			if (!this.secret || !this.canPrintOrShowQr) {
+				return undefined
+			}
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.cnOpenModal(name, props())
+					}
+				})
+			}
+			this.cnOpenModal(name, props())
+			return undefined
 		},
 
 		/**

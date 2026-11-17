@@ -1902,7 +1902,17 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Deze sites bieden passkeys aan, en je kluis bevat er geen voor deze sites. Een passkey kan niet worden gephisht of hergebruikt.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Sitegegevens: 2FA Directory (MIT) en Passkeys Directory (CC BY 4.0), door 2factorauth en bijdragers.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: de sitedirectory kon niet worden geladen. Andere bevindingen blijven gelden.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: je beheerder heeft de sitedirectory niet aangezet."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: je beheerder heeft de sitedirectory niet aangezet.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Een afgedrukt vel valt buiten de controle van Keepiq zodra het uit de printer komt. Voer je hoofdwachtwoord in om de naam, het adres, de gebruikersnaam en het wachtwoord af te drukken.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Iedereen die het scherm kan zien, kan dit wachtwoord scannen. Voer je hoofdwachtwoord in om het te tonen.",
+        "Print again": "Opnieuw afdrukken",
+        "Print login": "Inlog afdrukken",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Afgedrukt uit Keepiq. Bewaar dit vel op een veilige plek en vernietig het als je het niet meer nodig hebt.",
+        "QR code of the password of {name}": "QR-code van het wachtwoord van {name}",
+        "Show as QR code": "Tonen als QR-code",
+        "Show QR code": "QR-code tonen",
+        "The print dialog was opened. Close this window when you are done.": "Het afdrukvenster is geopend. Sluit dit venster als je klaar bent.",
+        "Username": "Gebruikersnaam"
     },
     "nplurals=2; plural=(n != 1);"
 )
