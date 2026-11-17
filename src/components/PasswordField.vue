@@ -23,7 +23,7 @@
 			:type="revealed ? 'text' : 'password'"
 			:readOnly="true" />
 		<NcButton
-			v-if="!useOnly && !alwaysShown"
+			v-if="!useOnly && !shownAtOnce"
 			variant="tertiary"
 			:aria-label="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
 			:title="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
@@ -36,6 +36,7 @@
 		<CopyButton
 			:resolve="resolvePlain"
 			:useOnly="useOnly"
+			:guard="guard"
 			:label="t('keepiq', 'Copy password')" />
 	</div>
 </template>
@@ -111,6 +112,15 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+
+		/**
+		 * Awaited before every reveal; a rejection shows nothing. A flagged
+		 * item passes its master password re-prompt here (crypto-item-reprompt).
+		 */
+		guard: {
+			type: Function,
+			default: null,
+		},
 	},
 
 	data() {
@@ -127,6 +137,16 @@ export default {
 		 */
 		displayValue() {
 			return this.revealed ? (this.plain ?? '') : this.masked
+		},
+
+		/**
+		 * Whether a public value is shown without a toggle. A re-prompt
+		 * guard still masks it until the guard passes.
+		 *
+		 * @spec exclude Presentation state: combines two props.
+		 */
+		shownAtOnce() {
+			return this.alwaysShown && !this.guard
 		},
 
 		/**
@@ -149,7 +169,7 @@ export default {
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 	 */
 	async mounted() {
-		if (this.alwaysShown && !this.useOnly) {
+		if (this.shownAtOnce && !this.useOnly) {
 			this.plain = await this.resolve()
 			this.revealed = true
 		}
@@ -168,6 +188,14 @@ export default {
 		async toggle() {
 			if (this.useOnly) {
 				return
+			}
+			if (!this.revealed && this.guard) {
+				// Every reveal asks again; hiding never does.
+				try {
+					await this.guard()
+				} catch {
+					return
+				}
 			}
 			if (!this.revealed && this.plain === null) {
 				this.plain = await this.resolve()

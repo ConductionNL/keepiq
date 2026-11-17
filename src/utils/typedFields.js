@@ -8,7 +8,7 @@
  */
 
 import { RESERVED_MEMBER_NAMES } from './additionalFields.js'
-import { fieldsOf, schemasOf, withSchemas } from './fieldSchema.js'
+import { fieldsOf, fieldValueOf, schemasOf, withSchemas } from './fieldSchema.js'
 
 /** The kinds a field can have, in the order the editor offers them. */
 export const FIELD_KINDS = Object.freeze(['text', 'hidden', 'url', 'email'])
@@ -112,8 +112,7 @@ export function splitTypedValues(blob, fields) {
 	const byLabel = Object.fromEntries(fields.map((f) => [f.label, f.key]))
 	for (const [name, value] of Object.entries(blob || {})) {
 		if (Object.hasOwn(byLabel, name)) {
-			values[byLabel[name]] =
-				value === null || value === undefined ? '' : String(value)
+			values[byLabel[name]] = fieldValueOf(value)
 		} else {
 			rest[name] = value
 		}

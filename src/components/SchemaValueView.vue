@@ -23,13 +23,13 @@
 					:aria-label="
 						revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')
 					"
-					@click="revealed = !revealed">
+					@click="toggle">
 					<template #icon>
 						<EyeOff v-if="revealed" :size="20" />
 						<Eye v-else :size="20" />
 					</template>
 				</NcButton>
-				<CopyButton :value="value" />
+				<CopyButton :value="value" :guard="guard" />
 			</div>
 			<CnJsonViewer
 				v-if="revealed"
@@ -41,6 +41,7 @@
 			v-else-if="hidden"
 			:label="label"
 			:multiline="input === 'multiline'"
+			:guard="guard"
 			:resolve="resolve" />
 		<template v-else-if="fits === false">
 			<span class="schema-value-view__text">{{ value }}</span>
@@ -113,6 +114,12 @@ export default {
 		label: {
 			type: String,
 			required: true,
+		},
+
+		/** Awaited before a hidden value is revealed or copied (re-prompt). */
+		guard: {
+			type: Function,
+			default: null,
 		},
 	},
 
@@ -198,6 +205,23 @@ export default {
 		 */
 		async resolve() {
 			return this.value
+		},
+
+		/**
+		 * Show or hide a hidden JSON value; showing passes the guard first.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+		 */
+		async toggle() {
+			if (!this.revealed && this.guard) {
+				try {
+					await this.guard()
+				} catch {
+					return
+				}
+			}
+			this.revealed = !this.revealed
 		},
 	},
 }

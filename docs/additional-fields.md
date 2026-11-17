@@ -70,6 +70,25 @@ Every value stays a string: a number as its digits, a yes/no as `"true"` or
 additional fields sees `@schema` as an entry of its own, so **skip it when you list
 the fields**.
 
+A 0.3.14 test build stored a hidden or yes/no field as `{ "value": …, "kind": … }`
+instead. Such a field reads as hidden or yes/no as well, and is stored the way above
+the next time the secret is saved.
+
+## SSH keys
+
+An item of type **SSH Key** has its own fields instead of one value: the
+private key, its passphrase, the public key and the fingerprint. **Generate key pair** creates a
+new pair in your browser (Ed25519, or RSA 4096 where the browser has no
+Ed25519), and **Import from file** reads a private key file in your browser and
+fills in the public key derived from it. Neither sends the private key anywhere
+before it is encrypted.
+
+The private key is stored as the item's value. The public key and its SHA256
+fingerprint are stored in the encrypted additional fields. The fingerprint is
+always worked out from the public key when you save, so it cannot disagree with
+the key, and text that is not a private key is refused with an error on the
+field.
+
 ## Names you cannot use
 
 `key`, `login` and `url` are refused, with a reason shown, and so is `@schema`,

@@ -24,6 +24,8 @@
 			class="masked-text-area__field"
 			modelValue="••••••••••"
 			:label="label"
+			:error="$attrs.error"
+			:helperText="$attrs.helperText"
 			readonly
 			data-testid="masked-text-area-mask" />
 		<NcButton

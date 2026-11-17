@@ -91,20 +91,22 @@ describe('CXF custom fields', () => {
 				password: 'PRIVATE',
 				additionalFields: {
 					Passphrase: 'pp',
-					'Public key': 'ssh-ed25519 AAAA',
+					publicKey: 'ssh-ed25519 AAAA',
+					fingerprint: 'SHA256:abc',
 				},
 			},
 		])
 		const [ssh, custom] = document.accounts[0].items[0].credentials
 
 		expect(ssh.publicKey.value).toBe('ssh-ed25519 AAAA')
-		// The public key leaves on the SSH key entity, not again as a field.
+		// The public key leaves on the SSH key entity, not again as a field,
+		// and the fingerprint is derived again on import.
 		expect(custom.fields.map((f) => [f.label, f.fieldType])).toEqual([
 			['Passphrase', 'concealed-string'],
 		])
 	})
 
-	it('imports an SSH public key under the name the SSH Key form shows', () => {
+	it('imports an SSH public key under the member SshKeyFields reads', () => {
 		const rows = cxfToRows(
 			parseCxfDocument(
 				JSON.stringify({
@@ -137,7 +139,7 @@ describe('CXF custom fields', () => {
 		)
 
 		expect(rows[0].additionalFields).toEqual({
-			'Public key': 'ssh-ed25519 AAAA',
+			publicKey: 'ssh-ed25519 AAAA',
 		})
 	})
 

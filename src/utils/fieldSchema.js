@@ -585,6 +585,31 @@ function isSchemaMap(value) {
 }
 
 /**
+ * The schemas of the `{ value, kind }` entries unstable 0.3.14 builds wrote
+ * for hidden and yes/no fields.
+ */
+const KIND_SCHEMAS = Object.freeze({
+	hidden: { type: 'string', hidden: true },
+	boolean: { type: 'boolean' },
+})
+
+/**
+ * Whether a blob entry is a `{ value, kind }` entry.
+ *
+ * @param {unknown} entry One entry of the decrypted blob.
+ * @return {boolean} True for a kinded entry.
+ */
+function isKindedEntry(entry) {
+	return (
+		entry !== null
+		&& typeof entry === 'object'
+		&& !Array.isArray(entry)
+		&& Object.hasOwn(entry, 'value')
+		&& typeof entry.kind === 'string'
+	)
+}
+
+/**
  * The schemas stored in a blob, by field name.
  *
  * @param {object|null|undefined} blob The decrypted additional fields.
@@ -593,7 +618,36 @@ function isSchemaMap(value) {
  */
 export function schemasOf(blob) {
 	const stored = blob?.[SCHEMA_MEMBER]
-	return isSchemaMap(stored) ? stored : {}
+	const schemas = isSchemaMap(stored) ? { ...stored } : {}
+	for (const [name, entry] of Object.entries(blob ?? {})) {
+		const known = isKindedEntry(entry) && Object.hasOwn(KIND_SCHEMAS, entry.kind)
+		if (known && !Object.hasOwn(schemas, name)) {
+			schemas[name] = { ...KIND_SCHEMAS[entry.kind] }
+		}
+	}
+	return schemas
+}
+
+/**
+ * One blob entry with a `{ value, kind }` entry unwrapped to its value.
+ *
+ * @param {unknown} entry One entry of the decrypted blob.
+ * @return {unknown} The stored value.
+ */
+function unwrapEntry(entry) {
+	return isKindedEntry(entry) ? entry.value : entry
+}
+
+/**
+ * The value of one blob entry as text, '' when absent.
+ *
+ * @param {unknown} entry One entry of the decrypted blob.
+ * @return {string} The value.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ */
+export function fieldValueOf(entry) {
+	const value = unwrapEntry(entry)
+	return value === null || value === undefined ? '' : String(value)
 }
 
 /**
@@ -608,7 +662,9 @@ export function fieldsOf(blob) {
 	if (blob === null || blob === undefined || typeof blob !== 'object') {
 		return {}
 	}
-	const fields = { ...blob }
+	const fields = Object.fromEntries(
+		Object.entries(blob).map(([name, entry]) => [name, unwrapEntry(entry)]),
+	)
 	const stored = fields[SCHEMA_MEMBER]
 	delete fields[SCHEMA_MEMBER]
 	keepMisnamedField(fields, stored)

@@ -325,6 +325,7 @@ import {
 import {
 	cleanSchema,
 	fieldsOf,
+	fieldValueOf,
 	isPlainSchema,
 	presetOf,
 	presetOptions,
@@ -1098,7 +1099,7 @@ export default {
 
 			const members = this.secret.additionalFields
 			if (members && typeof members === 'object') {
-				return String(members[key] || '') !== ''
+				return fieldValueOf(members[key]) !== ''
 			}
 
 			// The blob is present but not decrypted in this context, so member

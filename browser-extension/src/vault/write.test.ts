@@ -224,6 +224,23 @@ describe('fetchItem', () => {
 		expect(sent()).toEqual(['GET /api/v1/secrets/s1', 'GET /api/v1/secrets/s1/write-context'])
 	})
 
+	it('opens a `{ value, kind }` field from an unstable 0.3.14 build as its value, with its kind as a schema (Keepiq vault-custom-fields)', async () => {
+		const row = secretRow({ key: await encrypt('pw'), additionalFields: await encrypt('{"tenant":"acme","Recovery code":{"value":"abc-123","kind":"hidden"},"Active":{"value":"true","kind":"boolean"}}') })
+		await serve(row)
+		const opened = await fetchItem('s1')
+		expect(opened).toMatchObject({
+			ok: true,
+			value: {
+				additionalFields: {
+					tenant: 'acme',
+					'Recovery code': 'abc-123',
+					Active: 'true',
+					'@schema': JSON.stringify({ 'Recovery code': { type: 'string', hidden: true }, Active: { type: 'boolean' } }),
+				},
+			},
+		})
+	})
+
 	it('records the ciphertext it showed, its version and the source version for an edit, and reads no source version for a clone', async () => {
 		const row = secretRow({ key: await encrypt('pw') })
 		await serve(row)

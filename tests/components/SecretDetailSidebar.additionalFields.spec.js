@@ -16,13 +16,17 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import SchemaValueView from '../../src/components/SchemaValueView.vue'
 import SecretDetailSidebar from '../../src/components/SecretDetailSidebar.vue'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 
 const stubAll = {
 	NcAppSidebar: { template: '<aside><slot /></aside>' },
-	NcButton: { template: '<button><slot /></button>' },
+	NcButton: {
+		emits: ['click'],
+		template: '<button @click="$emit(\'click\')"><slot /></button>',
+	},
 	NcEmptyContent: { template: '<div><slot /></div>' },
 	NcNoteCard: { template: '<div><slot /></div>' },
 	NcActions: { template: '<div><slot /></div>' },
@@ -32,7 +36,11 @@ const stubAll = {
 	Pencil: { template: '<span />' },
 	FolderMove: { template: '<span />' },
 	ShareVariant: { template: '<span />' },
-	CopyButton: { template: '<button />' },
+	CopyButton: {
+		props: ['value', 'label'],
+		template:
+			'<button class="copy-stub" :aria-label="label" :data-value="value" />',
+	},
 	PasswordField: { template: '<input />' },
 	ShareList: { template: '<div />' },
 }
@@ -46,11 +54,11 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
  *
  * @return {Promise<object>} The mounted wrapper.
  */
-async function mountDetail(additionalFields) {
+async function mountDetail(additionalFields, typeId = 'login') {
 	const secret = {
 		id: 's-1',
 		name: 'Supplier API',
-		typeId: 'login',
+		typeId,
 		key: 'value',
 		additionalFields,
 	}
@@ -108,5 +116,85 @@ describe('SecretDetailSidebar — additional fields', () => {
 		const wrapper = await mountDetail('not json')
 
 		expect(wrapper.vm.hasAdditionalFields).toBe(false)
+	})
+
+	/**
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	 */
+	describe('fields from a 0.3.14 test build', () => {
+		it('keeps a `{ value, kind }` hidden value out of the DOM text', async () => {
+			const wrapper = await mountDetail({
+				'Recovery code': { value: 'abc-123', kind: 'hidden' },
+				tenant: 'acme',
+			})
+
+			expect(wrapper.text()).not.toContain('abc-123')
+			expect(wrapper.text()).toContain('acme')
+			expect(wrapper.vm.ownMembers[0]).toEqual({
+				name: 'Recovery code',
+				value: 'abc-123',
+				schema: { type: 'string', hidden: true },
+			})
+		})
+
+		it('shows a `{ value, kind }` yes or no field as Yes or No', async () => {
+			const wrapper = await mountDetail({
+				Active: { value: 'true', kind: 'boolean' },
+			})
+
+			expect(wrapper.findComponent(SchemaValueView).text()).toBe('Yes')
+		})
+	})
+
+	it('remounts a field when another secret opens, so no reveal carries over', async () => {
+		const wrapper = await mountDetail({
+			PIN: '4711',
+			'@schema': { PIN: { type: 'string', hidden: true } },
+		})
+		const before = wrapper.findComponent(SchemaValueView).vm
+
+		await wrapper.setProps({ secretId: 's-2' })
+		await flush()
+		await flush()
+
+		expect(wrapper.findComponent(SchemaValueView).vm).not.toBe(before)
+	})
+
+	/**
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+	 */
+	describe('SSH key', () => {
+		const publicKey =
+			'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIBoJneOTtxFSNECPswfFsH3T+cckVsjDeknogABDGhI vector@keepiq'
+		const fingerprint = 'SHA256:rJIGsSTIobhpdMcjRggss8LYJNg3rPUS2UTYAaW/hno'
+
+		it('shows the public key with Copy and the fingerprint, not as additional fields', async () => {
+			useSecretTypeStore().types = [{ id: 'ssh', name: 'ssh_key' }]
+			const wrapper = await mountDetail({ publicKey, fingerprint }, 'ssh')
+
+			expect(
+				wrapper.find('[data-testid="secret-detail-ssh-public-key"]').text(),
+			).toBe(publicKey)
+			expect(
+				wrapper.find('[data-testid="secret-detail-ssh-fingerprint"]').text(),
+			).toBe(fingerprint)
+			expect(
+				wrapper
+					.find('[data-testid="secret-detail-ssh-copy-public-key"]')
+					.attributes('data-value'),
+			).toBe(publicKey)
+			expect(wrapper.vm.ownMembers).toEqual([])
+		})
+
+		it('leaves a publicKey member of another type in the additional fields', async () => {
+			const wrapper = await mountDetail({ publicKey })
+
+			expect(wrapper.find('[data-testid="secret-detail-ssh"]').exists()).toBe(
+				false,
+			)
+			expect(wrapper.vm.ownMembers.map((member) => member.name)).toEqual([
+				'publicKey',
+			])
+		})
 	})
 })

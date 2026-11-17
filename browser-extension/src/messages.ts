@@ -208,13 +208,15 @@ export type FillOutcome = 'both' | 'username' | 'password' | 'none'
  * Popup → background, and the menu, command and page-load paths in the background. `tabId` omitted means the active tab.
  * `confirmed`: the answers to a card's or identity's `needsFormConfirm`.
  */
-export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number; confirmedInsecure?: boolean; confirmed?: FormConfirmation }
+/** `masterPassword`: entered in the popup for a flagged item, checked in the background and dropped. */
+export type FillRequest = { kind: 'fill.request'; itemId: string; tabId?: number; confirmedInsecure?: boolean; confirmed?: FormConfirmation; masterPassword?: string }
 /**
  * `code`: a one-time code was filled; a fill filled something when `filled !== 'none' || code`.
  * `form`: a card or identity filled at least one field. `noFields`: no frame of the tab had a field for the item.
  */
 /** `savedSecure` comes with `needsInsecureConfirm`: the login was saved on an https page, so the question can say so. */
-export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; savedSecure?: boolean; needsFormConfirm?: FormQuestion; noFields?: true }
+/** `needsReprompt`: a flagged item waits for the master password; `wrongMasterPassword` with it when the one sent did not open the key. */
+export type FillResult = { filled: FillOutcome | 'form'; code: boolean; needsInsecureConfirm?: boolean; savedSecure?: boolean; needsFormConfirm?: FormQuestion; noFields?: true; needsReprompt?: true; wrongMasterPassword?: true }
 
 /** What a menu fill without a form says in the page (ext-context-menu). */
 export type PageNoticeCode = 'no_login_form' | 'no_card_form' | 'no_identity_form'
@@ -601,7 +603,7 @@ export type ErrorCode =
 /** `file_access`: shown until the first unlock of an account added through the browser sign-in. */
 export type NoticeCode = 'session_revoked' | 'key_changed' | 'file_access'
 
-export type BlockReason = 'suite_missing' | 'suite_revoked' | 'suite_compromised' | 'migration_failed'
+export type BlockReason = 'suite_missing' | 'suite_revoked' | 'suite_compromised' | 'migration_failed' | 'privileged_access'
 
 export type Result = { ok: true; state: PopupState } | { ok: false; code: ErrorCode; attemptsLeft?: number }
 

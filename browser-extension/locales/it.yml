@@ -154,6 +154,8 @@ item:
   fillName: Compila {name}
   insecureTitle: Vuoi compilare comunque questo login?
   insecureWarning: "Attenzione: questa è una pagina HTTP non protetta e le informazioni che invii potrebbero essere viste e modificate da altri. Questo login è stato salvato in origine su una pagina protetta (HTTPS)."
+  repromptTitle: "Inserisci la password principale per compilare questo elemento"
+  repromptHelp: "Questo elemento chiede la password principale ogni volta che viene compilato. Protegge uno schermo sbloccato, non un'estensione modificata."
   cardInsecureTitle: Compilare questa carta su un sito non sicuro?
   cardInsecureWarning: Questo sito non è sicuro. Chiunque sulla rete potrebbe leggere i dati della carta inseriti.
   crossSiteTitle: Compilare anche su {hosts}?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: La sua chiave di crittografia è stata revocata.
   suiteCompromised: Cifrato con una chiave compromessa, quindi non può essere aperto qui. L’app web di Keepiq indica se può essere recuperato.
   migrationFailed: Non è stato possibile spostarlo sulla tua nuova chiave durante il ripristino dalla compromissione. Il valore memorizzato viene conservato ma non può essere aperto.
+  privilegedAccess: Il proprietario non ti ha approvato una finestra temporale adesso, o non da questo indirizzo.
 
 detail:
   item: Elemento

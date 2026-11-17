@@ -32,7 +32,7 @@ use DateTime;
 use OCA\Keepiq\Db\AuditEntry;
 use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Exception\AuditForbiddenMetadataException;
 use OCA\Keepiq\Kernel\Contracts\AuditServiceInterface;
 
@@ -100,7 +100,7 @@ class AuditService implements AuditServiceInterface {
 	private function sanitiseMetadata(string $eventType, array $metadata): array {
 		$this->assertNoForbiddenKeys(data: $metadata);
 
-		$allowed = AuditEventTypes::WHITELIST[$eventType] ?? [];
+		$allowed = AuditMetadataPolicy::WHITELIST[$eventType] ?? [];
 
 		$clean = [];
 		foreach ($metadata as $key => $value) {
@@ -124,7 +124,7 @@ class AuditService implements AuditServiceInterface {
 	private function assertNoForbiddenKeys(array $data): void {
 		foreach ($data as $key => $value) {
 			if (is_string($key) === true
-				&& in_array($key, AuditEventTypes::FORBIDDEN_KEYS, true) === true
+				&& in_array($key, AuditMetadataPolicy::FORBIDDEN_KEYS, true) === true
 			) {
 				throw new AuditForbiddenMetadataException(
 					message: 'Audit metadata may not contain the forbidden key "' . $key . '"'
@@ -278,7 +278,7 @@ class AuditService implements AuditServiceInterface {
 			$metadata = $entry->getMetadataArray();
 			$changed = false;
 
-			foreach (AuditEventTypes::USER_REFERENCING_METADATA_KEYS as $key) {
+			foreach (AuditMetadataPolicy::USER_REFERENCING_METADATA_KEYS as $key) {
 				if (array_key_exists($key, $metadata) === false) {
 					continue;
 				}

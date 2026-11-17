@@ -1622,6 +1622,269 @@
         ],
         "outcome": "prepared"
     },
+    "privileged_access_requested camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "%1$s asks for access to \"%2$s\"",
+                [
+                    "[a user][]",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[%1$s asks for access to \"%2$s\"][\"[a user][]\",\"[a secret][]\"]"
+            ],
+            [
+                "t",
+                "From %1$s to %2$s. Reason: %3$s",
+                [
+                    "",
+                    "",
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[From %1$s to %2$s. Reason: %3$s][\"\",\"\",\"\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "privileged_access_requested empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "a user",
+                []
+            ],
+            [
+                "t",
+                "%1$s asks for access to \"%2$s\"",
+                [
+                    "[a user][]",
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[%1$s asks for access to \"%2$s\"][\"[a user][]\",\"[a secret][]\"]"
+            ],
+            [
+                "t",
+                "From %1$s to %2$s. Reason: %3$s",
+                [
+                    "",
+                    "",
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[From %1$s to %2$s. Reason: %3$s][\"\",\"\",\"\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "privileged_access_requested full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "%1$s asks for access to \"%2$s\"",
+                [
+                    "carol",
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[%1$s asks for access to \"%2$s\"][\"carol\",\"Bank\"]"
+            ],
+            [
+                "t",
+                "From %1$s to %2$s. Reason: %3$s",
+                [
+                    "",
+                    "",
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[From %1$s to %2$s. Reason: %3$s][\"\",\"\",\"\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "privileged_access_result camel": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Your access request for \"%s\" was denied",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access request for \"%s\" was denied][\"[a secret][]\"]"
+            ],
+            [
+                "t",
+                "Your access request for \"%s\" was approved",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access request for \"%s\" was approved][\"[a secret][]\"]"
+            ],
+            [
+                "t",
+                "You may use it from %1$s to %2$s.",
+                [
+                    "",
+                    ""
+                ]
+            ],
+            [
+                "setParsedMessage",
+                "[You may use it from %1$s to %2$s.][\"\",\"\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "privileged_access_result empty": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "a secret",
+                []
+            ],
+            [
+                "t",
+                "Your access request for \"%s\" was denied",
+                [
+                    "[a secret][]"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access request for \"%s\" was denied][\"[a secret][]\"]"
+            ]
+        ],
+        "outcome": "prepared"
+    },
+    "privileged_access_result full": {
+        "calls": [
+            [
+                "l10n",
+                "keepiq",
+                "de"
+            ],
+            [
+                "setIcon",
+                "https://cloud.test/img/keepiq/app.svg"
+            ],
+            [
+                "t",
+                "Your access request for \"%s\" was denied",
+                [
+                    "Bank"
+                ]
+            ],
+            [
+                "setParsedSubject",
+                "[Your access request for \"%s\" was denied][\"Bank\"]"
+            ],
+            [
+                "linkToRoute",
+                "keepiq.dashboard.page",
+                []
+            ],
+            [
+                "setLink",
+                "https://cloud.test/route/keepiq.dashboard.page/secrets/secret-1"
+            ]
+        ],
+        "outcome": "prepared"
+    },
     "recovery_declined camel": {
         "calls": [
             [

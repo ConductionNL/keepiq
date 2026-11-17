@@ -140,16 +140,17 @@ describe('SecretDetailSidebar built-in type fields', () => {
 		})
 	})
 
-	it('shows an SSH public key at once, and masks its passphrase', async () => {
+	it('masks an SSH key passphrase; the public key has the SSH box', async () => {
 		const wrapper = await mountOn(
 			't-ssh',
-			{ 'Public key': 'ssh-ed25519 AAAA', Passphrase: 'pp' },
+			{ publicKey: 'ssh-ed25519 AAAA', Passphrase: 'pp' },
 			'PRIVATE',
 		)
 
 		const fields = fieldsByLabel(wrapper)
-		expect(fields['Public key']).toEqual({ multiline: true, alwaysShown: true })
 		expect(fields.Passphrase).toEqual({ multiline: false, alwaysShown: false })
+		expect(Object.hasOwn(fields, 'Public key')).toBe(false)
+		expect(wrapper.text()).not.toContain('Additional fields')
 	})
 
 	it('shows no additional fields box when only the type fields hold values', async () => {

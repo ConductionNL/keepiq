@@ -120,6 +120,15 @@
 				:disabled="saving || loading"
 				@update:modelValue="tags = $event" />
 
+			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
+			<NcCheckboxRadioSwitch
+				:modelValue="reprompt"
+				:disabled="saving || loading"
+				data-testid="secret-reprompt"
+				@update:modelValue="reprompt = $event">
+				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
+			</NcCheckboxRadioSwitch>
+
 			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
 
@@ -146,6 +155,7 @@
 <script>
 import {
 	NcButton,
+	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
@@ -168,6 +178,7 @@ import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
 import { secretSaveGuards } from '../mixins/secretSaveGuards.js'
 import { evaluateScore } from '../policy/policy.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
+import { SSH_FINGERPRINT_MEMBER, SSH_PUBLIC_KEY_MEMBER } from '../ssh/sshKey.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -195,6 +206,7 @@ export default {
 	name: 'SecretEditDialog',
 
 	components: {
+		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
 		AuthenticatorKeyField,
@@ -257,6 +269,7 @@ export default {
 			/** The type fields' values as loaded, so only a changed one must fit. */
 			loadedTypedValues: {},
 			tags: [],
+			reprompt: false,
 			policy: null,
 		}
 	},
@@ -314,6 +327,7 @@ export default {
 			if (
 				this.isCard
 				|| this.isIdentity
+				|| this.isSshKey
 				|| this.value === (this.original?.key || '')
 			) {
 				return { compliant: true, reason: null }
@@ -477,6 +491,7 @@ export default {
 				this.additionalUrls = Array.isArray(secret.additionalUrls) ? [...secret.additionalUrls] : []
 				this.login = secret.login || ''
 				this.tags = Array.isArray(secret.tags) ? [...secret.tags] : []
+				this.reprompt = secret.reprompt === true
 				// From the DECRYPTED blob the store already parsed. Pre-filling from
 				// the current decrypted copy is also what bounds the known
 				// last-writer-wins window: the whole blob is rewritten on save, so an
@@ -490,7 +505,10 @@ export default {
 				)
 				this.typedValues = split.values
 				this.loadedTypedValues = { ...split.values }
-				this.additionalFields = objectToMembers(split.rest)
+				// An SSH key's public key and fingerprint have their own fields.
+				this.additionalFields = objectToMembers(
+					this.takeSshMembers(split.rest),
+				)
 
 				// Seed the per-type composite fields from the decrypted
 				// payload (card-identity-items §3.1); a legacy plain value
@@ -576,6 +594,7 @@ export default {
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
@@ -588,10 +607,16 @@ export default {
 			this.error = ''
 			this.unreachablePartners = []
 			try {
+				// A malformed SSH key is refused on its field; nothing is saved.
+				const ssh = this.isSshKey ? await this.sshKeyToSave() : {}
+				if (ssh === null) {
+					return
+				}
 				// HIBP block on a changed manual value (§4.2) — before encryption.
 				if (
 					!this.isCard
 					&& !this.isIdentity
+					&& !this.isSshKey
 					&& this.value !== (this.original?.key || '')
 					&& (await this.breachBlocked())
 				) {
@@ -601,6 +626,9 @@ export default {
 				const o = this.original
 				if (this.name.trim() !== (o.name || '')) {
 					diff.name = this.name.trim()
+				}
+				if (this.reprompt !== (o.reprompt === true)) {
+					diff.reprompt = this.reprompt
 				}
 				// No `typeId` branch: type is read-only in this dialog (see the
 				// template), so it cannot differ from the original — and if a
@@ -630,24 +658,46 @@ export default {
 				// rather than null when the last member is removed: null would mean
 				// "not provided", which the store reads as "leave the stored blob
 				// alone" — the opposite of what removing the last field means.
-				const nextMembers = mergeTypedValues(
-					membersToObject(this.additionalFields),
-					this.typedFields,
-					this.typedValues,
-					o.additionalFields,
-				)
-				// The prior blob in the same shape (free members, then typed values),
-				// so a blob whose typed members only moved is not read as changed.
+				const nextMembers = {
+					...mergeTypedValues(
+						membersToObject(this.additionalFields),
+						this.typedFields,
+						this.typedValues,
+						o.additionalFields,
+					),
+
+					...ssh,
+				}
+				// The prior blob in the same shape (free members, then typed values,
+				// then an SSH key's own), so a blob whose members only moved is not
+				// read as changed.
 				const priorSplit = splitTypedValues(
 					o.additionalFields,
 					this.typedFields,
 				)
-				const priorMembers = mergeTypedValues(
-					membersToObject(objectToMembers(priorSplit.rest)),
-					this.typedFields,
-					priorSplit.values,
-					o.additionalFields,
-				)
+				const priorFree = membersToObject(objectToMembers(priorSplit.rest))
+				const priorSsh = {}
+				if (this.isSshKey) {
+					for (const member of [
+						SSH_PUBLIC_KEY_MEMBER,
+						SSH_FINGERPRINT_MEMBER,
+					]) {
+						if (Object.hasOwn(priorFree, member)) {
+							priorSsh[member] = priorFree[member]
+							delete priorFree[member]
+						}
+					}
+				}
+				const priorMembers = {
+					...mergeTypedValues(
+						priorFree,
+						this.typedFields,
+						priorSplit.values,
+						o.additionalFields,
+					),
+
+					...priorSsh,
+				}
 				if (JSON.stringify(nextMembers) !== JSON.stringify(priorMembers)) {
 					diff.additionalFields = nextMembers
 				}

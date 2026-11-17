@@ -204,6 +204,16 @@
 			</template>
 		</NcEmptyContent>
 
+		<!-- A privileged login outside an approved window: the detail panel
+		     offers to ask the owner for access (capability-requirements-from-
+		     the-matrix 3.1). -->
+		<div
+			v-if="error && privilegedRefused"
+			class="secret-detail__box"
+			data-testid="secret-detail-privileged-refused">
+			<PrivilegedAccessPanel :secretId="secretId" />
+		</div>
+
 		<div v-if="!error && secret" class="secret-detail__card">
 			<!-- Use-only copy (sharing-use-only-and-expiring-shares D3): the
 			     value is never shown or copied here, only filled by the
@@ -323,6 +333,7 @@
 					</div>
 					<span class="secret-detail__row-trailing">
 						<CopyButton
+							:guard="revealGuard"
 							:value="secret.login"
 							:label="t('keepiq', 'Copy login')" />
 					</span>
@@ -346,6 +357,7 @@
 								:useOnly="useOnly"
 								:multiline="valueField?.kind === 'multiline'"
 								:alwaysShown="valueShownAtOnce"
+								:guard="revealGuard"
 								:resolve="resolveKey" />
 						</div>
 					</div>
@@ -381,6 +393,7 @@
 									:label="member.label"
 									:multiline="member.field.kind === 'multiline'"
 									:alwaysShown="member.field.public === true"
+									:guard="revealGuard"
 									:resolve="memberResolver(member.value)" />
 							</div>
 							<template v-else>
@@ -408,6 +421,7 @@
 						<div class="secret-detail__row-value">
 							<TotpDisplay
 								:seed="secret.key || ''"
+								:guard="revealGuard"
 								data-testid="secret-detail-totp" />
 						</div>
 					</div>
@@ -494,6 +508,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.number"
 								:label="t('keepiq', 'Copy number')" />
 						</span>
@@ -550,6 +565,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.cvv"
 								:label="t('keepiq', 'Copy CVV')" />
 						</span>
@@ -592,6 +608,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.pin"
 								:label="t('keepiq', 'Copy PIN')" />
 						</span>
@@ -703,7 +720,7 @@
 											: t('keepiq', 'Show')
 									"
 									data-testid="identity-reveal-bsn"
-									@click="bsnRevealed = !bsnRevealed">
+									@click="toggleBsn">
 									<template #icon>
 										<EyeOffOutline
 											v-if="bsnRevealed"
@@ -712,6 +729,7 @@
 									</template>
 								</NcButton>
 								<CopyButton
+									:guard="revealGuard"
 									:value="identityPayload.bsn"
 									:label="t('keepiq', 'Copy BSN')" />
 							</span>
@@ -808,6 +826,7 @@
 						<div class="secret-detail__row-value">
 							<TotpDisplay
 								:seed="fieldTotp"
+								:guard="revealGuard"
 								data-testid="secret-detail-login-totp" />
 						</div>
 					</div>
@@ -836,6 +855,58 @@
 				</div>
 			</div>
 
+			<!-- The SSH key's public half and its derived fingerprint, from
+			     the encrypted additional fields (vault-ssh-key-item). The
+			     private key is the key row above. -->
+			<div
+				v-if="sshPublicKey && !useOnly"
+				class="secret-detail__box"
+				data-testid="secret-detail-ssh">
+				<div class="secret-detail__row">
+					<span class="secret-detail__row-icon">
+						<KeyVariant :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Public key')
+						}}</span>
+						<div
+							class="secret-detail__row-value secret-detail__row-value--mono"
+							data-testid="secret-detail-ssh-public-key">
+							{{ sshPublicKey }}
+						</div>
+					</div>
+					<span class="secret-detail__row-trailing">
+						<CopyButton
+							:guard="revealGuard"
+							:value="sshPublicKey"
+							:label="t('keepiq', 'Copy public key')"
+							data-testid="secret-detail-ssh-copy-public-key" />
+					</span>
+				</div>
+				<div v-if="sshFingerprint" class="secret-detail__row">
+					<span class="secret-detail__row-icon">
+						<Fingerprint :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Fingerprint')
+						}}</span>
+						<div
+							class="secret-detail__row-value secret-detail__row-value--mono"
+							data-testid="secret-detail-ssh-fingerprint">
+							{{ sshFingerprint }}
+						</div>
+					</div>
+					<span class="secret-detail__row-trailing">
+						<CopyButton
+							:guard="revealGuard"
+							:value="sshFingerprint"
+							:label="t('keepiq', 'Copy fingerprint')" />
+					</span>
+				</div>
+			</div>
+
 			<div v-if="ownMembers.length > 0 && !useOnly" class="secret-detail__box">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
@@ -849,7 +920,7 @@
 							<dl class="secret-detail__extra">
 								<div
 									v-for="member in ownMembers"
-									:key="member.name"
+									:key="`${secretLoadToken}-${member.name}`"
 									class="secret-detail__extra-item">
 									<dt>
 										{{ member.name }}
@@ -858,7 +929,8 @@
 										<SchemaValueView
 											:value="member.value"
 											:schema="member.schema"
-											:label="member.name" />
+											:label="member.name"
+											:guard="revealGuard" />
 									</dd>
 								</div>
 							</dl>
@@ -1152,6 +1224,20 @@
 							</div>
 						</div>
 					</div>
+
+					<div class="secret-detail__row secret-detail__row--block">
+						<span class="secret-detail__row-icon">
+							<ShieldOutline :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<span class="secret-detail__row-label">{{
+								t('keepiq', 'Privileged access')
+							}}</span>
+							<div class="secret-detail__row-value">
+								<PrivilegedAccessPanel :secretId="secretId" />
+							</div>
+						</div>
+					</div>
 				</div>
 			</details>
 		</div>
@@ -1209,6 +1295,7 @@ import HoneyPanel from './HoneyPanel.vue'
 import PasskeyDisplay from './PasskeyDisplay.vue'
 import PasskeyList from './PasskeyList.vue'
 import PasswordField from './PasswordField.vue'
+import PrivilegedAccessPanel from './PrivilegedAccessPanel.vue'
 import RotationPanel from './RotationPanel.vue'
 import SchemaValueView from './SchemaValueView.vue'
 import SecretActivityTab from './SecretActivityTab.vue'
@@ -1222,8 +1309,14 @@ import TotpDisplay from './TotpDisplay.vue'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
 import { cardBrandInfo, formatCardNumber, maskCardNumber, parsePayload } from '../cardIdentity/cardIdentity.js'
+import { needsReprompt, useReprompt } from '../composables/useReprompt.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
+import {
+	SSH_FINGERPRINT_MEMBER,
+	SSH_KEY_TYPE_NAME,
+	SSH_PUBLIC_KEY_MEMBER,
+} from '../ssh/sshKey.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
@@ -1235,8 +1328,8 @@ import {
 	valueFieldOf,
 } from '../utils/builtinTypeFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
-import { fieldsOf, schemasOf } from '../utils/fieldSchema.js'
-import { isRefusal } from '../utils/refusal.js'
+import { fieldsOf, fieldValueOf, schemasOf } from '../utils/fieldSchema.js'
+import { isRefusal, refusalCode } from '../utils/refusal.js'
 import { linkHref } from '../utils/safeLink.js'
 import { isRequestableTypeName, secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
@@ -1299,6 +1392,7 @@ export default {
 		CopyButton,
 		DelegationManager,
 		HoneyPanel,
+		PrivilegedAccessPanel,
 		PasskeyDisplay,
 		PasskeyList,
 		PasswordField,
@@ -1339,6 +1433,9 @@ export default {
 			loading: true,
 			error: '',
 			requestDialogOpen: false,
+			// The server refused this copy of a privileged login outside an
+			// approved window (capability-requirements-from-the-matrix 3.1).
+			privilegedRefused: false,
 			teamWritable: false,
 			/** A copy without a write grade: no edit, restore or new request. */
 			viewOnlyCopy: false,
@@ -1377,6 +1474,17 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The master password re-prompt every reveal path of this item awaits,
+		 * or null when the holder did not flag it (crypto-item-reprompt D2).
+		 *
+		 * @return {Function|null}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		revealGuard() {
+			return needsReprompt(this.secret) ? useReprompt(() => this.secret) : null
+		},
+
 		/**
 		 * The login's extra website addresses, each with a link only when it
 		 * is a web address, so a typed `javascript:` never becomes one.
@@ -1591,14 +1699,14 @@ export default {
 			if (!this.hasAdditionalFields) {
 				return []
 			}
-			const blob = this.secret.additionalFields
+			const fields = fieldsOf(this.secret.additionalFields)
 			const type = useSecretTypeStore().typesById[this.secret.typeId]
 			return typeFieldsOf(type)
-				.filter((field) => Object.hasOwn(blob, field.label))
+				.filter((field) => Object.hasOwn(fields, field.label))
 				.map((field) => ({
 					field,
 					label: field.displayLabel ?? field.label,
-					value: blob[field.label],
+					value: fields[field.label],
 				}))
 		},
 
@@ -1615,6 +1723,11 @@ export default {
 				return []
 			}
 			const typeNames = new Set(this.typeMembers.map((m) => m.field.label))
+			// An SSH key's public key and fingerprint have their own rows.
+			if (this.isSshKey) {
+				typeNames.add(SSH_PUBLIC_KEY_MEMBER)
+				typeNames.add(SSH_FINGERPRINT_MEMBER)
+			}
 			const schemas = schemasOf(this.secret.additionalFields)
 			return Object.entries(fieldsOf(this.secret.additionalFields))
 				.filter(([name]) => !typeNames.has(name))
@@ -1624,6 +1737,43 @@ export default {
 						value === null || value === undefined ? '' : String(value),
 					schema: schemas[name] ?? { type: 'string' },
 				}))
+		},
+
+		/**
+		 * Whether this secret is the `ssh_key` system type.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		isSshKey() {
+			const type = useSecretTypeStore().typesById[this.secret?.typeId]
+			return Boolean(type) && type.name === SSH_KEY_TYPE_NAME
+		},
+
+		/**
+		 * The SSH key's public key line from the encrypted blob, '' when none.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		sshPublicKey() {
+			const blob = this.secret?.additionalFields
+			return this.isSshKey && blob && typeof blob === 'object'
+				? fieldValueOf(blob[SSH_PUBLIC_KEY_MEMBER])
+				: ''
+		},
+
+		/**
+		 * The SSH key's stored fingerprint, '' when none.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		sshFingerprint() {
+			const blob = this.secret?.additionalFields
+			return this.sshPublicKey !== ''
+				? fieldValueOf(blob[SSH_FINGERPRINT_MEMBER])
+				: ''
 		},
 
 		/**
@@ -2091,6 +2241,7 @@ export default {
 			const id = this.secretId
 			this.loading = true
 			this.error = ''
+			this.privilegedRefused = false
 			try {
 				// Fetched together and applied together, so the flags below
 				// always describe the secret on show and a view-only copy
@@ -2119,7 +2270,13 @@ export default {
 				if (id !== this.secretId) {
 					return
 				}
-				if (isRefusal(e)) {
+				if (isRefusal(e) && refusalCode(e) === 'privileged_access_required') {
+					this.privilegedRefused = true
+					this.error = t(
+						'keepiq',
+						'This login can only be used in a time window its owner approved.',
+					)
+				} else if (isRefusal(e)) {
 					this.error = t(
 						'keepiq',
 						'This secret is locked because its encryption suite was revoked.',
@@ -2183,13 +2340,49 @@ export default {
 		 * Toggle one card field's reveal state (masked by default).
 		 *
 		 * @param {string} field The field name (number | cvv | pin).
-		 * @return {void}
+		 * @return {Promise<void>}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
 		 */
-		toggleCardField(field) {
+		async toggleCardField(field) {
+			if (!this.cardRevealed[field] && !(await this.allowedToReveal())) {
+				return
+			}
 			this.cardRevealed = {
 				...this.cardRevealed,
 				[field]: !this.cardRevealed[field],
+			}
+		},
+
+		/**
+		 * Show or hide the BSN; showing a flagged item's asks first.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		async toggleBsn() {
+			if (!this.bsnRevealed && !(await this.allowedToReveal())) {
+				return
+			}
+			this.bsnRevealed = !this.bsnRevealed
+		},
+
+		/**
+		 * Whether this item may be revealed now: at once when it is not
+		 * flagged, after the master password re-prompt when it is.
+		 *
+		 * @return {Promise<boolean>}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		async allowedToReveal() {
+			if (!this.revealGuard) {
+				return true
+			}
+			try {
+				await this.revealGuard()
+				return true
+			} catch {
+				return false
 			}
 		},
 
@@ -2218,10 +2411,30 @@ export default {
 		 * Open the edit dialog for this secret; reload the detail and the
 		 * list behind it on success.
 		 *
-		 * @return {void}
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		openEdit() {
+			// A flagged item opens its edit form only after the re-prompt;
+			// any other opens at once (crypto-item-reprompt D2).
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.openEditDialog()
+					}
+				})
+			}
+			this.openEditDialog()
+			return undefined
+		},
+
+		/**
+		 * Open the edit dialog itself.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
+		openEditDialog() {
 			this.cnOpenModal('secret-edit', {
 				secretId: this.secretId,
 				onSaved: () => this.reloadWithList(),
@@ -2233,13 +2446,34 @@ export default {
 		 * Saving is an ordinary create: a new id, fresh ciphertext, no shares,
 		 * attachments, history, passkeys or one-time code.
 		 *
-		 * @return {void}
+		 * A flagged item opens the prefilled form, which holds its value, only
+		 * after the master password re-prompt (crypto-item-reprompt D2).
+		 *
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
 		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
 		 */
 		openClone() {
 			if (!this.secret) {
-				return
+				return undefined
 			}
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.openCloneDialog()
+					}
+				})
+			}
+			this.openCloneDialog()
+			return undefined
+		},
+
+		/**
+		 * Open the create dialog prefilled from this secret.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		openCloneDialog() {
 			this.cnOpenModal('secret-create', {
 				folderId: this.secret.folderId || null,
 				prefill: {
@@ -2639,6 +2873,13 @@ details[open] > summary .secret-detail__accordion-chevron {
 .secret-detail__row-value--mono {
 	font-family: monospace;
 	letter-spacing: 0.04em;
+}
+
+/* A hidden additional field: the masked value, Show and Copy on one line. */
+.secret-detail__extra-hidden {
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }
 
 /* Identity section headings: plain text OUTSIDE the boxes (Proton). */

@@ -61,10 +61,10 @@ function notesOf(secret) {
 		return af
 	}
 	if (typeof af === 'object') {
-		if (typeof af.notes === 'string') {
-			return af.notes
-		}
 		const fields = fieldsOf(af)
+		if (typeof fields.notes === 'string') {
+			return fields.notes
+		}
 		return Object.keys(fields).length === 0 ? '' : JSON.stringify(fields)
 	}
 	return ''

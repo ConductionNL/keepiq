@@ -41,6 +41,14 @@ interface RecoveryAuditInterface {
 
 	public const SETTINGS_CHANGED = AuditEventTypes::RECOVERY_SETTINGS_CHANGED;
 
+	// A user's own recovery kit (crypto-recovery-kit). The suite is the
+	// event's object; no metadata, so nothing of the copy or the code.
+	public const KIT_CREATED = 'recovery_kit.created';
+
+	public const KIT_USED = 'recovery_kit.used';
+
+	public const KIT_REVOKED = 'recovery_kit.revoked';
+
 	/**
 	 * Record one recovery step.
 	 *

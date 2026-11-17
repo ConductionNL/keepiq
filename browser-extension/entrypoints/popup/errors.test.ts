@@ -96,6 +96,7 @@ describe('writeErrorText', () => {
 
 	it.each(Object.entries({
 		suite_missing: 'blocked.suiteMissing', suite_revoked: 'blocked.suiteRevoked', suite_compromised: 'blocked.suiteCompromised', migration_failed: 'blocked.migrationFailed',
+		privileged_access: 'blocked.privilegedAccess',
 	} satisfies Record<BlockReason, string>))('says a row is blocked for %s when the server gave that reason', (reason, key) => {
 		expect(t(key)).not.toBe('')
 		expect(writeErrorText({ code: 'blocked', reason: reason as BlockReason })).toBe(t(key))

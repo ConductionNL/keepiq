@@ -150,9 +150,26 @@ export function formSections(kind: FormKind, values: Pick<FormValues, 'loginShow
 	}
 }
 
-/** Additional fields as the form edits them: text, and any other JSON value as its JSON. */
-export const fieldTexts = (payload: Record<string, unknown>): Record<string, string> =>
-	Object.fromEntries(Object.entries(payload).map(([name, value]) => [name, typeof value === 'string' ? value : JSON.stringify(value)]))
+/** The schemas of the `{ value, kind }` fields unstable 0.3.14 web builds wrote for hidden and yes-or-no fields. */
+const KIND_SCHEMAS: Record<string, object> = { hidden: { type: 'string', hidden: true }, boolean: { type: 'boolean' } }
+
+type KindedField = { value: unknown; kind: string }
+
+const isKinded = (value: unknown): value is KindedField =>
+	typeof value === 'object' && value !== null && !Array.isArray(value) && 'value' in value && typeof (value as { kind?: unknown }).kind === 'string'
+
+/** Additional fields as the form edits them: text, and any other JSON value as its JSON. A `{ value, kind }` field becomes its value, with its kind as a schema. */
+export function fieldTexts(payload: Record<string, unknown>): Record<string, string> {
+	const texts = Object.fromEntries(Object.entries(payload).map(([name, value]) => {
+		const plain = isKinded(value) ? value.value : value
+		return [name, typeof plain === 'string' ? plain : JSON.stringify(plain)]
+	}))
+	const kinded = Object.entries(payload).filter((entry): entry is [string, KindedField] => isKinded(entry[1]) && Object.hasOwn(KIND_SCHEMAS, entry[1].kind))
+	if (kinded.length === 0) return texts
+	const stored = parseObject(texts[SCHEMA_MEMBER]) ?? {}
+	const schemas = { ...Object.fromEntries(kinded.map(([name, field]) => [name, KIND_SCHEMAS[field.kind]])), ...stored }
+	return { ...texts, [SCHEMA_MEMBER]: JSON.stringify(schemas) }
+}
 
 function members<K extends string>(raw: string, keys: readonly K[]): Record<K, string> {
 	const payload = parseObject(raw) ?? {}

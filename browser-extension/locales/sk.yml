@@ -154,6 +154,8 @@ item:
   fillName: Vyplniť {name}
   insecureTitle: Naozaj chcete tieto prihlasovacie údaje vyplniť?
   insecureWarning: "Upozornenie: Toto je nezabezpečená stránka HTTP a akékoľvek odoslané informácie môžu ostatní vidieť a meniť. Tieto prihlasovacie údaje boli pôvodne uložené na zabezpečenej stránke (HTTPS)."
+  repromptTitle: "Zadajte hlavné heslo na vyplnenie tejto položky"
+  repromptHelp: "Táto položka žiada o hlavné heslo pri každom vyplnení. Chráni odomknutú obrazovku, nie upravené rozšírenie."
   cardInsecureTitle: Vyplniť túto kartu na nezabezpečenom webe?
   cardInsecureWarning: Tento web nie je zabezpečený. Ktokoľvek v sieti môže vyplnené údaje karty prečítať.
   crossSiteTitle: Vyplniť aj na {hosts}?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Jej šifrovací kľúč bol zneplatnený.
   suiteCompromised: Zašifrované kompromitovaným kľúčom, preto ju tu nemožno otvoriť. Webová aplikácia Keepiq ukáže, či ju možno obnoviť.
   migrationFailed: Pri obnove po kompromitácii ju nebolo možné previesť na váš nový kľúč. Uložená hodnota je zachovaná, ale nemožno ju otvoriť.
+  privilegedAccess: Vlastník vám teraz neschválil časové okno, alebo nie z tejto adresy.
 
 detail:
   item: Položka

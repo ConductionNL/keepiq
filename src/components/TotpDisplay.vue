@@ -1,6 +1,15 @@
 <template>
 	<div class="totp-display" data-testid="totp-display">
-		<div v-if="invalid" class="totp-display__invalid" data-testid="totp-invalid">
+		<div v-if="locked" class="totp-display__locked">
+			<NcButton
+				variant="secondary"
+				data-testid="totp-show"
+				@click="unlock">
+				{{ t('keepiq', 'Show one-time code') }}
+			</NcButton>
+		</div>
+
+		<div v-else-if="invalid" class="totp-display__invalid" data-testid="totp-invalid">
 			<AlertCircleOutline :size="20" />
 			<span>{{ t('keepiq', 'Not a valid authenticator secret') }}</span>
 		</div>
@@ -45,6 +54,7 @@
 				<CopyButton
 					:value="code"
 					:label="t('keepiq', 'Copy one-time code')"
+					:guard="guard"
 					data-testid="totp-copy" />
 			</div>
 		</template>
@@ -56,7 +66,7 @@
 </template>
 
 <script>
-import { NcLoadingIcon } from '@nextcloud/vue'
+import { NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import CopyButton from './CopyButton.vue'
 import { onVaultLock, useSessionStore } from '../store/modules/session.js'
@@ -77,6 +87,7 @@ export default {
 	name: 'TotpDisplay',
 
 	components: {
+		NcButton,
 		NcLoadingIcon,
 		AlertCircleOutline,
 		CopyButton,
@@ -92,6 +103,18 @@ export default {
 			type: String,
 			default: '',
 		},
+
+		/**
+		 * Awaited before the code is shown and before every copy; a rejection
+		 * shows nothing. A flagged item passes its master password re-prompt
+		 * here (crypto-item-reprompt). Without one the code shows at once.
+		 *
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		guard: {
+			type: Function,
+			default: null,
+		},
 	},
 
 	data() {
@@ -106,10 +129,22 @@ export default {
 			invalid: false,
 			/** @type {?number} The recompute interval handle. */
 			timer: null,
+			/** @type {boolean} Whether the guard let the code be shown (until the seed changes or the vault locks). */
+			unlocked: false,
 		}
 	},
 
 	computed: {
+		/**
+		 * Whether the code waits behind the guard.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		locked() {
+			return this.guard !== null && !this.unlocked
+		},
+
 		/**
 		 * The code grouped for readability (e.g. "123 456").
 		 *
@@ -189,6 +224,8 @@ export default {
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
 		 */
 		seed() {
+			// Another seed is another item: it asks again.
+			this.unlocked = false
 			this.start()
 		},
 	},
@@ -202,7 +239,7 @@ export default {
 	mounted() {
 		// Discard all TOTP state when the vault locks (no seed/key/code survives
 		// a locked vault — password-health no-leak contract parity).
-		onVaultLock(this.discard)
+		onVaultLock(this.lock)
 		this.start()
 	},
 
@@ -220,6 +257,36 @@ export default {
 		t,
 
 		/**
+		 * Pass the guard, then show the code. A cancelled or refused prompt
+		 * shows nothing; showing it again asks again.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		async unlock() {
+			if (this.guard) {
+				try {
+					await this.guard()
+				} catch {
+					return
+				}
+			}
+			this.unlocked = true
+			await this.start()
+		},
+
+		/**
+		 * The vault locked: drop the code and put it back behind the guard.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		lock() {
+			this.unlocked = false
+			this.discard()
+		},
+
+		/**
 		 * Parse the seed and begin the per-second recompute loop. Refuses when
 		 * the vault is locked or the seed is unparseable.
 		 *
@@ -229,7 +296,7 @@ export default {
 		async start() {
 			this.discard()
 			const session = useSessionStore()
-			if (session.isLocked || !this.seed) {
+			if (session.isLocked || !this.seed || this.locked) {
 				return
 			}
 			try {
@@ -351,6 +418,11 @@ export default {
 	font-size: 0.85rem;
 	color: var(--color-text-maxcontrast);
 	min-width: 2.5em;
+}
+
+.totp-display__locked {
+	display: flex;
+	align-items: center;
 }
 
 .totp-display__invalid {

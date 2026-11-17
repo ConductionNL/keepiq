@@ -88,6 +88,13 @@ describe('pickCode', () => {
 		expect(await pickCode(target())).toEqual({ filled: 'none', code: true })
 	})
 
+	it('sends no code for a login flagged to ask for the master password, which the inline list cannot ask for', async () => {
+		await vault({ reprompt: true })
+		expect(await pickCode(target())).toEqual({ filled: 'none', code: false })
+		expect(sent).toEqual([])
+		expect(await browser.storage.local.get(lastUsedKey(accountId))).toEqual({})
+	})
+
 	it('sends nothing while locked', async () => {
 		await vault()
 		await lock(accountId)

@@ -37,11 +37,19 @@ beforeAll(async () => {
 describe('additional fields under real encryption', () => {
 	it('round-trips every member name and value exactly as entered', async () => {
 		const members = [
-			{ name: 'client-id', value: 'acme-4711' },
-			{ name: 'recovery-codes', value: 'a1b2 c3d4 e5f6' },
+			{ name: 'client-id', value: 'acme-4711', schema: { type: 'string' } },
+			{
+				name: 'recovery-codes',
+				value: 'a1b2 c3d4 e5f6',
+				schema: { type: 'string', hidden: true },
+			},
 			// Awkward but legal input: spaces, punctuation, unicode, an equals sign
 			// that a naive serializer might mangle.
-			{ name: 'note (staging)', value: 'wachtwoord=hüpfer & co' },
+			{
+				name: 'note (staging)',
+				value: 'wachtwoord=hüpfer & co',
+				schema: { type: 'string' },
+			},
 		]
 
 		const sealed = await rsaEncrypt(
@@ -52,10 +60,8 @@ describe('additional fields under real encryption', () => {
 			JSON.parse(await rsaDecrypt(sealed, pair.privateKey)),
 		)
 
-		// Each member comes back with its schema: plain text, as none was set.
-		expect(opened).toEqual(
-			members.map((member) => ({ ...member, schema: { type: 'string' } })),
-		)
+		// Each member comes back with its schema, the hidden one included.
+		expect(opened).toEqual(members)
 	})
 
 	it('leaks neither member names nor values into the ciphertext', async () => {

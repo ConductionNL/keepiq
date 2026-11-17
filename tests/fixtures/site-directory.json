@@ -1,0 +1,9 @@
+{
+    "fetchedAt": "2026-11-14T10:00:00+00:00",
+    "totp": {
+        "github.com": "https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa"
+    },
+    "passkeys": {
+        "example.com": "https://example.com/help/passkeys"
+    }
+}

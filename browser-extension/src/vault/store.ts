@@ -73,4 +73,4 @@ export function toItemMeta(row: StoredSecretRow): ItemMeta {
 	return meta
 }
 
-const BLOCK_REASONS: readonly string[] = ['suite_missing', 'suite_revoked', 'suite_compromised', 'migration_failed'] satisfies BlockReason[]
+const BLOCK_REASONS: readonly string[] = ['suite_missing', 'suite_revoked', 'suite_compromised', 'migration_failed', 'privileged_access'] satisfies BlockReason[]

@@ -54,17 +54,14 @@ describe('builtinTypeFields', () => {
 		])
 	})
 
-	it('gives an SSH key a multi-line private key, a public key and a passphrase', () => {
+	it('gives an SSH key a multi-line private key and a passphrase; SshKeyFields holds its public key', () => {
 		expect(valueFieldOf('ssh_key')).toEqual({
 			label: 'Private key',
 			kind: 'multiline',
 		})
 		expect(
 			typeFieldsOf({ name: 'ssh_key' }).map((f) => [f.label, f.kind]),
-		).toEqual([
-			['Public key', 'multiline'],
-			['Passphrase', 'hidden'],
-		])
+		).toEqual([['Passphrase', 'hidden']])
 		expect(leavesOut('ssh_key', 'login')).toBe(false)
 		expect(leavesOut('ssh_key', 'url')).toBe(false)
 	})
@@ -122,11 +119,5 @@ describe('the schema of a built-in field', () => {
 		)
 		expect(isHiddenSchema(schema)).toBe(true)
 		expect(inputOf(schema)).toBe('multiline')
-	})
-
-	it('shows an SSH public key, which is public', () => {
-		const field = builtinFieldNamed('ssh_key', 'Public key')
-		expect(field.public).toBe(true)
-		expect(isHiddenSchema(typeFieldSchema(field))).toBe(false)
 	})
 })

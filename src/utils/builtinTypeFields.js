@@ -150,9 +150,8 @@ function databaseDefinition() {
 }
 
 /**
- * An SSH key: an OpenSSH private key is several lines; a key pair generator
- * and a fingerprint follow in vault-custom-field-kinds-and-ssh-key. The
- * public key is public by design, like a certificate: never masked.
+ * An SSH key: an OpenSSH private key is several lines. Its public key and
+ * fingerprint have their own form, SshKeyFields, so they are not fields here.
  *
  * @return {object} The definition.
  * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
@@ -162,16 +161,7 @@ function sshKeyDefinition() {
 		value: { label: t('keepiq', 'Private key'), kind: 'multiline' },
 		lockedInRequests: true,
 		leaveOut: [],
-		fields: [
-			{
-				key: 'public-key',
-				label: 'Public key',
-				displayLabel: t('keepiq', 'Public key'),
-				kind: 'multiline',
-				public: true,
-			},
-			passphraseField(),
-		],
+		fields: [passphraseField()],
 	}
 }
 

@@ -15,9 +15,9 @@
 
 ## 2. SSH key item
 
-- [ ] 2.1 Build the SSH key section (private key, public key, fingerprint) and show it for type `ssh_key` in the create and edit dialogs. Verify: vitest that the fingerprint is derived and a malformed key is refused.
-- [ ] 2.2 Add Generate key pair and Import from file. Verify: vitest generating a pair and parsing the OpenSSH public key; Playwright flow create, save, open, copy public key.
-- [ ] 2.3 Update the CXF mapping for the new SSH fields. Verify: vitest round trip.
+- [x] 2.1 Build the SSH key section (private key, public key, fingerprint) and show it for type `ssh_key` in the create and edit dialogs. Verify: vitest that the fingerprint is derived and a malformed key is refused.
+- [ ] 2.2 Add Generate key pair and Import from file. Verify: vitest generating a pair and parsing the OpenSSH public key; Playwright flow create, save, open, copy public key. (Code and vitest done in `tests/vitest/sshKey.spec.js` and `tests/components/SshKeyFields.spec.js`; the Playwright flow is still open.)
+- [x] 2.3 Update the CXF mapping for the new SSH fields. Verify: vitest round trip.
 
 ## 3. Close out
 

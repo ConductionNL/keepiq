@@ -33,11 +33,16 @@ import { makeRow, rejectRow, validateRow } from '../import/model.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
 import { buildPasskeyCredential, parsePasskey } from '../passkey/passkey.js'
 import {
+	parsePublicKey,
+	SSH_FINGERPRINT_MEMBER,
+	SSH_PUBLIC_KEY_MEMBER,
+} from '../ssh/sshKey.js'
+import {
 	authenticatorKeyError,
 	authenticatorKeyFromParts,
 } from '../totp/authenticatorKey.js'
 import { parseOtpauth } from '../totp/totp.js'
-import { mergeBlobs } from '../utils/fieldSchema.js'
+import { fieldValueOf, mergeBlobs } from '../utils/fieldSchema.js'
 import { customFieldsCredential, readCustomFields } from './cxfCustomFields.js'
 
 /** The CXF version this module targets (Proposed Standard, Aug 2025 line). */
@@ -236,17 +241,6 @@ function apiKeyFields(credential, title) {
 }
 
 /**
- * The member an SSH key's public key is stored under: the built-in SSH Key
- * form's own field.
- */
-const SSH_PUBLIC_KEY = 'Public key'
-
-/**
- * The member older imports stored the public key under, still read on export.
- */
-const SSH_PUBLIC_KEY_ALIAS = 'publicKey'
-
-/**
  * Row fields of an SSH key credential.
  *
  * @param {object} credential The CXF credential entity.
@@ -259,7 +253,9 @@ function sshKeyFields(credential, title) {
 		name: title !== '' ? title : 'SSH key',
 		password: fieldValue(credential.privateKey),
 		type: 'ssh_key',
-		additionalFields: publicKey ? { [SSH_PUBLIC_KEY]: publicKey } : null,
+		// The fingerprint is not read from the file: it is derived from the
+		// public key when the row is committed (vault-ssh-key-item D3).
+		additionalFields: publicKey ? { [SSH_PUBLIC_KEY_MEMBER]: publicKey } : null,
 	}
 }
 
@@ -395,7 +391,10 @@ function readCredential(ctx, entry) {
 	} else if (type === 'passkey') {
 		readPasskey(ctx, entry)
 	} else if (type === 'custom-fields') {
-		ctx.custom.push(readCustomFields(entry.credential))
+		ctx.custom.push({
+			blob: readCustomFields(entry.credential),
+			sourceRow: entry.sourceRow,
+		})
 	} else {
 		ctx.rows.push(
 			credentialToRow(entry.credential, ctx.item, ctx.folder, entry.sourceRow),
@@ -471,7 +470,9 @@ function extrasTarget(ctx) {
 				type: 'login',
 			},
 			Math.min(
-				...[...ctx.seeds, ...ctx.passkeys].map((entry) => entry.sourceRow),
+				...[...ctx.seeds, ...ctx.passkeys, ...ctx.custom].map(
+					(entry) => entry.sourceRow,
+				),
 			),
 		),
 	)
@@ -490,7 +491,7 @@ function extrasTarget(ctx) {
  */
 function attachExtras(ctx) {
 	const target = extrasTarget(ctx)
-	for (const blob of ctx.custom) {
+	for (const { blob } of ctx.custom) {
 		target.additionalFields = mergeBlobs(target.additionalFields || {}, blob)
 	}
 	for (const { seed, sourceRow } of ctx.seeds) {
@@ -739,12 +740,8 @@ function apiKeyCredential(row) {
  * @return {object}
  */
 function sshKeyCredential(row) {
-	const fields = row.additionalFields
-	const publicKey =
-		fields && typeof fields === 'object'
-			? (fields[SSH_PUBLIC_KEY] ?? fields[SSH_PUBLIC_KEY_ALIAS] ?? '')
-			: ''
-	return {
+	const publicKey = memberText(row, SSH_PUBLIC_KEY_MEMBER)
+	const credential = {
 		type: 'ssh-key',
 		privateKey: {
 			fieldType: 'concealed-string',
@@ -752,6 +749,31 @@ function sshKeyCredential(row) {
 		},
 		publicKey: { fieldType: 'string', value: publicKey },
 	}
+	try {
+		const parsed = parsePublicKey(publicKey)
+		credential.keyType = parsed.type
+		if (parsed.comment !== '') {
+			credential.keyComment = parsed.comment
+		}
+	} catch {
+		// No usable public key: the private key is still exported.
+	}
+	return credential
+}
+
+/**
+ * The text of one additional field of a row, '' when absent.
+ *
+ * @param {object} row The serialized secret.
+ * @param {string} name The member name.
+ * @return {string}
+ */
+function memberText(row, name) {
+	const fields = row.additionalFields
+	if (!fields || typeof fields !== 'object') {
+		return ''
+	}
+	return fieldValueOf(fields[name])
 }
 
 /**
@@ -840,7 +862,7 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 		const custom = customFieldsCredential(
 			row.additionalFields,
 			credential.type === 'ssh-key'
-				? [SSH_PUBLIC_KEY, SSH_PUBLIC_KEY_ALIAS]
+				? [SSH_PUBLIC_KEY_MEMBER, SSH_FINGERPRINT_MEMBER]
 				: [],
 			typeName,
 		)
