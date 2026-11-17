@@ -67,6 +67,17 @@ Both fields are RSA-encrypted in the browser with the holder's public key, using
 - **Passkey type filter finding logins with passkeys.** The server cannot see inside the ciphertext, so the filter needs a backend query design.
 - **Android** belongs to keepiq#1329; the browser extension adopts the fields in its own changes.
 
+The open items are tracked in the follow-up change `vault-login-totp-followup`.
+
+## Known limitations of import and export
+
+Not changed here:
+
+- Duplicate detection still matches on name and URL only, so under the default "skip" an imported row with a code or passkeys is skipped when a vault login with the same name and URL lacks them; the duplicates list marks such rows so the user can import them as copies.
+- The password policy check runs on the password only; a row whose password is below the policy is rejected with its code and passkeys, under the policy's reason.
+- A CXF export drops a passkey's `algorithm`, `createdAt`, `counter` and `transports`, and a login's notes, as before; a CXF import gives a passkey Keepiq's defaults for them.
+- A CXF round trip keeps a seed's secret, parameters, issuer and account, but not the exact text of its otpauth URI (parameter order, other query parameters).
+
 ## Seed data
 
 Keepiq owns its tables (keepiq ADR-001) and has no OpenRegister register. No fixture change is needed: tests build their own logins with a published RFC 6238 test vector.

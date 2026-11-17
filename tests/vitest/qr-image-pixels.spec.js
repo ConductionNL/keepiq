@@ -5,7 +5,7 @@
  * The pixels read from a QR image file: the size it is scaled to, when the
  * browser resizes it while decoding, and the object URL always released.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'

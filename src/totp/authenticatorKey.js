@@ -8,7 +8,7 @@
  * passes here always yields a code. Nothing here touches the network or any
  * Web Storage API.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 import { translate as t } from '@nextcloud/l10n'
@@ -31,7 +31,7 @@ const OTPAUTH_SCHEME = /^otpauth:\/\//i
  * @param {string|null} [parts.account] The account name, for the link's label.
  * @return {string} The key, '' when there is no secret.
  * @throws {Error} When the code generator cannot use these parameters.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 export function authenticatorKeyFromParts(parts) {
 	const secret = compactSecret(parts.secret)
@@ -51,7 +51,7 @@ export function authenticatorKeyFromParts(parts) {
  *
  * @param {string|null|undefined} raw The secret as held.
  * @return {string} The compacted secret, '' when there is none.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 function compactSecret(raw) {
 	return String(raw ?? '')
@@ -65,7 +65,7 @@ function compactSecret(raw) {
  * @param {number|string|null|undefined} value The given parameter.
  * @param {number|string} fallback The default.
  * @return {number|string} The value to use.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 function given(value, fallback) {
 	return value === null || value === undefined || value === '' ? fallback : value
@@ -76,7 +76,7 @@ function given(value, fallback) {
  *
  * @param {string|null|undefined} algorithm The algorithm as held.
  * @return {string} The token.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 function algorithmToken(algorithm) {
 	return String(given(algorithm, TOTP_DEFAULTS.algorithm))
@@ -90,7 +90,7 @@ function algorithmToken(algorithm) {
  *
  * @param {object} parts The parameters, as authenticatorKeyFromParts takes them.
  * @return {{period: number, digits: number, algorithm: string, issuer: string, label: string}} The parameters.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 function totpParameters(parts) {
 	const issuer = String(parts.issuer ?? '')
@@ -110,7 +110,7 @@ function totpParameters(parts) {
  *
  * @param {{period: number, digits: number, algorithm: string, label: string}} totp The parameters.
  * @return {boolean} True when the bare secret is the key.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 function isBareSecret(totp) {
 	return totp.period === TOTP_DEFAULTS.period
@@ -127,7 +127,7 @@ function isBareSecret(totp) {
  * @param {{period: number, digits: number, algorithm: string, issuer: string, label: string}} totp The parameters.
  * @return {string} The link.
  * @throws {Error} When the code generator cannot use these parameters.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 function otpauthLink(secret, totp) {
 	const params = new URLSearchParams({
@@ -155,7 +155,7 @@ function otpauthLink(secret, totp) {
  *
  * @param {string} raw The entered key.
  * @return {string} The key to store, '' when nothing was entered.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function normaliseAuthenticatorKey(raw) {
 	const value = String(raw ?? '').trim()
@@ -171,7 +171,7 @@ export function normaliseAuthenticatorKey(raw) {
  *
  * @param {string} raw The entered key.
  * @return {string} The error to show, or ''.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function authenticatorKeyError(raw) {
 	const value = String(raw ?? '').trim()
@@ -197,7 +197,7 @@ export function authenticatorKeyError(raw) {
  * @param {string} text The decoded QR text.
  * @return {string} The link.
  * @throws {Error} When the text is not a usable `otpauth://totp/` link.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function otpauthFromQrText(text) {
 	const value = String(text ?? '').trim()

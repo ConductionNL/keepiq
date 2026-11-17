@@ -6,7 +6,7 @@
  * each the shape a standalone passkey item holds in its `key` (passkey.js),
  * or '' when there are none.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 /**
@@ -35,7 +35,7 @@ function storedArray(json) {
  *
  * @param {string} json The decrypted `passkeys` value.
  * @return {Array<{index: number, credential: object}>} [] when there are none or it does not parse.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function passkeyEntries(json) {
 	return (storedArray(json) ?? []).flatMap((credential, index) =>
@@ -56,7 +56,7 @@ export function passkeyEntries(json) {
  * @param {string} json The decrypted `passkeys` value.
  * @param {number} index The stored position of the entry to drop.
  * @return {string} The value to save.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function withoutPasskey(json, index) {
 	const stored = storedArray(json)

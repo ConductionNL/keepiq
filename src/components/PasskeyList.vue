@@ -8,7 +8,7 @@
   confirmation; the list then emits the remaining array for the caller to
   save. Passkeys are added by a provider or an import, never here.
 
-  @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+  @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 -->
 <template>
 	<div class="passkey-list" data-testid="passkey-list">
@@ -108,7 +108,7 @@ export default {
 		 * position in the stored array.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		entries() {
 			return passkeyEntries(this.passkeysJson).map(({ index, credential }) => {
@@ -131,7 +131,7 @@ export default {
 		 * Emit the `passkeys` value without the confirmed passkey.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		onConfirm() {
 			const entry =
