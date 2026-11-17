@@ -36,13 +36,6 @@ final class PatternAtoms {
 	private const ESCAPES = 'dDwWsSbBtnrf^$\\.*+?()[]{}|/';
 
 	/**
-	 * A counted quantifier with a higher upper bound counts as open-ended.
-	 *
-	 * @var integer
-	 */
-	private const MAX_BOUND = 64;
-
-	/**
 	 * The length of an escape, 0 when it is not one both dialects read alike. Back-references are refused: they read
 	 * differently and backtrack.
 	 *
@@ -121,8 +114,9 @@ final class PatternAtoms {
 	}//end classLength()
 
 	/**
-	 * The opening of a group: its length and whether it is a lookaround, or null for a construct only PCRE reads,
-	 * such as inline flags, an atomic group or a comment.
+	 * The opening of a group: its length and whether it is a lookahead, or null for a construct only PCRE reads,
+	 * such as inline flags, an atomic group or a comment, and for a lookbehind, which PCRE refuses when its length
+	 * varies but JavaScript runs.
 	 *
 	 * @param string $pattern The pattern
 	 * @param int    $index   Where the `(` is
@@ -141,8 +135,8 @@ final class PatternAtoms {
 			return ['length' => 3, 'look' => false];
 		}
 
-		if (preg_match('/^<?[=!]/', $rest, $match) === 1) {
-			return ['length' => 2 + strlen($match[0]), 'look' => true];
+		if (preg_match('/^[=!]/', $rest) === 1) {
+			return ['length' => 3, 'look' => true];
 		}
 
 		if (preg_match('/^<[A-Za-z_][A-Za-z0-9_]*>/', $rest, $match) === 1) {
@@ -153,7 +147,7 @@ final class PatternAtoms {
 	}//end groupOpening()
 
 	/**
-	 * Whether a quantifier is open-ended: `*`, `+`, `{n,}`, or an upper bound above MAX_BOUND.
+	 * Whether a quantifier is a choice point: `?`, `*`, `+`, `{m,}`, or `{m,n}` with m < n. A fixed `{n}` is not.
 	 *
 	 * @param string $quantifier The quantifier
 	 *
@@ -161,17 +155,17 @@ final class PatternAtoms {
 	 *
 	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
-	public function isOpenEnded(string $quantifier): bool {
-		if ($quantifier === '*' || $quantifier === '+') {
+	public function isVariable(string $quantifier): bool {
+		if (preg_match('/^\{(\d+)(,(\d*))?\}$/', $quantifier, $match) !== 1) {
 			return true;
 		}
 
-		if (preg_match('/,(\d*)\}$/', $quantifier, $match) !== 1) {
+		if (isset($match[2]) === false) {
 			return false;
 		}
 
-		return $match[1] === '' || (int)$match[1] > self::MAX_BOUND;
-	}//end isOpenEnded()
+		return $match[3] === '' || (int)$match[1] < (int)$match[3];
+	}//end isVariable()
 
 	/**
 	 * The length of a quantifier, 0 when there is none.

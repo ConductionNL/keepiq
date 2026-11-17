@@ -24,10 +24,12 @@ const SAFE = [
 	'^\\x41[\\-a-z]*$',
 	'(?=.*\\d)\\w{8,}',
 	'\\bfoo\\b',
-	// Three open-ended quantifiers, anchored; two, unanchored; small bounds.
+	// Three choice points, anchored; two, unanchored; fixed counts are none.
 	'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$',
 	'\\d+-\\d+',
-	'^\\d{1,30}\\d{1,30}\\d{1,30}\\d{1,30}$',
+	'^\\d{1,30}\\d{1,30}\\d{1,30}$',
+	'^(a|b)(c|d)e?$',
+	'^\\d{2}\\d{2,2}[a-z]+[a-z]*\\d?$',
 	// 300 characters, though 600 UTF-16 units.
 	'\u{1F600}'.repeat(300),
 ]
@@ -40,12 +42,20 @@ const UNSAFE = [
 	'^(a+){10}$',
 	'^(a+)+$',
 	'(a?){5}',
-	// Polynomial backtracking: too many open-ended quantifiers.
+	// Too many choice points: variable quantifiers and alternation groups.
 	'^\\d*\\d*\\d*\\d*x$',
 	'^.*.*.*.*.*.*.*.*=$',
 	'\\d*\\d*\\d*x',
 	'a|^\\d*\\d*\\d*x',
 	'^\\d{0,99}\\d{0,99}\\d{0,99}\\d{0,99}x$',
+	'^\\d{1,30}\\d{1,30}\\d{1,30}\\d{1,30}$',
+	'^' + '(a|a)'.repeat(28) + '$',
+	'^' + 'a{0,64}'.repeat(6) + '$',
+	'^(a|b)(c|d)(e|f)(g|h)$',
+	// A lookbehind, which PCRE refuses when its length varies.
+	'(?<=a+)b',
+	'^(?<=x*)y$',
+	'(?<=a{1,3})b',
 	// PCRE only.
 	'(?i)abc',
 	'a++b',

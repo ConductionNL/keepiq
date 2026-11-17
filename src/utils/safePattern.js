@@ -6,10 +6,11 @@
  * reads the same in JavaScript and in PHP's PCRE. A requester sets it, and the
  * recipient's browser runs it with no time limit, so a pattern that can
  * backtrack for ever is refused, and so is any construct only one of the two
- * dialects reads. Runs of open-ended quantifiers backtrack polynomially, about
- * n to the power of their count, plus one when the pattern is not anchored
- * with `^`; that degree is held to MAX_DEGREE and the value to
- * MAX_PATTERN_INPUT, which keeps a test to milliseconds.
+ * dialects reads. A failed match tries every combination of its choice points,
+ * each variable quantifier and each group holding an alternation, so their
+ * count, plus one when the pattern is not anchored with `^`, is held to
+ * MAX_DEGREE and the value to MAX_PATTERN_INPUT, which keeps a test to
+ * milliseconds.
  * lib/Service/SafePattern.php holds the same rules.
  *
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
@@ -21,11 +22,8 @@ export const MAX_PATTERN_LENGTH = 500
 /** The longest value a pattern is tested against. */
 export const MAX_PATTERN_INPUT = 256
 
-/** The most open-ended quantifiers, plus one for a pattern not anchored with `^`. */
+/** The most choice points, plus one for a pattern not anchored with `^`. */
 const MAX_DEGREE = 3
-
-/** A counted quantifier with a higher upper bound counts as open-ended. */
-const MAX_BOUND = 64
 
 /** Escaped characters that read alike in both dialects, outside a class. */
 const ESCAPES = 'dDwWsSbBtnrf^$\\.*+?()[]{}|/'
@@ -63,7 +61,7 @@ export function isSafePattern(pattern) {
  * @return {boolean} True when nothing unsafe was found.
  */
 function scan(p) {
-	const stack = [{ inner: false, look: false, unbounded: 0, alternation: false }]
+	const stack = [{ inner: false, look: false, alternation: false, choices: 0 }]
 	let last = null
 	let i = 0
 	while (i < p.length) {
@@ -75,7 +73,7 @@ function scan(p) {
 		last = step.last
 	}
 	const anchored = p.startsWith('^') && !stack[0].alternation
-	return stack.length === 1 && stack[0].unbounded + (anchored ? 0 : 1) <= MAX_DEGREE
+	return stack.length === 1 && stack[0].choices + (anchored ? 0 : 1) <= MAX_DEGREE
 }
 
 /**
@@ -83,7 +81,7 @@ function scan(p) {
  *
  * @param {string} p The pattern.
  * @param {number} i Where the token starts.
- * @param {Array<{inner: boolean, look: boolean}>} stack The open groups, changed in place.
+ * @param {Array<{inner: boolean, look: boolean, alternation: boolean, choices?: number}>} stack The open groups, changed in place; the first counts the choice points.
  * @param {{group: boolean, inner: boolean}|null} last What a quantifier here would repeat.
  * @return {{next: number, last: object|null}|null} Where the next token starts, or null to refuse.
  */
@@ -106,7 +104,10 @@ function token(p, i, stack, last) {
 	}
 	if (c === '|') {
 		top.inner = true
-		stack[0].alternation ||= stack.length === 1
+		if (!top.alternation) {
+			top.alternation = true
+			stack[0].choices += 1
+		}
 		return { next: i + 1, last: null }
 	}
 	const length = quantifierLength(p, i)
@@ -121,7 +122,7 @@ function token(p, i, stack, last) {
 }
 
 /**
- * Open a group: plain, non-capturing, named, or a lookaround.
+ * Open a group: plain, non-capturing, named, or a lookahead.
  *
  * @param {string} p The pattern.
  * @param {number} i Where the `(` is.
@@ -136,17 +137,18 @@ function openGroup(p, i, stack) {
 		const named = /^<[A-Za-z_][A-Za-z0-9_]*>/.exec(rest)
 		if (rest.startsWith(':')) {
 			length = 3
-		} else if (/^[=!]/.test(rest) || /^<[=!]/.test(rest)) {
+		} else if (/^[=!]/.test(rest)) {
 			look = true
-			length = rest[0] === '<' ? 4 : 3
+			length = 3
 		} else if (named) {
 			length = 2 + named[0].length
 		} else {
-			// Inline flags, atomic groups, comments and the like are PCRE only.
+			// Inline flags, atomic groups, comments and the like are PCRE only;
+			// PCRE refuses a lookbehind of variable length, which JavaScript runs.
 			return null
 		}
 	}
-	stack.push({ inner: false, look })
+	stack.push({ inner: false, look, alternation: false })
 	return { next: i + length, last: null }
 }
 
@@ -163,7 +165,7 @@ function closeGroup(i, stack) {
 	}
 	const closed = stack.pop()
 	stack[stack.length - 1].inner ||= closed.inner
-	// A lookaround cannot be repeated.
+	// A lookahead cannot be repeated.
 	return { next: i + 1, last: closed.look ? null : { group: true, inner: closed.inner } }
 }
 
@@ -173,7 +175,7 @@ function closeGroup(i, stack) {
  * @param {string} p The pattern.
  * @param {number} i Where the quantifier starts.
  * @param {number} length Its length.
- * @param {Array<{inner: boolean, unbounded?: number}>} stack The open groups; the last is the one it is in.
+ * @param {Array<{inner: boolean, choices?: number}>} stack The open groups; the last is the one it is in.
  * @param {{group: boolean, inner: boolean}|null} last What it repeats.
  * @return {{next: number, last: null}|null}
  */
@@ -185,8 +187,8 @@ function quantify(p, i, length, stack, last) {
 		return null
 	}
 	stack[stack.length - 1].inner = true
-	if (isOpenEnded(p.slice(i, i + length))) {
-		stack[0].unbounded += 1
+	if (isVariable(p.slice(i, i + length))) {
+		stack[0].choices += 1
 	}
 	let next = i + length
 	if (p[next] === '+') {
@@ -200,15 +202,19 @@ function quantify(p, i, length, stack, last) {
 }
 
 /**
- * Whether a quantifier is open-ended: `*`, `+`, `{n,}`, or an upper bound
- * above MAX_BOUND.
+ * Whether a quantifier is a choice point: `?`, `*`, `+`, `{m,}`, or `{m,n}`
+ * with m < n. A fixed `{n}` is not.
  *
  * @param {string} quantifier The quantifier.
  * @return {boolean}
  */
-function isOpenEnded(quantifier) {
-	const upper = /,(\d*)\}$/.exec(quantifier)
-	return '*+'.includes(quantifier) || (upper !== null && (upper[1] === '' || Number(upper[1]) > MAX_BOUND))
+function isVariable(quantifier) {
+	const braces = /^\{(\d+)(?:,(\d*))?\}$/.exec(quantifier)
+	if (braces === null) {
+		return true
+	}
+	const [, low, high] = braces
+	return high !== undefined && (high === '' || Number(low) < Number(high))
 }
 
 /**

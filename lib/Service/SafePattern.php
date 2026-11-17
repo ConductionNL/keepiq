@@ -25,10 +25,10 @@ namespace OCA\Keepiq\Service;
  * A requester sets a field's pattern and the recipient's browser runs it with no time limit, so a pattern that can
  * backtrack for ever is refused, and so is any construct only one of PCRE and JavaScript reads. A repeated group must
  * hold no quantifier and no alternation at any depth: `(a+)+`, `(a|aa)+` and `(a+){10}` are refused; `?` repeats
- * nothing, so it may follow such a group. Runs of open-ended quantifiers backtrack polynomially, about n to the power
- * of their count, plus one when the pattern is not anchored with `^`; that degree is held to MAX_DEGREE, and the
- * browser tests at most 256 characters, which keeps a test to milliseconds. src/utils/safePattern.js holds the same
- * rules for the browser.
+ * nothing, so it may follow such a group. A failed match tries every combination of its choice points, each variable
+ * quantifier and each group holding an alternation, so their count, plus one when the pattern is not anchored with
+ * `^`, is held to MAX_DEGREE, and the browser tests at most 256 characters, which keeps a test to milliseconds.
+ * src/utils/safePattern.js holds the same rules for the browser.
  *
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
@@ -41,7 +41,7 @@ final class SafePattern {
 	public const MAX_LENGTH = 500;
 
 	/**
-	 * The most open-ended quantifiers, plus one for a pattern not anchored with `^`.
+	 * The most choice points, plus one for a pattern not anchored with `^`.
 	 *
 	 * @var integer
 	 */
@@ -55,9 +55,10 @@ final class SafePattern {
 	private const ATOM = ['group' => false, 'inner' => false];
 
 	/**
-	 * The open groups: whether each holds a quantifier or alternation, and whether it is a lookaround.
+	 * The open groups: whether each holds a quantifier or alternation, whether it is a lookahead, and whether it holds
+	 * an alternation itself. The first is the pattern outside every group.
 	 *
-	 * @var list<array{inner:bool,look:bool}>
+	 * @var list<array{inner:bool,look:bool,alt:bool}>
 	 */
 	private array $stack = [];
 
@@ -69,18 +70,11 @@ final class SafePattern {
 	private string $pattern = '';
 
 	/**
-	 * How many open-ended quantifiers the pattern has.
+	 * How many choice points the pattern has.
 	 *
 	 * @var integer
 	 */
-	private int $unbounded = 0;
-
-	/**
-	 * Whether the pattern has an alternation outside every group, which undoes a leading `^`.
-	 *
-	 * @var boolean
-	 */
-	private bool $topAlternation = false;
+	private int $choices = 0;
 
 	/**
 	 * Constructor for SafePattern.
@@ -129,10 +123,9 @@ final class SafePattern {
 	 * @return bool True when nothing unsafe was found
 	 */
 	private function scan(string $pattern): bool {
-		$this->pattern        = $pattern;
-		$this->stack          = [['inner' => false, 'look' => false]];
-		$this->unbounded      = 0;
-		$this->topAlternation = false;
+		$this->pattern = $pattern;
+		$this->stack   = [['inner' => false, 'look' => false, 'alt' => false]];
+		$this->choices = 0;
 		$last  = null;
 		$index = 0;
 		while ($index < strlen($pattern)) {
@@ -148,14 +141,15 @@ final class SafePattern {
 	}//end scan()
 
 	/**
-	 * Whether the open-ended quantifiers, plus one for a pattern not anchored with `^`, stay within MAX_DEGREE.
+	 * Whether the choice points, plus one for a pattern not anchored with `^`, stay within MAX_DEGREE. An alternation
+	 * outside every group undoes a leading `^`.
 	 *
 	 * @return bool
 	 */
 	private function withinDegree(): bool {
-		$anchored = str_starts_with($this->pattern, '^') === true && $this->topAlternation === false;
+		$anchored = str_starts_with($this->pattern, '^') === true && $this->stack[0]['alt'] === false;
 
-		return $this->unbounded + (int)($anchored === false) <= self::MAX_DEGREE;
+		return $this->choices + (int)($anchored === false) <= self::MAX_DEGREE;
 	}//end withinDegree()
 
 	/**
@@ -215,8 +209,8 @@ final class SafePattern {
 	}//end classToken()
 
 	/**
-	 * Open a group: plain, non-capturing, named, or a lookaround. Inline flags, atomic groups, comments and the like
-	 * are PCRE only.
+	 * Open a group: plain, non-capturing, named, or a lookahead. Inline flags, atomic groups, comments and the like
+	 * are PCRE only, and a lookbehind is refused.
 	 *
 	 * @param int $index Where the `(` is
 	 *
@@ -228,12 +222,12 @@ final class SafePattern {
 			return null;
 		}
 
-		$this->stack[] = ['inner' => false, 'look' => $opening['look']];
+		$this->stack[] = ['inner' => false, 'look' => $opening['look'], 'alt' => false];
 		return [$index + $opening['length'], null];
 	}//end openGroup()
 
 	/**
-	 * Close a group, passing what it holds on to the group around it. A lookaround cannot be repeated.
+	 * Close a group, passing what it holds on to the group around it. A lookahead cannot be repeated.
 	 *
 	 * @param int $index Where the `)` is
 	 *
@@ -255,16 +249,18 @@ final class SafePattern {
 	}//end closeGroup()
 
 	/**
-	 * An alternation: the group it is in now holds one.
+	 * An alternation: the group it is in now holds one, which is a choice point once per group.
 	 *
 	 * @param int $index Where the `|` is
 	 *
 	 * @return array{0:int,1:null}
 	 */
 	private function alternate(int $index): array {
-		$this->stack[array_key_last($this->stack)]['inner'] = true;
-		if (count($this->stack) === 1) {
-			$this->topAlternation = true;
+		$top = array_key_last($this->stack);
+		$this->stack[$top]['inner'] = true;
+		if ($this->stack[$top]['alt'] === false) {
+			$this->stack[$top]['alt'] = true;
+			$this->choices++;
 		}
 
 		return [$index + 1, null];
@@ -313,8 +309,8 @@ final class SafePattern {
 		}
 
 		$this->stack[array_key_last($this->stack)]['inner'] = true;
-		if ($this->atoms->isOpenEnded(quantifier: substr($this->pattern, $index, $length)) === true) {
-			$this->unbounded++;
+		if ($this->atoms->isVariable(quantifier: substr($this->pattern, $index, $length)) === true) {
+			$this->choices++;
 		}
 
 		$next   = $index + $length;
