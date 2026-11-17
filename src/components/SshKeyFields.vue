@@ -16,7 +16,7 @@
   The dialog owns the values and the errors; this component only edits them
   through update events.
 
-  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+  @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 -->
 <template>
 	<section class="keepiq-ssh-key" data-testid="ssh-key-fields">
@@ -195,7 +195,7 @@ export default {
 		 *
 		 * @param {string} text The private key text.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async onPrivateKey(text) {
 			this.$emit('update:privateKey', text)
@@ -216,7 +216,7 @@ export default {
 		 *
 		 * @param {string} text The public key line.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async onPublicKey(text) {
 			const revision = ++this.revision
@@ -230,7 +230,7 @@ export default {
 		 * @param {string} publicKey The public key line.
 		 * @param {number} revision The edit this belongs to.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async emitKeys(publicKey, revision) {
 			const fingerprint = isPublicKey(publicKey)
@@ -245,7 +245,7 @@ export default {
 		 * Generate a key pair in the browser and fill in all three fields.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async onGenerate() {
 			this.busy = true
@@ -277,7 +277,7 @@ export default {
 		 *
 		 * @param {Event} event The file input's change event.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async onFile(event) {
 			const input = event.target

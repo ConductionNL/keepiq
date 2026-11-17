@@ -9,7 +9,7 @@
 
   @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
   @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
-  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+  @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 -->
 <template>
 	<template v-if="isCard || isIdentity">

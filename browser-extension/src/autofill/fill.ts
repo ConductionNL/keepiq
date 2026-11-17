@@ -231,7 +231,7 @@ export async function fill(target: FillTarget): Promise<FillResult> {
 /**
  * A flagged item fills only with the master password the popup asked for, checked on every fill.
  *
- * @spec openspec/changes/crypto-item-reprompt
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt
  */
 async function repromptRefusal(target: FillTarget, { accountId, row }: FillSource): Promise<FillResult | null> {
 	if (row.reprompt !== true) return null

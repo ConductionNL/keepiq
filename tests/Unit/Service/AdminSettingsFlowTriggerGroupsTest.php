@@ -79,7 +79,7 @@ class AdminSettingsFlowTriggerGroupsTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#scenario-a-fresh-install-fires-nothing
+	 * @spec openspec/specs/vault-event-flow-triggers/spec.md#scenario-a-fresh-install-fires-nothing
 	 */
 	public function testEveryGroupStartsOff(): void {
 		$this->assertSame([], $this->service->getAreaSettings(area: 'audit')['flow_trigger_groups']);
@@ -91,7 +91,7 @@ class AdminSettingsFlowTriggerGroupsTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-2.1
 	 */
 	public function testAnAdministratorRoundTripsTheGroups(): void {
 		$result = $this->service->updateAreaSettings(

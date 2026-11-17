@@ -230,7 +230,7 @@ export default {
 		 * the holder did not flag this item (crypto-item-reprompt D2).
 		 *
 		 * @return {Function|null}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
 		revealGuard() {
 			return needsReprompt(this.secret) ? useReprompt(() => this.secret) : null

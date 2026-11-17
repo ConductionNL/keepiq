@@ -14,7 +14,7 @@
  * `SHA256:` followed by the unpadded base64 of the SHA-256 digest of the
  * public key blob — what `ssh-keygen -lf` prints.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 
 /** The additional-fields member holding the OpenSSH public key line. */
@@ -296,7 +296,7 @@ function blobBodyCheck(type) {
  * @param {string} line The public key line.
  * @return {{type: string, blob: Uint8Array, comment: string}}
  * @throws {SshKeyError} When the line is not an OpenSSH public key.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 export function parsePublicKey(line) {
 	const parts = String(line ?? '')
@@ -319,7 +319,7 @@ export function parsePublicKey(line) {
  *
  * @param {string} line The text.
  * @return {boolean}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 export function isPublicKey(line) {
 	try {
@@ -336,7 +336,7 @@ export function isPublicKey(line) {
  * @param {string} a A public key line.
  * @param {string} b Another public key line.
  * @return {boolean}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 export function samePublicKey(a, b) {
 	try {
@@ -367,7 +367,7 @@ function publicKeyLine(blob, comment = '') {
  * @param {string} line An OpenSSH public key line.
  * @return {Promise<string>}
  * @throws {SshKeyError} When the line is not an OpenSSH public key.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 export async function fingerprintOf(line) {
 	const { blob } = parsePublicKey(line)
@@ -591,7 +591,7 @@ async function pkcs8PublicBlob(der) {
  * @param {string} text The private key text.
  * @return {Promise<{publicKey: (string|null)}>} The derived public key line, or null.
  * @throws {SshKeyError} When the text is not a private key.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 export async function parsePrivateKey(text) {
 	const { label, der, encrypted } = unarmour(text)
@@ -695,7 +695,7 @@ function opensshPrivateKey(jwk, comment) {
  * @param {object} [options] Options.
  * @param {string} [options.comment] The key comment.
  * @return {Promise<{privateKey: string, publicKey: string, fingerprint: string, algorithm: string}>}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 export async function generateKeyPair(options = {}) {
 	const comment = options.comment ?? ''
@@ -738,7 +738,7 @@ export async function generateKeyPair(options = {}) {
  * @param {string} typeName The secret's type name.
  * @param {object|string|null|undefined} fields The additional fields.
  * @return {Promise<object|string|null|undefined>}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 export async function withDerivedFingerprint(typeName, fields) {
 	if (typeName !== SSH_KEY_TYPE_NAME || !fields || typeof fields !== 'object') {

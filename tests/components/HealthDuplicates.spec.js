@@ -11,7 +11,7 @@
  * group item emitting `open` with its id, and the Merge action opening the
  * merge dialog for that group, closing it again and forwarding `merged`.
  *
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 
 import { mount } from '@vue/test-utils'

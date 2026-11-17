@@ -9,7 +9,7 @@
  * asks, names the item, submits the typed password through the store, shows
  * the store's error, and cancels through the store on dismissal.
  *
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
  */
 
 import { mount } from '@vue/test-utils'

@@ -7,7 +7,7 @@
  * update path, the others go through the delete path, and the people who
  * lose access are the distinct recipients of the removed items' shares.
  *
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'

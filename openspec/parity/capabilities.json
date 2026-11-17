@@ -1241,7 +1241,7 @@
       "id": "vault-11",
       "area": "vault",
       "name": "Add your own custom fields to an item, including hidden ones.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -1249,13 +1249,13 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "src/dialogs/SecretCreateDialog.vue:122 and src/dialogs/SecretEditDialog.vue:125 AdditionalFieldsEditor -> src/store/modules/secret.js:377 encrypts additionalFields blob -> POST /api/v1/secrets (appinfo/routes.php:89); src/components/AdditionalFieldsEditor.vue:50 value is a plain NcTextField; src/components/SecretDetailSidebar.vue:570-577 renders every value as plain <dd> text",
+        "state": "built",
+        "evidence": "src/components/AdditionalFieldsEditor.vue:59 field kind select, :73 hidden kind as a password field -> src/utils/additionalFields.js:155 fieldEntry stores {value, kind} in the encrypted additionalFields blob -> src/components/SecretDetailSidebar.vue:878 a hidden value renders as dots until Show, Copy copies the real value; Playwright tests/e2e/workflows/custom-field-kinds.spec.ts (hidden field)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret / Edit secret dialog -> Additional fields section",
-        "note": "Owners can add, rename and remove named custom fields on create and edit, stored encrypted. There is no hidden or concealed field kind: values are typed in plain text fields and shown unmasked on the detail sidebar.",
-        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key",
-        "requirement": "openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields :: Hidden custom fields"
+        "note": "Owners add, rename and remove custom fields, each with a kind; a hidden field is masked in the editor and on the detail sidebar until Show, and Copy copies it without revealing it.",
+        "requirement": "openspec/specs/vault-custom-fields :: Hidden custom fields",
+        "spec": "openspec/specs/vault-custom-fields"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1369,7 +1369,7 @@
       "id": "vault-14",
       "area": "vault",
       "name": "Store an SSH key pair as its own item type.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -1377,13 +1377,13 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "lib/Repair/SeedSecretTypes.php:64 seeds 'ssh_key' => 'SSH Key'; src/dialogs/SecretCreateDialog.vue:95-108 offers only one value field for it; src/cxf/cxf.js:205,355 maps CXF ssh-key items; grep -rni ssh src --include=*.vue: no SSH-specific form, public-key field or key-pair generator",
+        "state": "built",
+        "evidence": "src/components/SecretPayloadFields.vue:33 SshKeyFields for the ssh_key type -> src/components/SshKeyFields.vue:41 Generate key pair (src/ssh/sshKey.js:700 generateKeyPair), :52 Import from file (sshKey.js:596 parsePrivateKey), public key and fingerprint (sshKey.js:372 fingerprintOf) -> src/components/SecretDetailSidebar.vue:813 public key and fingerprint with Copy (:833); Playwright tests/e2e/workflows/custom-field-kinds.spec.ts (SSH key)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: SSH Key",
-        "note": "SSH Key exists as its own type, but it stores a single secret value like any other type: there are no separate private key, public key and fingerprint fields and no key-pair generation. A user can put the public key in an additional field by hand.",
-        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key",
-        "requirement": "openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item :: SSH key item form"
+        "note": "SSH Key is its own type with a private key (encrypted), a public key and a SHA256 fingerprint; a key pair can be generated or imported from a file, and the detail sidebar copies the public key.",
+        "requirement": "openspec/specs/vault-ssh-key-item :: SSH key item form",
+        "spec": "openspec/specs/vault-ssh-key-item"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1816,14 +1816,14 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-duplicate-finder on 2026-09-27. Before: git grep -i duplicate src lib: only the import wizard dedup (src/dialogs/ImportWizardDialog.vue:7 'duplicates' step); no report or merge over the stored vault",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-vault-duplicate-finder on 2026-09-27. Before: git grep -i duplicate src lib: only the import wizard dedup (src/dialogs/ImportWizardDialog.vue:7 'duplicates' step); no report or merge over the stored vault",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Duplicates are caught only while importing (portability-05); nothing finds or merges duplicates already stored.",
-        "change": "openspec/changes/vault-duplicate-finder",
+        "change": "openspec/changes/archive/2026-11-17-vault-duplicate-finder",
         "requirement": [
-          "openspec/changes/vault-duplicate-finder/specs/vault-duplicates :: Detect duplicates in the browser",
-          "openspec/changes/vault-duplicate-finder/specs/vault-duplicates :: Merge a duplicate group"
+          "openspec/specs/vault-duplicates :: Detect duplicates in the browser",
+          "openspec/specs/vault-duplicates :: Merge a duplicate group"
         ]
       },
       "rowSource": "competitor",
@@ -2858,14 +2858,14 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/crypto-item-reprompt on 2026-09-27. Before: git grep -i 'reprompt|re-prompt' src browser-extension: no match; master-password re-entry exists only before a plaintext export (src/dialogs/ExportDialog.vue:130 via src/crypto/reauth.js verifyMasterPassword)",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-crypto-item-reprompt on 2026-09-27. Before: git grep -i 'reprompt|re-prompt' src browser-extension: no match; master-password re-entry exists only before a plaintext export (src/dialogs/ExportDialog.vue:130 via src/crypto/reauth.js verifyMasterPassword)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Re-entry of the master password guards export only, not viewing or filling a chosen item.",
-        "change": "openspec/changes/crypto-item-reprompt",
+        "change": "openspec/changes/archive/2026-11-17-crypto-item-reprompt",
         "requirement": [
-          "openspec/changes/crypto-item-reprompt/specs/item-master-password-reprompt :: A per-item master password re-prompt",
-          "openspec/changes/crypto-item-reprompt/specs/item-master-password-reprompt :: The web app verifies the master password before revealing a flagged item"
+          "openspec/specs/item-master-password-reprompt :: A per-item master password re-prompt",
+          "openspec/specs/item-master-password-reprompt :: The web app verifies the master password before revealing a flagged item"
         ]
       },
       "rowSource": "competitor",
@@ -9536,7 +9536,7 @@
       "id": "clients-15",
       "area": "clients",
       "name": "Automate follow-up work on vault events with a flow builder.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "unknown",
       "passbolt": "no",
@@ -9544,13 +9544,13 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "Flows page src/manifest.json:570 (index over OpenRegister 'flows' source) and FlowDetail with src/registry.js:63 FlowDetailSidebar (CnFlowSidebar); OpenRegister triggers are only manual, object and schedule (openregister lib/Service/Flow/Nodes/TriggerManualNode.php, TriggerObjectNode.php, TriggerScheduleNode.php); keepiq data lives in its own tables and grep -i flow lib: no trigger publisher",
+        "state": "built",
+        "evidence": "lib/Listener/FlowTriggerForwardListener.php forwards every AuditEvent of a switched-on group to OpenRegister's FlowTriggerService::fire('keepiq.'+type) with the SIEM payload -> lib/Service/Flow/VaultFlowTriggerCatalog.php maps every audit event type to a trigger and group, contributed to OpenRegister's palette through RegisterFlowTriggersEvent (lib/Listener/AuditStreamEventRegistrar.php) -> admin switch app config flow_trigger_groups (lib/Service/AdminSettingsService.php:254); Playwright tests/e2e/workflows/vault-event-flow-trigger.spec.ts (a share starts one run with no secret material)",
         "owner": "ConductionNL/openregister",
         "reachedOn": "Flows menu item (/flows) -> OpenRegister flow list and canvas",
-        "note": "The Flows page and canvas are reachable, but they run on OpenRegister's engine whose triggers fire on OpenRegister objects, schedules or manual runs. Keepiq's vault lives in its own tables and publishes nothing to it, so no vault event can start a flow.",
-        "change": "openspec/changes/clients-vault-event-flow-triggers",
-        "requirement": "openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers :: Vault events fire flow triggers"
+        "note": "With OpenRegister installed, an audited vault event in a group the administrator switched on starts any published flow on its keepiq.* trigger, with who did what and when as the payload and never a secret.",
+        "requirement": "openspec/specs/vault-event-flow-triggers :: Vault events fire flow triggers",
+        "spec": "openspec/specs/vault-event-flow-triggers"
       },
       "rowSource": "own",
       "provider": "openregister",

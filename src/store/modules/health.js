@@ -144,7 +144,7 @@ async function decryptedRow(secret, session, facts) {
  * @param {object} secret A listed secret.
  * @param {object} session The session store (holds the CryptoKey).
  * @return {Promise<string|null>}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 async function decryptedLogin(secret, session) {
 	if (!secret.login) {
@@ -164,7 +164,7 @@ async function decryptedLogin(secret, session) {
  * Null when it cannot be read: duplicate detection then stays off.
  *
  * @return {Promise<Set<string>|null>}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 async function recipientCopyIds() {
 	try {
@@ -458,7 +458,7 @@ export const useHealthStore = defineStore('health', {
 		 * @return {Promise<Array<object>>} Decrypted rows.
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
-		 * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+		 * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
 		 */
 		async loadDecryptedRows(session) {
 			const types = await loadedTypes()

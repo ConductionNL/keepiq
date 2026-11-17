@@ -233,7 +233,7 @@ describe('AdditionalFieldsEditor', () => {
 	})
 
 	/**
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 	 */
 	describe('field kinds', () => {
 		it('shows a member without a kind as a text field', () => {

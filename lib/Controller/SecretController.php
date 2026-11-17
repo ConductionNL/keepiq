@@ -230,7 +230,7 @@ class SecretController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
-	 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-1.1
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The parameters are the
 	 *   route's request body, bound by the framework one by one.

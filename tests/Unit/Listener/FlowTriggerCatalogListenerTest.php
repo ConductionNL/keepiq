@@ -79,7 +79,7 @@ class FlowTriggerCatalogListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#scenario-an-administrator-picks-a-vault-trigger
+	 * @spec openspec/specs/vault-event-flow-triggers/spec.md#scenario-an-administrator-picks-a-vault-trigger
 	 */
 	public function testEveryVaultTriggerIsAddedUnderVault(): void {
 		$catalog = new VaultFlowTriggerCatalog();

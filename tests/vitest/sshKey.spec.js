@@ -9,7 +9,7 @@
  * of the module under test). Private keys are generated at test time with
  * Node's OpenSSL-backed `crypto`, so no private key is committed.
  *
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+ * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
  */
 
 import { generateKeyPairSync } from 'node:crypto'
