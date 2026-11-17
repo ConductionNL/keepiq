@@ -8,7 +8,7 @@
   a new recovery code in this browser and shows the code once, to print or
   download. A new kit replaces the old one.
 
-  @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+  @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 -->
 <template>
 	<div class="recovery-kit" data-testid="recovery-kit">
@@ -95,7 +95,7 @@ export default {
 	computed: {
 		/**
 		 * @return {string} When the current kit was made, or that there is none.
-		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+		 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 		 */
 		statusText() {
 			if (!this.kit) {
@@ -108,7 +108,7 @@ export default {
 	/**
 	 * Read whether the user already has a kit.
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 	 */
 	async created() {
 		try {
@@ -124,7 +124,7 @@ export default {
 		/**
 		 * Make a kit: wrap the private key with a new code; only the wrapped copy is sent.
 		 *
-		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
+		 * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
 		 */
 		async create() {
 			this.busy = true
@@ -145,7 +145,7 @@ export default {
 
 		/**
 		 * @return {string} The kit as text.
-		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+		 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 		 */
 		kitText() {
 			return recoveryKitText({ code: this.code, account: getCurrentUser()?.uid ?? '', createdAt: this.madeOn }, t)
@@ -154,7 +154,7 @@ export default {
 		/**
 		 * Download the kit as a text file.
 		 *
-		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
+		 * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
 		 */
 		download() {
 			const link = document.createElement('a')
@@ -167,7 +167,7 @@ export default {
 		/**
 		 * Print the kit on a page of its own.
 		 *
-		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
+		 * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
 		 */
 		print() {
 			const page = window.open('', '_blank', 'noopener=no')

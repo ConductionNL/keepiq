@@ -8,7 +8,7 @@
   spent kit is deleted and a new kit is offered. A wrong code opens nothing.
   Emits `recovered` once the vault is open.
 
-  @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+  @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
 -->
 <template>
 	<div v-if="hasKit" class="kit-unlock" data-testid="recovery-kit-unlock">
@@ -108,7 +108,7 @@ export default {
 	computed: {
 		/**
 		 * @return {boolean} Whether the code reads as a code and the new password is long enough and repeated.
-		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+		 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
 		 */
 		canRecover() {
 			return !this.busy
@@ -121,7 +121,7 @@ export default {
 	/**
 	 * Read whether the user has a kit to recover with.
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
 	 */
 	async created() {
 		try {
@@ -137,8 +137,8 @@ export default {
 		/**
 		 * Recover with the code, unlock with the new master password and offer a new kit.
 		 *
-		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-user-who-lost-the-master-password-gets-back-in
-		 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-wrong-code-opens-nothing
+		 * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-user-who-lost-the-master-password-gets-back-in
+		 * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-wrong-code-opens-nothing
 		 */
 		async recover() {
 			this.busy = true

@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md
+ * @spec openspec/specs/vault-recovery-kit/spec.md
  */
 
 declare(strict_types=1);

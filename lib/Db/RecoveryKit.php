@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md
+ * @spec openspec/specs/vault-recovery-kit/spec.md
  */
 
 declare(strict_types=1);
@@ -44,7 +44,7 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(?DateTime $createdAt)
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
  */
 class RecoveryKit extends Entity implements JsonSerializable {
 	use StringPrimaryKey;
@@ -94,7 +94,7 @@ class RecoveryKit extends Entity implements JsonSerializable {
 	/**
 	 * Declare the column types.
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 	 */
 	public function __construct() {
 		$this->addType(fieldName: 'id', type: 'string');
@@ -110,7 +110,7 @@ class RecoveryKit extends Entity implements JsonSerializable {
 	 *
 	 * @return array{suiteId: string, createdAt: string|null}
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 	 */
 	public function jsonSerialize(): array {
 		return [
