@@ -73,9 +73,10 @@ class SecretRequestFillController extends OCSController {
 	/**
 	 * Phase 1: resolve a token to its public metadata.
 	 *
-	 * Returns the list of requested fields and their schemas, the type of
-	 * the Secret they fill, the public certificate the browser must import to encrypt the
-	 * responses, and the current status so the page can render "expired" /
+	 * Returns the list of requested fields and, in `field_schemas`, their schemas
+	 * by name; in `secret_type`, the system type of the Secret they fill (null for
+	 * a custom type); the public certificate the browser must import to encrypt the
+	 * responses; and the current status so the page can render "expired" /
 	 * "fulfilled" / "temporarily unavailable" messages without leaking
 	 * ownership.
 	 *

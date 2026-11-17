@@ -118,6 +118,10 @@ class SecretRequestController extends OCSController {
 	/**
 	 * List secret requests for a given Secret — owner-only.
 	 *
+	 * Each request carries its `requestedFields` and, in `fieldSchemas`, the schema
+	 * of each requested custom field by name; the owner's browser gives a filled
+	 * field without a stored schema the one its request carries.
+	 *
 	 * @param string $secretId The Secret ID
 	 *
 	 * @NoAdminRequired
@@ -147,6 +151,11 @@ class SecretRequestController extends OCSController {
 	/**
 	 * Create a new pending secret request.
 	 *
+	 * The type of the Secret a fresh request creates arrives as `typeId` in the body,
+	 * and the schemas of requested custom fields as `fieldSchemas`, an object of JSON
+	 * Schema properties by field name. Both are read from the body rather than the
+	 * signature. The created request answers with the same `fieldSchemas`.
+	 *
 	 * @param string $secretId The Secret ID (unfilled or to-be-overwritten)
 	 * @param string $encryptionSuiteId The recipient's active suite ID
 	 * @param array<string> $requestedFields Field names to be filled in
@@ -155,9 +164,6 @@ class SecretRequestController extends OCSController {
 	 * @param string|null $applicationId Optional owning application ID
 	 * @param string|null $name Name for the Secret a FRESH request creates
 	 * @param string|null $folderId Optional folder for that created Secret
-	 *
-	 * The type of that created Secret arrives as `typeId` in the body, and the schemas
-	 * of requested custom fields as `fieldSchemas`.
 	 *
 	 * @NoAdminRequired
 	 *
