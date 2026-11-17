@@ -45,6 +45,12 @@ as a minimum and maximum length, a pattern, or a minimum and maximum number. The
 **Hidden** switch works on every type, so a JSON object or a URL with a token in it
 can stay hidden too.
 
+A pattern is checked on every keystroke, so it must stay quick to check: it may have
+at most three optional or repeated parts (`?`, `*`, `+`, `{1,3}`, or a group with
+`|`), two when it does not start with `^`, and no lookbehind. A fixed count such as
+`{4}` does not count. Advanced says so when a pattern breaks this rule, and a value
+is checked against a pattern only up to 256 characters.
+
 A value that does not fit its field is refused when you save, with the reason. An
 import keeps such a value but drops the field's kind, so it shows as plain text.
 

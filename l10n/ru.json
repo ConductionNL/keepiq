@@ -1951,7 +1951,8 @@
         "This browser could not generate a key pair.": "Этот браузер не смог сгенерировать пару ключей.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Это не закрытый ключ. Вставьте закрытый ключ OpenSSH или PEM либо сгенерируйте новый.",
         "This is not an OpenSSH public key.": "Это не открытый ключ OpenSSH.",
-        "This public key does not belong to the private key.": "Этот открытый ключ не соответствует закрытому ключу."
+        "This public key does not belong to the private key.": "Этот открытый ключ не соответствует закрытому ключу.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Этот шаблон нельзя использовать: в нём слишком много необязательных или повторяющихся частей, чтобы быстро его проверить, или сервер читает его иначе."
     },
     "plurals": null
 }

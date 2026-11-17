@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Šī pārlūkprogramma nevarēja ģenerēt atslēgu pāri.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Šī nav privātā atslēga. Ielīmējiet OpenSSH vai PEM privāto atslēgu vai ģenerējiet jaunu.",
         "This is not an OpenSSH public key.": "Šī nav OpenSSH publiskā atslēga.",
-        "This public key does not belong to the private key.": "Šī publiskā atslēga nepieder privātajai atslēgai."
+        "This public key does not belong to the private key.": "Šī publiskā atslēga nepieder privātajai atslēgai.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Šo paraugu nevar izmantot: tajā ir pārāk daudz neobligātu vai atkārtotu daļu, lai to varētu ātri pārbaudīt, vai serveris to lasa citādi."
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Denne nettleseren kunne ikke generere et nøkkelpar.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Dette er ikke en privat nøkkel. Lim inn en privat OpenSSH- eller PEM-nøkkel, eller generer en.",
         "This is not an OpenSSH public key.": "Dette er ikke en offentlig OpenSSH-nøkkel.",
-        "This public key does not belong to the private key.": "Denne offentlige nøkkelen hører ikke til den private nøkkelen."
+        "This public key does not belong to the private key.": "Denne offentlige nøkkelen hører ikke til den private nøkkelen.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Dette mønsteret kan ikke brukes: det har for mange valgfrie eller gjentatte deler til å kunne kontrolleres raskt, eller serveren leser det annerledes."
     },
     "nplurals=2; plural=(n != 1);"
 )

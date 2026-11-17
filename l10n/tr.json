@@ -1899,7 +1899,8 @@
         "This browser could not generate a key pair.": "Bu tarayıcı bir anahtar çifti oluşturamadı.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Bu bir özel anahtar değil. Bir OpenSSH veya PEM özel anahtarı yapıştırın ya da yeni bir tane oluşturun.",
         "This is not an OpenSSH public key.": "Bu bir OpenSSH açık anahtarı değil.",
-        "This public key does not belong to the private key.": "Bu açık anahtar bu özel anahtara ait değil."
+        "This public key does not belong to the private key.": "Bu açık anahtar bu özel anahtara ait değil.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Bu desen kullanılamaz: hızlıca denetlenemeyecek kadar çok isteğe bağlı veya yinelenen bölümü var ya da sunucu onu farklı okuyor."
     },
     "plurals": null
 }

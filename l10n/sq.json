@@ -1925,7 +1925,8 @@
         "This browser could not generate a key pair.": "Ky shfletues nuk mundi të gjenerojë një çift çelësash.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ky nuk është çelës privat. Ngjitni një çelës privat OpenSSH ose PEM, ose gjeneroni një të ri.",
         "This is not an OpenSSH public key.": "Ky nuk është çelës publik OpenSSH.",
-        "This public key does not belong to the private key.": "Ky çelës publik nuk i përket çelësit privat."
+        "This public key does not belong to the private key.": "Ky çelës publik nuk i përket çelësit privat.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Ky model nuk mund të përdoret: ka shumë pjesë opsionale ose të përsëritura për t'u kontrolluar shpejt, ose serveri e lexon ndryshe."
     },
     "plurals": null
 }

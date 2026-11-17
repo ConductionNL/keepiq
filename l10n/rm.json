@@ -1823,7 +1823,8 @@
         "This browser could not generate a key pair.": "Quest navigatur n’ha betg pudì generar in pèr da clavs.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Quai n’è nagina clav privata. Encollescha ina clav privata OpenSSH u PEM, u genera ina.",
         "This is not an OpenSSH public key.": "Quai n’è nagina clav publica OpenSSH.",
-        "This public key does not belong to the private key.": "Questa clav publica na fa betg part da la clav privata."
+        "This public key does not belong to the private key.": "Questa clav publica na fa betg part da la clav privata.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Quest muster na po betg vegnir duvrà: el ha memia bleras parts facultativas u repetidas per vegnir controllà svelt, u il server al legia auter."
     },
     "plurals": null
 }

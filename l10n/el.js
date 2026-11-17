@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Αυτό το πρόγραμμα περιήγησης δεν μπόρεσε να δημιουργήσει ζεύγος κλειδιών.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Αυτό δεν είναι ιδιωτικό κλειδί. Επικολλήστε ένα ιδιωτικό κλειδί OpenSSH ή PEM ή δημιουργήστε ένα.",
         "This is not an OpenSSH public key.": "Αυτό δεν είναι δημόσιο κλειδί OpenSSH.",
-        "This public key does not belong to the private key.": "Αυτό το δημόσιο κλειδί δεν ανήκει στο ιδιωτικό κλειδί."
+        "This public key does not belong to the private key.": "Αυτό το δημόσιο κλειδί δεν ανήκει στο ιδιωτικό κλειδί.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Αυτό το μοτίβο δεν μπορεί να χρησιμοποιηθεί: έχει πάρα πολλά προαιρετικά ή επαναλαμβανόμενα μέρη για να ελεγχθεί γρήγορα, ή ο διακομιστής το διαβάζει διαφορετικά."
     },
     "nplurals=2; plural=(n != 1);"
 )

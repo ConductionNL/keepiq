@@ -1951,7 +1951,8 @@
         "This browser could not generate a key pair.": "Tento prohlížeč nedokázal vygenerovat pár klíčů.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Toto není privátní klíč. Vložte privátní klíč OpenSSH nebo PEM, nebo nějaký vygenerujte.",
         "This is not an OpenSSH public key.": "Toto není veřejný klíč OpenSSH.",
-        "This public key does not belong to the private key.": "Tento veřejný klíč nepatří k privátnímu klíči."
+        "This public key does not belong to the private key.": "Tento veřejný klíč nepatří k privátnímu klíči.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Tento vzor nelze použít: obsahuje příliš mnoho volitelných nebo opakovaných částí, než aby se dal rychle ověřit, nebo jej server čte jinak."
     },
     "plurals": null
 }

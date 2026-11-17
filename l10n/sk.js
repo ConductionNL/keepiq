@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Tento prehliadač nedokázal vygenerovať pár kľúčov.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Toto nie je privátny kľúč. Vložte privátny kľúč OpenSSH alebo PEM, alebo nejaký vygenerujte.",
         "This is not an OpenSSH public key.": "Toto nie je verejný kľúč OpenSSH.",
-        "This public key does not belong to the private key.": "Tento verejný kľúč nepatrí k privátnemu kľúču."
+        "This public key does not belong to the private key.": "Tento verejný kľúč nepatrí k privátnemu kľúču.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Tento vzor nemožno použiť: obsahuje príliš veľa voliteľných alebo opakovaných častí na rýchlu kontrolu, alebo ho server číta inak."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

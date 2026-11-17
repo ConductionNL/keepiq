@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Acest browser nu a putut genera o pereche de chei.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Aceasta nu este o cheie privată. Lipiți o cheie privată OpenSSH sau PEM ori generați una.",
         "This is not an OpenSSH public key.": "Aceasta nu este o cheie publică OpenSSH.",
-        "This public key does not belong to the private key.": "Această cheie publică nu aparține cheii private."
+        "This public key does not belong to the private key.": "Această cheie publică nu aparține cheii private.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Acest model nu poate fi folosit: are prea multe părți opționale sau repetate pentru a fi verificat rapid, sau serverul îl citește altfel."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

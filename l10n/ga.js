@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Níorbh fhéidir leis an mbrabhsálaí seo péire eochracha a ghiniúint.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ní eochair phríobháideach í seo. Greamaigh eochair phríobháideach OpenSSH nó PEM, nó gin ceann.",
         "This is not an OpenSSH public key.": "Ní eochair phoiblí OpenSSH í seo.",
-        "This public key does not belong to the private key.": "Ní bhaineann an eochair phoiblí seo leis an eochair phríobháideach."
+        "This public key does not belong to the private key.": "Ní bhaineann an eochair phoiblí seo leis an eochair phríobháideach.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Ní féidir an patrún seo a úsáid: tá an iomarca codanna roghnacha nó athráite ann lena sheiceáil go tapa, nó léann an freastalaí ar bhealach eile é."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

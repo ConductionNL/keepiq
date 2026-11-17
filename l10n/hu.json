@@ -1925,7 +1925,8 @@
         "This browser could not generate a key pair.": "Ez a böngésző nem tudott kulcspárt generálni.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ez nem titkos kulcs. Illesszen be egy OpenSSH vagy PEM formátumú titkos kulcsot, vagy generáljon egyet.",
         "This is not an OpenSSH public key.": "Ez nem OpenSSH nyilvános kulcs.",
-        "This public key does not belong to the private key.": "Ez a nyilvános kulcs nem a titkos kulcshoz tartozik."
+        "This public key does not belong to the private key.": "Ez a nyilvános kulcs nem a titkos kulcshoz tartozik.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Ez a minta nem használható: túl sok nem kötelező vagy ismétlődő része van ahhoz, hogy gyorsan ellenőrizhető legyen, vagy a kiszolgáló másként értelmezi."
     },
     "plurals": null
 }

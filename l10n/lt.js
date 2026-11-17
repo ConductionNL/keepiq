@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Ši naršyklė negalėjo sugeneruoti raktų poros.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Tai nėra privatusis raktas. Įklijuokite OpenSSH arba PEM privatųjį raktą arba sugeneruokite naują.",
         "This is not an OpenSSH public key.": "Tai nėra OpenSSH viešasis raktas.",
-        "This public key does not belong to the private key.": "Šis viešasis raktas nepriklauso privačiajam raktui."
+        "This public key does not belong to the private key.": "Šis viešasis raktas nepriklauso privačiajam raktui.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Šio šablono naudoti negalima: jame per daug neprivalomų ar pasikartojančių dalių, kad jį būtų galima greitai patikrinti, arba serveris jį skaito kitaip."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Този браузър не успя да генерира двойка ключове.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Това не е частен ключ. Поставете частен ключ във формат OpenSSH или PEM или генерирайте нов.",
         "This is not an OpenSSH public key.": "Това не е публичен ключ във формат OpenSSH.",
-        "This public key does not belong to the private key.": "Този публичен ключ не принадлежи на частния ключ."
+        "This public key does not belong to the private key.": "Този публичен ключ не принадлежи на частния ключ.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Този шаблон не може да се използва: има твърде много незадължителни или повтарящи се части, за да бъде проверен бързо, или сървърът го чете различно."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Гэты браўзер не змог згенераваць пару ключоў.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Гэта не закрыты ключ. Устаўце закрыты ключ OpenSSH або PEM ці згенеруйце новы.",
         "This is not an OpenSSH public key.": "Гэта не адкрыты ключ OpenSSH.",
-        "This public key does not belong to the private key.": "Гэты адкрыты ключ не адпавядае закрытаму ключу."
+        "This public key does not belong to the private key.": "Гэты адкрыты ключ не адпавядае закрытаму ключу.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Гэты шаблон нельга выкарыстаць: у ім занадта шмат неабавязковых або паўторных частак, каб хутка яго праверыць, або сервер чытае яго інакш."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

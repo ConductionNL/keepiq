@@ -1925,7 +1925,8 @@
         "This browser could not generate a key pair.": "Овој прелистувач не можеше да генерира пар клучеви.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Ова не е приватен клуч. Залепете приватен клуч во формат OpenSSH или PEM или генерирајте нов.",
         "This is not an OpenSSH public key.": "Ова не е јавен клуч во формат OpenSSH.",
-        "This public key does not belong to the private key.": "Овој јавен клуч не припаѓа на приватниот клуч."
+        "This public key does not belong to the private key.": "Овој јавен клуч не припаѓа на приватниот клуч.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Овој шаблон не може да се користи: има премногу незадолжителни или повторени делови за да се провери брзо, или серверот го чита поинаку."
     },
     "plurals": null
 }

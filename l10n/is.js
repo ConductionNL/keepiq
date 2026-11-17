@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Þessi vafri gat ekki búið til lyklapar.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Þetta er ekki einkalykill. Límdu inn OpenSSH- eða PEM-einkalykil, eða búðu til nýjan.",
         "This is not an OpenSSH public key.": "Þetta er ekki OpenSSH-dreifilykill.",
-        "This public key does not belong to the private key.": "Þessi dreifilykill tilheyrir ekki einkalyklinum."
+        "This public key does not belong to the private key.": "Þessi dreifilykill tilheyrir ekki einkalyklinum.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Ekki er hægt að nota þetta mynstur: það hefur of marga valfrjálsa eða endurtekna hluta til að hægt sé að athuga það hratt, eða þjónninn les það öðruvísi."
     },
     "nplurals=2; plural=(n != 1);"
 )

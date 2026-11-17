@@ -60,11 +60,7 @@
 				:modelValue="schema.pattern ?? ''"
 				:label="t('keepiq', 'Pattern')"
 				:error="patternInvalid"
-				:helperText="
-					patternInvalid
-						? t('keepiq', 'This is not a valid regular expression.')
-						: ''
-				"
+				:helperText="patternHelp"
 				:disabled="disabled"
 				data-testid="schema-pattern"
 				@update:modelValue="set('pattern', $event)" />
@@ -111,7 +107,7 @@
 import { translate as t } from '@nextcloud/l10n'
 import { NcCheckboxRadioSwitch, NcSelect, NcTextField } from '@nextcloud/vue'
 import { cleanSchema, SCHEMA_TYPES, STRING_FORMATS } from '../utils/fieldSchema.js'
-import { isSafePattern } from '../utils/safePattern.js'
+import { patternProblem } from '../utils/safePattern.js'
 
 export default {
 	name: 'SchemaAdvanced',
@@ -193,7 +189,26 @@ export default {
 		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		patternInvalid() {
-			return Boolean(this.schema.pattern) && !isSafePattern(this.schema.pattern)
+			return Boolean(this.schema.pattern) && patternProblem(this.schema.pattern) !== ''
+		},
+
+		/**
+		 * Why the pattern cannot be used, or ''.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
+		 */
+		patternHelp() {
+			const problem = this.schema.pattern ? patternProblem(this.schema.pattern) : ''
+			if (problem === 'invalid') {
+				return t('keepiq', 'This is not a valid regular expression.')
+			}
+			return problem === 'unsupported'
+				? t(
+					'keepiq',
+					'This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.',
+				)
+				: ''
 		},
 
 		/**

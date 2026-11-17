@@ -1925,7 +1925,8 @@
         "This browser could not generate a key pair.": "Den här webbläsaren kunde inte generera ett nyckelpar.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Det här är ingen privat nyckel. Klistra in en privat OpenSSH- eller PEM-nyckel, eller generera en.",
         "This is not an OpenSSH public key.": "Det här är ingen publik OpenSSH-nyckel.",
-        "This public key does not belong to the private key.": "Den här publika nyckeln hör inte till den privata nyckeln."
+        "This public key does not belong to the private key.": "Den här publika nyckeln hör inte till den privata nyckeln.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Det här mönstret kan inte användas: det har för många valfria eller upprepade delar för att kunna kontrolleras snabbt, eller så läser servern det annorlunda."
     },
     "plurals": null
 }

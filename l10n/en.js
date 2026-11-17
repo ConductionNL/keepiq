@@ -1937,7 +1937,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "This browser could not generate a key pair.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.",
         "This is not an OpenSSH public key.": "This is not an OpenSSH public key.",
-        "This public key does not belong to the private key.": "This public key does not belong to the private key."
+        "This public key does not belong to the private key.": "This public key does not belong to the private key.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently."
     },
     "nplurals=2; plural=(n != 1);"
 )

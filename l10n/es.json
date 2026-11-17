@@ -1925,7 +1925,8 @@
         "This browser could not generate a key pair.": "Este navegador no ha podido generar un par de claves.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Esto no es una clave privada. Pegue una clave privada OpenSSH o PEM, o genere una.",
         "This is not an OpenSSH public key.": "Esto no es una clave pública OpenSSH.",
-        "This public key does not belong to the private key.": "Esta clave pública no corresponde a la clave privada."
+        "This public key does not belong to the private key.": "Esta clave pública no corresponde a la clave privada.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Este patrón no se puede usar: tiene demasiadas partes opcionales o repetidas para comprobarlo rápidamente, o el servidor lo lee de otra manera."
     },
     "plurals": null
 }

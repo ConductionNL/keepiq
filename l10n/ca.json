@@ -1925,7 +1925,8 @@
         "This browser could not generate a key pair.": "Aquest navegador no ha pogut generar un parell de claus.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Això no és una clau privada. Enganxeu una clau privada OpenSSH o PEM, o genereu-ne una.",
         "This is not an OpenSSH public key.": "Això no és una clau pública OpenSSH.",
-        "This public key does not belong to the private key.": "Aquesta clau pública no correspon a la clau privada."
+        "This public key does not belong to the private key.": "Aquesta clau pública no correspon a la clau privada.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Aquest patró no es pot fer servir: té massa parts opcionals o repetides per comprovar-lo ràpidament, o el servidor el llegeix d'una altra manera."
     },
     "plurals": null
 }

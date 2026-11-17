@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Ta brskalnik ni mogel ustvariti para ključev.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "To ni zasebni ključ. Prilepite zasebni ključ OpenSSH ali PEM ali pa ustvarite novega.",
         "This is not an OpenSSH public key.": "To ni javni ključ OpenSSH.",
-        "This public key does not belong to the private key.": "Ta javni ključ ne pripada zasebnemu ključu."
+        "This public key does not belong to the private key.": "Ta javni ključ ne pripada zasebnemu ključu.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Tega vzorca ni mogoče uporabiti: ima preveč neobveznih ali ponovljenih delov za hitro preverjanje ali pa ga strežnik bere drugače."
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

@@ -71,6 +71,7 @@ class SafePatternTest extends TestCase {
 			'a repeated overlapping alternation' => ['^(a|aa)+$'],
 			'a counted nested quantifier' => ['^(a+){10}$'],
 			'a nested quantifier'         => ['^(a+)+$'],
+			'a bound PCRE does not compile' => ['^x{0,70000}$'],
 			'a repeated optional'         => ['(a?){5}'],
 			'four open-ended quantifiers' => ['^\d*\d*\d*\d*x$'],
 			'eight dot-stars'             => ['^.*.*.*.*.*.*.*.*=$'],

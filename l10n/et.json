@@ -1925,7 +1925,8 @@
         "This browser could not generate a key pair.": "See brauser ei suutnud võtmepaari luua.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "See ei ole privaatvõti. Kleepige OpenSSH- või PEM-vormingus privaatvõti või looge uus.",
         "This is not an OpenSSH public key.": "See ei ole OpenSSH avalik võti.",
-        "This public key does not belong to the private key.": "See avalik võti ei kuulu selle privaatvõtme juurde."
+        "This public key does not belong to the private key.": "See avalik võti ei kuulu selle privaatvõtme juurde.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Seda mustrit ei saa kasutada: sellel on liiga palju valikulisi või korduvaid osi, et seda kiiresti kontrollida, või server loeb seda teisiti."
     },
     "plurals": null
 }

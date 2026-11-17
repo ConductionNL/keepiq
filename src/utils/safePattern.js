@@ -36,19 +36,42 @@ const ESCAPES = 'dDwWsSbBtnrf^$\\.*+?()[]{}|/'
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 export function isSafePattern(pattern) {
-	if (
-		typeof pattern !== 'string'
-		|| pattern === ''
-		|| [...pattern].length > MAX_PATTERN_LENGTH
-	) {
-		return false
+	return patternProblem(pattern) === ''
+}
+
+/**
+ * What keeps a pattern from being used: `invalid` when it is no regular
+ * expression, `unsupported` when it is one that could take too long to check
+ * or that the server reads differently, '' when it can be used.
+ *
+ * @param {unknown} pattern The pattern.
+ * @return {''|'invalid'|'unsupported'}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+export function patternProblem(pattern) {
+	if (typeof pattern !== 'string' || pattern === '') {
+		return 'invalid'
 	}
 	try {
 		new RegExp(pattern, 'u')
 	} catch {
-		return false
+		return 'invalid'
 	}
-	return scan(pattern)
+	const fits = [...pattern].length <= MAX_PATTERN_LENGTH && !hasHugeBound(pattern) && scan(pattern)
+	return fits ? '' : 'unsupported'
+}
+
+/**
+ * Whether a counted quantifier has a bound above 65535, which JavaScript
+ * accepts and PCRE does not compile.
+ *
+ * @param {string} pattern The pattern.
+ * @return {boolean}
+ */
+function hasHugeBound(pattern) {
+	return [...pattern.matchAll(/\{(\d+)(?:,(\d*))?\}/g)].some(
+		([, low, high]) => Number(low) > 65535 || Number(high || 0) > 65535,
+	)
 }
 
 /**

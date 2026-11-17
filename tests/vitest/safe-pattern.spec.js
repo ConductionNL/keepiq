@@ -12,7 +12,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { fitImportedBlob, schemaError } from '../../src/utils/fieldSchema.js'
-import { isSafePattern, MAX_PATTERN_INPUT } from '../../src/utils/safePattern.js'
+import { isSafePattern, MAX_PATTERN_INPUT, patternProblem } from '../../src/utils/safePattern.js'
 
 const SAFE = [
 	'^[0-9]{4,6}$',
@@ -80,6 +80,14 @@ describe('safe patterns', () => {
 
 	it.each(UNSAFE)('refuses %s', (pattern) => {
 		expect(isSafePattern(pattern)).toBe(false)
+	})
+
+	it('tells a pattern that does not compile from one it cannot use', () => {
+		expect(patternProblem('^[0-9')).toBe('invalid')
+		// Valid, but four choice points; and a bound PCRE does not compile.
+		expect(patternProblem('^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$')).toBe('unsupported')
+		expect(patternProblem('^x{0,70000}$')).toBe('unsupported')
+		expect(patternProblem('^\\d{4}$')).toBe('')
 	})
 
 	it('never runs an unsafe pattern, and no value fits it', () => {

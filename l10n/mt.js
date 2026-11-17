@@ -1848,7 +1848,8 @@ OC.L10N.register(
         "This browser could not generate a key pair.": "Dan il-browser ma setax jiġġenera par ta’ ċwievet.",
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "Din mhijiex ċavetta privata. Waħħal ċavetta privata OpenSSH jew PEM, jew iġġenera waħda.",
         "This is not an OpenSSH public key.": "Din mhijiex ċavetta pubblika OpenSSH.",
-        "This public key does not belong to the private key.": "Din iċ-ċavetta pubblika ma tappartjenix liċ-ċavetta privata."
+        "This public key does not belong to the private key.": "Din iċ-ċavetta pubblika ma tappartjenix liċ-ċavetta privata.",
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Dan il-mudell ma jistax jintuża: għandu wisq partijiet fakultattivi jew ripetuti biex jiġi ċċekkjat malajr, jew is-server jaqrah b'mod differenti."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )
