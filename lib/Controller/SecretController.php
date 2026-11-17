@@ -239,7 +239,7 @@ class SecretController extends OCSController {
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The parameters are the
 	 *   route's request body, bound by the framework one by one.
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $reprompt is a request body
-	 *   field the item stores as-is.
+	 *   field; only a flagged create carries it to the item.
 	 */
 	#[NoAdminRequired]
 	public function create(
