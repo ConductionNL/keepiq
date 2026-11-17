@@ -112,6 +112,7 @@
 					<input
 						v-else-if="inputType(field) === 'checkbox'"
 						type="checkbox"
+						:aria-labelledby="`fill-label-${index}`"
 						:checked="values[field] === 'true'"
 						:data-testid="`fill-field-${field}`"
 						@change="
@@ -126,6 +127,7 @@
 						autocomplete="off"
 						spellcheck="false"
 						required
+						:aria-labelledby="`fill-label-${index}`"
 						:aria-invalid="fieldError(field) !== '' ? 'true' : 'false'"
 						:aria-describedby="errorId(field, index)"
 						:data-testid="`fill-field-${field}`" />
@@ -136,6 +138,7 @@
 						:step="schemaOf(field)?.type === 'number' ? 'any' : undefined"
 						autocomplete="off"
 						required
+						:aria-labelledby="`fill-label-${index}`"
 						:aria-invalid="fieldError(field) !== '' ? 'true' : 'false'"
 						:aria-describedby="errorId(field, index)"
 						:data-testid="`fill-field-${field}`" />

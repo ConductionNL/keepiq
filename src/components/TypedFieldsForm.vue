@@ -28,6 +28,7 @@
 			<NcTextField
 				v-else
 				v-bind="fieldProps(field)"
+				:label="fieldLabel(field)"
 				:type="inputType(field)"
 				:step="field.schema?.type === 'number' ? 'any' : undefined"
 				@update:modelValue="set(field.key, $event)" />

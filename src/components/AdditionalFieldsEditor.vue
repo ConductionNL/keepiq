@@ -199,15 +199,15 @@ export default {
 	},
 
 	watch: {
-		/**
-		 * Give every row a key: a row added at the end gets a new one.
-		 *
-		 * @param {Array<object>} members The members.
-		 * @return {void}
-		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
-		 */
 		members: {
 			immediate: true,
+			/**
+			 * Give every row a key: a row added at the end gets a new one.
+			 *
+			 * @param {Array<object>} members The members.
+			 * @return {void}
+			 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+			 */
 			handler(members) {
 				this.rowKeys = this.rowKeys.slice(0, members.length)
 				while (this.rowKeys.length < members.length) {
