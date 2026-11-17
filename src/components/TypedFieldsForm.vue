@@ -29,6 +29,7 @@
 				v-else
 				v-bind="fieldProps(field)"
 				:type="inputType(field)"
+				:step="field.schema?.type === 'number' ? 'any' : undefined"
 				@update:modelValue="set(field.key, $event)" />
 		</template>
 	</div>
@@ -38,7 +39,7 @@
 import { translate as t } from '@nextcloud/l10n'
 import { NcPasswordField, NcTextField } from '@nextcloud/vue'
 import MaskedTextArea from './MaskedTextArea.vue'
-import { schemaError } from '../utils/fieldSchema.js'
+import { inputTypeFor, schemaError } from '../utils/fieldSchema.js'
 
 export default {
 	name: 'TypedFieldsForm',
@@ -128,7 +129,8 @@ export default {
 		 */
 		inputType(field) {
 			if (['integer', 'number'].includes(field.schema?.type)) {
-				return 'number'
+				// Text while the stored value is not a number, so it shows.
+				return inputTypeFor('number', this.values[field.key])
 			}
 			return field.kind === 'url' || field.kind === 'email'
 				? field.kind

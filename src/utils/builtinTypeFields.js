@@ -177,6 +177,19 @@ function definitionOf(typeName) {
 }
 
 /**
+ * Whether a value holds a PEM private key block, as a certificate bundle
+ * saved with its key does: such a value is masked even where the type's
+ * value is public.
+ *
+ * @param {string|null|undefined} value The value.
+ * @return {boolean}
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ */
+export function holdsPrivateKey(value) {
+	return /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/.test(value || '')
+}
+
+/**
  * The value field of a type: its label, its kind (`hidden` or `multiline`)
  * and whether it is public, or null when the type keeps the generic value
  * field.

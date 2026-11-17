@@ -95,7 +95,9 @@
 				v-model="url"
 				:label="t('keepiq', 'URL (optional)')" />
 
+			<!-- On a type without a URL, only addresses already stored show. -->
 			<AdditionalUrlsField
+				v-if="showUrl || additionalUrls.length > 0"
 				v-model="additionalUrls"
 				:disabled="saving || loading || viewOnly || isCopy" />
 
@@ -187,11 +189,11 @@ import {
 	authenticatorKeyError,
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
-import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import { membersToObject, membersValid, objectToMembers } from '../utils/additionalFields.js'
 import { sameUrls } from '../utils/additionalUrls.js'
 import { leavesOut } from '../utils/builtinTypeFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
-import { valuesFit } from '../utils/fieldSchema.js'
+import { cleanSchema, valuesFit } from '../utils/fieldSchema.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
 import { mergeTypedValues, splitTypedValues } from '../utils/typedFields.js'
@@ -268,6 +270,8 @@ export default {
 			additionalFields: [],
 			/** The type fields' values as loaded, so only a changed one must fit. */
 			loadedTypedValues: {},
+			/** The custom fields as loaded, so only a changed one must fit. */
+			loadedMembers: [],
 			tags: [],
 			reprompt: false,
 			policy: null,
@@ -424,11 +428,31 @@ export default {
 				&& this.policyVerdict.compliant
 				&& this.totpError === ''
 				&& valuesFit(
-					this.additionalFields,
+					this.changedMembers,
 					this.changedTypedFields,
 					this.typedValues,
 				)
+				&& membersValid(
+					this.additionalFields,
+					this.typedFields.map((f) => f.label),
+					this.changedMembers,
+				)
 			)
+		},
+
+		/**
+		 * The custom fields added or changed in this dialog, by name, value or
+		 * schema. Only those must fit, as for the type's own fields: a value
+		 * written elsewhere that does not fit its schema shows its warning but
+		 * does not block an unrelated change.
+		 *
+		 * @return {Array<object>} The members.
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 */
+		changedMembers() {
+			const key = (m) => JSON.stringify([m.name, m.value, cleanSchema(m.schema)])
+			const loaded = new Set(this.loadedMembers.map(key))
+			return this.additionalFields.filter((m) => !loaded.has(key(m)))
 		},
 
 		/**
@@ -509,6 +533,7 @@ export default {
 				this.additionalFields = objectToMembers(
 					this.takeSshMembers(split.rest),
 				)
+				this.loadedMembers = this.additionalFields.map((m) => ({ ...m }))
 
 				// Seed the per-type composite fields from the decrypted
 				// payload (card-identity-items §3.1); a legacy plain value

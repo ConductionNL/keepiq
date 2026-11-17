@@ -68,6 +68,7 @@
 			v-else-if="hidden"
 			v-bind="fieldAttrs"
 			:label="label"
+			autocomplete="off"
 			@update:modelValue="$emit('update:modelValue', $event)" />
 		<NcTextArea
 			v-else-if="input === 'multiline'"
@@ -80,6 +81,7 @@
 			v-bind="fieldAttrs"
 			:label="label"
 			:type="htmlType"
+			:step="input === 'number' ? 'any' : undefined"
 			@update:modelValue="$emit('update:modelValue', $event)" />
 	</div>
 </template>
@@ -97,7 +99,7 @@ import {
 import Eye from 'vue-material-design-icons/Eye.vue'
 import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import MaskedTextArea from './MaskedTextArea.vue'
-import { inputOf, isHiddenSchema } from '../utils/fieldSchema.js'
+import { inputOf, inputTypeFor, isHiddenSchema } from '../utils/fieldSchema.js'
 
 /** The HTML input type for each input that uses a plain text field. */
 const HTML_TYPES = Object.freeze({
@@ -207,13 +209,14 @@ export default {
 		},
 
 		/**
-		 * The HTML input type of the plain text field.
+		 * The HTML input type of the plain text field; text while the value is
+		 * one that input could not show, so a stored value is never hidden.
 		 *
 		 * @return {string} The type.
 		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 		 */
 		htmlType() {
-			return HTML_TYPES[this.input] ?? 'text'
+			return inputTypeFor(HTML_TYPES[this.input] ?? 'text', this.modelValue)
 		},
 
 		/**

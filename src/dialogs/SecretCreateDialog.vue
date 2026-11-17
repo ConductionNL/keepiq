@@ -58,7 +58,10 @@
 				v-model="url"
 				:label="t('keepiq', 'URL (optional)')" />
 
-			<AdditionalUrlsField v-model="additionalUrls" :disabled="saving" />
+			<AdditionalUrlsField
+				v-if="showUrl"
+				v-model="additionalUrls"
+				:disabled="saving" />
 
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
@@ -180,7 +183,7 @@ import {
 	authenticatorKeyError,
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
-import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import { membersToObject, membersValid, objectToMembers } from '../utils/additionalFields.js'
 import { leavesOut } from '../utils/builtinTypeFields.js'
 import { valuesFit } from '../utils/fieldSchema.js'
 import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
@@ -469,9 +472,15 @@ export default {
 			if (this.saving || this.locked || this.name.trim() === '') {
 				return false
 			}
-			// A value that does not fit its field's schema is never stored.
+			// A value that does not fit its field's schema is never stored, nor
+			// a field named like one of the type's own or with a schema the
+			// server refuses.
 			if (
 				!valuesFit(this.additionalFields, this.typedFields, this.typedValues)
+				|| !membersValid(
+					this.additionalFields,
+					this.typedFields.map((f) => f.label),
+				)
 			) {
 				return false
 			}
@@ -623,7 +632,7 @@ export default {
 			const blob = this.additionalBlob(ssh)
 			return {
 				url: this.urlToSave,
-				...(this.additionalUrls.length > 0 ? { additionalUrls: [...this.additionalUrls] } : {}),
+				...(this.showUrl && this.additionalUrls.length > 0 ? { additionalUrls: [...this.additionalUrls] } : {}),
 				login: this.loginToSave,
 				key: this.effectiveValue,
 				// Only when there ARE members: the store encrypts whatever it is

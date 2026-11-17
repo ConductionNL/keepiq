@@ -53,7 +53,7 @@ The system MUST store a built-in type's extra field values in the encrypted addi
 
 ### Requirement: The detail sidebar shows the fields of the type
 
-The detail sidebar MUST show a multi-line value or extra field with its line breaks once revealed, and MUST show a certificate at once, without a show/hide toggle, because it is public by design. It MUST show the type's extra fields in the value's box, below the value and in the type's order, and MUST mask a masked or multi-line one until it is revealed, as it masks the value. Only the additional fields the type does not define MUST be listed under "Additional fields", below the type's fields, each as a label above the value, keeping its line breaks.
+The detail sidebar MUST show a multi-line value or extra field with its line breaks once revealed, and MUST show a certificate at once, without a show/hide toggle, because it is public by design, unless its value holds a PEM private key block, as a bundle saved with its key does, or the item asks for the master password again before a reveal; then it MUST be masked behind a toggle, in the sidebar and in the create and edit dialogs alike. It MUST show the type's extra fields in the value's box, below the value and in the type's order, and MUST mask a masked or multi-line one until it is revealed, as it masks the value. Only the additional fields the type does not define MUST be listed under "Additional fields", below the type's fields, each as a label above the value, keeping its line breaks.
 
 #### Scenario: Opening a certificate
 
@@ -62,6 +62,12 @@ The detail sidebar MUST show a multi-line value or extra field with its line bre
 - **THEN** the certificate is shown with its line breaks and no show/hide toggle
 - **AND** the private key and passphrase are shown below it in the same box, masked until they are revealed, and the private key keeps its line breaks once revealed
 - **AND** "Additional fields" lists only the fields the owner added themselves
+
+#### Scenario: Opening a certificate saved with its private key
+
+- **GIVEN** a Certificate secret whose value holds the certificate and a `-----BEGIN PRIVATE KEY-----` block
+- **WHEN** its owner opens it in the detail sidebar or in the edit dialog
+- **THEN** the value is masked until they choose Show
 
 ### Requirement: A request always asks for the required fields of its type
 

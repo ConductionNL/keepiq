@@ -375,7 +375,7 @@
 						data-testid="secret-detail-type-field">
 						<span class="secret-detail__row-icon">
 							<KeyVariant
-								v-if="isMaskedField(member.field)"
+								v-if="member.masked"
 								:size="20" />
 							<FormatListBulleted v-else :size="20" />
 						</span>
@@ -383,10 +383,7 @@
 							<!-- A public multi-line field, such as an SSH public
 							     key, keeps its lines but is not masked. -->
 							<div
-								v-if="
-									isMaskedField(member.field)
-									|| member.field.public
-								"
+								v-if="member.masked || member.field.public"
 								class="secret-detail__row-value">
 								<PasswordField
 									:key="`${secretLoadToken}-${member.field.label}`"
@@ -1323,12 +1320,13 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { extraUrlLinks } from '../utils/additionalUrls.js'
 import {
+	holdsPrivateKey,
 	loginLabelOf,
 	typeFieldsOf,
 	valueFieldOf,
 } from '../utils/builtinTypeFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
-import { fieldsOf, fieldValueOf, schemasOf } from '../utils/fieldSchema.js'
+import { fieldsOf, fieldValueOf, isHiddenSchema, schemasOf } from '../utils/fieldSchema.js'
 import { isRefusal, refusalCode } from '../utils/refusal.js'
 import { linkHref } from '../utils/safeLink.js'
 import { isRequestableTypeName, secretTypeLabel } from '../utils/secretTypes.js'
@@ -1700,6 +1698,9 @@ export default {
 				return []
 			}
 			const fields = fieldsOf(this.secret.additionalFields)
+			// A schema stored for a type's own field, written through the API
+			// or a merge, can hide it too.
+			const schemas = schemasOf(this.secret.additionalFields)
 			const type = useSecretTypeStore().typesById[this.secret.typeId]
 			return typeFieldsOf(type)
 				.filter((field) => Object.hasOwn(fields, field.label))
@@ -1707,6 +1708,9 @@ export default {
 					field,
 					label: field.displayLabel ?? field.label,
 					value: fields[field.label],
+					masked:
+						this.isMaskedField(field)
+						|| isHiddenSchema(schemas[field.label]),
 				}))
 		},
 
@@ -1927,9 +1931,7 @@ export default {
 		valueShownAtOnce() {
 			return (
 				this.valueField?.public === true
-				&& !/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/.test(
-					this.secret?.key || '',
-				)
+				&& !holdsPrivateKey(this.secret?.key)
 			)
 		},
 

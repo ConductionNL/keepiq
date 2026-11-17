@@ -21,6 +21,7 @@ import {
 } from '../ssh/sshKey.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import {
+	holdsPrivateKey,
 	loginLabelOf,
 	typeFieldsOf,
 	valueFieldOf,
@@ -85,14 +86,17 @@ export const secretPayloadForm = {
 		},
 
 		/**
-		 * Whether the value is public, as a certificate is, so it is never
-		 * masked.
+		 * Whether the value is public, as a certificate is, so it is not
+		 * masked; a certificate saved with its private key is not.
 		 *
 		 * @return {boolean}
 		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valuePublic() {
-			return valueFieldOf(this.selectedTypeName)?.public === true
+			return (
+				valueFieldOf(this.selectedTypeName)?.public === true
+				&& !holdsPrivateKey(this.value)
+			)
 		},
 
 		/**

@@ -21,7 +21,7 @@
  */
 
 import { t } from '@nextcloud/l10n'
-import { fieldsOf, SCHEMA_MEMBER, schemasOf, withSchemas } from './fieldSchema.js'
+import { fieldsOf, SCHEMA_MEMBER, schemaConflicts, schemasOf, withSchemas } from './fieldSchema.js'
 
 /**
  * Names that address the Secret's own columns and can never be members.
@@ -77,6 +77,32 @@ export function memberNameError(name, taken = []) {
 	}
 
 	return ''
+}
+
+/**
+ * Whether a member list may be saved: every checked member with a name has one the
+ * rules accept, also against the type's own field names, and a schema the
+ * server would not refuse. The editor shows why; this keeps Save from going
+ * ahead anyway, as a rename onto a type field's name would overwrite it.
+ *
+ * @param {Array<{name: string, schema?: object}>} members The member list.
+ * @param {Array<string>} reserved Names a member may not take: the type's own fields.
+ * @param {Array<object>} checked The members to check, by default all of them.
+ * @return {boolean}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+ */
+export function membersValid(members = [], reserved = [], checked = members) {
+	return checked.every((member) => {
+		// A member left without a name is dropped on save (membersToObject).
+		if ((member.name || '').trim() === '') {
+			return true
+		}
+		const others = [
+			...members.filter((other) => other !== member).map((other) => other.name),
+			...reserved,
+		]
+		return memberNameError(member.name, others) === '' && !schemaConflicts(member.schema)
+	})
 }
 
 /**

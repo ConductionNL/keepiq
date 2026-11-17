@@ -38,6 +38,7 @@
 		:fingerprint="sshKey.fingerprint"
 		:privateKeyError="sshErrors.privateKey"
 		:publicKeyError="sshErrors.publicKey"
+		:required="valueRequired"
 		:disabled="disabled"
 		@update:privateKey="$emit('update:value', $event)"
 		@update:keys="$emit('update:sshKey', $event)" />

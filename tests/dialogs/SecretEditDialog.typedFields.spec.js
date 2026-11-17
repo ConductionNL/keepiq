@@ -191,11 +191,27 @@ describe('SecretEditDialog on a built-in type with data from before', () => {
 		typeStore.types = [
 			{ id: 'type-db', name: 'database', label: 'Database', scope: 'system' },
 			{ id: 'type-note', name: 'note', label: 'Secure Note', scope: 'system' },
+			{ id: 'type-cert', name: 'certificate', label: 'Certificate', scope: 'system' },
 		]
 		typeStore.fetchTypes = vi.fn().mockResolvedValue()
 		const session = useSessionStore()
 		session.cryptoKey = 'UNLOCKED'
 		session.certificate = 'PEM'
+	})
+
+	// openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+	it('masks a certificate saved with its private key, as the sidebar does', async () => {
+		const bundle = await mountSecret({
+			typeId: 'type-cert',
+			key: '-----BEGIN CERTIFICATE-----\nA\n-----END CERTIFICATE-----\n-----BEGIN PRIVATE KEY-----\nB\n-----END PRIVATE KEY-----',
+		})
+		expect(bundle.vm.valuePublic).toBe(false)
+
+		const certificate = await mountSecret({
+			typeId: 'type-cert',
+			key: '-----BEGIN CERTIFICATE-----\nA\n-----END CERTIFICATE-----',
+		})
+		expect(certificate.vm.valuePublic).toBe(true)
 	})
 
 	it('lets a Port that does not fit stay until it is changed', async () => {
@@ -208,6 +224,35 @@ describe('SecretEditDialog on a built-in type with data from before', () => {
 		expect(wrapper.vm.canSubmit).toBe(true)
 
 		wrapper.vm.typedValues = { ...wrapper.vm.typedValues, port: 'abc' }
+		expect(wrapper.vm.canSubmit).toBe(false)
+	})
+
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+	it('lets a custom value that does not fit stay until it is changed', async () => {
+		const wrapper = await mountSecret({
+			typeId: 'type-db',
+			additionalFields: { Count: 'abc', '@schema': { Count: { type: 'integer' } } },
+		})
+
+		wrapper.vm.name = 'Renamed'
+		expect(wrapper.vm.canSubmit).toBe(true)
+
+		wrapper.vm.additionalFields = [{ name: 'Count', value: 'abd', schema: { type: 'integer' } }]
+		expect(wrapper.vm.canSubmit).toBe(false)
+	})
+
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	it('blocks a rename onto one of the type’s own fields and a schema the server refuses', async () => {
+		const wrapper = await mountSecret({ typeId: 'type-db', additionalFields: { pass: 'x' } })
+		wrapper.vm.name = 'Renamed'
+
+		wrapper.vm.additionalFields = [{ name: 'Port', value: 'x' }]
+		expect(wrapper.vm.canSubmit).toBe(false)
+
+		wrapper.vm.additionalFields = [{ name: 'pass', value: 'x', schema: { type: 'string', pattern: '(a+)+' } }]
+		expect(wrapper.vm.canSubmit).toBe(false)
+
+		wrapper.vm.additionalFields = [{ name: 'pass', value: 'x', schema: { type: 'integer', minimum: 9, maximum: 1 } }]
 		expect(wrapper.vm.canSubmit).toBe(false)
 	})
 

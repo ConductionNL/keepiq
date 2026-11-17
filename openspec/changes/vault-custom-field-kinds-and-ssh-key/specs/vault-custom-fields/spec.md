@@ -53,7 +53,7 @@ The dialogs and the detail sidebar MUST render a custom field by its schema: a t
 
 ### Requirement: A value must fit its schema
 
-The system MUST NOT store a value that does not fit its field's schema from any Keepiq screen. The create and edit dialogs MUST block saving and name the field and the rule it breaks. A schema change MUST NOT be saved while the field's current value does not fit the new schema. An import MUST keep a value that does not fit, but MUST drop that field's schema so it reads as text. Because the server never sees the values, a value written through the API that does not fit MUST still be shown, as plain text with a warning.
+The web app's create and edit dialogs MUST NOT store a value that does not fit its field's schema: they MUST block saving and name the field and the rule it breaks. The edit dialog checks only the fields changed in it, so a stored value that does not fit, written elsewhere, shows its warning without blocking an unrelated change. The dialogs MUST also block saving a field named like one of the type's own fields and a schema the server would refuse. The browser extension and the mobile app keep each field's schema through an edit but do not check values against it. A schema change MUST NOT be saved while the field's current value does not fit the new schema. An import MUST keep a value that does not fit, but MUST drop that field's schema so it reads as text. Because the server never sees the values, a value written through the API that does not fit MUST still be shown, as plain text with a warning.
 
 #### Scenario: A port out of range
 

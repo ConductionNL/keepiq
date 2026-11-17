@@ -177,7 +177,7 @@ function keepsNumberKey(key, value, type) {
 
 /**
  * Keep a string schema's `format`, `pattern`, `minLength` or `maxLength`:
- * a known format, a pattern that is not empty, a length of zero or more.
+ * a known format, a pattern that is not empty, a whole length of zero or more.
  *
  * @param {string} key The key.
  * @param {string|number|boolean} value Its value.
@@ -191,7 +191,8 @@ function keepsStringKey(key, value) {
 	if (key === 'pattern') {
 		return typeof value === 'string' && value !== ''
 	}
-	return isNumeric(value) && Number(value) >= 0
+	// A length is a whole number, as the server requires.
+	return isNumeric(value) && Number.isInteger(Number(value)) && Number(value) >= 0
 }
 
 /**
@@ -292,6 +293,30 @@ export function inputOf(schema) {
 		time: 'time',
 	}
 	return byFormat[clean.format] ?? 'text'
+}
+
+/** What a browser's number, date and time inputs can hold; anything else they show empty. */
+const BROWSER_VALUES = Object.freeze({
+	number: (value) => isNumeric(value.trim()),
+	date: (value) => /^\d{4}-\d{2}-\d{2}$/.test(value),
+	'datetime-local': (value) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(value),
+	time: (value) => /^\d{2}:\d{2}(?::\d{2})?$/.test(value),
+})
+
+/**
+ * The HTML input type to use for a value: `type`, or `text` when a browser's
+ * input of that type cannot hold the value and would show it empty, as a
+ * Port of "default" in a number input.
+ *
+ * @param {string} type The HTML input type the schema asks for.
+ * @param {string} value The value.
+ * @return {string} The input type.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+ */
+export function inputTypeFor(type, value) {
+	const text = value === null || value === undefined ? '' : String(value)
+	const holds = BROWSER_VALUES[type]
+	return text === '' || holds === undefined || holds(text) ? type : 'text'
 }
 
 /**
@@ -725,26 +750,59 @@ function schemasFor(fields, schemas) {
 	return kept
 }
 
+/** The limits that contradict each other when the lower is above the upper. */
+const LIMIT_PAIRS = Object.freeze([
+	['minLength', 'maxLength'],
+	['minimum', 'maximum'],
+])
+
 /**
- * A schema without its pattern when the pattern is not safe to run.
+ * A schema without what the server refuses (lib/Service/FieldSchemaShape.php):
+ * a pattern that is not safe to run, and a pair of limits whose lower is
+ * above its upper.
  *
- * @param {object} schema The schema.
+ * @param {object|null|undefined} schema The schema.
  * @return {object} The schema to keep.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
-function withoutUnsafePattern(schema) {
-	if (schema?.pattern === undefined || isSafePattern(schema.pattern)) {
-		return schema
+export function withoutConflicts(schema) {
+	const kept = { ...(schema ?? {}) }
+	if (kept.pattern !== undefined && !isSafePattern(kept.pattern)) {
+		delete kept.pattern
 	}
-	const rest = { ...schema }
-	delete rest.pattern
-	return rest
+	for (const [low, high] of LIMIT_PAIRS) {
+		if (
+			kept[low] !== undefined
+			&& kept[high] !== undefined
+			&& Number(kept[low]) > Number(kept[high])
+		) {
+			delete kept[low]
+			delete kept[high]
+		}
+	}
+	return kept
+}
+
+/**
+ * Whether a schema holds something the server refuses, so it may not be
+ * saved or sent with a request.
+ *
+ * @param {object|null|undefined} schema The schema.
+ * @return {boolean}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+export function schemaConflicts(schema) {
+	return (
+		Object.keys(withoutConflicts(schema)).length
+		!== Object.keys(schema ?? {}).length
+	)
 }
 
 /**
  * An imported blob with the schema dropped from every field whose value does
  * not fit it, so the value is kept and reads as text. A hidden field stays
  * hidden: a mask is not a limit a value can fail. A pattern that is not safe
- * to run is dropped whatever the value, also from an empty field, which no
+ * to run, and limits that contradict each other, are dropped whatever the value, also from an empty field, which no
  * value could ever fill.
  *
  * @param {object|null|undefined} blob The imported additional fields.
@@ -758,7 +816,7 @@ export function fitImportedBlob(blob) {
 	const fields = fieldsOf(blob)
 	const fitting = Object.fromEntries(
 		Object.entries(schemasOf(blob)).map(([name, stored]) => {
-			const schema = withoutUnsafePattern(stored)
+			const schema = withoutConflicts(stored)
 			if (schemaError(fields[name], schema) === '') {
 				return [name, schema]
 			}

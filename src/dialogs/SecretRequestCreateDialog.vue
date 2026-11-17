@@ -187,6 +187,7 @@
 					<NcButton
 						class="secret-request-create-dialog__custom-add"
 						variant="secondary"
+						:disabled="customSchemaConflicts"
 						@click="addCustomField">
 						{{ t('keepiq', 'Add') }}
 					</NcButton>
@@ -329,8 +330,10 @@ import {
 	presetOf,
 	presetOptions,
 	presetSchema,
+	schemaConflicts,
 	schemasOf,
 	typeFieldSchema,
+	withoutConflicts,
 } from '../utils/fieldSchema.js'
 import { fillLinkFor } from '../utils/fillLink.js'
 import {
@@ -769,11 +772,25 @@ export default {
 					this.customSchemas[name]
 					?? stored[name]
 					?? (typeField ? typeFieldSchema(typeField) : null)
-				if (schema && !isPlainSchema(schema)) {
-					schemas[name] = cleanSchema(schema)
+				// A schema stored before the server's rules reached the dialogs
+				// is sent without what the server would refuse.
+				const clean = withoutConflicts(cleanSchema(schema ?? {}))
+				if (schema && !isPlainSchema(clean)) {
+					schemas[name] = clean
 				}
 			}
 			return schemas
+		},
+
+		/**
+		 * Whether the schema of the field being added holds something the
+		 * server refuses; Advanced then says what, and Add waits.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+		 */
+		customSchemaConflicts() {
+			return schemaConflicts(this.customFieldSchema)
 		},
 	},
 
@@ -907,7 +924,7 @@ export default {
 				return
 			}
 			this.addCustomField()
-			if (this.customFieldError === '') {
+			if (this.customFieldError === '' && !this.customSchemaConflicts) {
 				this.submit()
 			}
 		},
@@ -1118,7 +1135,8 @@ export default {
 			const name = (this.customFieldInput || '').trim()
 			this.customFieldError = ''
 
-			if (name === '') {
+			if (name === '' || this.customSchemaConflicts) {
+				this.customAdvancedOpen ||= this.customSchemaConflicts
 				return
 			}
 

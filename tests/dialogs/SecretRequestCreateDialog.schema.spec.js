@@ -71,6 +71,37 @@ describe('SecretRequestCreateDialog field schemas', () => {
 		expect(secrets.updateSecret).not.toHaveBeenCalled()
 	})
 
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	it('adds no field whose schema the server refuses, and sends a stored one without its conflicts', async () => {
+		const store = useSecretRequestStore()
+		store.createRequest = vi.fn().mockResolvedValue({ id: 'r', token: 't' })
+		const wrapper = mount(SecretRequestCreateDialog, {
+			propsData: {
+				open: true,
+				secret: {
+					id: 'secret-1',
+					additionalFields: {
+						Code: '',
+						'@schema': { Code: { type: 'string', hidden: true, pattern: '(a+)+', minLength: 9, maxLength: 1 } },
+					},
+				},
+			},
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.customFieldInput = 'PIN'
+		wrapper.vm.customFieldSchema = { type: 'integer', minimum: 9, maximum: 1 }
+		wrapper.vm.addCustomField()
+		expect(wrapper.vm.requestedFields).not.toContain('PIN')
+		expect(wrapper.vm.customAdvancedOpen).toBe(true)
+
+		wrapper.vm.requestedFields = ['key', 'Code']
+		await wrapper.vm.submit()
+		expect(store.createRequest.mock.calls[0][0].fieldSchemas).toEqual({
+			Code: { type: 'string', hidden: true },
+		})
+	})
+
 	it('refines a new field under Advanced and lists it as Custom', async () => {
 		const store = useSecretRequestStore()
 		store.createRequest = vi.fn().mockResolvedValue({ id: 'r', token: 't' })

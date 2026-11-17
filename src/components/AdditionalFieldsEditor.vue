@@ -75,7 +75,7 @@
 				<SchemaValueInput
 					:modelValue="member.value"
 					:schema="schemaOf(member)"
-					:label="t('keepiq', 'Value')"
+					:label="member.name || t('keepiq', 'Value')"
 					:error="valueError(member)"
 					:disabled="disabled"
 					:testid="`additional-field-value-${index}`"
@@ -140,6 +140,7 @@ import {
 	presetOf,
 	presetOptions,
 	presetSchema,
+	schemaConflicts,
 	schemaError,
 } from '../utils/fieldSchema.js'
 
@@ -260,14 +261,18 @@ export default {
 		},
 
 		/**
-		 * Whether a row's Advanced part is open.
+		 * Whether a row's Advanced part is open: on request, and always while
+		 * its schema holds a conflict, so the reason Save waits is in view.
 		 *
 		 * @param {number} index The row.
 		 * @return {boolean} True when open.
 		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		isOpen(index) {
-			return this.advancedOpen.includes(index)
+			return (
+				this.advancedOpen.includes(index)
+				|| schemaConflicts(this.members[index]?.schema)
+			)
 		},
 
 		/**

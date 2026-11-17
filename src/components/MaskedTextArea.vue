@@ -105,6 +105,21 @@ export default {
 
 	watch: {
 		/**
+		 * Keep a value that was in view in view when it stops being public,
+		 * as a certificate does once a private key is pasted into it.
+		 *
+		 * @param {boolean} isPublic Whether it is public now.
+		 * @param {boolean} wasPublic Whether it was.
+		 * @return {void}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		public(isPublic, wasPublic) {
+			if (wasPublic && !isPublic) {
+				this.revealed = true
+			}
+		},
+
+		/**
 		 * Mask a value that arrives after the field opened empty, as a
 		 * loaded secret does, unless the user typed it.
 		 *
