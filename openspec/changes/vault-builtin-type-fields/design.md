@@ -13,9 +13,9 @@ The extra fields use the same shape as admin-defined fields (`{key, label, kind,
 
 The certificate inventory parses `key` (`src/store/modules/certificate.js`), the expiry scan reads the `expires_at` that parse sets, and the guided renewal replaces the value. Moving the certificate into an additional field would break all three, and integriq's broker mints certificate secrets the same way. So the value field is relabelled "Certificate" and becomes a text area; there is no separate required secret.
 
-## Multi-line fields are not masked
+## Multi-line fields start masked behind Show
 
-A password input drops line breaks, so a PEM block cannot go in one. A text area cannot be masked natively, so the multi-line fields (Certificate, Private key, Public key, Note) show what is typed. The fill page summary still masks the private key, as it masks every field whose name says key.
+A password input drops line breaks, so a PEM block cannot go in one, and a text area cannot be masked natively. A multi-line secret field (Private key, Note, a certificate's private key) therefore opens in the dialogs as a mask with a Show button, and the text area holding the value is only mounted once Show is pressed. An empty one starts open, so a key can be pasted at once. A public multi-line field, the certificate itself, is shown at once. The fill page summary masks every multi-line field that is not public.
 
 ## The fill page needs the type
 

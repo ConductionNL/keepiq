@@ -10,7 +10,7 @@ The system MUST give the built-in item types below their own form in the create 
 | `certificate` | "Certificate", multi-line, required | Private key (multi-line), Passphrase (masked) | Login |
 | `api_key` | "API key", masked, required | API secret (masked) | — |
 | `database` | "Password", masked, required | Host, Port, Database | URL; Login is labelled "Username" |
-| `ssh_key` | "Private key", multi-line, required | Public key (multi-line), Passphrase (masked) | — |
+| `ssh_key` | "Private key", multi-line, required | Passphrase (masked); the public key and fingerprint are the `publicKey` and `fingerprint` members of `vault-ssh-key-item` | — |
 | `note` | "Note", multi-line, required | — | Login, URL |
 
 The value MUST stay in the secret's `key`, so a certificate stays where `certificate-lifecycle` parses it. A left-out field MUST still be shown in the edit dialog when the secret already holds a value for it, so no stored value becomes unreachable. Extra fields MUST be optional. The other built-in types keep their current forms.
@@ -42,7 +42,7 @@ The create dialog MUST mark the secret's value field as required, with the "(req
 
 ### Requirement: Built-in field values keep a fixed name
 
-The system MUST store a built-in type's extra field values in the encrypted additional fields under the field's fixed English name ("Private key", "Public key", "Passphrase", "API secret", "Host", "Port", "Database"), whatever the user's language, and MUST show them with a translated label. An empty extra field MUST NOT be stored.
+The system MUST store a built-in type's extra field values in the encrypted additional fields under the field's fixed English name ("Private key", "Passphrase", "API secret", "Host", "Port", "Database"), whatever the user's language, and MUST show them with a translated label. An empty extra field MUST NOT be stored.
 
 #### Scenario: A Dutch user saves a private key
 
