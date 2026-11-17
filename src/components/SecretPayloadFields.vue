@@ -229,7 +229,7 @@ export default {
 		 * by field name; empty for every other field.
 		 *
 		 * @return {{number?: string, cvv?: string}}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
 		 */
 		hints() {
 			if (!this.isCard) {
@@ -254,7 +254,7 @@ export default {
 		 *
 		 * @param {{code: string, brand?: string}} hint From `cardNumberHint`.
 		 * @return {string}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
 		 */
 		numberHintText(hint) {
 			if (hint.code === 'length') {

@@ -1342,7 +1342,7 @@
           "openspec/specs/card-identity-items :: Payment Card and Identity System Types",
           "openspec/specs/card-identity-items :: Type-Specific Presentation and Masked Reveal"
         ],
-        "plan": "openspec/changes/vault-card-brand-formats"
+        "plan": "openspec/changes/archive/2026-11-17-vault-card-brand-formats"
       },
       "rowSource": "own",
       "provider": "keepiq",

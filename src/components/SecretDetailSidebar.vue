@@ -1752,7 +1752,7 @@ export default {
 		 * of how the number was typed in.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberFormatted() {
 			return formatCardNumber(this.cardPayload?.number || '')
@@ -1762,7 +1762,7 @@ export default {
 		 * The number row's label, with the brand derived from the number.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberLabel() {
 			const brand = cardBrandInfo(this.cardPayload?.number || '')
@@ -1790,7 +1790,7 @@ export default {
 		 * digits visible in the brand's grouping, fully dotted when too short.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberMasked() {
 			return maskCardNumber(this.cardPayload?.number || '')
