@@ -291,42 +291,9 @@ async function decryptBlobFields(decrypted, cryptoKey) {
 }
 
 /**
- * The schemas the secret's requests carry, by field name, a newer request's
- * winning; null when the requests cannot be read.
- *
- * @param {string} secretId The secret ID.
- * @return {Promise<object|null>}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
- */
-async function requestedSchemasOf(secretId) {
-	let requests
-	try {
-		const response = await axios.get(
-			generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/requests`),
-		)
-		requests = Array.isArray(response?.data) ? response.data : []
-	} catch {
-		return null
-	}
-	const oldestFirst = [...requests].sort((a, b) =>
-		String(a?.createdAt ?? '').localeCompare(String(b?.createdAt ?? '')),
-	)
-	const schemas = {}
-	for (const request of oldestFirst) {
-		const given = request?.fieldSchemas
-		if (given && typeof given === 'object' && !Array.isArray(given)) {
-			Object.assign(schemas, given)
-		}
-	}
-	return schemas
-}
-
-/**
  * Merge the request-filled pending blobs into the decrypted extra fields,
- * and count them as merged only when every blob merged. When the requests,
- * and so the schemas of the filled fields, cannot be read, nothing is
- * merged: a hidden value would otherwise show in clear. The blobs stay
- * pending for the next open.
+ * and count them as merged only when every blob merged. Each blob comes with
+ * the schemas its request carried, which the server stored with it.
  *
  * @param {object} decrypted The decrypted secret.
  * @param {CryptoKey} cryptoKey The session private key.
@@ -337,16 +304,11 @@ async function mergePendingInto(decrypted, cryptoKey) {
 	if (!Array.isArray(pending) || pending.length === 0) {
 		return
 	}
-	const requested = await requestedSchemasOf(decrypted.id)
-	if (requested === null) {
-		decrypted.mergedPending = 0
-		return
-	}
 	const merged = await mergePendingFields(
 		decrypted.additionalFields,
 		pending,
 		cryptoKey,
-		requested,
+		Array.isArray(decrypted.pendingFieldSchemas) ? decrypted.pendingFieldSchemas : [],
 	)
 	decrypted.additionalFields = merged.fields
 	decrypted.mergedPending = merged.complete ? pending.length : 0
@@ -823,18 +785,18 @@ function keepOpenVersion(store, save) {
  * supplied; later fills win for a member they both name. A `@schema` in a
  * filled blob is ignored, because the filler seals the blob and can put
  * anything in it: a filled field keeps the owner's schema, or gets the one
- * its request carries. A blob that cannot be decrypted is skipped and makes
+ * its request carried. A blob that cannot be decrypted is skipped and makes
  * the merge incomplete, so it is not dropped from the server.
  *
  * @param {object|string|null|undefined} own The owner's decrypted extra fields.
  * @param {Array<string>} pending The pending ciphertexts, oldest first.
  * @param {CryptoKey} cryptoKey The session private key.
- * @param {object} requested The schemas the secret's requests carry, by field name.
+ * @param {Array<object>} schemas Each blob's request schemas by field name, in the same order.
  * @return {Promise<{fields: object|string|null, complete: boolean}>}
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
-async function mergePendingFields(own, pending, cryptoKey, requested) {
+async function mergePendingFields(own, pending, cryptoKey, schemas) {
 	if (
 		own !== null
 		&& own !== undefined
@@ -845,11 +807,11 @@ async function mergePendingFields(own, pending, cryptoKey, requested) {
 	}
 	let fields = { ...(own || {}) }
 	let complete = true
-	for (const ciphertext of pending) {
+	for (const [index, ciphertext] of pending.entries()) {
 		try {
 			const members = JSON.parse(await rsaDecrypt(ciphertext, cryptoKey))
 			if (members && typeof members === 'object' && !Array.isArray(members)) {
-				fields = mergeFilledBlob(fields, members, requested)
+				fields = mergeFilledBlob(fields, members, schemas[index] ?? {})
 			} else {
 				complete = false
 			}

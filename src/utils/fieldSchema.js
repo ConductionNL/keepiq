@@ -772,12 +772,12 @@ export function mergeBlobs(own, incoming) {
  * Merge the members a request filled in into a blob. Only the values are
  * taken, because whoever holds a fill link can put anything in the blob it
  * seals. A filled field keeps the schema stored on the secret; one without
- * a stored schema gets the schema its request carries, which the server
- * checked when the request was made.
+ * a stored schema gets the schema its request carried, which the server
+ * checked when the request was made and stored with the filled blob.
  *
  * @param {object} own The stored blob.
  * @param {object} incoming The members a request filled in.
- * @param {object} requested The schemas the secret's requests carry, by field name.
+ * @param {object} requested The schemas the filling request carried, by field name.
  * @return {object} The merged blob.
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */

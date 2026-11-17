@@ -124,9 +124,10 @@ A request can give each field a kind, so the fill page checks what is typed. The
 kinds and limits of a request are stored in plain text with the request, as its
 field names are: the server and its administrators can read that a field is
 hidden, its length limits and its pattern, though never the value. Keep a pattern
-general enough that it does not give the value away. When you make the request,
-your browser writes the fields with their kinds into the secret, so what is filled
-in keeps them; a kind sent along with a fill is ignored.
+general enough that it does not give the value away. When the request is filled,
+the server keeps the request's kinds with the filled values, and your browser gives
+each filled field its kind when it merges them; a kind sent along with a fill is
+ignored.
 
 ## Reference
 

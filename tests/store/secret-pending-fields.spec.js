@@ -56,8 +56,6 @@ describe('secret store: pending request-filled extra fields (keepiq#750)', () =>
 		const session = useSessionStore()
 		session.certificate = 'PEM'
 		session.cryptoKey = { fake: 'unlocked' }
-		// The secret's requests, read for the schemas of the filled fields.
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 	})
 
 	it('shows the owner fields and the filled field together', async () => {
@@ -149,46 +147,31 @@ describe('secret store: the schemas a request carries', () => {
 		session.cryptoKey = { fake: 'unlocked' }
 	})
 
-	/**
-	 * Serve the secret's requests.
-	 *
-	 * @param {Array<object>} requests The requests.
-	 * @return {object} The spy.
-	 */
-	function serveRequests(requests) {
-		return vi.spyOn(axios, 'get').mockImplementation(async (url) => {
-			expect(url).toBe('/apps/keepiq/api/v1/secrets/s1/requests')
-			return { data: requests }
+	it('gives a filled field without a stored schema the one stored with its blob, never the fill’s', async () => {
+		const get = vi.spyOn(axios, 'get')
+		const decrypted = await useSecretStore().decryptSecret({
+			...served([
+				'ENC({"PIN":"1","@schema":{"PIN":{"type":"string"}}})',
+				'ENC({"A":"true"})',
+			]),
+			pendingFieldSchemas: [{ PIN: { type: 'string', hidden: true } }, { A: { type: 'boolean' } }],
 		})
-	}
 
-	it('gives a filled field without a stored schema the one its newest request carries', async () => {
-		serveRequests([
-			{ createdAt: '2026-11-02T10:00:00+00:00', fieldSchemas: { PIN: { type: 'string', hidden: true } } },
-			{ createdAt: '2026-11-01T10:00:00+00:00', fieldSchemas: { PIN: { type: 'integer' }, A: { type: 'boolean' } } },
-		])
-
-		const decrypted = await useSecretStore().decryptSecret(
-			served(['ENC({"PIN":"1234","A":"true","@schema":{"PIN":{"type":"string"}}})']),
-		)
-
-		// The fill's own @schema is ignored; A had no stored schema, so the
-		// request's applies.
 		expect(decrypted.additionalFields).toEqual({
 			A: 'true',
 			B: 'b',
-			PIN: '1234',
+			PIN: '1',
 			'@schema': { PIN: { type: 'string', hidden: true }, A: { type: 'boolean' } },
 		})
-		expect(decrypted.mergedPending).toBe(1)
+		expect(decrypted.mergedPending).toBe(2)
+		// Nothing is read: the schemas came with the secret, also offline.
+		expect(get).not.toHaveBeenCalled()
 	})
 
-	it('merges nothing while the requests cannot be read, so no hidden value shows in clear', async () => {
-		vi.spyOn(axios, 'get').mockRejectedValue(new Error('offline'))
-
+	it('merges a blob held back before schemas were stored as text', async () => {
 		const decrypted = await useSecretStore().decryptSecret(served(['ENC({"PIN":"1234"})']))
 
-		expect(decrypted.additionalFields).toEqual({ A: 'a', B: 'b' })
-		expect(decrypted.mergedPending).toBe(0)
+		expect(decrypted.additionalFields).toEqual({ A: 'a', B: 'b', PIN: '1234' })
+		expect(decrypted.mergedPending).toBe(1)
 	})
 })

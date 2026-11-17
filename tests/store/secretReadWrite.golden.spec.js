@@ -68,10 +68,6 @@ vi.mock('@nextcloud/axios', () => ({
 					recipients: [{ userId: 'u1', certificate: 'C1' }],
 				})
 			}
-			if (url.endsWith('/requests')) {
-				// The secret's requests, read for the schemas of filled fields.
-				return answer('requests', [])
-			}
 			await world.beforeAnswer?.()
 			return answer('secret', { id: 's1', key: 'ck', updatedAt: 'v1' })
 		}),

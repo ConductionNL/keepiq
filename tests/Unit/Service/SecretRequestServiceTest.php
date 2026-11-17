@@ -765,6 +765,7 @@ class SecretRequestServiceTest extends TestCase {
 	public function testFillKeepsTheOwnersExtraFieldsAndHoldsTheFilledBlobPending(): void {
 		$entity = $this->buildPending();
 		$entity->setRequestedFields(json_encode(['key', 'api-interface-id']));
+		$entity->setFieldSchemas(json_encode(['api-interface-id' => ['type' => 'string', 'hidden' => true]]));
 
 		$this->mapper->method('findByToken')->willReturn($entity);
 		$this->mapper->method('findById')->willReturn($entity);
@@ -775,7 +776,7 @@ class SecretRequestServiceTest extends TestCase {
 		$secret->setOwnerType('user');
 		$secret->setOwnerId('requester');
 		$secret->setAdditionalFields('OWNERS_OWN_BLOB');
-		$secret->setPendingAdditionalFieldList(['EARLIER_FILL']);
+		$secret->setPendingAdditionalFields('["EARLIER_FILL"]');
 		$this->secretMapper->method('findById')->willReturn($secret);
 
 		$this->secretMapper->expects($this->once())
@@ -796,6 +797,11 @@ class SecretRequestServiceTest extends TestCase {
 		$this->assertSame('OWNERS_OWN_BLOB', $secret->getAdditionalFields());
 		$this->assertSame(['EARLIER_FILL', 'CIPHER_BLOB'], $secret->pendingAdditionalFieldList());
 		$this->assertSame(['EARLIER_FILL', 'CIPHER_BLOB'], $secret->jsonSerialize()['pendingAdditionalFields']);
+		// The request's checked schemas travel with its blob, so the merge never needs the request again.
+		$this->assertEquals(
+			[(object)[], (object)['api-interface-id' => ['type' => 'string', 'hidden' => true]]],
+			$secret->jsonSerialize()['pendingFieldSchemas']
+		);
 	}//end testFillKeepsTheOwnersExtraFieldsAndHoldsTheFilledBlobPending()
 
 	/**

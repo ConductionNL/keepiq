@@ -302,7 +302,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		$secret = $this->fillTarget(request: $request);
 		// The owner may have changed the Secret's type since the request was made.
 		$this->policy->requireRequestableByLink(typeId: $secret->getTypeId());
-		$this->writeFilledValues(secret: $secret, data: $data);
+		$this->writeFilledValues(secret: $secret, data: $data, schemas: (array)$request->decodedFieldSchemas());
 	}//end persistFilledValues()
 
 	/**
@@ -340,6 +340,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @param Secret $secret The secret the request writes to
 	 * @param array<string,mixed> $data The values to write
+	 * @param array<string,mixed> $schemas The request's field schemas, held back with a filled extra-field blob
 	 *
 	 * @return void
 	 *
@@ -351,7 +352,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	private function writeFilledValues(Secret $secret, array $data): void {
+	private function writeFilledValues(Secret $secret, array $data, array $schemas): void {
 		$secretService = $this->container->get(SecretService::class);
 
 		if ($secret->getOwnerType() === 'application') {
@@ -368,7 +369,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		// and that is a value change too.
 		$this->viewOnlyCopies->assertMayChangeValue(row: $secret, fields: array_keys($data), userId: $secret->getOwnerId());
 
-		$data = $this->holdBackAdditionalFields(secret: $secret, data: $data);
+		$data = $this->holdBackAdditionalFields(secret: $secret, data: $data, schemas: $schemas);
 		if ($data === []) {
 			return;
 		}
@@ -392,28 +393,27 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * Keep a filled extra-field blob apart (keepiq#750). The filler cannot
 	 * read the owner's blob, so storing the filled one in its place wiped
 	 * every other extra field. It is appended to the secret's pending list
-	 * instead, and the owner's browser merges it on the next open. That
-	 * holds with no stored blob too: the merge takes only the values, while
-	 * a blob written as is would also keep whatever `@schema` the filler
-	 * sealed into it.
+	 * instead, with the request's checked schemas, and the owner's browser
+	 * merges it on the next open. That holds with no stored blob too: the
+	 * merge takes only the values, while a blob written as is would also keep
+	 * whatever `@schema` the filler sealed into it.
 	 *
 	 * @param Secret $secret The user-owned secret the request writes to
 	 * @param array<string,mixed> $data The values to write
+	 * @param array<string,mixed> $schemas The request's field schemas, by name
 	 *
 	 * @return array<string,mixed> The values still to write through update()
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
-	private function holdBackAdditionalFields(Secret $secret, array $data): array {
+	private function holdBackAdditionalFields(Secret $secret, array $data, array $schemas): array {
 		$blob = $data[SecretRequestPolicy::ADDITIONAL_BLOB] ?? null;
 		if (is_string($blob) === false) {
 			return $data;
 		}
 
-		$pending = $secret->pendingAdditionalFieldList();
-		$pending[] = $blob;
-		$secret->setPendingAdditionalFieldList($pending);
+		$secret->appendPendingAdditionalFields(ciphertext: $blob, schemas: $schemas);
 		$this->secretMapper->update($secret);
 
 		unset($data[SecretRequestPolicy::ADDITIONAL_BLOB]);

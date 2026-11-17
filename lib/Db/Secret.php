@@ -595,6 +595,7 @@ class Secret extends Entity implements JsonSerializable {
 			'tombstoneReason' => $this->tombstoneReason,
 			...$this->holderFields(),
 			'pendingAdditionalFields' => $this->pendingAdditionalFieldList(),
+			'pendingFieldSchemas' => $this->pendingFieldSchemaList(),
 		];
 	}//end jsonSerialize()
 
@@ -626,35 +627,88 @@ class Secret extends Entity implements JsonSerializable {
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 	 */
 	public function pendingAdditionalFieldList(): array {
-		if ($this->pendingAdditionalFields === null || $this->pendingAdditionalFields === '') {
-			return [];
-		}
+		return array_map(static fn (array $entry): string => $entry['fields'], $this->pendingEntries());
+	}//end pendingAdditionalFieldList()
 
-		$decoded = json_decode($this->pendingAdditionalFields, true);
+	/**
+	 * The schemas each pending blob's request carried, in the same order as
+	 * pendingAdditionalFieldList(): an object by field name, empty for a blob
+	 * held back without any.
+	 *
+	 * @return list<object>
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	private function pendingFieldSchemaList(): array {
+		return array_map(static fn (array $entry): object => (object)$entry['schemas'], $this->pendingEntries());
+	}//end pendingFieldSchemaList()
+
+	/**
+	 * Hold a filled extra-field blob back for the owner's browser, with the
+	 * server-checked schemas of the request that filled it, so the merge never
+	 * needs the request again, also once it is gone.
+	 *
+	 * @param string              $ciphertext The filled blob
+	 * @param array<string,mixed> $schemas    The request's field schemas, by name
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function appendPendingAdditionalFields(string $ciphertext, array $schemas): void {
+		$entries   = $this->pendingEntries();
+		$entries[] = ['fields' => $ciphertext, 'schemas' => $schemas];
+		$this->storePendingEntries(entries: $entries);
+	}//end appendPendingAdditionalFields()
+
+	/**
+	 * The pending entries, oldest first. An entry is stored as its ciphertext
+	 * alone, as before schemas existed, or as `{fields, schemas}`; anything
+	 * else is skipped.
+	 *
+	 * @return list<array{fields:string,schemas:array<string,mixed>}>
+	 */
+	private function pendingEntries(): array {
+		$decoded = json_decode((string)$this->pendingAdditionalFields, true);
 		if (is_array($decoded) === false) {
 			return [];
 		}
 
-		return array_values(array_filter($decoded, 'is_string'));
-	}//end pendingAdditionalFieldList()
+		$entries = [];
+		foreach ($decoded as $entry) {
+			if (is_string($entry) === true) {
+				$entries[] = ['fields' => $entry, 'schemas' => []];
+			} else if (is_array($entry) === true && is_string($entry['fields'] ?? null) === true) {
+				$entries[] = ['fields' => $entry['fields'], 'schemas' => (array)($entry['schemas'] ?? [])];
+			}
+		}
+
+		return $entries;
+	}//end pendingEntries()
 
 	/**
-	 * Store the pending extra-field ciphertexts (null when the list is empty).
+	 * Store the pending entries (null when there are none). An entry without
+	 * schemas is stored as its ciphertext alone.
 	 *
-	 * @param list<string> $ciphertexts The pending ciphertexts, oldest first
+	 * @param list<array{fields:string,schemas:array<string,mixed>}> $entries The entries, oldest first
 	 *
 	 * @return void
-	 *
-	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 	 */
-	public function setPendingAdditionalFieldList(array $ciphertexts): void {
-		if ($ciphertexts === []) {
+	private function storePendingEntries(array $entries): void {
+		if ($entries === []) {
 			$this->setPendingAdditionalFields(null);
 			return;
 		}
 
-		$this->setPendingAdditionalFields(json_encode(array_values($ciphertexts)));
-	}//end setPendingAdditionalFieldList()
+		$stored = array_map(
+			static fn (array $entry): string|array => match ($entry['schemas']) {
+				[] => $entry['fields'],
+				default => $entry,
+			},
+			array_values($entries)
+		);
+		$this->setPendingAdditionalFields(json_encode($stored));
+	}//end storePendingEntries()
 
 	/**
 	 * Drop the oldest $count pending blobs: the ones the owner's client read
@@ -671,7 +725,7 @@ class Secret extends Entity implements JsonSerializable {
 			return;
 		}
 
-		$this->setPendingAdditionalFieldList(array_slice($this->pendingAdditionalFieldList(), $count));
+		$this->storePendingEntries(entries: array_slice($this->pendingEntries(), $count));
 	}//end dropMergedPending()
 
 	/**
