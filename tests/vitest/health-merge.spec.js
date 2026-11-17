@@ -29,6 +29,9 @@ vi.mock('@nextcloud/axios', () => ({
 		}),
 	},
 }))
+vi.mock('../../src/store/modules/secretType.js', () => ({
+	useSecretTypeStore: () => ({ typesById: { 't-api': { name: 'api_key' } } }),
+}))
 vi.mock('../../src/store/modules/secret.js', () => ({
 	useSecretStore: () => ({
 		fetchSecret: async (id) => secrets[id],
@@ -101,6 +104,16 @@ describe('merging a duplicate group', () => {
 			Token: '2',
 			'PIN (2)': '3',
 			'@schema': { PIN: hidden, Token: hidden, 'PIN (2)': hidden },
+		})
+	})
+
+	it('keeps a field the other secret\u2019s type masks masked on the kept secret', () => {
+		const kept = { additionalFields: {} }
+		const apiKey = { typeId: 't-api', additionalFields: { 'API secret': 's3cret' } }
+
+		expect(mergedFields(kept, [apiKey])).toEqual({
+			'API secret': 's3cret',
+			'@schema': { 'API secret': { type: 'string', hidden: true } },
 		})
 	})
 

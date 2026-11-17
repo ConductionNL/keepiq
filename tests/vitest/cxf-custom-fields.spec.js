@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { buildCxfDocument, cxfToRows, parseCxfDocument } from '../../src/cxf/cxf.js'
-import { readCustomFields } from '../../src/cxf/cxfCustomFields.js'
+import { readCustomFields, withoutClashes } from '../../src/cxf/cxfCustomFields.js'
 
 const BLOB = {
 	'Recovery code': 'abc-123',
@@ -159,6 +159,35 @@ describe('CXF custom fields', () => {
 			'url (imported)': 'x',
 			'url (imported 2)': 'https://b',
 			'@schema (imported)': '{}',
+		})
+	})
+
+	it('keeps a concealed field hidden whatever its Keepiq schema says', () => {
+		expect(
+			readCustomFields({
+				type: 'custom-fields',
+				fields: [{
+					label: 'PIN',
+					fieldType: 'concealed-string',
+					value: '1234',
+					extensions: [{ name: 'nl.conduction.keepiq.field-schema', schema: { type: 'string', hidden: 'true' } }],
+				}],
+			}),
+		).toEqual({ PIN: '1234', '@schema': { PIN: { type: 'string', hidden: true } } })
+	})
+
+	it('never lets an imported field replace one the row already has', () => {
+		const own = { publicKey: 'ssh-ed25519 OWN', '@schema': {} }
+		const blob = {
+			publicKey: 'ssh-ed25519 OTHER',
+			PIN: '1',
+			'@schema': { publicKey: { type: 'string', hidden: true } },
+		}
+
+		expect(withoutClashes(own, blob)).toEqual({
+			'publicKey (imported)': 'ssh-ed25519 OTHER',
+			PIN: '1',
+			'@schema': { 'publicKey (imported)': { type: 'string', hidden: true } },
 		})
 	})
 })

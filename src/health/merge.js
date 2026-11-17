@@ -14,7 +14,9 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { useSecretStore } from '../store/modules/secret.js'
-import { fieldsOf, schemasOf, withSchemas } from '../utils/fieldSchema.js'
+import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { builtinFieldNamed } from '../utils/builtinTypeFields.js'
+import { fieldsOf, schemasOf, typeFieldSchema, withSchemas } from '../utils/fieldSchema.js'
 import { foldFields } from './duplicates.js'
 
 /**
@@ -49,9 +51,32 @@ export function mergedFields(kept, others) {
 	const parts = (blob) => ({ fields: fieldsOf(blob), schemas: schemasOf(blob) })
 	const { fields, schemas } = foldFields(
 		parts(kept.additionalFields),
-		others.map((other) => parts(other.additionalFields)),
+		others.map((other) => withTypeSchemas(parts(other.additionalFields), other)),
 	)
 	return withSchemas(fields, schemas)
+}
+
+/**
+ * A secret's fields with the schemas its type gives its own fields, which
+ * are not stored: a group can hold secrets of different types, and an API
+ * key's secret or a certificate's private key must stay masked on the kept
+ * secret.
+ *
+ * @param {{fields: object, schemas: object}} parts The secret's fields and stored schemas.
+ * @param {object} secret The secret, decrypted.
+ * @return {{fields: object, schemas: object}}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+ */
+function withTypeSchemas(parts, secret) {
+	const typeName = useSecretTypeStore().typesById?.[secret.typeId]?.name ?? ''
+	const schemas = { ...parts.schemas }
+	for (const name of Object.keys(parts.fields)) {
+		const own = builtinFieldNamed(typeName, name)
+		if (own !== null && !Object.hasOwn(schemas, name)) {
+			schemas[name] = typeFieldSchema(own)
+		}
+	}
+	return { fields: parts.fields, schemas }
 }
 
 /**

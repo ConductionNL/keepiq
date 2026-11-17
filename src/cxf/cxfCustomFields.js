@@ -147,7 +147,9 @@ function schemaOfField(field) {
 		? field.extensions.find((e) => e?.name === SCHEMA_EXTENSION)
 		: undefined
 	if (extension?.schema && typeof extension.schema === 'object') {
-		return cleanSchema(extension.schema)
+		// A concealed field stays hidden whatever its schema says.
+		const schema = cleanSchema(extension.schema)
+		return field?.fieldType === 'concealed-string' ? { ...schema, hidden: true } : schema
 	}
 	return { ...(SCHEMA_BY_FIELD_TYPE[field?.fieldType] ?? { type: 'string' }) }
 }
@@ -170,6 +172,34 @@ function importedName(label, fields) {
 		name = `${label} (imported ${n})`
 	}
 	return name
+}
+
+/**
+ * A custom-fields blob whose names already on the row it joins get
+ * " (imported)" added, with their schemas, so an imported field never
+ * replaces one of the row's own, such as an SSH key's `publicKey`.
+ *
+ * @param {object|null|undefined} own The row's additional fields.
+ * @param {object} blob The imported custom fields, with `@schema`.
+ * @return {object} The blob to merge.
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
+ */
+export function withoutClashes(own, blob) {
+	const taken = fieldsOf(own)
+	const schemas = schemasOf(blob)
+	const fields = {}
+	const kept = {}
+	for (const [label, value] of Object.entries(fieldsOf(blob))) {
+		let name = label
+		for (let n = 1; Object.hasOwn(taken, name) || Object.hasOwn(fields, name); n++) {
+			name = n === 1 ? `${label} (imported)` : `${label} (imported ${n})`
+		}
+		fields[name] = value
+		if (schemas[label] !== undefined) {
+			kept[name] = schemas[label]
+		}
+	}
+	return withSchemas(fields, kept)
 }
 
 /**

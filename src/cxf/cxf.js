@@ -43,7 +43,7 @@ import {
 } from '../totp/authenticatorKey.js'
 import { parseOtpauth } from '../totp/totp.js'
 import { fieldValueOf, mergeBlobs } from '../utils/fieldSchema.js'
-import { customFieldsCredential, readCustomFields } from './cxfCustomFields.js'
+import { customFieldsCredential, readCustomFields, withoutClashes } from './cxfCustomFields.js'
 
 /** The CXF version this module targets (Proposed Standard, Aug 2025 line). */
 export const CXF_VERSION = { major: 1, minor: 0 }
@@ -492,7 +492,10 @@ function extrasTarget(ctx) {
 function attachExtras(ctx) {
 	const target = extrasTarget(ctx)
 	for (const { blob } of ctx.custom) {
-		target.additionalFields = mergeBlobs(target.additionalFields || {}, blob)
+		target.additionalFields = mergeBlobs(
+			target.additionalFields || {},
+			withoutClashes(target.additionalFields, blob),
+		)
 	}
 	for (const { seed, sourceRow } of ctx.seeds) {
 		const reason = attachTotp(target, seed)

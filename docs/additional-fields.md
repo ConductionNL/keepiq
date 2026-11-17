@@ -56,17 +56,18 @@ entry is plain text, so secrets saved before kinds existed read as before.
 
 ```json
 {
-  "Port": "5432",
+  "Replicas": "3",
   "Service account": "{\"type\": \"service_account\"}",
   "@schema": {
-    "Port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "Replicas": { "type": "integer", "minimum": 1, "maximum": 9 },
     "Service account": { "type": "object", "hidden": true }
   }
 }
 ```
 
-Every value stays a string: a number as its digits, a yes/no as `"true"` or
-`"false"`, an object as JSON text. An application that reads the decrypted
+The web app writes every value as a string: a number as its digits, a yes/no as
+`"true"` or `"false"`, an object as JSON text. Read a value as its text, since a
+secret written by an older client can hold a JSON number. An application that reads the decrypted
 additional fields sees `@schema` as an entry of its own, so **skip it when you list
 the fields**.
 

@@ -19,6 +19,7 @@ const merge = vi.hoisted(() => ({
 	peopleLosingAccess: vi.fn(),
 }))
 
+vi.mock('../../src/store/modules/secretType.js', () => ({ useSecretTypeStore: () => ({ typesById: {} }) }))
 vi.mock('../../src/health/merge.js', async (importOriginal) => ({
 	...merge,
 	mergedFields: (await importOriginal()).mergedFields,
