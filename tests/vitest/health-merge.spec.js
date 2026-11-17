@@ -90,6 +90,27 @@ describe('merging a duplicate group', () => {
 		expect(Object.keys(mergedFields(secrets.c, [secrets.a, secrets.b]))).toEqual(['pin', 'recovery email', 'pin (2)'])
 	})
 
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	it('keeps the others\' hidden fields hidden and writes one schema member', () => {
+		const hidden = { type: 'string', hidden: true }
+		const kept = { additionalFields: { PIN: '1', '@schema': { PIN: hidden } } }
+		const other = { additionalFields: { Token: '2', PIN: '3', '@schema': { Token: hidden, PIN: hidden } } }
+
+		expect(mergedFields(kept, [other])).toEqual({
+			PIN: '1',
+			Token: '2',
+			'PIN (2)': '3',
+			'@schema': { PIN: hidden, Token: hidden, 'PIN (2)': hidden },
+		})
+	})
+
+	it('does not re-save a kept secret whose schema member only reads differently', async () => {
+		secrets.d = { id: 'd', updatedAt: 'U-d', additionalFields: { '@schema': { PIN: { hidden: true, type: 'string' } }, PIN: '1' } }
+		await mergeGroup(secrets.d, [{ id: 'e', additionalFields: { PIN: '1' } }])
+
+		expect(calls.some(([op]) => op === 'update')).toBe(false)
+	})
+
 	it('counts the distinct people who lose access through the removed items\' shares', async () => {
 		expect(await peopleLosingAccess(['b', 'c'])).toBe(2)
 		expect(await peopleLosingAccess([])).toBe(0)

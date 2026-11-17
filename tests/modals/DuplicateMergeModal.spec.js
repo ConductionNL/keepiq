@@ -19,13 +19,10 @@ const merge = vi.hoisted(() => ({
 	peopleLosingAccess: vi.fn(),
 }))
 
-vi.mock('../../src/health/merge.js', async () => {
-	const { foldFields } = await import('../../src/health/duplicates.js')
-	return {
-		...merge,
-		mergedFields: (kept, others) => foldFields(kept.additionalFields, others.map((o) => o.additionalFields)),
-	}
-})
+vi.mock('../../src/health/merge.js', async (importOriginal) => ({
+	...merge,
+	mergedFields: (await importOriginal()).mergedFields,
+}))
 
 const { default: DuplicateMergeModal } = await import('../../src/modals/DuplicateMergeModal.vue')
 
@@ -52,7 +49,7 @@ const stubs = {
 
 const SECRETS = [
 	{ id: 'a', name: 'GitHub', additionalFields: null },
-	{ id: 'b', name: 'github.com', additionalFields: { 'recovery email': 'anna@home.example' } },
+	{ id: 'b', name: 'github.com', additionalFields: { 'recovery email': 'anna@home.example', '@schema': { 'recovery email': { type: 'string', hidden: true } } } },
 ]
 
 const group = (kind) => ({ kind, host: 'github.com', username: 'anna', items: SECRETS.map(({ id, name }) => ({ id, name })) })
@@ -74,6 +71,7 @@ describe('DuplicateMergeModal', () => {
 		expect(wrapper.find('[data-testid="duplicate-merge-access"]').exists()).toBe(true)
 		expect(wrapper.vm.peopleLosingAccess).toBe(2)
 		expect(wrapper.find('[data-testid="duplicate-merge-fields"]').text()).toContain('recovery email')
+		expect(wrapper.find('[data-testid="duplicate-merge-fields"]').text()).not.toContain('@schema')
 		expect(wrapper.text()).not.toContain('anna@home.example')
 	})
 

@@ -110,15 +110,18 @@ describe('hostOf', () => {
 })
 
 describe('foldFields', () => {
+	const fold = (kept, others) =>
+		foldFields({ fields: kept }, others.map((fields) => ({ fields }))).fields
+
 	it('keeps the kept secret\'s fields and adds the others\' new ones', () => {
-		expect(foldFields({ pin: '1234' }, [{ 'recovery email': 'anna@home.example' }])).toEqual({
+		expect(fold({ pin: '1234' }, [{ 'recovery email': 'anna@home.example' }])).toEqual({
 			pin: '1234',
 			'recovery email': 'anna@home.example',
 		})
 	})
 
 	it('keeps a clashing value under a suffixed name, the kept value winning', () => {
-		expect(foldFields({ pin: '1234' }, [{ pin: '9999' }, { pin: '5555' }])).toEqual({
+		expect(fold({ pin: '1234' }, [{ pin: '9999' }, { pin: '5555' }])).toEqual({
 			pin: '1234',
 			'pin (2)': '9999',
 			'pin (3)': '5555',
@@ -126,14 +129,34 @@ describe('foldFields', () => {
 	})
 
 	it('does not repeat a value the name already holds', () => {
-		expect(foldFields({ pin: '1234' }, [{ pin: '1234' }, { pin: '9999' }, { pin: '9999' }])).toEqual({
+		expect(fold({ pin: '1234' }, [{ pin: '1234' }, { pin: '9999' }, { pin: '9999' }])).toEqual({
 			pin: '1234',
 			'pin (2)': '9999',
 		})
 	})
 
 	it('reads a missing or unparsed blob as no fields', () => {
-		expect(foldFields(null, ['not json', null, { a: '1' }])).toEqual({ a: '1' })
-		expect(foldFields('text', [])).toEqual({})
+		expect(fold(null, ['not json', null, { a: '1' }])).toEqual({ a: '1' })
+		expect(fold('text', [])).toEqual({})
+	})
+
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	it('carries each schema to the name its value lands under', () => {
+		const hidden = { type: 'string', hidden: true }
+		const out = foldFields(
+			{ fields: { PIN: '1' }, schemas: { PIN: hidden } },
+			[{ fields: { Token: '2', PIN: '3' }, schemas: { Token: hidden, PIN: hidden } }],
+		)
+
+		expect(out.schemas).toEqual({ PIN: hidden, Token: hidden, 'PIN (2)': hidden })
+	})
+
+	it('keeps a repeated value hidden when the other side hides it', () => {
+		const out = foldFields(
+			{ fields: { PIN: '1' }, schemas: {} },
+			[{ fields: { PIN: '1' }, schemas: { PIN: { type: 'string', hidden: true } } }],
+		)
+
+		expect(out).toEqual({ fields: { PIN: '1' }, schemas: { PIN: { type: 'string', hidden: true } } })
 	})
 })
