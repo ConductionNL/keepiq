@@ -75,8 +75,8 @@ export function previewImageUrl(template, url) {
  *
  * @param {string|null|undefined} url The address.
  * @return {string|null}
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+ * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+ * @spec openspec/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
  */
 export function webAddress(url) {
 	const raw = String(url ?? '').trim()

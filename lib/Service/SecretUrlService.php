@@ -113,7 +113,7 @@ class SecretUrlService {
 	 *
 	 * @throws InvalidArgumentException When the entry is not text or too long
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	private function entry(mixed $url): string {
 		if (is_string($url) === false) {
