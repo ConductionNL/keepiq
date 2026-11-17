@@ -33,6 +33,10 @@
 //   create the new spelling as a new file next to the old one, and never
 //   rename only on disk: a case-insensitive file system does not tell Git.
 //
+//   For a normalisation clash, keep the NFC spelling and remove the other:
+//   `git rm '<the non-NFC path>'`. On Linux the two are separate files, so
+//   the NFC one stays.
+//
 // WHAT IT CHECKS
 //
 //   Every path `git ls-files` reports, and every directory on those paths,
@@ -96,13 +100,13 @@ console.error(
 	'path-case: FAIL — these tracked paths differ only in case (one file on Windows and macOS) or in Unicode normalisation (one file on macOS):',
 )
 /**
- * Two normalisation forms print alike, so name the decomposed one.
+ * Two normalisation forms print alike, so mark the one that is not NFC.
  *
  * @param {string} path A clashing spelling.
  * @return {string} The spelling as printed in the report.
  */
 function label(path) {
-	return path === path.normalize('NFC') ? path : `${path} (decomposed, NFD)`
+	return path === path.normalize('NFC') ? path : `${path} (not NFC)`
 }
 for (const set of clashes) {
 	console.error(`  • ${set.map(label).join('  ↔  ')}`)
@@ -112,6 +116,9 @@ console.error(
 	'Keep one spelling. To rename by case only, let Git move the path so the old spelling leaves the index:',
 )
 console.error('  git mv Old.js tmp.js && git mv tmp.js old.js')
+console.error(
+	"For a normalisation clash, keep the NFC spelling and remove the one marked (not NFC): git rm '<that path>'",
+)
 console.error(
 	'If both files hold different content, give one of them a distinct name instead of a case variant.',
 )
