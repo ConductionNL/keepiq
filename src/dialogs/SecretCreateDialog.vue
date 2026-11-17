@@ -81,7 +81,12 @@
 				:disabled="saving"
 				data-testid="secret-reprompt"
 				@update:modelValue="reprompt = $event">
-				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
+				{{
+					t(
+						'keepiq',
+						'Ask for my master password before showing or filling this item',
+					)
+				}}
 			</NcCheckboxRadioSwitch>
 
 			<!-- The shared destination picker (no "Vault root" option, by

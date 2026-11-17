@@ -50,7 +50,8 @@ const stubs = {
 	NcSelect: {
 		props: ['modelValue', 'options', 'inputLabel'],
 		emits: ['update:modelValue'],
-		template: '<select v-bind="$attrs" :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option></select>',
+		template:
+			'<select v-bind="$attrs" :value="modelValue" @change="$emit(\'update:modelValue\', $event.target.value)"><option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option></select>',
 	},
 }
 
@@ -267,7 +268,9 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 			request: { v: 'doriath-cxp-v1', requesterPublicKey: 'pk', nonce: 'n' },
 			session: { ephemeral: true },
 		})
-		const download = vi.spyOn(exportModule, 'downloadBlob').mockImplementation(() => {})
+		const download = vi
+			.spyOn(exportModule, 'downloadBlob')
+			.mockImplementation(() => {})
 		const post = vi.spyOn(axios, 'post')
 		const wrapper = mountCxp()
 
@@ -276,7 +279,11 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 		await vi.waitFor(() => expect(download).toHaveBeenCalled())
 
 		expect(download.mock.calls[0][0]).toBe('keepiq-cxp-request.json')
-		expect(JSON.parse(download.mock.calls[0][1])).toEqual({ v: 'doriath-cxp-v1', requesterPublicKey: 'pk', nonce: 'n' })
+		expect(JSON.parse(download.mock.calls[0][1])).toEqual({
+			v: 'doriath-cxp-v1',
+			requesterPublicKey: 'pk',
+			nonce: 'n',
+		})
 		expect(post).not.toHaveBeenCalled()
 		expect(wrapper.vm.session).toEqual({ ephemeral: true })
 		expect(wrapper.find('[data-testid="cxp-response-file"]').exists()).toBe(true)
@@ -286,14 +293,19 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 		const wrapper = mountCxp()
 		wrapper.vm.transport = 'file'
 		wrapper.vm.session = { ephemeral: true }
-		const opened = vi.spyOn(cxp, 'openEnvelope').mockResolvedValue(new TextEncoder().encode('{"cxf":1}'))
+		const opened = vi
+			.spyOn(cxp, 'openEnvelope')
+			.mockResolvedValue(new TextEncoder().encode('{"cxf":1}'))
 		const importStore = wrapper.vm.importStore
 		const parse = vi.spyOn(importStore, 'parseFile').mockResolvedValue()
 		vi.spyOn(importStore, 'goToStep').mockImplementation(() => {})
 
 		await wrapper.vm.onResponseFile(fileEvent('{"v":"doriath-cxp-v1","ct":"x"}'))
 
-		expect(opened).toHaveBeenCalledWith({ ephemeral: true }, { v: 'doriath-cxp-v1', ct: 'x' })
+		expect(opened).toHaveBeenCalledWith(
+			{ ephemeral: true },
+			{ v: 'doriath-cxp-v1', ct: 'x' },
+		)
 		expect(parse).toHaveBeenCalledWith('{"cxf":1}', 'cxf', {})
 		expect(wrapper.emitted('open-import')).toHaveLength(1)
 		expect(wrapper.vm.session).toBeNull()
@@ -303,12 +315,18 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 		const wrapper = mountCxp()
 		wrapper.vm.transport = 'file'
 		wrapper.vm.session = { ephemeral: true }
-		vi.spyOn(cxp, 'openEnvelope').mockRejectedValue(new Error('aead tag mismatch'))
+		vi.spyOn(cxp, 'openEnvelope').mockRejectedValue(
+			new Error('aead tag mismatch'),
+		)
 		const parse = vi.spyOn(wrapper.vm.importStore, 'parseFile')
 
-		await wrapper.vm.onResponseFile(fileEvent('{"v":"doriath-cxp-v1","ct":"tampered"}'))
+		await wrapper.vm.onResponseFile(
+			fileEvent('{"v":"doriath-cxp-v1","ct":"tampered"}'),
+		)
 
-		expect(wrapper.vm.error).toBe('The file could not be verified. Nothing was imported.')
+		expect(wrapper.vm.error).toBe(
+			'The file could not be verified. Nothing was imported.',
+		)
 		expect(parse).not.toHaveBeenCalled()
 		expect(wrapper.emitted('open-import')).toBeUndefined()
 		// The request stays open so the right file can still be loaded.
@@ -323,7 +341,9 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 		await wrapper.vm.openResponseText('not json')
 
 		expect(opened).not.toHaveBeenCalled()
-		expect(wrapper.vm.error).toBe('The file could not be verified. Nothing was imported.')
+		expect(wrapper.vm.error).toBe(
+			'The file could not be verified. Nothing was imported.',
+		)
 	})
 
 	it('loads a request file only when it carries a key and a nonce', () => {
@@ -333,7 +353,11 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 		expect(wrapper.vm.error).toBe('This is not a transfer request file.')
 		expect(wrapper.vm.fetchedRequest).toBeNull()
 
-		expect(wrapper.vm.loadRequestText('{"v":"doriath-cxp-v1","requesterPublicKey":"pk","nonce":"n","requestedFormat":"CXF"}')).toBe(true)
+		expect(
+			wrapper.vm.loadRequestText(
+				'{"v":"doriath-cxp-v1","requesterPublicKey":"pk","nonce":"n","requestedFormat":"CXF"}',
+			),
+		).toBe(true)
 		expect(wrapper.vm.fetchedRequest.requesterPublicKey).toBe('pk')
 		expect(wrapper.vm.error).toBeNull()
 	})
@@ -342,14 +366,27 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 		vi.spyOn(reauth, 'verifyMasterPassword').mockResolvedValue(true)
 		const get = vi.spyOn(axios, 'get')
 		const post = vi.spyOn(axios, 'post')
-		const download = vi.spyOn(exportModule, 'downloadBlob').mockImplementation(() => {})
-		const sealed = vi.spyOn(useExportStore(), 'exportCxpSealed')
+		const download = vi
+			.spyOn(exportModule, 'downloadBlob')
+			.mockImplementation(() => {})
+		const sealed = vi
+			.spyOn(useExportStore(), 'exportCxpSealed')
 			.mockResolvedValueOnce({ envelope: null, unmapped: [], itemCount: 1 })
-			.mockResolvedValueOnce({ envelope: { v: 'doriath-cxp-v1', ct: 'c' }, unmapped: [], itemCount: 1 })
-		const wrapper = mountCxp({ folders: [{ id: 'f1', name: 'Work', parentId: null }] })
+			.mockResolvedValueOnce({
+				envelope: { v: 'doriath-cxp-v1', ct: 'c' },
+				unmapped: [],
+				itemCount: 1,
+			})
+		const wrapper = mountCxp({
+			folders: [{ id: 'f1', name: 'Work', parentId: null }],
+		})
 		await wrapper.find('[data-testid="cxp-direction-send"]').trigger('click')
 		await wrapper.find('[data-testid="cxp-transport-file"]').trigger('click')
-		await wrapper.vm.onRequestFile(fileEvent('{"v":"doriath-cxp-v1","requesterPublicKey":"pk","nonce":"n","requestedFormat":"CXF"}'))
+		await wrapper.vm.onRequestFile(
+			fileEvent(
+				'{"v":"doriath-cxp-v1","requesterPublicKey":"pk","nonce":"n","requestedFormat":"CXF"}',
+			),
+		)
 		await wrapper.find('[data-testid="cxp-scope"]').setValue('f1')
 		wrapper.vm.masterPassword = 'pw'
 		await wrapper.vm.$nextTick()
@@ -358,10 +395,21 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 		await vi.waitFor(() => expect(download).toHaveBeenCalled())
 
 		expect(sealed).toHaveBeenCalledTimes(2)
-		expect(sealed.mock.calls[1][0]).toEqual({ v: 'doriath-cxp-v1', requesterPublicKey: 'pk', nonce: 'n', requestedFormat: 'CXF' })
-		expect(sealed.mock.calls[1][3]).toEqual({ mode: 'folders', folderIds: ['f1'] })
+		expect(sealed.mock.calls[1][0]).toEqual({
+			v: 'doriath-cxp-v1',
+			requesterPublicKey: 'pk',
+			nonce: 'n',
+			requestedFormat: 'CXF',
+		})
+		expect(sealed.mock.calls[1][3]).toEqual({
+			mode: 'folders',
+			folderIds: ['f1'],
+		})
 		expect(download.mock.calls[0][0]).toBe('keepiq-cxp-transfer.json')
-		expect(JSON.parse(download.mock.calls[0][1])).toEqual({ v: 'doriath-cxp-v1', ct: 'c' })
+		expect(JSON.parse(download.mock.calls[0][1])).toEqual({
+			v: 'doriath-cxp-v1',
+			ct: 'c',
+		})
 		expect(get).not.toHaveBeenCalled()
 		expect(post).not.toHaveBeenCalled()
 		expect(wrapper.vm.sent).toBe(true)
@@ -371,10 +419,20 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 		const none = mountCxp()
 		expect(none.vm.scopeOptions.map((o) => o.value)).toEqual(['vault'])
 
-		const wrapper = mountCxp({ selectedIds: ['s1', 's2', 's3'], folders: [{ id: 'f1', name: 'Work' }] })
-		expect(wrapper.vm.scopeOptions.map((o) => o.value)).toEqual(['vault', 'selection', 'f1'])
+		const wrapper = mountCxp({
+			selectedIds: ['s1', 's2', 's3'],
+			folders: [{ id: 'f1', name: 'Work' }],
+		})
+		expect(wrapper.vm.scopeOptions.map((o) => o.value)).toEqual([
+			'vault',
+			'selection',
+			'f1',
+		])
 		wrapper.vm.scopeChoice = 'selection'
-		expect(wrapper.vm.sendScope).toEqual({ mode: 'selection', secretIds: ['s1', 's2', 's3'] })
+		expect(wrapper.vm.sendScope).toEqual({
+			mode: 'selection',
+			secretIds: ['s1', 's2', 's3'],
+		})
 		wrapper.vm.scopeChoice = 'vault'
 		expect(wrapper.vm.sendScope).toEqual({ mode: 'vault' })
 	})
@@ -386,9 +444,15 @@ describe('CxpTransferDialog with another provider (portability-cxp-cross-provide
 		wrapper.vm.masterPassword = 'pw'
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.find('[data-testid="cxp-do-send"]').attributes('disabled')).toBeDefined()
-		wrapper.vm.loadRequestText('{"v":"doriath-cxp-v1","requesterPublicKey":"pk","nonce":"n"}')
+		expect(
+			wrapper.find('[data-testid="cxp-do-send"]').attributes('disabled'),
+		).toBeDefined()
+		wrapper.vm.loadRequestText(
+			'{"v":"doriath-cxp-v1","requesterPublicKey":"pk","nonce":"n"}',
+		)
 		await wrapper.vm.$nextTick()
-		expect(wrapper.find('[data-testid="cxp-do-send"]').attributes('disabled')).toBeUndefined()
+		expect(
+			wrapper.find('[data-testid="cxp-do-send"]').attributes('disabled'),
+		).toBeUndefined()
 	})
 })

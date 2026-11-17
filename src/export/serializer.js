@@ -352,22 +352,25 @@ export function serializeVault(
 	// travel; the folder scope carries its subtree, the vault every folder.
 	const usedFolderIds =
 		scope && scope.mode === 'selection'
-			? new Set(exported.map((secret) => secret.folderId).filter((id) => id !== null && id !== undefined))
+			? new Set(
+					exported
+						.map((secret) => secret.folderId)
+						.filter((id) => id !== null && id !== undefined),
+				)
 			: null
 
 	const payload = {
 		format: PAYLOAD_FORMAT,
 		version: PAYLOAD_VERSION,
-		secrets: exported
-			.map((secret) =>
-				withoutFields(
-					{
-						...exportEntry(secret, pathMap),
-						...typeNames(secret, typesById),
-					},
-					omitted,
-				),
+		secrets: exported.map((secret) =>
+			withoutFields(
+				{
+					...exportEntry(secret, pathMap),
+					...typeNames(secret, typesById),
+				},
+				omitted,
 			),
+		),
 		folders: folders
 			.filter(
 				(folder) =>

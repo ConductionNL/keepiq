@@ -922,7 +922,9 @@
 											: t('keepiq', 'No')
 									}}
 								</dd>
-								<dd v-else :data-testid="`secret-detail-field-${field.name}`">
+								<dd
+									v-else
+									:data-testid="`secret-detail-field-${field.name}`">
 									{{ field.value }}
 								</dd>
 							</template>
@@ -1254,7 +1256,12 @@ import ShareRequestForm from './share/ShareRequestForm.vue'
 import TotpDisplay from './TotpDisplay.vue'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
-import { cardBrandInfo, formatCardNumber, maskCardNumber, parsePayload } from '../cardIdentity/cardIdentity.js'
+import {
+	cardBrandInfo,
+	formatCardNumber,
+	maskCardNumber,
+	parsePayload,
+} from '../cardIdentity/cardIdentity.js'
 import { needsReprompt, useReprompt } from '../composables/useReprompt.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
@@ -2095,7 +2102,10 @@ export default {
 				if (id !== this.secretId) {
 					return
 				}
-				if (isRefusal(e) && refusalCode(e) === 'privileged_access_required') {
+				if (
+					isRefusal(e)
+					&& refusalCode(e) === 'privileged_access_required'
+				) {
 					this.privilegedRefused = true
 					this.error = t(
 						'keepiq',

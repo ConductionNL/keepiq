@@ -54,7 +54,9 @@ describe('TotpDisplay behind the re-prompt', () => {
 
 		expect(guard).toHaveBeenCalledTimes(1)
 		expect(wrapper.find('[data-testid="totp-show"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="totp-code"]').text().replace(/\s/g, '')).toMatch(/^\d{6}$/)
+		expect(
+			wrapper.find('[data-testid="totp-code"]').text().replace(/\s/g, ''),
+		).toMatch(/^\d{6}$/)
 		wrapper.unmount()
 	})
 
@@ -99,7 +101,9 @@ describe('TotpDisplay behind the re-prompt', () => {
 		const guarded = mount(TotpDisplay, { props: { seed: SECRET, guard } })
 		await guarded.vm.unlock()
 		await settle(guarded.vm)
-		expect(guarded.findComponent({ name: 'CopyButton' }).props('guard')).toBe(guard)
+		expect(guarded.findComponent({ name: 'CopyButton' }).props('guard')).toBe(
+			guard,
+		)
 		guarded.unmount()
 
 		const open = mount(TotpDisplay, { props: { seed: SECRET } })

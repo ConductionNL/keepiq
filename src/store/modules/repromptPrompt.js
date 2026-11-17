@@ -75,7 +75,12 @@ export const useRepromptPromptStore = defineStore('repromptPrompt', {
 		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		submit(masterPassword) {
-			return slot.check(this, masterPassword, (password) => verifyMasterPassword(useSessionStore().encryptedPrivateKey, password))
+			return slot.check(this, masterPassword, (password) =>
+				verifyMasterPassword(
+					useSessionStore().encryptedPrivateKey,
+					password,
+				),
+			)
 		},
 
 		/**

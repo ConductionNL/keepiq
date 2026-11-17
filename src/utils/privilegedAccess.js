@@ -21,7 +21,11 @@ export function requestState(request, now) {
 	if (request?.status === 'denied') {
 		return 'denied'
 	}
-	if (request?.status !== 'approved' || !request.approvedStart || !request.approvedEnd) {
+	if (
+		request?.status !== 'approved'
+		|| !request.approvedStart
+		|| !request.approvedEnd
+	) {
 		return 'pending'
 	}
 	if (now < new Date(request.approvedStart)) {

@@ -226,7 +226,8 @@ function secondFactorsHeld(secret, facts) {
 	const domain = siteDomain(secret.url)
 	return {
 		hasSeed: rowHasCode(secret) || listsDomain(facts.seedDomains, domain),
-		hasPasskey: rowHasPasskeys(secret) || listsDomain(facts.passkeyDomains, domain),
+		hasPasskey:
+			rowHasPasskeys(secret) || listsDomain(facts.passkeyDomains, domain),
 	}
 }
 
@@ -321,7 +322,11 @@ function usableDirectory(copy) {
  * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
  */
 function isDirectoryCopy(copy) {
-	return Boolean(copy) && typeof copy.totp === 'object' && typeof copy.passkeys === 'object'
+	return (
+		Boolean(copy)
+		&& typeof copy.totp === 'object'
+		&& typeof copy.passkeys === 'object'
+	)
 }
 
 export const useHealthStore = defineStore('health', {
@@ -468,7 +473,10 @@ export const useHealthStore = defineStore('health', {
 			const types = await loadedTypes()
 			const excludedTypeIds = machineMaterialTypeIds(types)
 			const items = await fetchEverySecret()
-			const facts = vaultSiteFacts(items, new Map(types.filter(Boolean).map((type) => [type.id, type.name])))
+			const facts = vaultSiteFacts(
+				items,
+				new Map(types.filter(Boolean).map((type) => [type.id, type.name])),
+			)
 			const copies = await recipientCopyIds()
 			const rows = []
 			for (const secret of items) {
@@ -497,12 +505,16 @@ export const useHealthStore = defineStore('health', {
 		 */
 		async loadSiteDirectory() {
 			try {
-				const response = await axios.get(generateUrl('/apps/keepiq/api/v1/site-directory'))
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/site-directory'),
+				)
 				const directory = usableDirectory(response?.data)
-				this.siteDirectoryStatus = directory === null ? 'unavailable' : 'ready'
+				this.siteDirectoryStatus =
+					directory === null ? 'unavailable' : 'ready'
 				return directory
 			} catch (e) {
-				this.siteDirectoryStatus = e?.response?.status === 404 ? 'off' : 'unavailable'
+				this.siteDirectoryStatus =
+					e?.response?.status === 404 ? 'off' : 'unavailable'
 				return null
 			}
 		},

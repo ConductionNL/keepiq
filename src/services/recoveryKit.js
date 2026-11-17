@@ -13,7 +13,11 @@ import { generateUrl } from '@nextcloud/router'
 import { decryptPrivateKey, encryptPrivateKey } from '../crypto/aes.js'
 import { HEADER_NONCE, HEADER_PROOF, PROOF_PURPOSE } from '../crypto/keyProof.js'
 import { provePrivateKey } from '../crypto/reauth.js'
-import { generateRecoveryCode, unwrapWithRecoveryCode, wrapWithRecoveryCode } from '../crypto/recoveryKit.js'
+import {
+	generateRecoveryCode,
+	unwrapWithRecoveryCode,
+	wrapWithRecoveryCode,
+} from '../crypto/recoveryKit.js'
 
 const BASE = '/apps/keepiq/api/v1/recovery-kit'
 
@@ -40,10 +44,16 @@ export async function recoveryKitStatus() {
  * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-new-kit-replaces-the-old-one
  */
 export async function createRecoveryKit(encryptedPrivateKey, masterPassword) {
-	const privateKeyPem = await decryptPrivateKey(encryptedPrivateKey, masterPassword)
+	const privateKeyPem = await decryptPrivateKey(
+		encryptedPrivateKey,
+		masterPassword,
+	)
 	const code = generateRecoveryCode()
 	const copy = await wrapWithRecoveryCode(privateKeyPem, code)
-	const { data } = await axios.put(generateUrl(BASE), { wrappedKey: copy.wrappedKey, kdf: copy.kdf })
+	const { data } = await axios.put(generateUrl(BASE), {
+		wrappedKey: copy.wrappedKey,
+		kdf: copy.kdf,
+	})
 	return { code, kit: data?.kit ?? null }
 }
 
@@ -75,10 +85,14 @@ export async function recoverWithCode(code, newPassword) {
 	const newEnvelope = await encryptPrivateKey(privateKeyPem, newPassword)
 
 	const { data: challenge } = await axios.get(
-		generateUrl('/apps/keepiq/api/v1/suites/' + copy.suiteId + '/proof-challenge'),
+		generateUrl(
+			'/apps/keepiq/api/v1/suites/' + copy.suiteId + '/proof-challenge',
+		),
 		{ params: { purpose: PROOF_PURPOSE.UPDATE_PRIVATE_KEY } },
 	)
-	const signature = await provePrivateKey(privateKeyPem, challenge.nonce, [newEnvelope])
+	const signature = await provePrivateKey(privateKeyPem, challenge.nonce, [
+		newEnvelope,
+	])
 	await axios.put(
 		generateUrl('/apps/keepiq/api/v1/suites/' + copy.suiteId + '/private-key'),
 		{ encryptedPrivateKey: newEnvelope },

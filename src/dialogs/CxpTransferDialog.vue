@@ -67,7 +67,10 @@
 				</NcCheckboxRadioSwitch>
 			</div>
 
-			<div class="cxp-dialog__modes" role="group" :aria-label="t('keepiq', 'Other side')">
+			<div
+				class="cxp-dialog__modes"
+				role="group"
+				:aria-label="t('keepiq', 'Other side')">
 				<NcCheckboxRadioSwitch
 					:modelValue="transport"
 					value="relay"
@@ -89,7 +92,9 @@
 			</div>
 
 			<!-- Receive / import -->
-			<div v-if="direction === 'receive' && transport === 'file'" class="cxp-dialog__panel">
+			<div
+				v-if="direction === 'receive' && transport === 'file'"
+				class="cxp-dialog__panel">
 				<p>
 					{{
 						t(
@@ -106,14 +111,16 @@
 					{{ t('keepiq', 'Download request file') }}
 				</NcButton>
 				<template v-if="session">
-					<label for="cxp-response-file">{{ t('keepiq', 'Sealed file from the other provider') }}</label>
+					<label for="cxp-response-file">{{
+						t('keepiq', 'Sealed file from the other provider')
+					}}</label>
 					<input
 						id="cxp-response-file"
 						type="file"
 						accept=".json,application/json"
 						:disabled="busy"
 						data-testid="cxp-response-file"
-						@change="onResponseFile">
+						@change="onResponseFile" />
 				</template>
 			</div>
 
@@ -155,16 +162,26 @@
 					:label="t('keepiq', 'Pairing code from the receiving provider')"
 					data-testid="cxp-send-pairing" />
 				<template v-else>
-					<label for="cxp-request-file">{{ t('keepiq', 'Request file from the receiving provider') }}</label>
+					<label for="cxp-request-file">{{
+						t('keepiq', 'Request file from the receiving provider')
+					}}</label>
 					<input
 						id="cxp-request-file"
 						type="file"
 						accept=".json,application/json"
 						:disabled="busy"
 						data-testid="cxp-request-file"
-						@change="onRequestFile">
-					<p v-if="fetchedRequest" class="cxp-dialog__status" data-testid="cxp-request-loaded">
-						{{ t('keepiq', 'Request loaded. The transfer is sealed for that provider only.') }}
+						@change="onRequestFile" />
+					<p
+						v-if="fetchedRequest"
+						class="cxp-dialog__status"
+						data-testid="cxp-request-loaded">
+						{{
+							t(
+								'keepiq',
+								'Request loaded. The transfer is sealed for that provider only.',
+							)
+						}}
 					</p>
 				</template>
 				<NcSelect
@@ -226,11 +243,14 @@
 				<NcNoteCard v-if="sent" type="success" data-testid="cxp-sent">
 					{{
 						transport === 'file'
-							? t('keepiq', 'Sealed file downloaded. Only the provider that made the request can open it.')
+							? t(
+									'keepiq',
+									'Sealed file downloaded. Only the provider that made the request can open it.',
+								)
 							: t(
-								'keepiq',
-								'Sealed transfer sent. No plaintext file was written.',
-							)
+									'keepiq',
+									'Sealed transfer sent. No plaintext file was written.',
+								)
 					}}
 				</NcNoteCard>
 			</div>
@@ -345,10 +365,14 @@ export default {
 		 * @spec openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp/spec.md#requirement-choose-what-to-send
 		 */
 		scopeOptions() {
-			const options = [{ label: this.t('keepiq', 'Entire vault'), value: 'vault' }]
+			const options = [
+				{ label: this.t('keepiq', 'Entire vault'), value: 'vault' },
+			]
 			if (this.selectedIds.length > 0) {
 				options.push({
-					label: this.t('keepiq', 'Selected items ({count})', { count: this.selectedIds.length }),
+					label: this.t('keepiq', 'Selected items ({count})', {
+						count: this.selectedIds.length,
+					}),
 					value: 'selection',
 				})
 			}
@@ -368,7 +392,10 @@ export default {
 			if (this.scopeChoice === 'selection' && this.selectedIds.length > 0) {
 				return { mode: 'selection', secretIds: [...this.selectedIds] }
 			}
-			if (this.scopeChoice !== 'vault' && this.folders.some((f) => f.id === this.scopeChoice)) {
+			if (
+				this.scopeChoice !== 'vault'
+				&& this.folders.some((f) => f.id === this.scopeChoice)
+			) {
 				return { mode: 'folders', folderIds: [this.scopeChoice] }
 			}
 			return { mode: 'vault' }
@@ -380,7 +407,9 @@ export default {
 		 * @return {boolean}
 		 */
 		requestReady() {
-			return this.transport === 'file' ? this.fetchedRequest !== null : Boolean(this.sendPairingId)
+			return this.transport === 'file'
+				? this.fetchedRequest !== null
+				: Boolean(this.sendPairingId)
 		},
 
 		/**
@@ -462,7 +491,8 @@ export default {
 					'application/json',
 				)
 			} catch (e) {
-				this.error = e.message || this.t('keepiq', 'Could not start the transfer')
+				this.error =
+					e.message || this.t('keepiq', 'Could not start the transfer')
 			} finally {
 				this.busy = false
 			}
@@ -475,7 +505,10 @@ export default {
 		 * @return {Promise<string|null>} The text, or null when no file was chosen.
 		 */
 		async fileText(event) {
-			const file = event && event.target && event.target.files ? event.target.files[0] : null
+			const file =
+				event && event.target && event.target.files
+					? event.target.files[0]
+					: null
 			if (!file) {
 				return null
 			}
@@ -518,7 +551,10 @@ export default {
 			try {
 				cxfBytes = await openEnvelope(this.session, JSON.parse(text))
 			} catch {
-				this.error = this.t('keepiq', 'The file could not be verified. Nothing was imported.')
+				this.error = this.t(
+					'keepiq',
+					'The file could not be verified. Nothing was imported.',
+				)
 				this.busy = false
 				return
 			}
@@ -526,7 +562,9 @@ export default {
 				this.session = null
 				await this.importCxf(cxfBytes)
 			} catch (e) {
-				this.error = e.message || this.t('keepiq', 'Could not open the sealed transfer')
+				this.error =
+					e.message
+					|| this.t('keepiq', 'Could not open the sealed transfer')
 			} finally {
 				this.busy = false
 			}
@@ -564,7 +602,8 @@ export default {
 			} catch {
 				request = null
 			}
-			const ok = request !== null
+			const ok =
+				request !== null
 				&& typeof request === 'object'
 				&& typeof request.v === 'string'
 				&& typeof request.requesterPublicKey === 'string'
@@ -771,7 +810,9 @@ export default {
 		async peerRequest() {
 			if (this.transport === 'file') {
 				if (this.fetchedRequest === null) {
-					throw new Error(this.t('keepiq', 'Could not send the sealed transfer'))
+					throw new Error(
+						this.t('keepiq', 'Could not send the sealed transfer'),
+					)
 				}
 				return this.fetchedRequest
 			}

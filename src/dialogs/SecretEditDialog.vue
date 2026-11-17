@@ -122,7 +122,12 @@
 				:disabled="saving || loading"
 				data-testid="secret-reprompt"
 				@update:modelValue="reprompt = $event">
-				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
+				{{
+					t(
+						'keepiq',
+						'Ask for my master password before showing or filling this item',
+					)
+				}}
 			</NcCheckboxRadioSwitch>
 
 			<PolicyBlockedNote :verdict="policyVerdict" />

@@ -27,7 +27,9 @@ export function hostOf(raw) {
 		return null
 	}
 	// `localhost:8080` is a host and port, not a scheme.
-	const withScheme = /^[a-z][a-z\d+.-]*:(?!\d)/i.test(trimmed) ? trimmed : `https://${trimmed}`
+	const withScheme = /^[a-z][a-z\d+.-]*:(?!\d)/i.test(trimmed)
+		? trimmed
+		: `https://${trimmed}`
 	return webHostname(withScheme)
 }
 
@@ -77,7 +79,9 @@ export function directoryEntry(list, raw) {
 	if (host === null) {
 		return null
 	}
-	const domain = [host, siteDomain(raw)].find((candidate) => candidate && Object.hasOwn(list, candidate))
+	const domain = [host, siteDomain(raw)].find(
+		(candidate) => candidate && Object.hasOwn(list, candidate),
+	)
 	return domain ? { domain, documentation: httpsOrNull(list[domain]) } : null
 }
 
@@ -106,7 +110,10 @@ function httpsOrNull(value) {
 export function vaultSiteFacts(secrets, typeNameById) {
 	const seedDomains = new Set()
 	const passkeyDomains = new Set()
-	const setByType = new Map([['totp', seedDomains], ['passkey', passkeyDomains]])
+	const setByType = new Map([
+		['totp', seedDomains],
+		['passkey', passkeyDomains],
+	])
 	for (const secret of secrets) {
 		const set = setByType.get(typeNameById.get(secret?.typeId))
 		const domain = set ? siteDomain(secret.url) : null

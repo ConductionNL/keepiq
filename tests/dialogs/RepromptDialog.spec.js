@@ -28,12 +28,14 @@ const stubs = {
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
+		template:
+			'<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
 	},
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue', 'label', 'disabled'],
@@ -52,7 +54,11 @@ const stubs = {
  * @param {object} vars The placeholder values
  * @return {string}
  */
-const t = (_app, key, vars = {}) => key.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match))
+function t(_app, key, vars = {}) {
+	return key.replace(/\{(\w+)\}/g, (match, name) =>
+		name in vars ? String(vars[name]) : match,
+	)
+}
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -103,12 +109,19 @@ describe('RepromptDialog', () => {
 		await wrapper.vm.$nextTick()
 
 		expect(byTestId(wrapper, 'title').text()).toBe('Enter your master password')
-		expect(wrapper.find('form').classes()).toEqual(['master-password-prompt', 'reprompt-dialog'])
+		expect(wrapper.find('form').classes()).toEqual([
+			'master-password-prompt',
+			'reprompt-dialog',
+		])
 		expect(wrapper.find('form p').text()).toBe(
 			'"Production database" asks for your master password before it is shown, copied or filled.',
 		)
-		expect(wrapper.find('.reprompt-dialog__hint').text()).toContain('checked on this device and never sent')
-		expect(byTestId(wrapper, 'reprompt-dialog-password').attributes('aria-label')).toBe('Your master password')
+		expect(wrapper.find('.reprompt-dialog__hint').text()).toContain(
+			'checked on this device and never sent',
+		)
+		expect(
+			byTestId(wrapper, 'reprompt-dialog-password').attributes('aria-label'),
+		).toBe('Your master password')
 		expect(byTestId(wrapper, 'reprompt-dialog-error').exists()).toBe(false)
 	})
 
@@ -117,12 +130,18 @@ describe('RepromptDialog', () => {
 		const wrapper = mountDialog()
 		await wrapper.vm.$nextTick()
 
-		expect(byTestId(wrapper, 'reprompt-dialog-confirm').attributes('disabled')).toBeDefined()
+		expect(
+			byTestId(wrapper, 'reprompt-dialog-confirm').attributes('disabled'),
+		).toBeDefined()
 
 		await byTestId(wrapper, 'reprompt-dialog-password').setValue('secret')
 
-		expect(byTestId(wrapper, 'reprompt-dialog-confirm').attributes('disabled')).toBeUndefined()
-		expect(byTestId(wrapper, 'reprompt-dialog-cancel').attributes('disabled')).toBeUndefined()
+		expect(
+			byTestId(wrapper, 'reprompt-dialog-confirm').attributes('disabled'),
+		).toBeUndefined()
+		expect(
+			byTestId(wrapper, 'reprompt-dialog-cancel').attributes('disabled'),
+		).toBeUndefined()
 	})
 
 	it('submits the typed password through the store and clears it when accepted', async () => {
@@ -151,8 +170,12 @@ describe('RepromptDialog', () => {
 		await wrapper.vm.$nextTick()
 
 		expect(prompt.submit).toHaveBeenCalledWith('wrong')
-		expect(byTestId(wrapper, 'reprompt-dialog-password').element.value).toBe('wrong')
-		expect(byTestId(wrapper, 'reprompt-dialog-error').text()).toBe('That master password is not right.')
+		expect(byTestId(wrapper, 'reprompt-dialog-password').element.value).toBe(
+			'wrong',
+		)
+		expect(byTestId(wrapper, 'reprompt-dialog-error').text()).toBe(
+			'That master password is not right.',
+		)
 	})
 
 	it('disables the field and both buttons while the store checks', async () => {
@@ -160,9 +183,15 @@ describe('RepromptDialog', () => {
 		const wrapper = mountDialog()
 		await wrapper.vm.$nextTick()
 
-		expect(byTestId(wrapper, 'reprompt-dialog-password').attributes('disabled')).toBeDefined()
-		expect(byTestId(wrapper, 'reprompt-dialog-cancel').attributes('disabled')).toBeDefined()
-		expect(byTestId(wrapper, 'reprompt-dialog-confirm').attributes('disabled')).toBeDefined()
+		expect(
+			byTestId(wrapper, 'reprompt-dialog-password').attributes('disabled'),
+		).toBeDefined()
+		expect(
+			byTestId(wrapper, 'reprompt-dialog-cancel').attributes('disabled'),
+		).toBeDefined()
+		expect(
+			byTestId(wrapper, 'reprompt-dialog-confirm').attributes('disabled'),
+		).toBeDefined()
 	})
 
 	it('cancels through the store from the cancel button', async () => {

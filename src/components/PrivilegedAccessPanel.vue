@@ -24,79 +24,148 @@
 				:disabled="busy"
 				data-testid="privileged-toggle"
 				@update:modelValue="onToggle">
-				{{ t('keepiq', 'Recipients need my approval for a time window before they can use this login') }}
+				{{
+					t(
+						'keepiq',
+						'Recipients need my approval for a time window before they can use this login',
+					)
+				}}
 			</NcCheckboxRadioSwitch>
 
 			<NcNoteCard
 				v-if="offerRotation"
 				type="warning"
 				data-testid="privileged-rotate">
-				{{ t('keepiq', 'An approved window has ended. Rotate this login if the recipient should no longer know it.') }}
+				{{
+					t(
+						'keepiq',
+						'An approved window has ended. Rotate this login if the recipient should no longer know it.',
+					)
+				}}
 			</NcNoteCard>
 		</template>
 
 		<template v-if="status && status.role === 'recipient'">
-			<p v-if="!status.privileged" class="privileged-panel__muted" data-testid="privileged-not-needed">
+			<p
+				v-if="!status.privileged"
+				class="privileged-panel__muted"
+				data-testid="privileged-not-needed">
 				{{ t('keepiq', 'This login needs no approval.') }}
 			</p>
 			<template v-else>
 				<p class="privileged-panel__muted">
-					{{ t('keepiq', 'The owner must approve a time window before you can use this login.') }}
+					{{
+						t(
+							'keepiq',
+							'The owner must approve a time window before you can use this login.',
+						)
+					}}
 				</p>
-				<form class="privileged-panel__form" data-testid="privileged-request-form" @submit.prevent="submitRequest">
+				<form
+					class="privileged-panel__form"
+					data-testid="privileged-request-form"
+					@submit.prevent="submitRequest">
 					<label class="privileged-panel__field">
 						<span>{{ t('keepiq', 'From') }}</span>
-						<input v-model="form.start" type="datetime-local" required data-testid="privileged-request-start">
+						<input
+							v-model="form.start"
+							type="datetime-local"
+							required
+							data-testid="privileged-request-start" />
 					</label>
 					<label class="privileged-panel__field">
 						<span>{{ t('keepiq', 'Until') }}</span>
-						<input v-model="form.end" type="datetime-local" required data-testid="privileged-request-end">
+						<input
+							v-model="form.end"
+							type="datetime-local"
+							required
+							data-testid="privileged-request-end" />
 					</label>
 					<NcTextField
 						v-model="form.reason"
 						:label="t('keepiq', 'Reason')"
 						:maxlength="500"
 						data-testid="privileged-request-reason" />
-					<NcButton type="submit" variant="primary" :disabled="busy || !canSubmitRequest" data-testid="privileged-request-submit">
+					<NcButton
+						type="submit"
+						variant="primary"
+						:disabled="busy || !canSubmitRequest"
+						data-testid="privileged-request-submit">
 						{{ t('keepiq', 'Ask for access') }}
 					</NcButton>
 				</form>
 			</template>
 		</template>
 
-		<ul v-if="status && status.requests.length" class="privileged-panel__requests" data-testid="privileged-requests">
+		<ul
+			v-if="status && status.requests.length"
+			class="privileged-panel__requests"
+			data-testid="privileged-requests">
 			<li
 				v-for="request in status.requests"
 				:key="request.id"
 				class="privileged-panel__request"
 				:data-testid="`privileged-request-${request.id}`">
 				<div>
-					<strong v-if="status.role === 'owner'">{{ request.requesterId }}</strong>
+					<strong v-if="status.role === 'owner'">{{
+						request.requesterId
+					}}</strong>
 					{{ windowText(request) }}
-					<span class="privileged-panel__state" :data-testid="`privileged-state-${request.id}`">{{ stateLabel(request) }}</span>
+					<span
+						class="privileged-panel__state"
+						:data-testid="`privileged-state-${request.id}`"
+						>{{ stateLabel(request) }}</span
+					>
 				</div>
 				<div class="privileged-panel__muted">
 					{{ request.reason }}
 				</div>
-				<div v-if="request.ranges && request.ranges.length" class="privileged-panel__muted">
-					{{ t('keepiq', 'Only from {ranges}', { ranges: request.ranges.join(', ') }) }}
+				<div
+					v-if="request.ranges && request.ranges.length"
+					class="privileged-panel__muted">
+					{{
+						t('keepiq', 'Only from {ranges}', {
+							ranges: request.ranges.join(', '),
+						})
+					}}
 				</div>
 
-				<div v-if="status.role === 'owner' && request.status === 'pending'" class="privileged-panel__answer">
+				<div
+					v-if="status.role === 'owner' && request.status === 'pending'"
+					class="privileged-panel__answer">
 					<template v-if="answering === request.id">
 						<label class="privileged-panel__field">
-							<span>{{ t('keepiq', 'From (optional, later than asked)') }}</span>
-							<input v-model="approval.start" type="datetime-local" :data-testid="`privileged-approve-start-${request.id}`">
+							<span>{{
+								t('keepiq', 'From (optional, later than asked)')
+							}}</span>
+							<input
+								v-model="approval.start"
+								type="datetime-local"
+								:data-testid="`privileged-approve-start-${request.id}`" />
 						</label>
 						<label class="privileged-panel__field">
-							<span>{{ t('keepiq', 'Until (optional, earlier than asked)') }}</span>
-							<input v-model="approval.end" type="datetime-local" :data-testid="`privileged-approve-end-${request.id}`">
+							<span>{{
+								t('keepiq', 'Until (optional, earlier than asked)')
+							}}</span>
+							<input
+								v-model="approval.end"
+								type="datetime-local"
+								:data-testid="`privileged-approve-end-${request.id}`" />
 						</label>
 						<NcTextField
 							v-model="approval.ranges"
-							:label="t('keepiq', 'Address ranges (optional, e.g. 192.0.2.0/24)')"
+							:label="
+								t(
+									'keepiq',
+									'Address ranges (optional, e.g. 192.0.2.0/24)',
+								)
+							"
 							:data-testid="`privileged-approve-ranges-${request.id}`" />
-						<NcButton variant="primary" :disabled="busy" :data-testid="`privileged-approve-confirm-${request.id}`" @click="approve(request)">
+						<NcButton
+							variant="primary"
+							:disabled="busy"
+							:data-testid="`privileged-approve-confirm-${request.id}`"
+							@click="approve(request)">
 							{{ t('keepiq', 'Approve') }}
 						</NcButton>
 					</template>
@@ -108,7 +177,11 @@
 						@click="startApproval(request)">
 						{{ t('keepiq', 'Approve…') }}
 					</NcButton>
-					<NcButton variant="tertiary" :disabled="busy" :data-testid="`privileged-deny-${request.id}`" @click="deny(request)">
+					<NcButton
+						variant="tertiary"
+						:disabled="busy"
+						:data-testid="`privileged-deny-${request.id}`"
+						@click="deny(request)">
 						{{ t('keepiq', 'Deny') }}
 					</NcButton>
 				</div>
@@ -176,9 +249,11 @@ export default {
 		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		canSubmitRequest() {
-			return localInputToIso(this.form.start) !== ''
+			return (
+				localInputToIso(this.form.start) !== ''
 				&& localInputToIso(this.form.end) !== ''
 				&& this.form.reason.trim() !== ''
+			)
 		},
 	},
 
@@ -217,15 +292,19 @@ export default {
 		 */
 		async load() {
 			await this.run(async () => {
-				const response = await axios.get(this.url(`/secrets/${this.secretId}/privileged`))
+				const response = await axios.get(
+					this.url(`/secrets/${this.secretId}/privileged`),
+				)
 				const data = response?.data ?? {}
 				// Anything but a known role shows nothing rather than guessing.
 				this.status = ['owner', 'recipient'].includes(data.role)
 					? {
-						role: data.role,
-						privileged: data.privileged === true,
-						requests: Array.isArray(data.requests) ? data.requests : [],
-					}
+							role: data.role,
+							privileged: data.privileged === true,
+							requests: Array.isArray(data.requests)
+								? data.requests
+								: [],
+						}
 					: null
 			})
 		},
@@ -239,8 +318,14 @@ export default {
 		 */
 		async onToggle(privileged) {
 			await this.run(async () => {
-				const response = await axios.put(this.url(`/secrets/${this.secretId}/privileged`), { privileged })
-				this.status = { ...this.status, privileged: response.data.privileged === true }
+				const response = await axios.put(
+					this.url(`/secrets/${this.secretId}/privileged`),
+					{ privileged },
+				)
+				this.status = {
+					...this.status,
+					privileged: response.data.privileged === true,
+				}
 			})
 		},
 
@@ -252,11 +337,14 @@ export default {
 		 */
 		async submitRequest() {
 			await this.run(async () => {
-				await axios.post(this.url(`/secrets/${this.secretId}/access-requests`), {
-					startsAt: localInputToIso(this.form.start),
-					endsAt: localInputToIso(this.form.end),
-					reason: this.form.reason.trim(),
-				})
+				await axios.post(
+					this.url(`/secrets/${this.secretId}/access-requests`),
+					{
+						startsAt: localInputToIso(this.form.start),
+						endsAt: localInputToIso(this.form.end),
+						reason: this.form.reason.trim(),
+					},
+				)
 				this.form = { start: '', end: '', reason: '' }
 				await this.load()
 			})
@@ -283,11 +371,14 @@ export default {
 		 */
 		async approve(request) {
 			await this.run(async () => {
-				await axios.post(this.url(`/access-requests/${request.id}/approve`), {
-					startsAt: localInputToIso(this.approval.start),
-					endsAt: localInputToIso(this.approval.end),
-					ranges: parseRanges(this.approval.ranges),
-				})
+				await axios.post(
+					this.url(`/access-requests/${request.id}/approve`),
+					{
+						startsAt: localInputToIso(this.approval.start),
+						endsAt: localInputToIso(this.approval.end),
+						ranges: parseRanges(this.approval.ranges),
+					},
+				)
 				this.answering = null
 				await this.load()
 				this.$emit('changed')
@@ -322,7 +413,9 @@ export default {
 			try {
 				await step()
 			} catch (e) {
-				this.error = e?.response?.data?.message || t('keepiq', 'Something went wrong. Please try again.')
+				this.error =
+					e?.response?.data?.message
+					|| t('keepiq', 'Something went wrong. Please try again.')
 			} finally {
 				this.busy = false
 			}
@@ -338,7 +431,10 @@ export default {
 		windowText(request) {
 			const start = request.approvedStart || request.requestedStart
 			const end = request.approvedEnd || request.requestedEnd
-			return t('keepiq', '{start} until {end}', { start: dateTimeOrDash(start), end: dateTimeOrDash(end) })
+			return t('keepiq', '{start} until {end}', {
+				start: dateTimeOrDash(start),
+				end: dateTimeOrDash(end),
+			})
 		},
 
 		/**

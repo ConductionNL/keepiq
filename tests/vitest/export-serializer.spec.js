@@ -106,7 +106,10 @@ describe('serializeVault', () => {
 
 	it('an empty selection exports nothing', () => {
 		const withIds = secrets.map((secret, i) => ({ ...secret, id: `s${i + 1}` }))
-		const payload = serializeVault(withIds, folders, { mode: 'selection', secretIds: [] })
+		const payload = serializeVault(withIds, folders, {
+			mode: 'selection',
+			secretIds: [],
+		})
 		expect(payload.secrets).toEqual([])
 		expect(payload.folders).toEqual([])
 	})

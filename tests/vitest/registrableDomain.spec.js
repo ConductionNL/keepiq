@@ -33,6 +33,8 @@ describe('registrableDomainOf', () => {
 	it('asks the lookup to count private suffixes', () => {
 		const lookup = vi.fn().mockReturnValue('example.com')
 		registrableDomainOf('www.example.com', lookup)
-		expect(lookup).toHaveBeenCalledWith('www.example.com', { allowPrivateDomains: true })
+		expect(lookup).toHaveBeenCalledWith('www.example.com', {
+			allowPrivateDomains: true,
+		})
 	})
 })

@@ -24,9 +24,15 @@ const stubs = {
 	NcAppSidebar: { template: '<aside><slot name="description" /><slot /></aside>' },
 	NcActions: { template: '<div><slot /></div>' },
 	NcActionButton: { template: '<button><slot /></button>' },
-	NcEmptyContent: { props: ['description'], template: '<div data-testid="empty">{{ description }}</div>' },
+	NcEmptyContent: {
+		props: ['description'],
+		template: '<div data-testid="empty">{{ description }}</div>',
+	},
 	NcNoteCard: { template: '<div><slot /></div>' },
-	PrivilegedAccessPanel: { props: ['secretId'], template: '<div data-testid="privileged-panel" :data-secret="secretId" />' },
+	PrivilegedAccessPanel: {
+		props: ['secretId'],
+		template: '<div data-testid="privileged-panel" :data-secret="secretId" />',
+	},
 }
 
 async function mountRefused(response) {
@@ -34,7 +40,10 @@ async function mountRefused(response) {
 	vi.spyOn(axios, 'get').mockResolvedValue({ data: null })
 	useSecretStore().fetchSecret = vi.fn().mockRejectedValue({ response })
 	useSecretTypeStore().fetchTypes = vi.fn().mockResolvedValue([])
-	const wrapper = mount(SecretDetailSidebar, { props: { secretId: 'c1' }, global: { stubs } })
+	const wrapper = mount(SecretDetailSidebar, {
+		props: { secretId: 'c1' },
+		global: { stubs },
+	})
 	await flush()
 	await flush()
 	return wrapper
@@ -47,16 +56,36 @@ beforeEach(() => {
 
 describe('a privileged copy outside its window', () => {
 	it('explains the refusal and offers to ask for access', async () => {
-		const wrapper = await mountRefused({ status: 403, data: { message: 'refused', code: 'privileged_access_required' } })
+		const wrapper = await mountRefused({
+			status: 403,
+			data: { message: 'refused', code: 'privileged_access_required' },
+		})
 
-		expect(wrapper.find('[data-testid="empty"]').text()).toBe('This login can only be used in a time window its owner approved.')
-		expect(wrapper.find('[data-testid="secret-detail-privileged-refused"] [data-testid="privileged-panel"]').attributes('data-secret')).toBe('c1')
+		expect(wrapper.find('[data-testid="empty"]').text()).toBe(
+			'This login can only be used in a time window its owner approved.',
+		)
+		expect(
+			wrapper
+				.find(
+					'[data-testid="secret-detail-privileged-refused"] [data-testid="privileged-panel"]',
+				)
+				.attributes('data-secret'),
+		).toBe('c1')
 	})
 
 	it('keeps the suite message and no panel for any other refusal', async () => {
-		const wrapper = await mountRefused({ status: 403, data: { message: 'Encryption suite is revoked' } })
+		const wrapper = await mountRefused({
+			status: 403,
+			data: { message: 'Encryption suite is revoked' },
+		})
 
-		expect(wrapper.find('[data-testid="empty"]').text()).toBe('This secret is locked because its encryption suite was revoked.')
-		expect(wrapper.find('[data-testid="secret-detail-privileged-refused"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="empty"]').text()).toBe(
+			'This secret is locked because its encryption suite was revoked.',
+		)
+		expect(
+			wrapper
+				.find('[data-testid="secret-detail-privileged-refused"]')
+				.exists(),
+		).toBe(false)
 	})
 })

@@ -17,10 +17,23 @@
 		:name="t('keepiq', 'Enter your master password')"
 		testid="reprompt-dialog"
 		formClass="reprompt-dialog">
-		<p>{{ t('keepiq', '"{name}" asks for your master password before it is shown, copied or filled.', { name: prompt.itemName }) }}</p>
+		<p>
+			{{
+				t(
+					'keepiq',
+					'"{name}" asks for your master password before it is shown, copied or filled.',
+					{ name: prompt.itemName },
+				)
+			}}
+		</p>
 		<template #hint>
 			<p class="reprompt-dialog__hint">
-				{{ t('keepiq', 'Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.') }}
+				{{
+					t(
+						'keepiq',
+						'Your master password is checked on this device and never sent. This stops someone at your unlocked screen; it does not protect against a modified app.',
+					)
+				}}
 			</p>
 		</template>
 	</MasterPasswordPromptDialog>

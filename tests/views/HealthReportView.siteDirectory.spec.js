@@ -48,7 +48,11 @@ const HealthCategoryStub = {
 			'section',
 			{ 'data-testid': this.testid },
 			(this.findings || []).map((f) =>
-				h('button', { class: 'finding', onClick: () => this.$emit('action', f) }, f.name),
+				h(
+					'button',
+					{ class: 'finding', onClick: () => this.$emit('action', f) },
+					f.name,
+				),
 			),
 		)
 	},
@@ -102,16 +106,40 @@ describe('HealthReportView site directory categories', () => {
 			breachedFindings: [],
 			compromisedFindings: [],
 			insecureAddressFindings: [],
-			twoFactorAvailableFindings: [{ id: 'gh', name: 'GitHub', siteDocs: { twoFactor: 'https://docs.github.com/2fa', passkey: null } }],
+			twoFactorAvailableFindings: [
+				{
+					id: 'gh',
+					name: 'GitHub',
+					siteDocs: {
+						twoFactor: 'https://docs.github.com/2fa',
+						passkey: null,
+					},
+				},
+			],
 			passkeyAvailableFindings: [
-				{ id: 'ex', name: 'Example', siteDocs: { twoFactor: null, passkey: 'https://example.com/passkeys' } },
-				{ id: 'nolink', name: 'No link', siteDocs: { twoFactor: null, passkey: null } },
+				{
+					id: 'ex',
+					name: 'Example',
+					siteDocs: {
+						twoFactor: null,
+						passkey: 'https://example.com/passkeys',
+					},
+				},
+				{
+					id: 'nolink',
+					name: 'No link',
+					siteDocs: { twoFactor: null, passkey: null },
+				},
 			],
 			analyseVault: vi.fn().mockResolvedValue(),
 			registerLockReset: vi.fn(),
 		}
 		sessionStore = { isLocked: false }
-		rotationStore = { flags: [], fetchFlags: vi.fn().mockResolvedValue(), flagSecrets: vi.fn() }
+		rotationStore = {
+			flags: [],
+			fetchFlags: vi.fn().mockResolvedValue(),
+			flagSecrets: vi.fn(),
+		}
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
 		vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 	})
@@ -123,34 +151,57 @@ describe('HealthReportView site directory categories', () => {
 	it('shows both categories, their counts and the attribution when the directory loaded', async () => {
 		const wrapper = await mountView()
 
-		expect(wrapper.find('[data-testid="category-two-factor-available"]').text()).toContain('GitHub')
-		expect(wrapper.find('[data-testid="category-passkey-available"]').text()).toContain('Example')
+		expect(
+			wrapper.find('[data-testid="category-two-factor-available"]').text(),
+		).toContain('GitHub')
+		expect(
+			wrapper.find('[data-testid="category-passkey-available"]').text(),
+		).toContain('Example')
 		expect(wrapper.text()).toContain('Two-factor available: 1')
 		expect(wrapper.text()).toContain('Passkey available: 2')
-		expect(wrapper.find('[data-testid="site-directory-attribution"]').text()).toContain('2FA Directory (MIT)')
-		expect(wrapper.find('[data-testid="site-directory-unavailable"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="site-directory-attribution"]').text(),
+		).toContain('2FA Directory (MIT)')
+		expect(
+			wrapper.find('[data-testid="site-directory-unavailable"]').exists(),
+		).toBe(false)
 	})
 
 	it.each([
 		['off', 'your administrator has not switched on the site directory'],
 		['unavailable', 'the site directory could not be loaded'],
-	])('says both categories are unavailable while the directory is %s', async (status, why) => {
-		healthStore.siteDirectoryStatus = status
+	])(
+		'says both categories are unavailable while the directory is %s',
+		async (status, why) => {
+			healthStore.siteDirectoryStatus = status
 
-		const wrapper = await mountView()
+			const wrapper = await mountView()
 
-		expect(wrapper.find('[data-testid="category-two-factor-available"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="category-passkey-available"]').exists()).toBe(false)
-		expect(wrapper.text()).not.toContain('Two-factor available: 1')
-		expect(wrapper.find('[data-testid="site-directory-unavailable"]').text()).toContain(why)
-	})
+			expect(
+				wrapper
+					.find('[data-testid="category-two-factor-available"]')
+					.exists(),
+			).toBe(false)
+			expect(
+				wrapper.find('[data-testid="category-passkey-available"]').exists(),
+			).toBe(false)
+			expect(wrapper.text()).not.toContain('Two-factor available: 1')
+			expect(
+				wrapper.find('[data-testid="site-directory-unavailable"]').text(),
+			).toContain(why)
+		},
+	)
 
 	it('opens the directory page of the site, or the directory itself without one', async () => {
 		const open = vi.spyOn(window, 'open').mockImplementation(() => null)
 		const wrapper = await mountView()
 
-		await wrapper.find('[data-testid="category-two-factor-available"] .finding').trigger('click')
-		const passkeys = wrapper.findAll('[data-testid="category-passkey-available"] .finding')
+		await wrapper
+			.find('[data-testid="category-two-factor-available"] .finding')
+			.trigger('click')
+		const passkeys = wrapper.findAll(
+			'[data-testid="category-passkey-available"] .finding',
+		)
 		await passkeys[0].trigger('click')
 		await passkeys[1].trigger('click')
 

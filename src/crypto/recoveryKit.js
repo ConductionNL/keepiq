@@ -60,7 +60,10 @@ export function normaliseRecoveryCode(code) {
 		.replace(/[\s-]/g, '')
 		.replace(/O/g, '0')
 		.replace(/[IL]/g, '1')
-	if (plain.length !== CODE_BYTES * 8 / 5 || [...plain].some((ch) => !ALPHABET.includes(ch))) {
+	if (
+		plain.length !== (CODE_BYTES * 8) / 5
+		|| [...plain].some((ch) => !ALPHABET.includes(ch))
+	) {
 		return ''
 	}
 	return plain
@@ -82,7 +85,11 @@ export async function wrapWithRecoveryCode(privateKeyPem, code) {
 	const { blob, salt } = await encryptSnapshot(privateKeyPem, secret)
 	return {
 		wrappedKey: blob,
-		kdf: JSON.stringify({ version: RECOVERY_KIT_VERSION, ...ARGON2_PARAMETERS, salt }),
+		kdf: JSON.stringify({
+			version: RECOVERY_KIT_VERSION,
+			...ARGON2_PARAMETERS,
+			salt,
+		}),
 	}
 }
 
@@ -115,7 +122,11 @@ export async function unwrapWithRecoveryCode(copy, code) {
 		throw new Error('This is not a recovery code')
 	}
 	const kdf = parseKdf(copy?.kdf)
-	if (kdf?.version !== RECOVERY_KIT_VERSION || kdf?.kdf !== ARGON2_PARAMETERS.kdf || typeof kdf?.salt !== 'string') {
+	if (
+		kdf?.version !== RECOVERY_KIT_VERSION
+		|| kdf?.kdf !== ARGON2_PARAMETERS.kdf
+		|| typeof kdf?.salt !== 'string'
+	) {
 		throw new Error('This recovery copy cannot be read')
 	}
 	try {
@@ -144,7 +155,10 @@ export function recoveryKitText({ code, account, createdAt }, t) {
 		t('keepiq', 'Made on') + ': ' + createdAt,
 		t('keepiq', 'Recovery code') + ': ' + code,
 		'',
-		t('keepiq', 'Keep this somewhere safe and offline. Anyone with this code and your account can open your vault. A kit works once: after you use it, make a new one.'),
+		t(
+			'keepiq',
+			'Keep this somewhere safe and offline. Anyone with this code and your account can open your vault. A kit works once: after you use it, make a new one.',
+		),
 		'',
 	].join('\n')
 }

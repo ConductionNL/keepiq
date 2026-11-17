@@ -124,7 +124,12 @@ describe('useHealthStore', () => {
 		])
 		expect(store.duplicates.likely).toEqual([])
 		// Only whole-vault reads went out: nothing about the groups was sent.
-		expect(axios.get.mock.calls.map(([u]) => u.split('/api/v1/')[1])).toEqual(['secret-types', 'secrets', 'offline/manifest', 'site-directory'])
+		expect(axios.get.mock.calls.map(([u]) => u.split('/api/v1/')[1])).toEqual([
+			'secret-types',
+			'secrets',
+			'offline/manifest',
+			'site-directory',
+		])
 		expect(post).not.toHaveBeenCalled()
 		expect(put).not.toHaveBeenCalled()
 

@@ -184,7 +184,12 @@
 				<template v-if="siteDirectoryReady">
 					<HealthCategory
 						:title="t('keepiq', 'Two-factor available')"
-						:description="t('keepiq', 'These sites offer one-time codes, and your vault holds no code for these logins. Turn on two-factor sign-in at the site and save the code with the login.')"
+						:description="
+							t(
+								'keepiq',
+								'These sites offer one-time codes, and your vault holds no code for these logins. Turn on two-factor sign-in at the site and save the code with the login.',
+							)
+						"
 						:findings="store.twoFactorAvailableFindings"
 						:actionLabel="t('keepiq', 'How to turn it on')"
 						testid="category-two-factor-available"
@@ -192,14 +197,26 @@
 						@action="openSiteDocs($event, 'twoFactor')" />
 					<HealthCategory
 						:title="t('keepiq', 'Passkey available')"
-						:description="t('keepiq', 'These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.')"
+						:description="
+							t(
+								'keepiq',
+								'These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.',
+							)
+						"
 						:findings="store.passkeyAvailableFindings"
 						:actionLabel="t('keepiq', 'How to add a passkey')"
 						testid="category-passkey-available"
 						@open="openSecret"
 						@action="openSiteDocs($event, 'passkey')" />
-					<p class="health-report__attribution" data-testid="site-directory-attribution">
-						{{ t('keepiq', 'Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.') }}
+					<p
+						class="health-report__attribution"
+						data-testid="site-directory-attribution">
+						{{
+							t(
+								'keepiq',
+								'Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.',
+							)
+						}}
 					</p>
 				</template>
 				<p v-else data-testid="site-directory-unavailable">
@@ -312,9 +329,15 @@ export default {
 		 */
 		siteDirectoryUnavailableText() {
 			if (this.store.siteDirectoryStatus === 'unavailable') {
-				return t('keepiq', 'Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.')
+				return t(
+					'keepiq',
+					'Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.',
+				)
 			}
-			return t('keepiq', 'Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.')
+			return t(
+				'keepiq',
+				'Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.',
+			)
 		},
 
 		/**
@@ -454,8 +477,15 @@ export default {
 		 * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
 		 */
 		openSiteDocs(finding, kind) {
-			const fallback = kind === 'passkey' ? 'https://passkeys.2fa.directory/' : 'https://2fa.directory/'
-			window.open(finding?.siteDocs?.[kind] || fallback, '_blank', 'noopener,noreferrer')
+			const fallback =
+				kind === 'passkey'
+					? 'https://passkeys.2fa.directory/'
+					: 'https://2fa.directory/'
+			window.open(
+				finding?.siteDocs?.[kind] || fallback,
+				'_blank',
+				'noopener,noreferrer',
+			)
 		},
 
 		/**
