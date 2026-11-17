@@ -56,11 +56,11 @@
 				value
 			}}</a>
 			<span v-else class="schema-value-view__text">{{ value }}</span>
-			<CopyButton :value="value" />
+			<CopyButton :value="value" :guard="guard" />
 		</div>
 		<template v-else-if="input === 'json'">
 			<CnJsonViewer :value="value" :readOnly="true" height="200px" />
-			<CopyButton :value="value" />
+			<CopyButton :value="value" :guard="guard" />
 		</template>
 		<span v-else class="schema-value-view__text">{{ shown }}</span>
 		<!-- A masked value keeps its mask; the warning still says it does

@@ -188,6 +188,17 @@ describe('every reveal path goes through the guard', () => {
 		}
 	})
 
+	it('guards every copy button and value field of a custom field’s view', () => {
+		const tpl = template('SchemaValueView')
+		const guarded = [...tags(tpl, 'CopyButton'), ...tags(tpl, 'PasswordField')]
+
+		expect(guarded.length).toBeGreaterThan(0)
+		for (const tag of guarded) {
+			expect(tag, tag).toMatch(/:guard="guard"/)
+		}
+		expect(tags(template('SecretDetailSidebar'), 'SchemaValueView').every((tag) => /:guard="revealGuard"/.test(tag))).toBe(true)
+	})
+
 	it('guards every one-time code display of the detail sidebar', () => {
 		const displays = tags(template('SecretDetailSidebar'), 'TotpDisplay')
 

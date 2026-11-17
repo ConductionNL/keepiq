@@ -184,8 +184,9 @@ function asText(value) {
 }
 
 /**
- * What one typed value is stored as: nothing when it is empty and the blob
- * did not hold it, the stored value when unchanged, else the value.
+ * What one typed value is stored as: the stored value when unchanged, so a
+ * member that was already empty stays; nothing when it is empty otherwise,
+ * so a cleared field is removed; else the value.
  *
  * @param {object} had The members of the blob the form was opened from.
  * @param {string} label The field's member name.
@@ -195,10 +196,10 @@ function asText(value) {
  */
 function typedMember(had, label, value) {
 	const text = asText(value)
-	if (!Object.hasOwn(had, label)) {
-		return text === '' ? undefined : text
+	if (Object.hasOwn(had, label) && asText(had[label]) === text) {
+		return had[label]
 	}
-	return asText(had[label]) === text ? had[label] : text
+	return text === '' ? undefined : text
 }
 
 /**
