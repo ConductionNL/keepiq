@@ -490,10 +490,31 @@ class SecretRequestFillControllerTest extends TestCase {
 	 */
 	public function testFillWithAnUncodedRefusalIs400(): void {
 		$this->secretRequestService->method('fill')->willThrowException(new InvalidArgumentException(message: 'Bad field'));
+		$this->secretRequestService->method('refusalReason')->willReturn('unknown');
 
 		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'CIPHER']);
 
 		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
-		$this->assertSame(expected: ['message' => 'Bad field'], actual: $response->getData());
+		$this->assertSame(expected: ['message' => 'Bad field', 'reason' => 'unknown'], actual: $response->getData());
 	}//end testFillWithAnUncodedRefusalIs400()
+
+	/**
+	 * A fill refused because the link is no longer available carries the
+	 * reason, so the page shows it in the recipient's language.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testARefusedFillCarriesItsReason(): void {
+		$this->secretRequestService->method('fill')->willThrowException(
+			new InvalidArgumentException(message: 'Request is no longer available', code: Http::STATUS_GONE)
+		);
+		$this->secretRequestService->method('refusalReason')->with('tok-1')->willReturn('unavailable');
+
+		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'CIPHER']);
+
+		$this->assertSame(expected: Http::STATUS_GONE, actual: $response->getStatus());
+		$this->assertSame(expected: 'unavailable', actual: $response->getData()['reason']);
+	}//end testARefusedFillCarriesItsReason()
 }//end class

@@ -126,6 +126,11 @@ class SecretTest extends TestCase {
 		$withPasskeys = new Secret();
 		$withPasskeys->setPasskeys('ENCRYPTED_PASSKEYS');
 		$this->assertFalse($withPasskeys->holdsNoValues());
+
+		// A placeholder filled with custom fields only holds them pending until the owner opens it.
+		$withPending = new Secret();
+		$withPending->appendPendingAdditionalFields(ciphertext: 'FILLED_BLOB', schemas: []);
+		$this->assertFalse($withPending->holdsNoValues());
 	}//end testHoldsNoValuesCountsTotpAndPasskeys()
 
 	/**

@@ -196,8 +196,12 @@ class SecretRequestFillController extends OCSController {
 				$status = Http::STATUS_BAD_REQUEST;
 			}
 
+			// As on show(): the reason is what the page can put in the recipient's language.
 			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
+				data: [
+					'message' => $e->getMessage(),
+					'reason' => $this->secretRequestService->refusalReason(token: $token),
+				],
 				statusCode: $status
 			);
 		} catch (ForbiddenException|NotFoundException|ShareScanPendingException) {

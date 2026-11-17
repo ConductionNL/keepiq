@@ -114,9 +114,9 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @return SecretRequest
 	 *
-	 * @throws InvalidArgumentException With code 404 (unknown), 410 (fulfilled),
-	 *                                  423 (locked), 408 (expired) or 403 (a type
-	 *                                  that cannot be requested).
+	 * @throws InvalidArgumentException With code 404 (unknown), 410 (fulfilled, or
+	 *                                  a Secret now of a type that cannot be
+	 *                                  requested), 423 (locked) or 408 (expired).
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
@@ -162,8 +162,8 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		$reason = $this->policy->refusalReason(token: $token);
 		try {
 			$this->getByToken(token: $token);
-		} catch (InvalidArgumentException) {
-			return $this->policy->refusalOfLink(reason: $reason);
+		} catch (InvalidArgumentException $e) {
+			return $this->policy->refusalOfLink(reason: $reason, status: $e->getCode());
 		}
 
 		return $reason;
@@ -508,10 +508,12 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * request, a plain fill-in and a re-request all meet this one rule. A missing
 	 * Secret is not refused here: the path that names one reports that itself.
 	 * A user's Secret is checked to be the requester's first, so the answer for
-	 * someone else's Secret does not tell its type.
+	 * someone else's Secret does not tell its type. An application's Secret may
+	 * be requested by any user (secret-requests spec), so for one of those the
+	 * answer does tell whether its type can be requested.
 	 *
 	 * @param string $secretId The Secret the request would write to
-	 * @param string|null $userId The requester; null when no one is asking, as on the public fill link
+	 * @param string $userId The requester
 	 *
 	 * @return void
 	 *
@@ -519,14 +521,14 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
-	private function requireRequestableSecret(string $secretId, ?string $userId = null): void {
+	private function requireRequestableSecret(string $secretId, string $userId): void {
 		try {
 			$secret = $this->secretMapper->findById($secretId);
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			return;
 		}
 
-		if ($userId !== null && $secret->getOwnerType() === 'user' && $secret->getOwnerId() !== $userId) {
+		if ($secret->getOwnerType() === 'user' && $secret->getOwnerId() !== $userId) {
 			throw new InvalidArgumentException(message: 'Not authorized for this secret', code: 403);
 		}
 

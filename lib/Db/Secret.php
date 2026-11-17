@@ -476,7 +476,11 @@ class Secret extends Entity implements JsonSerializable {
 	 * a credential and its history. The costs are not symmetric, so this one errs
 	 * toward reporting that a value is present.
 	 *
-	 * @return bool True when every value column is empty
+	 * A filled extra-field blob still waiting for the owner's browser to merge
+	 * it is a value too: a placeholder filled with custom fields only holds
+	 * nothing else until then.
+	 *
+	 * @return bool True when every value column is empty and no filled blob is pending
 	 *
 	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
@@ -486,7 +490,8 @@ class Secret extends Entity implements JsonSerializable {
 			&& (string)$this->additionalFields === ''
 			&& (string)$this->totp === ''
 			&& (string)$this->passkeys === ''
-			&& (string)$this->url === '';
+			&& (string)$this->url === ''
+			&& $this->pendingEntries() === [];
 	}//end holdsNoValues()
 
 	/**

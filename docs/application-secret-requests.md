@@ -47,7 +47,8 @@ the registrar may have left the organisation. Tying audit visibility to that wou
 make "who may see this" depend on who happened to click Register months ago.
 
 What is shown is plaintext metadata — status, timestamps, the names of the
-requested fields and their kinds (the field schemas a request carries). **No submitted value is readable from the listing**, by anyone,
+requested fields and, for a request made through the user API, their kinds (the
+field schemas it carries; a request an application makes for its own vault carries none). **No submitted value is readable from the listing**, by anyone,
 including an administrator. That is the write-without-read property the whole
 feature rests on and it is unaffected by who is looking.
 

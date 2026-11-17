@@ -288,17 +288,20 @@ class SecretRequestPolicy {
 
 	/**
 	 * The reason a refused link gives: its classified reason, or, for a request
-	 * that is open but whose Secret became a type that cannot be requested,
-	 * `unavailable`, so the recipient is not told the type.
+	 * that is open but refused with the `unavailable` status because its Secret
+	 * became a type that cannot be requested, `unavailable`, so the recipient is
+	 * not told the type. A request in a status this version does not know stays
+	 * `unknown`, matching its status.
 	 *
 	 * @param string $reason The reason refusalReason() classified
+	 * @param int $status The status the link was refused with
 	 *
 	 * @return string One of self::REASONS
 	 *
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
-	public function refusalOfLink(string $reason): string {
-		if ($reason === self::REASON_UNKNOWN) {
+	public function refusalOfLink(string $reason, int $status): string {
+		if ($reason === self::REASON_UNKNOWN && $status === self::REFUSALS[self::REASON_UNAVAILABLE]['code']) {
 			return self::REASON_UNAVAILABLE;
 		}
 
