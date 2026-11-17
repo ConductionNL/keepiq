@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 // Copyright (C) 2026 Conduction B.V.
 //
-// check-path-case.js — refuse two tracked paths that differ only in case.
+// check-path-case.js — refuse two tracked paths that differ only in case or
+// Unicode normalisation.
 //
 // WHY THIS EXISTS
 //
@@ -16,6 +17,9 @@
 //
 //   It usually starts with a case-only rename done the wrong way: a file is
 //   added again under its new spelling while the old spelling stays tracked.
+//
+//   macOS also treats the composed (NFC) and decomposed (NFD) forms of a name
+//   as one file: `é` as one code point, or as `e` plus a combining accent.
 //
 // HOW TO RENAME A FILE BY CASE ONLY
 //
@@ -32,8 +36,8 @@
 // WHAT IT CHECKS
 //
 //   Every path `git ls-files` reports, and every directory on those paths,
-//   lowercased. Two different spellings that lowercase to the same path fail
-//   the check. Exit 0 when there are none, 1 when there are.
+//   normalised to NFC and lowercased. Two different spellings that fold to the
+//   same path fail the check. Exit 0 when there are none, 1 when there are.
 
 'use strict'
 
@@ -47,7 +51,13 @@ const tracked = execFileSync('git', ['ls-files', '-z'], {
 	.filter(Boolean)
 
 // macOS also treats the NFC and NFD forms of a name as one file.
-const fold = (path) => path.normalize('NFC').toLowerCase()
+/**
+ * @param {string} path A tracked path or one of its directories.
+ * @return {string} The spelling a case- and normalisation-insensitive file system sees.
+ */
+function fold(path) {
+	return path.normalize('NFC').toLowerCase()
+}
 
 // Every file and every directory above it, by folded spelling.
 const spellings = new Map()
@@ -77,16 +87,25 @@ const clashes = [...spellings.values()]
 
 if (clashes.length === 0) {
 	console.log(
-		`path-case: OK — ${tracked.length} tracked paths, no two differ only in case.`,
+		`path-case: OK — ${tracked.length} tracked paths, no two differ only in case or normalisation.`,
 	)
 	process.exit(0)
 }
 
 console.error(
-	'path-case: FAIL — these tracked paths differ only in case or Unicode normalisation. On Windows or macOS they are one file:',
+	'path-case: FAIL — these tracked paths differ only in case (one file on Windows and macOS) or in Unicode normalisation (one file on macOS):',
 )
+/**
+ * Two normalisation forms print alike, so name the decomposed one.
+ *
+ * @param {string} path A clashing spelling.
+ * @return {string} The spelling as printed in the report.
+ */
+function label(path) {
+	return path === path.normalize('NFC') ? path : `${path} (decomposed, NFD)`
+}
 for (const set of clashes) {
-	console.error(`  • ${set.join('  ↔  ')}`)
+	console.error(`  • ${set.map(label).join('  ↔  ')}`)
 }
 console.error('')
 console.error(
