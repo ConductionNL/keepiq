@@ -82,8 +82,8 @@ The system MUST refuse any SecretRequest for a payment card, an identity, an aut
 @e2e exclude Server-side refusal; driven by SecretRequestServiceTest::testALinkIsRefusedOnceItsSecretBecameACard and ::testAFillIsRefusedOnceItsSecretBecameACard.
 - GIVEN a pending request on a Login Secret
 - WHEN its owner changes the Secret to the payment card type
-- THEN opening the fill link MUST be refused with an authorization error
-- AND a fill MUST be refused with nothing written, leaving the request pending
+- THEN opening the fill link MUST be refused as a link that is no longer available, with the same status and reason as any other, so the recipient is not told the type
+- AND a fill MUST be refused the same way with nothing written, leaving the request pending
 
 #### Scenario: SSH keys stay requestable
 @e2e exclude Server-side rule; driven by SecretRequestPolicyTest::testOtherTypesAndTheDefaultCanBeRequested.

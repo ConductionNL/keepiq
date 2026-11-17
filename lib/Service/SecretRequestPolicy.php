@@ -262,14 +262,15 @@ class SecretRequestPolicy {
 
 	/**
 	 * Refuse a link whose Secret is now of a type that cannot be requested, as
-	 * requireRequestableType() does, but with a message that does not tell the
-	 * anonymous recipient what the Secret became.
+	 * requireRequestableType() does, but as any `unavailable` link is refused,
+	 * with the same message and status, so the anonymous recipient cannot tell
+	 * what the Secret became.
 	 *
 	 * @param string|null $typeId The Secret's type id
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException With code 403 for a type in NOT_REQUESTABLE_TYPE_NAMES.
+	 * @throws InvalidArgumentException With code 410 for a type in NOT_REQUESTABLE_TYPE_NAMES.
 	 *
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
@@ -279,7 +280,7 @@ class SecretRequestPolicy {
 		} catch (InvalidArgumentException $e) {
 			throw new InvalidArgumentException(
 				message: self::REFUSALS[self::REASON_UNAVAILABLE]['message'],
-				code: $e->getCode(),
+				code: self::REFUSALS[self::REASON_UNAVAILABLE]['code'],
 				previous: $e
 			);
 		}

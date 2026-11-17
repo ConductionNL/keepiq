@@ -16,7 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- A secret request for a payment card, an identity, an authenticator key or a passkey is refused with 403, also when the secret's type is changed afterwards, and the request dialog and the detail view no longer offer one. (vault-builtin-type-fields)
+- A secret request for a payment card, an identity, an authenticator key or a passkey is refused with 403; when the secret's type is changed afterwards, its link answers as no longer available (410). The request dialog and the detail view no longer offer one. (vault-builtin-type-fields)
 - A filled request's additional fields always wait for the owner's browser to merge them, also when the secret had none yet. (vault-custom-field-kinds-and-ssh-key)
 - A Login's notes now leave a CXF export as a custom field, and a CXF import puts an SSH key's public key in the `publicKey` member the SSH Key form reads. (vault-custom-field-kinds-and-ssh-key)
 

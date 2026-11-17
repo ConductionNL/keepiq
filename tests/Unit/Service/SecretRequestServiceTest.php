@@ -1906,7 +1906,8 @@ class SecretRequestServiceTest extends TestCase {
 			$this->service->getByToken(token: 'tok-good');
 			$this->fail('A link onto a card must be refused');
 		} catch (InvalidArgumentException $e) {
-			$this->assertSame(403, $e->getCode());
+			// As any unavailable link: the recipient cannot tell this case apart.
+			$this->assertSame(410, $e->getCode());
 			// The anonymous recipient is not told what the Secret became.
 			$this->assertSame('Request is no longer available', $e->getMessage());
 		}
@@ -2019,7 +2020,7 @@ class SecretRequestServiceTest extends TestCase {
 			$this->makeFillService()->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHER']);
 			$this->fail('A fill onto a card must be refused');
 		} catch (InvalidArgumentException $e) {
-			$this->assertSame(403, $e->getCode());
+			$this->assertSame(410, $e->getCode());
 			$this->assertSame('Request is no longer available', $e->getMessage());
 			$this->assertSame(SecretRequest::STATUS_PENDING, $entity->getStatus());
 		}
