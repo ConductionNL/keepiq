@@ -96,7 +96,7 @@ async function framesFor(tabId: number, row: OpenSecretRow, types: VaultSnapshot
  * Any http frame asks first, whatever address the login was saved with (spec `health-site-checks`
  * § Flag logins saved with an unencrypted address).
  *
- * @spec openspec/changes/health-site-security-checks
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks
  */
 export const isInsecure = (_row: OpenSecretRow, frames: FrameRecord[]) =>
 	frames.some((frame) => new URL(frame.url).protocol === 'http:')
@@ -105,7 +105,7 @@ export const isInsecure = (_row: OpenSecretRow, frames: FrameRecord[]) =>
  * Whether the login was saved on an https page, so the question can say so; a bare host reads as https,
  * as everywhere else, and a url that does not parse (a regular expression) does not.
  *
- * @spec openspec/changes/health-site-security-checks
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks
  */
 export const savedSecure = (row: OpenSecretRow) => webUrl(row.url)?.protocol === 'https:'
 

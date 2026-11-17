@@ -1300,7 +1300,7 @@
           "openspec/specs/secrets :: Create Secret",
           "openspec/specs/secrets :: A secure note holds text without a login"
         ],
-        "plan": "openspec/changes/capability-requirements-from-the-matrix"
+        "plan": "openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1937,11 +1937,11 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27. Before: lib/Db/Secret.php:252 a single 'url' string field; git grep -i 'additionalUrl|urls' src lib: no multi-URL model; browser-extension/src/vault/match.ts:15 matches on that one url",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-vault-website-addresses on 2026-09-27. Before: lib/Db/Secret.php:252 a single 'url' string field; git grep -i 'additionalUrl|urls' src lib: no multi-URL model; browser-extension/src/vault/match.ts:15 matches on that one url",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "A secret carries one website address.",
-        "change": "openspec/changes/vault-website-addresses",
+        "change": "openspec/changes/archive/2026-11-17-vault-website-addresses",
         "readOn": "2026-10-16",
         "requirement": "openspec/specs/website-addresses :: A login carries several website addresses"
       },
@@ -1977,12 +1977,12 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Not built: no compare view. src/dialogs/VersionDetailsDialog.vue shows one decrypted historic version read-only and src/dialogs/VersionRestoreDialog.vue restores one; git grep -i 'diff|compare' src/dialogs src/components finds no side-by-side view. Planned in openspec/changes/capability-requirements-from-the-matrix task 1.1.",
+        "evidence": "Not built: no compare view. src/dialogs/VersionDetailsDialog.vue shows one decrypted historic version read-only and src/dialogs/VersionRestoreDialog.vue restores one; git grep -i 'diff|compare' src/dialogs src/components finds no side-by-side view. Planned in openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix task 1.1.",
         "owner": "ConductionNL/keepiq",
         "note": "One old version can be opened and read on its own; there is no side-by-side comparison. The KqGeheim board draws the version list with Herstellen, not a compare view.",
         "change": "openspec/changes/archive/2026-07-18-secret-version-history",
         "requirement": "openspec/specs/secret-version-history :: Compare two versions side by side",
-        "plan": "openspec/changes/capability-requirements-from-the-matrix"
+        "plan": "openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2054,11 +2054,11 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27 for the missing half: a preview image of the site; site icons are built. Before: lib/Controller/DashboardController.php:101 favicon_service_url admin setting (off by default) -> src/utils/favicon.js:6 -> src/components/SecretListItem.vue:13 favicon in the list; searched 'screenshot', 'preview' for sites: none",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-vault-website-addresses on 2026-09-27 for the missing half: a preview image of the site; site icons are built. Before: lib/Controller/DashboardController.php:101 favicon_service_url admin setting (off by default) -> src/utils/favicon.js:6 -> src/components/SecretListItem.vue:13 favicon in the list; searched 'screenshot', 'preview' for sites: none",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret list, favicon beside each login once an admin sets a favicon service",
         "note": "Site icons show when an admin configures a favicon service; there is no screenshot preview.",
-        "change": "openspec/changes/vault-website-addresses",
+        "change": "openspec/changes/archive/2026-11-17-vault-website-addresses",
         "requirement": "openspec/specs/website-addresses :: Site icons and previews are opt-in per instance"
       },
       "rowSource": "competitor",
@@ -2588,10 +2588,10 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/crypto-vault-encryption-details on 2026-09-27. Before: src/crypto/rsa.js:8 RSA_KEY_BITS = 4096 and src/crypto/aes.js:15 PBKDF2 600000 are code constants only; grep -rni 'algorithm\\|key size\\|RSA-OAEP' src --include=*.vue: only template comments; src/views/CertificateInventoryView.vue:116-137 shows vault certificate owner, subject and expiry, no algorithm or key size",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-crypto-vault-encryption-details on 2026-09-27. Before: src/crypto/rsa.js:8 RSA_KEY_BITS = 4096 and src/crypto/aes.js:15 PBKDF2 600000 are code constants only; grep -rni 'algorithm\\|key size\\|RSA-OAEP' src --include=*.vue: only template comments; src/views/CertificateInventoryView.vue:116-137 shows vault certificate owner, subject and expiry, no algorithm or key size",
         "owner": "ConductionNL/keepiq",
         "note": "No screen tells the user which algorithms or key sizes protect the vault. The certificates page shows the vault certificate's subject and expiry, but not RSA-4096, RSA-OAEP, AES-256-GCM or the key derivation settings.",
-        "change": "openspec/changes/crypto-vault-encryption-details",
+        "change": "openspec/changes/archive/2026-11-17-crypto-vault-encryption-details",
         "requirement": "openspec/specs/vault-encryption-details :: The user sees what protects the vault"
       },
       "rowSource": "own",
@@ -4021,12 +4021,12 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Not built: no approval window on a privileged login. appinfo/routes.php shareRequest create/approve/deny and src/components/share/ShareRequestForm.vue let a recipient ask the owner for a share, but lib/Service/ShareRequestService.php has no time window, address range or approval gate on use. Planned in openspec/changes/capability-requirements-from-the-matrix task 3.1.",
+        "evidence": "Not built: no approval window on a privileged login. appinfo/routes.php shareRequest create/approve/deny and src/components/share/ShareRequestForm.vue let a recipient ask the owner for a share, but lib/Service/ShareRequestService.php has no time window, address range or approval gate on use. Planned in openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix task 3.1.",
         "owner": "ConductionNL/keepiq",
         "note": "A user can ask the owner for access and the owner approves or denies, but approval is not limited by a time window or address range and does not gate use of a privileged login.",
         "spec": "openspec/specs/user-sharing",
         "requirement": "openspec/specs/user-sharing :: Use of a privileged login needs an approved time window",
-        "plan": "openspec/changes/capability-requirements-from-the-matrix"
+        "plan": "openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -6238,10 +6238,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: grep -rni '2fa.directory|twofactorauth|inactive.*2fa' src lib browser-extension/src: no hits",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-health-site-security-checks on 2026-09-27. Before: grep -rni '2fa.directory|twofactorauth|inactive.*2fa' src lib browser-extension/src: no hits",
         "owner": "ConductionNL/keepiq",
         "note": "No inactive two-factor report; the health engine has no such category (src/health/engine.js:114).",
-        "change": "openspec/changes/health-site-security-checks",
+        "change": "openspec/changes/archive/2026-11-17-health-site-security-checks",
         "requirement": "openspec/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
       },
       "rowSource": "competitor",
@@ -6273,10 +6273,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: src/health/engine.js flags only weak, reused, stale, compromised, breached; grep for http protocol checks in src and browser-extension/src: no hits",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-health-site-security-checks on 2026-09-27. Before: src/health/engine.js flags only weak, reused, stale, compromised, breached; grep for http protocol checks in src and browser-extension/src: no hits",
         "owner": "ConductionNL/keepiq",
         "note": "No insecure-URL (http) finding in the health report or the extension.",
-        "change": "openspec/changes/health-site-security-checks",
+        "change": "openspec/changes/archive/2026-11-17-health-site-security-checks",
         "requirement": "openspec/specs/health-site-checks :: Flag logins saved with an unencrypted address"
       },
       "rowSource": "competitor",
@@ -6372,11 +6372,11 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: git grep -i 'passkey' src/health src/store/modules/health.js: no passkey-availability check",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-health-site-security-checks on 2026-09-27. Before: git grep -i 'passkey' src/health src/store/modules/health.js: no passkey-availability check",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Health report has no passkey-available check.",
-        "change": "openspec/changes/health-site-security-checks",
+        "change": "openspec/changes/archive/2026-11-17-health-site-security-checks",
         "requirement": "openspec/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
       },
       "rowSource": "competitor",
@@ -6737,11 +6737,11 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27. Before: searched 'change-password', 'well-known' in src/ lib/ browser-extension/src: no match",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-vault-website-addresses on 2026-09-27. Before: searched 'change-password', 'well-known' in src/ lib/ browser-extension/src: no match",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Keepiq stores the website address but never looks up or opens the site's change-password page.",
-        "change": "openspec/changes/vault-website-addresses",
+        "change": "openspec/changes/archive/2026-11-17-vault-website-addresses",
         "requirement": "openspec/specs/website-addresses :: Open the site's change-password page"
       },
       "rowSource": "competitor",
@@ -9585,26 +9585,12 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
-        "evidence": "307 var(--color-*) references across src; every hex colour in src/*.vue is a var() fallback (grep: no bare hex outside var()); src/assets/app.css uses Nextcloud theme variables; organisation theming itself comes from Nextcloud theming or the thematiq (nldesign) app",
+        "evidence": "307 var(--color-*) references across src; every hex colour in src/*.vue is a var() fallback (grep: no bare hex outside var()); src/assets/app.css uses Nextcloud theme variables; organisation theming itself comes from Nextcloud theming or the thematiq (nldesign) app; src/manifest.json:376-398 dashboard tiles take var(--color-primary-element*) and var(--color-background-dark); lib/Controller/WebManifestController.php:152 reads ThemingDefaults::getColorPrimary() with #21468B only as FALLBACK_THEME_COLOR (:49)",
         "owner": "ConductionNL/thematiq",
         "reachedOn": "Every Keepiq page follows the active Nextcloud or NL Design System theme",
-        "note": "Keepiq styles through Nextcloud CSS variables, so the organisation theme applied by Nextcloud theming or thematiq carries through. A few surfaces use fixed colours: the dashboard quick-action tiles and the PWA theme colour.",
-        "defects": [
-          {
-            "at": "src/manifest.json:339",
-            "what": "Dashboard quick-action tiles hard-code backgroundColor (#21468B, #3b82f6, #6b7280) and white text, so they ignore the organisation theme.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "lib/Controller/WebManifestController.php:89",
-            "what": "PWA theme_color and background_color and the theme-color meta (templates/index.php:23) are fixed to #21468B instead of the instance theme colour.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/platform-properties",
-        "requirement": "openspec/changes/platform-properties/specs/platform-properties :: The look comes from the Nextcloud theme"
+        "note": "Keepiq styles through Nextcloud CSS variables, so the organisation theme applied by Nextcloud theming or thematiq carries through, including the dashboard tiles and the PWA theme colour.",
+        "requirement": "openspec/specs/platform-properties :: The look comes from the Nextcloud theme",
+        "spec": "openspec/specs/platform-properties"
       },
       "rowSource": "own",
       "provider": "thematiq",
@@ -9866,9 +9852,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Every keepiq page, in the language chosen under Nextcloud personal settings",
         "note": "Keepiq ships its own translations and follows the per-user Nextcloud language.",
-        "spec": "hydra/openspec/specs/i18n-infrastructure",
-        "change": "openspec/changes/platform-properties",
-        "requirement": "openspec/changes/platform-properties/specs/platform-properties :: The language follows the user's Nextcloud setting"
+        "spec": "openspec/specs/platform-properties",
+        "requirement": "openspec/specs/platform-properties :: The language follows the user's Nextcloud setting"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
