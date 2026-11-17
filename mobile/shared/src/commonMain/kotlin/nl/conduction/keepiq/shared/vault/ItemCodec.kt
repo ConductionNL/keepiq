@@ -131,10 +131,8 @@ class DecryptedItem(
      */
     fun masksExtra(name: String): Boolean {
         val schema = (additionalFields?.get(ItemCodec.SCHEMA_FIELD) as? JsonObject)?.get(name) as? JsonObject
-        val hidden = (schema?.get("hidden") as? JsonPrimitive)?.booleanOrNull == true ||
-            (schema?.get("format") as? JsonPrimitive)?.contentOrNull == "password"
         val kinded = ((additionalFields?.get(name) as? JsonObject)?.get("kind") as? JsonPrimitive)?.contentOrNull == "hidden"
-        return hidden || kinded || name in ItemCodec.SECRET_TYPE_MEMBERS
+        return kinded || ItemCodec.masks(name, schema)
     }
 
     /**
@@ -189,7 +187,9 @@ data class ItemDraft(
     val typed: Map<String, String> = emptyMap(),
     /** Other additional fields, name and value, in order. */
     val fields: List<Pair<String, String>> = emptyList(),
-    /** Additional members that are not text: kept as they are, never shown. */
+    /** Each field's schema from `@schema` as JSON text, "" for none, by row: it goes with its row, so a rename keeps it. */
+    val fieldSchemas: List<String> = emptyList(),
+    /** Additional members that are not text, and under `@schema` the schemas of members that are no row: kept as they are, never shown. */
     val preserved: Map<String, JsonElement> = emptyMap(),
     /** The item has a saved key; the key itself is never in the draft. */
     val hasSavedKey: Boolean = false,
@@ -201,6 +201,18 @@ data class ItemDraft(
 
     val fieldNames: List<String> get() = fields.map { it.first }
     val fieldValues: List<String> get() = fields.map { it.second }
+
+    /** Row [i]'s schema as JSON text, "" for none. */
+    fun schemaOf(i: Int): String = fieldSchemas.getOrElse(i) { "" }
+
+    /** The same draft with an empty row added. */
+    fun withField(): ItemDraft = copy(fields = fields + ("" to ""), fieldSchemas = List(fields.size) { schemaOf(it) } + "")
+
+    /** The same draft without row [i], and without its schema. */
+    fun withoutField(i: Int): ItemDraft = copy(
+        fields = fields.filterIndexed { j, _ -> j != i },
+        fieldSchemas = List(fields.size) { schemaOf(it) }.filterIndexed { j, _ -> j != i },
+    )
 
     /**
      * The same draft with what a form edited; kind, type and preserved
@@ -217,9 +229,10 @@ data class ItemDraft(
         typed: Map<String, String>,
         fieldNames: List<String>,
         fieldValues: List<String>,
+        fieldSchemas: List<String>,
     ): ItemDraft = copy(
         name = name, url = url, folderId = folderId, login = login, secret = secret, notes = notes,
-        composite = composite, typed = typed, fields = fieldNames.zip(fieldValues),
+        composite = composite, typed = typed, fields = fieldNames.zip(fieldValues), fieldSchemas = fieldSchemas,
     )
 }
 
@@ -235,14 +248,32 @@ object ItemCodec {
     const val NOTES_FIELD = "notes"
     /** The web app's member holding each field's schema: not a field, kept as it is on save. */
     const val SCHEMA_FIELD = "@schema"
+    /** The name a `@schema` member that holds no schema map is kept under (src/utils/fieldSchema.js RENAMED_SCHEMA_FIELD). */
+    const val RENAMED_SCHEMA_FIELD = "@schema (imported)"
     /** The members the web app's built-in types keep a secret in (src/utils/builtinTypeFields.js). */
     val SECRET_TYPE_MEMBERS = setOf("Private key", "Passphrase", "API secret")
     const val MAX_NAME_CHARS = 255
     const val MAX_FIELD_CHARS = 4096
     const val MAX_PAYLOAD_BYTES = 65536
 
-    /** RESERVED_MEMBER_NAMES (src/utils/additionalFields.js), plus the notes member. */
-    val RESERVED_FIELD_NAMES = setOf("key", "login", "url")
+    /** RESERVED_MEMBER_NAMES (src/utils/additionalFields.js) and the schema member; the notes member is checked apart. */
+    val RESERVED_FIELD_NAMES = setOf("key", "login", "url", SCHEMA_FIELD)
+
+    /** Whether a field's value is shown masked: hidden in its schema, or a member a built-in type keeps a secret in. */
+    fun masks(name: String, schema: JsonObject?): Boolean {
+        val hidden = (schema?.get("hidden") as? JsonPrimitive)?.booleanOrNull == true ||
+            (schema?.get("format") as? JsonPrimitive)?.contentOrNull == "password"
+        return hidden || name.trim() in SECRET_TYPE_MEMBERS
+    }
+
+    /** [masks] for an edit form row, with its schema as [ItemDraft.fieldSchemas] holds it. */
+    fun masksField(name: String, schema: String): Boolean = masks(name, schemaObject(schema))
+
+    private fun schemaObject(text: String): JsonObject? =
+        if (text.isEmpty()) null else runCatching { Json.parseToJsonElement(text) as? JsonObject }.getOrNull()
+
+    /** `@schema` as a schema map, an object of objects; null for anything else, which is a field a person named so. */
+    private fun schemaMap(stored: JsonElement?): JsonObject? = (stored as? JsonObject)?.takeIf { map -> map.values.all { it is JsonObject } }
 
     /**
      * Opens an item. A blocked item is not decrypted. A use-only copy shows
@@ -296,16 +327,27 @@ object ItemCodec {
         val typed = LinkedHashMap<String, String>()
         type?.fields?.forEach { typed[it.key] = "" }
         val extra = ArrayList<Pair<String, String>>()
+        val extraSchemas = ArrayList<String>()
         val preserved = LinkedHashMap<String, JsonElement>()
+        val schemas = schemaMap(fields[SCHEMA_FIELD])
+        val otherSchemas = LinkedHashMap<String, JsonElement>()
         for ((name, value) in fields) {
-            if (name == notesKey) continue
-            val key = typedLabels[name]
-            when {
-                key != null -> typed[key] = value.asText()
-                value is JsonPrimitive && value.isString -> extra += name to value.content
-                else -> preserved[name] = value
+            val schema = schemas?.get(name)
+            if (name == SCHEMA_FIELD) {
+                if (schemas == null && RENAMED_SCHEMA_FIELD !in fields) keep(RENAMED_SCHEMA_FIELD, value, extra, extraSchemas, preserved)
+                continue
             }
+            // parts() writes the notes back as `notes`, so their schema goes with that name.
+            if (name == notesKey) {
+                if (schema != null) otherSchemas[NOTES_FIELD] = schema
+                continue
+            }
+            val key = typedLabels[name]
+            if (key != null) typed[key] = value.asText()
+            val isRow = key == null && keep(name, value, extra, extraSchemas, preserved, schema)
+            if (!isRow && schema != null) otherSchemas[name] = schema
         }
+        if (otherSchemas.isNotEmpty()) preserved[SCHEMA_FIELD] = JsonObject(otherSchemas)
         val composite = if (kind == FormKind.CARD || kind == FormKind.IDENTITY) {
             val parsed = Composite.parse(item.secret) ?: emptyMap()
             Composite.fieldsOf(kind).associateWith { parsed[it] ?: "" }
@@ -324,9 +366,28 @@ object ItemCodec {
             composite = composite,
             typed = typed,
             fields = extra,
+            fieldSchemas = extraSchemas,
             preserved = preserved,
             hasSavedKey = item.hasSavedKey,
         )
+    }
+
+    /** A text member becomes a row with its schema and returns true; any other value is preserved. */
+    private fun keep(
+        name: String,
+        value: JsonElement,
+        extra: MutableList<Pair<String, String>>,
+        extraSchemas: MutableList<String>,
+        preserved: MutableMap<String, JsonElement>,
+        schema: JsonElement? = null,
+    ): Boolean {
+        if (value !is JsonPrimitive || !value.isString) {
+            preserved[name] = value
+            return false
+        }
+        extra += name to value.content
+        extraSchemas += schema?.toString() ?: ""
+        return true
     }
 
     /** partsFromDraft, with the typed fields merged under their labels (mergeTypedValues). */
@@ -337,13 +398,24 @@ object ItemCodec {
             else -> draft.secret
         }
         val fields = LinkedHashMap<String, JsonElement>()
-        fields.putAll(draft.preserved)
-        for ((name, value) in draft.fields) fields[name.trim()] = JsonPrimitive(value)
+        val schemas = LinkedHashMap<String, JsonElement>()
+        for ((name, value) in draft.preserved) {
+            if (name == SCHEMA_FIELD && value is JsonObject) schemas.putAll(value) else fields[name] = value
+        }
+        draft.fields.forEachIndexed { i, (name, value) ->
+            val clean = name.trim()
+            fields[clean] = JsonPrimitive(value)
+            val schema = schemaObject(draft.schemaOf(i))
+            if (schema != null) schemas[clean] = schema else schemas.remove(clean)
+        }
         for (f in type?.fields ?: emptyList()) {
             val value = draft.typed[f.key] ?: ""
             if (value != "") fields[f.label] = JsonPrimitive(value) else fields.remove(f.label)
         }
         if (draft.kind != FormKind.NOTE && draft.notes.trim().isNotEmpty()) fields[NOTES_FIELD] = JsonPrimitive(draft.notes)
+        // Only the schemas of fields still there, as the web app's withSchemas keeps them.
+        val kept = schemas.filterKeys { it in fields }
+        if (kept.isNotEmpty()) fields[SCHEMA_FIELD] = JsonObject(kept)
         return ItemParts(
             name = draft.name.trim(),
             url = draft.url.trim(),

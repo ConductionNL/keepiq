@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EditableItem } from '@/src/messages'
 import { parseTotpSeed } from '@/src/totp/totp'
-import { blobText, CARD_FIELDS, customField, diffDraft, emptyValues, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
+import { blobText, CARD_FIELDS, customField, diffDraft, emptyValues, fieldTexts, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
 
 function values(overrides: Partial<FormValues> = {}): FormValues {
 	return { ...emptyValues('t-login'), name: 'GitHub', ...overrides }
@@ -180,6 +180,24 @@ describe('fromItem and diffDraft', () => {
 		expect(form.fields.map((field) => field.name)).toEqual(['pin'])
 		const patch = patchOf(fetched, 'login', (values) => ({ fields: [...values.fields, customField('port', '22')] }))
 		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ pin: '1234', port: '22', '@schema': { pin: { type: 'string', hidden: true } } })
+	})
+
+	it('keeps a field schema through a rename', () => {
+		const fetched = item({ additionalFields: { PIN: '4711', '@schema': '{"PIN":{"type":"string","hidden":true}}' } })
+		const patch = patchOf(fetched, 'login', (values) => ({ fields: values.fields.map((field) => ({ ...field, name: 'Card PIN' })) }))
+		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ 'Card PIN': '4711', '@schema': { 'Card PIN': { type: 'string', hidden: true } } })
+	})
+
+	it('keeps the schema of the notes, which are no field', () => {
+		const fetched = item({ additionalFields: { Notes: 'n', pin: '1', '@schema': '{"Notes":{"type":"string","hidden":true}}' } })
+		const patch = patchOf(fetched, 'login', (values) => ({ fields: [...values.fields, customField('port', '22')] }))
+		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ pin: '1', port: '22', Notes: 'n', '@schema': { Notes: { type: 'string', hidden: true } } })
+	})
+
+	it('keeps the kind of a legacy { value, kind } field through a rename', () => {
+		const fetched = item({ additionalFields: fieldTexts({ PIN: { value: '4711', kind: 'hidden' } }) })
+		const patch = patchOf(fetched, 'login', (values) => ({ fields: values.fields.map((field) => ({ ...field, name: 'Card PIN' })) }))
+		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ 'Card PIN': '4711', '@schema': { 'Card PIN': { type: 'string', hidden: true } } })
 	})
 
 	it('keeps a field someone named @schema, under the name the web app gives it', () => {

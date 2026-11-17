@@ -69,7 +69,11 @@ export interface CustomField {
 	id: number
 	name: string
 	value: string
+	/** The field's JSON Schema from `@schema`, carried with the field so a rename keeps it. */
+	schema?: FieldSchema
 }
+
+export type FieldSchema = Record<string, unknown>
 
 export interface FormValues {
 	typeId: string
@@ -96,8 +100,8 @@ export interface FormValues {
 	/** The row holds an authenticator key, which `authKeyMode` keeps, replaces with `authKey` (removes, when that is empty) or, on a type that takes none, removes. */
 	totpSaved: boolean
 	authKeyMode: AuthKeyMode
-	/** The `@schema` member as JSON text, written back with the fields; null when the item has none. */
-	schemas: string | null
+	/** The `@schema` entries of members that are no form field, such as the notes; null when the item has no `@schema`. */
+	schemas: Record<string, FieldSchema> | null
 }
 
 export type AuthKeyMode = 'keep' | 'replace' | 'remove'
@@ -105,7 +109,7 @@ export type AuthKeyMode = 'keep' | 'replace' | 'remove'
 const blank = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((key) => [key, ''])) as Record<K, string>
 
 let nextFieldId = 0
-export const customField = (name = '', value = ''): CustomField => ({ id: ++nextFieldId, name, value })
+export const customField = (name = '', value = '', schema?: FieldSchema): CustomField => ({ id: ++nextFieldId, name, value, ...(schema && { schema }) })
 
 export function emptyValues(typeId: string, url = '', folderId: string | null = null): FormValues {
 	return {
@@ -184,26 +188,32 @@ function isPlainKey(kind: FormKind, key: string): boolean {
 /** The name a field called `@schema` that holds no schema map is kept under, as the web app does. */
 export const RENAMED_SCHEMA_FIELD = `${SCHEMA_MEMBER} (imported)`
 
-/** Whether `@schema` holds a schema map, an object of objects; anything else is a field a person named so. */
-function isSchemaMapText(value: string): boolean {
+/** `@schema` as a schema map, an object of objects; null for anything else, which is a field a person named so. */
+function schemaMap(value: string): Record<string, FieldSchema> | null {
 	const parsed = parseObject(value)
-	return parsed !== null && Object.values(parsed).every((schema) => typeof schema === 'object' && schema !== null && !Array.isArray(schema))
+	const isMap = parsed !== null && Object.values(parsed).every((schema) => typeof schema === 'object' && schema !== null && !Array.isArray(schema))
+	return isMap ? parsed as Record<string, FieldSchema> : null
 }
 
-/** The first field named Notes, in any case, is the notes; every other one is an additional field. */
+/** The first field named Notes, in any case, is the notes; every other one is an additional field, with its schema. */
 function takeFields(values: FormValues, additionalFields: Record<string, string>): void {
+	const schemaText = Object.hasOwn(additionalFields, SCHEMA_MEMBER) ? additionalFields[SCHEMA_MEMBER] : undefined
+	const schemas = schemaText === undefined ? null : schemaMap(schemaText)
+	const schemaOf = (name: string) => schemas && Object.hasOwn(schemas, name) ? schemas[name] : undefined
+	const rest: Record<string, FieldSchema> = {}
 	for (const [name, value] of Object.entries(additionalFields)) {
-		if (name === SCHEMA_MEMBER && isSchemaMapText(value)) {
-			values.schemas = value
-		} else if (name === SCHEMA_MEMBER) {
-			if (!Object.hasOwn(additionalFields, RENAMED_SCHEMA_FIELD)) values.fields.push(customField(RENAMED_SCHEMA_FIELD, value))
+		if (name === SCHEMA_MEMBER) {
+			if (!schemas && !Object.hasOwn(additionalFields, RENAMED_SCHEMA_FIELD)) values.fields.push(customField(RENAMED_SCHEMA_FIELD, value))
 		} else if (values.notesKey === null && name.toLowerCase() === NOTES) {
 			values.notes = value
 			values.notesKey = name
+			const schema = schemaOf(name)
+			if (schema) rest[name] = schema
 		} else {
-			values.fields.push(customField(name, value))
+			values.fields.push(customField(name, value, schemaOf(name)))
 		}
 	}
+	if (schemas) values.schemas = rest
 }
 
 export function fromItem(item: EditableItem, typeName: string | undefined): FormValues {
@@ -252,8 +262,15 @@ function keyOf(values: FormValues, kind: FormKind): string {
 function fieldEntries(values: FormValues, sections: FormSections): Array<[string, string]> {
 	const entries = sections.fields ? values.fields.filter((field) => field.name.trim()).map((field): [string, string] => [field.name.trim(), field.value]) : []
 	if (sections.notes && values.notes !== '') entries.push([values.notesKey ?? NOTES, values.notes])
-	if (values.schemas !== null) entries.push([SCHEMA_MEMBER, values.schemas])
+	const schemas = schemaEntries(values, sections)
+	if (values.schemas !== null || schemas.length > 0) entries.push([SCHEMA_MEMBER, JSON.stringify(Object.fromEntries(schemas))])
 	return entries
+}
+
+/** `@schema` under the names the fields are saved by, so a rename keeps a field's schema. */
+function schemaEntries(values: FormValues, sections: FormSections): Array<[string, FieldSchema]> {
+	const entries = sections.fields ? values.fields.filter((field) => field.name.trim() && field.schema).map((field): [string, FieldSchema] => [field.name.trim(), field.schema!]) : []
+	return [...Object.entries(values.schemas ?? {}), ...entries]
 }
 
 /** The additional fields as stored: `@schema` back to the object the web app reads, keeping only the schemas of fields still there. */
