@@ -21,7 +21,13 @@
  */
 
 import { t } from '@nextcloud/l10n'
-import { fieldsOf, SCHEMA_MEMBER, schemaConflicts, schemasOf, withSchemas } from './fieldSchema.js'
+import {
+	fieldsOf,
+	SCHEMA_MEMBER,
+	schemaConflicts,
+	schemasOf,
+	withSchemas,
+} from './fieldSchema.js'
 
 /**
  * Names that address the Secret's own columns and can never be members.
@@ -98,10 +104,15 @@ export function membersValid(members = [], reserved = [], checked = members) {
 			return true
 		}
 		const others = [
-			...members.filter((other) => other !== member).map((other) => other.name),
+			...members
+				.filter((other) => other !== member)
+				.map((other) => other.name),
 			...reserved,
 		]
-		return memberNameError(member.name, others) === '' && !schemaConflicts(member.schema)
+		return (
+			memberNameError(member.name, others) === ''
+			&& !schemaConflicts(member.schema)
+		)
 	})
 }
 

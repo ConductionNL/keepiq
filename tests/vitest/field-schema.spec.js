@@ -231,10 +231,14 @@ describe('field schemas', () => {
 	// openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	it('finds the conflicts the server refuses, reading a schema as stored', () => {
 		expect(schemaConflicts({ type: 'string', pattern: '(a+)+' })).toBe(true)
-		expect(schemaConflicts({ type: 'integer', minimum: 9, maximum: 1 })).toBe(true)
+		expect(schemaConflicts({ type: 'integer', minimum: 9, maximum: 1 })).toBe(
+			true,
+		)
 		// An integer keeps no pattern, so a stray one is no conflict.
 		expect(schemaConflicts({ type: 'integer', pattern: '(a+)+' })).toBe(false)
-		expect(schemaConflicts({ type: 'string', minLength: 1, maxLength: 9 })).toBe(false)
+		expect(schemaConflicts({ type: 'string', minLength: 1, maxLength: 9 })).toBe(
+			false,
+		)
 	})
 
 	// openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display

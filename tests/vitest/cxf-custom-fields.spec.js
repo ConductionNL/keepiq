@@ -166,14 +166,24 @@ describe('CXF custom fields', () => {
 		expect(
 			readCustomFields({
 				type: 'custom-fields',
-				fields: [{
-					label: 'PIN',
-					fieldType: 'concealed-string',
-					value: '1234',
-					extensions: [{ name: 'nl.conduction.keepiq.field-schema', schema: { type: 'string', hidden: 'true' } }],
-				}],
+				fields: [
+					{
+						label: 'PIN',
+						fieldType: 'concealed-string',
+						value: '1234',
+						extensions: [
+							{
+								name: 'nl.conduction.keepiq.field-schema',
+								schema: { type: 'string', hidden: 'true' },
+							},
+						],
+					},
+				],
 			}),
-		).toEqual({ PIN: '1234', '@schema': { PIN: { type: 'string', hidden: true } } })
+		).toEqual({
+			PIN: '1234',
+			'@schema': { PIN: { type: 'string', hidden: true } },
+		})
 	})
 
 	it('never lets an imported field replace one the row already has', () => {

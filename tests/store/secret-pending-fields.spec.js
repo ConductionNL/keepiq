@@ -154,14 +154,20 @@ describe('secret store: the schemas a request carries', () => {
 				'ENC({"PIN":"1","@schema":{"PIN":{"type":"string"}}})',
 				'ENC({"A":"true"})',
 			]),
-			pendingFieldSchemas: [{ PIN: { type: 'string', hidden: true } }, { A: { type: 'boolean' } }],
+			pendingFieldSchemas: [
+				{ PIN: { type: 'string', hidden: true } },
+				{ A: { type: 'boolean' } },
+			],
 		})
 
 		expect(decrypted.additionalFields).toEqual({
 			A: 'true',
 			B: 'b',
 			PIN: '1',
-			'@schema': { PIN: { type: 'string', hidden: true }, A: { type: 'boolean' } },
+			'@schema': {
+				PIN: { type: 'string', hidden: true },
+				A: { type: 'boolean' },
+			},
 		})
 		expect(decrypted.mergedPending).toBe(2)
 		// Nothing is read: the schemas came with the secret, also offline.
@@ -169,7 +175,9 @@ describe('secret store: the schemas a request carries', () => {
 	})
 
 	it('merges a blob held back before schemas were stored as text', async () => {
-		const decrypted = await useSecretStore().decryptSecret(served(['ENC({"PIN":"1234"})']))
+		const decrypted = await useSecretStore().decryptSecret(
+			served(['ENC({"PIN":"1234"})']),
+		)
 
 		expect(decrypted.additionalFields).toEqual({ A: 'a', B: 'b', PIN: '1234' })
 		expect(decrypted.mergedPending).toBe(1)

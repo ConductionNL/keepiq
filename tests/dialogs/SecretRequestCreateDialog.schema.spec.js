@@ -82,7 +82,15 @@ describe('SecretRequestCreateDialog field schemas', () => {
 					id: 'secret-1',
 					additionalFields: {
 						Code: '',
-						'@schema': { Code: { type: 'string', hidden: true, pattern: '(a+)+', minLength: 9, maxLength: 1 } },
+						'@schema': {
+							Code: {
+								type: 'string',
+								hidden: true,
+								pattern: '(a+)+',
+								minLength: 9,
+								maxLength: 1,
+							},
+						},
 					},
 				},
 			},

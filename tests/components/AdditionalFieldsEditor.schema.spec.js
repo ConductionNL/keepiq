@@ -85,32 +85,54 @@ describe('AdditionalFieldsEditor schemas', () => {
 describe('AdditionalFieldsEditor hidden values', () => {
 	// openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 	it.each([
-		['multi-line', { type: 'string', format: 'text', hidden: true }, 'masked-text-area-toggle'],
+		[
+			'multi-line',
+			{ type: 'string', format: 'text', hidden: true },
+			'masked-text-area-toggle',
+		],
 		['JSON', { type: 'object', hidden: true }, 'schema-value-input-json-toggle'],
-	])('keeps a hidden %s value out of the page until Show', async (_, schema, toggle) => {
-		const value = schema.type === 'object' ? '{"secret":"s3cr3t-recovery"}' : 's3cr3t-recovery'
-		const wrapper = mountEditor([{ name: 'Recovery', value, schema }])
+	])(
+		'keeps a hidden %s value out of the page until Show',
+		async (_, schema, toggle) => {
+			const value =
+				schema.type === 'object'
+					? '{"secret":"s3cr3t-recovery"}'
+					: 's3cr3t-recovery'
+			const wrapper = mountEditor([{ name: 'Recovery', value, schema }])
 
-		const input = wrapper.findComponent({ name: 'SchemaValueInput' })
-		expect(wrapper.html()).not.toContain('s3cr3t-recovery')
-		expect(input.findComponent({ name: 'NcTextArea' }).exists()).toBe(false)
-		expect(input.findComponent({ name: 'CnJsonViewer' }).exists()).toBe(false)
+			const input = wrapper.findComponent({ name: 'SchemaValueInput' })
+			expect(wrapper.html()).not.toContain('s3cr3t-recovery')
+			expect(input.findComponent({ name: 'NcTextArea' }).exists()).toBe(false)
+			expect(input.findComponent({ name: 'CnJsonViewer' }).exists()).toBe(
+				false,
+			)
 
-		await wrapper.find(`[data-testid="${toggle}"]`).trigger('click')
-		const shown = schema.type === 'object'
-			? input.findComponent({ name: 'CnJsonViewer' }).props('value')
-			: input.findComponent({ name: 'NcTextArea' }).props('modelValue')
-		expect(shown).toBe(value)
-	})
+			await wrapper.find(`[data-testid="${toggle}"]`).trigger('click')
+			const shown =
+				schema.type === 'object'
+					? input.findComponent({ name: 'CnJsonViewer' }).props('value')
+					: input.findComponent({ name: 'NcTextArea' }).props('modelValue')
+			expect(shown).toBe(value)
+		},
+	)
 
 	it('does not pass a removed row’s Show to the row that takes its place', async () => {
 		const hidden = { type: 'string', format: 'text', hidden: true }
 		const second = { name: 'Second', value: 'second-secret', schema: hidden }
-		const wrapper = mountEditor([{ name: 'First', value: 'first-secret', schema: hidden }, second])
+		const wrapper = mountEditor([
+			{ name: 'First', value: 'first-secret', schema: hidden },
+			second,
+		])
 
-		await wrapper.find('[data-testid="masked-text-area-toggle"]').trigger('click')
-		await wrapper.findComponent('[data-testid="additional-field-remove-0"]').trigger('click')
-		await wrapper.setProps({ members: wrapper.emitted('update:members').at(-1)[0] })
+		await wrapper
+			.find('[data-testid="masked-text-area-toggle"]')
+			.trigger('click')
+		await wrapper
+			.findComponent('[data-testid="additional-field-remove-0"]')
+			.trigger('click')
+		await wrapper.setProps({
+			members: wrapper.emitted('update:members').at(-1)[0],
+		})
 
 		expect(wrapper.props('members')).toEqual([second])
 		expect(wrapper.findComponent({ name: 'NcTextArea' }).exists()).toBe(false)

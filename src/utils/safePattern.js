@@ -57,7 +57,10 @@ export function patternProblem(pattern) {
 	} catch {
 		return 'invalid'
 	}
-	const fits = [...pattern].length <= MAX_PATTERN_LENGTH && !hasHugeBound(pattern) && scan(pattern)
+	const fits =
+		[...pattern].length <= MAX_PATTERN_LENGTH
+		&& !hasHugeBound(pattern)
+		&& scan(pattern)
 	return fits ? '' : 'unsupported'
 }
 
@@ -111,10 +114,15 @@ function scan(p) {
 function token(p, i, stack, last) {
 	const c = p[i]
 	const top = stack[stack.length - 1]
-	const atom = (length) => (length === 0 ? null : { next: i + length, last: { group: false, inner: false } })
+	const atom = (length) =>
+		length === 0
+			? null
+			: { next: i + length, last: { group: false, inner: false } }
 	if (c === '\\') {
 		// A word boundary is an assertion: nothing to repeat.
-		return 'bB'.includes(p[i + 1]) ? { next: i + 2, last: null } : atom(escapeLength(p, i, false))
+		return 'bB'.includes(p[i + 1])
+			? { next: i + 2, last: null }
+			: atom(escapeLength(p, i, false))
 	}
 	if (c === '[') {
 		return atom(classLength(p, i))
@@ -141,7 +149,10 @@ function token(p, i, stack, last) {
 		// A lone brace or bracket is a literal in PCRE and an error in JavaScript.
 		return null
 	}
-	return { next: i + 1, last: '^$'.includes(c) ? null : { group: false, inner: false } }
+	return {
+		next: i + 1,
+		last: '^$'.includes(c) ? null : { group: false, inner: false },
+	}
 }
 
 /**
@@ -189,7 +200,10 @@ function closeGroup(i, stack) {
 	const closed = stack.pop()
 	stack[stack.length - 1].inner ||= closed.inner
 	// A lookahead cannot be repeated.
-	return { next: i + 1, last: closed.look ? null : { group: true, inner: closed.inner } }
+	return {
+		next: i + 1,
+		last: closed.look ? null : { group: true, inner: closed.inner },
+	}
 }
 
 /**

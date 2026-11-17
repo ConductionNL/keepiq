@@ -300,7 +300,8 @@ const BROWSER_VALUES = Object.freeze({
 	// The HTML floating-point number grammar: "5.", "+5" or "0x10" show empty.
 	number: (value) => /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][-+]?\d+)?$/.test(value),
 	date: (value) => /^\d{4}-\d{2}-\d{2}$/.test(value),
-	'datetime-local': (value) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(value),
+	'datetime-local': (value) =>
+		/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(value),
 	time: (value) => /^\d{2}:\d{2}(?::\d{2})?$/.test(value),
 })
 
@@ -514,7 +515,9 @@ function patternError(value, pattern) {
 		return ''
 	}
 	if ([...value].length > MAX_PATTERN_INPUT) {
-		return t('keepiq', 'Use at most {max} characters.', { max: MAX_PATTERN_INPUT })
+		return t('keepiq', 'Use at most {max} characters.', {
+			max: MAX_PATTERN_INPUT,
+		})
 	}
 	const fits = isSafePattern(pattern) && new RegExp(pattern, 'u').test(value)
 	return fits ? '' : t('keepiq', 'This does not match the required pattern.')
@@ -796,9 +799,7 @@ export function schemaConflicts(schema) {
 	// Read as stored, so a key its type ignores, such as a pattern on an
 	// integer, does not count.
 	const clean = cleanSchema(schema)
-	return (
-		Object.keys(withoutConflicts(clean)).length !== Object.keys(clean).length
-	)
+	return Object.keys(withoutConflicts(clean)).length !== Object.keys(clean).length
 }
 
 /**
@@ -864,7 +865,10 @@ export function mergeFilledBlob(own, incoming, requested = {}) {
 	const filled = fieldsOf(incoming)
 	const schemas = schemasOf(own)
 	for (const name of Object.keys(filled)) {
-		if (!Object.hasOwn(schemas, name) && isSchemaMap({ [name]: requested?.[name] })) {
+		if (
+			!Object.hasOwn(schemas, name)
+			&& isSchemaMap({ [name]: requested?.[name] })
+		) {
 			schemas[name] = requested[name]
 		}
 	}

@@ -59,7 +59,12 @@ describe('typedFields', () => {
 		const original = { Host: 'h', 'Root password': '' }
 
 		expect(
-			mergeTypedValues({}, FIELDS, { host: '', 'root-password': '' }, original),
+			mergeTypedValues(
+				{},
+				FIELDS,
+				{ host: '', 'root-password': '' },
+				original,
+			),
 		).toEqual({ 'Root password': '' })
 	})
 

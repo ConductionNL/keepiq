@@ -189,7 +189,10 @@ export default {
 		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		patternInvalid() {
-			return Boolean(this.schema.pattern) && patternProblem(this.schema.pattern) !== ''
+			return (
+				Boolean(this.schema.pattern)
+				&& patternProblem(this.schema.pattern) !== ''
+			)
 		},
 
 		/**
@@ -199,15 +202,17 @@ export default {
 		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-presets-pick-a-schema-advanced-shows-it
 		 */
 		patternHelp() {
-			const problem = this.schema.pattern ? patternProblem(this.schema.pattern) : ''
+			const problem = this.schema.pattern
+				? patternProblem(this.schema.pattern)
+				: ''
 			if (problem === 'invalid') {
 				return t('keepiq', 'This is not a valid regular expression.')
 			}
 			return problem === 'unsupported'
 				? t(
-					'keepiq',
-					'This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.',
-				)
+						'keepiq',
+						'This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.',
+					)
 				: ''
 		},
 

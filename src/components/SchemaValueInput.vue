@@ -47,7 +47,9 @@
 				<NcButton
 					v-if="hidden"
 					variant="tertiary"
-					:aria-label="jsonShown ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
+					:aria-label="
+						jsonShown ? t('keepiq', 'Hide') : t('keepiq', 'Show')
+					"
 					:title="jsonShown ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
 					data-testid="schema-value-input-json-toggle"
 					@click="jsonRevealed = !jsonShown">
