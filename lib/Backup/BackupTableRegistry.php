@@ -46,6 +46,7 @@ final class BackupTableRegistry {
 	 * @var string[]
 	 */
 	public const TABLES = [
+		'access_requests',
 		'app_lease_policies',
 		'applications',
 		'attachment_grants',
@@ -71,9 +72,11 @@ final class BackupTableRegistry {
 		'machine_leases',
 		'migration_failures',
 		'passkey_credentials',
+		'privileged_logins',
 		'recovery_approvals',
 		'recovery_enrolments',
 		'recovery_keys',
+		'recovery_kits',
 		'recovery_officers',
 		'recovery_requests',
 		'rotation_flags',
@@ -81,6 +84,7 @@ final class BackupTableRegistry {
 		'secret_requests',
 		'secret_tags',
 		'secret_types',
+		'secret_urls',
 		'secret_versions',
 		'secrets',
 		'share_targets',
@@ -97,5 +101,5 @@ final class BackupTableRegistry {
 	 *
 	 * @var string[]
 	 */
-	public const AUTOINCREMENT = ['audit_log', 'migration_failures', 'secret_tags', 'used_proofs'];
+	public const AUTOINCREMENT = ['audit_log', 'migration_failures', 'secret_tags', 'secret_urls', 'used_proofs'];
 }//end class

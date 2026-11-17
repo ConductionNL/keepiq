@@ -97,21 +97,151 @@ function collectSubtree(folders, rootIds) {
 
 /**
  * Whether a secret goes into the export: never a use-only copy
- * (sharing-use-only-and-expiring-shares D3), and with a folder scope only a
- * secret whose folder is within a selected subtree.
+ * (sharing-use-only-and-expiring-shares D3), and only a secret every filter
+ * of the scope lets through (portability-export-choice-and-restore-fidelity
+ * D1): its folder within a selected subtree, its type among the chosen
+ * types, itself among the selected secrets. A filter that is null lets every
+ * secret through.
  *
  * @param {object} secret A decrypted secret.
- * @param {Set<string>|null} includedFolderIds The selected subtree, or null for the whole vault.
+ * @param {object} filters The scope's filters.
+ * @param {Set<string>|null} filters.folderIds The selected subtree, or null.
+ * @param {Set<string>|null} filters.typeIds The chosen type ids, or null.
+ * @param {Set<string>|null} filters.secretIds The selected secret ids, or null.
  * @return {boolean}
+ * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  */
-function isExported(secret, includedFolderIds) {
+function isExported(secret, { folderIds, typeIds, secretIds }) {
 	if (isUseOnly(secret)) {
 		return false
 	}
 	return (
-		includedFolderIds === null
-		|| (secret.folderId != null && includedFolderIds.has(secret.folderId))
+		(folderIds === null || (secret.folderId != null && folderIds.has(secret.folderId)))
+		&& (typeIds === null || typeIds.has(secretTypeId(secret)))
+		&& (secretIds === null || secretIds.has(String(secret.id)))
 	)
+}
+
+/**
+ * The type id of a decrypted secret: the server's `typeId`, else the `type` it was built with.
+ *
+ * @param {object} secret A decrypted secret.
+ * @return {string} The type id, '' when it has none.
+ */
+function secretTypeId(secret) {
+	return String(secret.typeId ?? secret.type ?? '')
+}
+
+/**
+ * The fields a user may leave out of an export (D2). The name and the value
+ * always go in: a backup without values is not a backup.
+ */
+export const OMITTABLE_FIELDS = Object.freeze(['login', 'additionalFields', 'totp'])
+
+/**
+ * The scope's filters as sets, null for a filter the scope does not set.
+ * The legacy `{ mode: 'folders', folderIds }` shape is a folder filter.
+ *
+ * @param {object} scope The scope.
+ * @param {Array<object>} folders Folder rows ({ id, parentId }).
+ * @return {{folderIds: Set<string>|null, typeIds: Set<string>|null, secretIds: Set<string>|null}}
+ */
+function scopeFilters(scope, folders) {
+	const listed = (key) =>
+		scope && Array.isArray(scope[key]) && scope[key].length > 0
+			? scope[key].map(String)
+			: null
+	return {
+		folderIds: folderFilter(scope, folders),
+		typeIds: listed('typeIds') === null ? null : new Set(listed('typeIds')),
+		secretIds: secretFilter(scope, listed('secretIds')),
+	}
+}
+
+/**
+ * The secret filter. A `{ mode: 'selection', secretIds }` scope selects exactly
+ * the listed secrets, so no ids listed selects nothing; otherwise `secretIds`
+ * filters only when it lists any.
+ *
+ * @param {object} scope The scope.
+ * @param {Array<string>|null} listed The listed secret ids, null when none.
+ * @return {Set<string>|null} The selected ids, or null for every secret.
+ * @spec openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp/spec.md#requirement-choose-what-to-send
+ */
+function secretFilter(scope, listed) {
+	if (scope && scope.mode === 'selection') {
+		return new Set(listed ?? [])
+	}
+	return listed === null ? null : new Set(listed)
+}
+
+/**
+ * The folder filter. The legacy `{ mode: 'folders', folderIds }` keeps its
+ * meaning exactly (no ids listed selects nothing); any other `mode` is the
+ * whole vault; a scope without `mode` filters on `folderIds` when it lists any.
+ *
+ * @param {object} scope The scope.
+ * @param {Array<object>} folders Folder rows ({ id, parentId }).
+ * @return {Set<string>|null} The selected subtree, or null for every folder.
+ */
+function folderFilter(scope, folders) {
+	if (!scope) {
+		return null
+	}
+	if (scope.mode === 'folders') {
+		return collectSubtree(folders, scope.folderIds || [])
+	}
+	if (scope.mode !== undefined || !Array.isArray(scope.folderIds) || scope.folderIds.length === 0) {
+		return null
+	}
+	return collectSubtree(folders, scope.folderIds)
+}
+
+/**
+ * The entry with the fields the user left out cleared. Leaving out the
+ * one-time code seed drops the login's own code and a `totp` kept among the
+ * additional fields.
+ *
+ * @param {object} entry The export entry.
+ * @param {Array<string>} omitted The fields left out.
+ * @return {object} The same entry.
+ */
+function withoutFields(entry, omitted) {
+	if (omitted.includes('login')) {
+		entry.login = null
+	}
+	if (omitted.includes('additionalFields')) {
+		entry.additionalFields = null
+	}
+	if (omitted.includes('totp')) {
+		delete entry.totp
+		const af = entry.additionalFields
+		if (af && typeof af === 'object' && !Array.isArray(af) && 'totp' in af) {
+			const rest = { ...af }
+			delete rest.totp
+			entry.additionalFields = rest
+		}
+	}
+	return entry
+}
+
+/**
+ * The type name, and for a custom type its label, of a secret (D3), so a
+ * restore on another instance can find or recreate the type.
+ *
+ * @param {object} secret A decrypted secret.
+ * @param {Map<string, object>} typesById The vault's types by id.
+ * @return {object} `{ typeName, typeLabel? }`, or {} for an unknown type.
+ */
+function typeNames(secret, typesById) {
+	const type = typesById.get(secretTypeId(secret))
+	if (!type || !type.name) {
+		return {}
+	}
+	if (type.scope === 'system' || !type.label) {
+		return { typeName: type.name }
+	}
+	return { typeName: type.name, typeLabel: type.label }
 }
 
 /**
@@ -156,55 +286,104 @@ function exportEntry(secret, pathMap) {
 		additionalFields: secret.additionalFields ?? null,
 		folder: folderPath(secret, pathMap),
 		...blobFields(secret),
+		...extraUrls(secret),
 	}
+}
+
+/**
+ * A login's extra website addresses, only when it has any, so a backup of a
+ * vault without them reads as before.
+ *
+ * @param {object} secret A decrypted secret.
+ * @return {object} `{ additionalUrls }` or nothing.
+ * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ */
+function extraUrls(secret) {
+	const urls = Array.isArray(secret.additionalUrls)
+		? secret.additionalUrls.filter((url) => typeof url === 'string' && url !== '')
+		: []
+	return urls.length > 0 ? { additionalUrls: urls } : {}
 }
 
 /**
  * Serialize decrypted secrets + folders into the versioned export payload.
  *
- * @param {Array<object>} secrets Decrypted secrets (name, url, login, key,
- *   additionalFields, totp, passkeys, type, folderId).
+ * @param {Array<object>} secrets Decrypted secrets (id, name, url, login, key,
+ *   additionalFields, totp, passkeys, typeId, folderId).
  * @param {Array<object>} folders Folder rows ({ id, name, parentId }).
- * @param {object} [scope] Scope selector.
- * @param {string} [scope.mode] 'vault' (default), 'folders' or 'selection'.
- * @param {Array<string>} [scope.folderIds] Selected folder IDs when mode is 'folders'.
- * @param {Array<string>} [scope.secretIds] Selected secret IDs when mode is 'selection'.
- * @return {object} The `{ format, version, secrets, folders }` payload.
+ * @param {object} [scope] The scope (D1): `folderIds` (with their
+ *   subfolders), `typeIds`, `secretIds`; the filters combine, and none set is
+ *   the whole vault. `{ mode: 'folders', folderIds }` still reads as a folder scope;
+ *   `{ mode: 'selection', secretIds }` exports exactly those secrets (none listed
+ *   exports nothing) and only the folders they sit in.
+ * @param {object} [options] Options.
+ * @param {Array<object>} [options.types] The vault's types ({ id, name, label, scope }), for `typeName`/`typeLabel`.
+ * @param {Array<string>} [options.omitFields] Fields to leave out, from OMITTABLE_FIELDS (D2).
+ * @return {object} The `{ format, version, secrets, folders }` payload, with
+ *   `partial: true` and `omittedFields` when fields were left out.
+ * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  * @spec openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp/spec.md#requirement-choose-what-to-send
  */
-export function serializeVault(secrets, folders, scope = { mode: 'vault' }) {
+export function serializeVault(secrets, folders, scope = { mode: 'vault' }, options = {}) {
 	const pathMap = buildPathMap(folders)
-	const includedFolderIds =
-		scope && scope.mode === 'folders'
-			? collectSubtree(folders, scope.folderIds || [])
-			: null
-	const selectedIds =
-		scope && scope.mode === 'selection'
-			? new Set((scope.secretIds || []).map(String))
-			: null
-
-	const exported = secrets.filter(
-		(secret) =>
-			isExported(secret, includedFolderIds)
-			&& (selectedIds === null || selectedIds.has(String(secret.id))),
+	const filters = scopeFilters(scope, folders)
+	const typesById = new Map(
+		(Array.isArray(options.types) ? options.types : [])
+			.filter((type) => type && type.id)
+			.map((type) => [String(type.id), type]),
 	)
+	const omitted = OMITTABLE_FIELDS.filter((field) =>
+		(options.omitFields || []).includes(field),
+	)
+	const exported = secrets.filter((secret) => isExported(secret, filters))
 	// A selection carries the folders its secrets sit in, so their paths
 	// travel; the folder scope carries its subtree, the vault every folder.
 	const usedFolderIds =
-		selectedIds === null
-			? null
-			: new Set(exported.map((secret) => secret.folderId).filter((id) => id !== null && id !== undefined))
+		scope && scope.mode === 'selection'
+			? new Set(exported.map((secret) => secret.folderId).filter((id) => id !== null && id !== undefined))
+			: null
 
-	return {
+	const payload = {
 		format: PAYLOAD_FORMAT,
 		version: PAYLOAD_VERSION,
-		secrets: exported.map((secret) => exportEntry(secret, pathMap)),
+		secrets: exported
+			.map((secret) =>
+				withoutFields(
+					{ ...exportEntry(secret, pathMap), ...typeNames(secret, typesById) },
+					omitted,
+				),
+			),
 		folders: folders
 			.filter(
 				(folder) =>
-					(includedFolderIds === null || includedFolderIds.has(folder.id))
+					(filters.folderIds === null || filters.folderIds.has(folder.id))
 					&& (usedFolderIds === null || usedFolderIds.has(folder.id)),
 			)
 			.map((folder) => ({ path: pathMap.get(folder.id) ?? folder.name })),
 	}
+	if (omitted.length > 0) {
+		payload.partial = true
+		payload.omittedFields = omitted
+	}
+	return payload
+}
+
+/**
+ * The scope name the export event reports: `vault` for an export with no
+ * filter, `folders` for any narrowed one.
+ *
+ * @param {object} scope The scope.
+ * @return {string} `vault` or `folders`.
+ */
+export function reportedScope(scope) {
+	if (!scope) {
+		return 'vault'
+	}
+	if (scope.mode !== undefined) {
+		return scope.mode === 'folders' ? 'folders' : 'vault'
+	}
+	const narrowed = ['folderIds', 'typeIds', 'secretIds'].some(
+		(key) => Array.isArray(scope[key]) && scope[key].length > 0,
+	)
+	return narrowed ? 'folders' : 'vault'
 }

@@ -33,7 +33,9 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Service\SecretUrlService;
 use OCA\Keepiq\Kernel\Contracts\SecretServiceInterface;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -60,6 +62,8 @@ class SecretUpdateController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param SecretServiceInterface $secretService The secret service
 	 * @param IUserSession $userSession The user session
+	 * @param SecretUrlService|null $urls The extra website addresses of a login
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 *
 	 * @return void
 	 */
@@ -67,6 +71,8 @@ class SecretUpdateController extends OCSController {
 		IRequest $request,
 		private SecretServiceInterface $secretService,
 		private IUserSession $userSession,
+		private ?SecretUrlService $urls = null,
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -96,10 +102,18 @@ class SecretUpdateController extends OCSController {
 		}
 
 		try {
+			// The extra addresses are checked before anything is written (vault-website-addresses).
+			$extraUrls = $this->extraUrls(id: $id, userId: $user->getUID());
 			$secret = $this->updateOnCurrent(id: $id, changes: $this->requestedChanges(), userId: $user->getUID());
+			// A privileged copy outside its window is returned without its
+			// ciphertext (capability-requirements-from-the-matrix 3.1).
+			$data = $this->serialised(secret: $secret, userId: $user->getUID());
+			if ($extraUrls !== null && $this->urls !== null) {
+				$data['additionalUrls'] = $this->urls->replace(secret: $secret, userId: $user->getUID(), urls: $extraUrls);
+			}
 		} catch (StaleWriteException $e) {
 			return new JSONResponse(
-				data: ['message' => $e->getMessage(), 'current' => $e->getCurrent()->jsonSerialize()],
+				data: ['message' => $e->getMessage(), 'current' => $this->serialised(secret: $e->getCurrent(), userId: $user->getUID())],
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (NotFoundException $e) {
@@ -118,8 +132,39 @@ class SecretUpdateController extends OCSController {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}//end try
 
-		return new JSONResponse(data: $secret->jsonSerialize());
+		return new JSONResponse(data: $data);
 	}//end update()
+
+	/**
+	 * The extra addresses the request carries, normalised, or null when it
+	 * carries none. Only the owner of a login changes them; a recipient's
+	 * copy is refused before the update writes anything.
+	 *
+	 * @param string $id     The secret ID
+	 * @param string $userId The requesting user
+	 *
+	 * @return list<string>|null
+	 *
+	 * @throws InvalidArgumentException When the list cannot be stored
+	 * @throws ForbiddenException When the login is not the caller's own
+	 * @throws NotFoundException When the secret does not exist
+	 *
+	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	private function extraUrls(string $id, string $userId): ?array {
+		$urls = $this->request->getParam('additionalUrls');
+		if ($urls === null || $this->urls === null) {
+			return null;
+		}
+
+		$list = $this->urls->normalise(urls: $urls);
+		$secret = $this->secretService->get($id, $userId);
+		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
+			throw new ForbiddenException(message: 'Only the owner of a login changes its addresses');
+		}
+
+		return $list;
+	}//end extraUrls()
 
 	/**
 	 * Run the update. One with a base is refused at once when the secret
@@ -173,6 +218,12 @@ class SecretUpdateController extends OCSController {
 			$data['mergedPending'] = (int)$mergedPending;
 		}
 
+		// The re-prompt flag is a boolean, not a string field (crypto-item-reprompt D1).
+		$reprompt = $this->request->getParam('reprompt');
+		if ($reprompt !== null) {
+			$data['reprompt'] = filter_var($reprompt, FILTER_VALIDATE_BOOLEAN);
+		}
+
 		$baseUpdatedAt = $this->request->getParam('baseUpdatedAt');
 		if ($baseUpdatedAt !== null && $baseUpdatedAt !== '') {
 			$data['baseUpdatedAt'] = (string)$baseUpdatedAt;
@@ -180,4 +231,19 @@ class SecretUpdateController extends OCSController {
 
 		return $data;
 	}//end requestedChanges()
+
+	/**
+	 * A row as it is returned to the caller: without its ciphertext when it
+	 * is a privileged copy outside its approved window.
+	 *
+	 * @param Secret $secret The row
+	 * @param string $userId The caller
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	private function serialised(Secret $secret, string $userId): array {
+		return $this->privilegedGate?->serialisedFor(secret: $secret, userId: $userId) ?? $secret->jsonSerialize();
+	}//end serialised()
 }//end class

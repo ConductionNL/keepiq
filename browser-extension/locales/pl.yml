@@ -154,6 +154,8 @@ item:
   fillName: Wypełnij {name}
   insecureTitle: Czy nadal chcesz wypełnić te dane logowania?
   insecureWarning: "Uwaga: to niezabezpieczona strona HTTP i wszelkie przesłane informacje mogą zostać podejrzane i zmienione przez inne osoby. Te dane logowania zostały pierwotnie zapisane na bezpiecznej stronie (HTTPS)."
+  repromptTitle: "Wpisz hasło główne, aby wypełnić ten element"
+  repromptHelp: "Ten element prosi o hasło główne przy każdym wypełnieniu. Chroni to odblokowany ekran, a nie zmodyfikowane rozszerzenie."
   cardInsecureTitle: Wypełnić tę kartę na niezabezpieczonej witrynie?
   cardInsecureWarning: Ta witryna nie jest bezpieczna. Każdy w sieci może odczytać wypełnione dane karty.
   crossSiteTitle: Wypełnić także na {hosts}?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Jego klucz szyfrowania został unieważniony.
   suiteCompromised: Zaszyfrowany przejętym kluczem, więc nie można go tu otworzyć. Aplikacja webowa Keepiq pokazuje, czy można go odzyskać.
   migrationFailed: Nie udało się go przenieść na nowy klucz podczas odzyskiwania po przejęciu klucza. Zapisana wartość została zachowana, ale nie można jej otworzyć.
+  privilegedAccess: Właściciel nie zatwierdził teraz dla Ciebie przedziału czasu lub nie z tego adresu.
 
 detail:
   item: Element
@@ -730,6 +733,11 @@ inlineList:
       count:
         1: 1 tożsamość Keepiq. Naciśnij strzałkę w dół, aby wybrać.
         n: "Tożsamości Keepiq: $1. Naciśnij strzałkę w dół, aby wybrać."
+  newPassword:
+    frameTitle: Silne hasło Keepiq
+    offer: Użyj silnego hasła
+    locked: Odblokuj Keepiq, aby otrzymać silne hasło
+    status: Użyj silnego hasła. Naciśnij strzałkę w dół, aby wybrać.
 
 notificationBar:
   label: Powiadomienie Keepiq

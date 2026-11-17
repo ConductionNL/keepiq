@@ -93,4 +93,25 @@ describe('SecretShareDialog createLink', () => {
 		expect(wrapper.vm.createdUrl).toBeFalsy()
 		expect(wrapper.emitted('saved')).toBeUndefined()
 	})
+
+	it.each([
+		['a past date', () => '2000-01-01'],
+		['today', () => {
+			const now = new Date()
+			const pad = (n) => String(n).padStart(2, '0')
+			return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+		}],
+	])('refuses %s as the end date before decrypting or sending anything', async (label, date) => {
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({ name: 'N', key: 'k' })
+		const create = vi.spyOn(useLinkShareStore(), 'createLinkShare').mockResolvedValue(undefined)
+		const wrapper = mountDialog()
+		wrapper.vm.expiryDate = date()
+		await wrapper.vm.createLink()
+
+		expect(useSecretStore().fetchSecret).not.toHaveBeenCalled()
+		expect(create).not.toHaveBeenCalled()
+		expect(wrapper.vm.error).toBe('The end date must lie in the future.')
+		expect(wrapper.vm.creating).toBe(false)
+		expect(wrapper.emitted('saved')).toBeUndefined()
+	})
 })

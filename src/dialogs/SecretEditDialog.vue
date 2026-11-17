@@ -92,6 +92,10 @@
 
 			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
+			<AdditionalUrlsField
+				v-model="additionalUrls"
+				:disabled="saving || loading || viewOnly || isCopy" />
+
 			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
 
 			<TypedFieldsForm
@@ -111,6 +115,15 @@
 				:modelValue="tags"
 				:disabled="saving || loading"
 				@update:modelValue="tags = $event" />
+
+			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
+			<NcCheckboxRadioSwitch
+				:modelValue="reprompt"
+				:disabled="saving || loading"
+				data-testid="secret-reprompt"
+				@update:modelValue="reprompt = $event">
+				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
+			</NcCheckboxRadioSwitch>
 
 			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
@@ -138,6 +151,7 @@
 <script>
 import {
 	NcButton,
+	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
@@ -145,6 +159,7 @@ import {
 } from '@nextcloud/vue'
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
@@ -159,6 +174,7 @@ import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
 import { secretSaveGuards } from '../mixins/secretSaveGuards.js'
 import { evaluateScore } from '../policy/policy.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
+import { SSH_FINGERPRINT_MEMBER, SSH_PUBLIC_KEY_MEMBER } from '../ssh/sshKey.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
@@ -168,6 +184,7 @@ import {
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import { sameUrls } from '../utils/additionalUrls.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
@@ -183,7 +200,9 @@ export default {
 	name: 'SecretEditDialog',
 
 	components: {
+		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
+		AdditionalUrlsField,
 		AuthenticatorKeyField,
 		PolicyBlockedNote,
 		SecretPayloadFields,
@@ -231,6 +250,10 @@ export default {
 			name: '',
 			typeId: null,
 			url: '',
+			/** The extra website addresses (vault-website-addresses). */
+			additionalUrls: [],
+			/** A received copy: its addresses are the owner's to change. */
+			isCopy: false,
 			login: '',
 			/** What happens to a saved authenticator key: keep, replace or remove. */
 			totpMode: 'keep',
@@ -238,6 +261,7 @@ export default {
 			totpInput: '',
 			additionalFields: [],
 			tags: [],
+			reprompt: false,
 			policy: null,
 		}
 	},
@@ -267,6 +291,7 @@ export default {
 			if (
 				this.isCard
 				|| this.isIdentity
+				|| this.isSshKey
 				|| this.value === (this.original?.key || '')
 			) {
 				return { compliant: true, reason: null }
@@ -404,8 +429,10 @@ export default {
 				this.typeId = secret.typeId || null
 				this.value = secret.key || ''
 				this.url = secret.url || ''
+				this.additionalUrls = Array.isArray(secret.additionalUrls) ? [...secret.additionalUrls] : []
 				this.login = secret.login || ''
 				this.tags = Array.isArray(secret.tags) ? [...secret.tags] : []
+				this.reprompt = secret.reprompt === true
 				// From the DECRYPTED blob the store already parsed. Pre-filling from
 				// the current decrypted copy is also what bounds the known
 				// last-writer-wins window: the whole blob is rewritten on save, so an
@@ -418,7 +445,10 @@ export default {
 					this.typedFields,
 				)
 				this.typedValues = split.values
-				this.additionalFields = objectToMembers(split.rest)
+				// An SSH key's public key and fingerprint have their own fields.
+				this.additionalFields = objectToMembers(
+					this.takeSshMembers(split.rest),
+				)
 
 				// Seed the per-type composite fields from the decrypted
 				// payload (card-identity-items §3.1); a legacy plain value
@@ -478,6 +508,7 @@ export default {
 				useSecretStore().writeBackSettled(this.secretId),
 			])
 			this.viewOnly = isViewOnlyCopy(context, this.secretId)
+			this.isCopy = Boolean(context?.sourceSecretId) && context.sourceSecretId !== this.secretId
 			if (context?.sourceSecretId === this.secretId) {
 				return null
 			}
@@ -503,6 +534,7 @@ export default {
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/secrets-write-ui/spec.md#requirement-a-failed-share-save-is-shown-and-nothing-is-saved
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
@@ -515,10 +547,16 @@ export default {
 			this.error = ''
 			this.unreachablePartners = []
 			try {
+				// A malformed SSH key is refused on its field; nothing is saved.
+				const ssh = this.isSshKey ? await this.sshKeyToSave() : {}
+				if (ssh === null) {
+					return
+				}
 				// HIBP block on a changed manual value (§4.2) — before encryption.
 				if (
 					!this.isCard
 					&& !this.isIdentity
+					&& !this.isSshKey
 					&& this.value !== (this.original?.key || '')
 					&& (await this.breachBlocked())
 				) {
@@ -529,6 +567,9 @@ export default {
 				if (this.name.trim() !== (o.name || '')) {
 					diff.name = this.name.trim()
 				}
+				if (this.reprompt !== (o.reprompt === true)) {
+					diff.reprompt = this.reprompt
+				}
 				// No `typeId` branch: type is read-only in this dialog (see the
 				// template), so it cannot differ from the original — and if a
 				// future change reintroduces a way to alter it, this must not
@@ -536,6 +577,9 @@ export default {
 				// with a payload built for the old shape.
 				if ((this.url || '') !== (o.url || '')) {
 					diff.url = this.url || null
+				}
+				if (!this.isCopy && !sameUrls(this.additionalUrls, o.additionalUrls)) {
+					diff.additionalUrls = [...this.additionalUrls]
 				}
 				if ((this.effectiveValue || '') !== (o.key || '')) {
 					diff.key = this.effectiveValue
@@ -554,22 +598,44 @@ export default {
 				// rather than null when the last member is removed: null would mean
 				// "not provided", which the store reads as "leave the stored blob
 				// alone" — the opposite of what removing the last field means.
-				const nextMembers = mergeTypedValues(
-					membersToObject(this.additionalFields),
-					this.typedFields,
-					this.typedValues,
-				)
-				// The prior blob in the same shape (free members, then typed values),
-				// so a blob whose typed members only moved is not read as changed.
+				const nextMembers = {
+					...mergeTypedValues(
+						membersToObject(this.additionalFields),
+						this.typedFields,
+						this.typedValues,
+					),
+
+					...ssh,
+				}
+				// The prior blob in the same shape (free members, then typed values,
+				// then an SSH key's own), so a blob whose members only moved is not
+				// read as changed.
 				const priorSplit = splitTypedValues(
 					o.additionalFields,
 					this.typedFields,
 				)
-				const priorMembers = mergeTypedValues(
-					membersToObject(objectToMembers(priorSplit.rest)),
-					this.typedFields,
-					priorSplit.values,
-				)
+				const priorFree = membersToObject(objectToMembers(priorSplit.rest))
+				const priorSsh = {}
+				if (this.isSshKey) {
+					for (const member of [
+						SSH_PUBLIC_KEY_MEMBER,
+						SSH_FINGERPRINT_MEMBER,
+					]) {
+						if (Object.hasOwn(priorFree, member)) {
+							priorSsh[member] = priorFree[member]
+							delete priorFree[member]
+						}
+					}
+				}
+				const priorMembers = {
+					...mergeTypedValues(
+						priorFree,
+						this.typedFields,
+						priorSplit.values,
+					),
+
+					...priorSsh,
+				}
 				if (JSON.stringify(nextMembers) !== JSON.stringify(priorMembers)) {
 					diff.additionalFields = nextMembers
 				}

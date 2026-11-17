@@ -154,6 +154,8 @@ item:
   fillName: Izpolni {name}
   insecureTitle: Ali želite to prijavo vseeno izpolniti?
   insecureWarning: "Opozorilo: to je nezavarovana stran HTTP, zato lahko drugi morda vidijo in spremenijo vse, kar pošljete. Ta prijava je bila prvotno shranjena na varni strani (HTTPS)."
+  repromptTitle: "Vnesite glavno geslo, da izpolnite ta element"
+  repromptHelp: "Ta element ob vsakem izpolnjevanju zahteva glavno geslo. To ščiti odklenjen zaslon, ne spremenjene razširitve."
   cardInsecureTitle: Želite izpolniti to kartico na nevarnem spletnem mestu?
   cardInsecureWarning: To spletno mesto ni varno. Kdorkoli v omrežju bi lahko prebral izpolnjene podatke kartice.
   crossSiteTitle: Želite izpolniti tudi na {hosts}?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Njegov šifrirni ključ je bil preklican.
   suiteCompromised: Šifriran je z ogroženim ključem, zato ga tukaj ni mogoče odpreti. Spletna aplikacija Keepiq prikaže, ali ga je mogoče obnoviti.
   migrationFailed: Med obnovitvijo po ogroženosti ga ni bilo mogoče prenesti na vaš novi ključ. Shranjena vrednost je ohranjena, vendar je ni mogoče odpreti.
+  privilegedAccess: Lastnik vam zdaj ni odobril časovnega okna ali ne s tega naslova.
 
 detail:
   item: Element
@@ -730,6 +733,11 @@ inlineList:
       count:
         1: 1 identiteta Keepiq. Za izbiro pritisnite puščico dol.
         n: "Identitete Keepiq: $1. Za izbiro pritisnite puščico dol."
+  newPassword:
+    frameTitle: Močno geslo Keepiq
+    offer: Uporabi močno geslo
+    locked: Odklenite Keepiq za močno geslo
+    status: Uporabi močno geslo. Za izbiro pritisnite puščico dol.
 
 notificationBar:
   label: Obvestilo Keepiq

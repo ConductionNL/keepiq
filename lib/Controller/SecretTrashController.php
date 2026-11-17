@@ -25,12 +25,14 @@ namespace OCA\Keepiq\Controller;
 
 use Closure;
 use InvalidArgumentException;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\SecretTrashServiceInterface;
+use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -48,6 +50,7 @@ class SecretTrashController extends Controller {
 	 * @param IRequest $request The request
 	 * @param SecretTrashServiceInterface $trashService The trash service
 	 * @param IUserSession $userSession The user session
+	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 *
 	 * @return void
 	 *
@@ -57,6 +60,7 @@ class SecretTrashController extends Controller {
 		IRequest $request,
 		private SecretTrashServiceInterface $trashService,
 		private IUserSession $userSession,
+		private ?PrivilegedCopyGate $privilegedGate = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -101,7 +105,7 @@ class SecretTrashController extends Controller {
 		return $this->run(
 			action: function (string $userId) use ($id): array {
 				$restored = $this->trashService->restore($id, $userId);
-				$body = $restored['secret']->jsonSerialize();
+				$body = $this->serialised(secret: $restored['secret'], userId: $userId);
 				if ($restored['federatedShare'] !== null) {
 					$body['federatedShare'] = $restored['federatedShare'];
 				}
@@ -181,7 +185,7 @@ class SecretTrashController extends Controller {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (StaleWriteException $e) {
 			return new JSONResponse(
-				data: ['message' => $e->getMessage(), 'current' => $e->getCurrent()->jsonSerialize()],
+				data: ['message' => $e->getMessage(), 'current' => $this->serialised(secret: $e->getCurrent(), userId: $user->getUID())],
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (ShareScanPendingException $e) {
@@ -194,4 +198,19 @@ class SecretTrashController extends Controller {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
 		}
 	}//end run()
+
+	/**
+	 * A row as it is returned to the caller: without its ciphertext when it
+	 * is a privileged copy outside its approved window.
+	 *
+	 * @param Secret $secret The row
+	 * @param string $userId The caller
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 */
+	private function serialised(Secret $secret, string $userId): array {
+		return $this->privilegedGate?->serialisedFor(secret: $secret, userId: $userId) ?? $secret->jsonSerialize();
+	}//end serialised()
 }//end class

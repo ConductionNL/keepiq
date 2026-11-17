@@ -155,6 +155,8 @@ item:
   fillName: Fill {name}
   insecureTitle: Do you still wish to fill this login?
   insecureWarning: "Warning: This is an unsecured HTTP page, and any information you submit can potentially be seen and changed by others. This login was originally saved on a secure (HTTPS) page."
+  repromptTitle: "Enter your master password to fill this item"
+  repromptHelp: "This item asks for your master password every time it is filled. It protects an unlocked screen, not a modified extension."
   # A card or identity fill's questions; the context menu asks the same with pageFill.cardInsecure and pageFill.crossSite.
   cardInsecureTitle: Fill this card on an insecure site?
   cardInsecureWarning: This site is not secure. Anyone on the network could read the card details that are filled in.
@@ -346,6 +348,7 @@ blocked:
   suiteRevoked: Its encryption key was revoked.
   suiteCompromised: Encrypted with a compromised key, so it cannot be opened here. The Keepiq web app shows whether it can be recovered.
   migrationFailed: It could not be moved to your new key during compromise recovery. The stored value is kept but cannot be opened.
+  privilegedAccess: Its owner has not approved a time window for you now, or not from this address.
 
 detail:
   item: Item
@@ -748,6 +751,12 @@ inlineList:
       count:
         1: 1 Keepiq identity. Press Down Arrow to choose.
         n: $1 Keepiq identities. Press Down Arrow to choose.
+  # A new-password field of a sign-up or change-password form: one row that fills a generated password.
+  newPassword:
+    frameTitle: Keepiq strong password
+    offer: Use a strong password
+    locked: Unlock Keepiq to get a strong password
+    status: Use a strong password. Press Down Arrow to choose.
 
 # The save and update bar at the top of the web page.
 notificationBar:

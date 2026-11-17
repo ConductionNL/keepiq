@@ -95,6 +95,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 	 * @var array<string, TableSpec>
 	 */
 	private const SCHEMA = [
+		'access_requests' => Version001021Date20261115090000::REQUESTS_DEFINITION,
 		'app_lease_policies' => [
 			'columns' => [
 				['application_id', Types::STRING, ['notnull' => true, 'length' => 36]],
@@ -603,6 +604,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [],
 		],
+		'privileged_logins' => Version001021Date20261115090000::FLAGS_DEFINITION,
 		'rotation_flags' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
@@ -659,6 +661,23 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 				['keepiq_rk_status_idx', ['status']],
 			],
 			'uniqueIndexes' => [],
+		],
+		// A user's own recovery kit (crypto-recovery-kit); also created on
+		// existing installs by Version001020Date20261114120000.
+		'recovery_kits' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['user_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['suite_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['wrapped_key', Types::TEXT, ['notnull' => true]],
+				['kdf', Types::TEXT, ['notnull' => true]],
+				['created_at', Types::DATETIME, ['notnull' => false]],
+			],
+			'primary' => ['id'],
+			'indexes' => [],
+			'uniqueIndexes' => [
+				['keepiq_rk_user_suite', ['user_id', 'suite_id']],
+			],
 		],
 		'recovery_officers' => [
 			'columns' => [
@@ -789,6 +808,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 				['keepiq_st_name_idx', ['name']],
 			],
 		],
+		'secret_urls' => Version001020Date20261114090000::DEFINITION,
 		'secret_versions' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

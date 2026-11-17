@@ -154,6 +154,8 @@ item:
   fillName: Completare {name}
   insecureTitle: Doriți totuși să completați această autentificare?
   insecureWarning: "Atenție: aceasta este o pagină HTTP nesecurizată, iar informațiile trimise pot fi văzute și modificate de alții. Această autentificare a fost salvată inițial pe o pagină securizată (HTTPS)."
+  repromptTitle: "Introduceți parola principală pentru a completa acest element"
+  repromptHelp: "Acest element cere parola principală de fiecare dată când este completat. Protejează un ecran deblocat, nu o extensie modificată."
   cardInsecureTitle: Completați acest card pe un site nesecurizat?
   cardInsecureWarning: Acest site nu este securizat. Oricine din rețea ar putea citi datele cardului completate.
   crossSiteTitle: Completați și pe {hosts}?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Cheia sa de criptare a fost revocată.
   suiteCompromised: Criptat cu o cheie compromisă, deci nu poate fi deschis aici. Aplicația web Keepiq arată dacă poate fi recuperat.
   migrationFailed: Nu a putut fi mutat la cheia dvs. nouă în timpul recuperării după compromitere. Valoarea stocată este păstrată, dar nu poate fi deschisă.
+  privilegedAccess: Proprietarul nu ți-a aprobat acum un interval de timp sau nu de la această adresă.
 
 detail:
   item: Element
@@ -730,6 +733,11 @@ inlineList:
       count:
         1: 1 identitate Keepiq. Apăsați Săgeată în jos pentru a alege.
         n: "Identități Keepiq: $1. Apăsați Săgeată în jos pentru a alege."
+  newPassword:
+    frameTitle: Parolă puternică Keepiq
+    offer: Folosiți o parolă puternică
+    locked: Deblocați Keepiq pentru a obține o parolă puternică
+    status: Folosiți o parolă puternică. Apăsați Săgeată în jos pentru a alege.
 
 notificationBar:
   label: Notificare Keepiq

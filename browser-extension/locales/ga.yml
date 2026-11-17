@@ -154,6 +154,8 @@ item:
   fillName: Líon {name}
   insecureTitle: An bhfuil tú fós ag iarraidh an logáil isteach seo a líonadh?
   insecureWarning: "Rabhadh: Is leathanach HTTP neamhdhaingean é seo, agus d'fhéadfadh daoine eile aon fhaisnéis a sheolann tú a fheiceáil agus a athrú. Sábháladh an logáil isteach seo ar leathanach daingean (HTTPS) ar dtús."
+  repromptTitle: "Cuir isteach do mháistirphasfhocal chun an mhír seo a líonadh"
+  repromptHelp: "Iarrann an mhír seo do mháistirphasfhocal gach uair a líontar í. Cosnaíonn sé seo scáileán díghlasáilte, ní síneadh athraithe."
   cardInsecureTitle: An líonfar an cárta seo ar shuíomh neamhdhaingean?
   cardInsecureWarning: Níl an suíomh seo daingean. D'fhéadfadh duine ar bith ar an líonra sonraí an chárta a líontar a léamh.
   crossSiteTitle: Líon ar {hosts} freisin?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Cúlghaireadh a heochair chriptithe.
   suiteCompromised: Criptithe le heochair a cuireadh i gcontúirt, mar sin ní féidir í a oscailt anseo. Taispeánann aip ghréasáin Keepiq an féidir í a aisghabháil.
   migrationFailed: Níorbh fhéidir í a aistriú chuig d'eochair nua le linn an athshlánaithe. Coinnítear an luach stóráilte ach ní féidir é a oscailt.
+  privilegedAccess: Níor cheadaigh an t-úinéir fuinneog ama duit anois, nó ní ón seoladh seo.
 
 detail:
   item: Mír
@@ -730,6 +733,11 @@ inlineList:
       count:
         1: 1 aitheantas Keepiq. Brúigh an tSaighead Síos chun roghnú.
         n: "Aitheantais Keepiq: $1. Brúigh an tSaighead Síos chun roghnú."
+  newPassword:
+    frameTitle: Pasfhocal láidir Keepiq
+    offer: Úsáid pasfhocal láidir
+    locked: Díghlasáil Keepiq chun pasfhocal láidir a fháil
+    status: Úsáid pasfhocal láidir. Brúigh an tSaighead Síos chun roghnú.
 
 notificationBar:
   label: Fógra Keepiq

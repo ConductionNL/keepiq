@@ -283,6 +283,15 @@ $extra = [
     ['name' => 'honey#acknowledge', 'url' => '/api/v1/honey/alerts/{id}/acknowledge', 'verb' => 'POST'],
     ['name' => 'honey#snooze',      'url' => '/api/v1/honey/alerts/{id}/snooze',     'verb' => 'POST'],
 
+    // Privileged logins (capability-requirements-from-the-matrix 3.1):
+    // ownership and holding are checked in the service.
+    ['name' => 'privilegedAccess#status',  'url' => '/api/v1/secrets/{id}/privileged',                 'verb' => 'GET'],
+    ['name' => 'privilegedAccess#update',  'url' => '/api/v1/secrets/{id}/privileged',                 'verb' => 'PUT'],
+    ['name' => 'privilegedAccess#request', 'url' => '/api/v1/secrets/{id}/access-requests',            'verb' => 'POST'],
+    ['name' => 'privilegedAccess#pending', 'url' => '/api/v1/access-requests',                         'verb' => 'GET'],
+    ['name' => 'privilegedAccess#approve', 'url' => '/api/v1/access-requests/{requestId}/approve',     'verb' => 'POST'],
+    ['name' => 'privilegedAccess#deny',    'url' => '/api/v1/access-requests/{requestId}/deny',        'verb' => 'POST'],
+
     // Offline cache (offline-readonly-cache §1.4) — owner-scoped
     // consolidated snapshot; 403 when the admin off switch is set.
     ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],
@@ -305,6 +314,12 @@ $extra = [
     ['name' => 'recoveryUser#myRequest',      'url' => '/api/v1/recovery/requests/mine',              'verb' => 'GET'],
     ['name' => 'recoveryUser#createRequest',  'url' => '/api/v1/recovery/requests',                   'verb' => 'POST'],
     ['name' => 'recoveryUser#complete',       'url' => '/api/v1/recovery/requests/{id}/complete',     'verb' => 'POST'],
+    // A user's own recovery kit (crypto-recovery-kit): the session user only.
+    ['name' => 'recoveryKit#show',            'url' => '/api/v1/recovery-kit',                        'verb' => 'GET'],
+    ['name' => 'recoveryKit#create',          'url' => '/api/v1/recovery-kit',                        'verb' => 'PUT'],
+    ['name' => 'recoveryKit#revoke',          'url' => '/api/v1/recovery-kit',                        'verb' => 'DELETE'],
+    ['name' => 'recoveryKit#fetch',           'url' => '/api/v1/recovery-kit/copy',                   'verb' => 'GET'],
+    ['name' => 'recoveryKit#spend',           'url' => '/api/v1/recovery-kit/spent',                  'verb' => 'POST'],
     // New device approval (crypto-new-device-approval). The fixed paths come
     // before the {id} ones.
     ['name' => 'deviceApproval#status',  'url' => '/api/v1/device-approvals/status',       'verb' => 'GET'],
@@ -508,6 +523,10 @@ $extra = [
     // POST with the prefix in the body, never in the URI: Nextcloud stamps the
     // request URI next to the user id on every log line (keepiq#866).
     ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range', 'verb' => 'POST'],
+
+    // Site directory copy for the health report's site checks
+    // (health-site-security-checks D2). Takes nothing from the browser.
+    ['name' => 'siteDirectory#index', 'url' => '/api/v1/site-directory', 'verb' => 'GET'],
 
     // GDPR data-subject endpoints (secret-export-gdpr D3/D4). All self-scoped
     // to the session user — no user selector. Master-password re-auth on the

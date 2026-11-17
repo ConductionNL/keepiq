@@ -25,7 +25,7 @@ import { buildCxfDocument } from '../../cxf/cxf.js'
 import { encryptBackup } from '../../export/backup.js'
 import { generateCsv } from '../../export/csv.js'
 import { assembleGdprPackage } from '../../export/gdprPackage.js'
-import { serializeVault } from '../../export/serializer.js'
+import { reportedScope, serializeVault } from '../../export/serializer.js'
 import { useSessionStore } from './session.js'
 
 /**
@@ -81,20 +81,21 @@ export const useExportStore = defineStore('export', {
 		 * @param {Array<object>} secrets Decrypted secrets.
 		 * @param {Array<object>} folders Folder rows.
 		 * @param {string} passphrase The backup passphrase.
-		 * @param {object} [scope] Scope selector ({ mode, folderIds }).
+		 * @param {object} [scope] Scope selector ({ folderIds, typeIds, secretIds }).
+		 * @param {object} [options] Serializer options ({ types, omitFields }).
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-export/spec.md
 		 */
-		async exportBackup(secrets, folders, passphrase, scope = { mode: 'vault' }) {
+		async exportBackup(secrets, folders, passphrase, scope = { mode: 'vault' }, options = {}) {
 			this.loading = true
 			this.error = null
 			try {
-				const payload = serializeVault(secrets, folders, scope)
+				const payload = serializeVault(secrets, folders, scope, options)
 				const envelope = await encryptBackup(payload, passphrase)
 				// Report BEFORE offering the download; a failure aborts the export.
 				await this.reportExport(
 					'encrypted-backup',
-					scope.mode || 'vault',
+					reportedScope(scope),
 					payload.secrets.length,
 				)
 				downloadBlob(
@@ -118,18 +119,19 @@ export const useExportStore = defineStore('export', {
 		 * @param {Array<object>} secrets Decrypted secrets.
 		 * @param {Array<object>} folders Folder rows.
 		 * @param {object} [scope] Scope selector.
+		 * @param {object} [options] Serializer options ({ types, omitFields }).
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-export/spec.md
 		 */
-		async exportCsv(secrets, folders, scope = { mode: 'vault' }) {
+		async exportCsv(secrets, folders, scope = { mode: 'vault' }, options = {}) {
 			this.loading = true
 			this.error = null
 			try {
-				const payload = serializeVault(secrets, folders, scope)
+				const payload = serializeVault(secrets, folders, scope, options)
 				const csv = generateCsv(payload.secrets)
 				await this.reportExport(
 					'plaintext-csv',
-					scope.mode || 'vault',
+					reportedScope(scope),
 					payload.secrets.length,
 				)
 				downloadBlob('vault.csv', csv, 'text/csv')
@@ -174,7 +176,7 @@ export const useExportStore = defineStore('export', {
 					return { unmapped, itemCount }
 				}
 				// Report BEFORE offering the download; a failure aborts.
-				await this.reportExport('cxf', scope.mode || 'vault', itemCount)
+				await this.reportExport('cxf', reportedScope(scope), itemCount)
 				downloadBlob(
 					'vault.cxf',
 					JSON.stringify(document, null, 2),
@@ -229,7 +231,7 @@ export const useExportStore = defineStore('export', {
 				const cxfBytes = new TextEncoder().encode(JSON.stringify(document))
 				const envelope = await sealForRequest(request, cxfBytes)
 				// Report BEFORE handing back the envelope; a failure aborts.
-				await this.reportExport('cxp', scope.mode || 'vault', itemCount)
+				await this.reportExport('cxp', reportedScope(scope), itemCount)
 				return { envelope, unmapped, itemCount }
 			} catch (e) {
 				this.error = e.message || 'CXP transfer failed'

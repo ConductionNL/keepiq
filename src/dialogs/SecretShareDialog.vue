@@ -355,10 +355,18 @@ export default {
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-share-a-secret-via-a-public-link
 		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
+		 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-2.2
 		 */
 		async createLink() {
-			this.creating = true
 			this.error = ''
+			// The date input's `min` is only a hint: a typed or pasted date can
+			// still lie before it, so the dialog refuses it before anything is
+			// decrypted or sent (the server refuses it too).
+			if (this.expiryDate !== '' && this.expiryDate < this.minExpiryDate) {
+				this.error = t('keepiq', 'The end date must lie in the future.')
+				return
+			}
+			this.creating = true
 			try {
 				const secret = await useSecretStore().fetchSecret(this.secretId)
 				const linkStore = useLinkShareStore()

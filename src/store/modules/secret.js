@@ -567,10 +567,13 @@ async function awaitWriteBack(store, save) {
  */
 function plainPatch(store, data) {
 	const payload = {}
-	for (const field of ['name', 'url', 'typeId', 'folderId']) {
+	for (const field of ['name', 'url', 'additionalUrls', 'typeId', 'folderId']) {
 		if (data[field] !== undefined) {
 			payload[field] = data[field]
 		}
+	}
+	if (data.reprompt !== undefined) {
+		payload.reprompt = data.reprompt === true
 	}
 	const rpId = mirroredRpId(store, data)
 	if (rpId) {
@@ -1236,6 +1239,16 @@ export const useSecretStore = defineStore('secret', {
 				typeId: data.typeId ?? null,
 				folderId: data.folderId ?? null,
 				key: await rsaEncrypt(String(data.key ?? ''), publicKey),
+			}
+			// Plain metadata, not a value: ask for the master password again
+			// before the item is used (crypto-item-reprompt D1). Sent only when
+			// set, so an unflagged create carries exactly what it did before.
+			if (data.reprompt === true) {
+				payload.reprompt = true
+			}
+			// Plain text like `url`, so search and the extension match (vault-website-addresses D1).
+			if (Array.isArray(data.additionalUrls) && data.additionalUrls.length > 0) {
+				payload.additionalUrls = data.additionalUrls
 			}
 			await encryptOptionalFields(payload, { data, publicKey })
 

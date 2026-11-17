@@ -142,6 +142,18 @@
 							</template>
 							{{ t('keepiq', 'Move') }}
 						</NcActionButton>
+						<!-- vault-item-clone-preview-and-print: a prefilled create of a
+						     new secret; never for a passkey item or a use-only copy. -->
+						<NcActionButton
+							v-if="canClone"
+							:closeAfterClick="true"
+							data-testid="secret-detail-clone"
+							@click="openClone">
+							<template #icon>
+								<ContentDuplicate :size="20" />
+							</template>
+							{{ t('keepiq', 'Clone') }}
+						</NcActionButton>
 						<NcActionButton
 							v-if="!offlineReadOnly && !federatedReadOnly"
 							:closeAfterClick="true"
@@ -191,6 +203,16 @@
 				<Lock />
 			</template>
 		</NcEmptyContent>
+
+		<!-- A privileged login outside an approved window: the detail panel
+		     offers to ask the owner for access (capability-requirements-from-
+		     the-matrix 3.1). -->
+		<div
+			v-if="error && privilegedRefused"
+			class="secret-detail__box"
+			data-testid="secret-detail-privileged-refused">
+			<PrivilegedAccessPanel :secretId="secretId" />
+		</div>
 
 		<div v-if="!error && secret" class="secret-detail__card">
 			<!-- Use-only copy (sharing-use-only-and-expiring-shares D3): the
@@ -311,6 +333,7 @@
 					</div>
 					<span class="secret-detail__row-trailing">
 						<CopyButton
+							:guard="revealGuard"
 							:value="secret.login"
 							:label="t('keepiq', 'Copy login')" />
 					</span>
@@ -332,6 +355,7 @@
 								:key="secretLoadToken"
 								:label="keyLabel"
 								:useOnly="useOnly"
+								:guard="revealGuard"
 								:resolve="resolveKey" />
 						</div>
 					</div>
@@ -350,6 +374,7 @@
 						<div class="secret-detail__row-value">
 							<TotpDisplay
 								:seed="secret.key || ''"
+								:guard="revealGuard"
 								data-testid="secret-detail-totp" />
 						</div>
 					</div>
@@ -436,6 +461,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.number"
 								:label="t('keepiq', 'Copy number')" />
 						</span>
@@ -492,6 +518,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.cvv"
 								:label="t('keepiq', 'Copy CVV')" />
 						</span>
@@ -534,6 +561,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.pin"
 								:label="t('keepiq', 'Copy PIN')" />
 						</span>
@@ -645,7 +673,7 @@
 											: t('keepiq', 'Show')
 									"
 									data-testid="identity-reveal-bsn"
-									@click="bsnRevealed = !bsnRevealed">
+									@click="toggleBsn">
 									<template #icon>
 										<EyeOffOutline
 											v-if="bsnRevealed"
@@ -654,6 +682,7 @@
 									</template>
 								</NcButton>
 								<CopyButton
+									:guard="revealGuard"
 									:value="identityPayload.bsn"
 									:label="t('keepiq', 'Copy BSN')" />
 							</span>
@@ -663,6 +692,14 @@
 			</template>
 
 			<div v-if="secret.url" class="secret-detail__box">
+				<img
+					v-if="previewSrc"
+					:src="previewSrc"
+					:alt="t('keepiq', 'Preview of {site}', { site: secret.url })"
+					class="secret-detail__preview"
+					referrerpolicy="no-referrer"
+					loading="lazy"
+					data-testid="secret-detail-preview">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<Web :size="20" />
@@ -679,6 +716,40 @@
 								{{ secret.url }}
 							</a>
 						</div>
+						<a
+							v-if="changePasswordHref"
+							:href="changePasswordHref"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="secret-detail__change-password"
+							data-testid="secret-detail-change-password">
+							{{ t('keepiq', 'Change password') }}
+						</a>
+					</div>
+				</div>
+				<div
+					v-if="extraUrls.length > 0"
+					class="secret-detail__row secret-detail__row--block"
+					data-testid="secret-detail-extra-urls">
+					<span class="secret-detail__row-icon">
+						<Web :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'More website addresses')
+						}}</span>
+						<ul class="secret-detail__row-value secret-detail__url-list">
+							<li v-for="extra in extraUrls" :key="extra.url">
+								<a
+									v-if="extra.href"
+									:href="extra.href"
+									target="_blank"
+									rel="noopener noreferrer">
+									{{ extra.url }}
+								</a>
+								<span v-else>{{ extra.url }}</span>
+							</li>
+						</ul>
 					</div>
 				</div>
 			</div>
@@ -704,6 +775,7 @@
 						<div class="secret-detail__row-value">
 							<TotpDisplay
 								:seed="fieldTotp"
+								:guard="revealGuard"
 								data-testid="secret-detail-login-totp" />
 						</div>
 					</div>
@@ -732,6 +804,58 @@
 				</div>
 			</div>
 
+			<!-- The SSH key's public half and its derived fingerprint, from
+			     the encrypted additional fields (vault-ssh-key-item). The
+			     private key is the key row above. -->
+			<div
+				v-if="sshPublicKey && !useOnly"
+				class="secret-detail__box"
+				data-testid="secret-detail-ssh">
+				<div class="secret-detail__row">
+					<span class="secret-detail__row-icon">
+						<KeyVariant :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Public key')
+						}}</span>
+						<div
+							class="secret-detail__row-value secret-detail__row-value--mono"
+							data-testid="secret-detail-ssh-public-key">
+							{{ sshPublicKey }}
+						</div>
+					</div>
+					<span class="secret-detail__row-trailing">
+						<CopyButton
+							:guard="revealGuard"
+							:value="sshPublicKey"
+							:label="t('keepiq', 'Copy public key')"
+							data-testid="secret-detail-ssh-copy-public-key" />
+					</span>
+				</div>
+				<div v-if="sshFingerprint" class="secret-detail__row">
+					<span class="secret-detail__row-icon">
+						<Fingerprint :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Fingerprint')
+						}}</span>
+						<div
+							class="secret-detail__row-value secret-detail__row-value--mono"
+							data-testid="secret-detail-ssh-fingerprint">
+							{{ sshFingerprint }}
+						</div>
+					</div>
+					<span class="secret-detail__row-trailing">
+						<CopyButton
+							:guard="revealGuard"
+							:value="sshFingerprint"
+							:label="t('keepiq', 'Copy fingerprint')" />
+					</span>
+				</div>
+			</div>
+
 			<div v-if="hasAdditionalFields && !useOnly" class="secret-detail__box">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
@@ -741,15 +865,65 @@
 						<span class="secret-detail__row-label">{{
 							t('keepiq', 'Additional fields')
 						}}</span>
+						<!-- A hidden value is masked until Reveal; Copy copies
+						     the real value without revealing it. -->
 						<dl class="secret-detail__extra">
 							<template
-								v-for="(value, key) in secret.additionalFields"
-								:key="key">
+								v-for="field in additionalFieldRows"
+								:key="field.name">
 								<dt>
-									{{ key }}
+									{{ field.name }}
 								</dt>
-								<dd>
-									{{ value }}
+								<dd
+									v-if="field.kind === 'hidden'"
+									class="secret-detail__extra-hidden">
+									<span
+										class="secret-detail__row-value--mono"
+										:data-testid="`secret-detail-field-${field.name}`">
+										{{
+											revealedFields[field.name]
+												? field.value
+												: '••••••••'
+										}}
+									</span>
+									<NcButton
+										variant="tertiary"
+										:ariaLabel="
+											revealedFields[field.name]
+												? t('keepiq', 'Hide')
+												: t('keepiq', 'Show')
+										"
+										:title="
+											revealedFields[field.name]
+												? t('keepiq', 'Hide')
+												: t('keepiq', 'Show')
+										"
+										:data-testid="`secret-detail-field-reveal-${field.name}`"
+										@click="toggleField(field.name)">
+										<template #icon>
+											<EyeOffOutline
+												v-if="revealedFields[field.name]"
+												:size="20" />
+											<EyeOutline v-else :size="20" />
+										</template>
+									</NcButton>
+									<CopyButton
+										:guard="revealGuard"
+										:value="field.value"
+										:label="t('keepiq', 'Copy value')"
+										:data-testid="`secret-detail-field-copy-${field.name}`" />
+								</dd>
+								<dd
+									v-else-if="field.kind === 'boolean'"
+									:data-testid="`secret-detail-field-${field.name}`">
+									{{
+										field.value === 'true'
+											? t('keepiq', 'Yes')
+											: t('keepiq', 'No')
+									}}
+								</dd>
+								<dd v-else :data-testid="`secret-detail-field-${field.name}`">
+									{{ field.value }}
 								</dd>
 							</template>
 						</dl>
@@ -999,6 +1173,20 @@
 							</div>
 						</div>
 					</div>
+
+					<div class="secret-detail__row secret-detail__row--block">
+						<span class="secret-detail__row-icon">
+							<ShieldOutline :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<span class="secret-detail__row-label">{{
+								t('keepiq', 'Privileged access')
+							}}</span>
+							<div class="secret-detail__row-value">
+								<PrivilegedAccessPanel :secretId="secretId" />
+							</div>
+						</div>
+					</div>
 				</div>
 			</details>
 		</div>
@@ -1026,6 +1214,7 @@ import CalendarMonthOutline from 'vue-material-design-icons/CalendarMonthOutline
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ClockOutline from 'vue-material-design-icons/ClockOutline.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import ContentDuplicate from 'vue-material-design-icons/ContentDuplicate.vue'
 import CreditCardOutline from 'vue-material-design-icons/CreditCardOutline.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Dialpad from 'vue-material-design-icons/Dialpad.vue'
@@ -1053,6 +1242,7 @@ import HoneyPanel from './HoneyPanel.vue'
 import PasskeyDisplay from './PasskeyDisplay.vue'
 import PasskeyList from './PasskeyList.vue'
 import PasswordField from './PasswordField.vue'
+import PrivilegedAccessPanel from './PrivilegedAccessPanel.vue'
 import RotationPanel from './RotationPanel.vue'
 import SecretActivityTab from './SecretActivityTab.vue'
 import SecretRequestList from './secretRequest/SecretRequestList.vue'
@@ -1065,16 +1255,25 @@ import TotpDisplay from './TotpDisplay.vue'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
 import { cardBrandInfo, formatCardNumber, maskCardNumber, parsePayload } from '../cardIdentity/cardIdentity.js'
+import { needsReprompt, useReprompt } from '../composables/useReprompt.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
+import {
+	SSH_FINGERPRINT_MEMBER,
+	SSH_KEY_TYPE_NAME,
+	SSH_PUBLIC_KEY_MEMBER,
+} from '../ssh/sshKey.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { fieldValueOf, objectToMembers } from '../utils/additionalFields.js'
+import { extraUrlLinks } from '../utils/additionalUrls.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
-import { isRefusal } from '../utils/refusal.js'
+import { isRefusal, refusalCode } from '../utils/refusal.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
+import { changePasswordUrl, previewImageUrl, previewTemplate } from '../utils/siteImages.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 import { rootVaultOf } from '../utils/vaultList.js'
 
@@ -1113,6 +1312,7 @@ export default {
 		Delete,
 		Fingerprint,
 		Flash,
+		ContentDuplicate,
 		FolderMove,
 		FormatListBulleted,
 		History,
@@ -1130,6 +1330,7 @@ export default {
 		CopyButton,
 		DelegationManager,
 		HoneyPanel,
+		PrivilegedAccessPanel,
 		PasskeyDisplay,
 		PasskeyList,
 		PasswordField,
@@ -1169,6 +1370,9 @@ export default {
 			loading: true,
 			error: '',
 			requestDialogOpen: false,
+			// The server refused this copy of a privileged login outside an
+			// approved window (capability-requirements-from-the-matrix 3.1).
+			privilegedRefused: false,
 			teamWritable: false,
 			/** A copy without a write grade: no edit, restore or new request. */
 			viewOnlyCopy: false,
@@ -1180,6 +1384,8 @@ export default {
 			cardRevealed: { number: false, cvv: false, pin: false },
 			/** Reveal state for the identity's BSN row (masked by default). */
 			bsnRevealed: false,
+			/** Reveal state of the hidden additional fields, by name (masked by default). */
+			revealedFields: {},
 			/**
 			 * Bumped by every successful `load()`, and bound to
 			 * `<PasswordField :key>` so the field remounts whenever the
@@ -1207,6 +1413,61 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The master password re-prompt every reveal path of this item awaits,
+		 * or null when the holder did not flag it (crypto-item-reprompt D2).
+		 *
+		 * @return {Function|null}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		revealGuard() {
+			return needsReprompt(this.secret) ? useReprompt(() => this.secret) : null
+		},
+
+		/**
+		 * The login's extra website addresses, each with a link only when it
+		 * is a web address, so a typed `javascript:` never becomes one.
+		 *
+		 * @return {Array<{url: string, href: string|null}>}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+		 */
+		extraUrls() {
+			return extraUrlLinks(this.secret?.additionalUrls)
+		},
+
+		/**
+		 * The site preview image, only when an admin set a preview service:
+		 * with no template nothing is requested.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+		 */
+		previewSrc() {
+			return previewImageUrl(previewTemplate(), this.secret?.url)
+		},
+
+		/**
+		 * The site's change-password page, null without a web address.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+		 */
+		changePasswordHref() {
+			return changePasswordUrl(this.secret?.url)
+		},
+
+		/**
+		 * Whether the secret may be cloned: online, its value visible to the
+		 * holder (not a use-only copy), and not a passkey item, whose
+		 * credential is bound to one item.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		canClone() {
+			return Boolean(this.secret) && !this.offlineReadOnly && !this.useOnly && !this.isPasskey
+		},
+
 		/**
 		 * Whether the open secret is archived (vault-trash-and-archive).
 		 *
@@ -1356,14 +1617,66 @@ export default {
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		hasAdditionalFields() {
-			const blob = this.secret?.additionalFields
+			return this.additionalFieldRows.length > 0
+		},
 
-			return (
-				blob !== null
-				&& blob !== undefined
-				&& typeof blob === 'object'
-				&& Object.keys(blob).length > 0
+		/**
+		 * The additional fields to list, as `{ name, value, kind }` rows. A
+		 * field saved before kinds existed reads as text. An SSH key's public
+		 * key and fingerprint have their own rows, so they are left out here.
+		 *
+		 * @return {Array<{name: string, value: string, kind: string}>}
+		 *
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 */
+		additionalFieldRows() {
+			const blob = this.secret?.additionalFields
+			if (blob === null || blob === undefined || typeof blob !== 'object') {
+				return []
+			}
+			const own = this.isSshKey
+				? [SSH_PUBLIC_KEY_MEMBER, SSH_FINGERPRINT_MEMBER]
+				: []
+			return objectToMembers(blob).filter(
+				(member) => !own.includes(member.name),
 			)
+		},
+
+		/**
+		 * Whether this secret is the `ssh_key` system type.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		isSshKey() {
+			const type = useSecretTypeStore().typesById[this.secret?.typeId]
+			return Boolean(type) && type.name === SSH_KEY_TYPE_NAME
+		},
+
+		/**
+		 * The SSH key's public key line from the encrypted blob, '' when none.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		sshPublicKey() {
+			const blob = this.secret?.additionalFields
+			return this.isSshKey && blob && typeof blob === 'object'
+				? fieldValueOf(blob[SSH_PUBLIC_KEY_MEMBER])
+				: ''
+		},
+
+		/**
+		 * The SSH key's stored fingerprint, '' when none.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		sshFingerprint() {
+			const blob = this.secret?.additionalFields
+			return this.sshPublicKey !== ''
+				? fieldValueOf(blob[SSH_FINGERPRINT_MEMBER])
+				: ''
 		},
 
 		/**
@@ -1707,6 +2020,7 @@ export default {
 			// Masked fields never carry reveal state over to another secret.
 			this.cardRevealed = { number: false, cvv: false, pin: false }
 			this.bsnRevealed = false
+			this.revealedFields = {}
 			this.load()
 		},
 	},
@@ -1743,6 +2057,7 @@ export default {
 			const id = this.secretId
 			this.loading = true
 			this.error = ''
+			this.privilegedRefused = false
 			try {
 				// Fetched together and applied together, so the flags below
 				// always describe the secret on show and a view-only copy
@@ -1771,7 +2086,13 @@ export default {
 				if (id !== this.secretId) {
 					return
 				}
-				if (isRefusal(e)) {
+				if (isRefusal(e) && refusalCode(e) === 'privileged_access_required') {
+					this.privilegedRefused = true
+					this.error = t(
+						'keepiq',
+						'This login can only be used in a time window its owner approved.',
+					)
+				} else if (isRefusal(e)) {
 					this.error = t(
 						'keepiq',
 						'This secret is locked because its encryption suite was revoked.',
@@ -1835,13 +2156,67 @@ export default {
 		 * Toggle one card field's reveal state (masked by default).
 		 *
 		 * @param {string} field The field name (number | cvv | pin).
-		 * @return {void}
+		 * @return {Promise<void>}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
 		 */
-		toggleCardField(field) {
+		async toggleCardField(field) {
+			if (!this.cardRevealed[field] && !(await this.allowedToReveal())) {
+				return
+			}
 			this.cardRevealed = {
 				...this.cardRevealed,
 				[field]: !this.cardRevealed[field],
+			}
+		},
+
+		/**
+		 * Toggle one hidden additional field's reveal state (masked by default);
+		 * showing one of a flagged item asks first.
+		 *
+		 * @param {string} name The field name.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 */
+		async toggleField(name) {
+			if (!this.revealedFields[name] && !(await this.allowedToReveal())) {
+				return
+			}
+			this.revealedFields = {
+				...this.revealedFields,
+				[name]: !this.revealedFields[name],
+			}
+		},
+
+		/**
+		 * Show or hide the BSN; showing a flagged item's asks first.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		async toggleBsn() {
+			if (!this.bsnRevealed && !(await this.allowedToReveal())) {
+				return
+			}
+			this.bsnRevealed = !this.bsnRevealed
+		},
+
+		/**
+		 * Whether this item may be revealed now: at once when it is not
+		 * flagged, after the master password re-prompt when it is.
+		 *
+		 * @return {Promise<boolean>}
+		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		async allowedToReveal() {
+			if (!this.revealGuard) {
+				return true
+			}
+			try {
+				await this.revealGuard()
+				return true
+			} catch {
+				return false
 			}
 		},
 
@@ -1870,12 +2245,79 @@ export default {
 		 * Open the edit dialog for this secret; reload the detail and the
 		 * list behind it on success.
 		 *
-		 * @return {void}
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		openEdit() {
+			// A flagged item opens its edit form only after the re-prompt;
+			// any other opens at once (crypto-item-reprompt D2).
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.openEditDialog()
+					}
+				})
+			}
+			this.openEditDialog()
+			return undefined
+		},
+
+		/**
+		 * Open the edit dialog itself.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
+		openEditDialog() {
 			this.cnOpenModal('secret-edit', {
 				secretId: this.secretId,
+				onSaved: () => this.reloadWithList(),
+			})
+		},
+
+		/**
+		 * Open the create dialog prefilled from this secret's decrypted fields.
+		 * Saving is an ordinary create: a new id, fresh ciphertext, no shares,
+		 * attachments, history, passkeys or one-time code.
+		 *
+		 * A flagged item opens the prefilled form, which holds its value, only
+		 * after the master password re-prompt (crypto-item-reprompt D2).
+		 *
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		openClone() {
+			if (!this.secret) {
+				return undefined
+			}
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.openCloneDialog()
+					}
+				})
+			}
+			this.openCloneDialog()
+			return undefined
+		},
+
+		/**
+		 * Open the create dialog prefilled from this secret.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		openCloneDialog() {
+			this.cnOpenModal('secret-create', {
+				folderId: this.secret.folderId || null,
+				prefill: {
+					typeId: this.secret.typeId || null,
+					name: this.secret.name || '',
+					url: this.secret.url || '',
+					login: this.secret.login || '',
+					key: this.secret.key || '',
+					additionalFields: this.secret.additionalFields ?? null,
+				},
 				onSaved: () => this.reloadWithList(),
 			})
 		},
@@ -2267,6 +2709,13 @@ details[open] > summary .secret-detail__accordion-chevron {
 	letter-spacing: 0.04em;
 }
 
+/* A hidden additional field: the masked value, Show and Copy on one line. */
+.secret-detail__extra-hidden {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
 /* Identity section headings: plain text OUTSIDE the boxes (Proton). */
 .secret-detail__section-heading {
 	margin: 16px 0 8px;
@@ -2363,5 +2812,26 @@ details[open] > summary .secret-detail__accordion-chevron {
 	font-weight: 600;
 	background-color: var(--color-primary-element-light, #dbe9f5);
 	color: var(--color-main-text, #222);
+}
+
+.secret-detail__url-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.secret-detail__preview {
+	display: block;
+	width: 100%;
+	max-height: 160px;
+	object-fit: cover;
+	border-radius: var(--border-radius-large);
+	margin-bottom: 8px;
+}
+
+.secret-detail__change-password {
+	display: inline-block;
+	margin-top: 4px;
+	color: var(--color-primary-element);
 }
 </style>

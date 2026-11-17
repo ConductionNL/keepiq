@@ -154,6 +154,8 @@ item:
   fillName: "{name} kitöltése"
   insecureTitle: Mégis kitöltöd ezt a bejelentkezést?
   insecureWarning: "Figyelem: ez egy nem biztonságos HTTP-oldal, az itt elküldött adatokat mások is láthatják és módosíthatják. Ezt a bejelentkezést eredetileg egy biztonságos (HTTPS) oldalon mentetted."
+  repromptTitle: "Add meg a mesterjelszavad az elem kitöltéséhez"
+  repromptHelp: "Ez az elem minden kitöltés előtt kéri a mesterjelszavad. Ez a feloldott képernyőt védi, nem egy módosított bővítményt."
   cardInsecureTitle: Kitöltöd ezt a kártyát egy nem biztonságos webhelyen?
   cardInsecureWarning: Ez a webhely nem biztonságos. A hálózaton bárki elolvashatja a kitöltött kártyaadatokat.
   crossSiteTitle: "Kitöltés itt is: {hosts}?"
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: A titkosítási kulcsát visszavonták.
   suiteCompromised: Feltört kulccsal van titkosítva, ezért itt nem nyitható meg. A Keepiq webalkalmazás mutatja, hogy helyreállítható-e.
   migrationFailed: A feltörés utáni helyreállításkor nem sikerült áttenni az új kulcsodra. A tárolt érték megmarad, de nem nyitható meg.
+  privilegedAccess: A tulajdonos most nem hagyott jóvá számodra időablakot, vagy nem erről a címről.
 
 detail:
   item: Elem
@@ -730,6 +733,11 @@ inlineList:
       count:
         1: 1 Keepiq-személyazonosság. A választáshoz nyomd meg a lefelé nyilat.
         n: $1 Keepiq-személyazonosság. A választáshoz nyomd meg a lefelé nyilat.
+  newPassword:
+    frameTitle: Keepiq erős jelszó
+    offer: Erős jelszó használata
+    locked: Oldd fel a Keepiq zárolását egy erős jelszóért
+    status: Erős jelszó használata. A választáshoz nyomd meg a lefelé nyilat.
 
 notificationBar:
   label: Keepiq-értesítés

@@ -70,7 +70,7 @@ describe('pickCode', () => {
 	it('asks first for an https login on an http frame, then fills once confirmed', async () => {
 		await vault()
 		const insecure = { frameId: 3, url: 'http://example.test/2fa', anchorKey: 'k1' }
-		expect(await pickCode(target({ only: insecure }))).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true })
+		expect(await pickCode(target({ only: insecure }))).toEqual({ filled: 'none', code: false, needsInsecureConfirm: true, savedSecure: true })
 		expect(sent).toEqual([])
 		expect(await pickCode(target({ only: insecure, confirmedInsecure: true }))).toEqual({ filled: 'none', code: true })
 	})
@@ -86,6 +86,13 @@ describe('pickCode', () => {
 	it('fills a use-only copy\'s code', async () => {
 		await vault({ useOnly: true })
 		expect(await pickCode(target())).toEqual({ filled: 'none', code: true })
+	})
+
+	it('sends no code for a login flagged to ask for the master password, which the inline list cannot ask for', async () => {
+		await vault({ reprompt: true })
+		expect(await pickCode(target())).toEqual({ filled: 'none', code: false })
+		expect(sent).toEqual([])
+		expect(await browser.storage.local.get(lastUsedKey(accountId))).toEqual({})
 	})
 
 	it('sends nothing while locked', async () => {

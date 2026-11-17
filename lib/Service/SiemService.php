@@ -35,7 +35,7 @@ use OCA\Keepiq\Db\SiemQueueItemMapper;
 use OCA\Keepiq\Db\SiemSink;
 use OCA\Keepiq\Db\SiemSinkMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Kernel\Contracts\SiemServiceInterface;
 use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCP\IGroupManager;
@@ -112,7 +112,7 @@ class SiemService implements SiemServiceInterface {
 	 */
 	public function buildPayload(AuditEvent $event): ?array {
 		$eventType = $event->getEventType();
-		$whitelist = AuditEventTypes::WHITELIST[$eventType] ?? null;
+		$whitelist = AuditMetadataPolicy::WHITELIST[$eventType] ?? null;
 		if ($whitelist === null) {
 			return null;
 		}
@@ -126,7 +126,7 @@ class SiemService implements SiemServiceInterface {
 			// dead. It is NOT dead — it is what stops secret material reaching a
 			// SIEM sink the day someone widens a whitelist row.
 			$isWhitelisted = in_array($metaKey, $whitelist, true);
-			$isForbidden = in_array($metaKey, AuditEventTypes::FORBIDDEN_KEYS, true);
+			$isForbidden = in_array($metaKey, AuditMetadataPolicy::FORBIDDEN_KEYS, true);
 			if ($isWhitelisted === true && $isForbidden === false) {
 				$metadata[$metaKey] = $metaValue;
 			}

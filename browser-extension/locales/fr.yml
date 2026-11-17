@@ -154,6 +154,8 @@ item:
   fillName: Remplir {name}
   insecureTitle: Voulez-vous quand même remplir cet identifiant ?
   insecureWarning: "Attention : cette page HTTP n’est pas sécurisée, et les informations que vous envoyez pourraient être vues et modifiées par d’autres. Cet identifiant a été enregistré à l’origine sur une page sécurisée (HTTPS)."
+  repromptTitle: "Saisissez votre mot de passe principal pour remplir cet élément"
+  repromptHelp: "Cet élément demande votre mot de passe principal à chaque remplissage. Cela protège un écran déverrouillé, pas une extension modifiée."
   cardInsecureTitle: Remplir cette carte sur un site non sécurisé ?
   cardInsecureWarning: Ce site n’est pas sécurisé. Toute personne sur le réseau pourrait lire les données de carte saisies.
   crossSiteTitle: Remplir aussi sur {hosts} ?
@@ -341,6 +343,7 @@ blocked:
   suiteRevoked: Sa clé de chiffrement a été révoquée.
   suiteCompromised: Chiffré avec une clé compromise, il ne peut donc pas être ouvert ici. L’application web Keepiq indique s’il peut être récupéré.
   migrationFailed: Il n’a pas pu être transféré vers votre nouvelle clé lors de la récupération après compromission. La valeur stockée est conservée mais ne peut pas être ouverte.
+  privilegedAccess: Son propriétaire ne vous a pas accordé de créneau pour le moment, ou pas depuis cette adresse.
 
 detail:
   item: Élément
@@ -730,6 +733,11 @@ inlineList:
       count:
         1: 1 identité Keepiq. Appuyez sur Flèche bas pour choisir.
         n: $1 identités Keepiq. Appuyez sur Flèche bas pour choisir.
+  newPassword:
+    frameTitle: Mot de passe fort Keepiq
+    offer: Utiliser un mot de passe fort
+    locked: Déverrouillez Keepiq pour obtenir un mot de passe fort
+    status: Utiliser un mot de passe fort. Appuyez sur Flèche bas pour choisir.
 
 notificationBar:
   label: Notification Keepiq

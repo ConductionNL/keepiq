@@ -53,6 +53,7 @@ interface SecretVersionServiceInterface {
 	 * @return SecretVersion
 	 *
 	 * @throws \InvalidArgumentException On not found / not owned / suite blocked
+	 * @throws \OCA\Keepiq\Exception\PrivilegedAccessRequiredException When it is a version of a privileged copy outside its approved window
 	 *
 	 * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
 	 */
