@@ -7,7 +7,7 @@
  * src/crypto/parameters.js, and the rendered page carries every technical
  * name the settings overview shows.
  *
- * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
 
 import { readFileSync } from 'node:fs'

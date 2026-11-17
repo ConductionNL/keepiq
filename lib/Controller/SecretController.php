@@ -152,7 +152,7 @@ class SecretController extends OCSController {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	private function withExtraUrls(array $result): array {
 		if ($this->urls === null || is_array($result['items'] ?? null) === false) {
@@ -312,7 +312,7 @@ class SecretController extends OCSController {
 	 *
 	 * @throws InvalidArgumentException When the list cannot be stored, or names addresses for an application-owned secret
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	private function extraUrls(mixed $urls, ?string $ownerType): ?array {
 		if ($urls === null || $this->urls === null) {

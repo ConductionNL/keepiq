@@ -515,7 +515,7 @@ class KeepiqNotifier implements INotifier {
 	 *
 	 * @return bool Always true: the subject is recognised.
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	private function renderPrivilegedAccess(SubjectRendering $r): bool {
 		$secretName = (string)($r->params['secret_name'] ?? $r->l->t('a secret'));

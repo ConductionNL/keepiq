@@ -94,7 +94,7 @@ class SecretVersionAccessGuard {
 	 *
 	 * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function requireReadableVersion(string $versionId, string $userId): SecretVersion {
 		$version = $this->loadOwnedVersion(versionId: $versionId, userId: $userId);

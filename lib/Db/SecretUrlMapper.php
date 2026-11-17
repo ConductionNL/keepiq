@@ -59,7 +59,7 @@ class SecretUrlMapper extends QBMapper {
 	 *
 	 * @return array<string,list<string>>
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function findUrlsBySecretIds(array $secretIds): array {
 		$urls = [];
@@ -92,7 +92,7 @@ class SecretUrlMapper extends QBMapper {
 	 *
 	 * @throws Throwable When the write fails; nothing is changed then
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function replaceForSecret(string $secretId, string $ownerId, array $urls): void {
 		$this->db->beginTransaction();
@@ -121,7 +121,7 @@ class SecretUrlMapper extends QBMapper {
 	 *
 	 * @return int The number of addresses removed
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function deleteBySecret(string $secretId): int {
 		$qb = $this->db->getQueryBuilder();
@@ -138,7 +138,7 @@ class SecretUrlMapper extends QBMapper {
 	 *
 	 * @return int The number of addresses removed
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function deleteByOwner(string $ownerId): int {
 		$qb = $this->db->getQueryBuilder();

@@ -1298,7 +1298,7 @@
         "spec": "openspec/specs/secrets",
         "requirement": [
           "openspec/specs/secrets :: Create Secret",
-          "openspec/changes/capability-requirements-from-the-matrix/specs/secrets :: A secure note holds text without a login"
+          "openspec/specs/secrets :: A secure note holds text without a login"
         ],
         "plan": "openspec/changes/capability-requirements-from-the-matrix"
       },
@@ -1943,7 +1943,7 @@
         "note": "A secret carries one website address.",
         "change": "openspec/changes/vault-website-addresses",
         "readOn": "2026-10-16",
-        "requirement": "openspec/changes/vault-website-addresses/specs/website-addresses :: A login carries several website addresses"
+        "requirement": "openspec/specs/website-addresses :: A login carries several website addresses"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1981,7 +1981,7 @@
         "owner": "ConductionNL/keepiq",
         "note": "One old version can be opened and read on its own; there is no side-by-side comparison. The KqGeheim board draws the version list with Herstellen, not a compare view.",
         "change": "openspec/changes/archive/2026-07-18-secret-version-history",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history :: Compare two versions side by side",
+        "requirement": "openspec/specs/secret-version-history :: Compare two versions side by side",
         "plan": "openspec/changes/capability-requirements-from-the-matrix"
       },
       "rowSource": "competitor",
@@ -2059,7 +2059,7 @@
         "reachedOn": "Secret list, favicon beside each login once an admin sets a favicon service",
         "note": "Site icons show when an admin configures a favicon service; there is no screenshot preview.",
         "change": "openspec/changes/vault-website-addresses",
-        "requirement": "openspec/changes/vault-website-addresses/specs/website-addresses :: Site icons and previews are opt-in per instance"
+        "requirement": "openspec/specs/website-addresses :: Site icons and previews are opt-in per instance"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -2592,7 +2592,7 @@
         "owner": "ConductionNL/keepiq",
         "note": "No screen tells the user which algorithms or key sizes protect the vault. The certificates page shows the vault certificate's subject and expiry, but not RSA-4096, RSA-OAEP, AES-256-GCM or the key derivation settings.",
         "change": "openspec/changes/crypto-vault-encryption-details",
-        "requirement": "openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details :: The user sees what protects the vault"
+        "requirement": "openspec/specs/vault-encryption-details :: The user sees what protects the vault"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3542,7 +3542,7 @@
         "change": "openspec/changes/archive/2026-06-14-implement-link-sharing",
         "requirement": [
           "openspec/specs/link-sharing :: Create Link Share",
-          "openspec/changes/capability-requirements-from-the-matrix/specs/link-sharing :: A link share can end on a date"
+          "openspec/specs/link-sharing :: A link share can end on a date"
         ]
       },
       "rowSource": "own",
@@ -4025,7 +4025,7 @@
         "owner": "ConductionNL/keepiq",
         "note": "A user can ask the owner for access and the owner approves or denies, but approval is not limited by a time window or address range and does not gate use of a privileged login.",
         "spec": "openspec/specs/user-sharing",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing :: Use of a privileged login needs an approved time window",
+        "requirement": "openspec/specs/user-sharing :: Use of a privileged login needs an approved time window",
         "plan": "openspec/changes/capability-requirements-from-the-matrix"
       },
       "rowSource": "competitor",
@@ -5036,7 +5036,7 @@
         "reachedOn": "Application detail page -> Secrets panel",
         "note": "An application's detail page lists the (ciphertext) secrets attributed to it by name, type and creation date.",
         "spec": "openspec/specs/application-mgmt",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/application-mgmt :: The application page lists the secrets in its vault"
+        "requirement": "openspec/specs/application-mgmt :: The application page lists the secrets in its vault"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6242,7 +6242,7 @@
         "owner": "ConductionNL/keepiq",
         "note": "No inactive two-factor report; the health engine has no such category (src/health/engine.js:114).",
         "change": "openspec/changes/health-site-security-checks",
-        "requirement": "openspec/changes/health-site-security-checks/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
+        "requirement": "openspec/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6277,7 +6277,7 @@
         "owner": "ConductionNL/keepiq",
         "note": "No insecure-URL (http) finding in the health report or the extension.",
         "change": "openspec/changes/health-site-security-checks",
-        "requirement": "openspec/changes/health-site-security-checks/specs/health-site-checks :: Flag logins saved with an unencrypted address"
+        "requirement": "openspec/specs/health-site-checks :: Flag logins saved with an unencrypted address"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6377,7 +6377,7 @@
         "reachedOn": "nothing",
         "note": "Health report has no passkey-available check.",
         "change": "openspec/changes/health-site-security-checks",
-        "requirement": "openspec/changes/health-site-security-checks/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
+        "requirement": "openspec/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -6742,7 +6742,7 @@
         "reachedOn": "nothing",
         "note": "Keepiq stores the website address but never looks up or opens the site's change-password page.",
         "change": "openspec/changes/vault-website-addresses",
-        "requirement": "openspec/changes/vault-website-addresses/specs/website-addresses :: Open the site's change-password page"
+        "requirement": "openspec/specs/website-addresses :: Open the site's change-password page"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -8350,7 +8350,7 @@
         "note": "Real-time alerts cover a fixed set of risky events: a decoy touched, emergency access, a compromised secret, a new-device approval request and an account recovery request. Nothing alerts on failed unlocks (the vault unlocks in the browser, so the server does not see a wrong master password) or on admin changes such as policy edits; those reach only the audit trail and the SIEM export. Partial is right, not generous.",
         "change": "openspec/changes/archive/2026-07-20-honey-credentials",
         "readOn": "2026-10-07",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/secret-audit-trail :: Risky events raise an alert at once"
+        "requirement": "openspec/specs/secret-audit-trail :: Risky events raise an alert at once"
       },
       "rowSource": "competitor",
       "provider": "keepiq",

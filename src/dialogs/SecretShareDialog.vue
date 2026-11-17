@@ -355,7 +355,7 @@ export default {
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-share-a-secret-via-a-public-link
 		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-2.2
 		 */
 		async createLink() {
 			this.error = ''

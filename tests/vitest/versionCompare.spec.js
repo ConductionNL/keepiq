@@ -4,7 +4,7 @@
  *
  * The field-by-field comparison behind the side-by-side version view.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
  */
 
 import { describe, expect, it } from 'vitest'

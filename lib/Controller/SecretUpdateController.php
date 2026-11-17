@@ -149,7 +149,7 @@ class SecretUpdateController extends OCSController {
 	 * @throws ForbiddenException When the login is not the caller's own
 	 * @throws NotFoundException When the secret does not exist
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	private function extraUrls(string $id, string $userId): ?array {
 		$urls = $this->request->getParam('additionalUrls');
@@ -241,7 +241,7 @@ class SecretUpdateController extends OCSController {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	private function serialised(Secret $secret, string $userId): array {
 		return $this->privilegedGate?->serialisedFor(secret: $secret, userId: $userId) ?? $secret->jsonSerialize();

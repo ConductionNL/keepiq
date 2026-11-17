@@ -51,7 +51,7 @@ class AccessRequestMapper extends QBMapper {
 	 * @throws DoesNotExistException When there is no such request
 	 * @throws MultipleObjectsReturnedException When the id is not unique
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function findById(string $id): AccessRequest {
 		$qb = $this->db->getQueryBuilder();
@@ -70,7 +70,7 @@ class AccessRequestMapper extends QBMapper {
 	 *
 	 * @return AccessRequest[]
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function findBySecret(string $secretId, ?string $requesterId = null): array {
 		$qb = $this->db->getQueryBuilder();
@@ -94,7 +94,7 @@ class AccessRequestMapper extends QBMapper {
 	 *
 	 * @return AccessRequest[]
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function findApproved(string $secretId, string $requesterId): array {
 		$qb = $this->db->getQueryBuilder();
@@ -114,7 +114,7 @@ class AccessRequestMapper extends QBMapper {
 	 *
 	 * @return AccessRequest[]
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function findPendingForOwner(string $ownerId): array {
 		$qb = $this->db->getQueryBuilder();
@@ -134,7 +134,7 @@ class AccessRequestMapper extends QBMapper {
 	 *
 	 * @return int The rows removed
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function deleteBySecret(string $secretId): int {
 		$qb = $this->db->getQueryBuilder();
@@ -151,7 +151,7 @@ class AccessRequestMapper extends QBMapper {
 	 *
 	 * @return int The rows removed
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function deleteByUser(string $userId): int {
 		$qb = $this->db->getQueryBuilder();

@@ -47,7 +47,7 @@ class PrivilegedLoginMapper extends QBMapper {
 	 *
 	 * @return list<string> The privileged ones
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function privilegedAmong(array $secretIds): array {
 		if ($secretIds === []) {
@@ -78,7 +78,7 @@ class PrivilegedLoginMapper extends QBMapper {
 	 *
 	 * @return int The rows removed
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function deleteBySecret(string $secretId): int {
 		$qb = $this->db->getQueryBuilder();
@@ -95,7 +95,7 @@ class PrivilegedLoginMapper extends QBMapper {
 	 *
 	 * @return int The rows removed
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function deleteByUser(string $userId): int {
 		$qb = $this->db->getQueryBuilder();

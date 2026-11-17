@@ -7,7 +7,7 @@
  * rows are added and removed, the add button stops at twenty, and only a web
  * address becomes a link in the detail view.
  *
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
  */
 
 import { mount } from '@vue/test-utils'

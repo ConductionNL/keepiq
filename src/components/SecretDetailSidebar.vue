@@ -1429,7 +1429,7 @@ export default {
 		 * is a web address, so a typed `javascript:` never becomes one.
 		 *
 		 * @return {Array<{url: string, href: string|null}>}
-		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 		 */
 		extraUrls() {
 			return extraUrlLinks(this.secret?.additionalUrls)
@@ -1440,7 +1440,7 @@ export default {
 		 * with no template nothing is requested.
 		 *
 		 * @return {string|null}
-		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
 		 */
 		previewSrc() {
 			return previewImageUrl(previewTemplate(), this.secret?.url)
@@ -1450,7 +1450,7 @@ export default {
 		 * The site's change-password page, null without a web address.
 		 *
 		 * @return {string|null}
-		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
 		 */
 		changePasswordHref() {
 			return changePasswordUrl(this.secret?.url)

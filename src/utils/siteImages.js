@@ -6,7 +6,7 @@
  * `site_preview_service_url` template, `{url}` replaced by the login's
  * encoded address. No template, no image and no request.
  *
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+ * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
  */
 
 import { loadState } from '@nextcloud/initial-state'
@@ -54,7 +54,7 @@ export function templateProblem(template, placeholder) {
  * @param {string} template The admin's template, '' when off.
  * @param {string|null|undefined} url The login's main address.
  * @return {string|null}
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+ * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
  */
 export function previewImageUrl(template, url) {
 	if (typeof template !== 'string' || template === '' || templateProblem(template, '{url}') !== null) {
@@ -89,7 +89,7 @@ export function webAddress(url) {
  *
  * @param {string|null|undefined} url The login's main address.
  * @return {string|null}
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+ * @spec openspec/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
  */
 export function changePasswordUrl(url) {
 	const address = webAddress(url)

@@ -6,7 +6,7 @@
  * saved, as https, and the vault is analysed again; a failed save says so and
  * analyses nothing.
  *
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
+ * @spec openspec/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
