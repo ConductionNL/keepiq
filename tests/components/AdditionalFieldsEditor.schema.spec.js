@@ -103,6 +103,19 @@ describe('AdditionalFieldsEditor hidden values', () => {
 		expect(shown).toBe(value)
 	})
 
+	it('does not pass a removed row’s Show to the row that takes its place', async () => {
+		const hidden = { type: 'string', format: 'text', hidden: true }
+		const second = { name: 'Second', value: 'second-secret', schema: hidden }
+		const wrapper = mountEditor([{ name: 'First', value: 'first-secret', schema: hidden }, second])
+
+		await wrapper.find('[data-testid="masked-text-area-toggle"]').trigger('click')
+		await wrapper.findComponent('[data-testid="additional-field-remove-0"]').trigger('click')
+		await wrapper.setProps({ members: wrapper.emitted('update:members').at(-1)[0] })
+
+		expect(wrapper.props('members')).toEqual([second])
+		expect(wrapper.findComponent({ name: 'NcTextArea' }).exists()).toBe(false)
+	})
+
 	it('opens a hidden JSON value that is empty, so it can be typed at once', () => {
 		const wrapper = mountEditor([
 			{ name: 'Account', value: '', schema: { type: 'object', hidden: true } },

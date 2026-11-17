@@ -43,7 +43,7 @@
 		<ul v-else class="keepiq-additional-fields__list">
 			<li
 				v-for="(member, index) in members"
-				:key="index"
+				:key="rowKeys[index] ?? index"
 				class="keepiq-additional-fields__row"
 				:data-testid="`additional-field-row-${index}`">
 				<div class="keepiq-additional-fields__line">
@@ -190,7 +190,30 @@ export default {
 			newName: '',
 			nameError: '',
 			advancedOpen: [],
+			// A key per row that moves with it, so a removed row's Show state
+			// does not pass to the row that takes its place.
+			rowKeys: [],
+			nextRowKey: 0,
 		}
+	},
+
+	watch: {
+		/**
+		 * Give every row a key: a row added at the end gets a new one.
+		 *
+		 * @param {Array<object>} members The members.
+		 * @return {void}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+		 */
+		members: {
+			immediate: true,
+			handler(members) {
+				this.rowKeys = this.rowKeys.slice(0, members.length)
+				while (this.rowKeys.length < members.length) {
+					this.rowKeys.push(this.nextRowKey++)
+				}
+			},
+		},
 	},
 
 	methods: {
@@ -400,6 +423,7 @@ export default {
 			this.advancedOpen = this.advancedOpen
 				.filter((i) => i !== index)
 				.map((i) => (i > index ? i - 1 : i))
+			this.rowKeys = this.rowKeys.filter((_, position) => position !== index)
 			this.emitMembers(
 				this.members.filter((_, position) => position !== index),
 			)
