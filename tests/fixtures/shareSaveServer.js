@@ -115,6 +115,10 @@ export function shareSaveServer({
 				},
 			}
 		}
+		if (url.endsWith('/requests')) {
+			// The secret's requests, read for the schemas of filled fields.
+			return { data: [] }
+		}
 		const rowId = url.split('/').pop()
 		if (rows[rowId]) {
 			return { data: rows[rowId] }

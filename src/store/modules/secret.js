@@ -10,7 +10,7 @@ import {
 	saveShared,
 	VALUE_FIELDS,
 } from '../../services/shareSave.js'
-import { mergeFilledBlob, withRequestedFields } from '../../utils/fieldSchema.js'
+import { mergeFilledBlob } from '../../utils/fieldSchema.js'
 import { secretPlacement } from '../../utils/secretPlacement.js'
 import { isAccessExpired } from '../../utils/shareRestriction.js'
 import { BLOB_FIELDS } from '../../utils/valueFields.js'
@@ -291,8 +291,42 @@ async function decryptBlobFields(decrypted, cryptoKey) {
 }
 
 /**
+ * The schemas the secret's requests carry, by field name, a newer request's
+ * winning; null when the requests cannot be read.
+ *
+ * @param {string} secretId The secret ID.
+ * @return {Promise<object|null>}
+ * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+async function requestedSchemasOf(secretId) {
+	let requests
+	try {
+		const response = await axios.get(
+			generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/requests`),
+		)
+		requests = Array.isArray(response?.data) ? response.data : []
+	} catch {
+		return null
+	}
+	const oldestFirst = [...requests].sort((a, b) =>
+		String(a?.createdAt ?? '').localeCompare(String(b?.createdAt ?? '')),
+	)
+	const schemas = {}
+	for (const request of oldestFirst) {
+		const given = request?.fieldSchemas
+		if (given && typeof given === 'object' && !Array.isArray(given)) {
+			Object.assign(schemas, given)
+		}
+	}
+	return schemas
+}
+
+/**
  * Merge the request-filled pending blobs into the decrypted extra fields,
- * and count them as merged only when every blob merged.
+ * and count them as merged only when every blob merged. When the requests,
+ * and so the schemas of the filled fields, cannot be read, nothing is
+ * merged: a hidden value would otherwise show in clear. The blobs stay
+ * pending for the next open.
  *
  * @param {object} decrypted The decrypted secret.
  * @param {CryptoKey} cryptoKey The session private key.
@@ -303,10 +337,16 @@ async function mergePendingInto(decrypted, cryptoKey) {
 	if (!Array.isArray(pending) || pending.length === 0) {
 		return
 	}
+	const requested = await requestedSchemasOf(decrypted.id)
+	if (requested === null) {
+		decrypted.mergedPending = 0
+		return
+	}
 	const merged = await mergePendingFields(
 		decrypted.additionalFields,
 		pending,
 		cryptoKey,
+		requested,
 	)
 	decrypted.additionalFields = merged.fields
 	decrypted.mergedPending = merged.complete ? pending.length : 0
@@ -527,77 +567,6 @@ async function encryptOptionalFields(payload, input) {
  */
 function extraFieldsText(fields) {
 	return typeof fields === 'string' ? fields : JSON.stringify(fields)
-}
-
-/**
- * The decrypted secret a write starts from: the open one once its pending
- * write-back has settled, since its version and pending count move when that
- * saves, else the secret as the server has it.
- *
- * @param {object} store The secret store.
- * @param {string} id The secret ID.
- * @return {Promise<object>} The decrypted secret.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
- */
-async function openForWrite(store, id) {
-	if (store.currentSecret?.id === id) {
-		await store.writeBackSettled(id)
-		return store.currentSecret
-	}
-	const response = await axios.get(
-		generateUrl(`/apps/keepiq/api/v1/secrets/${id}`),
-	)
-	return store.decryptSecret(response.data)
-}
-
-/**
- * Whether decrypted additional fields hold members a field can be added to:
- * none yet, or an object; text and lists do not.
- *
- * @param {object|Array|string|null|undefined} fields The decrypted additional fields.
- * @return {boolean}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
- */
-function holdsMembers(fields) {
-	if (fields === null || fields === undefined) {
-		return true
-	}
-	return typeof fields === 'object' && !Array.isArray(fields)
-}
-
-/**
- * The additional fields with the requested fields added, empty, with their
- * schemas; null when there is nothing to write, as when the fields are text
- * rather than members or the requested fields are already there.
- *
- * @param {object|Array|string|null|undefined} own The secret's decrypted additional fields.
- * @param {Array<string>} names The requested custom field names.
- * @param {object} schemas The requested schemas by field name.
- * @return {object|null} The blob to save, or null.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
- */
-function requestedBlob(own, names, schemas) {
-	if (!holdsMembers(own)) {
-		return null
-	}
-	const blob = withRequestedFields(own, names, schemas)
-	return JSON.stringify(blob) === JSON.stringify(own || {}) ? null : blob
-}
-
-/**
- * Show saved additional fields on the open secret, when it is the one saved.
- *
- * @param {object} store The secret store.
- * @param {string} id The saved secret's ID.
- * @param {object} blob The saved additional fields.
- * @return {void}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
- */
-function showSavedFields(store, id, blob) {
-	if (store.currentSecret && store.currentSecret.id === id) {
-		store.currentSecret.additionalFields = blob
-		store.currentSecret.mergedPending = 0
-	}
 }
 
 /**
@@ -851,20 +820,21 @@ function keepOpenVersion(store, save) {
 /**
  * Merge request-filled extra-field blobs into the owner's own extra fields
  * (keepiq#750). Each pending blob is the JSON object of the members one fill
- * supplied; later fills win for a member they both name. The schemas stay
- * the owner's: a `@schema` in a filled blob is ignored, because the filler
- * seals the blob and can put anything in it. A blob that cannot be
- * decrypted is skipped and makes the merge incomplete, so it is not dropped
- * from the server.
+ * supplied; later fills win for a member they both name. A `@schema` in a
+ * filled blob is ignored, because the filler seals the blob and can put
+ * anything in it: a filled field keeps the owner's schema, or gets the one
+ * its request carries. A blob that cannot be decrypted is skipped and makes
+ * the merge incomplete, so it is not dropped from the server.
  *
  * @param {object|string|null|undefined} own The owner's decrypted extra fields.
  * @param {Array<string>} pending The pending ciphertexts, oldest first.
  * @param {CryptoKey} cryptoKey The session private key.
+ * @param {object} requested The schemas the secret's requests carry, by field name.
  * @return {Promise<{fields: object|string|null, complete: boolean}>}
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
-async function mergePendingFields(own, pending, cryptoKey) {
+async function mergePendingFields(own, pending, cryptoKey, requested) {
 	if (
 		own !== null
 		&& own !== undefined
@@ -879,7 +849,7 @@ async function mergePendingFields(own, pending, cryptoKey) {
 		try {
 			const members = JSON.parse(await rsaDecrypt(ciphertext, cryptoKey))
 			if (members && typeof members === 'object' && !Array.isArray(members)) {
-				fields = mergeFilledBlob(fields, members)
+				fields = mergeFilledBlob(fields, members, requested)
 			} else {
 				complete = false
 			}
@@ -1389,35 +1359,6 @@ export const useSecretStore = defineStore('secret', {
 			const saved = await saveChange(this, change)
 			keepOpenVersion(this, { id, saved })
 			return saved
-		},
-
-		/**
-		 * Write the custom fields a request asks for into its secret, empty,
-		 * with their schemas. The schemas then come from the owner, and a
-		 * fill only adds values: the merge ignores any schema in a filled
-		 * blob. Nothing is written when the fields and schemas are there.
-		 *
-		 * @param {string} id The secret the request writes to.
-		 * @param {Array<string>} names The requested custom field names.
-		 * @param {object} schemas The requested schemas by field name.
-		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
-		 */
-		async prepareRequestedFields(id, names, schemas) {
-			if (names.length === 0) {
-				return
-			}
-			const open = await openForWrite(this, id)
-			const blob = requestedBlob(open.additionalFields, names, schemas)
-			if (blob === null) {
-				return
-			}
-			await this.updateSecret(
-				id,
-				{ additionalFields: blob, mergedPending: open.mergedPending ?? 0 },
-				{ baseUpdatedAt: open.updatedAt },
-			)
-			showSavedFields(this, id, blob)
 		},
 
 		/**

@@ -33,7 +33,6 @@ import {
 	schemaError,
 	schemasOf,
 	valuesFit,
-	withRequestedFields,
 	withSchemas,
 } from '../../src/utils/fieldSchema.js'
 
@@ -201,25 +200,30 @@ describe('field schemas', () => {
 		})
 	})
 
-	it('adds the requested fields empty, with their schemas, before a fill', () => {
+	it('gives a filled field without a stored schema its request’s, never the fill’s', () => {
 		const own = {
 			Host: 'db',
 			'@schema': { Host: { type: 'string', format: 'hostname' } },
 		}
+		const filled = {
+			Host: 'db2',
+			PIN: '1234',
+			'@schema': { PIN: { type: 'string' } },
+		}
+		const requested = {
+			Host: { type: 'string' },
+			PIN: { type: 'string', hidden: true },
+			Other: { type: 'boolean' },
+		}
 
-		expect(
-			withRequestedFields(own, ['Host', 'PIN'], {
-				PIN: { type: 'string', hidden: true },
-			}),
-		).toEqual({
-			Host: 'db',
-			PIN: '',
+		expect(mergeFilledBlob(own, filled, requested)).toEqual({
+			Host: 'db2',
+			PIN: '1234',
 			'@schema': {
 				Host: { type: 'string', format: 'hostname' },
 				PIN: { type: 'string', hidden: true },
 			},
 		})
-		expect(withRequestedFields(null, ['Note'], {})).toEqual({ Note: '' })
 	})
 
 	it('keeps a field a person named @schema, under a name of its own', () => {

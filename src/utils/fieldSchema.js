@@ -770,37 +770,26 @@ export function mergeBlobs(own, incoming) {
 
 /**
  * Merge the members a request filled in into a blob. Only the values are
- * taken: the schemas stay the stored ones, which the owner wrote when asking,
- * because whoever holds a fill link can put anything in the blob it seals.
+ * taken, because whoever holds a fill link can put anything in the blob it
+ * seals. A filled field keeps the schema stored on the secret; one without
+ * a stored schema gets the schema its request carries, which the server
+ * checked when the request was made.
  *
  * @param {object} own The stored blob.
  * @param {object} incoming The members a request filled in.
+ * @param {object} requested The schemas the secret's requests carry, by field name.
  * @return {object} The merged blob.
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
-export function mergeFilledBlob(own, incoming) {
-	return withSchemas({ ...fieldsOf(own), ...fieldsOf(incoming) }, schemasOf(own))
-}
-
-/**
- * A blob with the fields a request asks for: each name not stored yet as an
- * empty field, and the requested schemas over the stored ones, so the
- * schemas are on the secret before anyone fills it in.
- *
- * @param {object|null|undefined} own The stored blob.
- * @param {Array<string>} names The requested custom field names.
- * @param {object} schemas The requested schemas by field name.
- * @return {object} The blob.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
- */
-export function withRequestedFields(own, names, schemas) {
-	const fields = fieldsOf(own)
-	for (const name of names) {
-		if (!Object.hasOwn(fields, name)) {
-			fields[name] = ''
+export function mergeFilledBlob(own, incoming, requested = {}) {
+	const filled = fieldsOf(incoming)
+	const schemas = schemasOf(own)
+	for (const name of Object.keys(filled)) {
+		if (!Object.hasOwn(schemas, name) && isSchemaMap({ [name]: requested?.[name] })) {
+			schemas[name] = requested[name]
 		}
 	}
-	return withSchemas(fields, { ...schemasOf(own), ...schemas })
+	return withSchemas({ ...fieldsOf(own), ...filled }, schemas)
 }
 
 /**

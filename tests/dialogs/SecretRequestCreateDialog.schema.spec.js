@@ -30,11 +30,11 @@ describe('SecretRequestCreateDialog field schemas', () => {
 		setActivePinia(createPinia())
 	})
 
-	it('sends the schemas of the requested custom fields, then writes them into the secret', async () => {
+	it('sends the schemas of the requested custom fields and writes nothing into the secret', async () => {
 		const store = useSecretRequestStore()
 		store.createRequest = vi.fn().mockResolvedValue({ id: 'r', token: 't' })
 		const secrets = useSecretStore()
-		secrets.prepareRequestedFields = vi.fn().mockResolvedValue()
+		secrets.updateSecret = vi.fn()
 
 		const wrapper = mount(SecretRequestCreateDialog, {
 			propsData: {
@@ -66,14 +66,9 @@ describe('SecretRequestCreateDialog field schemas', () => {
 			Account: { type: 'object', hidden: true },
 			PIN: { type: 'string', hidden: true },
 		})
-		expect(secrets.prepareRequestedFields).toHaveBeenCalledWith(
-			'secret-1',
-			['Account', 'Notes', 'PIN'],
-			{
-				Account: { type: 'object', hidden: true },
-				PIN: { type: 'string', hidden: true },
-			},
-		)
+		// The merge of a fill takes the schemas from the request, so a
+		// placeholder stays empty and its cleanup still applies.
+		expect(secrets.updateSecret).not.toHaveBeenCalled()
 	})
 
 	it('refines a new field under Advanced and lists it as Custom', async () => {
