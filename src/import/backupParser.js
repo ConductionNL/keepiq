@@ -77,7 +77,7 @@ function withTypeNames(row, s) {
  * @param {object} row The row.
  * @param {object} s The decrypted secret.
  * @return {object} The same row.
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
  */
 function withExtraUrls(row, s) {
 	const urls = Array.isArray(s.additionalUrls)

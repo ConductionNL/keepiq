@@ -7,7 +7,7 @@
   addresses are plain text like the main address (design D1), and the help
   text says so where the user types them.
 
-  @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+  @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 -->
 <template>
 	<fieldset class="additional-urls-field" data-testid="additional-urls-field">

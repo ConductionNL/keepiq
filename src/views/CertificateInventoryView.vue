@@ -271,7 +271,7 @@ export default {
 		 *
 		 * @param {object|null} metadata The server-parsed certificate metadata.
 		 * @return {string}
-		 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
+		 * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
 		 */
 		keyLabel(metadata) {
 			if (!metadata?.keyType || !metadata?.keyBits) {

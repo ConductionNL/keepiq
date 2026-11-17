@@ -6,7 +6,7 @@
   - events may start an OpenRegister flow; every group starts off. Shown only
   - when OpenRegister is enabled, because without it nothing can be started.
   -
-  - @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#requirement-administrators-choose-which-event-groups-start-flows
+  - @spec openspec/specs/vault-event-flow-triggers/spec.md#requirement-administrators-choose-which-event-groups-start-flows
   -->
 <template>
 	<CnSettingsSection
@@ -113,7 +113,7 @@ export default {
 		 * Load the enabled groups from the audit area settings.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-2.2
 		 */
 		async load() {
 			try {
@@ -131,7 +131,7 @@ export default {
 		 * @param {string} key The group
 		 * @param {boolean} on Whether it is switched on
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-2.2
 		 */
 		async toggle(key, on) {
 			const wanted = new Set(this.enabled)

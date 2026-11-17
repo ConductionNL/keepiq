@@ -7,7 +7,7 @@
  * hosts are not, the finding carries the address for the Change to https
  * action, and the flag does not weigh on the vault score.
  *
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
+ * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
  */
 
 import { describe, expect, it } from 'vitest'

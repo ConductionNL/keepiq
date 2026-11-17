@@ -519,7 +519,7 @@ export default {
 		 * @param {object} [ssh] The SSH key members (sshKeyToSave).
 		 * @return {object} The blob.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-typed-fields-storage
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		additionalBlob(ssh = {}) {
 			return {
@@ -574,7 +574,7 @@ export default {
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async submit() {
 			if (this.saveBlocked()) {

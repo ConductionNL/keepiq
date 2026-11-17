@@ -315,7 +315,7 @@ export default {
 		 * Whether the site directory copy loaded, so its two categories can show.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
 		 */
 		siteDirectoryReady() {
 			return this.store.siteDirectoryStatus === 'ready'
@@ -325,7 +325,7 @@ export default {
 		 * Why the two site directory categories are not shown.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
 		 */
 		siteDirectoryUnavailableText() {
 			if (this.store.siteDirectoryStatus === 'unavailable') {
@@ -446,7 +446,7 @@ export default {
 		 *
 		 * @param {object} finding A finding of the Unencrypted address category.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
+		 * @spec openspec/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
 		 */
 		async changeToHttps(finding) {
 			this.httpsError = ''
@@ -474,7 +474,7 @@ export default {
 		 * @param {object} finding The finding.
 		 * @param {'twoFactor'|'passkey'} kind Which directory.
 		 * @return {void}
-		 * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+		 * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
 		 */
 		openSiteDocs(finding, kind) {
 			const fallback =

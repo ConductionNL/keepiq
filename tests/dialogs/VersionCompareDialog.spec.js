@@ -5,7 +5,7 @@
  * The side-by-side comparison dialog: changed rows marked, masked values
  * hidden until revealed, and a plain statement when nothing changed.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
  */
 
 import { mount } from '@vue/test-utils'

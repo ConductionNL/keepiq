@@ -7,7 +7,7 @@
 
 ## 2. Report and merge
 
-- [ ] 2.1 Add a Duplicates section to `HealthReportView.vue` listing groups with host, username, folder and a shared marker. Verify: Playwright flow on the fixture vault shows one exact and one likely group.
+- [x] 2.1 Add a Duplicates section to `HealthReportView.vue` listing groups with host, username, folder and a shared marker. Verify: Playwright flow on the fixture vault shows one exact and one likely group. Playwright done 2026-11-17 on a throwaway NC 34 rig: tests/e2e/workflows/duplicate-finder.spec.ts, one exact and one likely group, no request body naming a group; passed.
 - [x] 2.2 Add `src/modals/DuplicateMergeModal.vue`: pick the item to keep, preview the folded additional fields, confirm with the count of people who lose access, then update the kept item and delete the others. Verify: vitest on the field folding with a clash, a Playwright flow merge the exact group, and the hydra modal-isolation gate.
 
 ## 3. Docs

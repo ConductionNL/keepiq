@@ -25,7 +25,7 @@ const BASE = '/apps/keepiq/api/v1/recovery-kit'
  * The current kit, if any: when it was made, never the copy.
  *
  * @return {Promise<object|null>}
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
  */
 export async function recoveryKitStatus() {
 	const { data } = await axios.get(generateUrl(BASE))
@@ -40,8 +40,8 @@ export async function recoveryKitStatus() {
  * @param {string} encryptedPrivateKey The session's stored private key envelope.
  * @param {string} masterPassword The master password, to unwrap the private key.
  * @return {Promise<{code: string, kit: object}>} The code to print, and the stored kit.
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-new-kit-replaces-the-old-one
+ * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
+ * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-new-kit-replaces-the-old-one
  */
 export async function createRecoveryKit(encryptedPrivateKey, masterPassword) {
 	const privateKeyPem = await decryptPrivateKey(
@@ -61,7 +61,7 @@ export async function createRecoveryKit(encryptedPrivateKey, masterPassword) {
  * Delete the current kit.
  *
  * @return {Promise<void>}
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
  */
 export async function revokeRecoveryKit() {
 	await axios.delete(generateUrl(BASE))
@@ -76,8 +76,8 @@ export async function revokeRecoveryKit() {
  * @param {string} newPassword The new master password.
  * @return {Promise<void>}
  * @throws {Error} When the code does not open the copy; nothing is changed then.
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-user-who-lost-the-master-password-gets-back-in
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-wrong-code-opens-nothing
+ * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-user-who-lost-the-master-password-gets-back-in
+ * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-wrong-code-opens-nothing
  */
 export async function recoverWithCode(code, newPassword) {
 	const { data: copy } = await axios.get(generateUrl(BASE + '/copy'))

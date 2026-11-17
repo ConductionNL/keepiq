@@ -114,7 +114,7 @@ describe('additional-field shape conversion', () => {
 })
 
 /**
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
  */
 describe('custom field kinds', () => {
 	it('reads an old blob without kinds as text, exactly as before', () => {

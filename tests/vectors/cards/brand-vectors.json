@@ -1,5 +1,5 @@
 {
-	"comment": "Card brand per number; the web app and the browser extension both test against these. Review every changed label (openspec/changes/vault-card-brand-formats).",
+	"comment": "Card brand per number; the web app and the browser extension both test against these. Review every changed label (openspec/changes/archive/2026-11-17-vault-card-brand-formats).",
 	"vectors": [
 		{
 			"number": "4000000000000002",

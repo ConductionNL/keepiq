@@ -8,7 +8,7 @@
 //   node docs/scripts/encryption-overview.mjs          write the page
 //   node docs/scripts/encryption-overview.mjs --check  fail when it is stale
 //
-// @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+// @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
 
 /* eslint-disable no-console -- a CLI script reports to the terminal */
 import { readFileSync, writeFileSync } from 'node:fs'

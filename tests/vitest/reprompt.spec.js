@@ -9,8 +9,8 @@
  * and every reveal path of the detail sidebar and the list row goes through
  * the guard (design D2), so a new path cannot skip it unnoticed.
  *
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
  */
 
 import { readFileSync } from 'node:fs'

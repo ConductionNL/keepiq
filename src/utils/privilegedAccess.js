@@ -15,7 +15,7 @@
  * @param {object} request The request as the API serialises it.
  * @param {Date} now The moment to judge at.
  * @return {'pending'|'denied'|'upcoming'|'active'|'ended'} The state.
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+ * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 export function requestState(request, now) {
 	if (request?.status === 'denied') {
@@ -43,7 +43,7 @@ export function requestState(request, now) {
  *
  * @param {string} value The input value (`YYYY-MM-DDTHH:mm`, local time).
  * @return {string} The ISO moment in UTC, or ''.
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+ * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 export function localInputToIso(value) {
 	if (!value) {
@@ -61,7 +61,7 @@ export function localInputToIso(value) {
  *
  * @param {string} text The typed ranges.
  * @return {string[]} The non-empty ranges, in order, without duplicates.
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+ * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 export function parseRanges(text) {
 	const ranges = String(text ?? '')
@@ -78,7 +78,7 @@ export function parseRanges(text) {
  * @param {object[]} requests The requests of the login.
  * @param {Date} now The moment to judge at.
  * @return {boolean}
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+ * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 export function shouldOfferRotation(requests, now) {
 	return (requests ?? []).some((request) => requestState(request, now) === 'ended')

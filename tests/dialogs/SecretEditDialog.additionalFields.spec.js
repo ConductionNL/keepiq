@@ -210,7 +210,7 @@ describe('SecretEditDialog — additional fields', () => {
 	})
 
 	/**
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 	 */
 	it('saves a field made hidden with its kind in the blob', async () => {
 		const wrapper = await mountOver({ 'Recovery code': 'abc-123' })
@@ -229,7 +229,7 @@ describe('SecretEditDialog — additional fields', () => {
 	})
 
 	/**
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 	 */
 	it('loads a hidden field as hidden and leaves it alone when unchanged', async () => {
 		const wrapper = await mountOver({

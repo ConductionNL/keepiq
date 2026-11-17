@@ -11,7 +11,7 @@
  * Only algorithm names and numbers live here — never key material, salts or
  * envelopes.
  *
- * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
 
 import { CONTENT_KEY_PARAMETERS, MASTER_KEY_PARAMETERS } from './aes.js'
@@ -59,7 +59,7 @@ function grouped(value) {
  *
  * @param {object} [parameters] The parameters to describe (defaults to the code's).
  * @return {{secretValues: string, privateKey: string, attachments: string, passwordProtected: string}}
- * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
 export function technicalNames(parameters = CRYPTO_PARAMETERS) {
 	const { secretValues, privateKey, attachments, passwordProtected } = parameters

@@ -41,7 +41,7 @@ class AuditStreamEventRegistrarTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-1.3
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-1.3
 	 */
 	public function testTheFlowListenersAreBoundNextToTheSiemListener(): void {
 		$bound = [];

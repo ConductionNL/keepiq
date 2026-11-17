@@ -62,7 +62,7 @@ import { useCertificateStore } from '../../store/modules/certificate.js'
  * The vault's encryption overview for the Encryption section of the user
  * settings.
  *
- * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
 export default {
 	name: 'VaultEncryptionDetails',
@@ -96,7 +96,7 @@ export default {
 		 * One line per protected thing: plain words, then the technical names.
 		 *
 		 * @return {Array<{id: string, label: string, text: string, technical: string}>}
-		 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+		 * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
 		 */
 		lines() {
 			const { secretValues, privateKey, attachments, passwordProtected } =
@@ -154,7 +154,7 @@ export default {
 		 * The inventory row of the user's vault certificate, if loaded.
 		 *
 		 * @return {object|null} Its server-parsed metadata.
-		 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
+		 * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
 		 */
 		certificate() {
 			const suites = this.certificateStore.inventory?.suites || []
@@ -166,7 +166,7 @@ export default {
 		 * The certificate's public facts, in display order; missing ones show a dash.
 		 *
 		 * @return {Array<{id: string, label: string, value: string}>}
-		 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
+		 * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
 		 */
 		certificateFacts() {
 			const c = this.certificate

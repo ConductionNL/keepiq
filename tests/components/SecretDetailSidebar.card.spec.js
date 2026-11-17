@@ -5,7 +5,7 @@
  * The card number row of the detail sidebar: labelled with the derived
  * brand, masked and revealed in the brand's grouping.
  *
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
  */
 
 import { mount } from '@vue/test-utils'

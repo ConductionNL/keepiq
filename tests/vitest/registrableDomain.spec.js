@@ -4,7 +4,7 @@
  *
  * The registrable-domain rule the web app shares with the browser extension.
  *
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.1
  */
 
 import { getDomain } from 'tldts'

@@ -6,7 +6,7 @@
  * offered it, at most two entries are picked, both are decrypted through the
  * stores (nothing else is called), and the older one goes on the left.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
  */
 
 import { mount } from '@vue/test-utils'

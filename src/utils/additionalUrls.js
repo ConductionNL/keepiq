@@ -6,7 +6,7 @@
  * form the server stores them: trimmed, without empty entries or repeats
  * (ignoring case), in the order given, at most MAX_URLS.
  *
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
  */
 
 /** The most extra addresses one login carries (SecretUrlService::MAX_URLS). */
@@ -20,7 +20,7 @@ export const MAX_LENGTH = 512
  *
  * @param {Array<unknown>|null|undefined} value The typed addresses.
  * @return {Array<string>}
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
  */
 export function normaliseUrls(value) {
 	const seen = new Set()
@@ -43,7 +43,7 @@ export function normaliseUrls(value) {
  * @param {Array<unknown>|null|undefined} a One list.
  * @param {Array<unknown>|null|undefined} b The other.
  * @return {boolean}
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
  */
 export function sameUrls(a, b) {
 	const left = normaliseUrls(a)
@@ -60,7 +60,7 @@ export function sameUrls(a, b) {
  *
  * @param {Array<unknown>|null|undefined} value The stored addresses.
  * @return {Array<{url: string, href: string|null}>}
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
  */
 export function extraUrlLinks(value) {
 	return normaliseUrls(value).map((url) => ({ url, href: webHref(url) }))

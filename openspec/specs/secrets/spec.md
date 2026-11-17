@@ -72,7 +72,9 @@ Folders are owned per user or application and form a tree via `parent_id`. Folde
 | `migration_error` | text | No | Set when re-encryption fails during compromise recovery; null on success. Cleared on successful retry. |
 | `created_at` | datetime | No | |
 | `updated_at` | datetime | No | |
+
 ## Requirements
+
 ### Requirement: Create Secret
 The system MUST allow an authenticated user to create a secret with at minimum a name and a key value.
 
@@ -531,6 +533,17 @@ Known limitation, stated rather than implied: an EXPIRED request remains `pendin
 - **GIVEN** a pending request that created its own unfilled Secret
 - **WHEN** the request is revoked
 - **THEN** the unfilled Secret MUST be deleted, so no keyless Secret outlives the request that justified it
+
+### Requirement: A secure note holds text without a login
+
+A vault user MUST be able to store a secure note: a secret of the system type `note` whose value is free text. When the user picks Secure note in the new secret dialog, the dialog MUST label the value field Note. Username and website address MUST stay optional. The note text MUST be encrypted in the browser like any other secret value. The detail sidebar MUST show the value under the label Note.
+
+#### Scenario: A vault user keeps the alarm codes as a secure note
+
+- **GIVEN** a vault user in the new secret dialog on /secrets
+- **WHEN** the user picks the type Secure note, enters a name and the codes as text, and saves without a username or address
+- **THEN** the secret is stored with type `note` and its text encrypted
+- **AND** the detail sidebar shows the text under Note
 
 ## User Stories
 

@@ -239,7 +239,7 @@ function siteDocs(site) {
  * @param {object} row One row passed to {@link analyse}.
  * @param {object|null} siteDirectory The directory copy, null when off.
  * @return {{twoFactor: object|null, passkey: object|null}}
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+ * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
  */
 function siteSuggestions(row, siteDirectory) {
 	if (!siteDirectory) {

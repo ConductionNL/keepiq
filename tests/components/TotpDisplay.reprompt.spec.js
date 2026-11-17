@@ -6,7 +6,7 @@
  * re-prompt: nothing is computed until the guard lets it through, a
  * cancelled prompt shows nothing, and a new seed or a vault lock asks again.
  *
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
  */
 
 import { mount } from '@vue/test-utils'

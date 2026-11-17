@@ -661,7 +661,7 @@ class AdminSettingsService implements AdminSettingsServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the value is not a list of known groups.
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-17-clients-vault-event-flow-triggers/tasks.md#task-2.1
 	 */
 	private function updateFlowTriggerGroups(array $data): void {
 		if (array_key_exists('flow_trigger_groups', $data) === false) {

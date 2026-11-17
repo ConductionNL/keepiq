@@ -96,7 +96,7 @@ class PrivilegedCopyGate {
 	 *
 	 * @throws PrivilegedAccessRequiredException When no approved window allows it now, from here
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function assertServable(Secret $secret, string $userId, string $channel): void {
 		if ($this->allows(secret: $secret, userId: $userId, channel: $channel, audit: true) === false) {
@@ -118,7 +118,7 @@ class PrivilegedCopyGate {
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) A listing withholds as a fetch does, it only does not audit.
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function servable(Secret $secret, array $data, string $userId, string $channel, bool $audit = false): array {
 		if ($this->allows(secret: $secret, userId: $userId, channel: $channel, audit: $audit) === true) {
@@ -142,7 +142,7 @@ class PrivilegedCopyGate {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function serialisedFor(Secret $secret, string $userId, string $channel = 'web'): array {
 		return $this->servable(secret: $secret, data: $secret->jsonSerialize(), userId: $userId, channel: $channel);
@@ -160,7 +160,7 @@ class PrivilegedCopyGate {
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Auditing is the caller's choice per path.
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function allows(Secret $secret, string $userId, string $channel, bool $audit = false): bool {
 		$sourceId = ($this->restrictedCopies(userId: $userId)[$secret->getId()] ?? null);

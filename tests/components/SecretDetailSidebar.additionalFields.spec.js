@@ -118,7 +118,7 @@ describe('SecretDetailSidebar — additional fields', () => {
 	})
 
 	/**
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 	 */
 	describe('field kinds', () => {
 		it('shows every field of an old blob without kinds as plain text', async () => {
@@ -207,7 +207,7 @@ describe('SecretDetailSidebar — additional fields', () => {
 	})
 
 	/**
-	 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+	 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 	 */
 	describe('SSH key', () => {
 		const publicKey =

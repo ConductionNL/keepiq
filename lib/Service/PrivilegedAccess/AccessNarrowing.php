@@ -28,7 +28,7 @@ use DateTimeImmutable;
  * A plain carrier: AccessWindow::approve() refuses one that widens the request
  * or names a range that does not parse.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+ * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 final class AccessNarrowing {
 
@@ -39,7 +39,7 @@ final class AccessNarrowing {
 	 * @param DateTimeImmutable|null $endsAt   An earlier end, or null to keep the requested one
 	 * @param list<string>            $ranges   CIDR ranges to limit use to; empty for any address
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function __construct(
 		public readonly ?DateTimeImmutable $startsAt = null,

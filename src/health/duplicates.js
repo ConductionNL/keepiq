@@ -13,7 +13,7 @@
  * copies of other people's secrets and machine material (passkeys, one-time
  * code seeds) are never grouped.
  *
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 
 /**
@@ -130,7 +130,7 @@ function group(kind, bucket, rows) {
  *
  * @param {Array<object>} rows Decrypted health rows: id, name, url, login, value, copy, machineMaterial.
  * @return {{exact: Array<object>, likely: Array<object>}}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 export function duplicateGroups(rows) {
 	const exact = []
@@ -161,7 +161,7 @@ export function duplicateGroups(rows) {
  * @param {object|null} kept The kept secret's additional fields (name → value).
  * @param {Array<object|null>} others The other secrets' additional fields, in order.
  * @return {object} The folded fields.
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 export function foldFields(kept, others) {
 	const out = { ...(isFieldMap(kept) ? kept : {}) }

@@ -26,7 +26,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
  */
 #[CoversClass(AddressRange::class)]
 class AddressRangeTest extends TestCase {

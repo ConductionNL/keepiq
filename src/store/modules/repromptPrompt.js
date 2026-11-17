@@ -12,7 +12,7 @@
  * browser and dropped: it is never returned, stored or sent to the server.
  * There is no grace period: every action asks again (design D3).
  *
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
  */
 
 import { defineStore } from 'pinia'
@@ -27,7 +27,7 @@ export class RepromptCancelled extends Error {
 	/**
 	 * A cancelled re-prompt, with a stable code callers can test for.
 	 *
-	 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
 	 */
 	constructor() {
 		super('Master password re-prompt cancelled')
@@ -59,7 +59,7 @@ export const useRepromptPromptStore = defineStore('repromptPrompt', {
 		 *
 		 * @param {string} itemName The item's name, shown in the prompt.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		ask(itemName) {
 			this.itemName = String(itemName || '')
@@ -72,7 +72,7 @@ export const useRepromptPromptStore = defineStore('repromptPrompt', {
 		 *
 		 * @param {string} masterPassword The entered password.
 		 * @return {Promise<boolean>} Whether the password was accepted.
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		submit(masterPassword) {
 			return slot.check(this, masterPassword, (password) =>
@@ -87,7 +87,7 @@ export const useRepromptPromptStore = defineStore('repromptPrompt', {
 		 * Close the prompt and refuse the waiting action.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
 		 */
 		cancel() {
 			slot.cancel(this)

@@ -33,7 +33,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 /**
  * Checks, stores and attaches a login's extra addresses.
  *
- * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+ * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
  */
 class SecretUrlService {
 	/**
@@ -75,7 +75,7 @@ class SecretUrlService {
 	 *
 	 * @throws InvalidArgumentException When the list cannot be stored
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function normalise(mixed $urls): array {
 		if ($urls === null || $urls === '') {
@@ -141,7 +141,7 @@ class SecretUrlService {
 	 *
 	 * @throws ForbiddenException When the login is not the caller's own, or is a received copy
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function replace(Secret $secret, string $userId, array $urls): array {
 		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
@@ -166,7 +166,7 @@ class SecretUrlService {
 	 *
 	 * @return list<string> The list the copy now carries
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function copyOnto(Secret $source, Secret $copy): array {
 		$urls = ($this->mapper->findUrlsBySecretIds(secretIds: [$source->getId()])[$source->getId()] ?? []);
@@ -186,7 +186,7 @@ class SecretUrlService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	private function replaceOnCopies(Secret $source, array $urls): void {
 		if ($this->rowJudge === null || $this->secretMapper === null) {
@@ -216,7 +216,7 @@ class SecretUrlService {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	public function withUrls(array $items): array {
 		$ids = array_values(array_filter(array_map(static fn (array $item): string => (string)($item['id'] ?? ''), $items)));

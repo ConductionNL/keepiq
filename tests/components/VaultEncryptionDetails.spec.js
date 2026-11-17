@@ -8,7 +8,7 @@
  * the server-parsed inventory row of the user's suite. The certificate
  * store's fetch is faked; its state is real.
  *
- * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
 
 import { flushPromises, mount } from '@vue/test-utils'

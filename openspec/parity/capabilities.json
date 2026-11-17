@@ -1241,7 +1241,7 @@
       "id": "vault-11",
       "area": "vault",
       "name": "Add your own custom fields to an item, including hidden ones.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -1249,13 +1249,13 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "src/dialogs/SecretCreateDialog.vue:122 and src/dialogs/SecretEditDialog.vue:125 AdditionalFieldsEditor -> src/store/modules/secret.js:377 encrypts additionalFields blob -> POST /api/v1/secrets (appinfo/routes.php:89); src/components/AdditionalFieldsEditor.vue:50 value is a plain NcTextField; src/components/SecretDetailSidebar.vue:570-577 renders every value as plain <dd> text",
+        "state": "built",
+        "evidence": "src/components/AdditionalFieldsEditor.vue:59 field kind select, :73 hidden kind as a password field -> src/utils/additionalFields.js:155 fieldEntry stores {value, kind} in the encrypted additionalFields blob -> src/components/SecretDetailSidebar.vue:878 a hidden value renders as dots until Show, Copy copies the real value; Playwright tests/e2e/workflows/custom-field-kinds.spec.ts (hidden field)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret / Edit secret dialog -> Additional fields section",
-        "note": "Owners can add, rename and remove named custom fields on create and edit, stored encrypted. There is no hidden or concealed field kind: values are typed in plain text fields and shown unmasked on the detail sidebar.",
-        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key",
-        "requirement": "openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields :: Hidden custom fields"
+        "note": "Owners add, rename and remove custom fields, each with a kind; a hidden field is masked in the editor and on the detail sidebar until Show, and Copy copies it without revealing it.",
+        "requirement": "openspec/specs/vault-custom-fields :: Hidden custom fields",
+        "spec": "openspec/specs/vault-custom-fields"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1298,9 +1298,9 @@
         "spec": "openspec/specs/secrets",
         "requirement": [
           "openspec/specs/secrets :: Create Secret",
-          "openspec/changes/capability-requirements-from-the-matrix/specs/secrets :: A secure note holds text without a login"
+          "openspec/specs/secrets :: A secure note holds text without a login"
         ],
-        "plan": "openspec/changes/capability-requirements-from-the-matrix"
+        "plan": "openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1342,7 +1342,7 @@
           "openspec/specs/card-identity-items :: Payment Card and Identity System Types",
           "openspec/specs/card-identity-items :: Type-Specific Presentation and Masked Reveal"
         ],
-        "plan": "openspec/changes/vault-card-brand-formats"
+        "plan": "openspec/changes/archive/2026-11-17-vault-card-brand-formats"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1369,7 +1369,7 @@
       "id": "vault-14",
       "area": "vault",
       "name": "Store an SSH key pair as its own item type.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -1377,13 +1377,13 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "lib/Repair/SeedSecretTypes.php:64 seeds 'ssh_key' => 'SSH Key'; src/dialogs/SecretCreateDialog.vue:95-108 offers only one value field for it; src/cxf/cxf.js:205,355 maps CXF ssh-key items; grep -rni ssh src --include=*.vue: no SSH-specific form, public-key field or key-pair generator",
+        "state": "built",
+        "evidence": "src/components/SecretPayloadFields.vue:33 SshKeyFields for the ssh_key type -> src/components/SshKeyFields.vue:41 Generate key pair (src/ssh/sshKey.js:700 generateKeyPair), :52 Import from file (sshKey.js:596 parsePrivateKey), public key and fingerprint (sshKey.js:372 fingerprintOf) -> src/components/SecretDetailSidebar.vue:813 public key and fingerprint with Copy (:833); Playwright tests/e2e/workflows/custom-field-kinds.spec.ts (SSH key)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: SSH Key",
-        "note": "SSH Key exists as its own type, but it stores a single secret value like any other type: there are no separate private key, public key and fingerprint fields and no key-pair generation. A user can put the public key in an additional field by hand.",
-        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key",
-        "requirement": "openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-ssh-key-item :: SSH key item form"
+        "note": "SSH Key is its own type with a private key (encrypted), a public key and a SHA256 fingerprint; a key pair can be generated or imported from a file, and the detail sidebar copies the public key.",
+        "requirement": "openspec/specs/vault-ssh-key-item :: SSH key item form",
+        "spec": "openspec/specs/vault-ssh-key-item"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1816,14 +1816,14 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-duplicate-finder on 2026-09-27. Before: git grep -i duplicate src lib: only the import wizard dedup (src/dialogs/ImportWizardDialog.vue:7 'duplicates' step); no report or merge over the stored vault",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-vault-duplicate-finder on 2026-09-27. Before: git grep -i duplicate src lib: only the import wizard dedup (src/dialogs/ImportWizardDialog.vue:7 'duplicates' step); no report or merge over the stored vault",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Duplicates are caught only while importing (portability-05); nothing finds or merges duplicates already stored.",
-        "change": "openspec/changes/vault-duplicate-finder",
+        "change": "openspec/changes/archive/2026-11-17-vault-duplicate-finder",
         "requirement": [
-          "openspec/changes/vault-duplicate-finder/specs/vault-duplicates :: Detect duplicates in the browser",
-          "openspec/changes/vault-duplicate-finder/specs/vault-duplicates :: Merge a duplicate group"
+          "openspec/specs/vault-duplicates :: Detect duplicates in the browser",
+          "openspec/specs/vault-duplicates :: Merge a duplicate group"
         ]
       },
       "rowSource": "competitor",
@@ -1937,13 +1937,13 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27. Before: lib/Db/Secret.php:252 a single 'url' string field; git grep -i 'additionalUrl|urls' src lib: no multi-URL model; browser-extension/src/vault/match.ts:15 matches on that one url",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-vault-website-addresses on 2026-09-27. Before: lib/Db/Secret.php:252 a single 'url' string field; git grep -i 'additionalUrl|urls' src lib: no multi-URL model; browser-extension/src/vault/match.ts:15 matches on that one url",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "A secret carries one website address.",
-        "change": "openspec/changes/vault-website-addresses",
+        "change": "openspec/changes/archive/2026-11-17-vault-website-addresses",
         "readOn": "2026-10-16",
-        "requirement": "openspec/changes/vault-website-addresses/specs/website-addresses :: A login carries several website addresses"
+        "requirement": "openspec/specs/website-addresses :: A login carries several website addresses"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1977,12 +1977,12 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Not built: no compare view. src/dialogs/VersionDetailsDialog.vue shows one decrypted historic version read-only and src/dialogs/VersionRestoreDialog.vue restores one; git grep -i 'diff|compare' src/dialogs src/components finds no side-by-side view. Planned in openspec/changes/capability-requirements-from-the-matrix task 1.1.",
+        "evidence": "Not built: no compare view. src/dialogs/VersionDetailsDialog.vue shows one decrypted historic version read-only and src/dialogs/VersionRestoreDialog.vue restores one; git grep -i 'diff|compare' src/dialogs src/components finds no side-by-side view. Planned in openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix task 1.1.",
         "owner": "ConductionNL/keepiq",
         "note": "One old version can be opened and read on its own; there is no side-by-side comparison. The KqGeheim board draws the version list with Herstellen, not a compare view.",
         "change": "openspec/changes/archive/2026-07-18-secret-version-history",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history :: Compare two versions side by side",
-        "plan": "openspec/changes/capability-requirements-from-the-matrix"
+        "requirement": "openspec/specs/secret-version-history :: Compare two versions side by side",
+        "plan": "openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2054,12 +2054,12 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27 for the missing half: a preview image of the site; site icons are built. Before: lib/Controller/DashboardController.php:101 favicon_service_url admin setting (off by default) -> src/utils/favicon.js:6 -> src/components/SecretListItem.vue:13 favicon in the list; searched 'screenshot', 'preview' for sites: none",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-vault-website-addresses on 2026-09-27 for the missing half: a preview image of the site; site icons are built. Before: lib/Controller/DashboardController.php:101 favicon_service_url admin setting (off by default) -> src/utils/favicon.js:6 -> src/components/SecretListItem.vue:13 favicon in the list; searched 'screenshot', 'preview' for sites: none",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret list, favicon beside each login once an admin sets a favicon service",
         "note": "Site icons show when an admin configures a favicon service; there is no screenshot preview.",
-        "change": "openspec/changes/vault-website-addresses",
-        "requirement": "openspec/changes/vault-website-addresses/specs/website-addresses :: Site icons and previews are opt-in per instance"
+        "change": "openspec/changes/archive/2026-11-17-vault-website-addresses",
+        "requirement": "openspec/specs/website-addresses :: Site icons and previews are opt-in per instance"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -2537,7 +2537,7 @@
       "id": "crypto-12",
       "area": "crypto",
       "name": "Regain access yourself with a recovery code or kit when the master password is lost.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "no",
       "passbolt": "partial",
@@ -2545,18 +2545,14 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Not built: no recovery code or recovery kit (grep -rni \"recovery code\\|recovery kit\" src lib: no hits). Specified in openspec/changes/crypto-recovery-kit on 2026-11-12 (decision 399). What exists goes around the vault, not back into it: src/export/backup.js:14-17 passphrase-encrypted Argon2id backup that is suite-independent 'for a forgotten master password' -> src/store/modules/export.js:24 encryptBackup; src/import/backupParser.js:14 decryptBackup in the Import wizard; src/views/EmergencyAccessView.vue:11 trusted-contact escrow; grep -rni 'recovery code\\|recovery kit' src lib: no hits",
+        "state": "built",
+        "evidence": "src/components/RecoveryKitPanel.vue (Settings, Security, and beside the encrypted backup in the export dialog) makes the kit: src/crypto/recoveryKit.js wraps the suite private key under a 160-bit recovery code with Argon2id, src/services/recoveryKit.js stores only the wrapped copy -> PUT /api/v1/recovery-kit (lib/Controller/RecoveryKitController.php, lib/Service/RecoveryKitService.php, table keepiq_recovery_kits); src/components/RecoveryKitUnlock.vue on the lock screen unwraps it with the code, sets a new master password and spends the kit (POST /api/v1/recovery-kit/spent), the copy fetch rate limited 5 per hour; Playwright tests/e2e/workflows/recovery-kit.spec.ts",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList page -> Export dialog (encrypted backup); Import wizard (restore); Emergency access page (/emergency-access)",
-        "note": "There is no recovery code or kit that reopens the existing vault. A user who kept a passphrase-encrypted backup can restore their secrets into a new vault, but only after an administrator force-revokes the old key, and a trusted emergency contact can regain read access after a wait.",
-        "change": "openspec/changes/crypto-recovery-kit",
-        "spec": "openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit",
-        "requirement": [
-          "openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md :: A user can create a recovery kit that reopens their own vault",
-          "openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md :: The recovery code reopens the vault and sets a new master password"
-        ],
-        "plan": "openspec/changes/crypto-recovery-kit"
+        "reachedOn": "Settings -> Security -> Recovery kit; lock screen -> I lost my master password",
+        "note": "A user makes a recovery kit with their master password, downloads or prints the code, and with it reopens their own vault and sets a new master password; the kit is then spent and a new one is offered.",
+        "spec": "openspec/specs/vault-recovery-kit",
+        "plan": "openspec/changes/archive/2026-11-17-crypto-recovery-kit",
+        "requirement": "openspec/specs/vault-recovery-kit :: A user can create a recovery kit that reopens their own vault"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2588,11 +2584,11 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/crypto-vault-encryption-details on 2026-09-27. Before: src/crypto/rsa.js:8 RSA_KEY_BITS = 4096 and src/crypto/aes.js:15 PBKDF2 600000 are code constants only; grep -rni 'algorithm\\|key size\\|RSA-OAEP' src --include=*.vue: only template comments; src/views/CertificateInventoryView.vue:116-137 shows vault certificate owner, subject and expiry, no algorithm or key size",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-crypto-vault-encryption-details on 2026-09-27. Before: src/crypto/rsa.js:8 RSA_KEY_BITS = 4096 and src/crypto/aes.js:15 PBKDF2 600000 are code constants only; grep -rni 'algorithm\\|key size\\|RSA-OAEP' src --include=*.vue: only template comments; src/views/CertificateInventoryView.vue:116-137 shows vault certificate owner, subject and expiry, no algorithm or key size",
         "owner": "ConductionNL/keepiq",
         "note": "No screen tells the user which algorithms or key sizes protect the vault. The certificates page shows the vault certificate's subject and expiry, but not RSA-4096, RSA-OAEP, AES-256-GCM or the key derivation settings.",
-        "change": "openspec/changes/crypto-vault-encryption-details",
-        "requirement": "openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details :: The user sees what protects the vault"
+        "change": "openspec/changes/archive/2026-11-17-crypto-vault-encryption-details",
+        "requirement": "openspec/specs/vault-encryption-details :: The user sees what protects the vault"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2858,14 +2854,14 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/crypto-item-reprompt on 2026-09-27. Before: git grep -i 'reprompt|re-prompt' src browser-extension: no match; master-password re-entry exists only before a plaintext export (src/dialogs/ExportDialog.vue:130 via src/crypto/reauth.js verifyMasterPassword)",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-crypto-item-reprompt on 2026-09-27. Before: git grep -i 'reprompt|re-prompt' src browser-extension: no match; master-password re-entry exists only before a plaintext export (src/dialogs/ExportDialog.vue:130 via src/crypto/reauth.js verifyMasterPassword)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Re-entry of the master password guards export only, not viewing or filling a chosen item.",
-        "change": "openspec/changes/crypto-item-reprompt",
+        "change": "openspec/changes/archive/2026-11-17-crypto-item-reprompt",
         "requirement": [
-          "openspec/changes/crypto-item-reprompt/specs/item-master-password-reprompt :: A per-item master password re-prompt",
-          "openspec/changes/crypto-item-reprompt/specs/item-master-password-reprompt :: The web app verifies the master password before revealing a flagged item"
+          "openspec/specs/item-master-password-reprompt :: A per-item master password re-prompt",
+          "openspec/specs/item-master-password-reprompt :: The web app verifies the master password before revealing a flagged item"
         ]
       },
       "rowSource": "competitor",
@@ -3542,7 +3538,7 @@
         "change": "openspec/changes/archive/2026-06-14-implement-link-sharing",
         "requirement": [
           "openspec/specs/link-sharing :: Create Link Share",
-          "openspec/changes/capability-requirements-from-the-matrix/specs/link-sharing :: A link share can end on a date"
+          "openspec/specs/link-sharing :: A link share can end on a date"
         ]
       },
       "rowSource": "own",
@@ -4021,12 +4017,12 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Not built: no approval window on a privileged login. appinfo/routes.php shareRequest create/approve/deny and src/components/share/ShareRequestForm.vue let a recipient ask the owner for a share, but lib/Service/ShareRequestService.php has no time window, address range or approval gate on use. Planned in openspec/changes/capability-requirements-from-the-matrix task 3.1.",
+        "evidence": "Not built: no approval window on a privileged login. appinfo/routes.php shareRequest create/approve/deny and src/components/share/ShareRequestForm.vue let a recipient ask the owner for a share, but lib/Service/ShareRequestService.php has no time window, address range or approval gate on use. Planned in openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix task 3.1.",
         "owner": "ConductionNL/keepiq",
         "note": "A user can ask the owner for access and the owner approves or denies, but approval is not limited by a time window or address range and does not gate use of a privileged login.",
         "spec": "openspec/specs/user-sharing",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing :: Use of a privileged login needs an approved time window",
-        "plan": "openspec/changes/capability-requirements-from-the-matrix"
+        "requirement": "openspec/specs/user-sharing :: Use of a privileged login needs an approved time window",
+        "plan": "openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -5036,7 +5032,7 @@
         "reachedOn": "Application detail page -> Secrets panel",
         "note": "An application's detail page lists the (ciphertext) secrets attributed to it by name, type and creation date.",
         "spec": "openspec/specs/application-mgmt",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/application-mgmt :: The application page lists the secrets in its vault"
+        "requirement": "openspec/specs/application-mgmt :: The application page lists the secrets in its vault"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -6238,11 +6234,11 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: grep -rni '2fa.directory|twofactorauth|inactive.*2fa' src lib browser-extension/src: no hits",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-health-site-security-checks on 2026-09-27. Before: grep -rni '2fa.directory|twofactorauth|inactive.*2fa' src lib browser-extension/src: no hits",
         "owner": "ConductionNL/keepiq",
         "note": "No inactive two-factor report; the health engine has no such category (src/health/engine.js:114).",
-        "change": "openspec/changes/health-site-security-checks",
-        "requirement": "openspec/changes/health-site-security-checks/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
+        "change": "openspec/changes/archive/2026-11-17-health-site-security-checks",
+        "requirement": "openspec/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6273,11 +6269,11 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: src/health/engine.js flags only weak, reused, stale, compromised, breached; grep for http protocol checks in src and browser-extension/src: no hits",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-health-site-security-checks on 2026-09-27. Before: src/health/engine.js flags only weak, reused, stale, compromised, breached; grep for http protocol checks in src and browser-extension/src: no hits",
         "owner": "ConductionNL/keepiq",
         "note": "No insecure-URL (http) finding in the health report or the extension.",
-        "change": "openspec/changes/health-site-security-checks",
-        "requirement": "openspec/changes/health-site-security-checks/specs/health-site-checks :: Flag logins saved with an unencrypted address"
+        "change": "openspec/changes/archive/2026-11-17-health-site-security-checks",
+        "requirement": "openspec/specs/health-site-checks :: Flag logins saved with an unencrypted address"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6372,12 +6368,12 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: git grep -i 'passkey' src/health src/store/modules/health.js: no passkey-availability check",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-health-site-security-checks on 2026-09-27. Before: git grep -i 'passkey' src/health src/store/modules/health.js: no passkey-availability check",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Health report has no passkey-available check.",
-        "change": "openspec/changes/health-site-security-checks",
-        "requirement": "openspec/changes/health-site-security-checks/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
+        "change": "openspec/changes/archive/2026-11-17-health-site-security-checks",
+        "requirement": "openspec/specs/health-site-checks :: Flag unused two-factor login and available passkeys"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -6737,12 +6733,12 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27. Before: searched 'change-password', 'well-known' in src/ lib/ browser-extension/src: no match",
+        "evidence": "Specified in openspec/changes/archive/2026-11-17-vault-website-addresses on 2026-09-27. Before: searched 'change-password', 'well-known' in src/ lib/ browser-extension/src: no match",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Keepiq stores the website address but never looks up or opens the site's change-password page.",
-        "change": "openspec/changes/vault-website-addresses",
-        "requirement": "openspec/changes/vault-website-addresses/specs/website-addresses :: Open the site's change-password page"
+        "change": "openspec/changes/archive/2026-11-17-vault-website-addresses",
+        "requirement": "openspec/specs/website-addresses :: Open the site's change-password page"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -8350,7 +8346,7 @@
         "note": "Real-time alerts cover a fixed set of risky events: a decoy touched, emergency access, a compromised secret, a new-device approval request and an account recovery request. Nothing alerts on failed unlocks (the vault unlocks in the browser, so the server does not see a wrong master password) or on admin changes such as policy edits; those reach only the audit trail and the SIEM export. Partial is right, not generous.",
         "change": "openspec/changes/archive/2026-07-20-honey-credentials",
         "readOn": "2026-10-07",
-        "requirement": "openspec/changes/capability-requirements-from-the-matrix/specs/secret-audit-trail :: Risky events raise an alert at once"
+        "requirement": "openspec/specs/secret-audit-trail :: Risky events raise an alert at once"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -9536,7 +9532,7 @@
       "id": "clients-15",
       "area": "clients",
       "name": "Automate follow-up work on vault events with a flow builder.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "unknown",
       "passbolt": "no",
@@ -9544,13 +9540,13 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "Flows page src/manifest.json:570 (index over OpenRegister 'flows' source) and FlowDetail with src/registry.js:63 FlowDetailSidebar (CnFlowSidebar); OpenRegister triggers are only manual, object and schedule (openregister lib/Service/Flow/Nodes/TriggerManualNode.php, TriggerObjectNode.php, TriggerScheduleNode.php); keepiq data lives in its own tables and grep -i flow lib: no trigger publisher",
+        "state": "built",
+        "evidence": "lib/Listener/FlowTriggerForwardListener.php forwards every AuditEvent of a switched-on group to OpenRegister's FlowTriggerService::fire('keepiq.'+type) with the SIEM payload -> lib/Service/Flow/VaultFlowTriggerCatalog.php maps every audit event type to a trigger and group, contributed to OpenRegister's palette through RegisterFlowTriggersEvent (lib/Listener/AuditStreamEventRegistrar.php) -> admin switch app config flow_trigger_groups (lib/Service/AdminSettingsService.php:254); Playwright tests/e2e/workflows/vault-event-flow-trigger.spec.ts (a share starts one run with no secret material)",
         "owner": "ConductionNL/openregister",
         "reachedOn": "Flows menu item (/flows) -> OpenRegister flow list and canvas",
-        "note": "The Flows page and canvas are reachable, but they run on OpenRegister's engine whose triggers fire on OpenRegister objects, schedules or manual runs. Keepiq's vault lives in its own tables and publishes nothing to it, so no vault event can start a flow.",
-        "change": "openspec/changes/clients-vault-event-flow-triggers",
-        "requirement": "openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers :: Vault events fire flow triggers"
+        "note": "With OpenRegister installed, an audited vault event in a group the administrator switched on starts any published flow on its keepiq.* trigger, with who did what and when as the payload and never a secret.",
+        "requirement": "openspec/specs/vault-event-flow-triggers :: Vault events fire flow triggers",
+        "spec": "openspec/specs/vault-event-flow-triggers"
       },
       "rowSource": "own",
       "provider": "openregister",
@@ -9585,26 +9581,12 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
-        "evidence": "307 var(--color-*) references across src; every hex colour in src/*.vue is a var() fallback (grep: no bare hex outside var()); src/assets/app.css uses Nextcloud theme variables; organisation theming itself comes from Nextcloud theming or the thematiq (nldesign) app",
+        "evidence": "307 var(--color-*) references across src; every hex colour in src/*.vue is a var() fallback (grep: no bare hex outside var()); src/assets/app.css uses Nextcloud theme variables; organisation theming itself comes from Nextcloud theming or the thematiq (nldesign) app; src/manifest.json:376-398 dashboard tiles take var(--color-primary-element*) and var(--color-background-dark); lib/Controller/WebManifestController.php:152 reads ThemingDefaults::getColorPrimary() with #21468B only as FALLBACK_THEME_COLOR (:49)",
         "owner": "ConductionNL/thematiq",
         "reachedOn": "Every Keepiq page follows the active Nextcloud or NL Design System theme",
-        "note": "Keepiq styles through Nextcloud CSS variables, so the organisation theme applied by Nextcloud theming or thematiq carries through. A few surfaces use fixed colours: the dashboard quick-action tiles and the PWA theme colour.",
-        "defects": [
-          {
-            "at": "src/manifest.json:339",
-            "what": "Dashboard quick-action tiles hard-code backgroundColor (#21468B, #3b82f6, #6b7280) and white text, so they ignore the organisation theme.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "lib/Controller/WebManifestController.php:89",
-            "what": "PWA theme_color and background_color and the theme-color meta (templates/index.php:23) are fixed to #21468B instead of the instance theme colour.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/platform-properties",
-        "requirement": "openspec/changes/platform-properties/specs/platform-properties :: The look comes from the Nextcloud theme"
+        "note": "Keepiq styles through Nextcloud CSS variables, so the organisation theme applied by Nextcloud theming or thematiq carries through, including the dashboard tiles and the PWA theme colour.",
+        "requirement": "openspec/specs/platform-properties :: The look comes from the Nextcloud theme",
+        "spec": "openspec/specs/platform-properties"
       },
       "rowSource": "own",
       "provider": "thematiq",
@@ -9866,9 +9848,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Every keepiq page, in the language chosen under Nextcloud personal settings",
         "note": "Keepiq ships its own translations and follows the per-user Nextcloud language.",
-        "spec": "hydra/openspec/specs/i18n-infrastructure",
-        "change": "openspec/changes/platform-properties",
-        "requirement": "openspec/changes/platform-properties/specs/platform-properties :: The language follows the user's Nextcloud setting"
+        "spec": "openspec/specs/platform-properties",
+        "requirement": "openspec/specs/platform-properties :: The language follows the user's Nextcloud setting"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",

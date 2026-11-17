@@ -21,7 +21,7 @@ const AES_KEY_BITS = 256
  * How the private key is protected by the master password, as the functions
  * below do it. Read by the encryption overview.
  *
- * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
 export const MASTER_KEY_PARAMETERS = Object.freeze({
 	cipher: AES_ALGORITHM,
@@ -36,7 +36,7 @@ export const MASTER_KEY_PARAMETERS = Object.freeze({
  * The algorithm of a fresh content key (an attachment's file key). Passed to
  * `crypto.subtle.generateKey` as is.
  *
- * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
 export const CONTENT_KEY_PARAMETERS = Object.freeze({
 	name: AES_ALGORITHM,

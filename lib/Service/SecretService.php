@@ -1794,7 +1794,7 @@ class SecretService implements SecretServiceInterface {
 	 *
 	 * @return list<array<string,mixed>>
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	private function serialiseAllFor(array $secrets, string $userId): array {
 		return array_map(fn (Secret $secret): array => $this->serialiseFor(secret: $secret, userId: $userId), $secrets);
@@ -1808,7 +1808,7 @@ class SecretService implements SecretServiceInterface {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	private function serialiseFor(Secret $secret, string $userId): array {
 		$data = $this->serialiseWithBlocking(secret: $secret);

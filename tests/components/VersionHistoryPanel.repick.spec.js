@@ -6,7 +6,7 @@
  * Compare with fewer than two picks decrypts nothing, and closing the
  * comparison drops the decrypted states.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
+ * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
  */
 
 import { mount } from '@vue/test-utils'

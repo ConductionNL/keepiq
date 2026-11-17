@@ -70,7 +70,7 @@ class PrivilegedAccessController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	#[NoAdminRequired]
 	public function status(string $id): JSONResponse {
@@ -89,7 +89,7 @@ class PrivilegedAccessController extends OCSController {
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The flag is the request body.
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	#[NoAdminRequired]
 	public function update(string $id, bool $privileged = false): JSONResponse {
@@ -112,7 +112,7 @@ class PrivilegedAccessController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	#[NoAdminRequired]
 	public function request(string $id, string $startsAt = '', string $endsAt = '', string $reason = ''): JSONResponse {
@@ -137,7 +137,7 @@ class PrivilegedAccessController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	#[NoAdminRequired]
 	public function pending(): JSONResponse {
@@ -156,7 +156,7 @@ class PrivilegedAccessController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	#[NoAdminRequired]
 	public function approve(string $requestId, string $startsAt = '', string $endsAt = '', array $ranges = []): JSONResponse {
@@ -182,7 +182,7 @@ class PrivilegedAccessController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	#[NoAdminRequired]
 	public function deny(string $requestId): JSONResponse {

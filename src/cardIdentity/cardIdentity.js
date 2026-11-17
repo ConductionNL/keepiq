@@ -113,7 +113,7 @@ const BRAND_RANGES = CARD_BRANDS.brands.flatMap((brand) =>
  *
  * @param {string} number The decrypted card number (spaces allowed).
  * @return {object|null} The `card-brands.json` entry.
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
  */
 export function cardBrandInfo(number) {
 	const digits = digitsOf(number)
@@ -126,7 +126,7 @@ export function cardBrandInfo(number) {
  * @param {{start: string, end: string}} range A brand range.
  * @param {string} digits Digits only.
  * @return {boolean} True when the number falls in the range.
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
  */
 function rangeCovers(range, digits) {
 	const head = digits.slice(0, range.start.length)
@@ -144,7 +144,7 @@ function rangeCovers(range, digits) {
  *
  * @param {Array<{brand: object, width: number}>} ranges The matching ranges.
  * @return {object|null} The `card-brands.json` entry.
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
  */
 function narrowestBrand(ranges) {
 	if (ranges.length === 0) {
@@ -163,7 +163,7 @@ function narrowestBrand(ranges) {
  *
  * @param {string} number The decrypted card number (spaces allowed).
  * @return {string} The brand label.
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-card-brand-detection-from-a-brand-table
  */
 export function cardBrand(number) {
 	return cardBrandInfo(number)?.label ?? 'Card'
@@ -195,7 +195,7 @@ function cardGroups(digits) {
  *
  * @param {string} number The decrypted card number.
  * @return {string}
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
  */
 export function formatCardNumber(number) {
 	const digits = digitsOf(number)
@@ -208,7 +208,7 @@ export function formatCardNumber(number) {
  *
  * @param {string} number The decrypted card number.
  * @return {string}
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
  */
 export function maskCardNumber(number) {
 	const digits = digitsOf(number)
@@ -238,7 +238,7 @@ export function maskCardNumber(number) {
  *
  * @param {string} number The card number as typed.
  * @return {{code: string, brand?: string}|null}
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
  */
 export function cardNumberHint(number) {
 	const digits = digitsOf(number)
@@ -255,7 +255,7 @@ export function cardNumberHint(number) {
  * @param {object|null} brand The brand table entry.
  * @param {number} length The number of digits.
  * @return {{code: string, brand?: string}|null}
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
  */
 function lengthHint(brand, length) {
 	if (!brand) {
@@ -272,7 +272,7 @@ function lengthHint(brand, length) {
  * @param {object|null} brand The brand table entry.
  * @param {string} digits Digits only.
  * @return {{code: string}|null}
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
  */
 function luhnHint(brand, digits) {
 	return brand?.luhn !== false && !luhnValid(digits) ? { code: 'luhn' } : null
@@ -285,7 +285,7 @@ function luhnHint(brand, digits) {
  * @param {string} number The card number.
  * @param {string} code The security code as typed.
  * @return {{brand: string, name: string, size: number}|null}
- * @spec openspec/changes/vault-card-brand-formats/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
+ * @spec openspec/specs/card-identity-items/spec.md#requirement-non-blocking-card-format-hints
  */
 export function securityCodeHint(number, code) {
 	const typed = String(code ?? '').trim()

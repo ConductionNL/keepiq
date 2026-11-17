@@ -6,7 +6,7 @@
  * every change written straight back to the general admin settings, and the
  * privacy and attribution text always shown.
  *
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.3
  */
 
 import axios from '@nextcloud/axios'

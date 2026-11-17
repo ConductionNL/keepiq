@@ -5,7 +5,7 @@
  * The optional per-finding action of a health category, used by the
  * Unencrypted address category for Change to https.
  *
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
+ * @spec openspec/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
  */
 
 import { mount } from '@vue/test-utils'

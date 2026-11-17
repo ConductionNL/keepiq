@@ -26,7 +26,7 @@
   and value; a member without one is text.
 
   @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
-  @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+  @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 -->
 <template>
 	<section class="keepiq-additional-fields" data-testid="additional-fields-editor">
@@ -193,7 +193,7 @@ export default {
 		 *
 		 * @return {Array<{value: string, label: string}>}
 		 *
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 		 */
 		kindOptions() {
 			return [
@@ -212,7 +212,7 @@ export default {
 		 *
 		 * @return {{value: string, label: string}}
 		 *
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 		 */
 		kindOption(kind) {
 			const normalised = normaliseKind(kind)
@@ -312,7 +312,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
 		 */
 		onRekind(index, option) {
 			const kind = normaliseKind(

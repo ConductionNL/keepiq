@@ -9,7 +9,7 @@
  * own and prints it, or says the page was blocked; a status lookup that
  * fails counts as no kit; and a server message replaces the generic error.
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
+ * @spec openspec/specs/vault-recovery-kit/spec.md#scenario-a-kit-is-created-without-the-code-leaving-the-browser
  */
 
 import { mount } from '@vue/test-utils'

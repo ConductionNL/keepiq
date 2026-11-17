@@ -28,7 +28,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
  */
 #[CoversClass(AccessWindow::class)]
 #[UsesClass(AddressRange::class)]

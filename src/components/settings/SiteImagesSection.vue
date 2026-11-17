@@ -8,7 +8,7 @@
   what leaves the instance when one is set. The server checks that a template
   is an https address with its placeholder; this form checks the same first.
 
-  @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+  @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
 -->
 <template>
 	<CnSettingsSection

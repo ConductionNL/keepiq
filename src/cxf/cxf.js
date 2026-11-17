@@ -532,7 +532,7 @@ function attachExtras(ctx) {
  * @param {object} target The row the fields go on.
  * @param {{credential: object, sourceRow: number}} entry The credential and its source row.
  * @return {void}
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
  */
 function attachCustomFields(ctx, target, entry) {
 	const fields = Array.isArray(entry.credential.fields)
@@ -870,7 +870,7 @@ const ENTITY_MEMBERS = {
  * @param {object} row The serialized secret.
  * @param {string} typeName The resolved Keepiq type name.
  * @return {Array<object>} [] or the one credential.
- * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
  */
 function customFieldCredentials(row, typeName) {
 	const fields = row.additionalFields

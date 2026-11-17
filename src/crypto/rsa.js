@@ -22,7 +22,7 @@ const RSA_PUBLIC_EXPONENT = 65537
  * functions below use them. Read by the encryption overview so the screen
  * cannot say something this module does not do.
  *
- * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
+ * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
  */
 export const RSA_PARAMETERS = Object.freeze({
 	algorithm: RSA_ALGORITHM,

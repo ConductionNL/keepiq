@@ -7,7 +7,7 @@
   each with its address host, username and items, and a Merge action.
   Presentation only; the groups come from the health store.
 
-  @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+  @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
 -->
 <template>
 	<section class="health-duplicates" data-testid="category-duplicates">

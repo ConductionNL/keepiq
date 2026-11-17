@@ -8,7 +8,7 @@
   kept item is saved with the others' fields folded in and the others move to
   the trash. Likely duplicates have no item picked in advance.
 
-  @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+  @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
 -->
 <template>
 	<NcDialog
@@ -152,7 +152,7 @@ export default {
 		/**
 		 * The names of the additional fields the kept item will carry; values stay hidden.
 		 *
-		 * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+		 * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
 		 */
 		fieldNames() {
 			return this.kept ? Object.keys(mergedFields(this.kept, this.others)) : []
@@ -171,7 +171,7 @@ export default {
 	/**
 	 * Decrypt the group's items; an exact group starts with the first one picked.
 	 *
-	 * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+	 * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
 	 */
 	async mounted() {
 		try {
@@ -190,7 +190,7 @@ export default {
 		/**
 		 * Count the people who lose access through shares of the items being removed.
 		 *
-		 * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+		 * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
 		 */
 		async countPeople() {
 			this.peopleLosingAccess = null
@@ -211,7 +211,7 @@ export default {
 		/**
 		 * Merge: save the kept item with the folded fields, then move the others to the trash.
 		 *
-		 * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+		 * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
 		 */
 		async merge() {
 			this.merging = true

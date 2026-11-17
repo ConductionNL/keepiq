@@ -136,7 +136,7 @@ export default {
 		 *
 		 * @param {object} finding The finding.
 		 * @return {string|null}
-		 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
 		 */
 		changePasswordHref(finding) {
 			return changePasswordUrl(finding?.url)

@@ -109,7 +109,7 @@ export default {
 		 * shows nothing. A flagged item passes its master password re-prompt
 		 * here (crypto-item-reprompt). Without one the code shows at once.
 		 *
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
 		guard: {
 			type: Function,
@@ -139,7 +139,7 @@ export default {
 		 * Whether the code waits behind the guard.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
 		locked() {
 			return this.guard !== null && !this.unlocked
@@ -261,7 +261,7 @@ export default {
 		 * shows nothing; showing it again asks again.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
 		async unlock() {
 			if (this.guard) {
@@ -279,7 +279,7 @@ export default {
 		 * The vault locked: drop the code and put it back behind the guard.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
 		lock() {
 			this.unlocked = false

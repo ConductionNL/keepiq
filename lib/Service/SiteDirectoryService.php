@@ -24,7 +24,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -46,7 +46,7 @@ use Throwable;
 /**
  * Fetches, stores and serves the site directory copy.
  *
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
  */
 class SiteDirectoryService {
 
@@ -105,7 +105,7 @@ class SiteDirectoryService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
 	 */
 	public function isEnabled(): bool {
 		return $this->appConfig->getValueBool(AppIdentity::APP_ID, self::CONFIG_KEY, false);
@@ -120,7 +120,7 @@ class SiteDirectoryService {
 	 *
 	 * @return bool Whether a new copy was stored.
 	 *
-	 * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
 	 */
 	public function refresh(): bool {
 		if ($this->isEnabled() === false) {
@@ -152,7 +152,7 @@ class SiteDirectoryService {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
 	 */
 	public function current(): ?string {
 		try {
@@ -217,7 +217,7 @@ class SiteDirectoryService {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/health-site-security-checks/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-2.2
 	 */
 	private function documentationOf(mixed $entry): string {
 		$documentation = '';

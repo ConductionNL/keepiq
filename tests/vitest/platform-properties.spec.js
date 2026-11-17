@@ -10,8 +10,8 @@
  *  - tests/l10n/check-l10n-nl.js fails, naming the key, when a
  *    t('keepiq', ...) key used in src/ has no entry in l10n/nl.json.
  *
- * @spec openspec/changes/platform-properties/tasks.md#1.3
- * @spec openspec/changes/platform-properties/tasks.md#2.1
+ * @spec openspec/changes/archive/2026-11-17-platform-properties/tasks.md#1.3
+ * @spec openspec/changes/archive/2026-11-17-platform-properties/tasks.md#2.1
  */
 
 import { spawnSync } from 'node:child_process'

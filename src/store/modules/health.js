@@ -144,7 +144,7 @@ async function decryptedRow(secret, session, facts) {
  * @param {object} secret A listed secret.
  * @param {object} session The session store (holds the CryptoKey).
  * @return {Promise<string|null>}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 async function decryptedLogin(secret, session) {
 	if (!secret.login) {
@@ -164,7 +164,7 @@ async function decryptedLogin(secret, session) {
  * Null when it cannot be read: duplicate detection then stays off.
  *
  * @return {Promise<Set<string>|null>}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
  */
 async function recipientCopyIds() {
 	try {
@@ -196,7 +196,7 @@ async function recipientCopyIds() {
  * @param {string|null} [login] Its decrypted username.
  * @return {object} The row the engine analyses.
  * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 function healthRow(secret, value, facts, login = null) {
 	return {
@@ -220,7 +220,7 @@ function healthRow(secret, value, facts, login = null) {
  * @param {object} secret A listed secret.
  * @param {{seedDomains: Set<string>, passkeyDomains: Set<string>}} facts The vault's own seed and passkey items by domain.
  * @return {{hasSeed: boolean, hasPasskey: boolean}}
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 function secondFactorsHeld(secret, facts) {
 	const domain = siteDomain(secret.url)
@@ -235,7 +235,7 @@ function secondFactorsHeld(secret, facts) {
  * @param {Set<string>} domains Registrable domains the vault holds an item for.
  * @param {string|null} domain A row's registrable domain.
  * @return {boolean} Whether the domain is known and in the set.
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 function listsDomain(domains, domain) {
 	return domain !== null && domains.has(domain)
@@ -307,7 +307,7 @@ async function scoreRows(store, analysis) {
  *
  * @param {object|null|undefined} copy The response body.
  * @return {{totp: object, passkeys: object}|null}
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 function usableDirectory(copy) {
 	if (!isDirectoryCopy(copy)) {
@@ -319,7 +319,7 @@ function usableDirectory(copy) {
 /**
  * @param {object|null|undefined} copy The response body.
  * @return {boolean} Whether it holds an object-typed totp and passkeys list.
- * @spec openspec/changes/health-site-security-checks/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 function isDirectoryCopy(copy) {
 	return (
@@ -387,21 +387,21 @@ export const useHealthStore = defineStore('health', {
 		/**
 		 * @param {object} state The store state.
 		 * @return {Array<object>} Findings whose address is plain http.
-		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
 		 */
 		insecureAddressFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('insecure-address')),
 		/**
 		 * @param {object} state The store state.
 		 * @return {Array<object>} Logins for sites offering one-time codes the vault holds no seed for.
-		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
 		 */
 		twoFactorAvailableFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('two-factor-available')),
 		/**
 		 * @param {object} state The store state.
 		 * @return {Array<object>} Logins for sites offering passkeys the vault holds none for.
-		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
 		 */
 		passkeyAvailableFindings: (state) =>
 			state.findings.filter((f) => f.flags.includes('passkey-available')),
@@ -467,7 +467,7 @@ export const useHealthStore = defineStore('health', {
 		 * @return {Promise<Array<object>>} Decrypted rows.
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-client-side-totp-code-generation
-		 * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
+		 * @spec openspec/specs/vault-duplicates/spec.md#requirement-detect-duplicates-in-the-browser
 		 */
 		async loadDecryptedRows(session) {
 			const types = await loadedTypes()
@@ -501,7 +501,7 @@ export const useHealthStore = defineStore('health', {
 		 * directory categories unavailable and the rest of the report as is.
 		 *
 		 * @return {Promise<{totp: Object<string,string>, passkeys: Object<string,string>}|null>}
-		 * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-the-site-directory-is-fetched-whole-and-taught-nothing
+		 * @spec openspec/specs/health-site-checks/spec.md#requirement-the-site-directory-is-fetched-whole-and-taught-nothing
 		 */
 		async loadSiteDirectory() {
 			try {

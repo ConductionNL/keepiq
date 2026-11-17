@@ -197,7 +197,7 @@ class ImportService implements ImportServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the list is malformed or too long
 	 *
-	 * @spec openspec/changes/vault-website-addresses/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
 	private function extraUrls(array $item): array {
 		if ($this->urls === null) {

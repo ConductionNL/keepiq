@@ -9,7 +9,7 @@
   clears it when the prompt closes. The slot holds the prompt's own text.
   Lives in its own file per ADR-004 (hydra gate-13).
 
-  @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+  @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
 -->
 <template>
 	<NcDialog
@@ -63,7 +63,7 @@ import masterPasswordPrompt from '../mixins/masterPasswordPrompt.js'
 /**
  * A master password dialog driven by the prompt store passed in.
  *
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
  */
 export default {
 	name: 'MasterPasswordPromptDialog',

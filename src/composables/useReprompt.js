@@ -6,7 +6,7 @@
  * (crypto-item-reprompt D2): showing or copying its value or username,
  * editing, cloning, printing, showing a QR code and filling.
  *
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
  */
 
 import {
@@ -19,7 +19,7 @@ import {
  *
  * @param {object|null} secret The secret.
  * @return {boolean}
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
  */
 export function needsReprompt(secret) {
 	return secret?.reprompt === true
@@ -34,7 +34,7 @@ export function needsReprompt(secret) {
  * @param {object|Function} secret The secret, or a getter returning the current one.
  * @param {Function} [prompt] The prompt store factory, for tests.
  * @return {Function} `() => Promise<void>`
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
  */
 export function useReprompt(secret, prompt = useRepromptPromptStore) {
 	return async () => {
@@ -54,7 +54,7 @@ export function useReprompt(secret, prompt = useRepromptPromptStore) {
  * @param {Function} action The action to run once allowed.
  * @param {Function} [prompt] The prompt store factory, for tests.
  * @return {Promise<*>} What the action returns, or null when the person cancelled.
- * @spec openspec/changes/crypto-item-reprompt/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
  */
 export async function withReprompt(secret, action, prompt = useRepromptPromptStore) {
 	try {

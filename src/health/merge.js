@@ -8,7 +8,7 @@
  * deleted through the existing delete path (a move to the trash). Nothing
  * about the group reaches the server beyond those writes.
  *
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 
 import axios from '@nextcloud/axios'
@@ -21,7 +21,7 @@ import { foldFields } from './duplicates.js'
  *
  * @param {Array<string>} ids The secret ids.
  * @return {Promise<Array<object>>}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 export async function loadGroup(ids) {
 	const store = useSecretStore()
@@ -40,7 +40,7 @@ export async function loadGroup(ids) {
  * @param {object} kept The kept secret, decrypted.
  * @param {Array<object>} others The other secrets, decrypted.
  * @return {object}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 export function mergedFields(kept, others) {
 	return foldFields(
@@ -55,7 +55,7 @@ export function mergedFields(kept, others) {
  *
  * @param {Array<string>} ids The secrets that will be removed.
  * @return {Promise<number>}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 export async function peopleLosingAccess(ids) {
 	const people = new Set()
@@ -80,7 +80,7 @@ export async function peopleLosingAccess(ids) {
  * @param {object} kept The kept secret, decrypted.
  * @param {Array<object>} others The other secrets, decrypted.
  * @return {Promise<{removed: Array<string>}>}
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 export async function mergeGroup(kept, others) {
 	const store = useSecretStore()

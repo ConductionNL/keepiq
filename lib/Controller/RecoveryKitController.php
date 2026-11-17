@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md
+ * @spec openspec/specs/vault-recovery-kit/spec.md
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use OCP\IUserSession;
  * user only; none takes a user id, so no one reaches another user's copy,
  * an administrator included.
  *
- * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
  */
 class RecoveryKitController extends Controller {
 
@@ -52,7 +52,7 @@ class RecoveryKitController extends Controller {
 	 * @param RecoveryKitServiceInterface $kits        The kits.
 	 * @param IUserSession                $userSession The session.
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
 	 */
 	public function __construct(
 		IRequest $request,
@@ -67,7 +67,7 @@ class RecoveryKitController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 	 */
 	#[NoAdminRequired]
 	public function show(): JSONResponse {
@@ -82,7 +82,7 @@ class RecoveryKitController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 	 */
 	#[NoAdminRequired]
 	public function create(string $wrappedKey='', string $kdf=''): JSONResponse {
@@ -98,7 +98,7 @@ class RecoveryKitController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
 	 */
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: 5, period: 3600)]
@@ -111,7 +111,7 @@ class RecoveryKitController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
 	 */
 	#[NoAdminRequired]
 	public function spend(): JSONResponse {
@@ -128,7 +128,7 @@ class RecoveryKitController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-recovery-kit/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
+	 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-recovery-is-limited-to-the-owner-and-leaves-a-trail
 	 */
 	#[NoAdminRequired]
 	public function revoke(): JSONResponse {

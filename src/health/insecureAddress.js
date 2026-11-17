@@ -9,7 +9,7 @@
  * synchronous; the address is the login's own plain-text url and never leaves
  * the browser.
  *
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
+ * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
  */
 
 /**
@@ -78,7 +78,7 @@ export function isLocalHost(host) {
  *
  * @param {unknown} address The saved address.
  * @return {boolean}
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
+ * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-logins-saved-with-an-unencrypted-address
  */
 export function isInsecureAddress(address) {
 	const host = httpHost(address)
@@ -90,7 +90,7 @@ export function isInsecureAddress(address) {
  *
  * @param {string} address An `http://` address.
  * @return {string}
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
+ * @spec openspec/specs/health-site-checks/spec.md#scenario-a-vault-user-finds-a-login-saved-with-http
  */
 export function httpsAddress(address) {
 	return address.trim().replace(/^http:\/\//i, 'https://')

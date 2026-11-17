@@ -6,7 +6,7 @@
  * request, narrowed to address ranges; a recipient asks for a window with a
  * reason; a server refusal is shown.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+ * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 
 import axios from '@nextcloud/axios'

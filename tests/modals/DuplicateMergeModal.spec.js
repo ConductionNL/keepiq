@@ -7,7 +7,7 @@
  * confirmation says how many people lose access, and Merge runs the merge
  * and reports what was removed.
  *
- * @spec openspec/changes/vault-duplicate-finder/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 
 import { mount } from '@vue/test-utils'

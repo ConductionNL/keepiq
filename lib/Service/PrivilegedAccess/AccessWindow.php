@@ -30,7 +30,7 @@ use InvalidArgumentException;
  * The start is inclusive and the end exclusive, so two windows that meet do
  * not overlap. No ranges means any address.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
  */
 final class AccessWindow {
 
@@ -68,7 +68,7 @@ final class AccessWindow {
 	 * @SuppressWarnings(PHPMD.StaticAccess) AddressRange::parse() is the value
 	 *   object's validating named constructor.
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
 	 */
 	public static function approve(
 		AccessWindow $requested,
@@ -97,7 +97,7 @@ final class AccessWindow {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
 	 */
 	public function allows(DateTimeInterface $now, string $address): bool {
 		if ($now < $this->startsAt || $now >= $this->endsAt) {
@@ -122,7 +122,7 @@ final class AccessWindow {
 	 *
 	 * @return list<string>
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
 	 */
 	public function rangeStrings(): array {
 		return array_map(static fn (AddressRange $range): string => $range->toString(), $this->ranges);

@@ -8,7 +8,7 @@
  * nothing is listed while the directory is off. Uses the small directory
  * fixture: one one-time code site and one passkey site.
  *
- * @spec openspec/changes/health-site-security-checks/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
+ * @spec openspec/specs/health-site-checks/spec.md#requirement-flag-unused-two-factor-login-and-available-passkeys
  */
 
 import { describe, expect, it } from 'vitest'

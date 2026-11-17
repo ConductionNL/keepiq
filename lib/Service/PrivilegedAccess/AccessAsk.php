@@ -27,7 +27,7 @@ use DateTimeImmutable;
  * A plain carrier: PrivilegedAccessService::request() validates it, after it
  * has checked that the caller holds the copy.
  *
- * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+ * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
  */
 final class AccessAsk {
 
@@ -38,7 +38,7 @@ final class AccessAsk {
 	 * @param DateTimeImmutable $endsAt   The end asked for
 	 * @param string            $reason   Why the login is needed
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function __construct(
 		public readonly DateTimeImmutable $startsAt,

@@ -175,7 +175,7 @@ class AccessRequest extends Entity implements JsonSerializable {
 	 *
 	 * @return list<string>
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function rangeList(): array {
 		$decoded = json_decode((string)$this->ranges, true);
@@ -194,7 +194,7 @@ class AccessRequest extends Entity implements JsonSerializable {
 	 * @SuppressWarnings(PHPMD.StaticAccess) DateTimeImmutable::createFromMutable()
 	 *   and AddressRange::parse() are named constructors of value objects.
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function approvedWindow(): ?AccessWindow {
 		if ($this->status !== self::STATUS_APPROVED || $this->approvedStart === null || $this->approvedEnd === null) {

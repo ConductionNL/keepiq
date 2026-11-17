@@ -203,7 +203,7 @@ class CertificateLifecycleService implements CertificateLifecycleServiceInterfac
 	 *
 	 * @return array{keyType: string|null, keyBits: int|null}
 	 *
-	 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
+	 * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
 	 */
 	private function publicKeyFacts(string $pem): array {
 		$publicKey = $this->withoutDiagnostics(call: static fn () => openssl_pkey_get_public(public_key: $pem));
@@ -240,7 +240,7 @@ class CertificateLifecycleService implements CertificateLifecycleServiceInterfac
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/crypto-vault-encryption-details/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
+	 * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-vault-certificate-shows-its-key-and-signature-algorithm
 	 */
 	private function signatureAlgorithm(array $parsed): ?string {
 		foreach (['signatureTypeLN', 'signatureTypeSN'] as $field) {

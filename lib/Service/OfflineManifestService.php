@@ -156,7 +156,7 @@ class OfflineManifestService implements OfflineManifestServiceInterface {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	private function servable(Secret $secret, string $userId): array {
 		$data = $secret->jsonSerialize();

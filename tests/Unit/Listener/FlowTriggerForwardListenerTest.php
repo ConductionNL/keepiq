@@ -154,7 +154,7 @@ class FlowTriggerForwardListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#scenario-a-granted-share-starts-a-flow
+	 * @spec openspec/specs/vault-event-flow-triggers/spec.md#scenario-a-granted-share-starts-a-flow
 	 */
 	public function testAGrantedShareStartsAFlow(): void {
 		$logger = $this->createMock(LoggerInterface::class);
@@ -183,7 +183,7 @@ class FlowTriggerForwardListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#scenario-a-fresh-install-fires-nothing
+	 * @spec openspec/specs/vault-event-flow-triggers/spec.md#scenario-a-fresh-install-fires-nothing
 	 */
 	public function testNothingFiresWhileTheGroupIsOff(): void {
 		$logger = $this->createMock(LoggerInterface::class);
@@ -205,7 +205,7 @@ class FlowTriggerForwardListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#scenario-a-vault-on-a-plain-nextcloud
+	 * @spec openspec/specs/vault-event-flow-triggers/spec.md#scenario-a-vault-on-a-plain-nextcloud
 	 */
 	public function testWithoutOpenRegisterNothingHappens(): void {
 		$logger = $this->createMock(LoggerInterface::class);
@@ -219,7 +219,7 @@ class FlowTriggerForwardListenerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/clients-vault-event-flow-triggers/specs/vault-event-flow-triggers/spec.md#scenario-a-broken-flow-engine-does-not-block-a-share
+	 * @spec openspec/specs/vault-event-flow-triggers/spec.md#scenario-a-broken-flow-engine-does-not-block-a-share
 	 */
 	public function testABrokenFlowEngineIsLoggedNotThrown(): void {
 		$this->flows->throws = true;

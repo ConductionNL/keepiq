@@ -9,7 +9,7 @@
   login. A recipient sees their requests and asks for a window with a reason.
   The server decides the role and enforces every window and range.
 
-  @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+  @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 -->
 <template>
 	<div class="privileged-panel" data-testid="privileged-panel">
@@ -239,14 +239,14 @@ export default {
 
 	computed: {
 		/**
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		offerRotation() {
 			return shouldOfferRotation(this.status?.requests, new Date())
 		},
 
 		/**
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		canSubmitRequest() {
 			return (
@@ -261,7 +261,7 @@ export default {
 		/**
 		 * Reload when the panel shows another secret.
 		 *
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		secretId() {
 			this.load()
@@ -278,7 +278,7 @@ export default {
 		 *
 		 * @param {string} path The path after /api/v1.
 		 * @return {string}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		url(path) {
 			return generateUrl(`/apps/keepiq/api/v1${path}`)
@@ -288,7 +288,7 @@ export default {
 		 * Load the state the caller may see.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		async load() {
 			await this.run(async () => {
@@ -314,7 +314,7 @@ export default {
 		 *
 		 * @param {boolean} privileged The state asked for.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		async onToggle(privileged) {
 			await this.run(async () => {
@@ -333,7 +333,7 @@ export default {
 		 * Ask the owner for the window in the form.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		async submitRequest() {
 			await this.run(async () => {
@@ -355,7 +355,7 @@ export default {
 		 *
 		 * @param {object} request The request.
 		 * @return {void}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		startApproval(request) {
 			this.answering = request.id
@@ -367,7 +367,7 @@ export default {
 		 *
 		 * @param {object} request The request.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		async approve(request) {
 			await this.run(async () => {
@@ -390,7 +390,7 @@ export default {
 		 *
 		 * @param {object} request The request.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		async deny(request) {
 			await this.run(async () => {
@@ -405,7 +405,7 @@ export default {
 		 *
 		 * @param {() => Promise<void>} step The call.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		async run(step) {
 			this.busy = true
@@ -426,7 +426,7 @@ export default {
 		 *
 		 * @param {object} request The request.
 		 * @return {string}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		windowText(request) {
 			const start = request.approvedStart || request.requestedStart
@@ -442,7 +442,7 @@ export default {
 		 *
 		 * @param {object} request The request.
 		 * @return {string}
-		 * @spec openspec/changes/capability-requirements-from-the-matrix/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 		 */
 		stateLabel(request) {
 			const labels = {
