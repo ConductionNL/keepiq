@@ -24,12 +24,14 @@ import {
 	fieldsOf,
 	fitImportedBlob,
 	inputOf,
+	inputTypeFor,
 	isHiddenSchema,
 	mergeBlobs,
 	mergeFilledBlob,
 	presetOf,
 	presetOptions,
 	presetSchema,
+	schemaConflicts,
 	schemaError,
 	schemasOf,
 	valuesFit,
@@ -224,6 +226,27 @@ describe('field schemas', () => {
 				PIN: { type: 'string', hidden: true },
 			},
 		})
+	})
+
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	it('finds the conflicts the server refuses, reading a schema as stored', () => {
+		expect(schemaConflicts({ type: 'string', pattern: '(a+)+' })).toBe(true)
+		expect(schemaConflicts({ type: 'integer', minimum: 9, maximum: 1 })).toBe(true)
+		// An integer keeps no pattern, so a stray one is no conflict.
+		expect(schemaConflicts({ type: 'integer', pattern: '(a+)+' })).toBe(false)
+		expect(schemaConflicts({ type: 'string', minLength: 1, maxLength: 9 })).toBe(false)
+	})
+
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+	it('shows a value a number or date input cannot hold in a text input', () => {
+		expect(inputTypeFor('number', '5')).toBe('number')
+		expect(inputTypeFor('number', '-2.5e3')).toBe('number')
+		expect(inputTypeFor('number', 'default')).toBe('text')
+		expect(inputTypeFor('number', '5.')).toBe('text')
+		expect(inputTypeFor('number', '0x10')).toBe('text')
+		expect(inputTypeFor('date', '31/03/2026')).toBe('text')
+		expect(inputTypeFor('date', '2026-03-31')).toBe('date')
+		expect(inputTypeFor('date', '')).toBe('date')
 	})
 
 	it('keeps a field a person named @schema, under a name of its own', () => {

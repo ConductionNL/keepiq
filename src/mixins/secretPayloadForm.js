@@ -87,7 +87,8 @@ export const secretPayloadForm = {
 
 		/**
 		 * Whether the value is public, as a certificate is, so it is not
-		 * masked; a certificate saved with its private key is not.
+		 * masked; a certificate saved with its private key, or one that asks
+		 * for the master password before a reveal, is not.
 		 *
 		 * @return {boolean}
 		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
@@ -96,6 +97,7 @@ export const secretPayloadForm = {
 			return (
 				valueFieldOf(this.selectedTypeName)?.public === true
 				&& !holdsPrivateKey(this.value)
+				&& this.reprompt !== true
 			)
 		},
 
@@ -149,6 +151,21 @@ export const secretPayloadForm = {
 		 */
 		isSshKey() {
 			return this.selectedTypeName === SSH_KEY_TYPE_NAME
+		},
+
+		/**
+		 * The names a custom field may not take: the labels of the type's own
+		 * fields, and an SSH key's public key and fingerprint members, which
+		 * the SSH form writes over a custom field of that name.
+		 *
+		 * @return {Array<string>}
+		 * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+		 */
+		reservedMemberNames() {
+			const names = this.typedFields.map((f) => f.label)
+			return this.isSshKey
+				? [...names, SSH_PUBLIC_KEY_MEMBER, SSH_FINGERPRINT_MEMBER]
+				: names
 		},
 
 		/**

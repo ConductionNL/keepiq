@@ -192,6 +192,7 @@ describe('SecretEditDialog on a built-in type with data from before', () => {
 			{ id: 'type-db', name: 'database', label: 'Database', scope: 'system' },
 			{ id: 'type-note', name: 'note', label: 'Secure Note', scope: 'system' },
 			{ id: 'type-cert', name: 'certificate', label: 'Certificate', scope: 'system' },
+			{ id: 'type-ssh', name: 'ssh_key', label: 'SSH Key', scope: 'system' },
 		]
 		typeStore.fetchTypes = vi.fn().mockResolvedValue()
 		const session = useSessionStore()
@@ -212,6 +213,20 @@ describe('SecretEditDialog on a built-in type with data from before', () => {
 			key: '-----BEGIN CERTIFICATE-----\nA\n-----END CERTIFICATE-----',
 		})
 		expect(certificate.vm.valuePublic).toBe(true)
+
+		// One that asks for the master password before a reveal is masked too.
+		certificate.vm.reprompt = true
+		expect(certificate.vm.valuePublic).toBe(false)
+	})
+
+	// openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	it('keeps a custom field from taking an SSH key\u2019s public key or fingerprint', async () => {
+		const wrapper = await mountSecret({ typeId: 'type-ssh', key: '', additionalFields: { note: 'x' } })
+		wrapper.vm.name = 'Deploy key'
+
+		expect(wrapper.vm.reservedMemberNames).toEqual(expect.arrayContaining(['publicKey', 'fingerprint']))
+		wrapper.vm.additionalFields = [{ name: 'publicKey', value: 'deploy host note' }]
+		expect(wrapper.vm.canSubmit).toBe(false)
 	})
 
 	it('lets a Port that does not fit stay until it is changed', async () => {

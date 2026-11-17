@@ -297,7 +297,8 @@ export function inputOf(schema) {
 
 /** What a browser's number, date and time inputs can hold; anything else they show empty. */
 const BROWSER_VALUES = Object.freeze({
-	number: (value) => isNumeric(value.trim()),
+	// The HTML floating-point number grammar: "5.", "+5" or "0x10" show empty.
+	number: (value) => /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][-+]?\d+)?$/.test(value),
 	date: (value) => /^\d{4}-\d{2}-\d{2}$/.test(value),
 	'datetime-local': (value) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(value),
 	time: (value) => /^\d{2}:\d{2}(?::\d{2})?$/.test(value),
@@ -792,9 +793,11 @@ export function withoutConflicts(schema) {
  * @spec openspec/changes/vault-custom-field-kinds-and-ssh-key/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 export function schemaConflicts(schema) {
+	// Read as stored, so a key its type ignores, such as a pattern on an
+	// integer, does not count.
+	const clean = cleanSchema(schema)
 	return (
-		Object.keys(withoutConflicts(schema)).length
-		!== Object.keys(schema ?? {}).length
+		Object.keys(withoutConflicts(clean)).length !== Object.keys(clean).length
 	)
 }
 

@@ -74,7 +74,7 @@
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving"
-				:reservedNames="typedFields.map((f) => f.label)"
+				:reservedNames="reservedMemberNames"
 				@update:members="additionalFields = $event" />
 
 			<SecretTagsField
@@ -479,7 +479,7 @@ export default {
 				!valuesFit(this.additionalFields, this.typedFields, this.typedValues)
 				|| !membersValid(
 					this.additionalFields,
-					this.typedFields.map((f) => f.label),
+					this.reservedMemberNames,
 				)
 			) {
 				return false

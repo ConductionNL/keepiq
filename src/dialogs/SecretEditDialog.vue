@@ -114,7 +114,7 @@
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving || loading"
-				:reservedNames="typedFields.map((f) => f.label)"
+				:reservedNames="reservedMemberNames"
 				@update:members="additionalFields = $event" />
 
 			<SecretTagsField
@@ -434,7 +434,7 @@ export default {
 				)
 				&& membersValid(
 					this.additionalFields,
-					this.typedFields.map((f) => f.label),
+					this.reservedMemberNames,
 					this.changedMembers,
 				)
 			)
