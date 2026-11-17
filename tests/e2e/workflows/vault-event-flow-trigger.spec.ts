@@ -43,7 +43,10 @@ test.describe('vault event flow trigger', () => {
 		const catalog = await admin.get(`${OR_API}/flow/event-catalog`, {
 			headers: { 'OCS-APIRequest': 'true' },
 		})
-		test.skip(catalog.status() !== 200, 'OpenRegister is not enabled on this instance')
+		test.skip(
+			catalog.status() !== 200,
+			'OpenRegister is not enabled on this instance',
+		)
 		await createUsers(admin, [owner, recipient])
 	})
 
@@ -52,22 +55,33 @@ test.describe('vault event flow trigger', () => {
 			await session.context.close()
 		}
 		if (flowId !== '') {
-			await admin.delete(`${OR_API}/flows/${flowId}`, { headers: { 'OCS-APIRequest': 'true' } })
+			await admin.delete(`${OR_API}/flows/${flowId}`, {
+				headers: { 'OCS-APIRequest': 'true' },
+			})
 		}
 		await admin
-			.put(AUDIT, { headers: { 'OCS-APIRequest': 'true' }, data: { flow_trigger_groups: groupsBefore } })
+			.put(AUDIT, {
+				headers: { 'OCS-APIRequest': 'true' },
+				data: { flow_trigger_groups: groupsBefore },
+			})
 			.catch(() => undefined)
 		await deleteUsers(admin, [owner, recipient])
 		await admin?.dispose()
 	})
 
-	test('a granted share starts one run with no secret material', async ({ browser }) => {
+	test('a granted share starts one run with no secret material', async ({
+		browser,
+	}) => {
 		// @e2e vault-event-flow-triggers::a-granted-share-starts-a-flow
 		test.setTimeout(180_000)
 		const headers = { 'OCS-APIRequest': 'true' }
 
-		const catalog = await (await admin.get(`${OR_API}/flow/event-catalog`, { headers })).text()
-		expect(catalog, 'the flow palette lists the vault trigger').toContain('keepiq.share.granted')
+		const catalog = await (
+			await admin.get(`${OR_API}/flow/event-catalog`, { headers })
+		).text()
+		expect(catalog, 'the flow palette lists the vault trigger').toContain(
+			'keepiq.share.granted',
+		)
 
 		const created = await admin.post(`${OR_API}/flows`, {
 			headers,
@@ -82,12 +96,17 @@ test.describe('vault event flow trigger', () => {
 		})
 		expect(created.status(), await created.text()).toBe(201)
 		flowId = (await created.json()).id
-		const published = await admin.post(`${OR_API}/flows/${flowId}/publish`, { headers })
+		const published = await admin.post(`${OR_API}/flows/${flowId}/publish`, {
+			headers,
+		})
 		expect(published.status(), await published.text()).toBe(200)
 
 		const before = await admin.get(AUDIT, { headers })
 		groupsBefore = (await before.json())?.flow_trigger_groups ?? []
-		const saved = await admin.put(AUDIT, { headers, data: { flow_trigger_groups: ['sharing'] } })
+		const saved = await admin.put(AUDIT, {
+			headers,
+			data: { flow_trigger_groups: ['sharing'] },
+		})
 		expect(saved.status(), await saved.text()).toBe(200)
 
 		for (const user of [recipient, owner]) {
@@ -100,7 +119,9 @@ test.describe('vault event flow trigger', () => {
 		const sourceId = await storeSecret(page, NAME, VALUE)
 		// The share store comes into use with the detail sidebar.
 		await gotoVaultRoute(page, `secrets/${sourceId}`)
-		await expect(page.getByTestId('secret-detail-sidebar')).toBeVisible({ timeout: 30_000 })
+		await expect(page.getByTestId('secret-detail-sidebar')).toBeVisible({
+			timeout: 30_000,
+		})
 		const certificate = await api(
 			page,
 			'GET',
@@ -139,11 +160,15 @@ test.describe('vault event flow trigger', () => {
 		await expect
 			.poll(
 				async () => {
-					const listed = await admin.get(`${OR_API}/flow-runs?limit=100`, { headers })
+					const listed = await admin.get(`${OR_API}/flow-runs?limit=100`, {
+						headers,
+					})
 					const body = await listed.json()
 					runs = (body.results ?? []).filter(
 						(run: Record<string, unknown>) =>
-							run.flowUuid === flowId || run.flowId === flowId || run.flow === flowId,
+							run.flowUuid === flowId
+							|| run.flowId === flowId
+							|| run.flow === flowId,
 					)
 					return runs.length
 				},
@@ -152,7 +177,9 @@ test.describe('vault event flow trigger', () => {
 			.toBe(1)
 
 		const uuid = String(runs[0].uuid ?? runs[0].id)
-		const detail = await (await admin.get(`${OR_API}/flow-runs/${uuid}`, { headers })).text()
+		const detail = await (
+			await admin.get(`${OR_API}/flow-runs/${uuid}`, { headers })
+		).text()
 		expect(detail).toContain('share.granted')
 		expect(detail).toContain(owner.uid)
 		for (const secret of [NAME, VALUE, owner.masterPassword]) {
