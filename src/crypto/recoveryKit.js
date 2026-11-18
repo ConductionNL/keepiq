@@ -108,6 +108,20 @@ function parseKdf(text) {
 }
 
 /**
+ * Whether a parsed `kdf` is one this version can derive the key from.
+ *
+ * @param {object|null} kdf The parsed `kdf`.
+ * @return {boolean}
+ */
+function isReadableKdf(kdf) {
+	return (
+		kdf?.version === RECOVERY_KIT_VERSION
+		&& kdf?.kdf === ARGON2_PARAMETERS.kdf
+		&& typeof kdf?.salt === 'string'
+	)
+}
+
+/**
  * Unwrap the private key from the stored copy with a recovery code.
  *
  * @param {{wrappedKey: string, kdf: string}} copy The stored copy.
@@ -122,11 +136,7 @@ export async function unwrapWithRecoveryCode(copy, code) {
 		throw new Error('This is not a recovery code')
 	}
 	const kdf = parseKdf(copy?.kdf)
-	if (
-		kdf?.version !== RECOVERY_KIT_VERSION
-		|| kdf?.kdf !== ARGON2_PARAMETERS.kdf
-		|| typeof kdf?.salt !== 'string'
-	) {
+	if (!isReadableKdf(kdf)) {
 		throw new Error('This recovery copy cannot be read')
 	}
 	try {

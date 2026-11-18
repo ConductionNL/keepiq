@@ -60,7 +60,18 @@ function additionalOf(state) {
  * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
  */
 export function compareStates(left, right) {
-	const rows = COMPARED_FIELDS.map(({ field, masked }) => {
+	return [...standardRows(left, right), ...additionalRows(left, right)]
+}
+
+/**
+ * The compared rows of the standard fields, in COMPARED_FIELDS order.
+ *
+ * @param {object} left The earlier (or left-hand) state.
+ * @param {object} right The later (or right-hand) state.
+ * @return {Array<object>} One row per standard field.
+ */
+function standardRows(left, right) {
+	return COMPARED_FIELDS.map(({ field, masked }) => {
 		const a = plain(left && left[field])
 		const b = plain(right && right[field])
 		return {
@@ -72,28 +83,35 @@ export function compareStates(left, right) {
 			changed: a !== b,
 		}
 	})
+}
 
+/**
+ * The compared rows of the additional fields on either side, sorted by name.
+ *
+ * @param {object} left The earlier (or left-hand) state.
+ * @param {object} right The later (or right-hand) state.
+ * @return {Array<object>} One masked row per additional field name.
+ */
+function additionalRows(left, right) {
 	const leftExtra = additionalOf(left)
 	const rightExtra = additionalOf(right)
 	const names = [
 		...new Set([...Object.keys(leftExtra), ...Object.keys(rightExtra)]),
 	].sort((x, y) => x.localeCompare(y))
-	for (const name of names) {
+	return names.map((name) => {
 		const a = plain(leftExtra[name])
 		const b = plain(rightExtra[name])
 		const presenceDiffers =
 			Object.hasOwn(leftExtra, name) !== Object.hasOwn(rightExtra, name)
-		rows.push({
+		return {
 			field: name,
 			additional: true,
 			masked: true,
 			left: a,
 			right: b,
 			changed: presenceDiffers || a !== b,
-		})
-	}
-
-	return rows
+		}
+	})
 }
 
 /**

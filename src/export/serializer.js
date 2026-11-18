@@ -313,6 +313,20 @@ function extraUrls(secret) {
 }
 
 /**
+ * The vault's types by their id as a string, skipping a type without an id.
+ *
+ * @param {Array<object>|undefined} types The vault's types.
+ * @return {Map<string, object>}
+ */
+function typesByIdOf(types) {
+	return new Map(
+		(Array.isArray(types) ? types : [])
+			.filter((type) => type && type.id)
+			.map((type) => [String(type.id), type]),
+	)
+}
+
+/**
  * Serialize decrypted secrets + folders into the versioned export payload.
  *
  * @param {Array<object>} secrets Decrypted secrets (id, name, url, login, key,
@@ -339,11 +353,7 @@ export function serializeVault(
 ) {
 	const pathMap = buildPathMap(folders)
 	const filters = scopeFilters(scope, folders)
-	const typesById = new Map(
-		(Array.isArray(options.types) ? options.types : [])
-			.filter((type) => type && type.id)
-			.map((type) => [String(type.id), type]),
-	)
+	const typesById = typesByIdOf(options.types)
 	const omitted = OMITTABLE_FIELDS.filter((field) =>
 		(options.omitFields || []).includes(field),
 	)

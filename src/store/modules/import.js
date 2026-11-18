@@ -363,16 +363,35 @@ async function readWithParser(parser, text, options) {
 		parser.adjustableMapping === true
 		&& typeof parser.parseDetailed === 'function'
 	) {
-		const detailed = await parser.parseDetailed(text, options)
-		return {
-			rows: detailed.rows,
-			mapping: detailed.mapping,
-			headers: detailed.headers,
-			adjustableMapping: true,
-			sourceText: text,
-		}
+		return detailedRead(await parser.parseDetailed(text, options), text)
 	}
-	const rows = await parser.parse(text, options)
+	return plainRead(await parser.parse(text, options))
+}
+
+/**
+ * The read of a detailed parse, whose mapping can be adjusted.
+ *
+ * @param {object} detailed The parser's { rows, mapping, headers }.
+ * @param {string} text The file text, kept to re-parse with a new mapping.
+ * @return {object} The rows, mapping, headers, adjustableMapping and sourceText.
+ */
+function detailedRead(detailed, text) {
+	return {
+		rows: detailed.rows,
+		mapping: detailed.mapping,
+		headers: detailed.headers,
+		adjustableMapping: true,
+		sourceText: text,
+	}
+}
+
+/**
+ * The read of a plain parse: rows only, with a fixed mapping.
+ *
+ * @param {Array<object>} rows The parsed rows.
+ * @return {object} The rows, mapping, headers, adjustableMapping and sourceText.
+ */
+function plainRead(rows) {
 	return {
 		rows,
 		mapping: [],

@@ -222,14 +222,22 @@ function assertionJson(assertion) {
 		id,
 		rawId: id,
 		type: 'public-key',
-		response: {
-			clientDataJSON: optionalBase64Url(assertion.response?.clientDataJSON),
-			authenticatorData: optionalBase64Url(
-				assertion.response?.authenticatorData,
-			),
-			signature: optionalBase64Url(assertion.response?.signature),
-			userHandle: optionalBase64Url(assertion.response?.userHandle),
-		},
+		response: assertionResponseJson(assertion.response),
+	}
+}
+
+/**
+ * A get() credential's response as the JSON the server verifies.
+ *
+ * @param {object|undefined} response The get() credential's response.
+ * @return {object}
+ */
+function assertionResponseJson(response) {
+	return {
+		clientDataJSON: optionalBase64Url(response?.clientDataJSON),
+		authenticatorData: optionalBase64Url(response?.authenticatorData),
+		signature: optionalBase64Url(response?.signature),
+		userHandle: optionalBase64Url(response?.userHandle),
 	}
 }
 

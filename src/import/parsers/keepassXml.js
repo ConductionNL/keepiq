@@ -159,6 +159,21 @@ function attachTotpSeeds(row, strings) {
 }
 
 /**
+ * The rows of a `<Group>`'s own entries, numbered on from the shared counter.
+ *
+ * @param {Element} group The group element.
+ * @param {{path: Array<string>, counter: {value: number}}} walk The group's
+ *   folder path segments and the shared 1-based entry counter.
+ * @return {Array<object>} The rows of the group's direct entries.
+ */
+function entryRows(group, walk) {
+	return childrenByTag(group, 'Entry').map((entry) => {
+		walk.counter.value += 1
+		return parseEntry(entry, walk.path, walk.counter.value)
+	})
+}
+
+/**
  * Recursively walk a `<Group>`, collecting entries with their folder path.
  *
  * @param {Element} group The group element.
@@ -167,11 +182,7 @@ function attachTotpSeeds(row, strings) {
  * @return {Array<object>} The rows from this group and its descendants.
  */
 function walkGroup(group, walk) {
-	const rows = []
-	for (const entry of childrenByTag(group, 'Entry')) {
-		walk.counter.value += 1
-		rows.push(parseEntry(entry, walk.path, walk.counter.value))
-	}
+	const rows = entryRows(group, walk)
 	for (const child of childrenByTag(group, 'Group')) {
 		rows.push(
 			...walkGroup(child, {

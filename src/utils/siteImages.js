@@ -11,6 +11,9 @@
 
 import { loadState } from '@nextcloud/initial-state'
 
+/** An address that starts with its own scheme, such as `http:`. */
+const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i
+
 /**
  * The admin's preview template, '' when previews are off.
  *
@@ -39,13 +42,21 @@ export function templateProblem(template, placeholder) {
 	if (!value.includes(placeholder)) {
 		return 'placeholder'
 	}
+	return isHttpsAddress(value.replaceAll(placeholder, 'x')) ? null : 'https'
+}
+
+/**
+ * Whether an address parses as https with a host.
+ *
+ * @param {string} address The address.
+ * @return {boolean}
+ */
+function isHttpsAddress(address) {
 	try {
-		const parsed = new URL(value.replaceAll(placeholder, 'x'))
+		const parsed = new URL(address)
 		return parsed.protocol === 'https:' && parsed.hostname !== ''
-			? null
-			: 'https'
 	} catch {
-		return 'https'
+		return false
 	}
 }
 
@@ -84,9 +95,7 @@ export function webAddress(url) {
 		return null
 	}
 	try {
-		const parsed = new URL(
-			/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`,
-		)
+		const parsed = new URL(HAS_SCHEME.test(raw) ? raw : `https://${raw}`)
 		return parsed.protocol === 'https:' || parsed.protocol === 'http:'
 			? parsed.href
 			: null
