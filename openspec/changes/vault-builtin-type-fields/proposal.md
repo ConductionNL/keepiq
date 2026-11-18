@@ -18,7 +18,7 @@ A request for a new secret follows the picked type (`secret-requests`), so the s
 - Keep the certificate itself in the secret's value (`key`), relabelled "Certificate", so the certificate inventory, expiry reminders and renewal (`certificate-lifecycle`) keep reading it from there.
 - In the request dialog, tick and lock the fields a type requires. On the fill page, show the requested fields with the type's labels and inputs; the public request answer names the secret's type for this.
 
-SSH Key gets a multi-line private key, a public key and a passphrase, so a pasted OpenSSH key keeps its line breaks. Generating a key pair, importing one from a file and the fingerprint stay with `vault-custom-field-kinds-and-ssh-key`, which builds on these fields.
+SSH Key gets a multi-line private key and a passphrase, so a pasted OpenSSH key keeps its line breaks; its public key and fingerprint are the `publicKey` and `fingerprint` members of `vault-ssh-key-item`. Generating a key pair and importing one from a file stay with `vault-custom-field-kinds-and-ssh-key`, which builds on these fields.
 
 ## Capabilities
 
