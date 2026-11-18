@@ -47,10 +47,19 @@ the registrar may have left the organisation. Tying audit visibility to that wou
 make "who may see this" depend on who happened to click Register months ago.
 
 What is shown is plaintext metadata — status, timestamps, the names of the
-requested fields and, for a request made through the user API, their kinds (the
-field schemas it carries; a request an application makes for its own vault carries none). **No submitted value is readable from the listing**, by anyone,
+requested fields; such a request carries no field schemas (see below). **No submitted value is readable from the listing**, by anyone,
 including an administrator. That is the write-without-read property the whole
 feature rests on and it is unaffected by who is looking.
+
+## Field schemas
+
+A request for an application's secret **carries no field schemas**. A user who
+asks for one with `fieldSchemas`, such as a hidden PIN or a pattern, gets a 400:
+"A request for an application's secret cannot carry field schemas". The fill page
+seals the filled extra fields to the application's key and the server stores that
+blob as it is, so it cannot add the `@schema` member, and no owner's browser merges
+it later as it does for a user's secret. A schema kept with the request would be
+dropped at fill time and the field would reach the application as plain text.
 
 ## Revoking a request
 
