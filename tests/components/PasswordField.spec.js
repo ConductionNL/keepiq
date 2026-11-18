@@ -155,6 +155,46 @@ describe('PasswordField', () => {
 		expect(wrapper.find('[aria-label="Hide"]').exists()).toBe(false)
 	})
 
+	// @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	it('reveals on a click of its eye button, after the guard, and hides on the next', async () => {
+		const order = []
+		const guard = vi.fn(async () => {
+			order.push('guard')
+		})
+		const resolve = vi.fn(async () => {
+			order.push('resolve')
+			return 'hunter2'
+		})
+		const wrapper = mount(PasswordField, { propsData: { resolve, guard } })
+
+		await wrapper.find('button[aria-label="Show"]').trigger('click')
+		await flushPromises()
+
+		expect(order).toEqual(['guard', 'resolve'])
+		expect(wrapper.vm.displayValue).toBe('hunter2')
+		await wrapper.find('button[aria-label="Hide"]').trigger('click')
+		await flushPromises()
+		expect(wrapper.vm.revealed).toBe(false)
+		expect(wrapper.find('button[aria-label="Show"]').exists()).toBe(true)
+	})
+
+	it('names its copy button after the value it copies', () => {
+		const resolve = vi.fn()
+		const copyLabel = (wrapper) =>
+			wrapper.findComponent({ name: 'CopyButton' }).props('label')
+
+		expect(copyLabel(mount(PasswordField, { propsData: { resolve } }))).toBe(
+			'Copy password',
+		)
+		expect(
+			copyLabel(
+				mount(PasswordField, {
+					propsData: { resolve, copyLabel: 'Copy value' },
+				}),
+			),
+		).toBe('Copy value')
+	})
+
 	it('never reveals an always-shown value on a use-only copy', async () => {
 		const resolve = vi.fn().mockResolvedValue('public')
 		const wrapper = mount(PasswordField, {

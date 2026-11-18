@@ -32,7 +32,8 @@
 			:label="label"
 			:multiline="input === 'multiline'"
 			:guard="guard"
-			:resolve="resolve" />
+			:resolve="resolve"
+			:copyLabel="t('keepiq', 'Copy value')" />
 		<template v-else-if="fits === false">
 			<span class="schema-value-view__text">{{ value }}</span>
 			<span

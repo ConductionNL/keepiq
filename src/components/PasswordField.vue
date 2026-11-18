@@ -31,7 +31,7 @@
 			:resolve="resolvePlain"
 			:useOnly="useOnly"
 			:guard="guard"
-			:label="t('keepiq', 'Copy password')" />
+			:label="copyLabel" />
 	</div>
 </template>
 
@@ -71,6 +71,20 @@ export default {
 			 */
 			default() {
 				return t('keepiq', 'Password')
+			},
+		},
+
+		/** The copy button's label. */
+		copyLabel: {
+			type: String,
+			/**
+			 * @return {string} The translated fallback label.
+			 *
+			 * @spec exclude A Vue prop `default()` factory returning a translated
+			 *   fallback string — it declares a default value, not behaviour.
+			 */
+			default() {
+				return t('keepiq', 'Copy password')
 			},
 		},
 

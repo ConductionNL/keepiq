@@ -160,6 +160,20 @@ describe('SecretDetailSidebar — additional fields', () => {
 		expect(wrapper.findComponent(SchemaValueView).vm).not.toBe(before)
 	})
 
+	// @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	it('names a hidden field’s copy button Copy value, not Copy password', () => {
+		const view = mount(SchemaValueView, {
+			props: {
+				label: 'PIN',
+				value: '4711',
+				schema: { type: 'string', hidden: true },
+			},
+		})
+
+		expect(view.find('button[aria-label="Copy value"]').exists()).toBe(true)
+		expect(view.find('button[aria-label="Copy password"]').exists()).toBe(false)
+	})
+
 	/**
 	 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 	 */
