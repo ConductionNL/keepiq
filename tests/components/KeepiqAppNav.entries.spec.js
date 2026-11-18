@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import KeepiqAppNav from '../../src/components/KeepiqAppNav/KeepiqAppNav.vue'
 import { useFolderStore } from '../../src/store/modules/folder.js'
 import { useTeamFolderStore } from '../../src/store/modules/teamFolder.js'
+import { goldenMarkup } from '../fixtures/goldenMarkup.js'
 
 vi.mock('@nextcloud/auth', () => ({
 	getCurrentUser: () => ({ uid: 'ada', isAdmin: false }),
@@ -117,12 +118,7 @@ beforeEach(() => {
 describe('KeepiqAppNav manifest entries (golden)', () => {
 	it('renders the main, footer and settings entries', () => {
 		const wrapper = mountNav(vi.fn())
-		const html = wrapper
-			.html()
-			.replace(/ data-v-[0-9a-f]+=""/g, '')
-			.replace(/<!--[\s\S]*?-->/g, '')
-			.replace(/>\s+</g, '><')
-		expect(html).toMatchSnapshot()
+		expect(goldenMarkup(wrapper.html())).toMatchSnapshot()
 	})
 
 	it('opens the host settings for a user-settings entry and prevents the link', async () => {
