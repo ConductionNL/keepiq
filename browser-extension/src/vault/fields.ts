@@ -204,6 +204,11 @@ function memberFields(additionalFields: Record<string, string>, schemas: Record<
 	})
 }
 
+/** The fields an item's detail shows, in order: every member but a schema map, a misnamed `@schema` as the edit form shows it. */
+export function shownFields(additionalFields: Record<string, string>): Array<[string, string]> {
+	return memberFields(additionalFields, storedSchemas(additionalFields))
+}
+
 /** The first field named Notes, in any case, is the notes. */
 const isNotes = (values: FormValues, name: string) => values.notesKey === null && name.toLowerCase() === NOTES
 
