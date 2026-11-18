@@ -628,10 +628,12 @@ export default {
 		 */
 		additionalBlob(ssh = {}) {
 			return {
+				// A clone keeps the schemas stored for its source's type fields.
 				...mergeTypedValues(
 					membersToObject(this.additionalFields),
 					this.typedFields,
 					this.typedValues,
+					this.prefill?.additionalFields ?? null,
 				),
 
 				...ssh,
