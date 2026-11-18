@@ -154,7 +154,8 @@ class SecretRequestController extends OCSController {
 	 * The type of the Secret a fresh request creates arrives as `typeId` in the body,
 	 * and the schemas of requested custom fields as `fieldSchemas`, an object of JSON
 	 * Schema properties by field name. Both are read from the body rather than the
-	 * signature. The created request answers with the same `fieldSchemas`.
+	 * signature. The created request answers with the same `fieldSchemas`. A request
+	 * for an application's secret carries none: `fieldSchemas` on one is refused with a 400.
 	 *
 	 * @param string $secretId The Secret ID (unfilled or to-be-overwritten)
 	 * @param string $encryptionSuiteId The recipient's active suite ID
