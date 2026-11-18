@@ -10,7 +10,8 @@
  * each variable quantifier and each group holding an alternation, so their
  * count, plus one when the pattern is not anchored with `^`, is held to
  * MAX_DEGREE and the value to MAX_PATTERN_INPUT, which keeps a test to
- * milliseconds.
+ * milliseconds. PCRE writes a counted group out once per repeat, so the
+ * pattern written out that way is held to MAX_WRITTEN_OUT.
  * lib/Service/SafePattern.php holds the same rules.
  *
  * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
@@ -24,6 +25,14 @@ export const MAX_PATTERN_INPUT = 256
 
 /** The most choice points, plus one for a pattern not anchored with `^`. */
 const MAX_DEGREE = 3
+
+/**
+ * The longest a pattern may be, in code points, with each counted group
+ * written out as often as it repeats. PCRE compiles a counted group once per
+ * repeat into at most 64 KiB, and no code point compiles to more than 11
+ * bytes, so this stays well inside it.
+ */
+const MAX_WRITTEN_OUT = 4096
 
 /** Escaped characters that read alike in both dialects, outside a class. */
 const ESCAPES = new Set('dDwWsSbBtnrf^$\\.*+?()[]{}|/')
@@ -122,6 +131,7 @@ function scan(p) {
 		p,
 		stack: [{ inner: false, look: false, alternation: false, choices: 0 }],
 		last: null,
+		writtenOut: [...p].length,
 	}
 	let i = 0
 	while (i < p.length) {
@@ -132,7 +142,7 @@ function scan(p) {
 		i = step.next
 		scanner.last = step.last
 	}
-	return withinDegree(scanner)
+	return withinDegree(scanner) && scanner.writtenOut <= MAX_WRITTEN_OUT
 }
 
 /**
@@ -279,7 +289,7 @@ function openGroup({ p, stack }, i) {
 			return null
 		}
 	}
-	stack.push({ inner: false, look, alternation: false })
+	stack.push({ inner: false, look, alternation: false, start: i })
 	return { next: i + length, last: null }
 }
 
@@ -299,7 +309,9 @@ function closeGroup({ stack }, i) {
 	// A lookahead cannot be repeated.
 	return {
 		next: i + 1,
-		last: closed.look ? null : { group: true, inner: closed.inner },
+		last: closed.look
+			? null
+			: { group: true, inner: closed.inner, start: closed.start },
 	}
 }
 
@@ -307,7 +319,7 @@ function closeGroup({ stack }, i) {
  * Apply a quantifier to what came before it: `last`, in the group that is
  * last on `stack`.
  *
- * @param {{p: string, stack: Array<{inner: boolean, choices?: number}>, last: {group: boolean, inner: boolean}|null}} scanner The scan so far.
+ * @param {{p: string, stack: Array<{inner: boolean, choices?: number}>, last: {group: boolean, inner: boolean, start?: number}|null, writtenOut: number}} scanner The scan so far.
  * @param {number} i Where the quantifier starts.
  * @param {number} length Its length.
  * @return {{next: number, last: null}|null}
@@ -322,7 +334,28 @@ function quantify(scanner, i, length) {
 	if (isVariable(quantifier)) {
 		stack[0].choices += 1
 	}
+	if (last.group) {
+		scanner.writtenOut +=
+			(copies(quantifier) - 1) * [...p.slice(last.start, i)].length
+	}
 	return afterQuantifier(p, i + length)
+}
+
+/**
+ * How often PCRE writes out a group a quantifier repeats: as often as its
+ * bound allows, once more when it is open-ended, and at least once.
+ *
+ * @param {string} quantifier The quantifier.
+ * @return {number}
+ */
+function copies(quantifier) {
+	const braces = /^\{(\d+)(?:(,)(\d*))?\}$/.exec(quantifier)
+	if (braces === null) {
+		return 1
+	}
+	const [, low, comma, high] = braces
+	const most = high ? Number(high) : Number(low) + (comma ? 1 : 0)
+	return Math.max(most, 1)
 }
 
 /**

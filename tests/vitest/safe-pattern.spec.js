@@ -36,6 +36,8 @@ const SAFE = [
 	'^\\d{2}\\d{2,2}[a-z]+[a-z]*\\d?$',
 	// 300 characters, though 600 UTF-16 units.
 	'\u{1F600}'.repeat(300),
+	// A counted group within the written-out cap.
+	'^(?:\\d\\d-){400}$',
 ]
 
 const UNSAFE = [
@@ -75,6 +77,11 @@ const UNSAFE = [
 	'(?=a)+',
 	'',
 	'x'.repeat(501),
+	// A counted group PCRE writes out past what it compiles.
+	'(a){6553}',
+	'(?:a){8192}',
+	'(?:abcd){4681}',
+	'(?:abcd){400}(?:abcd){200}',
 ]
 
 describe('safe patterns', () => {

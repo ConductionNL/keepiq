@@ -56,6 +56,7 @@ class SafePatternTest extends TestCase {
 			'two alternation groups and an optional' => ['^(a|b)(c|d)e?$'],
 			'fixed counts are no choice points' => ['^\d{2}\d{2,2}[a-z]+[a-z]*\d?$'],
 			'300 characters outside the BMP' => [str_repeat("\u{1F600}", 300)],
+			'a counted group within the written-out cap' => ['^(?:\d\d-){400}$'],
 		];
 	}//end safe()
 
@@ -72,6 +73,10 @@ class SafePatternTest extends TestCase {
 			'a counted nested quantifier' => ['^(a+){10}$'],
 			'a nested quantifier'         => ['^(a+)+$'],
 			'a bound PCRE does not compile' => ['^x{0,70000}$'],
+			'a counted group PCRE does not compile' => ['(a){6553}'],
+			'a counted non-capturing group PCRE does not compile' => ['(?:a){8192}'],
+			'a longer counted group PCRE does not compile' => ['(?:abcd){4681}'],
+			'counted groups written out too long together' => ['(?:abcd){400}(?:abcd){200}'],
 			'a repeated optional'         => ['(a?){5}'],
 			'four open-ended quantifiers' => ['^\d*\d*\d*\d*x$'],
 			'eight dot-stars'             => ['^.*.*.*.*.*.*.*.*=$'],

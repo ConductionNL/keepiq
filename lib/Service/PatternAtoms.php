@@ -168,6 +168,29 @@ final class PatternAtoms {
 	}//end isVariable()
 
 	/**
+	 * How often PCRE writes out a group a quantifier repeats: as often as its bound allows, once more when it is
+	 * open-ended, and at least once.
+	 *
+	 * @param string $quantifier The quantifier
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function copies(string $quantifier): int {
+		if (preg_match('/^\{(\d+)(,(\d*))?\}$/', $quantifier, $match) !== 1) {
+			return 1;
+		}
+
+		$most = (int)$match[1] + (int)isset($match[2]);
+		if (($match[3] ?? '') !== '') {
+			$most = (int)$match[3];
+		}
+
+		return max($most, 1);
+	}//end copies()
+
+	/**
 	 * The length of a quantifier, 0 when there is none.
 	 *
 	 * @param string $pattern The pattern

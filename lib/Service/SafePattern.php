@@ -27,7 +27,8 @@ namespace OCA\Keepiq\Service;
  * hold no quantifier and no alternation at any depth: `(a+)+`, `(a|aa)+` and `(a+){10}` are refused; `?` repeats
  * nothing, so it may follow such a group. A failed match tries every combination of its choice points, each variable
  * quantifier and each group holding an alternation, so their count, plus one when the pattern is not anchored with
- * `^`, is held to MAX_DEGREE, and the browser tests at most 256 characters, which keeps a test to milliseconds.
+ * `^`, is held to MAX_DEGREE, and the browser tests at most 256 characters, which keeps a test to milliseconds. PCRE
+ * writes a counted group out once per repeat, so the pattern written out that way is held to MAX_WRITTEN_OUT.
  * src/utils/safePattern.js holds the same rules for the browser.
  *
  * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
@@ -48,6 +49,15 @@ final class SafePattern {
 	private const MAX_DEGREE = 3;
 
 	/**
+	 * The longest a pattern may be, in code points, with each counted group written out as often as it repeats. PCRE
+	 * compiles a counted group once per repeat into at most 64 KiB, and no code point compiles to more than 11 bytes,
+	 * so this stays well inside it.
+	 *
+	 * @var integer
+	 */
+	private const MAX_WRITTEN_OUT = 4096;
+
+	/**
 	 * What a quantifier repeats: a plain atom.
 	 *
 	 * @var array{group:bool,inner:bool}
@@ -55,12 +65,19 @@ final class SafePattern {
 	private const ATOM = ['group' => false, 'inner' => false];
 
 	/**
-	 * The open groups: whether each holds a quantifier or alternation, whether it is a lookahead, and whether it holds
-	 * an alternation itself. The first is the pattern outside every group.
+	 * The open groups: whether each holds a quantifier or alternation, whether it is a lookahead, whether it holds
+	 * an alternation itself, and where it starts. The first is the pattern outside every group.
 	 *
-	 * @var list<array{inner:bool,look:bool,alt:bool}>
+	 * @var list<array{inner:bool,look:bool,alt:bool,start:int}>
 	 */
 	private array $stack = [];
+
+	/**
+	 * The pattern's length in code points with each counted group written out as often as it repeats.
+	 *
+	 * @var integer
+	 */
+	private int $writtenOut = 0;
 
 	/**
 	 * The pattern being scanned.
@@ -123,9 +140,10 @@ final class SafePattern {
 	 * @return bool True when nothing unsafe was found
 	 */
 	private function scan(string $pattern): bool {
-		$this->pattern = $pattern;
-		$this->stack   = [['inner' => false, 'look' => false, 'alt' => false]];
-		$this->choices = 0;
+		$this->pattern    = $pattern;
+		$this->stack      = [['inner' => false, 'look' => false, 'alt' => false, 'start' => 0]];
+		$this->choices    = 0;
+		$this->writtenOut = mb_strlen($pattern);
 		$last  = null;
 		$index = 0;
 		while ($index < strlen($pattern)) {
@@ -137,7 +155,7 @@ final class SafePattern {
 			[$index, $last] = $step;
 		}
 
-		return count($this->stack) === 1 && $this->withinDegree() === true;
+		return count($this->stack) === 1 && $this->withinDegree() === true && $this->writtenOut <= self::MAX_WRITTEN_OUT;
 	}//end scan()
 
 	/**
@@ -156,9 +174,9 @@ final class SafePattern {
 	 * Read one token.
 	 *
 	 * @param int                               $index Where the token starts
-	 * @param array{group:bool,inner:bool}|null $last  What a quantifier here would repeat
+	 * @param array{group:bool,inner:bool,start?:int}|null $last  What a quantifier here would repeat
 	 *
-	 * @return array{0:int,1:array{group:bool,inner:bool}|null}|null Where the next token starts and what it may repeat, or null to refuse
+	 * @return array{0:int,1:array{group:bool,inner:bool,start?:int}|null}|null Where the next token starts and what it may repeat, or null to refuse
 	 */
 	private function token(int $index, ?array $last): ?array {
 		return match ($this->pattern[$index]) {
@@ -176,7 +194,7 @@ final class SafePattern {
 	 *
 	 * @param int $index Where the `\` is
 	 *
-	 * @return array{0:int,1:array{group:bool,inner:bool}|null}|null
+	 * @return array{0:int,1:array{group:bool,inner:bool,start?:int}|null}|null
 	 */
 	private function escapeToken(int $index): ?array {
 		$next = $this->pattern[$index + 1] ?? '';
@@ -222,7 +240,7 @@ final class SafePattern {
 			return null;
 		}
 
-		$this->stack[] = ['inner' => false, 'look' => $opening['look'], 'alt' => false];
+		$this->stack[] = ['inner' => false, 'look' => $opening['look'], 'alt' => false, 'start' => $index];
 		return [$index + $opening['length'], null];
 	}//end openGroup()
 
@@ -231,7 +249,7 @@ final class SafePattern {
 	 *
 	 * @param int $index Where the `)` is
 	 *
-	 * @return array{0:int,1:array{group:bool,inner:bool}|null}|null
+	 * @return array{0:int,1:array{group:bool,inner:bool,start?:int}|null}|null
 	 */
 	private function closeGroup(int $index): ?array {
 		if (count($this->stack) === 1) {
@@ -245,7 +263,7 @@ final class SafePattern {
 			return [$index + 1, null];
 		}
 
-		return [$index + 1, ['group' => true, 'inner' => $closed['inner']]];
+		return [$index + 1, ['group' => true, 'inner' => $closed['inner'], 'start' => $closed['start']]];
 	}//end closeGroup()
 
 	/**
@@ -271,9 +289,9 @@ final class SafePattern {
 	 * an error in JavaScript.
 	 *
 	 * @param int                               $index Where the token starts
-	 * @param array{group:bool,inner:bool}|null $last  What a quantifier here would repeat
+	 * @param array{group:bool,inner:bool,start?:int}|null $last  What a quantifier here would repeat
 	 *
-	 * @return array{0:int,1:array{group:bool,inner:bool}|null}|null
+	 * @return array{0:int,1:array{group:bool,inner:bool,start?:int}|null}|null
 	 */
 	private function otherToken(int $index, ?array $last): ?array {
 		$char   = $this->pattern[$index];
@@ -298,7 +316,7 @@ final class SafePattern {
 	 *
 	 * @param int                               $index  Where the quantifier starts
 	 * @param int                               $length Its length
-	 * @param array{group:bool,inner:bool}|null $last   What it repeats
+	 * @param array{group:bool,inner:bool,start?:int}|null $last   What it repeats
 	 *
 	 * @return array{0:int,1:null}|null
 	 */
@@ -309,10 +327,12 @@ final class SafePattern {
 		}
 
 		$this->stack[array_key_last($this->stack)]['inner'] = true;
-		if ($this->atoms->isVariable(quantifier: substr($this->pattern, $index, $length)) === true) {
+		$quantifier = substr($this->pattern, $index, $length);
+		if ($this->atoms->isVariable(quantifier: $quantifier) === true) {
 			$this->choices++;
 		}
 
+		$this->writeOut(index: $index, last: $last, quantifier: $quantifier);
 		$next   = $index + $length;
 		$suffix = $this->pattern[$next] ?? '';
 		if ($suffix === '+') {
@@ -325,4 +345,24 @@ final class SafePattern {
 
 		return [$next, null];
 	}//end quantify()
+
+	/**
+	 * Count a counted group as written out as often as the quantifier repeats it.
+	 *
+	 * @param int                                     $index      Where the quantifier starts
+	 * @param array{group:bool,inner:bool,start?:int} $last       What it repeats
+	 * @param string                                  $quantifier The quantifier
+	 *
+	 * @return void
+	 */
+	private function writeOut(int $index, array $last, string $quantifier): void {
+		if ($last['group'] === false) {
+			return;
+		}
+
+		$start = $last['start'] ?? 0;
+		$this->writtenOut += ($this->atoms->copies(quantifier: $quantifier) - 1) * mb_strlen(
+			substr($this->pattern, $start, $index - $start)
+		);
+	}//end writeOut()
 }//end class
