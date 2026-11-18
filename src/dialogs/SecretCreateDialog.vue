@@ -67,6 +67,7 @@
 				v-if="typedFields.length > 0"
 				:fields="typedFields"
 				:values="typedValues"
+				:schemas="storedSchemas"
 				:missing="typedMissing"
 				:disabled="saving"
 				@update:values="onTypedValues" />
@@ -186,7 +187,7 @@ import {
 	objectToMembers,
 } from '../utils/additionalFields.js'
 import { leavesOut } from '../utils/builtinTypeFields.js'
-import { valuesFit } from '../utils/fieldSchema.js'
+import { schemasOf, valuesFit } from '../utils/fieldSchema.js'
 import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
 import { mergeTypedValues, splitTypedValues } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
@@ -309,6 +310,17 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The schemas stored on the secret being cloned, none for a new one, so a type's own
+		 * field they hide is masked in the form.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		storedSchemas() {
+			return schemasOf(this.prefill?.additionalFields)
+		},
+
 		/**
 		 * @spec exclude Store-state passthrough: reads the session lock flag for display gating.
 		 */

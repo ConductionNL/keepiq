@@ -116,6 +116,17 @@ describe('SecretEditDialog typed fields', () => {
 		expect(wrapper.find('[data-testid="typed-fields"]').exists()).toBe(true)
 	})
 
+	it('masks a typed field whose stored schema hides it', async () => {
+		const wrapper = await mountOver({
+			Host: 'https://db-01',
+			'@schema': { Host: { type: 'string', hidden: true } },
+		})
+
+		expect(
+			wrapper.find('[data-testid="typed-field-host"]').attributes('type'),
+		).toBe('password')
+	})
+
 	it('sends no blob when nothing changed', async () => {
 		const wrapper = await mountOver({ Host: 'https://db-01', notes: 'rack 4' })
 		const update = vi
