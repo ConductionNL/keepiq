@@ -31,34 +31,41 @@ namespace OCA\Keepiq\Db;
  */
 final class PendingAdditionalFields {
 	/**
-	 * Constructor for PendingAdditionalFields.
+	 * The entries, oldest first.
 	 *
-	 * @param list<array{fields:string,schemas:array<string,mixed>}> $entries The entries, oldest first
-	 *
-	 * @return void
+	 * @var list<array{fields:string,schemas:array<string,mixed>}>
 	 */
-	private function __construct(
-		private readonly array $entries,
-	) {
-	}//end __construct()
+	private array $entries;
 
 	/**
 	 * Read the column. Anything that is no entry is skipped.
 	 *
 	 * @param string|null $column The stored column
 	 *
-	 * @return self
+	 * @return void
 	 *
 	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
-	public static function fromColumn(?string $column): self {
-		$decoded = json_decode((string)$column, true);
-		if (is_array($decoded) === false) {
-			return new self(entries: []);
+	public function __construct(?string $column) {
+		$decoded       = json_decode((string)$column, true);
+		$this->entries = [];
+		if (is_array($decoded) === true) {
+			$this->entries = array_values(array_filter(array_map(self::entryOf(...), $decoded)));
 		}
+	}//end __construct()
 
-		return new self(entries: array_values(array_filter(array_map(self::entryOf(...), $decoded))));
-	}//end fromColumn()
+	/**
+	 * A copy holding other entries.
+	 *
+	 * @param list<array{fields:string,schemas:array<string,mixed>}> $entries The entries, oldest first
+	 *
+	 * @return self
+	 */
+	private function withEntries(array $entries): self {
+		$copy          = clone $this;
+		$copy->entries = $entries;
+		return $copy;
+	}//end withEntries()
 
 	/**
 	 * One stored entry as `{fields, schemas}`, or null when it is no entry.
@@ -149,7 +156,7 @@ final class PendingAdditionalFields {
 	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function with(string $ciphertext, array $schemas): self {
-		return new self(entries: [...$this->entries, ['fields' => $ciphertext, 'schemas' => $schemas]]);
+		return $this->withEntries(entries: [...$this->entries, ['fields' => $ciphertext, 'schemas' => $schemas]]);
 	}//end with()
 
 	/**
@@ -162,6 +169,6 @@ final class PendingAdditionalFields {
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 	 */
 	public function withoutOldest(int $count): self {
-		return new self(entries: array_slice($this->entries, $count));
+		return $this->withEntries(entries: array_slice($this->entries, $count));
 	}//end withoutOldest()
 }//end class

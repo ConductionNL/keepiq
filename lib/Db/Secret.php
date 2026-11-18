@@ -670,7 +670,7 @@ class Secret extends Entity implements JsonSerializable {
 	 * @return PendingAdditionalFields
 	 */
 	private function pending(): PendingAdditionalFields {
-		return PendingAdditionalFields::fromColumn(column: $this->pendingAdditionalFields);
+		return new PendingAdditionalFields(column: $this->pendingAdditionalFields);
 	}//end pending()
 
 	/**
