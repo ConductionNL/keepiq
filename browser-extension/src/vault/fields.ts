@@ -25,17 +25,11 @@ export type IdentityField = typeof IDENTITY_FIELDS[number]
 /** `credential` is a username plus a secret: logins, keys, databases and custom types. */
 export type FormKind = 'credential' | 'note' | 'totp' | 'card' | 'identity' | 'passkey'
 
+/** The types with a form of their own, by type name. */
+const OWN_FORMS = new Map<string | undefined, FormKind>((['note', 'totp', 'card', 'identity', 'passkey'] as const).map((kind) => [kind, kind]))
+
 export function formKind(typeName: string | undefined): FormKind {
-	switch (typeName) {
-		case 'note':
-		case 'totp':
-		case 'card':
-		case 'identity':
-		case 'passkey':
-			return typeName
-		default:
-			return 'credential'
-	}
+	return OWN_FORMS.get(typeName) ?? 'credential'
 }
 
 /** No new item gets these types: a passkey comes from its ceremony, an authenticator key goes on its login (keepiq#1324). */
@@ -195,22 +189,37 @@ function schemaMap(value: string): Record<string, FieldSchema> | null {
 	return isMap ? parsed as Record<string, FieldSchema> : null
 }
 
-/** The first field named Notes, in any case, is the notes; every other one is an additional field, with its schema. */
-function takeFields(values: FormValues, additionalFields: Record<string, string>): void {
+/** The blob's `@schema` member as a schema map; null when it has none or holds no map. */
+function storedSchemas(additionalFields: Record<string, string>): Record<string, FieldSchema> | null {
 	const schemaText = Object.hasOwn(additionalFields, SCHEMA_MEMBER) ? additionalFields[SCHEMA_MEMBER] : undefined
-	const schemas = schemaText === undefined ? null : schemaMap(schemaText)
+	return schemaText === undefined ? null : schemaMap(schemaText)
+}
+
+/** The members that are fields, in order: a `@schema` holding no schema map is one, kept under `RENAMED_SCHEMA_FIELD` unless that name is taken. */
+function memberFields(additionalFields: Record<string, string>, schemas: Record<string, FieldSchema> | null): Array<[string, string]> {
+	const keepsMisnamed = !schemas && !Object.hasOwn(additionalFields, RENAMED_SCHEMA_FIELD)
+	return Object.entries(additionalFields).flatMap(([name, value]): Array<[string, string]> => {
+		if (name !== SCHEMA_MEMBER) return [[name, value]]
+		return keepsMisnamed ? [[RENAMED_SCHEMA_FIELD, value]] : []
+	})
+}
+
+/** The first field named Notes, in any case, is the notes. */
+const isNotes = (values: FormValues, name: string) => values.notesKey === null && name.toLowerCase() === NOTES
+
+/** The notes and every other field, each with its schema. */
+function takeFields(values: FormValues, additionalFields: Record<string, string>): void {
+	const schemas = storedSchemas(additionalFields)
 	const schemaOf = (name: string) => schemas && Object.hasOwn(schemas, name) ? schemas[name] : undefined
 	const rest: Record<string, FieldSchema> = {}
-	for (const [name, value] of Object.entries(additionalFields)) {
-		if (name === SCHEMA_MEMBER) {
-			if (!schemas && !Object.hasOwn(additionalFields, RENAMED_SCHEMA_FIELD)) values.fields.push(customField(RENAMED_SCHEMA_FIELD, value))
-		} else if (values.notesKey === null && name.toLowerCase() === NOTES) {
+	for (const [name, value] of memberFields(additionalFields, schemas)) {
+		const schema = schemaOf(name)
+		if (isNotes(values, name)) {
 			values.notes = value
 			values.notesKey = name
-			const schema = schemaOf(name)
 			if (schema) rest[name] = schema
 		} else {
-			values.fields.push(customField(name, value, schemaOf(name)))
+			values.fields.push(customField(name, value, schema))
 		}
 	}
 	if (schemas) values.schemas = rest

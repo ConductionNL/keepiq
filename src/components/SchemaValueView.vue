@@ -18,17 +18,7 @@
 				<span v-if="!revealed" class="schema-value-view__masked"
 					>••••••••••</span
 				>
-				<NcButton
-					variant="tertiary"
-					:aria-label="
-						revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')
-					"
-					@click="toggle">
-					<template #icon>
-						<EyeOff v-if="revealed" :size="20" />
-						<Eye v-else :size="20" />
-					</template>
-				</NcButton>
+				<RevealToggle :revealed="revealed" @click="toggle" />
 				<CopyButton :value="value" :guard="guard" />
 			</div>
 			<CnJsonViewer
@@ -77,11 +67,9 @@
 <script>
 import { CnJsonViewer } from '@conduction/nextcloud-vue'
 import { getCanonicalLocale, translate as t } from '@nextcloud/l10n'
-import { NcButton } from '@nextcloud/vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
-import EyeOff from 'vue-material-design-icons/EyeOff.vue'
 import CopyButton from './CopyButton.vue'
 import PasswordField from './PasswordField.vue'
+import RevealToggle from './RevealToggle.vue'
 import { inputOf, isHiddenSchema, schemaError } from '../utils/fieldSchema.js'
 import { linkHref } from '../utils/safeLink.js'
 
@@ -91,10 +79,8 @@ export default {
 	components: {
 		CnJsonViewer,
 		CopyButton,
-		Eye,
-		EyeOff,
-		NcButton,
 		PasswordField,
+		RevealToggle,
 	},
 
 	props: {

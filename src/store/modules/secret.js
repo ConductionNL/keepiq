@@ -799,29 +799,47 @@ function keepOpenVersion(store, save) {
  * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 async function mergePendingFields(own, pending, cryptoKey, schemas) {
-	if (
-		own !== null
-		&& own !== undefined
-		&& (typeof own !== 'object' || Array.isArray(own))
-	) {
+	if (own !== null && own !== undefined && !isMemberObject(own)) {
 		// Not a member object: there is nothing to merge into safely.
 		return { fields: own, complete: false }
 	}
-	let fields = { ...(own || {}) }
+	let fields = { ...own }
 	let complete = true
 	for (const [index, ciphertext] of pending.entries()) {
-		try {
-			const members = JSON.parse(await rsaDecrypt(ciphertext, cryptoKey))
-			if (members && typeof members === 'object' && !Array.isArray(members)) {
-				fields = mergeFilledBlob(fields, members, schemas[index] ?? {})
-			} else {
-				complete = false
-			}
-		} catch {
+		const members = await filledMembers(ciphertext, cryptoKey)
+		if (members === null) {
 			complete = false
+		} else {
+			fields = mergeFilledBlob(fields, members, schemas[index] ?? {})
 		}
 	}
 	return { fields, complete }
+}
+
+/**
+ * The members of one request-filled blob, or null when it cannot be
+ * decrypted or holds no member object.
+ *
+ * @param {string} ciphertext The pending ciphertext.
+ * @param {CryptoKey} cryptoKey The session private key.
+ * @return {Promise<object|null>}
+ * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ */
+async function filledMembers(ciphertext, cryptoKey) {
+	try {
+		const members = JSON.parse(await rsaDecrypt(ciphertext, cryptoKey))
+		return isMemberObject(members) ? members : null
+	} catch {
+		return null
+	}
+}
+
+/**
+ * @param {unknown} value A decrypted value.
+ * @return {boolean} Whether it is an object of members, not null or an array.
+ */
+function isMemberObject(value) {
+	return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 export const useSecretStore = defineStore('secret', {

@@ -177,7 +177,6 @@ export const secretPayloadForm = {
 		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
 		 */
 		payloadFields() {
-			const required = this.valueRequired === true
 			return {
 				value: this.value,
 				card: this.card,
@@ -189,13 +188,25 @@ export const secretPayloadForm = {
 				sshKey: this.sshKey,
 				sshErrors: this.sshErrors,
 				disabled: Boolean(this.saving),
-				valueLabel: required
-					? t('keepiq', '{label} (required)', { label: this.valueLabel })
-					: this.valueLabel,
-				valueRequired: required,
+				valueLabel: this.payloadValueLabel,
+				valueRequired: this.valueRequired === true,
 				valueMultiline: this.valueMultiline,
 				valuePublic: this.valuePublic,
 			}
+		},
+
+		/**
+		 * The value field's label in the dialog, marked when the host
+		 * requires the value.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
+		 */
+		payloadValueLabel() {
+			if (this.valueRequired !== true) {
+				return this.valueLabel
+			}
+			return t('keepiq', '{label} (required)', { label: this.valueLabel })
 		},
 
 		/**

@@ -26,7 +26,14 @@ export const MAX_PATTERN_INPUT = 256
 const MAX_DEGREE = 3
 
 /** Escaped characters that read alike in both dialects, outside a class. */
-const ESCAPES = 'dDwWsSbBtnrf^$\\.*+?()[]{}|/'
+const ESCAPES = new Set('dDwWsSbBtnrf^$\\.*+?()[]{}|/')
+
+/** Inside a class, `\-` is a hyphen, and `\b` and `\B` read differently. */
+const CLASS_ESCAPES = new Map([
+	['-', 2],
+	['b', 0],
+	['B', 0],
+])
 
 /**
  * Whether a pattern is safe: not too long, compiles, and passes the scan.
@@ -49,19 +56,43 @@ export function isSafePattern(pattern) {
  * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 export function patternProblem(pattern) {
-	if (typeof pattern !== 'string' || pattern === '') {
+	if (!compiles(pattern)) {
 		return 'invalid'
+	}
+	return fits(pattern) ? '' : 'unsupported'
+}
+
+/**
+ * Whether a pattern is a non-empty string that compiles.
+ *
+ * @param {unknown} pattern The pattern.
+ * @return {boolean}
+ */
+function compiles(pattern) {
+	if (typeof pattern !== 'string' || pattern === '') {
+		return false
 	}
 	try {
 		new RegExp(pattern, 'u')
+		return true
 	} catch {
-		return 'invalid'
+		return false
 	}
-	const fits =
+}
+
+/**
+ * Whether a compiling pattern is short enough, has no bound PCRE refuses,
+ * and passes the scan.
+ *
+ * @param {string} pattern The pattern.
+ * @return {boolean}
+ */
+function fits(pattern) {
+	return (
 		[...pattern].length <= MAX_PATTERN_LENGTH
 		&& !hasHugeBound(pattern)
 		&& scan(pattern)
-	return fits ? '' : 'unsupported'
+	)
 }
 
 /**
@@ -87,64 +118,131 @@ function hasHugeBound(pattern) {
  * @return {boolean} True when nothing unsafe was found.
  */
 function scan(p) {
-	const stack = [{ inner: false, look: false, alternation: false, choices: 0 }]
-	let last = null
+	const scanner = {
+		p,
+		stack: [{ inner: false, look: false, alternation: false, choices: 0 }],
+		last: null,
+	}
 	let i = 0
 	while (i < p.length) {
-		const step = token(p, i, stack, last)
+		const step = token(scanner, i)
 		if (step === null) {
 			return false
 		}
 		i = step.next
-		last = step.last
+		scanner.last = step.last
 	}
+	return withinDegree(scanner)
+}
+
+/**
+ * Whether a scanned pattern closed every group and holds no more choice
+ * points than MAX_DEGREE allows.
+ *
+ * @param {{p: string, stack: Array<object>}} scanner The finished scan.
+ * @return {boolean}
+ */
+function withinDegree({ p, stack }) {
 	const anchored = p.startsWith('^') && !stack[0].alternation
 	return stack.length === 1 && stack[0].choices + (anchored ? 0 : 1) <= MAX_DEGREE
 }
 
 /**
+ * The reader of each token that starts with a character of its own.
+ */
+const TOKEN_READERS = new Map([
+	['\\', readEscape],
+	['[', readClass],
+	['(', openGroup],
+	[')', closeGroup],
+	['|', alternate],
+])
+
+/**
  * Read one token at `i`.
  *
- * @param {string} p The pattern.
+ * The scanner holds the pattern `p`, the open groups `stack` (changed in
+ * place; the first counts the choice points) and `last`, what a quantifier
+ * here would repeat.
+ *
+ * @param {{p: string, stack: Array<{inner: boolean, look: boolean, alternation: boolean, choices?: number}>, last: {group: boolean, inner: boolean}|null}} scanner The scan so far.
  * @param {number} i Where the token starts.
- * @param {Array<{inner: boolean, look: boolean, alternation: boolean, choices?: number}>} stack The open groups, changed in place; the first counts the choice points.
- * @param {{group: boolean, inner: boolean}|null} last What a quantifier here would repeat.
  * @return {{next: number, last: object|null}|null} Where the next token starts, or null to refuse.
  */
-function token(p, i, stack, last) {
-	const c = p[i]
-	const top = stack[stack.length - 1]
-	const atom = (length) =>
-		length === 0
-			? null
-			: { next: i + length, last: { group: false, inner: false } }
-	if (c === '\\') {
-		// A word boundary is an assertion: nothing to repeat.
-		return 'bB'.includes(p[i + 1])
-			? { next: i + 2, last: null }
-			: atom(escapeLength(p, i, false))
+function token(scanner, i) {
+	const read = TOKEN_READERS.get(scanner.p[i])
+	if (read) {
+		return read(scanner, i)
 	}
-	if (c === '[') {
-		return atom(classLength(p, i))
-	}
-	if (c === '(') {
-		return openGroup(p, i, stack)
-	}
-	if (c === ')') {
-		return closeGroup(i, stack)
-	}
-	if (c === '|') {
-		top.inner = true
-		if (!top.alternation) {
-			top.alternation = true
-			stack[0].choices += 1
-		}
-		return { next: i + 1, last: null }
-	}
-	const length = quantifierLength(p, i)
+	const length = quantifierLength(scanner.p, i)
 	if (length > 0) {
-		return quantify(p, i, length, stack, last)
+		return quantify(scanner, i, length)
 	}
+	return literal(scanner.p[i], i)
+}
+
+/**
+ * An atom of `length` characters at `i`, null when there is none.
+ *
+ * @param {number} i Where it starts.
+ * @param {number} length Its length.
+ * @return {{next: number, last: {group: boolean, inner: boolean}}|null}
+ */
+function atom(i, length) {
+	return length === 0
+		? null
+		: { next: i + length, last: { group: false, inner: false } }
+}
+
+/**
+ * Read an escape. A word boundary is an assertion: nothing to repeat.
+ *
+ * @param {{p: string}} scanner The scan so far.
+ * @param {number} i Where the `\` is.
+ * @return {{next: number, last: object|null}|null}
+ */
+function readEscape({ p }, i) {
+	return 'bB'.includes(p[i + 1])
+		? { next: i + 2, last: null }
+		: atom(i, escapeLength(p, i, false))
+}
+
+/**
+ * Read a character class.
+ *
+ * @param {{p: string}} scanner The scan so far.
+ * @param {number} i Where the `[` is.
+ * @return {{next: number, last: object}|null}
+ */
+function readClass({ p }, i) {
+	return atom(i, classLength(p, i))
+}
+
+/**
+ * Read a `|`, counting the group it is in as a choice point once.
+ *
+ * @param {{stack: Array<object>}} scanner The scan so far.
+ * @param {number} i Where the `|` is.
+ * @return {{next: number, last: null}}
+ */
+function alternate({ stack }, i) {
+	const top = stack[stack.length - 1]
+	top.inner = true
+	if (!top.alternation) {
+		top.alternation = true
+		stack[0].choices += 1
+	}
+	return { next: i + 1, last: null }
+}
+
+/**
+ * Read a literal character; an anchor repeats nothing.
+ *
+ * @param {string} c The character.
+ * @param {number} i Where it is.
+ * @return {{next: number, last: object|null}|null}
+ */
+function literal(c, i) {
 	if ('{}]'.includes(c)) {
 		// A lone brace or bracket is a literal in PCRE and an error in JavaScript.
 		return null
@@ -158,12 +256,11 @@ function token(p, i, stack, last) {
 /**
  * Open a group: plain, non-capturing, named, or a lookahead.
  *
- * @param {string} p The pattern.
+ * @param {{p: string, stack: Array<object>}} scanner The scan so far; its open groups are changed in place.
  * @param {number} i Where the `(` is.
- * @param {Array<object>} stack The open groups, changed in place.
  * @return {{next: number, last: null}|null}
  */
-function openGroup(p, i, stack) {
+function openGroup({ p, stack }, i) {
 	let length = 1
 	let look = false
 	if (p[i + 1] === '?') {
@@ -189,11 +286,11 @@ function openGroup(p, i, stack) {
 /**
  * Close a group, passing what it holds on to the group around it.
  *
+ * @param {{stack: Array<object>}} scanner The scan so far; its open groups are changed in place.
  * @param {number} i Where the `)` is.
- * @param {Array<object>} stack The open groups, changed in place.
  * @return {{next: number, last: object|null}|null}
  */
-function closeGroup(i, stack) {
+function closeGroup({ stack }, i) {
 	if (stack.length === 1) {
 		return null
 	}
@@ -207,35 +304,52 @@ function closeGroup(i, stack) {
 }
 
 /**
- * Apply a quantifier to what came before it.
+ * Apply a quantifier to what came before it: `last`, in the group that is
+ * last on `stack`.
  *
- * @param {string} p The pattern.
+ * @param {{p: string, stack: Array<{inner: boolean, choices?: number}>, last: {group: boolean, inner: boolean}|null}} scanner The scan so far.
  * @param {number} i Where the quantifier starts.
  * @param {number} length Its length.
- * @param {Array<{inner: boolean, choices?: number}>} stack The open groups; the last is the one it is in.
- * @param {{group: boolean, inner: boolean}|null} last What it repeats.
  * @return {{next: number, last: null}|null}
  */
-function quantify(p, i, length, stack, last) {
-	if (last === null) {
-		return null
-	}
-	if (last.group && last.inner && p[i] !== '?') {
+function quantify(scanner, i, length) {
+	const { p, stack, last } = scanner
+	const quantifier = p.slice(i, i + length)
+	if (!canRepeat(last, quantifier)) {
 		return null
 	}
 	stack[stack.length - 1].inner = true
-	if (isVariable(p.slice(i, i + length))) {
+	if (isVariable(quantifier)) {
 		stack[0].choices += 1
 	}
-	let next = i + length
+	return afterQuantifier(p, i + length)
+}
+
+/**
+ * Whether a quantifier may repeat what came before it. `?` repeats nothing,
+ * so it may follow a group that holds a quantifier or an alternation.
+ *
+ * @param {{group: boolean, inner: boolean}|null} last What it repeats.
+ * @param {string} quantifier The quantifier.
+ * @return {boolean}
+ */
+function canRepeat(last, quantifier) {
+	return last !== null && !(last.group && last.inner && quantifier !== '?')
+}
+
+/**
+ * Where the token after a quantifier starts: past a lazy `?`, or null for a
+ * possessive `+`, which is PCRE only.
+ *
+ * @param {string} p The pattern.
+ * @param {number} next The position right after the quantifier.
+ * @return {{next: number, last: null}|null}
+ */
+function afterQuantifier(p, next) {
 	if (p[next] === '+') {
-		// Possessive: PCRE only.
 		return null
 	}
-	if (p[next] === '?') {
-		next += 1
-	}
-	return { next, last: null }
+	return { next: p[next] === '?' ? next + 1 : next, last: null }
 }
 
 /**
@@ -280,16 +394,24 @@ function quantifierLength(p, i) {
  */
 function escapeLength(p, i, inClass) {
 	const next = p[i + 1]
-	if (next === undefined) {
-		return 0
-	}
 	if (next === 'x') {
-		return /^[0-9a-fA-F]{2}$/.test(p.slice(i + 2, i + 4)) ? 4 : 0
+		return hexEscapeLength(p, i)
 	}
-	if (inClass && (next === '-' || next === 'b' || next === 'B')) {
-		return next === '-' ? 2 : 0
+	if (inClass && CLASS_ESCAPES.has(next)) {
+		return CLASS_ESCAPES.get(next)
 	}
-	return ESCAPES.includes(next) ? 2 : 0
+	return ESCAPES.has(next) ? 2 : 0
+}
+
+/**
+ * The length of a `\x` escape at `i`: 4 with two hex digits, else 0.
+ *
+ * @param {string} p The pattern.
+ * @param {number} i Where the `\` is.
+ * @return {number}
+ */
+function hexEscapeLength(p, i) {
+	return /^[0-9a-fA-F]{2}$/.test(p.slice(i + 2, i + 4)) ? 4 : 0
 }
 
 /**
@@ -301,22 +423,44 @@ function escapeLength(p, i, inClass) {
  * @return {number}
  */
 function classLength(p, i) {
-	let j = p[i + 1] === '^' ? i + 2 : i + 1
-	if (p[j] === ']') {
+	const start = p[i + 1] === '^' ? i + 2 : i + 1
+	if (p[start] === ']') {
 		return 0
 	}
-	while (j < p.length) {
-		if (p[j] === ']') {
-			return j - i + 1
-		}
-		if (p[j] === '[') {
-			return 0
-		}
-		const step = p[j] === '\\' ? escapeLength(p, j, true) : 1
+	const end = classEnd(p, start)
+	return end === -1 ? 0 : end - i + 1
+}
+
+/**
+ * Where a class whose members start at `j` closes, -1 when it does not
+ * close or holds a member both dialects do not read alike.
+ *
+ * @param {string} p The pattern.
+ * @param {number} j Where its members start.
+ * @return {number} The position of the `]`, or -1.
+ */
+function classEnd(p, j) {
+	while (j < p.length && p[j] !== ']') {
+		const step = classMemberLength(p, j)
 		if (step === 0) {
-			return 0
+			return -1
 		}
 		j += step
 	}
-	return 0
+	return j < p.length ? j : -1
+}
+
+/**
+ * The length of one class member at `j`, 0 for a `[` or an escape both
+ * dialects do not read alike.
+ *
+ * @param {string} p The pattern.
+ * @param {number} j Where the member is.
+ * @return {number}
+ */
+function classMemberLength(p, j) {
+	if (p[j] === '[') {
+		return 0
+	}
+	return p[j] === '\\' ? escapeLength(p, j, true) : 1
 }

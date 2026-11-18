@@ -22,17 +22,11 @@
 			:label="label"
 			:type="revealed ? 'text' : 'password'"
 			:readOnly="true" />
-		<NcButton
+		<RevealToggle
 			v-if="!useOnly && !shownAtOnce"
-			variant="tertiary"
-			:aria-label="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
+			:revealed="revealed"
 			:title="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
-			@click="toggle">
-			<template #icon>
-				<EyeOff v-if="revealed" :size="20" />
-				<Eye v-else :size="20" />
-			</template>
-		</NcButton>
+			@click="toggle" />
 		<CopyButton
 			:resolve="resolvePlain"
 			:useOnly="useOnly"
@@ -42,10 +36,9 @@
 </template>
 
 <script>
-import { NcButton, NcInputField, NcTextArea } from '@nextcloud/vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
-import EyeOff from 'vue-material-design-icons/EyeOff.vue'
+import { NcInputField, NcTextArea } from '@nextcloud/vue'
 import CopyButton from './CopyButton.vue'
+import RevealToggle from './RevealToggle.vue'
 
 /**
  * A masked key/password field with a show/hide eye toggle and a copy button.
@@ -58,12 +51,10 @@ export default {
 	name: 'PasswordField',
 
 	components: {
-		NcButton,
 		NcInputField,
 		NcTextArea,
-		Eye,
-		EyeOff,
 		CopyButton,
+		RevealToggle,
 	},
 
 	props: {
