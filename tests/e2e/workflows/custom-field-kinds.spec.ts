@@ -116,7 +116,7 @@ test.describe('custom field kinds and the SSH key item', () => {
 
 		await page.evaluate(() => navigator.clipboard.writeText(''))
 		await field
-			.getByRole('button', { name: 'Copy password' })
+			.getByRole('button', { name: 'Copy value' })
 			.evaluate((el: HTMLElement) => el.click())
 		await expect.poll(clipboard, { timeout: 15_000 }).toBe(HIDDEN)
 		await expect(input).not.toHaveValue(HIDDEN)
