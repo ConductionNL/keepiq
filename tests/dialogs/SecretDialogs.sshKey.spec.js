@@ -167,6 +167,44 @@ describe('SecretCreateDialog — SSH key', () => {
 		)
 	})
 
+	// openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+	it('clones an SSH key ready to save, keeping its custom fields', async () => {
+		const pair = await generateKeyPair()
+		const wrapper = mount(SecretCreateDialog, {
+			propsData: {
+				folderId: 'folder-1',
+				prefill: {
+					typeId: 'ssh',
+					name: 'Deploy key',
+					key: pair.privateKey,
+					additionalFields: {
+						publicKey: pair.publicKey,
+						fingerprint: 'SHA256:stale',
+						Host: 'git.example',
+					},
+				},
+			},
+			global: { stubs },
+		})
+		await flush()
+		const create = vi
+			.spyOn(useSecretStore(), 'createSecret')
+			.mockResolvedValue({ id: 's2' })
+
+		expect(wrapper.vm.additionalFields).toEqual([
+			{ name: 'Host', value: 'git.example', schema: { type: 'string' } },
+		])
+		expect(wrapper.vm.formReady).toBe(true)
+		await wrapper.vm.submit()
+
+		// The fingerprint is derived again, over the one the source stored.
+		expect(create.mock.calls[0][0].additionalFields).toEqual({
+			Host: 'git.example',
+			publicKey: pair.publicKey,
+			fingerprint: pair.fingerprint,
+		})
+	})
+
 	it('fills all three fields from Generate key pair', async () => {
 		const wrapper = await mountCreate()
 

@@ -556,7 +556,8 @@ export default {
 			this.value = source.key || ''
 			const split = splitTypedValues(source.additionalFields, this.typedFields)
 			this.typedValues = split.values
-			this.additionalFields = objectToMembers(split.rest)
+			// An SSH key's public key and fingerprint have their own fields.
+			this.additionalFields = objectToMembers(this.takeSshMembers(split.rest))
 			const payload = parsePayload(source.key || '')
 			if (payload !== null && this.isCard) {
 				for (const field of CARD_FIELDS) {
