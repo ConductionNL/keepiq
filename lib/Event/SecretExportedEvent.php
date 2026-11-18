@@ -92,7 +92,7 @@ class SecretExportedEvent extends Event {
 
 	/**
 	 * Get the audit metadata payload — counts and modes only, never secret
-	 * material. Keys match the AuditEventTypes whitelist for vault.exported.
+	 * material. Keys match the AuditMetadataPolicy whitelist for vault.exported.
 	 *
 	 * @return array<string,mixed>
 	 */

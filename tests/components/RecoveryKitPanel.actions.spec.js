@@ -25,10 +25,12 @@ const service = vi.hoisted(() => ({
 vi.mock('../../src/services/recoveryKit.js', () => service)
 vi.mock('@nextcloud/auth', () => ({ getCurrentUser: () => ({ uid: 'alice' }) }))
 vi.mock('@nextcloud/l10n', () => ({
-	translate: (_app, text, vars = {}) => text.replace(/\{(\w+)\}/g, (match, name) => String(vars[name] ?? match)),
+	translate: (_app, text, vars = {}) =>
+		text.replace(/\{(\w+)\}/g, (match, name) => String(vars[name] ?? match)),
 }))
 
-const { default: RecoveryKitPanel } = await import('../../src/components/RecoveryKitPanel.vue')
+const { default: RecoveryKitPanel } =
+	await import('../../src/components/RecoveryKitPanel.vue')
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -36,13 +38,18 @@ const stubs = {
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
-	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div class="note" :data-type="type"><slot /></div>',
+	},
 	NcPasswordField: {
 		props: ['modelValue', 'label', 'disabled'],
 		emits: ['update:modelValue'],
-		template: '<input class="password" :disabled="disabled" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+		template:
+			'<input class="password" :disabled="disabled" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 	},
 }
 
@@ -53,11 +60,16 @@ const stubs = {
  */
 async function panelWithNewKit() {
 	service.recoveryKitStatus.mockResolvedValue(null)
-	service.createRecoveryKit.mockResolvedValue({ code: 'ABCD-EFGH', kit: { suiteId: 's-1', createdAt: '2026-11-14T10:00:00+00:00' } })
+	service.createRecoveryKit.mockResolvedValue({
+		code: 'ABCD-EFGH',
+		kit: { suiteId: 's-1', createdAt: '2026-11-14T10:00:00+00:00' },
+	})
 	const wrapper = mount(RecoveryKitPanel, { global: { stubs } })
 	await flush()
 	await wrapper.get('[data-testid="recovery-kit-create"]').trigger('click')
-	await wrapper.get('[data-testid="recovery-kit-password"]').setValue('master password')
+	await wrapper
+		.get('[data-testid="recovery-kit-password"]')
+		.setValue('master password')
 	await wrapper.get('[data-testid="recovery-kit-create"]').trigger('click')
 	await flush()
 	return wrapper
@@ -98,14 +110,18 @@ describe('RecoveryKitPanel actions', () => {
 		})
 		URL.revokeObjectURL = vi.fn()
 		const clicked = []
-		vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function() {
-			clicked.push({ href: this.href, download: this.download })
-		})
+		vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
+			function () {
+				clicked.push({ href: this.href, download: this.download })
+			},
+		)
 		const wrapper = await panelWithNewKit()
 
 		await wrapper.get('[data-testid="recovery-kit-download"]').trigger('click')
 
-		expect(clicked).toEqual([{ href: 'blob:kit', download: 'keepiq-recovery-kit.txt' }])
+		expect(clicked).toEqual([
+			{ href: 'blob:kit', download: 'keepiq-recovery-kit.txt' },
+		])
 		expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:kit')
 		expect(blobs).toHaveLength(1)
 		expect(blobs[0].type).toBe('text/plain')
@@ -118,14 +134,18 @@ describe('RecoveryKitPanel actions', () => {
 	it('prints the kit on a page of its own', async () => {
 		const page = document.implementation.createHTMLDocument('')
 		const printed = vi.fn()
-		const open = vi.spyOn(window, 'open').mockReturnValue({ document: page, print: printed })
+		const open = vi
+			.spyOn(window, 'open')
+			.mockReturnValue({ document: page, print: printed })
 		const wrapper = await panelWithNewKit()
 
 		await wrapper.get('[data-testid="recovery-kit-print"]').trigger('click')
 
 		expect(open).toHaveBeenCalledWith('', '_blank', 'noopener=no')
 		expect(page.title).toBe('Keepiq recovery kit')
-		expect(page.body.querySelector('pre').textContent).toContain('Recovery code: ABCD-EFGH')
+		expect(page.body.querySelector('pre').textContent).toContain(
+			'Recovery code: ABCD-EFGH',
+		)
 		expect(printed).toHaveBeenCalledTimes(1)
 		expect(wrapper.find('[role="alert"]').exists()).toBe(false)
 	})
@@ -136,8 +156,12 @@ describe('RecoveryKitPanel actions', () => {
 
 		await wrapper.get('[data-testid="recovery-kit-print"]').trigger('click')
 
-		expect(wrapper.get('[role="alert"]').text()).toBe('The print page was blocked. Download the kit instead.')
-		expect(wrapper.get('[data-testid="recovery-kit-code"]').text()).toBe('ABCD-EFGH')
+		expect(wrapper.get('[role="alert"]').text()).toBe(
+			'The print page was blocked. Download the kit instead.',
+		)
+		expect(wrapper.get('[data-testid="recovery-kit-code"]').text()).toBe(
+			'ABCD-EFGH',
+		)
 	})
 
 	it('treats a failing status lookup as no kit', async () => {
@@ -145,21 +169,31 @@ describe('RecoveryKitPanel actions', () => {
 		const wrapper = mount(RecoveryKitPanel, { global: { stubs } })
 		await flush()
 
-		expect(wrapper.get('[data-testid="recovery-kit-status"]').text()).toBe('You have no recovery kit.')
+		expect(wrapper.get('[data-testid="recovery-kit-status"]').text()).toBe(
+			'You have no recovery kit.',
+		)
 	})
 
 	it('shows the server message when making the kit is refused', async () => {
 		service.recoveryKitStatus.mockResolvedValue(null)
-		service.createRecoveryKit.mockRejectedValue({ response: { data: { message: 'A kit was made a minute ago.' } } })
+		service.createRecoveryKit.mockRejectedValue({
+			response: { data: { message: 'A kit was made a minute ago.' } },
+		})
 		const wrapper = mount(RecoveryKitPanel, { global: { stubs } })
 		await flush()
 
 		await wrapper.get('[data-testid="recovery-kit-create"]').trigger('click')
-		await wrapper.get('[data-testid="recovery-kit-password"]').setValue('master password')
+		await wrapper
+			.get('[data-testid="recovery-kit-password"]')
+			.setValue('master password')
 		await wrapper.get('[data-testid="recovery-kit-create"]').trigger('click')
 		await flush()
 
-		expect(wrapper.get('[role="alert"]').text()).toBe('A kit was made a minute ago.')
-		expect(wrapper.get('[data-testid="recovery-kit-password"]').element.value).toBe('')
+		expect(wrapper.get('[role="alert"]').text()).toBe(
+			'A kit was made a minute ago.',
+		)
+		expect(
+			wrapper.get('[data-testid="recovery-kit-password"]').element.value,
+		).toBe('')
 	})
 })

@@ -43,7 +43,9 @@ describe('TeamFolderDialog wiring', () => {
 
 	beforeEach(() => {
 		setActivePinia(createPinia())
-		fetchPolicy.mockReset().mockResolvedValue({ team_folder_auto_confirm: false })
+		fetchPolicy
+			.mockReset()
+			.mockResolvedValue({ team_folder_auto_confirm: false })
 		useShareStore().searchShareableRecipients = vi.fn().mockResolvedValue([])
 		useGroupStore().fetchGroups = vi.fn().mockResolvedValue([])
 		store = useTeamFolderStore()
@@ -72,7 +74,7 @@ describe('TeamFolderDialog wiring', () => {
 		return wrapper.findAllComponents({ name: 'NcSelect' })
 	}
 
-	it('hands the grade select\'s chosen value and the row to the grade change', async () => {
+	it("hands the grade select's chosen value and the row to the grade change", async () => {
 		const wrapper = mountDialog()
 		const spy = vi.spyOn(wrapper.vm, 'onGradeChange').mockResolvedValue()
 		await wrapper.vm.$forceUpdate()
@@ -88,7 +90,9 @@ describe('TeamFolderDialog wiring', () => {
 	it('removes the member whose remove button is clicked', async () => {
 		const wrapper = mountDialog()
 
-		await wrapper.find('[data-testid="team-folder-remove-devops"]').trigger('click')
+		await wrapper
+			.find('[data-testid="team-folder-remove-devops"]')
+			.trigger('click')
 		await new Promise((resolve) => setTimeout(resolve, 0))
 
 		expect(store.removeMember).toHaveBeenCalledWith('tf-1', 'm2')
@@ -99,7 +103,9 @@ describe('TeamFolderDialog wiring', () => {
 		const wrapper = mountDialog()
 		const typeSelect = selects(wrapper)[0]
 
-		expect(typeSelect.props('reduce')({ label: 'Group', value: 'group' })).toBe('group')
+		expect(typeSelect.props('reduce')({ label: 'Group', value: 'group' })).toBe(
+			'group',
+		)
 
 		wrapper.vm.newMemberId = 'bob'
 		typeSelect.vm.$emit('update:modelValue', 'group')
@@ -113,7 +119,9 @@ describe('TeamFolderDialog wiring', () => {
 		const wrapper = mountDialog()
 		const memberSelect = selects(wrapper)[1]
 
-		expect(memberSelect.props('reduce')({ id: 'carol', label: 'Carol' })).toBe('carol')
+		expect(memberSelect.props('reduce')({ id: 'carol', label: 'Carol' })).toBe(
+			'carol',
+		)
 
 		memberSelect.vm.$emit('update:modelValue', 'carol')
 		await wrapper.vm.$nextTick()
@@ -126,14 +134,20 @@ describe('TeamFolderDialog wiring', () => {
 		expect(selects(wrapper)[1].props('modelValue')).toBe(null)
 	})
 
-	it('writes the restriction fields\' update into the new restriction', async () => {
+	it("writes the restriction fields' update into the new restriction", async () => {
 		const wrapper = mountDialog()
 		const fields = wrapper.findComponent({ name: 'ShareRestrictionFields' })
 
-		fields.vm.$emit('update:modelValue', { useOnly: true, endDate: '2027-01-01' })
+		fields.vm.$emit('update:modelValue', {
+			useOnly: true,
+			endDate: '2027-01-01',
+		})
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.vm.newRestriction).toEqual({ useOnly: true, endDate: '2027-01-01' })
+		expect(wrapper.vm.newRestriction).toEqual({
+			useOnly: true,
+			endDate: '2027-01-01',
+		})
 	})
 
 	it('cancels a running fan-out from its cancel button', async () => {
@@ -141,8 +155,12 @@ describe('TeamFolderDialog wiring', () => {
 		store.fanOut = { total: 4, done: 1, running: true }
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.find('[data-testid="team-folder-run-fanout"]').exists()).toBe(false)
-		await wrapper.find('[data-testid="team-folder-cancel-fanout"]').trigger('click')
+		expect(wrapper.find('[data-testid="team-folder-run-fanout"]').exists()).toBe(
+			false,
+		)
+		await wrapper
+			.find('[data-testid="team-folder-cancel-fanout"]')
+			.trigger('click')
 
 		expect(store.cancelFanOut).toHaveBeenCalledTimes(1)
 	})

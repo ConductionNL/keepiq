@@ -308,7 +308,9 @@ async function mergePendingInto(decrypted, cryptoKey) {
 		decrypted.additionalFields,
 		pending,
 		cryptoKey,
-		Array.isArray(decrypted.pendingFieldSchemas) ? decrypted.pendingFieldSchemas : [],
+		Array.isArray(decrypted.pendingFieldSchemas)
+			? decrypted.pendingFieldSchemas
+			: [],
 	)
 	decrypted.additionalFields = merged.fields
 	decrypted.mergedPending = merged.complete ? pending.length : 0
@@ -1254,7 +1256,10 @@ export const useSecretStore = defineStore('secret', {
 				payload.reprompt = true
 			}
 			// Plain text like `url`, so search and the extension match (vault-website-addresses D1).
-			if (Array.isArray(data.additionalUrls) && data.additionalUrls.length > 0) {
+			if (
+				Array.isArray(data.additionalUrls)
+				&& data.additionalUrls.length > 0
+			) {
 				payload.additionalUrls = data.additionalUrls
 			}
 			await encryptOptionalFields(payload, { data, publicKey })

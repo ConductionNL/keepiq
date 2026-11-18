@@ -135,7 +135,9 @@
 						v-else
 						v-model="values[field]"
 						:type="inputType(field)"
-						:step="schemaOf(field)?.type === 'number' ? 'any' : undefined"
+						:step="
+							schemaOf(field)?.type === 'number' ? 'any' : undefined
+						"
 						autocomplete="off"
 						required
 						:aria-labelledby="`fill-label-${index}`"
@@ -418,9 +420,7 @@ export default {
 				unavailable: t('keepiq', 'This request is no longer available.'),
 				'not-found': t('keepiq', 'This request could not be found.'),
 			}
-			return Object.hasOwn(messages, reason)
-				? messages[reason]
-				: null
+			return Object.hasOwn(messages, reason) ? messages[reason] : null
 		},
 
 		/**
@@ -665,7 +665,9 @@ export default {
 		 */
 		summaryValue(field) {
 			if (this.inputType(field) === 'checkbox') {
-				return this.values[field] === 'true' ? t('keepiq', 'Yes') : t('keepiq', 'No')
+				return this.values[field] === 'true'
+					? t('keepiq', 'Yes')
+					: t('keepiq', 'No')
 			}
 			return this.values[field]
 		},

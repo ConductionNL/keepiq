@@ -39,6 +39,9 @@ use OCP\IUserSession;
  * Endpoints for privileged logins: the owner's mark, a recipient's request
  * for a time window, and the owner's answer. Ownership and holding are
  * checked in the service; an unknown or foreign secret answers not found.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 13 against a threshold of
+ *   13: the service's value objects in, and each refusal mapped to its status.
  */
 class PrivilegedAccessController extends OCSController {
 	/**

@@ -13,7 +13,6 @@
  */
 export function isSnoozed(alert) {
 	return (
-		!!alert.snoozedUntil
-		&& new Date(alert.snoozedUntil).getTime() > Date.now()
+		!!alert.snoozedUntil && new Date(alert.snoozedUntil).getTime() > Date.now()
 	)
 }

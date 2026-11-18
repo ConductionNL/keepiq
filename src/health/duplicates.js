@@ -43,11 +43,13 @@ export function hostOf(url) {
  * @return {boolean}
  */
 function isGroupable(row) {
-	return Boolean(row)
+	return (
+		Boolean(row)
 		&& row.copy !== true
 		&& row.machineMaterial !== true
 		&& typeof row.value === 'string'
 		&& row.value !== ''
+	)
 }
 
 /**
@@ -74,7 +76,8 @@ function buckets(rows) {
 		}
 		const host = hostOf(row.url)
 		const username = usernameOf(row.login)
-		const place = host !== null ? `host:${host}` : `name:${String(row.name ?? '')}`
+		const place =
+			host !== null ? `host:${host}` : `name:${String(row.name ?? '')}`
 		const key = `${place}\u0000${username}`
 		if (!out.has(key)) {
 			out.set(key, { host, username, rows: [] })
@@ -199,7 +202,10 @@ export function foldFields(kept, others) {
  */
 function nameHolding(fields, name, value) {
 	const match = Object.entries(fields).find(
-		([n, v]) => v === value && (n === name || /^ \(\d+\)$/.test(n.slice(name.length)) && n.startsWith(name)),
+		([n, v]) =>
+			v === value
+			&& (n === name
+				|| (/^ \(\d+\)$/.test(n.slice(name.length)) && n.startsWith(name))),
 	)
 	return match ? match[0] : null
 }
@@ -213,7 +219,8 @@ function nameHolding(fields, name, value) {
  * @return {void}
  */
 function keepHidden(schemas, name, theirs) {
-	const hidden = (schema) => schema?.hidden === true || schema?.format === 'password'
+	const hidden = (schema) =>
+		schema?.hidden === true || schema?.format === 'password'
 	if (hidden(theirs) && !hidden(schemas[name])) {
 		schemas[name] = { type: 'string', ...schemas[name], hidden: true }
 	}

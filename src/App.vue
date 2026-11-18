@@ -235,7 +235,8 @@
 							{{ suiteStore.currentSuite.id }}
 						</p>
 
-						<VaultEncryptionDetails :suiteId="suiteStore.currentSuite.id" />
+						<VaultEncryptionDetails
+							:suiteId="suiteStore.currentSuite.id" />
 
 						<template v-if="suiteStore.currentSuite.status === 'active'">
 							<NcNoteCard v-if="revokeConfirm" type="warning">
@@ -502,7 +503,10 @@ const ACTIVITY_EVENTS = Object.freeze([
  * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
  */
 function isEmergencyLossRefusal(e) {
-	return e.response?.status === 409 && e.response?.data?.error === 'emergency_access_present'
+	return (
+		e.response?.status === 409
+		&& e.response?.data?.error === 'emergency_access_present'
+	)
 }
 
 export default {
@@ -1087,7 +1091,8 @@ export default {
 		 */
 		showRevokeFailure(e) {
 			if (isEmergencyLossRefusal(e)) {
-				this.revokeEmergencyCount = e.response.data.usableEmergencyContacts || 1
+				this.revokeEmergencyCount =
+					e.response.data.usableEmergencyContacts || 1
 				return
 			}
 			this.revokeError =

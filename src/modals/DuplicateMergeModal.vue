@@ -36,23 +36,37 @@
 
 				<template v-if="kept">
 					<h4>{{ t('keepiq', 'Additional fields after the merge') }}</h4>
-					<p v-if="fieldNames.length === 0" data-testid="duplicate-merge-no-fields">
+					<p
+						v-if="fieldNames.length === 0"
+						data-testid="duplicate-merge-no-fields">
 						{{ t('keepiq', 'No additional fields yet.') }}
 					</p>
-					<ul v-else class="duplicate-merge__fields" data-testid="duplicate-merge-fields">
+					<ul
+						v-else
+						class="duplicate-merge__fields"
+						data-testid="duplicate-merge-fields">
 						<li v-for="name in fieldNames" :key="name">
 							{{ name }}
 						</li>
 					</ul>
 
 					<p
-v-if="peopleLosingAccess !== null"
+						v-if="peopleLosingAccess !== null"
 						class="duplicate-merge__access"
 						data-testid="duplicate-merge-access">
-						{{ t('keepiq', 'People who lose access: {count}', { count: peopleLosingAccess }) }}
+						{{
+							t('keepiq', 'People who lose access: {count}', {
+								count: peopleLosingAccess,
+							})
+						}}
 					</p>
 					<p class="duplicate-merge__trash">
-						{{ t('keepiq', 'The other items move to the trash, where you can restore them.') }}
+						{{
+							t(
+								'keepiq',
+								'The other items move to the trash, where you can restore them.',
+							)
+						}}
 					</p>
 				</template>
 
@@ -77,8 +91,18 @@ v-if="peopleLosingAccess !== null"
 </template>
 
 <script>
-import { NcButton, NcCheckboxRadioSwitch, NcDialog, NcLoadingIcon } from '@nextcloud/vue'
-import { loadGroup, mergedFields, mergeGroup, peopleLosingAccess } from '../health/merge.js'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcLoadingIcon,
+} from '@nextcloud/vue'
+import {
+	loadGroup,
+	mergedFields,
+	mergeGroup,
+	peopleLosingAccess,
+} from '../health/merge.js'
 import { fieldsOf } from '../utils/fieldSchema.js'
 
 export default {
@@ -132,7 +156,9 @@ export default {
 		 * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
 		 */
 		fieldNames() {
-			return this.kept ? Object.keys(fieldsOf(mergedFields(this.kept, this.others))) : []
+			return this.kept
+				? Object.keys(fieldsOf(mergedFields(this.kept, this.others)))
+				: []
 		},
 	},
 
@@ -178,7 +204,10 @@ export default {
 					this.peopleLosingAccess = count
 				}
 			} catch {
-				this.error = this.t('keepiq', 'The merge failed. Nothing was removed.')
+				this.error = this.t(
+					'keepiq',
+					'The merge failed. Nothing was removed.',
+				)
 			}
 		},
 
@@ -194,7 +223,10 @@ export default {
 				const { removed } = await mergeGroup(this.kept, this.others)
 				this.$emit('merged', { kept: this.kept.id, removed })
 			} catch {
-				this.error = this.t('keepiq', 'The merge did not complete. Check the items of this group in your vault.')
+				this.error = this.t(
+					'keepiq',
+					'The merge did not complete. Check the items of this group in your vault.',
+				)
 			} finally {
 				this.merging = false
 			}

@@ -193,13 +193,18 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 			}
 			const data = this.served[token]
 			try {
-				const contentKey = await contentKeyOf(data, { fragmentKey, password })
+				const contentKey = await contentKeyOf(data, {
+					fragmentKey,
+					password,
+				})
 				const plaintext = await aesDecrypt(contentKey, data.encryptedPayload)
 				// The view was counted when the ciphertext was served; a
 				// burned send is already gone, so its confirm is skipped.
 				delete this.served[token]
 				if (!data.burned) {
-					await axios.post(publicSendUrl(token, 'confirm')).catch(() => null)
+					await axios
+						.post(publicSendUrl(token, 'confirm'))
+						.catch(() => null)
 				}
 				return {
 					payload: new TextDecoder().decode(plaintext),

@@ -52,6 +52,27 @@ class SecretMapperQueriesGoldenTest extends TestCase {
 	private const GOLDEN = __DIR__ . '/golden/secret-mapper-queries.json';
 
 	/**
+	 * The names of the int parameter types older Nextcloud versions pass, as
+	 * the enum cases of newer ones are named. An array type is its element
+	 * type plus 100.
+	 *
+	 * @var array<int,string>
+	 */
+	private const PARAMETER_TYPES = [
+		0   => 'NULL',
+		1   => 'INTEGER',
+		2   => 'STRING',
+		3   => 'LARGE_OBJECT',
+		5   => 'BOOLEAN',
+		16  => 'BINARY',
+		17  => 'ASCII',
+		101 => 'INTEGER',
+		102 => 'STRING',
+		116 => 'BINARY',
+		117 => 'ASCII',
+	];
+
+	/**
 	 * The calls recorded so far.
 	 *
 	 * @var array<int,mixed>
@@ -243,6 +264,11 @@ class SecretMapperQueriesGoldenTest extends TestCase {
 		});
 		$qb->method('func')->willReturn($func);
 		$qb->method('createNamedParameter')->willReturnCallback(function (...$args) {
+			// The type is an enum on newer Nextcloud versions and an int on older ones.
+			if (is_int($args[1] ?? null) === true) {
+				$args[1] = (self::PARAMETER_TYPES[$args[1]] ?? $args[1]);
+			}
+
 			$this->calls[] = ['createNamedParameter', $this->describe(args: $args)];
 			$parameter = $this->createMock(IParameter::class);
 			$parameter->method('__toString')->willReturn(':param');
@@ -320,9 +346,15 @@ class SecretMapperQueriesGoldenTest extends TestCase {
 	private function recordingResult(): IResult {
 		$rows = $this->rows;
 		$result = $this->createMock(IResult::class);
+		// QBMapper reads with fetch() or fetchAssociative() depending on the
+		// Nextcloud version, so both are recorded as one read.
 		foreach (['fetch', 'fetchAssociative'] as $method) {
-			$result->method($method)->willReturnCallback(function () use ($method, &$rows) {
-				$this->calls[] = [$method, []];
+			if (method_exists(IResult::class, $method) === false) {
+				continue;
+			}
+
+			$result->method($method)->willReturnCallback(function () use (&$rows) {
+				$this->calls[] = ['fetch', []];
 				return array_shift($rows) ?? false;
 			});
 		}

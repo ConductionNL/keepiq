@@ -56,10 +56,18 @@ describe('MachineLeaseSection', () => {
 		})
 		const wrapper = await mountSection()
 
-		expect(wrapper.find('[data-testid="lease-default-ttl"]').element.value).toBe('120')
-		expect(wrapper.find('[data-testid="lease-max-ttl"]').element.value).toBe('3600')
-		expect(wrapper.find('[data-testid="lease-renewable"]').element.checked).toBe(false)
-		expect(wrapper.find('[data-testid="lease-block-on-revoke"]').element.checked).toBe(true)
+		expect(wrapper.find('[data-testid="lease-default-ttl"]').element.value).toBe(
+			'120',
+		)
+		expect(wrapper.find('[data-testid="lease-max-ttl"]').element.value).toBe(
+			'3600',
+		)
+		expect(wrapper.find('[data-testid="lease-renewable"]').element.checked).toBe(
+			false,
+		)
+		expect(
+			wrapper.find('[data-testid="lease-block-on-revoke"]').element.checked,
+		).toBe(true)
 	})
 
 	it('only a literal true blocks re-fetching after revocation', async () => {
@@ -90,13 +98,20 @@ describe('MachineLeaseSection', () => {
 		await wrapper.find('[data-testid="lease-block-on-revoke"]').setValue(true)
 		await flush()
 
-		expect(put).toHaveBeenLastCalledWith(URL, expect.objectContaining({ lease_revocation_blocks_refetch: true }))
+		expect(put).toHaveBeenLastCalledWith(
+			URL,
+			expect.objectContaining({ lease_revocation_blocks_refetch: true }),
+		)
 	})
 
 	it('shows a load or save error', async () => {
-		vi.spyOn(axios, 'get').mockRejectedValue({ response: { data: { message: 'Admins only' } } })
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { data: { message: 'Admins only' } },
+		})
 		const wrapper = await mountSection()
-		expect(wrapper.find('[data-testid="lease-error"]').text()).toBe('Admins only')
+		expect(wrapper.find('[data-testid="lease-error"]').text()).toBe(
+			'Admins only',
+		)
 
 		vi.spyOn(axios, 'put').mockRejectedValue(new Error('Bad TTL'))
 		await wrapper.vm.save()

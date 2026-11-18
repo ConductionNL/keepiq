@@ -30,6 +30,7 @@ import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 import { useShareStore } from '../../src/store/modules/share.js'
 import { useUserPreferencesStore } from '../../src/store/modules/userPreferences.js'
+import { goldenMarkup } from '../fixtures/goldenMarkup.js'
 
 vi.mock('../../src/policy/policy.js', () => ({
 	fetchPolicy: vi.fn().mockResolvedValue(null),
@@ -175,12 +176,7 @@ async function flush(wrapper) {
  * @return {string} The form markup without scope ids, comments or layout whitespace.
  */
 function formHtml(wrapper) {
-	return wrapper
-		.find('.secret-form')
-		.html()
-		.replace(/ data-v-[0-9a-f]+=""/g, '')
-		.replace(/<!--[\s\S]*?-->/g, '')
-		.replace(/>\s+</g, '><')
+	return goldenMarkup(wrapper.find('.secret-form').html())
 }
 
 /**

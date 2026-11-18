@@ -34,11 +34,14 @@ describe('shareWithGroup', () => {
 			useOnly: true,
 			expiresAt: 'E',
 		})
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/s-1/group-shares', {
-			groupId: 'team',
-			useOnly: true,
-			expiresAt: 'E',
-		})
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/secrets/s-1/group-shares',
+			{
+				groupId: 'team',
+				useOnly: true,
+				expiresAt: 'E',
+			},
+		)
 		expect(encrypt).not.toHaveBeenCalled()
 		expect(result).toEqual({ received: 0, skipped: 2, refused: 0 })
 		expect(store.groupShares).toEqual([{ id: 'old' }])
@@ -60,20 +63,29 @@ describe('shareWithGroup', () => {
 		vi.spyOn(axios, 'post').mockResolvedValue({
 			data: {
 				groupShare: { id: 'gs' },
-				members: [{ userId: 'a' }, { userId: 'b' }, { userId: 'c' }, { userId: 'd' }],
+				members: [
+					{ userId: 'a' },
+					{ userId: 'b' },
+					{ userId: 'c' },
+					{ userId: 'd' },
+				],
 				skipped: 1,
 			},
 		})
 		const store = useGroupShareStore()
-		const encrypt = vi.spyOn(store, 'encryptForMembers').mockResolvedValue(['rows'])
-		const register = vi.spyOn(useShareStore(), 'registerBatch').mockResolvedValue({
-			items: [
-				{ status: 'created' },
-				{ status: 'exists' },
-				{ status: 'copy_fields_mismatch' },
-				{ status: 'no_suite' },
-			],
-		})
+		const encrypt = vi
+			.spyOn(store, 'encryptForMembers')
+			.mockResolvedValue(['rows'])
+		const register = vi
+			.spyOn(useShareStore(), 'registerBatch')
+			.mockResolvedValue({
+				items: [
+					{ status: 'created' },
+					{ status: 'exists' },
+					{ status: 'copy_fields_mismatch' },
+					{ status: 'no_suite' },
+				],
+			})
 		const result = await store.shareWithGroup('s-1', 'team')
 		expect(encrypt).toHaveBeenCalledWith('s-1', 'gs', [
 			{ userId: 'a' },
@@ -111,7 +123,9 @@ describe('searchGroups', () => {
 			data: {
 				ocs: {
 					data: {
-						exact: { groups: [{ label: 'Exact', value: { shareWith: 'g1' } }] },
+						exact: {
+							groups: [{ label: 'Exact', value: { shareWith: 'g1' } }],
+						},
 						groups: [{ value: {} }, null, ...groups],
 					},
 				},

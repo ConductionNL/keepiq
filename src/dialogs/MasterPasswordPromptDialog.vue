@@ -19,7 +19,10 @@
 		size="small"
 		:data-testid="testid"
 		@update:open="onOpenChange">
-		<form class="master-password-prompt" :class="[formClass]" @submit.prevent="onSubmit">
+		<form
+			class="master-password-prompt"
+			:class="[formClass]"
+			@submit.prevent="onSubmit">
 			<slot />
 			<NcPasswordField
 				v-model="password"
@@ -36,7 +39,10 @@
 			<slot name="hint" />
 		</form>
 		<template #actions>
-			<NcButton :disabled="prompt.checking" :data-testid="`${testid}-cancel`" @click="onCancel">
+			<NcButton
+				:disabled="prompt.checking"
+				:data-testid="`${testid}-cancel`"
+				@click="onCancel">
 				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
 			<NcButton

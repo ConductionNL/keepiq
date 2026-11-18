@@ -20,13 +20,15 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Event\Audit;
 
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 /**
- * Tests for AuditEventTypes.
+ * Tests for AuditEventTypes and AuditMetadataPolicy.
  *
  * @covers \OCA\Keepiq\Event\Audit\AuditEventTypes
+ * @covers \OCA\Keepiq\Event\Audit\AuditMetadataPolicy
  */
 class AuditEventTypesTest extends TestCase {
 	/**
@@ -35,10 +37,10 @@ class AuditEventTypesTest extends TestCase {
 	 * @return void
 	 */
 	public function testWhitelistedTypesAreKnown(): void {
-		$this->assertTrue(AuditEventTypes::isKnown(AuditEventTypes::SECRET_CREATED));
-		$this->assertTrue(AuditEventTypes::isKnown(AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED));
-		foreach (array_keys(AuditEventTypes::WHITELIST) as $type) {
-			$this->assertTrue(AuditEventTypes::isKnown($type), $type);
+		$this->assertTrue(AuditMetadataPolicy::isKnown(AuditEventTypes::SECRET_CREATED));
+		$this->assertTrue(AuditMetadataPolicy::isKnown(AuditEventTypes::FEDERATION_PARTNER_VALUE_FIELDS_CHANGED));
+		foreach (array_keys(AuditMetadataPolicy::WHITELIST) as $type) {
+			$this->assertTrue(AuditMetadataPolicy::isKnown($type), $type);
 		}
 	}//end testWhitelistedTypesAreKnown()
 
@@ -48,10 +50,10 @@ class AuditEventTypesTest extends TestCase {
 	 * @return void
 	 */
 	public function testUnknownTypesAreNotKnown(): void {
-		$this->assertFalse(AuditEventTypes::isKnown('secret.exploded'));
-		$this->assertFalse(AuditEventTypes::isKnown(''));
-		$this->assertFalse(AuditEventTypes::isKnown(strtoupper(AuditEventTypes::SECRET_CREATED)));
-		$this->assertFalse(AuditEventTypes::isKnown(AuditEventTypes::SECRET_CREATED.' '));
+		$this->assertFalse(AuditMetadataPolicy::isKnown('secret.exploded'));
+		$this->assertFalse(AuditMetadataPolicy::isKnown(''));
+		$this->assertFalse(AuditMetadataPolicy::isKnown(strtoupper(AuditEventTypes::SECRET_CREATED)));
+		$this->assertFalse(AuditMetadataPolicy::isKnown(AuditEventTypes::SECRET_CREATED.' '));
 	}//end testUnknownTypesAreNotKnown()
 
 	/**
@@ -65,7 +67,7 @@ class AuditEventTypesTest extends TestCase {
 
 		$this->assertNotEmpty($types);
 		foreach ($types as $name => $type) {
-			$this->assertTrue(AuditEventTypes::isKnown($type), $name.' is not whitelisted');
+			$this->assertTrue(AuditMetadataPolicy::isKnown($type), $name.' is not whitelisted');
 		}
 	}//end testEveryTypeConstantIsWhitelisted()
 
@@ -75,10 +77,10 @@ class AuditEventTypesTest extends TestCase {
 	 * @return void
 	 */
 	public function testNoWhitelistEntryAllowsAForbiddenKey(): void {
-		foreach (AuditEventTypes::WHITELIST as $type => $allowed) {
+		foreach (AuditMetadataPolicy::WHITELIST as $type => $allowed) {
 			$this->assertSame(
 				[],
-				array_values(array_intersect($allowed, AuditEventTypes::FORBIDDEN_KEYS)),
+				array_values(array_intersect($allowed, AuditMetadataPolicy::FORBIDDEN_KEYS)),
 				$type.' whitelists a forbidden key'
 			);
 		}
@@ -91,7 +93,7 @@ class AuditEventTypesTest extends TestCase {
 	 */
 	public function testForbiddenKeysNameTheSecretFields(): void {
 		foreach (['key', 'login', 'password', 'value', 'totp', 'passkeys', 'ciphertext'] as $key) {
-			$this->assertContains($key, AuditEventTypes::FORBIDDEN_KEYS);
+			$this->assertContains($key, AuditMetadataPolicy::FORBIDDEN_KEYS);
 		}
 	}//end testForbiddenKeysNameTheSecretFields()
 
@@ -101,9 +103,9 @@ class AuditEventTypesTest extends TestCase {
 	 * @return void
 	 */
 	public function testUserReferencingKeysAreWhitelistedSomewhere(): void {
-		$allAllowed = array_merge(...array_values(AuditEventTypes::WHITELIST));
+		$allAllowed = array_merge(...array_values(AuditMetadataPolicy::WHITELIST));
 
-		foreach (AuditEventTypes::USER_REFERENCING_METADATA_KEYS as $key) {
+		foreach (AuditMetadataPolicy::USER_REFERENCING_METADATA_KEYS as $key) {
 			$this->assertContains($key, $allAllowed, $key.' is never whitelisted');
 		}
 	}//end testUserReferencingKeysAreWhitelistedSomewhere()

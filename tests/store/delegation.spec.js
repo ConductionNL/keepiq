@@ -152,7 +152,9 @@ describe('useDelegationStore', () => {
 		})
 
 		it('posts the takeover with its proof and keeps the delegation', async () => {
-			const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'd-1' } })
+			const post = vi
+				.spyOn(axios, 'post')
+				.mockResolvedValue({ data: { id: 'd-1' } })
 			const store = useDelegationStore()
 			await expect(store.adminHandover('s-1')).resolves.toEqual({ id: 'd-1' })
 			const [url, body, config] = post.mock.calls[0]

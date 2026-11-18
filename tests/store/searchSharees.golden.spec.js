@@ -33,8 +33,15 @@ describe('searchSharees', () => {
 			data: {
 				ocs: {
 					data: {
-						exact: { users: [{ label: 'Exact', value: { shareWith: 'u1' } }] },
-						users: [{ value: {} }, null, { label: 'Zero', value: { shareWith: 0 } }, ...users],
+						exact: {
+							users: [{ label: 'Exact', value: { shareWith: 'u1' } }],
+						},
+						users: [
+							{ value: {} },
+							null,
+							{ label: 'Zero', value: { shareWith: 0 } },
+							...users,
+						],
 					},
 				},
 			},

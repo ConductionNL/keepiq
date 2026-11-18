@@ -30,7 +30,8 @@ function mountDialog() {
 			stubs: {
 				NcDialog: {
 					emits: ['update:open'],
-					template: '<div><button data-testid="dismiss" @click="$emit(\'update:open\', false)" /><slot /><slot name="actions" /></div>',
+					template:
+						'<div><button data-testid="dismiss" @click="$emit(\'update:open\', false)" /><slot /><slot name="actions" /></div>',
 				},
 				NcNoteCard: { template: '<div><slot /></div>' },
 				NcButton: { template: '<button v-bind="$attrs"><slot /></button>' },
@@ -65,7 +66,9 @@ describe('BulkDeleteDialog typed confirmation', () => {
 		bulk.setSelection(ids(10))
 		const wrapper = mountDialog()
 
-		expect(wrapper.find('[data-testid="bulk-delete-typed"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="bulk-delete-typed"]').exists()).toBe(
+			false,
+		)
 		expect(wrapper.vm.confirmed).toBe(true)
 		expect(runButton(wrapper).attributes('disabled')).toBeUndefined()
 	})

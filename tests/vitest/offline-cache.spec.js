@@ -79,7 +79,9 @@ function createFakeIndexedDb() {
 					put(value, key) {
 						if (mode !== 'readwrite') throw new Error('ReadOnlyError')
 						const k = store.keyPath ? value[store.keyPath] : key
-						return request(() => store.rows.set(k, structuredClone(value)))
+						return request(() =>
+							store.rows.set(k, structuredClone(value)),
+						)
 					},
 					get: (key) => request(() => store.rows.get(key)),
 					getAll: () => request(() => [...store.rows.values()]),
@@ -181,7 +183,10 @@ describe('offline cache', () => {
 
 		await expect(readSnapshot()).resolves.toEqual({ secrets: ['b'] })
 		expect([
-			...fake.databases.get('keepiq-offline').stores.get('snapshot').rows.keys(),
+			...fake.databases
+				.get('keepiq-offline')
+				.stores.get('snapshot')
+				.rows.keys(),
 		]).toEqual(['current'])
 	})
 

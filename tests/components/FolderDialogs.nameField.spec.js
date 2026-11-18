@@ -15,6 +15,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import FolderCreateDialog from '../../src/dialogs/FolderCreateDialog.vue'
 import FolderEditDialog from '../../src/dialogs/FolderEditDialog.vue'
+import { goldenMarkup } from '../fixtures/goldenMarkup.js'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -33,7 +34,10 @@ const stubs = {
 		template:
 			'<input :aria-label="label" :value="modelValue" :data-required="String(required)" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 	},
-	NcSelect: { props: ['options', 'inputLabel'], template: '<div class="select" />' },
+	NcSelect: {
+		props: ['options', 'inputLabel'],
+		template: '<div class="select" />',
+	},
 	CnIconColorPicker: { template: '<div class="picker" />' },
 	CnDialogActions: { template: '<div class="actions" />' },
 }
@@ -43,12 +47,7 @@ const stubs = {
  * @return {string} The form markup without scope ids, comments or layout whitespace.
  */
 function formHtml(wrapper) {
-	return wrapper
-		.find('.folder-form')
-		.html()
-		.replace(/ data-v-[0-9a-f]+=""/g, '')
-		.replace(/<!--[\s\S]*?-->/g, '')
-		.replace(/>\s+</g, '><')
+	return goldenMarkup(wrapper.find('.folder-form').html())
 }
 
 /**

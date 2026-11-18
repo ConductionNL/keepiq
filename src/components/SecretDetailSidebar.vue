@@ -374,9 +374,7 @@
 						class="secret-detail__row"
 						data-testid="secret-detail-type-field">
 						<span class="secret-detail__row-icon">
-							<KeyVariant
-								v-if="member.masked"
-								:size="20" />
+							<KeyVariant v-if="member.masked" :size="20" />
 							<FormatListBulleted v-else :size="20" />
 						</span>
 						<div class="secret-detail__row-main">
@@ -743,7 +741,7 @@
 					class="secret-detail__preview"
 					referrerpolicy="no-referrer"
 					loading="lazy"
-					data-testid="secret-detail-preview">
+					data-testid="secret-detail-preview" />
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<Web :size="20" />
@@ -1305,7 +1303,12 @@ import ShareRequestForm from './share/ShareRequestForm.vue'
 import TotpDisplay from './TotpDisplay.vue'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
-import { cardBrandInfo, formatCardNumber, maskCardNumber, parsePayload } from '../cardIdentity/cardIdentity.js'
+import {
+	cardBrandInfo,
+	formatCardNumber,
+	maskCardNumber,
+	parsePayload,
+} from '../cardIdentity/cardIdentity.js'
 import { needsReprompt, useReprompt } from '../composables/useReprompt.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
 import { shareSaveErrorText } from '../services/shareSave.js'
@@ -1326,12 +1329,21 @@ import {
 	valueFieldOf,
 } from '../utils/builtinTypeFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
-import { fieldsOf, fieldValueOf, isHiddenSchema, schemasOf } from '../utils/fieldSchema.js'
+import {
+	fieldsOf,
+	fieldValueOf,
+	isHiddenSchema,
+	schemasOf,
+} from '../utils/fieldSchema.js'
 import { isRefusal, refusalCode } from '../utils/refusal.js'
 import { linkHref } from '../utils/safeLink.js'
 import { isRequestableTypeName, secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
-import { changePasswordUrl, previewImageUrl, previewTemplate } from '../utils/siteImages.js'
+import {
+	changePasswordUrl,
+	previewImageUrl,
+	previewTemplate,
+} from '../utils/siteImages.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
 import { rootVaultOf } from '../utils/vaultList.js'
 
@@ -1524,7 +1536,12 @@ export default {
 		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
 		 */
 		canClone() {
-			return Boolean(this.secret) && !this.offlineReadOnly && !this.useOnly && !this.isPasskey
+			return (
+				Boolean(this.secret)
+				&& !this.offlineReadOnly
+				&& !this.useOnly
+				&& !this.isPasskey
+			)
 		},
 
 		/**
@@ -2272,7 +2289,10 @@ export default {
 				if (id !== this.secretId) {
 					return
 				}
-				if (isRefusal(e) && refusalCode(e) === 'privileged_access_required') {
+				if (
+					isRefusal(e)
+					&& refusalCode(e) === 'privileged_access_required'
+				) {
 					this.privilegedRefused = true
 					this.error = t(
 						'keepiq',

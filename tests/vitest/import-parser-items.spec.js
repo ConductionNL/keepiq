@@ -18,13 +18,40 @@ import { parseBitwardenJson } from '../../src/import/parsers/bitwarden.js'
 import { parseKeepassXml } from '../../src/import/parsers/keepassXml.js'
 
 const ITEMS = [
-	{ type: 3, name: 'No number', card: { cardholderName: 'A', expMonth: 3, expYear: 2031 } },
+	{
+		type: 3,
+		name: 'No number',
+		card: { cardholderName: 'A', expMonth: 3, expYear: 2031 },
+	},
 	{ type: 3, card: { number: '4111111111111111', expMonth: '7' } },
-	{ type: 3, name: 'Year only', card: { number: '4111111111111111', expYear: '2030', code: '123' } },
+	{
+		type: 3,
+		name: 'Year only',
+		card: { number: '4111111111111111', expYear: '2030', code: '123' },
+	},
 	{ type: 3, name: 'No card' },
-	{ type: 4, name: 'Address only', identity: { address1: 'Street 1', city: 'Town' } },
-	{ type: 4, identity: { ssn: '123456782', address1: 'Street 1', address2: '', city: 'Town', postalCode: '1234 AB', country: 'NL', phone: '06' } },
-	{ type: 4, name: 'Empty strings', identity: { firstName: '', lastName: '', email: '' } },
+	{
+		type: 4,
+		name: 'Address only',
+		identity: { address1: 'Street 1', city: 'Town' },
+	},
+	{
+		type: 4,
+		identity: {
+			ssn: '123456782',
+			address1: 'Street 1',
+			address2: '',
+			city: 'Town',
+			postalCode: '1234 AB',
+			country: 'NL',
+			phone: '06',
+		},
+	},
+	{
+		type: 4,
+		name: 'Empty strings',
+		identity: { firstName: '', lastName: '', email: '' },
+	},
 	{ type: 4, name: 'No identity' },
 	{ type: 2, name: 'Note' },
 	{ type: 5, name: 'SSH key' },
@@ -33,7 +60,13 @@ const ITEMS = [
 		type: 1,
 		name: 'Loose fields',
 		notes: '',
-		fields: [null, { name: null, value: 'x' }, { name: 'a', value: null }, { name: 7, value: 0 }, { name: 'b', value: false }],
+		fields: [
+			null,
+			{ name: null, value: 'x' },
+			{ name: 'a', value: null },
+			{ name: 7, value: 0 },
+			{ name: 'b', value: false },
+		],
 		login: { uris: [{ uri: null }, { uri: 'https://second' }], password: 'p' },
 	},
 	{
@@ -43,8 +76,21 @@ const ITEMS = [
 		collectionIds: ['c-none', 'c-1'],
 		login: {
 			fido2Credentials: [
-				{ credentialId: 'A', rpId: 'a.test', keyValue: 'K', counter: '12', rpName: 'A', userHandle: 'h', userDisplayName: 'U' },
-				{ credentialId: 'B', rpId: 'b.test', keyValue: 'K', counter: 'many' },
+				{
+					credentialId: 'A',
+					rpId: 'a.test',
+					keyValue: 'K',
+					counter: '12',
+					rpName: 'A',
+					userHandle: 'h',
+					userDisplayName: 'U',
+				},
+				{
+					credentialId: 'B',
+					rpId: 'b.test',
+					keyValue: 'K',
+					counter: 'many',
+				},
 				{ credentialId: 'C', rpId: '', keyValue: 'K' },
 				null,
 			],

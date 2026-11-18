@@ -40,6 +40,7 @@ use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
@@ -1098,7 +1099,7 @@ class TeamFolderServiceTest extends TestCase {
 		$this->assertSame(['finance-team'], $metadata['coveringGroupIds']);
 
 		// Every key the auditor sends survives the whitelist: none is dropped.
-		$whitelist = AuditEventTypes::WHITELIST[AuditEventTypes::TEAM_FOLDER_OFFBOARDED];
+		$whitelist = AuditMetadataPolicy::WHITELIST[AuditEventTypes::TEAM_FOLDER_OFFBOARDED];
 		$this->assertSame([], array_values(array_diff(array_keys($metadata), $whitelist)));
 	}//end testOffboardAuditCarriesRemovedCountAndCoveringGroups()
 

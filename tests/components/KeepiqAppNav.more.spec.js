@@ -74,7 +74,11 @@ const stubs = {
 		emits: ['edit', 'share', 'move', 'delete', 'newFolder'],
 		template: '<div data-testid="tree" />',
 	},
-	FolderCreateDialog: dialogStub('create-dialog', ['parentId'], ['saved', 'close']),
+	FolderCreateDialog: dialogStub(
+		'create-dialog',
+		['parentId'],
+		['saved', 'close'],
+	),
 	FolderEditDialog: dialogStub('edit-dialog', ['folder'], ['close']),
 	MoveDialog: dialogStub('move-dialog', ['folder', 'subject'], ['saved', 'close']),
 	TeamFolderDialog: dialogStub(
@@ -149,7 +153,11 @@ beforeEach(() => {
 
 describe('KeepiqAppNav dialogs from the tree', () => {
 	it('hands the store tree and the highlight to the folder tree', () => {
-		const wrapper = mountNav({ name: 'SecretListFolder', params: { folderId: 'v1' }, query: {} })
+		const wrapper = mountNav({
+			name: 'SecretListFolder',
+			params: { folderId: 'v1' },
+			query: {},
+		})
 
 		expect(tree(wrapper).props('folders')).toEqual([{ ...VAULT, children: [] }])
 		expect(tree(wrapper).props('highlightId')).toBe('v1')
@@ -181,7 +189,11 @@ describe('KeepiqAppNav dialogs from the tree', () => {
 
 		await tree(wrapper).vm.$emit('share', VAULT)
 		const dialog = wrapper.findComponent(stubs.TeamFolderDialog)
-		expect(dialog.props()).toEqual({ open: true, folderId: 'v1', folderName: 'Suppliers' })
+		expect(dialog.props()).toEqual({
+			open: true,
+			folderId: 'v1',
+			folderName: 'Suppliers',
+		})
 
 		await dialog.vm.$emit('update:open', true)
 		expect(has(wrapper, 'team-dialog')).toBe(true)
@@ -230,8 +242,15 @@ describe('KeepiqAppNav dialogs from the tree', () => {
 
 describe('KeepiqAppNav delete surfaces', () => {
 	it('confirms an empty vault and leaves its route once deleted', async () => {
-		folderStore.fetchChildren.mockResolvedValue({ directSecretCount: 0, subfolders: [] })
-		const wrapper = mountNav({ name: 'SecretListFolder', params: { folderId: 'v1' }, query: {} })
+		folderStore.fetchChildren.mockResolvedValue({
+			directSecretCount: 0,
+			subfolders: [],
+		})
+		const wrapper = mountNav({
+			name: 'SecretListFolder',
+			params: { folderId: 'v1' },
+			query: {},
+		})
 
 		await tree(wrapper).vm.$emit('delete', VAULT)
 		await flushPromises()
@@ -252,7 +271,9 @@ describe('KeepiqAppNav delete surfaces', () => {
 
 		await tree(wrapper).vm.$emit('delete', VAULT)
 		await flushPromises()
-		await wrapper.findComponent(stubs.FolderDeleteConfirmDialog).vm.$emit('close')
+		await wrapper
+			.findComponent(stubs.FolderDeleteConfirmDialog)
+			.vm.$emit('close')
 
 		expect(has(wrapper, 'confirm-dialog')).toBe(false)
 		expect(wrapper.vm.deleteFolder).toBeNull()
@@ -282,11 +303,17 @@ describe('KeepiqAppNav delete surfaces', () => {
 
 	it('closes the resolution protocol once the vault is deleted', async () => {
 		folderStore.fetchChildren.mockResolvedValue({ directSecretCount: 1 })
-		const wrapper = mountNav({ name: 'SecretListFolder', params: { folderId: 'other' }, query: {} })
+		const wrapper = mountNav({
+			name: 'SecretListFolder',
+			params: { folderId: 'other' },
+			query: {},
+		})
 
 		await tree(wrapper).vm.$emit('delete', VAULT)
 		await flushPromises()
-		await wrapper.findComponent(stubs.SubfolderResolutionDialog).vm.$emit('deleted', 'v1')
+		await wrapper
+			.findComponent(stubs.SubfolderResolutionDialog)
+			.vm.$emit('deleted', 'v1')
 
 		expect(has(wrapper, 'resolution-dialog')).toBe(false)
 		expect(push).not.toHaveBeenCalled()

@@ -37,6 +37,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\FederatedCopyDeclineService;
@@ -362,7 +363,7 @@ class FederatedCopyDeclineTest extends TestCase {
 			foreach (['CIPHER-KEY-FOR-BOB', self::SHARED_SECRET, hash('sha256', self::SHARED_SECRET)] as $secret) {
 				$this->assertStringNotContainsString($secret, $entry);
 			}
-			$this->assertSame([], array_diff(array_keys($event->getMetadata()), AuditEventTypes::WHITELIST[$event->getEventType()]));
+			$this->assertSame([], array_diff(array_keys($event->getMetadata()), AuditMetadataPolicy::WHITELIST[$event->getEventType()]));
 		}
 	}
 

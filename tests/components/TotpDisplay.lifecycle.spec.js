@@ -55,12 +55,16 @@ describe('TotpDisplay lifecycle', () => {
 
 		const wrapper = mount(TotpDisplay, { props: { seed: FIRST } })
 		await waitForCode(wrapper.vm, first)
-		expect(wrapper.find('[data-testid="totp-code"]').text().replace(/\s/g, '')).toBe(first)
+		expect(
+			wrapper.find('[data-testid="totp-code"]').text().replace(/\s/g, ''),
+		).toBe(first)
 
 		await wrapper.setProps({ seed: SECOND })
 		await waitForCode(wrapper.vm, second)
 
-		expect(wrapper.find('[data-testid="totp-code"]').text().replace(/\s/g, '')).toBe(second)
+		expect(
+			wrapper.find('[data-testid="totp-code"]').text().replace(/\s/g, ''),
+		).toBe(second)
 		expect(wrapper.find('[data-testid="totp-countdown"]').text()).toBe('25s')
 		wrapper.unmount()
 	})

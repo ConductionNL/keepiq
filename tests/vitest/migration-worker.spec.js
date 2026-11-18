@@ -86,12 +86,14 @@ describe('migration worker protocol', () => {
 
 		await send({ requestId: 'batch-1', type: 'records', jobs: [{ id: 's-1' }] })
 
-		expect(posted).toEqual([{
-			requestId: 'batch-1',
-			type: 'batch',
-			ok: false,
-			error: 'Migration worker received records before its keys',
-		}])
+		expect(posted).toEqual([
+			{
+				requestId: 'batch-1',
+				type: 'batch',
+				ok: false,
+				error: 'Migration worker received records before its keys',
+			},
+		])
 		expect(migrateRecord).not.toHaveBeenCalled()
 	})
 
@@ -115,7 +117,10 @@ describe('migration worker protocol', () => {
 			requestId: 'batch-1',
 			type: 'batch',
 			ok: true,
-			results: [{ id: 's-1', ok: true }, { id: 's-2', ok: true }],
+			results: [
+				{ id: 's-1', ok: true },
+				{ id: 's-2', ok: true },
+			],
 		})
 	})
 
@@ -125,7 +130,12 @@ describe('migration worker protocol', () => {
 		await send({ requestId: 'init', type: 'init', ...KEYS })
 		await send({ requestId: 'batch-1', type: 'records' })
 
-		expect(posted[1]).toEqual({ requestId: 'batch-1', type: 'batch', ok: true, results: [] })
+		expect(posted[1]).toEqual({
+			requestId: 'batch-1',
+			type: 'batch',
+			ok: true,
+			results: [],
+		})
 	})
 
 	it('reports a pipeline exception as a failed batch with its message', async () => {
@@ -135,7 +145,12 @@ describe('migration worker protocol', () => {
 		await send({ requestId: 'init', type: 'init', ...KEYS })
 		await send({ requestId: 'batch-1', type: 'records', jobs: [{ id: 's-1' }] })
 
-		expect(posted[1]).toEqual({ requestId: 'batch-1', type: 'batch', ok: false, error: 'boom' })
+		expect(posted[1]).toEqual({
+			requestId: 'batch-1',
+			type: 'batch',
+			ok: false,
+			error: 'boom',
+		})
 	})
 
 	it('stringifies a thrown value that is not an Error', async () => {
@@ -145,7 +160,12 @@ describe('migration worker protocol', () => {
 		await send({ requestId: 'init', type: 'init', ...KEYS })
 		await send({ requestId: 'batch-2', type: 'records', jobs: [{ id: 's-1' }] })
 
-		expect(posted[1]).toEqual({ requestId: 'batch-2', type: 'batch', ok: false, error: 'plain failure' })
+		expect(posted[1]).toEqual({
+			requestId: 'batch-2',
+			type: 'batch',
+			ok: false,
+			error: 'plain failure',
+		})
 	})
 
 	it('drops the keys on dispose, so later records are refused', async () => {

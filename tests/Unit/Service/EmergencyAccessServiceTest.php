@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\EmergencyAccessAuditTrail;
 use OCA\Keepiq\Service\EmergencyAccessService;
@@ -425,7 +426,7 @@ class EmergencyAccessServiceTest extends TestCase {
 		foreach ($this->dispatched as $event) {
 			$encoded = json_encode($event->getMetadata());
 			$this->assertStringNotContainsString('ENVELOPE-CIPHERTEXT', (string)$encoded);
-			foreach (AuditEventTypes::FORBIDDEN_KEYS as $forbidden) {
+			foreach (AuditMetadataPolicy::FORBIDDEN_KEYS as $forbidden) {
 				$this->assertArrayNotHasKey($forbidden, $event->getMetadata());
 			}
 		}

@@ -24,7 +24,8 @@ const ncStubs = {
 	},
 	NcButton: {
 		props: ['variant', 'disabled'],
-		template: '<button :disabled="disabled"><slot name="icon" /><slot /></button>',
+		template:
+			'<button :disabled="disabled"><slot name="icon" /><slot /></button>',
 	},
 	NcCheckboxRadioSwitch: {
 		name: 'NcCheckboxRadioSwitch',
@@ -34,7 +35,17 @@ const ncStubs = {
 	},
 	NcInputField: {
 		name: 'NcInputField',
-		props: ['modelValue', 'label', 'min', 'max', 'type', 'helperText', 'readOnly', 'showTrailingButton', 'trailingButtonLabel'],
+		props: [
+			'modelValue',
+			'label',
+			'min',
+			'max',
+			'type',
+			'helperText',
+			'readOnly',
+			'showTrailingButton',
+			'trailingButtonLabel',
+		],
 		emits: ['update:modelValue', 'trailingButtonClick'],
 		template: '<div class="input" :data-label="label">{{ modelValue }}</div>',
 	},
@@ -50,7 +61,10 @@ const ncStubs = {
  * @return {Promise<object>} The wrapper.
  */
 async function mounted() {
-	const wrapper = mount(KeyGeneratorModal, { props: { open: true }, global: { stubs: ncStubs } })
+	const wrapper = mount(KeyGeneratorModal, {
+		props: { open: true },
+		global: { stubs: ncStubs },
+	})
 	await flushPromises()
 	return wrapper
 }
@@ -64,7 +78,9 @@ async function mounted() {
  * @return {Promise<void>}
  */
 async function typeInto(wrapper, label, value) {
-	const input = wrapper.findAllComponents({ name: 'NcInputField' }).find((c) => c.props('label') === label)
+	const input = wrapper
+		.findAllComponents({ name: 'NcInputField' })
+		.find((c) => c.props('label') === label)
 	input.vm.$emit('update:modelValue', value)
 	await wrapper.vm.$nextTick()
 }
@@ -78,7 +94,9 @@ async function typeInto(wrapper, label, value) {
  * @return {Promise<void>}
  */
 async function flip(wrapper, text, value) {
-	const control = wrapper.findAllComponents({ name: 'NcCheckboxRadioSwitch' }).find((c) => c.text() === text)
+	const control = wrapper
+		.findAllComponents({ name: 'NcCheckboxRadioSwitch' })
+		.find((c) => c.text() === text)
 	control.vm.$emit('update:modelValue', value)
 	await wrapper.vm.$nextTick()
 }
@@ -96,11 +114,19 @@ describe('KeyGeneratorModal controls', () => {
 
 	it('switches to passphrase mode and generates from the passphrase options', async () => {
 		const wrapper = await mounted()
-		expect(wrapper.find('[data-testid="passphrase-options"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="passphrase-options"]').exists()).toBe(
+			false,
+		)
 
 		await flip(wrapper, 'Passphrase', 'passphrase')
-		expect(wrapper.find('[data-testid="passphrase-options"]').exists()).toBe(true)
-		expect(wrapper.findAllComponents({ name: 'NcInputField' }).map((c) => c.props('label'))).toEqual(['Number of words', 'Separator'])
+		expect(wrapper.find('[data-testid="passphrase-options"]').exists()).toBe(
+			true,
+		)
+		expect(
+			wrapper
+				.findAllComponents({ name: 'NcInputField' })
+				.map((c) => c.props('label')),
+		).toEqual(['Number of words', 'Separator'])
 
 		await typeInto(wrapper, 'Number of words', 6)
 		await typeInto(wrapper, 'Separator', '_')
@@ -113,7 +139,9 @@ describe('KeyGeneratorModal controls', () => {
 		expect(words.every((w) => /^[a-z]+$/.test(w))).toBe(true)
 
 		await flip(wrapper, 'Password', 'password')
-		expect(wrapper.find('[data-testid="passphrase-options"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="passphrase-options"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('passes the password inputs to the generated key', async () => {
@@ -149,7 +177,9 @@ describe('KeyGeneratorModal controls', () => {
 
 		await wrapper.vm.generate()
 		await wrapper.vm.$nextTick()
-		const preview = wrapper.findAllComponents({ name: 'NcInputField' }).find((c) => c.props('label') === 'Generated key')
+		const preview = wrapper
+			.findAllComponents({ name: 'NcInputField' })
+			.find((c) => c.props('label') === 'Generated key')
 		expect(preview.props('modelValue')).toBe(wrapper.vm.generatedKey)
 		preview.vm.$emit('trailingButtonClick')
 		await flushPromises()

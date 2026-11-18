@@ -80,7 +80,10 @@ describe('ExportDialog.onExport', () => {
 		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
 		wrapper.vm.scopeFolder = 'f1'
 		await wrapper.vm.onExport()
-		expect(backup.mock.calls[0][3]).toEqual({ mode: 'folders', folderIds: ['f1'] })
+		expect(backup.mock.calls[0][3]).toEqual({
+			mode: 'folders',
+			folderIds: ['f1'],
+		})
 	})
 
 	it('writes nothing while skipped secrets are not acknowledged', async () => {
@@ -97,7 +100,9 @@ describe('ExportDialog.onExport', () => {
 
 	it('refuses a wrong master password for a plaintext export', async () => {
 		const wrapper = mountExport()
-		const verify = vi.spyOn(reauth, 'verifyMasterPassword').mockResolvedValue(false)
+		const verify = vi
+			.spyOn(reauth, 'verifyMasterPassword')
+			.mockResolvedValue(false)
 		const csv = vi.spyOn(useExportStore(), 'exportCsv').mockResolvedValue()
 		wrapper.vm.mode = 'csv'
 		wrapper.vm.masterPassword = 'wrong'
@@ -129,7 +134,11 @@ describe('ExportDialog.onExport', () => {
 		expect(wrapper.emitted('update:open')).toBeUndefined()
 		await wrapper.vm.onExport()
 		expect(cxf.mock.calls.map((call) => call[3])).toMatchSnapshot()
-		expect(cxf.mock.calls[1].slice(0, 3)).toEqual([SECRETS, FOLDERS, { mode: 'vault' }])
+		expect(cxf.mock.calls[1].slice(0, 3)).toEqual([
+			SECRETS,
+			FOLDERS,
+			{ mode: 'vault' },
+		])
 		expect(wrapper.emitted('update:open')).toEqual([[false]])
 	})
 
@@ -305,10 +314,13 @@ describe('CxpTransferDialog.pollForEnvelope', () => {
 			vi.spyOn(cxp, 'openEnvelope').mockResolvedValue(
 				new TextEncoder().encode('CXF'),
 			)
-			const { useImportStore } = await import('../../src/store/modules/import.js')
+			const { useImportStore } =
+				await import('../../src/store/modules/import.js')
 			const importStore = useImportStore()
 			const parse = vi.spyOn(importStore, 'parseFile').mockResolvedValue()
-			const step = vi.spyOn(importStore, 'goToStep').mockImplementation(() => {})
+			const step = vi
+				.spyOn(importStore, 'goToStep')
+				.mockImplementation(() => {})
 			const get = vi
 				.spyOn(axios, 'get')
 				.mockRejectedValueOnce(notYet())
@@ -321,7 +333,10 @@ describe('CxpTransferDialog.pollForEnvelope', () => {
 				'/apps/keepiq/api/v1/cxp/relay/pair/response',
 				'/apps/keepiq/api/v1/cxp/relay/pair/response',
 			])
-			expect(cxp.openEnvelope).toHaveBeenCalledWith({ ephemeral: true }, { env: 1 })
+			expect(cxp.openEnvelope).toHaveBeenCalledWith(
+				{ ephemeral: true },
+				{ env: 1 },
+			)
 			expect(parse).toHaveBeenCalledWith('CXF', 'cxf', {})
 			expect(step).toHaveBeenCalledWith('mapping')
 			expect(wrapper.vm.session).toBe(null)
@@ -342,7 +357,9 @@ describe('CxpTransferDialog.pollForEnvelope', () => {
 			await vi.advanceTimersByTimeAsync(2000 * 61)
 			expect(wrapper.vm.pollCount).toBe(60)
 			expect(wrapper.vm.waiting).toBe(false)
-			expect(wrapper.vm.error).toBe('Timed out waiting for the sealed transfer')
+			expect(wrapper.vm.error).toBe(
+				'Timed out waiting for the sealed transfer',
+			)
 		} finally {
 			vi.useRealTimers()
 		}

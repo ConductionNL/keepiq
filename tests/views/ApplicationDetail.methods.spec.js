@@ -20,9 +20,8 @@ vi.mock('../../src/store/modules/application.js', () => ({
 	useApplicationStore: () => applicationStore,
 }))
 
-const { default: ApplicationDetail } = await import(
-	'../../src/views/ApplicationDetail.vue'
-)
+const { default: ApplicationDetail } =
+	await import('../../src/views/ApplicationDetail.vue')
 const { computed, methods, watch } = ApplicationDetail
 
 const t = (_app, key) => key
@@ -89,22 +88,33 @@ describe('ApplicationDetail', () => {
 
 		it('does not treat an inherited property name as a status', () => {
 			expect(
-				computed.statusLabel.call({ t, application: { status: 'toString' } }),
+				computed.statusLabel.call({
+					t,
+					application: { status: 'toString' },
+				}),
 			).toBe('toString')
 		})
 
 		it('allows delete only once the application has a status', () => {
-			expect(computed.canDelete.call({ application: { status: 'active' } })).toBe(true)
+			expect(
+				computed.canDelete.call({ application: { status: 'active' } }),
+			).toBe(true)
 			expect(computed.canDelete.call({ application: {} })).toBe(false)
 			expect(computed.canDelete.call({ application: null })).toBe(false)
 		})
 
 		it('prefers the id prop over the route param', () => {
 			expect(
-				computed.routeId.call({ id: 'prop', $route: { params: { id: 'route' } } }),
+				computed.routeId.call({
+					id: 'prop',
+					$route: { params: { id: 'route' } },
+				}),
 			).toBe('prop')
 			expect(
-				computed.routeId.call({ id: '', $route: { params: { id: 'route' } } }),
+				computed.routeId.call({
+					id: '',
+					$route: { params: { id: 'route' } },
+				}),
 			).toBe('route')
 			expect(computed.routeId.call({ id: '' })).toBe('')
 		})
@@ -198,7 +208,9 @@ describe('ApplicationDetail', () => {
 
 			vm.goBack()
 
-			expect(vm.$router.push).toHaveBeenCalledWith({ name: 'ApplicationRegister' })
+			expect(vm.$router.push).toHaveBeenCalledWith({
+				name: 'ApplicationRegister',
+			})
 		})
 
 		it('does nothing on back without a router', () => {
@@ -253,7 +265,9 @@ describe('ApplicationDetail', () => {
 
 			expect(vm.deleteDialogOpen).toBe(false)
 			expect(vm.store.deleteApplication).toHaveBeenCalledWith('app-1')
-			expect(vm.$router.push).toHaveBeenCalledWith({ name: 'ApplicationRegister' })
+			expect(vm.$router.push).toHaveBeenCalledWith({
+				name: 'ApplicationRegister',
+			})
 		})
 
 		it('stays on the page and shows the error when delete fails', async () => {

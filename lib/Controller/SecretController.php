@@ -44,6 +44,10 @@ use OCP\IUserSession;
  * Its 403 refusals leave as 428 with the policy code as `error`: Nextcloud's
  * OCSMiddleware would turn a 403 of an OCSController into an HTTP 200 OCS
  * envelope, so OcsRefusalMiddleware re-statuses it first.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Thin transport layer: each
+ *   type is a request, a response or a refusal it maps to a status, and the
+ *   extra website addresses of a login (vault-website-addresses) add one.
  */
 class SecretController extends OCSController {
 	/**
@@ -234,6 +238,8 @@ class SecretController extends OCSController {
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The parameters are the
 	 *   route's request body, bound by the framework one by one.
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $reprompt is a request body
+	 *   field; only a flagged create carries it to the item.
 	 */
 	#[NoAdminRequired]
 	public function create(

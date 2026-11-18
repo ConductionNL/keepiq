@@ -16,7 +16,12 @@ import { generateUrl } from '@nextcloud/router'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { builtinFieldNamed } from '../utils/builtinTypeFields.js'
-import { fieldsOf, schemasOf, typeFieldSchema, withSchemas } from '../utils/fieldSchema.js'
+import {
+	fieldsOf,
+	schemasOf,
+	typeFieldSchema,
+	withSchemas,
+} from '../utils/fieldSchema.js'
 import { foldFields } from './duplicates.js'
 
 /**
@@ -90,7 +95,9 @@ function withTypeSchemas(parts, secret) {
 export async function peopleLosingAccess(ids) {
 	const people = new Set()
 	for (const id of ids) {
-		const response = await axios.get(generateUrl(`/apps/keepiq/api/v1/secrets/${id}/shares`))
+		const response = await axios.get(
+			generateUrl(`/apps/keepiq/api/v1/secrets/${id}/shares`),
+		)
 		for (const share of Array.isArray(response?.data) ? response.data : []) {
 			if (share?.targetUserId) {
 				people.add(String(share.targetUserId))

@@ -43,7 +43,11 @@ import {
 } from '../totp/authenticatorKey.js'
 import { parseOtpauth } from '../totp/totp.js'
 import { fieldValueOf, mergeBlobs } from '../utils/fieldSchema.js'
-import { customFieldsCredential, readCustomFields, withoutClashes } from './cxfCustomFields.js'
+import {
+	customFieldsCredential,
+	readCustomFields,
+	withoutClashes,
+} from './cxfCustomFields.js'
 
 /** The CXF version this module targets (Proposed Standard, Aug 2025 line). */
 export const CXF_VERSION = { major: 1, minor: 0 }

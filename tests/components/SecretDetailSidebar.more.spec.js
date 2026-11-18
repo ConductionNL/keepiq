@@ -84,8 +84,7 @@ const stubs = {
 	GroupShareList: true,
 	DelegationManager: {
 		emits: ['reclaimed'],
-		template:
-			'<button class="reclaim" @click="$emit(\'reclaimed\')" />',
+		template: '<button class="reclaim" @click="$emit(\'reclaimed\')" />',
 	},
 	ShareRequestForm: true,
 	AdminHandoverPanel: true,
@@ -190,9 +189,9 @@ describe('loading failures', () => {
 
 	it('shows the server message, else the fallback, for any other load failure', async () => {
 		const wrapper = await mountSecret()
-		useSecretStore().fetchSecret = vi
-			.fn()
-			.mockRejectedValue({ response: { status: 500, data: { message: 'Boom' } } })
+		useSecretStore().fetchSecret = vi.fn().mockRejectedValue({
+			response: { status: 500, data: { message: 'Boom' } },
+		})
 		await wrapper.vm.load()
 		expect(wrapper.vm.error).toBe('Boom')
 
@@ -280,11 +279,16 @@ describe('header actions', () => {
 	it('keeps the sidebar open and names the action that failed', async () => {
 		for (const [fields, message] of [
 			[{}, 'Could not archive the secret'],
-			[{ archivedAt: '2026-10-02T10:00:00Z' }, 'Could not unarchive the secret'],
+			[
+				{ archivedAt: '2026-10-02T10:00:00Z' },
+				'Could not unarchive the secret',
+			],
 		]) {
 			vi.mocked(showError).mockClear()
 			const wrapper = await mountSecret(fields)
-			useSecretStore().changeSecretState = vi.fn().mockRejectedValue(new Error('no'))
+			useSecretStore().changeSecretState = vi
+				.fn()
+				.mockRejectedValue(new Error('no'))
 			await find(wrapper, 'secret-detail-archive').trigger('click')
 			await flush()
 
@@ -316,7 +320,12 @@ describe('masked rows', () => {
 	it('reveals and hides each card field on its own', async () => {
 		const wrapper = await mountSecret({
 			typeId: 'type-card',
-			key: JSON.stringify({ number: '4111111111111111', cvv: '123', pin: '9876', cardholder: 'Alice' }),
+			key: JSON.stringify({
+				number: '4111111111111111',
+				cvv: '123',
+				pin: '9876',
+				cardholder: 'Alice',
+			}),
 		})
 		const text = (id) => find(wrapper, id).text()
 		expect(text('card-cvv-value')).toBe('•••')
@@ -325,7 +334,11 @@ describe('masked rows', () => {
 		await find(wrapper, 'card-reveal-cvv').trigger('click')
 		expect(text('card-cvv-value')).toBe('123')
 		expect(text('card-pin-value')).not.toContain('9876')
-		expect(wrapper.vm.cardRevealed).toEqual({ number: false, cvv: true, pin: false })
+		expect(wrapper.vm.cardRevealed).toEqual({
+			number: false,
+			cvv: true,
+			pin: false,
+		})
 
 		await find(wrapper, 'card-reveal-pin').trigger('click')
 		expect(text('card-pin-value')).toBe('9876')
@@ -335,14 +348,23 @@ describe('masked rows', () => {
 
 		await find(wrapper, 'card-reveal-cvv').trigger('click')
 		expect(text('card-cvv-value')).toBe('•••')
-		expect(wrapper.vm.cardRevealed).toEqual({ number: true, cvv: false, pin: true })
+		expect(wrapper.vm.cardRevealed).toEqual({
+			number: true,
+			cvv: false,
+			pin: true,
+		})
 		expect(wrapper.find('.key-field').exists()).toBe(false)
 	})
 
 	it("reveals and hides an identity's BSN", async () => {
 		const wrapper = await mountSecret({
 			typeId: 'type-identity',
-			key: JSON.stringify({ firstName: 'Alice', lastName: 'Smit', bsn: '111222333', address: 'Main 1' }),
+			key: JSON.stringify({
+				firstName: 'Alice',
+				lastName: 'Smit',
+				bsn: '111222333',
+				address: 'Main 1',
+			}),
 		})
 		expect(find(wrapper, 'identity-name').text()).toBe('Alice Smit')
 		expect(find(wrapper, 'identity-bsn-value').text()).toBe('•••••••••')
@@ -392,7 +414,9 @@ describe('state notes', () => {
 		expect(find(wrapper, 'secret-detail-delete').exists()).toBe(true)
 		expect(find(wrapper, 'secret-detail-archive').exists()).toBe(false)
 		expect(find(wrapper, 'secret-detail-star').exists()).toBe(false)
-		expect(find(wrapper, 'secret-detail-share').attributes('disabled')).toBeDefined()
+		expect(
+			find(wrapper, 'secret-detail-share').attributes('disabled'),
+		).toBeDefined()
 	})
 
 	it('offline read-only: says so and leaves only Close in the menu', async () => {
@@ -419,7 +443,14 @@ describe('state notes', () => {
 
 		expect(wrapper.vm.loading).toBe(true)
 		expect(wrapper.vm.typeLabel).toBe('')
-		for (const flag of ['isNote', 'isTotp', 'isPasskey', 'isCard', 'isIdentity', 'isOwner']) {
+		for (const flag of [
+			'isNote',
+			'isTotp',
+			'isPasskey',
+			'isCard',
+			'isIdentity',
+			'isOwner',
+		]) {
 			expect(wrapper.vm[flag]).toBe(false)
 		}
 		expect(wrapper.vm.identityPayload).toBe(null)
@@ -475,7 +506,9 @@ describe('passkey delete edges', () => {
 		}
 		const wrapper = await mountSecret()
 		const store = useSecretStore()
-		store.writeBackSettled = vi.fn().mockResolvedValue({ sourceUpdatedAt: 'ignored' })
+		store.writeBackSettled = vi
+			.fn()
+			.mockResolvedValue({ sourceUpdatedAt: 'ignored' })
 		store.updateSecret = vi.fn().mockResolvedValue({})
 		store.fetchSecrets = vi.fn().mockResolvedValue()
 		await wrapper.vm.onDeletePasskey('')

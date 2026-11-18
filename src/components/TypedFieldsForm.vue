@@ -17,11 +17,13 @@
 			<NcPasswordField
 				v-if="field.kind === 'hidden'"
 				v-bind="fieldProps(field)"
+				:label="fieldLabel(field)"
 				@update:modelValue="set(field.key, $event)" />
 			<!-- A private key starts masked; a public key does not. -->
 			<MaskedTextArea
 				v-else-if="field.kind === 'multiline'"
 				v-bind="fieldProps(field)"
+				:label="fieldLabel(field)"
 				:public="field.public === true"
 				rows="4"
 				@update:modelValue="set(field.key, $event)" />
@@ -95,10 +97,10 @@ export default {
 		},
 
 		/**
-		 * What every typed field gets, whatever its kind: the value, the
-		 * label with the required marker, required, disabled, the missing
-		 * error with its helper text or else the reason the value does not
-		 * fit the field's schema, and the test id.
+		 * What every typed field gets, whatever its kind: the value,
+		 * required, disabled, the missing error with its helper text or else
+		 * the reason the value does not fit the field's schema, and the test
+		 * id. The label is bound in the template.
 		 *
 		 * @param {object} field The field definition.
 		 * @return {object} The field's props and test id.
@@ -110,7 +112,6 @@ export default {
 			const misfit = missing ? '' : this.fitError(field)
 			return {
 				modelValue: this.values[field.key] || '',
-				label: this.fieldLabel(field),
 				required: field.required,
 				disabled: this.disabled,
 				error: missing || misfit !== '',

@@ -108,14 +108,14 @@ async function dispatch(type, extra = {}) {
 	return event
 }
 
-function get (url, extra = {}) {
-  return {
-	method: 'GET',
-	url,
-	mode: 'cors',
-	destination: 'script',
-	...extra,
-}
+function get(url, extra = {}) {
+	return {
+		method: 'GET',
+		url,
+		mode: 'cors',
+		destination: 'script',
+		...extra,
+	}
 }
 
 describe('offline service worker', () => {
@@ -160,11 +160,13 @@ describe('offline service worker', () => {
 			expect(selfStub.skipWaiting).toHaveBeenCalledTimes(1)
 			const [name] = caches.store.keys()
 			expect(name).toBe('keepiq-shell-dev')
-			expect([...caches.store.get(name).keys()].sort()).toEqual([
-				ORIGIN + '/apps/keepiq/css/app.css',
-				SCOPE,
-				ORIGIN + '/apps/keepiq/js/keepiq-main.js?v=1&x=2',
-			].sort())
+			expect([...caches.store.get(name).keys()].sort()).toEqual(
+				[
+					ORIGIN + '/apps/keepiq/css/app.css',
+					SCOPE,
+					ORIGIN + '/apps/keepiq/js/keepiq-main.js?v=1&x=2',
+				].sort(),
+			)
 			expect(fetchMock).toHaveBeenCalledWith(SCOPE, {
 				credentials: 'same-origin',
 			})
@@ -254,7 +256,10 @@ describe('offline service worker', () => {
 			})
 
 			it.each([
-				['a POST', { method: 'POST', url: ORIGIN + '/apps/keepiq/js/main.js' }],
+				[
+					'a POST',
+					{ method: 'POST', url: ORIGIN + '/apps/keepiq/js/main.js' },
+				],
 				['an API call', get(ORIGIN + '/apps/keepiq/api/v1/secrets')],
 				['another origin', get('https://cdn.example/apps/keepiq/x.js')],
 				['a non-asset path', get(ORIGIN + '/ocs/v2.php/cloud/user')],

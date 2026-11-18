@@ -93,16 +93,24 @@ test.describe('custom field kinds and the SSH key item', () => {
 
 		await gotoVaultRoute(page, `secrets/${id}`)
 		const sidebar = page.getByTestId('secret-detail-sidebar')
-		const field = sidebar.locator('.secret-detail__extra-item', { hasText: 'Recovery code' })
+		const field = sidebar.locator('.secret-detail__extra-item', {
+			hasText: 'Recovery code',
+		})
 		const input = field.locator('input')
 		await expect(input).toHaveAttribute('type', 'password', { timeout: 30_000 })
 		await expect(input).not.toHaveValue(HIDDEN)
 		await expect(sidebar).not.toContainText(HIDDEN)
-		await expect(sidebar.locator('.secret-detail__extra-item', { hasText: 'Note' })).toContainText('plain')
+		await expect(
+			sidebar.locator('.secret-detail__extra-item', { hasText: 'Note' }),
+		).toContainText('plain')
 
-		await field.getByRole('button', { name: 'Show' }).evaluate((el: HTMLElement) => el.click())
+		await field
+			.getByRole('button', { name: 'Show' })
+			.evaluate((el: HTMLElement) => el.click())
 		await expect(input).toHaveValue(HIDDEN)
-		await field.getByRole('button', { name: 'Hide' }).evaluate((el: HTMLElement) => el.click())
+		await field
+			.getByRole('button', { name: 'Hide' })
+			.evaluate((el: HTMLElement) => el.click())
 		await expect(input).toHaveAttribute('type', 'password')
 		await expect(input).not.toHaveValue(HIDDEN)
 
@@ -129,19 +137,30 @@ test.describe('custom field kinds and the SSH key item', () => {
 		await clickButton(page, '^New secret$')
 		const form = page.locator('.secret-form')
 		await expect(form).toBeVisible({ timeout: 15_000 })
-		await form.locator('input[type="text"]').first().fill('Deploy key', { force: true })
+		await form
+			.locator('input[type="text"]')
+			.first()
+			.fill('Deploy key', { force: true })
 
 		await form.getByRole('combobox', { name: 'Type' }).click()
 		await page.getByRole('option', { name: /SSH/ }).first().click()
 		const ssh = form.getByTestId('ssh-key-fields')
 		await expect(ssh).toBeVisible({ timeout: 15_000 })
 
-		await ssh.getByTestId('ssh-generate').evaluate((el: HTMLElement) => el.click())
-		const publicKey = ssh.locator('[data-testid="ssh-public-key"] input, input[data-testid="ssh-public-key"]').first()
+		await ssh
+			.getByTestId('ssh-generate')
+			.evaluate((el: HTMLElement) => el.click())
+		const publicKey = ssh
+			.locator(
+				'[data-testid="ssh-public-key"] input, input[data-testid="ssh-public-key"]',
+			)
+			.first()
 		await expect(publicKey).toHaveValue(/^ssh-[a-z0-9-]+ /, { timeout: 30_000 })
 		const generated = await publicKey.inputValue()
 		const fingerprint = await ssh
-			.locator('[data-testid="ssh-fingerprint"] input, input[data-testid="ssh-fingerprint"]')
+			.locator(
+				'[data-testid="ssh-fingerprint"] input, input[data-testid="ssh-fingerprint"]',
+			)
 			.first()
 			.inputValue()
 		expect(fingerprint).toMatch(/^SHA256:/)
@@ -150,7 +169,11 @@ test.describe('custom field kinds and the SSH key item', () => {
 		await expect(form).toHaveCount(0, { timeout: 20_000 })
 
 		const list = await api(page, 'GET', '/secrets?limit=100')
-		const items = (list.body.items ?? list.body) as Array<{ id: string; name: string; key: string }>
+		const items = (list.body.items ?? list.body) as Array<{
+			id: string
+			name: string
+			key: string
+		}>
 		const stored = items.find((s) => s.name === 'Deploy key')
 		expect(stored, 'the stored SSH key item').toBeTruthy()
 		expect(stored!.key).not.toContain('PRIVATE KEY')
@@ -158,10 +181,15 @@ test.describe('custom field kinds and the SSH key item', () => {
 
 		await gotoVaultRoute(page, `secrets/${stored!.id}`)
 		const sidebar = page.getByTestId('secret-detail-sidebar')
-		await expect(sidebar.getByTestId('secret-detail-ssh-public-key')).toHaveText(generated, {
-			timeout: 30_000,
-		})
-		await expect(sidebar.getByTestId('secret-detail-ssh-fingerprint')).toHaveText(fingerprint)
+		await expect(sidebar.getByTestId('secret-detail-ssh-public-key')).toHaveText(
+			generated,
+			{
+				timeout: 30_000,
+			},
+		)
+		await expect(
+			sidebar.getByTestId('secret-detail-ssh-fingerprint'),
+		).toHaveText(fingerprint)
 
 		await page.evaluate(() => navigator.clipboard.writeText(''))
 		await sidebar
