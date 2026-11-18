@@ -25,6 +25,9 @@ const SAFE = [
 	'^(?:https?)://',
 	'^(a+)?$',
 	'(?<year>\\d{4})-\\d{2}',
+	// Distinct group names of up to 32 characters.
+	'^(?<a>x)(?<b>y)$',
+	'^(?<' + 'n'.repeat(32) + '>x)$',
 	'^\\x41[\\-a-z]*$',
 	'(?=.*\\d)\\w{8,}',
 	'\\bfoo\\b',
@@ -62,6 +65,11 @@ const UNSAFE = [
 	'(?<=a+)b',
 	'^(?<=x*)y$',
 	'(?<=a{1,3})b',
+	// A group name PCRE refuses: used twice, or over 128 characters; and
+	// one over the 32 both scanners allow.
+	'^(?<a>x)|(?<a>y)$',
+	'^(?<' + 'n'.repeat(129) + '>x)$',
+	'^(?<' + 'n'.repeat(33) + '>x)$',
 	// PCRE only.
 	'(?i)abc',
 	'a++b',

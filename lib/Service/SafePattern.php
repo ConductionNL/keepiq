@@ -73,6 +73,13 @@ final class SafePattern {
 	private array $stack = [];
 
 	/**
+	 * The group names seen so far. PCRE refuses a name used twice, which JavaScript accepts in separate alternatives.
+	 *
+	 * @var array<string,true>
+	 */
+	private array $names = [];
+
+	/**
 	 * The pattern's length in code points with each counted group written out as often as it repeats.
 	 *
 	 * @var integer
@@ -143,6 +150,7 @@ final class SafePattern {
 		$this->pattern    = $pattern;
 		$this->stack      = [['inner' => false, 'look' => false, 'alt' => false, 'start' => 0]];
 		$this->choices    = 0;
+		$this->names      = [];
 		$this->writtenOut = mb_strlen($pattern);
 		$last  = null;
 		$index = 0;
@@ -228,7 +236,7 @@ final class SafePattern {
 
 	/**
 	 * Open a group: plain, non-capturing, named, or a lookahead. Inline flags, atomic groups, comments and the like
-	 * are PCRE only, and a lookbehind is refused.
+	 * are PCRE only, and a lookbehind is refused, as are a name over 32 characters and a name used before.
 	 *
 	 * @param int $index Where the `(` is
 	 *
@@ -238,6 +246,15 @@ final class SafePattern {
 		$opening = $this->atoms->groupOpening(pattern: $this->pattern, index: $index);
 		if ($opening === null) {
 			return null;
+		}
+
+		$name = $opening['name'];
+		if ($name !== null) {
+			if (isset($this->names[$name]) === true) {
+				return null;
+			}
+
+			$this->names[$name] = true;
 		}
 
 		$this->stack[] = ['inner' => false, 'look' => $opening['look'], 'alt' => false, 'start' => $index];
