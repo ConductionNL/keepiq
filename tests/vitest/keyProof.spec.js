@@ -86,14 +86,18 @@ describe('keyProof', () => {
 			true,
 			['sign', 'verify'],
 		)
-		const pkcs8 = new Uint8Array(await crypto.subtle.exportKey('pkcs8', pair.privateKey))
+		const pkcs8 = new Uint8Array(
+			await crypto.subtle.exportKey('pkcs8', pair.privateKey),
+		)
 		// The PEM label is assembled at runtime: the key itself is generated above, and a literal
 		// armour line in the source reads to secret scanners like a committed key.
 		const dashes = '-'.repeat(5)
 		const label = ['PRIVATE', 'KEY'].join(' ')
 		const pem =
 			`${dashes}BEGIN ${label}${dashes}\n`
-			+ btoa(String.fromCharCode(...pkcs8)).match(/.{1,64}/g).join('\n')
+			+ btoa(String.fromCharCode(...pkcs8))
+				.match(/.{1,64}/g)
+				.join('\n')
 			+ `\n${dashes}END ${label}${dashes}`
 		envelope = await encryptPrivateKey(pem, 'master-pw')
 		publicKey = pair.publicKey
@@ -133,8 +137,12 @@ describe('keyProof', () => {
 			)
 			expect(Object.keys(headers)).toEqual([HEADER_NONCE, HEADER_PROOF])
 			expect(headers[HEADER_NONCE]).toBe('nonce.mac')
-			expect(await verifies(headers[HEADER_PROOF], 'nonce.mac', ['a', 'b'])).toBe(true)
-			expect(await verifies(headers[HEADER_PROOF], 'nonce.mac', ['a', 'c'])).toBe(false)
+			expect(
+				await verifies(headers[HEADER_PROOF], 'nonce.mac', ['a', 'b']),
+			).toBe(true)
+			expect(
+				await verifies(headers[HEADER_PROOF], 'nonce.mac', ['a', 'c']),
+			).toBe(false)
 		})
 
 		it('binds no values by default', async () => {
@@ -193,7 +201,9 @@ describe('keyProof', () => {
 				{ params: { purpose: 'share-new-recipient' } },
 			)
 			expect(result.masterPassword).toBe('master-pw')
-			expect(await verifies(result.headers[HEADER_PROOF], 'nonce.mac', ['bob'])).toBe(true)
+			expect(
+				await verifies(result.headers[HEADER_PROOF], 'nonce.mac', ['bob']),
+			).toBe(true)
 		})
 
 		it('does not ask again when a password was already given', async () => {
@@ -212,7 +222,10 @@ describe('keyProof', () => {
 			prompt.ask = vi.fn().mockRejectedValue(new Error('cancelled'))
 
 			await expect(
-				sessionKeyProofHeaders({ purpose: PROOF_PURPOSE.DELEGATION_CREATE, reason: 'r' }),
+				sessionKeyProofHeaders({
+					purpose: PROOF_PURPOSE.DELEGATION_CREATE,
+					reason: 'r',
+				}),
 			).rejects.toThrow('cancelled')
 			expect(axios.get).not.toHaveBeenCalled()
 		})

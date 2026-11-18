@@ -11,16 +11,16 @@
 import { describe, expect, it } from 'vitest'
 import { duplicateGroups, foldFields, hostOf } from '../../src/health/duplicates.js'
 
-function row (id, over = {}) {
-  return {
-	id,
-	name: 'GitHub',
-	url: 'https://github.com/login',
-	login: 'anna@example.org',
-	value: 'S3cret-one',
-	folderPath: null,
-	...over,
-}
+function row(id, over = {}) {
+	return {
+		id,
+		name: 'GitHub',
+		url: 'https://github.com/login',
+		login: 'anna@example.org',
+		value: 'S3cret-one',
+		folderPath: null,
+		...over,
+	}
 }
 
 const ids = (group) => group.items.map((item) => item.id)
@@ -34,7 +34,11 @@ describe('duplicateGroups', () => {
 		])
 		expect(exact).toHaveLength(1)
 		expect(ids(exact[0])).toEqual(['a', 'b'])
-		expect(exact[0]).toMatchObject({ kind: 'exact', host: 'github.com', username: 'anna@example.org' })
+		expect(exact[0]).toMatchObject({
+			kind: 'exact',
+			host: 'github.com',
+			username: 'anna@example.org',
+		})
 		expect(likely).toEqual([])
 	})
 
@@ -81,20 +85,33 @@ describe('duplicateGroups', () => {
 		expect(likely).toEqual([])
 	})
 
-	it('never lists a recipient copy of someone else\'s secret', () => {
+	it("never lists a recipient copy of someone else's secret", () => {
 		const { exact } = duplicateGroups([row('own'), row('copy', { copy: true })])
 		expect(exact).toEqual([])
-		expect(duplicateGroups([row('own'), row('own2'), row('copy', { copy: true })]).exact.map(ids)).toEqual([['own', 'own2']])
+		expect(
+			duplicateGroups([
+				row('own'),
+				row('own2'),
+				row('copy', { copy: true }),
+			]).exact.map(ids),
+		).toEqual([['own', 'own2']])
 	})
 
 	it('reports no value and no digest', () => {
 		const { exact } = duplicateGroups([row('a'), row('b')])
 		expect(JSON.stringify(exact)).not.toContain('S3cret-one')
-		expect(Object.keys(exact[0].items[0]).sort()).toEqual(['folderId', 'id', 'name'])
+		expect(Object.keys(exact[0].items[0]).sort()).toEqual([
+			'folderId',
+			'id',
+			'name',
+		])
 	})
 
 	it('ignores empty values and empty input', () => {
-		expect(duplicateGroups([row('a', { value: '' }), row('b', { value: '' })]).exact).toEqual([])
+		expect(
+			duplicateGroups([row('a', { value: '' }), row('b', { value: '' })])
+				.exact,
+		).toEqual([])
 		expect(duplicateGroups(undefined)).toEqual({ exact: [], likely: [] })
 	})
 })
@@ -110,15 +127,19 @@ describe('hostOf', () => {
 })
 
 describe('foldFields', () => {
-	it('keeps the kept secret\'s fields and adds the others\' new ones', () => {
-		expect(foldFields({ pin: '1234' }, [{ 'recovery email': 'anna@home.example' }])).toEqual({
+	it("keeps the kept secret's fields and adds the others' new ones", () => {
+		expect(
+			foldFields({ pin: '1234' }, [{ 'recovery email': 'anna@home.example' }]),
+		).toEqual({
 			pin: '1234',
 			'recovery email': 'anna@home.example',
 		})
 	})
 
 	it('keeps a clashing value under a suffixed name, the kept value winning', () => {
-		expect(foldFields({ pin: '1234' }, [{ pin: '9999' }, { pin: '5555' }])).toEqual({
+		expect(
+			foldFields({ pin: '1234' }, [{ pin: '9999' }, { pin: '5555' }]),
+		).toEqual({
 			pin: '1234',
 			'pin (2)': '9999',
 			'pin (3)': '5555',
@@ -126,7 +147,13 @@ describe('foldFields', () => {
 	})
 
 	it('does not repeat a value the name already holds', () => {
-		expect(foldFields({ pin: '1234' }, [{ pin: '1234' }, { pin: '9999' }, { pin: '9999' }])).toEqual({
+		expect(
+			foldFields({ pin: '1234' }, [
+				{ pin: '1234' },
+				{ pin: '9999' },
+				{ pin: '9999' },
+			]),
+		).toEqual({
 			pin: '1234',
 			'pin (2)': '9999',
 		})

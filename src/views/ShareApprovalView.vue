@@ -195,7 +195,10 @@ export default {
 			if (SHARED.includes(status)) {
 				return {
 					type: 'success',
-					text: this.t('keepiq', 'Shared. The recipient can now open the secret.'),
+					text: this.t(
+						'keepiq',
+						'Shared. The recipient can now open the secret.',
+					),
 				}
 			}
 			return (

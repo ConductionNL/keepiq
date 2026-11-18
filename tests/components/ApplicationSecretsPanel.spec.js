@@ -16,9 +16,8 @@ vi.mock('../../src/store/modules/application.js', () => ({
 	useApplicationStore: () => applicationStore,
 }))
 
-const { default: Panel } = await import(
-	'../../src/components/application/ApplicationSecretsPanel.vue'
-)
+const { default: Panel } =
+	await import('../../src/components/application/ApplicationSecretsPanel.vue')
 
 /**
  * A fake instance with refresh bound to it.
@@ -100,7 +99,9 @@ describe('ApplicationSecretsPanel', () => {
 		expect(vm.error).toBe('Forbidden')
 		expect(vm.loading).toBe(false)
 
-		applicationStore.listApplicationSecrets.mockRejectedValueOnce(new Error('offline'))
+		applicationStore.listApplicationSecrets.mockRejectedValueOnce(
+			new Error('offline'),
+		)
 		await vm.refresh()
 		expect(vm.error).toBe('offline')
 
@@ -111,7 +112,9 @@ describe('ApplicationSecretsPanel', () => {
 
 	it('formats a date and passes an empty or unformattable one through', () => {
 		const iso = '2026-02-03T04:05:06Z'
-		expect(Panel.methods.formatDate(iso)).toBe(new Date(iso).toLocaleDateString())
+		expect(Panel.methods.formatDate(iso)).toBe(
+			new Date(iso).toLocaleDateString(),
+		)
 		expect(Panel.methods.formatDate('')).toBe('')
 		expect(Panel.methods.formatDate(null)).toBe('')
 

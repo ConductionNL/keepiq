@@ -224,7 +224,9 @@ describe('LinkShareAccess', () => {
 			usageCount: 1,
 		})
 		store.decryptPublicSnapshot = vi.fn().mockResolvedValue({ name: 'Secret' })
-		store.confirmPublicLinkShare = vi.fn().mockRejectedValue({ response: { status: 404 } })
+		store.confirmPublicLinkShare = vi
+			.fn()
+			.mockRejectedValue({ response: { status: 404 } })
 
 		const wrapper = mount(LinkShareAccess)
 		await flushPromises()

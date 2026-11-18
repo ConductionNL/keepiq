@@ -117,13 +117,10 @@
 				@update:modelValue="tags = $event" />
 
 			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
-			<NcCheckboxRadioSwitch
+			<RepromptSwitch
 				:modelValue="reprompt"
 				:disabled="saving || loading"
-				data-testid="secret-reprompt"
-				@update:modelValue="reprompt = $event">
-				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
-			</NcCheckboxRadioSwitch>
+				@update:modelValue="reprompt = $event" />
 
 			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
@@ -151,7 +148,6 @@
 <script>
 import {
 	NcButton,
-	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
@@ -162,6 +158,7 @@ import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
+import RepromptSwitch from '../components/RepromptSwitch.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -200,11 +197,11 @@ export default {
 	name: 'SecretEditDialog',
 
 	components: {
-		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
 		AuthenticatorKeyField,
 		PolicyBlockedNote,
+		RepromptSwitch,
 		SecretPayloadFields,
 		SecretTagsField,
 		TypedFieldsForm,
@@ -429,7 +426,9 @@ export default {
 				this.typeId = secret.typeId || null
 				this.value = secret.key || ''
 				this.url = secret.url || ''
-				this.additionalUrls = Array.isArray(secret.additionalUrls) ? [...secret.additionalUrls] : []
+				this.additionalUrls = Array.isArray(secret.additionalUrls)
+					? [...secret.additionalUrls]
+					: []
 				this.login = secret.login || ''
 				this.tags = Array.isArray(secret.tags) ? [...secret.tags] : []
 				this.reprompt = secret.reprompt === true
@@ -508,7 +507,9 @@ export default {
 				useSecretStore().writeBackSettled(this.secretId),
 			])
 			this.viewOnly = isViewOnlyCopy(context, this.secretId)
-			this.isCopy = Boolean(context?.sourceSecretId) && context.sourceSecretId !== this.secretId
+			this.isCopy =
+				Boolean(context?.sourceSecretId)
+				&& context.sourceSecretId !== this.secretId
 			if (context?.sourceSecretId === this.secretId) {
 				return null
 			}
@@ -578,7 +579,10 @@ export default {
 				if ((this.url || '') !== (o.url || '')) {
 					diff.url = this.url || null
 				}
-				if (!this.isCopy && !sameUrls(this.additionalUrls, o.additionalUrls)) {
+				if (
+					!this.isCopy
+					&& !sameUrls(this.additionalUrls, o.additionalUrls)
+				) {
 					diff.additionalUrls = [...this.additionalUrls]
 				}
 				if ((this.effectiveValue || '') !== (o.key || '')) {

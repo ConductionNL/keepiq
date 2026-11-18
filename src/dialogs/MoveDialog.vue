@@ -386,7 +386,9 @@ export default {
 				const movedSecrets = await this.moveEach(
 					secrets,
 					(secret) =>
-						secretStore.updateSecret(secret.id, { folderId: this.target }),
+						secretStore.updateSecret(secret.id, {
+							folderId: this.target,
+						}),
 					failures,
 				)
 				if (!movedSecrets) {

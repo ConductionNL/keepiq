@@ -27,10 +27,14 @@ async function arrange({ online = true, query = {} } = {}) {
 	vi.spyOn(usePasskeyStore(), 'isUnlockOffered').mockResolvedValue(false)
 	const session = useSessionStore()
 	const unlock = vi.spyOn(session, 'unlock').mockResolvedValue(undefined)
-	const enrol = vi.spyOn(useAccountRecoveryStore(), 'enrolAtUnlock').mockResolvedValue('skipped')
+	const enrol = vi
+		.spyOn(useAccountRecoveryStore(), 'enrolAtUnlock')
+		.mockResolvedValue('skipped')
 	const offline = useOfflineStore()
 	offline.online = online
-	const unlockOffline = vi.spyOn(offline, 'unlockOffline').mockResolvedValue(undefined)
+	const unlockOffline = vi
+		.spyOn(offline, 'unlockOffline')
+		.mockResolvedValue(undefined)
 	const evict = vi.spyOn(offline, 'evict').mockResolvedValue(undefined)
 	const push = vi.fn()
 	const wrapper = mount(LockScreen, {
@@ -52,7 +56,11 @@ describe('LockScreen handleUnlock', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		window.isSecureContext = true
-		window.matchMedia = vi.fn(() => ({ matches: true, addEventListener() {}, removeEventListener() {} }))
+		window.matchMedia = vi.fn(() => ({
+			matches: true,
+			addEventListener() {},
+			removeEventListener() {},
+		}))
 	})
 
 	afterEach(() => {
@@ -61,7 +69,9 @@ describe('LockScreen handleUnlock', () => {
 	})
 
 	it('online: unlocks the session, enrols, and goes to the return URL', async () => {
-		const { wrapper, push, unlock, enrol, unlockOffline } = await arrange({ query: { returnUrl: '/vault/7' } })
+		const { wrapper, push, unlock, enrol, unlockOffline } = await arrange({
+			query: { returnUrl: '/vault/7' },
+		})
 		await unlockNow(wrapper)
 
 		expect(unlock).toHaveBeenCalledWith('pw-1')
@@ -74,7 +84,9 @@ describe('LockScreen handleUnlock', () => {
 	})
 
 	it('offline: unlocks the snapshot only, and goes to the root', async () => {
-		const { wrapper, push, unlock, unlockOffline } = await arrange({ online: false })
+		const { wrapper, push, unlock, unlockOffline } = await arrange({
+			online: false,
+		})
 		await unlockNow(wrapper)
 
 		expect(unlock).not.toHaveBeenCalled()
@@ -84,7 +96,9 @@ describe('LockScreen handleUnlock', () => {
 	})
 
 	it('online but unreachable: falls back to the snapshot with the same password', async () => {
-		const { wrapper, push, unlock, unlockOffline } = await arrange({ query: { returnUrl: '/x' } })
+		const { wrapper, push, unlock, unlockOffline } = await arrange({
+			query: { returnUrl: '/x' },
+		})
 		unlock.mockRejectedValue({ message: 'Network Error' })
 		await unlockNow(wrapper)
 

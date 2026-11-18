@@ -33,18 +33,18 @@ vi.mock('../../src/store/modules/application.js', () => ({
 const { default: ApplicationDetail } =
 	await import('../../src/views/ApplicationDetail.vue')
 
-function named (name, props = []) {
-  return {
-	name,
-	props,
-	emits: ['close', 'confirm', 'written', 'writeSecret'],
-	render() {
-		return h('div', { class: name }, [
-			this.$slots.icon?.(),
-			this.$slots.default?.(),
-		])
-	},
-}
+function named(name, props = []) {
+	return {
+		name,
+		props,
+		emits: ['close', 'confirm', 'written', 'writeSecret'],
+		render() {
+			return h('div', { class: name }, [
+				this.$slots.icon?.(),
+				this.$slots.default?.(),
+			])
+		},
+	}
 }
 
 /**

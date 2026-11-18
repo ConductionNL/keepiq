@@ -232,7 +232,11 @@ export async function rsaEncrypt(plaintext, publicKey) {
 
 	for (let i = 0; i < chunks.length; i++) {
 		const encrypted = new Uint8Array(
-			await crypto.subtle.encrypt({ name: RSA_ALGORITHM }, publicKey, chunks[i]),
+			await crypto.subtle.encrypt(
+				{ name: RSA_ALGORITHM },
+				publicKey,
+				chunks[i],
+			),
 		)
 		result.set(encrypted, 4 + i * RSA_BLOCK_SIZE)
 	}

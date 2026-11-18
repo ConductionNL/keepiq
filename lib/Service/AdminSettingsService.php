@@ -51,6 +51,10 @@ use Throwable;
  *   is being split per admin area by admin-scoped-roles (keepiq#774), which
  *   removes this; a separate service now would add a dependency to a class
  *   that sits at its coupling limit.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 13 against a limit of 13,
+ *   reached when the trusted extension origins joined the admin settings
+ *   (extension-passkey-enrolment). The per-area split of admin-scoped-roles
+ *   (keepiq#774) removes this too.
  */
 class AdminSettingsService implements AdminSettingsServiceInterface {
 	/**

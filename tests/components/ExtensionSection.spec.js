@@ -67,29 +67,47 @@ describe('ExtensionSection', () => {
 			data: {
 				extension_max_idle_minutes: 60,
 				extension_passkeys_enabled: true,
-				extension_passkey_origins: ['chrome-extension://abcdefghijklmnopabcdefghijklmnop'],
-				extension_passkey_pinned_origins: ['chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba'],
+				extension_passkey_origins: [
+					'chrome-extension://abcdefghijklmnopabcdefghijklmnop',
+				],
+				extension_passkey_pinned_origins: [
+					'chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba',
+				],
 			},
 		})
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 		const wrapper = mountSection()
 		await flush()
 
-		expect(wrapper.find('[data-testid="extension-pinned-origins"]').text()).toBe('chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba')
+		expect(wrapper.find('[data-testid="extension-pinned-origins"]').text()).toBe(
+			'chrome-extension://ponmlkjihgfedcbaponmlkjihgfedcba',
+		)
 		const origins = wrapper.find('[data-testid="extension-passkey-origins"]')
-		expect(origins.element.value).toBe('chrome-extension://abcdefghijklmnopabcdefghijklmnop')
+		expect(origins.element.value).toBe(
+			'chrome-extension://abcdefghijklmnopabcdefghijklmnop',
+		)
 
-		await origins.setValue(' chrome-extension://abcdefghijklmnopabcdefghijklmnop \n\nmoz-extension://x ')
+		await origins.setValue(
+			' chrome-extension://abcdefghijklmnopabcdefghijklmnop \n\nmoz-extension://x ',
+		)
 		await origins.trigger('change')
-		await wrapper.find('[data-testid="extension-passkeys-enabled"]').setValue(false)
+		await wrapper
+			.find('[data-testid="extension-passkeys-enabled"]')
+			.setValue(false)
 		await flush()
 
 		expect(put).toHaveBeenNthCalledWith(1, ROUTE, {
 			extension_max_idle_minutes: 60,
 			extension_passkeys_enabled: true,
-			extension_passkey_origins: ['chrome-extension://abcdefghijklmnopabcdefghijklmnop', 'moz-extension://x'],
+			extension_passkey_origins: [
+				'chrome-extension://abcdefghijklmnopabcdefghijklmnop',
+				'moz-extension://x',
+			],
 		})
-		expect(put).toHaveBeenLastCalledWith(ROUTE, expect.objectContaining({ extension_passkeys_enabled: false }))
+		expect(put).toHaveBeenLastCalledWith(
+			ROUTE,
+			expect.objectContaining({ extension_passkeys_enabled: false }),
+		)
 	})
 
 	it('shows the server message when loading is refused', async () => {

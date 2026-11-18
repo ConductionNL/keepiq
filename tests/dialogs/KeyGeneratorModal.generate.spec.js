@@ -16,7 +16,9 @@ vi.mock('../../src/generator/generator.js', async (importOriginal) => ({
 	generateKey: vi.fn(() => 'generated-key'),
 	generatePassphrase: vi.fn(() => 'some words here'),
 }))
-vi.mock('../../src/policy/policy.js', () => ({ fetchPolicy: vi.fn(async () => null) }))
+vi.mock('../../src/policy/policy.js', () => ({
+	fetchPolicy: vi.fn(async () => null),
+}))
 
 function mountModal() {
 	return mount(KeyGeneratorModal, { propsData: { open: true }, shallow: true })
@@ -30,9 +32,21 @@ describe('KeyGeneratorModal generate', () => {
 	it('passes the password options and the policy', async () => {
 		const wrapper = mountModal()
 		const policy = { policy_enabled: true }
-		Object.assign(wrapper.vm, { policy, lengthInput: '20', includeSpecialCharacters: false, excludedCharacters: 'Il' })
+		Object.assign(wrapper.vm, {
+			policy,
+			lengthInput: '20',
+			includeSpecialCharacters: false,
+			excludedCharacters: 'Il',
+		})
 		await wrapper.vm.generate()
-		expect(generateKey).toHaveBeenCalledWith({ length: 20, includeSpecialCharacters: false, excludedCharacters: 'Il' }, policy)
+		expect(generateKey).toHaveBeenCalledWith(
+			{
+				length: 20,
+				includeSpecialCharacters: false,
+				excludedCharacters: 'Il',
+			},
+			policy,
+		)
 		expect(generatePassphrase).not.toHaveBeenCalled()
 		expect(wrapper.vm.generatedKey).toBe('generated-key')
 		expect(wrapper.vm.loading).toBe(false)
@@ -48,9 +62,18 @@ describe('KeyGeneratorModal generate', () => {
 
 	it('passes the passphrase options in passphrase mode', async () => {
 		const wrapper = mountModal()
-		Object.assign(wrapper.vm, { mode: 'passphrase', wordsInput: '5', separator: '.', capitalise: true, includeNumber: true })
+		Object.assign(wrapper.vm, {
+			mode: 'passphrase',
+			wordsInput: '5',
+			separator: '.',
+			capitalise: true,
+			includeNumber: true,
+		})
 		await wrapper.vm.generate()
-		expect(generatePassphrase).toHaveBeenCalledWith({ words: 5, separator: '.', capitalise: true, includeNumber: true }, wrapper.vm.policy)
+		expect(generatePassphrase).toHaveBeenCalledWith(
+			{ words: 5, separator: '.', capitalise: true, includeNumber: true },
+			wrapper.vm.policy,
+		)
 		expect(generateKey).not.toHaveBeenCalled()
 		expect(wrapper.vm.generatedKey).toBe('some words here')
 		expect(wrapper.vm.loading).toBe(false)

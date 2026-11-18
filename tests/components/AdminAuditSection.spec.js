@@ -33,7 +33,8 @@ const stubs = {
 	NcButton: {
 		props: ['disabled'],
 		emits: ['click'],
-		template: '<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcSelect: {
 		props: ['modelValue', 'options'],
@@ -65,7 +66,9 @@ describe('AdminAuditSection', () => {
 	}
 
 	it('loads the retention window and the first page', async () => {
-		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: { audit_retention_days: 90 } })
+		const get = vi
+			.spyOn(axios, 'get')
+			.mockResolvedValue({ data: { audit_retention_days: 90 } })
 		const wrapper = await mountSection()
 
 		expect(get).toHaveBeenCalledWith(URL)
@@ -84,7 +87,9 @@ describe('AdminAuditSection', () => {
 	})
 
 	it('saves a changed retention window', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { audit_retention_days: 365 } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { audit_retention_days: 365 },
+		})
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 		const wrapper = await mountSection()
 
@@ -96,8 +101,12 @@ describe('AdminAuditSection', () => {
 	})
 
 	it('shows the refusal and reloads the stored window when the save is refused', async () => {
-		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: { audit_retention_days: 120 } })
-		vi.spyOn(axios, 'put').mockRejectedValue({ response: { data: { message: 'Below the floor' } } })
+		const get = vi
+			.spyOn(axios, 'get')
+			.mockResolvedValue({ data: { audit_retention_days: 120 } })
+		vi.spyOn(axios, 'put').mockRejectedValue({
+			response: { data: { message: 'Below the floor' } },
+		})
 		const wrapper = await mountSection()
 
 		wrapper.vm.retentionDays = 5
@@ -165,15 +174,29 @@ describe('AdminAuditSection', () => {
 	it('renders a row per entry and pages forward and back', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
 		store.adminEntries = [
-			{ id: 1, eventType: 'x.custom', actorType: 'user', actorId: 'bob', occurredAt: '2026-01-01T00:00:00Z' },
-			{ id: 2, eventType: 'x.other', actorType: 'system', actorId: null, occurredAt: null },
+			{
+				id: 1,
+				eventType: 'x.custom',
+				actorType: 'user',
+				actorId: 'bob',
+				occurredAt: '2026-01-01T00:00:00Z',
+			},
+			{
+				id: 2,
+				eventType: 'x.other',
+				actorType: 'system',
+				actorId: null,
+				occurredAt: null,
+			},
 		]
 		store.adminPage = 2
 		store.adminTotal = 150
 		const wrapper = await mountSection()
 
 		expect(wrapper.findAll('[data-testid="audit-row"]')).toHaveLength(2)
-		const buttons = wrapper.find('[data-testid="audit-pagination"]').findAll('button')
+		const buttons = wrapper
+			.find('[data-testid="audit-pagination"]')
+			.findAll('button')
 		await buttons[0].trigger('click')
 		expect(store.fetchAdminAudit).toHaveBeenLastCalledWith(1)
 		await buttons[buttons.length - 1].trigger('click')
@@ -189,16 +212,38 @@ describe('AdminAuditSection', () => {
 			new Date('2026-01-01T00:00:00Z').toLocaleString(),
 		)
 		expect(wrapper.vm.actor({ actorType: 'system' })).toBe('System')
-		expect(wrapper.vm.actor({ actorType: 'user', actorId: 'carol' })).toBe('carol')
+		expect(wrapper.vm.actor({ actorType: 'user', actorId: 'carol' })).toBe(
+			'carol',
+		)
 		expect(wrapper.vm.label('x.unknown')).toBe('x.unknown')
 	})
 
 	it('exports the whole filtered result as CSV', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
 		store.fetchAllAdminForExport = vi.fn().mockResolvedValue([
-			{ occurredAt: '2026-01-01', eventType: 'x.a', actorType: 'user', actorId: 'dave', objectType: 'secret', objectName: 'Mail' },
-			{ occurredAt: '2026-01-02', eventType: 'x.b', actorType: 'link_visitor', actorId: null, objectType: 'link', objectId: 'l-9' },
-			{ occurredAt: '2026-01-03', eventType: 'x.c', actorType: 'user', actorId: 'erin', objectType: 'vault' },
+			{
+				occurredAt: '2026-01-01',
+				eventType: 'x.a',
+				actorType: 'user',
+				actorId: 'dave',
+				objectType: 'secret',
+				objectName: 'Mail',
+			},
+			{
+				occurredAt: '2026-01-02',
+				eventType: 'x.b',
+				actorType: 'link_visitor',
+				actorId: null,
+				objectType: 'link',
+				objectId: 'l-9',
+			},
+			{
+				occurredAt: '2026-01-03',
+				eventType: 'x.c',
+				actorType: 'user',
+				actorId: 'erin',
+				objectType: 'vault',
+			},
 		])
 		const wrapper = await mountSection()
 

@@ -17,7 +17,8 @@ import NavMenuEntry from '../../src/components/KeepiqAppNav/NavMenuEntry.vue'
 const item = {
 	props: ['name', 'to', 'href', 'active'],
 	emits: ['click'],
-	template: '<li :data-name="name" @click="$emit(\'click\', $event)"><slot name="icon" /></li>',
+	template:
+		'<li :data-name="name" @click="$emit(\'click\', $event)"><slot name="icon" /></li>',
 }
 
 const stubs = {
@@ -72,7 +73,12 @@ describe('NavMenuEntry standalone', () => {
 	})
 
 	it('renders a route entry active on its own route, with its icon', () => {
-		const wrapper = mountEntry({ id: 'Health', label: 'Password health', route: 'health', icon: 'Shield' })
+		const wrapper = mountEntry({
+			id: 'Health',
+			label: 'Password health',
+			route: 'health',
+			icon: 'Shield',
+		})
 		const entry = wrapper.findComponent(item)
 
 		expect(entry.props('active')).toBe(true)
@@ -82,7 +88,11 @@ describe('NavMenuEntry standalone', () => {
 	})
 
 	it('renders an external entry as a plain href, inactive and without icon', () => {
-		const wrapper = mountEntry({ id: 'Docs', label: 'Documentation', href: 'https://docs.example.org' })
+		const wrapper = mountEntry({
+			id: 'Docs',
+			label: 'Documentation',
+			href: 'https://docs.example.org',
+		})
 		const entry = wrapper.findComponent(item)
 
 		expect(entry.props('href')).toBe('https://docs.example.org')

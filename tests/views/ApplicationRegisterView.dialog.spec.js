@@ -19,7 +19,8 @@ const DialogStub = {
 	name: 'ApplicationRegisterDialog',
 	props: ['open'],
 	emits: ['close', 'registered'],
-	template: '<div v-if="open" class="register-dialog"><button class="close" @click="$emit(\'close\')" /></div>',
+	template:
+		'<div v-if="open" class="register-dialog"><button class="close" @click="$emit(\'close\')" /></div>',
 }
 
 const IndexStub = {
@@ -68,7 +69,9 @@ describe('ApplicationRegisterView register dialog', () => {
 		const wrapper = await mountView()
 
 		expect(get).toHaveBeenCalled()
-		expect(wrapper.find('[data-testid="application-register-view"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="application-register-view"]').exists(),
+		).toBe(true)
 		await wrapper.find('.add').trigger('click')
 		expect(wrapper.vm.dialogOpen).toBe(true)
 	})

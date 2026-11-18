@@ -16,9 +16,8 @@ vi.mock('../../src/store/modules/delegation.js', () => ({
 	useDelegationStore: () => delegationStore,
 }))
 
-const { default: Panel } = await import(
-	'../../src/components/share/AdminHandoverPanel.vue'
-)
+const { default: Panel } =
+	await import('../../src/components/share/AdminHandoverPanel.vue')
 
 /**
  * A fake instance with onHandover bound to it.

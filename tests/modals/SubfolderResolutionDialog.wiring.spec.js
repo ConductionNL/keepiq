@@ -45,19 +45,28 @@ describe('SubfolderResolutionDialog wiring', () => {
 	it('starts from an empty plan when no children payload is given', () => {
 		const wrapper = mountDialog({})
 
-		expect(wrapper.props('children')).toEqual({ directSecretCount: 0, subfolders: [] })
+		expect(wrapper.props('children')).toEqual({
+			directSecretCount: 0,
+			subfolders: [],
+		})
 		expect(wrapper.vm.plan).toEqual({})
 		expect(selects(wrapper)).toHaveLength(1)
 	})
 
-	it('reduces every picker\'s option to its action value', () => {
+	it("reduces every picker's option to its action value", () => {
 		const wrapper = mountDialog({ children: CHILDREN })
 		const pickers = selects(wrapper)
 
 		expect(pickers).toHaveLength(3)
-		expect(pickers[0].props('reduce')({ value: 'delete', label: 'Delete them' })).toBe('delete')
-		expect(pickers[1].props('reduce')({ value: 'move', label: 'Move' })).toBe('move')
-		expect(pickers[2].props('reduce')({ value: 'keep', label: 'Keep' })).toBe('keep')
+		expect(
+			pickers[0].props('reduce')({ value: 'delete', label: 'Delete them' }),
+		).toBe('delete')
+		expect(pickers[1].props('reduce')({ value: 'move', label: 'Move' })).toBe(
+			'move',
+		)
+		expect(pickers[2].props('reduce')({ value: 'keep', label: 'Keep' })).toBe(
+			'keep',
+		)
 	})
 
 	it('sends the picks made in the pickers with the delete', async () => {

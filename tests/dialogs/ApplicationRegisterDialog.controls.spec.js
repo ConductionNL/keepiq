@@ -46,7 +46,10 @@ function radio(wrapper, testid) {
  */
 async function uploadCsr(wrapper, files) {
 	const input = wrapper.find('[data-testid="application-register-csr-upload"]')
-	Object.defineProperty(input.element, 'files', { value: files, configurable: true })
+	Object.defineProperty(input.element, 'files', {
+		value: files,
+		configurable: true,
+	})
 	await input.trigger('change')
 }
 
@@ -60,7 +63,9 @@ describe('ApplicationRegisterDialog controls', () => {
 		const register = vi.spyOn(useApplicationStore(), 'registerApplication')
 		const wrapper = mountDialog()
 
-		await wrapper.find('[data-testid="application-register-cancel"]').trigger('click')
+		await wrapper
+			.find('[data-testid="application-register-cancel"]')
+			.trigger('click')
 
 		expect(wrapper.emitted('close')).toHaveLength(1)
 		expect(register).not.toHaveBeenCalled()
@@ -69,20 +74,29 @@ describe('ApplicationRegisterDialog controls', () => {
 	it('switches the type back to internal after external was picked', async () => {
 		const wrapper = mountDialog()
 
-		radio(wrapper, 'application-register-type-external').vm.$emit('update:modelValue', 'external')
+		radio(wrapper, 'application-register-type-external').vm.$emit(
+			'update:modelValue',
+			'external',
+		)
 		await wrapper.vm.$nextTick()
 		expect(wrapper.vm.form.type).toBe('external')
 
-		radio(wrapper, 'application-register-type-internal').vm.$emit('update:modelValue', 'internal')
+		radio(wrapper, 'application-register-type-internal').vm.$emit(
+			'update:modelValue',
+			'internal',
+		)
 		await wrapper.vm.$nextTick()
 		expect(wrapper.vm.form.type).toBe('internal')
 	})
 
 	it('reads an uploaded CSR file into the PEM field', async () => {
-		const pem = '-----BEGIN CERTIFICATE REQUEST-----\nMIIB\n-----END CERTIFICATE REQUEST-----'
+		const pem =
+			'-----BEGIN CERTIFICATE REQUEST-----\nMIIB\n-----END CERTIFICATE REQUEST-----'
 		const wrapper = mountDialog()
 
-		await uploadCsr(wrapper, [new File([pem], 'app.csr', { type: 'text/plain' })])
+		await uploadCsr(wrapper, [
+			new File([pem], 'app.csr', { type: 'text/plain' }),
+		])
 
 		await vi.waitFor(() => expect(wrapper.vm.form.csr).toBe(pem))
 	})

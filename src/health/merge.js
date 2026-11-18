@@ -43,7 +43,10 @@ export async function loadGroup(ids) {
  * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
  */
 export function mergedFields(kept, others) {
-	return foldFields(kept.additionalFields, others.map((other) => other.additionalFields))
+	return foldFields(
+		kept.additionalFields,
+		others.map((other) => other.additionalFields),
+	)
 }
 
 /**
@@ -57,7 +60,9 @@ export function mergedFields(kept, others) {
 export async function peopleLosingAccess(ids) {
 	const people = new Set()
 	for (const id of ids) {
-		const response = await axios.get(generateUrl(`/apps/keepiq/api/v1/secrets/${id}/shares`))
+		const response = await axios.get(
+			generateUrl(`/apps/keepiq/api/v1/secrets/${id}/shares`),
+		)
 		for (const share of Array.isArray(response?.data) ? response.data : []) {
 			if (share?.targetUserId) {
 				people.add(String(share.targetUserId))
@@ -80,7 +85,10 @@ export async function peopleLosingAccess(ids) {
 export async function mergeGroup(kept, others) {
 	const store = useSecretStore()
 	const fields = mergedFields(kept, others)
-	if (JSON.stringify(fields) !== JSON.stringify(isMap(kept.additionalFields) ? kept.additionalFields : {})) {
+	if (
+		JSON.stringify(fields)
+		!== JSON.stringify(isMap(kept.additionalFields) ? kept.additionalFields : {})
+	) {
 		await store.writeBackSettled(kept.id)
 		const data = { additionalFields: fields }
 		if (kept.mergedPending > 0) {

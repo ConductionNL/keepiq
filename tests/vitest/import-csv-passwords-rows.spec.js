@@ -27,7 +27,20 @@ afterEach(() => {
 describe('CSV mapping and rows', () => {
 	it('detects the first header of each kind, notes only when nothing else took it', () => {
 		expect(
-			detectMapping([' Title ', 'name', 'URL', 'Notes', 'comment', 'email', 'username', 'otp', 'Key', null, 'type', 'something']),
+			detectMapping([
+				' Title ',
+				'name',
+				'URL',
+				'Notes',
+				'comment',
+				'email',
+				'username',
+				'otp',
+				'Key',
+				null,
+				'type',
+				'something',
+			]),
 		).toMatchSnapshot()
 	})
 
@@ -43,7 +56,20 @@ describe('CSV mapping and rows', () => {
 			{ column: 'f', target: 'folder' },
 		]
 		expect([
-			applyMapping({ n: 'Mail', u: '', p: 'pw', x: 'dropped', note: 'hi', pin: '1234', code: 'JBSWY3DPEHPK3PXP', f: 'A/B' }, mapping, 1),
+			applyMapping(
+				{
+					n: 'Mail',
+					u: '',
+					p: 'pw',
+					x: 'dropped',
+					note: 'hi',
+					pin: '1234',
+					code: 'JBSWY3DPEHPK3PXP',
+					f: 'A/B',
+				},
+				mapping,
+				1,
+			),
 			applyMapping({ n: 'Steam', p: 'pw', code: 'steam://ABC' }, mapping, 2),
 			applyMapping({ n: '', p: null }, mapping, 3),
 			applyMapping({}, [], 4),
@@ -55,7 +81,11 @@ describe('Nextcloud Passwords rows', () => {
 	it('resolves every folder shape and custom field shape', () => {
 		const backup = {
 			folders: [
-				{ id: 'f1', label: 'Work', parent: '00000000-0000-0000-0000-000000000000' },
+				{
+					id: 'f1',
+					label: 'Work',
+					parent: '00000000-0000-0000-0000-000000000000',
+				},
 				{ id: 'f2', label: 'Dev', parent: 'f1' },
 				{ id: 'f3', label: '', parent: 'f2' },
 				{ id: 'loop-a', label: 'A', parent: 'loop-b' },
@@ -65,8 +95,25 @@ describe('Nextcloud Passwords rows', () => {
 				{ label: 'no id' },
 			],
 			passwords: [
-				{ label: 'One', username: 'u', password: 'p', url: 'https://one', folder: 'f3', notes: 'n', customFields: '[{"label":"PIN","value":"1"},{"label":null,"value":"x"}]' },
-				{ label: 'Two', folder: 'orphan', customFields: [{ label: 'A', value: 0 }, { label: 'B', value: null }, null] },
+				{
+					label: 'One',
+					username: 'u',
+					password: 'p',
+					url: 'https://one',
+					folder: 'f3',
+					notes: 'n',
+					customFields:
+						'[{"label":"PIN","value":"1"},{"label":null,"value":"x"}]',
+				},
+				{
+					label: 'Two',
+					folder: 'orphan',
+					customFields: [
+						{ label: 'A', value: 0 },
+						{ label: 'B', value: null },
+						null,
+					],
+				},
 				{ label: 'Three', folder: 'loop-a', customFields: '{not json' },
 				{ folder: 'unknown', customFields: 'null' },
 				{ label: 'Five' },
@@ -74,6 +121,8 @@ describe('Nextcloud Passwords rows', () => {
 		}
 		expect(parseNcPasswords(backup)).toMatchSnapshot()
 		expect(parseNcPasswords(JSON.stringify({ passwords: [] }))).toEqual([])
-		expect(() => parseNcPasswords({ folders: [] })).toThrow('Not a Nextcloud Passwords JSON backup')
+		expect(() => parseNcPasswords({ folders: [] })).toThrow(
+			'Not a Nextcloud Passwords JSON backup',
+		)
 	})
 })

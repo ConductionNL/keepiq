@@ -21,7 +21,9 @@
 				</dt>
 				<dd>
 					{{ line.text }}
-					<code class="vault-encryption-details__technical">{{ line.technical }}</code>
+					<code class="vault-encryption-details__technical">{{
+						line.technical
+					}}</code>
 				</dd>
 			</template>
 		</dl>
@@ -42,7 +44,10 @@
 			{{
 				certificateStore.loading
 					? t('keepiq', 'Loading certificate details…')
-					: t('keepiq', 'No certificate details are available for this vault.')
+					: t(
+							'keepiq',
+							'No certificate details are available for this vault.',
+						)
 			}}
 		</p>
 	</section>
@@ -94,7 +99,8 @@ export default {
 		 * @spec openspec/specs/vault-encryption-details/spec.md#requirement-the-user-sees-what-protects-the-vault
 		 */
 		lines() {
-			const { secretValues, privateKey, attachments, passwordProtected } = this.parameters
+			const { secretValues, privateKey, attachments, passwordProtected } =
+				this.parameters
 			const names = technicalNames(this.parameters)
 			return [
 				{
@@ -164,30 +170,51 @@ export default {
 		 */
 		certificateFacts() {
 			const c = this.certificate
-			const key = c.keyType && c.keyBits
-				? t('keepiq', '{type}, {bits}-bit', { type: c.keyType, bits: c.keyBits })
-				: '—'
+			const key =
+				c.keyType && c.keyBits
+					? t('keepiq', '{type}, {bits}-bit', {
+							type: c.keyType,
+							bits: c.keyBits,
+						})
+					: '—'
 			return [
 				{ id: 'key', label: t('keepiq', 'Key'), value: key },
-				{ id: 'signature', label: t('keepiq', 'Signature algorithm'), value: c.signatureAlgorithm || '—' },
-				{ id: 'fingerprint', label: t('keepiq', 'Fingerprint'), value: c.fingerprintSha256 || '—' },
-				{ id: 'issuer', label: t('keepiq', 'Issuer'), value: c.issuer || '—' },
+				{
+					id: 'signature',
+					label: t('keepiq', 'Signature algorithm'),
+					value: c.signatureAlgorithm || '—',
+				},
+				{
+					id: 'fingerprint',
+					label: t('keepiq', 'Fingerprint'),
+					value: c.fingerprintSha256 || '—',
+				},
+				{
+					id: 'issuer',
+					label: t('keepiq', 'Issuer'),
+					value: c.issuer || '—',
+				},
 				{
 					id: 'validity',
 					label: t('keepiq', 'Valid'),
-					value: c.notBefore && c.notAfter
-						? t('keepiq', '{from} to {until}', {
-							from: new Date(c.notBefore).toLocaleDateString(),
-							until: new Date(c.notAfter).toLocaleDateString(),
-						})
-						: '—',
+					value:
+						c.notBefore && c.notAfter
+							? t('keepiq', '{from} to {until}', {
+									from: new Date(c.notBefore).toLocaleDateString(),
+									until: new Date(c.notAfter).toLocaleDateString(),
+								})
+							: '—',
 				},
 			]
 		},
 	},
 
 	mounted() {
-		if (this.suiteId && !this.certificateStore.inventory && !this.certificateStore.loading) {
+		if (
+			this.suiteId
+			&& !this.certificateStore.inventory
+			&& !this.certificateStore.loading
+		) {
 			this.certificateStore.fetchInventory()
 		}
 	},

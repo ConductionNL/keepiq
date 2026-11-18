@@ -94,7 +94,11 @@ export default {
 		 */
 		title() {
 			if (this.finished) {
-				return this.t('keepiq', 'Moved {ok} of {total} secrets', this.reportCounts)
+				return this.t(
+					'keepiq',
+					'Moved {ok} of {total} secrets',
+					this.reportCounts,
+				)
 			}
 			return this.t('keepiq', 'Move {count} secrets', {
 				count: this.bulk.selectionCount,

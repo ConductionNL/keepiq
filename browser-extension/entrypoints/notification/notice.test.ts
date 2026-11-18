@@ -5,7 +5,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setLocale } from '@/src/testing/i18n'
 import { startNotice } from './notice'
 
-const BODY = /<body>([\s\S]*)<\/body>/.exec(readFileSync(resolve('entrypoints/notification/index.html'), 'utf8'))![1]!.replace(/<script[\s\S]*?<\/script>/, '')
+function withoutScripts(html: string): string {
+	let previous: string
+	let out = html
+	do {
+		previous = out
+		out = out.replace(/<script[\s\S]*?<\/script>/g, '')
+	} while (out !== previous)
+	return out
+}
+
+const BODY = withoutScripts(/<body>([\s\S]*)<\/body>/.exec(readFileSync(resolve('entrypoints/notification/index.html'), 'utf8'))![1]!)
 
 let sent: unknown[]
 let stop: (() => void) | undefined

@@ -24,6 +24,7 @@ use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Exception\AuditForbiddenMetadataException;
 use OCA\Keepiq\Service\AuditService;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -173,7 +174,7 @@ class AuditServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testRecordRejectsEveryForbiddenKey(): void {
-		foreach (AuditEventTypes::FORBIDDEN_KEYS as $forbidden) {
+		foreach (AuditMetadataPolicy::FORBIDDEN_KEYS as $forbidden) {
 			$event = AuditEvent::forUser(
 				actorId: 'alice',
 				eventType: AuditEventTypes::SECRET_CREATED,
@@ -201,7 +202,7 @@ class AuditServiceTest extends TestCase {
 	 */
 	public function testEveryValueFieldIsForbidden(): void {
 		foreach (Secret::VALUE_FIELDS as $field) {
-			$this->assertContains($field, AuditEventTypes::FORBIDDEN_KEYS);
+			$this->assertContains($field, AuditMetadataPolicy::FORBIDDEN_KEYS);
 		}
 
 		foreach (['totp', 'passkeys'] as $field) {

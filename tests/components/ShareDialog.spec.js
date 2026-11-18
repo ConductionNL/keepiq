@@ -16,9 +16,8 @@ vi.mock('../../src/store/modules/share.js', () => ({
 	useShareStore: () => shareStore,
 }))
 
-const { default: ShareDialog } = await import(
-	'../../src/components/share/ShareDialog.vue'
-)
+const { default: ShareDialog } =
+	await import('../../src/components/share/ShareDialog.vue')
 
 /**
  * A fake instance with onSubmit bound to it.
@@ -40,7 +39,9 @@ function makeVm(overrides = {}) {
 
 describe('ShareDialog', () => {
 	beforeEach(() => {
-		shareStore.encryptForRecipient = vi.fn().mockResolvedValue({ password: 'enc' })
+		shareStore.encryptForRecipient = vi
+			.fn()
+			.mockResolvedValue({ password: 'enc' })
 	})
 
 	it('requires a recipient before anything else', async () => {

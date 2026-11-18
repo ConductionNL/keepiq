@@ -24,14 +24,19 @@ const stubs = {
 	NcDialog: {
 		props: ['open'],
 		emits: ['update:open'],
-		template: '<div><button data-testid="dialog-close" @click="$emit(\'update:open\', false)" /><slot /><slot name="actions" /></div>',
+		template:
+			'<div><button data-testid="dialog-close" @click="$emit(\'update:open\', false)" /><slot /><slot name="actions" /></div>',
 	},
 	NcButton: {
 		props: ['disabled'],
 		emits: ['click'],
-		template: '<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
-	NcNoteCard: { props: ['type'], template: '<div data-testid="note" :class="`note--${type}`"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div data-testid="note" :class="`note--${type}`"><slot /></div>',
+	},
 }
 
 async function mountDialog(entry, conflict) {
@@ -40,7 +45,15 @@ async function mountDialog(entry, conflict) {
 	offline.resolveConflict = vi.fn().mockResolvedValue()
 	offline.conflicts = { e1: conflict }
 	const wrapper = mount(OfflineConflictDialog, {
-		props: { open: true, entry: { entryId: 'e1', op: 'update', body: { name: 'My name' }, ...entry } },
+		props: {
+			open: true,
+			entry: {
+				entryId: 'e1',
+				op: 'update',
+				body: { name: 'My name' },
+				...entry,
+			},
+		},
 		global: { stubs },
 	})
 	await flush()
@@ -61,8 +74,13 @@ describe('OfflineConflictDialog', () => {
 		const wrapper = await mountDialog({}, { name: 'Server name', key: 'CIPHER' })
 
 		expect(decrypt).toHaveBeenCalledWith('CIPHER', { private: true })
-		expect(wrapper.vm.server).toEqual({ name: 'Server name', key: 'server-value' })
-		expect(wrapper.find('[data-testid="offline-conflict-server"]').text()).toContain('server-value')
+		expect(wrapper.vm.server).toEqual({
+			name: 'Server name',
+			key: 'server-value',
+		})
+		expect(
+			wrapper.find('[data-testid="offline-conflict-server"]').text(),
+		).toContain('server-value')
 	})
 
 	it('shows a blank server value when it cannot be decrypted', async () => {
@@ -88,25 +106,37 @@ describe('OfflineConflictDialog', () => {
 		const wrapper = await mountDialog({ op: 'delete' }, { name: 'Server name' })
 
 		expect(wrapper.text()).toContain('You deleted this secret offline')
-		expect(wrapper.find('[data-testid="offline-conflict-mine"]').text()).toContain('Deleted')
-		expect(wrapper.find('[data-testid="offline-conflict-mine"]').text()).not.toContain('mine-value')
+		expect(
+			wrapper.find('[data-testid="offline-conflict-mine"]').text(),
+		).toContain('Deleted')
+		expect(
+			wrapper.find('[data-testid="offline-conflict-mine"]').text(),
+		).not.toContain('mine-value')
 	})
 
 	it('falls back to the server name when the offline change kept it', async () => {
 		const wrapper = await mountDialog({ body: {} }, { name: 'Server name' })
 
-		expect(wrapper.find('[data-testid="offline-conflict-mine"]').text()).toContain('Server name')
+		expect(
+			wrapper.find('[data-testid="offline-conflict-mine"]').text(),
+		).toContain('Server name')
 	})
 
 	it('keeps the dialog open with the reason when resolving fails', async () => {
 		const wrapper = await mountDialog({}, { name: 'Server name' })
-		useOfflineStore().resolveConflict.mockRejectedValueOnce(new Error('server unreachable'))
+		useOfflineStore().resolveConflict.mockRejectedValueOnce(
+			new Error('server unreachable'),
+		)
 
-		await wrapper.find('[data-testid="offline-conflict-keep-mine"]').trigger('click')
+		await wrapper
+			.find('[data-testid="offline-conflict-keep-mine"]')
+			.trigger('click')
 		await flush()
 
 		expect(wrapper.vm.error).toBe('server unreachable')
-		expect(wrapper.find('[data-testid="note"]').text()).toBe('server unreachable')
+		expect(wrapper.find('[data-testid="note"]').text()).toBe(
+			'server unreachable',
+		)
 		expect(wrapper.vm.busy).toBe(false)
 		expect(wrapper.emitted('resolved')).toBeUndefined()
 		expect(wrapper.emitted('update:open')).toBeUndefined()

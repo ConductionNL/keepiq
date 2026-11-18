@@ -56,22 +56,27 @@ describe('NavFolderTree vault menu', () => {
 		['move', 'nav-folder-move-v-1', 'Move vault contents'],
 		['delete', 'nav-folder-delete-v-1', 'Delete vault'],
 		['newFolder', 'nav-folder-new-v-1', 'New folder'],
-	])('emits %s with the vault node from its labelled button', async (event, testId, label) => {
-		const wrapper = mountTree()
-		const button = wrapper.find(`[data-testid="${testId}"]`)
+	])(
+		'emits %s with the vault node from its labelled button',
+		async (event, testId, label) => {
+			const wrapper = mountTree()
+			const button = wrapper.find(`[data-testid="${testId}"]`)
 
-		expect(button.text()).toBe(label)
-		expect(button.find('svg').exists()).toBe(true)
+			expect(button.text()).toBe(label)
+			expect(button.find('svg').exists()).toBe(true)
 
-		await button.trigger('click')
+			await button.trigger('click')
 
-		expect(wrapper.emitted(event)).toHaveLength(1)
-		expect(wrapper.emitted(event)[0][0]).toEqual(VAULT)
-		const others = ['edit', 'share', 'move', 'delete', 'newFolder'].filter((e) => e !== event)
-		for (const other of others) {
-			expect(wrapper.emitted(other)).toBeUndefined()
-		}
-	})
+			expect(wrapper.emitted(event)).toHaveLength(1)
+			expect(wrapper.emitted(event)[0][0]).toEqual(VAULT)
+			const others = ['edit', 'share', 'move', 'delete', 'newFolder'].filter(
+				(e) => e !== event,
+			)
+			for (const other of others) {
+				expect(wrapper.emitted(other)).toBeUndefined()
+			}
+		},
+	)
 
 	it('uses the vertical dots as the vault menu trigger, and none on nested rows', () => {
 		const wrapper = mountTree()
@@ -81,7 +86,9 @@ describe('NavFolderTree vault menu', () => {
 		expect(rows[0].find('.menu-icon svg').exists()).toBe(true)
 		expect(rows[1].attributes('data-name')).toBe('Invoices')
 		expect(rows[1].find('.menu-icon svg').exists()).toBe(false)
-		expect(rows[1].find('[data-testid="nav-folder-edit-f-1"]').exists()).toBe(false)
+		expect(rows[1].find('[data-testid="nav-folder-edit-f-1"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('remembers a collapse toggle for the node', async () => {

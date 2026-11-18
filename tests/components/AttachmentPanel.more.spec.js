@@ -73,7 +73,9 @@ describe('AttachmentPanel rows and actions', () => {
 
 		expect(store.fetchAttachments).toHaveBeenCalledExactlyOnceWith('sec-1')
 		expect(wrapper.find('[data-testid="attachment-list"]').exists()).toBe(false)
-		expect(wrapper.find('.attachment-panel__empty').text()).toBe('No attachments')
+		expect(wrapper.find('.attachment-panel__empty').text()).toBe(
+			'No attachments',
+		)
 	})
 
 	it('shows the store error in a note', async () => {
@@ -98,10 +100,12 @@ describe('AttachmentPanel rows and actions', () => {
 	it('renders names with fallback and human sizes', async () => {
 		const wrapper = await mountPanel()
 
-		const rows = wrapper.findAll('.attachment-panel__row').map((row) => [
-			row.find('.attachment-panel__name').text(),
-			row.find('.attachment-panel__size').text(),
-		])
+		const rows = wrapper
+			.findAll('.attachment-panel__row')
+			.map((row) => [
+				row.find('.attachment-panel__name').text(),
+				row.find('.attachment-panel__size').text(),
+			])
 		expect(rows).toEqual([
 			['notes.txt', '512 B'],
 			['(undecryptable attachment)', '2.0 KB'],
@@ -113,8 +117,12 @@ describe('AttachmentPanel rows and actions', () => {
 	it('lets a viewer download but not delete or upload', async () => {
 		const wrapper = await mountPanel({ canManage: false })
 
-		expect(wrapper.find('[data-testid="attachment-delete-a1"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="attachment-file-input"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="attachment-delete-a1"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.find('[data-testid="attachment-file-input"]').exists()).toBe(
+			false,
+		)
 
 		await wrapper.find('[data-testid="attachment-download-a3"]').trigger('click')
 		expect(store.download).toHaveBeenCalledOnce()
@@ -130,7 +138,9 @@ describe('AttachmentPanel rows and actions', () => {
 	})
 
 	it('opens the file picker from the upload button, disabled while busy', async () => {
-		const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {})
+		const click = vi
+			.spyOn(HTMLInputElement.prototype, 'click')
+			.mockImplementation(() => {})
 		const wrapper = await mountPanel({ canManage: true })
 		const button = wrapper.find('[data-testid="attachment-upload"]')
 
@@ -150,7 +160,10 @@ describe('AttachmentPanel rows and actions', () => {
 		const wrapper = await mountPanel({ canManage: true })
 		const file = new File(['abc'], 'pic.png', { type: 'image/png' })
 		const input = wrapper.find('[data-testid="attachment-file-input"]')
-		Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+		Object.defineProperty(input.element, 'files', {
+			value: [file],
+			configurable: true,
+		})
 
 		await input.trigger('change')
 		await flush()
@@ -164,7 +177,9 @@ describe('AttachmentPanel rows and actions', () => {
 		const file = new File(['abc'], 'big.bin')
 		const target = { files: [file], value: 'big.bin' }
 
-		await expect(wrapper.vm.onFilePicked({ target })).rejects.toThrow('too large')
+		await expect(wrapper.vm.onFilePicked({ target })).rejects.toThrow(
+			'too large',
+		)
 
 		expect(store.upload).toHaveBeenCalledWith('sec-1', file)
 		expect(target.value).toBe('')

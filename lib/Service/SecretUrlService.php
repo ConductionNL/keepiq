@@ -87,25 +87,15 @@ class SecretUrlService {
 		}
 
 		$list = [];
-		$seen = [];
 		foreach ($urls as $url) {
-			if (is_string($url) === false) {
-				throw new InvalidArgumentException('additionalUrls must be a list of addresses');
-			}
-
-			$url = trim($url);
+			$url = $this->entry(url: $url);
 			$key = strtolower($url);
-			if ($url === '' || isset($seen[$key]) === true) {
-				continue;
+			if ($url !== '' && isset($list[$key]) === false) {
+				$list[$key] = $url;
 			}
-
-			if (mb_strlen($url) > self::MAX_LENGTH) {
-				throw new InvalidArgumentException('An extra address may be at most ' . self::MAX_LENGTH . ' characters long');
-			}
-
-			$seen[$key] = true;
-			$list[] = $url;
 		}
+
+		$list = array_values($list);
 
 		if (count($list) > self::MAX_URLS) {
 			throw new InvalidArgumentException('A login carries at most ' . self::MAX_URLS . ' extra addresses');
@@ -113,6 +103,30 @@ class SecretUrlService {
 
 		return $list;
 	}//end normalise()
+
+	/**
+	 * One entry of the list, trimmed.
+	 *
+	 * @param mixed $url The entry
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When the entry is not text or too long
+	 *
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	private function entry(mixed $url): string {
+		if (is_string($url) === false) {
+			throw new InvalidArgumentException('additionalUrls must be a list of addresses');
+		}
+
+		$url = trim($url);
+		if (mb_strlen($url) > self::MAX_LENGTH) {
+			throw new InvalidArgumentException('An extra address may be at most ' . self::MAX_LENGTH . ' characters long');
+		}
+
+		return $url;
+	}//end entry()
 
 	/**
 	 * Replace the extra addresses of the caller's own login, and of every
@@ -170,16 +184,15 @@ class SecretUrlService {
 	 * @param Secret       $source The owner's login
 	 * @param list<string> $urls   The owner's new list
 	 *
-	 * @return int The number of copies written
+	 * @return void
 	 *
 	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
 	 */
-	private function replaceOnCopies(Secret $source, array $urls): int {
+	private function replaceOnCopies(Secret $source, array $urls): void {
 		if ($this->rowJudge === null || $this->secretMapper === null) {
-			return 0;
+			return;
 		}
 
-		$written = 0;
 		foreach ($this->rowJudge->rowsOfSource(sourceId: $source->getId())->notHeldBack() as $row) {
 			try {
 				$copy = $this->secretMapper->findById((string)$row->getSecretId());
@@ -192,10 +205,7 @@ class SecretUrlService {
 			}
 
 			$this->mapper->replaceForSecret(secretId: $copy->getId(), ownerId: $copy->getOwnerId(), urls: $urls);
-			$written++;
 		}
-
-		return $written;
 	}//end replaceOnCopies()
 
 	/**

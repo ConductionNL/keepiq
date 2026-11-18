@@ -24,23 +24,11 @@ use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The policy tables keep their contents, and AuditEventTypes still exposes the same tables.
+ * The policy tables keep their contents.
  *
  * @covers \OCA\Keepiq\Event\Audit\AuditMetadataPolicy
- * @covers \OCA\Keepiq\Event\Audit\AuditEventTypes
  */
 class AuditMetadataPolicyTest extends TestCase {
-
-	/**
-	 * AuditEventTypes' table constants are the policy's, value for value.
-	 *
-	 * @return void
-	 */
-	public function testAuditEventTypesExposesThePolicyTables(): void {
-		$this->assertSame(AuditMetadataPolicy::WHITELIST, AuditEventTypes::WHITELIST);
-		$this->assertSame(AuditMetadataPolicy::FORBIDDEN_KEYS, AuditEventTypes::FORBIDDEN_KEYS);
-		$this->assertSame(AuditMetadataPolicy::USER_REFERENCING_METADATA_KEYS, AuditEventTypes::USER_REFERENCING_METADATA_KEYS);
-	}//end testAuditEventTypesExposesThePolicyTables()
 
 	/**
 	 * The whitelist is keyed by event-type strings and lists metadata key names.

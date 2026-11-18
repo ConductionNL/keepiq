@@ -87,6 +87,9 @@ class KeyGeneratorController extends OCSController {
 	 *   kept for API clients only.
 	 *
 	 * @spec openspec/specs/key-generator/spec.md#requirement-configuration-fields
+	 *
+	 * @no-admin-idor-exempt no object is addressed. The parameters describe the
+	 * key to generate; nothing is loaded or stored.
 	 */
 	#[NoAdminRequired]
 	public function generate(

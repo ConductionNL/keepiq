@@ -76,13 +76,10 @@
 				@update:modelValue="tags = $event" />
 
 			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
-			<NcCheckboxRadioSwitch
+			<RepromptSwitch
 				:modelValue="reprompt"
 				:disabled="saving"
-				data-testid="secret-reprompt"
-				@update:modelValue="reprompt = $event">
-				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
-			</NcCheckboxRadioSwitch>
+				@update:modelValue="reprompt = $event" />
 
 			<!-- The shared destination picker (no "Vault root" option, by
 			     design): a secret always lives in a vault, so creating one
@@ -139,7 +136,6 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
-	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
@@ -152,6 +148,7 @@ import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
+import RepromptSwitch from '../components/RepromptSwitch.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -223,13 +220,13 @@ export default {
 	name: 'SecretCreateDialog',
 
 	components: {
-		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
 		AuthenticatorKeyField,
 		TypedFieldsForm,
 		DestinationSelect,
 		PolicyBlockedNote,
+		RepromptSwitch,
 		SecretPayloadFields,
 		SecretTagsField,
 		NcButton,
@@ -275,7 +272,10 @@ export default {
 			typeId: this.prefill?.typeId || null,
 			url: this.prefill?.url || '',
 			/** The extra website addresses (vault-website-addresses). */
-			additionalUrls: Array.isArray(this.prefill?.additionalUrls) ? [...this.prefill.additionalUrls] : [],
+			additionalUrls: Array.isArray(this.prefill?.additionalUrls)
+				? [...this.prefill.additionalUrls]
+				: [],
+
 			login: this.prefill?.login || '',
 			/** The authenticator key being entered on a login. */
 			totpInput: '',
@@ -468,12 +468,18 @@ export default {
 			const payload = parsePayload(source.key || '')
 			if (payload !== null && this.isCard) {
 				for (const field of CARD_FIELDS) {
-					this.card[field] = payload[field] === null || payload[field] === undefined ? '' : String(payload[field])
+					this.card[field] =
+						payload[field] === null || payload[field] === undefined
+							? ''
+							: String(payload[field])
 				}
 			}
 			if (payload !== null && this.isIdentity) {
 				for (const field of IDENTITY_FIELDS) {
-					this.identity[field] = payload[field] === null || payload[field] === undefined ? '' : String(payload[field])
+					this.identity[field] =
+						payload[field] === null || payload[field] === undefined
+							? ''
+							: String(payload[field])
 				}
 			}
 		},
@@ -540,7 +546,10 @@ export default {
 			const blob = this.additionalBlob(ssh)
 			return {
 				url: this.url || null,
-				...(this.additionalUrls.length > 0 ? { additionalUrls: [...this.additionalUrls] } : {}),
+				...(this.additionalUrls.length > 0
+					? { additionalUrls: [...this.additionalUrls] }
+					: {}),
+
 				login: this.login || '',
 				key: this.effectiveValue,
 				// Only when there ARE members: the store encrypts whatever it is

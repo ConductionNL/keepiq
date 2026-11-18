@@ -573,8 +573,10 @@ function existingMembers(target) {
  * @return {boolean}
  */
 function clashesWithMember(label, members) {
-	return RESERVED_MEMBER_NAMES.includes(label.toLowerCase())
+	return (
+		RESERVED_MEMBER_NAMES.includes(label.toLowerCase())
 		|| Object.hasOwn(members, label)
+	)
 }
 
 /**

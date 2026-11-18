@@ -331,7 +331,10 @@ function passkeyFromFido2(entry) {
  */
 function textsOf(source, names) {
 	return Object.fromEntries(
-		Object.entries(names).map(([target, from]) => [target, source?.[from] ?? '']),
+		Object.entries(names).map(([target, from]) => [
+			target,
+			source?.[from] ?? '',
+		]),
 	)
 }
 
@@ -371,7 +374,11 @@ function buildCardRow(item, sourceRow) {
  */
 function cardPayload(card) {
 	return {
-		...textsOf(card, { number: 'number', cvv: 'code', cardholder: 'cardholderName' }),
+		...textsOf(card, {
+			number: 'number',
+			cvv: 'code',
+			cardholder: 'cardholderName',
+		}),
 		expiry: cardExpiry(card),
 		pin: '',
 	}

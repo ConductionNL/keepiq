@@ -6,7 +6,7 @@
  * and read: every byte value round-trips, the text is standard padded
  * base64, and a metadata envelope written before stays readable.
  *
- * @spec openspec/specs/crypto-new-device-approval/spec.md
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
  */
 
 import { describe, expect, it } from 'vitest'
@@ -23,7 +23,9 @@ describe('device approval base64', () => {
 	})
 
 	it('reads it back byte for byte', () => {
-		expect(fromBase64(Buffer.from(ALL_BYTES).toString('base64'))).toEqual(ALL_BYTES)
+		expect(fromBase64(Buffer.from(ALL_BYTES).toString('base64'))).toEqual(
+			ALL_BYTES,
+		)
 		expect(fromBase64('/w==')).toEqual(Uint8Array.from([0xff]))
 		expect(fromBase64('')).toEqual(new Uint8Array(0))
 	})

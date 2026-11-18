@@ -97,7 +97,12 @@ describe('team folder fan-out (golden)', () => {
 		wire(store, state(15, ['bob', 'eve']), createAll)
 		const result = await store.runFanOut('tf-1')
 
-		expect(result).toEqual({ created: 30, cancelled: false, skipped: [], refused: [] })
+		expect(result).toEqual({
+			created: 30,
+			cancelled: false,
+			skipped: [],
+			refused: [],
+		})
 		expect(events.filter((e) => e[0] !== 'decrypt')).toEqual([
 			['post', URL_SHARES, 20, 0],
 			['regrant', 20, 0],
@@ -134,7 +139,10 @@ describe('team folder fan-out (golden)', () => {
 			created: shares.length - 1,
 			rows: [],
 			skipped: [
-				{ sourceSecretId: shares[1].sourceSecretId, reason: 'copy_fields_mismatch' },
+				{
+					sourceSecretId: shares[1].sourceSecretId,
+					reason: 'copy_fields_mismatch',
+				},
 				{ sourceSecretId: shares[0].sourceSecretId, reason: 'other' },
 			],
 		}))
@@ -216,7 +224,12 @@ describe('team folder fan-out (golden)', () => {
 		})
 		const result = await store.runFanOut('tf-1')
 
-		expect(result).toEqual({ created: 20, cancelled: true, skipped: [], refused: [] })
+		expect(result).toEqual({
+			created: 20,
+			cancelled: true,
+			skipped: [],
+			refused: [],
+		})
 		expect(axios.post).toHaveBeenCalledTimes(1)
 		expect(store.fanOut.done).toBe(20)
 		expect(store.fanOut.running).toBe(false)

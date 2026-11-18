@@ -1247,7 +1247,10 @@ export const useSecretStore = defineStore('secret', {
 				payload.reprompt = true
 			}
 			// Plain text like `url`, so search and the extension match (vault-website-addresses D1).
-			if (Array.isArray(data.additionalUrls) && data.additionalUrls.length > 0) {
+			if (
+				Array.isArray(data.additionalUrls)
+				&& data.additionalUrls.length > 0
+			) {
 				payload.additionalUrls = data.additionalUrls
 			}
 			await encryptOptionalFields(payload, { data, publicKey })

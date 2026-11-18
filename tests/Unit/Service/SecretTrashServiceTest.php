@@ -27,6 +27,7 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\AuditService;
@@ -271,10 +272,10 @@ class SecretTrashServiceTest extends TestCase {
 	 */
 	public function testEventTypesAreWhitelisted(): void {
 		foreach (['secret.trashed', 'secret.restored', 'secret.purged', 'secret.archived', 'secret.unarchived'] as $type) {
-			$this->assertTrue(AuditEventTypes::isKnown($type), $type);
+			$this->assertTrue(AuditMetadataPolicy::isKnown($type), $type);
 		}
 
-		$this->assertSame(['reason'], AuditEventTypes::WHITELIST[AuditEventTypes::SECRET_PURGED]);
+		$this->assertSame(['reason'], AuditMetadataPolicy::WHITELIST[AuditEventTypes::SECRET_PURGED]);
 	}//end testEventTypesAreWhitelisted()
 
 	/**

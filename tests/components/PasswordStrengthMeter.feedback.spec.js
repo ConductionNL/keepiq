@@ -67,7 +67,9 @@ describe('PasswordStrengthMeter feedback', () => {
 		expect(feedbackOf(wrapper)).toBe('')
 		const events = wrapper.emitted('strength-change')
 		expect(events[events.length - 1][0]).toEqual({ isValid: false, score: 0 })
-		expect(wrapper.find('.password-strength-meter__fill').attributes('style')).toContain('width: 0%')
+		expect(
+			wrapper.find('.password-strength-meter__fill').attributes('style'),
+		).toContain('width: 0%')
 	})
 
 	it('names the length floor while the password is shorter', async () => {
@@ -86,7 +88,9 @@ describe('PasswordStrengthMeter feedback', () => {
 		const wrapper = await meter({ password, minLength: 4 })
 
 		expect(feedbackOf(wrapper)).toBe(warning)
-		expect(wrapper.find('.password-strength-meter__feedback').classes()).toContain('password-strength-meter__feedback--danger')
+		expect(
+			wrapper.find('.password-strength-meter__feedback').classes(),
+		).toContain('password-strength-meter__feedback--danger')
 	})
 
 	it('labels a password without a warning by its score', async () => {
@@ -98,7 +102,9 @@ describe('PasswordStrengthMeter feedback', () => {
 		const wrapper = await meter({ password, minLength: 4 })
 
 		expect(feedbackOf(wrapper)).toBe('Very strong')
-		expect(wrapper.find('.password-strength-meter__fill').classes()).toContain('password-strength-meter__fill--success')
+		expect(wrapper.find('.password-strength-meter__fill').classes()).toContain(
+			'password-strength-meter__fill--success',
+		)
 	})
 
 	it('re-judges a changed password only after the 300ms debounce', async () => {

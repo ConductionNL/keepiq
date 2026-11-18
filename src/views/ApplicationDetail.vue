@@ -275,9 +275,7 @@ export default {
 				active: this.t('keepiq', 'Active'),
 				pending: this.t('keepiq', 'Pending'),
 			}
-			return Object.hasOwn(labels, status)
-				? labels[status]
-				: status || ''
+			return Object.hasOwn(labels, status) ? labels[status] : status || ''
 		},
 
 		/**

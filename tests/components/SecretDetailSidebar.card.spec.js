@@ -14,7 +14,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // The setup's `t` returns the key as is, and the sidebar binds the global `t` on import; the brand label needs its placeholder filled.
 vi.hoisted(() => {
-	globalThis.t = (_app, key, vars) => key.replace(/{(\w+)}/g, (match, name) => vars?.[name] ?? match)
+	globalThis.t = (_app, key, vars) =>
+		key.replace(/{(\w+)}/g, (match, name) => vars?.[name] ?? match)
 })
 
 import SecretDetailSidebar from '../../src/components/SecretDetailSidebar.vue'
@@ -48,7 +49,13 @@ async function mountCard(number) {
 		id: 's-1',
 		name: 'Card',
 		typeId: 'type-card',
-		key: JSON.stringify({ number, expiry: '', cvv: '', pin: '', cardholder: '' }),
+		key: JSON.stringify({
+			number,
+			expiry: '',
+			cvv: '',
+			pin: '',
+			cardholder: '',
+		}),
 		additionalFields: null,
 	})
 	const wrapper = mount(SecretDetailSidebar, {
@@ -60,7 +67,11 @@ async function mountCard(number) {
 	return wrapper
 }
 
-const numberRow = (wrapper) => wrapper.get('[data-testid="card-number-value"]').element.closest('.secret-detail__row')
+function numberRow(wrapper) {
+	return wrapper
+		.get('[data-testid="card-number-value"]')
+		.element.closest('.secret-detail__row')
+}
 
 describe('SecretDetailSidebar — card number', () => {
 	beforeEach(() => {
@@ -73,23 +84,31 @@ describe('SecretDetailSidebar — card number', () => {
 		const wrapper = await mountCard('378282246310005')
 
 		expect(numberRow(wrapper).textContent).toContain('Number · American Express')
-		expect(wrapper.get('[data-testid="card-number-value"]').text()).toBe('3782 •••••• •0005')
+		expect(wrapper.get('[data-testid="card-number-value"]').text()).toBe(
+			'3782 •••••• •0005',
+		)
 
 		wrapper.vm.cardRevealed.number = true
 		await wrapper.vm.$nextTick()
-		expect(wrapper.get('[data-testid="card-number-value"]').text()).toBe('3782 822463 10005')
+		expect(wrapper.get('[data-testid="card-number-value"]').text()).toBe(
+			'3782 822463 10005',
+		)
 	})
 
 	it('groups a 14-digit Diners Club number 4-6-4', async () => {
 		const wrapper = await mountCard('30569309025904')
 
-		expect(wrapper.get('[data-testid="card-number-value"]').text()).toBe('3056 •••••• 5904')
+		expect(wrapper.get('[data-testid="card-number-value"]').text()).toBe(
+			'3056 •••••• 5904',
+		)
 	})
 
 	it('shows no brand for an unknown prefix', async () => {
 		const wrapper = await mountCard('6999 1234 1234 1234')
 
 		expect(numberRow(wrapper).textContent).not.toContain('·')
-		expect(wrapper.get('[data-testid="card-number-value"]').text()).toBe('6999 •••• •••• 1234')
+		expect(wrapper.get('[data-testid="card-number-value"]').text()).toBe(
+			'6999 •••• •••• 1234',
+		)
 	})
 })
