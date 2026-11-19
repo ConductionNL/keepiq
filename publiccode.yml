@@ -2,8 +2,8 @@ publiccodeYmlVersion: "0.4"
 
 name: Keepiq
 url: "https://github.com/ConductionNL/keepiq"
-softwareVersion: "0.3.10"
-releaseDate: "2026-10-08"
+softwareVersion: "0.3.12"
+releaseDate: "2026-11-16"
 developmentStatus: beta
 softwareType: addon
 
