@@ -164,9 +164,14 @@ export function fieldTexts(payload: Record<string, unknown>): Record<string, str
 	}))
 	const kinded = Object.entries(payload).filter((entry): entry is [string, KindedField] => isKinded(entry[1]) && Object.hasOwn(KIND_SCHEMAS, entry[1].kind))
 	if (kinded.length === 0) return texts
-	const stored = parseObject(texts[SCHEMA_MEMBER]) ?? {}
-	const schemas = { ...Object.fromEntries(kinded.map(([name, field]) => [name, KIND_SCHEMAS[field.kind]])), ...stored }
-	return { ...texts, [SCHEMA_MEMBER]: JSON.stringify(schemas) }
+	const kindSchemas = Object.fromEntries(kinded.map(([name, field]) => [name, KIND_SCHEMAS[field.kind]]))
+	const original = Object.hasOwn(texts, SCHEMA_MEMBER) ? texts[SCHEMA_MEMBER] : undefined
+	const stored = original === undefined ? {} : schemaMap(original)
+	if (original === undefined || stored !== null) return { ...texts, [SCHEMA_MEMBER]: JSON.stringify({ ...kindSchemas, ...stored }) }
+	// A `@schema` holding no schema map is a field someone named so: it moves to RENAMED_SCHEMA_FIELD, unless that name is taken, as memberFields keeps it.
+	const fields = Object.fromEntries(Object.entries(texts).filter(([name]) => name !== SCHEMA_MEMBER))
+	const kept = Object.hasOwn(fields, RENAMED_SCHEMA_FIELD) ? fields : { ...fields, [RENAMED_SCHEMA_FIELD]: original }
+	return { ...kept, [SCHEMA_MEMBER]: JSON.stringify(kindSchemas) }
 }
 
 function members<K extends string>(raw: string, keys: readonly K[]): Record<K, string> {
@@ -202,6 +207,11 @@ function memberFields(additionalFields: Record<string, string>, schemas: Record<
 		if (name !== SCHEMA_MEMBER) return [[name, value]]
 		return keepsMisnamed ? [[RENAMED_SCHEMA_FIELD, value]] : []
 	})
+}
+
+/** The fields an item's detail shows, in order: every member but a schema map, a misnamed `@schema` as the edit form shows it. */
+export function shownFields(additionalFields: Record<string, string>): Array<[string, string]> {
+	return memberFields(additionalFields, storedSchemas(additionalFields))
 }
 
 /** The first field named Notes, in any case, is the notes. */

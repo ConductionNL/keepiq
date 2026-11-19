@@ -107,6 +107,7 @@
 				v-if="typedFields.length > 0"
 				:fields="typedFields"
 				:values="typedValues"
+				:schemas="storedSchemas"
 				:missing="typedMissing"
 				:disabled="saving || loading"
 				@update:values="onTypedValues" />
@@ -194,7 +195,7 @@ import {
 import { sameUrls } from '../utils/additionalUrls.js'
 import { leavesOut } from '../utils/builtinTypeFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
-import { cleanSchema, valuesFit } from '../utils/fieldSchema.js'
+import { cleanSchema, schemasOf, valuesFit } from '../utils/fieldSchema.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
 import { mergeTypedValues, splitTypedValues } from '../utils/typedFields.js'
@@ -280,6 +281,17 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The schemas stored on the secret being edited, so a type's own
+		 * field they hide is masked in the form.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		storedSchemas() {
+			return schemasOf(this.original?.additionalFields)
+		},
+
 		/**
 		 * This secret's type as translated display text. Replaces the type
 		 * SELECT this dialog used to render — see the template comment on why

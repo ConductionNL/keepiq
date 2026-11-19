@@ -200,6 +200,17 @@ describe('fromItem and diffDraft', () => {
 		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ 'Card PIN': '4711', '@schema': { 'Card PIN': { type: 'string', hidden: true } } })
 	})
 
+	it('keeps a field someone named @schema next to a legacy { value, kind } field', () => {
+		const texts = fieldTexts({ PIN: { value: '4711', kind: 'hidden' }, '@schema': 'my value' })
+		expect(texts).toEqual({ PIN: '4711', '@schema (imported)': 'my value', '@schema': JSON.stringify({ PIN: { type: 'string', hidden: true } }) })
+		const form = fromItem(item({ additionalFields: texts }), 'login')
+		expect(form.fields.map((field) => [field.name, field.value])).toEqual([['PIN', '4711'], ['@schema (imported)', 'my value']])
+		// A taken imported name keeps its own value, as the edit form does.
+		expect(fieldTexts({ PIN: { value: '1', kind: 'hidden' }, '@schema': 'theirs', '@schema (imported)': 'mine' })['@schema (imported)']).toBe('mine')
+		// A schema map is merged with the kinds, its own entries winning.
+		expect(JSON.parse(fieldTexts({ PIN: { value: '1', kind: 'hidden' }, '@schema': { PIN: { type: 'string' } } })['@schema'] ?? '')).toEqual({ PIN: { type: 'string' } })
+	})
+
 	it('keeps a field someone named @schema, under the name the web app gives it', () => {
 		const fetched = item({ additionalFields: { pin: '1234', '@schema': 'my value' } })
 		const form = fromItem(fetched, 'login')

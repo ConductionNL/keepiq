@@ -45,11 +45,36 @@ as a minimum and maximum length, a pattern, or a minimum and maximum number. The
 **Hidden** switch works on every type, so a JSON object or a URL with a token in it
 can stay hidden too.
 
-A pattern is checked on every keystroke, so it must stay quick to check: it may have
-at most three optional or repeated parts (`?`, `*`, `+`, `{1,3}`, or a group with
-`|`), two when it does not start with `^`, and no lookbehind. A fixed count such as
-`{4}` does not count. Advanced says so when a pattern breaks this rule, and a value
-is checked against a pattern only up to 256 characters.
+A pattern is checked on every keystroke, in your browser and on the server, so it
+must stay quick to check and read the same in both. The browser and the server
+refuse the same patterns:
+
+- **More than three optional or repeated parts.** Each `?`, `*`, `+`, `{2,}` or
+  `{1,3}` counts, and so does each group with a `|` in it, or the whole pattern when
+  it has one outside every group. A fixed count such as `{4}` or `{2,2}` does not
+  count. One part fewer is allowed when the pattern does not start with `^`, or when
+  it has a `|` outside every group, since that undoes the `^`.
+- **A repeated group that holds a repeat or a `|`**, at any depth, such as `(a+)+`,
+  `(a|aa)+` or `(a+){10}`. A `?` after such a group is fine: `(a+)?`.
+- **A long pattern**: more than 500 characters, or more than 4096 with each counted
+  group written out as often as it repeats (`(?:abcd){500}` is fine,
+  `(?:abcd){600}` is not), or a count above 65535.
+- **Constructs the browser and the server read differently**: a lookbehind
+  (`(?<=…)`, `(?<!…)`), inline flags such as `(?i)`, atomic groups `(?>…)`,
+  comments `(?#…)`, possessive quantifiers such as `a++`, back-references such as
+  `\1`, `\A`, `\z` and `\Z`, POSIX classes such as `[[:alpha:]]`, an empty class
+  `[]` or `[^]`, a lone `{`, `}` or `]`, and outside a class any escape other than
+  `\d \D \w \W \s \S \b \B \t \n \r \f`, `\xHH` and an escaped
+  `^ $ \ . * + ? ( ) [ ] { } | /`.
+- **A group name used twice, or longer than 32 characters**, as in
+  `(?<a>x)|(?<a>y)`.
+- **Nothing to repeat**: a quantifier after `^`, `$`, `\b`, a `|`, a lookahead,
+  another quantifier or the start of a group.
+
+Plain groups, `(?:…)`, named groups `(?<name>…)`, lookaheads `(?=…)` and `(?!…)`,
+and lazy quantifiers such as `+?` are fine. Advanced says so when a pattern breaks
+one of these rules, and a value is checked against a pattern only up to 256
+characters.
 
 A value that does not fit its field is refused when you save, with the reason. An
 import keeps such a value but drops the field's kind, so it shows as plain text.

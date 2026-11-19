@@ -468,9 +468,10 @@ class SecretRequestService implements SecretRequestServiceInterface {
 			throw new InvalidArgumentException(message: 'userId is required');
 		}
 
-		$this->requireRequestableSecret(secretId: $secretId, userId: $userId);
+		$target  = $this->requireRequestableSecret(secretId: $secretId, userId: $userId);
 		$shape   = new FieldSchemaShape();
 		$schemas = $shape->normalize(schemas: $requestedFields->schemas, requestedFields: $names);
+		$this->refuseSchemasForAnApplication(secret: $target, schemas: $schemas);
 
 		$entity = new SecretRequest();
 		$entity->setId(Uuid::uuid4()->toString());
@@ -515,17 +516,17 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @param string $secretId The Secret the request would write to
 	 * @param string $userId The requester
 	 *
-	 * @return void
+	 * @return Secret|null The Secret, or null when there is none to check
 	 *
 	 * @throws InvalidArgumentException With code 403 for another user's Secret or for a type that cannot be requested.
 	 *
 	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
-	private function requireRequestableSecret(string $secretId, string $userId): void {
+	private function requireRequestableSecret(string $secretId, string $userId): ?Secret {
 		try {
 			$secret = $this->secretMapper->findById($secretId);
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
-			return;
+			return null;
 		}
 
 		if ($secret->getOwnerType() === 'user' && $secret->getOwnerId() !== $userId) {
@@ -533,7 +534,37 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		}
 
 		$this->policy->requireRequestableType(typeId: $secret->getTypeId());
+
+		return $secret;
 	}//end requireRequestableSecret()
+
+	/**
+	 * Refuse field schemas on a request for an application's Secret. A fill
+	 * writes an application's extra-field blob as the fill page sealed it,
+	 * to the application's key: the server cannot add the schemas to it, and
+	 * no browser of the owner merges a held-back blob as it does for a user.
+	 * A schema stored with the request would be dropped at fill time, so a
+	 * hidden or pattern field would reach the application as plain text.
+	 *
+	 * @param Secret|null $secret The Secret the request would write to
+	 * @param array<string,mixed> $schemas The request's checked field schemas, by name
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException With code 400 for field schemas on an application's Secret
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	private function refuseSchemasForAnApplication(?Secret $secret, array $schemas): void {
+		if ($secret === null || $secret->getOwnerType() !== 'application' || $schemas === []) {
+			return;
+		}
+
+		throw new InvalidArgumentException(
+			message: 'A request for an application\'s secret cannot carry field schemas',
+			code: 400
+		);
+	}//end refuseSchemasForAnApplication()
 
 	/**
 	 * Create a FRESH request in the requester's own vault, creating the Secret.

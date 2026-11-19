@@ -35,4 +35,18 @@ class ExtraFieldMaskTest {
             item.extraFields.map { it.first }.filter(item::masksExtra),
         )
     }
+
+    @Test
+    fun showsAMisnamedSchemaMemberUnderItsImportedName() {
+        assertEquals(
+            listOf("pin" to "1", ItemCodec.RENAMED_SCHEMA_FIELD to "my value"),
+            item("""{"pin":"1","@schema":"my value"}""").extraFields,
+        )
+        // A schema map is no field; a taken imported name keeps its own value.
+        assertEquals(listOf("pin" to "1"), item("""{"pin":"1","@schema":{"pin":{"type":"string"}}}""").extraFields)
+        assertEquals(
+            listOf(ItemCodec.RENAMED_SCHEMA_FIELD to "mine"),
+            item("""{"@schema":"theirs","@schema (imported)":"mine"}""").extraFields,
+        )
+    }
 }

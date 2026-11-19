@@ -147,6 +147,40 @@ describe('SecretCreateDialog — clone', () => {
 		expect(wrapper.emitted('saved')[0][0]).toEqual({ id: 'new-id' })
 	})
 
+	it('keeps the stored schema that hides a type field of the source', async () => {
+		useSecretTypeStore().types.push({
+			id: 'server',
+			name: 'server-access',
+			label: 'Server access',
+			fields: [{ key: 'host', label: 'Host', kind: 'text', required: false }],
+		})
+		const wrapper = await mountDialog({
+			prefill: {
+				typeId: 'server',
+				name: 'DB',
+				key: 'pw',
+				folderId: 'folder-ops',
+				additionalFields: {
+					Host: 'db-01',
+					team: 'platform',
+					'@schema': { Host: { type: 'string', hidden: true } },
+				},
+			},
+		})
+		vi.spyOn(wrapper.vm, 'breachBlocked').mockResolvedValue(false)
+		const create = vi
+			.spyOn(useSecretStore(), 'createSecret')
+			.mockResolvedValue({ id: 'new-id' })
+		vi.spyOn(useSecretStore(), 'setTags').mockResolvedValue()
+
+		await wrapper.vm.submit()
+
+		expect(create).toHaveBeenCalledTimes(1)
+		const blob = create.mock.calls[0][0].additionalFields
+		expect(blob.Host).toBe('db-01')
+		expect(blob['@schema'].Host.hidden).toBe(true)
+	})
+
 	it('seeds a card from its decrypted payload', async () => {
 		const card = {
 			number: '4111111111111111',

@@ -114,33 +114,33 @@ final class PatternAtoms {
 	}//end classLength()
 
 	/**
-	 * The opening of a group: its length and whether it is a lookahead, or null for a construct only PCRE reads,
-	 * such as inline flags, an atomic group or a comment, and for a lookbehind, which PCRE refuses when its length
-	 * varies but JavaScript runs.
+	 * The opening of a group: its length, whether it is a lookahead and its name, or null for a construct only PCRE
+	 * reads, such as inline flags, an atomic group or a comment, for a lookbehind, which PCRE refuses when its length
+	 * varies but JavaScript runs, and for a name over 32 characters: PCRE refuses one over 128.
 	 *
 	 * @param string $pattern The pattern
 	 * @param int    $index   Where the `(` is
 	 *
-	 * @return array{length:int,look:bool}|null
+	 * @return array{length:int,look:bool,name:?string}|null
 	 *
 	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function groupOpening(string $pattern, int $index): ?array {
 		if (($pattern[$index + 1] ?? '') !== '?') {
-			return ['length' => 1, 'look' => false];
+			return ['length' => 1, 'look' => false, 'name' => null];
 		}
 
 		$rest = substr($pattern, $index + 2);
 		if (str_starts_with($rest, ':') === true) {
-			return ['length' => 3, 'look' => false];
+			return ['length' => 3, 'look' => false, 'name' => null];
 		}
 
 		if (preg_match('/^[=!]/', $rest) === 1) {
-			return ['length' => 3, 'look' => true];
+			return ['length' => 3, 'look' => true, 'name' => null];
 		}
 
-		if (preg_match('/^<[A-Za-z_][A-Za-z0-9_]*>/', $rest, $match) === 1) {
-			return ['length' => 2 + strlen($match[0]), 'look' => false];
+		if (preg_match('/^<([A-Za-z_][A-Za-z0-9_]{0,31})>/', $rest, $match) === 1) {
+			return ['length' => 2 + strlen($match[0]), 'look' => false, 'name' => $match[1]];
 		}
 
 		return null;

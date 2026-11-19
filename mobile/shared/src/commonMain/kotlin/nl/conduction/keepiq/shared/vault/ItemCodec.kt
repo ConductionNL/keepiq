@@ -114,14 +114,26 @@ class DecryptedItem(
     val typedValues: List<Pair<TypeField, String>>
         get() = (type?.fields ?: emptyList()).map { f -> f to (additionalFields?.get(f.label)?.asText() ?: "") }
 
-    /** Additional fields that are neither notes, typed fields nor the web app's field schemas. */
+    /**
+     * Additional fields that are neither notes, typed fields nor the web app's
+     * field schemas. A `@schema` member that holds no schema map is a field of
+     * its own, shown as [ItemCodec.RENAMED_SCHEMA_FIELD] unless that name is
+     * taken, as the web app (fieldsOf) and [ItemCodec.draft] show it.
+     */
     val extraFields: List<Pair<String, String>>
         get() {
+            val fields = additionalFields ?: return emptyList()
             val typed = type?.fields?.map { it.label }?.toSet() ?: emptySet()
             val notes = notesKey()
-            return additionalFields?.entries
-                ?.filter { (k, _) -> k != notes && k !in typed && k != ItemCodec.SCHEMA_FIELD }
-                ?.map { (k, v) -> k to v.asText() } ?: emptyList()
+            return fields.entries
+                .filter { (k, _) -> k != notes && k !in typed }
+                .mapNotNull { (k, v) ->
+                    when {
+                        k != ItemCodec.SCHEMA_FIELD -> k to v.asText()
+                        ItemCodec.isSchemaMap(v) || ItemCodec.RENAMED_SCHEMA_FIELD in fields -> null
+                        else -> ItemCodec.RENAMED_SCHEMA_FIELD to v.asText()
+                    }
+                }
         }
 
     /**
@@ -274,6 +286,9 @@ object ItemCodec {
 
     /** `@schema` as a schema map, an object of objects; null for anything else, which is a field a person named so. */
     private fun schemaMap(stored: JsonElement?): JsonObject? = (stored as? JsonObject)?.takeIf { map -> map.values.all { it is JsonObject } }
+
+    /** Whether a `@schema` member holds a schema map, as the web app's isSchemaMap reads it. */
+    fun isSchemaMap(stored: JsonElement?): Boolean = schemaMap(stored) != null
 
     /**
      * Opens an item. A blocked item is not decrypted. A use-only copy shows

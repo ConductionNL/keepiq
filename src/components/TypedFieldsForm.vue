@@ -5,7 +5,8 @@
   The fields an administrator defined on an item type (admin-18), rendered
   by kind: text, hidden (a password field), url and email, and the extra
   fields of a built-in type, which add multiline (a text area that keeps the
-  line breaks of a key or certificate, masked until shown unless public). The parent keeps
+  line breaks of a key or certificate, masked until shown unless public). A
+  schema stored on the secret that hides a field masks it as well. The parent keeps
   the values by field key and stores them in the encrypted additional-fields
   blob; this component only edits them.
 
@@ -15,7 +16,7 @@
 	<div class="typed-fields" data-testid="typed-fields">
 		<template v-for="field in fields" :key="field.key">
 			<NcPasswordField
-				v-if="field.kind === 'hidden'"
+				v-if="isMasked(field) && field.kind !== 'multiline'"
 				v-bind="fieldProps(field)"
 				:label="fieldLabel(field)"
 				@update:modelValue="set(field.key, $event)" />
@@ -24,7 +25,7 @@
 				v-else-if="field.kind === 'multiline'"
 				v-bind="fieldProps(field)"
 				:label="fieldLabel(field)"
-				:public="field.public === true"
+				:public="field.public === true && !isMasked(field)"
 				rows="4"
 				@update:modelValue="set(field.key, $event)" />
 			<NcTextField
@@ -42,7 +43,7 @@
 import { translate as t } from '@nextcloud/l10n'
 import { NcPasswordField, NcTextField } from '@nextcloud/vue'
 import MaskedTextArea from './MaskedTextArea.vue'
-import { inputTypeFor, schemaError } from '../utils/fieldSchema.js'
+import { inputTypeFor, isHiddenSchema, schemaError } from '../utils/fieldSchema.js'
 
 export default {
 	name: 'TypedFieldsForm',
@@ -73,6 +74,15 @@ export default {
 		disabled: {
 			type: Boolean,
 			default: false,
+		},
+
+		/**
+		 * The schemas stored on the secret, by field label (schemasOf). One
+		 * that hides a type's own field masks it here, as the sidebar does.
+		 */
+		schemas: {
+			type: Object,
+			default: () => ({}),
 		},
 	},
 
@@ -150,6 +160,20 @@ export default {
 			return field.schema
 				? schemaError(this.values[field.key], field.schema)
 				: ''
+		},
+
+		/**
+		 * Whether a field is masked: its kind is hidden, or the schema stored
+		 * for it on the secret hides it.
+		 *
+		 * @param {{kind: string, label: string}} field The field.
+		 * @return {boolean}
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		isMasked(field) {
+			return (
+				field.kind === 'hidden' || isHiddenSchema(this.schemas[field.label])
+			)
 		},
 
 		/**

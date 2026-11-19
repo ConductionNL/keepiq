@@ -248,6 +248,49 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testCreateRefusesASchemaForAFieldNotRequested()
 
 	/**
+	 * A request for an application's secret is refused when it names a field
+	 * schema: the fill writes the application's blob as sealed, so the schema
+	 * could never reach the secret. Without one the request is stored.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testARequestForAnApplicationsSecretRefusesFieldSchemas(): void {
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('application');
+		$secret->setOwnerId('app-1');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$stored = $this->service->create(
+			secretId: 'sec-1',
+			encryptionSuiteId: 'suite-1',
+			requestedFields: new RequestedFields(names: ['key', 'PIN']),
+			isReRequest: false,
+			expiresAt: null,
+			userId: 'alice',
+		);
+		$this->assertSame('sec-1', $stored->getSecretId());
+
+		try {
+			$this->service->create(
+				secretId: 'sec-1',
+				encryptionSuiteId: 'suite-1',
+				requestedFields: new RequestedFields(names: ['key', 'PIN'], schemas: ['PIN' => ['type' => 'string', 'hidden' => true]]),
+				isReRequest: false,
+				expiresAt: null,
+				userId: 'alice',
+			);
+			$this->fail('A field schema on an application\'s secret was accepted');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame("A request for an application's secret cannot carry field schemas", $e->getMessage());
+			$this->assertSame(400, $e->getCode());
+		}
+	}//end testARequestForAnApplicationsSecretRefusesFieldSchemas()
+
+	/**
 	 * Test approve flips a pending request to fulfilled and sets the timestamp.
 	 *
 	 * @return void

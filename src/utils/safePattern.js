@@ -34,6 +34,13 @@ const MAX_DEGREE = 3
  */
 const MAX_WRITTEN_OUT = 4096
 
+/**
+ * A group name both dialects read: up to 32 characters. PCRE refuses one
+ * longer than 128, and a name used twice, which JavaScript accepts in
+ * separate alternatives.
+ */
+const GROUP_NAME = /^<([A-Za-z_][A-Za-z0-9_]{0,31})>/
+
 /** Escaped characters that read alike in both dialects, outside a class. */
 const ESCAPES = new Set('dDwWsSbBtnrf^$\\.*+?()[]{}|/')
 
@@ -132,6 +139,7 @@ function scan(p) {
 		stack: [{ inner: false, look: false, alternation: false, choices: 0 }],
 		last: null,
 		writtenOut: [...p].length,
+		names: new Set(),
 	}
 	let i = 0
 	while (i < p.length) {
@@ -264,28 +272,31 @@ function literal(c, i) {
 }
 
 /**
- * Open a group: plain, non-capturing, named, or a lookahead.
+ * Open a group: plain, non-capturing, named, or a lookahead. A name over 32
+ * characters or one used before is refused.
  *
- * @param {{p: string, stack: Array<object>}} scanner The scan so far; its open groups are changed in place.
+ * @param {{p: string, stack: Array<object>, names: Set<string>}} scanner The scan so far; its open groups and names are changed in place.
  * @param {number} i Where the `(` is.
  * @return {{next: number, last: null}|null}
  */
-function openGroup({ p, stack }, i) {
+function openGroup({ p, stack, names }, i) {
 	let length = 1
 	let look = false
 	if (p[i + 1] === '?') {
 		const rest = p.slice(i + 2)
-		const named = /^<[A-Za-z_][A-Za-z0-9_]*>/.exec(rest)
+		const named = GROUP_NAME.exec(rest)
 		if (rest.startsWith(':')) {
 			length = 3
 		} else if (/^[=!]/.test(rest)) {
 			look = true
 			length = 3
-		} else if (named) {
+		} else if (named && !names.has(named[1])) {
+			names.add(named[1])
 			length = 2 + named[0].length
 		} else {
 			// Inline flags, atomic groups, comments and the like are PCRE only;
-			// PCRE refuses a lookbehind of variable length, which JavaScript runs.
+			// PCRE refuses a lookbehind of variable length, which JavaScript runs,
+			// and a group name GROUP_NAME does not allow.
 			return null
 		}
 	}
