@@ -157,43 +157,73 @@ export function duplicateGroups(rows) {
  * The additional fields of the kept secret with the others' folded in. The
  * kept secret wins on a clash; a different value under a taken name is kept
  * under that name with a number suffix; an identical value is not repeated.
+ * Each field's schema goes with it to the name it lands under, and a value
+ * that is hidden on either side stays hidden.
  *
- * @param {object|null} kept The kept secret's additional fields (name → value).
- * @param {Array<object|null>} others The other secrets' additional fields, in order.
- * @return {object} The folded fields.
+ * @param {{fields: object|null, schemas?: object}} kept The kept secret's fields (name → value) and schemas.
+ * @param {Array<{fields: object|null, schemas?: object}>} others The other secrets' fields and schemas, in order.
+ * @return {{fields: object, schemas: object}} The folded fields and their schemas.
  * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
  */
 export function foldFields(kept, others) {
-	const out = { ...(isFieldMap(kept) ? kept : {}) }
-	for (const fields of others || []) {
-		if (!isFieldMap(fields)) {
+	const fields = { ...(isFieldMap(kept?.fields) ? kept.fields : {}) }
+	const schemas = { ...(isFieldMap(kept?.schemas) ? kept.schemas : {}) }
+	for (const other of others || []) {
+		if (!isFieldMap(other?.fields)) {
 			continue
 		}
-		for (const [name, value] of Object.entries(fields)) {
-			if (holdsAlready(out, name, value)) {
+		const theirs = isFieldMap(other.schemas) ? other.schemas : {}
+		for (const [name, value] of Object.entries(other.fields)) {
+			const held = nameHolding(fields, name, value)
+			if (held !== null) {
+				keepHidden(schemas, held, theirs[name])
 				continue
 			}
-			out[freeName(out, name)] = value
+			const free = freeName(fields, name)
+			fields[free] = value
+			if (theirs[name]) {
+				schemas[free] = theirs[name]
+			} else {
+				delete schemas[free]
+			}
 		}
 	}
-	return out
+	return { fields, schemas }
 }
 
 /**
- * Whether the name, or one of its numbered variants, already holds the value.
+ * The name, or one of its numbered variants, that already holds the value, or null.
  *
  * @param {object} fields The fields so far.
  * @param {string} name The field name.
- * @param {*} value The value.
- * @return {boolean}
+ * @param {string|number|boolean|object|null} value The value.
+ * @return {string|null}
  */
-function holdsAlready(fields, name, value) {
-	return Object.entries(fields).some(
+function nameHolding(fields, name, value) {
+	const match = Object.entries(fields).find(
 		([n, v]) =>
 			v === value
 			&& (n === name
 				|| (/^ \(\d+\)$/.test(n.slice(name.length)) && n.startsWith(name))),
 	)
+	return match ? match[0] : null
+}
+
+/**
+ * Mark a kept field hidden when the same value is hidden on the other side.
+ *
+ * @param {object} schemas The schemas so far, changed in place.
+ * @param {string} name The kept field's name.
+ * @param {object|undefined} theirs The other side's schema for the value.
+ * @return {void}
+ */
+function keepHidden(schemas, name, theirs) {
+	const hidden = (schema) =>
+		schema?.hidden === true || schema?.format === 'password'
+	if (hidden(theirs) && !hidden(schemas[name])) {
+		schemas[name] = { type: 'string', ...schemas[name], hidden: true }
+	}
 }
 
 /**

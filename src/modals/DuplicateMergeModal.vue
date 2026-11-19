@@ -103,6 +103,7 @@ import {
 	mergeGroup,
 	peopleLosingAccess,
 } from '../health/merge.js'
+import { fieldsOf } from '../utils/fieldSchema.js'
 
 export default {
 	name: 'DuplicateMergeModal',
@@ -155,7 +156,9 @@ export default {
 		 * @spec openspec/specs/vault-duplicates/spec.md#requirement-merge-a-duplicate-group
 		 */
 		fieldNames() {
-			return this.kept ? Object.keys(mergedFields(this.kept, this.others)) : []
+			return this.kept
+				? Object.keys(fieldsOf(mergedFields(this.kept, this.others)))
+				: []
 		},
 	},
 

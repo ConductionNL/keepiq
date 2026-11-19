@@ -21,6 +21,7 @@
  *
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
  * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 
 import {
@@ -41,11 +42,12 @@ import {
 	authenticatorKeyFromParts,
 } from '../totp/authenticatorKey.js'
 import { parseOtpauth } from '../totp/totp.js'
+import { fieldValueOf, mergeBlobs } from '../utils/fieldSchema.js'
 import {
-	fieldEntry,
-	objectToMembers,
-	RESERVED_MEMBER_NAMES,
-} from '../utils/additionalFields.js'
+	customFieldsCredential,
+	readCustomFields,
+	withoutClashes,
+} from './cxfCustomFields.js'
 
 /** The CXF version this module targets (Proposed Standard, Aug 2025 line). */
 export const CXF_VERSION = { major: 1, minor: 0 }
@@ -285,19 +287,6 @@ function wifiFields(credential, title) {
 	}
 }
 
-/** The CXF field types an imported custom field keeps as its kind. */
-const CXF_FIELD_KINDS = {
-	'concealed-string': 'hidden',
-	boolean: 'boolean',
-}
-
-/** The CXF field type each custom field kind is exported as. */
-const KIND_FIELD_TYPES = {
-	text: 'string',
-	hidden: 'concealed-string',
-	boolean: 'boolean',
-}
-
 /** The row fields of each supported CXF credential type. */
 const CREDENTIAL_FIELDS = new Map([
 	['basic-auth', loginFields],
@@ -359,7 +348,7 @@ function itemToRows(item, folder, firstRow) {
 		rows: [],
 		seeds: [],
 		passkeys: [],
-		customFields: [],
+		custom: [],
 	}
 	for (const [index, credential] of item.credentials.entries()) {
 		readCredential(ctx, { credential, sourceRow: firstRow + index })
@@ -367,7 +356,7 @@ function itemToRows(item, folder, firstRow) {
 	if (
 		ctx.seeds.length === 0
 		&& ctx.passkeys.length === 0
-		&& ctx.customFields.length === 0
+		&& ctx.custom.length === 0
 	) {
 		return ctx.rows
 	}
@@ -392,8 +381,8 @@ function rejectEntry(ctx, entry) {
 }
 
 /**
- * Read one credential of the item: a TOTP seed and a passkey wait for the
- * row they go on, anything else becomes a row of its own.
+ * Read one credential of the item: a TOTP seed, a passkey and custom fields
+ * wait for the row they go on, anything else becomes a row of its own.
  *
  * @param {object} ctx The item being read (itemToRows).
  * @param {{credential: object, sourceRow: number}} entry The credential and its source row.
@@ -403,10 +392,13 @@ function readCredential(ctx, entry) {
 	const type = String(entry.credential?.type ?? '')
 	if (type === 'totp') {
 		readTotp(ctx, entry)
-	} else if (type === 'custom-fields') {
-		ctx.customFields.push(entry)
 	} else if (type === 'passkey') {
 		readPasskey(ctx, entry)
+	} else if (type === 'custom-fields') {
+		ctx.custom.push({
+			blob: readCustomFields(entry.credential),
+			sourceRow: entry.sourceRow,
+		})
 	} else {
 		ctx.rows.push(
 			credentialToRow(entry.credential, ctx.item, ctx.folder, entry.sourceRow),
@@ -482,7 +474,7 @@ function extrasTarget(ctx) {
 				type: 'login',
 			},
 			Math.min(
-				...[...ctx.seeds, ...ctx.passkeys, ...ctx.customFields].map(
+				...[...ctx.seeds, ...ctx.passkeys, ...ctx.custom].map(
 					(entry) => entry.sourceRow,
 				),
 			),
@@ -493,14 +485,22 @@ function extrasTarget(ctx) {
 }
 
 /**
- * Put the item's TOTP seeds and passkeys on its target row, rejecting a
- * seed or passkey that row cannot take.
+ * Put the item's TOTP seeds, passkeys and custom fields on its target row,
+ * rejecting a seed or passkey that row cannot take. Custom fields join the
+ * row's own, each with its schema.
  *
  * @param {object} ctx The item being read (itemToRows).
  * @return {void}
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 function attachExtras(ctx) {
 	const target = extrasTarget(ctx)
+	for (const { blob } of ctx.custom) {
+		target.additionalFields = mergeBlobs(
+			target.additionalFields || {},
+			withoutClashes(target.additionalFields, blob),
+		)
+	}
 	for (const { seed, sourceRow } of ctx.seeds) {
 		const reason = attachTotp(target, seed)
 		if (reason !== null) {
@@ -516,79 +516,6 @@ function attachExtras(ctx) {
 	)) {
 		rejectEntry(ctx, { sourceRow, reason: SECOND_PASSKEY_REASON })
 	}
-	for (const entry of ctx.customFields) {
-		attachCustomFields(ctx, target, entry)
-	}
-}
-
-/**
- * Put the fields of a CXF `custom-fields` credential on the item's row as
- * additional fields, keeping each field's kind: a `concealed-string` comes
- * back hidden, a `boolean` as yes or no, anything else as text. A field
- * named after a built-in field (`key`, `login`, `url`) or already on the
- * row is rejected with a reason rather than overwriting it.
- *
- * @param {object} ctx The item being read (itemToRows).
- * @param {object} target The row the fields go on.
- * @param {{credential: object, sourceRow: number}} entry The credential and its source row.
- * @return {void}
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
- */
-function attachCustomFields(ctx, target, entry) {
-	const fields = Array.isArray(entry.credential.fields)
-		? entry.credential.fields
-		: []
-	const members = existingMembers(target)
-	for (const [index, field] of fields.entries()) {
-		const label = fieldValue(field?.label).trim() || `Field ${index + 1}`
-		if (clashesWithMember(label, members)) {
-			rejectEntry(ctx, {
-				sourceRow: entry.sourceRow,
-				reason: `CXF custom field "${label}" clashes with a field the secret already has`,
-			})
-			continue
-		}
-		members[label] = customFieldEntry(field)
-	}
-	target.additionalFields = members
-}
-
-/**
- * A copy of the additional fields already on a row, or an empty object.
- *
- * @param {object} target The row.
- * @return {object}
- */
-function existingMembers(target) {
-	return target.additionalFields && typeof target.additionalFields === 'object'
-		? { ...target.additionalFields }
-		: {}
-}
-
-/**
- * Whether a custom field label names a built-in field or one already on the row.
- *
- * @param {string} label The field label.
- * @param {object} members The row's additional fields so far.
- * @return {boolean}
- */
-function clashesWithMember(label, members) {
-	return (
-		RESERVED_MEMBER_NAMES.includes(label.toLowerCase())
-		|| Object.hasOwn(members, label)
-	)
-}
-
-/**
- * The additional-field entry of one CXF custom field, keeping its kind.
- *
- * @param {object} field The CXF field.
- * @return {object}
- */
-function customFieldEntry(field) {
-	const kind = CXF_FIELD_KINDS[String(field?.fieldType ?? '')] ?? 'text'
-	const value = fieldValue(field)
-	return fieldEntry(kind === 'boolean' ? String(value === 'true') : value, kind)
 }
 
 /**
@@ -853,47 +780,7 @@ function memberText(row, name) {
 	if (!fields || typeof fields !== 'object') {
 		return ''
 	}
-	const member = objectToMembers(fields).find((entry) => entry.name === name)
-	return member ? member.value : ''
-}
-
-/** The additional fields a type's own CXF entity already carries. */
-const ENTITY_MEMBERS = {
-	ssh_key: [SSH_PUBLIC_KEY_MEMBER, SSH_FINGERPRINT_MEMBER],
-}
-
-/**
- * The CXF `custom-fields` credential of a row's additional fields, with
- * each field's kind: hidden as `concealed-string`, yes or no as `boolean`,
- * text as `string`. Fields the type's own entity carries are left out.
- *
- * @param {object} row The serialized secret.
- * @param {string} typeName The resolved Keepiq type name.
- * @return {Array<object>} [] or the one credential.
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
- */
-function customFieldCredentials(row, typeName) {
-	const fields = row.additionalFields
-	if (!fields || typeof fields !== 'object') {
-		return []
-	}
-	const own = ENTITY_MEMBERS[typeName] ?? []
-	const members = objectToMembers(fields).filter(
-		(member) => !own.includes(member.name),
-	)
-	if (members.length === 0) {
-		return []
-	}
-	return [
-		{
-			type: 'custom-fields',
-			fields: members.map((member) => ({
-				fieldType: KIND_FIELD_TYPES[member.kind],
-				label: member.name,
-				value: member.value,
-			})),
-		},
-	]
+	return fieldValueOf(fields[name])
 }
 
 /**
@@ -963,6 +850,7 @@ const TYPE_NAMES = new Set([
  *   name map, used when a row's `type` carries an id rather than a name.
  * @param {string} [options.accountUserName] The exporting account's user name.
  * @return {{document: object, unmapped: Array<string>, itemCount: number}}
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
 export function buildCxfDocument(serializedSecrets, options = {}) {
 	const unmapped = []
@@ -977,13 +865,21 @@ export function buildCxfDocument(serializedSecrets, options = {}) {
 		}
 
 		const itemId = `item-${index + 1}`
+		// The SSH key entity carries the public key itself.
+		const custom = customFieldsCredential(
+			row.additionalFields,
+			credential.type === 'ssh-key'
+				? [SSH_PUBLIC_KEY_MEMBER, SSH_FINGERPRINT_MEMBER]
+				: [],
+			typeName,
+		)
 		items.push({
 			id: itemId,
 			title: row.name ?? '',
 			credentials: [
 				credential,
 				...valueFieldCredentials(row, unmapped),
-				...customFieldCredentials(row, typeName),
+				...(custom === null ? [] : [custom]),
 			],
 		})
 		addToCollection(collections, { folder: row.folder, itemId })

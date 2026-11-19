@@ -4,8 +4,9 @@
  *
  * Hidden custom fields and the SSH key item (vault-custom-field-kinds-and-ssh-key).
  *
- * A fresh account stores a login with a hidden field: the detail sidebar
- * shows dots until Show, hides it again, and Copy puts the real value on the
+ * A fresh account stores a login with a hidden field the way an unstable
+ * 0.3.14 build saved one, as `{ value, kind }`: the detail sidebar masks it
+ * until Show, masks it again on Hide, and Copy puts the real value on the
  * clipboard. Then it creates an SSH Key item through the New secret dialog
  * with Generate key pair, and the detail sidebar shows the public key and its
  * fingerprint with a Copy action.
@@ -72,8 +73,8 @@ test.describe('custom field kinds and the SSH key item', () => {
 		await admin?.dispose()
 	})
 
-	test('a hidden field is masked until Show, and Copy copies the value', async () => {
-		// @e2e vault-custom-fields::an-owner-hides-a-recovery-code
+	test('a hidden field an earlier build saved is masked until Show, and Copy copies the value', async () => {
+		// @e2e vault-custom-fields::a-hidden-field-from-an-earlier-build
 		const id = await withStore<string>(
 			page,
 			'secret',
@@ -92,27 +93,33 @@ test.describe('custom field kinds and the SSH key item', () => {
 
 		await gotoVaultRoute(page, `secrets/${id}`)
 		const sidebar = page.getByTestId('secret-detail-sidebar')
-		const field = sidebar.getByTestId('secret-detail-field-Recovery code')
-		await expect(field).toHaveText('••••••••', { timeout: 30_000 })
+		const field = sidebar.locator('.secret-detail__extra-item', {
+			hasText: 'Recovery code',
+		})
+		const input = field.locator('input')
+		await expect(input).toHaveAttribute('type', 'password', { timeout: 30_000 })
+		await expect(input).not.toHaveValue(HIDDEN)
 		await expect(sidebar).not.toContainText(HIDDEN)
-		await expect(sidebar.getByTestId('secret-detail-field-Note')).toHaveText(
-			'plain',
-		)
+		await expect(
+			sidebar.locator('.secret-detail__extra-item', { hasText: 'Note' }),
+		).toContainText('plain')
 
-		const toggle = sidebar.getByTestId(
-			'secret-detail-field-reveal-Recovery code',
-		)
-		await toggle.evaluate((el: HTMLElement) => el.click())
-		await expect(field).toHaveText(HIDDEN)
-		await toggle.evaluate((el: HTMLElement) => el.click())
-		await expect(field).toHaveText('••••••••')
+		await field
+			.getByRole('button', { name: 'Show' })
+			.evaluate((el: HTMLElement) => el.click())
+		await expect(input).toHaveValue(HIDDEN)
+		await field
+			.getByRole('button', { name: 'Hide' })
+			.evaluate((el: HTMLElement) => el.click())
+		await expect(input).toHaveAttribute('type', 'password')
+		await expect(input).not.toHaveValue(HIDDEN)
 
 		await page.evaluate(() => navigator.clipboard.writeText(''))
-		await sidebar
-			.getByTestId('secret-detail-field-copy-Recovery code')
+		await field
+			.getByRole('button', { name: 'Copy value' })
 			.evaluate((el: HTMLElement) => el.click())
 		await expect.poll(clipboard, { timeout: 15_000 }).toBe(HIDDEN)
-		await expect(field).toHaveText('••••••••')
+		await expect(input).not.toHaveValue(HIDDEN)
 	})
 
 	test('Generate key pair stores an SSH key and the sidebar copies its public key', async () => {

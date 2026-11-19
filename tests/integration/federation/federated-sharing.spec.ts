@@ -332,7 +332,8 @@ test('share with a user of a partner instance, update, and revoke', async ({
 		{ timeout: 60_000 },
 	)
 	const dialog = alice.getByRole('dialog', { name: 'Edit secret' })
-	await dialog.getByRole('textbox', { name: 'Secret value' }).fill(NEW_PASSWORD)
+	// "Production Database" is a database, whose value field is its Password.
+	await dialog.getByRole('textbox', { name: 'Password' }).fill(NEW_PASSWORD)
 	await dialog.getByRole('button', { name: 'Save' }).click()
 	const refusal = await (await incomplete).json()
 	expect(refusal.error).toBe('incomplete')

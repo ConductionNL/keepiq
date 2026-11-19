@@ -102,4 +102,50 @@ describe('TypedFieldsForm (golden)', () => {
 		await mail.trigger('input')
 		expect(wrapper.emitted('update:values')).toMatchSnapshot()
 	})
+
+	it('masks a field whose stored schema hides it, as the sidebar does', () => {
+		const wrapper = mount(TypedFieldsForm, {
+			props: {
+				fields: [
+					...FIELDS,
+					{
+						key: 'cert',
+						label: 'Certificate',
+						kind: 'multiline',
+						public: true,
+					},
+				],
+				values: { host: 'db1', cert: 'PEM' },
+				schemas: {
+					Host: { type: 'string', hidden: true },
+					Certificate: { type: 'string', format: 'password' },
+					Site: { type: 'string' },
+				},
+			},
+			global: {
+				stubs: {
+					NcPasswordField: recorder('NcPasswordField'),
+					NcTextField: recorder('NcTextField'),
+					MaskedTextArea: {
+						name: 'MaskedTextArea',
+						props: ['public'],
+						template: '<textarea />',
+					},
+				},
+			},
+		})
+		const byId = Object.fromEntries(
+			rendered(wrapper).map((field) => [
+				field.attrs['data-testid'],
+				field.component,
+			]),
+		)
+		expect(byId['typed-field-host']).toBe('NcPasswordField')
+		expect(byId['typed-field-pin']).toBe('NcPasswordField')
+		expect(byId['typed-field-site']).toBe('NcTextField')
+		expect(byId['typed-field-mail']).toBe('NcTextField')
+		// A multi-line field stays a text area, masked although its type says public.
+		const cert = wrapper.findComponent({ name: 'MaskedTextArea' })
+		expect(cert.props('public')).toBe(false)
+	})
 })

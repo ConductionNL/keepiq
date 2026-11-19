@@ -26,6 +26,7 @@ import { dedupeKey, folderSegments } from '../../import/model.js'
 import { getParser } from '../../import/parserRegistry.js'
 import { evaluateScore, fetchPolicy } from '../../policy/policy.js'
 import { withDerivedFingerprint } from '../../ssh/sshKey.js'
+import { fitImportedBlob } from '../../utils/fieldSchema.js'
 import { BLOB_FIELDS } from '../../utils/valueFields.js'
 import { useSecretStore } from './secret.js'
 import { useSecretTypeStore } from './secretType.js'
@@ -165,6 +166,8 @@ export async function resolveRowTypes(rows, typeStore) {
 
 /**
  * The additional fields of a row as the JSON to encrypt, or '' when there are none.
+ * A field whose value does not fit its schema keeps the value and loses the
+ * schema, so it reads as text.
  *
  * @param {object|string|null|undefined} value The row's additionalFields.
  * @return {string} The JSON, or ''.
@@ -173,7 +176,8 @@ function additionalFieldsJson(value) {
 	if (value == null) {
 		return ''
 	}
-	const json = typeof value === 'string' ? value : JSON.stringify(value)
+	const json =
+		typeof value === 'string' ? value : JSON.stringify(fitImportedBlob(value))
 	return json && json !== '{}' && json !== 'null' ? json : ''
 }
 
@@ -698,6 +702,7 @@ export const useImportStore = defineStore('import', {
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		async encryptRow(row, publicKey, asCopy, typeId = null) {
 			const name = asCopy ? `${row.name} (imported)` : row.name

@@ -9,6 +9,8 @@
  * @spec openspec/specs/secret-version-history/spec.md#requirement-compare-two-versions-side-by-side
  */
 
+import { fieldsOf } from './fieldSchema.js'
+
 /**
  * The built-in fields compared, in display order. `masked` fields stay hidden
  * until the owner reveals them.
@@ -34,7 +36,8 @@ function plain(value) {
 }
 
 /**
- * The additional fields of a state as a flat name → value object.
+ * The additional fields of a state as a flat name → value object, without
+ * the reserved schema member.
  *
  * @param {object|null} state The decrypted state.
  * @return {object}
@@ -42,7 +45,7 @@ function plain(value) {
 function additionalOf(state) {
 	const fields = state && state.additionalFields
 	return fields && typeof fields === 'object' && !Array.isArray(fields)
-		? fields
+		? fieldsOf(fields)
 		: {}
 }
 

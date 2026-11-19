@@ -3,8 +3,9 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   The value part of the create and edit secret dialogs: the card or identity
-  fields for those types (card-identity-items 3.1), otherwise the secret
-  value with its key generator. The dialog owns the values; this component
+  fields for those types (card-identity-items 3.1), a text area for a value
+  that spans several lines, otherwise the secret value with its key
+  generator. The dialog owns the values; this component
   only edits them through update events.
 
   @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
@@ -37,14 +38,27 @@
 		:fingerprint="sshKey.fingerprint"
 		:privateKeyError="sshErrors.privateKey"
 		:publicKeyError="sshErrors.publicKey"
+		:required="valueRequired"
 		:disabled="disabled"
 		@update:privateKey="$emit('update:value', $event)"
 		@update:keys="$emit('update:sshKey', $event)" />
+	<!-- A certificate or note is several lines: a password input would
+	     drop the line breaks of a PEM block. A secret one starts masked. -->
+	<MaskedTextArea
+		v-else-if="valueMultiline"
+		:modelValue="value"
+		:label="valueLabel"
+		:public="valuePublic"
+		:required="valueRequired"
+		rows="6"
+		data-testid="secret-value-multiline"
+		@update:modelValue="$emit('update:value', $event)" />
 	<div v-else class="secret-form__value-row">
 		<NcPasswordField
 			:modelValue="value"
 			class="secret-form__value-field"
 			:label="valueLabel"
+			:required="valueRequired"
 			@update:modelValue="$emit('update:value', $event)" />
 		<NcButton
 			variant="tertiary-no-background"
@@ -69,6 +83,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcPasswordField, NcTextField } from '@nextcloud/vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import KeyGeneratorModal from '../dialogs/KeyGeneratorModal.vue'
+import MaskedTextArea from './MaskedTextArea.vue'
 import SshKeyFields from './SshKeyFields.vue'
 import { cardNumberHint, securityCodeHint } from '../cardIdentity/cardIdentity.js'
 
@@ -78,6 +93,7 @@ export default {
 	components: {
 		Dice5,
 		KeyGeneratorModal,
+		MaskedTextArea,
 		NcButton,
 		NcPasswordField,
 		NcTextField,
@@ -143,6 +159,24 @@ export default {
 		valueLabel: {
 			type: String,
 			required: true,
+		},
+
+		/** Whether the value field is marked as required. */
+		valueRequired: {
+			type: Boolean,
+			default: false,
+		},
+
+		/** Whether the value spans several lines, such as a certificate. */
+		valueMultiline: {
+			type: Boolean,
+			default: false,
+		},
+
+		/** Whether the value is public, as a certificate is, so never masked. */
+		valuePublic: {
+			type: Boolean,
+			default: false,
 		},
 
 		/** Whether the key generator dialog is open. */

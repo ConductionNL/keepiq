@@ -123,4 +123,17 @@ describe('compareStates', () => {
 		)
 		expect(anyChanged(rows)).toBe(false)
 	})
+
+	// openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	it('does not list the schema member as a field', () => {
+		const schemas = { '@schema': { a: { type: 'string', hidden: true } } }
+		const rows = compareStates(
+			{ additionalFields: { a: '1', ...schemas } },
+			{ additionalFields: { a: '2' } },
+		)
+
+		expect(rows.filter((row) => row.additional).map((row) => row.field)).toEqual(
+			['a'],
+		)
+	})
 })

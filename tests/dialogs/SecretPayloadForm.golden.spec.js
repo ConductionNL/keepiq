@@ -116,6 +116,12 @@ const stubs = {
 	},
 	NcTextField: field('text'),
 	NcPasswordField: field('password'),
+	NcTextArea: {
+		props: ['modelValue', 'label', 'required', 'disabled'],
+		emits: ['update:modelValue'],
+		template:
+			'<textarea :aria-label="label" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+	},
 	NcNoteCard: {
 		props: ['type'],
 		template: '<div class="note" :data-type="type"><slot /></div>',
@@ -138,7 +144,7 @@ const stubs = {
 		template: '<div class="typed" />',
 	},
 	AdditionalFieldsEditor: {
-		props: ['members', 'disabled'],
+		props: ['members', 'disabled', 'reservedNames'],
 		template: '<div class="additional" />',
 	},
 	SecretTagsField: {
@@ -270,7 +276,8 @@ describe('create dialog value part (golden)', () => {
 		return wrapper
 	}
 
-	for (const typeId of ['type-login', 'type-note']) {
+	// A note is several lines: it is a text area without the generator.
+	for (const typeId of ['type-login']) {
 		it(`${typeId}: typed value, generator, save`, async () => {
 			const wrapper = await create(typeId)
 			const empty = { html: formHtml(wrapper), state: formState(wrapper) }
@@ -298,6 +305,23 @@ describe('create dialog value part (golden)', () => {
 			})
 		})
 	}
+
+	it('type-note: a text area, no generator, save', async () => {
+		const wrapper = await create('type-note')
+		const empty = { html: formHtml(wrapper), state: formState(wrapper) }
+		await type(
+			wrapper,
+			'textarea[data-testid="secret-value-multiline"]',
+			'line one\nline two',
+		)
+		const typed = formState(wrapper)
+		await wrapper.vm.submit()
+		check('create type-note', {
+			empty,
+			typed,
+			created: mask(useSecretStore().createSecret.mock.calls),
+		})
+	})
 
 	it('card: fields, checksum hint, save', async () => {
 		const wrapper = await create('type-card')
