@@ -94,6 +94,23 @@ internal actual object Primitives {
         )
     }
 
+    actual fun rsaSha256Verify(spki: ByteArray, data: ByteArray, signature: ByteArray, pss: Boolean): Boolean = try {
+        if (pss) {
+            // The Apple provider takes no salt size: SecKey's PSS uses the digest's, 32 bytes for SHA-256.
+            algorithm(RSA.PSS).publicKeyDecoder(SHA256)
+                .decodeFromByteArrayBlocking(RSA.PublicKey.Format.DER, spki)
+                .signatureVerifier()
+                .tryVerifySignatureBlocking(data, signature)
+        } else {
+            algorithm(RSA.PKCS1).publicKeyDecoder(SHA256)
+                .decodeFromByteArrayBlocking(RSA.PublicKey.Format.DER, spki)
+                .signatureVerifier()
+                .tryVerifySignatureBlocking(data, signature)
+        }
+    } catch (e: Exception) {
+        false
+    }
+
     private fun aesKey(key: ByteArray) =
         algorithm(AES.GCM).keyDecoder().decodeFromByteArrayBlocking(AES.Key.Format.RAW, key)
 

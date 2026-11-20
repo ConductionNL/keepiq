@@ -595,13 +595,28 @@ class ScreensTest {
 
     private val vault = FakeVault()
 
-    private fun showEdit(id: String) {
+    private fun showEdit(id: String, onSaved: (String?) -> Unit = {}) {
         compose.setContent {
             MaterialTheme {
-                ItemEditScreen(vault.session, id, null, null, GeneratorSettings(), Modifier, onSaved = {}, onCancel = {})
+                ItemEditScreen(vault.session, id, null, null, GeneratorSettings(), Modifier, onSaved = onSaved, onCancel = {})
             }
         }
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Edit item").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun anUnreachablePartnerOffersSaveWithoutThem() {
+        vault.put("l1", FakeVault.row("l1", "Mail", "1", key = "geheim", login = "alice"))
+        vault.unreachablePartner = true
+        val saved = mutableListOf<String?>()
+        showEdit("l1") { saved += it }
+        compose.onNodeWithText("User name").performTextInput("2")
+        compose.onNodeWithText("Save").performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("bob@partner.example", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        assertTrue("nothing was saved yet", saved.isEmpty())
+        compose.onNodeWithText("Save without them").performScrollTo().performClick()
+        compose.waitUntil(5_000) { saved.isNotEmpty() }
+        assertEquals(listOf<String?>("l1"), saved)
     }
 
     @Test
@@ -646,14 +661,27 @@ class ScreensTest {
         compose.onNode(hasText("Cancel") and hasAnyAncestor(isDialog())).performClick()
         compose.onNodeWithText("Delete the passkey for alice-work?").assertDoesNotExist()
         compose.waitForIdle()
-        assertEquals("Cancel deletes nothing", 0, vault.count("PUT", "/api/v1/secrets/s4"))
+        assertEquals("Cancel deletes nothing", 0, vault.count("PUT", "/api/v1/secrets/s4/share-save"))
 
         compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
-        assertEquals("the dialog asks first", 0, vault.count("PUT", "/api/v1/secrets/s4"))
+        assertEquals("the dialog asks first", 0, vault.count("PUT", "/api/v1/secrets/s4/share-save"))
         compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
-        compose.waitUntil(5_000) { vault.count("PUT", "/api/v1/secrets/s4") > 0 }
+        compose.waitUntil(5_000) { vault.count("PUT", "/api/v1/secrets/s4/share-save") > 0 }
         compose.waitForIdle()
-        assertEquals(1, vault.count("PUT", "/api/v1/secrets/s4"))
+        // Through share-save, so every copy of the login loses it too.
+        assertEquals(1, vault.count("PUT", "/api/v1/secrets/s4/share-save"))
+        assertEquals(0, vault.count("PUT", "/api/v1/secrets/s4"))
+    }
+
+    @Test
+    fun aCopySharedToViewOnlyOffersNoEditAndNoPasskeyDelete() {
+        vault.viewOnly += "s4"
+        vault.put("s4", mailWithTwoPasskeys)
+        showDetail("s4")
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Shared with you to view only.", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Edit").assertDoesNotExist()
+        compose.onNodeWithText("Move").assertExists()
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").assertDoesNotExist()
     }
 
     @Test

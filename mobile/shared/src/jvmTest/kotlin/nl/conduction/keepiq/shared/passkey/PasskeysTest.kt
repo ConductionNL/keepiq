@@ -55,6 +55,9 @@ import kotlin.test.assertTrue
 class PasskeysTest {
     private companion object {
         const val UPDATED_AT = "2026-10-05T10:00:00+00:00"
+
+        /** A write to login l1: read fresh, its write-context, then the share-save. */
+        val WRITE_L1 = listOf("GET" to "/api/v1/secrets/l1", "GET" to "/api/v1/secrets/l1/write-context", "PUT" to "/api/v1/secrets/l1/share-save")
     }
 
     private val privatePem = Vectors.envelope.str("privateKeyPem")
@@ -68,7 +71,12 @@ class PasskeysTest {
 
     /** What GET /api/v1/secrets/l1 answers: the login as the server holds it now. */
     private var freshLogin = "{}"
+
+    /** Each write's body; for a share-save, its `patch`, which is the body a plain PUT sent. */
     private val bodies = mutableListOf<JsonObject>()
+
+    /** Each share-save's whole body. */
+    private val shareSaves = mutableListOf<JsonObject>()
     private var offline = false
     private var capabilities = """["match","totp-field","passkeys-field"]"""
     private var pairCalls = 0
@@ -89,7 +97,15 @@ class PasskeysTest {
             return@MockEngine respond("""{"ok":true,"apiVersion":1,"capabilities":$capabilities}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
         requests += request.method.value to path
-        (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
+        (request.body as? TextContent)?.let {
+            val sent = Json.parseToJsonElement(it.text).jsonObject
+            if (path.endsWith("/share-save")) {
+                shareSaves += sent
+                sent["patch"]?.let { patch -> bodies += patch.jsonObject }
+            } else {
+                bodies += sent
+            }
+        }
         if (offline) throw java.io.IOException("no network")
         if (request.method == HttpMethod.Put && refusePut) {
             return@MockEngine respond("""{"error":"read_only","message":"You can only read this item."}""", HttpStatusCode.Forbidden, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -97,14 +113,20 @@ class PasskeysTest {
         if (request.method == HttpMethod.Put && staleWrites > 0) {
             staleWrites--
             afterStale()
-            return@MockEngine respond("""{"message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
+            return@MockEngine respond("""{"error":"stale","message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
         }
         if (path == "/api/v1/secrets/l1" && request.method == HttpMethod.Get) {
             freshStatus?.let { return@MockEngine respond("""{"message":"x"}""", it, headersOf(HttpHeaders.ContentType, "application/json")) }
         }
         val body = when {
             path == "/api/v1/secret-types" -> """[{"id":"7","name":"login","fields":[]},{"id":"9","name":"passkey","fields":[]}]"""
+            // Every item is the user's own, with no copies.
+            path.endsWith("/write-context") -> {
+                val id = path.removePrefix("/api/v1/secrets/").removeSuffix("/write-context")
+                """{"sourceSecretId":"$id","effectiveGrade":"owner","ownerCertificate":null,"sourceUpdatedAt":"$UPDATED_AT"}"""
+            }
             path == "/api/v1/secrets/l1" && request.method == HttpMethod.Get -> freshLogin
+            path == "/api/v1/secrets/p1" && request.method == HttpMethod.Get -> """{"id":"p1","name":"Example","typeId":"9","updatedAt":"$UPDATED_AT"}"""
             request.method == HttpMethod.Post -> """{"id":"new"}"""
             else -> """{"id":"p1"}"""
         }
@@ -146,9 +168,9 @@ class PasskeysTest {
         val assertion = Passkeys.sign(api, keys, choice, ClientData.hashed(hash), "login.example.nl")
         assertEquals(5L, assertion.counter)
         assertTrue(WebAuthn.verifyHash(spki, assertion.authenticatorData, hash, assertion.signature))
-        assertEquals(listOf("GET" to "/api/v1/secrets/l1", "PUT" to "/api/v1/secrets/l1"), requests)
-        assertEquals(setOf("passkeys", "baseUpdatedAt"), bodies.single().keys)
-        assertEquals(UPDATED_AT, bodies.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(WRITE_L1, requests)
+        assertEquals(setOf("passkeys"), bodies.single().keys)
+        assertEquals(UPDATED_AT, shareSaves.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf(5L), sentPasskeys().map { it.counter })
     }
 
@@ -162,8 +184,8 @@ class PasskeysTest {
         val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
         val assertion = Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl")
         assertEquals(13L, assertion.counter)
-        assertEquals(listOf("GET", "PUT", "GET", "PUT"), requests.map { it.first })
-        assertEquals("2026-10-05T11:00:00+00:00", bodies.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(WRITE_L1 + WRITE_L1, requests)
+        assertEquals("2026-10-05T11:00:00+00:00", shareSaves.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf(13L), LoginPasskeys.credentials(dec(bodies.last()["passkeys"]!!.jsonPrimitive.content)).map { it.counter })
     }
 
@@ -175,7 +197,7 @@ class PasskeysTest {
         val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
         val e = assertFailsWith<KeepiqApiException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
         assertEquals(409, e.status)
-        assertEquals(listOf("GET", "PUT", "GET", "PUT"), requests.map { it.first })
+        assertEquals(WRITE_L1 + WRITE_L1, requests)
     }
 
     @Test
@@ -291,7 +313,7 @@ class PasskeysTest {
         assertEquals(5L, assertion.counter)
         assertContentEquals(Encoding.uint32BigEndian(5), assertion.authenticatorData.copyOfRange(33, 37))
         assertTrue(WebAuthn.verifyHash(spki, assertion.authenticatorData, hash, assertion.signature))
-        assertEquals(listOf("PUT" to "/api/v1/secrets/p1"), requests)
+        assertEquals(listOf("GET" to "/api/v1/secrets/p1", "GET" to "/api/v1/secrets/p1/write-context", "PUT" to "/api/v1/secrets/p1/share-save"), requests)
         assertEquals(setOf("key"), bodies.single().keys)
         assertEquals(5L, PasskeyCredential.parse(dec(bodies.single()["key"]!!.jsonPrimitive.content)) { "" }!!.counter)
     }
@@ -315,9 +337,9 @@ class PasskeysTest {
         freshLoginWith(existing)
         val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", " Alice@Example.nl")))
         val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
-        assertEquals(listOf("GET" to "/api/v1/secrets/l1", "PUT" to "/api/v1/secrets/l1"), requests)
-        assertEquals(setOf("passkeys", "baseUpdatedAt"), bodies.single().keys)
-        assertEquals(UPDATED_AT, bodies.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(WRITE_L1, requests)
+        assertEquals(setOf("passkeys"), bodies.single().keys)
+        assertEquals(UPDATED_AT, shareSaves.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf(existing, r.record), sentPasskeys())
     }
 
@@ -330,8 +352,8 @@ class PasskeysTest {
         afterStale = { freshLoginWith(existing, addedElsewhere, updatedAt = "2026-10-05T11:00:00+00:00") }
         val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
         val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
-        assertEquals(listOf("GET", "PUT", "GET", "PUT"), requests.map { it.first })
-        assertEquals("2026-10-05T11:00:00+00:00", bodies.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(WRITE_L1 + WRITE_L1, requests)
+        assertEquals("2026-10-05T11:00:00+00:00", shareSaves.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf(existing, addedElsewhere, r.record), LoginPasskeys.credentials(dec(bodies.last()["passkeys"]!!.jsonPrimitive.content)))
     }
 

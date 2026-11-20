@@ -556,17 +556,44 @@ function createSecret(r) {
 	return [201, row]
 }
 
+/** A plain PUT's body, or a share-save's patch, written to the row. */
+function applyPatch(row, b) {
+	for (const field of ['name', 'url', 'folderId', 'key', 'login', 'additionalFields']) if (field in b) row[field] = b[field]
+	for (const field of ['totp', 'passkeys']) if (field in b) row[field] = b[field] || null
+	row.updatedAt = now()
+	if ('key' in b) row.keyUpdatedAt = row.updatedAt
+}
+
+/**
+ * GET /secrets/{id}/write-context and PUT /secrets/{id}/share-save: the
+ * recorded vault shares nothing, so every row is its own source with no
+ * copies, and a share-save writes the patch in one round.
+ */
+function shareAnswer(r, id, action) {
+	const row = r.vault.get(id)
+	if (!row) return [404, { error: 'not found' }]
+	if (action === 'write-context' && r.method === 'GET') {
+		return [200, { sourceSecretId: id, effectiveGrade: 'owner', ownerCertificate: null, sourceUpdatedAt: row.updatedAt }]
+	}
+	if (action === 'share-save' && r.method === 'PUT') {
+		applyPatch(row, r.json().patch || {})
+		return [200, {
+			secret: row,
+			sourceUpdatedAt: row.updatedAt,
+			copies: { written: 0, skipped: 0 },
+			federated: { written: 0, suspended: 0, notified: 0, queued: 0, ownerOnly: false },
+		}]
+	}
+	return null
+}
+
 /** GET, PUT or DELETE /secrets/{id}; null for another method. */
 function secretAnswer(r, id) {
 	const row = r.vault.get(id)
 	if (!row) return [404, { error: 'not found' }]
 	if (r.method === 'GET') return [200, { ...row, tags: r.f.secretTags || [] }]
 	if (r.method === 'PUT') {
-		const b = r.json()
-		for (const field of ['name', 'url', 'folderId', 'key', 'login', 'additionalFields']) if (field in b) row[field] = b[field]
-		for (const field of ['totp', 'passkeys']) if (field in b) row[field] = b[field] || null
-		row.updatedAt = now()
-		if ('key' in b) row.keyUpdatedAt = row.updatedAt
+		applyPatch(row, r.json())
 		return [200, row]
 	}
 	if (r.method === 'DELETE') {
@@ -622,6 +649,11 @@ function vaultAnswer(f, vault, sends, method, path, url, body) {
 	const secret = path.match(new RegExp(`^${API}/secrets/([^/]+)$`))
 	if (secret) {
 		const answer = secretAnswer(r, decodeURIComponent(secret[1]))
+		if (answer !== null) return answer
+	}
+	const shared = path.match(new RegExp(`^${API}/secrets/([^/]+)/(write-context|share-save)$`))
+	if (shared) {
+		const answer = shareAnswer(r, decodeURIComponent(shared[1]), shared[2])
 		if (answer !== null) return answer
 	}
 	if (method === 'POST' && path === `${API}/sends`) return createSend(r)

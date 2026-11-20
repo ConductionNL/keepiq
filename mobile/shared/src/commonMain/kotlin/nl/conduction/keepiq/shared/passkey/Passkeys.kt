@@ -20,8 +20,11 @@ import nl.conduction.keepiq.shared.vault.ItemCodec
 import nl.conduction.keepiq.shared.vault.ItemParts
 import nl.conduction.keepiq.shared.vault.LoginGoneException
 import nl.conduction.keepiq.shared.vault.LoginPasskeys
+import nl.conduction.keepiq.shared.vault.MobileSession
 import nl.conduction.keepiq.shared.vault.PasskeysWrite
 import nl.conduction.keepiq.shared.vault.ServerUnreachableException
+import nl.conduction.keepiq.shared.vault.ShareSave
+import nl.conduction.keepiq.shared.vault.ShareSaveException
 import nl.conduction.keepiq.shared.vault.VaultKeys
 import nl.conduction.keepiq.shared.vault.VaultRow
 
@@ -84,14 +87,19 @@ object Passkeys {
         }
     }
 
-    /** Signs for [rpId] with [choice] and writes a non-zero counter back to its item. */
+    /**
+     * Signs for [rpId] with [choice] and writes a non-zero counter back to its
+     * item, through share-save on the item as read now, so every copy gets it.
+     */
     suspend fun sign(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientData: ClientData, rpId: String): WebAuthn.Assertion {
         if (choice.onLogin) return signOnLogin(api, keys, choice, clientData, rpId)
         val assertion = WebAuthn.getAssertion(clientData, rpId, choice.credential)
         if (assertion.counter > 0 && assertion.counter != choice.credential.counter) {
-            val updated = choice.credential.copy(counter = assertion.counter)
-            val parts = ItemParts(choice.name, rpId, null, "", updated.toJson(), null)
-            api.updateSecret(choice.itemId, ItemCodec.updateBody(parts, setOf("key"), keys))
+            val updated = choice.credential.copy(counter = assertion.counter).toJson()
+            val fresh = api.getSecret(choice.itemId)?.let { VaultRow.from(it) } ?: throw PasskeyGoneException()
+            val parts = ItemParts(choice.name, rpId, null, "", updated, null)
+            ShareSave(api, keys, MobileSession::nowMillis)
+                .saveFresh(fresh, ItemCodec.updateBody(parts, setOf("key"), keys), mapOf("key" to updated), vouchEmpty = true)
         }
         return assertion
     }
@@ -181,6 +189,10 @@ object Passkeys {
             false
         } catch (e: KeepiqApiException) {
             if (e.status != 404) throw e
+            false
+        } catch (e: ShareSaveException) {
+            // A login shared with the user to view only takes no passkey: a new login is made.
+            if (e.code != ShareSave.VIEW_ONLY) throw e
             false
         }
         if (!appended) {

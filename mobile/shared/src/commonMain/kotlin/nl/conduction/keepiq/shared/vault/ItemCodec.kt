@@ -532,6 +532,17 @@ object ItemCodec {
     }
 
     /**
+     * The value fields of [updateBody] as typed, for the copies share-save
+     * seals to each holder: null where the body sends null, `""` for a removed key.
+     */
+    fun plainValues(parts: ItemParts, changed: Set<String>): Values = buildMap {
+        if ("key" in changed) put("key", parts.key)
+        if ("login" in changed) put("login", parts.login.ifEmpty { null })
+        if ("additionalFields" in changed) put("additionalFields", parts.additionalFields?.toString())
+        if ("totp" in changed) put("totp", parts.totp ?: "")
+    }
+
+    /**
      * The body that sets a login's passkeys: `''` when none remain, never an
      * encrypted empty string. With [baseUpdatedAt], the `updatedAt` of the
      * row the change was made on, the server refuses the write when the

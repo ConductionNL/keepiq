@@ -44,6 +44,34 @@ The apps MUST create, edit and move items and folders, and move items to the tra
 - **WHEN** the server refuses an edit
 - **THEN** the app shows the refusal and keeps the old value
 
+### Requirement: A value change reaches every copy
+A change of an item's `key`, `login`, `additionalFields`, `totp` or `passkeys` MUST go through `PUT /api/v1/secrets/{id}/share-save`, as the web app and the extension save it: the row, every copy sealed to its holder's certificate, and every partner share sealed to a verified partner certificate, in one transaction or not at all (keepiq#1300). This holds for the edit form, an autofill password update and a passkey write. A change of only the name, address or folder MAY stay a plain `PUT /api/v1/secrets/{id}`. A copy whose holder has no write grade, as `GET /api/v1/secrets/{id}/write-context` grades it, MUST NOT offer Edit, and a value change of it MUST be refused before anything is sent.
+
+#### Scenario: Edit the password of a source with copies
+- **GIVEN** a login the user owns, shared with two users
+- **WHEN** the user changes its password on the phone
+- **THEN** the save names both copies, each encrypted to its holder, and both users read the new password
+
+#### Scenario: Edit as a team folder editor
+- **GIVEN** a copy in a team folder where the user has the write grade
+- **WHEN** the user changes its password on the phone
+- **THEN** the save goes to the source on the version the form opened, and every copy gets the new password
+
+#### Scenario: A copy shared to view only
+- **GIVEN** a copy the user may only view
+- **WHEN** the user opens it
+- **THEN** the item shows no Edit, and says it is shared to view only
+
+#### Scenario: A partner can't be reached
+- **GIVEN** a login shared with a partner organisation that does not answer
+- **WHEN** the user saves a new password
+- **THEN** nothing is saved, the partner is named, and Save without them saves it for everyone else and pauses the partner share
+
+#### Scenario: An autofill update of a login shared with a partner
+- **GIVEN** a login shared with a partner organisation
+- **WHEN** the system autofill offers to update its password
+- **THEN** the update is refused, since the partner gets the whole value and no form showed it, and the web app or the edit form makes the change
+
 ### Requirement: Offline reading
 When the device is offline, the apps MUST open the vault from the local store with biometric, PIN or master-password unlock, show when it last synced, and refuse edits with a clear message. When the organisation turned offline caching off, the apps MUST say the vault needs a connection.
 

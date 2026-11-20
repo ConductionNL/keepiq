@@ -21,6 +21,10 @@ struct ItemDetailView: View {
     @State private var confirmTrash = false
     @State private var moving = false
     @State private var editing = false
+    /// A copy shared to view only: no Edit (keepiq#1300); the save checks again.
+    @State private var viewOnly = false
+    /// What the last save could not deliver to everyone, said once.
+    @State private var note: ShareSaveNote?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -40,6 +44,10 @@ struct ItemDetailView: View {
 
     private func load() async {
         result = try? await model.repository.open(id: itemId)
+        note = model.repository.takeShareSaveNote(id: itemId)
+        if let opened = result as? OpenResult.Opened, !opened.item.fromCache, !opened.item.row.useOnly {
+            viewOnly = (try? await model.repository.isViewOnly(id: itemId))?.boolValue ?? false
+        }
     }
 
     @ViewBuilder
@@ -53,6 +61,8 @@ struct ItemDetailView: View {
                 if item.fromCache { Text(L("detail_from_cache")) }
                 if row.useOnly { Text(L("detail_use_only")) }
                 if row.readOnly && !row.useOnly { Text(L("detail_read_only")) }
+                if viewOnly && !row.readOnly { Text(L("detail_view_only")) }
+                if let note { Text(shareSaveNoteText(note)) }
                 if let problem { Text(writeProblemText(problem)).foregroundStyle(.red) }
             }
             if row.blocked {
@@ -62,7 +72,9 @@ struct ItemDetailView: View {
                 Section { fields(item) }
                 if !row.useOnly {
                     Section {
-                        Button { editing = true } label: { Text(L("action_edit")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
+                        if !viewOnly {
+                            Button { editing = true } label: { Text(L("action_edit")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
+                        }
                         Button { moving = true } label: { Text(L("action_move")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
                     }
                 }
@@ -431,6 +443,13 @@ struct ItemEditView: View {
             Section {
                 if let problem { Text(writeProblemText(problem)).foregroundStyle(.red) }
                 if let fieldsProblem = error("fields") { Text(fieldsProblem).foregroundStyle(.red) }
+                // Leaving out the partners that can't be reached pauses sharing with them until the item is shared with them again.
+                if let problem, problem.kind == .partnerUnreachable, !problem.partners.isEmpty {
+                    Button(L("action_save_without_them")) {
+                        save(draft, valid: errors.isEmpty, withoutUnreachable: Set(problem.partners.map { $0.shareId }))
+                    }
+                    .disabled(busy || model.repository.state.offline)
+                }
                 Button(L("action_save")) { save(draft, valid: errors.isEmpty) }
                     .disabled(busy || model.repository.state.offline)
                 if model.repository.state.offline { Text(L("write_offline")).font(.footnote) }
@@ -447,7 +466,7 @@ struct ItemEditView: View {
         }
     }
 
-    private func save(_ draft: ItemDraft, valid: Bool) {
+    private func save(_ draft: ItemDraft, valid: Bool, withoutUnreachable: Set<String> = []) {
         dismissKeyboard()
         showErrors = true
         guard valid else { return }
@@ -456,7 +475,7 @@ struct ItemEditView: View {
         Task { @MainActor in
             let outcome: WriteResult?
             if let item {
-                outcome = try? await model.repository.update(item: item, draft: draft)
+                outcome = try? await model.repository.update(item: item, draft: draft, withoutUnreachable: withoutUnreachable)
             } else {
                 outcome = try? await model.repository.create(draft: draft, type: type)
             }
@@ -468,7 +487,7 @@ struct ItemEditView: View {
             } else if let refused = outcome as? WriteResult.Refused {
                 problem = refused.problem
             } else {
-                problem = WriteProblem(kind: .failed, serverMessage: nil, status: 0)
+                problem = WriteProblem(kind: .failed, serverMessage: nil, status: 0, partners: [], requiredVersion: nil)
             }
         }
     }

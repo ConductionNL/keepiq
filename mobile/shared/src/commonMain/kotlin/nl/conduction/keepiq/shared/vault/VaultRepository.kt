@@ -85,6 +85,14 @@ class VaultRepository(
     var state: VaultState = VaultState.EMPTY
         private set
 
+    private val shareSave = ShareSave(api, keys, clock)
+
+    /** What each open edit form showed, by item id, for its save to pass partners exactly that. */
+    private val editRecords = HashMap<String, Opened>()
+
+    /** What the last save of an item could not deliver to everyone, until its detail shows it. */
+    private val shareSaveNotes = HashMap<String, ShareSaveNote>()
+
     /** Syncs for [trigger] and returns what the list shows. */
     suspend fun refresh(trigger: SyncTrigger): VaultState {
         state = try {
@@ -181,9 +189,48 @@ class VaultRepository(
     /**
      * Opens one item for the edit form: as [open], but a login's own
      * Authenticator key is not decrypted, so the saved key is never held by
-     * the edit screen (mobile-login-totp-passkeys D8).
+     * the edit screen (mobile-login-totp-passkeys D8). A copy shared to view
+     * only is refused, and what the form shows is recorded for the save.
      */
-    suspend fun openForEdit(id: String): OpenResult = openRow(id, withSeed = false)
+    suspend fun openForEdit(id: String): OpenResult {
+        val opened = openRow(id, withSeed = false)
+        if (opened !is OpenResult.Opened || opened.item.fromCache) return opened
+        val context = try {
+            shareSave.readContext(id)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return OpenResult.Failed(WriteProblem.from(e))
+        }
+        if (context.isViewOnly(id)) return OpenResult.Failed(WriteProblem(WriteProblemKind.VIEW_ONLY))
+        editRecords[id] = record(opened.item, context.sourceUpdatedAt)
+        return opened
+    }
+
+    /** The ciphertext of each value field the form shows in full; `totp` and `passkeys` always, as the extension records them. */
+    private fun record(item: DecryptedItem, sourceUpdatedAt: String?): Opened {
+        val row = item.row
+        val shown = linkedMapOf<String, String?>("totp" to row.totp?.ifEmpty { null }, "passkeys" to row.passkeys?.ifEmpty { null })
+        // A passkey's credential and login are never on the form.
+        if (item.kind != FormKind.PASSKEY) {
+            shown["key"] = row.key?.ifEmpty { null }
+            shown["login"] = row.login?.ifEmpty { null }
+        }
+        if (!item.additionalFieldsError) shown["additionalFields"] = row.additionalFields?.ifEmpty { null }
+        return Opened(shown, row.updatedAt ?: "", sourceUpdatedAt)
+    }
+
+    /** Whether [id] is a copy shared to view only, for the detail to offer no Edit; the save checks again. */
+    suspend fun isViewOnly(id: String): Boolean = try {
+        shareSave.readContext(id).isViewOnly(id)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        false
+    }
+
+    /** What the last save of [id] could not deliver to everyone, once. */
+    fun takeShareSaveNote(id: String): ShareSaveNote? = shareSaveNotes.remove(id)
 
     private suspend fun openRow(id: String, withSeed: Boolean): OpenResult {
         val types = state.types
@@ -224,16 +271,31 @@ class VaultRepository(
 
     /**
      * Updates [item] with only the parts that changed. A passkey's key is
-     * never rewritten: only its name, address, folder and notes change.
+     * never rewritten: only its name, address, folder and notes change. A
+     * value change goes through share-save, which writes every copy and
+     * partner share or nothing (keepiq#1300); anything else is a plain PUT.
+     * [withoutUnreachable]: the partner shares the user chose to save without.
      */
-    suspend fun update(item: DecryptedItem, draft: ItemDraft): WriteResult = write {
+    suspend fun update(item: DecryptedItem, draft: ItemDraft, withoutUnreachable: Set<String> = emptySet()): WriteResult = write {
         if (item.row.useOnly || item.row.blocked) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.REFUSED))
         val before = ItemCodec.parts(ItemCodec.draft(item, item.type), item.type)
         val after = ItemCodec.parts(draft, item.type)
         val changed = ItemCodec.changed(before, after).let { if (item.kind == FormKind.PASSKEY) it - "key" - "login" else it }
         if (changed.isEmpty()) return@write WriteResult.Saved(item.row.id)
         if ("totp" in changed) api.requireLoginFields()
-        api.updateSecret(item.row.id, ItemCodec.updateBody(after, changed, keys))
+        val body = ItemCodec.updateBody(after, changed, keys)
+        if (changed.none { it in ShareSave.VALUE_FIELDS }) {
+            api.updateSecret(item.row.id, body)
+            return@write WriteResult.Saved(item.row.id)
+        }
+        // share-save refuses a save without the version it was made from.
+        val base = item.row.updatedAt ?: return@write WriteResult.Refused(WriteProblem(WriteProblemKind.FAILED))
+        // The grade may have been lowered since the form opened.
+        val context = shareSave.readContext(item.row.id)
+        val input = ShareSaveInput(item.row.id, body, ItemCodec.plainValues(after, changed), base, context, editRecords[item.row.id], withoutUnreachable)
+        val note = shareSave.save(input)
+        editRecords.remove(item.row.id)
+        note?.let { shareSaveNotes[item.row.id] = it }
         WriteResult.Saved(item.row.id)
     }
 
@@ -247,7 +309,7 @@ class VaultRepository(
     suspend fun deletePasskey(item: DecryptedItem, credentialId: String, rpId: String): WriteResult = write {
         if (item.row.useOnly || item.row.readOnly || item.row.blocked) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.REFUSED))
         try {
-            PasskeysWrite.rewrite(api, keys, item.row.id) { _, stored -> PasskeysWrite.Change(LoginPasskeys.without(stored, credentialId, rpId), Unit) }
+            PasskeysWrite.rewrite(api, keys, item.row.id, clock) { _, stored -> PasskeysWrite.Change(LoginPasskeys.without(stored, credentialId, rpId), Unit) }
         } catch (e: LoginGoneException) {
             return@write WriteResult.Refused(WriteProblem(WriteProblemKind.FAILED))
         }

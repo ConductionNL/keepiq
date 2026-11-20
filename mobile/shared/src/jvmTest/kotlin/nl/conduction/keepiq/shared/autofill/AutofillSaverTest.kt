@@ -56,17 +56,39 @@ class AutofillSaverTest {
     )
 
     private val requests = mutableListOf<Pair<String, String>>()
+
+    /** Each write's body; for a share-save, its `patch`. */
     private val bodies = mutableListOf<JsonObject>()
+
+    /** write-context grades w1 as a copy shared with the user to view only. */
+    private var viewOnly = false
+
+    /** w1 has a partner share: the share-save answers that it must be in the save. */
+    private var partnerShare = false
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
         requests += request.method.value to path
-        (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
+        (request.body as? TextContent)?.let {
+            val sent = Json.parseToJsonElement(it.text).jsonObject
+            bodies += if (path.endsWith("/share-save")) sent["patch"]!!.jsonObject else sent
+        }
+        val json = headersOf(HttpHeaders.ContentType, "application/json")
         val body = when {
             path == "/api/v1/secret-types" -> """[{"id":"7","name":"login","fields":[]},{"id":"8","name":"totp","fields":[]}]"""
+            path == "/api/v1/secrets/w1" && request.method == HttpMethod.Get ->
+                """{"id":"w1","name":"Example","typeId":"7","key":"${enc("one")}","login":"${enc("alice")}","updatedAt":"2026-10-05T10:00:00+00:00"}"""
+            path == "/api/v1/secrets/w1/write-context" ->
+                if (viewOnly) """{"sourceSecretId":"src","effectiveGrade":"read","ownerCertificate":null,"sourceUpdatedAt":null}"""
+                else """{"sourceSecretId":"w1","effectiveGrade":"owner","ownerCertificate":null,"sourceUpdatedAt":"2026-10-05T10:00:00+00:00"}"""
+            path.endsWith("/share-save") && partnerShare -> return@MockEngine respond(
+                """{"error":"incomplete","message":"m","copies":{"required":[]},"federated":{"required":[{"shareId":"fs1","recipientCloudId":"bob@partner.example"}]}}""",
+                io.ktor.http.HttpStatusCode.Conflict,
+                json,
+            )
             request.method == HttpMethod.Post -> """{"id":"new"}"""
             else -> """{"id":"w1"}"""
         }
-        respond(body, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        respond(body, headers = json)
     }
     private val api = KeepiqApi(KeepiqApi.httpClient(engine), Account("acc", "https://cloud.example.nl", "alice", "app-password"))
     private val saver = AutofillSaver(api, keys)
@@ -112,9 +134,29 @@ class AutofillSaverTest {
     @Test
     fun aChangedPasswordUpdatesTheOneLoginWithThatName() = runTest {
         assertEquals(SaveResult.UPDATED, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
-        assertEquals(listOf("PUT" to "/api/v1/secrets/w1"), requests)
+        // Through share-save on the row as read now, so every copy gets it.
+        assertEquals(
+            listOf("GET" to "/api/v1/secrets/w1", "GET" to "/api/v1/secrets/w1/write-context", "PUT" to "/api/v1/secrets/w1/share-save"),
+            requests,
+        )
         assertEquals(setOf("key"), bodies.single().keys)
         assertEquals("changed", dec(bodies.single()["key"]!!.jsonPrimitive.content))
+    }
+
+    @Test
+    fun aCopySharedToViewOnlyIsNotUpdated() = runTest {
+        viewOnly = true
+        assertEquals(SaveResult.REFUSED, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
+        assertTrue(requests.none { it.first == "PUT" }, "$requests")
+    }
+
+    @Test
+    fun aLoginWithAPartnerShareIsNotUpdatedWithoutAForm() = runTest {
+        // The partner gets the whole value, which only an edit form vouches for.
+        partnerShare = true
+        assertEquals(SaveResult.REFUSED, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
+        assertEquals(1, requests.count { it.first == "PUT" })
+        assertTrue(requests.none { it.second.contains("federation") }, "no partner is looked up: $requests")
     }
 
     @Test
