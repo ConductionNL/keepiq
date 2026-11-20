@@ -43,12 +43,7 @@
 - [x] 6.5 Carry both fields in the backup and GDPR payload (`serializeVault`) and read them back on backup restore; write the seed in a `totp` CSV column that the generic CSV import maps back. Verify: `tests/vitest/export-serializer.spec.js`, `tests/vitest/export-gdprPackage.spec.js`, `tests/vitest/import-backupParser.spec.js`, `tests/vitest/import-parsers.spec.js`, `tests/store/import.spec.js`.
 - [x] 6.6 The batch import endpoint (`ImportService::commitChunk`) passes `totp` and `passkeys` on to the secret it creates, and checks both as ciphertext. Done in fdca23d5. Verify: `ImportServiceTest::testTotpAndPasskeysReachTheCreatedSecret`, `ImportServiceTest::testPlaintextTotpOrPasskeysRejected`.
 
-## 7. Deferred, not in this change
-
-- [ ] 7.1 Clone and print carry both fields. Deferred: neither feature exists yet; belongs to `vault-item-clone-preview-and-print`.
-- [ ] 7.2 The Passkey type filter also finds logins with passkeys. Deferred: the server cannot see inside the ciphertext; needs a backend query design.
-- [ ] 7.3 Guided move of standalone Authenticator and Passkey items, and of additional fields named `totp` or `otp`, onto their login. Dropped in keepiq#1328: only internal testers hold such items, so they stay as they are (D12).
-- [ ] 7.4 Android reads and writes both fields. Deferred to keepiq#1329.
+Tasks 7.1-7.4 (deferred by design) moved to the follow-up change `vault-login-totp-followup`.
 
 ## Acceptance criteria
 
