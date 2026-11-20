@@ -69,7 +69,7 @@ class FederationControllerStatusMappingTest extends TestCase {
 			request: $this->createStub(IRequest::class),
 			certificates: $this->certificates,
 			userSession: $session,
-			batch: $this->createStub(PartnerCertificateBatchService::class),
+			batch: $this->createStub(originalClassName: PartnerCertificateBatchService::class),
 		);
 	}//end controller()
 

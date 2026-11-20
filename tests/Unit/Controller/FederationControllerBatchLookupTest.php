@@ -48,7 +48,7 @@ class FederationControllerBatchLookupTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->batch = $this->createMock(PartnerCertificateBatchService::class);
+		$this->batch = $this->createMock(originalClassName: PartnerCertificateBatchService::class);
 	}//end setUp()
 
 	/**
@@ -61,16 +61,16 @@ class FederationControllerBatchLookupTest extends TestCase {
 	private function controller(?string $uid): FederationController {
 		$user = null;
 		if ($uid !== null) {
-			$user = $this->createStub(IUser::class);
+			$user = $this->createStub(originalClassName: IUser::class);
 			$user->method('getUID')->willReturn($uid);
 		}
 
-		$session = $this->createStub(IUserSession::class);
+		$session = $this->createStub(originalClassName: IUserSession::class);
 		$session->method('getUser')->willReturn($user);
 
 		return new FederationController(
-			request: $this->createStub(IRequest::class),
-			certificates: $this->createStub(FederatedCertificateServiceInterface::class),
+			request: $this->createStub(originalClassName: IRequest::class),
+			certificates: $this->createStub(originalClassName: FederatedCertificateServiceInterface::class),
 			userSession: $session,
 			batch: $this->batch,
 		);
@@ -84,9 +84,9 @@ class FederationControllerBatchLookupTest extends TestCase {
 	public function testWithoutAUserIsUnauthorized(): void {
 		$this->batch->expects($this->never())->method('lookup');
 
-		$response = $this->controller(null)->recipientCertificates(shareIds: ['s1']);
+		$response = $this->controller(uid: null)->recipientCertificates(shareIds: ['s1']);
 
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		$this->assertSame(expected: Http::STATUS_UNAUTHORIZED, actual: $response->getStatus());
 	}//end testWithoutAUserIsUnauthorized()
 
 	/**
@@ -97,10 +97,10 @@ class FederationControllerBatchLookupTest extends TestCase {
 	public function testAnEmptyListIsABadRequest(): void {
 		$this->batch->expects($this->never())->method('lookup');
 
-		$response = $this->controller('alice')->recipientCertificates(shareIds: ['', 42]);
+		$response = $this->controller(uid: 'alice')->recipientCertificates(shareIds: ['', 42]);
 
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame(['message' => 'shareIds_required'], $response->getData());
+		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+		$this->assertSame(expected: ['message' => 'shareIds_required'], actual: $response->getData());
 	}//end testAnEmptyListIsABadRequest()
 
 	/**
@@ -118,10 +118,10 @@ class FederationControllerBatchLookupTest extends TestCase {
 			->with(['s1', 's2'], 'alice')
 			->willReturn($answer);
 
-		$response = $this->controller('alice')->recipientCertificates(shareIds: ['s1', null, 's2']);
+		$response = $this->controller(uid: 'alice')->recipientCertificates(shareIds: ['s1', null, 's2']);
 
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame($answer, $response->getData());
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertSame(expected: $answer, actual: $response->getData());
 	}//end testTheAnswerIsTheServicesForTheCaller()
 
 	/**
@@ -132,9 +132,9 @@ class FederationControllerBatchLookupTest extends TestCase {
 	public function testMoreThanTheBoundIsABadRequest(): void {
 		$this->batch->method('lookup')->willThrowException(new InvalidArgumentException('too_many_shares'));
 
-		$response = $this->controller('alice')->recipientCertificates(shareIds: ['s1']);
+		$response = $this->controller(uid: 'alice')->recipientCertificates(shareIds: ['s1']);
 
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame(['message' => 'too_many_shares'], $response->getData());
+		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+		$this->assertSame(expected: ['message' => 'too_many_shares'], actual: $response->getData());
 	}//end testMoreThanTheBoundIsABadRequest()
 }//end class

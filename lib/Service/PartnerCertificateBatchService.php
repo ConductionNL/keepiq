@@ -82,12 +82,24 @@ class PartnerCertificateBatchService {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public static function refusalStatus(Throwable $exception): int {
-		$message = $exception->getMessage();
+		$statuses = [
+			'not_a_partner'          => Http::STATUS_FORBIDDEN,
+			'federation_unavailable' => Http::STATUS_CONFLICT,
+		];
+		$status   = ($statuses[$exception->getMessage()] ?? null);
 		if ($exception instanceof InvalidArgumentException) {
-			return ($message === 'not_a_partner') ? Http::STATUS_FORBIDDEN : Http::STATUS_NOT_FOUND;
+			if ($status === Http::STATUS_FORBIDDEN) {
+				return $status;
+			}
+
+			return Http::STATUS_NOT_FOUND;
 		}
 
-		return ($message === 'federation_unavailable') ? Http::STATUS_CONFLICT : Http::STATUS_BAD_GATEWAY;
+		if ($status === Http::STATUS_CONFLICT) {
+			return $status;
+		}
+
+		return Http::STATUS_BAD_GATEWAY;
 	}//end refusalStatus()
 
 	/**

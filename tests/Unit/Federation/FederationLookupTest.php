@@ -127,7 +127,7 @@ class FederationLookupTest extends TestCase {
 		$user->method('getUID')->willReturn('alice');
 		$session->method('getUser')->willReturn($user);
 
-		return new FederationController($this->createMock(IRequest::class), $service, $session, $this->createStub(PartnerCertificateBatchService::class));
+		return new FederationController($this->createMock(IRequest::class), $service, $session, $this->createStub(originalClassName: PartnerCertificateBatchService::class));
 	}
 
 	/**
@@ -374,7 +374,7 @@ class FederationLookupTest extends TestCase {
 			$this->createMock(IRequest::class),
 			$this->createMock(FederatedCertificateService::class),
 			$session,
-			$this->createStub(PartnerCertificateBatchService::class)
+			$this->createStub(originalClassName: PartnerCertificateBatchService::class)
 		);
 
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $anonymous->recipientCertificate('bob@cloud.partner.example')->getStatus());

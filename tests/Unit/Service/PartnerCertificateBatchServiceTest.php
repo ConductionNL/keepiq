@@ -54,7 +54,7 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->mapper = $this->createMock(FederatedShareMapper::class);
+		$this->mapper = $this->createMock(originalClassName: FederatedShareMapper::class);
 		$this->mapper->method('findById')->willReturnCallback(function (string $id): FederatedShare {
 			if (isset($this->rows[$id]) === false) {
 				throw new DoesNotExistException('none');
@@ -62,7 +62,7 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 
 			return $this->rows[$id];
 		});
-		$this->certificates = $this->createMock(FederatedCertificateServiceInterface::class);
+		$this->certificates = $this->createMock(originalClassName: FederatedCertificateServiceInterface::class);
 	}//end setUp()
 
 	/**
@@ -116,17 +116,17 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testOwnActiveSharesGetTheirCertificates(): void {
-		$this->row('s1', 'alice', 'bob@a.example');
-		$this->row('s2', 'alice', 'carol@b.example');
+		$this->row(id: 's1', owner: 'alice', cloudId: 'bob@a.example');
+		$this->row(id: 's2', owner: 'alice', cloudId: 'carol@b.example');
 		$this->certificates->method('lookup')->willReturnCallback(
-			static fn (string $cloudId, string $userId): array => self::answer($cloudId)
+			static fn (string $cloudId, string $userId): array => self::answer(cloudId: $cloudId)
 		);
 
 		$result = $this->service()->lookup(shareIds: ['s1', 's2'], userId: 'alice');
 
-		$this->assertSame(self::answer('bob@a.example'), $result['certificates']['s1']);
-		$this->assertSame(self::answer('carol@b.example'), $result['certificates']['s2']);
-		$this->assertSame([], $result['refused']);
+		$this->assertSame(expected: self::answer(cloudId: 'bob@a.example'), actual: $result['certificates']['s1']);
+		$this->assertSame(expected: self::answer(cloudId: 'carol@b.example'), actual: $result['certificates']['s2']);
+		$this->assertSame(expected: [], actual: $result['refused']);
 	}//end testOwnActiveSharesGetTheirCertificates()
 
 	/**
@@ -135,16 +135,16 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testEachRecipientIsAskedOnce(): void {
-		$this->row('s1', 'alice', 'bob@a.example');
-		$this->row('s2', 'alice', 'bob@a.example');
+		$this->row(id: 's1', owner: 'alice', cloudId: 'bob@a.example');
+		$this->row(id: 's2', owner: 'alice', cloudId: 'bob@a.example');
 		$this->certificates->expects($this->once())
 			->method('lookup')
 			->with('bob@a.example', 'alice')
-			->willReturn(self::answer('bob@a.example'));
+			->willReturn(self::answer(cloudId: 'bob@a.example'));
 
 		$result = $this->service()->lookup(shareIds: ['s1', 's2', 's1'], userId: 'alice');
 
-		$this->assertSame(['s1', 's2'], array_keys($result['certificates']));
+		$this->assertSame(expected: ['s1', 's2'], actual: array_keys($result['certificates']));
 	}//end testEachRecipientIsAskedOnce()
 
 	/**
@@ -155,15 +155,15 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-another-users-partner-share-is-not-looked-up
 	 */
 	public function testOtherSharesAreRefusedAlike(): void {
-		$this->row('mallory', 'mallory', 'bob@a.example');
-		$this->row('paused', 'alice', 'bob@a.example', FederatedShare::STATUS_SUSPENDED);
+		$this->row(id: 'mallory', owner: 'mallory', cloudId: 'bob@a.example');
+		$this->row(id: 'paused', owner: 'alice', cloudId: 'bob@a.example', status: FederatedShare::STATUS_SUSPENDED);
 		$this->certificates->expects($this->never())->method('lookup');
 
 		$result = $this->service()->lookup(shareIds: ['nope', 'mallory', 'paused'], userId: 'alice');
 
 		$refusal = ['status' => Http::STATUS_NOT_FOUND, 'message' => PartnerCertificateBatchService::UNKNOWN_SHARE];
-		$this->assertSame(['nope' => $refusal, 'mallory' => $refusal, 'paused' => $refusal], $result['refused']);
-		$this->assertSame([], $result['certificates']);
+		$this->assertSame(expected: ['nope' => $refusal, 'mallory' => $refusal, 'paused' => $refusal], actual: $result['refused']);
+		$this->assertSame(expected: [], actual: $result['certificates']);
 	}//end testOtherSharesAreRefusedAlike()
 
 	/**
@@ -174,9 +174,9 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-one-unreachable-partner-does-not-fail-the-others
 	 */
 	public function testOneUnreachablePartnerDoesNotFailTheOthers(): void {
-		$this->row('s1', 'alice', 'bob@down.example');
-		$this->row('s2', 'alice', 'carol@up.example');
-		$this->row('s3', 'alice', 'dave@gone.example');
+		$this->row(id: 's1', owner: 'alice', cloudId: 'bob@down.example');
+		$this->row(id: 's2', owner: 'alice', cloudId: 'carol@up.example');
+		$this->row(id: 's3', owner: 'alice', cloudId: 'dave@gone.example');
 		$this->certificates->method('lookup')->willReturnCallback(
 			static function (string $cloudId): array {
 				if ($cloudId === 'bob@down.example') {
@@ -187,19 +187,19 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 					throw new InvalidArgumentException('not_a_partner');
 				}
 
-				return self::answer($cloudId);
+				return self::answer(cloudId: $cloudId);
 			}
 		);
 
 		$result = $this->service()->lookup(shareIds: ['s1', 's2', 's3'], userId: 'alice');
 
-		$this->assertSame(['s2'], array_keys($result['certificates']));
+		$this->assertSame(expected: ['s2'], actual: array_keys($result['certificates']));
 		$this->assertSame(
-			[
+			expected: [
 				's1' => ['status' => Http::STATUS_BAD_GATEWAY, 'message' => 'partner_unreachable'],
 				's3' => ['status' => Http::STATUS_FORBIDDEN, 'message' => 'not_a_partner'],
 			],
-			$result['refused']
+			actual: $result['refused']
 		);
 	}//end testOneUnreachablePartnerDoesNotFailTheOthers()
 
@@ -212,8 +212,8 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 		$this->mapper->expects($this->never())->method('findById');
 		$ids = array_map(static fn (int $i): string => 'id'.$i, range(1, PartnerCertificateBatchService::MAX_SHARES + 1));
 
-		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('too_many_shares');
+		$this->expectException(exception: InvalidArgumentException::class);
+		$this->expectExceptionMessage(message: 'too_many_shares');
 		$this->service()->lookup(shareIds: $ids, userId: 'alice');
 	}//end testMoreThanTheBoundIsRefused()
 
@@ -223,9 +223,14 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testRefusalStatus(): void {
-		$this->assertSame(Http::STATUS_FORBIDDEN, PartnerCertificateBatchService::refusalStatus(new InvalidArgumentException('not_a_partner')));
-		$this->assertSame(Http::STATUS_NOT_FOUND, PartnerCertificateBatchService::refusalStatus(new InvalidArgumentException('unknown_recipient')));
-		$this->assertSame(Http::STATUS_CONFLICT, PartnerCertificateBatchService::refusalStatus(new RuntimeException('federation_unavailable')));
-		$this->assertSame(Http::STATUS_BAD_GATEWAY, PartnerCertificateBatchService::refusalStatus(new RuntimeException('bad_chain')));
+		$cases = [
+			[Http::STATUS_FORBIDDEN, new InvalidArgumentException('not_a_partner')],
+			[Http::STATUS_NOT_FOUND, new InvalidArgumentException('unknown_recipient')],
+			[Http::STATUS_CONFLICT, new RuntimeException('federation_unavailable')],
+			[Http::STATUS_BAD_GATEWAY, new RuntimeException('bad_chain')],
+		];
+		foreach ($cases as [$status, $exception]) {
+			$this->assertSame(expected: $status, actual: PartnerCertificateBatchService::refusalStatus(exception: $exception));
+		}
 	}//end testRefusalStatus()
 }//end class

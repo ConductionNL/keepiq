@@ -267,6 +267,7 @@ async function postWithKeyProof(refusal, attempt) {
 export class PartnerLookupRefusal extends Error {
 	/**
 	 * @param {{status: number, message: string}} refusal The server's status and reason.
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
 	 */
 	constructor(refusal) {
 		super(`Partner lookup refused: ${refusal?.message ?? 'unknown'}`)
