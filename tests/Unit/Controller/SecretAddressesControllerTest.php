@@ -182,7 +182,7 @@ class SecretAddressesControllerTest extends TestCase {
 	 */
 	public function testTheOwnersUpdateReplacesTheList(): void {
 		$this->secretService->method('get')->willReturn($this->secret());
-		$this->secretService->expects($this->once())->method('update')->willReturn($this->secret());
+		$this->secretService->expects($this->once())->method('updateAlone')->willReturn($this->secret());
 		$this->urlMapper->expects($this->once())->method('replaceForSecret')->with('s1', 'alice', ['https://example.net']);
 		$controller = new SecretUpdateController(request: $this->request(['additionalUrls' => ['https://example.net']]), secretService: $this->secretService, userSession: $this->session(), urls: new SecretUrlService($this->urlMapper));
 
@@ -199,7 +199,7 @@ class SecretAddressesControllerTest extends TestCase {
 	 */
 	public function testAddressesOnSomeoneElsesLoginAreRefusedBeforeAnyWrite(): void {
 		$this->secretService->method('get')->willReturn($this->secret(ownerId: 'bob'));
-		$this->secretService->expects($this->never())->method('update');
+		$this->secretService->expects($this->never())->method('updateAlone');
 		$this->urlMapper->expects($this->never())->method('replaceForSecret');
 		$controller = new SecretUpdateController(request: $this->request(['name' => 'Renamed', 'additionalUrls' => ['https://example.net']]), secretService: $this->secretService, userSession: $this->session(), urls: new SecretUrlService($this->urlMapper));
 
@@ -215,7 +215,7 @@ class SecretAddressesControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnUpdateWithoutTheFieldLeavesTheList(): void {
-		$this->secretService->method('update')->willReturn($this->secret());
+		$this->secretService->method('updateAlone')->willReturn($this->secret());
 		$this->urlMapper->expects($this->never())->method('replaceForSecret');
 		$controller = new SecretUpdateController(request: $this->request(['name' => 'Renamed']), secretService: $this->secretService, userSession: $this->session(), urls: new SecretUrlService($this->urlMapper));
 

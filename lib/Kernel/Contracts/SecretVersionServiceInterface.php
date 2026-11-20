@@ -91,6 +91,7 @@ interface SecretVersionServiceInterface {
 	 * @throws \OCA\Keepiq\Exception\NotFoundException When the head is a copy whose source cannot be resolved
 	 * @throws StaleWriteException When the head moved on from `$baseUpdatedAt`, or from the version read
 	 * @throws ShareScanPendingException When the head is a copy whose share row waits for the share quarantine scan
+	 * @throws \OCA\Keepiq\Exception\ShareSaveRequiredException When the restore changes the value of a shared secret
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently

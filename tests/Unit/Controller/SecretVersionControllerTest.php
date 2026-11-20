@@ -20,6 +20,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use OCA\Keepiq\Controller\SecretVersionController;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -100,5 +101,17 @@ class SecretVersionControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 		$this->assertSame(['message' => 'Secret not found'], $response->getData());
+	}
+
+	public function testARestoreOfASharedValueAnswers409ShareSaveRequired(): void {
+		$this->versionService->method('restore')
+			->willThrowException(new ShareSaveRequiredException());
+
+		$response = $this->controller->restore(id: 'v-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('share_save_required', $response->getData()['code']);
+		$this->assertSame('share_save_required', $response->getData()['error']);
+		$this->assertStringContainsString('Update the app', $response->getData()['message']);
 	}
 }

@@ -30,6 +30,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Kernel\AppIdentity;
@@ -88,6 +89,8 @@ class SecretUpdateController extends OCSController {
 	 * and `baseUpdatedAt` (the version an offline edit was made from).
 	 * A field the request leaves out keeps its stored value, and an empty string clears it.
 	 * A JSON null counts as left out, as Nextcloud's getParam() reads it.
+	 * A value change of a shared secret answers 409 `share_save_required`: it
+	 * goes through the share-save, which writes every copy (keepiq#1300).
 	 *
 	 * @param string $id The secret ID
 	 *
@@ -97,6 +100,7 @@ class SecretUpdateController extends OCSController {
 	 *
 	 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
 	 */
 	#[NoAdminRequired]
 	public function update(string $id): JSONResponse {
@@ -120,6 +124,9 @@ class SecretUpdateController extends OCSController {
 				data: ['message' => $e->getMessage(), 'current' => $this->serialised(secret: $e->getCurrent(), userId: $user->getUID())],
 				statusCode: Http::STATUS_CONFLICT
 			);
+		} catch (ShareSaveRequiredException $e) {
+			$code = ShareSaveRequiredException::CODE;
+			return new JSONResponse(data: ['error' => $code, 'code' => $code, 'message' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException $e) {
@@ -197,18 +204,20 @@ class SecretUpdateController extends OCSController {
 	 * @return Secret
 	 *
 	 * @throws StaleWriteException When the secret moved on from the base, or twice during the update
+	 * @throws ShareSaveRequiredException When a value change must go through the share-save
 	 *
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
 	 */
 	private function updateOnCurrent(string $id, array $changes, string $userId): Secret {
 		try {
-			return $this->secretService->update($id, $changes, $userId);
+			return $this->secretService->updateAlone(id: $id, data: $changes, userId: $userId);
 		} catch (StaleWriteException $e) {
 			if (array_key_exists('baseUpdatedAt', $changes) === true) {
 				throw $e;
 			}
 
-			return $this->secretService->update($id, $changes, $userId);
+			return $this->secretService->updateAlone(id: $id, data: $changes, userId: $userId);
 		}
 	}//end updateOnCurrent()
 
