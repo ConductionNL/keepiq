@@ -27,16 +27,24 @@
 				multiple
 				class="attachment-dropzone__input"
 				:aria-label="t('keepiq', 'Add file')"
+				:disabled="!canAdd"
 				data-testid="attachment-dropzone-input"
 				@change="onPicked" />
 			<NcButton
 				variant="secondary"
-				:disabled="disabled"
+				:disabled="!canAdd"
 				data-testid="attachment-dropzone-add"
 				@click="$refs.fileInput.click()">
 				{{ t('keepiq', 'Add file') }}
 			</NcButton>
 		</div>
+
+		<p
+			v-if="unavailable"
+			class="attachment-dropzone__note"
+			data-testid="attachment-dropzone-unavailable">
+			{{ unavailable }}
+		</p>
 
 		<p
 			v-if="droppedFolder"
@@ -60,7 +68,7 @@
 					v-if="entry.status === 'failed' && secretId"
 					variant="tertiary"
 					:aria-label="t('keepiq', 'Retry upload of {name}', { name: entry.file.name })"
-					:disabled="disabled || busy"
+					:disabled="disabled || busy || Boolean(unavailable)"
 					:data-testid="`attachment-pending-retry-${index}`"
 					@click="retry(entry)">
 					<template #icon>
@@ -113,6 +121,15 @@ export default {
 			default: false,
 		},
 
+		/**
+		 * Why files cannot be added right now, '' when they can. Listed files
+		 * stay, so the user can see and remove them.
+		 */
+		unavailable: {
+			type: String,
+			default: '',
+		},
+
 		/** The saved secret, once there is one: enables Retry per file. */
 		secretId: {
 			type: String,
@@ -138,6 +155,13 @@ export default {
 		 */
 		busy() {
 			return this.pending.some((entry) => entry.status === 'uploading')
+		},
+
+		/**
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		canAdd() {
+			return !this.disabled && !this.unavailable
 		},
 
 		/**
@@ -263,7 +287,9 @@ export default {
 		 * @spec exclude Event plumbing: hands the picked files to add().
 		 */
 		onPicked(event) {
-			this.add(event.target.files)
+			if (this.canAdd) {
+				this.add(event.target.files)
+			}
 			event.target.value = ''
 		},
 
@@ -271,7 +297,7 @@ export default {
 		 * @spec exclude Event plumbing: highlights the zone while a drag is over it.
 		 */
 		onDragOver() {
-			this.dragging = !this.disabled
+			this.dragging = this.canAdd
 		},
 
 		/**
@@ -281,7 +307,7 @@ export default {
 		 */
 		onDrop(event) {
 			this.dragging = false
-			if (this.disabled) {
+			if (!this.canAdd) {
 				return
 			}
 			const items = Array.from(event.dataTransfer?.items || [])
@@ -338,6 +364,10 @@ export default {
 	align-items: center;
 	gap: 8px;
 	flex-wrap: wrap;
+	color: var(--color-text-maxcontrast, #767676);
+}
+
+.attachment-dropzone__note {
 	color: var(--color-text-maxcontrast, #767676);
 }
 

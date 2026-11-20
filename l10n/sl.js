@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Znova poskusi naložiti {name}",
         "The secret was saved, but some files could not be added.": "Skrivnost je shranjena, vendar nekaterih datotek ni bilo mogoče dodati.",
         "Upload failed": "Nalaganje ni uspelo",
-        "Folders cannot be attached. Drop the files inside them instead.": "Map ni mogoče priložiti. Namesto tega spustite datoteke v njih."
+        "Folders cannot be attached. Drop the files inside them instead.": "Map ni mogoče priložiti. Namesto tega spustite datoteke v njih.",
+        "Files cannot be added while you are offline. Remove them to save.": "Datotek ni mogoče dodati, ko ste brez povezave. Odstranite jih, da shranite.",
+        "Files can only be added to a secret you own. Remove them to save.": "Datoteke je mogoče dodati le skrivnosti, ki je vaša. Odstranite jih, da shranite."
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Yritä tiedoston {name} lähetystä uudelleen",
         "The secret was saved, but some files could not be added.": "Salaisuus tallennettiin, mutta joitakin tiedostoja ei voitu lisätä.",
         "Upload failed": "Lähetys epäonnistui",
-        "Folders cannot be attached. Drop the files inside them instead.": "Kansioita ei voi liittää. Pudota sen sijaan niiden sisältämät tiedostot."
+        "Folders cannot be attached. Drop the files inside them instead.": "Kansioita ei voi liittää. Pudota sen sijaan niiden sisältämät tiedostot.",
+        "Files cannot be added while you are offline. Remove them to save.": "Tiedostoja ei voi lisätä ollessasi offline-tilassa. Poista ne tallentaaksesi.",
+        "Files can only be added to a secret you own. Remove them to save.": "Tiedostoja voi lisätä vain omistamaasi salaisuuteen. Poista ne tallentaaksesi."
     },
     "nplurals=2; plural=(n != 1);"
 )

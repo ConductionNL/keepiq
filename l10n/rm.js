@@ -1945,7 +1945,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Empruvar da chargiar si {name} danovamain",
         "The secret was saved, but some files could not be added.": "Il secret è vegnì memorisà, ma intginas datotecas n'han betg pudì vegnir agiuntadas.",
         "Upload failed": "Chargiar si n'è betg reussì",
-        "Folders cannot be attached. Drop the files inside them instead.": "Ordinaturs na pon betg vegnir agiuntads. Tira empè las datotecas en els."
+        "Folders cannot be attached. Drop the files inside them instead.": "Ordinaturs na pon betg vegnir agiuntads. Tira empè las datotecas en els.",
+        "Files cannot be added while you are offline. Remove them to save.": "Datotecas na pon betg vegnir agiuntadas offline. Allontanai ellas per memorisar.",
+        "Files can only be added to a secret you own. Remove them to save.": "Datotecas pon mo vegnir agiuntadas ad in secret che tutga a vus. Allontanai ellas per memorisar."
     },
     "nplurals=1; plural=0;"
 )

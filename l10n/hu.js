@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "{name} feltöltésének újrapróbálása",
         "The secret was saved, but some files could not be added.": "A titok mentve, de néhány fájlt nem sikerült hozzáadni.",
         "Upload failed": "A feltöltés sikertelen",
-        "Folders cannot be attached. Drop the files inside them instead.": "Mappák nem csatolhatók. Húzza ide inkább a bennük lévő fájlokat."
+        "Folders cannot be attached. Drop the files inside them instead.": "Mappák nem csatolhatók. Húzza ide inkább a bennük lévő fájlokat.",
+        "Files cannot be added while you are offline. Remove them to save.": "Offline állapotban nem adhatók hozzá fájlok. A mentéshez távolítsa el őket.",
+        "Files can only be added to a secret you own. Remove them to save.": "Fájlok csak a saját titkához adhatók hozzá. A mentéshez távolítsa el őket."
     },
     "nplurals=2; plural=(n != 1);"
 )

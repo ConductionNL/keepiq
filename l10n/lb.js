@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Eroplueden vun {name} nach eng Kéier probéieren",
         "The secret was saved, but some files could not be added.": "D'Geheimnis gouf gespäichert, mee e puer Fichiere konnten net dobäigesat ginn.",
         "Upload failed": "Eroplueden ass feelgeschloen",
-        "Folders cannot be attached. Drop the files inside them instead.": "Dossiere kënnen net ugehaange ginn. Leet amplaz d'Fichieren dran of."
+        "Folders cannot be attached. Drop the files inside them instead.": "Dossiere kënnen net ugehaange ginn. Leet amplaz d'Fichieren dran of.",
+        "Files cannot be added while you are offline. Remove them to save.": "Fichiere kënnen offline net dobäigesat ginn. Huelt se ewech fir ze späicheren.",
+        "Files can only be added to a secret you own. Remove them to save.": "Fichiere kënnen nëmmen zu engem eegene Geheimnis dobäigesat ginn. Huelt se ewech fir ze späicheren."
     },
     "nplurals=2; plural=(n != 1);"
 )

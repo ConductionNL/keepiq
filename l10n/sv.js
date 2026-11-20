@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Försök ladda upp {name} igen",
         "The secret was saved, but some files could not be added.": "Hemligheten sparades, men vissa filer kunde inte läggas till.",
         "Upload failed": "Uppladdningen misslyckades",
-        "Folders cannot be attached. Drop the files inside them instead.": "Mappar kan inte bifogas. Släpp i stället filerna i dem."
+        "Folders cannot be attached. Drop the files inside them instead.": "Mappar kan inte bifogas. Släpp i stället filerna i dem.",
+        "Files cannot be added while you are offline. Remove them to save.": "Filer kan inte läggas till när du är offline. Ta bort dem för att spara.",
+        "Files can only be added to a secret you own. Remove them to save.": "Filer kan bara läggas till i en hemlighet som du äger. Ta bort dem för att spara."
     },
     "nplurals=2; plural=(n != 1);"
 )

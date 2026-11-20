@@ -151,7 +151,7 @@ describe('SecretEditDialog attachments', () => {
 		expect(wrapper.vm.canSubmit).toBe(false)
 	})
 
-	it('does not close as uploaded when the drop zone is gone with files listed', async () => {
+	it('keeps a refused file listed with the reason when going offline after the save', async () => {
 		uploadFile.mockRejectedValueOnce(new Error('Too large'))
 		const wrapper = await opened()
 		await addFiles(wrapper, ['big.zip'])
@@ -160,10 +160,54 @@ describe('SecretEditDialog attachments', () => {
 
 		useOfflineStore().servedFromCache = true
 		await flushPromises()
+
+		const zone = wrapper.findComponent(AttachmentDropZone)
+		expect(zone.text()).toContain('big.zip')
+		expect(zone.props('unavailable')).toContain('offline')
+		expect(wrapper.emitted('close')).toBeUndefined()
+	})
+
+	it('reports the save once, when the dialog closes after the retries', async () => {
+		uploadFile
+			.mockRejectedValueOnce(new Error('Too large'))
+			.mockRejectedValueOnce(new Error('Too large'))
+		const wrapper = await opened()
+		await addFiles(wrapper, ['big.zip'])
+
+		await wrapper.vm.submit()
+		await flushPromises()
+		await wrapper.vm.submit()
+		await flushPromises()
+		expect(wrapper.emitted('saved')).toBeUndefined()
+
 		await wrapper.vm.submit()
 		await flushPromises()
 
-		expect(wrapper.emitted('close')).toBeUndefined()
+		expect(wrapper.emitted('close')).toHaveLength(1)
+		expect(wrapper.emitted('saved')).toHaveLength(1)
+	})
+
+	it('reports the save when closed with a refused file still listed', async () => {
+		uploadFile.mockRejectedValueOnce(new Error('Too large'))
+		const wrapper = await opened()
+		await addFiles(wrapper, ['big.zip'])
+		await wrapper.vm.submit()
+		await flushPromises()
+
+		wrapper.vm.onUpdateOpen(false)
+
+		expect(wrapper.emitted('saved')).toHaveLength(1)
+	})
+
+	it('keeps added files when going offline and blocks the save until they are removed', async () => {
+		const wrapper = await opened()
+		await addFiles(wrapper, ['cert.pem'])
+
+		useOfflineStore().servedFromCache = true
+		await flushPromises()
+
+		expect(wrapper.findComponent(AttachmentDropZone).text()).toContain('cert.pem')
+		expect(wrapper.vm.canSubmit).toBe(false)
 	})
 
 	it('uploads nothing on Cancel', async () => {

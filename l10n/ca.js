@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Torna a pujar {name}",
         "The secret was saved, but some files could not be added.": "El secret s'ha desat, però no s'han pogut afegir alguns fitxers.",
         "Upload failed": "No s'ha pogut pujar",
-        "Folders cannot be attached. Drop the files inside them instead.": "No es poden adjuntar carpetes. Deixeu anar els fitxers que contenen."
+        "Folders cannot be attached. Drop the files inside them instead.": "No es poden adjuntar carpetes. Deixeu anar els fitxers que contenen.",
+        "Files cannot be added while you are offline. Remove them to save.": "No es poden afegir fitxers mentre esteu fora de línia. Elimineu-los per desar.",
+        "Files can only be added to a secret you own. Remove them to save.": "Només es poden afegir fitxers a un secret que sigui vostre. Elimineu-los per desar."
     },
     "nplurals=2; plural=(n != 1);"
 )

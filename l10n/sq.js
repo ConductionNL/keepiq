@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Riprovo ngarkimin e {name}",
         "The secret was saved, but some files could not be added.": "Sekreti u ruajt, por disa skedarë nuk mund të shtoheshin.",
         "Upload failed": "Ngarkimi dështoi",
-        "Folders cannot be attached. Drop the files inside them instead.": "Dosjet nuk mund të bashkëngjiten. Lëshoni në vend të tyre skedarët që përmbajnë."
+        "Folders cannot be attached. Drop the files inside them instead.": "Dosjet nuk mund të bashkëngjiten. Lëshoni në vend të tyre skedarët që përmbajnë.",
+        "Files cannot be added while you are offline. Remove them to save.": "Skedarët nuk mund të shtohen ndërsa jeni jashtë linje. Hiqini për të ruajtur.",
+        "Files can only be added to a secret you own. Remove them to save.": "Skedarët mund të shtohen vetëm te një sekret që e zotëroni. Hiqini për të ruajtur."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Riprova il caricamento di {name}",
         "The secret was saved, but some files could not be added.": "Il segreto è stato salvato, ma non è stato possibile aggiungere alcuni file.",
         "Upload failed": "Caricamento non riuscito",
-        "Folders cannot be attached. Drop the files inside them instead.": "Le cartelle non possono essere allegate. Trascina invece i file al loro interno."
+        "Folders cannot be attached. Drop the files inside them instead.": "Le cartelle non possono essere allegate. Trascina invece i file al loro interno.",
+        "Files cannot be added while you are offline. Remove them to save.": "Non è possibile aggiungere file mentre sei offline. Rimuovili per salvare.",
+        "Files can only be added to a secret you own. Remove them to save.": "I file possono essere aggiunti solo a un segreto di tua proprietà. Rimuovili per salvare."
     },
     "nplurals=2; plural=(n != 1);"
 )

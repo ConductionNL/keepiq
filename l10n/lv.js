@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Mēģināt augšupielādēt {name} vēlreiz",
         "The secret was saved, but some files could not be added.": "Noslēpums tika saglabāts, bet dažus failus neizdevās pievienot.",
         "Upload failed": "Augšupielāde neizdevās",
-        "Folders cannot be attached. Drop the files inside them instead.": "Mapes nevar pievienot. Tā vietā nometiet tajās esošos failus."
+        "Folders cannot be attached. Drop the files inside them instead.": "Mapes nevar pievienot. Tā vietā nometiet tajās esošos failus.",
+        "Files cannot be added while you are offline. Remove them to save.": "Bezsaistē failus nevar pievienot. Noņemiet tos, lai saglabātu.",
+        "Files can only be added to a secret you own. Remove them to save.": "Failus var pievienot tikai jums piederošam noslēpumam. Noņemiet tos, lai saglabātu."
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

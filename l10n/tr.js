@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "{name} yüklemesini yeniden dene",
         "The secret was saved, but some files could not be added.": "Gizli kaydedildi, ancak bazı dosyalar eklenemedi.",
         "Upload failed": "Yükleme başarısız oldu",
-        "Folders cannot be attached. Drop the files inside them instead.": "Klasörler eklenemez. Bunun yerine içlerindeki dosyaları bırakın."
+        "Folders cannot be attached. Drop the files inside them instead.": "Klasörler eklenemez. Bunun yerine içlerindeki dosyaları bırakın.",
+        "Files cannot be added while you are offline. Remove them to save.": "Çevrimdışıyken dosya eklenemez. Kaydetmek için bunları kaldırın.",
+        "Files can only be added to a secret you own. Remove them to save.": "Dosyalar yalnızca size ait bir gizliye eklenebilir. Kaydetmek için bunları kaldırın."
     },
     "nplurals=1; plural=0;"
 )

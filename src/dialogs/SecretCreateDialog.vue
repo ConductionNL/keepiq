@@ -127,8 +127,9 @@
 			</template>
 
 			<AttachmentDropZone
-				v-if="canAddFiles"
+				v-if="canAddFiles || pendingFiles > 0"
 				ref="dropZone"
+				:unavailable="filesUnavailable"
 				:disabled="saving"
 				:secretId="created ? created.id : null"
 				@update:pending="pendingFiles = $event"
@@ -504,7 +505,12 @@ export default {
 			if (this.created) {
 				return !this.saving && !this.filesBusy
 			}
-			return this.formReady && this.valueReady
+			// Listed files that can no longer be added must be removed first.
+			return (
+				this.formReady
+				&& this.valueReady
+				&& (this.canAddFiles || this.pendingFiles === 0)
+			)
 		},
 
 		/**
@@ -516,6 +522,21 @@ export default {
 		 */
 		canAddFiles() {
 			return !this.contributeTo && !useOfflineStore().readOnly
+		},
+
+		/**
+		 * Why listed files cannot be added, '' when they can.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		filesUnavailable() {
+			if (this.canAddFiles) {
+				return ''
+			}
+			return useOfflineStore().readOnly
+				? t('keepiq', 'Files cannot be added while you are offline. Remove them to save.')
+				: t('keepiq', 'Files can only be added to a secret you own. Remove them to save.')
 		},
 
 		/**

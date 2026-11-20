@@ -135,8 +135,9 @@
 			</template>
 
 			<AttachmentDropZone
-				v-if="canAddFiles"
+				v-if="canAddFiles || pendingFiles > 0"
 				ref="dropZone"
+				:unavailable="filesUnavailable"
 				:disabled="saving"
 				:secretId="savedSecret ? secretId : null"
 				@update:pending="pendingFiles = $event"
@@ -463,6 +464,8 @@ export default {
 				!this.loading
 				&& !this.saving
 				&& !this.viewOnly
+				// Listed files that can no longer be added must be removed first.
+				&& (this.canAddFiles || this.pendingFiles === 0)
 				&& this.name.trim() !== ''
 				&& this.policyVerdict.compliant
 				&& this.totpError === ''
@@ -529,6 +532,21 @@ export default {
 				&& !useOfflineStore().readOnly
 			)
 		},
+
+		/**
+		 * Why listed files cannot be added, '' when they can.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		filesUnavailable() {
+			if (this.canAddFiles) {
+				return ''
+			}
+			return useOfflineStore().readOnly
+				? t('keepiq', 'Files cannot be added while you are offline. Remove them to save.')
+				: t('keepiq', 'Files can only be added to a secret you own. Remove them to save.')
+		},
 	},
 
 	watch: {
@@ -542,8 +560,6 @@ export default {
 		 */
 		pendingFiles(count) {
 			if (this.savedSecret && count === 0 && !this.saving) {
-				this.reportSaved()
-				this.savedSecret = null
 				this.onUpdateOpen(false)
 			}
 		},
@@ -870,7 +886,6 @@ export default {
 			const uploaded = zone
 				? await zone.uploadPending(this.secretId)
 				: this.pendingFiles === 0
-			this.reportSaved()
 			if (!uploaded) {
 				this.error = t(
 					'keepiq',
@@ -878,7 +893,6 @@ export default {
 				)
 				return
 			}
-			this.savedSecret = null
 			this.onUpdateOpen(false)
 		},
 
@@ -899,14 +913,25 @@ export default {
 		},
 
 		/**
+		 * Close the dialog. After a save it reports the secret saved, once:
+		 * the uploads that will run have run by then, so the caller reloads
+		 * once and sees every file that was added.
+		 *
+		 * @param {boolean} value The new open state.
 		 * @return {void}
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
-		reportSaved() {
-			this.$emit('saved', this.savedSecret)
-			if (this.onSaved) {
-				this.onSaved(this.savedSecret)
+		onUpdateOpen(value) {
+			if (!value && this.savedSecret) {
+				const saved = this.savedSecret
+				this.savedSecret = null
+				this.$emit('saved', saved)
+				if (this.onSaved) {
+					this.onSaved(saved)
+				}
 			}
+			secretPayloadForm.methods.onUpdateOpen.call(this, value)
 		},
 	},
 }

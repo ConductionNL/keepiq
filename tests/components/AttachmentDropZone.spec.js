@@ -199,6 +199,45 @@ describe('AttachmentDropZone', () => {
 		expect(drop(['Files'])).toBe(false)
 	})
 
+	it('adds no picked file while disabled', async () => {
+		const wrapper = mount(AttachmentDropZone, {
+			props: { disabled: true },
+			global: { stubs },
+		})
+		const input = wrapper.find('[data-testid="attachment-dropzone-input"]')
+
+		await pick(wrapper, [file('a.txt')])
+
+		expect(input.attributes('disabled')).toBeDefined()
+		expect(wrapper.find('[data-testid="attachment-pending-0"]').exists()).toBe(
+			false,
+		)
+	})
+
+	it('keeps listed files when adding becomes unavailable, says why, and lets them be removed', async () => {
+		const wrapper = mounted()
+		await pick(wrapper, [file('a.txt')])
+
+		await wrapper.setProps({ unavailable: 'Files can only be added to a secret you own.' })
+		await pick(wrapper, [file('b.txt')])
+		await wrapper
+			.find('[data-testid="attachment-dropzone"]')
+			.trigger('drop', { dataTransfer: { files: [file('c.txt')] } })
+
+		expect(wrapper.text()).toContain('a.txt')
+		expect(wrapper.text()).not.toContain('b.txt')
+		expect(wrapper.text()).not.toContain('c.txt')
+		expect(
+			wrapper.find('[data-testid="attachment-dropzone-unavailable"]').text(),
+		).toContain('Files can only be added to a secret you own.')
+		expect(
+			wrapper.find('[data-testid="attachment-dropzone-add"]').attributes('disabled'),
+		).toBeDefined()
+
+		await wrapper.find('[data-testid="attachment-pending-remove-0"]').trigger('click')
+		expect(wrapper.text()).not.toContain('a.txt')
+	})
+
 	it('resolves true with nothing waiting', async () => {
 		const wrapper = mounted()
 		expect(await wrapper.vm.uploadPending('s1')).toBe(true)

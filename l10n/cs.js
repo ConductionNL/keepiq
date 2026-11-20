@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Zkusit znovu nahrát {name}",
         "The secret was saved, but some files could not be added.": "Tajemství bylo uloženo, ale některé soubory se nepodařilo přidat.",
         "Upload failed": "Nahrání se nezdařilo",
-        "Folders cannot be attached. Drop the files inside them instead.": "Složky nelze připojit. Přetáhněte místo toho soubory v nich."
+        "Folders cannot be attached. Drop the files inside them instead.": "Složky nelze připojit. Přetáhněte místo toho soubory v nich.",
+        "Files cannot be added while you are offline. Remove them to save.": "Soubory nelze přidat, když jste offline. Odeberte je, abyste mohli uložit.",
+        "Files can only be added to a secret you own. Remove them to save.": "Soubory lze přidat jen k tajemství, které vlastníte. Odeberte je, abyste mohli uložit."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

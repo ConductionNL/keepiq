@@ -157,6 +157,26 @@ describe('SecretCreateDialog attachments', () => {
 		expect(wrapper.findComponent(AttachmentDropZone).exists()).toBe(false)
 	})
 
+	it('keeps added files when switching to a team folder and blocks the save until they are removed', async () => {
+		const wrapper = await withFiles(['codes.png'])
+
+		wrapper.vm.contributeTo = { teamFolderId: 't1', folderName: 'Ops' }
+		await flushPromises()
+
+		const zone = wrapper.findComponent(AttachmentDropZone)
+		expect(zone.exists()).toBe(true)
+		expect(zone.text()).toContain('codes.png')
+		expect(zone.props('unavailable')).not.toBe('')
+		expect(wrapper.vm.canSubmit).toBe(false)
+
+		await wrapper
+			.find('[data-testid="attachment-pending-remove-0"]')
+			.trigger('click')
+		await flushPromises()
+
+		expect(wrapper.vm.canSubmit).toBe(true)
+	})
+
 	it('offers no drop zone while served from the offline cache', async () => {
 		useOfflineStore().servedFromCache = true
 		const wrapper = mount(SecretCreateDialog, {

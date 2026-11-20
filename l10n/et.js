@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Proovi {name} uuesti üles laadida",
         "The secret was saved, but some files could not be added.": "Saladus salvestati, kuid mõnda faili ei õnnestunud lisada.",
         "Upload failed": "Üleslaadimine ebaõnnestus",
-        "Folders cannot be attached. Drop the files inside them instead.": "Kaustu ei saa manustada. Lohistage selle asemel nendes olevad failid."
+        "Folders cannot be attached. Drop the files inside them instead.": "Kaustu ei saa manustada. Lohistage selle asemel nendes olevad failid.",
+        "Files cannot be added while you are offline. Remove them to save.": "Faile ei saa võrguühenduseta lisada. Salvestamiseks eemaldage need.",
+        "Files can only be added to a secret you own. Remove them to save.": "Faile saab lisada ainult teie enda saladusele. Salvestamiseks eemaldage need."
     },
     "nplurals=2; plural=(n != 1);"
 )

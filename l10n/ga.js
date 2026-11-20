@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Bain triail eile as uaslódáil {name}",
         "The secret was saved, but some files could not be added.": "Sábháladh an rún, ach níorbh fhéidir roinnt comhad a chur leis.",
         "Upload failed": "Theip ar an uaslódáil",
-        "Folders cannot be attached. Drop the files inside them instead.": "Ní féidir fillteáin a cheangal. Scaoil na comhaid atá iontu ina ionad sin."
+        "Folders cannot be attached. Drop the files inside them instead.": "Ní féidir fillteáin a cheangal. Scaoil na comhaid atá iontu ina ionad sin.",
+        "Files cannot be added while you are offline. Remove them to save.": "Ní féidir comhaid a chur leis agus tú as líne. Bain iad chun sábháil.",
+        "Files can only be added to a secret you own. Remove them to save.": "Ní féidir comhaid a chur ach le rún atá agat féin. Bain iad chun sábháil."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

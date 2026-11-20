@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Повторно качване на {name}",
         "The secret was saved, but some files could not be added.": "Тайната е запазена, но някои файлове не можаха да бъдат добавени.",
         "Upload failed": "Неуспешно качване",
-        "Folders cannot be attached. Drop the files inside them instead.": "Папки не могат да бъдат прикачени. Пуснете файловете в тях."
+        "Folders cannot be attached. Drop the files inside them instead.": "Папки не могат да бъдат прикачени. Пуснете файловете в тях.",
+        "Files cannot be added while you are offline. Remove them to save.": "Не могат да се добавят файлове, докато сте офлайн. Премахнете ги, за да запазите.",
+        "Files can only be added to a secret you own. Remove them to save.": "Файлове могат да се добавят само към ваша собствена тайна. Премахнете ги, за да запазите."
     },
     "nplurals=2; plural=(n != 1);"
 )

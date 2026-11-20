@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Bandyti įkelti {name} dar kartą",
         "The secret was saved, but some files could not be added.": "Paslaptis išsaugota, bet kai kurių failų nepavyko pridėti.",
         "Upload failed": "Įkelti nepavyko",
-        "Folders cannot be attached. Drop the files inside them instead.": "Aplankų pridėti negalima. Vietoj to nutempkite juose esančius failus."
+        "Folders cannot be attached. Drop the files inside them instead.": "Aplankų pridėti negalima. Vietoj to nutempkite juose esančius failus.",
+        "Files cannot be added while you are offline. Remove them to save.": "Neprisijungus failų pridėti negalima. Pašalinkite juos, kad išsaugotumėte.",
+        "Files can only be added to a secret you own. Remove them to save.": "Failus galima pridėti tik prie jums priklausančios paslapties. Pašalinkite juos, kad išsaugotumėte."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

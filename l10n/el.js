@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Επανάληψη μεταφόρτωσης του {name}",
         "The secret was saved, but some files could not be added.": "Το μυστικό αποθηκεύτηκε, αλλά ορισμένα αρχεία δεν ήταν δυνατό να προστεθούν.",
         "Upload failed": "Η μεταφόρτωση απέτυχε",
-        "Folders cannot be attached. Drop the files inside them instead.": "Οι φάκελοι δεν μπορούν να επισυναφθούν. Αποθέστε αντί αυτού τα αρχεία που περιέχουν."
+        "Folders cannot be attached. Drop the files inside them instead.": "Οι φάκελοι δεν μπορούν να επισυναφθούν. Αποθέστε αντί αυτού τα αρχεία που περιέχουν.",
+        "Files cannot be added while you are offline. Remove them to save.": "Δεν είναι δυνατή η προσθήκη αρχείων ενώ είστε εκτός σύνδεσης. Αφαιρέστε τα για να αποθηκεύσετε.",
+        "Files can only be added to a secret you own. Remove them to save.": "Αρχεία μπορούν να προστεθούν μόνο σε μυστικό που σας ανήκει. Αφαιρέστε τα για να αποθηκεύσετε."
     },
     "nplurals=2; plural=(n != 1);"
 )

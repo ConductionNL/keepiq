@@ -1969,7 +1969,9 @@ OC.L10N.register(
         "Retry upload of {name}": "Повторно прикачување на {name}",
         "The secret was saved, but some files could not be added.": "Тајната е зачувана, но некои датотеки не можеа да се додадат.",
         "Upload failed": "Прикачувањето не успеа",
-        "Folders cannot be attached. Drop the files inside them instead.": "Папките не можат да се приложат. Наместо тоа, спуштете ги датотеките од нив."
+        "Folders cannot be attached. Drop the files inside them instead.": "Папките не можат да се приложат. Наместо тоа, спуштете ги датотеките од нив.",
+        "Files cannot be added while you are offline. Remove them to save.": "Не може да се додаваат датотеки додека сте офлајн. Отстранете ги за да зачувате.",
+        "Files can only be added to a secret you own. Remove them to save.": "Датотеки може да се додаваат само на ваша тајна. Отстранете ги за да зачувате."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )
