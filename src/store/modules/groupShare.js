@@ -6,7 +6,11 @@
 import axios from '@nextcloud/axios'
 import { generateOcsUrl, generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
-import { copyCiphertext, recipientFields } from '../../services/recipientCopy.js'
+import {
+	copyCiphertext,
+	recipientFields,
+	sourceVersion,
+} from '../../services/recipientCopy.js'
 import { uniqueSharees } from '../../utils/sharees.js'
 import { useSecretStore } from './secret.js'
 import { useShareStore } from './share.js'
@@ -75,8 +79,31 @@ async function registerMemberCopies(store, share) {
 		share.groupShare.id,
 		share.members,
 	)
-	const { items } = await useShareStore().registerBatch(rows)
+	const { items } = await useShareStore().registerBatch(rows, {
+		rebuild: (stale) => encryptAgain(store, share.secretId, share.groupShare.id, share.members, stale),
+	})
 	return registeredCounts(items, share.members.length)
+}
+
+/**
+ * Encrypt the copies of the given stale rows again, from the version the
+ * source holds now (#1255).
+ *
+ * @param {object} store The group share store.
+ * @param {string} secretId The source secret.
+ * @param {string|null} groupShareId The group share the copies hang on.
+ * @param {Array<{userId: string, certificate: string}>} members The members a copy was made for.
+ * @param {Array<object>} stale The rows the server answered `stale_source`.
+ * @return {Promise<Array<object>>} The rows encrypted again.
+ * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+ */
+export function encryptAgain(store, secretId, groupShareId, members, stale) {
+	const again = new Set(stale.map((row) => row.targetUserId))
+	return store.encryptForMembers(
+		secretId,
+		groupShareId,
+		members.filter((member) => again.has(member.userId)),
+	)
 }
 
 /**
@@ -243,6 +270,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 					targetUserId: member.userId,
 					...copyCiphertext(blob),
 					groupShareId,
+					...sourceVersion(plain),
 				})
 			}
 			return rows

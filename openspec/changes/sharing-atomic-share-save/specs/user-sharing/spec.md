@@ -91,3 +91,25 @@ A share-save MAY carry `restoredFrom`, the id of a version of `{id}`, on a one-c
 - GIVEN a secret shared with a recipient and a prior version `V`
 - WHEN the owner restores `V` and the share-save is answered 409 `incomplete`
 - THEN neither the owner's row nor the recipient's copy MUST have changed, and no restore MUST be recorded
+
+### Requirement: A share is made from the current version
+
+A share row sent to `POST /api/v1/shares/register-batch` or `POST /api/v1/team-folders/{id}/shares` MAY name, as `sourceUpdatedAt`, the version of the row its ciphertext was encrypted from: the source, or the caller's own copy when a delegate shares from it. The server MUST compare it with that row's version after taking the source's row lock, the lock a share-save takes, inside the transaction that mints the copy, comparing in whole seconds. When it differs, or the row is gone, the server MUST mint nothing for that row and MUST answer it `stale_source` with the current version (`sourceUpdatedAt`, null when gone), while the other rows of the request go on. A `sourceUpdatedAt` that is not a moment MUST be refused as `invalid`. A row without one MUST be accepted as before, until every client sends it. The web app MUST name the version on the rows it encrypts from the source itself or from a delegate's own copy, and MUST decrypt the row again and send a `stale_source` row once more, at most three times. A team folder row a manager or member encrypts from their own copy names no version.
+
+#### Scenario: A share made during a save is sent again
+
+@e2e exclude A race between two requests; driven by DirectShareRegistrarTest::testARowFromAnOlderVersionIsStale, TeamFolderFanOutTest::testARowFromAnOlderVersionIsSkippedAsStale and tests/store/share.staleSource.spec.js.
+
+- **GIVEN** Alice opens the share dialog of a login and Carol, who holds a write grade on it, saves a new password through a share-save before Alice confirms
+- **WHEN** Alice shares the login with Bob, encrypted from the password she decrypted
+- **THEN** the server MUST mint no copy from the old password and MUST answer the row `stale_source` with the new version
+- **AND** Alice's browser MUST decrypt the login again and share the new password with Bob
+
+#### Scenario: An older client's share is accepted
+
+@e2e exclude Server-side compatibility; driven by DirectShareRegistrarTest::testARowWithoutAVersionIsNotCheckedAndAMalformedOneIsInvalid.
+
+- **GIVEN** a client that does not send `sourceUpdatedAt`
+- **WHEN** it registers a share
+- **THEN** the share MUST be created as before
+

@@ -167,6 +167,7 @@ class TeamFolderFanOutTest extends TestCase {
 			db: $this->db,
 			logger: $this->createMock(LoggerInterface::class),
 			restrictions: $restrictions,
+			secrets: $this->secrets,
 		);
 	}//end setUp()
 
@@ -284,4 +285,73 @@ class TeamFolderFanOutTest extends TestCase {
 
 		$this->assertSame(['insert copy bob', 'insert share bob', 'restrict bob'], $this->log);
 	}//end testAFailingWriteRollsBackAndNotifiesNobody()
+	/**
+	 * Rows naming the version they were encrypted from lock each named folder secret once, in id order, inside
+	 * the transaction; a row from an older version is skipped as `stale_source` with the current version, a
+	 * malformed one as `invalid`, and the rest are created.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+	 */
+	public function testARowFromAnOlderVersionIsSkippedAsStale(): void {
+		$locked = [];
+		$this->secrets->method('lockVersion')->willReturnCallback(
+			function (string $id) use (&$locked): ?\DateTime {
+				$locked[] = $id;
+				return new \DateTime($id === 'sec-2' ? '2026-10-01T10:00:05+00:00' : '2026-10-01T10:00:00+00:00');
+			}
+		);
+		$this->db->expects($this->once())->method('commit');
+
+		$result = $this->service->registerFanOutShares(
+			teamFolder: $this->teamFolder(),
+			shares: [
+				['sourceSecretId' => 'sec-2', 'targetUserId' => 'bob', 'encryptedKey' => 'K', 'sourceUpdatedAt' => '2026-10-01T10:00:00+00:00'],
+				['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'encryptedKey' => 'K', 'sourceUpdatedAt' => '2026-10-01T12:00:00+02:00'],
+				['sourceSecretId' => 'sec-1', 'targetUserId' => 'carol', 'encryptedKey' => 'K', 'sourceUpdatedAt' => 'not a moment'],
+				['sourceSecretId' => 'sec-2', 'targetUserId' => 'carol', 'encryptedKey' => 'K'],
+				// Outside the folder: never locked.
+				['sourceSecretId' => 'sec-9', 'targetUserId' => 'bob', 'encryptedKey' => 'K', 'sourceUpdatedAt' => '2026-10-01T10:00:00+00:00'],
+			],
+			subtreeSecretIds: ['sec-1' => true, 'sec-2' => true],
+			userId: 'alice'
+		);
+
+		$this->assertSame(['sec-1', 'sec-2'], $locked);
+		$this->assertSame(
+			[['sec-1', 'bob'], ['sec-2', 'carol']],
+			array_map(static fn (array $row): array => [$row['sourceSecretId'], $row['targetUserId']], $result['rows'])
+		);
+		$this->assertSame(
+			[
+				['sourceSecretId' => 'sec-2', 'targetUserId' => 'bob', 'reason' => 'stale_source', 'sourceUpdatedAt' => '2026-10-01T10:00:05+00:00'],
+				['sourceSecretId' => 'sec-1', 'targetUserId' => 'carol', 'reason' => 'invalid'],
+				['sourceSecretId' => 'sec-9', 'targetUserId' => 'bob', 'reason' => 'not_in_folder'],
+			],
+			$result['skipped']
+		);
+	}//end testARowFromAnOlderVersionIsSkippedAsStale()
+
+	/**
+	 * A source deleted under the lock is stale with no current version.
+	 *
+	 * @return void
+	 */
+	public function testASourceGoneUnderTheLockIsStale(): void {
+		$this->secrets->method('lockVersion')->willReturn(null);
+
+		$result = $this->service->registerFanOutShares(
+			teamFolder: $this->teamFolder(),
+			shares: [['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'encryptedKey' => 'K', 'sourceUpdatedAt' => '2026-10-01T10:00:00+00:00']],
+			subtreeSecretIds: ['sec-1' => true],
+			userId: 'alice'
+		);
+
+		$this->assertSame(0, $result['created']);
+		$this->assertSame(
+			[['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'reason' => 'stale_source', 'sourceUpdatedAt' => null]],
+			$result['skipped']
+		);
+	}//end testASourceGoneUnderTheLockIsStale()
 }//end class

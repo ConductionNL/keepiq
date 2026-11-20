@@ -169,6 +169,41 @@ class SecretMapper extends QBMapper {
 	}//end advanceVersion()
 
 	/**
+	 * Take the row lock of a secret without moving its version, and read the
+	 * version it holds. The no-op UPDATE holds the lock until the transaction
+	 * ends, the same lock advanceVersion() takes, so a share-save of the row
+	 * and this caller wait for each other; the read after it sees the version
+	 * the other one committed. Call it inside a transaction.
+	 *
+	 * @param string $id The secret ID
+	 *
+	 * @return DateTime|null The version, in UTC; null when the row is gone
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 */
+	public function lockVersion(string $id): ?DateTime {
+		$lock = $this->db->getQueryBuilder();
+		$lock->update($this->getTableName())
+			->set('updated_at', $lock->createFunction('updated_at'))
+			->where($lock->expr()->eq('id', $lock->createNamedParameter($id)));
+		$lock->executeStatement();
+
+		$read = $this->db->getQueryBuilder();
+		$read->select('updated_at')
+			->from($this->getTableName())
+			->where($read->expr()->eq('id', $read->createNamedParameter($id)));
+		$result = $read->executeQuery();
+		$value = $result->fetchOne();
+		$result->closeCursor();
+
+		if (is_string($value) === false || $value === '') {
+			return null;
+		}
+
+		return new DateTime($value, new DateTimeZone('UTC'));
+	}//end lockVersion()
+
+	/**
 	 * A moment as the DATETIME column holds it: UTC, whole seconds.
 	 *
 	 * @param DateTime $moment The moment

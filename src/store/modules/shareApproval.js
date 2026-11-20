@@ -6,7 +6,7 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
-import { useGroupShareStore } from './groupShare.js'
+import { encryptAgain, useGroupShareStore } from './groupShare.js'
 import { useShareStore } from './share.js'
 
 /** register-batch statuses that mean the recipient now holds a copy. */
@@ -48,13 +48,19 @@ export const useShareApprovalStore = defineStore('shareApproval', {
 				return 'no_suite'
 			}
 
-			const rows = await useGroupShareStore().encryptForMembers(
+			const members = [{ userId, certificate: recipient.certificate }]
+			const groupShares = useGroupShareStore()
+			const rows = await groupShares.encryptForMembers(
 				secretId,
 				groupShareId,
-				[{ userId, certificate: recipient.certificate }],
+				members,
 			)
-			// register-batch needs a vault-key proof (keepiq#818).
-			const { items } = await useShareStore().registerBatch(rows)
+			// register-batch needs a vault-key proof (keepiq#818); a row made
+			// from a version a save replaced meanwhile is made again (#1255).
+			const { items } = await useShareStore().registerBatch(rows, {
+				rebuild: (stale) =>
+					encryptAgain(groupShares, secretId, groupShareId, members, stale),
+			})
 			return String(items[0]?.status ?? 'not_registered')
 		},
 

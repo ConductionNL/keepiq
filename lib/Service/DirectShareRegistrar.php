@@ -40,6 +40,7 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Exception\StaleShareSourceException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\Exception as DbException;
 use OCP\IDBConnection;
@@ -221,7 +222,16 @@ class DirectShareRegistrar {
 			return $share->outcome(status: 'exists');
 		}
 
-		$copy = $this->mintAndLink(mint: $mint);
+		if ($share->sourceVersion() === '') {
+			return $share->outcome(status: 'invalid');
+		}
+
+		try {
+			$copy = $this->mintAndLink(mint: $mint);
+		} catch (StaleShareSourceException $stale) {
+			return $share->stale(current: $stale->currentVersion());
+		}
+
 		if (is_string($copy) === true) {
 			return $share->outcome(status: $copy);
 		}
@@ -268,6 +278,8 @@ class DirectShareRegistrar {
 	 *
 	 * @return Secret|string The copy, or the status when neither it nor its row was written:
 	 *   `copy_fields_mismatch` when the row's totp or passkeys does not mirror the source's, `no_suite`, `exists`
+	 *
+	 * @throws StaleShareSourceException When the row names a source version that is no longer current; nothing is written
 	 */
 	private function mintAndLink(DirectShareMint $mint): Secret|string {
 		// A copy without the source's TOTP seed or passkeys, or with ones it
@@ -278,6 +290,7 @@ class DirectShareRegistrar {
 
 		$this->connection?->beginTransaction();
 		try {
+			$this->assertSourceCurrent(mint: $mint);
 			$copy = $this->mintCopy(mint: $mint);
 			if ($copy === null) {
 				$this->connection?->rollBack();
@@ -303,6 +316,38 @@ class DirectShareRegistrar {
 
 		return $copy;
 	}//end mintAndLink()
+
+	/**
+	 * Refuse a row encrypted from an older version of the row it was encrypted from, under the source's row
+	 * lock, the lock a share-save takes first. That is the source itself, or the caller's own copy of it when a
+	 * delegate shares from their copy: a share-save writes that copy in the same transaction, so its version
+	 * is read after the source's lock, in the order a share-save takes them. A row that names no version (an
+	 * older client) is not checked.
+	 *
+	 * @param DirectShareMint $mint The row and its resolved source
+	 *
+	 * @return void
+	 *
+	 * @throws StaleShareSourceException When the row it was encrypted from moved on since
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 */
+	private function assertSourceCurrent(DirectShareMint $mint): void {
+		$sent = $mint->share->sourceVersion();
+		if ($sent === null || $sent === '') {
+			return;
+		}
+
+		$current = $this->secretMapper->lockVersion(id: $mint->source->getId());
+		$named   = $mint->share->sourceSecretId;
+		if ($named !== $mint->source->getId()) {
+			$current = $this->secretMapper->lockVersion(id: $named);
+		}
+
+		if (ShareSourceVersion::isCurrent(sent: $sent, current: $current) === false) {
+			throw new StaleShareSourceException(current: $current);
+		}
+	}//end assertSourceCurrent()
 
 	/**
 	 * Mint the recipient's copy of the source from the row's ciphertexts.

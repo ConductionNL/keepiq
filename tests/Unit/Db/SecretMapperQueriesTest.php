@@ -191,6 +191,41 @@ class SecretMapperQueriesTest extends TestCase {
 	}//end testAdvanceVersionIsAConditionalUtcUpdate()
 
 	/**
+	 * The version lock is a no-op UPDATE of the row, which takes its lock without moving the version, followed
+	 * by a read of the version it holds, in UTC.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 */
+	public function testLockVersionLocksTheRowWithoutMovingIt(): void {
+		$this->affected = [0];
+		$this->queueRows(rows: [['updated_at' => '2026-03-01 11:00:00']]);
+
+		$version = $this->mapper()->lockVersion(id: 's1');
+
+		$this->assertSame(
+			expected: ['update(keepiq_secrets)', 'set(updated_at, updated_at)', 'where(eq(id, :p0))'],
+			actual: $this->opsOf(index: 0)
+		);
+		$this->assertSame(expected: 'statement', actual: $this->ranOf(index: 0));
+		$this->assertSame(expected: ['select(updated_at)', 'from(keepiq_secrets)', 'where(eq(id, :p1))'], actual: $this->opsOf(index: 1));
+		$this->assertSame(expected: '2026-03-01T11:00:00+00:00', actual: $version?->format(DATE_ATOM));
+	}//end testLockVersionLocksTheRowWithoutMovingIt()
+
+	/**
+	 * A row that is gone has no version.
+	 *
+	 * @return void
+	 */
+	public function testLockVersionOfAGoneRowIsNull(): void {
+		$this->affected = [0];
+		$this->queueRows(rows: []);
+
+		$this->assertNull(actual: $this->mapper()->lockVersion(id: 'gone'));
+	}//end testLockVersionOfAGoneRowIsNull()
+
+	/**
 	 * A row that moved on answers zero.
 	 *
 	 * @return void
