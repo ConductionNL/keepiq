@@ -101,8 +101,7 @@ class CredentialExpiryRequestedListener implements IEventListener {
 			return null;
 		}
 
-		$mint = $this->mints->findBySecret(secretId: $event->getCredentialId());
-		if ($mint === null || $mint->getConsumer() !== self::RECEIVER || $mint->getOrganisationId() !== $organisation) {
+		if ($this->mintedForReceiver(credentialId: $event->getCredentialId(), organisation: $organisation) === false) {
 			return null;
 		}
 
@@ -112,12 +111,42 @@ class CredentialExpiryRequestedListener implements IEventListener {
 			return null;
 		}
 
-		if ($secret->getOwnerType() !== 'application' || $secret->getTrashedAt() !== null || $secret->getTombstonedAt() !== null) {
+		if ($this->isLiveApplicationSecret(secret: $secret) === false) {
 			return null;
 		}
 
 		return $secret;
 	}//end answerableSecret()
+
+	/**
+	 * Whether the credential was minted for integriq and this organisation.
+	 *
+	 * @param string $credentialId The secret the request names
+	 * @param string $organisation The acting organisation
+	 *
+	 * @return bool
+	 */
+	private function mintedForReceiver(string $credentialId, string $organisation): bool {
+		$mint = $this->mints->findBySecret(secretId: $credentialId);
+		if ($mint === null) {
+			return false;
+		}
+
+		return $mint->getConsumer() === self::RECEIVER && $mint->getOrganisationId() === $organisation;
+	}//end mintedForReceiver()
+
+	/**
+	 * Whether the secret is an application secret that is neither trashed nor tombstoned.
+	 *
+	 * @param Secret $secret The secret
+	 *
+	 * @return bool
+	 */
+	private function isLiveApplicationSecret(Secret $secret): bool {
+		return $secret->getOwnerType() === 'application'
+			&& $secret->getTrashedAt() === null
+			&& $secret->getTombstonedAt() === null;
+	}//end isLiveApplicationSecret()
 
 	/**
 	 * The absolute link to the secret's page, where the guided renewal is.

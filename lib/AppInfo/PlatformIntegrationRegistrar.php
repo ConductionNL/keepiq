@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
+use OCA\Keepiq\Event\CredentialExpiryRequestedEvent;
+use OCA\Keepiq\Listener\CredentialExpiryRequestedListener;
 use OCA\Keepiq\Listener\FederationEventRegistrar;
 use OCA\Keepiq\Middleware\MiddlewareRegistrar;
 use OCA\Keepiq\Notification\NotificationRegistrar;
@@ -36,7 +38,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * These registrations are not Keepiq domain wiring — they are the places
  * where the PLATFORM calls into this app: the unified-search bar, the
  * notification renderer, the request pipeline, the admin overview's setup
- * checks and Open Cloud Mesh. They are grouped because
+ * checks, Open Cloud Mesh and other apps' events. They are grouped because
  * they share that direction of control and because each one is a single
  * class handed to a core registry, with no ordering relationship to the
  * domain listeners.
@@ -63,6 +65,14 @@ final class PlatformIntegrationRegistrar {
 		// events, through which partner instances reach the federation
 		// endpoints (sharing-federated-recipients).
 		(new FederationEventRegistrar())->register(context: $context);
+
+		// Another app asking through the event dispatcher: the one narrow
+		// answer is the expiry of integriq's own connection certificate
+		// (connection-certificate-expiry-for-integriq).
+		$context->registerEventListener(
+			event: CredentialExpiryRequestedEvent::class,
+			listener: CredentialExpiryRequestedListener::class
+		);
 
 	}//end register()
 

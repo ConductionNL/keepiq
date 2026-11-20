@@ -21,9 +21,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
-use OCA\Keepiq\Event\CredentialExpiryRequestedEvent;
 use OCA\Keepiq\Listener\AuditStreamEventRegistrar;
-use OCA\Keepiq\Listener\CredentialExpiryRequestedListener;
 use OCA\Keepiq\Listener\SuiteLifecycleEventRegistrar;
 use OCA\Keepiq\Listener\UserLifecycleEventRegistrar;
 use OCA\Keepiq\Mcp\McpRegistrar;
@@ -119,13 +117,6 @@ class Application extends App implements IBootstrap {
 		(new SuiteLifecycleEventRegistrar())->register(context: $context);
 		(new UserLifecycleEventRegistrar())->register(context: $context);
 		(new AuditStreamEventRegistrar())->register(context: $context);
-
-		// The one narrow answer to another app: the expiry of integriq's own
-		// connection certificate (connection-certificate-expiry-for-integriq).
-		$context->registerEventListener(
-			event: CredentialExpiryRequestedEvent::class,
-			listener: CredentialExpiryRequestedListener::class
-		);
 
 		// Nextcloud's own extension points: unified search, notifications and
 		// the JWT-Bearer request middleware.
