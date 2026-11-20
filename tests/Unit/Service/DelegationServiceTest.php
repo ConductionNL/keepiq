@@ -30,6 +30,8 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\DelegationAuthorizer;
 use OCA\Keepiq\Service\DelegationService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -151,6 +153,8 @@ class DelegationServiceTest extends TestCase {
 	 * source's owner delegates (keepiq#1298).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
 	 */
 	public function testCreateDelegationRefusesAReceivedCopy(): void {
 		[$service, $mapper, $secretMapper] = $this->build();
@@ -290,6 +294,74 @@ class DelegationServiceTest extends TestCase {
 
 		return [$service, $mapper, $secretMapper, $shareTargetMapper, $groupManager];
 	}//end buildWithAdmin()
+
+	/**
+	 * A service over `copy-of-bob`, Bob's received copy of Alice's `sec-1`,
+	 * with a People area admin and the scan's verdict on the copy's row.
+	 *
+	 * @param string|null $heldBack The scan's verdict on the row (ShareQuarantineScanner::HELD_*), or null
+	 *
+	 * @return array{0:DelegationService,1:SecretDelegationMapper}
+	 */
+	private function buildOverBobsCopy(?string $heldBack = null): array {
+		$mapper = $this->createMock(originalClassName: SecretDelegationMapper::class);
+		$secretMapper = $this->createMock(originalClassName: SecretMapper::class);
+		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'bob', id: 'copy-of-bob'));
+		$row = new ShareTarget();
+		$row->setSourceSecretId('sec-1');
+		$row->setTargetUserId('bob');
+		$row->setSecretId('copy-of-bob');
+		$targets = $this->createMock(originalClassName: ShareTargetMapper::class);
+		$targets->method('findByRecipientSecret')->willReturn($row);
+		$targets->method('findBySourceSecretAndTargetUser')->willReturn($row);
+		$scanner = $this->createMock(originalClassName: ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturn($heldBack);
+
+		$service = new DelegationService(
+			mapper: $mapper,
+			authorizer: new DelegationAuthorizer(
+				secretMapper: $secretMapper,
+				rowJudge: $this->shareRowJudge(targets: $targets, secrets: $secretMapper, scanner: $scanner),
+				areas: $this->areaAuthorizer(groupManager: $this->createMock(originalClassName: IGroupManager::class), delegated: [PeopleAdminSettings::class]),
+			),
+		);
+
+		return [$service, $mapper];
+	}//end buildOverBobsCopy()
+
+	/**
+	 * Bob's copy whose row waits for the quarantine scan is not refused as a
+	 * copy yet: he is told it waits for the scan.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 */
+	public function testCreateDelegationOfACopyAwaitingTheScanAnswersScanPending(): void {
+		[$service, $mapper] = $this->buildOverBobsCopy(heldBack: ShareQuarantineScanner::HELD_UNJUDGED);
+		$mapper->expects(matcher: $this->never())->method('insert');
+
+		$this->expectException(ShareScanPendingException::class);
+		$this->expectExceptionMessage('This secret waits for the share quarantine scan, so it cannot be delegated yet');
+		$service->createDelegation(secretId: 'copy-of-bob', delegatedTo: 'carol', initiatedBy: 'bob');
+	}//end testCreateDelegationOfACopyAwaitingTheScanAnswersScanPending()
+
+	/**
+	 * An admin who holds a share of Bob's received copy is not handed that
+	 * copy: only an original is delegated.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 */
+	public function testCreateAdminHandoverRefusesAReceivedCopy(): void {
+		[$service, $mapper] = $this->buildOverBobsCopy();
+		$mapper->expects(matcher: $this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('A received copy cannot be delegated');
+		$service->createAdminHandover(secretId: 'copy-of-bob', delegatedTo: 'mallory', initiatedBy: 'mallory');
+	}//end testCreateAdminHandoverRefusesAReceivedCopy()
 
 	/**
 	 * Owner self-delegation is rejected when the delegate holds no share

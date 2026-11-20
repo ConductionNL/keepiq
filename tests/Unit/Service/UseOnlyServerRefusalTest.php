@@ -198,11 +198,13 @@ class UseOnlyServerRefusalTest extends TestCase {
 	}
 
 	/**
-	 * Bob cannot hand his use-only copy over to anyone.
+	 * Bob cannot hand his use-only copy over to anyone: no received copy is
+	 * delegated.
 	 *
 	 * @return void
 	 */
 	public function testADelegationOfAUseOnlyCopyIsRefused(): void {
+		$this->copy->setId('copy-of-bob');
 		$this->copy->setUseOnly(true);
 		$delegations = $this->createMock(SecretDelegationMapper::class);
 		$delegations->expects($this->never())->method('insert');
@@ -211,8 +213,8 @@ class UseOnlyServerRefusalTest extends TestCase {
 			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets, rowJudge: $this->shareRowJudgeWhereEveryoneHoldsACopy()),
 		);
 
-		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
-		$service->createDelegation('copy', 'mallory', 'bob');
+		$this->expectExceptionMessage('A received copy cannot be delegated');
+		$service->createDelegation('copy-of-bob', 'mallory', 'bob');
 	}
 
 	/**

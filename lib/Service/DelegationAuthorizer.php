@@ -111,7 +111,7 @@ class DelegationAuthorizer {
 	 * @throws InvalidArgumentException When the Secret is a received copy
 	 * @throws ShareScanPendingException When the row naming it waits for the share quarantine scan
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
 	 */
 	public function requireOriginal(Secret $secret): void {
 		$verdict = $this->rowJudge->forCopy(copy: $secret);

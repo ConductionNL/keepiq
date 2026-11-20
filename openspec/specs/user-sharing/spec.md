@@ -62,7 +62,7 @@ Tracks ownership delegation of a secret. Multiple active delegations per secret 
 ### Requirement: Share a Secret
 The system MUST allow a user to share a secret they own with another Nextcloud user who has an active EncryptionSuite. The secret's owner or an ACTIVE delegate of it (SecretDelegation) MAY create the share; no one else can. `register-batch` and group-share create apply the same owner-or-delegate check, so a delegate can create both a direct share and a group share, and a plain recipient can create neither. Delegation does not widen who may share: only an active delegate qualifies.
 
-Both paths share only an ORIGINAL secret as the source. A received copy — a secret that is itself some share target's recipient secret — MUST be refused as a source, which enforces at creation the "Recipients MUST NOT be able to share a secret directly" rule below: a recipient who owns their copy still cannot re-share it. The one exception is a caller who holds the copy and is an active delegate of its source: the copy resolves to the source, and every minted row hangs on the source. A delegate shares with the owner's authority but keeps their own copy's limits, whether they name their copy or the source: when that copy is use-only, expiring or read-only, or when they hold no copy of the source (revoked or expired) or more than one, the direct, group and link paths MUST refuse, so a restricted or ended grant can never mint a full, unrestricted copy. A delegate other than the owner needs at least one grant on the copy that is on its own neither use-only nor expiring; grants are not combined for this, so a full grant that ends plus a permanent use-only one cannot mint a full copy, and a grant past its end date counts for nothing even before the expiry job removes it. The same rules guard changing a restriction: a delegate whose own copy may not be shared onward MUST NOT change any share's restriction (`PATCH /shares/{id}`), and a delegate MUST NOT change a share made to themselves or the restriction of a group share that reaches them. On the link path a delegate may name only their own copy; another recipient's copy is not found. This creation-time refusal covers `register-batch`, group shares and link shares; federation and the team-folder fan-out do not apply it yet, so a plain recipient can still send their full copy out through either (a follow-up).
+Both paths share only an ORIGINAL secret as the source. A received copy — a secret that is itself some share target's recipient secret — MUST be refused as a source, which enforces at creation the "Recipients MUST NOT be able to share a secret directly" rule below: a recipient who owns their copy still cannot re-share it. The one exception is a caller who holds the copy and is an active delegate of its source: the copy resolves to the source, and every minted row hangs on the source. A delegate shares with the owner's authority but keeps their own copy's limits, whether they name their copy or the source: when that copy is use-only, expiring or read-only, or when they hold no copy of the source (revoked or expired) or more than one, the direct, group and link paths MUST refuse, so a restricted or ended grant can never mint a full, unrestricted copy. A delegate other than the owner needs at least one grant on the copy that is on its own neither use-only nor expiring; grants are not combined for this, so a full grant that ends plus a permanent use-only one cannot mint a full copy, and a grant past its end date counts for nothing even before the expiry job removes it. The same rules guard changing a restriction: a delegate whose own copy may not be shared onward MUST NOT change any share's restriction (`PATCH /shares/{id}`), and a delegate MUST NOT change a share made to themselves or the restriction of a group share that reaches them. On the link path a delegate may name only their own copy; another recipient's copy is not found. This creation-time refusal covers `register-batch`, group shares, link shares and delegations (Ownership Delegation); federation and the team-folder fan-out do not apply it yet, so a plain recipient can still send their full copy out through either (a follow-up).
 
 #### Scenario: Share with valid recipient
 - GIVEN user A owns a secret and user B has an active EncryptionSuite
@@ -432,6 +432,8 @@ The system MUST allow a secret's ownership to be delegated to one or more other 
 
 In both cases the delegatee MUST already hold a share — the delegation promotes their existing copy to co-owner status.
 
+Both paths delegate only an ORIGINAL secret. A received copy MUST be refused and no delegation stored, even though its recipient owns it: only the source's owner delegates. When the pending quarantine scan cannot judge the share row naming the secret, the request MUST be refused as waiting for the scan (`share_scan_pending`, 409) until the scan has judged it.
+
 **Mechanics:** the delegate's copy is promoted to co-owner status; the original owner's copy is demoted to a regular share for the duration of the delegation. The existing sync-on-update mechanism ensures all copies remain consistent regardless of which co-owner updates the value.
 
 #### Scenario: Admin creates delegation (power grab)
@@ -450,6 +452,18 @@ In both cases the delegatee MUST already hold a share — the delegation promote
 - GIVEN user C does not hold a share of secret S
 - WHEN a delegation to C is attempted
 - THEN the system MUST return an error — delegation requires a pre-existing share
+
+#### Scenario: A received copy is not delegated
+- GIVEN user B holds a received copy of user A's secret S
+- WHEN B delegates that copy, or a vault administrator holding a share of it takes it over
+- THEN the system MUST refuse it
+- AND no SecretDelegation record is stored
+
+#### Scenario: A copy whose share row waits for the scan
+- GIVEN user B's copy of S is named by a share row the pending quarantine scan cannot judge
+- WHEN B delegates that copy
+- THEN the system MUST answer `share_scan_pending` (409)
+- AND no SecretDelegation record is stored
 
 ### Requirement: Reclaim Delegation
 The original owner MUST be able to reclaim ownership at any time while delegations are temporary, revoking all active delegations simultaneously.

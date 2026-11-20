@@ -162,9 +162,10 @@ class DelegationService implements DelegationServiceInterface {
 	 *                                  caller is not a vault admin,
 	 *                                  $delegatedTo is not the initiator,
 	 *                                  the initiator is already the owner,
+	 *                                  the Secret is a received copy,
 	 *                                  or the initiator holds no
 	 *                                  pre-existing share of the Secret.
-	 * @throws ShareScanPendingException When the share row the handover sits on waits for the share quarantine scan
+	 * @throws ShareScanPendingException When the share row the handover sits on, or the one naming the Secret, waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
 	 */
@@ -188,6 +189,8 @@ class DelegationService implements DelegationServiceInterface {
 				message: 'Admin handover does not apply to the secret owner themselves'
 			);
 		}
+
+		$this->authorizer->requireOriginal(secret: $secret);
 
 		$this->authorizer->requirePreExistingShare(secretId: $secretId, userId: $initiatedBy);
 
