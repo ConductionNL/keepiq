@@ -16,6 +16,13 @@ enum class FederatedCertificateReason(val code: String) {
 
 class FederatedCertificateException(val reason: FederatedCertificateReason) : KeepiqCryptoException(reason.code)
 
+/**
+ * A SHA-256 RSASSA-PSS signature with a salt other than 32 bytes, which the
+ * web app checks but iOS can't: no verdict on the certificate, so it stops
+ * the save instead of suspending the share.
+ */
+class FederatedCertificateUnsupportedException : KeepiqCryptoException("unsupported_signature")
+
 /** A verified leaf: its SHA-256 as lowercase hex, the `certFingerprint` Keepiq takes, and the key that was checked. */
 class VerifiedFederatedCertificate(val fingerprint: String, val spki: ByteArray)
 
@@ -23,12 +30,15 @@ class VerifiedFederatedCertificate(val fingerprint: String, val spki: ByteArray)
  * A port of browser-extension/src/crypto/federated-certificate.ts: catches a
  * certificate for the wrong user, an expired one, or a chain from another
  * partner before anything is encrypted to it. RSASSA-PSS is taken only with
- * a 32-byte salt, the one Keepiq signs with and the one iOS verifies.
+ * a 32-byte salt, the one Keepiq signs with and the one iOS verifies; any
+ * other throws [FederatedCertificateUnsupportedException]. Name constraints
+ * are refused in any form, as the web app does: nothing here enforces them.
  */
 object FederatedCertificate {
     private const val OID_COMMON_NAME = "2.5.4.3"
     private const val OID_BASIC_CONSTRAINTS = "2.5.29.19"
     private const val OID_KEY_USAGE = "2.5.29.15"
+    private const val OID_NAME_CONSTRAINTS = "2.5.29.30"
     private const val OID_SHA256_RSA = "1.2.840.113549.1.1.11"
     private const val OID_RSA_PSS = "1.2.840.113549.1.1.10"
     private const val OID_MGF1 = "1.2.840.113549.1.1.8"
@@ -50,6 +60,8 @@ object FederatedCertificate {
         val tbs: ByteArray,
         /** Null for a signature algorithm Keepiq does not use; true for PSS. */
         val pss: Boolean?,
+        /** RSASSA-PSS with SHA-256 throughout but a salt other than 32 bytes. */
+        val otherSalt: Boolean,
         val signature: ByteArray,
         val issuer: ByteArray,
         val subject: ByteArray,
@@ -113,8 +125,9 @@ object FederatedCertificate {
     }
 
     private fun signedBy(cert: Parsed, issuer: Parsed): Boolean {
-        val pss = cert.pss ?: return false
         if (!cert.issuer.contentEquals(issuer.subject)) return false
+        if (cert.otherSalt) throw FederatedCertificateUnsupportedException()
+        val pss = cert.pss ?: return false
         return try {
             Primitives.rsaSha256Verify(issuer.spki, cert.tbs, cert.signature, pss)
         } catch (e: Exception) {
@@ -248,7 +261,7 @@ object FederatedCertificate {
             val id = oid(bytes, kids[0])
             if (!seen.add(id)) throw malformed()
             val known = id == OID_BASIC_CONSTRAINTS || id == OID_KEY_USAGE
-            if (critical != null && presentFlag(bytes, critical) && !known) throw malformed()
+            if (id == OID_NAME_CONSTRAINTS || (critical != null && presentFlag(bytes, critical) && !known)) throw malformed()
             when (id) {
                 OID_BASIC_CONSTRAINTS -> readBasicConstraints(bytes, value, run)
                 OID_KEY_USAGE -> readKeyUsage(bytes, value, run)
@@ -294,7 +307,11 @@ object FederatedCertificate {
         var mask: String? = null
         var maskHash: String? = null
         var salt = 20
+        var previous = 0
+        // Each field at most once and in order (DER).
         for (field in children(bytes, params)) {
+            if (field.tag <= previous) throw malformed()
+            previous = field.tag
             val inner = only(bytes, field)
             when (field.tag) {
                 0xA0 -> hash = algorithmIdOf(bytes, inner)
@@ -310,7 +327,8 @@ object FederatedCertificate {
             }
         }
         val sha256Throughout = hash == OID_SHA256 && mask == OID_MGF1 && maskHash == OID_SHA256
-        return if (sha256Throughout && salt == PSS_SALT) true else null
+        if (!sha256Throughout) return null
+        return salt == PSS_SALT || throw FederatedCertificateUnsupportedException()
     }
 
     private fun algorithmIdOf(bytes: ByteArray, element: Element): String =
@@ -372,10 +390,18 @@ object FederatedCertificate {
 
         val times = children(der, validity)
         val issuing = issuing(der, optional.firstOrNull { it.tag == 0xA3 })
+        var otherSalt = false
+        val pss = try {
+            algorithmOf(der, algorithm)
+        } catch (e: FederatedCertificateUnsupportedException) {
+            otherSalt = true
+            null
+        }
         return Parsed(
             der = der,
             tbs = whole(der, tbs),
-            pss = algorithmOf(der, algorithm),
+            pss = pss,
+            otherSalt = otherSalt,
             signature = der.copyOfRange(signature.start + 1, signature.end),
             issuer = whole(der, issuer),
             subject = whole(der, subject),

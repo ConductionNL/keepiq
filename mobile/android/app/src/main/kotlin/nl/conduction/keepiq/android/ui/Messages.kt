@@ -31,8 +31,9 @@ suspend fun <T> io(block: suspend () -> T): T = withContext(Dispatchers.IO) {
     }
 }
 
+/** [saveWithout]: the screen offers Save without them for an unreachable partner. */
 @Composable
-fun writeProblemText(problem: WriteProblem): String = when (problem.kind) {
+fun writeProblemText(problem: WriteProblem, saveWithout: Boolean = true): String = when (problem.kind) {
     WriteProblemKind.OFFLINE -> stringResource(R.string.write_offline)
     WriteProblemKind.KEY_MIGRATION -> stringResource(R.string.write_key_migration)
     WriteProblemKind.SUITE_BLOCKED -> stringResource(R.string.write_suite_blocked)
@@ -46,7 +47,8 @@ fun writeProblemText(problem: WriteProblem): String = when (problem.kind) {
     WriteProblemKind.UNVERIFIED -> stringResource(R.string.write_unverified)
     WriteProblemKind.UNREADABLE -> stringResource(R.string.write_unreadable)
     WriteProblemKind.BAD_CERTIFICATE -> stringResource(R.string.write_bad_certificate)
-    WriteProblemKind.PARTNER_UNREACHABLE -> stringResource(R.string.write_partner_unreachable, problem.partnerNames)
+    WriteProblemKind.PARTNER_UNREACHABLE ->
+        stringResource(if (saveWithout) R.string.write_partner_unreachable else R.string.write_partner_unreachable_later, problem.partnerNames)
     WriteProblemKind.PARTNER_UPGRADE_REQUIRED -> {
         val text = if (problem.partners.isEmpty()) {
             stringResource(R.string.write_partner_upgrade_unnamed)
@@ -59,6 +61,7 @@ fun writeProblemText(problem: WriteProblem): String = when (problem.kind) {
     WriteProblemKind.PARTNER_LOOKUP_LIMIT -> stringResource(R.string.write_partner_lookup_limit)
     WriteProblemKind.FEDERATION_UNAVAILABLE -> stringResource(R.string.write_federation_unavailable)
     WriteProblemKind.KEEPIQ_OUTDATED -> stringResource(R.string.write_keepiq_outdated)
+    WriteProblemKind.CONFLICT -> stringResource(R.string.write_conflict)
 }
 
 /** What a share-save could not deliver to everyone, for the item's detail. */

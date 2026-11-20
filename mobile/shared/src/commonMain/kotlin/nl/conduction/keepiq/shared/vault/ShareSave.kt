@@ -16,6 +16,7 @@ import nl.conduction.keepiq.shared.api.KeepiqApiException
 import nl.conduction.keepiq.shared.crypto.FederatedCertificate
 import nl.conduction.keepiq.shared.crypto.FederatedCertificateException
 import nl.conduction.keepiq.shared.crypto.FederatedCertificateReason
+import nl.conduction.keepiq.shared.crypto.FederatedCertificateUnsupportedException
 import nl.conduction.keepiq.shared.crypto.RsaFields
 import nl.conduction.keepiq.shared.crypto.RsaPublicKey
 import nl.conduction.keepiq.shared.send.IsoTime
@@ -118,10 +119,30 @@ class ShareSave(private val api: KeepiqApi, private val keys: VaultKeys, private
         const val SERVER_ERROR = "server_error"
         const val UNKNOWN = "unknown"
 
+        /** The server sent a value ciphertext the device doesn't hold for the item. */
+        const val CONFLICT = "conflict"
+
+        /**
+         * What a passkey write passes on as read, so what [holds] checks for it:
+         * `totp`, vouched for partners, and `passkeys`, rewritten for everyone.
+         * The other fields are vouched for only when they hold nothing ([openedForPasskeys]).
+         */
+        val PASSKEY_WRITE_HELD = setOf("totp", "passkeys")
+
+        /**
+         * Whether every value ciphertext of [fresh] is the one the device holds
+         * for it ([held]: from the store, the list or the autofill index; a
+         * field it lacks is not compared). Every item is encrypted to the same
+         * key, so a ciphertext the device doesn't hold for this item may be
+         * another's, which a save would pass on (ADR-002, the extension's `cachedMatch`).
+         */
+        fun holds(fresh: VaultRow, held: Values): Boolean = held.all { (field, ciphertext) -> fresh.values[field] == ciphertext }
+
         /**
          * The ciphertext a passkey save vouches for: `totp` and `passkeys`, read
          * fresh, and the other value fields only where they hold nothing; any
          * other field fails partner shares as unverified, as in the extension.
+         * The caller has checked [row] with [holds].
          */
         fun openedForPasskeys(row: VaultRow, keys: VaultKeys, sourceUpdatedAt: String?): Opened {
             val shown = linkedMapOf<String, String?>("totp" to row.totp?.ifEmpty { null }, "passkeys" to row.passkeys?.ifEmpty { null })
@@ -172,7 +193,8 @@ class ShareSave(private val api: KeepiqApi, private val keys: VaultKeys, private
     /**
      * A save with no edit form behind it, on [fresh] as just read: an autofill
      * update or a passkey write. With [vouchEmpty] the fields that hold
-     * nothing count as opened ([openedForPasskeys]); without it, partner
+     * nothing count as opened ([openedForPasskeys]), after the caller checked
+     * [fresh] with [holds]; without it, partner
      * shares refuse the save as unverified, as the extension's capture queue does.
      */
     suspend fun saveFresh(fresh: VaultRow, patch: JsonObject, plain: Values, vouchEmpty: Boolean): ShareSaveNote? {
@@ -600,6 +622,8 @@ class ShareSave(private val api: KeepiqApi, private val keys: VaultKeys, private
                 // Validity is judged by this phone's clock, which may be wrong, so it stops the save instead of suspending for good.
                 if (e.reason == FederatedCertificateReason.NOT_VALID_NOW) throw ShareSaveException(PARTNER_CLOCK)
                 PartnerOutcome.Suspend(e.reason.code)
+            } catch (e: FederatedCertificateUnsupportedException) {
+                throw ShareSaveException(BAD_CERTIFICATE)
             }
         }
 

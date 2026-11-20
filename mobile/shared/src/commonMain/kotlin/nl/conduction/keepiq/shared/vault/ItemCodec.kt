@@ -387,6 +387,30 @@ object ItemCodec {
         )
     }
 
+    /**
+     * Which of `key`, `login` and `additionalFields` the edit form shows all
+     * of, as the extension's `shownInFull`: partner shares get untouched
+     * fields whole, so only these may be vouched for (ADR-002). An empty
+     * field hides nothing.
+     */
+    fun shownInFull(item: DecryptedItem): Set<String> = buildSet {
+        val kind = item.kind
+        if (kind != FormKind.PASSKEY && keyShownInFull(item.secret, kind)) add("key")
+        if (item.login.isEmpty() || kind == FormKind.LOGIN || kind == FormKind.GENERIC) add("login")
+        val hidden = draft(item, item.type).preserved.keys - SCHEMA_FIELD
+        if (!item.additionalFieldsError && hidden.isEmpty()) add("additionalFields")
+    }
+
+    /** A card or identity shows only its own members, each a string or number. */
+    private fun keyShownInFull(secret: String, kind: FormKind): Boolean {
+        if (secret.isEmpty() || (kind != FormKind.CARD && kind != FormKind.IDENTITY)) return true
+        val payload = runCatching { Json.parseToJsonElement(secret) as? JsonObject }.getOrNull() ?: return false
+        val members = Composite.fieldsOf(kind)
+        return payload.all { (member, value) ->
+            member in members && value is JsonPrimitive && value !is JsonNull && (value.isString || value.content.toDoubleOrNull() != null)
+        }
+    }
+
     /** A text member becomes a row with its schema and returns true; any other value is preserved. */
     private fun keep(
         name: String,

@@ -136,6 +136,7 @@ func writeProblemText(_ problem: WriteProblem) -> String {
     case .partnerLookupLimit: return L("write_partner_lookup_limit")
     case .federationUnavailable: return L("write_federation_unavailable")
     case .keepiqOutdated: return L("write_keepiq_outdated")
+    case .conflict: return L("write_conflict")
     default: return L("write_failed")
     }
 }

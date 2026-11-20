@@ -132,6 +132,7 @@
 "write_partner_lookup_limit" = "Te veel zoekopdrachten naar partners. Er is niets opgeslagen; probeer het over een minuut opnieuw.";
 "write_federation_unavailable" = "Je Keepiq-server kan niet delen met partnerorganisaties, dus dit item kan hier niet worden opgeslagen. Er is niets opgeslagen; vraag het je beheerder.";
 "write_keepiq_outdated" = "Je Keepiq-server is te oud om een wijziging aan een gedeeld item op te slaan. Er is niets opgeslagen; vraag je beheerder om Keepiq bij te werken.";
+"write_conflict" = "De server stuurde dit item met een waarde die Keepiq er niet voor heeft, ook na een synchronisatie. Het is daarom niet geopend of gewijzigd. Probeer het later opnieuw.";
 "folder_new" = "Nieuwe map";
 "folder_rename" = "Map hernoemen";
 "folder_delete" = "Map verwijderen";

@@ -66,6 +66,9 @@ enum class WriteProblemKind {
 
     /** This server's Keepiq has no share-save. */
     KEEPIQ_OUTDATED,
+
+    /** The server sent a value the app doesn't hold for this item, even after a sync: it is not opened or changed. */
+    CONFLICT,
 }
 
 /** A refused or failed write. The old value stays; nothing is shown as saved. */
@@ -95,6 +98,7 @@ data class WriteProblem(
             ShareSave.FEDERATION_UNAVAILABLE to WriteProblemKind.FEDERATION_UNAVAILABLE,
             ShareSave.KEEPIQ_OUTDATED to WriteProblemKind.KEEPIQ_OUTDATED,
             ShareSave.FORBIDDEN to WriteProblemKind.REFUSED,
+            ShareSave.CONFLICT to WriteProblemKind.CONFLICT,
         )
 
         /**

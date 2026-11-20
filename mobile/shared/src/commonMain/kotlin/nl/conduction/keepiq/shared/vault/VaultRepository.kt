@@ -189,13 +189,15 @@ class VaultRepository(
     /**
      * Opens one item for the edit form: as [open], but a login's own
      * Authenticator key is not decrypted, so the saved key is never held by
-     * the edit screen (mobile-login-totp-passkeys D8). A copy shared to view
-     * only is refused, and what the form shows is recorded for the save.
+     * the edit screen (mobile-login-totp-passkeys D8). A row whose value
+     * ciphertext the device doesn't hold for it is refused ([holds]), a copy
+     * shared to view only too, and what the form shows is recorded for the save.
      */
     suspend fun openForEdit(id: String): OpenResult {
         val opened = openRow(id, withSeed = false)
         if (opened !is OpenResult.Opened || opened.item.fromCache) return opened
         val context = try {
+            if (!holds(opened.item.row)) return OpenResult.Failed(WriteProblem(WriteProblemKind.CONFLICT))
             shareSave.readContext(id)
         } catch (e: CancellationException) {
             throw e
@@ -207,26 +209,36 @@ class VaultRepository(
         return opened
     }
 
-    /** The ciphertext of each value field the form shows in full; `totp` and `passkeys` always, as the extension records them. */
+    /** The ciphertext of each value field the form shows in full ([ItemCodec.shownInFull]); `totp` and `passkeys` always, as the extension records them. */
     private fun record(item: DecryptedItem, sourceUpdatedAt: String?): Opened {
-        val row = item.row
-        val shown = linkedMapOf<String, String?>("totp" to row.totp?.ifEmpty { null }, "passkeys" to row.passkeys?.ifEmpty { null })
-        // A passkey's credential and login are never on the form.
-        if (item.kind != FormKind.PASSKEY) {
-            shown["key"] = row.key?.ifEmpty { null }
-            shown["login"] = row.login?.ifEmpty { null }
-        }
-        if (!item.additionalFieldsError) shown["additionalFields"] = row.additionalFields?.ifEmpty { null }
-        return Opened(shown, row.updatedAt ?: "", sourceUpdatedAt)
+        val values = item.row.values
+        val shown = ItemCodec.shownInFull(item) + "totp" + "passkeys"
+        return Opened(ShareSave.VALUE_FIELDS.filter { it in shown }.associateWith { values[it] }, item.row.updatedAt ?: "", sourceUpdatedAt)
     }
 
-    /** Whether [id] is a copy shared to view only, for the detail to offer no Edit; the save checks again. */
-    suspend fun isViewOnly(id: String): Boolean = try {
+    /**
+     * Whether the device holds [fresh]'s value ciphertexts for it, of [fields],
+     * after one sync when it doesn't yet, so a row written elsewhere since the
+     * last sync gets through (the extension's `cachedMatch`, [ShareSave.holds]).
+     */
+    private suspend fun holds(fresh: VaultRow, fields: Collection<String> = ShareSave.VALUE_FIELDS): Boolean {
+        fun matches() = cachedRow(fresh.id)?.takeIf { !it.blocked }?.let { ShareSave.holds(fresh, it.values.filterKeys { k -> k in fields }) } == true
+        if (matches()) return true
+        refresh(SyncTrigger.AFTER_WRITE)
+        return matches()
+    }
+
+    /**
+     * Whether [id] is a copy shared to view only, for the detail to offer no
+     * Edit: null when write-context could not tell, which offers none either.
+     * The save checks again.
+     */
+    suspend fun isViewOnly(id: String): Boolean? = try {
         shareSave.readContext(id).isViewOnly(id)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        false
+        null
     }
 
     /** What the last save of [id] could not deliver to everyone, once. */
@@ -284,14 +296,15 @@ class VaultRepository(
         if (changed.isEmpty()) return@write WriteResult.Saved(item.row.id)
         if ("totp" in changed) api.requireLoginFields()
         val body = ItemCodec.updateBody(after, changed, keys)
+        // The grade may have been lowered since the form opened; only a move needs none (the extension's writableContext).
+        val context = shareSave.readContext(item.row.id)
+        if (context.isViewOnly(item.row.id)) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.VIEW_ONLY))
         if (changed.none { it in ShareSave.VALUE_FIELDS }) {
             api.updateSecret(item.row.id, body)
             return@write WriteResult.Saved(item.row.id)
         }
         // share-save refuses a save without the version it was made from.
         val base = item.row.updatedAt ?: return@write WriteResult.Refused(WriteProblem(WriteProblemKind.FAILED))
-        // The grade may have been lowered since the form opened.
-        val context = shareSave.readContext(item.row.id)
         val input = ShareSaveInput(item.row.id, body, ItemCodec.plainValues(after, changed), base, context, editRecords[item.row.id], withoutUnreachable)
         val note = shareSave.save(input)
         editRecords.remove(item.row.id)
@@ -309,7 +322,10 @@ class VaultRepository(
     suspend fun deletePasskey(item: DecryptedItem, credentialId: String, rpId: String): WriteResult = write {
         if (item.row.useOnly || item.row.readOnly || item.row.blocked) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.REFUSED))
         try {
-            PasskeysWrite.rewrite(api, keys, item.row.id, clock) { _, stored -> PasskeysWrite.Change(LoginPasskeys.without(stored, credentialId, rpId), Unit) }
+            PasskeysWrite.rewrite(
+                api, keys, item.row.id, held = { holds(it, ShareSave.PASSKEY_WRITE_HELD) }, now = clock,
+                noted = { shareSaveNotes[item.row.id] = it },
+            ) { _, stored -> PasskeysWrite.Change(LoginPasskeys.without(stored, credentialId, rpId), Unit) }
         } catch (e: LoginGoneException) {
             return@write WriteResult.Refused(WriteProblem(WriteProblemKind.FAILED))
         }

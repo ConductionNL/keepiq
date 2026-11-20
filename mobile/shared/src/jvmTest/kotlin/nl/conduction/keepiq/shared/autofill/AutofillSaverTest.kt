@@ -146,7 +146,8 @@ class AutofillSaverTest {
     @Test
     fun aCopySharedToViewOnlyIsNotUpdated() = runTest {
         viewOnly = true
-        assertEquals(SaveResult.REFUSED, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
+        // Told apart from a site that saves nothing, so the user hears the password was not kept.
+        assertEquals(SaveResult.VIEW_ONLY, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
         assertTrue(requests.none { it.first == "PUT" }, "$requests")
     }
 
@@ -154,7 +155,7 @@ class AutofillSaverTest {
     fun aLoginWithAPartnerShareIsNotUpdatedWithoutAForm() = runTest {
         // The partner gets the whole value, which only an edit form vouches for.
         partnerShare = true
-        assertEquals(SaveResult.REFUSED, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
+        assertEquals(SaveResult.NOT_UPDATED, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
         assertEquals(1, requests.count { it.first == "PUT" })
         assertTrue(requests.none { it.second.contains("federation") }, "no partner is looked up: $requests")
     }

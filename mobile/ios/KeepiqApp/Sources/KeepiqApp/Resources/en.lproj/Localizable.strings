@@ -132,6 +132,7 @@
 "write_partner_lookup_limit" = "Too many partner lookups. Nothing was saved; try again in a minute.";
 "write_federation_unavailable" = "Your Keepiq server can't share with partner organisations, so this item can't be saved here. Nothing was saved; ask your administrator.";
 "write_keepiq_outdated" = "Your Keepiq server is too old to save a change to a shared item. Nothing was saved; ask your administrator to update Keepiq.";
+"write_conflict" = "The server sent this item with a value Keepiq doesn't hold for it, even after a sync, so it was not opened or changed. Try again later.";
 "folder_new" = "New folder";
 "folder_rename" = "Rename folder";
 "folder_delete" = "Delete folder";

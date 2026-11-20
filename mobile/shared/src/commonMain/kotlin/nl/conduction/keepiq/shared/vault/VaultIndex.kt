@@ -37,6 +37,10 @@ data class VaultRow(
 ) {
     override fun toString(): String = "VaultRow(id=$id, typeId=$typeId, folderId=$folderId)"
 
+    /** Every value field's ciphertext, null for none. */
+    val values: Values get() = mapOf("key" to key, "login" to login, "additionalFields" to additionalFields, "totp" to totp, "passkeys" to passkeys)
+        .mapValues { (_, ciphertext) -> ciphertext?.ifEmpty { null } }
+
     companion object {
         fun from(stored: StoredSecret): VaultRow = VaultRow(
             id = stored.id,

@@ -566,17 +566,20 @@ function applyPatch(row, b) {
 
 /**
  * GET /secrets/{id}/write-context and PUT /secrets/{id}/share-save: the
- * recorded vault shares nothing, so every row is its own source with no
- * copies, and a share-save writes the patch in one round.
+ * recorded vault shares nothing, so every row is the caller's own, answered
+ * as ShareWriteContext::ownRowContext does, and a share-save writes the
+ * patch in one round, or answers 409 `stale` for an older version.
  */
 function shareAnswer(r, id, action) {
 	const row = r.vault.get(id)
 	if (!row) return [404, { error: 'not found' }]
 	if (action === 'write-context' && r.method === 'GET') {
-		return [200, { sourceSecretId: id, effectiveGrade: 'owner', ownerCertificate: null, sourceUpdatedAt: row.updatedAt }]
+		return [200, { sourceSecretId: null, effectiveGrade: 'none', ownerCertificate: null, sourceUpdatedAt: null }]
 	}
 	if (action === 'share-save' && r.method === 'PUT') {
-		applyPatch(row, r.json().patch || {})
+		const b = r.json()
+		if (b.baseUpdatedAt !== row.updatedAt) return [409, { error: 'stale', code: 'stale' }]
+		applyPatch(row, b.patch || {})
 		return [200, {
 			secret: row,
 			sourceUpdatedAt: row.updatedAt,
