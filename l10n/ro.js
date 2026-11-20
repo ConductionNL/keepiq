@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Aceste site-uri oferă chei de acces, iar seiful dvs. nu conține niciuna pentru ele. O cheie de acces nu poate fi furată prin phishing și nici refolosită.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Date despre site-uri: 2FA Directory (MIT) și Passkeys Directory (CC BY 4.0), de 2factorauth și contribuitori.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Autentificare în doi pași disponibilă și Cheie de acces disponibilă nu sunt disponibile: directorul de site-uri nu a putut fi încărcat. Celelalte constatări nu sunt afectate.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Autentificare în doi pași disponibilă și Cheie de acces disponibilă nu sunt disponibile: administratorul dvs. nu a activat directorul de site-uri."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Autentificare în doi pași disponibilă și Cheie de acces disponibilă nu sunt disponibile: administratorul dvs. nu a activat directorul de site-uri.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "O foaie tipărită nu mai este sub controlul Keepiq odată ce iese din imprimantă. Introduceți parola principală pentru a imprima numele, adresa, numele de utilizator și parola.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Oricine poate vedea ecranul poate scana această parolă. Introduceți parola principală pentru a o afișa.",
+        "Print again": "Imprimați din nou",
+        "Print login": "Imprimați datele de autentificare",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Imprimat din Keepiq. Păstrați această foaie într-un loc sigur și distrugeți-o atunci când nu mai este necesară.",
+        "QR code of the password of {name}": "Codul QR al parolei pentru {name}",
+        "Show as QR code": "Afișați ca cod QR",
+        "Show QR code": "Afișați codul QR",
+        "The print dialog was opened. Close this window when you are done.": "Dialogul de imprimare a fost deschis. Închideți această fereastră când ați terminat."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

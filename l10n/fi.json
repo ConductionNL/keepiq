@@ -2022,7 +2022,16 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Nämä sivustot tarjoavat pääsyavaimia, eikä holvissasi ole niille pääsyavainta. Pääsyavainta ei voi kalastella eikä käyttää uudelleen.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Sivustotiedot: 2FA Directory (MIT) ja Passkeys Directory (CC BY 4.0), tekijät 2factorauth ja avustajat.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Kaksivaiheinen kirjautuminen saatavilla ja Pääsyavain saatavilla eivät ole käytettävissä: sivustohakemistoa ei voitu ladata. Muut havainnot eivät muutu.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Kaksivaiheinen kirjautuminen saatavilla ja Pääsyavain saatavilla eivät ole käytettävissä: ylläpitäjäsi ei ole ottanut sivustohakemistoa käyttöön."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Kaksivaiheinen kirjautuminen saatavilla ja Pääsyavain saatavilla eivät ole käytettävissä: ylläpitäjäsi ei ole ottanut sivustohakemistoa käyttöön.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Tulostettu arkki on sovelluksen Keepiq hallinnan ulkopuolella heti, kun se lähtee tulostimesta. Anna pääsalasanasi tulostaaksesi nimen, osoitteen, käyttäjätunnuksen ja salasanan.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Kuka tahansa, joka näkee näytön, voi skannata tämän salasanan. Anna pääsalasanasi näyttääksesi sen.",
+        "Print again": "Tulosta uudelleen",
+        "Print login": "Tulosta kirjautumistiedot",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Tulostettu sovelluksesta Keepiq. Säilytä tämä arkki turvallisessa paikassa ja hävitä se, kun sitä ei enää tarvita.",
+        "QR code of the password of {name}": "Kohteen {name} salasanan QR-koodi",
+        "Show as QR code": "Näytä QR-koodina",
+        "Show QR code": "Näytä QR-koodi",
+        "The print dialog was opened. Close this window when you are done.": "Tulostusikkuna avattiin. Sulje tämä ikkuna, kun olet valmis."
     },
     "plurals": null
 }

@@ -2048,7 +2048,16 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Ці сайти пропонують ключі доступу, а у вашому сховищі немає для них ключа доступу. Ключ доступу неможливо виманити фішингом або використати повторно.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Дані про сайти: 2FA Directory (MIT) і Passkeys Directory (CC BY 4.0), від 2factorauth та учасників проєкту.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "«Доступний двофакторний вхід» і «Доступний ключ доступу» недоступні: не вдалося завантажити каталог сайтів. Інші результати це не зачіпає.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "«Доступний двофакторний вхід» і «Доступний ключ доступу» недоступні: ваш адміністратор не ввімкнув каталог сайтів."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "«Доступний двофакторний вхід» і «Доступний ключ доступу» недоступні: ваш адміністратор не ввімкнув каталог сайтів.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Надрукований аркуш виходить з-під контролю Keepiq, щойно залишає принтер. Введіть свій головний пароль, щоб надрукувати назву, адресу, ім'я користувача і пароль.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Будь-хто, хто бачить екран, може відсканувати цей пароль. Введіть свій головний пароль, щоб показати його.",
+        "Print again": "Надрукувати знову",
+        "Print login": "Надрукувати логін",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Надруковано з Keepiq. Зберігайте цей аркуш у безпечному місці та знищте його, коли він більше не буде потрібен.",
+        "QR code of the password of {name}": "QR-код пароля {name}",
+        "Show as QR code": "Показати як QR-код",
+        "Show QR code": "Показати QR-код",
+        "The print dialog was opened. Close this window when you are done.": "Діалог друку відкрито. Закрийте це вікно, коли завершите."
     },
     "plurals": null
 }

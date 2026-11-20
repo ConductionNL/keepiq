@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Þessi vefsvæði bjóða upp á aðgangslykla og hólfið þitt geymir engan aðgangslykil fyrir þau. Ekki er hægt að stela aðgangslykli með vefveiðum eða endurnota hann.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Gögn vefsvæða: 2FA Directory (MIT) og Passkeys Directory (CC BY 4.0), frá 2factorauth og þátttakendum.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Tveggja þátta innskráning í boði og Aðgangslykill í boði eru ekki tiltæk: ekki tókst að hlaða vefsvæðaskránni. Aðrar niðurstöður verða ekki fyrir áhrifum.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tveggja þátta innskráning í boði og Aðgangslykill í boði eru ekki tiltæk: kerfisstjórinn þinn hefur ekki kveikt á vefsvæðaskránni."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tveggja þátta innskráning í boði og Aðgangslykill í boði eru ekki tiltæk: kerfisstjórinn þinn hefur ekki kveikt á vefsvæðaskránni.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Útprentað blað er utan stjórnar Keepiq um leið og það fer úr prentaranum. Sláðu inn aðallykilorðið þitt til að prenta nafnið, heimilisfangið, notandanafnið og lykilorðið.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Hver sem sér skjáinn getur skannað þetta lykilorð. Sláðu inn aðallykilorðið þitt til að sýna það.",
+        "Print again": "Prenta aftur",
+        "Print login": "Prenta innskráningu",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Prentað úr Keepiq. Geymdu þetta blað á öruggum stað og eyddu því þegar ekki er lengur þörf á því.",
+        "QR code of the password of {name}": "QR-kóði lykilorðs {name}",
+        "Show as QR code": "Sýna sem QR-kóða",
+        "Show QR code": "Sýna QR-kóða",
+        "The print dialog was opened. Close this window when you are done.": "Prentglugginn var opnaður. Lokaðu þessum glugga að því loknu."
     },
     "nplurals=2; plural=(n != 1);"
 )

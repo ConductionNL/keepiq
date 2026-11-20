@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Tieto weby ponúkajú prístupové kľúče a váš trezor pre ne neobsahuje žiadny prístupový kľúč. Prístupový kľúč sa nedá vylákať phishingom ani znova použiť.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Údaje webov: 2FA Directory (MIT) a Passkeys Directory (CC BY 4.0), od 2factorauth a prispievateľov.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Dvojfázové prihlásenie k dispozícii a Prístupový kľúč k dispozícii nie sú dostupné: adresár webov sa nepodarilo načítať. Ostatné zistenia to neovplyvňuje.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dvojfázové prihlásenie k dispozícii a Prístupový kľúč k dispozícii nie sú dostupné: váš správca nezapol adresár webov."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dvojfázové prihlásenie k dispozícii a Prístupový kľúč k dispozícii nie sú dostupné: váš správca nezapol adresár webov.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Vytlačený hárok je mimo kontroly aplikácie Keepiq, hneď ako opustí tlačiareň. Zadajte svoje hlavné heslo, aby ste mohli vytlačiť názov, adresu, používateľské meno a heslo.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Ktokoľvek, kto vidí obrazovku, môže toto heslo naskenovať. Zadajte svoje hlavné heslo, aby sa zobrazilo.",
+        "Print again": "Vytlačiť znova",
+        "Print login": "Vytlačiť prihlasovacie údaje",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Vytlačené z aplikácie Keepiq. Uschovajte tento hárok na bezpečnom mieste a zničte ho, keď už nebude potrebný.",
+        "QR code of the password of {name}": "QR kód hesla pre {name}",
+        "Show as QR code": "Zobraziť ako QR kód",
+        "Show QR code": "Zobraziť QR kód",
+        "The print dialog was opened. Close this window when you are done.": "Dialógové okno tlače bolo otvorené. Keď skončíte, zatvorte toto okno."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

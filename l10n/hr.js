@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Ova web-mjesta nude pristupne ključeve, a vaš trezor nema pristupni ključ za njih. Pristupni ključ ne može se ukrasti phishingom niti ponovno upotrijebiti.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Podaci o web-mjestima: 2FA Directory (MIT) i Passkeys Directory (CC BY 4.0), autori 2factorauth i suradnici.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Dostupna prijava u dva koraka i Dostupan pristupni ključ nisu dostupni: imenik web-mjesta nije se mogao učitati. Ostali nalazi nisu pogođeni.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dostupna prijava u dva koraka i Dostupan pristupni ključ nisu dostupni: vaš administrator nije uključio imenik web-mjesta."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dostupna prijava u dva koraka i Dostupan pristupni ključ nisu dostupni: vaš administrator nije uključio imenik web-mjesta.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Ispisani list izvan je kontrole aplikacije Keepiq čim izađe iz pisača. Unesite svoju glavnu lozinku da biste ispisali naziv, adresu, korisničko ime i lozinku.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Svatko tko vidi zaslon može skenirati ovu lozinku. Unesite svoju glavnu lozinku da biste je prikazali.",
+        "Print again": "Ispiši ponovno",
+        "Print login": "Ispiši prijavu",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Ispisano iz aplikacije Keepiq. Čuvajte ovaj list na sigurnom mjestu i uništite ga kada vam više ne bude potreban.",
+        "QR code of the password of {name}": "QR kod lozinke za {name}",
+        "Show as QR code": "Prikaži kao QR kod",
+        "Show QR code": "Prikaži QR kod",
+        "The print dialog was opened. Close this window when you are done.": "Dijaloški okvir za ispis je otvoren. Zatvorite ovaj prozor kada završite."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

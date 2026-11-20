@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Dës Websäite bidden Passkeys un, an Ären Tresor huet kee Passkey fir si. E Passkey kann net duerch Phishing geklaut oder nach eng Kéier benotzt ginn.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Websäitendonnéeën: 2FA Directory (MIT) a Passkeys Directory (CC BY 4.0), vu 2factorauth a Mataarbechter.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Zwee-Faktor disponibel a Passkey disponibel sinn net disponibel: D'Websäitenverzeechnes konnt net geluede ginn. Aner Resultater sinn net betraff.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Zwee-Faktor disponibel a Passkey disponibel sinn net disponibel: Ären Administrateur huet d'Websäitenverzeechnes net ageschalt."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Zwee-Faktor disponibel a Passkey disponibel sinn net disponibel: Ären Administrateur huet d'Websäitenverzeechnes net ageschalt.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "E gedréckte Blat ass ausserhalb vun der Kontroll vu Keepiq, soubal et den Drécker verléisst. Gitt Äert Masterpasswuert an, fir den Numm, d'Adress, de Benotzernumm an d'Passwuert ze drécken.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Jiddereen, deen den Ecran gesäit, kann dëst Passwuert scannen. Gitt Äert Masterpasswuert an, fir et ze weisen.",
+        "Print again": "Nach eemol drécken",
+        "Print login": "Login drécken",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Aus Keepiq gedréckt. Haalt dëst Blat op enger sécherer Plaz a vernicht et, wann Dir et net méi braucht.",
+        "QR code of the password of {name}": "QR-Code vum Passwuert fir {name}",
+        "Show as QR code": "Als QR-Code weisen",
+        "Show QR code": "QR-Code weisen",
+        "The print dialog was opened. Close this window when you are done.": "Den Dréckdialog gouf opgemaach. Maacht dës Fënster zou, wann Dir fäerdeg sidd."
     },
     "nplurals=2; plural=(n != 1);"
 )

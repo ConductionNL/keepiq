@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Bu siteler geçiş anahtarları sunuyor ve kasanızda bunlar için geçiş anahtarı yok. Geçiş anahtarı kimlik avıyla ele geçirilemez ve yeniden kullanılamaz.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Site verileri: 2FA Directory (MIT) ve Passkeys Directory (CC BY 4.0), 2factorauth ve katkıda bulunanlar tarafından.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "\"İki adımlı giriş kullanılabilir\" ve \"Geçiş anahtarı kullanılabilir\" kullanılamıyor: site dizini yüklenemedi. Diğer bulgular etkilenmez.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "\"İki adımlı giriş kullanılabilir\" ve \"Geçiş anahtarı kullanılabilir\" kullanılamıyor: yöneticiniz site dizinini açmadı."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "\"İki adımlı giriş kullanılabilir\" ve \"Geçiş anahtarı kullanılabilir\" kullanılamıyor: yöneticiniz site dizinini açmadı.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Basılı bir sayfa, yazıcıdan çıktığı anda artık Keepiq denetiminde değildir. Adı, adresi, kullanıcı adını ve parolayı yazdırmak için ana parolanızı girin.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Ekranı görebilen herkes bu parolayı tarayabilir. Göstermek için ana parolanızı girin.",
+        "Print again": "Yeniden yazdır",
+        "Print login": "Giriş bilgilerini yazdır",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Keepiq üzerinden yazdırıldı. Bu sayfayı güvenli bir yerde saklayın ve artık gerekmediğinde imha edin.",
+        "QR code of the password of {name}": "{name} parolasının QR kodu",
+        "Show as QR code": "QR kodu olarak göster",
+        "Show QR code": "QR kodunu göster",
+        "The print dialog was opened. Close this window when you are done.": "Yazdırma penceresi açıldı. İşiniz bittiğinde bu pencereyi kapatın."
     },
     "nplurals=1; plural=0;"
 )

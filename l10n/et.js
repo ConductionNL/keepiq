@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Need saidid pakuvad pääsuvõtmeid, kuid sinu hoidlas pole nende jaoks pääsuvõtit. Pääsuvõtit ei saa õngitseda ega uuesti kasutada.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Saitide andmed: 2FA Directory (MIT) ja Passkeys Directory (CC BY 4.0), autorid 2factorauth ja kaastöötajad.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Kaheastmeline sisselogimine saadaval ja Pääsuvõti saadaval pole kättesaadavad: saitide kataloogi ei õnnestunud laadida. Teisi leide see ei mõjuta.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Kaheastmeline sisselogimine saadaval ja Pääsuvõti saadaval pole kättesaadavad: sinu administraator pole saitide kataloogi sisse lülitanud."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Kaheastmeline sisselogimine saadaval ja Pääsuvõti saadaval pole kättesaadavad: sinu administraator pole saitide kataloogi sisse lülitanud.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Prinditud leht ei ole enam rakenduse Keepiq kontrolli all, kui see on printerist välja tulnud. Sisesta oma põhiparool, et printida nimi, aadress, kasutajanimi ja parool.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Igaüks, kes ekraani näeb, saab selle parooli skannida. Sisesta oma põhiparool, et seda näidata.",
+        "Print again": "Prindi uuesti",
+        "Print login": "Prindi sisselogimisandmed",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Prinditud rakendusest Keepiq. Hoia seda lehte turvalises kohas ja hävita see, kui seda enam vaja pole.",
+        "QR code of the password of {name}": "Kirje {name} parooli QR-kood",
+        "Show as QR code": "Näita QR-koodina",
+        "Show QR code": "Näita QR-koodi",
+        "The print dialog was opened. Close this window when you are done.": "Printimisdialoog avati. Sulge see aken, kui oled lõpetanud."
     },
     "nplurals=2; plural=(n != 1);"
 )

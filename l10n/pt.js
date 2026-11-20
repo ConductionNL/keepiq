@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Estes sites oferecem chaves de acesso e o seu cofre não tem nenhuma para eles. Uma chave de acesso não pode ser roubada por phishing nem reutilizada.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Dados dos sites: 2FA Directory (MIT) e Passkeys Directory (CC BY 4.0), por 2factorauth e colaboradores.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Autenticação de dois fatores disponível e Chave de acesso disponível não estão disponíveis: não foi possível carregar o diretório de sites. As outras conclusões não são afetadas.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Autenticação de dois fatores disponível e Chave de acesso disponível não estão disponíveis: o seu administrador não ativou o diretório de sites."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Autenticação de dois fatores disponível e Chave de acesso disponível não estão disponíveis: o seu administrador não ativou o diretório de sites.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Uma folha impressa fica fora do controlo do Keepiq assim que sai da impressora. Introduza a sua palavra-passe mestre para imprimir o nome, o endereço, o nome de utilizador e a palavra-passe.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Qualquer pessoa que consiga ver o ecrã pode digitalizar esta palavra-passe. Introduza a sua palavra-passe mestre para a mostrar.",
+        "Print again": "Imprimir novamente",
+        "Print login": "Imprimir dados de acesso",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Impresso a partir do Keepiq. Guarde esta folha num local seguro e destrua-a quando já não for necessária.",
+        "QR code of the password of {name}": "Código QR da palavra-passe de {name}",
+        "Show as QR code": "Mostrar como código QR",
+        "Show QR code": "Mostrar código QR",
+        "The print dialog was opened. Close this window when you are done.": "A caixa de diálogo de impressão foi aberta. Feche esta janela quando terminar."
     },
     "nplurals=2; plural=(n != 1);"
 )

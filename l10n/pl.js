@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Te witryny oferują klucze dostępu, a twój sejf nie zawiera dla nich żadnego klucza dostępu. Klucza dostępu nie da się wyłudzić phishingiem ani użyć ponownie.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Dane witryn: 2FA Directory (MIT) i Passkeys Directory (CC BY 4.0), autorstwa 2factorauth i współtwórców.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Dostępne logowanie dwuetapowe i Dostępny klucz dostępu są niedostępne: nie udało się wczytać katalogu witryn. Pozostałych wyników to nie dotyczy.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dostępne logowanie dwuetapowe i Dostępny klucz dostępu są niedostępne: administrator nie włączył katalogu witryn."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dostępne logowanie dwuetapowe i Dostępny klucz dostępu są niedostępne: administrator nie włączył katalogu witryn.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Wydrukowana kartka wymyka się spod kontroli Keepiq, gdy tylko opuści drukarkę. Wpisz swoje hasło główne, aby wydrukować nazwę, adres, nazwę użytkownika i hasło.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Każdy, kto widzi ekran, może zeskanować to hasło. Wpisz swoje hasło główne, aby je pokazać.",
+        "Print again": "Drukuj ponownie",
+        "Print login": "Drukuj dane logowania",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Wydrukowano z Keepiq. Przechowuj tę kartkę w bezpiecznym miejscu i zniszcz ją, gdy nie będzie już potrzebna.",
+        "QR code of the password of {name}": "Kod QR hasła dla {name}",
+        "Show as QR code": "Pokaż jako kod QR",
+        "Show QR code": "Pokaż kod QR",
+        "The print dialog was opened. Close this window when you are done.": "Okno drukowania zostało otwarte. Zamknij to okno, gdy skończysz."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

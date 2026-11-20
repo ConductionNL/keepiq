@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Aquests llocs ofereixen claus d’accés, i la vostra caixa forta no en conté cap per a ells. Una clau d’accés no es pot robar amb pesca de credencials ni reutilitzar.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Dades dels llocs: 2FA Directory (MIT) i Passkeys Directory (CC BY 4.0), de 2factorauth i col·laboradors.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Inici de sessió en dos passos disponible i Clau d’accés disponible no estan disponibles: no s'ha pogut carregar el directori de llocs. La resta de resultats no es veuen afectats.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Inici de sessió en dos passos disponible i Clau d’accés disponible no estan disponibles: l'administrador no ha activat el directori de llocs."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Inici de sessió en dos passos disponible i Clau d’accés disponible no estan disponibles: l'administrador no ha activat el directori de llocs.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Un full imprès queda fora del control de Keepiq quan surt de la impressora. Introduïu la vostra contrasenya mestra per imprimir el nom, l'adreça, el nom d'usuari i la contrasenya.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Qualsevol persona que pugui veure la pantalla pot escanejar aquesta contrasenya. Introduïu la vostra contrasenya mestra per mostrar-la.",
+        "Print again": "Torna a imprimir",
+        "Print login": "Imprimeix l'inici de sessió",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Imprès des de Keepiq. Guardeu aquest full en un lloc segur i destruïu-lo quan ja no el necessiteu.",
+        "QR code of the password of {name}": "Codi QR de la contrasenya de {name}",
+        "Show as QR code": "Mostra com a codi QR",
+        "Show QR code": "Mostra el codi QR",
+        "The print dialog was opened. Close this window when you are done.": "S'ha obert el diàleg d'impressió. Tanqueu aquesta finestra quan hàgiu acabat."
     },
     "nplurals=2; plural=(n != 1);"
 )

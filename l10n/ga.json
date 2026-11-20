@@ -2048,7 +2048,16 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Tairgeann na suíomhanna seo eochracha rochtana, agus níl aon eochair rochtana i do vailt dóibh. Ní féidir eochair rochtana a fhioscaireacht ná a athúsáid.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Sonraí suíomhanna: 2FA Directory (MIT) agus Passkeys Directory (CC BY 4.0), ó 2factorauth agus rannpháirtithe.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Ní féidir 'Dhá fhachtóir ar fáil' ná 'Eochair rochtana ar fáil' a thaispeáint: níorbh fhéidir an t-eolaire suíomhanna a lódáil. Ní théann sé seo i bhfeidhm ar thorthaí eile.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Ní féidir 'Dhá fhachtóir ar fáil' ná 'Eochair rochtana ar fáil' a thaispeáint: níor chas do riarthóir an t-eolaire suíomhanna air."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Ní féidir 'Dhá fhachtóir ar fáil' ná 'Eochair rochtana ar fáil' a thaispeáint: níor chas do riarthóir an t-eolaire suíomhanna air.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Níl smacht ag Keepiq ar bhileog phriontáilte a luaithe a fhágann sí an printéir. Cuir isteach do phríomhphasfhocal chun an t-ainm, an seoladh, an t-ainm úsáideora agus an pasfhocal a phriontáil.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Is féidir le duine ar bith a fheiceann an scáileán an pasfhocal seo a scanadh. Cuir isteach do phríomhphasfhocal chun é a thaispeáint.",
+        "Print again": "Priontáil arís",
+        "Print login": "Priontáil sonraí logála isteach",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Priontáilte ó Keepiq. Coinnigh an bhileog seo in áit shábháilte agus scrios í nuair nach mbeidh sí ag teastáil a thuilleadh.",
+        "QR code of the password of {name}": "Cód QR phasfhocal {name}",
+        "Show as QR code": "Taispeáin mar chód QR",
+        "Show QR code": "Taispeáin an cód QR",
+        "The print dialog was opened. Close this window when you are done.": "Osclaíodh an dialóg phriontála. Dún an fhuinneog seo nuair a bheidh tú críochnaithe."
     },
     "plurals": null
 }

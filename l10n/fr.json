@@ -2022,7 +2022,16 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Ces sites proposent des clés d’accès, et votre coffre n'en contient aucune pour eux. Une clé d’accès ne peut être ni hameçonnée ni réutilisée.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Données des sites : 2FA Directory (MIT) et Passkeys Directory (CC BY 4.0), par 2factorauth et ses contributeurs.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Connexion à deux facteurs disponible et Clé d’accès disponible ne sont pas disponibles : l'annuaire des sites n'a pas pu être chargé. Les autres constats ne sont pas affectés.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Connexion à deux facteurs disponible et Clé d’accès disponible ne sont pas disponibles : votre administrateur n'a pas activé l'annuaire des sites."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Connexion à deux facteurs disponible et Clé d’accès disponible ne sont pas disponibles : votre administrateur n'a pas activé l'annuaire des sites.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Une feuille imprimée échappe au contrôle de Keepiq dès qu'elle sort de l'imprimante. Saisissez votre mot de passe maître pour imprimer le nom, l'adresse, le nom d'utilisateur et le mot de passe.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Toute personne pouvant voir l'écran peut scanner ce mot de passe. Saisissez votre mot de passe maître pour l'afficher.",
+        "Print again": "Imprimer à nouveau",
+        "Print login": "Imprimer l'identifiant",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Imprimé depuis Keepiq. Conservez cette feuille en lieu sûr et détruisez-la lorsqu'elle n'est plus nécessaire.",
+        "QR code of the password of {name}": "Code QR du mot de passe de {name}",
+        "Show as QR code": "Afficher en code QR",
+        "Show QR code": "Afficher le code QR",
+        "The print dialog was opened. Close this window when you are done.": "La boîte de dialogue d'impression a été ouverte. Fermez cette fenêtre lorsque vous avez terminé."
     },
     "plurals": null
 }

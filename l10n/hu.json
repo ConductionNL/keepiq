@@ -2022,7 +2022,16 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Ezek a webhelyek hozzáférési kulcsot kínálnak, de a széfje nem tartalmaz hozzájuk hozzáférési kulcsot. A hozzáférési kulcs nem csalható ki adathalászattal, és nem használható újra.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Webhelyadatok: 2FA Directory (MIT) és Passkeys Directory (CC BY 4.0), készítette: 2factorauth és a közreműködők.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "A „Kétlépcsős bejelentkezés elérhető” és a „Hozzáférési kulcs elérhető” nem érhető el: a webhelykatalógust nem sikerült betölteni. A többi megállapítást ez nem érinti.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "A „Kétlépcsős bejelentkezés elérhető” és a „Hozzáférési kulcs elérhető” nem érhető el: a rendszergazda nem kapcsolta be a webhelykatalógust."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "A „Kétlépcsős bejelentkezés elérhető” és a „Hozzáférési kulcs elérhető” nem érhető el: a rendszergazda nem kapcsolta be a webhelykatalógust.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "A kinyomtatott lap, amint elhagyja a nyomtatót, kikerül a Keepiq felügyelete alól. Adja meg a főjelszavát a név, a cím, a felhasználónév és a jelszó kinyomtatásához.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Bárki, aki látja a képernyőt, beolvashatja ezt a jelszót. Adja meg a főjelszavát a megjelenítéséhez.",
+        "Print again": "Újranyomtatás",
+        "Print login": "Bejelentkezési adatok nyomtatása",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Nyomtatva a Keepiq alkalmazásból. Tartsa ezt a lapot biztonságos helyen, és semmisítse meg, ha már nincs rá szükség.",
+        "QR code of the password of {name}": "{name} jelszavának QR-kódja",
+        "Show as QR code": "Megjelenítés QR-kódként",
+        "Show QR code": "QR-kód megjelenítése",
+        "The print dialog was opened. Close this window when you are done.": "A nyomtatási párbeszédablak megnyílt. Ha végzett, zárja be ezt az ablakot."
     },
     "plurals": null
 }

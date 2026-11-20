@@ -1920,7 +1920,16 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Questas websites porschan clavs d'access, e Vossa cassaforta na cuntegna nagina clav d'access per ellas. Ina clav d'access na po betg vegnir engulada cun phishing u reutilisada.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Datas da websites: 2FA Directory (MIT) e Passkeys Directory (CC BY 4.0), da 2factorauth e contribuents.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Annunzia en dus pass disponibla e Clav d'access disponibla n'èn betg disponiblas: il register da websites n'ha betg pudì vegnir chargià. Las autras constataziuns n'èn betg pertutgadas.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Annunzia en dus pass disponibla e Clav d'access disponibla n'èn betg disponiblas: Voss administratur n'ha betg activà il register da websites."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Annunzia en dus pass disponibla e Clav d'access disponibla n'èn betg disponiblas: Voss administratur n'ha betg activà il register da websites.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "In fegl stampà n'è betg pli sut la controlla da Keepiq, uschespert ch'el banduna la stampadra. Endatai Voss pled-clav principal per stampar il num, l'adressa, il num d'utilisader ed il pled-clav.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Mintgin che po vesair il visur po scannar quest pled-clav. Endatai Voss pled-clav principal per al mussar.",
+        "Print again": "Stampar anc ina giada",
+        "Print login": "Stampar il login",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Stampà da Keepiq. Tegnai quest fegl en in lieu segir e destruai el, cura ch'el n'è betg pli necessari.",
+        "QR code of the password of {name}": "Code QR dal pled-clav da {name}",
+        "Show as QR code": "Mussar sco code QR",
+        "Show QR code": "Mussar il code QR",
+        "The print dialog was opened. Close this window when you are done.": "Il dialog da stampar è vegnì avert. Serrai questa fanestra, cura che Vus essas a fin."
     },
     "plurals": null
 }

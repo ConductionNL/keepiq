@@ -1945,7 +1945,16 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "De här webbplatserna erbjuder passnycklar, och ditt valv har ingen passnyckel för dem. En passnyckel kan inte nätfiskas eller återanvändas.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Webbplatsdata: 2FA Directory (MIT) och Passkeys Directory (CC BY 4.0), av 2factorauth och bidragsgivare.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Tvåstegsinloggning tillgänglig och Passnyckel tillgänglig är inte tillgängliga: webbplatskatalogen kunde inte läsas in. Andra fynd påverkas inte.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tvåstegsinloggning tillgänglig och Passnyckel tillgänglig är inte tillgängliga: din administratör har inte slagit på webbplatskatalogen."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tvåstegsinloggning tillgänglig och Passnyckel tillgänglig är inte tillgängliga: din administratör har inte slagit på webbplatskatalogen.",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Keepiq har inte längre kontroll över ett utskrivet ark när det har lämnat skrivaren. Ange ditt huvudlösenord för att skriva ut namn, adress, användarnamn och lösenord.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Alla som kan se skärmen kan skanna det här lösenordet. Ange ditt huvudlösenord för att visa det.",
+        "Print again": "Skriv ut igen",
+        "Print login": "Skriv ut inloggning",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Utskrivet från Keepiq. Förvara det här arket på ett säkert ställe och förstör det när det inte längre behövs.",
+        "QR code of the password of {name}": "QR-kod för lösenordet till {name}",
+        "Show as QR code": "Visa som QR-kod",
+        "Show QR code": "Visa QR-kod",
+        "The print dialog was opened. Close this window when you are done.": "Utskriftsdialogen öppnades. Stäng det här fönstret när du är klar."
     },
     "nplurals=2; plural=(n != 1);"
 )
