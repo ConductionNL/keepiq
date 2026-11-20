@@ -65,6 +65,31 @@ function copyRow(pair, blob, version = {}) {
 }
 
 /**
+ * The version of the source a copy holder's own copy stands for, read
+ * BEFORE the copy is decrypted: a save in between then makes the row stale
+ * and it is sent again, never the other way round (#1255). A share-save
+ * writes the source and every copy in one transaction, so the copy read
+ * after holds that version's value or a newer one. Nothing when the write
+ * context does not name this source.
+ *
+ * @param {object} shareStore The share store.
+ * @param {string} copyId The caller's own copy.
+ * @param {string} sourceId The source the row hangs on.
+ * @return {Promise<{sourceUpdatedAt?: string}>}
+ * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ */
+async function copySourceVersion(shareStore, copyId, sourceId) {
+	try {
+		const context = await shareStore.fetchWriteContext(copyId)
+		return context?.sourceSecretId === sourceId
+			? sourceVersion({ updatedAt: context.sourceUpdatedAt })
+			: {}
+	} catch {
+		return {}
+	}
+}
+
+/**
  * The pairs of the rows the server skipped as `stale_source`: encrypted from
  * a version a save replaced meanwhile, to be encrypted again (#1255).
  *
@@ -205,11 +230,15 @@ async function fanOutCopy(
 	if (!plaintextCache[pair.secretId]) {
 		// fetchSecret decrypts with the session CryptoKey and returns the
 		// PLAINTEXT secret — do not decrypt twice.
+		// A manager's copy names the source's version, read first.
+		const copyVersion =
+			readId === pair.secretId
+				? null
+				: await copySourceVersion(shareStore, readId, pair.secretId)
 		const plain = await secretStore.fetchSecret(readId)
 		plaintextCache[pair.secretId] = {
 			fields: recipientFields(plain),
-			// Only the source's own version: a manager's copy has its own.
-			version: readId === pair.secretId ? sourceVersion(plain) : {},
+			version: copyVersion ?? sourceVersion(plain),
 		}
 	}
 
@@ -238,8 +267,8 @@ async function confirmFolder(store, folder, { secretStore, shareStore }, totals)
 	const fieldsBySecret = {}
 	let chunk = []
 
-	// The copy row of one pair: an owner reads the source and names its
-	// version (#1255); a member reads their own copy, which has its own.
+	// The copy row of one pair, naming the source version it was encrypted
+	// from (#1255): an owner reads the source, a member their own copy.
 	const rowFor = async (pair) => {
 		const certificate = certByUser[pair.userId]
 		if (!certificate) {
@@ -247,12 +276,17 @@ async function confirmFolder(store, folder, { secretStore, shareStore }, totals)
 		}
 		const readId = pair.ownCopyId ?? pair.secretId
 		if (!fieldsBySecret[readId]) {
+			// A member's copy names the source's version, read first.
+			const copyVersion =
+				readId === pair.secretId
+					? null
+					: await copySourceVersion(shareStore, readId, pair.secretId)
 			const raw = await axios.get(
 				generateUrl(`/apps/keepiq/api/v1/secrets/${readId}`),
 			)
 			fieldsBySecret[readId] = {
 				fields: recipientFields(await secretStore.decryptSecret(raw.data)),
-				version: readId === pair.secretId ? sourceVersion(raw.data) : {},
+				version: copyVersion ?? sourceVersion(raw.data),
 			}
 		}
 		const { fields, version } = fieldsBySecret[readId]

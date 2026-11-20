@@ -94,7 +94,7 @@ A share-save MAY carry `restoredFrom`, the id of a version of `{id}`, on a one-c
 
 ### Requirement: A share is made from the current version
 
-A share row sent to `POST /api/v1/shares/register-batch` or `POST /api/v1/team-folders/{id}/shares` MAY name, as `sourceUpdatedAt`, the version of the row its ciphertext was encrypted from: the source, or the caller's own copy when a delegate shares from it. The server MUST compare it with that row's version after taking the source's row lock, the lock a share-save takes, inside the transaction that mints the copy, comparing in whole seconds. When it differs, or the row is gone, the server MUST mint nothing for that row and MUST answer it `stale_source` with the current version (`sourceUpdatedAt`, null when gone), while the other rows of the request go on. A `sourceUpdatedAt` that is not a moment MUST be refused as `invalid`. A row without one MUST be accepted as before, until every client sends it. The web app MUST name the version on the rows it encrypts from the source itself or from a delegate's own copy, and MUST decrypt the row again and send a `stale_source` row once more, at most three times. A team folder row a manager or member encrypts from their own copy names no version.
+A share row sent to `POST /api/v1/shares/register-batch` or `POST /api/v1/team-folders/{id}/shares` MAY name, as `sourceUpdatedAt`, the version of the row its ciphertext was encrypted from: the source, or the caller's own copy when a delegate shares from it. The server MUST compare it with that row's version after taking the source's row lock, the lock a share-save takes, inside the transaction that mints the copy, comparing in whole seconds. When it differs, or the row is gone, the server MUST mint nothing for that row and MUST answer it `stale_source` with the current version (`sourceUpdatedAt`, null when gone), while the other rows of the request go on. A `sourceUpdatedAt` that is not a moment MUST be refused as `invalid`. A row without one MUST be accepted as before, until every client sends it. The web app MUST name the version on the rows it encrypts from the source itself or from a delegate's own copy. On a team folder row a manager or member encrypts from their own copy, it MUST name the source's version from that copy's write context, read before the copy is decrypted, so a save in between makes the row stale rather than letting an older value through. It MUST decrypt the row again and send a `stale_source` row once more, at most three times.
 
 #### Scenario: A share made during a save is sent again
 
@@ -112,4 +112,12 @@ A share row sent to `POST /api/v1/shares/register-batch` or `POST /api/v1/team-f
 - **GIVEN** a client that does not send `sourceUpdatedAt`
 - **WHEN** it registers a share
 - **THEN** the share MUST be created as before
+
+#### Scenario: A manager's fan-out from their own copy is sent again
+
+@e2e exclude A race between two requests; driven by tests/store/teamFolder.staleSource.spec.js.
+
+- **GIVEN** Mo manages a team folder and holds a copy of its login, and the owner saves a new password through a share-save while Mo's browser fans the login out to a new member
+- **WHEN** Mo's browser reads the source's version from the write context of Mo's copy, then decrypts the copy
+- **THEN** a save that commits between the two reads MUST make the row `stale_source`, and Mo's browser MUST decrypt the copy again and send the new password
 

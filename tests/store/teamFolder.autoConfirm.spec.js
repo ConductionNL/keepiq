@@ -250,6 +250,8 @@ describe('teamFolder.autoConfirm', () => {
 			'/apps/keepiq/api/v1/team-folders/pending-confirmations',
 			'/apps/keepiq/api/v1/secrets/src-0',
 			'/apps/keepiq/api/v1/secrets/src-1',
+			// A member's own copy: the source's version first (#1255).
+			'/apps/keepiq/api/v1/secrets/own-9/write-context',
 			'/apps/keepiq/api/v1/secrets/own-9',
 		])
 		expect(decrypt).toHaveBeenCalledTimes(3)
