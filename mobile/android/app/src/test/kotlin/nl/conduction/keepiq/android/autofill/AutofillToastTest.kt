@@ -28,10 +28,12 @@ class AutofillToastTest {
     @Test
     fun aSharedLoginsPasswordThatWasNotUpdatedIsSaid() {
         assertEquals(
-            "Password not updated: this login is shared. Change it in the Keepiq app or the web app so everyone gets it.",
+            "Password not updated: this login is shared with a partner organisation. Change it in the Keepiq app or the web app so everyone gets it.",
             toastOf(SaveResult.NOT_UPDATED),
         )
         assertEquals("Password not updated: this login is shared with you to view only.", toastOf(SaveResult.VIEW_ONLY))
+        // Any other reason is not said to be a share; the app's edit form names it.
+        assertEquals("Password not updated: Keepiq could not save it. Open the login in the Keepiq app to see why.", toastOf(SaveResult.FAILED))
     }
 
     @Test

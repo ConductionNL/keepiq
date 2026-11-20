@@ -71,6 +71,9 @@ enum class WriteProblemKind {
     CONFLICT,
 }
 
+/** A refusal the phone already put in words, thrown through a write that reports it as [problem]. */
+class WriteProblemException(val problem: WriteProblem) : Exception(problem.kind.name)
+
 /** A refused or failed write. The old value stays; nothing is shown as saved. */
 data class WriteProblem(
     val kind: WriteProblemKind,
@@ -108,6 +111,7 @@ data class WriteProblem(
          */
         fun from(error: Throwable): WriteProblem {
             if (error is CancellationException) throw error
+            if (error is WriteProblemException) return error.problem
             if (error is ShareSaveException) {
                 return WriteProblem(SHARE_SAVE_KINDS[error.code] ?: WriteProblemKind.FAILED, partners = error.partners, requiredVersion = error.requiredVersion)
             }

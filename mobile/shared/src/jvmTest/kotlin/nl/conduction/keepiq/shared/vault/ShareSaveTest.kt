@@ -23,6 +23,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.crypto.FederatedCertificateBuiltTest
 import nl.conduction.keepiq.shared.crypto.RsaFields
 import nl.conduction.keepiq.shared.crypto.RsaPrivateKey
 import nl.conduction.keepiq.shared.crypto.RsaPublicKey
@@ -277,6 +278,22 @@ class ShareSaveTest {
         assertEquals(listOf("fs1"), last.list("suspend").map { it["shareId"]!!.jsonPrimitive.content })
         assertEquals(listOf("fs2"), last.list("federated").map { it["shareId"]!!.jsonPrimitive.content })
         assertEquals(listOf("c1"), last.list("copies").map { it["secretId"]!!.jsonPrimitive.content })
+    }
+
+    @Test
+    fun aPartnerSignatureThisPhoneCantVerifyStopsTheSaveWithoutSuspending() = runTest {
+        val built = FederatedCertificateBuiltTest
+        val (leaf, intermediate, root) = built.chain(MALLORY, built.pssParams(built.pssHash(), built.pssMask(), built.pssSalt(20)))
+        partnerAnswer = HttpStatusCode.OK to buildJsonObject {
+            put("cloudId", MALLORY)
+            put("certificate", leaf)
+            put("chain", buildJsonArray { add(JsonPrimitive(intermediate)); add(JsonPrimitive(root)) })
+            put("partnerRootFingerprint", built.sha256Hex(root))
+            put("valueFields", buildJsonArray {})
+        }.toString()
+        answers = listOf(incomplete(federated = partnerShare), HttpStatusCode.OK to "{}")
+        assertEquals(ShareSave.BAD_CERTIFICATE, assertFailsWith<ShareSaveException> { shareSave.save(input()) }.code)
+        assertEquals(1, saves.size, "nothing sent after the refusal, so nothing suspended")
     }
 
     @Test

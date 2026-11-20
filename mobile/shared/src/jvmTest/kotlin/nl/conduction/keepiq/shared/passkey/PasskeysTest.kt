@@ -359,6 +359,32 @@ class PasskeysTest {
     }
 
     @Test
+    fun aStandalonePasskeyFailsTheSignInOnAnyOtherRefusal() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        // A row the index doesn't hold as the server sent it.
+        val unheld = PasskeyChoice("p1", "Example", record, held = mapOf("totp" to enc("ANOTHERSEED")))
+        assertEquals("conflict", assertFailsWith<nl.conduction.keepiq.shared.vault.ShareSaveException> {
+            Passkeys.sign(api, keys, unheld, ClientData.hashed(ByteArray(32)), "login.example.nl")
+        }.code)
+        assertTrue(shareSaves.isEmpty())
+        // A server refusal that is not about how the item is shared.
+        refusePut = true
+        assertFails { Passkeys.sign(api, keys, PasskeyChoice("p1", "Example", record, held = emptyMap()), ClientData.hashed(ByteArray(32)), "login.example.nl") }
+    }
+
+    @Test
+    fun aLoginChangedSinceTheIndexSignsAfterItIsReadAgain() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        // Its key was set on another device after the index was built.
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","totp":"${enc("NEWSEED")}","passkeys":"${enc(array(record))}","updatedAt":"$UPDATED_AT"}"""
+        val stale = loginEntry("l1", "https://login.example.nl", "alice@example.nl", record)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(stale)), "login.example.nl", keys).single()
+        val reread = AutofillIndex(listOf(stale.copy(totp = enc("NEWSEED"))))
+        assertEquals(5L, Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl", resync = { reread }).counter)
+        assertEquals(listOf(5L), sentPasskeys().map { it.counter })
+    }
+
+    @Test
     fun aViewOnlyLoginTakesNoCounterAndNoNewPasskey() = runTest {
         val (record, _) = made("login.example.nl", 4)
         freshLoginWith(record)

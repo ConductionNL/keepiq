@@ -190,14 +190,14 @@ class VaultRepository(
      * Opens one item for the edit form: as [open], but a login's own
      * Authenticator key is not decrypted, so the saved key is never held by
      * the edit screen (mobile-login-totp-passkeys D8). A row whose value
-     * ciphertext the device doesn't hold for it is refused ([holds]), a copy
+     * ciphertext the device doesn't hold for it is refused ([unheld]), a copy
      * shared to view only too, and what the form shows is recorded for the save.
      */
     suspend fun openForEdit(id: String): OpenResult {
         val opened = openRow(id, withSeed = false)
         if (opened !is OpenResult.Opened || opened.item.fromCache) return opened
         val context = try {
-            if (!holds(opened.item.row)) return OpenResult.Failed(WriteProblem(WriteProblemKind.CONFLICT))
+            unheld(opened.item.row)?.let { return OpenResult.Failed(it) }
             shareSave.readContext(id)
         } catch (e: CancellationException) {
             throw e
@@ -217,15 +217,25 @@ class VaultRepository(
     }
 
     /**
-     * Whether the device holds [fresh]'s value ciphertexts for it, of [fields],
-     * after one sync when it doesn't yet, so a row written elsewhere since the
-     * last sync gets through (the extension's `cachedMatch`, [ShareSave.holds]).
+     * Null when the device holds [fresh]'s value ciphertexts for it, of
+     * [fields], after one sync when it doesn't yet, so a row written elsewhere
+     * since the last sync gets through (the extension's `cachedMatch`,
+     * [ShareSave.holds]); else why not. A sync never throws, so a failed one
+     * is told apart from a mismatch, which would otherwise read as one.
      */
-    private suspend fun holds(fresh: VaultRow, fields: Collection<String> = ShareSave.VALUE_FIELDS): Boolean {
-        fun matches() = cachedRow(fresh.id)?.takeIf { !it.blocked }?.let { ShareSave.holds(fresh, it.values.filterKeys { k -> k in fields }) } == true
-        if (matches()) return true
-        refresh(SyncTrigger.AFTER_WRITE)
-        return matches()
+    private suspend fun unheld(fresh: VaultRow, fields: Collection<String> = ShareSave.VALUE_FIELDS): WriteProblem? {
+        fun matches() = cachedRow(fresh.id)?.let { !it.blocked && ShareSave.holds(fresh, it.values.filterKeys { k -> k in fields }) } == true
+        if (matches()) return null
+        val synced = refresh(SyncTrigger.AFTER_WRITE)
+        when {
+            synced.offline -> return WriteProblem(WriteProblemKind.OFFLINE)
+            synced.locked != null -> return WriteProblem(WriteProblemKind.SUITE_BLOCKED)
+            synced.problem != null -> return synced.problem
+        }
+        if (matches()) return null
+        val cached = cachedRow(fresh.id)
+        if (cached?.blocked == true) return cached.blockedReason?.let { WriteProblem(WriteProblemKind.SERVER_MESSAGE, it) } ?: WriteProblem(WriteProblemKind.REFUSED)
+        return WriteProblem(WriteProblemKind.CONFLICT)
     }
 
     /**
@@ -323,7 +333,8 @@ class VaultRepository(
         if (item.row.useOnly || item.row.readOnly || item.row.blocked) return@write WriteResult.Refused(WriteProblem(WriteProblemKind.REFUSED))
         try {
             PasskeysWrite.rewrite(
-                api, keys, item.row.id, held = { holds(it, ShareSave.PASSKEY_WRITE_HELD) }, now = clock,
+                api, keys, item.row.id, now = clock,
+                held = { fresh -> unheld(fresh, ShareSave.PASSKEY_WRITE_HELD)?.let { throw WriteProblemException(it) } ?: true },
                 noted = { shareSaveNotes[item.row.id] = it },
             ) { _, stored -> PasskeysWrite.Change(LoginPasskeys.without(stored, credentialId, rpId), Unit) }
         } catch (e: LoginGoneException) {

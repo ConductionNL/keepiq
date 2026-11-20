@@ -175,6 +175,7 @@ class KeepiqAutofillService : AutofillService() {
                 SaveResult.UPDATED -> R.string.autofill_updated
                 SaveResult.NOT_UPDATED -> R.string.autofill_not_updated_shared
                 SaveResult.VIEW_ONLY -> R.string.autofill_not_updated_view_only
+                SaveResult.FAILED -> R.string.autofill_not_updated
                 SaveResult.UNCHANGED, SaveResult.REFUSED -> return
                 null -> R.string.autofill_save_failed
             }

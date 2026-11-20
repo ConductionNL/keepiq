@@ -21,7 +21,8 @@
 "add.password" = "Wachtwoord";
 "add.save" = "Opslaan en invullen";
 "add.refused" = "Keepiq slaat geen logins op voor deze site.";
-"add.notUpdated" = "Wachtwoord niet bijgewerkt: deze login is gedeeld. Wijzig hem in de Keepiq-app of de webapp, zodat iedereen hem krijgt.";
+"add.notUpdated" = "Wachtwoord niet bijgewerkt: deze login is gedeeld met een partnerorganisatie. Wijzig hem in de Keepiq-app of de webapp, zodat iedereen hem krijgt.";
+"add.notUpdatedFailed" = "Wachtwoord niet bijgewerkt: Keepiq kon het niet opslaan. Open de login in de Keepiq-app om te zien waarom.";
 "add.viewOnly" = "Wachtwoord niet bijgewerkt: deze login is met je gedeeld om alleen te bekijken.";
 /* Passkeys (clients-mobile-apps taak 5.2). */
 "unlock.passkey" = "Om je passkey voor %@ te gebruiken.";

@@ -3,7 +3,6 @@
 
 package nl.conduction.keepiq.shared.crypto
 
-import nl.conduction.keepiq.shared.send.IsoTime
 
 /** Why a partner recipient's certificate was refused, as the extension names it. */
 enum class FederatedCertificateReason(val code: String) {
@@ -98,11 +97,19 @@ object FederatedCertificate {
         if (pinned.isEmpty() || sha256Hex(certs.last().der) != pinned) throw FederatedCertificateException(FederatedCertificateReason.UNTRUSTED_ROOT)
         // The first link must be the partner's intermediate, not its root again; a CA-marked leaf is refused (keepiq#1257).
         if (certs[1].issuer.contentEquals(certs[1].subject) || certs[0].ca) throw FederatedCertificateException(FederatedCertificateReason.BAD_CHAIN)
+        var unsupported: FederatedCertificateUnsupportedException? = null
         for (i in 1 until certs.size) {
             val issuer = certs[i]
             // pathLen counts the CAs below this one, not the leaf.
             val mayIssue = issuer.mayIssue && (issuer.pathLen == null || i - 1 <= issuer.pathLen)
-            if (!mayIssue || !signedBy(certs[i - 1], issuer)) throw FederatedCertificateException(FederatedCertificateReason.BAD_CHAIN)
+            val signed = try {
+                signedBy(certs[i - 1], issuer)
+            } catch (e: FederatedCertificateUnsupportedException) {
+                // Only after every verdict this phone can reach, so a wrong name or date still gets one.
+                unsupported = e
+                true
+            }
+            if (!mayIssue || !signed) throw FederatedCertificateException(FederatedCertificateReason.BAD_CHAIN)
         }
         val expected = canonicalCloudId(cloudId)
         if (expected.isEmpty() || commonName == null || canonicalCloudId(commonName) != expected) {
@@ -111,6 +118,7 @@ object FederatedCertificate {
         if (certs.any { now + CLOCK_SKEW_MS < it.notBefore || now > it.notAfter }) {
             throw FederatedCertificateException(FederatedCertificateReason.NOT_VALID_NOW)
         }
+        unsupported?.let { throw it }
         return VerifiedFederatedCertificate(sha256Hex(certs[0].der), certs[0].spki)
     }
 
@@ -241,8 +249,24 @@ object FederatedCertificate {
         val g = TIME.matchEntire(text)?.groupValues ?: throw malformed()
         var year = g[1].toInt()
         if (g[1].length == 2) year += if (year < 50) 2000 else 1900
-        val iso = "${year.toString().padStart(4, '0')}-${g[2]}-${g[3]}T${g[4]}:${g[5]}:${g[6]}Z"
-        return IsoTime.parseMillis(iso) ?: throw malformed()
+        return utcMillis(year, g[2].toInt(), g[3].toInt(), g[4].toInt(), g[5].toInt(), g[6].toInt())
+    }
+
+    /**
+     * `Date.UTC`, as the web app and the extension read a time: a field out of
+     * range carries over (month 13 is January of the next year), and a year
+     * 0-99 is 1900-1999, so all three clients reach the same verdict.
+     */
+    private fun utcMillis(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int): Long {
+        val y = (if (year in 0..99) year + 1900 else year) + (month - 1).floorDiv(12)
+        val m = (month - 1).mod(12) + 1
+        // Days since 1970-01-01 of the first of the month (H. Hinnant's days_from_civil).
+        val yy = if (m <= 2) y - 1 else y
+        val era = (if (yy >= 0) yy else yy - 399) / 400
+        val yoe = yy - era * 400
+        val doy = (153 * (if (m > 2) m - 3 else m + 9) + 2) / 5
+        val days = era * 146_097L + (yoe * 365 + yoe / 4 - yoe / 100 + doy) - 719_468 + (day - 1)
+        return (((days * 24 + hour) * 60 + minute) * 60 + second) * 1000
     }
 
     private class Issuing(var ca: Boolean = false, var keyCertSign: Boolean = true, var pathLen: Int? = null)

@@ -620,6 +620,30 @@ class ScreensTest {
     }
 
     @Test
+    fun afterSaveWithoutThemTheDetailSaysTheShareIsPaused() {
+        vault.put("l1", FakeVault.row("l1", "Mail", "1", key = "geheim", login = "alice"))
+        vault.unreachablePartner = true
+        var editing by mutableStateOf(true)
+        compose.setContent {
+            MaterialTheme {
+                if (editing) {
+                    ItemEditScreen(vault.session, "l1", null, null, GeneratorSettings(), Modifier, onSaved = { editing = false }, onCancel = {})
+                } else {
+                    ItemDetailScreen(vault.session, "l1", Modifier, onCopy = {}, onEdit = {}, onGone = {}, onSendLogin = { _, _ -> })
+                }
+            }
+        }
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Edit item").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("User name").performTextInput("2")
+        compose.onNodeWithText("Save").performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Save without them").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Save without them").performScrollTo().performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodesWithText("Sharing with bob@partner.example is paused until you share this item with them again.").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
     fun anAuthenticatorItemWithItsOwnKeyOffersRemoveOnly() {
         vault.put("t1", FakeVault.row("t1", "Code", "3", key = "JBSWY3DPEHPK3PXP", totp = "GEZDGNBVGY3TQOJQ"))
         showEdit("t1")
