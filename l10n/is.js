@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Flytja út valið",
         "Leave out": "Sleppa",
         "Types": "Tegundir",
-        "Usernames": "Notendanöfn"
+        "Usernames": "Notendanöfn",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Útprentað blað er utan stjórnar Keepiq um leið og það fer úr prentaranum. Sláðu inn aðallykilorðið þitt til að prenta nafnið, heimilisfangið, notandanafnið og lykilorðið.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Hver sem sér skjáinn getur skannað þetta lykilorð. Sláðu inn aðallykilorðið þitt til að sýna það.",
+        "Print again": "Prenta aftur",
+        "Print login": "Prenta innskráningu",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Prentað úr Keepiq. Geymdu þetta blað á öruggum stað og eyddu því þegar ekki er lengur þörf á því.",
+        "QR code of the password of {name}": "QR-kóði lykilorðs {name}",
+        "Show as QR code": "Sýna sem QR-kóða",
+        "Show QR code": "Sýna QR-kóða",
+        "The print dialog was opened. Close this window when you are done.": "Prentglugginn var opnaður. Lokaðu þessum glugga að því loknu."
     },
     "nplurals=2; plural=(n != 1);"
 )

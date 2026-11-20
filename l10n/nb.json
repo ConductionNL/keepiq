@@ -2029,7 +2029,16 @@
         "Export selected": "Eksporter valgte",
         "Leave out": "Utelat",
         "Types": "Typer",
-        "Usernames": "Brukernavn"
+        "Usernames": "Brukernavn",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Keepiq har ikke lenger kontroll over et utskrevet ark når det har forlatt skriveren. Skriv inn hovedpassordet ditt for å skrive ut navn, adresse, brukernavn og passord.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Alle som kan se skjermen, kan skanne dette passordet. Skriv inn hovedpassordet ditt for å vise det.",
+        "Print again": "Skriv ut på nytt",
+        "Print login": "Skriv ut innlogging",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Skrevet ut fra Keepiq. Oppbevar dette arket på et trygt sted, og makuler det når det ikke lenger trengs.",
+        "QR code of the password of {name}": "QR-kode for passordet til {name}",
+        "Show as QR code": "Vis som QR-kode",
+        "Show QR code": "Vis QR-kode",
+        "The print dialog was opened. Close this window when you are done.": "Utskriftsdialogen ble åpnet. Lukk dette vinduet når du er ferdig."
     },
     "plurals": null
 }

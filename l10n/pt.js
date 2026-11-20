@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Exportar seleção",
         "Leave out": "Excluir",
         "Types": "Tipos",
-        "Usernames": "Nomes de utilizador"
+        "Usernames": "Nomes de utilizador",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Uma folha impressa fica fora do controlo do Keepiq assim que sai da impressora. Introduza a sua palavra-passe mestre para imprimir o nome, o endereço, o nome de utilizador e a palavra-passe.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Qualquer pessoa que consiga ver o ecrã pode digitalizar esta palavra-passe. Introduza a sua palavra-passe mestre para a mostrar.",
+        "Print again": "Imprimir novamente",
+        "Print login": "Imprimir dados de acesso",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Impresso a partir do Keepiq. Guarde esta folha num local seguro e destrua-a quando já não for necessária.",
+        "QR code of the password of {name}": "Código QR da palavra-passe de {name}",
+        "Show as QR code": "Mostrar como código QR",
+        "Show QR code": "Mostrar código QR",
+        "The print dialog was opened. Close this window when you are done.": "A caixa de diálogo de impressão foi aberta. Feche esta janela quando terminar."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Esporta l-magħżula",
         "Leave out": "Ħalli barra",
         "Types": "Tipi",
-        "Usernames": "Ismijiet tal-utenti"
+        "Usernames": "Ismijiet tal-utenti",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Folja stampata ma tibqax taħt il-kontroll ta' Keepiq ladarba toħroġ mill-printer. Daħħal il-password master tiegħek biex tipprintja l-isem, l-indirizz, l-isem tal-utent u l-password.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Kull min jista' jara l-iskrin jista' jiskenja din il-password. Daħħal il-password master tiegħek biex turiha.",
+        "Print again": "Ipprintja mill-ġdid",
+        "Print login": "Ipprintja l-login",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Ipprintjat minn Keepiq. Żomm din il-folja f'post sigur u eqridha meta ma tkunx għadha meħtieġa.",
+        "QR code of the password of {name}": "Kodiċi QR tal-password ta' {name}",
+        "Show as QR code": "Uri bħala kodiċi QR",
+        "Show QR code": "Uri l-kodiċi QR",
+        "The print dialog was opened. Close this window when you are done.": "Id-djalogu tal-ipprintjar infetaħ. Agħlaq din it-tieqa meta tlesti."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

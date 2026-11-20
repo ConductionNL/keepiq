@@ -41,6 +41,8 @@ import SecretCreateDialog from './dialogs/SecretCreateDialog.vue'
 import SecretDeleteConfirmDialog from './dialogs/SecretDeleteConfirmDialog.vue'
 import SecretEditDialog from './dialogs/SecretEditDialog.vue'
 import SecretShareDialog from './dialogs/SecretShareDialog.vue'
+import SecretPrintModal from './modals/SecretPrintModal.vue'
+import SecretQrModal from './modals/SecretQrModal.vue'
 import ApplicationDetail from './views/ApplicationDetail.vue'
 import ApplicationRegisterView from './views/ApplicationRegisterView.vue'
 import CertificateInventoryView from './views/CertificateInventoryView.vue'
@@ -93,6 +95,9 @@ export default {
 		propsSchema: {},
 	},
 	'secret-move': { kind: 'modal', component: MoveDialog, propsSchema: {} },
+	// vault-item-clone-preview-and-print D3: both behind a master password check.
+	'secret-print': { kind: 'modal', component: SecretPrintModal, propsSchema: {} },
+	'secret-qr': { kind: 'modal', component: SecretQrModal, propsSchema: {} },
 	'secret-share': { kind: 'modal', component: SecretShareDialog, propsSchema: {} },
 	'application-register': {
 		kind: 'modal',

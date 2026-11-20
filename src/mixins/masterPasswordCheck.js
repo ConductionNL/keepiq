@@ -9,9 +9,22 @@ import { verifyMasterPassword } from '../crypto/reauth.js'
  * A fresh master-password re-auth for a dialog that writes or sends vault
  * data: a client-side proof of knowledge of the typed `masterPassword`
  * against the session's wrapped private key. The dialog provides
- * `sessionStore`, `masterPassword` and `error`.
+ * `sessionStore`, `masterPassword` and `error`; `masterPasswordChecked`
+ * also uses `busy`.
  */
 export default {
+	computed: {
+		/**
+		 * Whether the confirm button waits: nothing typed yet, or a check runs.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		masterPasswordPending() {
+			return this.masterPassword.length === 0 || this.busy
+		},
+	},
+
 	methods: {
 		/**
 		 * Whether the typed master password opens the vault key; when it does
@@ -30,6 +43,27 @@ export default {
 				this.error = this.t('keepiq', 'Incorrect master password')
 			}
 			return ok
+		},
+
+		/**
+		 * One guarded check of the typed master password: ignored while a check
+		 * runs or nothing is typed, and the field is cleared afterwards either way.
+		 *
+		 * @return {Promise<boolean>} Whether the password opens the vault key
+		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		async masterPasswordChecked() {
+			if (this.busy || this.masterPassword.length === 0) {
+				return false
+			}
+			this.busy = true
+			this.error = null
+			try {
+				return await this.masterPasswordVerified()
+			} finally {
+				this.masterPassword = ''
+				this.busy = false
+			}
 		},
 	},
 }

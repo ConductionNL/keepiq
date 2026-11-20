@@ -2055,7 +2055,16 @@
         "Export selected": "Экспортировать выбранное",
         "Leave out": "Исключить",
         "Types": "Типы",
-        "Usernames": "Имена пользователей"
+        "Usernames": "Имена пользователей",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Распечатанный лист выходит из-под контроля Keepiq, как только покидает принтер. Введите ваш мастер-пароль, чтобы распечатать название, адрес, имя пользователя и пароль.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Любой, кто видит экран, может отсканировать этот пароль. Введите ваш мастер-пароль, чтобы показать его.",
+        "Print again": "Распечатать снова",
+        "Print login": "Распечатать логин",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Распечатано из Keepiq. Храните этот лист в надёжном месте и уничтожьте его, когда он больше не понадобится.",
+        "QR code of the password of {name}": "QR-код пароля {name}",
+        "Show as QR code": "Показать как QR-код",
+        "Show QR code": "Показать QR-код",
+        "The print dialog was opened. Close this window when you are done.": "Диалог печати открыт. Закройте это окно, когда закончите."
     },
     "plurals": null
 }

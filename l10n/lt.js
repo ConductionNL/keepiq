@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Eksportuoti pasirinktus",
         "Leave out": "Neįtraukti",
         "Types": "Tipai",
-        "Usernames": "Naudotojų vardai"
+        "Usernames": "Naudotojų vardai",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Atspausdintas lapas, vos tik palieka spausdintuvą, nebėra kontroliuojamas Keepiq. Įveskite savo pagrindinį slaptažodį, kad atspausdintumėte pavadinimą, adresą, naudotojo vardą ir slaptažodį.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Bet kas, kas mato ekraną, gali nuskenuoti šį slaptažodį. Įveskite savo pagrindinį slaptažodį, kad jis būtų parodytas.",
+        "Print again": "Spausdinti dar kartą",
+        "Print login": "Spausdinti prisijungimo duomenis",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Atspausdinta iš Keepiq. Laikykite šį lapą saugioje vietoje ir sunaikinkite jį, kai jo nebereikės.",
+        "QR code of the password of {name}": "{name} slaptažodžio QR kodas",
+        "Show as QR code": "Rodyti kaip QR kodą",
+        "Show QR code": "Rodyti QR kodą",
+        "The print dialog was opened. Close this window when you are done.": "Atidarytas spausdinimo dialogas. Baigę uždarykite šį langą."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

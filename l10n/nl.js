@@ -1957,7 +1957,16 @@ OC.L10N.register(
         "Export selected": "Selectie exporteren",
         "Leave out": "Weglaten",
         "Types": "Typen",
-        "Usernames": "Gebruikersnamen"
+        "Usernames": "Gebruikersnamen",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Een afgedrukt vel valt buiten de controle van Keepiq zodra het uit de printer komt. Voer je hoofdwachtwoord in om de naam, het adres, de gebruikersnaam en het wachtwoord af te drukken.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Iedereen die het scherm kan zien, kan dit wachtwoord scannen. Voer je hoofdwachtwoord in om het te tonen.",
+        "Print again": "Opnieuw afdrukken",
+        "Print login": "Inlog afdrukken",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Afgedrukt uit Keepiq. Bewaar dit vel op een veilige plek en vernietig het als je het niet meer nodig hebt.",
+        "QR code of the password of {name}": "QR-code van het wachtwoord van {name}",
+        "Show as QR code": "Tonen als QR-code",
+        "Show QR code": "QR-code tonen",
+        "The print dialog was opened. Close this window when you are done.": "Het afdrukvenster is geopend. Sluit dit venster als je klaar bent."
     },
     "nplurals=2; plural=(n != 1);"
 )

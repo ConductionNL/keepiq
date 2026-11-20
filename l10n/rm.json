@@ -1927,7 +1927,16 @@
         "Export selected": "Exportar la selecziun",
         "Leave out": "Exclauder",
         "Types": "Tips",
-        "Usernames": "Nums d'utilisader"
+        "Usernames": "Nums d'utilisader",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "In fegl stampà n'è betg pli sut la controlla da Keepiq, uschespert ch'el banduna la stampadra. Endatai Voss pled-clav principal per stampar il num, l'adressa, il num d'utilisader ed il pled-clav.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Mintgin che po vesair il visur po scannar quest pled-clav. Endatai Voss pled-clav principal per al mussar.",
+        "Print again": "Stampar anc ina giada",
+        "Print login": "Stampar il login",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Stampà da Keepiq. Tegnai quest fegl en in lieu segir e destruai el, cura ch'el n'è betg pli necessari.",
+        "QR code of the password of {name}": "Code QR dal pled-clav da {name}",
+        "Show as QR code": "Mussar sco code QR",
+        "Show QR code": "Mussar il code QR",
+        "The print dialog was opened. Close this window when you are done.": "Il dialog da stampar è vegnì avert. Serrai questa fanestra, cura che Vus essas a fin."
     },
     "plurals": null
 }

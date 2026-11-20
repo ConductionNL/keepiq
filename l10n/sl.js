@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Izvozi izbrano",
         "Leave out": "Izpusti",
         "Types": "Vrste",
-        "Usernames": "Uporabniška imena"
+        "Usernames": "Uporabniška imena",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Natisnjen list je zunaj nadzora aplikacije Keepiq, takoj ko zapusti tiskalnik. Vnesite svoje glavno geslo, da natisnete ime, naslov, uporabniško ime in geslo.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Kdorkoli vidi zaslon, lahko optično prebere to geslo. Vnesite svoje glavno geslo, da ga prikažete.",
+        "Print again": "Natisni znova",
+        "Print login": "Natisni podatke za prijavo",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Natisnjeno iz aplikacije Keepiq. Ta list hranite na varnem mestu in ga uničite, ko ga ne boste več potrebovali.",
+        "QR code of the password of {name}": "Koda QR gesla za {name}",
+        "Show as QR code": "Pokaži kot kodo QR",
+        "Show QR code": "Pokaži kodo QR",
+        "The print dialog was opened. Close this window when you are done.": "Pogovorno okno za tiskanje je odprto. Ko končate, zaprite to okno."
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

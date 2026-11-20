@@ -2055,7 +2055,16 @@
         "Export selected": "Izvezi odabrano",
         "Leave out": "Izostavi",
         "Types": "Vrste",
-        "Usernames": "Korisnička imena"
+        "Usernames": "Korisnička imena",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Odštampani list je izvan kontrole aplikacije Keepiq čim izađe iz štampača. Unesite svoju glavnu lozinku da biste odštampali naziv, adresu, korisničko ime i lozinku.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Svako ko vidi ekran može skenirati ovu lozinku. Unesite svoju glavnu lozinku da biste je prikazali.",
+        "Print again": "Štampaj ponovo",
+        "Print login": "Štampaj prijavu",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Odštampano iz aplikacije Keepiq. Čuvajte ovaj list na sigurnom mjestu i uništite ga kada vam više ne bude potreban.",
+        "QR code of the password of {name}": "QR kod lozinke za {name}",
+        "Show as QR code": "Prikaži kao QR kod",
+        "Show QR code": "Prikaži QR kod",
+        "The print dialog was opened. Close this window when you are done.": "Dijalog za štampanje je otvoren. Zatvorite ovaj prozor kada završite."
     },
     "plurals": null
 }

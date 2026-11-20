@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Exportați selecția",
         "Leave out": "Excludeți",
         "Types": "Tipuri",
-        "Usernames": "Nume de utilizator"
+        "Usernames": "Nume de utilizator",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "O foaie tipărită nu mai este sub controlul Keepiq odată ce iese din imprimantă. Introduceți parola principală pentru a imprima numele, adresa, numele de utilizator și parola.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Oricine poate vedea ecranul poate scana această parolă. Introduceți parola principală pentru a o afișa.",
+        "Print again": "Imprimați din nou",
+        "Print login": "Imprimați datele de autentificare",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Imprimat din Keepiq. Păstrați această foaie într-un loc sigur și distrugeți-o atunci când nu mai este necesară.",
+        "QR code of the password of {name}": "Codul QR al parolei pentru {name}",
+        "Show as QR code": "Afișați ca cod QR",
+        "Show QR code": "Afișați codul QR",
+        "The print dialog was opened. Close this window when you are done.": "Dialogul de imprimare a fost deschis. Închideți această fereastră când ați terminat."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

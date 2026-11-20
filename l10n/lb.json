@@ -2029,7 +2029,16 @@
         "Export selected": "Auswiel exportéieren",
         "Leave out": "Ewechloossen",
         "Types": "Typen",
-        "Usernames": "Benotzernimm"
+        "Usernames": "Benotzernimm",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "E gedréckte Blat ass ausserhalb vun der Kontroll vu Keepiq, soubal et den Drécker verléisst. Gitt Äert Masterpasswuert an, fir den Numm, d'Adress, de Benotzernumm an d'Passwuert ze drécken.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Jiddereen, deen den Ecran gesäit, kann dëst Passwuert scannen. Gitt Äert Masterpasswuert an, fir et ze weisen.",
+        "Print again": "Nach eemol drécken",
+        "Print login": "Login drécken",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Aus Keepiq gedréckt. Haalt dëst Blat op enger sécherer Plaz a vernicht et, wann Dir et net méi braucht.",
+        "QR code of the password of {name}": "QR-Code vum Passwuert fir {name}",
+        "Show as QR code": "Als QR-Code weisen",
+        "Show QR code": "QR-Code weisen",
+        "The print dialog was opened. Close this window when you are done.": "Den Dréckdialog gouf opgemaach. Maacht dës Fënster zou, wann Dir fäerdeg sidd."
     },
     "plurals": null
 }

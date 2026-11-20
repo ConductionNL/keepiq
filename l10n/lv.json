@@ -2055,7 +2055,16 @@
         "Export selected": "Eksportēt atlasītos",
         "Leave out": "Neiekļaut",
         "Types": "Veidi",
-        "Usernames": "Lietotājvārdi"
+        "Usernames": "Lietotājvārdi",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Izdrukāta lapa vairs nav Keepiq kontrolē, tiklīdz tā atstāj printeri. Ievadiet savu galveno paroli, lai izdrukātu nosaukumu, adresi, lietotājvārdu un paroli.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Ikviens, kas redz ekrānu, var noskenēt šo paroli. Ievadiet savu galveno paroli, lai to parādītu.",
+        "Print again": "Drukāt vēlreiz",
+        "Print login": "Drukāt pieteikšanās datus",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Izdrukāts no Keepiq. Glabājiet šo lapu drošā vietā un iznīciniet to, kad tā vairs nav vajadzīga.",
+        "QR code of the password of {name}": "{name} paroles QR kods",
+        "Show as QR code": "Rādīt kā QR kodu",
+        "Show QR code": "Rādīt QR kodu",
+        "The print dialog was opened. Close this window when you are done.": "Drukāšanas dialogs tika atvērts. Pēc pabeigšanas aizveriet šo logu."
     },
     "plurals": null
 }

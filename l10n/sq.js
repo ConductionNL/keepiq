@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Eksporto të përzgjedhurat",
         "Leave out": "Përjashto",
         "Types": "Llojet",
-        "Usernames": "Emrat e përdoruesve"
+        "Usernames": "Emrat e përdoruesve",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Një fletë e printuar del jashtë kontrollit të Keepiq sapo largohet nga printeri. Jepni fjalëkalimin tuaj kryesor për të printuar emrin, adresën, emrin e përdoruesit dhe fjalëkalimin.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Kushdo që mund ta shohë ekranin mund ta skanojë këtë fjalëkalim. Jepni fjalëkalimin tuaj kryesor për ta shfaqur.",
+        "Print again": "Printo sërish",
+        "Print login": "Printo të dhënat e hyrjes",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Printuar nga Keepiq. Mbajeni këtë fletë në një vend të sigurt dhe asgjësojeni kur të mos nevojitet më.",
+        "QR code of the password of {name}": "Kodi QR i fjalëkalimit të {name}",
+        "Show as QR code": "Shfaq si kod QR",
+        "Show QR code": "Shfaq kodin QR",
+        "The print dialog was opened. Close this window when you are done.": "Dritarja e printimit u hap. Mbylleni këtë dritare kur të keni mbaruar."
     },
     "nplurals=2; plural=(n != 1);"
 )

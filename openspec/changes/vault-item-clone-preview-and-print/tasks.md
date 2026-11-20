@@ -12,12 +12,12 @@
 
 ## 3. Print and QR code
 
-- [ ] 3.1 Add `SecretPrintSheet.vue` with print-only styles and a Print action behind `verifyMasterPassword()`. Verify: vitest that print is refused with a wrong master password, and a Playwright check that the sheet holds name, address, username and password and no seed.
-- [ ] 3.2 Add the QR encoder dependency and `src/modals/SecretQrModal.vue` behind the same check. Verify: vitest that the encoded QR decodes back to the password, and the npm licence and audit checks.
+- [x] 3.1 Add `SecretPrintSheet.vue` with print-only styles and a Print action behind `verifyMasterPassword()`. Verify: vitest that print is refused with a wrong master password, and a Playwright check that the sheet holds name, address, username and password and no seed. Done: `src/components/SecretPrintSheet.vue` (teleported into a print-only container: hidden on screen, the only thing on the page in print), `src/modals/SecretPrintModal.vue` (master password through `masterPasswordCheck`, then the sheet and `window.print()`), Print in the More menu of a login (`canPrintOrShowQr`). vitest: `tests/modals/SecretPrintModal.spec.js`, `tests/components/SecretDetailSidebar.print.spec.js`. Playwright: `tests/e2e/workflows/secret-item-actions.spec.ts` (written, lints and lists; not run against a live instance here).
+- [x] 3.2 Add the QR encoder dependency and `src/modals/SecretQrModal.vue` behind the same check. Verify: vitest that the encoded QR decodes back to the password, and the npm licence and audit checks. Done: `qrcode-generator` 2.0.4 (MIT, no dependencies; `npm audit --omit=dev` unchanged from development, SBOM regenerated), `src/utils/qrCode.js` (UTF-8 bytes in byte mode, drawn as one SVG path), `src/modals/SecretQrModal.vue`. vitest: `tests/vitest/qrCode.spec.js` and `tests/modals/SecretQrModal.spec.js` decode the code back to the password with jsQR, including characters outside Latin-1.
 
 ## 4. Docs
 
-- [ ] 4.1 Document clone, preview, print and QR in `docs/`, including what a clone does not copy. Verify: docs build.
+- [x] 4.1 Document clone, preview, print and QR in `docs/`, including what a clone does not copy. Verify: docs build. Done: `docs/item-actions.md`; `docusaurus build` succeeds.
 
 ## Acceptance criteria
 

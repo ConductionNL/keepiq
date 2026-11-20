@@ -2055,7 +2055,16 @@
         "Export selected": "Easpórtáil na cinn roghnaithe",
         "Leave out": "Fág ar lár",
         "Types": "Cineálacha",
-        "Usernames": "Ainmneacha úsáideora"
+        "Usernames": "Ainmneacha úsáideora",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Níl smacht ag Keepiq ar bhileog phriontáilte a luaithe a fhágann sí an printéir. Cuir isteach do phríomhphasfhocal chun an t-ainm, an seoladh, an t-ainm úsáideora agus an pasfhocal a phriontáil.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Is féidir le duine ar bith a fheiceann an scáileán an pasfhocal seo a scanadh. Cuir isteach do phríomhphasfhocal chun é a thaispeáint.",
+        "Print again": "Priontáil arís",
+        "Print login": "Priontáil sonraí logála isteach",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Priontáilte ó Keepiq. Coinnigh an bhileog seo in áit shábháilte agus scrios í nuair nach mbeidh sí ag teastáil a thuilleadh.",
+        "QR code of the password of {name}": "Cód QR phasfhocal {name}",
+        "Show as QR code": "Taispeáin mar chód QR",
+        "Show QR code": "Taispeáin an cód QR",
+        "The print dialog was opened. Close this window when you are done.": "Osclaíodh an dialóg phriontála. Dún an fhuinneog seo nuair a bheidh tú críochnaithe."
     },
     "plurals": null
 }

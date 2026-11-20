@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Vie valitut",
         "Leave out": "Jätä pois",
         "Types": "Tyypit",
-        "Usernames": "Käyttäjätunnukset"
+        "Usernames": "Käyttäjätunnukset",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Tulostettu arkki on sovelluksen Keepiq hallinnan ulkopuolella heti, kun se lähtee tulostimesta. Anna pääsalasanasi tulostaaksesi nimen, osoitteen, käyttäjätunnuksen ja salasanan.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Kuka tahansa, joka näkee näytön, voi skannata tämän salasanan. Anna pääsalasanasi näyttääksesi sen.",
+        "Print again": "Tulosta uudelleen",
+        "Print login": "Tulosta kirjautumistiedot",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Tulostettu sovelluksesta Keepiq. Säilytä tämä arkki turvallisessa paikassa ja hävitä se, kun sitä ei enää tarvita.",
+        "QR code of the password of {name}": "Kohteen {name} salasanan QR-koodi",
+        "Show as QR code": "Näytä QR-koodina",
+        "Show QR code": "Näytä QR-koodi",
+        "The print dialog was opened. Close this window when you are done.": "Tulostusikkuna avattiin. Sulje tämä ikkuna, kun olet valmis."
     },
     "nplurals=2; plural=(n != 1);"
 )

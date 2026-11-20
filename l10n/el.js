@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Εξαγωγή επιλεγμένων",
         "Leave out": "Παράλειψη",
         "Types": "Τύποι",
-        "Usernames": "Ονόματα χρηστών"
+        "Usernames": "Ονόματα χρηστών",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Ένα εκτυπωμένο φύλλο βρίσκεται εκτός του ελέγχου του Keepiq μόλις βγει από τον εκτυπωτή. Εισαγάγετε τον κύριο κωδικό πρόσβασής σας για να εκτυπώσετε το όνομα, τη διεύθυνση, το όνομα χρήστη και τον κωδικό πρόσβασης.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Όποιος μπορεί να δει την οθόνη μπορεί να σαρώσει αυτόν τον κωδικό πρόσβασης. Εισαγάγετε τον κύριο κωδικό πρόσβασής σας για να τον εμφανίσετε.",
+        "Print again": "Επανεκτύπωση",
+        "Print login": "Εκτύπωση στοιχείων σύνδεσης",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Εκτυπώθηκε από το Keepiq. Φυλάξτε αυτό το φύλλο σε ασφαλές μέρος και καταστρέψτε το όταν δεν το χρειάζεστε πια.",
+        "QR code of the password of {name}": "Κωδικός QR του κωδικού πρόσβασης του {name}",
+        "Show as QR code": "Εμφάνιση ως κωδικός QR",
+        "Show QR code": "Εμφάνιση κωδικού QR",
+        "The print dialog was opened. Close this window when you are done.": "Το παράθυρο διαλόγου εκτύπωσης άνοιξε. Κλείστε αυτό το παράθυρο όταν τελειώσετε."
     },
     "nplurals=2; plural=(n != 1);"
 )

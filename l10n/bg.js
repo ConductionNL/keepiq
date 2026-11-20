@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Износ на избраните",
         "Leave out": "Изключване",
         "Types": "Типове",
-        "Usernames": "Потребителски имена"
+        "Usernames": "Потребителски имена",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Отпечатаният лист е извън контрола на Keepiq, щом излезе от принтера. Въведете главната си парола, за да отпечатате името, адреса, потребителското име и паролата.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Всеки, който вижда екрана, може да сканира тази парола. Въведете главната си парола, за да я покажете.",
+        "Print again": "Повторен печат",
+        "Print login": "Печат на данните за вход",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Отпечатано от Keepiq. Пазете този лист на сигурно място и го унищожете, когато вече не е нужен.",
+        "QR code of the password of {name}": "QR код на паролата на {name}",
+        "Show as QR code": "Показване като QR код",
+        "Show QR code": "Показване на QR код",
+        "The print dialog was opened. Close this window when you are done.": "Диалоговият прозорец за печат е отворен. Затворете този прозорец, когато приключите."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Exporta la selecció",
         "Leave out": "Exclou",
         "Types": "Tipus",
-        "Usernames": "Noms d'usuari"
+        "Usernames": "Noms d'usuari",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Un full imprès queda fora del control de Keepiq quan surt de la impressora. Introduïu la vostra contrasenya mestra per imprimir el nom, l'adreça, el nom d'usuari i la contrasenya.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Qualsevol persona que pugui veure la pantalla pot escanejar aquesta contrasenya. Introduïu la vostra contrasenya mestra per mostrar-la.",
+        "Print again": "Torna a imprimir",
+        "Print login": "Imprimeix l'inici de sessió",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Imprès des de Keepiq. Guardeu aquest full en un lloc segur i destruïu-lo quan ja no el necessiteu.",
+        "QR code of the password of {name}": "Codi QR de la contrasenya de {name}",
+        "Show as QR code": "Mostra com a codi QR",
+        "Show QR code": "Mostra el codi QR",
+        "The print dialog was opened. Close this window when you are done.": "S'ha obert el diàleg d'impressió. Tanqueu aquesta finestra quan hàgiu acabat."
     },
     "nplurals=2; plural=(n != 1);"
 )

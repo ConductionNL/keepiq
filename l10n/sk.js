@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Exportovať vybrané",
         "Leave out": "Vynechať",
         "Types": "Typy",
-        "Usernames": "Používateľské mená"
+        "Usernames": "Používateľské mená",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Vytlačený hárok je mimo kontroly aplikácie Keepiq, hneď ako opustí tlačiareň. Zadajte svoje hlavné heslo, aby ste mohli vytlačiť názov, adresu, používateľské meno a heslo.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Ktokoľvek, kto vidí obrazovku, môže toto heslo naskenovať. Zadajte svoje hlavné heslo, aby sa zobrazilo.",
+        "Print again": "Vytlačiť znova",
+        "Print login": "Vytlačiť prihlasovacie údaje",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Vytlačené z aplikácie Keepiq. Uschovajte tento hárok na bezpečnom mieste a zničte ho, keď už nebude potrebný.",
+        "QR code of the password of {name}": "QR kód hesla pre {name}",
+        "Show as QR code": "Zobraziť ako QR kód",
+        "Show QR code": "Zobraziť QR kód",
+        "The print dialog was opened. Close this window when you are done.": "Dialógové okno tlače bolo otvorené. Keď skončíte, zatvorte toto okno."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

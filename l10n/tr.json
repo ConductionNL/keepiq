@@ -2003,7 +2003,16 @@
         "Export selected": "Seçilenleri dışa aktar",
         "Leave out": "Hariç tut",
         "Types": "Türler",
-        "Usernames": "Kullanıcı adları"
+        "Usernames": "Kullanıcı adları",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Basılı bir sayfa, yazıcıdan çıktığı anda artık Keepiq denetiminde değildir. Adı, adresi, kullanıcı adını ve parolayı yazdırmak için ana parolanızı girin.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Ekranı görebilen herkes bu parolayı tarayabilir. Göstermek için ana parolanızı girin.",
+        "Print again": "Yeniden yazdır",
+        "Print login": "Giriş bilgilerini yazdır",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Keepiq üzerinden yazdırıldı. Bu sayfayı güvenli bir yerde saklayın ve artık gerekmediğinde imha edin.",
+        "QR code of the password of {name}": "{name} parolasının QR kodu",
+        "Show as QR code": "QR kodu olarak göster",
+        "Show QR code": "QR kodunu göster",
+        "The print dialog was opened. Close this window when you are done.": "Yazdırma penceresi açıldı. İşiniz bittiğinde bu pencereyi kapatın."
     },
     "plurals": null
 }

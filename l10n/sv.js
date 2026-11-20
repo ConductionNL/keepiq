@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Exportera valda",
         "Leave out": "Utelämna",
         "Types": "Typer",
-        "Usernames": "Användarnamn"
+        "Usernames": "Användarnamn",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Keepiq har inte längre kontroll över ett utskrivet ark när det har lämnat skrivaren. Ange ditt huvudlösenord för att skriva ut namn, adress, användarnamn och lösenord.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Alla som kan se skärmen kan skanna det här lösenordet. Ange ditt huvudlösenord för att visa det.",
+        "Print again": "Skriv ut igen",
+        "Print login": "Skriv ut inloggning",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Utskrivet från Keepiq. Förvara det här arket på ett säkert ställe och förstör det när det inte längre behövs.",
+        "QR code of the password of {name}": "QR-kod för lösenordet till {name}",
+        "Show as QR code": "Visa som QR-kod",
+        "Show QR code": "Visa QR-kod",
+        "The print dialog was opened. Close this window when you are done.": "Utskriftsdialogen öppnades. Stäng det här fönstret när du är klar."
     },
     "nplurals=2; plural=(n != 1);"
 )

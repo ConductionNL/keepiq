@@ -2029,7 +2029,16 @@
         "Export selected": "Kijelöltek exportálása",
         "Leave out": "Kihagyás",
         "Types": "Típusok",
-        "Usernames": "Felhasználónevek"
+        "Usernames": "Felhasználónevek",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "A kinyomtatott lap, amint elhagyja a nyomtatót, kikerül a Keepiq felügyelete alól. Adja meg a főjelszavát a név, a cím, a felhasználónév és a jelszó kinyomtatásához.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Bárki, aki látja a képernyőt, beolvashatja ezt a jelszót. Adja meg a főjelszavát a megjelenítéséhez.",
+        "Print again": "Újranyomtatás",
+        "Print login": "Bejelentkezési adatok nyomtatása",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Nyomtatva a Keepiq alkalmazásból. Tartsa ezt a lapot biztonságos helyen, és semmisítse meg, ha már nincs rá szükség.",
+        "QR code of the password of {name}": "{name} jelszavának QR-kódja",
+        "Show as QR code": "Megjelenítés QR-kódként",
+        "Show QR code": "QR-kód megjelenítése",
+        "The print dialog was opened. Close this window when you are done.": "A nyomtatási párbeszédablak megnyílt. Ha végzett, zárja be ezt az ablakot."
     },
     "plurals": null
 }

@@ -1952,7 +1952,16 @@ OC.L10N.register(
         "Export selected": "Експортувати вибране",
         "Leave out": "Не включати",
         "Types": "Типи",
-        "Usernames": "Імена користувачів"
+        "Usernames": "Імена користувачів",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Надрукований аркуш виходить з-під контролю Keepiq, щойно залишає принтер. Введіть свій головний пароль, щоб надрукувати назву, адресу, ім'я користувача і пароль.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Будь-хто, хто бачить екран, може відсканувати цей пароль. Введіть свій головний пароль, щоб показати його.",
+        "Print again": "Надрукувати знову",
+        "Print login": "Надрукувати логін",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Надруковано з Keepiq. Зберігайте цей аркуш у безпечному місці та знищте його, коли він більше не буде потрібен.",
+        "QR code of the password of {name}": "QR-код пароля {name}",
+        "Show as QR code": "Показати як QR-код",
+        "Show QR code": "Показати QR-код",
+        "The print dialog was opened. Close this window when you are done.": "Діалог друку відкрито. Закрийте це вікно, коли завершите."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

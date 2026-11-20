@@ -2055,7 +2055,16 @@
         "Export selected": "Exportovat vybrané",
         "Leave out": "Vynechat",
         "Types": "Typy",
-        "Usernames": "Uživatelská jména"
+        "Usernames": "Uživatelská jména",
+        "A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.": "Vytištěný list je mimo kontrolu aplikace Keepiq, jakmile opustí tiskárnu. Zadejte své hlavní heslo, abyste mohli vytisknout název, adresu, uživatelské jméno a heslo.",
+        "Anyone who can see the screen can scan this password. Enter your master password to show it.": "Kdokoli, kdo vidí obrazovku, může toto heslo naskenovat. Zadejte své hlavní heslo, abyste ho zobrazili.",
+        "Print again": "Vytisknout znovu",
+        "Print login": "Vytisknout přihlašovací údaje",
+        "Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.": "Vytištěno z aplikace Keepiq. Uschovejte tento list na bezpečném místě a zničte ho, až už nebude potřeba.",
+        "QR code of the password of {name}": "QR kód hesla pro {name}",
+        "Show as QR code": "Zobrazit jako QR kód",
+        "Show QR code": "Zobrazit QR kód",
+        "The print dialog was opened. Close this window when you are done.": "Dialog tisku byl otevřen. Až budete hotovi, zavřete toto okno."
     },
     "plurals": null
 }
