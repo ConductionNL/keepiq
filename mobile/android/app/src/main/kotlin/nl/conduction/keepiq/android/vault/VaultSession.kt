@@ -16,6 +16,7 @@ import nl.conduction.keepiq.shared.sync.VaultSync
 import nl.conduction.keepiq.shared.unlock.UnlockedVault
 import nl.conduction.keepiq.shared.vault.VaultKeys
 import nl.conduction.keepiq.shared.vault.VaultRepository
+import nl.conduction.keepiq.shared.vault.VerifiedPartners
 
 /**
  * One unlocked account, as the vault, Send and generator screens use it.
@@ -46,6 +47,7 @@ class VaultSession(
      */
     fun close() {
         keys.forget()
+        VerifiedPartners.forget()
         runCatching { store?.close() }
     }
 

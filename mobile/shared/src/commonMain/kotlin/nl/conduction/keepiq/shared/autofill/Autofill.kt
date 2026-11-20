@@ -43,8 +43,12 @@ object AutofillChoices {
         }
 }
 
-/** What saving a submitted login did. */
-enum class SaveResult { SAVED, UPDATED, UNCHANGED, REFUSED }
+/**
+ * What saving a submitted login did. [NOT_UPDATED]: the stored login is
+ * shared and its change has to be made in the app's edit form or the web
+ * app; [VIEW_ONLY]: it is shared with the user to view only.
+ */
+enum class SaveResult { SAVED, UPDATED, UNCHANGED, REFUSED, NOT_UPDATED, VIEW_ONLY }
 
 /**
  * Saves a login typed into an app or a website (task 4.2), as the
@@ -69,7 +73,9 @@ class AutofillSaver(private val api: KeepiqApi, private val keys: VaultKeys) {
     /**
      * Only `key`, through share-save on the row as read now, so every copy
      * gets it (keepiq#1300); with no edit form behind it, partner shares
-     * refuse it, as in the extension. A copy shared to view only is refused.
+     * refuse it, as in the extension. Every share-save refusal is told
+     * apart from a site that saves nothing, so the user hears the password
+     * was not kept.
      */
     private suspend fun update(id: String, name: String, login: String, password: String): SaveResult {
         val fresh = api.getSecret(id)?.let { VaultRow.from(it) } ?: return SaveResult.REFUSED
@@ -78,7 +84,7 @@ class AutofillSaver(private val api: KeepiqApi, private val keys: VaultKeys) {
             ShareSave(api, keys, MobileSession::nowMillis).saveFresh(fresh, ItemCodec.updateBody(parts, setOf("key"), keys), mapOf("key" to password), vouchEmpty = false)
             SaveResult.UPDATED
         } catch (e: ShareSaveException) {
-            SaveResult.REFUSED
+            if (e.code == ShareSave.VIEW_ONLY) SaveResult.VIEW_ONLY else SaveResult.NOT_UPDATED
         }
     }
 

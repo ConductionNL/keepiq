@@ -152,6 +152,8 @@
     <string name="write_unreadable">Could not read this item, so it cannot be saved here.</string>
     <string name="write_bad_certificate">Keepiq sent an encryption key for someone this item is shared with that this phone could not read. Nothing was saved.</string>
     <string name="write_partner_unreachable">Nothing was saved: a partner organisation this item is shared with can\'t be reached (%1$s). Try again later, or save without them, which pauses sharing this item with them until you share it with them again.</string>
+    <string name="write_partner_unreachable_later">Nothing was saved: a partner organisation this item is shared with can\'t be reached (%1$s). Try again later.</string>
+    <string name="write_conflict">The server sent this item with a value Keepiq doesn\'t hold for it, even after a sync, so it was not opened or changed. Try again later.</string>
     <string name="write_partner_upgrade">Nothing was saved: the Keepiq of %1$s is too old to receive an authenticator key. Remove the key, or ask them to update Keepiq.</string>
     <string name="write_partner_upgrade_unnamed">Nothing was saved: a partner organisation this item is shared with runs a Keepiq too old to receive an authenticator key. Remove the key, or ask them to update Keepiq.</string>
     <string name="write_partner_upgrade_version">They need Keepiq %1$s or later.</string>
@@ -261,6 +263,8 @@
     <string name="autofill_nothing">Keepiq has no login for this app or site.</string>
     <string name="autofill_saved">Login saved in Keepiq.</string>
     <string name="autofill_updated">Password updated in Keepiq.</string>
+    <string name="autofill_not_updated_shared">Password not updated: this login is shared. Change it in the Keepiq app or the web app so everyone gets it.</string>
+    <string name="autofill_not_updated_view_only">Password not updated: this login is shared with you to view only.</string>
     <string name="autofill_save_failed">Keepiq could not save this login. Add it in the app.</string>
     <string name="autofill_settings_title">Autofill</string>
     <string name="autofill_status_on">Keepiq fills in your logins in apps and browsers.</string>

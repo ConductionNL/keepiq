@@ -173,10 +173,12 @@ class KeepiqAutofillService : AutofillService() {
             val text = when (result) {
                 SaveResult.SAVED -> R.string.autofill_saved
                 SaveResult.UPDATED -> R.string.autofill_updated
+                SaveResult.NOT_UPDATED -> R.string.autofill_not_updated_shared
+                SaveResult.VIEW_ONLY -> R.string.autofill_not_updated_view_only
                 SaveResult.UNCHANGED, SaveResult.REFUSED -> return
                 null -> R.string.autofill_save_failed
             }
-            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, text, Toast.LENGTH_LONG).show()
         }
 
         /** The login and password values for the fields a form has. */

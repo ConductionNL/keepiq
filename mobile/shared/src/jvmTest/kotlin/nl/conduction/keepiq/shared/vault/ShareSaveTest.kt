@@ -74,6 +74,9 @@ class ShareSaveTest {
     /** What the federation lookup answers. */
     private var partnerAnswer: Pair<HttpStatusCode, String> = HttpStatusCode.OK to partner()
 
+    /** Partners whose lookup answers that they can't be reached. */
+    private var unreachable = setOf<String>()
+
     /** Users with a vault certificate; anyone else has none. */
     private var certified = setOf("bob", "carol")
 
@@ -93,6 +96,8 @@ class ShareSaveTest {
                 val rows = sent["userIds"]!!.jsonArray.map { it.jsonPrimitive.content }.filter { it in certified }
                 respond("""{"recipients":[${rows.joinToString(",") { """{"userId":"$it","shareable":true,"certificate":${JsonPrimitive(certificate)}}""" }}]}""", HttpStatusCode.OK, json)
             }
+            path == "/api/v1/federation/recipient-certificate" && sent?.get("cloudId")?.jsonPrimitive?.content in unreachable ->
+                respond("""{"message":"partner_unreachable"}""", HttpStatusCode.BadGateway, json)
             path == "/api/v1/federation/recipient-certificate" -> respond(partnerAnswer.second, partnerAnswer.first, json)
             else -> respond("{}", HttpStatusCode.OK, json)
         }
@@ -256,6 +261,22 @@ class ShareSaveTest {
         val note = shareSave.save(input(without = setOf("fs1")))
         assertEquals(listOf("fs1" to "partner_unreachable"), saves.last().list("suspend").map { it["shareId"]!!.jsonPrimitive.content to it["reason"]!!.jsonPrimitive.content })
         assertEquals(ShareSaveNote(paused = listOf(MALLORY)), note)
+    }
+
+    @Test
+    fun saveWithoutThemSuspendsOnlyTheUnreachablePartner() = runTest {
+        val carol = "carol@cloud.partner.example"
+        unreachable = setOf(carol)
+        val shares = """[{"shareId":"fs1","recipientCloudId":"$carol"},{"shareId":"fs2","recipientCloudId":"$MALLORY"}]"""
+        answers = listOf(incomplete(copies = "[${copy("c1", "bob")}]", federated = shares), HttpStatusCode.OK to "{}")
+        assertEquals(listOf(PartnerShare("fs1", carol)), assertFailsWith<ShareSaveException> { shareSave.save(input()) }.partners)
+
+        saves.clear()
+        shareSave.save(input(without = setOf("fs1")))
+        val last = saves.last()
+        assertEquals(listOf("fs1"), last.list("suspend").map { it["shareId"]!!.jsonPrimitive.content })
+        assertEquals(listOf("fs2"), last.list("federated").map { it["shareId"]!!.jsonPrimitive.content })
+        assertEquals(listOf("c1"), last.list("copies").map { it["secretId"]!!.jsonPrimitive.content })
     }
 
     @Test

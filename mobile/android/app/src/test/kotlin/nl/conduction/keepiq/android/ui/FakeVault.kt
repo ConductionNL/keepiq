@@ -48,6 +48,12 @@ internal class FakeVault {
     /** Rows that are a copy shared with the user to view only, as write-context grades them. */
     val viewOnly: MutableSet<String> = java.util.Collections.synchronizedSet(mutableSetOf())
 
+    /** Rows whose write-context fails with a 500. */
+    val contextFails: MutableSet<String> = java.util.Collections.synchronizedSet(mutableSetOf())
+
+    /** Rows that are a copy the user may write, whose share-save reached only the owner's partner shares. */
+    val writerCopies: MutableSet<String> = java.util.Collections.synchronizedSet(mutableSetOf())
+
     /** Every row has a partner share whose partner can't be reached: a share-save takes it only suspended. */
     @Volatile var unreachablePartner = false
     private val requests = mutableListOf<Pair<String, String>>()
@@ -81,12 +87,17 @@ internal class FakeVault {
             // A row of the user's own, or a view-only copy of someone else's source.
             path.endsWith("/write-context") -> {
                 val id = path.removePrefix("/api/v1/secrets/").removeSuffix("/write-context")
-                if (id in viewOnly) {
+                if (id in contextFails) return@MockEngine respond("""{"message":"x"}""", HttpStatusCode.InternalServerError, json)
+                if (id in writerCopies) {
+                    """{"sourceSecretId":"source-of-$id","effectiveGrade":"write","ownerCertificate":null,"sourceUpdatedAt":"2026-10-03T09:00:00+00:00"}"""
+                } else if (id in viewOnly) {
                     """{"sourceSecretId":"source-of-$id","effectiveGrade":"read","ownerCertificate":null,"sourceUpdatedAt":"2026-10-03T09:00:00+00:00"}"""
                 } else {
                     """{"sourceSecretId":"$id","effectiveGrade":"owner","ownerCertificate":null,"sourceUpdatedAt":"2026-10-03T09:00:00+00:00"}"""
                 }
             }
+            path.endsWith("/share-save") && path.removePrefix("/api/v1/secrets/").removeSuffix("/share-save") in writerCopies ->
+                """{"federated":{"ownerOnly":true}}"""
             path.startsWith("/api/v1/secrets/") && request.method == HttpMethod.Get ->
                 synchronized(rows) { rows[path.removePrefix("/api/v1/secrets/")] }
                     ?: return@MockEngine respond("""{"message":"Secret not found"}""", HttpStatusCode.NotFound, json)

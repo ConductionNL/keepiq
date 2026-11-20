@@ -22,8 +22,9 @@ struct ItemDetailView: View {
     @State private var moving = false
     @State private var editing = false
     /// A copy shared to view only: no Edit (keepiq#1300); the save checks again.
-    @State private var viewOnly = false
-    /// What the last save could not deliver to everyone, said once.
+    /// Nil until write-context says, and when it can't: Edit is then not enabled.
+    @State private var viewOnly: Bool?
+    /// What the last save could not deliver to everyone; the repository says it once.
     @State private var note: ShareSaveNote?
     @Environment(\.dismiss) private var dismiss
 
@@ -44,9 +45,9 @@ struct ItemDetailView: View {
 
     private func load() async {
         result = try? await model.repository.open(id: itemId)
-        note = model.repository.takeShareSaveNote(id: itemId)
+        if let taken = model.repository.takeShareSaveNote(id: itemId) { note = taken }
         if let opened = result as? OpenResult.Opened, !opened.item.fromCache, !opened.item.row.useOnly {
-            viewOnly = (try? await model.repository.isViewOnly(id: itemId))?.boolValue ?? false
+            viewOnly = (try? await model.repository.isViewOnly(id: itemId))?.boolValue
         }
     }
 
@@ -61,7 +62,7 @@ struct ItemDetailView: View {
                 if item.fromCache { Text(L("detail_from_cache")) }
                 if row.useOnly { Text(L("detail_use_only")) }
                 if row.readOnly && !row.useOnly { Text(L("detail_read_only")) }
-                if viewOnly && !row.readOnly { Text(L("detail_view_only")) }
+                if viewOnly == true && !row.readOnly { Text(L("detail_view_only")) }
                 if let note { Text(shareSaveNoteText(note)) }
                 if let problem { Text(writeProblemText(problem)).foregroundStyle(.red) }
             }
@@ -72,8 +73,8 @@ struct ItemDetailView: View {
                 Section { fields(item) }
                 if !row.useOnly {
                     Section {
-                        if !viewOnly {
-                            Button { editing = true } label: { Text(L("action_edit")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
+                        if viewOnly != true {
+                            Button { editing = true } label: { Text(L("action_edit")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline || viewOnly == nil)
                         }
                         Button { moving = true } label: { Text(L("action_move")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
                     }

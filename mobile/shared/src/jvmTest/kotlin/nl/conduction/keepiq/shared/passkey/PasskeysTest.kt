@@ -64,7 +64,10 @@ class PasskeysTest {
     private val keys = RsaVaultKeys.fromPem(privatePem, Vectors.envelope.str("certificatePem"), "suite-9", 2)
     private val publicKey = RsaPublicKey.fromPem(Vectors.envelope.str("publicKeyPem"))
     private val privateKey = RsaPrivateKey.fromPem(privatePem)
-    private fun enc(text: String) = RsaFields.encrypt(text, publicKey)
+    private val sealed = HashMap<String, String>()
+
+    /** One ciphertext per value, so the index and the server hold the same one, as after a sync. */
+    private fun enc(text: String) = sealed.getOrPut(text) { RsaFields.encrypt(text, publicKey) }
     private fun dec(text: String) = RsaFields.decrypt(text, privateKey)
 
     private val requests = mutableListOf<Pair<String, String>>()
@@ -87,6 +90,15 @@ class PasskeysTest {
     /** The server refuses every PUT, as it does on a copy the user may not change. */
     private var refusePut = false
     private var afterStale: () -> Unit = {}
+    /** Items write-context grades as a copy shared to view only. */
+    private var viewOnly = setOf<String>()
+
+    /** Items shared with one partner: their share-save answers `incomplete` with that share. */
+    private var partnerShared = setOf<String>()
+
+    /** What GET /api/v1/secrets/p1 answers. */
+    private var freshPasskeyItem = """{"id":"p1","name":"Example","typeId":"9","updatedAt":"$UPDATED_AT"}"""
+
     /** What GET /api/v1/secrets/l1 answers with instead of the login, when set. */
     private var freshStatus: HttpStatusCode? = null
     private val engine = MockEngine { request ->
@@ -123,10 +135,16 @@ class PasskeysTest {
             // Every item is the user's own, with no copies.
             path.endsWith("/write-context") -> {
                 val id = path.removePrefix("/api/v1/secrets/").removeSuffix("/write-context")
-                """{"sourceSecretId":"$id","effectiveGrade":"owner","ownerCertificate":null,"sourceUpdatedAt":"$UPDATED_AT"}"""
+                val grade = if (id in viewOnly) """"source-x","effectiveGrade":"read"""" else """"$id","effectiveGrade":"owner""""
+                """{"sourceSecretId":$grade,"ownerCertificate":null,"sourceUpdatedAt":"$UPDATED_AT"}"""
             }
+            path.endsWith("/share-save") && path.removePrefix("/api/v1/secrets/").removeSuffix("/share-save") in partnerShared ->
+                return@MockEngine respond(
+                    """{"error":"incomplete","message":"m","copies":{"required":[],"skipRefused":[]},"federated":{"required":[{"shareId":"fs1","recipientCloudId":"bob@partner.example"}]}}""",
+                    HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"),
+                )
             path == "/api/v1/secrets/l1" && request.method == HttpMethod.Get -> freshLogin
-            path == "/api/v1/secrets/p1" && request.method == HttpMethod.Get -> """{"id":"p1","name":"Example","typeId":"9","updatedAt":"$UPDATED_AT"}"""
+            path == "/api/v1/secrets/p1" && request.method == HttpMethod.Get -> freshPasskeyItem
             request.method == HttpMethod.Post -> """{"id":"new"}"""
             else -> """{"id":"p1"}"""
         }
@@ -152,7 +170,8 @@ class PasskeysTest {
         )
 
     private fun freshLoginWith(vararg records: PasskeyCredential, updatedAt: String = UPDATED_AT) {
-        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","passkeys":"${enc(array(*records))}","updatedAt":"$updatedAt"}"""
+        val passkeys = if (records.isEmpty()) "" else ""","passkeys":"${enc(array(*records))}""""
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7"$passkeys,"updatedAt":"$updatedAt"}"""
     }
 
     private fun sentPasskeys(): List<PasskeyCredential> =
@@ -321,9 +340,60 @@ class PasskeysTest {
     @Test
     fun aCounterOfZeroStaysZeroAndWritesNothing() = runTest {
         val (record, _) = made("login.example.nl", 0)
-        val choice = PasskeyChoice("p1", "Example", record)
+        val choice = PasskeyChoice("p1", "Example", record, held = emptyMap())
         assertEquals(0L, Passkeys.sign(api, keys, choice, ClientData.build(ClientData.GET, ByteArray(32), "https://login.example.nl"), "login.example.nl").counter)
         assertTrue(requests.isEmpty())
+    }
+
+    @Test
+    fun aStandalonePasskeyShareSaveRefusesStillSignsWithoutItsCounter() = runTest {
+        // An old passkey item with a user name, shared with a partner: the phone can't vouch for its login, so share-save refuses.
+        freshPasskeyItem = """{"id":"p1","name":"Example","typeId":"9","login":"${enc("alice")}","updatedAt":"$UPDATED_AT"}"""
+        partnerShared = setOf("p1")
+        val (record, spki) = made("login.example.nl", 4)
+        val hash = ByteArray(32) { 5 }
+        val assertion = Passkeys.sign(api, keys, PasskeyChoice("p1", "Example", record, held = emptyMap()), ClientData.hashed(hash), "login.example.nl")
+        assertEquals(5L, assertion.counter)
+        assertTrue(WebAuthn.verifyHash(spki, assertion.authenticatorData, hash, assertion.signature))
+        assertTrue(shareSaves.all { it["federated"]?.let { f -> f.toString() == "[]" } ?: true }, "nothing sealed to the partner")
+    }
+
+    @Test
+    fun aViewOnlyLoginTakesNoCounterAndNoNewPasskey() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLoginWith(record)
+        viewOnly = setOf("l1")
+        val entry = loginEntry("l1", "https://login.example.nl", "alice@example.nl", record)
+        val choice = Passkeys.candidates(AutofillIndex(listOf(entry)), "login.example.nl", keys).single()
+        assertFailsWith<nl.conduction.keepiq.shared.vault.ShareSaveException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertTrue(requests.none { it.first == "PUT" }, "$requests")
+
+        requests.clear()
+        Passkeys.create(api, keys, AutofillIndex(listOf(entry)), creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        assertTrue(requests.none { it.first == "PUT" }, "$requests")
+        assertEquals("POST" to "/api/v1/secrets", requests.last())
+    }
+
+    @Test
+    fun aLoginTheIndexDoesNotHoldAsTheServerSentItTakesNoPasskey() = runTest {
+        val (existing, _) = made("login.example.nl", 0)
+        val (swapped, _) = made("login.example.nl", 0)
+        // The server's passkeys are not the ones the index holds, also when it is read again: a new login is made.
+        freshLoginWith(swapped)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", existing)))
+        Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0, resync = { index })
+        assertTrue(shareSaves.isEmpty())
+        assertEquals("POST" to "/api/v1/secrets", requests.last())
+    }
+
+    @Test
+    fun aCounterIsNotWrittenOnALoginWhoseKeyTheIndexDoesNotHold() = runTest {
+        val (record, _) = made("login.example.nl", 4)
+        freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","totp":"${enc("ANOTHERSEED")}","passkeys":"${enc(array(record))}","updatedAt":"$UPDATED_AT"}"""
+        val choice = Passkeys.candidates(AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", record))), "login.example.nl", keys).single()
+        val e = assertFailsWith<nl.conduction.keepiq.shared.vault.ShareSaveException> { Passkeys.sign(api, keys, choice, ClientData.hashed(ByteArray(32)), "login.example.nl") }
+        assertEquals("conflict", e.code)
+        assertTrue(shareSaves.isEmpty())
     }
 
     private fun creation(userName: String) = WebAuthnJson.creation(
@@ -335,7 +405,7 @@ class PasskeysTest {
     fun aNewPasskeyGoesOntoTheOneMatchingLogin() = runTest {
         val (existing, _) = made("login.example.nl", 0)
         freshLoginWith(existing)
-        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", " Alice@Example.nl")))
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", " Alice@Example.nl", existing)))
         val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 1_791_194_400_000L)
         assertEquals(WRITE_L1, requests)
         assertEquals(setOf("passkeys"), bodies.single().keys)
@@ -350,8 +420,15 @@ class PasskeysTest {
         freshLoginWith(existing)
         staleWrites = 1
         afterStale = { freshLoginWith(existing, addedElsewhere, updatedAt = "2026-10-05T11:00:00+00:00") }
-        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl")))
-        val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0)
+        val index = AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", existing)))
+        // The index is read again for the new row, which it then holds.
+        var resynced = 0
+        val resync = suspend {
+            resynced++
+            AutofillIndex(listOf(loginEntry("l1", "https://login.example.nl", "alice@example.nl", existing, addedElsewhere)))
+        }
+        val r = Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0, resync)
+        assertEquals(1, resynced)
         assertEquals(WRITE_L1 + WRITE_L1, requests)
         assertEquals("2026-10-05T11:00:00+00:00", shareSaves.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf(existing, addedElsewhere, r.record), LoginPasskeys.credentials(dec(bodies.last()["passkeys"]!!.jsonPrimitive.content)))

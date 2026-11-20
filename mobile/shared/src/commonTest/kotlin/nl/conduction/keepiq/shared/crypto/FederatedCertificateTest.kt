@@ -83,6 +83,14 @@ class FederatedCertificateTest {
 
     private fun reasonOf(block: () -> Unit): FederatedCertificateReason = assertFailsWith<FederatedCertificateException> { block() }.reason
 
+    /** Every entry of the fixtures, so one added there gets a case here (the `_note` entries are no certificate). */
+    @Test
+    fun readsEveryEntryOfTheFixtures() {
+        assertEquals(listOf("bob", "bobOtherRoot", "bobPss", "intermediateA", "intermediateABasicConstraintsOnly", "intermediateADuplicateBasicConstraints", "intermediateAEmptyKeyUsageWithUnusedBits", "intermediateAExpired", "intermediateAKeyCertSignInPadding", "intermediateANoBasicConstraints", "intermediateANoCertSign", "intermediateANotCa", "intermediateANotYetValid", "intermediateAPathLen0", "intermediateAUnknownCritical", "intermediateAUnknownNonCritical", "intermediateB", "leafMarkedCa", "leafSignedByLeaf", "leafSignedByRoot", "mallory", "rootA", "rootAExpired", "rootAExpiredFingerprint", "rootAFingerprint", "rootAPathLen0", "rootAPathLen0Fingerprint", "rootB", "rootBFingerprint"), f.keys.sorted())
+        assertEquals(listOf("_note", "forgedAlice", "intermediate", "intermediateDuplicateBasicConstraints", "intermediateExpired", "intermediateNoBasicConstraints", "intermediateNoCertSign", "intermediateNotCa", "intermediateNotYetValid", "intermediatePathLen0", "intermediateUnknownCritical", "mallory", "malloryByRoot", "malloryBySubIntermediate", "malloryDuplicateExtension", "malloryKey", "malloryUnknownCritical", "malloryUnknownNonCritical", "root", "rootExpired", "rootExpiredFingerprint", "rootFingerprint", "rootPathLen0", "rootPathLen0Fingerprint", "subIntermediate"), c.keys.sorted())
+        assertEquals(listOf("_note", "intermediate", "leaf", "leafResigned", "opensslLeafResigned", "root", "rootFingerprint"), p.keys.sorted())
+    }
+
     @Test
     fun acceptsThePinnedChainAndReturnsTheLeafsFingerprintAndKey() {
         val verified = verify()

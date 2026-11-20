@@ -31,8 +31,15 @@ import nl.conduction.keepiq.shared.vault.VaultRow
 /**
  * A stored passkey for the asked relying party, decrypted for one request:
  * a Passkey item, or with [onLogin] one credential of a login's `passkeys`.
+ * [held]: the item's value ciphertexts as the index holds them ([AutofillEntry.held]).
  */
-class PasskeyChoice(val itemId: String, val name: String, val credential: PasskeyCredential, val onLogin: Boolean = false) {
+class PasskeyChoice(
+    val itemId: String,
+    val name: String,
+    val credential: PasskeyCredential,
+    val onLogin: Boolean = false,
+    val held: Map<String, String?>,
+) {
     /** Tells apart the passkeys of one login: what the platform's choice carries back. */
     val id: String get() = itemId + "|" + credential.credentialId
 
@@ -61,6 +68,9 @@ class ExcludedCredentialException : IllegalStateException("A passkey for this ac
  *   the login as the server holds it now and signs from there, so its
  *   counter is the stored one plus one and a passkey deleted elsewhere
  *   refuses. A write-back that fails fails the request, as in the extension.
+ * - Before a write, the item's ciphertext must be what the index holds, read
+ *   again through `resync` once ([indexHolds]): a ciphertext the device
+ *   doesn't hold may be another item's (ADR-002).
  * - [create]: a new ES256 passkey saved onto the one matching login, else
  *   onto a new login named rpName or rpId with the rpId as address
  *   (mobile-login-totp-passkeys D12). An excluded credential refuses before
@@ -70,6 +80,17 @@ class ExcludedCredentialException : IllegalStateException("A passkey for this ac
  * callers check that before they come here.
  */
 object Passkeys {
+    /**
+     * Whether the index holds [fresh]'s [fields] for item [id], read again
+     * through [resync] once when it doesn't, so a row changed elsewhere since
+     * the index was built gets through ([ShareSave.holds]).
+     */
+    private suspend fun indexHolds(fresh: VaultRow, held: Map<String, String?>, fields: Set<String>, resync: suspend () -> AutofillIndex?): Boolean {
+        if (ShareSave.holds(fresh, held.filterKeys { it in fields })) return true
+        val again = resync()?.entries?.firstOrNull { it.id == fresh.id } ?: return false
+        return ShareSave.holds(fresh, again.held.filterKeys { it in fields })
+    }
+
     fun candidates(index: AutofillIndex, rpId: String, keys: VaultKeys, allowCredentialIds: List<String> = emptyList()): List<PasskeyChoice> {
         val rp = rpId.lowercase()
         val site = SiteMatch.registrableDomain(rp)
@@ -79,10 +100,10 @@ object Passkeys {
         return index.entries.filter { (it.isPasskey || it.hasPasskeys) && SiteMatch.registrableDomain(it.url ?: "") == site }.flatMap { e ->
             if (e.isPasskey) {
                 val record = runCatching { PasskeyCredential.parse(keys.decryptField(e.key)) { "" } }.getOrNull()
-                listOfNotNull(record?.takeIf(::usable)?.let { PasskeyChoice(e.id, e.name, it) })
+                listOfNotNull(record?.takeIf(::usable)?.let { PasskeyChoice(e.id, e.name, it, held = e.held) })
             } else {
                 val records = runCatching { LoginPasskeys.credentials(keys.decryptField(e.passkeys)) }.getOrDefault(emptyList())
-                records.filter(::usable).map { PasskeyChoice(e.id, e.name, it, onLogin = true) }
+                records.filter(::usable).map { PasskeyChoice(e.id, e.name, it, onLogin = true, held = e.held) }
             }
         }
     }
@@ -90,16 +111,31 @@ object Passkeys {
     /**
      * Signs for [rpId] with [choice] and writes a non-zero counter back to its
      * item, through share-save on the item as read now, so every copy gets it.
+     * No client makes a standalone passkey item any more (passkeys live on
+     * logins), so one that share-save refuses to write, such as one shared to
+     * view only or with a partner, still signs: only its counter stays behind.
      */
-    suspend fun sign(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientData: ClientData, rpId: String): WebAuthn.Assertion {
-        if (choice.onLogin) return signOnLogin(api, keys, choice, clientData, rpId)
+    suspend fun sign(
+        api: KeepiqApi,
+        keys: VaultKeys,
+        choice: PasskeyChoice,
+        clientData: ClientData,
+        rpId: String,
+        resync: suspend () -> AutofillIndex? = { null },
+    ): WebAuthn.Assertion {
+        if (choice.onLogin) return signOnLogin(api, keys, choice, clientData, rpId, resync)
         val assertion = WebAuthn.getAssertion(clientData, rpId, choice.credential)
         if (assertion.counter > 0 && assertion.counter != choice.credential.counter) {
             val updated = choice.credential.copy(counter = assertion.counter).toJson()
             val fresh = api.getSecret(choice.itemId)?.let { VaultRow.from(it) } ?: throw PasskeyGoneException()
             val parts = ItemParts(choice.name, rpId, null, "", updated, null)
-            ShareSave(api, keys, MobileSession::nowMillis)
-                .saveFresh(fresh, ItemCodec.updateBody(parts, setOf("key"), keys), mapOf("key" to updated), vouchEmpty = true)
+            try {
+                if (!indexHolds(fresh, choice.held, ShareSave.PASSKEY_WRITE_HELD, resync)) throw ShareSaveException(ShareSave.CONFLICT)
+                ShareSave(api, keys, MobileSession::nowMillis)
+                    .saveFresh(fresh, ItemCodec.updateBody(parts, setOf("key"), keys), mapOf("key" to updated), vouchEmpty = true)
+            } catch (e: ShareSaveException) {
+                // The counter is not written; see above.
+            }
         }
         return assertion
     }
@@ -118,12 +154,21 @@ object Passkeys {
      * index cannot know that such a passkey was deleted on another device or
      * gained a counter there since, so offline it still signs (counter 0) and
      * the relying party decides. Any other failure, such as a value that
-     * cannot be decrypted, fails.
+     * cannot be decrypted, fails. Before the counter is written the login's
+     * `totp` must be the one the index holds ([ShareSave.holds]); its
+     * `passkeys` hold the chosen credential, so they are the login's own.
      */
-    private suspend fun signOnLogin(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientData: ClientData, rpId: String): WebAuthn.Assertion {
+    private suspend fun signOnLogin(
+        api: KeepiqApi,
+        keys: VaultKeys,
+        choice: PasskeyChoice,
+        clientData: ClientData,
+        rpId: String,
+        resync: suspend () -> AutofillIndex?,
+    ): WebAuthn.Assertion {
         var fetched = false
         return try {
-            PasskeysWrite.rewrite(api, keys, choice.itemId) { _, stored ->
+            PasskeysWrite.rewrite(api, keys, choice.itemId, held = { indexHolds(it, choice.held, setOf("totp"), resync) }) { _, stored ->
                 fetched = true
                 val record = LoginPasskeys.credentials(stored)
                     .firstOrNull { it.credentialId == choice.credential.credentialId && it.rpId == choice.credential.rpId }
@@ -158,6 +203,7 @@ object Passkeys {
         request: CreateRequest,
         clientData: ClientData,
         nowMillis: Long,
+        resync: suspend () -> AutofillIndex? = { null },
     ): WebAuthn.Registration {
         if (!WebAuthn.supports(request.algorithms)) {
             throw nl.conduction.keepiq.shared.crypto.KeepiqCryptoException(WebAuthn.UNSUPPORTED_ALGORITHM)
@@ -182,7 +228,7 @@ object Passkeys {
         // The index carries no owner: a login the server refuses `passkeys` on, read fresh, gets none and a new login is made.
         // A matched login deleted elsewhere since the index was built is no match either: a new login is made.
         val appended = login != null && try {
-            PasskeysWrite.rewrite(api, keys, login.id) { fresh, stored ->
+            PasskeysWrite.rewrite(api, keys, login.id, held = { indexHolds(it, login.held, ShareSave.PASSKEY_WRITE_HELD, resync) }) { fresh, stored ->
                 if (mayTakePasskeys(fresh)) PasskeysWrite.Change(LoginPasskeys.appended(stored, record), true) else PasskeysWrite.Change(null, false)
             }
         } catch (e: LoginGoneException) {
@@ -191,8 +237,8 @@ object Passkeys {
             if (e.status != 404) throw e
             false
         } catch (e: ShareSaveException) {
-            // A login shared with the user to view only takes no passkey: a new login is made.
-            if (e.code != ShareSave.VIEW_ONLY) throw e
+            // A login shared with the user to view only, or one the index doesn't hold as the server sent it, takes no passkey: a new login is made.
+            if (e.code != ShareSave.VIEW_ONLY && e.code != ShareSave.CONFLICT) throw e
             false
         }
         if (!appended) {

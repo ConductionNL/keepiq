@@ -685,6 +685,43 @@ class ScreensTest {
     }
 
     @Test
+    fun aGradeWriteContextCannotTellOffersNoEnabledEditOrPasskeyDelete() {
+        vault.contextFails += "s4"
+        vault.put("s4", mailWithTwoPasskeys)
+        showDetail("s4")
+        compose.waitUntil(5_000) { vault.count("GET", "/api/v1/secrets/s4/write-context") > 0 }
+        compose.waitForIdle()
+        compose.onNodeWithText("Edit").assertIsNotEnabled()
+        compose.onNodeWithText("Shared with you to view only.", substring = true).assertDoesNotExist()
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").assertDoesNotExist()
+    }
+
+    @Test
+    fun aPasskeyDeleteThatReachedOnlyTheOwnerSaysSoOnTheDetail() {
+        vault.writerCopies += "s4"
+        vault.put("s4", mailWithTwoPasskeys)
+        showDetail("s4")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("get this change when the owner next saves it", substring = true).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun aPasskeyDeleteToAnUnreachablePartnerOffersNoActionTheDetailLacks() {
+        // No key or login, so the partner gets only what holds nothing beside the passkeys, and is looked up.
+        vault.put("s7", FakeVault.row("s7", "Mail", "1", passkeys = listOf(FakeVault.credential("a", "alice"), FakeVault.credential("b", "alice-work"))))
+        vault.unreachablePartner = true
+        showDetail("s7")
+        waitForDescription("Delete passkey for alice-work")
+        compose.onNodeWithContentDescription("Delete passkey for alice-work").performScrollTo().performClick()
+        compose.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Try again later.", substring = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("save without them", substring = true, ignoreCase = true).assertDoesNotExist()
+        compose.onNodeWithText("Save without them").assertDoesNotExist()
+    }
+
+    @Test
     fun aLoginsEditScreenOffersTheFullKeyField() {
         vault.put("l1", FakeVault.row("l1", "Mail", "1", key = "geheim", login = "alice"))
         showEdit("l1")

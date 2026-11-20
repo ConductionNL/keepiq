@@ -150,6 +150,8 @@
     <string name="write_unreadable">Dit item kan niet worden gelezen en dus hier niet worden opgeslagen.</string>
     <string name="write_bad_certificate">Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze telefoon niet kon lezen. Er is niets opgeslagen.</string>
     <string name="write_partner_unreachable">Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (%1$s). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt.</string>
+    <string name="write_partner_unreachable_later">Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar (%1$s). Probeer het later opnieuw.</string>
+    <string name="write_conflict">De server stuurde dit item met een waarde die Keepiq er niet voor heeft, ook na een synchronisatie. Het is daarom niet geopend of gewijzigd. Probeer het later opnieuw.</string>
     <string name="write_partner_upgrade">Er is niets opgeslagen: de Keepiq van %1$s is te oud om een authenticatorsleutel te ontvangen. Verwijder de sleutel, of vraag hen Keepiq bij te werken.</string>
     <string name="write_partner_upgrade_unnamed">Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, heeft een Keepiq die te oud is om een authenticatorsleutel te ontvangen. Verwijder de sleutel, of vraag hen Keepiq bij te werken.</string>
     <string name="write_partner_upgrade_version">Ze hebben Keepiq %1$s of nieuwer nodig.</string>
@@ -259,6 +261,8 @@
     <string name="autofill_nothing">Keepiq heeft geen login voor deze app of site.</string>
     <string name="autofill_saved">Login opgeslagen in Keepiq.</string>
     <string name="autofill_updated">Wachtwoord bijgewerkt in Keepiq.</string>
+    <string name="autofill_not_updated_shared">Wachtwoord niet bijgewerkt: deze login is gedeeld. Wijzig hem in de Keepiq-app of de webapp, zodat iedereen hem krijgt.</string>
+    <string name="autofill_not_updated_view_only">Wachtwoord niet bijgewerkt: deze login is met je gedeeld om alleen te bekijken.</string>
     <string name="autofill_save_failed">Keepiq kon deze login niet opslaan. Voeg hem toe in de app.</string>
     <string name="autofill_settings_title">Automatisch invullen</string>
     <string name="autofill_status_on">Keepiq vult je logins in, in apps en browsers.</string>

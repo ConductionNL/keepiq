@@ -45,7 +45,7 @@ The apps MUST create, edit and move items and folders, and move items to the tra
 - **THEN** the app shows the refusal and keeps the old value
 
 ### Requirement: A value change reaches every copy
-A change of an item's `key`, `login`, `additionalFields`, `totp` or `passkeys` MUST go through `PUT /api/v1/secrets/{id}/share-save`, as the web app and the extension save it: the row, every copy sealed to its holder's certificate, and every partner share sealed to a verified partner certificate, in one transaction or not at all (keepiq#1300). This holds for the edit form, an autofill password update and a passkey write. A change of only the name, address or folder MAY stay a plain `PUT /api/v1/secrets/{id}`. A copy whose holder has no write grade, as `GET /api/v1/secrets/{id}/write-context` grades it, MUST NOT offer Edit, and a value change of it MUST be refused before anything is sent.
+A change of an item's `key`, `login`, `additionalFields`, `totp` or `passkeys` MUST go through `PUT /api/v1/secrets/{id}/share-save`, as the web app and the extension save it: the row, every copy sealed to its holder's certificate, and every partner share sealed to a verified partner certificate, in one transaction or not at all (keepiq#1300). This holds for the edit form, an autofill password update and a passkey write. A change of only the name, address or folder MAY stay a plain `PUT /api/v1/secrets/{id}`. A copy whose holder has no write grade, as `GET /api/v1/secrets/{id}/write-context` grades it, MUST NOT offer Edit or passkey Delete, and any change of it but a move MUST be refused before anything is sent; while write-context has not answered, or could not, Edit and passkey Delete MUST NOT be enabled. Every item is encrypted to the same user key, so before an item is opened for edit or its passkeys are written, each value ciphertext the server sent MUST be the one the device holds for that item, after one sync when it is not yet (ADR-002); otherwise nothing is opened or written. A partner share gets the whole value, so the save MUST vouch only for the fields the edit form shows in full, and fail as unverified on any other.
 
 #### Scenario: Edit the password of a source with copies
 - **GIVEN** a login the user owns, shared with two users
@@ -60,7 +60,7 @@ A change of an item's `key`, `login`, `additionalFields`, `totp` or `passkeys` M
 #### Scenario: A copy shared to view only
 - **GIVEN** a copy the user may only view
 - **WHEN** the user opens it
-- **THEN** the item shows no Edit, and says it is shared to view only
+- **THEN** the item shows no Edit and no passkey Delete, and says it is shared to view only
 
 #### Scenario: A partner can't be reached
 - **GIVEN** a login shared with a partner organisation that does not answer
@@ -70,7 +70,17 @@ A change of an item's `key`, `login`, `additionalFields`, `totp` or `passkeys` M
 #### Scenario: An autofill update of a login shared with a partner
 - **GIVEN** a login shared with a partner organisation
 - **WHEN** the system autofill offers to update its password
-- **THEN** the update is refused, since the partner gets the whole value and no form showed it, and the web app or the edit form makes the change
+- **THEN** the update is refused, since the partner gets the whole value and no form showed it, and the phone says the password was not updated and that the app's edit form or the web app makes the change
+
+#### Scenario: A value the device does not hold
+- **GIVEN** an item whose ciphertext from the server differs from the one the device holds for it, also after a sync
+- **WHEN** the user opens it for edit, or a passkey on it is written
+- **THEN** it is not opened or written, and the phone says the server sent a value it doesn't hold
+
+#### Scenario: A card member the form does not show
+- **GIVEN** a card shared with a partner organisation whose key holds a member the card form has no field for
+- **WHEN** the user changes only its notes
+- **THEN** nothing is saved, and the phone says to make the change in the web app
 
 ### Requirement: Offline reading
 When the device is offline, the apps MUST open the vault from the local store with biometric, PIN or master-password unlock, show when it last synced, and refuse edits with a clear message. When the organisation turned offline caching off, the apps MUST say the vault needs a connection.

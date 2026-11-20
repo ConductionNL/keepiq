@@ -39,13 +39,18 @@ object PasskeysWrite {
      * Reads login [id] fresh and writes what [change] makes of its
      * decrypted `passkeys` (`""` for none). Throws [LoginGoneException] when
      * the login is not there, and [ServerUnreachableException] only when the
-     * fresh read got no answer at all.
+     * fresh read got no answer at all. Before a write, [held] must say the
+     * device holds the fresh row's value ciphertexts ([ShareSave.holds]),
+     * else it refuses with [ShareSave.CONFLICT]. [noted] gets what the save
+     * could not deliver to every partner share.
      */
     suspend fun <T> rewrite(
         api: KeepiqApi,
         keys: VaultKeys,
         id: String,
+        held: suspend (fresh: VaultRow) -> Boolean,
         now: () -> Long = MobileSession::nowMillis,
+        noted: (ShareSaveNote) -> Unit = {},
         change: (fresh: VaultRow, stored: String) -> Change<T>,
     ): T {
         val shareSave = ShareSave(api, keys, now)
@@ -66,9 +71,10 @@ object PasskeysWrite {
             val stored = if (fresh.passkeys.isNullOrEmpty()) "" else keys.decryptField(fresh.passkeys)
             val next = change(fresh, stored)
             val passkeys = next.passkeys ?: return next.result
+            if (!held(fresh)) throw ShareSaveException(ShareSave.CONFLICT)
             api.requireLoginFields()
             try {
-                shareSave.saveFresh(fresh, ItemCodec.passkeysBody(passkeys, keys), mapOf("passkeys" to passkeys), vouchEmpty = true)
+                shareSave.saveFresh(fresh, ItemCodec.passkeysBody(passkeys, keys), mapOf("passkeys" to passkeys), vouchEmpty = true)?.let(noted)
                 return next.result
             } catch (e: Exception) {
                 if (!isStale(e) || ++attempt > 1) throw e
