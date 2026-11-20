@@ -55,14 +55,18 @@ describe('verificationPhrase', () => {
 	it('gives the same phrase for a Uint8Array and its ArrayBuffer', async () => {
 		const key = new Uint8Array([9, 8, 7, 6, 5])
 
-		expect(await verificationPhrase(key.buffer)).toBe(await verificationPhrase(key))
+		expect(await verificationPhrase(key.buffer)).toBe(
+			await verificationPhrase(key),
+		)
 	})
 
 	it('gives the same phrase for the base64 form', async () => {
 		const key = new Uint8Array([0, 255, 16, 128, 42, 7])
 		const b64 = btoa(String.fromCharCode(...key))
 
-		expect(await verificationPhraseFromBase64(b64)).toBe(await verificationPhrase(key))
+		expect(await verificationPhraseFromBase64(b64)).toBe(
+			await verificationPhrase(key),
+		)
 	})
 
 	it('gives a different phrase for a swapped key', async () => {

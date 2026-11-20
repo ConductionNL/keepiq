@@ -17,7 +17,12 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useHoneyStore } from '../../src/store/modules/honey.js'
 
-const REFUSED = { response: { status: 403, data: { message: 'Only the owner or an admin may do this' } } }
+const REFUSED = {
+	response: {
+		status: 403,
+		data: { message: 'Only the owner or an admin may do this' },
+	},
+}
 const DOWN = new Error('Network down')
 
 const ALERTS = [
@@ -47,10 +52,17 @@ afterEach(() => {
 describe('honey store writes (golden)', () => {
 	it('flag: posts the note and marks the secret flagged', async () => {
 		const honey = store()
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'f1', note: 'bait' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'f1', note: 'bait' } })
 		expect(await honey.flag('s1', 'bait')).toBe(true)
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/s1/honey', { note: 'bait' })
-		expect(honey.status).toEqual({ flagged: true, flag: { id: 'f1', note: 'bait' } })
+		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/s1/honey', {
+			note: 'bait',
+		})
+		expect(honey.status).toEqual({
+			flagged: true,
+			flag: { id: 'f1', note: 'bait' },
+		})
 		expect(honey.error).toBe(null)
 	})
 
@@ -58,7 +70,9 @@ describe('honey store writes (golden)', () => {
 		const honey = store()
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
 		await honey.flag('s1')
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/s1/honey', { note: '' })
+		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/s1/honey', {
+			note: '',
+		})
 	})
 
 	it('flag: a refusal keeps the server message and leaves the status', async () => {
@@ -90,9 +104,13 @@ describe('honey store writes (golden)', () => {
 
 	it('acknowledge: posts and swaps the alert in place', async () => {
 		const honey = store()
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'a2', acknowledged: true } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'a2', acknowledged: true } })
 		expect(await honey.acknowledge('a2')).toBe(true)
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/honey/alerts/a2/acknowledge')
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/honey/alerts/a2/acknowledge',
+		)
 		expect(post.mock.calls[0]).toHaveLength(1)
 		expect(honey.alerts).toEqual([
 			{ id: 'a1', acknowledged: false },
@@ -111,9 +129,14 @@ describe('honey store writes (golden)', () => {
 
 	it('snooze: posts the hours and swaps the alert in place', async () => {
 		const honey = store()
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'a1', snoozedUntil: 'later' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'a1', snoozedUntil: 'later' } })
 		expect(await honey.snooze('a1', 4)).toBe(true)
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/honey/alerts/a1/snooze', { hours: 4 })
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/honey/alerts/a1/snooze',
+			{ hours: 4 },
+		)
 		expect(honey.alerts).toEqual([
 			{ id: 'a1', snoozedUntil: 'later' },
 			{ id: 'a2', acknowledged: false },
@@ -124,7 +147,10 @@ describe('honey store writes (golden)', () => {
 		const honey = store()
 		const post = vi.spyOn(axios, 'post').mockRejectedValue(DOWN)
 		expect(await honey.snooze('a1')).toBe(false)
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/honey/alerts/a1/snooze', { hours: 24 })
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/honey/alerts/a1/snooze',
+			{ hours: 24 },
+		)
 		expect(honey.error).toBe('Network down')
 		expect(honey.alerts).toEqual(ALERTS)
 	})

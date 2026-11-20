@@ -11,7 +11,9 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import RecipientPicker, { RECIPIENT_SEARCH_DEBOUNCE_MS } from '../../src/components/share/RecipientPicker.vue'
+import RecipientPicker, {
+	RECIPIENT_SEARCH_DEBOUNCE_MS,
+} from '../../src/components/share/RecipientPicker.vue'
 import { useShareStore } from '../../src/store/modules/share.js'
 
 const ALICE = { id: 'alice', label: 'Alice', hasSuite: true }
@@ -20,9 +22,18 @@ const BOB = { id: 'bob', label: 'Bob', hasSuite: false }
 // A select that exposes its props and lets the test emit what vue-select would.
 const NcSelect = {
 	name: 'NcSelect',
-	props: ['modelValue', 'options', 'selectable', 'loading', 'disabled', 'error', 'helperText'],
+	props: [
+		'modelValue',
+		'options',
+		'selectable',
+		'loading',
+		'disabled',
+		'error',
+		'helperText',
+	],
 	emits: ['update:modelValue', 'search'],
-	template: '<div data-testid="select"><slot name="option" v-for="o in options" v-bind="o" /></div>',
+	template:
+		'<div data-testid="select"><slot name="option" v-for="o in options" v-bind="o" /></div>',
 }
 
 /**
@@ -50,7 +61,9 @@ describe('RecipientPicker', () => {
 	})
 
 	it('searches only after the pause since the last keystroke', async () => {
-		const search = vi.spyOn(store, 'searchRecipients').mockResolvedValue([ALICE, BOB])
+		const search = vi
+			.spyOn(store, 'searchRecipients')
+			.mockResolvedValue([ALICE, BOB])
 		const wrapper = mountPicker()
 		const select = wrapper.findComponent({ name: 'NcSelect' })
 
@@ -86,7 +99,12 @@ describe('RecipientPicker', () => {
 	it('lets only the newest search fill the list', async () => {
 		let answerFirst
 		vi.spyOn(store, 'searchRecipients')
-			.mockImplementationOnce(() => new Promise((resolve) => { answerFirst = resolve }))
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						answerFirst = resolve
+					}),
+			)
 			.mockResolvedValueOnce([ALICE])
 		const wrapper = mountPicker()
 
@@ -101,7 +119,9 @@ describe('RecipientPicker', () => {
 
 	it('shows why a search failed and empties the list', async () => {
 		vi.spyOn(store, 'searchRecipients')
-			.mockRejectedValueOnce({ response: { data: { message: 'Search is disabled' } } })
+			.mockRejectedValueOnce({
+				response: { data: { message: 'Search is disabled' } },
+			})
 			.mockRejectedValueOnce(new Error('Network Error'))
 			.mockRejectedValueOnce({})
 		const wrapper = mountPicker()
@@ -141,7 +161,11 @@ describe('RecipientPicker', () => {
 		const wrapper = mountPicker({ modelValue: 'carol', disabled: true })
 		const select = wrapper.findComponent({ name: 'NcSelect' })
 
-		expect(select.props('modelValue')).toEqual({ id: 'carol', label: 'carol', hasSuite: true })
+		expect(select.props('modelValue')).toEqual({
+			id: 'carol',
+			label: 'carol',
+			hasSuite: true,
+		})
 		expect(select.props('disabled')).toBe(true)
 
 		await wrapper.vm.search('b')

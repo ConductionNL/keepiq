@@ -56,12 +56,19 @@ describe('HealthReportView', () => {
 
 	describe('computed', () => {
 		it('offers 90, 180, 365 days and never as thresholds', () => {
-			expect(options.map((o) => o.value)).toEqual(['90', '180', '365', 'never'])
+			expect(options.map((o) => o.value)).toEqual([
+				'90',
+				'180',
+				'365',
+				'never',
+			])
 		})
 
 		it('reports locked from the session store', () => {
 			expect(computed.locked.call({ session: { isLocked: true } })).toBe(true)
-			expect(computed.locked.call({ session: { isLocked: false } })).toBe(false)
+			expect(computed.locked.call({ session: { isLocked: false } })).toBe(
+				false,
+			)
 		})
 
 		it('activates breach checking only when the admin gate and the opt-in are both on', () => {

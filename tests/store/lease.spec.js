@@ -32,7 +32,9 @@ describe('useLeaseStore', () => {
 			expect(store.loading).toBe(true)
 			await pending
 
-			expect(get).toHaveBeenCalledWith('/apps/keepiq/api/v1/applications/app-1/leases')
+			expect(get).toHaveBeenCalledWith(
+				'/apps/keepiq/api/v1/applications/app-1/leases',
+			)
 			expect(store.leases).toEqual([{ id: 'l1', state: 'active' }])
 			expect(store.loading).toBe(false)
 		})
@@ -73,7 +75,9 @@ describe('useLeaseStore', () => {
 			const store = useLeaseStore()
 			const override = { defaultTtl: 300, maxTtl: null, renewable: false }
 
-			await expect(store.savePolicy('app-2', override)).resolves.toEqual(effective)
+			await expect(store.savePolicy('app-2', override)).resolves.toEqual(
+				effective,
+			)
 			expect(put).toHaveBeenCalledWith(
 				'/apps/keepiq/api/v1/applications/app-2/lease-policy',
 				override,
@@ -84,7 +88,9 @@ describe('useLeaseStore', () => {
 	describe('revoke', () => {
 		it('deletes the lease and swaps in the server row in place', async () => {
 			const revoked = { id: 'l2', state: 'revoked' }
-			const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: revoked })
+			const del = vi
+				.spyOn(axios, 'delete')
+				.mockResolvedValue({ data: revoked })
 			const store = useLeaseStore()
 			store.leases = [
 				{ id: 'l1', state: 'active' },

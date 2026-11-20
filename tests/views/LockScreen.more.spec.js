@@ -67,17 +67,34 @@ async function arrange({
 	deviceApproval = false,
 	query = {},
 } = {}) {
-	Object.defineProperty(window, 'isSecureContext', { value: secure, configurable: true })
+	Object.defineProperty(window, 'isSecureContext', {
+		value: secure,
+		configurable: true,
+	})
 	const suiteStore = useEncryptionSuiteStore()
 	suiteStore.currentSuite = suite
-	const fetchSuiteSpy = vi.spyOn(suiteStore, 'fetchSuite').mockImplementation(fetchSuite)
-	const fetchMigration = vi.spyOn(suiteStore, 'fetchMigrationStatus').mockResolvedValue(undefined)
-	const createSuite = vi.spyOn(suiteStore, 'createSuite').mockResolvedValue(undefined)
-	const isUnlockOffered = vi.spyOn(usePasskeyStore(), 'isUnlockOffered').mockResolvedValue(passkey)
-	const unlockWithPasskey = vi.spyOn(usePasskeyStore(), 'unlockWithPasskey').mockResolvedValue(undefined)
-	const fetchStatus = vi.spyOn(useDeviceApprovalStore(), 'fetchStatus').mockResolvedValue(deviceApproval)
+	const fetchSuiteSpy = vi
+		.spyOn(suiteStore, 'fetchSuite')
+		.mockImplementation(fetchSuite)
+	const fetchMigration = vi
+		.spyOn(suiteStore, 'fetchMigrationStatus')
+		.mockResolvedValue(undefined)
+	const createSuite = vi
+		.spyOn(suiteStore, 'createSuite')
+		.mockResolvedValue(undefined)
+	const isUnlockOffered = vi
+		.spyOn(usePasskeyStore(), 'isUnlockOffered')
+		.mockResolvedValue(passkey)
+	const unlockWithPasskey = vi
+		.spyOn(usePasskeyStore(), 'unlockWithPasskey')
+		.mockResolvedValue(undefined)
+	const fetchStatus = vi
+		.spyOn(useDeviceApprovalStore(), 'fetchStatus')
+		.mockResolvedValue(deviceApproval)
 	const unlock = vi.spyOn(useSessionStore(), 'unlock').mockResolvedValue(undefined)
-	const enrol = vi.spyOn(useAccountRecoveryStore(), 'enrolAtUnlock').mockResolvedValue('skipped')
+	const enrol = vi
+		.spyOn(useAccountRecoveryStore(), 'enrolAtUnlock')
+		.mockResolvedValue('skipped')
 	const offline = useOfflineStore()
 	offline.online = online
 	const push = vi.fn()
@@ -85,9 +102,18 @@ async function arrange({
 		global: {
 			mocks: { $router: { push }, $route: { query, hash: '' } },
 			stubs: {
-				DeviceApprovalRequest: { name: 'DeviceApprovalRequest', template: '<div class="stub-dar" />' },
-				ForgotPasswordRecovery: { name: 'ForgotPasswordRecovery', template: '<div class="stub-fpr" />' },
-				PasswordStrengthMeter: { name: 'PasswordStrengthMeter', template: '<div class="stub-psm" />' },
+				DeviceApprovalRequest: {
+					name: 'DeviceApprovalRequest',
+					template: '<div class="stub-dar" />',
+				},
+				ForgotPasswordRecovery: {
+					name: 'ForgotPasswordRecovery',
+					template: '<div class="stub-fpr" />',
+				},
+				PasswordStrengthMeter: {
+					name: 'PasswordStrengthMeter',
+					template: '<div class="stub-psm" />',
+				},
 			},
 		},
 	})
@@ -122,7 +148,11 @@ async function runWithTimers(fn) {
 describe('LockScreen — suite check', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
-		window.matchMedia = vi.fn(() => ({ matches: true, addEventListener() {}, removeEventListener() {} }))
+		window.matchMedia = vi.fn(() => ({
+			matches: true,
+			addEventListener() {},
+			removeEventListener() {},
+		}))
 		vi.mocked(showSuccess).mockClear()
 	})
 
@@ -132,20 +162,25 @@ describe('LockScreen — suite check', () => {
 	})
 
 	it('fails closed online: banner, retry button, and no setup or unlock form', async () => {
-		const { wrapper, fetchMigration } = await arrange({ fetchSuite: () => Promise.reject(new Error('500')) })
+		const { wrapper, fetchMigration } = await arrange({
+			fetchSuite: () => Promise.reject(new Error('500')),
+		})
 
 		expect(wrapper.vm.suiteCheck).toBe('failed')
 		expect(wrapper.vm.isFirstSetup).toBe(false)
 		expect(wrapper.text()).toContain(CHECK_FAILED_TEXT)
 		expect(wrapper.text()).toContain('Try again')
-		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(
+			false,
+		)
 		expect(fetchMigration).not.toHaveBeenCalled()
 	})
 
 	it('"Try again" re-runs the check and lands on the unlock form once it succeeds', async () => {
 		let calls = 0
 		const { wrapper, fetchSuiteSpy } = await arrange({
-			fetchSuite: () => (++calls === 1 ? Promise.reject(new Error('500')) : Promise.resolve()),
+			fetchSuite: () =>
+				++calls === 1 ? Promise.reject(new Error('500')) : Promise.resolve(),
 		})
 		expect(wrapper.vm.suiteCheck).toBe('failed')
 
@@ -156,30 +191,45 @@ describe('LockScreen — suite check', () => {
 		expect(fetchSuiteSpy).toHaveBeenCalledTimes(2)
 		expect(wrapper.vm.suiteCheck).toBe('resolved')
 		expect(wrapper.text()).not.toContain(CHECK_FAILED_TEXT)
-		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('offline with a failed check still renders the unlock form (no banner)', async () => {
-		const { wrapper } = await arrange({ online: false, fetchSuite: () => Promise.reject(new Error('net')) })
+		const { wrapper } = await arrange({
+			online: false,
+			fetchSuite: () => Promise.reject(new Error('net')),
+		})
 
 		expect(wrapper.vm.checkFailed).toBe(true)
 		expect(wrapper.text()).not.toContain(CHECK_FAILED_TEXT)
-		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(
+			true,
+		)
 	})
 
-	it('online: offers passkey and device approval from the stores\' answers', async () => {
-		const { wrapper, isUnlockOffered, fetchStatus } = await arrange({ passkey: true, deviceApproval: true })
+	it("online: offers passkey and device approval from the stores' answers", async () => {
+		const { wrapper, isUnlockOffered, fetchStatus } = await arrange({
+			passkey: true,
+			deviceApproval: true,
+		})
 
 		expect(isUnlockOffered).toHaveBeenCalledTimes(1)
 		expect(fetchStatus).toHaveBeenCalledTimes(1)
 		expect(wrapper.vm.passkeyOffered).toBe(true)
 		expect(wrapper.vm.deviceApprovalOffered).toBe(true)
-		expect(wrapper.find('[data-testid="unlock-with-passkey"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="unlock-with-passkey"]').exists()).toBe(
+			true,
+		)
 		expect(wrapper.find('.stub-dar').exists()).toBe(true)
 	})
 
 	it('offline: never asks for passkey or device-approval offers', async () => {
-		const { wrapper, isUnlockOffered, fetchStatus } = await arrange({ online: false, passkey: true })
+		const { wrapper, isUnlockOffered, fetchStatus } = await arrange({
+			online: false,
+			passkey: true,
+		})
 
 		expect(isUnlockOffered).not.toHaveBeenCalled()
 		expect(fetchStatus).not.toHaveBeenCalled()
@@ -188,7 +238,9 @@ describe('LockScreen — suite check', () => {
 	})
 
 	it('a failing extra (migration status) keeps the resolved decision', async () => {
-		const { wrapper, fetchMigration, isUnlockOffered } = await arrange({ passkey: true })
+		const { wrapper, fetchMigration, isUnlockOffered } = await arrange({
+			passkey: true,
+		})
 		expect(wrapper.vm.passkeyOffered).toBe(true)
 
 		// Re-run the check with the extra failing: the decision stays answered.
@@ -197,14 +249,20 @@ describe('LockScreen — suite check', () => {
 
 		expect(wrapper.vm.suiteCheck).toBe('resolved')
 		expect(isUnlockOffered).toHaveBeenCalledTimes(1)
-		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('insecure context: the HTTPS banner and no form at all', async () => {
 		const { wrapper } = await arrange({ secure: false })
 
-		expect(wrapper.text()).toContain('Keepiq requires a secure connection (HTTPS)')
-		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(false)
+		expect(wrapper.text()).toContain(
+			'Keepiq requires a secure connection (HTTPS)',
+		)
+		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('a paused key rotation shows the read-only warning', async () => {
@@ -213,14 +271,20 @@ describe('LockScreen — suite check', () => {
 		await wrapper.vm.$nextTick()
 
 		expect(wrapper.vm.hasPausedMigration).toBe(true)
-		expect(wrapper.text()).toContain('Key rotation is unfinished and your vault is read-only.')
+		expect(wrapper.text()).toContain(
+			'Key rotation is unfinished and your vault is read-only.',
+		)
 	})
 })
 
 describe('LockScreen — first-time setup', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
-		window.matchMedia = vi.fn(() => ({ matches: true, addEventListener() {}, removeEventListener() {} }))
+		window.matchMedia = vi.fn(() => ({
+			matches: true,
+			addEventListener() {},
+			removeEventListener() {},
+		}))
 	})
 
 	afterEach(() => {
@@ -233,7 +297,9 @@ describe('LockScreen — first-time setup', () => {
 
 		expect(wrapper.vm.isFirstSetup).toBe(true)
 		expect(wrapper.text()).toContain('Set up vault')
-		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="unlock-with-password"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('the submit gate needs matching passwords AND a valid strength', async () => {
@@ -255,7 +321,9 @@ describe('LockScreen — first-time setup', () => {
 		wrapper.vm.masterPassword = 'abc'
 		await wrapper.vm.$nextTick()
 
-		wrapper.findComponent({ name: 'PasswordStrengthMeter' }).vm.$emit('strengthChange', { isValid: true })
+		wrapper
+			.findComponent({ name: 'PasswordStrengthMeter' })
+			.vm.$emit('strengthChange', { isValid: true })
 		expect(wrapper.vm.strengthValid).toBe(true)
 	})
 
@@ -294,7 +362,9 @@ describe('LockScreen — first-time setup', () => {
 		wrapper.vm.revealMismatch()
 		expect(wrapper.vm.showMismatch).toBe(true)
 		await wrapper.vm.$nextTick()
-		expect(wrapper.find('.lock-screen__submit').attributes('title')).toBe(MISMATCH)
+		expect(wrapper.find('.lock-screen__submit').attributes('title')).toBe(
+			MISMATCH,
+		)
 	})
 
 	it('blurring a setup field reveals the mismatch; Enter in it submits setup', async () => {
@@ -319,11 +389,15 @@ describe('LockScreen — first-time setup', () => {
 	})
 
 	it('Enter in the unlock field runs the password unlock', async () => {
-		const { wrapper, unlock, push } = await arrange({ suite: { id: 7, status: 'active' } })
+		const { wrapper, unlock, push } = await arrange({
+			suite: { id: 7, status: 'active' },
+		})
 		wrapper.vm.masterPassword = 'pw-enter'
 		await wrapper.vm.$nextTick()
 		vi.useFakeTimers()
-		await wrapper.findComponent({ name: 'NcPasswordField' }).trigger('keyup', { key: 'Enter' })
+		await wrapper
+			.findComponent({ name: 'NcPasswordField' })
+			.trigger('keyup', { key: 'Enter' })
 		await vi.runAllTimersAsync()
 
 		expect(unlock).toHaveBeenCalledWith('pw-enter')
@@ -368,7 +442,10 @@ describe('LockScreen — first-time setup', () => {
 
 	it('a two-factor refusal flags the policy with no error text', async () => {
 		const { wrapper, createSuite, push } = await arrange({ suite: null })
-		createSuite.mockRejectedValue({ message: 'x', response: { data: { code: 'two_factor_required' } } })
+		createSuite.mockRejectedValue({
+			message: 'x',
+			response: { data: { code: 'two_factor_required' } },
+		})
 		wrapper.vm.masterPassword = 'pw'
 		wrapper.vm.confirmPassword = 'pw'
 		wrapper.vm.onStrengthChange({ isValid: true })
@@ -409,7 +486,11 @@ describe('LockScreen — first-time setup', () => {
 describe('LockScreen — passkey and alternate unlock paths', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
-		window.matchMedia = vi.fn(() => ({ matches: true, addEventListener() {}, removeEventListener() {} }))
+		window.matchMedia = vi.fn(() => ({
+			matches: true,
+			addEventListener() {},
+			removeEventListener() {},
+		}))
 		vi.mocked(showSuccess).mockClear()
 	})
 
@@ -419,7 +500,10 @@ describe('LockScreen — passkey and alternate unlock paths', () => {
 	})
 
 	it('passkey unlock: unlocks via the store and goes to the return URL', async () => {
-		const { wrapper, unlockWithPasskey, push } = await arrange({ passkey: true, query: { returnUrl: '/vault/9' } })
+		const { wrapper, unlockWithPasskey, push } = await arrange({
+			passkey: true,
+			query: { returnUrl: '/vault/9' },
+		})
 		vi.useFakeTimers()
 		await runWithTimers(() => wrapper.vm.handlePasskeyUnlock())
 
@@ -440,7 +524,7 @@ describe('LockScreen — passkey and alternate unlock paths', () => {
 		expect(push).toHaveBeenCalledWith('/')
 	})
 
-	it('passkey failure: shows the store\'s message and flashes the rejection', async () => {
+	it("passkey failure: shows the store's message and flashes the rejection", async () => {
 		const { wrapper, unlockWithPasskey, push } = await arrange({ passkey: true })
 		unlockWithPasskey.mockRejectedValue(new Error('The operation was aborted'))
 		vi.useFakeTimers()
@@ -462,11 +546,16 @@ describe('LockScreen — passkey and alternate unlock paths', () => {
 		unlockWithPasskey.mockRejectedValue(undefined)
 		await wrapper.vm.handlePasskeyUnlock()
 
-		expect(wrapper.vm.error).toBe('Passkey unlock failed — use your master password')
+		expect(wrapper.vm.error).toBe(
+			'Passkey unlock failed — use your master password',
+		)
 	})
 
-	it('another device\'s approval continues to the return URL', async () => {
-		const { wrapper, push } = await arrange({ deviceApproval: true, query: { returnUrl: '/s/1' } })
+	it("another device's approval continues to the return URL", async () => {
+		const { wrapper, push } = await arrange({
+			deviceApproval: true,
+			query: { returnUrl: '/s/1' },
+		})
 		vi.useFakeTimers()
 		wrapper.findComponent({ name: 'DeviceApprovalRequest' }).vm.$emit('unlocked')
 		await vi.runAllTimersAsync()
@@ -490,7 +579,9 @@ describe('LockScreen — passkey and alternate unlock paths', () => {
 	it('recovery is reachable from the forgot-password component', async () => {
 		const { wrapper, push } = await arrange({ query: { returnUrl: '/after' } })
 		vi.useFakeTimers()
-		wrapper.findComponent({ name: 'ForgotPasswordRecovery' }).vm.$emit('recovered', '')
+		wrapper
+			.findComponent({ name: 'ForgotPasswordRecovery' })
+			.vm.$emit('recovered', '')
 		await vi.runAllTimersAsync()
 
 		expect(showSuccess).toHaveBeenCalledTimes(1)

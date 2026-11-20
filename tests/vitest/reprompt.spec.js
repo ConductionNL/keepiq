@@ -25,11 +25,16 @@ vi.mock('../../src/store/modules/session.js', () => ({
 	useSessionStore: () => session,
 }))
 
-const { RepromptCancelled, useRepromptPromptStore } = await import('../../src/store/modules/repromptPrompt.js')
-const { needsReprompt, useReprompt, withReprompt } = await import('../../src/composables/useReprompt.js')
+const { RepromptCancelled, useRepromptPromptStore } =
+	await import('../../src/store/modules/repromptPrompt.js')
+const { needsReprompt, useReprompt, withReprompt } =
+	await import('../../src/composables/useReprompt.js')
 
 beforeAll(async () => {
-	session.encryptedPrivateKey = await encryptPrivateKey('-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----', 'right-password')
+	session.encryptedPrivateKey = await encryptPrivateKey(
+		'-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----',
+		'right-password',
+	)
 })
 
 beforeEach(() => {
@@ -51,11 +56,14 @@ describe('the re-prompt store', () => {
 	it('keeps the prompt open and the action waiting on a wrong password', async () => {
 		const prompt = useRepromptPromptStore()
 		let settled = false
-		prompt.ask('Bank').then(() => {
-			settled = true
-		}, () => {
-			settled = true
-		})
+		prompt.ask('Bank').then(
+			() => {
+				settled = true
+			},
+			() => {
+				settled = true
+			},
+		)
 
 		expect(await prompt.submit('wrong-password')).toBe(false)
 		expect(prompt.open).toBe(true)
@@ -105,7 +113,9 @@ describe('the guard', () => {
 			factory: () => ({
 				ask: (name) => {
 					asked.push(name)
-					return answers.shift() === 'ok' ? Promise.resolve() : Promise.reject(new RepromptCancelled())
+					return answers.shift() === 'ok'
+						? Promise.resolve()
+						: Promise.reject(new RepromptCancelled())
 				},
 			}),
 		}
@@ -128,7 +138,10 @@ describe('the guard', () => {
 
 	it('asks again on every action for a flagged item, with no grace period', async () => {
 		const prompt = fakePrompt(['ok', 'ok'])
-		const guard = useReprompt(() => ({ name: 'Bank', reprompt: true }), prompt.factory)
+		const guard = useReprompt(
+			() => ({ name: 'Bank', reprompt: true }),
+			prompt.factory,
+		)
 
 		await guard()
 		await guard()
@@ -140,16 +153,30 @@ describe('the guard', () => {
 		const prompt = fakePrompt(['cancel', 'ok'])
 		const action = vi.fn(() => 'copied')
 
-		expect(await withReprompt({ name: 'Bank', reprompt: true }, action, prompt.factory)).toBeNull()
+		expect(
+			await withReprompt(
+				{ name: 'Bank', reprompt: true },
+				action,
+				prompt.factory,
+			),
+		).toBeNull()
 		expect(action).not.toHaveBeenCalled()
-		expect(await withReprompt({ name: 'Bank', reprompt: true }, action, prompt.factory)).toBe('copied')
+		expect(
+			await withReprompt(
+				{ name: 'Bank', reprompt: true },
+				action,
+				prompt.factory,
+			),
+		).toBe('copied')
 		expect(action).toHaveBeenCalledOnce()
 	})
 
 	it('passes on a failure that is not a cancel', async () => {
 		const broken = () => ({ ask: () => Promise.reject(new Error('store gone')) })
 
-		await expect(withReprompt({ reprompt: true }, () => 'x', broken)).rejects.toThrow('store gone')
+		await expect(
+			withReprompt({ reprompt: true }, () => 'x', broken),
+		).rejects.toThrow('store gone')
 	})
 })
 
@@ -161,8 +188,14 @@ describe('every reveal path goes through the guard', () => {
 	 * @return {string}
 	 */
 	function template(name) {
-		const source = readFileSync(new URL(`../../src/components/${name}.vue`, import.meta.url), 'utf8')
-		return source.slice(source.indexOf('<template>'), source.lastIndexOf('</template>'))
+		const source = readFileSync(
+			new URL(`../../src/components/${name}.vue`, import.meta.url),
+			'utf8',
+		)
+		return source.slice(
+			source.indexOf('<template>'),
+			source.lastIndexOf('</template>'),
+		)
 	}
 
 	/**
@@ -173,7 +206,9 @@ describe('every reveal path goes through the guard', () => {
 	 * @return {Array<string>}
 	 */
 	function tags(tpl, tag) {
-		return [...tpl.matchAll(new RegExp(`<${tag}\\b[^>]*>`, 'g'))].map((match) => match[0])
+		return [...tpl.matchAll(new RegExp(`<${tag}\\b[^>]*>`, 'g'))].map(
+			(match) => match[0],
+		)
 	}
 
 	it('guards every copy button and the value field of the detail sidebar', () => {
@@ -188,6 +223,21 @@ describe('every reveal path goes through the guard', () => {
 		}
 	})
 
+	it('guards every copy button and value field of a custom field’s view', () => {
+		const tpl = template('SchemaValueView')
+		const guarded = [...tags(tpl, 'CopyButton'), ...tags(tpl, 'PasswordField')]
+
+		expect(guarded.length).toBeGreaterThan(0)
+		for (const tag of guarded) {
+			expect(tag, tag).toMatch(/:guard="guard"/)
+		}
+		expect(
+			tags(template('SecretDetailSidebar'), 'SchemaValueView').every((tag) =>
+				/:guard="revealGuard"/.test(tag),
+			),
+		).toBe(true)
+	})
+
 	it('guards every one-time code display of the detail sidebar', () => {
 		const displays = tags(template('SecretDetailSidebar'), 'TotpDisplay')
 
@@ -199,15 +249,29 @@ describe('every reveal path goes through the guard', () => {
 
 	it('guards the card and BSN reveals and the edit button of the detail sidebar', () => {
 		const tpl = template('SecretDetailSidebar')
-		const reveals = [...tpl.matchAll(/@click="([^"]+)"/g)].map((match) => match[1]).filter((handler) => /reveal|Revealed|toggleCard|toggleBsn/i.test(handler))
+		const reveals = [...tpl.matchAll(/@click="([^"]+)"/g)]
+			.map((match) => match[1])
+			.filter((handler) =>
+				/reveal|Revealed|toggleCard|toggleBsn/i.test(handler),
+			)
 
 		expect(reveals.length).toBeGreaterThan(0)
 		for (const handler of reveals) {
 			expect(handler, handler).toMatch(/^toggleCardField\(|^toggleBsn$/)
 		}
-		const script = readFileSync(new URL('../../src/components/SecretDetailSidebar.vue', import.meta.url), 'utf8')
-		for (const method of ['async toggleCardField(field) {', 'async toggleBsn() {', '\t\topenEdit() {']) {
-			const body = script.slice(script.indexOf(method), script.indexOf('\n\t\t},', script.indexOf(method)))
+		const script = readFileSync(
+			new URL('../../src/components/SecretDetailSidebar.vue', import.meta.url),
+			'utf8',
+		)
+		for (const method of [
+			'async toggleCardField(field) {',
+			'async toggleBsn() {',
+			'\t\topenEdit() {',
+		]) {
+			const body = script.slice(
+				script.indexOf(method),
+				script.indexOf('\n\t\t},', script.indexOf(method)),
+			)
 			expect(body, method).toContain('allowedToReveal()')
 		}
 	})
@@ -224,14 +288,24 @@ describe('every reveal path goes through the guard', () => {
 	})
 
 	it('awaits the guard before a copy button or a value field reveals anything', () => {
-		const copy = readFileSync(new URL('../../src/components/CopyButton.vue', import.meta.url), 'utf8')
-		const field = readFileSync(new URL('../../src/components/PasswordField.vue', import.meta.url), 'utf8')
+		const copy = readFileSync(
+			new URL('../../src/components/CopyButton.vue', import.meta.url),
+			'utf8',
+		)
+		const field = readFileSync(
+			new URL('../../src/components/PasswordField.vue', import.meta.url),
+			'utf8',
+		)
 		const onCopy = copy.slice(copy.indexOf('async onCopy() {'))
 
 		expect(onCopy.indexOf('await this.guard()')).toBeGreaterThan(-1)
-		expect(onCopy.indexOf('await this.guard()')).toBeLessThan(onCopy.indexOf('await this.resolve()'))
+		expect(onCopy.indexOf('await this.guard()')).toBeLessThan(
+			onCopy.indexOf('await this.resolve()'),
+		)
 		const toggle = field.slice(field.indexOf('async toggle() {'))
-		expect(toggle.indexOf('await this.guard()')).toBeLessThan(toggle.indexOf('await this.resolve()'))
+		expect(toggle.indexOf('await this.guard()')).toBeLessThan(
+			toggle.indexOf('await this.resolve()'),
+		)
 		expect(copy).toMatch(/if \(this\.useOnly \|\| this\.guard\) \{\s*return/)
 	})
 })

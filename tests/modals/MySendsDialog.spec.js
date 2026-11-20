@@ -23,7 +23,8 @@ const stubs = {
 	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 }
 
@@ -38,7 +39,10 @@ describe('MySendsDialog', () => {
 	})
 
 	it('loads the sends when mounted and explains an empty list', async () => {
-		const wrapper = mount(MySendsDialog, { props: { open: true }, global: { stubs } })
+		const wrapper = mount(MySendsDialog, {
+			props: { open: true },
+			global: { stubs },
+		})
 		await flush()
 
 		expect(store.fetchSends).toHaveBeenCalledTimes(1)
@@ -48,26 +52,56 @@ describe('MySendsDialog', () => {
 
 	it('lists each send with views left, expiry and password state', async () => {
 		store.sends = [
-			{ id: 's1', payloadType: 'text', remainingViews: 2, expiresAt: '2026-12-01T10:00:00Z', hasPassword: true },
-			{ id: 's2', payloadType: 'credential', remainingViews: 1, expiresAt: null, hasPassword: false },
+			{
+				id: 's1',
+				payloadType: 'text',
+				remainingViews: 2,
+				expiresAt: '2026-12-01T10:00:00Z',
+				hasPassword: true,
+			},
+			{
+				id: 's2',
+				payloadType: 'credential',
+				remainingViews: 1,
+				expiresAt: null,
+				hasPassword: false,
+			},
 		]
-		const wrapper = mount(MySendsDialog, { props: { open: true }, global: { stubs } })
+		const wrapper = mount(MySendsDialog, {
+			props: { open: true },
+			global: { stubs },
+		})
 		await flush()
 
-		const first = wrapper.findAll('[data-testid="send-row-s1"] td').map((td) => td.text())
+		const first = wrapper
+			.findAll('[data-testid="send-row-s1"] td')
+			.map((td) => td.text())
 		expect(first.slice(0, 4)).toEqual([
 			'text',
 			'2',
 			new Date('2026-12-01T10:00:00Z').toLocaleString(),
 			'yes',
 		])
-		const second = wrapper.findAll('[data-testid="send-row-s2"] td').map((td) => td.text())
+		const second = wrapper
+			.findAll('[data-testid="send-row-s2"] td')
+			.map((td) => td.text())
 		expect(second.slice(0, 4)).toEqual(['credential', '1', 'never', 'no'])
 	})
 
 	it('revokes the clicked send', async () => {
-		store.sends = [{ id: 's9', payloadType: 'text', remainingViews: 1, expiresAt: null, hasPassword: false }]
-		const wrapper = mount(MySendsDialog, { props: { open: true }, global: { stubs } })
+		store.sends = [
+			{
+				id: 's9',
+				payloadType: 'text',
+				remainingViews: 1,
+				expiresAt: null,
+				hasPassword: false,
+			},
+		]
+		const wrapper = mount(MySendsDialog, {
+			props: { open: true },
+			global: { stubs },
+		})
 		await flush()
 
 		await wrapper.find('[data-testid="send-revoke-s9"]').trigger('click')
@@ -78,7 +112,10 @@ describe('MySendsDialog', () => {
 	it('swallows store failures, which the store surfaces itself', async () => {
 		store.fetchSends = vi.fn().mockRejectedValue(new Error('offline'))
 		store.revoke = vi.fn().mockRejectedValue(new Error('gone'))
-		const wrapper = mount(MySendsDialog, { props: { open: true }, global: { stubs } })
+		const wrapper = mount(MySendsDialog, {
+			props: { open: true },
+			global: { stubs },
+		})
 		await flush()
 
 		await expect(wrapper.vm.onRevoke('s1')).resolves.toBeUndefined()
@@ -86,7 +123,10 @@ describe('MySendsDialog', () => {
 	})
 
 	it('emits close from the Close button and from the dialog', async () => {
-		const wrapper = mount(MySendsDialog, { props: { open: true }, global: { stubs } })
+		const wrapper = mount(MySendsDialog, {
+			props: { open: true },
+			global: { stubs },
+		})
 		await flush()
 
 		await wrapper.find('button').trigger('click')

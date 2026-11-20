@@ -11,6 +11,7 @@
  * store specs; the real crypto is covered in tests/vitest.
  *
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 
 import axios from '@nextcloud/axios'
@@ -115,5 +116,70 @@ describe('secret store: pending request-filled extra fields (keepiq#750)', () =>
 		await useSecretStore().fetchSecret('s1')
 
 		expect(put).not.toHaveBeenCalled()
+	})
+
+	it('keeps the owner’s schemas when a fill seals its own', async () => {
+		const decrypted = await useSecretStore().decryptSecret({
+			...served([
+				'ENC({"PIN":"1234","@schema":{"A":{"type":"string"},"PIN":{"type":"boolean"}}})',
+			]),
+			additionalFields:
+				'ENC({"A":"a","PIN":"","@schema":{"A":{"type":"string","hidden":true},"PIN":{"type":"string","pattern":"^[0-9]{4}$"}}})',
+		})
+
+		expect(decrypted.additionalFields).toEqual({
+			A: 'a',
+			PIN: '1234',
+			'@schema': {
+				A: { type: 'string', hidden: true },
+				PIN: { type: 'string', pattern: '^[0-9]{4}$' },
+			},
+		})
+	})
+})
+
+describe('secret store: the schemas a request carries', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		const session = useSessionStore()
+		session.certificate = 'PEM'
+		session.cryptoKey = { fake: 'unlocked' }
+	})
+
+	it('gives a filled field without a stored schema the one stored with its blob, never the fill’s', async () => {
+		const get = vi.spyOn(axios, 'get')
+		const decrypted = await useSecretStore().decryptSecret({
+			...served([
+				'ENC({"PIN":"1","@schema":{"PIN":{"type":"string"}}})',
+				'ENC({"A":"true"})',
+			]),
+			pendingFieldSchemas: [
+				{ PIN: { type: 'string', hidden: true } },
+				{ A: { type: 'boolean' } },
+			],
+		})
+
+		expect(decrypted.additionalFields).toEqual({
+			A: 'true',
+			B: 'b',
+			PIN: '1',
+			'@schema': {
+				PIN: { type: 'string', hidden: true },
+				A: { type: 'boolean' },
+			},
+		})
+		expect(decrypted.mergedPending).toBe(2)
+		// Nothing is read: the schemas came with the secret, also offline.
+		expect(get).not.toHaveBeenCalled()
+	})
+
+	it('merges a blob held back before schemas were stored as text', async () => {
+		const decrypted = await useSecretStore().decryptSecret(
+			served(['ENC({"PIN":"1234"})']),
+		)
+
+		expect(decrypted.additionalFields).toEqual({ A: 'a', B: 'b', PIN: '1234' })
+		expect(decrypted.mergedPending).toBe(1)
 	})
 })

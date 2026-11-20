@@ -49,16 +49,14 @@ const NcCheckboxRadioSwitch = {
  * @return {Array<object>} Every selection checkbox's attributes and checked state, without scope ids.
  */
 function checkboxes(wrapper) {
-	return wrapper
-		.findAll('input[type="checkbox"]')
-		.map((box) => ({
-			attrs: Object.fromEntries(
-				Object.entries(box.attributes())
-					.filter(([key]) => !key.startsWith('data-v-'))
-					.sort(([a], [b]) => a.localeCompare(b)),
-			),
-			checked: box.element.checked,
-		}))
+	return wrapper.findAll('input[type="checkbox"]').map((box) => ({
+		attrs: Object.fromEntries(
+			Object.entries(box.attributes())
+				.filter(([key]) => !key.startsWith('data-v-'))
+				.sort(([a], [b]) => a.localeCompare(b)),
+		),
+		checked: box.element.checked,
+	}))
 }
 
 beforeEach(() => {
@@ -92,12 +90,20 @@ describe('SecretList selection checkbox (golden)', () => {
 
 		await wrapper.find('.list-row[data-id="a"] input').trigger('click')
 		const afterPlain = [...bulk.selectedIds]
-		await wrapper.find('.card-row[data-id="c"] input').trigger('click', { shiftKey: true })
+		await wrapper
+			.find('.card-row[data-id="c"] input')
+			.trigger('click', { shiftKey: true })
 		const afterRange = [...bulk.selectedIds].sort()
 		await wrapper.find('.card-row[data-id="b"] input').trigger('click')
 		const afterToggle = [...bulk.selectedIds].sort()
 
-		expect({ initial, afterPlain, afterRange, afterToggle, final: checkboxes(wrapper) }).toMatchSnapshot()
+		expect({
+			initial,
+			afterPlain,
+			afterRange,
+			afterToggle,
+			final: checkboxes(wrapper),
+		}).toMatchSnapshot()
 		expect(afterPlain).toEqual(['a'])
 		expect(afterRange).toEqual(['a', 'b', 'c'])
 		expect(afterToggle).toEqual(['a', 'c'])

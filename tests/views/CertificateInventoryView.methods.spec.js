@@ -17,9 +17,8 @@ const dialogs = vi.hoisted(() => ({
 
 vi.mock('@nextcloud/dialogs', () => dialogs)
 
-const { default: CertificateInventoryView } = await import(
-	'../../src/views/CertificateInventoryView.vue'
-)
+const { default: CertificateInventoryView } =
+	await import('../../src/views/CertificateInventoryView.vue')
 const { methods } = CertificateInventoryView
 
 /**
@@ -109,7 +108,9 @@ describe('CertificateInventoryView', () => {
 	describe('onChecklist', () => {
 		it('stores the renewal checklist for the row', async () => {
 			const checklist = { steps: ['a', 'b'] }
-			const vm = makeVm({ renewalChecklist: vi.fn().mockResolvedValue(checklist) })
+			const vm = makeVm({
+				renewalChecklist: vi.fn().mockResolvedValue(checklist),
+			})
 
 			await vm.onChecklist({ id: 'c2' })
 
@@ -132,7 +133,9 @@ describe('CertificateInventoryView', () => {
 
 	describe('onReissue', () => {
 		it('confirms a re-issue', async () => {
-			const vm = makeVm({ reissueSuite: vi.fn().mockResolvedValue({ ok: true }) })
+			const vm = makeVm({
+				reissueSuite: vi.fn().mockResolvedValue({ ok: true }),
+			})
 
 			await vm.onReissue({ id: 'c3' })
 
@@ -157,7 +160,10 @@ describe('CertificateInventoryView', () => {
 		})
 
 		it('shows nothing when the re-issue fails without an error', async () => {
-			const vm = makeVm({ reissueSuite: vi.fn().mockResolvedValue(null), error: '' })
+			const vm = makeVm({
+				reissueSuite: vi.fn().mockResolvedValue(null),
+				error: '',
+			})
 
 			await vm.onReissue({ id: 'c3' })
 

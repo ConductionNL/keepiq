@@ -1,10 +1,17 @@
-# Tasks: hidden custom fields and a real SSH key item
+# Tasks: custom fields with a schema and a real SSH key item
 
-## 1. Custom field kinds
+## 1. Custom field schemas
 
-- [x] 1.1 Add `kind` to the field model in `AdditionalFieldsEditor.vue` with a kind select, and mask hidden values with reveal and copy controls. Verify: vitest on the editor emitting `{name, value, kind}` and on an old blob reading as text.
-- [x] 1.2 Render hidden fields masked in `SecretDetailSidebar.vue`. Verify: vitest that a hidden value is not in the DOM text until Reveal, and a Playwright flow hide, reveal, copy. (Code and vitest done in `tests/components/SecretDetailSidebar.additionalFields.spec.js`; the Playwright flow is still open.) Playwright done 2026-11-17 on a throwaway NC 34 rig: tests/e2e/workflows/custom-field-kinds.spec.ts hidden-field test (dots until Show, Hide again, Copy puts the real value on the clipboard); passed.
-- [x] 1.3 Carry the kind through `src/cxf/cxf.js` export and import. Verify: vitest round trip with one hidden and one text field.
+- [x] 1.1 Add the schema model in `src/utils/fieldSchema.js`, used by `src/utils/additionalFields.js`: read and write `@schema`, refuse `@schema` as a field name, the presets and their schemas, and one `schemaError()` check with a message per rule. Verify: vitest on an old blob reading as string, on every preset round trip, and on each limit refusing and accepting a value.
+- [x] 1.2 Skip `@schema` in every reader that lists fields: sidebar, editor, request dialog, CSV and backup export, importers, request merge. Verify: vitest per reader on a blob with `@schema`; grep for blob readers that do not go through the helper.
+- [x] 1.3 Add the preset select and the Advanced part (type, format, limits, Hidden) to `AdditionalFieldsEditor.vue`, with an input per schema and the JSON viewer for objects. Verify: vitest on the editor emitting `{name, value, schema}`, Custom after an Advanced change, and Create/Save blocked on a value or schema change that does not fit.
+- [x] 1.4 Render each field by its schema in `SecretDetailSidebar.vue`, masked when hidden, with a warning for a value that does not fit. Verify: vitest that a hidden value is not in the DOM text until Reveal, a URL is a link and an object uses the JSON viewer.
+- [x] 1.4a Cover hide, reveal and copy of a custom field in the browser. Verify: a Playwright flow hide, reveal, copy. (`tests/e2e/workflows/hidden-custom-field.spec.ts`, and the first test of `custom-field-kinds.spec.ts` for an older `{ value, kind }` entry; neither has run on a rig against this branch yet.)
+- [x] 1.5 Describe the built-in type fields in `src/utils/builtinTypeFields.js` with the same schemas. Verify: vitest that a Database Port refuses 70000 and a certificate's private key stays masked and multi-line.
+- [x] 1.6 Let importers keep a value that does not fit and drop its schema. Verify: vitest on an import with a number field holding "n/a".
+- [x] 1.7 Carry each requested field's schema in the secret request: store it in a new `field_schemas` column and return it (`FieldSchemaShape`, `SecretRequestService`, `SecretRequestController`, `SecretRequestFillController`) with a shape check, offer it in `SecretRequestCreateDialog.vue`, give a filled field without a stored schema its request's schema when the owner's browser merges the fill, and enforce it in `SecretRequestFill.vue`; a fill carries only values. Verify: PHPUnit on the stored and returned schema and on a malformed schema refused; vitest on the fill page blocking a PIN that does not match its pattern and on the merge.
+- [x] 1.8 Carry the schema through `src/cxf/cxf.js` export and import. Verify: vitest round trip with one hidden text field and one integer field with limits.
+- [x] 1.9 Document the `@schema` member in the application API docs. Verify: the docs page names the member, its shape and that applications skip it.
 
 ## 2. SSH key item
 
@@ -14,6 +21,7 @@
 
 ## 3. Close out
 
-- [x] 3.1 Add strings to every shipped locale through the writing skill, never `test:l10n:write`. Verify: `npm run test:l10n`. (All 14 new strings are in every locale and `check:l10n-js` and the parity gate pass; `test:l10n` still reports 7 passkey and extension strings missing that were already missing on `development` before this change.)
+- [x] 3.1 Add strings to every shipped locale through the writing skill, never `test:l10n:write`. Verify: `npm run test:l10n`.
+- [x] 3.1a Add the CHANGELOG entries. Verify: `CHANGELOG.md` names this change.
 - [x] 3.2 Set rows `vault-11` and `vault-14` to built with evidence paths and lines, and archive the change. Verify: parity_verify --strict. Done 2026-11-17: vault-11 and vault-14 set to built with evidence paths and lines; parity_verify is not on the live-pass box, the file was checked to parse and round-trip instead.
 

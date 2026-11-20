@@ -20,7 +20,11 @@ import {
 	unwrapWithRecoveryCode,
 	wrapWithRecoveryCode,
 } from '../../src/crypto/recoveryKit.js'
-import { pemToDer, PRIVATE_KEY_PKCS8_PEM, PUBLIC_KEY_SPKI_PEM } from './fixtures/rsa-fixtures.js'
+import {
+	pemToDer,
+	PRIVATE_KEY_PKCS8_PEM,
+	PUBLIC_KEY_SPKI_PEM,
+} from './fixtures/rsa-fixtures.js'
 
 const calls = []
 const responses = {}
@@ -31,10 +35,18 @@ vi.mock('@nextcloud/axios', () => {
 		calls.push({ verb, url, body, config })
 		return { data: responses[verb + ' ' + url] ?? {} }
 	}
-	return { default: { get: record('get'), put: record('put'), post: record('post'), delete: record('delete') } }
+	return {
+		default: {
+			get: record('get'),
+			put: record('put'),
+			post: record('post'),
+			delete: record('delete'),
+		},
+	}
 })
 
-const { createRecoveryKit, recoverWithCode } = await import('../../src/services/recoveryKit.js')
+const { createRecoveryKit, recoverWithCode } =
+	await import('../../src/services/recoveryKit.js')
 
 /**
  * Everything a request sent, as one string.
@@ -42,7 +54,9 @@ const { createRecoveryKit, recoverWithCode } = await import('../../src/services/
  * @return {string}
  */
 function sent() {
-	return JSON.stringify(calls.map((c) => [c.url, c.body ?? null, c.config ?? null]))
+	return JSON.stringify(
+		calls.map((c) => [c.url, c.body ?? null, c.config ?? null]),
+	)
 }
 
 beforeEach(() => {
@@ -61,10 +75,16 @@ describe('recovery code', () => {
 	})
 
 	it('reads a code as printed, whatever the case, spacing and look-alike letters', () => {
-		expect(normaliseRecoveryCode('0123-4567-89ab-cdef-ghjk-mnpq-rstv-wxyz')).toBe('0123456789ABCDEFGHJKMNPQRSTVWXYZ')
-		expect(normaliseRecoveryCode('o1l1 4567 89AB CDEF GHJK MNPQ RSTV WXYZ')).toBe('0111456789ABCDEFGHJKMNPQRSTVWXYZ')
+		expect(
+			normaliseRecoveryCode('0123-4567-89ab-cdef-ghjk-mnpq-rstv-wxyz'),
+		).toBe('0123456789ABCDEFGHJKMNPQRSTVWXYZ')
+		expect(
+			normaliseRecoveryCode('o1l1 4567 89AB CDEF GHJK MNPQ RSTV WXYZ'),
+		).toBe('0111456789ABCDEFGHJKMNPQRSTVWXYZ')
 		expect(normaliseRecoveryCode('too short')).toBe('')
-		expect(normaliseRecoveryCode('UUUU-4567-89AB-CDEF-GHJK-MNPQ-RSTV-WXYZ')).toBe('')
+		expect(
+			normaliseRecoveryCode('UUUU-4567-89AB-CDEF-GHJK-MNPQ-RSTV-WXYZ'),
+		).toBe('')
 	})
 })
 
@@ -73,26 +93,53 @@ describe('wrap and unwrap', () => {
 		const code = generateRecoveryCode()
 		const copy = await wrapWithRecoveryCode(PRIVATE_KEY_PKCS8_PEM, code)
 
-		expect(JSON.parse(copy.kdf)).toMatchObject({ version: RECOVERY_KIT_VERSION, kdf: 'Argon2id' })
+		expect(JSON.parse(copy.kdf)).toMatchObject({
+			version: RECOVERY_KIT_VERSION,
+			kdf: 'Argon2id',
+		})
 		expect(copy.wrappedKey).not.toContain('PRIVATE KEY')
-		expect(await unwrapWithRecoveryCode(copy, code.toLowerCase().replace(/-/g, ' '))).toBe(PRIVATE_KEY_PKCS8_PEM)
+		expect(
+			await unwrapWithRecoveryCode(
+				copy,
+				code.toLowerCase().replace(/-/g, ' '),
+			),
+		).toBe(PRIVATE_KEY_PKCS8_PEM)
 	})
 
 	it('opens nothing with a wrong or malformed code, or a copy it cannot read', async () => {
-		const copy = await wrapWithRecoveryCode(PRIVATE_KEY_PKCS8_PEM, generateRecoveryCode())
+		const copy = await wrapWithRecoveryCode(
+			PRIVATE_KEY_PKCS8_PEM,
+			generateRecoveryCode(),
+		)
 
-		await expect(unwrapWithRecoveryCode(copy, generateRecoveryCode())).rejects.toThrow('does not open')
-		await expect(unwrapWithRecoveryCode(copy, 'not a code')).rejects.toThrow('not a recovery code')
-		await expect(unwrapWithRecoveryCode({ ...copy, kdf: '{"version":2}' }, generateRecoveryCode())).rejects.toThrow('cannot be read')
+		await expect(
+			unwrapWithRecoveryCode(copy, generateRecoveryCode()),
+		).rejects.toThrow('does not open')
+		await expect(unwrapWithRecoveryCode(copy, 'not a code')).rejects.toThrow(
+			'not a recovery code',
+		)
+		await expect(
+			unwrapWithRecoveryCode(
+				{ ...copy, kdf: '{"version":2}' },
+				generateRecoveryCode(),
+			),
+		).rejects.toThrow('cannot be read')
 	})
 
 	it('refuses to wrap without a key or a code', async () => {
-		await expect(wrapWithRecoveryCode('', generateRecoveryCode())).rejects.toThrow()
-		await expect(wrapWithRecoveryCode(PRIVATE_KEY_PKCS8_PEM, 'x')).rejects.toThrow()
+		await expect(
+			wrapWithRecoveryCode('', generateRecoveryCode()),
+		).rejects.toThrow()
+		await expect(
+			wrapWithRecoveryCode(PRIVATE_KEY_PKCS8_PEM, 'x'),
+		).rejects.toThrow()
 	})
 
 	it('writes the kit file with the code, the account and the date', () => {
-		const text = recoveryKitText({ code: 'ABCD-EFGH', account: 'alice', createdAt: '2026-11-14' }, (app, s) => s)
+		const text = recoveryKitText(
+			{ code: 'ABCD-EFGH', account: 'alice', createdAt: '2026-11-14' },
+			(app, s) => s,
+		)
 
 		expect(text).toContain('Recovery code: ABCD-EFGH')
 		expect(text).toContain('Account: alice')
@@ -102,25 +149,39 @@ describe('wrap and unwrap', () => {
 
 describe('requests', () => {
 	it('creates a kit by sending only the wrapped copy and its parameters', async () => {
-		const envelope = await encryptPrivateKey(PRIVATE_KEY_PKCS8_PEM, 'master password')
-		responses['put /apps/keepiq/api/v1/recovery-kit'] = { kit: { suiteId: 's-1' } }
+		const envelope = await encryptPrivateKey(
+			PRIVATE_KEY_PKCS8_PEM,
+			'master password',
+		)
+		responses['put /apps/keepiq/api/v1/recovery-kit'] = {
+			kit: { suiteId: 's-1' },
+		}
 
 		const { code, kit } = await createRecoveryKit(envelope, 'master password')
 
 		expect(kit).toEqual({ suiteId: 's-1' })
-		expect(calls.map((c) => c.verb + ' ' + c.url)).toEqual(['put /apps/keepiq/api/v1/recovery-kit'])
+		expect(calls.map((c) => c.verb + ' ' + c.url)).toEqual([
+			'put /apps/keepiq/api/v1/recovery-kit',
+		])
 		expect(Object.keys(calls[0].body).sort()).toEqual(['kdf', 'wrappedKey'])
 		expect(sent()).not.toContain(code)
 		expect(sent()).not.toContain(normaliseRecoveryCode(code))
 		expect(sent()).not.toContain('PRIVATE KEY')
-		expect(await unwrapWithRecoveryCode(calls[0].body, code)).toBe(PRIVATE_KEY_PKCS8_PEM)
+		expect(await unwrapWithRecoveryCode(calls[0].body, code)).toBe(
+			PRIVATE_KEY_PKCS8_PEM,
+		)
 	})
 
 	it('recovers: a new envelope for the new password, proven with the key, then the kit is spent', async () => {
 		const code = generateRecoveryCode()
 		const copy = await wrapWithRecoveryCode(PRIVATE_KEY_PKCS8_PEM, code)
-		responses['get /apps/keepiq/api/v1/recovery-kit/copy'] = { suiteId: 's-1', ...copy }
-		responses['get /apps/keepiq/api/v1/suites/s-1/proof-challenge'] = { nonce: 'nonce-1' }
+		responses['get /apps/keepiq/api/v1/recovery-kit/copy'] = {
+			suiteId: 's-1',
+			...copy,
+		}
+		responses['get /apps/keepiq/api/v1/suites/s-1/proof-challenge'] = {
+			nonce: 'nonce-1',
+		}
 
 		await recoverWithCode(code, 'new master password')
 
@@ -138,19 +199,50 @@ describe('requests', () => {
 
 		const put = calls[2]
 		const { decryptPrivateKey } = await import('../../src/crypto/aes.js')
-		expect(await decryptPrivateKey(put.body.encryptedPrivateKey, 'new master password')).toBe(PRIVATE_KEY_PKCS8_PEM)
+		expect(
+			await decryptPrivateKey(
+				put.body.encryptedPrivateKey,
+				'new master password',
+			),
+		).toBe(PRIVATE_KEY_PKCS8_PEM)
 		expect(put.config.headers['X-Keepiq-Key-Proof-Nonce']).toBe('nonce-1')
-		const publicKey = await crypto.subtle.importKey('spki', pemToDer(PUBLIC_KEY_SPKI_PEM), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify'])
+		const publicKey = await crypto.subtle.importKey(
+			'spki',
+			pemToDer(PUBLIC_KEY_SPKI_PEM),
+			{ name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+			false,
+			['verify'],
+		)
 		const { signedMessageBytes } = await import('../../src/crypto/reauth.js')
-		const signature = Uint8Array.from(atob(put.config.headers['X-Keepiq-Key-Proof']), (ch) => ch.charCodeAt(0))
-		expect(await crypto.subtle.verify('RSASSA-PKCS1-v1_5', publicKey, signature, await signedMessageBytes('nonce-1', [put.body.encryptedPrivateKey]))).toBe(true)
+		const signature = Uint8Array.from(
+			atob(put.config.headers['X-Keepiq-Key-Proof']),
+			(ch) => ch.charCodeAt(0),
+		)
+		expect(
+			await crypto.subtle.verify(
+				'RSASSA-PKCS1-v1_5',
+				publicKey,
+				signature,
+				await signedMessageBytes('nonce-1', [put.body.encryptedPrivateKey]),
+			),
+		).toBe(true)
 	})
 
 	it('changes nothing when the code is wrong', async () => {
-		const copy = await wrapWithRecoveryCode(PRIVATE_KEY_PKCS8_PEM, generateRecoveryCode())
-		responses['get /apps/keepiq/api/v1/recovery-kit/copy'] = { suiteId: 's-1', ...copy }
+		const copy = await wrapWithRecoveryCode(
+			PRIVATE_KEY_PKCS8_PEM,
+			generateRecoveryCode(),
+		)
+		responses['get /apps/keepiq/api/v1/recovery-kit/copy'] = {
+			suiteId: 's-1',
+			...copy,
+		}
 
-		await expect(recoverWithCode(generateRecoveryCode(), 'new master password')).rejects.toThrow('does not open')
-		expect(calls.map((c) => c.verb + ' ' + c.url)).toEqual(['get /apps/keepiq/api/v1/recovery-kit/copy'])
+		await expect(
+			recoverWithCode(generateRecoveryCode(), 'new master password'),
+		).rejects.toThrow('does not open')
+		expect(calls.map((c) => c.verb + ' ' + c.url)).toEqual([
+			'get /apps/keepiq/api/v1/recovery-kit/copy',
+		])
 	})
 })

@@ -38,9 +38,18 @@ async function mountSection(sinks) {
 				CnSettingsSection: { template: '<section><slot /></section>' },
 				NcButton: { template: '<button v-bind="$attrs"><slot /></button>' },
 				NcNoteCard: { template: '<div><slot /></div>' },
-				NcSelect: { props: ['modelValue', 'options'], template: '<div v-bind="$attrs" />' },
-				NcTextField: { props: ['modelValue', 'label'], template: '<input v-bind="$attrs">' },
-				NcCheckboxRadioSwitch: { props: ['modelValue'], template: '<label v-bind="$attrs"><slot /></label>' },
+				NcSelect: {
+					props: ['modelValue', 'options'],
+					template: '<div v-bind="$attrs" />',
+				},
+				NcTextField: {
+					props: ['modelValue', 'label'],
+					template: '<input v-bind="$attrs">',
+				},
+				NcCheckboxRadioSwitch: {
+					props: ['modelValue'],
+					template: '<label v-bind="$attrs"><slot /></label>',
+				},
 			},
 		},
 	})
@@ -63,7 +72,10 @@ describe('SiemSection save', () => {
 		const post = vi.spyOn(axios, 'post')
 		await wrapper.vm.onSave()
 		expect(post).not.toHaveBeenCalled()
-		expect(put).toHaveBeenCalledWith(expect.stringContaining('/apps/keepiq/api/v1/siem/sinks/s1'), expected)
+		expect(put).toHaveBeenCalledWith(
+			expect.stringContaining('/apps/keepiq/api/v1/siem/sinks/s1'),
+			expected,
+		)
 		expect(wrapper.vm.sinks).toEqual([OTHER, updated])
 		expect(wrapper.vm.formOpen).toBe(false)
 		expect(wrapper.vm.busy).toBe(false)
@@ -79,7 +91,9 @@ describe('SiemSection save', () => {
 		const created = { ...SINK, id: 'n1' }
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: created })
 		await wrapper.vm.onSave()
-		expect(post.mock.calls[0][0]).toMatch(/\/apps\/keepiq\/api\/v1\/siem\/sinks$/)
+		expect(post.mock.calls[0][0]).toMatch(
+			/\/apps\/keepiq\/api\/v1\/siem\/sinks$/,
+		)
 		expect(post.mock.calls[0][1]).toEqual({ ...rest, type })
 		expect(Object.keys(post.mock.calls[0][1]).at(-1)).toBe('type')
 		expect(wrapper.vm.sinks).toEqual([created, OTHER])

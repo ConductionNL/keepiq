@@ -135,7 +135,14 @@ describe('bulk store: chunked runner', () => {
 			{ secretId: 'e', status: 'failed', reason: 'plain' },
 			{ secretId: 'f', status: 'failed', reason: 'failed' },
 		])
-		expect(seen).toEqual([['a', 0], ['b', 1], ['c', 2], ['d', 3], ['e', 4], ['f', 5]])
+		expect(seen).toEqual([
+			['a', 0],
+			['b', 1],
+			['c', 2],
+			['d', 3],
+			['e', 4],
+			['f', 5],
+		])
 		expect(bulk.progress).toEqual({
 			running: false,
 			done: 6,

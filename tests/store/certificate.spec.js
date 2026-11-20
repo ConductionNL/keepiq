@@ -99,9 +99,7 @@ describe('certificate store', () => {
 			const put = vi
 				.spyOn(axios, 'put')
 				.mockResolvedValue({ data: { secretId: 's-1', stored: true } })
-			const get = vi
-				.spyOn(axios, 'get')
-				.mockResolvedValue({ data: INVENTORY })
+			const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: INVENTORY })
 			const store = useCertificateStore()
 
 			const result = await store.parseAndSubmit('s-1')
@@ -201,7 +199,9 @@ describe('certificate store', () => {
 		})
 
 		it('falls back to the error message without a server body', async () => {
-			vi.spyOn(axios, 'post').mockRejectedValue(httpError(undefined, 'Timeout'))
+			vi.spyOn(axios, 'post').mockRejectedValue(
+				httpError(undefined, 'Timeout'),
+			)
 			const store = useCertificateStore()
 
 			expect(await store.renewalChecklist('s-9')).toBeNull()
@@ -214,9 +214,7 @@ describe('certificate store', () => {
 			const post = vi
 				.spyOn(axios, 'post')
 				.mockResolvedValue({ data: { id: 'suite-1', status: 'active' } })
-			const get = vi
-				.spyOn(axios, 'get')
-				.mockResolvedValue({ data: INVENTORY })
+			const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: INVENTORY })
 			const store = useCertificateStore()
 
 			const result = await store.reissueSuite('suite-1')

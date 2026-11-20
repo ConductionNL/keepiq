@@ -243,11 +243,13 @@ describe('App.vue shell options', () => {
 
 		it('opens only for a list route with an id', () => {
 			const id = App.computed.detailSidebarSecretId
-			expect(id.call({ $route: { name: 'SecretList', params: { id: 's1' } } })).toBe(
-				's1',
-			)
 			expect(
-				id.call({ $route: { name: 'ApplicationDetail', params: { id: 'a1' } } }),
+				id.call({ $route: { name: 'SecretList', params: { id: 's1' } } }),
+			).toBe('s1')
+			expect(
+				id.call({
+					$route: { name: 'ApplicationDetail', params: { id: 'a1' } },
+				}),
 			).toBeNull()
 		})
 	})
@@ -265,9 +267,9 @@ describe('App.vue shell options', () => {
 		})
 
 		it('recognises the lock screen by route name', () => {
-			expect(App.computed.isLockScreen.call({ $route: { name: 'Lock' } })).toBe(
-				true,
-			)
+			expect(
+				App.computed.isLockScreen.call({ $route: { name: 'Lock' } }),
+			).toBe(true)
 			expect(
 				App.computed.isLockScreen.call({ $route: { name: 'SecretList' } }),
 			).toBe(false)

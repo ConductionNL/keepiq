@@ -22,7 +22,10 @@ const at = (days) => new Date(NOW.getTime() + days * DAY).toISOString()
 
 const stubs = {
 	NcButton: { template: '<button><slot /></button>' },
-	NcEmptyContent: { props: ['name'], template: '<div class="empty">{{ name }}</div>' },
+	NcEmptyContent: {
+		props: ['name'],
+		template: '<div class="empty">{{ name }}</div>',
+	},
 	NcLoadingIcon: { template: '<span />' },
 	NcNoteCard: { template: '<div><slot /></div>' },
 	CertificateRenewalChecklistDialog: true,
@@ -34,7 +37,10 @@ const stubs = {
  */
 function tokenDates(html) {
 	return [3, 20, 90].reduce(
-		(out, days) => out.split(new Date(at(days)).toLocaleDateString()).join(`<date +${days}d>`),
+		(out, days) =>
+			out
+				.split(new Date(at(days)).toLocaleDateString())
+				.join(`<date +${days}d>`),
 		html,
 	)
 }
@@ -49,7 +55,15 @@ function expiryCells(wrapper, selector) {
 		row
 			.findAll('td')
 			.filter((td) => td.html().includes('span'))
-			.map((td) => tokenDates(td.html().replace(/ data-v-[0-9a-f]+=""/g, '').replace(/>\s+</g, '><').replace(/\s+/g, ' ')))
+			.map((td) =>
+				tokenDates(
+					td
+						.html()
+						.replace(/ data-v-[0-9a-f]+=""/g, '')
+						.replace(/>\s+</g, '><')
+						.replace(/\s+/g, ' '),
+				),
+			)
 			.join(''),
 	)
 }
@@ -61,9 +75,21 @@ beforeEach(() => {
 	const store = useCertificateStore()
 	store.fetchInventory = vi.fn()
 	const rows = (prefix) => [
-		{ id: `${prefix}1`, caRole: `${prefix}-root`, metadata: { subject: 'CN=a', notAfter: at(3) } },
-		{ id: `${prefix}2`, caRole: `${prefix}-int`, metadata: { subject: 'CN=b', notAfter: at(20) } },
-		{ id: `${prefix}3`, caRole: `${prefix}-leaf`, metadata: { subject: 'CN=c', notAfter: at(90) } },
+		{
+			id: `${prefix}1`,
+			caRole: `${prefix}-root`,
+			metadata: { subject: 'CN=a', notAfter: at(3) },
+		},
+		{
+			id: `${prefix}2`,
+			caRole: `${prefix}-int`,
+			metadata: { subject: 'CN=b', notAfter: at(20) },
+		},
+		{
+			id: `${prefix}3`,
+			caRole: `${prefix}-leaf`,
+			metadata: { subject: 'CN=c', notAfter: at(90) },
+		},
 		{ id: `${prefix}4`, caRole: `${prefix}-none`, metadata: null },
 	]
 	store.inventory = { stored: rows('s'), suites: rows('v'), ca: rows('c') }

@@ -21,12 +21,10 @@ vi.mock('../../src/store/modules/teamFolder.js', () => ({
 	useTeamFolderStore: () => teamFolderStore,
 }))
 
-const { default: KeepiqAppNav } = await import(
-	'../../src/components/KeepiqAppNav/KeepiqAppNav.vue'
-)
-const { NAV_TREE_MAX_DEPTH } = await import(
-	'../../src/components/KeepiqAppNav/NavFolderTree.vue'
-)
+const { default: KeepiqAppNav } =
+	await import('../../src/components/KeepiqAppNav/KeepiqAppNav.vue')
+const { NAV_TREE_MAX_DEPTH } =
+	await import('../../src/components/KeepiqAppNav/NavFolderTree.vue')
 const { computed, methods } = KeepiqAppNav
 
 /**
@@ -91,7 +89,11 @@ describe('KeepiqAppNav logic', () => {
 		})
 
 		it('runs from the root down to the active folder', () => {
-			expect(trailVm(chain(3), 'f3').activeFolderTrail).toEqual(['f1', 'f2', 'f3'])
+			expect(trailVm(chain(3), 'f3').activeFolderTrail).toEqual([
+				'f1',
+				'f2',
+				'f3',
+			])
 		})
 
 		it('stops on a parent cycle instead of looping', () => {
@@ -107,8 +109,14 @@ describe('KeepiqAppNav logic', () => {
 		})
 
 		it('reads the active folder from the route', () => {
-			expect(computed.activeFolderId.call({ $route: { params: { folderId: 'f9' } } })).toBe('f9')
-			expect(computed.activeFolderId.call({ $route: { params: {} } })).toBeNull()
+			expect(
+				computed.activeFolderId.call({
+					$route: { params: { folderId: 'f9' } },
+				}),
+			).toBe('f9')
+			expect(
+				computed.activeFolderId.call({ $route: { params: {} } }),
+			).toBeNull()
 			expect(computed.activeFolderId.call({})).toBeNull()
 		})
 	})
@@ -117,7 +125,9 @@ describe('KeepiqAppNav logic', () => {
 		it('highlights the active folder while it is within the display cap', () => {
 			const vm = trailVm(chain(NAV_TREE_MAX_DEPTH), `f${NAV_TREE_MAX_DEPTH}`)
 
-			expect(computed.highlightFolderId.call(vm)).toBe(`f${NAV_TREE_MAX_DEPTH}`)
+			expect(computed.highlightFolderId.call(vm)).toBe(
+				`f${NAV_TREE_MAX_DEPTH}`,
+			)
 			expect(computed.ellipsisHighlightId.call(vm)).toBeNull()
 		})
 
@@ -126,7 +136,9 @@ describe('KeepiqAppNav logic', () => {
 			const vm = trailVm(chain(depth), `f${depth}`)
 
 			expect(computed.highlightFolderId.call(vm)).toBeNull()
-			expect(computed.ellipsisHighlightId.call(vm)).toBe(`f${NAV_TREE_MAX_DEPTH}`)
+			expect(computed.ellipsisHighlightId.call(vm)).toBe(
+				`f${NAV_TREE_MAX_DEPTH}`,
+			)
 		})
 
 		it('highlights nothing without a trail', () => {
@@ -135,7 +147,8 @@ describe('KeepiqAppNav logic', () => {
 	})
 
 	describe('delete emptiness', () => {
-		const isEmpty = (deleteChildren) => computed.deleteIsEmpty.call({ deleteChildren })
+		const isEmpty = (deleteChildren) =>
+			computed.deleteIsEmpty.call({ deleteChildren })
 
 		it('is not empty while the children are unknown', () => {
 			expect(isEmpty(null)).toBe(false)
@@ -148,7 +161,9 @@ describe('KeepiqAppNav logic', () => {
 
 		it('is not empty with a secret or a subfolder', () => {
 			expect(isEmpty({ directSecretCount: 1, subfolders: [] })).toBe(false)
-			expect(isEmpty({ directSecretCount: 0, subfolders: [{ id: 'x' }] })).toBe(false)
+			expect(
+				isEmpty({ directSecretCount: 0, subfolders: [{ id: 'x' }] }),
+			).toBe(false)
 		})
 	})
 
@@ -167,13 +182,19 @@ describe('KeepiqAppNav logic', () => {
 			vm.sortedMenu = computed.sortedMenu.call(vm)
 
 			expect(vm.sortedMenu.map((i) => i.id)).toEqual(['c', 'b', 'a', 's', 'z'])
-			expect(computed.mainItems.call(vm).map((i) => i.id)).toEqual(['b', 'a', 'z'])
+			expect(computed.mainItems.call(vm).map((i) => i.id)).toEqual([
+				'b',
+				'a',
+				'z',
+			])
 			expect(computed.footerItems.call(vm).map((i) => i.id)).toEqual(['c'])
 			expect(computed.settingsItems.call(vm).map((i) => i.id)).toEqual(['s'])
 		})
 
 		it('is empty without a manifest menu', () => {
-			expect(computed.sortedMenu.call({ manifest: {}, isAdmin: false })).toEqual([])
+			expect(
+				computed.sortedMenu.call({ manifest: {}, isAdmin: false }),
+			).toEqual([])
 		})
 
 		it('treats only an explicit isAdmin true as admin', () => {
@@ -222,7 +243,9 @@ describe('KeepiqAppNav logic', () => {
 		it('swallows a failed folder load', async () => {
 			const vm = makeVm()
 			vm.folderStore.fetchFolders = vi.fn().mockRejectedValue(new Error('500'))
-			teamFolderStore.fetchTeamFolders = vi.fn().mockRejectedValue(new Error('500'))
+			teamFolderStore.fetchTeamFolders = vi
+				.fn()
+				.mockRejectedValue(new Error('500'))
 
 			expect(() => vm.fetchFoldersSafe()).not.toThrow()
 			await Promise.resolve()

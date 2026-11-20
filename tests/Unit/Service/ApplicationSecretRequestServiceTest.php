@@ -257,6 +257,25 @@ class ApplicationSecretRequestServiceTest extends TestCase {
 	}//end testCreateForApplicationVaultRefusesAnEmptyFieldList()
 
 	/**
+	 * The member holding the field schemas is not a field, so an application
+	 * cannot request it either.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
+	 */
+	public function testCreateForApplicationVaultRefusesTheSchemaMember(): void {
+		$this->secretService->expects($this->never())->method('createByApplication');
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionCode(400);
+		$this->expectExceptionMessage('@schema holds the field schemas and cannot be requested');
+
+		$this->makeService()->createForApplicationVault(applicationId: 'app-1', requestedFields: ['key', '@schema']);
+	}//end testCreateForApplicationVaultRefusesTheSchemaMember()
+
+	/**
 	 * The pending list is scoped by the unforgeable created_by prefix.
 	 *
 	 * Fulfilled rows are excluded, and one application cannot enumerate

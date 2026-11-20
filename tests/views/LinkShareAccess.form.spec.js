@@ -18,7 +18,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import LinkShareAccess from '../../src/views/LinkShareAccess.vue'
 import { useLinkShareStore } from '../../src/store/modules/linkShare.js'
 
-const SHARE = { encryptedSecretSnapshot: 'CT', argon2idSalt: 'SALT', usageLimit: 1, usageCount: 0 }
+const SHARE = {
+	encryptedSecretSnapshot: 'CT',
+	argon2idSalt: 'SALT',
+	usageLimit: 1,
+	usageCount: 0,
+}
 
 /**
  * Point the page's URL at the given path.
@@ -27,7 +32,10 @@ const SHARE = { encryptedSecretSnapshot: 'CT', argon2idSalt: 'SALT', usageLimit:
  * @return {void}
  */
 function atPath(pathname) {
-	Object.defineProperty(window, 'location', { value: { pathname }, writable: true })
+	Object.defineProperty(window, 'location', {
+		value: { pathname },
+		writable: true,
+	})
 }
 
 describe('LinkShareAccess form wiring', () => {

@@ -9,7 +9,10 @@
  * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
  */
 
-import { RepromptCancelled, useRepromptPromptStore } from '../store/modules/repromptPrompt.js'
+import {
+	RepromptCancelled,
+	useRepromptPromptStore,
+} from '../store/modules/repromptPrompt.js'
 
 /**
  * Whether a secret asks for the master password again before it is used.

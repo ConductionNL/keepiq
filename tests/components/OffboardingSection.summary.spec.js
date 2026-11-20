@@ -17,8 +17,10 @@ function summaryOf(summary) {
 			mixins: [
 				{
 					methods: {
-						t: (app, text, vars) => `[${app}] ${text} ${JSON.stringify(vars ?? {})}`,
-						n: (app, one, many, count) => `[${app}] ${count === 1 ? one : many} (${count})`,
+						t: (app, text, vars) =>
+							`[${app}] ${text} ${JSON.stringify(vars ?? {})}`,
+						n: (app, one, many, count) =>
+							`[${app}] ${count === 1 ? one : many} (${count})`,
 					},
 				},
 			],
@@ -42,7 +44,14 @@ describe('OffboardingSection summaryText', () => {
 		[{ revoked: 0, transferred: 1, skipped: [], membershipsRemoved: 1 }],
 		[{ revoked: 1, transferred: 0, skipped: [], membershipsRemoved: 4 }],
 		[{ revoked: 2, transferred: 2, skipped: ['s-1'], membershipsRemoved: 0 }],
-		[{ revoked: 2, transferred: 2, skipped: ['s-1', 's-2'], membershipsRemoved: 3 }],
+		[
+			{
+				revoked: 2,
+				transferred: 2,
+				skipped: ['s-1', 's-2'],
+				membershipsRemoved: 3,
+			},
+		],
 	])('builds the sentence for %j', (summary) => {
 		expect(summaryOf(summary)).toMatchSnapshot()
 	})

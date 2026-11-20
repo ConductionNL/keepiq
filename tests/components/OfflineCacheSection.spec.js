@@ -25,7 +25,11 @@ const URL = '/apps/keepiq/api/settings/admin/general'
  */
 async function mountSection() {
 	const wrapper = mount(OfflineCacheSection, {
-		global: { stubs: { CnSettingsSection: { template: '<section><slot /></section>' } } },
+		global: {
+			stubs: {
+				CnSettingsSection: { template: '<section><slot /></section>' },
+			},
+		},
 	})
 	await flush()
 	return wrapper
@@ -41,31 +45,55 @@ describe('OfflineCacheSection', () => {
 		const wrapper = await mountSection()
 
 		expect(get).toHaveBeenCalledWith(URL)
-		expect(wrapper.find('[data-testid="offline-cache-enabled"]').element.checked).toBe(true)
-		expect(wrapper.find('[data-testid="offline-edits-enabled"]').element.checked).toBe(false)
-		expect(wrapper.find('[data-testid="offline-edits-enabled"]').element.disabled).toBe(false)
+		expect(
+			wrapper.find('[data-testid="offline-cache-enabled"]').element.checked,
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="offline-edits-enabled"]').element.checked,
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="offline-edits-enabled"]').element.disabled,
+		).toBe(false)
 	})
 
-	it.each([[false], ['0']])('reads caching as off when stored as %j, and locks offline edits', async (stored) => {
+	it.each([[false], ['0']])(
+		'reads caching as off when stored as %j, and locks offline edits',
+		async (stored) => {
+			vi.spyOn(axios, 'get').mockResolvedValue({
+				data: { offline_cache_enabled: stored, offline_edits_enabled: true },
+			})
+			const wrapper = await mountSection()
+
+			expect(
+				wrapper.find('[data-testid="offline-cache-enabled"]').element
+					.checked,
+			).toBe(false)
+			expect(
+				wrapper.find('[data-testid="offline-edits-enabled"]').element
+					.checked,
+			).toBe(true)
+			expect(
+				wrapper.find('[data-testid="offline-edits-enabled"]').element
+					.disabled,
+			).toBe(true)
+		},
+	)
+
+	it('reads offline edits as on only when stored as true', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
-			data: { offline_cache_enabled: stored, offline_edits_enabled: true },
+			data: { offline_edits_enabled: 'true' },
 		})
 		const wrapper = await mountSection()
 
-		expect(wrapper.find('[data-testid="offline-cache-enabled"]').element.checked).toBe(false)
-		expect(wrapper.find('[data-testid="offline-edits-enabled"]').element.checked).toBe(true)
-		expect(wrapper.find('[data-testid="offline-edits-enabled"]').element.disabled).toBe(true)
-	})
-
-	it('reads offline edits as on only when stored as true', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { offline_edits_enabled: 'true' } })
-		const wrapper = await mountSection()
-
-		expect(wrapper.find('[data-testid="offline-edits-enabled"]').element.checked).toBe(false)
+		expect(
+			wrapper.find('[data-testid="offline-edits-enabled"]').element.checked,
+		).toBe(false)
 	})
 
 	it('writes the caching switch back when it changes', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { offline_cache_enabled: true } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { offline_cache_enabled: true },
+		})
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 		const wrapper = await mountSection()
 
@@ -74,7 +102,9 @@ describe('OfflineCacheSection', () => {
 
 		expect(put).toHaveBeenCalledTimes(1)
 		expect(put).toHaveBeenCalledWith(URL, { offline_cache_enabled: false })
-		expect(wrapper.find('[data-testid="offline-edits-enabled"]').element.disabled).toBe(true)
+		expect(
+			wrapper.find('[data-testid="offline-edits-enabled"]').element.disabled,
+		).toBe(true)
 	})
 
 	it('keeps caching on when the read fails', async () => {
@@ -82,8 +112,15 @@ describe('OfflineCacheSection', () => {
 		vi.spyOn(axios, 'get').mockRejectedValue(new Error('offline'))
 		const wrapper = await mountSection()
 
-		expect(wrapper.find('[data-testid="offline-cache-enabled"]').element.checked).toBe(true)
-		expect(wrapper.find('[data-testid="offline-edits-enabled"]').element.checked).toBe(false)
-		expect(warn).toHaveBeenCalledWith('Keepiq: failed to load offline-cache switch', expect.any(Error))
+		expect(
+			wrapper.find('[data-testid="offline-cache-enabled"]').element.checked,
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="offline-edits-enabled"]').element.checked,
+		).toBe(false)
+		expect(warn).toHaveBeenCalledWith(
+			'Keepiq: failed to load offline-cache switch',
+			expect.any(Error),
+		)
 	})
 })

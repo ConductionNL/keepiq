@@ -48,7 +48,11 @@ const stubs = {
 
 const SHARES = [
 	{ id: 'fs-1', recipientCloudId: BOB, status: 'active' },
-	{ id: 'fs-2', recipientCloudId: 'carol@cloud.partner.example', status: 'suspended' },
+	{
+		id: 'fs-2',
+		recipientCloudId: 'carol@cloud.partner.example',
+		status: 'suspended',
+	},
 	{ id: 'fs-3', recipientCloudId: 'dan@cloud.partner.example', status: 'failed' },
 	{ id: 'fs-4', recipientCloudId: 'eve@cloud.partner.example', status: 'revoked' },
 	{ id: 'fs-5', recipientCloudId: 'fay@cloud.partner.example', status: 'pending' },
@@ -86,7 +90,9 @@ async function checkBob(wrapper) {
 beforeEach(() => {
 	setActivePinia(createPinia())
 	vi.restoreAllMocks()
-	get = vi.spyOn(axios, 'get').mockResolvedValue({ data: SHARES.map((s) => ({ ...s })) })
+	get = vi
+		.spyOn(axios, 'get')
+		.mockResolvedValue({ data: SHARES.map((s) => ({ ...s })) })
 	store = useFederatedShareStore()
 	vi.spyOn(store, 'lookup').mockResolvedValue({ ...RECIPIENT })
 })
@@ -95,8 +101,12 @@ describe('FederatedShareForm share list', () => {
 	it('lists each share with its status in words and revoke where it still applies', async () => {
 		const wrapper = await mountForm()
 
-		expect(get).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/src/federated-shares')
-		const states = wrapper.findAll('[data-testid="federated-share-state"]').map((s) => s.text())
+		expect(get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/secrets/src/federated-shares',
+		)
+		const states = wrapper
+			.findAll('[data-testid="federated-share-state"]')
+			.map((s) => s.text())
 		expect(states).toEqual([
 			'Shared',
 			'Stopped: their organisation could not be reached, or their certificate or the partnership changed. Revoke it or share again.',
@@ -105,9 +115,15 @@ describe('FederatedShareForm share list', () => {
 			'pending',
 		])
 		expect(
-			wrapper.find('[data-testid="federated-share-row-fs-4"] [data-testid="federated-share-revoke"]').exists(),
+			wrapper
+				.find(
+					'[data-testid="federated-share-row-fs-4"] [data-testid="federated-share-revoke"]',
+				)
+				.exists(),
 		).toBe(false)
-		expect(wrapper.findAll('[data-testid="federated-share-revoke"]')).toHaveLength(4)
+		expect(
+			wrapper.findAll('[data-testid="federated-share-revoke"]'),
+		).toHaveLength(4)
 	})
 
 	it('revokes a share and drops its row', async () => {
@@ -115,13 +131,19 @@ describe('FederatedShareForm share list', () => {
 		const wrapper = await mountForm()
 
 		await wrapper
-			.find('[data-testid="federated-share-row-fs-2"] [data-testid="federated-share-revoke"]')
+			.find(
+				'[data-testid="federated-share-row-fs-2"] [data-testid="federated-share-revoke"]',
+			)
 			.trigger('click')
 		await flushPromises()
 
 		expect(del).toHaveBeenCalledWith('/apps/keepiq/api/v1/federated-shares/fs-2')
-		expect(wrapper.find('[data-testid="federated-share-row-fs-2"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="federated-share-error"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="federated-share-row-fs-2"]').exists(),
+		).toBe(false)
+		expect(wrapper.find('[data-testid="federated-share-error"]').exists()).toBe(
+			false,
+		)
 		expect(wrapper.vm.busy).toBe(false)
 	})
 
@@ -132,14 +154,18 @@ describe('FederatedShareForm share list', () => {
 		const wrapper = await mountForm()
 
 		await wrapper
-			.find('[data-testid="federated-share-row-fs-1"] [data-testid="federated-share-revoke"]')
+			.find(
+				'[data-testid="federated-share-row-fs-1"] [data-testid="federated-share-revoke"]',
+			)
 			.trigger('click')
 		await flushPromises()
 
 		expect(wrapper.find('[data-testid="federated-share-error"]').text()).toBe(
 			'The other organisation did not answer. Try again later.',
 		)
-		expect(wrapper.find('[data-testid="federated-share-row-fs-1"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="federated-share-row-fs-1"]').exists(),
+		).toBe(true)
 		expect(wrapper.vm.busy).toBe(false)
 	})
 
@@ -147,22 +173,30 @@ describe('FederatedShareForm share list', () => {
 		get.mockRejectedValue(new Error('500'))
 		const wrapper = await mountForm()
 
-		expect(wrapper.find('[data-testid="federated-share-list"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="federated-share-check"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="federated-share-list"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.find('[data-testid="federated-share-check"]').exists()).toBe(
+			true,
+		)
 	})
 })
 
 describe('FederatedShareForm sharing', () => {
 	it('shares with the verified recipient, emits the row, clears the form and reloads the list', async () => {
 		const secret = { name: 'Portal', key: 'pw' }
-		const fetchSecret = vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue(secret)
+		const fetchSecret = vi
+			.spyOn(useSecretStore(), 'fetchSecret')
+			.mockResolvedValue(secret)
 		const row = { id: 'fs-9', recipientCloudId: BOB, status: 'active' }
 		const share = vi.spyOn(store, 'share').mockResolvedValue(row)
 		const wrapper = await mountForm()
 		await checkBob(wrapper)
 
 		expect(store.lookup).toHaveBeenCalledWith(BOB)
-		expect(wrapper.find('[data-testid="federated-share-fingerprint"]').text()).toBe('AA:BB')
+		expect(
+			wrapper.find('[data-testid="federated-share-fingerprint"]').text(),
+		).toBe('AA:BB')
 
 		await wrapper.find('[data-testid="federated-share-submit"]').trigger('click')
 		await flushPromises()
@@ -172,8 +206,12 @@ describe('FederatedShareForm sharing', () => {
 		expect(wrapper.emitted('shared')).toEqual([[row]])
 		expect(get).toHaveBeenCalledTimes(2)
 		expect(wrapper.vm.cloudId).toBe('')
-		expect(wrapper.find('[data-testid="federated-share-verified"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="federated-share-done"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="federated-share-verified"]').exists(),
+		).toBe(false)
+		expect(wrapper.find('[data-testid="federated-share-done"]').exists()).toBe(
+			true,
+		)
 		expect(wrapper.vm.sharedWith).toBe(BOB)
 	})
 
@@ -191,29 +229,47 @@ describe('FederatedShareForm sharing', () => {
 	it('drops the verified recipient once the typed account changes', async () => {
 		const wrapper = await mountForm()
 		await checkBob(wrapper)
-		expect(wrapper.find('[data-testid="federated-share-verified"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="federated-share-verified"]').exists(),
+		).toBe(true)
 
-		await wrapper.find('[data-testid="federated-share-cloud-id"]').setValue('carol@cloud.partner.example')
+		await wrapper
+			.find('[data-testid="federated-share-cloud-id"]')
+			.setValue('carol@cloud.partner.example')
 
-		expect(wrapper.find('[data-testid="federated-share-verified"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="federated-share-verified"]').exists(),
+		).toBe(false)
 	})
 
 	it.each([
-		['unknown_recipient', 'No one with that account can receive secrets from you.'],
-		['delivery_failed', 'The other organisation did not answer. Try again later.'],
+		[
+			'unknown_recipient',
+			'No one with that account can receive secrets from you.',
+		],
+		[
+			'delivery_failed',
+			'The other organisation did not answer. Try again later.',
+		],
 		['already_shared', 'This secret is already shared with that account.'],
 		['no_such_code', 'Something went wrong. Try again.'],
 	])('says what the %s refusal of a share means', async (message, shown) => {
 		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ key: 'pw' })
-		vi.spyOn(store, 'share').mockRejectedValue({ response: { data: { message } } })
+		vi.spyOn(store, 'share').mockRejectedValue({
+			response: { data: { message } },
+		})
 		const wrapper = await mountForm()
 		await checkBob(wrapper)
 
 		await wrapper.find('[data-testid="federated-share-submit"]').trigger('click')
 		await flushPromises()
 
-		expect(wrapper.find('[data-testid="federated-share-error"]').text()).toBe(shown)
+		expect(wrapper.find('[data-testid="federated-share-error"]').text()).toBe(
+			shown,
+		)
 		expect(wrapper.emitted('shared')).toBeUndefined()
-		expect(wrapper.find('[data-testid="federated-share-verified"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="federated-share-verified"]').exists(),
+		).toBe(true)
 	})
 })

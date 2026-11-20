@@ -80,12 +80,24 @@ describe('OrgPasswordPolicySection: load and save', () => {
 		})
 		const wrapper = await mountSection()
 
-		expect(wrapper.find('[data-testid="policy-enabled"]').element.checked).toBe(true)
-		expect(wrapper.find('[data-testid="generator-min-length"]').element.value).toBe('20')
-		expect(wrapper.find('[data-testid="generator_require_digit"]').element.checked).toBe(true)
-		expect(wrapper.find('[data-testid="generator_require_upper"]').element.checked).toBe(false)
-		expect(wrapper.find('[data-testid="min-zxcvbn-score"]').element.value).toBe('3')
-		expect(wrapper.find('[data-testid="block-on-hibp"]').element.checked).toBe(true)
+		expect(wrapper.find('[data-testid="policy-enabled"]').element.checked).toBe(
+			true,
+		)
+		expect(
+			wrapper.find('[data-testid="generator-min-length"]').element.value,
+		).toBe('20')
+		expect(
+			wrapper.find('[data-testid="generator_require_digit"]').element.checked,
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="generator_require_upper"]').element.checked,
+		).toBe(false)
+		expect(wrapper.find('[data-testid="min-zxcvbn-score"]').element.value).toBe(
+			'3',
+		)
+		expect(wrapper.find('[data-testid="block-on-hibp"]').element.checked).toBe(
+			true,
+		)
 
 		const select = wrapper.findComponent({ name: 'NcSelect' })
 		expect(select.props('modelValue')).toEqual(['card'])
@@ -97,7 +109,9 @@ describe('OrgPasswordPolicySection: load and save', () => {
 		mockGet({ policy_exempt_types: 'card' })
 		const wrapper = await mountSection()
 
-		expect(wrapper.findComponent({ name: 'NcSelect' }).props('modelValue')).toEqual([])
+		expect(
+			wrapper.findComponent({ name: 'NcSelect' }).props('modelValue'),
+		).toEqual([])
 	})
 
 	it('does not refetch the types when the store already has them', async () => {
@@ -108,7 +122,9 @@ describe('OrgPasswordPolicySection: load and save', () => {
 
 		expect(get).toHaveBeenCalledTimes(1)
 		expect(get.mock.calls[0][0]).toBe(URL)
-		expect(wrapper.findComponent({ name: 'NcSelect' }).props('options')).toEqual(['ssh'])
+		expect(wrapper.findComponent({ name: 'NcSelect' }).props('options')).toEqual(
+			['ssh'],
+		)
 	})
 
 	it('saves the whole policy with the exempt types when a control changes', async () => {
@@ -143,14 +159,21 @@ describe('OrgPasswordPolicySection: load and save', () => {
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 		const wrapper = await mountSection()
 
-		wrapper.findComponent({ name: 'NcSelect' }).vm.$emit('update:modelValue', ['login'])
+		wrapper
+			.findComponent({ name: 'NcSelect' })
+			.vm.$emit('update:modelValue', ['login'])
 		await flushPromises()
 
-		expect(put).toHaveBeenCalledWith(URL, expect.objectContaining({ policy_exempt_types: ['login'] }))
+		expect(put).toHaveBeenCalledWith(
+			URL,
+			expect.objectContaining({ policy_exempt_types: ['login'] }),
+		)
 	})
 
 	it('shows the server message when loading fails', async () => {
-		vi.spyOn(axios, 'get').mockRejectedValue({ response: { data: { message: 'Not allowed' } } })
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { data: { message: 'Not allowed' } },
+		})
 		const wrapper = await mountSection()
 
 		expect(wrapper.find('.note').text()).toBe('Not allowed')
@@ -158,8 +181,11 @@ describe('OrgPasswordPolicySection: load and save', () => {
 
 	it('shows the server message when saving fails, and clears it on the next save', async () => {
 		mockGet({})
-		const put = vi.spyOn(axios, 'put')
-			.mockRejectedValueOnce({ response: { data: { message: 'Length below 8' } } })
+		const put = vi
+			.spyOn(axios, 'put')
+			.mockRejectedValueOnce({
+				response: { data: { message: 'Length below 8' } },
+			})
 			.mockResolvedValueOnce({ data: {} })
 		const wrapper = await mountSection()
 

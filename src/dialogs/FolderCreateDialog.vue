@@ -165,11 +165,12 @@ export default {
 		 */
 		async submit() {
 			await this.saveFolder(
-				() => useFolderStore().createFolder(
-					this.name.trim(),
-					this.selectedParentId,
-					this.customization(),
-				),
+				() =>
+					useFolderStore().createFolder(
+						this.name.trim(),
+						this.selectedParentId,
+						this.customization(),
+					),
 				t('keepiq', 'Failed to create folder'),
 			)
 		},

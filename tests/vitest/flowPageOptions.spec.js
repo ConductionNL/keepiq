@@ -18,8 +18,11 @@ describe('flow page options', () => {
 		expect(flowPages.length).toBeGreaterThan(0)
 	})
 
-	it.each(flowPages.map((page) => [page.id, page]))('%s offers the list view and the payload test', (_id, page) => {
-		expect(page.config.listMode).toBe(true)
-		expect(page.config.testPayload).toBe(true)
-	})
+	it.each(flowPages.map((page) => [page.id, page]))(
+		'%s offers the list view and the payload test',
+		(_id, page) => {
+			expect(page.config.listMode).toBe(true)
+			expect(page.config.testPayload).toBe(true)
+		},
+	)
 })
