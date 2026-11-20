@@ -43,7 +43,7 @@
 				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
-			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+			<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
 			<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
 
@@ -53,14 +53,21 @@
 				mode="replace"
 				:disabled="saving" />
 
-			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
+			<NcTextField
+				v-if="showUrl"
+				v-model="url"
+				:label="t('keepiq', 'URL (optional)')" />
 
-			<AdditionalUrlsField v-model="additionalUrls" :disabled="saving" />
+			<AdditionalUrlsField
+				v-if="showUrl"
+				v-model="additionalUrls"
+				:disabled="saving" />
 
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
 				:fields="typedFields"
 				:values="typedValues"
+				:schemas="storedSchemas"
 				:missing="typedMissing"
 				:disabled="saving"
 				@update:values="onTypedValues" />
@@ -68,6 +75,7 @@
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving"
+				:reservedNames="reservedMemberNames"
 				@update:members="additionalFields = $event" />
 
 			<SecretTagsField
@@ -76,13 +84,10 @@
 				@update:modelValue="tags = $event" />
 
 			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
-			<NcCheckboxRadioSwitch
+			<RepromptSwitch
 				:modelValue="reprompt"
 				:disabled="saving"
-				data-testid="secret-reprompt"
-				@update:modelValue="reprompt = $event">
-				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
-			</NcCheckboxRadioSwitch>
+				@update:modelValue="reprompt = $event" />
 
 			<!-- The shared destination picker (no "Vault root" option, by
 			     design): a secret always lives in a vault, so creating one
@@ -139,7 +144,6 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
-	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
@@ -152,6 +156,7 @@ import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
+import RepromptSwitch from '../components/RepromptSwitch.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -176,7 +181,13 @@ import {
 	authenticatorKeyError,
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
-import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import {
+	membersToObject,
+	membersValid,
+	objectToMembers,
+} from '../utils/additionalFields.js'
+import { leavesOut } from '../utils/builtinTypeFields.js'
+import { schemasOf, valuesFit } from '../utils/fieldSchema.js'
 import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
 import { mergeTypedValues, splitTypedValues } from '../utils/typedFields.js'
 import { valueFieldsSupported } from '../utils/valueFields.js'
@@ -223,13 +234,13 @@ export default {
 	name: 'SecretCreateDialog',
 
 	components: {
-		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
 		AuthenticatorKeyField,
 		TypedFieldsForm,
 		DestinationSelect,
 		PolicyBlockedNote,
+		RepromptSwitch,
 		SecretPayloadFields,
 		SecretTagsField,
 		NcButton,
@@ -275,7 +286,10 @@ export default {
 			typeId: this.prefill?.typeId || null,
 			url: this.prefill?.url || '',
 			/** The extra website addresses (vault-website-addresses). */
-			additionalUrls: Array.isArray(this.prefill?.additionalUrls) ? [...this.prefill.additionalUrls] : [],
+			additionalUrls: Array.isArray(this.prefill?.additionalUrls)
+				? [...this.prefill.additionalUrls]
+				: [],
+
 			login: this.prefill?.login || '',
 			/** The authenticator key being entered on a login. */
 			totpInput: '',
@@ -296,6 +310,17 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The schemas stored on the secret being cloned, none for a new one, so a type's own
+		 * field they hide is masked in the form.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		storedSchemas() {
+			return schemasOf(this.prefill?.additionalFields)
+		},
+
 		/**
 		 * @spec exclude Store-state passthrough: reads the session lock flag for display gating.
 		 */
@@ -357,6 +382,58 @@ export default {
 		},
 
 		/**
+		 * The value is required here: Create stays disabled without it, so
+		 * the value form marks it as the type's own required fields are.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
+		 */
+		valueRequired() {
+			return true
+		},
+
+		/**
+		 * Whether the chosen type uses the login field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showLogin() {
+			return !leavesOut(this.selectedTypeName, 'login')
+		},
+
+		/**
+		 * Whether the chosen type uses the URL field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showUrl() {
+			return !leavesOut(this.selectedTypeName, 'url')
+		},
+
+		/**
+		 * The login to save: none when the type leaves the field out, so one
+		 * typed before switching type is not saved unseen.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		loginToSave() {
+			return this.showLogin ? this.login || '' : ''
+		},
+
+		/**
+		 * The URL to save: none when the type leaves the field out.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		urlToSave() {
+			return this.showUrl ? this.url || null : null
+		},
+
+		/**
 		 * Whether the team folder ownership policy covers this user and type.
 		 *
 		 * @return {boolean}
@@ -391,21 +468,48 @@ export default {
 		/**
 		 * Whether Create may run: not busy, named, a folder chosen (secrets
 		 * cannot live at the vault root), and the type's own required value
-		 * present and policy-compliant.
+		 * present and policy-compliant, and every field value fitting its schema.
 		 *
 		 * @return {boolean}
-		 * @spec exclude Form-enablement guard; no domain behaviour.
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		canSubmit() {
+			return this.formReady && this.valueReady
+		},
+
+		/**
+		 * Whether the form around the value is ready: not busy, named, every
+		 * field value fitting its schema, a folder chosen and no code error.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 */
+		formReady() {
 			if (this.saving || this.locked || this.name.trim() === '') {
+				return false
+			}
+			// A value that does not fit its field's schema is never stored, nor
+			// a field named like one of the type's own or with a schema the
+			// server refuses.
+			if (
+				!valuesFit(this.additionalFields, this.typedFields, this.typedValues)
+				|| !membersValid(this.additionalFields, this.reservedMemberNames)
+			) {
 				return false
 			}
 			if (!this.selectedFolderId && !this.contributeTo) {
 				return false
 			}
-			if (this.totpError !== '') {
-				return false
-			}
+			return this.totpError === ''
+		},
+
+		/**
+		 * Whether the type's own required value is present and policy-compliant.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 */
+		valueReady() {
 			if (this.isCard) {
 				return this.card.number !== ''
 			}
@@ -464,16 +568,23 @@ export default {
 			this.value = source.key || ''
 			const split = splitTypedValues(source.additionalFields, this.typedFields)
 			this.typedValues = split.values
-			this.additionalFields = objectToMembers(split.rest)
+			// An SSH key's public key and fingerprint have their own fields.
+			this.additionalFields = objectToMembers(this.takeSshMembers(split.rest))
 			const payload = parsePayload(source.key || '')
 			if (payload !== null && this.isCard) {
 				for (const field of CARD_FIELDS) {
-					this.card[field] = payload[field] === null || payload[field] === undefined ? '' : String(payload[field])
+					this.card[field] =
+						payload[field] === null || payload[field] === undefined
+							? ''
+							: String(payload[field])
 				}
 			}
 			if (payload !== null && this.isIdentity) {
 				for (const field of IDENTITY_FIELDS) {
-					this.identity[field] = payload[field] === null || payload[field] === undefined ? '' : String(payload[field])
+					this.identity[field] =
+						payload[field] === null || payload[field] === undefined
+							? ''
+							: String(payload[field])
 				}
 			}
 		},
@@ -517,10 +628,12 @@ export default {
 		 */
 		additionalBlob(ssh = {}) {
 			return {
+				// A clone keeps the schemas stored for its source's type fields.
 				...mergeTypedValues(
 					membersToObject(this.additionalFields),
 					this.typedFields,
 					this.typedValues,
+					this.prefill?.additionalFields ?? null,
 				),
 
 				...ssh,
@@ -535,13 +648,17 @@ export default {
 		 * @param {object} [ssh] The SSH key members (sshKeyToSave).
 		 * @return {object} The value part of the create body.
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valueFields(ssh = {}) {
 			const blob = this.additionalBlob(ssh)
 			return {
-				url: this.url || null,
-				...(this.additionalUrls.length > 0 ? { additionalUrls: [...this.additionalUrls] } : {}),
-				login: this.login || '',
+				url: this.urlToSave,
+				...(this.showUrl && this.additionalUrls.length > 0
+					? { additionalUrls: [...this.additionalUrls] }
+					: {}),
+
+				login: this.loginToSave,
 				key: this.effectiveValue,
 				// Only when there ARE members: the store encrypts whatever it is
 				// handed, so passing {} unconditionally would write an empty

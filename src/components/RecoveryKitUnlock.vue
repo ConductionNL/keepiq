@@ -22,7 +22,14 @@
 		</NcButton>
 
 		<template v-else-if="step === 'code'">
-			<p>{{ t('keepiq', 'Enter the code from your recovery kit and choose a new master password.') }}</p>
+			<p>
+				{{
+					t(
+						'keepiq',
+						'Enter the code from your recovery kit and choose a new master password.',
+					)
+				}}
+			</p>
 			<NcTextField
 				v-model="code"
 				:label="t('keepiq', 'Recovery code')"
@@ -54,7 +61,12 @@
 
 		<template v-else-if="step === 'offer'">
 			<NcNoteCard type="success">
-				{{ t('keepiq', 'Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.') }}
+				{{
+					t(
+						'keepiq',
+						'Your vault is open and your recovery kit is used up. Make a new kit now, with your new master password.',
+					)
+				}}
 			</NcNoteCard>
 			<RecoveryKitPanel />
 			<NcButton
@@ -82,7 +94,14 @@ import { useSessionStore } from '../store/modules/session.js'
 
 export default {
 	name: 'RecoveryKitUnlock',
-	components: { NcButton, NcNoteCard, NcPasswordField, NcTextField, RecoveryKitPanel },
+	components: {
+		NcButton,
+		NcNoteCard,
+		NcPasswordField,
+		NcTextField,
+		RecoveryKitPanel,
+	},
+
 	props: {
 		/** The organisation's minimum master password length. */
 		minLength: {
@@ -111,10 +130,12 @@ export default {
 		 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
 		 */
 		canRecover() {
-			return !this.busy
+			return (
+				!this.busy
 				&& normaliseRecoveryCode(this.code) !== ''
 				&& this.newPassword.length >= this.minLength
 				&& this.newPassword === this.repeatPassword
+			)
 		},
 	},
 
@@ -148,9 +169,10 @@ export default {
 				await useSessionStore().unlock(this.newPassword)
 				this.step = 'offer'
 			} catch (e) {
-				this.error = e?.response?.status === 429
-					? t('keepiq', 'Too many attempts. Try again in an hour.')
-					: t('keepiq', 'This recovery code does not open your vault.')
+				this.error =
+					e?.response?.status === 429
+						? t('keepiq', 'Too many attempts. Try again in an hour.')
+						: t('keepiq', 'This recovery code does not open your vault.')
 			} finally {
 				this.code = ''
 				this.newPassword = ''

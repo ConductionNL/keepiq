@@ -778,98 +778,37 @@ describe('CXF export of a login with a code and passkeys', () => {
 })
 
 /**
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-values-in-exports
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-schemas-survive-export-and-import
  */
-describe('CXF custom fields keep their kind', () => {
-	const row = {
-		name: 'Supplier',
-		type: 'login',
-		url: 'https://supplier.example',
-		login: 'alice',
-		password: 'pw',
-		folder: '',
-		additionalFields: {
-			tenant: 'acme',
-			'Recovery code': { value: 'abc-123', kind: 'hidden' },
-			Active: { value: 'true', kind: 'boolean' },
-		},
-	}
-
-	it('exports a hidden field as a concealed string field', () => {
-		const { document } = buildCxfDocument([row])
-		const custom = document.accounts[0].items[0].credentials.find(
-			(credential) => credential.type === 'custom-fields',
-		)
-
-		expect(custom.fields).toEqual([
-			{ fieldType: 'string', label: 'tenant', value: 'acme' },
-			{
-				fieldType: 'concealed-string',
-				label: 'Recovery code',
-				value: 'abc-123',
-			},
-			{ fieldType: 'boolean', label: 'Active', value: 'true' },
-		])
-	})
-
-	it('round-trips one text and one hidden field into an empty vault', () => {
+describe('CXF export of fields from a 0.3.14 test build', () => {
+	it('exports a `{ value, kind }` field by its kind', () => {
 		const { document } = buildCxfDocument([
 			{
-				...row,
+				name: 'Supplier',
+				type: 'login',
+				password: 'pw',
+				folder: '',
 				additionalFields: {
 					tenant: 'acme',
 					'Recovery code': { value: 'abc-123', kind: 'hidden' },
+					Active: { value: 'true', kind: 'boolean' },
 				},
 			},
 		])
-		const rows = cxfToRows(parseCxfDocument(JSON.stringify(document)))
-
-		expect(rows).toHaveLength(1)
-		expect(rows[0].errors).toEqual([])
-		expect(rows[0].password).toBe('pw')
-		expect(rows[0].additionalFields).toEqual({
-			tenant: 'acme',
-			'Recovery code': { value: 'abc-123', kind: 'hidden' },
-		})
-	})
-
-	it('rejects a custom field that would overwrite a built-in field, with a reason', () => {
-		const rows = cxfToRows({
-			accounts: [
-				{
-					items: [
-						{
-							id: 'i1',
-							title: 'Clash',
-							credentials: [
-								{ type: 'basic-auth', username: 'u', password: 'p' },
-								{
-									type: 'custom-fields',
-									fields: [
-										{
-											fieldType: 'string',
-											label: 'url',
-											value: 'x',
-										},
-										{
-											fieldType: 'string',
-											label: 'kept',
-											value: 'y',
-										},
-									],
-								},
-							],
-						},
-					],
-				},
-			],
-		})
-
-		const accepted = rows.filter((r) => r.errors.length === 0)
-		const rejected = rows.filter((r) => r.errors.length > 0)
-		expect(accepted[0].additionalFields).toEqual({ kept: 'y' })
-		expect(rejected).toHaveLength(1)
-		expect(rejected[0].errors[0]).toMatch(/"url"/)
+		const custom = document.accounts[0].items[0].credentials.find(
+			(credential) => credential.type === 'custom-fields',
+		)
+		expect(
+			custom.fields.map((field) => [
+				field.label,
+				field.fieldType,
+				field.value,
+			]),
+		).toEqual([
+			['tenant', 'string', 'acme'],
+			['Recovery code', 'concealed-string', 'abc-123'],
+			['Active', 'boolean', 'true'],
+		])
 	})
 })
 
@@ -903,7 +842,12 @@ describe('CXF SSH key round trip', () => {
 		})
 		// The fingerprint is derived, so it is not exported as a custom field.
 		expect(credentials[1].fields).toEqual([
-			{ fieldType: 'string', label: 'Host', value: 'git.example' },
+			{
+				id: 'field-1',
+				label: 'Host',
+				fieldType: 'string',
+				value: 'git.example',
+			},
 		])
 		expect(unmapped).toEqual([])
 

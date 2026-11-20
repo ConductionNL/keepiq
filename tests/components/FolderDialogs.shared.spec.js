@@ -18,7 +18,13 @@ import FolderEditDialog from '../../src/dialogs/FolderEditDialog.vue'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
-const NESTED = { id: 'f-2', name: 'Docs', parentId: 'v-1', customIcon: 'x', customColor: 'y' }
+const NESTED = {
+	id: 'f-2',
+	name: 'Docs',
+	parentId: 'v-1',
+	customIcon: 'x',
+	customColor: 'y',
+}
 
 describe('folder dialogs, shared behaviour', () => {
 	beforeEach(() => {
@@ -31,7 +37,9 @@ describe('folder dialogs, shared behaviour', () => {
 		const created = { id: 'f-9', name: 'New', parentId: 'v-1' }
 		vi.spyOn(axios, 'post').mockResolvedValue({ data: created })
 		const onSaved = vi.fn()
-		const wrapper = mount(FolderCreateDialog, { propsData: { parentId: 'v-1', onSaved } })
+		const wrapper = mount(FolderCreateDialog, {
+			propsData: { parentId: 'v-1', onSaved },
+		})
 		await flush()
 
 		wrapper.vm.name = '  New  '
@@ -74,7 +82,9 @@ describe('folder dialogs, shared behaviour', () => {
 	})
 
 	it('edit: a nested rename sends only the changed name, none when unchanged', async () => {
-		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: { ...NESTED, name: 'Papers' } })
+		const put = vi
+			.spyOn(axios, 'put')
+			.mockResolvedValue({ data: { ...NESTED, name: 'Papers' } })
 		const wrapper = mount(FolderEditDialog, { propsData: { folder: NESTED } })
 
 		wrapper.vm.name = ' Papers '
@@ -112,7 +122,9 @@ describe('folder dialogs, shared behaviour', () => {
 		await create.vm.submit()
 		expect(post).not.toHaveBeenCalled()
 
-		const edit = mount(FolderEditDialog, { propsData: { folder: { ...NESTED, name: '' } } })
+		const edit = mount(FolderEditDialog, {
+			propsData: { folder: { ...NESTED, name: '' } },
+		})
 		expect(edit.vm.canSubmit).toBe(false)
 		await edit.vm.submit()
 		expect(put).not.toHaveBeenCalled()

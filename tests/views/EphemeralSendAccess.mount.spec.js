@@ -58,7 +58,9 @@ describe('EphemeralSendAccess — mounted peek and copy', () => {
 		expect(get).toHaveBeenCalledWith('/apps/keepiq/api/v1/public/sends/tok%2F1')
 		expect(wrapper.vm.needsPassword).toBe(true)
 		expect(wrapper.vm.gone).toBe(false)
-		expect(wrapper.find('[data-testid="send-access-password"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="send-access-password"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('does not prompt when hasPassword is anything but true', async () => {
@@ -66,7 +68,9 @@ describe('EphemeralSendAccess — mounted peek and copy', () => {
 		const wrapper = await mountPage()
 
 		expect(wrapper.vm.needsPassword).toBe(false)
-		expect(wrapper.find('[data-testid="send-access-password"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="send-access-password"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('peeks an empty token when the route carries none', async () => {

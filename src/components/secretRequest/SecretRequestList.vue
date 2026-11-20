@@ -409,9 +409,7 @@ export default {
 				locked: t('keepiq', 'Locked'),
 				expired: t('keepiq', 'Expired'),
 			}
-			return Object.hasOwn(labels, status)
-				? labels[status]
-				: status
+			return Object.hasOwn(labels, status) ? labels[status] : status
 		},
 
 		/**

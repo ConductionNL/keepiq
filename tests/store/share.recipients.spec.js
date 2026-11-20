@@ -236,7 +236,10 @@ describe('useShareStore — recipient candidates', () => {
 	})
 
 	it('names each user once, offers only the shareable ones, and keeps the probe answer order', async () => {
-		mockSharees({ exact: [['bob', 'Bob']], users: ['bob', ['carol', 'Carol'], 'dave'] })
+		mockSharees({
+			exact: [['bob', 'Bob']],
+			users: ['bob', ['carol', 'Carol'], 'dave'],
+		})
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({
 			data: {
 				recipients: [

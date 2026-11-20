@@ -86,7 +86,6 @@ export default {
 	mixins: [bulkRunDialog],
 
 	props: {
-
 		/** One of archive, unarchive, restore, purge. */
 		action: {
 			type: String,
@@ -134,7 +133,11 @@ export default {
 		 */
 		title() {
 			if (this.finished) {
-				return this.t('keepiq', 'Done for {ok} of {total} secrets', this.reportCounts)
+				return this.t(
+					'keepiq',
+					'Done for {ok} of {total} secrets',
+					this.reportCounts,
+				)
 			}
 			return this.command
 		},

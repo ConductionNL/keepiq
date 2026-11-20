@@ -2,12 +2,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { buildRecoveryEnvelope } from '../../crypto/emergencyEnvelope.js'
-import {
-	decryptPrivateKey,
-	encryptPrivateKey,
-	generateKeyPair,
-	importPrivateKey,
-} from '../../crypto/index.js'
+import { decryptPrivateKey, encryptPrivateKey } from '../../crypto/index.js'
 import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../crypto/keyProof.js'
 import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
@@ -526,7 +521,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			await bindSessionToNewSuite(rotation, session)
 			await evictOfflineSnapshot()
 
-			const outcome = await this.runMigration(await rotationMigration(rotation))
+			const outcome = await this.runMigration(
+				await rotationMigration(rotation),
+			)
 
 			// Migrate emergency-access recovery envelopes BEFORE completion. The
 			// completion sweep (SuiteMigrationCompletedEvent) invalidates every
@@ -1015,7 +1012,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					{ params: { limit: 1 } },
 				)
 				this.migrationRemaining = data.totalRemaining ?? 0
-			} catch (e) {
+			} catch {
 				// A banner that cannot count is still worth showing, so leave the
 				// count null rather than hiding the migration entirely.
 				this.migrationRemaining = null
@@ -1065,7 +1062,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			this.migrationFailures = []
 			this.migrationDroppedVersions = 0
-			const outcome = await this.runMigration(resumedMigration(resume, session))
+			const outcome = await this.runMigration(
+				resumedMigration(resume, session),
+			)
 
 			// A resumed run finalises without any extra prompt, exactly like the
 			// initiate path: completion's proof is over the OLD key, which resume
@@ -1227,7 +1226,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			try {
 				const { useOfflineStore } = await import('./offline.js')
 				await useOfflineStore().evict()
-			} catch (e) {
+			} catch {
 				// Offline cache absent — nothing to evict.
 			}
 		},

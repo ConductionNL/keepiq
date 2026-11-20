@@ -334,7 +334,7 @@ private fun MoreFields(item: DecryptedItem, onCopy: (String) -> Unit) {
     if (item.additionalFieldsError) Text(stringResource(R.string.detail_fields_error), color = MaterialTheme.colorScheme.error)
     if (item.extraFields.isNotEmpty()) {
         Text(stringResource(R.string.detail_extra_fields), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
-        for ((name, value) in item.extraFields) FieldRow(name, value, onCopy = onCopy)
+        for ((name, value) in item.extraFields) FieldRow(name, value, masked = item.masksExtra(name), onCopy = onCopy)
     }
 }
 

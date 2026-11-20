@@ -35,7 +35,9 @@ describe('MachineLeaseSection fields', () => {
 	})
 
 	it('writes a changed default TTL as a number', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { lease_max_ttl_seconds: 3600 } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { lease_max_ttl_seconds: 3600 },
+		})
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 		const wrapper = await mountSection()
 
@@ -60,7 +62,10 @@ describe('MachineLeaseSection fields', () => {
 		await flushPromises()
 
 		expect(wrapper.vm.renewable).toBe(false)
-		expect(put).toHaveBeenCalledWith(URL, expect.objectContaining({ lease_renewable: false }))
+		expect(put).toHaveBeenCalledWith(
+			URL,
+			expect.objectContaining({ lease_renewable: false }),
+		)
 		expect(wrapper.find('[data-testid="lease-error"]').exists()).toBe(false)
 	})
 })

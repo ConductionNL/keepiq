@@ -443,9 +443,7 @@ function certificateParts(der) {
 	malformedUnless(tbs?.tag === 0x30 && algorithm?.tag === 0x30)
 	// A BIT STRING value starts with its unused-bits count, which a
 	// signature never has.
-	malformedUnless(
-		signature?.tag === 0x03 && !extra && der[signature.start] === 0,
-	)
+	malformedUnless(signature?.tag === 0x03 && !extra && der[signature.start] === 0)
 	return { tbs, algorithm, signature }
 }
 

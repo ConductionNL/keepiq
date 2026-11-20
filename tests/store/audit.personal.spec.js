@@ -19,7 +19,7 @@ describe('useAuditStore personal activity and filters', () => {
 	})
 
 	describe('fetchPersonalActivity', () => {
-		it('stores the session user\'s entries from the personal endpoint', async () => {
+		it("stores the session user's entries from the personal endpoint", async () => {
 			const get = vi.spyOn(axios, 'get').mockResolvedValue({
 				data: { entries: [{ id: 3, eventType: 'secret.read' }] },
 			})
@@ -27,8 +27,12 @@ describe('useAuditStore personal activity and filters', () => {
 
 			await store.fetchPersonalActivity()
 
-			expect(get.mock.calls[0][0]).toMatch(/\/apps\/keepiq\/api\/v1\/audit\/me$/)
-			expect(store.personalEntries).toEqual([{ id: 3, eventType: 'secret.read' }])
+			expect(get.mock.calls[0][0]).toMatch(
+				/\/apps\/keepiq\/api\/v1\/audit\/me$/,
+			)
+			expect(store.personalEntries).toEqual([
+				{ id: 3, eventType: 'secret.read' },
+			])
 			expect(store.loading).toBe(false)
 		})
 

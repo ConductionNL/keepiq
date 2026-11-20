@@ -105,6 +105,9 @@ class AttachmentService implements AttachmentServiceInterface {
 	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy's attachments outside its approved window
 	 *
 	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Container-injected
+	 *   collaborators, not a call signature anyone writes by hand.
 	 */
 	public function __construct(
 		private AttachmentMapper $mapper,

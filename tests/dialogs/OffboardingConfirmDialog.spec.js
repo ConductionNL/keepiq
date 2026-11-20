@@ -25,11 +25,13 @@ const stubs = {
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
+		template:
+			'<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
 	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
@@ -76,9 +78,7 @@ describe('OffboardingConfirmDialog', () => {
 	it('closes through update:open from cancel and from the dialog', async () => {
 		const wrapper = mountDialog()
 
-		const cancel = wrapper
-			.findAll('button')
-			.find((b) => b.text() === 'Cancel')
+		const cancel = wrapper.findAll('button').find((b) => b.text() === 'Cancel')
 		await cancel.trigger('click')
 		wrapper.findComponent({ name: 'NcDialog' }).vm.$emit('update:open', false)
 

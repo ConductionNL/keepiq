@@ -38,7 +38,8 @@ export default {
 		 * @spec exclude Presentation-only urgency marker.
 		 */
 		expiryClass() {
-			const daysLeft = (new Date(this.notAfter).getTime() - Date.now()) / 86400000
+			const daysLeft =
+				(new Date(this.notAfter).getTime() - Date.now()) / 86400000
 			if (daysLeft < 7) {
 				return 'cert-inventory__expiry--critical'
 			}

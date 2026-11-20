@@ -33,6 +33,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\SecretRequestController;
 use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\RequestedFields;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -224,7 +225,7 @@ class SecretRequestControllerDecisionTest extends TestCase {
 			->with(
 				's-1',
 				'suite-1',
-				['password'],
+				new RequestedFields(names: ['password']),
 				false,
 				$this->callback(callback: static fn (?DateTime $at): bool => $at?->format('c') === '2026-12-01T00:00:00+00:00'),
 				'alice'

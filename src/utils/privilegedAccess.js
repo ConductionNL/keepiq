@@ -21,7 +21,7 @@ export function requestState(request, now) {
 	if (request?.status === 'denied') {
 		return 'denied'
 	}
-	if (request?.status !== 'approved' || !request.approvedStart || !request.approvedEnd) {
+	if (!hasApprovedWindow(request)) {
 		return 'pending'
 	}
 	if (now < new Date(request.approvedStart)) {
@@ -32,6 +32,20 @@ export function requestState(request, now) {
 		return 'ended'
 	}
 	return 'active'
+}
+
+/**
+ * Whether a request is approved with both ends of its time window set.
+ *
+ * @param {object} request The request as the API serialises it.
+ * @return {boolean}
+ */
+function hasApprovedWindow(request) {
+	return (
+		request?.status === 'approved'
+		&& Boolean(request.approvedStart)
+		&& Boolean(request.approvedEnd)
+	)
 }
 
 /**

@@ -24,7 +24,9 @@ describe('AdditionalUrlsField syncing', () => {
 	})
 
 	it('replaces its rows when a different list arrives', async () => {
-		const wrapper = mount(AdditionalUrlsField, { props: { modelValue: ['https://a.test'] } })
+		const wrapper = mount(AdditionalUrlsField, {
+			props: { modelValue: ['https://a.test'] },
+		})
 
 		await wrapper.setProps({ modelValue: ['https://b.test', 'https://c.test'] })
 
@@ -33,7 +35,9 @@ describe('AdditionalUrlsField syncing', () => {
 	})
 
 	it('keeps an empty row being typed when the same list is echoed back', async () => {
-		const wrapper = mount(AdditionalUrlsField, { props: { modelValue: ['https://a.test'] } })
+		const wrapper = mount(AdditionalUrlsField, {
+			props: { modelValue: ['https://a.test'] },
+		})
 		await wrapper.find('[data-testid="additional-url-add"]').trigger('click')
 		expect(wrapper.vm.rows).toEqual(['https://a.test', ''])
 

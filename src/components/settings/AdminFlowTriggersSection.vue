@@ -12,10 +12,17 @@
 	<CnSettingsSection
 		v-if="openRegisterEnabled"
 		:name="t('keepiq', 'Flows')"
-		:description="t('keepiq', 'Flows receive who did what and when, never a secret.')"
+		:description="
+			t('keepiq', 'Flows receive who did what and when, never a secret.')
+		"
 		data-testid="flow-triggers">
 		<p class="flow-triggers__intro">
-			{{ t('keepiq', 'Choose which vault events may start a flow. Every group starts switched off.') }}
+			{{
+				t(
+					'keepiq',
+					'Choose which vault events may start a flow. Every group starts switched off.',
+				)
+			}}
 		</p>
 		<ul class="flow-triggers__groups">
 			<li v-for="group in groups" :key="group.key">
@@ -29,7 +36,11 @@
 				</NcCheckboxRadioSwitch>
 			</li>
 		</ul>
-		<p v-if="error" class="flow-triggers__error" role="alert" data-testid="flow-triggers-error">
+		<p
+			v-if="error"
+			class="flow-triggers__error"
+			role="alert"
+			data-testid="flow-triggers-error">
 			{{ error }}
 		</p>
 	</CnSettingsSection>
@@ -133,11 +144,15 @@ export default {
 			this.saving = true
 			this.error = ''
 			try {
-				const response = await axios.put(generateUrl(AUDIT_SETTINGS), { flow_trigger_groups: next })
+				const response = await axios.put(generateUrl(AUDIT_SETTINGS), {
+					flow_trigger_groups: next,
+				})
 				const saved = response.data?.flow_trigger_groups
 				this.enabled = Array.isArray(saved) ? saved : next
 			} catch (e) {
-				this.error = e?.response?.data?.message || t('keepiq', 'The flow settings could not be saved.')
+				this.error =
+					e?.response?.data?.message
+					|| t('keepiq', 'The flow settings could not be saved.')
 				await this.load()
 			} finally {
 				this.saving = false

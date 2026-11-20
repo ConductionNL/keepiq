@@ -72,7 +72,7 @@ class VaultRepositoryTest {
     private var afterStale: () -> Unit = {}
 
     private val loginRow = """{"id":"s1","name":"Huisbank","url":"https://mijn.huisbank.example","typeId":"1","folderId":"f2",
-        "key":"${enc("geheim-1")}","login":"${enc("alice")}","additionalFields":"${enc("""{"notes":"pin bij balie","Klantnummer":"123","extra":42}""")}",
+        "key":"${enc("geheim-1")}","login":"${enc("alice")}","additionalFields":"${enc("""{"notes":"pin bij balie","Klantnummer":"123","extra":42,"@schema":{"extra":{"type":"integer"}}}""")}",
         "useOnly":false,"readOnly":false,"blocked":false,"updatedAt":"2026-10-03T09:00:00+00:00"}"""
     private val useOnlyRow = """{"id":"s2","name":"Leveranciersportaal","url":"https://portal.supplier.example","typeId":"1","folderId":null,
         "key":"${enc("niet-tonen")}","login":"${enc("bob")}","additionalFields":"${enc("""{"geheim":"x"}""")}",
@@ -236,7 +236,7 @@ class VaultRepositoryTest {
         val item = assertIs<OpenResult.Opened>(repo.open("s1")).item
         val draft = ItemCodec.draft(item, item.type)
         assertEquals("123", draft.typed["klantnummer"])
-        assertEquals(mapOf("extra" to JsonPrimitive(42)), draft.preserved)
+        assertEquals(setOf("extra", ItemCodec.SCHEMA_FIELD), draft.preserved.keys)
         assertIs<WriteResult.Saved>(repo.update(item, draft.copy(secret = "nieuw-wachtwoord", login = "")))
         val body = bodies.single()
         assertEquals(setOf("key", "login"), body.keys)
@@ -253,6 +253,8 @@ class VaultRepositoryTest {
         assertEquals(setOf("additionalFields"), body.keys)
         val fields = Json.parseToJsonElement(dec(body["additionalFields"]!!.jsonPrimitive.content)).jsonObject
         assertEquals(JsonPrimitive(42), fields["extra"])
+        // The schemas stay the object the web app reads.
+        assertEquals("integer", fields[ItemCodec.SCHEMA_FIELD]!!.jsonObject["extra"]!!.jsonObject["type"]!!.jsonPrimitive.content)
         assertEquals("123", fields["Klantnummer"]!!.jsonPrimitive.content)
         assertEquals("nieuw", fields["notes"]!!.jsonPrimitive.content)
     }

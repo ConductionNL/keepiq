@@ -84,11 +84,7 @@ async function aesRoundTrip(encryptKey, decryptKey) {
 		encryptKey,
 		new TextEncoder().encode('metadata'),
 	)
-	const pt = await crypto.subtle.decrypt(
-		{ name: 'AES-GCM', iv },
-		decryptKey,
-		ct,
-	)
+	const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, decryptKey, ct)
 	return new TextDecoder().decode(pt)
 }
 
@@ -150,9 +146,7 @@ describe('session store unlock paths', () => {
 	})
 
 	it('unlocks with the master password from the active suite', async () => {
-		const get = vi
-			.spyOn(axios, 'get')
-			.mockResolvedValue({ data: suites() })
+		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: suites() })
 		const store = useSessionStore()
 		store.lastActivity = 0
 
@@ -231,9 +225,7 @@ describe('session store unlock paths', () => {
 	})
 
 	it('unlocks with the raw unlock key and uses it as the AES key', async () => {
-		const get = vi
-			.spyOn(axios, 'get')
-			.mockResolvedValue({ data: suites() })
+		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: suites() })
 		const { salt } = decodeEnvelope(envelope)
 		const raw = await deriveUnlockKeyRaw(PASSWORD, salt)
 		const store = useSessionStore()
@@ -259,9 +251,9 @@ describe('session store unlock paths', () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 		const store = useSessionStore()
 
-		await expect(
-			store.unlockWithRawKey(new Uint8Array(32)),
-		).rejects.toThrow('No active EncryptionSuite found')
+		await expect(store.unlockWithRawKey(new Uint8Array(32))).rejects.toThrow(
+			'No active EncryptionSuite found',
+		)
 		expect(store.isLocked).toBe(true)
 	})
 
@@ -277,9 +269,7 @@ describe('session store unlock paths', () => {
 	})
 
 	it('unlocks from a recovered private key with the offline cache off', async () => {
-		const get = vi
-			.spyOn(axios, 'get')
-			.mockResolvedValue({ data: suites() })
+		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: suites() })
 		const store = useSessionStore()
 		store.aesKey = {}
 		store.lastActivity = 0
@@ -303,9 +293,9 @@ describe('session store unlock paths', () => {
 		})
 		const store = useSessionStore()
 
-		await expect(
-			store.unlockWithPrivateKeyPem(privateKeyPem),
-		).rejects.toThrow('No active EncryptionSuite found')
+		await expect(store.unlockWithPrivateKeyPem(privateKeyPem)).rejects.toThrow(
+			'No active EncryptionSuite found',
+		)
 		expect(store.isLocked).toBe(true)
 	})
 })
@@ -329,11 +319,9 @@ describe('session store afterUnlock', () => {
 	})
 
 	it('swallows an auto-confirm that throws synchronously', () => {
-		vi.spyOn(useTeamFolderStore(), 'startAutoConfirm').mockImplementation(
-			() => {
-				throw new Error('sync')
-			},
-		)
+		vi.spyOn(useTeamFolderStore(), 'startAutoConfirm').mockImplementation(() => {
+			throw new Error('sync')
+		})
 		const store = useSessionStore()
 
 		expect(() => store.afterUnlock()).not.toThrow()
@@ -379,11 +367,9 @@ describe('session store lock', () => {
 	})
 
 	it('still locks when stopping auto-confirm throws', () => {
-		vi.spyOn(useTeamFolderStore(), 'stopAutoConfirm').mockImplementation(
-			() => {
-				throw new Error('stop failed')
-			},
-		)
+		vi.spyOn(useTeamFolderStore(), 'stopAutoConfirm').mockImplementation(() => {
+			throw new Error('stop failed')
+		})
 		const store = filledStore()
 
 		expect(() => store.lock()).not.toThrow()

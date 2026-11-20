@@ -495,9 +495,9 @@ describe('the officer path for a new device', () => {
 			status: 'fulfilled',
 			sealedResult: undefined,
 		})
-		expect(session.unlockWithPrivateKeyPem.mock.invocationCallOrder[0]).toBeLessThan(
-			axios.post.mock.invocationCallOrder[0],
-		)
+		expect(
+			session.unlockWithPrivateKeyPem.mock.invocationCallOrder[0],
+		).toBeLessThan(axios.post.mock.invocationCallOrder[0])
 
 		store.myRequest = {
 			id: 'req-p',

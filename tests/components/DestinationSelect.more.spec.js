@@ -24,14 +24,27 @@ import DestinationSelect from '../../src/components/DestinationSelect.vue'
 import { useFolderStore } from '../../src/store/modules/folder.js'
 
 const FOLDERS = [
-	{ id: 'v1', name: 'Personal', parentId: null, customIcon: 'briefcase', customColor: 'blue' },
+	{
+		id: 'v1',
+		name: 'Personal',
+		parentId: null,
+		customIcon: 'briefcase',
+		customColor: 'blue',
+	},
 	{ id: 'f1', name: 'Servers', parentId: 'v1' },
 	{ id: 'v2', name: 'Work', parentId: null, customIcon: null, customColor: null },
 ]
 
 const NcSelect = {
 	name: 'NcSelect',
-	props: ['modelValue', 'options', 'reduce', 'inputLabel', 'disabled', 'clearable'],
+	props: [
+		'modelValue',
+		'options',
+		'reduce',
+		'inputLabel',
+		'disabled',
+		'clearable',
+	],
 	emits: ['update:modelValue'],
 	template: `
 		<div class="stub-select">
@@ -76,7 +89,11 @@ describe('DestinationSelect option rows', () => {
 	it('renders each option with label, indent and glyph styling', () => {
 		const wrapper = mountPicker()
 		const rows = wrapper.findAll('li')
-		expect(rows.map((r) => r.attributes('data-value'))).toEqual(['v1', 'f1', 'v2'])
+		expect(rows.map((r) => r.attributes('data-value'))).toEqual([
+			'v1',
+			'f1',
+			'v2',
+		])
 
 		const personal = rows[0].find('.destination-select__option')
 		expect(personal.text()).toBe('Personal')
@@ -92,10 +109,12 @@ describe('DestinationSelect option rows', () => {
 		expect(servers.text()).toBe('Servers')
 		expect(servers.attributes('style')).toContain('padding-inline-start: 16px')
 		// No custom colour: neutral circle and a currentColor fill.
-		expect(servers.find('.destination-select__glyph').attributes('style')).toBeUndefined()
-		expect(rows[1].findComponent({ name: 'FolderOutlineIcon' }).props('fillColor')).toBe(
-			'currentColor',
-		)
+		expect(
+			servers.find('.destination-select__glyph').attributes('style'),
+		).toBeUndefined()
+		expect(
+			rows[1].findComponent({ name: 'FolderOutlineIcon' }).props('fillColor'),
+		).toBe('currentColor')
 
 		// A vault without a custom icon falls back to the safe glyph.
 		expect(rows[2].findComponent({ name: 'SafeIcon' }).exists()).toBe(true)
@@ -107,12 +126,16 @@ describe('DestinationSelect option rows', () => {
 
 		expect(selected.text()).toBe('Servers')
 		expect(selected.attributes('style')).toBeUndefined()
-		expect(wrapper.findAll('.stub-selected .destination-select__option')).toHaveLength(1)
+		expect(
+			wrapper.findAll('.stub-selected .destination-select__option'),
+		).toHaveLength(1)
 	})
 
 	it('renders the selected custom icon in its resolved colour', () => {
 		const wrapper = mountPicker({ modelValue: 'v1' })
-		const icon = wrapper.find('.stub-selected').findComponent({ name: 'StubFolderIcon' })
+		const icon = wrapper
+			.find('.stub-selected')
+			.findComponent({ name: 'StubFolderIcon' })
 
 		expect(wrapper.find('.stub-selected').text()).toBe('Personal')
 		expect(icon.props('fillColor')).toBe('#0064a3')
@@ -127,7 +150,9 @@ describe('DestinationSelect option rows', () => {
 	})
 
 	it('hands the select a reduce that maps an option to its id', () => {
-		const reduce = mountPicker().findComponent({ name: 'NcSelect' }).props('reduce')
+		const reduce = mountPicker()
+			.findComponent({ name: 'NcSelect' })
+			.props('reduce')
 
 		expect(reduce({ value: 'f1', label: 'Servers' })).toBe('f1')
 	})

@@ -4,5 +4,8 @@
 /** The registrable domain of a host; see registrableDomain.js. */
 export function registrableDomainOf(
 	host: string | null | undefined,
-	getDomain: (host: string, options: { allowPrivateDomains: boolean }) => string | null,
+	getDomain: (
+		host: string,
+		options: { allowPrivateDomains: boolean },
+	) => string | null,
 ): string | null

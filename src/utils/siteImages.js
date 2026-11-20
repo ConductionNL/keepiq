@@ -11,6 +11,9 @@
 
 import { loadState } from '@nextcloud/initial-state'
 
+/** An address that starts with its own scheme, such as `http:`. */
+const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i
+
 /**
  * The admin's preview template, '' when previews are off.
  *
@@ -39,11 +42,21 @@ export function templateProblem(template, placeholder) {
 	if (!value.includes(placeholder)) {
 		return 'placeholder'
 	}
+	return isHttpsAddress(value.replaceAll(placeholder, 'x')) ? null : 'https'
+}
+
+/**
+ * Whether an address parses as https with a host.
+ *
+ * @param {string} address The address.
+ * @return {boolean}
+ */
+function isHttpsAddress(address) {
 	try {
-		const parsed = new URL(value.replaceAll(placeholder, 'x'))
-		return parsed.protocol === 'https:' && parsed.hostname !== '' ? null : 'https'
+		const parsed = new URL(address)
+		return parsed.protocol === 'https:' && parsed.hostname !== ''
 	} catch {
-		return 'https'
+		return false
 	}
 }
 
@@ -57,7 +70,11 @@ export function templateProblem(template, placeholder) {
  * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
  */
 export function previewImageUrl(template, url) {
-	if (typeof template !== 'string' || template === '' || templateProblem(template, '{url}') !== null) {
+	if (
+		typeof template !== 'string'
+		|| template === ''
+		|| templateProblem(template, '{url}') !== null
+	) {
 		return null
 	}
 	const address = webAddress(url)
@@ -69,6 +86,8 @@ export function previewImageUrl(template, url) {
  *
  * @param {string|null|undefined} url The address.
  * @return {string|null}
+ * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+ * @spec openspec/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
  */
 export function webAddress(url) {
 	const raw = String(url ?? '').trim()
@@ -76,8 +95,10 @@ export function webAddress(url) {
 		return null
 	}
 	try {
-		const parsed = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`)
-		return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : null
+		const parsed = new URL(HAS_SCHEME.test(raw) ? raw : `https://${raw}`)
+		return parsed.protocol === 'https:' || parsed.protocol === 'http:'
+			? parsed.href
+			: null
 	} catch {
 		return null
 	}
@@ -93,5 +114,7 @@ export function webAddress(url) {
  */
 export function changePasswordUrl(url) {
 	const address = webAddress(url)
-	return address ? `https://${new URL(address).host}/.well-known/change-password` : null
+	return address
+		? `https://${new URL(address).host}/.well-known/change-password`
+		: null
 }

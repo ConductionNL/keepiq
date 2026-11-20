@@ -139,14 +139,19 @@ describe('EmergencyAccessView — methods', () => {
 
 		it('delegates other states to stateLabel', async () => {
 			const { wrapper } = await mountView()
-			expect(wrapper.vm.incomingStateLabel({ state: 'approved' })).toBe('Approved')
+			expect(wrapper.vm.incomingStateLabel({ state: 'approved' })).toBe(
+				'Approved',
+			)
 		})
 	})
 
 	describe('rotationRemoved and canReestablish', () => {
 		it('flags a finished rotation removal', async () => {
 			const { wrapper } = await mountView()
-			const contact = { state: 'invalidated', invalidatedReason: 'grantor_rotation' }
+			const contact = {
+				state: 'invalidated',
+				invalidatedReason: 'grantor_rotation',
+			}
 			expect(wrapper.vm.rotationRemoved(contact)).toBe(true)
 			expect(wrapper.vm.canReestablish(contact)).toBe(false)
 		})
@@ -170,7 +175,10 @@ describe('EmergencyAccessView — methods', () => {
 
 		it('never applies to a contact that is not invalidated', async () => {
 			const { wrapper } = await mountView()
-			const contact = { state: 'granted', invalidatedReason: 'grantor_rotation' }
+			const contact = {
+				state: 'granted',
+				invalidatedReason: 'grantor_rotation',
+			}
 			expect(wrapper.vm.rotationRemoved(contact)).toBe(false)
 			expect(wrapper.vm.canReestablish(contact)).toBe(false)
 		})
@@ -279,7 +287,9 @@ describe('EmergencyAccessView — methods', () => {
 			const { wrapper, store } = await mountView()
 			const recover = vi.spyOn(store, 'recover')
 
-			recover.mockRejectedValueOnce({ response: { data: { message: 'Not approved yet' } } })
+			recover.mockRejectedValueOnce({
+				response: { data: { message: 'Not approved yet' } },
+			})
 			await wrapper.vm.recover('rel-9')
 			expect(wrapper.vm.error).toBe('Not approved yet')
 

@@ -18,19 +18,19 @@ import { h } from 'vue'
 import EmergencyAccessView from '../../src/views/EmergencyAccessView.vue'
 import { useEmergencyAccessStore } from '../../src/store/modules/emergencyAccess.js'
 
-function field (name) {
-  return {
-	name,
-	props: ['modelValue', 'options', 'reduce'],
-	emits: ['update:modelValue'],
-	render() {
-		return h('div', { 'data-field': name })
-	},
-}
+function field(name) {
+	return {
+		name,
+		props: ['modelValue', 'options', 'reduce'],
+		emits: ['update:modelValue'],
+		render() {
+			return h('div', { 'data-field': name })
+		},
+	}
 }
 
-function t (app, text, vars) {
-  return vars
+function t(app, text, vars) {
+	return vars
 		? Object.keys(vars).reduce(
 				(out, k) => out.replace(`{${k}}`, String(vars[k])),
 				text,
@@ -75,8 +75,8 @@ async function mountView(contacts = [], incoming = []) {
 }
 
 const byTestId = (wrapper, id) => wrapper.find(`[data-testid="${id}"]`)
-function fieldOf (wrapper, id) {
-  return wrapper.findAllComponents(`[data-testid="${id}"]`)[0]
+function fieldOf(wrapper, id) {
+	return wrapper.findAllComponents(`[data-testid="${id}"]`)[0]
 }
 
 describe('EmergencyAccessView actions', () => {
@@ -173,12 +173,22 @@ describe('EmergencyAccessView actions', () => {
 
 	it('re-establishes a contact the grantee invalidated by filling the form with them', async () => {
 		const { wrapper } = await mountView([
-			{ id: 'c-2', granteeUserId: 'carla', state: 'invalidated', invalidatedReason: 'grantee_revocation', waitPeriodDays: 3 },
+			{
+				id: 'c-2',
+				granteeUserId: 'carla',
+				state: 'invalidated',
+				invalidatedReason: 'grantee_revocation',
+				waitPeriodDays: 3,
+			},
 		])
-		expect(wrapper.find('.emergency-access__state').text()).toBe('Invalidated (re-establish)')
+		expect(wrapper.find('.emergency-access__state').text()).toBe(
+			'Invalidated (re-establish)',
+		)
 
 		await byTestId(wrapper, 'emergency-reestablish').trigger('click')
-		expect(fieldOf(wrapper, 'emergency-grantee-input').props('modelValue')).toBe('carla')
+		expect(fieldOf(wrapper, 'emergency-grantee-input').props('modelValue')).toBe(
+			'carla',
+		)
 	})
 
 	it('requests access to a granted vault and recovers an approved one', async () => {

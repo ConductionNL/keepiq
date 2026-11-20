@@ -71,11 +71,23 @@ const CnIndexPage = {
 			h('div', { class: 'selection-actions' }, s['selection-actions']?.()),
 			h('div', { class: 'empty' }, s.empty?.()),
 			...rows.flatMap((object) => [
-				h('div', { class: 'list-row' }, s['list-item']?.({ object, selected: true })),
-				h('div', { class: 'card-row' }, s.card?.({ object, selected: false })),
+				h(
+					'div',
+					{ class: 'list-row' },
+					s['list-item']?.({ object, selected: true }),
+				),
+				h(
+					'div',
+					{ class: 'card-row' },
+					s.card?.({ object, selected: false }),
+				),
 				h('div', { class: 'col-name' }, s['column-name']?.({ row: object })),
 				h('div', { class: 'col-type' }, s['column-type']?.({ row: object })),
-				h('div', { class: 'col-strength' }, s['column-strength']?.({ row: object })),
+				h(
+					'div',
+					{ class: 'col-strength' },
+					s['column-strength']?.({ row: object }),
+				),
 			]),
 		])
 	},
@@ -84,7 +96,10 @@ const CnIndexPage = {
 const NcActions = {
 	name: 'NcActions',
 	render() {
-		return h('div', { class: 'nc-actions' }, [this.$slots.icon?.(), this.$slots.default?.()])
+		return h('div', { class: 'nc-actions' }, [
+			this.$slots.icon?.(),
+			this.$slots.default?.(),
+		])
 	},
 }
 
@@ -95,7 +110,11 @@ const NcActionButton = {
 	render() {
 		return h(
 			'button',
-			{ class: 'nc-action-button', disabled: this.disabled, onClick: () => this.$emit('click') },
+			{
+				class: 'nc-action-button',
+				disabled: this.disabled,
+				onClick: () => this.$emit('click'),
+			},
 			[this.$slots.icon?.(), this.$slots.default?.()],
 		)
 	},
@@ -108,7 +127,11 @@ const NcButton = {
 	render() {
 		return h(
 			'button',
-			{ class: 'nc-button', disabled: this.disabled, onClick: () => this.$emit('click') },
+			{
+				class: 'nc-button',
+				disabled: this.disabled,
+				onClick: () => this.$emit('click'),
+			},
 			[this.$slots.icon?.(), this.$slots.default?.()],
 		)
 	},
@@ -342,10 +365,16 @@ describe('SecretList — selection', () => {
 		const all = computed.allCurrentSelected
 		expect(all.call({ secrets: [], bulkStore: { selectedIds: [] } })).toBe(false)
 		expect(
-			all.call({ secrets: [{ id: 'a' }, { id: 'b' }], bulkStore: { selectedIds: ['a'] } }),
+			all.call({
+				secrets: [{ id: 'a' }, { id: 'b' }],
+				bulkStore: { selectedIds: ['a'] },
+			}),
 		).toBe(false)
 		expect(
-			all.call({ secrets: [{ id: 'a' }], bulkStore: { selectedIds: ['a', 'z'] } }),
+			all.call({
+				secrets: [{ id: 'a' }],
+				bulkStore: { selectedIds: ['a', 'z'] },
+			}),
 		).toBe(true)
 	})
 })
@@ -391,13 +420,18 @@ describe('SecretList — export, CXP and GDPR', () => {
 		['openExport', 'exportOpen'],
 		['openCxp', 'cxpOpen'],
 		['openGdpr', 'gdprOpen'],
-	])('%s hands the decrypted secrets and skip count to its dialog', async (method, flag) => {
-		const ctx = exportCtx()
-		await methods[method].call(ctx)
-		expect(ctx.decryptedSecrets).toEqual([{ id: 'ok', name: 'Mail', key: 'hunter2' }])
-		expect(ctx.skippedSecrets).toBe(2)
-		expect(ctx[flag]).toBe(true)
-	})
+	])(
+		'%s hands the decrypted secrets and skip count to its dialog',
+		async (method, flag) => {
+			const ctx = exportCtx()
+			await methods[method].call(ctx)
+			expect(ctx.decryptedSecrets).toEqual([
+				{ id: 'ok', name: 'Mail', key: 'hunter2' },
+			])
+			expect(ctx.skippedSecrets).toBe(2)
+			expect(ctx[flag]).toBe(true)
+		},
+	)
 
 	it('"export first" closes the deletion dialog and opens the export', async () => {
 		const ctx = { deletionOpen: true, openExport: vi.fn().mockResolvedValue() }
@@ -458,7 +492,10 @@ describe('SecretList — filters, search, sort and refresh hooks', () => {
 	it('refetches list and requests after a credential request, keeping the dialog open', async () => {
 		const requests = useSecretRequestStore()
 		requests.fetchRequests = vi.fn().mockResolvedValue()
-		const ctx = { credentialRequestOpen: true, reload: vi.fn().mockResolvedValue() }
+		const ctx = {
+			credentialRequestOpen: true,
+			reload: vi.fn().mockResolvedValue(),
+		}
 		await methods.onCredentialRequested.call(ctx)
 		expect(ctx.reload).toHaveBeenCalledTimes(1)
 		expect(requests.fetchRequests).toHaveBeenCalledTimes(1)
@@ -549,16 +586,24 @@ describe('SecretList — computeds with branches', () => {
 			expect(computed.emptyText.call(ctx)).toBe(empty)
 			expect(computed.emptyDescription.call(ctx)).toMatch(/\S/)
 		}
-		expect(computed.pageTitle.call({ listState: 'live', selectedFolderName: '' })).toBe('Secrets')
+		expect(
+			computed.pageTitle.call({ listState: 'live', selectedFolderName: '' }),
+		).toBe('Secrets')
 		expect(computed.emptyDescription.call({ listState: 'live' })).toBe(
 			'Add your first secret using the button above',
 		)
 	})
 
 	it('maps route names to list states', () => {
-		expect(computed.listState.call({ $route: { name: 'SecretTrash' } })).toBe('trashed')
-		expect(computed.listState.call({ $route: { name: 'SecretArchive' } })).toBe('archived')
-		expect(computed.listState.call({ $route: { name: 'SecretListFolder' } })).toBe('live')
+		expect(computed.listState.call({ $route: { name: 'SecretTrash' } })).toBe(
+			'trashed',
+		)
+		expect(computed.listState.call({ $route: { name: 'SecretArchive' } })).toBe(
+			'archived',
+		)
+		expect(
+			computed.listState.call({ $route: { name: 'SecretListFolder' } }),
+		).toBe('live')
 		expect(computed.listState.call({ $route: undefined })).toBe('live')
 	})
 
@@ -569,7 +614,9 @@ describe('SecretList — computeds with branches', () => {
 		]
 		const trail = computed.folderTrail.call({ selectedFolderId: 'c', folders })
 		expect(trail.map((f) => f.id)).toEqual(['v', 'c'])
-		expect(computed.folderTrail.call({ selectedFolderId: null, folders })).toEqual([])
+		expect(
+			computed.folderTrail.call({ selectedFolderId: null, folders }),
+		).toEqual([])
 	})
 
 	it('builds breadcrumbs: home, linked ancestors, unlinked current folder', () => {
@@ -579,7 +626,10 @@ describe('SecretList — computeds with branches', () => {
 		]
 		expect(computed.breadcrumbs.call({ folderTrail })).toEqual([
 			{ icon: 'Home', label: 'Vaults', to: { name: 'SecretList' } },
-			{ label: 'Vault', to: { name: 'SecretListFolder', params: { folderId: 'v' } } },
+			{
+				label: 'Vault',
+				to: { name: 'SecretListFolder', params: { folderId: 'v' } },
+			},
 			{ label: 'Folder' },
 		])
 		expect(computed.breadcrumbs.call({ folderTrail: [] })).toEqual([])
@@ -598,9 +648,15 @@ describe('SecretList — computeds with branches', () => {
 		expect(Object.keys(map).sort()).toEqual(['s-empty', 's-full'])
 
 		const ctx = { pendingRequestsBySecret: map }
-		expect(methods.requestStateFor.call(ctx, { id: 's-empty', key: '' })).toBe('awaiting-fill')
-		expect(methods.requestStateFor.call(ctx, { id: 's-full', key: 'abc' })).toBe('re-request')
-		expect(methods.requestStateFor.call(ctx, { id: 's-done', key: '' })).toBeNull()
+		expect(methods.requestStateFor.call(ctx, { id: 's-empty', key: '' })).toBe(
+			'awaiting-fill',
+		)
+		expect(methods.requestStateFor.call(ctx, { id: 's-full', key: 'abc' })).toBe(
+			're-request',
+		)
+		expect(
+			methods.requestStateFor.call(ctx, { id: 's-done', key: '' }),
+		).toBeNull()
 		expect(methods.requestStateFor.call(ctx, null)).toBeNull()
 	})
 
@@ -609,23 +665,35 @@ describe('SecretList — computeds with branches', () => {
 			{ id: 'a', name: 'Mail', pendingSync: true },
 			{ id: 'b', name: 'VPN' },
 		]
-		expect(computed.listObjects.call({ folderSwitching: false, secrets })).toEqual([
+		expect(
+			computed.listObjects.call({ folderSwitching: false, secrets }),
+		).toEqual([
 			{ id: 'a', name: 'Mail (Not synced yet)', pendingSync: true },
 			{ id: 'b', name: 'VPN' },
 		])
 		expect(secrets[0].name).toBe('Mail')
-		expect(computed.listObjects.call({ folderSwitching: true, secrets })).toEqual([])
+		expect(
+			computed.listObjects.call({ folderSwitching: true, secrets }),
+		).toEqual([])
 	})
 
 	it('derives pagination with at least one page', () => {
 		expect(
 			computed.pagination.call({ secretStore: { page: 2, totalCount: 101 } }),
 		).toEqual({ page: 2, pages: 3, total: 101, limit: 50 })
-		expect(computed.pagination.call({ secretStore: { page: 1, totalCount: 0 } }).pages).toBe(1)
+		expect(
+			computed.pagination.call({ secretStore: { page: 1, totalCount: 0 } })
+				.pages,
+		).toBe(1)
 	})
 
 	it('flags the funnel active for any non-default filter or sort', () => {
-		const base = { typeFilter: null, favouriteFilter: false, tagFilter: null, sortField: 'name' }
+		const base = {
+			typeFilter: null,
+			favouriteFilter: false,
+			tagFilter: null,
+			sortField: 'name',
+		}
 		const active = computed.filterMenuActive
 		expect(active.call(base)).toBe(false)
 		expect(active.call({ ...base, typeFilter: 't' })).toBe(true)
@@ -641,8 +709,12 @@ describe('SecretList — computeds with branches', () => {
 			}),
 		).toEqual([{ value: 'work', label: 'work (3)' }])
 		const folders = [{ id: 'f-1', name: 'Work' }]
-		expect(computed.selectedFolderName.call({ folders, selectedFolderId: 'f-1' })).toBe('Work')
-		expect(computed.selectedFolderName.call({ folders, selectedFolderId: 'zz' })).toBe('')
+		expect(
+			computed.selectedFolderName.call({ folders, selectedFolderId: 'f-1' }),
+		).toBe('Work')
+		expect(
+			computed.selectedFolderName.call({ folders, selectedFolderId: 'zz' }),
+		).toBe('')
 	})
 })
 
@@ -651,7 +723,10 @@ describe('SecretList — template wiring', () => {
 		const { secret } = stubNetwork()
 		useSessionStore().cryptoKey = {}
 		const { wrapper } = await mountList()
-		secret.secrets = [{ id: 'a', name: 'Mail' }, { id: 'b', name: 'VPN' }]
+		secret.secrets = [
+			{ id: 'a', name: 'Mail' },
+			{ id: 'b', name: 'VPN' },
+		]
 		await flushPromises()
 
 		await button(wrapper, 'Select all').trigger('click')
@@ -682,7 +757,9 @@ describe('SecretList — template wiring', () => {
 		await flushPromises()
 		expect(secret.fetchAllSecrets).toHaveBeenCalledTimes(1)
 		expect(wrapper.vm.exportOpen).toBe(true)
-		expect(wrapper.vm.decryptedSecrets).toEqual([{ id: 'a', name: 'Mail', key: 'plain' }])
+		expect(wrapper.vm.decryptedSecrets).toEqual([
+			{ id: 'a', name: 'Mail', key: 'plain' },
+		])
 
 		await button(wrapper, 'Import').trigger('click')
 		expect(wrapper.vm.importOpen).toBe(true)
@@ -734,7 +811,11 @@ describe('SecretList — template wiring', () => {
 			{ id: 'f-1', name: 'Subfolder', parentId: 'v-1' },
 		]
 		const { wrapper, router } = await mountList({
-			route: { query: {}, params: { folderId: 'v-1' }, name: 'SecretListFolder' },
+			route: {
+				query: {},
+				params: { folderId: 'v-1' },
+				name: 'SecretListFolder',
+			},
 		})
 
 		expect(wrapper.find('.secret-list-view__crumbs').exists()).toBe(true)
@@ -828,7 +909,10 @@ describe('SecretList — template wiring', () => {
 		expect(useBulkStore().selectedIds).toEqual(['s-1'])
 
 		page.vm.$emit('rowClick', { id: 's-1' })
-		expect(router.push).toHaveBeenCalledWith({ name: 'SecretList', params: { id: 's-1' } })
+		expect(router.push).toHaveBeenCalledWith({
+			name: 'SecretList',
+			params: { id: 's-1' },
+		})
 
 		page.vm.$emit('search', 'bank')
 		vi.advanceTimersByTime(300)
@@ -842,7 +926,12 @@ describe('SecretList — template wiring', () => {
 		await flushPromises()
 
 		expect(wrapper.findComponent(CnIndexPage).props('objects')).toEqual([
-			{ id: 'a', name: 'Mail (Not synced yet)', typeId: 't', pendingSync: true },
+			{
+				id: 'a',
+				name: 'Mail (Not synced yet)',
+				typeId: 't',
+				pendingSync: true,
+			},
 		])
 		expect(wrapper.find('.col-name').text()).toContain('Mail (Not synced yet)')
 		expect(wrapper.find('.col-strength').text()).toBe('—')
