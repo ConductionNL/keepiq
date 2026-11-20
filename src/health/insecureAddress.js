@@ -57,11 +57,17 @@ export function isLocalHost(host) {
 	const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
 	if (v4) {
 		const [first, second] = [Number(v4[1]), Number(v4[2])]
-		return PRIVATE_V4.some(([a, from, to]) => first === a && second >= from && second <= to)
+		return PRIVATE_V4.some(
+			([a, from, to]) => first === a && second >= from && second <= to,
+		)
 	}
 	if (host.includes(':')) {
 		// IPv6: loopback, unique local (fc00::/7) and link-local (fe80::/10).
-		return host === '::1' || /^f[cd][0-9a-f]{0,2}:/.test(host) || /^fe[89ab][0-9a-f]?:/.test(host)
+		return (
+			host === '::1'
+			|| /^f[cd][0-9a-f]{0,2}:/.test(host)
+			|| /^fe[89ab][0-9a-f]?:/.test(host)
+		)
 	}
 	return false
 }

@@ -22,19 +22,45 @@ const stubs = {
 	NcDialog: {
 		props: ['name', 'open', 'size'],
 		emits: ['update:open'],
-		template: '<div class="dialog-stub" :data-name="name"><slot /><slot name="actions" /></div>',
+		template:
+			'<div class="dialog-stub" :data-name="name"><slot /><slot name="actions" /></div>',
 	},
 	NcButton: {
 		props: ['disabled', 'variant', 'ariaLabel', 'title'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 }
 
 const ROWS = [
-	{ id: 'png', filename: 'recovery.png', contentType: 'image/png', sizeBytes: 10, wrappedFileKey: 'w' },
-	{ id: 'svg', filename: 'logo.svg', contentType: 'image/svg+xml', sizeBytes: 10, wrappedFileKey: 'w' },
-	{ id: 'txt', filename: 'codes.txt', contentType: 'text/plain', sizeBytes: 10, wrappedFileKey: 'w' },
-	{ id: 'zip', filename: 'backup.zip', contentType: 'application/zip', sizeBytes: 10, wrappedFileKey: 'w' },
+	{
+		id: 'png',
+		filename: 'recovery.png',
+		contentType: 'image/png',
+		sizeBytes: 10,
+		wrappedFileKey: 'w',
+	},
+	{
+		id: 'svg',
+		filename: 'logo.svg',
+		contentType: 'image/svg+xml',
+		sizeBytes: 10,
+		wrappedFileKey: 'w',
+	},
+	{
+		id: 'txt',
+		filename: 'codes.txt',
+		contentType: 'text/plain',
+		sizeBytes: 10,
+		wrappedFileKey: 'w',
+	},
+	{
+		id: 'zip',
+		filename: 'backup.zip',
+		contentType: 'application/zip',
+		sizeBytes: 10,
+		wrappedFileKey: 'w',
+	},
 ]
 
 let revokeObjectURL
@@ -45,7 +71,10 @@ async function mountPanel() {
 		store.attachments = ROWS
 	})
 	store.download = vi.fn()
-	const wrapper = mount(AttachmentPanel, { props: { secretId: 'sec-1' }, global: { stubs } })
+	const wrapper = mount(AttachmentPanel, {
+		props: { secretId: 'sec-1' },
+		global: { stubs },
+	})
 	await flush()
 	return { wrapper, store }
 }
@@ -54,7 +83,13 @@ beforeEach(() => {
 	setActivePinia(createPinia())
 	vi.restoreAllMocks()
 	revokeObjectURL = vi.fn()
-	vi.stubGlobal('URL', Object.assign(Object.create(URL), { createObjectURL: vi.fn(), revokeObjectURL }))
+	vi.stubGlobal(
+		'URL',
+		Object.assign(Object.create(URL), {
+			createObjectURL: vi.fn(),
+			revokeObjectURL,
+		}),
+	)
 })
 
 afterEach(() => {
@@ -64,16 +99,28 @@ afterEach(() => {
 describe('AttachmentPanel preview', () => {
 	it('offers Preview for images and text only; SVG and other types keep Download only', async () => {
 		const { wrapper } = await mountPanel()
-		expect(wrapper.find('[data-testid="attachment-preview-png"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="attachment-preview-txt"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="attachment-preview-svg"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="attachment-preview-zip"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="attachment-download-svg"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="attachment-preview-png"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.find('[data-testid="attachment-preview-txt"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.find('[data-testid="attachment-preview-svg"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.find('[data-testid="attachment-preview-zip"]').exists()).toBe(
+			false,
+		)
+		expect(
+			wrapper.find('[data-testid="attachment-download-svg"]').exists(),
+		).toBe(true)
 	})
 
 	it('shows a PNG in a modal, downloads nothing, and revokes the URL on close', async () => {
 		const { wrapper, store } = await mountPanel()
-		store.preview = vi.fn().mockResolvedValue({ kind: 'image', url: 'blob:keepiq/1', text: null })
+		store.preview = vi
+			.fn()
+			.mockResolvedValue({ kind: 'image', url: 'blob:keepiq/1', text: null })
 
 		await wrapper.find('[data-testid="attachment-preview-png"]').trigger('click')
 		await flush()
@@ -82,38 +129,55 @@ describe('AttachmentPanel preview', () => {
 		expect(store.download).not.toHaveBeenCalled()
 		const img = wrapper.find('[data-testid="attachment-preview-image"]')
 		expect(img.attributes('src')).toBe('blob:keepiq/1')
-		expect(wrapper.find('.dialog-stub').attributes('data-name')).toBe('recovery.png')
+		expect(wrapper.find('.dialog-stub').attributes('data-name')).toBe(
+			'recovery.png',
+		)
 
-		await wrapper.find('[data-testid="attachment-preview-close"]').trigger('click')
+		await wrapper
+			.find('[data-testid="attachment-preview-close"]')
+			.trigger('click')
 		await flush()
 
 		expect(revokeObjectURL).toHaveBeenCalledTimes(1)
 		expect(revokeObjectURL).toHaveBeenCalledWith('blob:keepiq/1')
-		expect(wrapper.find('[data-testid="attachment-preview"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="attachment-preview"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('shows plain text in a pre, and leaves the panel closed when the decrypt fails', async () => {
 		const { wrapper, store } = await mountPanel()
-		store.preview = vi.fn().mockResolvedValue({ kind: 'text', url: null, text: '1234-5678' })
+		store.preview = vi
+			.fn()
+			.mockResolvedValue({ kind: 'text', url: null, text: '1234-5678' })
 		await wrapper.find('[data-testid="attachment-preview-txt"]').trigger('click')
 		await flush()
-		expect(wrapper.find('[data-testid="attachment-preview-text"]').text()).toBe('1234-5678')
+		expect(wrapper.find('[data-testid="attachment-preview-text"]').text()).toBe(
+			'1234-5678',
+		)
 
-		await wrapper.find('[data-testid="attachment-preview-close"]').trigger('click')
+		await wrapper
+			.find('[data-testid="attachment-preview-close"]')
+			.trigger('click')
 		await flush()
 		expect(revokeObjectURL).not.toHaveBeenCalled()
 
 		store.preview = vi.fn().mockRejectedValue(new Error('bad key'))
 		await wrapper.find('[data-testid="attachment-preview-png"]').trigger('click')
 		await flush()
-		expect(wrapper.find('[data-testid="attachment-preview"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="attachment-preview"]').exists()).toBe(
+			false,
+		)
 	})
 })
 
 describe('AttachmentPreviewModal', () => {
 	it('renders a PDF in a fully sandboxed frame and revokes its URL once when unmounted', () => {
 		const wrapper = mount(AttachmentPreviewModal, {
-			props: { preview: { kind: 'pdf', url: 'blob:keepiq/9', text: null }, filename: 'scan.pdf' },
+			props: {
+				preview: { kind: 'pdf', url: 'blob:keepiq/9', text: null },
+				filename: 'scan.pdf',
+			},
 			global: { stubs },
 		})
 		const frame = wrapper.find('[data-testid="attachment-preview-pdf"]')

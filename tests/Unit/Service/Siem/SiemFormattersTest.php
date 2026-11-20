@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service\Siem;
 
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Service\Siem\CefFormatter;
 use OCA\Keepiq\Service\Siem\JsonFormatter;
 use OCA\Keepiq\Service\Siem\SentinelRowFormatter;
@@ -180,7 +180,7 @@ class SiemFormattersTest extends TestCase {
 	 */
 	public function testNoFormatterCarriesAnythingButThePayload(): void {
 		$metadata = ['suiteId' => 'suite-9'];
-		foreach (AuditEventTypes::FORBIDDEN_KEYS as $i => $key) {
+		foreach (AuditMetadataPolicy::FORBIDDEN_KEYS as $i => $key) {
 			$metadata[$key] = 'PLANTED-SECRET-' . $i;
 		}
 
@@ -195,7 +195,7 @@ class SiemFormattersTest extends TestCase {
 		];
 		foreach ($outputs as $name => $out) {
 			$this->assertStringNotContainsString('PLANTED', $out, $name . ' carries planted material');
-			foreach (AuditEventTypes::FORBIDDEN_KEYS as $key) {
+			foreach (AuditMetadataPolicy::FORBIDDEN_KEYS as $key) {
 				$this->assertStringNotContainsString('"' . $key . '"', $out, $name . ' carries the key ' . $key);
 			}
 		}

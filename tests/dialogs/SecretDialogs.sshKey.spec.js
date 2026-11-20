@@ -105,7 +105,7 @@ describe('SecretCreateDialog — SSH key', () => {
 		const wrapper = await mountCreate()
 
 		expect(wrapper.find('[data-testid="ssh-key-fields"]').exists()).toBe(true)
-		expect(wrapper.find('.generic-value').exists()).toBe(false)
+		expect(wrapper.find('.secret-form__value-row').exists()).toBe(false)
 		expect(wrapper.text()).toContain('Private key')
 		expect(wrapper.text()).toContain('Public key')
 		expect(wrapper.text()).toContain('Fingerprint')
@@ -143,7 +143,8 @@ describe('SecretCreateDialog — SSH key', () => {
 		expect(create).not.toHaveBeenCalled()
 		expect(wrapper.vm.saving).toBe(false)
 		expect(wrapper.vm.sshErrors.privateKey).not.toBe('')
-		expect(wrapper.find('[data-testid="ssh-private-key"]').text()).toContain(
+		// The refused key is masked; its field still names the reason.
+		expect(wrapper.find('[data-testid="ssh-key-fields"]').text()).toContain(
 			'This is not a private key.',
 		)
 	})
@@ -164,6 +165,44 @@ describe('SecretCreateDialog — SSH key', () => {
 		expect(wrapper.vm.sshErrors.publicKey).toBe(
 			'This public key does not belong to the private key.',
 		)
+	})
+
+	// openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+	it('clones an SSH key ready to save, keeping its custom fields', async () => {
+		const pair = await generateKeyPair()
+		const wrapper = mount(SecretCreateDialog, {
+			propsData: {
+				folderId: 'folder-1',
+				prefill: {
+					typeId: 'ssh',
+					name: 'Deploy key',
+					key: pair.privateKey,
+					additionalFields: {
+						publicKey: pair.publicKey,
+						fingerprint: 'SHA256:stale',
+						Host: 'git.example',
+					},
+				},
+			},
+			global: { stubs },
+		})
+		await flush()
+		const create = vi
+			.spyOn(useSecretStore(), 'createSecret')
+			.mockResolvedValue({ id: 's2' })
+
+		expect(wrapper.vm.additionalFields).toEqual([
+			{ name: 'Host', value: 'git.example', schema: { type: 'string' } },
+		])
+		expect(wrapper.vm.formReady).toBe(true)
+		await wrapper.vm.submit()
+
+		// The fingerprint is derived again, over the one the source stored.
+		expect(create.mock.calls[0][0].additionalFields).toEqual({
+			Host: 'git.example',
+			publicKey: pair.publicKey,
+			fingerprint: pair.fingerprint,
+		})
 	})
 
 	it('fills all three fields from Generate key pair', async () => {
@@ -219,7 +258,7 @@ describe('SecretEditDialog — SSH key', () => {
 			fingerprint: pair.fingerprint,
 		})
 		expect(wrapper.vm.additionalFields).toEqual([
-			{ name: 'Host', value: 'git.example', kind: 'text' },
+			{ name: 'Host', value: 'git.example', schema: { type: 'string' } },
 		])
 	})
 

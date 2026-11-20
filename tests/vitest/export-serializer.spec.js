@@ -106,7 +106,10 @@ describe('serializeVault', () => {
 
 	it('an empty selection exports nothing', () => {
 		const withIds = secrets.map((secret, i) => ({ ...secret, id: `s${i + 1}` }))
-		const payload = serializeVault(withIds, folders, { mode: 'selection', secretIds: [] })
+		const payload = serializeVault(withIds, folders, {
+			mode: 'selection',
+			secretIds: [],
+		})
 		expect(payload.secrets).toEqual([])
 		expect(payload.folders).toEqual([])
 	})
@@ -118,28 +121,72 @@ describe('serializeVault scope, fields and type names', () => {
 	const types = [
 		{ id: LOGIN_TYPE_ID, name: 'login', label: 'Login', scope: 'system' },
 		{ id: API_KEY_TYPE_ID, name: 'api-key', label: 'API key', scope: 'system' },
-		{ id: VPN_TYPE_ID, name: 'vpn-profile', label: 'VPN profile', scope: 'user' },
+		{
+			id: VPN_TYPE_ID,
+			name: 'vpn-profile',
+			label: 'VPN profile',
+			scope: 'user',
+		},
 	]
 	const vault = [
-		{ id: 's1', name: 'AWS', key: 'k1', login: 'l1', folderId: 'f2', typeId: API_KEY_TYPE_ID },
-		{ id: 's2', name: 'Bank', key: 'k2', login: 'l2', folderId: 'f3', typeId: LOGIN_TYPE_ID, totp: 'SEED', additionalFields: { notes: 'n', totp: 'SEED2' } },
-		{ id: 's3', name: 'GCP', key: 'k3', login: null, folderId: 'f1', typeId: API_KEY_TYPE_ID },
-		{ id: 's4', name: 'Office VPN', key: 'k4', login: 'v', folderId: 'f3', typeId: VPN_TYPE_ID },
+		{
+			id: 's1',
+			name: 'AWS',
+			key: 'k1',
+			login: 'l1',
+			folderId: 'f2',
+			typeId: API_KEY_TYPE_ID,
+		},
+		{
+			id: 's2',
+			name: 'Bank',
+			key: 'k2',
+			login: 'l2',
+			folderId: 'f3',
+			typeId: LOGIN_TYPE_ID,
+			totp: 'SEED',
+			additionalFields: { notes: 'n', totp: 'SEED2' },
+		},
+		{
+			id: 's3',
+			name: 'GCP',
+			key: 'k3',
+			login: null,
+			folderId: 'f1',
+			typeId: API_KEY_TYPE_ID,
+		},
+		{
+			id: 's4',
+			name: 'Office VPN',
+			key: 'k4',
+			login: 'v',
+			folderId: 'f3',
+			typeId: VPN_TYPE_ID,
+		},
 	]
 	const names = (payload) => payload.secrets.map((s) => s.name).sort()
 
 	it('combines folders with their subfolders and types', () => {
-		const payload = serializeVault(vault, folders, { folderIds: ['f1', 'f3'], typeIds: [API_KEY_TYPE_ID] })
+		const payload = serializeVault(vault, folders, {
+			folderIds: ['f1', 'f3'],
+			typeIds: [API_KEY_TYPE_ID],
+		})
 		expect(names(payload)).toEqual(['AWS', 'GCP'])
-		expect(reportedScope({ folderIds: ['f1'], typeIds: [API_KEY_TYPE_ID] })).toBe('folders')
+		expect(
+			reportedScope({ folderIds: ['f1'], typeIds: [API_KEY_TYPE_ID] }),
+		).toBe('folders')
 	})
 
 	it('limits to the chosen types alone', () => {
-		expect(names(serializeVault(vault, folders, { typeIds: [VPN_TYPE_ID] }))).toEqual(['Office VPN'])
+		expect(
+			names(serializeVault(vault, folders, { typeIds: [VPN_TYPE_ID] })),
+		).toEqual(['Office VPN'])
 	})
 
 	it('limits to exactly the selected secrets', () => {
-		const payload = serializeVault(vault, folders, { secretIds: ['s1', 's2', 's4'] })
+		const payload = serializeVault(vault, folders, {
+			secretIds: ['s1', 's2', 's4'],
+		})
 		expect(names(payload)).toEqual(['AWS', 'Bank', 'Office VPN'])
 		// A selection keeps every folder path; it filters secrets only.
 		expect(payload.folders).toHaveLength(3)
@@ -147,7 +194,13 @@ describe('serializeVault scope, fields and type names', () => {
 
 	it('treats an empty scope as the entire vault', () => {
 		expect(serializeVault(vault, folders, {}).secrets).toHaveLength(4)
-		expect(serializeVault(vault, folders, { folderIds: [], typeIds: [], secretIds: [] }).secrets).toHaveLength(4)
+		expect(
+			serializeVault(vault, folders, {
+				folderIds: [],
+				typeIds: [],
+				secretIds: [],
+			}).secrets,
+		).toHaveLength(4)
 		expect(reportedScope({})).toBe('vault')
 		expect(reportedScope({ mode: 'folders', folderIds: ['f1'] })).toBe('folders')
 		expect(reportedScope(undefined)).toBe('vault')
@@ -170,19 +223,31 @@ describe('serializeVault scope, fields and type names', () => {
 	it('leaves out usernames and marks the backup partial', () => {
 		const payload = serializeVault(vault, folders, {}, { omitFields: ['login'] })
 		expect(payload.secrets.every((s) => s.login === null)).toBe(true)
-		expect(payload.secrets.every((s) => s.password !== null && s.name !== '')).toBe(true)
+		expect(
+			payload.secrets.every((s) => s.password !== null && s.name !== ''),
+		).toBe(true)
 		expect(payload.partial).toBe(true)
 		expect(payload.omittedFields).toEqual(['login'])
 	})
 
 	it('leaves out additional fields', () => {
-		const bank = serializeVault(vault, folders, {}, { omitFields: ['additionalFields'] }).secrets.find((s) => s.name === 'Bank')
+		const bank = serializeVault(
+			vault,
+			folders,
+			{},
+			{ omitFields: ['additionalFields'] },
+		).secrets.find((s) => s.name === 'Bank')
 		expect(bank.additionalFields).toBeNull()
 		expect(bank.totp).toBe('SEED')
 	})
 
 	it('leaves out the one-time code seed, also among the additional fields', () => {
-		const payload = serializeVault(vault, folders, {}, { omitFields: ['totp', 'name', 'password'] })
+		const payload = serializeVault(
+			vault,
+			folders,
+			{},
+			{ omitFields: ['totp', 'name', 'password'] },
+		)
 		const bank = payload.secrets.find((s) => s.name === 'Bank')
 		expect(bank).not.toHaveProperty('totp')
 		expect(bank.additionalFields).toEqual({ notes: 'n' })

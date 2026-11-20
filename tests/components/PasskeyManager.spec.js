@@ -106,16 +106,26 @@ describe('PasskeyManager', () => {
 		const wrapper = mountManager()
 		await flush()
 
-		expect(wrapper.find('[data-testid="passkey-status-ext-1"]').text()).toBe('Suspended')
-		expect(wrapper.find('[data-testid="passkey-status-web-1"]').text()).toBe('Active')
-		expect(wrapper.find('[data-testid="passkey-suspended-note"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="passkey-revoke-ext-1"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="passkey-status-ext-1"]').text()).toBe(
+			'Suspended',
+		)
+		expect(wrapper.find('[data-testid="passkey-status-web-1"]').text()).toBe(
+			'Active',
+		)
+		expect(wrapper.find('[data-testid="passkey-suspended-note"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.find('[data-testid="passkey-revoke-ext-1"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('shows no suspension warning while every passkey is active', async () => {
 		const wrapper = mountManager()
 		await flush()
 
-		expect(wrapper.find('[data-testid="passkey-suspended-note"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="passkey-suspended-note"]').exists()).toBe(
+			false,
+		)
 	})
 })

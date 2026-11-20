@@ -14,25 +14,47 @@
 	<CnSettingsSection
 		id="section-site-images"
 		:name="t('keepiq', 'Site images')"
-		:description="t('keepiq', 'Show an icon and a preview image of the website a login belongs to. Off until you set a service.')">
+		:description="
+			t(
+				'keepiq',
+				'Show an icon and a preview image of the website a login belongs to. Off until you set a service.',
+			)
+		">
 		<div class="site-images" data-testid="site-images-section">
 			<NcNoteCard v-if="error" type="error">
 				{{ error }}
 			</NcNoteCard>
 			<NcNoteCard type="warning" data-testid="site-images-privacy">
-				{{ t('keepiq', 'When a service is set, the browser of every vault user asks it for an image of each login it shows: the icon service receives the website\'s host name, the preview service the full website address. Leave both empty to keep these addresses inside this instance.') }}
+				{{
+					t(
+						'keepiq',
+						"When a service is set, the browser of every vault user asks it for an image of each login it shows: the icon service receives the website's host name, the preview service the full website address. Leave both empty to keep these addresses inside this instance.",
+					)
+				}}
 			</NcNoteCard>
 			<NcTextField
 				v-model="favicon"
 				:label="t('keepiq', 'Site icon service')"
-				:helperText="t('keepiq', 'An https address with {placeholder} where the host name goes.', { placeholder: '{domain}' })"
+				:helperText="
+					t(
+						'keepiq',
+						'An https address with {placeholder} where the host name goes.',
+						{ placeholder: '{domain}' },
+					)
+				"
 				placeholder="https://icons.example.com/{domain}.png"
 				data-testid="site-images-favicon"
 				@blur="save" />
 			<NcTextField
 				v-model="preview"
 				:label="t('keepiq', 'Site preview service')"
-				:helperText="t('keepiq', 'An https address with {placeholder} where the website address goes.', { placeholder: '{url}' })"
+				:helperText="
+					t(
+						'keepiq',
+						'An https address with {placeholder} where the website address goes.',
+						{ placeholder: '{url}' },
+					)
+				"
 				placeholder="https://preview.example.com/shot?url={url}"
 				data-testid="site-images-preview"
 				@blur="save" />
@@ -76,8 +98,14 @@ export default {
 		 * @return {string|null}
 		 */
 		validateSettings() {
-			if (templateProblem(this.favicon, '{domain}') || templateProblem(this.preview, '{url}')) {
-				return t('keepiq', 'A service must be an https address that contains its placeholder.')
+			if (
+				templateProblem(this.favicon, '{domain}')
+				|| templateProblem(this.preview, '{url}')
+			) {
+				return t(
+					'keepiq',
+					'A service must be an https address that contains its placeholder.',
+				)
 			}
 			return null
 		},

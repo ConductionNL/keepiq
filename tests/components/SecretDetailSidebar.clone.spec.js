@@ -73,7 +73,12 @@ describe('SecretDetailSidebar clone', () => {
 
 	it('is offered for a visible secret online, and not for a passkey item, a use-only copy or offline', () => {
 		const canClone = SecretDetailSidebar.computed.canClone
-		const base = { secret: GRAFANA, offlineReadOnly: false, useOnly: false, isPasskey: false }
+		const base = {
+			secret: GRAFANA,
+			offlineReadOnly: false,
+			useOnly: false,
+			isPasskey: false,
+		}
 		expect(canClone.call(base)).toBe(true)
 		expect(canClone.call({ ...base, isPasskey: true })).toBe(false)
 		expect(canClone.call({ ...base, useOnly: true })).toBe(false)

@@ -136,7 +136,8 @@ struct ItemDetailView: View {
             }
             if item.additionalFieldsError { Text(L("detail_fields_error")).foregroundStyle(.red) }
             ForEach(Array(item.extraFields.enumerated()), id: \.offset) { _, pair in
-                FieldRow(label: (pair.first as? String) ?? "", value: (pair.second as? String) ?? "", onCopy: model.copy)
+                let name = (pair.first as? String) ?? ""
+                FieldRow(label: name, value: (pair.second as? String) ?? "", masked: item.masksExtra(name: name), onCopy: model.copy)
             }
         }
     }
@@ -253,6 +254,8 @@ struct ItemEditView: View {
     @State private var typed: [String: String] = [:]
     @State private var fieldNames: [String] = []
     @State private var fieldValues: [String] = []
+    /// Each row's schema as JSON text, "" for none, kept with its row through a rename.
+    @State private var fieldSchemas: [String] = []
     @State private var problem: WriteProblem?
     @State private var showErrors = false
     @State private var busy = false
@@ -329,12 +332,13 @@ struct ItemEditView: View {
         typed = draft.typed
         fieldNames = draft.fieldNames
         fieldValues = draft.fieldValues
+        fieldSchemas = draft.fieldSchemas
     }
 
     private func current(_ base: ItemDraft) -> ItemDraft {
         base.edited(
             name: name, url: url, folderId: folder, login: login, secret: secret, notes: notes,
-            composite: composite, typed: typed, fieldNames: fieldNames, fieldValues: fieldValues
+            composite: composite, typed: typed, fieldNames: fieldNames, fieldValues: fieldValues, fieldSchemas: fieldSchemas
         )
     }
 
@@ -402,10 +406,17 @@ struct ItemEditView: View {
                     ForEach(fieldNames.indices, id: \.self) { i in
                         VStack {
                             LabeledInput(label: L("edit_field_name"), text: $fieldNames[i], problem: error("field-\(i)"))
-                            LabeledInput(label: L("edit_field_value"), text: $fieldValues[i], problem: nil)
+                            if ItemCodec.shared.masksField(name: fieldNames[i], schema: i < fieldSchemas.count ? fieldSchemas[i] : "") {
+                                // Keyed by the row count too, so a removed row's Show state never passes to the row taking its place.
+                                SecretInput(label: L("edit_field_value"), text: $fieldValues[i], problem: nil, onGenerate: nil)
+                                    .id("\(i)-\(fieldNames.count)")
+                            } else {
+                                LabeledInput(label: L("edit_field_value"), text: $fieldValues[i], problem: nil)
+                            }
                             Button(L("action_remove"), role: .destructive) {
                                 fieldNames.remove(at: i)
                                 fieldValues.remove(at: i)
+                                if i < fieldSchemas.count { fieldSchemas.remove(at: i) }
                             }
                             .accessibilityLabel(L("cd_remove_field", fieldNames[i]))
                         }
@@ -413,6 +424,7 @@ struct ItemEditView: View {
                     Button(L("edit_add_field")) {
                         fieldNames.append("")
                         fieldValues.append("")
+                        fieldSchemas.append("")
                     }
                 }
             }

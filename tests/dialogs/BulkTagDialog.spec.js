@@ -29,11 +29,13 @@ const stubs = {
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
+		template:
+			'<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
 	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
@@ -112,7 +114,11 @@ describe('BulkTagDialog', () => {
 		await button(wrapper, 'add').trigger('click')
 		await flush()
 
-		expect(secrets.changeTagInBulk).toHaveBeenCalledWith(['a', 'b'], 'work', true)
+		expect(secrets.changeTagInBulk).toHaveBeenCalledWith(
+			['a', 'b'],
+			'work',
+			true,
+		)
 		expect(wrapper.emitted('done')).toHaveLength(1)
 		expect(wrapper.emitted('close')).toHaveLength(1)
 		expect(wrapper.vm.running).toBe(false)
@@ -126,7 +132,11 @@ describe('BulkTagDialog', () => {
 		await button(wrapper, 'remove').trigger('click')
 		await flush()
 
-		expect(secrets.changeTagInBulk).toHaveBeenCalledWith(['a', 'b'], 'home', false)
+		expect(secrets.changeTagInBulk).toHaveBeenCalledWith(
+			['a', 'b'],
+			'home',
+			false,
+		)
 	})
 
 	it('shows an error and stays open when the change fails', async () => {

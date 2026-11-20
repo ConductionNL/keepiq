@@ -45,6 +45,9 @@ use OCP\Notification\UnknownNotificationException;
  *   already split per subject group. The share-request and group-member
  *   approval actions (keepiq#747) pushed it to the threshold. Splitting the
  *   class would only move branches into a second class this one calls.
+ * @SuppressWarnings(PHPMD.TooManyMethods) 26 against a threshold of 25, for
+ *   the same reason: one small renderer per subject group, and privileged
+ *   access added one.
  */
 class KeepiqNotifier implements INotifier {
 	/**

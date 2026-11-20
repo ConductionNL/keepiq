@@ -21,6 +21,13 @@
  */
 
 import { t } from '@nextcloud/l10n'
+import {
+	fieldsOf,
+	SCHEMA_MEMBER,
+	schemaConflicts,
+	schemasOf,
+	withSchemas,
+} from './fieldSchema.js'
 
 /**
  * Names that address the Secret's own columns and can never be members.
@@ -64,6 +71,13 @@ export function memberNameError(name, taken = []) {
 		)
 	}
 
+	// The member that holds the field schemas is not a field.
+	if (trimmed === SCHEMA_MEMBER) {
+		return t('keepiq', '“{name}” is reserved — choose a different name.', {
+			name: SCHEMA_MEMBER,
+		})
+	}
+
 	if (taken.some((existing) => (existing || '').trim() === trimmed) === true) {
 		return t('keepiq', 'That field is already listed.')
 	}
@@ -72,115 +86,68 @@ export function memberNameError(name, taken = []) {
 }
 
 /**
- * The kinds a custom field can have. `text` is the default and the reading of
- * every field saved before kinds existed; `hidden` is masked until revealed;
- * `boolean` holds `'true'` or `'false'`.
+ * Whether a member list may be saved: every checked member with a name has one the
+ * rules accept, also against the type's own field names, and a schema the
+ * server would not refuse. The editor shows why; this keeps Save from going
+ * ahead anyway, as a rename onto a type field's name would overwrite it.
  *
- * @type {Array<string>}
- */
-export const FIELD_KINDS = ['text', 'hidden', 'boolean']
-
-/**
- * A known kind, or `text` for anything else (absent, misspelt, from a newer
- * client).
- *
- * @param {string|undefined|null} kind The stored kind.
- *
- * @return {string} One of FIELD_KINDS.
- *
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
- */
-export function normaliseKind(kind) {
-	return FIELD_KINDS.includes(kind) ? kind : 'text'
-}
-
-/**
- * Whether a blob entry is the `{ value, kind }` shape a non-text field is
- * stored in.
- *
- * @param {string|number|boolean|object|null|undefined} entry One entry of the decrypted blob.
- *
+ * @param {Array<{name: string, schema?: object}>} members The member list.
+ * @param {Array<string>} reserved Names a member may not take: the type's own fields.
+ * @param {Array<object>} checked The members to check, by default all of them.
  * @return {boolean}
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
-function isKindedEntry(entry) {
-	return (
-		entry !== null
-		&& typeof entry === 'object'
-		&& !Array.isArray(entry)
-		&& Object.hasOwn(entry, 'value')
-	)
+export function membersValid(members = [], reserved = [], checked = members) {
+	return checked.every((member) => {
+		// A member left without a name is dropped on save (membersToObject).
+		if ((member.name || '').trim() === '') {
+			return true
+		}
+		const others = [
+			...members
+				.filter((other) => other !== member)
+				.map((other) => other.name),
+			...reserved,
+		]
+		return (
+			memberNameError(member.name, others) === ''
+			&& !schemaConflicts(member.schema)
+		)
+	})
 }
 
 /**
- * The value of one blob entry as text, whichever shape it is stored in.
- *
- * @param {string|number|boolean|object|null|undefined} entry One entry of the decrypted blob.
- *
- * @return {string} The value, '' when absent.
- *
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
- */
-export function fieldValueOf(entry) {
-	const value = isKindedEntry(entry) ? entry.value : entry
-	return value === null || value === undefined ? '' : String(value)
-}
-
-/**
- * The kind of one blob entry: `text` for a plain value, which is every entry
- * written before kinds existed.
- *
- * @param {string|number|boolean|object|null|undefined} entry One entry of the decrypted blob.
- *
- * @return {string} One of FIELD_KINDS.
- *
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
- */
-export function fieldKindOf(entry) {
-	return isKindedEntry(entry) ? normaliseKind(entry.kind) : 'text'
-}
-
-/**
- * The blob entry of one member. A text field stays a bare string, so a blob
- * without hidden or boolean fields is byte for byte what it was before kinds
- * existed and every older reader keeps working; any other kind is stored as
- * `{ value, kind }` inside the same encrypted blob (design D1).
- *
- * @param {string} value The value.
- * @param {string} kind The kind.
- *
- * @return {string|{value: string, kind: string}}
- *
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
- */
-export function fieldEntry(value, kind) {
-	const normalised = normaliseKind(kind)
-	return normalised === 'text' ? value : { value, kind: normalised }
-}
-
-/**
- * Turn a name/value/kind member list into the object the store encrypts.
+ * Turn a name/value member list into the object the store encrypts.
  *
  * Returns `{}` for an empty list rather than null, and that distinction is load
  * bearing: an empty blob means "this secret has no additional fields", while null
  * means "nothing was sent", which the store reads as "leave whatever is stored
  * alone". Removing the last member has to say the former.
  *
- * @param {Array<{name: string, value: string, kind?: string}>} members The edited member list.
+ * A member's `schema` goes into the reserved `@schema` member; a plain-text
+ * schema is left out, so a blob without typed fields looks exactly as before.
  *
- * @return {object} A plain object of name → entry, possibly empty.
+ * @param {Array<{name: string, value: string, schema?: object}>} members The edited member list.
+ *
+ * @return {object} A plain object of name → value, possibly empty.
  *
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function membersToObject(members = []) {
-	return members.reduce((acc, member) => {
+	const fields = {}
+	const schemas = {}
+	for (const member of members) {
 		const name = (member?.name || '').trim()
 		if (name !== '') {
-			acc[name] = fieldEntry(member?.value ?? '', member?.kind)
+			fields[name] = member?.value ?? ''
+			if (member?.schema) {
+				schemas[name] = member.schema
+			}
 		}
+	}
 
-		return acc
-	}, {})
+	return withSchemas(fields, schemas)
 }
 
 /**
@@ -189,24 +156,27 @@ export function membersToObject(members = []) {
  * Tolerates the shapes the store can hand over: a parsed object (the normal case),
  * or a string when the ciphertext did not contain JSON. A string is deliberately
  * NOT guessed at — it becomes no members, so an edit cannot silently discard
- * something unparseable by writing a blob that omits it. An entry without a kind
- * reads as `text`.
+ * something unparseable by writing a blob that omits it.
  *
  * @param {object|string|null|undefined} blob The decrypted `additionalFields`.
  *
- * @return {Array<{name: string, value: string, kind: string}>} The editable member list.
+ * Each member carries its schema; a field without one reads as plain text.
+ * The reserved `@schema` member itself never becomes a member.
+ *
+ * @return {Array<{name: string, value: string, schema: object}>} The editable member list.
  *
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
 export function objectToMembers(blob) {
 	if (blob === null || blob === undefined || typeof blob !== 'object') {
 		return []
 	}
 
-	return Object.entries(blob).map(([name, entry]) => ({
+	const schemas = schemasOf(blob)
+	return Object.entries(fieldsOf(blob)).map(([name, value]) => ({
 		name,
-		value: fieldValueOf(entry),
-		kind: fieldKindOf(entry),
+		value: value === null || value === undefined ? '' : String(value),
+		schema: schemas[name] ?? { type: 'string' },
 	}))
 }

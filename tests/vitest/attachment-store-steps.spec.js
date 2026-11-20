@@ -36,10 +36,12 @@ describe('attachment store steps', () => {
 	 */
 	async function uploaded(file) {
 		let body = null
-		const post = vi.spyOn(axios, 'post').mockImplementation(async (url, data) => {
-			body = data
-			return { data: {} }
-		})
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockImplementation(async (url, data) => {
+				body = data
+				return { data: {} }
+			})
 		const get = vi.spyOn(axios, 'get').mockImplementation(async () => ({
 			data: [
 				{
@@ -67,16 +69,32 @@ describe('attachment store steps', () => {
 		const { store, post, get } = await uploaded(
 			new File(['abc'], 'a.txt', { type: 'text/plain' }),
 		)
-		expect(post.mock.calls[0][0]).toBe('/apps/keepiq/api/v1/secrets/sec-1/attachments')
+		expect(post.mock.calls[0][0]).toBe(
+			'/apps/keepiq/api/v1/secrets/sec-1/attachments',
+		)
 		expect(Object.keys(post.mock.calls[0][1])).toEqual([
 			'blob',
 			'encryptedMetadata',
 			'wrappedFileKey',
 		])
-		expect(get).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/sec-1/attachments')
+		expect(get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/secrets/sec-1/attachments',
+		)
 		expect(store.attachments.map(({ wrappedFileKey, ...row }) => row)).toEqual([
-			{ id: 'a1', sizeBytes: 3, createdAt: 'T', filename: 'a.txt', contentType: 'text/plain' },
-			{ id: 'a2', sizeBytes: 4, createdAt: 'T2', filename: null, contentType: null },
+			{
+				id: 'a1',
+				sizeBytes: 3,
+				createdAt: 'T',
+				filename: 'a.txt',
+				contentType: 'text/plain',
+			},
+			{
+				id: 'a2',
+				sizeBytes: 4,
+				createdAt: 'T2',
+				filename: null,
+				contentType: null,
+			},
 		])
 		expect(store.loading).toBe(false)
 		expect(store.error).toBe(null)
@@ -99,24 +117,45 @@ describe('attachment store steps', () => {
 	})
 
 	it.each([
-		['upload', (s) => s.upload('sec-1', new File(['x'], 'x')), 'post', 'Upload failed'],
+		[
+			'upload',
+			(s) => s.upload('sec-1', new File(['x'], 'x')),
+			'post',
+			'Upload failed',
+		],
 		['remove', (s) => s.remove('sec-1', 'a1'), 'delete', 'Delete failed'],
-		['fetchAttachments', (s) => s.fetchAttachments('sec-1'), 'get', 'Failed to load attachments'],
-		['download', (s) => s.download({ id: 'a1', wrappedFileKey: 'w' }), 'get', 'Download failed'],
-	])('%s keeps the server message, else the error message, else its own text', async (name, act, verb, fallback) => {
-		const store = useAttachmentStore()
-		const call = vi.spyOn(axios, verb)
-		call.mockRejectedValueOnce({ response: { data: { message: 'server says' } } })
-		await expect(act(store)).rejects.toBeTruthy()
-		expect(store.error).toBe('server says')
-		call.mockRejectedValueOnce(new Error('plain'))
-		await expect(act(store)).rejects.toBeTruthy()
-		expect(store.error).toBe('plain')
-		call.mockRejectedValueOnce({})
-		await expect(act(store)).rejects.toBeTruthy()
-		expect(store.error).toBe(fallback)
-		expect(store.loading).toBe(false)
-	}, 30000)
+		[
+			'fetchAttachments',
+			(s) => s.fetchAttachments('sec-1'),
+			'get',
+			'Failed to load attachments',
+		],
+		[
+			'download',
+			(s) => s.download({ id: 'a1', wrappedFileKey: 'w' }),
+			'get',
+			'Download failed',
+		],
+	])(
+		'%s keeps the server message, else the error message, else its own text',
+		async (name, act, verb, fallback) => {
+			const store = useAttachmentStore()
+			const call = vi.spyOn(axios, verb)
+			call.mockRejectedValueOnce({
+				response: { data: { message: 'server says' } },
+			})
+			await expect(act(store)).rejects.toBeTruthy()
+			expect(store.error).toBe('server says')
+			call.mockRejectedValueOnce(new Error('plain'))
+			await expect(act(store)).rejects.toBeTruthy()
+			expect(store.error).toBe('plain')
+			call.mockRejectedValueOnce({})
+			await expect(act(store)).rejects.toBeTruthy()
+			expect(store.error).toBe(fallback)
+			expect(store.loading).toBe(false)
+		},
+		30000,
+	)
 
 	it('deletes the attachment and lists the secret again', async () => {
 		const del = vi.spyOn(axios, 'delete').mockResolvedValue({})
@@ -124,7 +163,9 @@ describe('attachment store steps', () => {
 		const store = useAttachmentStore()
 		await store.remove('sec-1', 'a1')
 		expect(del).toHaveBeenCalledWith('/apps/keepiq/api/v1/attachments/a1')
-		expect(get).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/sec-1/attachments')
+		expect(get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/secrets/sec-1/attachments',
+		)
 		expect(store.attachments).toEqual([])
 	})
 
@@ -153,8 +194,13 @@ describe('attachment store steps', () => {
 			filename: 'n.txt',
 			contentType: 'text/plain',
 		})
-		expect(axios.get).toHaveBeenCalledWith('/apps/keepiq/api/v1/attachments/a1/blob')
-		expect(blobs.map((b) => b.type)).toEqual(['application/octet-stream', 'text/plain'])
+		expect(axios.get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/attachments/a1/blob',
+		)
+		expect(blobs.map((b) => b.type)).toEqual([
+			'application/octet-stream',
+			'text/plain',
+		])
 		expect(await blobs[0].text()).toBe('abc')
 		expect(clicks).toEqual([
 			['blob:1', 'attachment'],
@@ -187,13 +233,38 @@ describe('attachment key re-grant for a recipient copy', () => {
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
 		const created = await regrant(useAttachmentStore(), keys.publicKeyPem)
 		expect(created).toBe(2)
-		expect(get).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/src-1/attachments')
-		expect(post.mock.calls.map(([url, body]) => [url, { ...body, wrappedFileKey: typeof body.wrappedFileKey }])).toEqual([
-			['/apps/keepiq/api/v1/attachments/a1/grants', { copySecretId: 'copy-1', recipientId: 'bob', wrappedFileKey: 'string', recipientType: 'user' }],
-			['/apps/keepiq/api/v1/attachments/a2/grants', { copySecretId: 'copy-1', recipientId: 'bob', wrappedFileKey: 'string', recipientType: 'user' }],
+		expect(get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/secrets/src-1/attachments',
+		)
+		expect(
+			post.mock.calls.map(([url, body]) => [
+				url,
+				{ ...body, wrappedFileKey: typeof body.wrappedFileKey },
+			]),
+		).toEqual([
+			[
+				'/apps/keepiq/api/v1/attachments/a1/grants',
+				{
+					copySecretId: 'copy-1',
+					recipientId: 'bob',
+					wrappedFileKey: 'string',
+					recipientType: 'user',
+				},
+			],
+			[
+				'/apps/keepiq/api/v1/attachments/a2/grants',
+				{
+					copySecretId: 'copy-1',
+					recipientId: 'bob',
+					wrappedFileKey: 'string',
+					recipientType: 'user',
+				},
+			],
 		])
 		const unwrapped = await Promise.all(
-			post.mock.calls.map(([, body]) => rsaDecrypt(body.wrappedFileKey, keys.privateKey)),
+			post.mock.calls.map(([, body]) =>
+				rsaDecrypt(body.wrappedFileKey, keys.privateKey),
+			),
 		)
 		expect(unwrapped).toEqual(['KEY-ONE', 'KEY-TWO'])
 	}, 30000)
@@ -204,11 +275,13 @@ describe('attachment key re-grant for a recipient copy', () => {
 		session.cryptoKey = keys.privateKey
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: null })
 		const post = vi.spyOn(axios, 'post')
-		await expect(regrant(useAttachmentStore(), keys.publicKeyPem)).resolves.toBe(0)
-		session.cryptoKey = null
-		await expect(regrant(useAttachmentStore(), keys.publicKeyPem)).rejects.toThrow(
-			'Vault is locked',
+		await expect(regrant(useAttachmentStore(), keys.publicKeyPem)).resolves.toBe(
+			0,
 		)
+		session.cryptoKey = null
+		await expect(
+			regrant(useAttachmentStore(), keys.publicKeyPem),
+		).rejects.toThrow('Vault is locked')
 		expect(post).not.toHaveBeenCalled()
 	}, 30000)
 })

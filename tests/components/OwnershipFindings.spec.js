@@ -248,7 +248,9 @@ describe('OwnershipFindings: a move step by step', () => {
 		vi.spyOn(secretStore, 'deleteSecret').mockResolvedValue()
 		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[1]
 		await wrapper.vm.move({ id: 'old-login' })
-		expect(axios.get).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/old-login')
+		expect(axios.get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/secrets/old-login',
+		)
 		expect(secretStore.contributeSecret).toHaveBeenCalledWith('tf-ops', {
 			name: 'Bank',
 			url: null,

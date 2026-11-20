@@ -27,7 +27,8 @@ const stubs = {
 	NcButton: {
 		props: ['variant', 'disabled', 'wide'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcNoteCard: {
 		props: ['type'],
@@ -132,9 +133,9 @@ describe('ForgotPasswordRecovery', () => {
 		const wrapper = await mountForgot()
 
 		expect(store.fetchMyRequest).toHaveBeenCalledTimes(1)
-		expect(
-			wrapper.find('[data-testid="forgot-password-start"]').text(),
-		).toBe('Forgot your master password?')
+		expect(wrapper.find('[data-testid="forgot-password-start"]').text()).toBe(
+			'Forgot your master password?',
+		)
 		expect(wrapper.find('[data-testid="forgot-password-phrase"]').exists()).toBe(
 			false,
 		)

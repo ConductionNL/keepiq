@@ -35,7 +35,8 @@ const stubs = {
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcNoteCard: {
 		props: ['type'],
@@ -208,9 +209,7 @@ describe('AccountRecoveryEnrolment', () => {
 		).toBe(true)
 		expect(wrapper.find('[data-testid="recovery-enrol"]').exists()).toBe(false)
 		expect(wrapper.find('input.password').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="recovery-withdraw"]').exists()).toBe(
-			true,
-		)
+		expect(wrapper.find('[data-testid="recovery-withdraw"]').exists()).toBe(true)
 	})
 
 	it('offers re-enrolment when the enrolment is not to the current key', async () => {

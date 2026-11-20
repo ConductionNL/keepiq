@@ -6,6 +6,7 @@
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress",
     "check:l10n-js": "node scripts/build-l10n-js.js --check",
     "check:manifest": "node tests/validate-manifest.js",
+    "check:path-case": "node scripts/check-path-case.js",
     "check:schema-l10n": "node scripts/check-schema-l10n.js",
     "dev": "NODE_ENV=development webpack --config webpack.config.js --progress",
     "format": "prettier --check \"**/*.{js,ts,vue,css,scss}\"",

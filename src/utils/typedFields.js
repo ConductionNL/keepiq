@@ -8,6 +8,7 @@
  */
 
 import { RESERVED_MEMBER_NAMES } from './additionalFields.js'
+import { fieldsOf, fieldValueOf, schemasOf, withSchemas } from './fieldSchema.js'
 
 /** The kinds a field can have, in the order the editor offers them. */
 export const FIELD_KINDS = Object.freeze(['text', 'hidden', 'url', 'email'])
@@ -111,8 +112,7 @@ export function splitTypedValues(blob, fields) {
 	const byLabel = Object.fromEntries(fields.map((f) => [f.label, f.key]))
 	for (const [name, value] of Object.entries(blob || {})) {
 		if (Object.hasOwn(byLabel, name)) {
-			values[byLabel[name]] =
-				value === null || value === undefined ? '' : String(value)
+			values[byLabel[name]] = fieldValueOf(value)
 		} else {
 			rest[name] = value
 		}
@@ -122,23 +122,84 @@ export function splitTypedValues(blob, fields) {
 
 /**
  * The additional-fields object to encrypt: the free members plus every
- * non-empty typed value, named by its field label.
+ * non-empty typed value, named by its field label. With the blob the form
+ * was opened from, a typed member it held stays, also when empty, keeps its
+ * stored value when unchanged (a number stays a number), and keeps its
+ * stored schema.
  *
  * @param {object} rest The free members, by name.
  * @param {Array<{key: string, label: string}>} fields The type's fields.
  * @param {object} values Typed values by field key.
+ * @param {object|null} [original] The blob the form was opened from.
  * @return {object} The blob.
  * @spec openspec/specs/admin-secret-types/spec.md#requirement-typed-fields-storage
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
-export function mergeTypedValues(rest, fields, values) {
+export function mergeTypedValues(rest, fields, values, original = null) {
+	const had =
+		original !== null && typeof original === 'object' ? fieldsOf(original) : {}
+	const given = values || {}
 	const out = { ...rest }
+	const merged = []
 	for (const field of fields) {
-		const value = values?.[field.key] ?? ''
-		if (value !== '') {
-			out[field.label] = value
+		const member = typedMember(had, field.label, given[field.key])
+		if (member !== undefined) {
+			out[field.label] = member
+			merged.push(field.label)
 		}
 	}
-	return out
+	return withStoredSchemas(out, merged, schemasOf(original))
+}
+
+/**
+ * The blob with the stored schemas of the typed members it was given back.
+ *
+ * @param {object} out The merged blob.
+ * @param {Array<string>} merged The typed members written into it.
+ * @param {object} stored The schemas of the blob the form was opened from.
+ * @return {object} The blob.
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ */
+function withStoredSchemas(out, merged, stored) {
+	const kept = {}
+	for (const label of merged) {
+		if (stored[label]) {
+			kept[label] = stored[label]
+		}
+	}
+	return Object.keys(kept).length === 0
+		? out
+		: withSchemas(fieldsOf(out), { ...schemasOf(out), ...kept })
+}
+
+/**
+ * A member value as text, '' for none.
+ *
+ * @param {string|number|boolean|object|null|undefined} value The value.
+ * @return {string} The text.
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ */
+function asText(value) {
+	return value === null || value === undefined ? '' : String(value)
+}
+
+/**
+ * What one typed value is stored as: the stored value when unchanged, so a
+ * member that was already empty stays; nothing when it is empty otherwise,
+ * so a cleared field is removed; else the value.
+ *
+ * @param {object} had The members of the blob the form was opened from.
+ * @param {string} label The field's member name.
+ * @param {string|undefined} value The value in the form.
+ * @return {string|number|boolean|object|null|undefined} The member value, or undefined to leave it out.
+ * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ */
+function typedMember(had, label, value) {
+	const text = asText(value)
+	if (Object.hasOwn(had, label) && asText(had[label]) === text) {
+		return had[label]
+	}
+	return text === '' ? undefined : text
 }
 
 /**

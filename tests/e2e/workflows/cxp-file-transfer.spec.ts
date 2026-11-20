@@ -9,7 +9,12 @@
  * and the import wizard opens with the received item. An altered response
  * opens nothing. Both sides are fresh accounts with their own vault.
  */
-import type { APIRequestContext, Browser, BrowserContext, Page } from '@playwright/test'
+import type {
+	APIRequestContext,
+	Browser,
+	BrowserContext,
+	Page,
+} from '@playwright/test'
 import type { VaultUser } from './_vault-users.ts'
 
 import { expect, test } from '@playwright/test'
@@ -59,8 +64,13 @@ async function openTransfer(
 	await clickOverflowAction(page, 'cxp-transfer')
 	const dialog = page.getByTestId('cxp-dialog')
 	await expect(dialog).toBeVisible({ timeout: 15_000 })
-	const label = direction === 'receive' ? 'Receive credentials (import)' : 'Send credentials (export)'
-	await dialog.getByRole('radio', { name: label }).evaluate((el: HTMLElement) => el.click())
+	const label =
+		direction === 'receive'
+			? 'Receive credentials (import)'
+			: 'Send credentials (export)'
+	await dialog
+		.getByRole('radio', { name: label })
+		.evaluate((el: HTMLElement) => el.click())
 	await dialog
 		.getByRole('radio', { name: 'Another provider (files)' })
 		.evaluate((el: HTMLElement) => el.click())
@@ -124,20 +134,29 @@ test.describe('CXP transfer through files', () => {
 			.fill(sender.masterPassword)
 
 		const pending = send.waitForEvent('download', { timeout: 60_000 })
-		await sendDialog.getByTestId('cxp-do-send').evaluate((el: HTMLElement) => el.click())
+		await sendDialog
+			.getByTestId('cxp-do-send')
+			.evaluate((el: HTMLElement) => el.click())
 		// A first press may only report what CXF cannot carry; the second sends.
 		const confirm = sendDialog.getByText('Confirm and send sealed transfer')
 		if (await confirm.isVisible({ timeout: 5_000 }).catch(() => false)) {
-			await sendDialog.getByTestId('cxp-do-send').evaluate((el: HTMLElement) => el.click())
+			await sendDialog
+				.getByTestId('cxp-do-send')
+				.evaluate((el: HTMLElement) => el.click())
 		}
-		const sealed = await readFile((await (await pending).path()) as string, 'utf8')
+		const sealed = await readFile(
+			(await (await pending).path()) as string,
+			'utf8',
+		)
 		await expect(sendDialog.getByTestId('cxp-sent')).toBeVisible()
 		expect(sealed).not.toContain(ITEM)
 		expect(sealed).not.toContain('carried-across-2026')
 
 		const receiveDialog = receive.getByTestId('cxp-dialog')
 		const altered = JSON.parse(sealed)
-		const field = Object.keys(altered).find((k) => typeof altered[k] === 'string' && altered[k].length > 40)
+		const field = Object.keys(altered).find(
+			(k) => typeof altered[k] === 'string' && altered[k].length > 40,
+		)
 		expect(field, 'a sealed field to alter').toBeTruthy()
 		const value: string = altered[field!]
 		altered[field!] = (value[0] === 'A' ? 'B' : 'A') + value.slice(1)
@@ -146,7 +165,9 @@ test.describe('CXP transfer through files', () => {
 			mimeType: 'application/json',
 			buffer: Buffer.from(JSON.stringify(altered)),
 		})
-		await expect(receiveDialog).toContainText('could not be verified', { timeout: 15_000 })
+		await expect(receiveDialog).toContainText('could not be verified', {
+			timeout: 15_000,
+		})
 
 		await receiveDialog.getByTestId('cxp-response-file').setInputFiles({
 			name: 'sealed.json',

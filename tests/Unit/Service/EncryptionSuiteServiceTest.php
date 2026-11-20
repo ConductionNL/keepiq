@@ -28,6 +28,7 @@ use OCA\Keepiq\Service\EncryptionSuiteProvisioningService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -769,7 +770,7 @@ class EncryptionSuiteServiceTest extends TestCase {
 		$this->assertSame(['reasonCode' => 'migration_in_progress', 'markCompromised' => true], $event->getMetadata());
 		$this->assertSame(
 			['reasonCode', 'markCompromised'],
-			AuditEventTypes::WHITELIST[AuditEventTypes::SUITE_REVOKE_REFUSED]
+			AuditMetadataPolicy::WHITELIST[AuditEventTypes::SUITE_REVOKE_REFUSED]
 		);
 	}//end testRecordRevokeRefusedDispatchesAnAuditEvent()
 
@@ -800,7 +801,7 @@ class EncryptionSuiteServiceTest extends TestCase {
 		);
 		$this->assertSame(
 			['stamped', 'notified', 'failed', 'incomplete', 'migrationEndFailed'],
-			AuditEventTypes::WHITELIST[AuditEventTypes::SUITE_COMPROMISE_CONTAINED]
+			AuditMetadataPolicy::WHITELIST[AuditEventTypes::SUITE_COMPROMISE_CONTAINED]
 		);
 	}//end testRecordContainmentDispatchesAnAuditEvent()
 

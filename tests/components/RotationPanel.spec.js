@@ -35,7 +35,8 @@ const stubs = {
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcNoteCard: {
 		props: ['type'],
@@ -174,7 +175,9 @@ describe('RotationPanel', () => {
 			const wrapper = await mountPanel()
 
 			expect(
-				wrapper.find('[data-testid="rotation-flag"] .rotation-panel__chip').text(),
+				wrapper
+					.find('[data-testid="rotation-flag"] .rotation-panel__chip')
+					.text(),
 			).toBe(label)
 			// An open flag replaces the manual "flag for rotation" action.
 			expect(wrapper.find('[data-testid="rotation-flag-now"]').exists()).toBe(
@@ -186,7 +189,9 @@ describe('RotationPanel', () => {
 			store.flags = [{ id: 'f9', secretId: 'other', reason: 'user_flagged' }]
 			const wrapper = await mountPanel()
 
-			expect(wrapper.find('[data-testid="rotation-flag"]').exists()).toBe(false)
+			expect(wrapper.find('[data-testid="rotation-flag"]').exists()).toBe(
+				false,
+			)
 			expect(wrapper.find('[data-testid="rotation-flag-now"]').exists()).toBe(
 				true,
 			)
@@ -268,11 +273,15 @@ describe('RotationPanel', () => {
 
 			await wrapper.find('[data-testid="expiry-save"]').trigger('click')
 			await flush()
-			expect(wrapper.find('[data-testid="rotation-error"]').exists()).toBe(true)
+			expect(wrapper.find('[data-testid="rotation-error"]').exists()).toBe(
+				true,
+			)
 			await wrapper.find('[data-testid="expiry-save"]').trigger('click')
 			await flush()
 
-			expect(wrapper.find('[data-testid="rotation-error"]').exists()).toBe(false)
+			expect(wrapper.find('[data-testid="rotation-error"]').exists()).toBe(
+				false,
+			)
 		})
 	})
 
@@ -329,7 +338,9 @@ describe('RotationPanel', () => {
 			await flush()
 
 			expect(store.flagSecrets).toHaveBeenCalledWith(['s1'])
-			expect(wrapper.find('[data-testid="rotation-error"]').exists()).toBe(false)
+			expect(wrapper.find('[data-testid="rotation-error"]').exists()).toBe(
+				false,
+			)
 		})
 
 		it('shows the error on failure, with a fixed fallback', async () => {
@@ -394,7 +405,9 @@ describe('RotationPanel', () => {
 
 			await button.trigger('click')
 			await flush()
-			expect(wrapper.find('[data-testid="rotation-error"]').text()).toBe('Gone')
+			expect(wrapper.find('[data-testid="rotation-error"]').text()).toBe(
+				'Gone',
+			)
 
 			await button.trigger('click')
 			await flush()
@@ -438,7 +451,9 @@ describe('RotationPanel', () => {
 
 			await button.trigger('click')
 			await flush()
-			expect(wrapper.find('[data-testid="rotation-error"]').text()).toBe('Nope')
+			expect(wrapper.find('[data-testid="rotation-error"]').text()).toBe(
+				'Nope',
+			)
 
 			await button.trigger('click')
 			await flush()

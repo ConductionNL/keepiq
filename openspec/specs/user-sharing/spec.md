@@ -190,7 +190,7 @@ The share dialog's recipient field MUST search Nextcloud users through Nextcloud
 The marks MUST come from an endpoint that takes the search term and the user ids of one result page (at most 25) and answers, per id, whether that user holds an active suite. The endpoint MUST rerun the sharee search for the term as the caller and MUST answer only about ids that search returns: an id the caller could not have found through sharee search is left out of the answer and is never looked up. There MUST NOT be an endpoint that lists the users who hold a suite.
 
 #### Scenario: Users without a vault are marked
-@e2e exclude The marks need two seeded users with and without a suite and Nextcloud's sharee search; covered by RecipientStatusControllerTest and tests/components/recipientPicker.spec.js.
+@e2e exclude The marks need two seeded users with and without a suite and Nextcloud's sharee search; covered by RecipientStatusControllerTest and tests/components/RecipientPicker.vaultStatus.spec.js.
 - GIVEN user A searches "al" and the sharee search returns alice, who has a suite, and albert, who does not
 - WHEN the share dialog shows the results
 - THEN alice MUST be selectable

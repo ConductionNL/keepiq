@@ -123,10 +123,14 @@ describe('device approval store', () => {
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
 		session.encryptedPrivateKey = null
 		session.suiteId = 'suite-1'
-		await expect(store.approve({ id: 'r-1' }, 'pw')).rejects.toThrow('Vault is locked')
+		await expect(store.approve({ id: 'r-1' }, 'pw')).rejects.toThrow(
+			'Vault is locked',
+		)
 		session.encryptedPrivateKey = await encryptPrivateKey(PEM, 'correct horse')
 		session.suiteId = null
-		await expect(store.approve({ id: 'r-1' }, 'pw')).rejects.toThrow('Vault is locked')
+		await expect(store.approve({ id: 'r-1' }, 'pw')).rejects.toThrow(
+			'Vault is locked',
+		)
 		expect(post).not.toHaveBeenCalled()
 
 		session.suiteId = 'suite-1'

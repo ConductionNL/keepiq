@@ -12,18 +12,31 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import HealthCategory from '../../src/components/HealthCategory.vue'
 
-const FINDING = { id: 's1', name: 'Intranet', url: 'http://intranet.example.org', flags: ['insecure-address'] }
+const FINDING = {
+	id: 's1',
+	name: 'Intranet',
+	url: 'http://intranet.example.org',
+	flags: ['insecure-address'],
+}
 
 describe('HealthCategory action', () => {
 	it('shows no action button without a label', () => {
-		const wrapper = mount(HealthCategory, { props: { title: 'Weak', findings: [FINDING] } })
+		const wrapper = mount(HealthCategory, {
+			props: { title: 'Weak', findings: [FINDING] },
+		})
 
-		expect(wrapper.find('[data-testid="finding-action-s1"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="finding-action-s1"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('emits the whole finding from the action button, and still opens on the name', async () => {
 		const wrapper = mount(HealthCategory, {
-			props: { title: 'Unencrypted address', findings: [FINDING], actionLabel: 'Change to https' },
+			props: {
+				title: 'Unencrypted address',
+				findings: [FINDING],
+				actionLabel: 'Change to https',
+			},
 		})
 
 		const action = wrapper.find('[data-testid="finding-action-s1"]')

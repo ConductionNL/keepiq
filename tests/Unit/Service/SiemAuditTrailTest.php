@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Service;
 
 use OCA\Keepiq\Event\Audit\AuditEvent;
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
@@ -100,8 +100,8 @@ class SiemAuditTrailTest extends TestCase {
 		$trail->recordSinkTested(actorId: 'admin', sinkId: 'sink-1', outcome: 'failed');
 		$trail->recordSinkDeleted(actorId: 'admin', sinkId: 'sink-1');
 		foreach ($this->events as $event) {
-			$this->assertTrue(condition: AuditEventTypes::isKnown(eventType: $event->getEventType()), message: $event->getEventType());
-			$allowed = AuditEventTypes::WHITELIST[$event->getEventType()];
+			$this->assertTrue(condition: AuditMetadataPolicy::isKnown(eventType: $event->getEventType()), message: $event->getEventType());
+			$allowed = AuditMetadataPolicy::WHITELIST[$event->getEventType()];
 			$this->assertSame(expected: [], actual: array_diff(array_keys($event->getMetadata()), $allowed), message: $event->getEventType());
 		}
 	}//end testTheMetadataStaysWithinTheWhitelist()

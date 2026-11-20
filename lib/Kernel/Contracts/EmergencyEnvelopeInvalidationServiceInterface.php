@@ -39,6 +39,9 @@ use OCA\Keepiq\Exception\NotFoundException;
  * @link     https://github.com/ConductionNL/keepiq
  *
  * @spec exclude Structural contract, no functional requirement.
+ *
+ * @SuppressWarnings(PHPMD.LongClassName) Every contract is named after its
+ *   service plus "Interface".
  */
 interface EmergencyEnvelopeInvalidationServiceInterface {
 

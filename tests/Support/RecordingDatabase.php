@@ -308,8 +308,13 @@ trait RecordingDatabase {
 		$next = static function () use (&$rows) {
 			return (array_shift($rows) ?? false);
 		};
-		$result->method('fetch')->willReturnCallback($next);
-		$result->method('fetchAssociative')->willReturnCallback($next);
+		// IResult has fetchAssociative() only from Nextcloud 33 on.
+		foreach (['fetch', 'fetchAssociative'] as $method) {
+			if (method_exists(IResult::class, $method) === true) {
+				$result->method($method)->willReturnCallback($next);
+			}
+		}
+
 		$result->method('fetchOne')->willReturnCallback(static function () use (&$rows) {
 			$row = array_shift($rows);
 			return ($row === null) ? false : reset($row);

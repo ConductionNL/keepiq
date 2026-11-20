@@ -49,7 +49,11 @@ describe('GroupShareForm', () => {
 		const share = vi.spyOn(store, 'shareWithGroup')
 		const wrapper = mountForm()
 
-		expect(wrapper.find('[data-testid="group-share-form-submit"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="group-share-form-submit"]')
+				.attributes('disabled'),
+		).toBeDefined()
 		await wrapper.find('form').trigger('submit')
 
 		expect(errorText(wrapper)).toBe('Group is required')
@@ -83,7 +87,9 @@ describe('GroupShareForm', () => {
 	})
 
 	it('sends the restriction and emits the share with its group', async () => {
-		const share = vi.spyOn(store, 'shareWithGroup').mockResolvedValue({ received: 2, skipped: 0 })
+		const share = vi
+			.spyOn(store, 'shareWithGroup')
+			.mockResolvedValue({ received: 2, skipped: 0 })
 		const wrapper = mountForm()
 		wrapper.vm.selected = FINANCE
 		wrapper.vm.restriction = { useOnly: true, endDate: '2027-01-31' }
@@ -95,13 +101,21 @@ describe('GroupShareForm', () => {
 			useOnly: true,
 			expiresAt: new Date('2027-01-31T23:59:59').toISOString(),
 		})
-		expect(wrapper.emitted('shared')).toEqual([[{ group: FINANCE, received: 2, skipped: 0 }]])
+		expect(wrapper.emitted('shared')).toEqual([
+			[{ group: FINANCE, received: 2, skipped: 0 }],
+		])
 		expect(wrapper.vm.busy).toBe(false)
 		expect(errorText(wrapper)).toBeNull()
 	})
 
 	it.each([
-		[{ response: { data: { message: 'Group not allowed' } }, message: 'ignored' }, 'Group not allowed'],
+		[
+			{
+				response: { data: { message: 'Group not allowed' } },
+				message: 'ignored',
+			},
+			'Group not allowed',
+		],
 		[new Error('Network Error'), 'Network Error'],
 		[{}, 'Failed to share'],
 	])('shows why a share failed (%#)', async (failure, shown) => {
@@ -120,7 +134,9 @@ describe('GroupShareForm', () => {
 	it('emits cancel from the cancel button', async () => {
 		const wrapper = mountForm()
 
-		await wrapper.find('[data-testid="group-share-form-cancel"]').trigger('click')
+		await wrapper
+			.find('[data-testid="group-share-form-cancel"]')
+			.trigger('click')
 
 		expect(wrapper.emitted('cancel')).toHaveLength(1)
 	})

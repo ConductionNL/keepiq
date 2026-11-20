@@ -29,7 +29,9 @@ const PARTNER = {
 	allowInbound: false,
 }
 const URL_PARTNER = '/apps/keepiq/api/v1/federation/partners/p%201'
-const REFUSED = { response: { status: 403, data: { message: 'Administrators only' } } }
+const REFUSED = {
+	response: { status: 403, data: { message: 'Administrators only' } },
+}
 
 let events
 
@@ -80,7 +82,9 @@ describe('updatePartner', () => {
 	it('sends nothing when the password is not confirmed, shows why and reloads', async () => {
 		const wrapper = await mountSection()
 		const put = vi.spyOn(axios, 'put')
-		confirmPassword.mockRejectedValue(new Error('Password confirmation cancelled'))
+		confirmPassword.mockRejectedValue(
+			new Error('Password confirmation cancelled'),
+		)
 		await wrapper.vm.updatePartner(PARTNER, { allowInbound: true })
 		expect(put).not.toHaveBeenCalled()
 		expect(wrapper.vm.error).toBe('Password confirmation cancelled')

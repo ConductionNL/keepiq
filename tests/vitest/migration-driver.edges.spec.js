@@ -46,7 +46,9 @@ function installWorker(reply) {
 		}
 
 		removeEventListener(type, fn) {
-			this.listeners[type] = (this.listeners[type] || []).filter((f) => f !== fn)
+			this.listeners[type] = (this.listeners[type] || []).filter(
+				(f) => f !== fn,
+			)
 		}
 
 		emit(type, event) {
@@ -137,11 +139,13 @@ describe('createMigrationRunner — handshake edges', () => {
 
 describe('createMigrationRunner — worker batches', () => {
 	it('numbers batches and resolves each with its own results', async () => {
-		const { instances } = installWorker(readyThen((msg) => ({
-			requestId: msg.requestId,
-			ok: true,
-			results: msg.jobs.map((j) => j.id + '@' + msg.requestId),
-		})))
+		const { instances } = installWorker(
+			readyThen((msg) => ({
+				requestId: msg.requestId,
+				ok: true,
+				results: msg.jobs.map((j) => j.id + '@' + msg.requestId),
+			})),
+		)
 
 		const runner = await createMigrationRunner(KEYS)
 		const first = await runner.run([{ id: 'a' }])
@@ -158,11 +162,17 @@ describe('createMigrationRunner — worker batches', () => {
 	it('ignores replies for other requests until its own arrives', async () => {
 		installWorker((msg, worker) => {
 			if (msg.type === 'init') {
-				worker.emit('message', { data: { requestId: msg.requestId, ok: true } })
+				worker.emit('message', {
+					data: { requestId: msg.requestId, ok: true },
+				})
 				return
 			}
-			worker.emit('message', { data: { requestId: 'batch-99', ok: true, results: ['wrong'] } })
-			worker.emit('message', { data: { requestId: msg.requestId, ok: true, results: ['right'] } })
+			worker.emit('message', {
+				data: { requestId: 'batch-99', ok: true, results: ['wrong'] },
+			})
+			worker.emit('message', {
+				data: { requestId: msg.requestId, ok: true, results: ['right'] },
+			})
 		})
 
 		const runner = await createMigrationRunner(KEYS)
@@ -171,7 +181,13 @@ describe('createMigrationRunner — worker batches', () => {
 	})
 
 	it('rejects a failed batch with the worker error', async () => {
-		installWorker(readyThen((msg) => ({ requestId: msg.requestId, ok: false, error: 'bad key' })))
+		installWorker(
+			readyThen((msg) => ({
+				requestId: msg.requestId,
+				ok: false,
+				error: 'bad key',
+			})),
+		)
 
 		const runner = await createMigrationRunner(KEYS)
 
@@ -183,7 +199,9 @@ describe('createMigrationRunner — worker batches', () => {
 
 		const runner = await createMigrationRunner(KEYS)
 
-		await expect(runner.run([{ id: 'a' }])).rejects.toThrow('Migration batch failed')
+		await expect(runner.run([{ id: 'a' }])).rejects.toThrow(
+			'Migration batch failed',
+		)
 	})
 })
 

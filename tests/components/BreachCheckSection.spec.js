@@ -19,7 +19,11 @@ const URL = '/apps/keepiq/api/settings/admin/general'
 
 function mountSection() {
 	return mount(BreachCheckSection, {
-		global: { stubs: { CnSettingsSection: { template: '<section><slot /></section>' } } },
+		global: {
+			stubs: {
+				CnSettingsSection: { template: '<section><slot /></section>' },
+			},
+		},
 	})
 }
 
@@ -35,13 +39,17 @@ describe('BreachCheckSection', () => {
 		[false, false],
 		[undefined, false],
 	])('reads breach_check_enabled=%s as %s', async (stored, expected) => {
-		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: { breach_check_enabled: stored } })
+		const get = vi
+			.spyOn(axios, 'get')
+			.mockResolvedValue({ data: { breach_check_enabled: stored } })
 		const wrapper = mountSection()
 		await flush()
 
 		expect(get).toHaveBeenCalledWith(URL)
 		expect(wrapper.vm.enabled).toBe(expected)
-		expect(wrapper.find('[data-testid="breach-check-enabled"]').element.checked).toBe(expected)
+		expect(
+			wrapper.find('[data-testid="breach-check-enabled"]').element.checked,
+		).toBe(expected)
 	})
 
 	it('stays off when the setting cannot be loaded', async () => {
