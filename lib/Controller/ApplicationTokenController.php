@@ -83,6 +83,11 @@ class ApplicationTokenController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 *
+	 * @no-admin-idor-exempt the assertion is the authorisation. The service
+	 * verifies its signature against the key the named application
+	 * registered, so a caller only gets a token for an application whose
+	 * private key it holds; failures are throttled.
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

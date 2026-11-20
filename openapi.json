@@ -2,7 +2,7 @@
     "openapi": "3.0.3",
     "info": {
         "title": "Keepiq",
-        "version": "0.3.9-unstable.20261115090000",
+        "version": "0.3.9-unstable.20261117120000",
         "description": "The versioned JSON API of Keepiq, the password and secrets vault for Nextcloud: secrets, folders, shares, emergency access, recovery, applications and the admin API. Authenticate as a Nextcloud user: a browser session, or an app password over HTTP Basic with the header OCS-APIRequest: true. Generated from appinfo/routes.php by scripts/generate-openapi.php; secret payloads are encrypted on the client and their shape is not described here. Errors on the /api/v1/ paths of the unversioned routes are RFC 9457 problem details (application/problem+json); the routes Keepiq declares under /api/v1/ itself, such as the admin API, answer errors as application/json, and as application/problem+json when the request's Accept header asks for it.",
         "contact": {
             "name": "Conduction B.V.",
@@ -12499,7 +12499,7 @@
             "get": {
                 "operationId": "secret-request-fill-show",
                 "summary": "Phase 1: resolve a token to its public metadata",
-                "description": "Phase 1: resolve a token to its public metadata. Returns the list of requested fields, the public certificate the browser must import to encrypt the responses, and the current status so the page can render \"expired\" / \"fulfilled\" / \"temporarily unavailable\" messages without leaking ownership.",
+                "description": "Phase 1: resolve a token to its public metadata. Returns the list of requested fields and, in `field_schemas`, their schemas by name; in `secret_type`, the system type of the Secret they fill (null for a custom type); the public certificate the browser must import to encrypt the responses; and the current status so the page can render \"expired\" / \"fulfilled\" / \"temporarily unavailable\" messages without leaking ownership.",
                 "tags": [
                     "secret-request-fill"
                 ],
@@ -14689,7 +14689,7 @@
             "post": {
                 "operationId": "secret-request-create",
                 "summary": "Create a new pending secret request",
-                "description": "Create a new pending secret request.",
+                "description": "Create a new pending secret request. The type of the Secret a fresh request creates arrives as `typeId` in the body, and the schemas of requested custom fields as `fieldSchemas`, an object of JSON Schema properties by field name. Both are read from the body rather than the signature. The created request answers with the same `fieldSchemas`. A request for an application's secret carries none: `fieldSchemas` on one is refused with a 400.",
                 "tags": [
                     "secret-request"
                 ],
@@ -18737,7 +18737,7 @@
             "get": {
                 "operationId": "secret-request-list-by-secret",
                 "summary": "List secret requests for a given Secret — owner-only",
-                "description": "List secret requests for a given Secret — owner-only.",
+                "description": "List secret requests for a given Secret — owner-only. Each request carries its `requestedFields` and, in `fieldSchemas`, the schema of each requested custom field by name; the owner's browser gives a filled field without a stored schema the one its request carries.",
                 "tags": [
                     "secret-request"
                 ],

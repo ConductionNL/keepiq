@@ -116,7 +116,8 @@ function isExported(secret, { folderIds, typeIds, secretIds }) {
 		return false
 	}
 	return (
-		(folderIds === null || (secret.folderId != null && folderIds.has(secret.folderId)))
+		(folderIds === null
+			|| (secret.folderId != null && folderIds.has(secret.folderId)))
 		&& (typeIds === null || typeIds.has(secretTypeId(secret)))
 		&& (secretIds === null || secretIds.has(String(secret.id)))
 	)
@@ -191,7 +192,11 @@ function folderFilter(scope, folders) {
 	if (scope.mode === 'folders') {
 		return collectSubtree(folders, scope.folderIds || [])
 	}
-	if (scope.mode !== undefined || !Array.isArray(scope.folderIds) || scope.folderIds.length === 0) {
+	if (
+		scope.mode !== undefined
+		|| !Array.isArray(scope.folderIds)
+		|| scope.folderIds.length === 0
+	) {
 		return null
 	}
 	return collectSubtree(folders, scope.folderIds)
@@ -300,9 +305,25 @@ function exportEntry(secret, pathMap) {
  */
 function extraUrls(secret) {
 	const urls = Array.isArray(secret.additionalUrls)
-		? secret.additionalUrls.filter((url) => typeof url === 'string' && url !== '')
+		? secret.additionalUrls.filter(
+				(url) => typeof url === 'string' && url !== '',
+			)
 		: []
 	return urls.length > 0 ? { additionalUrls: urls } : {}
+}
+
+/**
+ * The vault's types by their id as a string, skipping a type without an id.
+ *
+ * @param {Array<object>|undefined} types The vault's types.
+ * @return {Map<string, object>}
+ */
+function typesByIdOf(types) {
+	return new Map(
+		(Array.isArray(types) ? types : [])
+			.filter((type) => type && type.id)
+			.map((type) => [String(type.id), type]),
+	)
 }
 
 /**
@@ -324,14 +345,15 @@ function extraUrls(secret) {
  * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  * @spec openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp/spec.md#requirement-choose-what-to-send
  */
-export function serializeVault(secrets, folders, scope = { mode: 'vault' }, options = {}) {
+export function serializeVault(
+	secrets,
+	folders,
+	scope = { mode: 'vault' },
+	options = {},
+) {
 	const pathMap = buildPathMap(folders)
 	const filters = scopeFilters(scope, folders)
-	const typesById = new Map(
-		(Array.isArray(options.types) ? options.types : [])
-			.filter((type) => type && type.id)
-			.map((type) => [String(type.id), type]),
-	)
+	const typesById = typesByIdOf(options.types)
 	const omitted = OMITTABLE_FIELDS.filter((field) =>
 		(options.omitFields || []).includes(field),
 	)
@@ -340,19 +362,25 @@ export function serializeVault(secrets, folders, scope = { mode: 'vault' }, opti
 	// travel; the folder scope carries its subtree, the vault every folder.
 	const usedFolderIds =
 		scope && scope.mode === 'selection'
-			? new Set(exported.map((secret) => secret.folderId).filter((id) => id !== null && id !== undefined))
+			? new Set(
+					exported
+						.map((secret) => secret.folderId)
+						.filter((id) => id !== null && id !== undefined),
+				)
 			: null
 
 	const payload = {
 		format: PAYLOAD_FORMAT,
 		version: PAYLOAD_VERSION,
-		secrets: exported
-			.map((secret) =>
-				withoutFields(
-					{ ...exportEntry(secret, pathMap), ...typeNames(secret, typesById) },
-					omitted,
-				),
+		secrets: exported.map((secret) =>
+			withoutFields(
+				{
+					...exportEntry(secret, pathMap),
+					...typeNames(secret, typesById),
+				},
+				omitted,
 			),
+		),
 		folders: folders
 			.filter(
 				(folder) =>

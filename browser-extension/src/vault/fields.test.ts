@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EditableItem } from '@/src/messages'
 import { parseTotpSeed } from '@/src/totp/totp'
-import { CARD_FIELDS, customField, diffDraft, emptyValues, fieldShapes, fieldText, fieldTexts, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, withKinds, type FormValues } from './fields'
+import { blobText, CARD_FIELDS, customField, diffDraft, emptyValues, fieldTexts, formKind, formSections, fromItem, IDENTITY_FIELDS, keepLineBreaks, shownInFull, toDraft, totpKey, validate, type FormValues } from './fields'
 
 function values(overrides: Partial<FormValues> = {}): FormValues {
 	return { ...emptyValues('t-login'), name: 'GitHub', ...overrides }
@@ -172,6 +172,59 @@ describe('fromItem and diffDraft', () => {
 		const fetched = item({ typeId: 't-passkey', key: '', login: null })
 		expect(patchOf(fetched, 'passkey', () => ({ name: 'Renamed' }))).toEqual({ name: 'Renamed' })
 	})
+
+	it('keeps the field schemas out of the fields and writes them back as an object', () => {
+		const schemas = '{"pin":{"type":"string","hidden":true},"gone":{"type":"integer"}}'
+		const fetched = item({ additionalFields: { pin: '1234', '@schema': schemas } })
+		const form = fromItem(fetched, 'login')
+		expect(form.fields.map((field) => field.name)).toEqual(['pin'])
+		const patch = patchOf(fetched, 'login', (values) => ({ fields: [...values.fields, customField('port', '22')] }))
+		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ pin: '1234', port: '22', '@schema': { pin: { type: 'string', hidden: true } } })
+	})
+
+	it('keeps a field schema through a rename', () => {
+		const fetched = item({ additionalFields: { PIN: '4711', '@schema': '{"PIN":{"type":"string","hidden":true}}' } })
+		const patch = patchOf(fetched, 'login', (values) => ({ fields: values.fields.map((field) => ({ ...field, name: 'Card PIN' })) }))
+		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ 'Card PIN': '4711', '@schema': { 'Card PIN': { type: 'string', hidden: true } } })
+	})
+
+	it('keeps the schema of the notes, which are no field', () => {
+		const fetched = item({ additionalFields: { Notes: 'n', pin: '1', '@schema': '{"Notes":{"type":"string","hidden":true}}' } })
+		const patch = patchOf(fetched, 'login', (values) => ({ fields: [...values.fields, customField('port', '22')] }))
+		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ pin: '1', port: '22', Notes: 'n', '@schema': { Notes: { type: 'string', hidden: true } } })
+	})
+
+	it('keeps the kind of a legacy { value, kind } field through a rename', () => {
+		const fetched = item({ additionalFields: fieldTexts({ PIN: { value: '4711', kind: 'hidden' } }) })
+		const patch = patchOf(fetched, 'login', (values) => ({ fields: values.fields.map((field) => ({ ...field, name: 'Card PIN' })) }))
+		expect(JSON.parse(blobText(patch.additionalFields!))).toEqual({ 'Card PIN': '4711', '@schema': { 'Card PIN': { type: 'string', hidden: true } } })
+	})
+
+	it('keeps a field someone named @schema next to a legacy { value, kind } field', () => {
+		const texts = fieldTexts({ PIN: { value: '4711', kind: 'hidden' }, '@schema': 'my value' })
+		expect(texts).toEqual({ PIN: '4711', '@schema (imported)': 'my value', '@schema': JSON.stringify({ PIN: { type: 'string', hidden: true } }) })
+		const form = fromItem(item({ additionalFields: texts }), 'login')
+		expect(form.fields.map((field) => [field.name, field.value])).toEqual([['PIN', '4711'], ['@schema (imported)', 'my value']])
+		// A taken imported name keeps its own value, as the edit form does.
+		expect(fieldTexts({ PIN: { value: '1', kind: 'hidden' }, '@schema': 'theirs', '@schema (imported)': 'mine' })['@schema (imported)']).toBe('mine')
+		// A schema map is merged with the kinds, its own entries winning.
+		expect(JSON.parse(fieldTexts({ PIN: { value: '1', kind: 'hidden' }, '@schema': { PIN: { type: 'string' } } })['@schema'] ?? '')).toEqual({ PIN: { type: 'string' } })
+	})
+
+	it('keeps a field someone named @schema, under the name the web app gives it', () => {
+		const fetched = item({ additionalFields: { pin: '1234', '@schema': 'my value' } })
+		const form = fromItem(fetched, 'login')
+		expect(form.fields.map((field) => [field.name, field.value])).toEqual([['pin', '1234'], ['@schema (imported)', 'my value']])
+		expect(form.schemas).toBeNull()
+		expect(JSON.parse(blobText(toDraft(form, 'login').additionalFields!))).toEqual({ pin: '1234', '@schema (imported)': 'my value' })
+	})
+})
+
+describe('blobText', () => {
+	it('writes fields without schemas as they are', () => {
+		expect(blobText({ pin: '1234' })).toBe('{"pin":"1234"}')
+		expect(blobText({ pin: '1234', '@schema': '{"gone":{"type":"integer"}}' })).toBe('{"pin":"1234"}')
+	})
 })
 
 describe('validate', () => {
@@ -319,53 +372,5 @@ describe('diffDraft and validate, field by field', () => {
 		expect(Object.keys(validate({ ...identity, identity: { ...identity.identity, address: long } }, 'identity'))).toEqual(['identity.address'])
 		expect(validate(values({ typeId: 't-totp', secret: 'not base32 !' }), 'totp')).toEqual({ secret: { code: 'invalidTotp' } })
 		expect(validate(values({ typeId: 't-passkey', name: '', url: long, login: long }), 'passkey')).toEqual({ name: { code: 'required' }, url: { code: 'tooLong', max: 4096 } })
-	})
-})
-
-/** Keepiq `vault-custom-fields`: the web app stores a hidden or yes-or-no field as `{ value, kind }`. */
-describe('kinded additional fields', () => {
-	const blob = { tenant: 'acme', 'Recovery code': { value: 'abc-123', kind: 'hidden' }, Active: { value: true, kind: 'boolean' }, Archived: { value: 'false', kind: 'boolean' } }
-
-	it('reads a hidden field as its value, not its JSON, and a yes or no as true or false', () => {
-		expect(fieldTexts(blob)).toEqual({ tenant: 'acme', 'Recovery code': 'abc-123', Active: 'true', Archived: 'false' })
-		expect(fieldText({ value: 'x', kind: 'hidden' })).not.toContain('{')
-		expect(fieldText({ nested: 1 })).toBe('{"nested":1}')
-	})
-
-	it('records the shape of the kinded fields only', () => {
-		expect(fieldShapes(blob)).toEqual({ 'Recovery code': { kind: 'hidden' }, Active: { kind: 'boolean', boolean: true }, Archived: { kind: 'boolean' } })
-	})
-
-	it('saves an edited hidden field back with its kind, and a plain field as plain text', () => {
-		const fetched = item({ additionalFields: fieldTexts(blob), fieldKinds: fieldShapes(blob) })
-		const form = fromItem(fetched, 'login')
-		form.fields = form.fields.map((field) => field.name === 'Recovery code' ? { ...field, value: 'xyz-789' } : field)
-		const patch = diffDraft(toDraft(fromItem(fetched, 'login'), 'login'), toDraft(form, 'login'))
-
-		expect(patch.additionalFields).toEqual({ tenant: 'acme', 'Recovery code': 'xyz-789', Active: 'true', Archived: 'false' })
-		expect(withKinds(patch.additionalFields!, patch.fieldKinds)).toEqual({
-			tenant: 'acme',
-			'Recovery code': { value: 'xyz-789', kind: 'hidden' },
-			Active: { value: true, kind: 'boolean' },
-			Archived: { value: 'false', kind: 'boolean' },
-		})
-	})
-
-	it('keeps the kind through a rename', () => {
-		const fetched = item({ additionalFields: { PIN: '4711' }, fieldKinds: { PIN: { kind: 'hidden' } } })
-		const form = fromItem(fetched, 'login')
-		form.fields = form.fields.map((field) => ({ ...field, name: 'Card PIN' }))
-		const draft = toDraft(form, 'login')
-		expect(withKinds(draft.additionalFields, draft.fieldKinds)).toEqual({ 'Card PIN': { value: '4711', kind: 'hidden' } })
-	})
-
-	it('leaves an item without kinded fields exactly as before', () => {
-		const fetched = item({ additionalFields: { pin: '1234' } })
-		const draft = toDraft(fromItem(fetched, 'login'), 'login')
-		expect(draft).not.toHaveProperty('fieldKinds')
-		expect(withKinds(draft.additionalFields, draft.fieldKinds)).toEqual({ pin: '1234' })
-		const renamed = fromItem(fetched, 'login')
-		renamed.name = 'Renamed'
-		expect(diffDraft(draft, toDraft(renamed, 'login'))).toEqual({ name: 'Renamed' })
 	})
 })

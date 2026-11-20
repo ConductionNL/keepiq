@@ -49,9 +49,7 @@
 			v-else-if="loadError"
 			class="keepiq-link-share-access__not-found"
 			data-testid="link-share-load-error">
-			<div class="keepiq-link-share-access__not-found-icon">
-				<LinkVariantOff :size="36" />
-			</div>
+			<LinkUnavailableIcon />
 			<h2>{{ t('keepiq', 'Link not found or expired') }}</h2>
 			<p>
 				{{
@@ -180,8 +178,8 @@
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import EyeOff from 'vue-material-design-icons/EyeOff.vue'
-import LinkVariantOff from 'vue-material-design-icons/LinkVariantOff.vue'
 import CopyButton from '../components/CopyButton.vue'
+import LinkUnavailableIcon from '../components/LinkUnavailableIcon.vue'
 import { parsePayload } from '../cardIdentity/cardIdentity.js'
 import { useLinkShareStore } from '../store/modules/linkShare.js'
 import { objectToMembers } from '../utils/additionalFields.js'
@@ -227,7 +225,7 @@ export default {
 		CopyButton,
 		Eye,
 		EyeOff,
-		LinkVariantOff,
+		LinkUnavailableIcon,
 		NcButton,
 		NcNoteCard,
 	},
@@ -537,19 +535,6 @@ export default {
 .keepiq-link-share-access__not-found {
 	padding: 16px 0 8px;
 	text-align: center;
-}
-
-.keepiq-link-share-access__not-found-icon {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 72px;
-	height: 72px;
-	margin: 0 auto 16px;
-	border-radius: 50%;
-	background: var(--color-background-dark, #ededed);
-	background: color-mix(in srgb, var(--color-error, #d91f2d) 12%, transparent);
-	color: var(--color-error, #d91f2d);
 }
 
 .keepiq-link-share-access__not-found h2 {

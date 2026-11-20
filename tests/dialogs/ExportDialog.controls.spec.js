@@ -70,7 +70,9 @@ const folders = [
  * @return {Promise<import('@vue/test-utils').VueWrapper>}
  */
 async function mountDialog() {
-	vi.spyOn(axios, 'get').mockResolvedValue({ data: { vault_export_disabled: false } })
+	vi.spyOn(axios, 'get').mockResolvedValue({
+		data: { vault_export_disabled: false },
+	})
 	const wrapper = mount(ExportDialog, {
 		propsData: { open: true, secrets: [], folders },
 		global: { stubs },
@@ -107,11 +109,15 @@ describe('ExportDialog controls', () => {
 		await radio(wrapper, 'plaintext-csv').trigger('click')
 		expect(wrapper.vm.mode).toBe('plaintext-csv')
 		expect(wrapper.find('.export-dialog__backup').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="export-plaintext-warning"]').text()).toContain('A CSV export is UNENCRYPTED')
+		expect(
+			wrapper.find('[data-testid="export-plaintext-warning"]').text(),
+		).toContain('A CSV export is UNENCRYPTED')
 
 		await radio(wrapper, 'cxf').trigger('click')
 		expect(wrapper.vm.mode).toBe('cxf')
-		expect(wrapper.find('[data-testid="export-plaintext-warning"]').text()).toContain('A CXF export is UNENCRYPTED')
+		expect(
+			wrapper.find('[data-testid="export-plaintext-warning"]').text(),
+		).toContain('A CXF export is UNENCRYPTED')
 
 		await radio(wrapper, 'encrypted-backup').trigger('click')
 		expect(wrapper.vm.mode).toBe('encrypted-backup')
@@ -157,8 +163,12 @@ describe('ExportDialog controls', () => {
 
 		await field.setValue('correct horse battery staple violet harbour')
 		expect(wrapper.vm.passphraseScore).toBe(4)
-		expect(wrapper.find('.export-dialog__strength').classes()).toContain('export-dialog__strength--4')
-		expect(wrapper.find('.export-dialog__strength').text()).toBe('Passphrase strength: strong enough')
+		expect(wrapper.find('.export-dialog__strength').classes()).toContain(
+			'export-dialog__strength--4',
+		)
+		expect(wrapper.find('.export-dialog__strength').text()).toBe(
+			'Passphrase strength: strong enough',
+		)
 		expect(wrapper.vm.canSubmit).toBe(true)
 
 		await field.setValue('')
@@ -188,7 +198,9 @@ describe('ExportDialog controls', () => {
 		await radio(wrapper, 'plaintext-csv').trigger('click')
 		await wrapper.find('.export-dialog__csv label.switch').trigger('click')
 
-		const cancel = wrapper.findAll('button').find((button) => button.text() === 'Cancel')
+		const cancel = wrapper
+			.findAll('button')
+			.find((button) => button.text() === 'Cancel')
 		await cancel.trigger('click')
 
 		expect(wrapper.emitted('update:open')).toEqual([[false]])
@@ -214,20 +226,27 @@ describe('ExportDialog controls', () => {
 			{ id: 't-note', name: 'Secure note' },
 		]
 		vi.spyOn(reauth, 'verifyMasterPassword').mockResolvedValue(true)
-		const cxf = vi.spyOn(useExportStore(), 'exportCxf').mockResolvedValue({ unmapped: [] })
+		const cxf = vi
+			.spyOn(useExportStore(), 'exportCxf')
+			.mockResolvedValue({ unmapped: [] })
 		wrapper.vm.mode = 'cxf'
 		wrapper.vm.warningAcknowledged = true
 		wrapper.vm.masterPassword = 'hunter2'
 
 		await wrapper.vm.onExport()
 
-		expect(cxf).toHaveBeenLastCalledWith([], folders, { mode: 'vault' }, {
-			types: [
-				{ id: 't-login', name: 'Login' },
-				{ id: 't-note', name: 'Secure note' },
-			],
-			omitFields: [],
-			typeNamesById: { 't-login': 'Login', 't-note': 'Secure note' },
-		})
+		expect(cxf).toHaveBeenLastCalledWith(
+			[],
+			folders,
+			{ mode: 'vault' },
+			{
+				types: [
+					{ id: 't-login', name: 'Login' },
+					{ id: 't-note', name: 'Secure note' },
+				],
+				omitFields: [],
+				typeNamesById: { 't-login': 'Login', 't-note': 'Secure note' },
+			},
+		)
 	})
 })

@@ -6,35 +6,39 @@
 		     "Cannot read properties of undefined (reading 'toString')", and the
 		     <input> never renders — the wrapper div is still there, so it looks
 		     present. No lint rule catches this. -->
+		<!-- A revealed multi-line value, such as a certificate or a private
+		     key, keeps its line breaks: a one-line input would join them. -->
+		<NcTextArea
+			v-if="revealed && multiline"
+			class="keepiq-password-field__multiline"
+			:modelValue="displayValue"
+			:label="label"
+			:rows="rows"
+			readonly
+			spellcheck="false" />
 		<NcInputField
+			v-else
 			:modelValue="displayValue"
 			:label="label"
 			:type="revealed ? 'text' : 'password'"
 			:readOnly="true" />
-		<NcButton
-			v-if="!useOnly"
-			variant="tertiary"
-			:aria-label="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
+		<RevealToggle
+			v-if="!useOnly && !shownAtOnce"
+			:revealed="revealed"
 			:title="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
-			@click="toggle">
-			<template #icon>
-				<EyeOff v-if="revealed" :size="20" />
-				<Eye v-else :size="20" />
-			</template>
-		</NcButton>
+			@click="toggle" />
 		<CopyButton
 			:resolve="resolvePlain"
 			:useOnly="useOnly"
 			:guard="guard"
-			:label="t('keepiq', 'Copy password')" />
+			:label="copyLabel" />
 	</div>
 </template>
 
 <script>
-import { NcButton, NcInputField } from '@nextcloud/vue'
-import Eye from 'vue-material-design-icons/Eye.vue'
-import EyeOff from 'vue-material-design-icons/EyeOff.vue'
+import { NcInputField, NcTextArea } from '@nextcloud/vue'
 import CopyButton from './CopyButton.vue'
+import RevealToggle from './RevealToggle.vue'
 
 /**
  * A masked key/password field with a show/hide eye toggle and a copy button.
@@ -47,11 +51,10 @@ export default {
 	name: 'PasswordField',
 
 	components: {
-		NcButton,
 		NcInputField,
-		Eye,
-		EyeOff,
+		NcTextArea,
 		CopyButton,
+		RevealToggle,
 	},
 
 	props: {
@@ -71,6 +74,20 @@ export default {
 			},
 		},
 
+		/** The copy button's label. */
+		copyLabel: {
+			type: String,
+			/**
+			 * @return {string} The translated fallback label.
+			 *
+			 * @spec exclude A Vue prop `default()` factory returning a translated
+			 *   fallback string — it declares a default value, not behaviour.
+			 */
+			default() {
+				return t('keepiq', 'Copy password')
+			},
+		},
+
 		/**
 		 * A use-only value stays masked: no reveal toggle, no copy, and the
 		 * resolver is never called (sharing-use-only-and-expiring-shares D3).
@@ -84,6 +101,21 @@ export default {
 		resolve: {
 			type: Function,
 			required: true,
+		},
+
+		/** The value spans several lines, such as a certificate or a key. */
+		multiline: {
+			type: Boolean,
+			default: false,
+		},
+
+		/**
+		 * The value is public by design, such as a certificate: it is shown
+		 * at once and has no show/hide toggle.
+		 */
+		alwaysShown: {
+			type: Boolean,
+			default: false,
 		},
 
 		/**
@@ -111,6 +143,41 @@ export default {
 		displayValue() {
 			return this.revealed ? (this.plain ?? '') : this.masked
 		},
+
+		/**
+		 * Whether a public value is shown without a toggle. A re-prompt
+		 * guard still masks it until the guard passes.
+		 *
+		 * @spec exclude Presentation state: combines two props.
+		 */
+		shownAtOnce() {
+			return this.alwaysShown && !this.guard
+		},
+
+		/**
+		 * The text area's height: the value's lines plus one, at least ten
+		 * so a short key or certificate still reads as a block, at most
+		 * twenty.
+		 *
+		 * @spec exclude Presentation sizing: no domain behaviour.
+		 */
+		rows() {
+			const lines = (this.plain ?? '').split('\n').length + 1
+			return Math.min(Math.max(lines, 10), 20)
+		},
+	},
+
+	/**
+	 * Show a public value at once; a use-only value is never revealed.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+	 */
+	async mounted() {
+		if (this.shownAtOnce && !this.useOnly) {
+			this.plain = await this.resolve()
+			this.revealed = true
+		}
 	},
 
 	methods: {
@@ -173,7 +240,23 @@ export default {
 	gap: 4px;
 }
 
-.keepiq-password-field :deep(.input-field) {
-	flex: 1 1 auto;
+/* The buttons keep their room; the field takes what is left and may shrink
+   below its content's width, so a long line never pushes them out. */
+.keepiq-password-field > * {
+	flex: 0 0 auto;
+}
+
+.keepiq-password-field :deep(.input-field),
+.keepiq-password-field__multiline {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+/* Only taller, never wider: a wider text area would run off the screen. */
+.keepiq-password-field__multiline :deep(textarea) {
+	max-width: 100%;
+	font-family: monospace;
+	font-size: 13px;
+	resize: vertical;
 }
 </style>

@@ -13,7 +13,9 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import SecretCreateDialog, { cloneName } from '../../src/dialogs/SecretCreateDialog.vue'
+import SecretCreateDialog, {
+	cloneName,
+} from '../../src/dialogs/SecretCreateDialog.vue'
 import { useFolderStore } from '../../src/store/modules/folder.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
@@ -27,15 +29,23 @@ const stubs = {
 	},
 	NcButton: {
 		props: ['disabled', 'variant', 'ariaLabel', 'title'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
-	NcSelect: { props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'], template: '<div />' },
+	NcSelect: {
+		props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'],
+		template: '<div />',
+	},
 	NcTextField: {
 		props: ['modelValue', 'label', 'placeholder', 'disabled', 'required'],
 		emits: ['update:modelValue'],
-		template: '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+		template:
+			'<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 	},
-	NcPasswordField: { props: ['modelValue', 'label'], template: '<input type="password" :value="modelValue" />' },
+	NcPasswordField: {
+		props: ['modelValue', 'label'],
+		template: '<input type="password" :value="modelValue" />',
+	},
 	NcNoteCard: { props: ['type'], template: '<div><slot /></div>' },
 	NcLoadingIcon: { template: '<span />' },
 	Plus: { template: '<i />' },
@@ -67,7 +77,8 @@ describe('SecretCreateDialog — clone', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
-		globalThis.t = (_app, text, vars = {}) => text.replace(/\{(\w+)\}/g, (_m, k) => vars[k] ?? '')
+		globalThis.t = (_app, text, vars = {}) =>
+			text.replace(/\{(\w+)\}/g, (_m, k) => vars[k] ?? '')
 		const typeStore = useSecretTypeStore()
 		typeStore.types = [
 			{ id: 'login', name: 'login', label: 'Login' },
@@ -100,9 +111,13 @@ describe('SecretCreateDialog — clone', () => {
 		expect(wrapper.vm.url).toBe('https://grafana.staging.example')
 		expect(wrapper.vm.login).toBe('ops')
 		expect(wrapper.vm.value).toBe('Xk9#mQ2$vL7@pR4!zT6&')
-		expect(wrapper.vm.additionalFields).toEqual([{ name: 'team', value: 'platform', kind: 'text' }])
+		expect(wrapper.vm.additionalFields).toEqual([
+			{ name: 'team', value: 'platform', schema: { type: 'string' } },
+		])
 		expect(wrapper.vm.selectedFolderId).toBe('folder-ops')
-		expect(wrapper.find('[data-testid="secret-create-clone-note"]').text()).toContain(
+		expect(
+			wrapper.find('[data-testid="secret-create-clone-note"]').text(),
+		).toContain(
 			'Attachments, shares, history, passkeys and the one-time code are not copied.',
 		)
 	})
@@ -110,7 +125,9 @@ describe('SecretCreateDialog — clone', () => {
 	it('saves a new secret through the ordinary create, with the changed address', async () => {
 		const wrapper = await mountDialog({ prefill: GRAFANA })
 		vi.spyOn(wrapper.vm, 'breachBlocked').mockResolvedValue(false)
-		const create = vi.spyOn(useSecretStore(), 'createSecret').mockResolvedValue({ id: 'new-id' })
+		const create = vi
+			.spyOn(useSecretStore(), 'createSecret')
+			.mockResolvedValue({ id: 'new-id' })
 		const setTags = vi.spyOn(useSecretStore(), 'setTags').mockResolvedValue()
 
 		wrapper.vm.url = 'https://grafana.prod.example'
@@ -130,21 +147,71 @@ describe('SecretCreateDialog — clone', () => {
 		expect(wrapper.emitted('saved')[0][0]).toEqual({ id: 'new-id' })
 	})
 
-	it('seeds a card from its decrypted payload', async () => {
-		const card = { number: '4111111111111111', expiry: '12/29', cvv: '123', pin: '', cardholder: 'J. Jansen' }
+	it('keeps the stored schema that hides a type field of the source', async () => {
+		useSecretTypeStore().types.push({
+			id: 'server',
+			name: 'server-access',
+			label: 'Server access',
+			fields: [{ key: 'host', label: 'Host', kind: 'text', required: false }],
+		})
 		const wrapper = await mountDialog({
-			prefill: { typeId: 'card', name: 'Company card', key: JSON.stringify(card), folderId: 'folder-ops' },
+			prefill: {
+				typeId: 'server',
+				name: 'DB',
+				key: 'pw',
+				folderId: 'folder-ops',
+				additionalFields: {
+					Host: 'db-01',
+					team: 'platform',
+					'@schema': { Host: { type: 'string', hidden: true } },
+				},
+			},
+		})
+		vi.spyOn(wrapper.vm, 'breachBlocked').mockResolvedValue(false)
+		const create = vi
+			.spyOn(useSecretStore(), 'createSecret')
+			.mockResolvedValue({ id: 'new-id' })
+		vi.spyOn(useSecretStore(), 'setTags').mockResolvedValue()
+
+		await wrapper.vm.submit()
+
+		expect(create).toHaveBeenCalledTimes(1)
+		const blob = create.mock.calls[0][0].additionalFields
+		expect(blob.Host).toBe('db-01')
+		expect(blob['@schema'].Host.hidden).toBe(true)
+	})
+
+	it('seeds a card from its decrypted payload', async () => {
+		const card = {
+			number: '4111111111111111',
+			expiry: '12/29',
+			cvv: '123',
+			pin: '',
+			cardholder: 'J. Jansen',
+		}
+		const wrapper = await mountDialog({
+			prefill: {
+				typeId: 'card',
+				name: 'Company card',
+				key: JSON.stringify(card),
+				folderId: 'folder-ops',
+			},
 		})
 		expect(wrapper.vm.card).toEqual(card)
 	})
 
 	it('a folder passed by the caller wins over the source folder, and without a prefill nothing is seeded', async () => {
-		const cloned = await mountDialog({ prefill: GRAFANA, folderId: 'folder-other' })
+		const cloned = await mountDialog({
+			prefill: GRAFANA,
+			folderId: 'folder-other',
+		})
 		expect(cloned.vm.selectedFolderId).toBe('folder-other')
 
 		const fresh = await mountDialog({ folderId: 'folder-ops' })
 		expect(fresh.vm.name).toBe('')
 		expect(fresh.vm.value).toBe('')
-		expect(fresh.find('[data-testid="secret-create-clone-note"]').exists()).toBe(false)
+		expect(fresh.find('[data-testid="secret-create-clone-note"]').exists()).toBe(
+			false,
+		)
 	})
 })

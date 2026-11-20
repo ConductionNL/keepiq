@@ -146,7 +146,14 @@ describe('HealthReportView rendered', () => {
 			'Possibly compromised: 5',
 			'Unencrypted address: 6',
 		])
-		for (const id of ['weak', 'reused', 'stale', 'compromised', 'insecure-address', 'rotation']) {
+		for (const id of [
+			'weak',
+			'reused',
+			'stale',
+			'compromised',
+			'insecure-address',
+			'rotation',
+		]) {
 			expect(wrapper.find(`[data-testid="category-${id}"]`).exists()).toBe(
 				true,
 			)

@@ -64,7 +64,11 @@ describe('LockScreen password fields', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		window.isSecureContext = true
-		window.matchMedia = vi.fn(() => ({ matches: true, addEventListener() {}, removeEventListener() {} }))
+		window.matchMedia = vi.fn(() => ({
+			matches: true,
+			addEventListener() {},
+			removeEventListener() {},
+		}))
 	})
 
 	afterEach(() => {

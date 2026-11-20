@@ -31,7 +31,9 @@ async function mountPage(accessSend) {
 	store.accessSend = vi.fn(accessSend)
 	const wrapper = mount(EphemeralSendAccess, {
 		global: {
-			mocks: { $route: { params: { token: 'tok' }, query: {}, hash: '#k=KEY' } },
+			mocks: {
+				$route: { params: { token: 'tok' }, query: {}, hash: '#k=KEY' },
+			},
 			stubs: {
 				NcButton: { template: '<button><slot /></button>' },
 				NcNoteCard: { template: '<div><slot /></div>' },
@@ -50,7 +52,10 @@ describe('EphemeralSendAccess — template wiring', () => {
 	})
 
 	it('sends the typed password when Enter is pressed in the field', async () => {
-		const { wrapper, store } = await mountPage(async () => ({ payload: 'secret text', burned: false }))
+		const { wrapper, store } = await mountPage(async () => ({
+			payload: 'secret text',
+			burned: false,
+		}))
 		const input = wrapper.find('[data-testid="send-access-password"]')
 
 		await input.setValue('hunter2')
@@ -59,11 +64,16 @@ describe('EphemeralSendAccess — template wiring', () => {
 		await flush()
 
 		expect(store.accessSend).toHaveBeenCalledWith('tok', 'KEY', 'hunter2')
-		expect(wrapper.find('[data-testid="send-access-payload"]').text()).toBe('secret text')
+		expect(wrapper.find('[data-testid="send-access-payload"]').text()).toBe(
+			'secret text',
+		)
 	})
 
 	it('opens the send from the reveal button', async () => {
-		const { wrapper, store } = await mountPage(async () => ({ payload: 'p', burned: true }))
+		const { wrapper, store } = await mountPage(async () => ({
+			payload: 'p',
+			burned: true,
+		}))
 		await wrapper.find('[data-testid="send-access-password"]').setValue('pw')
 
 		await wrapper.find('[data-testid="send-access-open"]').trigger('click')
@@ -71,7 +81,9 @@ describe('EphemeralSendAccess — template wiring', () => {
 
 		expect(store.accessSend).toHaveBeenCalledTimes(1)
 		expect(wrapper.vm.burned).toBe(true)
-		expect(wrapper.find('[data-testid="send-burn-notice"]').text()).toContain('This was the last view')
+		expect(wrapper.find('[data-testid="send-burn-notice"]').text()).toContain(
+			'This was the last view',
+		)
 	})
 
 	it('shows the failure text in the error card', async () => {
@@ -83,7 +95,11 @@ describe('EphemeralSendAccess — template wiring', () => {
 		await wrapper.find('[data-testid="send-access-open"]').trigger('click')
 		await flush()
 
-		expect(wrapper.find('[data-testid="send-access-error"]').text()).toBe('The server refused')
-		expect(wrapper.find('[data-testid="send-access-payload"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="send-access-error"]').text()).toBe(
+			'The server refused',
+		)
+		expect(wrapper.find('[data-testid="send-access-payload"]').exists()).toBe(
+			false,
+		)
 	})
 })

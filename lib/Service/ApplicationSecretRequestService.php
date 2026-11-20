@@ -137,12 +137,14 @@ class ApplicationSecretRequestService implements ApplicationSecretRequestService
 	 *
 	 * @return SecretRequest
 	 *
-	 * @throws InvalidArgumentException When no field is requested
+	 * @throws InvalidArgumentException When no field is requested, or `@schema` is
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md
 	 */
 	public function createRequest(ApplicationSecretRequest $request): SecretRequest {
-		if ($request->requestedFields === []) {
+		// The same guard as a user's request: `@schema` is not a field.
+		$requested = new RequestedFields(names: $request->requestedFields);
+		if ($requested->names === []) {
 			throw new InvalidArgumentException(message: 'requestedFields is required', code: 400);
 		}
 

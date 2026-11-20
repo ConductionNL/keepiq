@@ -76,10 +76,18 @@ describe('writeSecretForApplication payloads', () => {
 			login: 'ENC(7|KEY(PEM))',
 			additionalFields: 'ENC({"pin":"1"}|KEY(PEM))',
 		})
-		const [[, text]] = await written({ name: 'X', additionalFields: '{"a":1}', login: '' })
+		const [[, text]] = await written({
+			name: 'X',
+			additionalFields: '{"a":1}',
+			login: '',
+		})
 		expect(text.additionalFields).toBe('ENC({"a":1}|KEY(PEM))')
 		expect('login' in text).toBe(false)
-		const [[, none]] = await written({ name: 'X', login: null, additionalFields: '' })
+		const [[, none]] = await written({
+			name: 'X',
+			login: null,
+			additionalFields: '',
+		})
 		expect('login' in none).toBe(false)
 		expect('additionalFields' in none).toBe(false)
 	})

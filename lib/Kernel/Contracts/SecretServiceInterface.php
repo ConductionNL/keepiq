@@ -231,6 +231,9 @@ interface SecretServiceInterface {
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The parameters are the
+	 *   list route's query string, which SecretController passes on one by one.
 	 */
 	public function list(
 		string $userId,

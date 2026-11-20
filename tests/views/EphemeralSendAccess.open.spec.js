@@ -62,35 +62,55 @@ describe('EphemeralSendAccess.onOpen', () => {
 	})
 
 	it('names the attempts left after a wrong password', async () => {
-		expect(await opened(async () => {
-			throw wrong({ attemptsLeft: 2, burned: false })
-		})).toMatchObject({
+		expect(
+			await opened(async () => {
+				throw wrong({ attemptsLeft: 2, burned: false })
+			}),
+		).toMatchObject({
 			gone: false,
 			error: 'Wrong password — {count} attempt(s) left before the message is destroyed. {"count":2}',
 		})
 	})
 
 	it('says the message is destroyed after the last wrong password', async () => {
-		expect(await opened(async () => {
-			throw wrong({ attemptsLeft: 0, burned: true })
-		})).toMatchObject({
+		expect(
+			await opened(async () => {
+				throw wrong({ attemptsLeft: 0, burned: true })
+			}),
+		).toMatchObject({
 			gone: true,
 			error: 'Too many wrong passwords — the message has been destroyed.',
 		})
 	})
 
 	it('shows a send that is gone, and the text of any other failure', async () => {
-		expect(await opened(async () => {
-			throw { response: { status: 404 } }
-		})).toMatchObject({ gone: true, error: null })
-		expect((await opened(async () => {
-			throw { response: { status: 500, data: { message: 'server says' } } }
-		})).error).toBe('server says')
-		expect((await opened(async () => {
-			throw new Error('plain')
-		})).error).toBe('plain')
-		expect((await opened(async () => {
-			throw {}
-		})).error).toBe('Failed to open the message')
+		expect(
+			await opened(async () => {
+				throw { response: { status: 404 } }
+			}),
+		).toMatchObject({ gone: true, error: null })
+		expect(
+			(
+				await opened(async () => {
+					throw {
+						response: { status: 500, data: { message: 'server says' } },
+					}
+				})
+			).error,
+		).toBe('server says')
+		expect(
+			(
+				await opened(async () => {
+					throw new Error('plain')
+				})
+			).error,
+		).toBe('plain')
+		expect(
+			(
+				await opened(async () => {
+					throw {}
+				})
+			).error,
+		).toBe('Failed to open the message')
 	})
 })

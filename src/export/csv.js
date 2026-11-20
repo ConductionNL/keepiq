@@ -14,7 +14,7 @@
  * The CSV is generated in the browser and never transmitted to the server.
  */
 
-import { fieldValueOf } from '../utils/additionalFields.js'
+import { fieldsOf } from '../utils/fieldSchema.js'
 
 /** The fixed column order, matching the generic CSV import mapping. */
 export const CSV_COLUMNS = [
@@ -46,7 +46,8 @@ function quoteField(value) {
 }
 
 /**
- * Pull the notes value out of a secret's additionalFields, if present.
+ * Pull the notes value out of a secret's additionalFields, if present: the
+ * `notes` member, else the other fields as JSON, without their schemas.
  *
  * @param {object} secret The serialized secret row.
  * @return {string} The notes string (empty when absent).
@@ -60,11 +61,11 @@ function notesOf(secret) {
 		return af
 	}
 	if (typeof af === 'object') {
-		// A hidden notes field is stored as `{ value, kind }`.
-		if (typeof af.notes === 'string' || typeof af.notes?.value === 'string') {
-			return fieldValueOf(af.notes)
+		const fields = fieldsOf(af)
+		if (typeof fields.notes === 'string') {
+			return fields.notes
 		}
-		return JSON.stringify(af)
+		return Object.keys(fields).length === 0 ? '' : JSON.stringify(fields)
 	}
 	return ''
 }

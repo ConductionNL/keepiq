@@ -17,7 +17,15 @@ import { useSecretStore } from '../../src/store/modules/secret.js'
 
 const NcSelect = {
 	name: 'NcSelect',
-	props: ['modelValue', 'options', 'inputLabel', 'multiple', 'taggable', 'disabled', 'ariaLabelCombobox'],
+	props: [
+		'modelValue',
+		'options',
+		'inputLabel',
+		'multiple',
+		'taggable',
+		'disabled',
+		'ariaLabelCombobox',
+	],
 	emits: ['update:modelValue'],
 	template: '<div class="select" />',
 }
@@ -35,7 +43,7 @@ describe('SecretTagsField', () => {
 		setActivePinia(createPinia())
 	})
 
-	it('offers the holder\'s existing tags and passes the current tags on', () => {
+	it("offers the holder's existing tags and passes the current tags on", () => {
 		useSecretStore().tags = [
 			{ tag: 'work', count: 3 },
 			{ tag: 'bank', count: 1 },
@@ -60,7 +68,9 @@ describe('SecretTagsField', () => {
 
 	it('emits the tags trimmed, lowercased and without duplicates', async () => {
 		const wrapper = mountField()
-		await wrapper.findComponent({ name: 'NcSelect' }).vm.$emit('update:modelValue', [' Work ', 'work', '', 'BANK'])
+		await wrapper
+			.findComponent({ name: 'NcSelect' })
+			.vm.$emit('update:modelValue', [' Work ', 'work', '', 'BANK'])
 
 		expect(wrapper.emitted('update:modelValue')).toEqual([[['work', 'bank']]])
 	})
@@ -68,7 +78,9 @@ describe('SecretTagsField', () => {
 	it('cuts long tags to 32 characters and keeps the first 20', async () => {
 		const wrapper = mountField()
 		const many = Array.from({ length: 25 }, (_, i) => 'tag' + i)
-		await wrapper.findComponent({ name: 'NcSelect' }).vm.$emit('update:modelValue', ['x'.repeat(40), ...many])
+		await wrapper
+			.findComponent({ name: 'NcSelect' })
+			.vm.$emit('update:modelValue', ['x'.repeat(40), ...many])
 
 		const [[emitted]] = wrapper.emitted('update:modelValue')
 		expect(emitted).toHaveLength(20)
@@ -78,7 +90,9 @@ describe('SecretTagsField', () => {
 
 	it('emits an empty list when the field is cleared', async () => {
 		const wrapper = mountField({ modelValue: ['work'] })
-		await wrapper.findComponent({ name: 'NcSelect' }).vm.$emit('update:modelValue', null)
+		await wrapper
+			.findComponent({ name: 'NcSelect' })
+			.vm.$emit('update:modelValue', null)
 
 		expect(wrapper.emitted('update:modelValue')).toEqual([[[]]])
 	})

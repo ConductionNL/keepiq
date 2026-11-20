@@ -99,7 +99,9 @@ describe('SecretEditDialog — save diff of the remaining fields', () => {
 
 	it('sends the reprompt switch when it was turned on', async () => {
 		const wrapper = await mountOver({ ...SECRET })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		wrapper.vm.reprompt = true
 		await wrapper.vm.submit()
@@ -109,7 +111,9 @@ describe('SecretEditDialog — save diff of the remaining fields', () => {
 
 	it('sends a cleared URL as null and a changed URL as typed', async () => {
 		const wrapper = await mountOver({ ...SECRET })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		wrapper.vm.url = ''
 		await wrapper.vm.submit()
@@ -123,18 +127,24 @@ describe('SecretEditDialog — save diff of the remaining fields', () => {
 
 	it('sends the additional URLs when they changed', async () => {
 		const wrapper = await mountOver({ ...SECRET })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		wrapper.vm.additionalUrls = ['https://a.test', 'https://b.test']
 		await wrapper.vm.submit()
 
-		expect(update.mock.calls[0][1]).toEqual({ additionalUrls: ['https://a.test', 'https://b.test'] })
+		expect(update.mock.calls[0][1]).toEqual({
+			additionalUrls: ['https://a.test', 'https://b.test'],
+		})
 	})
 
 	it('stores changed tags apart from the value and calls onSaved', async () => {
 		const onSaved = vi.fn()
 		const wrapper = await mountOver({ ...SECRET }, { onSaved })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 		const setTags = vi.spyOn(useSecretStore(), 'setTags').mockResolvedValue()
 
 		wrapper.vm.tags = ['work', 'bank']
@@ -142,7 +152,9 @@ describe('SecretEditDialog — save diff of the remaining fields', () => {
 
 		expect(update).not.toHaveBeenCalled()
 		expect(setTags).toHaveBeenCalledWith('s1', ['work', 'bank'])
-		expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ id: 's1', name: 'Bank' }))
+		expect(onSaved).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 's1', name: 'Bank' }),
+		)
 		expect(wrapper.emitted('saved')).toHaveLength(1)
 	})
 
@@ -168,14 +180,24 @@ describe('SecretEditDialog — save diff of the remaining fields', () => {
 	})
 
 	it('shows the server message when loading fails, else the error message', async () => {
-		useSecretStore().fetchSecret = vi.fn().mockRejectedValue({ response: { data: { message: 'Not yours' } } })
-		const wrapper = mount(SecretEditDialog, { props: { secretId: 's9' }, global: { stubs } })
+		useSecretStore().fetchSecret = vi
+			.fn()
+			.mockRejectedValue({ response: { data: { message: 'Not yours' } } })
+		const wrapper = mount(SecretEditDialog, {
+			props: { secretId: 's9' },
+			global: { stubs },
+		})
 		await new Promise((resolve) => setTimeout(resolve, 0))
 		expect(wrapper.vm.error).toBe('Not yours')
 		expect(wrapper.vm.loading).toBe(false)
 
-		useSecretStore().fetchSecret = vi.fn().mockRejectedValue(new Error('offline'))
-		const other = mount(SecretEditDialog, { props: { secretId: 's9' }, global: { stubs } })
+		useSecretStore().fetchSecret = vi
+			.fn()
+			.mockRejectedValue(new Error('offline'))
+		const other = mount(SecretEditDialog, {
+			props: { secretId: 's9' },
+			global: { stubs },
+		})
 		await new Promise((resolve) => setTimeout(resolve, 0))
 		expect(other.vm.error).toBe('offline')
 	})

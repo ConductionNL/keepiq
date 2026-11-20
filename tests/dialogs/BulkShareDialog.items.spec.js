@@ -32,17 +32,31 @@ describe('BulkShareDialog per-item outcome', () => {
 
 	beforeEach(() => {
 		setActivePinia(createPinia())
-		wrapper = mount(BulkShareDialog, { propsData: { open: true }, global: { stubs: STUBS } })
+		wrapper = mount(BulkShareDialog, {
+			propsData: { open: true },
+			global: { stubs: STUBS },
+		})
 		wrapper.vm.targetUserId = 'bob'
 		wrapper.vm.certificate = 'PEM'
 		wrapper.vm.runPassword = 'pw'
-		vi.spyOn(useSecretStore(), 'fetchSecret').mockImplementation(async (id) => ({ id, key: 'plain', login: 'u', ...(id === 'use-only' ? { shareRestriction: { useOnly: true } } : {}), ...(id === 'expiring' ? { accessExpiresAt: '2030-01-01' } : {}) }))
-		encrypt = vi.spyOn(useShareStore(), 'encryptForRecipient').mockResolvedValue({ encryptedKey: 'EK' })
+		vi.spyOn(useSecretStore(), 'fetchSecret').mockImplementation(async (id) => ({
+			id,
+			key: 'plain',
+			login: 'u',
+			...(id === 'use-only' ? { shareRestriction: { useOnly: true } } : {}),
+			...(id === 'expiring' ? { accessExpiresAt: '2030-01-01' } : {}),
+		}))
+		encrypt = vi
+			.spyOn(useShareStore(), 'encryptForRecipient')
+			.mockResolvedValue({ encryptedKey: 'EK' })
 		registerBatch = vi.spyOn(useShareStore(), 'registerBatch')
 	})
 
 	it('skips a restricted copy before encrypting anything', async () => {
-		expect(await wrapper.vm.shareOne('expiring')).toEqual({ status: 'skipped', reason: 'restricted' })
+		expect(await wrapper.vm.shareOne('expiring')).toEqual({
+			status: 'skipped',
+			reason: 'restricted',
+		})
 		expect(encrypt).not.toHaveBeenCalled()
 		expect(registerBatch).not.toHaveBeenCalled()
 	})
@@ -51,13 +65,22 @@ describe('BulkShareDialog per-item outcome', () => {
 		const answers = [
 			[{ status: 'created' }, { status: 'ok', reason: undefined }],
 			[{ status: 'exists' }, { status: 'ok', reason: 'already shared' }],
-			[{ status: 'copy_fields_mismatch' }, { status: 'skipped', reason: 'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.' }],
+			[
+				{ status: 'copy_fields_mismatch' },
+				{
+					status: 'skipped',
+					reason: 'This login holds a one-time code or passkeys that this version of Keepiq cannot share yet, so it was not shared.',
+				},
+			],
 			[{ status: 'no_suite' }, { status: 'skipped', reason: 'no_suite' }],
 			[undefined, { status: 'skipped', reason: 'not registered' }],
 			[{}, { status: 'skipped', reason: 'not registered' }],
 		]
 		for (const [item, outcome] of answers) {
-			registerBatch.mockResolvedValueOnce({ items: [item], masterPassword: 'kept' })
+			registerBatch.mockResolvedValueOnce({
+				items: [item],
+				masterPassword: 'kept',
+			})
 			expect(await wrapper.vm.shareOne('s-1')).toEqual(outcome)
 		}
 		expect(wrapper.vm.runPassword).toBe('kept')

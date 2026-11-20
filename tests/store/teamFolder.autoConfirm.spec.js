@@ -205,8 +205,16 @@ describe('teamFolder.autoConfirm', () => {
 							{ teamFolderId: 'tf-a', missing, recipients },
 							{
 								teamFolderId: 'tf-b',
-								missing: [{ secretId: 'src-9', userId: 'u0', ownCopyId: 'own-9' }],
-								recipients: [{ userId: 'u0', certificate: 'CERT-0' }],
+								missing: [
+									{
+										secretId: 'src-9',
+										userId: 'u0',
+										ownCopyId: 'own-9',
+									},
+								],
+								recipients: [
+									{ userId: 'u0', certificate: 'CERT-0' },
+								],
 							},
 						],
 					},
@@ -214,20 +222,26 @@ describe('teamFolder.autoConfirm', () => {
 			}
 			return { data: { key: 'CIPHER' } }
 		})
-		const post = vi.spyOn(axios, 'post').mockImplementation(async (url, body) => ({
-			data: {
-				created: body.shares.length,
-				rows: body.shares.map((share) => ({ targetUserId: share.targetUserId })),
-				skipped: url.includes('tf-b')
-					? [{ reason: 'copy_fields_mismatch' }, { reason: 'exists' }]
-					: [],
-			},
-		}))
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockImplementation(async (url, body) => ({
+				data: {
+					created: body.shares.length,
+					rows: body.shares.map((share) => ({
+						targetUserId: share.targetUserId,
+					})),
+					skipped: url.includes('tf-b')
+						? [{ reason: 'copy_fields_mismatch' }, { reason: 'exists' }]
+						: [],
+				},
+			}))
 		const regrant = useTeamFolderStore().regrantAttachments
 
 		const result = await useTeamFolderStore().autoConfirm()
 
-		expect(post.mock.calls.map(([url, body]) => [url, body.shares.length])).toEqual([
+		expect(
+			post.mock.calls.map(([url, body]) => [url, body.shares.length]),
+		).toEqual([
 			['/apps/keepiq/api/v1/team-folders/tf-a/shares', 20],
 			['/apps/keepiq/api/v1/team-folders/tf-a/shares', 1],
 			['/apps/keepiq/api/v1/team-folders/tf-b/shares', 1],
@@ -241,8 +255,16 @@ describe('teamFolder.autoConfirm', () => {
 		expect(decrypt).toHaveBeenCalledTimes(3)
 		expect(encrypt).toHaveBeenCalledTimes(22)
 		expect(regrant).toHaveBeenCalledTimes(3)
-		expect(regrant.mock.calls[2]).toEqual([[{ targetUserId: 'u0' }], { u0: 'CERT-0' }])
-		expect(result).toEqual({ enabled: false, created: 22, members: 21, refused: 1 })
+		expect(regrant.mock.calls[2]).toEqual([
+			[{ targetUserId: 'u0' }],
+			{ u0: 'CERT-0' },
+		])
+		expect(result).toEqual({
+			enabled: false,
+			created: 22,
+			members: 21,
+			refused: 1,
+		})
 		expect(useTeamFolderStore().lastAutoConfirm).toEqual(
 			expect.objectContaining({ created: 22, members: 21, refused: 1 }),
 		)

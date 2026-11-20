@@ -21,9 +21,8 @@ vi.mock('../../src/store/modules/share.js', () => ({
 	useShareStore: () => shareStore,
 }))
 
-const { default: ShareDialog } = await import(
-	'../../src/components/share/ShareDialog.vue'
-)
+const { default: ShareDialog } =
+	await import('../../src/components/share/ShareDialog.vue')
 
 const RecipientPicker = {
 	name: 'RecipientPicker',
@@ -64,7 +63,9 @@ async function pick(wrapper, uid) {
 
 describe('ShareDialog mounted', () => {
 	beforeEach(() => {
-		shareStore.encryptForRecipient = vi.fn().mockResolvedValue({ password: 'enc-1' })
+		shareStore.encryptForRecipient = vi
+			.fn()
+			.mockResolvedValue({ password: 'enc-1' })
 	})
 
 	it('renders nothing while closed', () => {
@@ -95,11 +96,16 @@ describe('ShareDialog mounted', () => {
 		await wrapper.find('form').trigger('submit')
 		await flushPromises()
 
-		expect(shareStore.encryptForRecipient).toHaveBeenCalledWith({ password: 'pw' }, 'cert-1')
+		expect(shareStore.encryptForRecipient).toHaveBeenCalledWith(
+			{ password: 'pw' },
+			'cert-1',
+		)
 		expect(wrapper.emitted('shared')).toEqual([
 			[{ targetUserId: 'bob', encryptedFields: { password: 'enc-1' } }],
 		])
-		expect(wrapper.find('[data-testid="share-dialog-error"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="share-dialog-error"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('encrypts an empty snapshot when the parent passes none', async () => {
@@ -118,7 +124,10 @@ describe('ShareDialog mounted', () => {
 	it('shows "Sharing…" and disables the picker while encrypting', async () => {
 		let release
 		shareStore.encryptForRecipient = vi.fn(
-			() => new Promise((resolve) => { release = resolve }),
+			() =>
+				new Promise((resolve) => {
+					release = resolve
+				}),
 		)
 		const wrapper = mountDialog()
 		await pick(wrapper, 'bob')
@@ -128,7 +137,9 @@ describe('ShareDialog mounted', () => {
 		const submit = wrapper.find('[data-testid="share-dialog-submit"]')
 		expect(submit.text()).toBe('Sharing…')
 		expect(submit.attributes('disabled')).toBeDefined()
-		expect(wrapper.find('[data-testid="picker"]').attributes('data-disabled')).toBe('true')
+		expect(
+			wrapper.find('[data-testid="picker"]').attributes('data-disabled'),
+		).toBe('true')
 
 		release({ password: 'enc-1' })
 		await flushPromises()
@@ -136,14 +147,18 @@ describe('ShareDialog mounted', () => {
 	})
 
 	it('renders an encryption failure and emits nothing', async () => {
-		shareStore.encryptForRecipient = vi.fn().mockRejectedValue(new Error('bad cert'))
+		shareStore.encryptForRecipient = vi
+			.fn()
+			.mockRejectedValue(new Error('bad cert'))
 		const wrapper = mountDialog()
 		await pick(wrapper, 'bob')
 
 		await wrapper.find('form').trigger('submit')
 		await flushPromises()
 
-		expect(wrapper.find('[data-testid="share-dialog-error"]').text()).toBe('bad cert')
+		expect(wrapper.find('[data-testid="share-dialog-error"]').text()).toBe(
+			'bad cert',
+		)
 		expect(wrapper.emitted('shared')).toBeUndefined()
 	})
 
@@ -161,7 +176,9 @@ describe('ShareDialog mounted', () => {
 	})
 
 	it('clears the picked recipient and the error when closed', async () => {
-		shareStore.encryptForRecipient = vi.fn().mockRejectedValue(new Error('bad cert'))
+		shareStore.encryptForRecipient = vi
+			.fn()
+			.mockRejectedValue(new Error('bad cert'))
 		const wrapper = mountDialog()
 		await pick(wrapper, 'bob')
 		await wrapper.find('form').trigger('submit')
@@ -171,7 +188,13 @@ describe('ShareDialog mounted', () => {
 		await wrapper.setProps({ open: true })
 
 		expect(wrapper.findComponent(RecipientPicker).props('modelValue')).toBe('')
-		expect(wrapper.find('[data-testid="share-dialog-error"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="share-dialog-submit"]').attributes('disabled')).toBeDefined()
+		expect(wrapper.find('[data-testid="share-dialog-error"]').exists()).toBe(
+			false,
+		)
+		expect(
+			wrapper
+				.find('[data-testid="share-dialog-submit"]')
+				.attributes('disabled'),
+		).toBeDefined()
 	})
 })

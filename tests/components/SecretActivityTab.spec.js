@@ -47,15 +47,21 @@ describe('SecretActivityTab', () => {
 		const wrapper = mount(SecretActivityTab, { props: { secretId: 's1' } })
 		await wrapper.vm.$nextTick()
 
-		expect(get).toHaveBeenCalledExactlyOnceWith('/apps/keepiq/api/v1/audit/secret/s1')
+		expect(get).toHaveBeenCalledExactlyOnceWith(
+			'/apps/keepiq/api/v1/audit/secret/s1',
+		)
 		expect(wrapper.find('[data-stub="NcLoadingIcon"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="secret-activity-item"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-activity-item"]').exists()).toBe(
+			false,
+		)
 
 		release({ data: { entries: [] } })
 		await flush()
 
 		expect(wrapper.find('[data-stub="NcLoadingIcon"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="secret-activity-empty"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="secret-activity-empty"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('shows the empty state when the request fails', async () => {
@@ -73,10 +79,34 @@ describe('SecretActivityTab', () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
 			data: {
 				entries: [
-					{ id: 1, eventType: 'secret.read', actorType: 'user', actorId: 'alice', occurredAt: ISO },
-					{ id: 2, eventType: 'secret.updated', actorType: 'link_visitor', actorId: null, occurredAt: ISO },
-					{ id: 3, eventType: 'custom.event', actorType: 'system', actorId: null, occurredAt: null },
-					{ id: 4, eventType: 'secret.created', actorType: 'user', actorId: 'deleted-account', occurredAt: '' },
+					{
+						id: 1,
+						eventType: 'secret.read',
+						actorType: 'user',
+						actorId: 'alice',
+						occurredAt: ISO,
+					},
+					{
+						id: 2,
+						eventType: 'secret.updated',
+						actorType: 'link_visitor',
+						actorId: null,
+						occurredAt: ISO,
+					},
+					{
+						id: 3,
+						eventType: 'custom.event',
+						actorType: 'system',
+						actorId: null,
+						occurredAt: null,
+					},
+					{
+						id: 4,
+						eventType: 'secret.created',
+						actorType: 'user',
+						actorId: 'deleted-account',
+						occurredAt: '',
+					},
 				],
 			},
 		})
@@ -84,11 +114,13 @@ describe('SecretActivityTab', () => {
 		const wrapper = mount(SecretActivityTab, { props: { secretId: 's1' } })
 		await flush()
 
-		const rows = wrapper.findAll('[data-testid="secret-activity-item"]').map((row) => [
-			row.find('.secret-activity__event').text(),
-			row.find('.secret-activity__actor').text(),
-			row.find('.secret-activity__time').text(),
-		])
+		const rows = wrapper
+			.findAll('[data-testid="secret-activity-item"]')
+			.map((row) => [
+				row.find('.secret-activity__event').text(),
+				row.find('.secret-activity__actor').text(),
+				row.find('.secret-activity__time').text(),
+			])
 		const time = new Date(ISO).toLocaleString()
 		expect(rows).toEqual([
 			['Secret read', 'alice', time],
@@ -96,11 +128,15 @@ describe('SecretActivityTab', () => {
 			['custom.event', 'System', ''],
 			['Secret created', 'Deleted account', ''],
 		])
-		expect(wrapper.find('[data-testid="secret-activity-empty"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-activity-empty"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('refetches when the secretId prop changes', async () => {
-		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: { entries: [] } })
+		const get = vi
+			.spyOn(axios, 'get')
+			.mockResolvedValue({ data: { entries: [] } })
 
 		const wrapper = mount(SecretActivityTab, { props: { secretId: 's1' } })
 		await flush()
@@ -114,7 +150,9 @@ describe('SecretActivityTab', () => {
 	})
 
 	it('does not fetch for an empty secretId', async () => {
-		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: { entries: [] } })
+		const get = vi
+			.spyOn(axios, 'get')
+			.mockResolvedValue({ data: { entries: [] } })
 
 		mount(SecretActivityTab, { props: { secretId: '' } })
 		await flush()

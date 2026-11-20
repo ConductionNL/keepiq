@@ -21,7 +21,11 @@ import { useBulkStore } from '../../src/store/modules/bulk.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 
 const STUBS = {
-	NcDialog: { props: ['name'], template: '<div><h1 data-testid="title">{{ name }}</h1><slot /><slot name="actions" /></div>' },
+	NcDialog: {
+		props: ['name'],
+		template:
+			'<div><h1 data-testid="title">{{ name }}</h1><slot /><slot name="actions" /></div>',
+	},
 	NcButton: { template: '<button v-bind="$attrs"><slot /></button>' },
 	NcNoteCard: { template: '<div><slot /></div>' },
 	DestinationSelect: { template: '<div />' },
@@ -32,9 +36,36 @@ const STUBS = {
 const GLOBAL = { stubs: STUBS }
 
 const CASES = [
-	{ name: 'delete', component: BulkDeleteDialog, props: {}, step: 'deleteOne', store: 'deleteSecret', run: 'Deleting secrets', retry: 'Retrying delete', done: 'Deleted {ok} of {total} secrets' },
-	{ name: 'state', component: BulkStateDialog, props: { action: 'archive' }, step: 'changeOne', store: 'changeSecretState', run: 'Archive {count} secrets', retry: 'Archive {count} secrets', done: 'Done for {ok} of {total} secrets' },
-	{ name: 'move', component: BulkMoveDialog, props: {}, step: 'moveOne', store: 'updateSecret', run: 'Moving secrets', retry: 'Retrying move', done: 'Moved {ok} of {total} secrets' },
+	{
+		name: 'delete',
+		component: BulkDeleteDialog,
+		props: {},
+		step: 'deleteOne',
+		store: 'deleteSecret',
+		run: 'Deleting secrets',
+		retry: 'Retrying delete',
+		done: 'Deleted {ok} of {total} secrets',
+	},
+	{
+		name: 'state',
+		component: BulkStateDialog,
+		props: { action: 'archive' },
+		step: 'changeOne',
+		store: 'changeSecretState',
+		run: 'Archive {count} secrets',
+		retry: 'Archive {count} secrets',
+		done: 'Done for {ok} of {total} secrets',
+	},
+	{
+		name: 'move',
+		component: BulkMoveDialog,
+		props: {},
+		step: 'moveOne',
+		store: 'updateSecret',
+		run: 'Moving secrets',
+		retry: 'Retrying move',
+		done: 'Moved {ok} of {total} secrets',
+	},
 ]
 
 describe('bulk run dialogs, shared behaviour', () => {
@@ -48,12 +79,17 @@ describe('bulk run dialogs, shared behaviour', () => {
 
 	for (const c of CASES) {
 		it(`${c.name}: hands the run and retry to the store and emits done after each`, async () => {
-			const run = vi.spyOn(bulk, 'run').mockImplementation(async (ids, step) => {
-				await step(ids[0])
-			})
+			const run = vi
+				.spyOn(bulk, 'run')
+				.mockImplementation(async (ids, step) => {
+					await step(ids[0])
+				})
 			const retry = vi.spyOn(bulk, 'retryFailed').mockResolvedValue(undefined)
 			const write = vi.spyOn(useSecretStore(), c.store).mockResolvedValue({})
-			const wrapper = mount(c.component, { propsData: { open: true, ...c.props }, global: GLOBAL })
+			const wrapper = mount(c.component, {
+				propsData: { open: true, ...c.props },
+				global: GLOBAL,
+			})
 
 			expect(wrapper.vm.ran).toBe(false)
 			await wrapper.vm.onRun()
@@ -71,7 +107,10 @@ describe('bulk run dialogs, shared behaviour', () => {
 		})
 
 		it(`${c.name}: counts the outcome off the report once finished`, async () => {
-			const wrapper = mount(c.component, { propsData: { open: true, ...c.props }, global: GLOBAL })
+			const wrapper = mount(c.component, {
+				propsData: { open: true, ...c.props },
+				global: GLOBAL,
+			})
 			bulk.report = [{ status: 'ok' }, { status: 'failed' }]
 			wrapper.vm.ran = true
 			await wrapper.vm.$nextTick()
@@ -84,12 +123,18 @@ describe('bulk run dialogs, shared behaviour', () => {
 
 	it('delete and state skip a secret already gone and pass any other failure on', async () => {
 		for (const c of CASES.slice(0, 2)) {
-			const wrapper = mount(c.component, { propsData: { open: true, ...c.props }, global: GLOBAL })
+			const wrapper = mount(c.component, {
+				propsData: { open: true, ...c.props },
+				global: GLOBAL,
+			})
 			const write = vi.spyOn(useSecretStore(), c.store)
 			write.mockResolvedValueOnce({})
 			expect(await wrapper.vm[c.step]('a')).toEqual({ status: 'ok' })
 			write.mockRejectedValueOnce({ response: { status: 404 } })
-			expect(await wrapper.vm[c.step]('a')).toEqual({ status: 'skipped', reason: 'already deleted' })
+			expect(await wrapper.vm[c.step]('a')).toEqual({
+				status: 'skipped',
+				reason: 'already deleted',
+			})
 			const failure = { response: { status: 500 } }
 			write.mockRejectedValueOnce(failure)
 			await expect(wrapper.vm[c.step]('a')).rejects.toBe(failure)
@@ -97,7 +142,10 @@ describe('bulk run dialogs, shared behaviour', () => {
 	})
 
 	it('move passes every failure on', async () => {
-		const wrapper = mount(BulkMoveDialog, { propsData: { open: true }, global: GLOBAL })
+		const wrapper = mount(BulkMoveDialog, {
+			propsData: { open: true },
+			global: GLOBAL,
+		})
 		wrapper.vm.targetFolderId = 'f-1'
 		const write = vi.spyOn(useSecretStore(), 'updateSecret')
 		write.mockResolvedValueOnce({})

@@ -37,7 +37,9 @@ function list() {
 		tagFilter: QUERY.tag,
 		secretStore: {
 			setListQuery: vi.fn((query) => calls.push(['setListQuery', query])),
-			fetchSecrets: vi.fn(async (options) => calls.push(['fetchSecrets', options])),
+			fetchSecrets: vi.fn(async (options) =>
+				calls.push(['fetchSecrets', options]),
+			),
 		},
 		calls,
 	}

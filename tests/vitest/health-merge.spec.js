@@ -22,18 +22,28 @@ vi.mock('@nextcloud/axios', () => ({
 		get: vi.fn(async (url) => {
 			calls.push(['get', url])
 			const shares = {
-				'/apps/keepiq/api/v1/secrets/b/shares': [{ targetUserId: 'ben' }, { targetUserId: 'cas' }],
-				'/apps/keepiq/api/v1/secrets/c/shares': [{ targetUserId: 'ben' }, { groupShareId: 'g' }],
+				'/apps/keepiq/api/v1/secrets/b/shares': [
+					{ targetUserId: 'ben' },
+					{ targetUserId: 'cas' },
+				],
+				'/apps/keepiq/api/v1/secrets/c/shares': [
+					{ targetUserId: 'ben' },
+					{ groupShareId: 'g' },
+				],
 			}
 			return { data: shares[url] ?? [] }
 		}),
 	},
 }))
+vi.mock('../../src/store/modules/secretType.js', () => ({
+	useSecretTypeStore: () => ({ typesById: { 't-api': { name: 'api_key' } } }),
+}))
 vi.mock('../../src/store/modules/secret.js', () => ({
 	useSecretStore: () => ({
 		fetchSecret: async (id) => secrets[id],
 		writeBackSettled: async (id) => calls.push(['writeBackSettled', id]),
-		updateSecret: async (id, data, options) => calls.push(['update', id, data, options]),
+		updateSecret: async (id, data, options) =>
+			calls.push(['update', id, data, options]),
 		deleteSecret: async (id) => {
 			if (id === failDelete) {
 				throw new Error('refused')
@@ -43,15 +53,31 @@ vi.mock('../../src/store/modules/secret.js', () => ({
 	}),
 }))
 
-const { loadGroup, mergedFields, mergeGroup, peopleLosingAccess } = await import('../../src/health/merge.js')
+const { loadGroup, mergedFields, mergeGroup, peopleLosingAccess } =
+	await import('../../src/health/merge.js')
 
 describe('merging a duplicate group', () => {
 	beforeEach(() => {
 		calls.length = 0
 		failDelete = ''
-		secrets.a = { id: 'a', name: 'GitHub', updatedAt: 'U-a', additionalFields: { pin: '1234' } }
-		secrets.b = { id: 'b', name: 'github.com', updatedAt: 'U-b', additionalFields: { 'recovery email': 'anna@home.example', pin: '9999' } }
-		secrets.c = { id: 'c', name: 'GitHub (2)', updatedAt: 'U-c', additionalFields: null }
+		secrets.a = {
+			id: 'a',
+			name: 'GitHub',
+			updatedAt: 'U-a',
+			additionalFields: { pin: '1234' },
+		}
+		secrets.b = {
+			id: 'b',
+			name: 'github.com',
+			updatedAt: 'U-b',
+			additionalFields: { 'recovery email': 'anna@home.example', pin: '9999' },
+		}
+		secrets.c = {
+			id: 'c',
+			name: 'GitHub (2)',
+			updatedAt: 'U-c',
+			additionalFields: null,
+		}
 	})
 
 	it('loads the group decrypted, in order', async () => {
@@ -63,7 +89,18 @@ describe('merging a duplicate group', () => {
 		expect(result).toEqual({ removed: ['b', 'c'] })
 		expect(calls).toEqual([
 			['writeBackSettled', 'a'],
-			['update', 'a', { additionalFields: { pin: '1234', 'recovery email': 'anna@home.example', 'pin (2)': '9999' } }, { baseUpdatedAt: 'U-a' }],
+			[
+				'update',
+				'a',
+				{
+					additionalFields: {
+						pin: '1234',
+						'recovery email': 'anna@home.example',
+						'pin (2)': '9999',
+					},
+				},
+				{ baseUpdatedAt: 'U-a' },
+			],
 			['delete', 'b'],
 			['delete', 'c'],
 		])
@@ -82,15 +119,66 @@ describe('merging a duplicate group', () => {
 
 	it('stops at the first refused delete', async () => {
 		failDelete = 'b'
-		await expect(mergeGroup(secrets.a, [secrets.b, secrets.c])).rejects.toThrow('refused')
+		await expect(mergeGroup(secrets.a, [secrets.b, secrets.c])).rejects.toThrow(
+			'refused',
+		)
 		expect(calls.some(([op, id]) => op === 'delete' && id === 'c')).toBe(false)
 	})
 
 	it('previews the fields the kept secret will carry', () => {
-		expect(Object.keys(mergedFields(secrets.c, [secrets.a, secrets.b]))).toEqual(['pin', 'recovery email', 'pin (2)'])
+		expect(Object.keys(mergedFields(secrets.c, [secrets.a, secrets.b]))).toEqual(
+			['pin', 'recovery email', 'pin (2)'],
+		)
 	})
 
-	it('counts the distinct people who lose access through the removed items\' shares', async () => {
+	// openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	it("keeps the others' hidden fields hidden and writes one schema member", () => {
+		const hidden = { type: 'string', hidden: true }
+		const kept = { additionalFields: { PIN: '1', '@schema': { PIN: hidden } } }
+		const other = {
+			additionalFields: {
+				Token: '2',
+				PIN: '3',
+				'@schema': { Token: hidden, PIN: hidden },
+			},
+		}
+
+		expect(mergedFields(kept, [other])).toEqual({
+			PIN: '1',
+			Token: '2',
+			'PIN (2)': '3',
+			'@schema': { PIN: hidden, Token: hidden, 'PIN (2)': hidden },
+		})
+	})
+
+	it('keeps a field the other secret\u2019s type masks masked on the kept secret', () => {
+		const kept = { additionalFields: {} }
+		const apiKey = {
+			typeId: 't-api',
+			additionalFields: { 'API secret': 's3cret' },
+		}
+
+		expect(mergedFields(kept, [apiKey])).toEqual({
+			'API secret': 's3cret',
+			'@schema': { 'API secret': { type: 'string', hidden: true } },
+		})
+	})
+
+	it('does not re-save a kept secret whose schema member only reads differently', async () => {
+		secrets.d = {
+			id: 'd',
+			updatedAt: 'U-d',
+			additionalFields: {
+				'@schema': { PIN: { hidden: true, type: 'string' } },
+				PIN: '1',
+			},
+		}
+		await mergeGroup(secrets.d, [{ id: 'e', additionalFields: { PIN: '1' } }])
+
+		expect(calls.some(([op]) => op === 'update')).toBe(false)
+	})
+
+	it("counts the distinct people who lose access through the removed items' shares", async () => {
 		expect(await peopleLosingAccess(['b', 'c'])).toBe(2)
 		expect(await peopleLosingAccess([])).toBe(0)
 	})

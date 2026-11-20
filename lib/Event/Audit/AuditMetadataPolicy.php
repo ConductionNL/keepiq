@@ -242,4 +242,17 @@ final class AuditMetadataPolicy {
 		'successorUserId',
 		'skippedUserIds',
 	];
+
+	/**
+	 * Whether an event type is known to the whitelist.
+	 *
+	 * @param string $eventType The event type
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/secret-audit-trail/spec.md#requirement-no-secret-material-in-audit-entries
+	 */
+	public static function isKnown(string $eventType): bool {
+		return array_key_exists($eventType, self::WHITELIST);
+	}//end isKnown()
 }//end class

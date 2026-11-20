@@ -170,7 +170,9 @@ const CASES = {
 	'challenge with plus and slash': {
 		script: {
 			challenge: {
-				value: { data: { challenge: 'a+b/c+/', assertionChallenge: 'd+e/' } },
+				value: {
+					data: { challenge: 'a+b/c+/', assertionChallenge: 'd+e/' },
+				},
 			},
 		},
 	},

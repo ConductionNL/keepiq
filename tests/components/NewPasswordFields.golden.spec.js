@@ -27,9 +27,13 @@ const stubs = {
 		name: 'PasswordStrengthMeter',
 		props: ['password'],
 		emits: ['strengthChange'],
-		template: '<meter class="strength" :data-password-length="password.length" />',
+		template:
+			'<meter class="strength" :data-password-length="password.length" />',
 	},
-	NcNoteCard: { props: ['type'], template: '<p class="note" :data-type="type"><slot /></p>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<p class="note" :data-type="type"><slot /></p>',
+	},
 	NcButton: { template: '<button><slot /></button>' },
 	NcCheckboxRadioSwitch: { template: '<label><slot /></label>' },
 	NcProgressBar: { template: '<progress />' },
@@ -74,7 +78,9 @@ describe.each([
 		expect(wrapper.vm.newPassword).toBe('correct horse')
 		expect(wrapper.vm.confirmPassword).toBe('correct horse')
 		expect(wrapper.vm.strengthValid).toBe(false)
-		wrapper.findComponent({ name: 'PasswordStrengthMeter' }).vm.$emit('strengthChange', { isValid: true })
+		wrapper
+			.findComponent({ name: 'PasswordStrengthMeter' })
+			.vm.$emit('strengthChange', { isValid: true })
 		expect(wrapper.vm.strengthValid).toBe(true)
 		wrapper.vm.loading = true
 		await wrapper.vm.$nextTick()

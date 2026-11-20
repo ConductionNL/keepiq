@@ -104,7 +104,13 @@ describe('runMigration', () => {
 		pages = [
 			[
 				ok('secrets', 's1'),
-				{ store: 'versions', id: 'v1', ok: false, permanent: true, error: 'bad' },
+				{
+					store: 'versions',
+					id: 'v1',
+					ok: false,
+					permanent: true,
+					error: 'bad',
+				},
 				ok('attachmentGrants', 'g1'),
 			],
 			[ok('secrets', 's2')],
@@ -157,7 +163,11 @@ describe('runMigration', () => {
 		)
 		pages = [[{ store: 'secrets', id: 's1', ok: false }]]
 		const error = await store.runMigration(PARAMS).catch((e) => e)
-		expect([error.message, error.migrated, store.migrationProgress]).toMatchSnapshot()
+		expect([
+			error.message,
+			error.migrated,
+			store.migrationProgress,
+		]).toMatchSnapshot()
 	})
 })
 
@@ -182,7 +192,13 @@ describe('postResults', () => {
 			ok('secrets', 's1'),
 			ok('versions', 'v1'),
 			ok('attachmentGrants', 'g1'),
-			{ store: 'secrets', id: 's2', ok: false, permanent: true, error: 'old key' },
+			{
+				store: 'secrets',
+				id: 's2',
+				ok: false,
+				permanent: true,
+				error: 'old key',
+			},
 			{ store: 'secrets', id: 's3', ok: false, permanent: true },
 			{ store: 'secrets', id: 's4', ok: false },
 			ok('secrets', 's5'),
@@ -211,7 +227,10 @@ describe('postResults', () => {
 			if (url.endsWith('/s3')) {
 				throw Object.assign(new Error('x'), {
 					response: {
-						data: { error: 'fields_not_reencrypted', message: 'totp left' },
+						data: {
+							error: 'fields_not_reencrypted',
+							message: 'totp left',
+						},
 					},
 				})
 			}
@@ -227,7 +246,10 @@ describe('postResults', () => {
 
 		const outcome = await store.postResults('m1', results, [])
 
-		expect({ outcome, posts: post.mock.calls.map(([url]) => url) }).toMatchSnapshot()
+		expect({
+			outcome,
+			posts: post.mock.calls.map(([url]) => url),
+		}).toMatchSnapshot()
 	})
 
 	it('keeps a halt with its own reason', async () => {

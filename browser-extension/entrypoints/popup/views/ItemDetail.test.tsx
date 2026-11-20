@@ -165,6 +165,20 @@ describe('additional fields and notes', () => {
 		expect(fields.textContent).not.toContain('{')
 	})
 
+	it('shows a field someone named @schema under the name the web app gives it', async () => {
+		renderDetail(itemMeta(), { key: 'pw', additionalFields: JSON.stringify({ pin: '1234', '@schema': 'my value' }) })
+		const fields = await screen.findByRole('heading', { name: 'Additional fields' }).then((h) => h.closest('section')!)
+		expect(within(fields).getByText('@schema (imported)')).toBeTruthy()
+		expect(within(fields).getAllByRole('button', { name: /^Show / })).toHaveLength(2)
+	})
+
+	it('does not show a schema map as a field', async () => {
+		renderDetail(itemMeta(), { key: 'pw', additionalFields: JSON.stringify({ pin: '1234', '@schema': { pin: { type: 'string' } } }) })
+		const fields = await screen.findByRole('heading', { name: 'Additional fields' }).then((h) => h.closest('section')!)
+		expect(fields.textContent).not.toContain('@schema')
+		expect(within(fields).getAllByRole('button', { name: /^Show / })).toHaveLength(1)
+	})
+
 	it('says when the fields do not parse', async () => {
 		renderDetail(itemMeta(), { key: 'pw', additionalFields: '[1,2]' })
 		expect(await screen.findByText('Could not read additional fields')).toBeTruthy()

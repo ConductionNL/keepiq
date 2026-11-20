@@ -15,7 +15,12 @@
 	<CnSettingsSection
 		id="section-site-directory"
 		:name="t('keepiq', 'Site directory')"
-		:description="t('keepiq', 'Show users which of their sites offer one-time codes or passkeys they have not set up.')">
+		:description="
+			t(
+				'keepiq',
+				'Show users which of their sites offer one-time codes or passkeys they have not set up.',
+			)
+		">
 		<div class="site-directory">
 			<label class="site-directory__toggle" for="site-directory-enabled">
 				<input
@@ -24,16 +29,45 @@
 					type="checkbox"
 					data-testid="site-directory-enabled"
 					@change="save" />
-				{{ t('keepiq', 'Use the site directory in the password health report') }}
+				{{
+					t(
+						'keepiq',
+						'Use the site directory in the password health report',
+					)
+				}}
 			</label>
-			<p class="site-directory__disclosure" data-testid="site-directory-privacy">
-				{{ t('keepiq', 'Once a day the server downloads the whole public list from api.2fa.directory and passkeys-api.2fa.directory. Matching happens in each user\'s browser: no login, address or result is sent to the directories or stored on the server. Leave this off for air-gapped instances.') }}
+			<p
+				class="site-directory__disclosure"
+				data-testid="site-directory-privacy">
+				{{
+					t(
+						'keepiq',
+						"Once a day the server downloads the whole public list from api.2fa.directory and passkeys-api.2fa.directory. Matching happens in each user's browser: no login, address or result is sent to the directories or stored on the server. Leave this off for air-gapped instances.",
+					)
+				}}
 			</p>
-			<p class="site-directory__attribution" data-testid="site-directory-attribution">
-				{{ t('keepiq', 'Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.') }}
-				<a href="https://2fa.directory/" target="_blank" rel="noopener noreferrer">2fa.directory</a>
+			<p
+				class="site-directory__attribution"
+				data-testid="site-directory-attribution">
+				{{
+					t(
+						'keepiq',
+						'Data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.',
+					)
+				}}
+				<a
+					href="https://2fa.directory/"
+					target="_blank"
+					rel="noopener noreferrer"
+					>2fa.directory</a
+				>
 				·
-				<a href="https://passkeys.2fa.directory/" target="_blank" rel="noopener noreferrer">passkeys.2fa.directory</a>
+				<a
+					href="https://passkeys.2fa.directory/"
+					target="_blank"
+					rel="noopener noreferrer"
+					>passkeys.2fa.directory</a
+				>
 			</p>
 		</div>
 	</CnSettingsSection>
@@ -62,8 +96,11 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/keepiq/api/settings/admin/general'))
-			this.enabled = response.data?.site_directory_enabled === true
+			const response = await axios.get(
+				generateUrl('/apps/keepiq/api/settings/admin/general'),
+			)
+			this.enabled =
+				response.data?.site_directory_enabled === true
 				|| response.data?.site_directory_enabled === '1'
 		} catch {
 			// The switch stays off when the settings cannot be read.

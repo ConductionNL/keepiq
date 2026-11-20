@@ -24,6 +24,7 @@ use OCA\Keepiq\Service\FederatedDeclineReceiver;
 use OCA\Keepiq\Service\FederatedRemoteChangeService;
 use OCA\Keepiq\Service\FederatedShareReceiver;
 use OCP\Federation\ICloudFederationShare;
+use OCP\OCM\Events\OCMEndpointRequestEvent;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -40,6 +41,12 @@ class KeepiqSecretFederationProviderTest extends TestCase {
 	private FederatedDeclineReceiver&MockObject $declines;
 
 	protected function setUp(): void {
+		// The provider implements an OCM interface of Nextcloud 33; below it
+		// federation stays off and the provider is never registered.
+		if (class_exists(OCMEndpointRequestEvent::class) === false) {
+			$this->markTestSkipped('Federation needs the OCM APIs of Nextcloud 33 or later.');
+		}
+
 		$this->receiver      = $this->createMock(FederatedShareReceiver::class);
 		$this->remoteChanges = $this->createMock(FederatedRemoteChangeService::class);
 		$this->declines      = $this->createMock(FederatedDeclineReceiver::class);

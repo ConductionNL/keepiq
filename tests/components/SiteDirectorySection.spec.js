@@ -20,7 +20,11 @@ const URL = '/apps/keepiq/api/settings/admin/general'
 
 function mountSection() {
 	return mount(SiteDirectorySection, {
-		global: { stubs: { CnSettingsSection: { template: '<section><slot /></section>' } } },
+		global: {
+			stubs: {
+				CnSettingsSection: { template: '<section><slot /></section>' },
+			},
+		},
 	})
 }
 
@@ -36,12 +40,16 @@ describe('SiteDirectorySection', () => {
 		[false, false],
 		[undefined, false],
 	])('reads site_directory_enabled=%s as %s', async (stored, expected) => {
-		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: { site_directory_enabled: stored } })
+		const get = vi
+			.spyOn(axios, 'get')
+			.mockResolvedValue({ data: { site_directory_enabled: stored } })
 		const wrapper = mountSection()
 		await flush()
 
 		expect(get).toHaveBeenCalledWith(URL)
-		expect(wrapper.find('[data-testid="site-directory-enabled"]').element.checked).toBe(expected)
+		expect(
+			wrapper.find('[data-testid="site-directory-enabled"]').element.checked,
+		).toBe(expected)
 	})
 
 	it('stays off when the setting cannot be loaded', async () => {
@@ -49,7 +57,9 @@ describe('SiteDirectorySection', () => {
 		const wrapper = mountSection()
 		await flush()
 
-		expect(wrapper.find('[data-testid="site-directory-enabled"]').element.checked).toBe(false)
+		expect(
+			wrapper.find('[data-testid="site-directory-enabled"]').element.checked,
+		).toBe(false)
 	})
 
 	it('writes the new state as a boolean when toggled', async () => {
@@ -80,13 +90,17 @@ describe('SiteDirectorySection', () => {
 		const wrapper = mountSection()
 		await flush()
 
-		const attribution = wrapper.find('[data-testid="site-directory-attribution"]')
+		const attribution = wrapper.find(
+			'[data-testid="site-directory-attribution"]',
+		)
 		expect(attribution.text()).toContain('2FA Directory (MIT)')
 		expect(attribution.text()).toContain('Passkeys Directory (CC BY 4.0)')
 		expect(attribution.findAll('a').map((a) => a.attributes('href'))).toEqual([
 			'https://2fa.directory/',
 			'https://passkeys.2fa.directory/',
 		])
-		attribution.findAll('a').forEach((a) => expect(a.attributes('rel')).toContain('noopener'))
+		attribution
+			.findAll('a')
+			.forEach((a) => expect(a.attributes('rel')).toContain('noopener'))
 	})
 })

@@ -1,5 +1,5 @@
 /** The item form's model: per-type fields, the payloads they serialize to, and the limits Keepiq enforces. */
-import type { EditableItem, FieldShape, FormField, ItemDraft, ItemPatch } from '@/src/messages'
+import type { EditableItem, FormField, ItemDraft, ItemPatch } from '@/src/messages'
 import { isAuthenticatorKey, normaliseAuthenticatorKey } from '@/src/totp/authenticator-key'
 import { parseTotpSeed, type TotpAlgorithm } from '@/src/totp/totp'
 import { parseObject, parsePayload, text } from './payloads'
@@ -10,8 +10,10 @@ export const NAME_MAX = 255
 export const FIELD_MAX = 4096
 export const BLOB_MAX_BYTES = 65536
 
+/** The web app's member holding each field's schema: not a field, but kept as it is on save. */
+export const SCHEMA_MEMBER = '@schema'
 /** Reserved by the server (ADR-003), plus `notes`, which holds the Notes field. */
-const RESERVED = new Set(['key', 'login', 'url', 'notes'])
+const RESERVED = new Set(['key', 'login', 'url', 'notes', SCHEMA_MEMBER])
 const NOTES = 'notes'
 
 /** Member order of the web app's `src/cardIdentity/cardIdentity.js`, so it renders what is written here. */
@@ -23,17 +25,11 @@ export type IdentityField = typeof IDENTITY_FIELDS[number]
 /** `credential` is a username plus a secret: logins, keys, databases and custom types. */
 export type FormKind = 'credential' | 'note' | 'totp' | 'card' | 'identity' | 'passkey'
 
+/** The types with a form of their own, by type name. */
+const OWN_FORMS = new Map<string | undefined, FormKind>((['note', 'totp', 'card', 'identity', 'passkey'] as const).map((kind) => [kind, kind]))
+
 export function formKind(typeName: string | undefined): FormKind {
-	switch (typeName) {
-		case 'note':
-		case 'totp':
-		case 'card':
-		case 'identity':
-		case 'passkey':
-			return typeName
-		default:
-			return 'credential'
-	}
+	return OWN_FORMS.get(typeName) ?? 'credential'
 }
 
 /** No new item gets these types: a passkey comes from its ceremony, an authenticator key goes on its login (keepiq#1324). */
@@ -67,9 +63,11 @@ export interface CustomField {
 	id: number
 	name: string
 	value: string
-	/** How the field is stored when it is not plain text, kept through renames and edits. */
-	shape?: FieldShape
+	/** The field's JSON Schema from `@schema`, carried with the field so a rename keeps it. */
+	schema?: FieldSchema
 }
+
+export type FieldSchema = Record<string, unknown>
 
 export interface FormValues {
 	typeId: string
@@ -90,14 +88,14 @@ export interface FormValues {
 	notes: string
 	/** The member the notes came from, so an edit writes them back under the same name. */
 	notesKey: string | null
-	/** How the notes member is stored when it is not plain text. */
-	notesShape?: FieldShape
 	fields: CustomField[]
 	/** A login's new authenticator key, as typed or scanned; a saved one is never loaded here. */
 	authKey: string
 	/** The row holds an authenticator key, which `authKeyMode` keeps, replaces with `authKey` (removes, when that is empty) or, on a type that takes none, removes. */
 	totpSaved: boolean
 	authKeyMode: AuthKeyMode
+	/** The `@schema` entries of members that are no form field, such as the notes; null when the item has no `@schema`. */
+	schemas: Record<string, FieldSchema> | null
 }
 
 export type AuthKeyMode = 'keep' | 'replace' | 'remove'
@@ -105,13 +103,13 @@ export type AuthKeyMode = 'keep' | 'replace' | 'remove'
 const blank = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((key) => [key, ''])) as Record<K, string>
 
 let nextFieldId = 0
-export const customField = (name = '', value = '', shape?: FieldShape): CustomField => ({ id: ++nextFieldId, name, value, ...(shape && { shape }) })
+export const customField = (name = '', value = '', schema?: FieldSchema): CustomField => ({ id: ++nextFieldId, name, value, ...(schema && { schema }) })
 
 export function emptyValues(typeId: string, url = '', folderId: string | null = null): FormValues {
 	return {
 		typeId, name: '', url, folderId, login: '', loginShown: false, plainKey: false, secret: '', totp: {},
 		card: blank(CARD_FIELDS), identity: blank(IDENTITY_FIELDS), notes: '', notesKey: null, fields: [],
-		authKey: '', totpSaved: false, authKeyMode: 'keep',
+		authKey: '', totpSaved: false, authKeyMode: 'keep', schemas: null,
 	}
 }
 
@@ -150,43 +148,30 @@ export function formSections(kind: FormKind, values: Pick<FormValues, 'loginShow
 	}
 }
 
-/** A `{ value, kind }` member, as the web app writes a hidden or yes-or-no field (Keepiq `vault-custom-fields`). */
-function kinded(value: unknown): { value: unknown; kind: unknown } | null {
-	return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.hasOwn(value, 'value') ? value as { value: unknown; kind: unknown } : null
-}
+/** The schemas of the `{ value, kind }` fields unstable 0.3.14 web builds wrote for hidden and yes-or-no fields. */
+const KIND_SCHEMAS: Record<string, object> = { hidden: { type: 'string', hidden: true }, boolean: { type: 'boolean' } }
 
-/** One additional field as text: a kinded field as its value, a yes or no as `'true'` or `'false'`, any other JSON value as its JSON. */
-export function fieldText(value: unknown): string {
-	const inner = kinded(value)?.value ?? value
-	if (typeof inner === 'string') return inner
-	return inner === undefined || inner === null ? '' : typeof inner === 'object' ? JSON.stringify(inner) : String(inner)
-}
+type KindedField = { value: unknown; kind: string }
 
-/** Additional fields as the form edits them, by `fieldText`. */
-export const fieldTexts = (payload: Record<string, unknown>): Record<string, string> =>
-	Object.fromEntries(Object.entries(payload).map(([name, value]) => [name, fieldText(value)]))
+const isKinded = (value: unknown): value is KindedField =>
+	typeof value === 'object' && value !== null && !Array.isArray(value) && 'value' in value && typeof (value as { kind?: unknown }).kind === 'string'
 
-/** The kinded fields of a blob, by name, so a save writes them back with their kind. */
-export function fieldShapes(payload: Record<string, unknown>): Record<string, FieldShape> {
-	const shapes: Record<string, FieldShape> = {}
-	for (const [name, value] of Object.entries(payload)) {
-		const entry = kinded(value)
-		if (!entry) continue
-		const kind = typeof entry.kind === 'string' ? entry.kind : 'text'
-		shapes[name] = typeof entry.value === 'boolean' ? { kind, boolean: true } : { kind }
-	}
-	return shapes
-}
-
-/** The blob to store: each field with a shape wrapped back as `{ value, kind }`, every other one as its text. */
-export function withKinds(fields: Record<string, string>, kinds: Record<string, FieldShape> | undefined): Record<string, unknown> {
-	if (!kinds || typeof kinds !== 'object') return fields
-	return Object.fromEntries(Object.entries(fields).map(([name, value]) => {
-		const shape = Object.hasOwn(kinds, name) ? kinds[name] : undefined
-		if (!shape || typeof shape.kind !== 'string') return [name, value]
-		const stored = shape.boolean && (value === 'true' || value === 'false') ? value === 'true' : value
-		return [name, { value: stored, kind: shape.kind }]
+/** Additional fields as the form edits them: text, and any other JSON value as its JSON. A `{ value, kind }` field becomes its value, with its kind as a schema. */
+export function fieldTexts(payload: Record<string, unknown>): Record<string, string> {
+	const texts = Object.fromEntries(Object.entries(payload).map(([name, value]) => {
+		const plain = isKinded(value) ? value.value : value
+		return [name, typeof plain === 'string' ? plain : JSON.stringify(plain)]
 	}))
+	const kinded = Object.entries(payload).filter((entry): entry is [string, KindedField] => isKinded(entry[1]) && Object.hasOwn(KIND_SCHEMAS, entry[1].kind))
+	if (kinded.length === 0) return texts
+	const kindSchemas = Object.fromEntries(kinded.map(([name, field]) => [name, KIND_SCHEMAS[field.kind]]))
+	const original = Object.hasOwn(texts, SCHEMA_MEMBER) ? texts[SCHEMA_MEMBER] : undefined
+	const stored = original === undefined ? {} : schemaMap(original)
+	if (original === undefined || stored !== null) return { ...texts, [SCHEMA_MEMBER]: JSON.stringify({ ...kindSchemas, ...stored }) }
+	// A `@schema` holding no schema map is a field someone named so: it moves to RENAMED_SCHEMA_FIELD, unless that name is taken, as memberFields keeps it.
+	const fields = Object.fromEntries(Object.entries(texts).filter(([name]) => name !== SCHEMA_MEMBER))
+	const kept = Object.hasOwn(fields, RENAMED_SCHEMA_FIELD) ? fields : { ...fields, [RENAMED_SCHEMA_FIELD]: original }
+	return { ...kept, [SCHEMA_MEMBER]: JSON.stringify(kindSchemas) }
 }
 
 function members<K extends string>(raw: string, keys: readonly K[]): Record<K, string> {
@@ -199,18 +184,55 @@ function isPlainKey(kind: FormKind, key: string): boolean {
 	return (kind === 'card' || kind === 'identity') && key !== '' && !parsePayload(key)
 }
 
-/** The first field named Notes, in any case, is the notes; every other one is an additional field. */
-function takeFields(values: FormValues, additionalFields: Record<string, string>, shapes: Record<string, FieldShape> = {}): void {
-	for (const [name, value] of Object.entries(additionalFields)) {
-		const shape = Object.hasOwn(shapes, name) ? shapes[name] : undefined
-		if (values.notesKey === null && name.toLowerCase() === NOTES) {
+/** The name a field called `@schema` that holds no schema map is kept under, as the web app does. */
+export const RENAMED_SCHEMA_FIELD = `${SCHEMA_MEMBER} (imported)`
+
+/** `@schema` as a schema map, an object of objects; null for anything else, which is a field a person named so. */
+function schemaMap(value: string): Record<string, FieldSchema> | null {
+	const parsed = parseObject(value)
+	const isMap = parsed !== null && Object.values(parsed).every((schema) => typeof schema === 'object' && schema !== null && !Array.isArray(schema))
+	return isMap ? parsed as Record<string, FieldSchema> : null
+}
+
+/** The blob's `@schema` member as a schema map; null when it has none or holds no map. */
+function storedSchemas(additionalFields: Record<string, string>): Record<string, FieldSchema> | null {
+	const schemaText = Object.hasOwn(additionalFields, SCHEMA_MEMBER) ? additionalFields[SCHEMA_MEMBER] : undefined
+	return schemaText === undefined ? null : schemaMap(schemaText)
+}
+
+/** The members that are fields, in order: a `@schema` holding no schema map is one, kept under `RENAMED_SCHEMA_FIELD` unless that name is taken. */
+function memberFields(additionalFields: Record<string, string>, schemas: Record<string, FieldSchema> | null): Array<[string, string]> {
+	const keepsMisnamed = !schemas && !Object.hasOwn(additionalFields, RENAMED_SCHEMA_FIELD)
+	return Object.entries(additionalFields).flatMap(([name, value]): Array<[string, string]> => {
+		if (name !== SCHEMA_MEMBER) return [[name, value]]
+		return keepsMisnamed ? [[RENAMED_SCHEMA_FIELD, value]] : []
+	})
+}
+
+/** The fields an item's detail shows, in order: every member but a schema map, a misnamed `@schema` as the edit form shows it. */
+export function shownFields(additionalFields: Record<string, string>): Array<[string, string]> {
+	return memberFields(additionalFields, storedSchemas(additionalFields))
+}
+
+/** The first field named Notes, in any case, is the notes. */
+const isNotes = (values: FormValues, name: string) => values.notesKey === null && name.toLowerCase() === NOTES
+
+/** The notes and every other field, each with its schema. */
+function takeFields(values: FormValues, additionalFields: Record<string, string>): void {
+	const schemas = storedSchemas(additionalFields)
+	const schemaOf = (name: string) => schemas && Object.hasOwn(schemas, name) ? schemas[name] : undefined
+	const rest: Record<string, FieldSchema> = {}
+	for (const [name, value] of memberFields(additionalFields, schemas)) {
+		const schema = schemaOf(name)
+		if (isNotes(values, name)) {
 			values.notes = value
 			values.notesKey = name
-			if (shape) values.notesShape = shape
+			if (schema) rest[name] = schema
 		} else {
-			values.fields.push(customField(name, value, shape))
+			values.fields.push(customField(name, value, schema))
 		}
 	}
+	if (schemas) values.schemas = rest
 }
 
 export function fromItem(item: EditableItem, typeName: string | undefined): FormValues {
@@ -223,7 +245,7 @@ export function fromItem(item: EditableItem, typeName: string | undefined): Form
 	values.secret = item.key
 	values.card = members(item.key, CARD_FIELDS)
 	values.identity = members(item.key, IDENTITY_FIELDS)
-	takeFields(values, item.additionalFields, item.fieldKinds)
+	takeFields(values, item.additionalFields)
 	return values
 }
 
@@ -259,14 +281,23 @@ function keyOf(values: FormValues, kind: FormKind): string {
 function fieldEntries(values: FormValues, sections: FormSections): Array<[string, string]> {
 	const entries = sections.fields ? values.fields.filter((field) => field.name.trim()).map((field): [string, string] => [field.name.trim(), field.value]) : []
 	if (sections.notes && values.notes !== '') entries.push([values.notesKey ?? NOTES, values.notes])
+	const schemas = schemaEntries(values, sections)
+	if (values.schemas !== null || schemas.length > 0) entries.push([SCHEMA_MEMBER, JSON.stringify(Object.fromEntries(schemas))])
 	return entries
 }
 
-/** The shapes of the fields the draft keeps, under the names they are saved by. */
-function kindEntries(values: FormValues, sections: FormSections): Array<[string, FieldShape]> {
-	const entries = sections.fields ? values.fields.filter((field) => field.name.trim() && field.shape).map((field): [string, FieldShape] => [field.name.trim(), field.shape!]) : []
-	if (sections.notes && values.notes !== '' && values.notesShape) entries.push([values.notesKey ?? NOTES, values.notesShape])
-	return entries
+/** `@schema` under the names the fields are saved by, so a rename keeps a field's schema. */
+function schemaEntries(values: FormValues, sections: FormSections): Array<[string, FieldSchema]> {
+	const entries = sections.fields ? values.fields.filter((field) => field.name.trim() && field.schema).map((field): [string, FieldSchema] => [field.name.trim(), field.schema!]) : []
+	return [...Object.entries(values.schemas ?? {}), ...entries]
+}
+
+/** The additional fields as stored: `@schema` back to the object the web app reads, keeping only the schemas of fields still there. */
+export function blobText(additionalFields: Record<string, string>): string {
+	const { [SCHEMA_MEMBER]: schemaText, ...fields } = additionalFields
+	const schemas = schemaText === undefined ? null : parseObject(schemaText)
+	const kept = Object.fromEntries(Object.entries(schemas ?? {}).filter(([name]) => Object.hasOwn(fields, name)))
+	return JSON.stringify(Object.keys(kept).length === 0 ? fields : { ...fields, [SCHEMA_MEMBER]: kept })
 }
 
 function loginOf(values: FormValues, sections: FormSections): string | null {
@@ -278,7 +309,6 @@ export function toDraft(values: FormValues, typeName: string | undefined): ItemD
 	const sections = formSections(kind, values)
 	// `fromEntries` defines each name, so a field called `__proto__` is kept rather than setting the prototype.
 	const additionalFields: Record<string, string> = Object.fromEntries(fieldEntries(values, sections))
-	const fieldKinds: Record<string, FieldShape> = Object.fromEntries(kindEntries(values, sections))
 	return {
 		typeId: values.typeId,
 		name: values.name,
@@ -287,7 +317,6 @@ export function toDraft(values: FormValues, typeName: string | undefined): ItemD
 		key: keyOf(values, kind),
 		login: loginOf(values, sections),
 		additionalFields,
-		...(Object.keys(fieldKinds).length > 0 && { fieldKinds }),
 		...totpPart(values, typeName),
 	}
 }
@@ -311,11 +340,7 @@ export function diffDraft(before: ItemDraft, after: ItemDraft): ItemPatch {
 	for (const field of SCALAR_FIELDS) {
 		if (before[field] !== after[field]) patch[field] = after[field]
 	}
-	if (!sameRecord(before.additionalFields, after.additionalFields)) {
-		patch.additionalFields = after.additionalFields
-		// The blob is written whole, so the kinds it keeps go with it.
-		if (after.fieldKinds) patch.fieldKinds = after.fieldKinds
-	}
+	if (!sameRecord(before.additionalFields, after.additionalFields)) patch.additionalFields = after.additionalFields
 	if (totpChanged(before, after)) patch.totp = after.totp
 	return patch as ItemPatch
 }

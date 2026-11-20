@@ -43,7 +43,12 @@ describe('useFolderStore', () => {
 			expect(tree[0].children.map((f) => f.id)).toEqual(['b', 'e'])
 			expect(tree[0].children[0].children.map((f) => f.id)).toEqual(['c'])
 			expect(tree[0].children[0].children[0].children).toEqual([])
-			expect(tree[1]).toEqual({ id: 'd', name: 'D', parentId: 'gone', children: [] })
+			expect(tree[1]).toEqual({
+				id: 'd',
+				name: 'D',
+				parentId: 'gone',
+				children: [],
+			})
 			// The flat list is not mutated.
 			expect(store.folders[0].children).toBeUndefined()
 		})
@@ -91,8 +96,14 @@ describe('useFolderStore', () => {
 
 		it.each([
 			['a Network Error message', new Error('Network Error')],
-			['an ERR_NETWORK code', Object.assign(new Error('x'), { code: 'ERR_NETWORK' })],
-			['a request without a response', Object.assign(new Error('x'), { request: {} })],
+			[
+				'an ERR_NETWORK code',
+				Object.assign(new Error('x'), { code: 'ERR_NETWORK' }),
+			],
+			[
+				'a request without a response',
+				Object.assign(new Error('x'), { request: {} }),
+			],
 		])('falls back to the cached folders on %s', async (_label, err) => {
 			vi.spyOn(axios, 'get').mockRejectedValue(err)
 			const offline = useOfflineStore()
@@ -143,13 +154,18 @@ describe('useFolderStore', () => {
 
 			const created = await store.createFolder('Work')
 
-			expect(post).toHaveBeenCalledWith(FOLDERS_URL, { name: 'Work', parentId: null })
+			expect(post).toHaveBeenCalledWith(FOLDERS_URL, {
+				name: 'Work',
+				parentId: null,
+			})
 			expect(created).toEqual({ id: 'n1', name: 'Work' })
 			expect(store.folders).toEqual([{ id: 'n1', name: 'Work' }])
 		})
 
 		it('forwards the parent and only the two known, set customization keys', async () => {
-			const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'n2' } })
+			const post = vi
+				.spyOn(axios, 'post')
+				.mockResolvedValue({ data: { id: 'n2' } })
 			const store = useFolderStore()
 
 			await store.createFolder('Sub', 'p1', {
@@ -164,8 +180,14 @@ describe('useFolderStore', () => {
 				customColor: 'red',
 			})
 
-			await store.createFolder('Sub', 'p1', { customIcon: null, customColor: undefined })
-			expect(post).toHaveBeenLastCalledWith(FOLDERS_URL, { name: 'Sub', parentId: 'p1' })
+			await store.createFolder('Sub', 'p1', {
+				customIcon: null,
+				customColor: undefined,
+			})
+			expect(post).toHaveBeenLastCalledWith(FOLDERS_URL, {
+				name: 'Sub',
+				parentId: 'p1',
+			})
 		})
 	})
 
@@ -182,7 +204,10 @@ describe('useFolderStore', () => {
 
 			expect(put).toHaveBeenCalledWith(`${FOLDERS_URL}/b`, data)
 			expect(updated).toEqual({ id: 'b', name: 'Renamed' })
-			expect(store.folders).toEqual([{ id: 'a' }, { id: 'b', name: 'Renamed' }])
+			expect(store.folders).toEqual([
+				{ id: 'a' },
+				{ id: 'b', name: 'Renamed' },
+			])
 		})
 
 		it('leaves the list alone for a folder it does not hold', async () => {

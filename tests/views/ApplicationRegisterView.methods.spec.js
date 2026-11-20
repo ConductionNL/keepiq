@@ -132,7 +132,9 @@ describe('ApplicationRegisterView — logic', () => {
 	it('closes the dialog and reloads the list after registering', async () => {
 		const { wrapper, get } = await mountView()
 		wrapper.vm.dialogOpen = true
-		const fetch = vi.spyOn(wrapper.vm.store, 'fetchApplications').mockResolvedValue()
+		const fetch = vi
+			.spyOn(wrapper.vm.store, 'fetchApplications')
+			.mockResolvedValue()
 
 		wrapper.vm.onRegistered()
 

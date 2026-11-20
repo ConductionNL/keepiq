@@ -61,7 +61,9 @@ describe('HealthDuplicates', () => {
 		const wrapper = mountSection()
 
 		expect(wrapper.find('h3').text()).toBe('Duplicates')
-		expect(wrapper.find('[data-testid="duplicates-empty"]').text()).toBe('No duplicates found')
+		expect(wrapper.find('[data-testid="duplicates-empty"]').text()).toBe(
+			'No duplicates found',
+		)
 		expect(wrapper.findAll('h4')).toHaveLength(0)
 		expect(wrapper.find('[data-testid="merge-modal-stub"]').exists()).toBe(false)
 	})
@@ -75,13 +77,21 @@ describe('HealthDuplicates', () => {
 		expect(headings[0].text()).toBe('Exact duplicates')
 
 		const group = wrapper.find('[data-testid="duplicate-group-exact"]')
-		expect(group.find('.health-duplicates__host').text()).toBe('mail.example.com')
-		expect(group.find('.health-duplicates__head .health-duplicates__meta').text()).toBe('ann')
+		expect(group.find('.health-duplicates__host').text()).toBe(
+			'mail.example.com',
+		)
+		expect(
+			group.find('.health-duplicates__head .health-duplicates__meta').text(),
+		).toBe('ann')
 
 		const first = wrapper.find('[data-testid="duplicate-item-a1"]')
 		expect(first.text()).toContain('Mail')
 		expect(first.find('.health-duplicates__meta').text()).toBe('work')
-		expect(wrapper.find('[data-testid="duplicate-item-a2"] .health-duplicates__meta').exists()).toBe(false)
+		expect(
+			wrapper
+				.find('[data-testid="duplicate-item-a2"] .health-duplicates__meta')
+				.exists(),
+		).toBe(false)
 	})
 
 	it('renders the likely list with its hint and falls back to the first item name', () => {
@@ -90,11 +100,15 @@ describe('HealthDuplicates', () => {
 		const headings = wrapper.findAll('h4')
 		expect(headings).toHaveLength(1)
 		expect(headings[0].text()).toBe('Likely duplicates')
-		expect(wrapper.text()).toContain('Same address and username, a different password.')
+		expect(wrapper.text()).toContain(
+			'Same address and username, a different password.',
+		)
 
 		const group = wrapper.find('[data-testid="duplicate-group-likely"]')
 		expect(group.find('.health-duplicates__host').text()).toBe('Bank')
-		expect(group.find('.health-duplicates__head .health-duplicates__meta').exists()).toBe(false)
+		expect(
+			group.find('.health-duplicates__head .health-duplicates__meta').exists(),
+		).toBe(false)
 	})
 
 	it('emits open with the item id when an item is clicked', async () => {
@@ -108,7 +122,9 @@ describe('HealthDuplicates', () => {
 	it('opens the merge dialog for the clicked group and forwards merged', async () => {
 		const wrapper = mountSection({ exact: [exactGroup], likely: [likelyGroup] })
 
-		await wrapper.find('[data-testid="duplicate-merge-likely-0"] ').trigger('click')
+		await wrapper
+			.find('[data-testid="duplicate-merge-likely-0"] ')
+			.trigger('click')
 		const modal = wrapper.findComponent(MergeModalStub)
 		expect(modal.exists()).toBe(true)
 		expect(modal.props('group')).toEqual(likelyGroup)
@@ -125,7 +141,9 @@ describe('HealthDuplicates', () => {
 	it('closes the merge dialog without emitting merged', async () => {
 		const wrapper = mountSection({ exact: [exactGroup] })
 
-		await wrapper.find('[data-testid="duplicate-merge-exact-0"]').trigger('click')
+		await wrapper
+			.find('[data-testid="duplicate-merge-exact-0"]')
+			.trigger('click')
 		wrapper.findComponent(MergeModalStub).vm.$emit('close')
 		await wrapper.vm.$nextTick()
 

@@ -75,22 +75,36 @@ describe('OfflineSyncPanel', () => {
 
 	it('renders nothing when the queue is empty', () => {
 		const wrapper = mountPanel()
-		expect(wrapper.find('[data-testid="offline-sync-panel"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="offline-sync-panel"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('lists a conflict and opens / closes the conflict dialog for it', async () => {
 		offline.entries = [
-			{ entryId: 'c1', op: 'update', secretId: 's1', status: 'conflict', body: {} },
+			{
+				entryId: 'c1',
+				op: 'update',
+				secretId: 's1',
+				status: 'conflict',
+				body: {},
+			},
 		]
 		const wrapper = mountPanel()
 
 		expect(wrapper.find('[data-testid="offline-sync-pending"]').text()).toBe(
 			'1 change waiting to sync',
 		)
-		expect(wrapper.find('.keepiq-offline-sync__list li').text()).toContain('Secret')
-		expect(wrapper.findComponent({ name: 'OfflineConflictDialog' }).exists()).toBe(false)
+		expect(wrapper.find('.keepiq-offline-sync__list li').text()).toContain(
+			'Secret',
+		)
+		expect(
+			wrapper.findComponent({ name: 'OfflineConflictDialog' }).exists(),
+		).toBe(false)
 
-		await wrapper.find('[data-testid="offline-sync-resolve-c1"]').trigger('click')
+		await wrapper
+			.find('[data-testid="offline-sync-resolve-c1"]')
+			.trigger('click')
 		const dialog = wrapper.findComponent({ name: 'OfflineConflictDialog' })
 		expect(dialog.props('entry')).toEqual(offline.entries[0])
 		expect(dialog.props('open')).toBe(true)
@@ -102,7 +116,9 @@ describe('OfflineSyncPanel', () => {
 		dialog.vm.$emit('update:open', false)
 		await wrapper.vm.$nextTick()
 		expect(wrapper.vm.conflictEntry).toBeNull()
-		expect(wrapper.findComponent({ name: 'OfflineConflictDialog' }).exists()).toBe(false)
+		expect(
+			wrapper.findComponent({ name: 'OfflineConflictDialog' }).exists(),
+		).toBe(false)
 	})
 
 	describe('changes made under rotated keys', () => {
@@ -125,18 +141,26 @@ describe('OfflineSyncPanel', () => {
 			await form.trigger('submit')
 			await flush()
 
-			expect(offline.reopenWithPreviousPassword).toHaveBeenCalledExactlyOnceWith('pw')
+			expect(
+				offline.reopenWithPreviousPassword,
+			).toHaveBeenCalledExactlyOnceWith('pw')
 			expect(offline.replayQueue).toHaveBeenCalledOnce()
 			expect(wrapper.vm.previousPassword).toBe('')
-			expect(wrapper.find('.keepiq-offline-sync__message').exists()).toBe(false)
+			expect(wrapper.find('.keepiq-offline-sync__message').exists()).toBe(
+				false,
+			)
 		})
 
 		it('explains a refused password and does not replay', async () => {
-			offline.reopenWithPreviousPassword = vi.fn().mockRejectedValue(new Error('bad key'))
+			offline.reopenWithPreviousPassword = vi
+				.fn()
+				.mockRejectedValue(new Error('bad key'))
 			const wrapper = mountPanel()
 
 			await wrapper.find('input.pw').setValue('wrong')
-			await wrapper.find('[data-testid="offline-sync-reopen"]').trigger('submit')
+			await wrapper
+				.find('[data-testid="offline-sync-reopen"]')
+				.trigger('submit')
 			await flush()
 
 			expect(offline.reopenWithPreviousPassword).toHaveBeenCalledWith('wrong')
@@ -149,7 +173,9 @@ describe('OfflineSyncPanel', () => {
 
 		it('discards the changes on request', async () => {
 			const wrapper = mountPanel()
-			const buttons = wrapper.find('[data-testid="offline-sync-reopen"]').findAll('button')
+			const buttons = wrapper
+				.find('[data-testid="offline-sync-reopen"]')
+				.findAll('button')
 			const discard = buttons.find((b) => b.text() === 'Discard')
 
 			await discard.trigger('click')
@@ -179,6 +205,8 @@ describe('OfflineSyncPanel', () => {
 		expect(writeText).toHaveBeenCalledExactlyOnceWith('')
 		expect(wrapper.find('.keepiq-offline-sync__message').text()).toBe('Copied!')
 		// No pending count: only failed entries.
-		expect(wrapper.find('[data-testid="offline-sync-pending"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="offline-sync-pending"]').exists()).toBe(
+			false,
+		)
 	})
 })

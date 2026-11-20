@@ -111,7 +111,12 @@ function fanOutError(e) {
  * @param {Set<string>} context.refused Refused source names, added to.
  * @return {Promise<number>} How many copies the server created.
  */
-async function postFanOutChunk(store, teamFolderId, chunk, { certByUser, refs, refused }) {
+async function postFanOutChunk(
+	store,
+	teamFolderId,
+	chunk,
+	{ certByUser, refs, refused },
+) {
 	const response = await axios.post(
 		generateUrl(`/apps/keepiq/api/v1/team-folders/${teamFolderId}/shares`),
 		{ shares: chunk },
@@ -137,7 +142,10 @@ async function postFanOutChunk(store, teamFolderId, chunk, { certByUser, refs, r
  * @param {object} context.shareStore The share store.
  * @return {Promise<object|null>} The copy row, or null.
  */
-async function fanOutCopy(pair, { refs, certByUser, plaintextCache, skipped, secretStore, shareStore }) {
+async function fanOutCopy(
+	pair,
+	{ refs, certByUser, plaintextCache, skipped, secretStore, shareStore },
+) {
 	const certificate = certByUser[pair.userId]
 	if (!certificate) {
 		return null
@@ -555,7 +563,10 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						(state.secrets ?? []).map((ref) => [ref.id, ref]),
 					),
 					certByUser: Object.fromEntries(
-						(state.recipients ?? []).map((r) => [r.userId, r.certificate]),
+						(state.recipients ?? []).map((r) => [
+							r.userId,
+							r.certificate,
+						]),
 					),
 					// Decrypt each distinct source secret once, not per recipient.
 					plaintextCache: {},
@@ -636,7 +647,12 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 			const totals = { created: 0, refused: 0, members: new Set() }
 
 			for (const folder of response.data?.folders ?? []) {
-				await confirmFolder(this, folder, { secretStore, shareStore }, totals)
+				await confirmFolder(
+					this,
+					folder,
+					{ secretStore, shareStore },
+					totals,
+				)
 			}
 
 			const { created, refused, members } = totals

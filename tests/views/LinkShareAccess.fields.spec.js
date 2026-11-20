@@ -26,7 +26,10 @@ import { useLinkShareStore } from '../../src/store/modules/linkShare.js'
  */
 async function fieldsOf(snapshot) {
 	const wrapper = mount(LinkShareAccess, {
-		global: { mocks: { t: (app, s) => s }, stubs: { NcButton: true, NcNoteCard: true, NcPasswordField: true } },
+		global: {
+			mocks: { t: (app, s) => s },
+			stubs: { NcButton: true, NcNoteCard: true, NcPasswordField: true },
+		},
 	})
 	wrapper.vm.snapshot = snapshot
 	return wrapper.vm.snapshotFields

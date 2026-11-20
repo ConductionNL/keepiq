@@ -215,7 +215,10 @@ describe('useRotationStore', () => {
 				.spyOn(axios, 'post')
 				.mockResolvedValue({ data: { flagged: 2 } })
 			vi.spyOn(axios, 'get').mockResolvedValue({
-				data: [{ id: 'f1', secretId: 'a' }, { id: 'f2', secretId: 'b' }],
+				data: [
+					{ id: 'f1', secretId: 'a' },
+					{ id: 'f2', secretId: 'b' },
+				],
 			})
 			const store = useRotationStore()
 

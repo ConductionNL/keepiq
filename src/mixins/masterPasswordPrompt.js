@@ -26,7 +26,7 @@ export default {
 		 * @return {void}
 		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.1
 		 */
-		'prompt.open': function(open) {
+		'prompt.open': function (open) {
 			if (!open) {
 				this.password = ''
 			}

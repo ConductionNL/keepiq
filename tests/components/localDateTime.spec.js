@@ -16,7 +16,13 @@ import VersionHistoryPanel from '../../src/components/VersionHistoryPanel.vue'
 import ComplianceSnapshotDialog from '../../src/dialogs/ComplianceSnapshotDialog.vue'
 import MySendsDialog from '../../src/modals/MySendsDialog.vue'
 
-const VIEWS = { ApplicationLeasesPanel, ComplianceSection, VersionHistoryPanel, ComplianceSnapshotDialog, MySendsDialog }
+const VIEWS = {
+	ApplicationLeasesPanel,
+	ComplianceSection,
+	VersionHistoryPanel,
+	ComplianceSnapshotDialog,
+	MySendsDialog,
+}
 
 describe('formatDate', () => {
 	for (const [name, view] of Object.entries(VIEWS)) {

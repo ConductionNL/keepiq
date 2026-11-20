@@ -27,7 +27,11 @@ describe('NotificationTogglesSection', () => {
 
 	it('loads the stored preferences, reading "1" and true as on and anything else as off', async () => {
 		const get = vi.spyOn(axios, 'get').mockResolvedValue({
-			data: { notify_shares: '0', notify_requests: true, notify_security: '1' },
+			data: {
+				notify_shares: '0',
+				notify_requests: true,
+				notify_security: '1',
+			},
 		})
 		const wrapper = mount(NotificationTogglesSection, { global: { stubs } })
 		await flush()
@@ -40,7 +44,9 @@ describe('NotificationTogglesSection', () => {
 			notify_security: true,
 		})
 		expect(wrapper.find('#notify-notify_shares').element.checked).toBe(false)
-		expect(wrapper.find('#notify-notify_group_shares').element.checked).toBe(true)
+		expect(wrapper.find('#notify-notify_group_shares').element.checked).toBe(
+			true,
+		)
 	})
 
 	it('renders one checkbox per category, in order', async () => {
@@ -48,7 +54,9 @@ describe('NotificationTogglesSection', () => {
 		const wrapper = mount(NotificationTogglesSection, { global: { stubs } })
 		await flush()
 
-		expect(wrapper.findAll('input[type="checkbox"]').map((n) => n.attributes('id'))).toEqual([
+		expect(
+			wrapper.findAll('input[type="checkbox"]').map((n) => n.attributes('id')),
+		).toEqual([
 			'notify-notify_shares',
 			'notify-notify_requests',
 			'notify-notify_group_shares',

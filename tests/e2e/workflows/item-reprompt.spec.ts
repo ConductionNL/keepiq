@@ -92,9 +92,11 @@ test.describe('item re-prompt', () => {
 		// The list loads on entering the route, so leave it and come back.
 		await gotoVaultRoute(page, 'password-health')
 		await gotoVaultRoute(page, 'secrets')
-		await expect(page.getByTestId('secret-reprompt-marker').first()).toBeVisible({
-			timeout: 30_000,
-		})
+		await expect(page.getByTestId('secret-reprompt-marker').first()).toBeVisible(
+			{
+				timeout: 30_000,
+			},
+		)
 	})
 
 	test('a wrong master password reveals nothing', async () => {
@@ -123,10 +125,9 @@ test.describe('item re-prompt', () => {
 			.evaluate((el: HTMLElement) => el.click())
 		await expect(page.getByTestId('reprompt-dialog')).toHaveCount(0)
 
-		await expect(sidebar.locator('.keepiq-password-field input')).toHaveAttribute(
-			'type',
-			'password',
-		)
+		await expect(
+			sidebar.locator('.keepiq-password-field input'),
+		).toHaveAttribute('type', 'password')
 		await expect(sidebar).not.toContainText(VALUE)
 		const shown = await sidebar
 			.locator('.keepiq-password-field input')

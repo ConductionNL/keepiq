@@ -111,7 +111,9 @@ describe('CopyButton re-prompt guard', () => {
 	it('copies the resolved value after the guard resolves', async () => {
 		const resolve = vi.fn().mockResolvedValue('hunter2')
 		const guard = vi.fn().mockResolvedValue()
-		const wrapper = mount(CopyButton, { props: { resolve, guard, clearAfter: 0 } })
+		const wrapper = mount(CopyButton, {
+			props: { resolve, guard, clearAfter: 0 },
+		})
 
 		await wrapper.vm.onCopy()
 

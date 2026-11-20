@@ -21,7 +21,9 @@ import SiemSection from '../../src/components/settings/SiemSection.vue'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
-const REFUSED = { response: { status: 403, data: { message: 'Administrators only' } } }
+const REFUSED = {
+	response: { status: 403, data: { message: 'Administrators only' } },
+}
 const SINK = { id: 's1', name: 'Syslog', type: 'syslog', format: 'cef' }
 
 /**
@@ -107,7 +109,10 @@ describe('SIEM test-fire', () => {
 
 describe('SIEM sink delete', () => {
 	it('is busy with no error while it runs, then drops the row', async () => {
-		const wrapper = await mountSection(SiemSection, [SINK, { ...SINK, id: 's2' }])
+		const wrapper = await mountSection(SiemSection, [
+			SINK,
+			{ ...SINK, id: 's2' },
+		])
 		const seen = during(wrapper, ['busy', 'error'])
 		const del = vi.spyOn(axios, 'delete').mockImplementation(async () => {
 			seen.capture()
@@ -180,12 +185,24 @@ describe('offboarding run', () => {
 			return { data: { revoked: 1, transferred: 2, skipped: [] } }
 		})
 		await wrapper.vm.run()
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/team-folders/offboard', {
-			leavingUserId: 'ada',
-			successorUserId: 'bob',
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/team-folders/offboard',
+			{
+				leavingUserId: 'ada',
+				successorUserId: 'bob',
+			},
+		)
+		expect(seen).toMatchObject({
+			busy: true,
+			error: null,
+			summary: null,
+			confirmOpen: false,
 		})
-		expect(seen).toMatchObject({ busy: true, error: null, summary: null, confirmOpen: false })
-		expect(wrapper.vm.summary).toEqual({ revoked: 1, transferred: 2, skipped: [] })
+		expect(wrapper.vm.summary).toEqual({
+			revoked: 1,
+			transferred: 2,
+			skipped: [],
+		})
 		expect(wrapper.vm.error).toBe(null)
 		expect(wrapper.vm.busy).toBe(false)
 	})

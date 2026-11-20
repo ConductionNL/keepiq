@@ -52,7 +52,11 @@
 				<input
 					v-if="canManage"
 					type="checkbox"
-					:aria-label="t('keepiq', 'Pick version {number} to compare', { number: version.versionNumber })"
+					:aria-label="
+						t('keepiq', 'Pick version {number} to compare', {
+							number: version.versionNumber,
+						})
+					"
 					:data-testid="`version-pick-${version.versionNumber}`"
 					:checked="picked.includes(version.id)"
 					:disabled="!picked.includes(version.id) && picked.length >= 2"
@@ -252,11 +256,21 @@ export default {
 				const version = this.store.versions.find((v) => v.id === id)
 				return version ? version.versionNumber : 0
 			}
-			const [first, second] = [...this.picked].sort((a, b) => order(a) - order(b))
+			const [first, second] = [...this.picked].sort(
+				(a, b) => order(a) - order(b),
+			)
 			this.comparing = true
 			try {
-				const [left, right] = await Promise.all([this.stateOf(first), this.stateOf(second)])
-				this.comparison = { left, right, leftLabel: this.labelOf(first), rightLabel: this.labelOf(second) }
+				const [left, right] = await Promise.all([
+					this.stateOf(first),
+					this.stateOf(second),
+				])
+				this.comparison = {
+					left,
+					right,
+					leftLabel: this.labelOf(first),
+					rightLabel: this.labelOf(second),
+				}
 			} catch {
 				// A version failure is surfaced via store state.
 			} finally {
@@ -288,7 +302,9 @@ export default {
 				return this.t('keepiq', 'Current value')
 			}
 			const version = this.store.versions.find((v) => v.id === id)
-			return this.t('keepiq', 'Version {number}', { number: version ? version.versionNumber : '?' })
+			return this.t('keepiq', 'Version {number}', {
+				number: version ? version.versionNumber : '?',
+			})
 		},
 
 		/** Locale date-time display of an ISO timestamp. */

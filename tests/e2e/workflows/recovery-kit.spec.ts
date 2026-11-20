@@ -53,7 +53,10 @@ async function fill(target: Page, testid: string, value: string): Promise<void> 
  * @param testid The data-testid.
  */
 async function press(target: Page, testid: string): Promise<void> {
-	await target.getByTestId(testid).first().evaluate((el: HTMLElement) => el.click())
+	await target
+		.getByTestId(testid)
+		.first()
+		.evaluate((el: HTMLElement) => el.click())
 }
 
 /**
@@ -64,7 +67,9 @@ async function press(target: Page, testid: string): Promise<void> {
  */
 async function recoverWith(target: Page, kitCode: string): Promise<void> {
 	await target.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
-	await expect(target.getByTestId('recovery-kit-unlock')).toBeVisible({ timeout: 30_000 })
+	await expect(target.getByTestId('recovery-kit-unlock')).toBeVisible({
+		timeout: 30_000,
+	})
 	await press(target, 'recovery-kit-unlock-start')
 	await fill(target, 'recovery-kit-unlock-code', kitCode)
 	await fill(target, 'recovery-kit-unlock-password', NEW_MASTER)
@@ -120,21 +125,30 @@ test.describe('recovery kit', () => {
 		const bare = code.replace(/[\s-]/g, '')
 		for (const line of sent) {
 			expect(line, 'a request carrying the recovery code').not.toContain(code)
-			expect(line.replace(/[\s-]/g, ''), 'a request carrying the recovery code').not.toContain(bare)
+			expect(
+				line.replace(/[\s-]/g, ''),
+				'a request carrying the recovery code',
+			).not.toContain(bare)
 		}
 	})
 
 	test('the code opens the vault with a new master password, once', async () => {
 		// @e2e vault-recovery-kit::a-user-who-lost-the-master-password-gets-back-in
 		await recoverWith(page, code)
-		await expect(page.getByTestId('recovery-kit-unlock-continue')).toBeVisible({ timeout: 60_000 })
+		await expect(page.getByTestId('recovery-kit-unlock-continue')).toBeVisible({
+			timeout: 60_000,
+		})
 		await press(page, 'recovery-kit-unlock-continue')
-		await expect(page.locator('.lock-screen')).toHaveCount(0, { timeout: 30_000 })
+		await expect(page.locator('.lock-screen')).toHaveCount(0, {
+			timeout: 30_000,
+		})
 
 		// The spent kit is gone: the lock screen no longer offers it, and the
 		// new master password unlocks.
 		await page.goto(`${APP_BASE}/lock`, { waitUntil: 'domcontentloaded' })
-		await expect(page.locator('.lock-screen input[type="password"]').first()).toBeVisible({
+		await expect(
+			page.locator('.lock-screen input[type="password"]').first(),
+		).toBeVisible({
 			timeout: 30_000,
 		})
 		await expect(page.getByTestId('recovery-kit-unlock')).toHaveCount(0)

@@ -45,7 +45,8 @@ vi.mock('../../src/store/modules/offline.js', () => ({
 	}),
 }))
 
-const { useEncryptionSuiteStore } = await import('../../src/store/modules/encryptionSuite.js')
+const { useEncryptionSuiteStore } =
+	await import('../../src/store/modules/encryptionSuite.js')
 const { useSessionStore } = await import('../../src/store/modules/session.js')
 
 beforeEach(() => {
@@ -77,15 +78,21 @@ describe('initiateCompromiseRecovery', () => {
 			calls.push('runMigration')
 			return { migrated: 3, failed: 1, failures: [] }
 		})
-		const contacts = vi.spyOn(store, 'migrateEmergencyContacts').mockImplementation(async () => {
-			calls.push('migrateEmergencyContacts')
-			return [{ granteeUserId: 'g', reason: 'r' }]
-		})
-		const finalise = vi.spyOn(store, 'finaliseMigration').mockImplementation(async () => {
-			calls.push('finaliseMigration')
-		})
+		const contacts = vi
+			.spyOn(store, 'migrateEmergencyContacts')
+			.mockImplementation(async () => {
+				calls.push('migrateEmergencyContacts')
+				return [{ granteeUserId: 'g', reason: 'r' }]
+			})
+		const finalise = vi
+			.spyOn(store, 'finaliseMigration')
+			.mockImplementation(async () => {
+				calls.push('finaliseMigration')
+			})
 
-		const outcome = await store.initiateCompromiseRecovery('old-pw', 'new-pw', ['c1'])
+		const outcome = await store.initiateCompromiseRecovery('old-pw', 'new-pw', [
+			'c1',
+		])
 
 		expect({
 			calls,
@@ -114,7 +121,10 @@ describe('initiateCompromiseRecovery', () => {
 		const session = useSessionStore()
 		session.suiteId = 'old-suite'
 		vi.spyOn(axios, 'post').mockResolvedValue({
-			data: { migration: { id: 'm1', oldSuiteId: 'old-suite' }, oldEncryptedPrivateKey: 'O' },
+			data: {
+				migration: { id: 'm1', oldSuiteId: 'old-suite' },
+				oldEncryptedPrivateKey: 'O',
+			},
 		})
 		vi.spyOn(store, 'runMigration').mockResolvedValue({ failed: 0 })
 		vi.spyOn(store, 'migrateEmergencyContacts').mockResolvedValue([])
@@ -122,7 +132,9 @@ describe('initiateCompromiseRecovery', () => {
 		await store.initiateCompromiseRecovery('old-pw', 'new-pw')
 		expect(session.suiteId).toBe('old-suite')
 		expect(session.certificate).toBe(null)
-		expect(store.migrateEmergencyContacts.mock.calls[0][0].carryContactIds).toEqual([])
+		expect(
+			store.migrateEmergencyContacts.mock.calls[0][0].carryContactIds,
+		).toEqual([])
 	})
 })
 
@@ -205,7 +217,9 @@ describe('resumeMigration', () => {
 		store.migrationFailures = ['stale']
 		store.migrationDroppedVersions = 4
 		const run = vi.spyOn(store, 'runMigration').mockResolvedValue({ failed: 2 })
-		const finalise = vi.spyOn(store, 'finaliseMigration').mockResolvedValue({ finalised: false })
+		const finalise = vi
+			.spyOn(store, 'finaliseMigration')
+			.mockResolvedValue({ finalised: false })
 		const removed = vi.spyOn(store, 'rotationRemovedContacts')
 
 		const outcome = await store.resumeMigration('old-pw')

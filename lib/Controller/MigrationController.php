@@ -468,7 +468,11 @@ class MigrationController extends OCSController {
 	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(purpose: VaultKeyProofServiceInterface::PURPOSE_EMERGENCY_RE_ENVELOPE, binds: self::ENVELOPE_BINDS, subject: 'migrationNewSuite')]
+	#[VaultKeyProofRequired(
+		purpose: VaultKeyProofServiceInterface::PURPOSE_EMERGENCY_RE_ENVELOPE,
+		binds: self::ENVELOPE_BINDS,
+		subject: 'migrationNewSuite'
+	)]
 	public function reEnvelopeEmergencyContact(
 		string $id,
 		string $contactId,
