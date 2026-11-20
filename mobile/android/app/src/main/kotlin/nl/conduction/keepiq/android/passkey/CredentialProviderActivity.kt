@@ -220,6 +220,7 @@ class CredentialProviderActivity : FragmentActivity() {
                     SaveResult.REFUSED -> return createErrorIntent(CreateCredentialUnknownException("refused"))
                     SaveResult.NOT_UPDATED -> return createErrorIntent(CreateCredentialUnknownException(getString(R.string.autofill_not_updated_shared)))
                     SaveResult.VIEW_ONLY -> return createErrorIntent(CreateCredentialUnknownException(getString(R.string.autofill_not_updated_view_only)))
+                    SaveResult.FAILED -> return createErrorIntent(CreateCredentialUnknownException(getString(R.string.autofill_not_updated)))
                     else -> Unit
                 }
                 refreshIndex(accountId, keys, always = true)

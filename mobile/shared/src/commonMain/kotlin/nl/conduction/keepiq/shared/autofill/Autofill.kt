@@ -6,6 +6,7 @@ package nl.conduction.keepiq.shared.autofill
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.api.KeepiqApiException
 import nl.conduction.keepiq.shared.crypto.Totp
 import nl.conduction.keepiq.shared.vault.ItemCodec
 import nl.conduction.keepiq.shared.vault.ItemParts
@@ -44,11 +45,13 @@ object AutofillChoices {
 }
 
 /**
- * What saving a submitted login did. [NOT_UPDATED]: the stored login is
- * shared and its change has to be made in the app's edit form or the web
- * app; [VIEW_ONLY]: it is shared with the user to view only.
+ * What saving a submitted login did. An update that was not kept: [NOT_UPDATED]
+ * when the login is shared with a partner organisation and the change has to
+ * be made in the app's edit form or the web app, [VIEW_ONLY] when it is shared
+ * with the user to view only, [FAILED] for any other reason, which the app's
+ * edit form names.
  */
-enum class SaveResult { SAVED, UPDATED, UNCHANGED, REFUSED, NOT_UPDATED, VIEW_ONLY }
+enum class SaveResult { SAVED, UPDATED, UNCHANGED, REFUSED, NOT_UPDATED, VIEW_ONLY, FAILED }
 
 /**
  * Saves a login typed into an app or a website (task 4.2), as the
@@ -73,19 +76,34 @@ class AutofillSaver(private val api: KeepiqApi, private val keys: VaultKeys) {
     /**
      * Only `key`, through share-save on the row as read now, so every copy
      * gets it (keepiq#1300); with no edit form behind it, partner shares
-     * refuse it, as in the extension. Every share-save refusal is told
+     * refuse it, as in the extension. A refused or failed update is told
      * apart from a site that saves nothing, so the user hears the password
      * was not kept.
      */
     private suspend fun update(id: String, name: String, login: String, password: String): SaveResult {
-        val fresh = api.getSecret(id)?.let { VaultRow.from(it) } ?: return SaveResult.REFUSED
         val parts = ItemParts(name, "", null, login, password, null)
         return try {
+            // A login gone since the index was built is not updated either, and says so.
+            val fresh = api.getSecret(id)?.let { VaultRow.from(it) } ?: return SaveResult.FAILED
             ShareSave(api, keys, MobileSession::nowMillis).saveFresh(fresh, ItemCodec.updateBody(parts, setOf("key"), keys), mapOf("key" to password), vouchEmpty = false)
             SaveResult.UPDATED
         } catch (e: ShareSaveException) {
-            if (e.code == ShareSave.VIEW_ONLY) SaveResult.VIEW_ONLY else SaveResult.NOT_UPDATED
+            when (e.code) {
+                ShareSave.VIEW_ONLY -> SaveResult.VIEW_ONLY
+                in PARTNER_REFUSALS -> SaveResult.NOT_UPDATED
+                else -> SaveResult.FAILED
+            }
+        } catch (e: KeepiqApiException) {
+            SaveResult.FAILED
         }
+    }
+
+    private companion object {
+        /** Share-save refusals for a partner share, which a save without a form can't make. */
+        val PARTNER_REFUSALS = setOf(
+            ShareSave.UNVERIFIED, ShareSave.PARTNER_UNREACHABLE, ShareSave.PARTNER_UPGRADE_REQUIRED,
+            ShareSave.PARTNER_CLOCK, ShareSave.PARTNER_LOOKUP_LIMIT, ShareSave.FEDERATION_UNAVAILABLE,
+        )
     }
 
     private suspend fun create(target: AutofillTarget, login: String, password: String, appLabel: String?, webScheme: String?): SaveResult {

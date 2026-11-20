@@ -80,6 +80,9 @@ class ExcludedCredentialException : IllegalStateException("A passkey for this ac
  * callers check that before they come here.
  */
 object Passkeys {
+    /** Refusals for how a standalone passkey item is shared, which the phone can't resolve: it signs without writing the counter. */
+    private val COUNTER_LEFT_BEHIND = setOf(ShareSave.VIEW_ONLY, ShareSave.UNVERIFIED, ShareSave.PARTNER_UNREACHABLE, ShareSave.PARTNER_UPGRADE_REQUIRED)
+
     /**
      * Whether the index holds [fresh]'s [fields] for item [id], read again
      * through [resync] once when it doesn't, so a row changed elsewhere since
@@ -112,8 +115,9 @@ object Passkeys {
      * Signs for [rpId] with [choice] and writes a non-zero counter back to its
      * item, through share-save on the item as read now, so every copy gets it.
      * No client makes a standalone passkey item any more (passkeys live on
-     * logins), so one that share-save refuses to write, such as one shared to
-     * view only or with a partner, still signs: only its counter stays behind.
+     * logins), so one that share-save refuses for how it is shared
+     * ([COUNTER_LEFT_BEHIND]) still signs: only its counter stays behind, and
+     * a relying party may then see it repeat. Every other refusal fails.
      */
     suspend fun sign(
         api: KeepiqApi,
@@ -134,7 +138,8 @@ object Passkeys {
                 ShareSave(api, keys, MobileSession::nowMillis)
                     .saveFresh(fresh, ItemCodec.updateBody(parts, setOf("key"), keys), mapOf("key" to updated), vouchEmpty = true)
             } catch (e: ShareSaveException) {
-                // The counter is not written; see above.
+                // The counter is not written; see above. Anything else, such as a ciphertext the index doesn't hold, fails the sign-in.
+                if (e.code !in COUNTER_LEFT_BEHIND) throw e
             }
         }
         return assertion

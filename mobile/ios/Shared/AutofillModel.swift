@@ -378,6 +378,8 @@ final class AutofillModel: ObservableObject {
                     self.message = AL("add.notUpdated")
                 } else if result == SaveResult.viewOnly {
                     self.message = AL("add.viewOnly")
+                } else if result == SaveResult.failed {
+                    self.message = AL("add.notUpdatedFailed")
                 } else {
                     clearFields()
                     try? await Task.sleep(nanoseconds: 200_000_000)

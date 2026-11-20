@@ -21,7 +21,7 @@ import kotlin.test.assertFailsWith
  * field order). On the JVM, which signs; the parser under test is common code.
  */
 class FederatedCertificateBuiltTest {
-    private companion object {
+    internal companion object {
         const val MALLORY = "mallory@cloud.partner.example"
         val NOW = IsoTime.parseMillis("2030-01-01T00:00:00Z")!!
         val KEYS: KeyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
@@ -76,33 +76,41 @@ class FederatedCertificateBuiltTest {
 
         fun ByteArray.contains(pattern: ByteArray) = (0..size - pattern.size).any { i -> pattern.indices.all { this[i + it] == pattern[it] } }
 
+        class Spec(
+            val issuer: ByteArray,
+            val subject: ByteArray,
+            val extensions: List<ByteArray>? = null,
+            /** The algorithm in the TBS, and outside it unless [outer] says otherwise. */
+            val algorithm: ByteArray = PKCS1,
+            val outer: ByteArray? = null,
+            val spki: ByteArray = SPKI,
+            val notBefore: String = "200101000000Z",
+        )
+
+        /** Signed with SHA-256: PSS with MGF1-SHA-256 and a 32-byte salt under any PSS algorithm, whatever its parameters claim. */
+        fun certificate(spec: Spec): String {
+            val validity = der(0x30, der(0x17, ascii(spec.notBefore)), der(0x17, ascii("491231235959Z")))
+            val extensions = spec.extensions?.let { der(0xa3, der(0x30, *it.toTypedArray())) } ?: ByteArray(0)
+            val tbs = der(0x30, der(0xa0, der(0x02, b(2))), der(0x02, b(1)), spec.algorithm, spec.issuer, validity, spec.subject, spec.spki, extensions)
+            val signer = if (spec.algorithm.contains(OID_PSS)) {
+                Signature.getInstance("RSASSA-PSS").apply { setParameter(PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1)) }
+            } else {
+                Signature.getInstance("SHA256withRSA")
+            }
+            signer.initSign(KEYS.private)
+            signer.update(tbs)
+            return pemOf(der(0x30, tbs, spec.outer ?: spec.algorithm, der(0x03, b(0x00), signer.sign())))
+        }
+
+        /** A root, an intermediate and [cloudId]'s leaf signed with [leafAlgorithm]: leaf, intermediate, root. */
+        fun chain(cloudId: String = MALLORY, leafAlgorithm: ByteArray = PKCS1): List<String> = listOf(
+            certificate(Spec(INTERMEDIATE, name(utf8(cloudId)), algorithm = leafAlgorithm)),
+            certificate(Spec(ROOT, INTERMEDIATE, listOf(CA))),
+            certificate(Spec(ROOT, ROOT, listOf(CA))),
+        )
+
         fun pemOf(der: ByteArray) = "-----BEGIN CERTIFICATE-----\n${Encoding.toBase64(der)}\n-----END CERTIFICATE-----"
         fun sha256Hex(pem: String) = Encoding.hex(Primitives.sha256(Encoding.fromBase64(pem.replace(Regex("-----[A-Z ]+-----|\\s"), ""))))
-    }
-
-    private class Spec(
-        val issuer: ByteArray,
-        val subject: ByteArray,
-        val extensions: List<ByteArray>? = null,
-        /** The algorithm in the TBS, and outside it unless [outer] says otherwise. */
-        val algorithm: ByteArray = PKCS1,
-        val outer: ByteArray? = null,
-        val spki: ByteArray = SPKI,
-    )
-
-    /** Signed with SHA-256: PSS with MGF1-SHA-256 and a 32-byte salt under any PSS algorithm, whatever its parameters claim. */
-    private fun certificate(spec: Spec): String {
-        val validity = der(0x30, der(0x17, ascii("200101000000Z")), der(0x17, ascii("491231235959Z")))
-        val extensions = spec.extensions?.let { der(0xa3, der(0x30, *it.toTypedArray())) } ?: ByteArray(0)
-        val tbs = der(0x30, der(0xa0, der(0x02, b(2))), der(0x02, b(1)), spec.algorithm, spec.issuer, validity, spec.subject, spec.spki, extensions)
-        val signer = if (spec.algorithm.contains(OID_PSS)) {
-            Signature.getInstance("RSASSA-PSS").apply { setParameter(PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1)) }
-        } else {
-            Signature.getInstance("SHA256withRSA")
-        }
-        signer.initSign(KEYS.private)
-        signer.update(tbs)
-        return pemOf(der(0x30, tbs, spec.outer ?: spec.algorithm, der(0x03, b(0x00), signer.sign())))
     }
 
     private class Chain(val root: String, val intermediate: String, val leaf: String)
@@ -116,7 +124,8 @@ class FederatedCertificateBuiltTest {
         algorithm: ByteArray = PKCS1,
         outer: ByteArray? = null,
         spki: ByteArray = SPKI,
-    ) = Spec(issuer, subject, extensions, algorithm, outer, spki)
+        notBefore: String = "200101000000Z",
+    ) = Spec(issuer, subject, extensions, algorithm, outer, spki, notBefore)
 
     private fun build(root: Spec = rootSpec(), intermediate: Spec = intermediateSpec(), leaf: Spec = leafSpec()) =
         Chain(certificate(root), certificate(intermediate), certificate(leaf))
@@ -184,6 +193,17 @@ class FederatedCertificateBuiltTest {
         for (algorithm in listOf(pssParams(pssHash(), pssMask(), pssSalt(20)), pssParams(pssHash(), pssMask()))) {
             assertFailsWith<FederatedCertificateUnsupportedException> { verifyBuilt(leaf = leafSpec(algorithm = algorithm)) }
         }
+        // A verdict the phone can reach still comes first.
+        val salt20 = pssParams(pssHash(), pssMask(), pssSalt(20))
+        assertEquals("name_mismatch", reasonOf { verifyBuilt(leaf = leafSpec(algorithm = salt20, subject = name(utf8("alice@cloud.partner.example")))) })
+        assertEquals("not_valid_now", reasonOf { verifyBuilt(leaf = leafSpec(algorithm = salt20, notBefore = "400101000000Z")) })
+    }
+
+    @Test
+    fun readsATimeAsDateUtcDoes() {
+        // Month 13 of 2020 is January 2021, and month 32 of 2029 is August 2031, after now: as in the web app and the extension.
+        verifyBuilt(leaf = leafSpec(notBefore = "201301000000Z"))
+        assertEquals("not_valid_now", reasonOf { verifyBuilt(leaf = leafSpec(notBefore = "293201000000Z")) })
     }
 
     @Test

@@ -45,7 +45,7 @@ The apps MUST create, edit and move items and folders, and move items to the tra
 - **THEN** the app shows the refusal and keeps the old value
 
 ### Requirement: A value change reaches every copy
-A change of an item's `key`, `login`, `additionalFields`, `totp` or `passkeys` MUST go through `PUT /api/v1/secrets/{id}/share-save`, as the web app and the extension save it: the row, every copy sealed to its holder's certificate, and every partner share sealed to a verified partner certificate, in one transaction or not at all (keepiq#1300). This holds for the edit form, an autofill password update and a passkey write. A change of only the name, address or folder MAY stay a plain `PUT /api/v1/secrets/{id}`. A copy whose holder has no write grade, as `GET /api/v1/secrets/{id}/write-context` grades it, MUST NOT offer Edit or passkey Delete, and any change of it but a move MUST be refused before anything is sent; while write-context has not answered, or could not, Edit and passkey Delete MUST NOT be enabled. Every item is encrypted to the same user key, so before an item is opened for edit or its passkeys are written, each value ciphertext the server sent MUST be the one the device holds for that item, after one sync when it is not yet (ADR-002); otherwise nothing is opened or written. A partner share gets the whole value, so the save MUST vouch only for the fields the edit form shows in full, and fail as unverified on any other.
+A change of an item's `key`, `login`, `additionalFields`, `totp` or `passkeys` MUST go through `PUT /api/v1/secrets/{id}/share-save`, as the web app and the extension save it: the row, every copy sealed to its holder's certificate, and every partner share sealed to a verified partner certificate, in one transaction or not at all (keepiq#1300). This holds for the edit form, an autofill password update and a passkey write. A change of only the name, address or folder MAY stay a plain `PUT /api/v1/secrets/{id}`. A copy whose holder has no write grade, as `GET /api/v1/secrets/{id}/write-context` grades it, MUST NOT offer Edit or passkey Delete, and any change of it but a move MUST be refused before anything is sent; while write-context has not answered, or could not, Edit and passkey Delete MUST NOT be enabled. Every item is encrypted to the same user key, so before an item is opened for edit or its passkeys are written, each value ciphertext the server sent MUST be the one the device holds for that item, after one sync, or on the passkey provider one read of the vault, when it is not yet (ADR-002); otherwise nothing is opened or written, and a failed sync is named as such. A partner share gets the whole value, so the save MUST vouch only for the fields the edit form shows in full, and fail as unverified on any other.
 
 #### Scenario: Edit the password of a source with copies
 - **GIVEN** a login the user owns, shared with two users
@@ -74,8 +74,18 @@ A change of an item's `key`, `login`, `additionalFields`, `totp` or `passkeys` M
 
 #### Scenario: A value the device does not hold
 - **GIVEN** an item whose ciphertext from the server differs from the one the device holds for it, also after a sync
-- **WHEN** the user opens it for edit, or a passkey on it is written
+- **WHEN** the user opens it for edit, or deletes a passkey on it
 - **THEN** it is not opened or written, and the phone says the server sent a value it doesn't hold
+
+#### Scenario: A passkey written to a login the device does not hold
+- **GIVEN** a login whose ciphertext from the server differs from the one the device holds for it, also after reading the vault again
+- **WHEN** a site registers a passkey that would go on it, or signs in with a passkey on it whose counter must be written
+- **THEN** the new passkey goes on a new login, and the sign-in fails; nothing is written to that login
+
+#### Scenario: A failed sync during the check
+- **GIVEN** an item changed elsewhere since the last sync
+- **WHEN** the user opens it for edit and the sync fails
+- **THEN** the phone names the failure, such as being offline, and does not say the server sent a value it doesn't hold
 
 #### Scenario: A card member the form does not show
 - **GIVEN** a card shared with a partner organisation whose key holds a member the card form has no field for

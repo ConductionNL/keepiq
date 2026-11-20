@@ -87,6 +87,10 @@ class VaultRepositoryTest {
     /** Rows the manifest lists beside the login, use-only and blocked ones. */
     private var moreRows = listOf<() -> String>()
 
+    /** The manifest answers 500, or with [manifestUnreachable] no connection at all. */
+    private var manifestFails = false
+    private var manifestUnreachable = false
+
     /** What GET /secrets/s1 answers instead of [loginRow], when set. */
     private var freshS1: String? = null
     private var offline = false
@@ -146,6 +150,10 @@ class VaultRepositoryTest {
             }
         }
         if (offline) throw IOException("no network")
+        if (path == "/api/v1/offline/manifest") {
+            if (manifestUnreachable) throw IOException("no network")
+            if (manifestFails) return@MockEngine respond("""{"message":"boom"}""", HttpStatusCode.InternalServerError, headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         if (request.method == HttpMethod.Put && staleWrites > 0) {
             staleWrites--
             afterStale()
@@ -388,6 +396,19 @@ class VaultRepositoryTest {
         assertEquals(manifests + 1, requests.count { it.second == "/api/v1/offline/manifest" }, "synced once before refusing")
         assertTrue(shareSaves.isEmpty())
         assertTrue(requests.none { it.first == "PUT" })
+    }
+
+    @Test
+    fun aSyncThatFailsInsideTheCacheMatchIsNotCalledAConflict() = runTest {
+        repo.refresh(SyncTrigger.START)
+        // Written elsewhere since the last sync, which now fails.
+        freshS1 = loginRow.replace("\"useOnly\"", "\"totp\":\"${enc(seed)}\",\"useOnly\"")
+        manifestFails = true
+        val failed = assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind
+        assertTrue(failed != WriteProblemKind.CONFLICT, "$failed")
+        manifestFails = false
+        manifestUnreachable = true
+        assertEquals(WriteProblemKind.OFFLINE, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
     }
 
     @Test

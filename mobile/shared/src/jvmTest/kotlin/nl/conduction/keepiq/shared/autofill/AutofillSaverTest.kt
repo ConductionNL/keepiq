@@ -65,6 +65,12 @@ class AutofillSaverTest {
 
     /** w1 has a partner share: the share-save answers that it must be in the save. */
     private var partnerShare = false
+
+    /** What the share-save answers instead, when set. */
+    private var shareSaveAnswer: Pair<io.ktor.http.HttpStatusCode, String>? = null
+
+    /** GET /secrets/w1 answers 404: the login is gone since the index was built. */
+    private var gone = false
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
         requests += request.method.value to path
@@ -73,6 +79,8 @@ class AutofillSaverTest {
             bodies += if (path.endsWith("/share-save")) sent["patch"]!!.jsonObject else sent
         }
         val json = headersOf(HttpHeaders.ContentType, "application/json")
+        shareSaveAnswer?.takeIf { path.endsWith("/share-save") }?.let { (status, text) -> return@MockEngine respond(text, status, json) }
+        if (gone && path == "/api/v1/secrets/w1") return@MockEngine respond("""{"message":"Secret not found"}""", io.ktor.http.HttpStatusCode.NotFound, json)
         val body = when {
             path == "/api/v1/secret-types" -> """[{"id":"7","name":"login","fields":[]},{"id":"8","name":"totp","fields":[]}]"""
             path == "/api/v1/secrets/w1" && request.method == HttpMethod.Get ->
@@ -149,6 +157,18 @@ class AutofillSaverTest {
         // Told apart from a site that saves nothing, so the user hears the password was not kept.
         assertEquals(SaveResult.VIEW_ONLY, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
         assertTrue(requests.none { it.first == "PUT" }, "$requests")
+    }
+
+    @Test
+    fun anUpdateThatFailsForAnotherReasonIsNotSaidToBeShared() = runTest {
+        // A server error, and a Keepiq without share-save (Nextcloud's own 404 page).
+        shareSaveAnswer = io.ktor.http.HttpStatusCode.InternalServerError to """{"message":"boom"}"""
+        assertEquals(SaveResult.FAILED, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
+        shareSaveAnswer = io.ktor.http.HttpStatusCode.NotFound to "<html>Not found</html>"
+        assertEquals(SaveResult.FAILED, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
+        shareSaveAnswer = null
+        gone = true
+        assertEquals(SaveResult.FAILED, saver.save(AutofillTarget.Web("example.com"), index, "alice", "changed"))
     }
 
     @Test
