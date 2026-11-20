@@ -41,7 +41,8 @@ Nothing here starts before Ruben approved the design. Each decision in design.md
 
 ## 4. Verification and docs
 
-- [ ] 4.1 The diff check while building, `composer check:strict` and `npm run lint` once before push.
+- [x] 4.1 The diff check while building, `composer check:strict` and `npm run lint` once before push.
+  - Run on 20 Nov 2026 over development with this change merged: hydra `diff-check.sh` green on the branches that touched it since; `composer check:strict` passes lint, PHPCS, Psalm, PHPStan and PHPUnit (none failed), and PHPMD reports only the existing `ExcessiveClassComplexity` of `SecretRequestService`, outside this change's files; `npm run lint` 0 errors.
 - [ ] 4.2 Manual test on a live instance by the human contributor in Chrome and Firefox: enrol, unlock, revoke the app password in Devices & sessions, remove an admin origin.
 - [x] 4.3 Update `docs/` with the admin setting and the Devices & sessions revocation.
   - `docs/browser-extension/using.md`: signing in through Nextcloud (Login Flow v2) with the app password as fallback and the file-access note, fingerprint or face unlock (set up, unlock, turn off), the Devices & sessions revocation, and a section for administrators on the Browser extension settings (idle maximum, passkey switch, official and admin-added origins).
