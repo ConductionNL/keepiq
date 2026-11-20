@@ -40,6 +40,7 @@ const stubAll = {
 	GroupShareList: { template: '<div data-testid="stub-group-share-list" />' },
 	DelegationManager: { template: '<div data-testid="stub-delegation-manager" />' },
 	ShareRequestForm: { template: '<div data-testid="stub-share-request-form" />' },
+	AdminHandoverPanel: { template: '<div />' },
 	SecretRequestList: { template: '<div data-testid="stub-request-list" />' },
 	SecretRequestCreateDialog: {
 		template: '<div data-testid="stub-request-dialog" />',
@@ -47,6 +48,27 @@ const stubAll = {
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+/**
+ * Answer the write-context with `context` (or fail with it when it is an
+ * Error), and every other GET with an empty list.
+ *
+ * @param {object|Error} context The write-context.
+ * @return {void}
+ */
+function serveWriteContext(context) {
+	axios.get.mockImplementation(async (url) => {
+		if (!url.endsWith('/write-context')) {
+			return { data: [] }
+		}
+		if (context instanceof Error) {
+			throw context
+		}
+		return { data: context }
+	})
+}
+
+const has = (wrapper, testId) => wrapper.find(`[data-testid="${testId}"]`).exists()
 
 async function mountDetail({ secret, currentUser }) {
 	window.OC = { currentUser }
@@ -85,6 +107,7 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 	})
 
 	it('renders the recipient list + delegation manager for the secret owner', async () => {
+		serveWriteContext({ sourceSecretId: 's-1', effectiveGrade: 'owner' })
 		const wrapper = await mountDetail({
 			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
 			currentUser: 'alice',
@@ -111,6 +134,7 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 	})
 
 	it('renders the share-request form for a non-owner recipient', async () => {
+		serveWriteContext({ sourceSecretId: 's-1', effectiveGrade: 'read' })
 		const wrapper = await mountDetail({
 			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
 			currentUser: 'bob',
@@ -138,11 +162,7 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 
 	it('treats the recipient of a received copy as a recipient, not its owner (#1298)', async () => {
 		// The copy is owned by its recipient; the write-context names its source.
-		axios.get.mockImplementation(async (url) => ({
-			data: url.endsWith('/write-context')
-				? { sourceSecretId: 'src-1', effectiveGrade: 'read' }
-				: [],
-		}))
+		serveWriteContext({ sourceSecretId: 'src-1', effectiveGrade: 'read' })
 		const wrapper = await mountDetail({
 			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
 			currentUser: 'bob',
@@ -152,35 +172,66 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 			'secret-detail-share-list',
 			'secret-detail-group-share-list',
 			'secret-detail-delegation-manager',
-			'secret-detail-admin-handover',
 		]) {
-			expect(wrapper.find(`[data-testid="${testId}"]`).exists(), testId).toBe(
-				false,
-			)
+			expect(has(wrapper, testId), testId).toBe(false)
 		}
+		// The request and the admin handover go to the source.
 		const form = wrapper.find('[data-testid="secret-detail-share-request"]')
-		expect(form.exists()).toBe(true)
-		// The request goes to the source's owner.
 		expect(form.attributes('secretid')).toBe('src-1')
+		const handover = wrapper.find('[data-testid="secret-detail-admin-handover"]')
+		expect(handover.attributes('secretid')).toBe('src-1')
 	})
 
-	it('keeps the owner controls for a delegate on their copy', async () => {
-		axios.get.mockImplementation(async (url) => ({
-			data: url.endsWith('/write-context')
-				? { sourceSecretId: 'src-1', effectiveGrade: 'owner' }
-				: [],
-		}))
+	it('shows neither the owner controls nor the request form while the write-context is unknown', async () => {
+		// 409 while the copy's row waits for the quarantine scan.
+		serveWriteContext(
+			Object.assign(new Error('scan'), { response: { status: 409 } }),
+		)
+		const wrapper = await mountDetail({
+			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
+			currentUser: 'bob',
+		})
+
+		for (const testId of [
+			'secret-detail-share-list',
+			'secret-detail-group-share-list',
+			'secret-detail-delegation-manager',
+			'secret-detail-share-request',
+			'secret-detail-admin-handover',
+		]) {
+			expect(has(wrapper, testId), testId).toBe(false)
+		}
+	})
+
+	it('offers no share request when the write-context names no source', async () => {
+		serveWriteContext({ sourceSecretId: null, effectiveGrade: 'none' })
+		const wrapper = await mountDetail({
+			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
+			currentUser: 'bob',
+		})
+
+		expect(has(wrapper, 'secret-detail-share-request')).toBe(false)
+		expect(has(wrapper, 'secret-detail-share-list')).toBe(false)
+	})
+
+	it("lists the source's shares for a delegate on their copy, without delegating", async () => {
+		serveWriteContext({ sourceSecretId: 'src-1', effectiveGrade: 'owner' })
 		const wrapper = await mountDetail({
 			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
 			currentUser: 'bob',
 		})
 
 		expect(
-			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
-		).toBe(true)
-		expect(
-			wrapper.find('[data-testid="secret-detail-share-request"]').exists(),
-		).toBe(false)
+			wrapper
+				.find('[data-testid="secret-detail-share-list"]')
+				.attributes('secretid'),
+		).toBe('src-1')
+		const groups = wrapper.find('[data-testid="secret-detail-group-share-list"]')
+		// The group share form shares from the copy, which the delegate decrypts.
+		expect(groups.attributes('secretid')).toBe('copy-1')
+		expect(groups.attributes('sourcesecretid')).toBe('src-1')
+		expect(has(wrapper, 'secret-detail-delegation-manager')).toBe(false)
+		expect(has(wrapper, 'secret-detail-share-request')).toBe(false)
 	})
 
 	it('hides the entire sharing tab when no secret is loaded', async () => {
@@ -205,12 +256,7 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 			currentUser: 'alice',
 		})
 
-		expect(
-			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
-		).toBe(false)
-		expect(
-			wrapper.find('[data-testid="secret-detail-share-request"]').exists(),
-		).toBe(true)
+		expect(has(wrapper, 'secret-detail-requests')).toBe(false)
 	})
 
 	it('renders the Requests section + SecretRequestList for the owner', async () => {

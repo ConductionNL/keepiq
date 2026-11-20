@@ -1058,39 +1058,50 @@
 								{{ t('keepiq', 'Sharing') }}
 							</h3>
 							<div class="secret-detail__row-value">
+								<!-- A delegate's copy lists the source's shares. -->
 								<ShareList
-									v-if="managesSharing"
-									:secretId="secretId"
+									v-if="managesSharing === true"
+									:secretId="sharingSourceId"
 									data-testid="secret-detail-share-list" />
 
 								<GroupShareList
-									v-if="managesSharing"
+									v-if="managesSharing === true"
 									:secretId="secretId"
+									:sourceSecretId="sharingSourceId"
 									data-testid="secret-detail-group-share-list" />
 
+								<!-- Only the source's owner delegates. -->
 								<DelegationManager
-									v-if="managesSharing"
+									v-if="
+										managesSharing === true
+										&& sharingSourceId === secretId
+									"
 									:secretId="secretId"
 									:canReclaim="true"
 									data-testid="secret-detail-delegation-manager"
 									@reclaimed="onReclaimed" />
 
 								<ShareRequestForm
-									v-if="!managesSharing"
-									:secretId="shareRequestSecretId"
+									v-if="
+										managesSharing === false && sharingSourceId
+									"
+									:secretId="sharingSourceId"
 									data-testid="secret-detail-share-request" />
 
 								<!--
 							  Vault-admin takeover (user-sharing spec.md § Ownership
 							  Delegation). Only offered to a vault admin looking at
-							  somebody else's secret — the owner has ShareList and
+							  somebody else's secret, usually through their own copy, so
+							  it names the source — the owner has ShareList and
 							  DelegationManager above instead. The server re-checks group
 							  membership AND that the admin already holds a share, so this
 							  condition decides what to SHOW, never what is allowed.
 							-->
 								<AdminHandoverPanel
-									v-if="!isOwner"
-									:secretId="secretId"
+									v-if="
+										managesSharing === false && sharingSourceId
+									"
+									:secretId="sharingSourceId"
 									data-testid="secret-detail-admin-handover" />
 							</div>
 						</div>
@@ -2118,27 +2129,29 @@ export default {
 		 * True when the current user may share the secret: its source's owner
 		 * or a delegate. They see the recipient list + delegation manager;
 		 * anyone else gets the share-request form. A received copy is owned by
-		 * its recipient, so the write-context decides when it is known.
+		 * its recipient, so only the write-context decides: null while it is
+		 * unknown, and then neither shows.
 		 *
-		 * @return {boolean}
+		 * @return {boolean|null}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		managesSharing() {
-			if (typeof this.writeContext?.effectiveGrade === 'string') {
-				return this.writeContext.effectiveGrade === 'owner'
+			if (typeof this.writeContext?.effectiveGrade !== 'string') {
+				return null
 			}
-			return this.isOwner
+			return this.writeContext.effectiveGrade === 'owner'
 		},
 
 		/**
-		 * The secret a share request names: the source of a received copy, as
-		 * the request goes to its owner.
+		 * The source the write-context names: the secret itself unless it is
+		 * a received copy. Empty when it names none, as a share request or
+		 * handover on the copy itself always fails.
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
 		 */
-		shareRequestSecretId() {
-			return this.writeContext?.sourceSecretId || this.secretId
+		sharingSourceId() {
+			return this.writeContext?.sourceSecretId || ''
 		},
 
 		/**
