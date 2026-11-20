@@ -45,6 +45,7 @@
 
 <script>
 import { t } from '@nextcloud/l10n'
+import secretPrintProps from './secretPrintProps.js'
 
 /**
  * The print sheet of one login. Renders nothing on screen.
@@ -52,31 +53,7 @@ import { t } from '@nextcloud/l10n'
 export default {
 	name: 'SecretPrintSheet',
 
-	props: {
-		/** The login's name. */
-		name: {
-			type: String,
-			default: '',
-		},
-
-		/** The login's address. */
-		url: {
-			type: String,
-			default: '',
-		},
-
-		/** The login's username. */
-		login: {
-			type: String,
-			default: '',
-		},
-
-		/** The decrypted password. */
-		password: {
-			type: String,
-			required: true,
-		},
-	},
+	props: secretPrintProps,
 
 	methods: {
 		t,

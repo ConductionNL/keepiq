@@ -56,7 +56,7 @@
 			<NcButton
 				v-if="!verified"
 				variant="primary"
-				:disabled="masterPassword.length === 0 || busy"
+				:disabled="masterPasswordPending"
 				data-testid="secret-qr-show"
 				@click="onVerify">
 				{{ t('keepiq', 'Show QR code') }}
@@ -157,20 +157,9 @@ export default {
 		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		async onVerify() {
-			if (this.busy || this.masterPassword.length === 0) {
-				return
-			}
-			this.busy = true
-			this.error = null
-			try {
-				const ok = await this.masterPasswordVerified()
-				if (ok) {
-					this.matrix = qrMatrix(this.password)
-					this.verified = true
-				}
-			} finally {
-				this.masterPassword = ''
-				this.busy = false
+			if (await this.masterPasswordChecked()) {
+				this.matrix = qrMatrix(this.password)
+				this.verified = true
 			}
 		},
 

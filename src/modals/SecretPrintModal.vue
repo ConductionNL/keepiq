@@ -54,7 +54,7 @@
 			<NcButton
 				v-else
 				variant="primary"
-				:disabled="masterPassword.length === 0 || busy"
+				:disabled="masterPasswordPending"
 				data-testid="secret-print-submit"
 				@click="onVerify">
 				{{ t('keepiq', 'Print') }}
@@ -67,6 +67,7 @@
 import { t } from '@nextcloud/l10n'
 import { NcButton, NcDialog, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
 import SecretPrintSheet from '../components/SecretPrintSheet.vue'
+import secretPrintProps from '../components/secretPrintProps.js'
 import masterPasswordCheck from '../mixins/masterPasswordCheck.js'
 import { useSessionStore } from '../store/modules/session.js'
 
@@ -86,31 +87,7 @@ export default {
 
 	mixins: [masterPasswordCheck],
 
-	props: {
-		/** The login's name. */
-		name: {
-			type: String,
-			default: '',
-		},
-
-		/** The login's address. */
-		url: {
-			type: String,
-			default: '',
-		},
-
-		/** The login's username. */
-		login: {
-			type: String,
-			default: '',
-		},
-
-		/** The decrypted password. */
-		password: {
-			type: String,
-			required: true,
-		},
-	},
+	props: secretPrintProps,
 
 	emits: ['close'],
 
@@ -146,19 +123,7 @@ export default {
 		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		async onVerify() {
-			if (this.busy || this.masterPassword.length === 0) {
-				return
-			}
-			this.busy = true
-			this.error = null
-			let ok
-			try {
-				ok = await this.masterPasswordVerified()
-			} finally {
-				this.masterPassword = ''
-				this.busy = false
-			}
-			if (!ok) {
+			if (!(await this.masterPasswordChecked())) {
 				return
 			}
 			this.verified = true
