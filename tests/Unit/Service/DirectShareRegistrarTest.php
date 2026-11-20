@@ -47,6 +47,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
 use PHPUnit\Framework\Attributes\DataProvider;
+use OCA\Keepiq\Tests\Support\SecretVersionLockDouble;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
@@ -54,6 +55,7 @@ use PHPUnit\Framework\TestCase;
  * Tests for DirectShareRegistrar.
  */
 class DirectShareRegistrarTest extends TestCase {
+	use SecretVersionLockDouble;
 	use ShareRowJudgeFixture;
 
 	/**
@@ -341,14 +343,11 @@ class DirectShareRegistrarTest extends TestCase {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function testARowFromTheCurrentVersionIsMinted(): void {
-		$this->secretMapper->method('findById')->willReturn($this->ownerSecret('src-1', 'alice'));
-		$this->secretMapper->expects($this->once())
-			->method('lockVersion')
-			->with('src-1')
-			->willReturn(new DateTime('2026-10-01T10:00:00+00:00'));
+		$this->secretMapper->method('findById')->willReturn($this->ownerSecret(id: 'src-1', ownerId: 'alice'));
+		$this->answerVersionLocks(connection: $this->connection, versions: ['src-1' => '2026-10-01 10:00:00']);
 		$this->mapper->method('findBySourceSecretAndTargetUser')
 			->willThrowException(new DoesNotExistException('none'));
-		$this->copyFactory->expects($this->once())->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$this->copyFactory->expects($this->once())->method('create')->willReturn($this->recipientCopy(id: 'copy-1', ownerId: 'bob'));
 		$this->mapper->method('insert')->willReturnArgument(0);
 		$this->connection->expects($this->once())->method('commit');
 
@@ -363,7 +362,8 @@ class DirectShareRegistrarTest extends TestCase {
 			]]
 		);
 
-		$this->assertSame('created', $report[0]['status']);
+		$this->assertSame(expected: 'created', actual: $report[0]['status']);
+		$this->assertSame(expected: ['src-1'], actual: $this->lockedIds);
 	}//end testARowFromTheCurrentVersionIsMinted()
 
 	/**
@@ -375,15 +375,21 @@ class DirectShareRegistrarTest extends TestCase {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
 	 */
 	public function testARowFromAnOlderVersionIsStale(): void {
-		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'src-2' => $this->ownerSecret('src-2', 'alice')]);
-		$this->secretMapper->method('lockVersion')->willReturnCallback(
-			static fn (string $id): DateTime => new DateTime($id === 'src-1' ? '2026-10-01T10:00:05+00:00' : '2026-10-01T10:00:00+00:00')
+		$this->secrets(
+			secrets: [
+				'src-1' => $this->ownerSecret(id: 'src-1', ownerId: 'alice'),
+				'src-2' => $this->ownerSecret(id: 'src-2', ownerId: 'alice'),
+			]
+		);
+		$this->answerVersionLocks(
+			connection: $this->connection,
+			versions: ['src-1' => '2026-10-01 10:00:05', 'src-2' => '2026-10-01 10:00:00']
 		);
 		$this->mapper->method('findBySourceSecretAndTargetUser')
 			->willThrowException(new DoesNotExistException('none'));
-		$this->copyFactory->expects($this->once())->method('create')->willReturn($this->recipientCopy('copy-2', 'carol'));
+		$this->copyFactory->expects($this->once())->method('create')->willReturn($this->recipientCopy(id: 'copy-2', ownerId: 'carol'));
 		$this->mapper->method('insert')->willReturnArgument(0);
-		$this->connection->expects($this->exactly(2))->method('beginTransaction');
+		$this->connection->expects($this->exactly(count: 2))->method('beginTransaction');
 		$this->connection->expects($this->once())->method('rollBack');
 		$this->connection->expects($this->once())->method('commit');
 		$this->notificationService->expects($this->once())->method('notify');
@@ -397,15 +403,15 @@ class DirectShareRegistrarTest extends TestCase {
 		);
 
 		$this->assertSame(
-			[
+			expected: [
 				'sourceSecretId'  => 'src-1',
 				'targetUserId'    => 'bob',
 				'status'          => 'stale_source',
 				'sourceUpdatedAt' => '2026-10-01T10:00:05+00:00',
 			],
-			$report[0]
+			actual: $report[0]
 		);
-		$this->assertSame('created', $report[1]['status']);
+		$this->assertSame(expected: 'created', actual: $report[1]['status']);
 	}//end testARowFromAnOlderVersionIsStale()
 
 	/**
@@ -417,11 +423,11 @@ class DirectShareRegistrarTest extends TestCase {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function testARowWithoutAVersionIsNotCheckedAndAMalformedOneIsInvalid(): void {
-		$this->secretMapper->method('findById')->willReturn($this->ownerSecret('src-1', 'alice'));
-		$this->secretMapper->expects($this->never())->method('lockVersion');
+		$this->secretMapper->method('findById')->willReturn($this->ownerSecret(id: 'src-1', ownerId: 'alice'));
+		$this->connection->expects($this->never())->method('getQueryBuilder');
 		$this->mapper->method('findBySourceSecretAndTargetUser')
 			->willThrowException(new DoesNotExistException('none'));
-		$this->copyFactory->expects($this->once())->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$this->copyFactory->expects($this->once())->method('create')->willReturn($this->recipientCopy(id: 'copy-1', ownerId: 'bob'));
 		$this->mapper->method('insert')->willReturnArgument(0);
 
 		$report = $this->registrar()->registerDirectShares(
@@ -433,7 +439,7 @@ class DirectShareRegistrarTest extends TestCase {
 			]
 		);
 
-		$this->assertSame(['created', 'invalid', 'invalid'], array_column($report, 'status'));
+		$this->assertSame(expected: ['created', 'invalid', 'invalid'], actual: array_column($report, 'status'));
 	}//end testARowWithoutAVersionIsNotCheckedAndAMalformedOneIsInvalid()
 
 	/**
@@ -442,8 +448,8 @@ class DirectShareRegistrarTest extends TestCase {
 	 * @return void
 	 */
 	public function testASourceGoneUnderTheLockIsStaleWithoutAVersion(): void {
-		$this->secretMapper->method('findById')->willReturn($this->ownerSecret('src-1', 'alice'));
-		$this->secretMapper->method('lockVersion')->willReturn(null);
+		$this->secretMapper->method('findById')->willReturn($this->ownerSecret(id: 'src-1', ownerId: 'alice'));
+		$this->answerVersionLocks(connection: $this->connection, versions: []);
 		$this->mapper->method('findBySourceSecretAndTargetUser')
 			->willThrowException(new DoesNotExistException('none'));
 		$this->copyFactory->expects($this->never())->method('create');
@@ -453,8 +459,8 @@ class DirectShareRegistrarTest extends TestCase {
 			shares: [['sourceSecretId' => 'src-1', 'targetUserId' => 'bob', 'encryptedKey' => 'K', 'sourceUpdatedAt' => '2026-10-01T10:00:00+00:00']]
 		);
 
-		$this->assertSame('stale_source', $report[0]['status']);
-		$this->assertNull($report[0]['sourceUpdatedAt']);
+		$this->assertSame(expected: 'stale_source', actual: $report[0]['status']);
+		$this->assertNull(actual: $report[0]['sourceUpdatedAt']);
 	}//end testASourceGoneUnderTheLockIsStaleWithoutAVersion()
 
 	/**
@@ -561,30 +567,36 @@ class DirectShareRegistrarTest extends TestCase {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function testADelegatesRowIsComparedWithTheirCopyAfterTheSourcesLock(): void {
-		$this->secrets(['src-1' => $this->ownerSecret('src-1', 'alice'), 'dave-copy' => $this->recipientCopy('dave-copy', 'dave')]);
-		$this->copyRows['dave-copy'] = $this->copyRow('src-1', 'dave', 'dave-copy');
-		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
-			fn (string $sourceSecretId, string $targetUserId): ShareTarget => ($targetUserId === 'dave'
-				? $this->copyRow('src-1', 'dave', 'dave-copy')
-				: throw new DoesNotExistException('none'))
+		$this->secrets(
+			secrets: [
+				'src-1'     => $this->ownerSecret(id: 'src-1', ownerId: 'alice'),
+				'dave-copy' => $this->recipientCopy(id: 'dave-copy', ownerId: 'dave'),
+			]
 		);
-		$locked = [];
-		$this->secretMapper->method('lockVersion')->willReturnCallback(
-			static function (string $id) use (&$locked): DateTime {
-				$locked[] = $id;
-				return new DateTime($id === 'src-1' ? '2026-10-01T10:00:09+00:00' : '2026-10-01T10:00:00+00:00');
+		$this->copyRows['dave-copy'] = $this->copyRow(sourceId: 'src-1', userId: 'dave', copyId: 'dave-copy');
+		$this->mapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			function (string $sourceSecretId, string $targetUserId): ShareTarget {
+				if ($targetUserId !== 'dave') {
+					throw new DoesNotExistException('none');
+				}
+
+				return $this->copyRow(sourceId: $sourceSecretId, userId: 'dave', copyId: 'dave-copy');
 			}
 		);
-		$this->copyFactory->method('create')->willReturn($this->recipientCopy('copy-1', 'bob'));
+		$this->answerVersionLocks(
+			connection: $this->connection,
+			versions: ['src-1' => '2026-10-01 10:00:09', 'dave-copy' => '2026-10-01 10:00:00']
+		);
+		$this->copyFactory->method('create')->willReturn($this->recipientCopy(id: 'copy-1', ownerId: 'bob'));
 		$this->mapper->method('insert')->willReturnArgument(0);
 
-		$report = $this->registrar(authorization: $this->realAuthorization(['src-1/dave']))->registerDirectShares(
+		$report = $this->registrar(authorization: $this->realAuthorization(delegates: ['src-1/dave']))->registerDirectShares(
 			userId: 'dave',
 			shares: [['sourceSecretId' => 'dave-copy', 'targetUserId' => 'bob', 'encryptedKey' => 'blob', 'sourceUpdatedAt' => '2026-10-01T10:00:00+00:00']]
 		);
 
-		$this->assertSame(['src-1', 'dave-copy'], $locked);
-		$this->assertSame('created', $report[0]['status']);
+		$this->assertSame(expected: ['src-1', 'dave-copy'], actual: $this->lockedIds);
+		$this->assertSame(expected: 'created', actual: $report[0]['status']);
 	}//end testADelegatesRowIsComparedWithTheirCopyAfterTheSourcesLock()
 
 	/**

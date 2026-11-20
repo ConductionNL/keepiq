@@ -140,7 +140,9 @@ describe('the copy rows of the share paths', () => {
 			{ userId: 'carol', certificate: 'C' },
 		]
 
-		await expect(encryptAgain(store, 's1', 'g1', members, [row('carol', OLD)])).resolves.toEqual(['rows'])
+		await expect(
+			encryptAgain(store, { secretId: 's1', groupShareId: 'g1', members }, [row('carol', OLD)]),
+		).resolves.toEqual(['rows'])
 		expect(store.encryptForMembers).toHaveBeenCalledWith('s1', 'g1', [{ userId: 'carol', certificate: 'C' }])
 	})
 })

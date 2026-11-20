@@ -43,12 +43,15 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use OCA\Keepiq\Tests\Support\SecretVersionLockDouble;
 use Psr\Log\LoggerInterface;
 
 /**
  * Tests the fan-out of a team folder to its members.
  */
 class TeamFolderFanOutTest extends TestCase {
+	use SecretVersionLockDouble;
+
 
 	/**
 	 * @var ShareTargetMapper&MockObject
@@ -167,7 +170,6 @@ class TeamFolderFanOutTest extends TestCase {
 			db: $this->db,
 			logger: $this->createMock(LoggerInterface::class),
 			restrictions: $restrictions,
-			secrets: $this->secrets,
 		);
 	}//end setUp()
 
@@ -295,12 +297,9 @@ class TeamFolderFanOutTest extends TestCase {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
 	 */
 	public function testARowFromAnOlderVersionIsSkippedAsStale(): void {
-		$locked = [];
-		$this->secrets->method('lockVersion')->willReturnCallback(
-			function (string $id) use (&$locked): ?\DateTime {
-				$locked[] = $id;
-				return new \DateTime($id === 'sec-2' ? '2026-10-01T10:00:05+00:00' : '2026-10-01T10:00:00+00:00');
-			}
+		$this->answerVersionLocks(
+			connection: $this->db,
+			versions: ['sec-1' => '2026-10-01 10:00:00', 'sec-2' => '2026-10-01 10:00:05']
 		);
 		$this->db->expects($this->once())->method('commit');
 
@@ -318,18 +317,18 @@ class TeamFolderFanOutTest extends TestCase {
 			userId: 'alice'
 		);
 
-		$this->assertSame(['sec-1', 'sec-2'], $locked);
+		$this->assertSame(expected: ['sec-1', 'sec-2'], actual: $this->lockedIds);
 		$this->assertSame(
-			[['sec-1', 'bob'], ['sec-2', 'carol']],
-			array_map(static fn (array $row): array => [$row['sourceSecretId'], $row['targetUserId']], $result['rows'])
+			expected: [['sec-1', 'bob'], ['sec-2', 'carol']],
+			actual: array_map(static fn (array $row): array => [$row['sourceSecretId'], $row['targetUserId']], $result['rows'])
 		);
 		$this->assertSame(
-			[
+			expected: [
 				['sourceSecretId' => 'sec-2', 'targetUserId' => 'bob', 'reason' => 'stale_source', 'sourceUpdatedAt' => '2026-10-01T10:00:05+00:00'],
 				['sourceSecretId' => 'sec-1', 'targetUserId' => 'carol', 'reason' => 'invalid'],
 				['sourceSecretId' => 'sec-9', 'targetUserId' => 'bob', 'reason' => 'not_in_folder'],
 			],
-			$result['skipped']
+			actual: $result['skipped']
 		);
 	}//end testARowFromAnOlderVersionIsSkippedAsStale()
 
@@ -339,7 +338,7 @@ class TeamFolderFanOutTest extends TestCase {
 	 * @return void
 	 */
 	public function testASourceGoneUnderTheLockIsStale(): void {
-		$this->secrets->method('lockVersion')->willReturn(null);
+		$this->answerVersionLocks(connection: $this->db, versions: []);
 
 		$result = $this->service->registerFanOutShares(
 			teamFolder: $this->teamFolder(),
@@ -348,10 +347,10 @@ class TeamFolderFanOutTest extends TestCase {
 			userId: 'alice'
 		);
 
-		$this->assertSame(0, $result['created']);
+		$this->assertSame(expected: 0, actual: $result['created']);
 		$this->assertSame(
-			[['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'reason' => 'stale_source', 'sourceUpdatedAt' => null]],
-			$result['skipped']
+			expected: [['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'reason' => 'stale_source', 'sourceUpdatedAt' => null]],
+			actual: $result['skipped']
 		);
 	}//end testASourceGoneUnderTheLockIsStale()
 }//end class

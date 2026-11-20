@@ -36,6 +36,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretVersionLock;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
@@ -64,6 +65,13 @@ class DirectShareRegistrar {
 	 * @var ShareAuditTrail
 	 */
 	private ShareAuditTrail $auditTrail;
+
+	/**
+	 * The source version check, made on first use.
+	 *
+	 * @var ShareSourceVersion|null
+	 */
+	private ?ShareSourceVersion $sourceVersions = null;
 
 	/**
 	 * Constructor for DirectShareRegistrar.
@@ -222,7 +230,7 @@ class DirectShareRegistrar {
 			return $share->outcome(status: 'exists');
 		}
 
-		if ($share->sourceVersion() === '') {
+		if ($this->sourceVersions()?->sent(row: $share->row) === '') {
 			return $share->outcome(status: 'invalid');
 		}
 
@@ -318,6 +326,21 @@ class DirectShareRegistrar {
 	}//end mintAndLink()
 
 	/**
+	 * The source version check over this registrar's connection, made on first use; none without one.
+	 *
+	 * @return ShareSourceVersion|null
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 */
+	private function sourceVersions(): ?ShareSourceVersion {
+		if ($this->connection === null) {
+			return null;
+		}
+
+		return $this->sourceVersions ??= new ShareSourceVersion(locks: new SecretVersionLock(db: $this->connection));
+	}//end sourceVersions()
+
+	/**
 	 * Refuse a row encrypted from an older version of the row it was encrypted from, under the source's row
 	 * lock, the lock a share-save takes first. That is the source itself, or the caller's own copy of it when a
 	 * delegate shares from their copy: a share-save writes that copy in the same transaction, so its version
@@ -333,18 +356,14 @@ class DirectShareRegistrar {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	private function assertSourceCurrent(DirectShareMint $mint): void {
-		$sent = $mint->share->sourceVersion();
-		if ($sent === null || $sent === '') {
+		$versions = $this->sourceVersions();
+		$sent     = $versions?->sent(row: $mint->share->row);
+		if ($versions === null || $sent === null || $sent === '') {
 			return;
 		}
 
-		$current = $this->secretMapper->lockVersion(id: $mint->source->getId());
-		$named   = $mint->share->sourceSecretId;
-		if ($named !== $mint->source->getId()) {
-			$current = $this->secretMapper->lockVersion(id: $named);
-		}
-
-		if (ShareSourceVersion::isCurrent(sent: $sent, current: $current) === false) {
+		$current = $versions->lockedVersion(sourceId: $mint->source->getId(), readId: $mint->share->sourceSecretId);
+		if ($versions->isCurrent(sent: $sent, current: $current) === false) {
 			throw new StaleShareSourceException(current: $current);
 		}
 	}//end assertSourceCurrent()

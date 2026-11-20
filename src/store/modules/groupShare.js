@@ -80,7 +80,12 @@ async function registerMemberCopies(store, share) {
 		share.members,
 	)
 	const { items } = await useShareStore().registerBatch(rows, {
-		rebuild: (stale) => encryptAgain(store, share.secretId, share.groupShare.id, share.members, stale),
+		rebuild: (stale) =>
+			encryptAgain(
+				store,
+				{ secretId: share.secretId, groupShareId: share.groupShare.id, members: share.members },
+				stale,
+			),
 	})
 	return registeredCounts(items, share.members.length)
 }
@@ -90,14 +95,12 @@ async function registerMemberCopies(store, share) {
  * source holds now (#1255).
  *
  * @param {object} store The group share store.
- * @param {string} secretId The source secret.
- * @param {string|null} groupShareId The group share the copies hang on.
- * @param {Array<{userId: string, certificate: string}>} members The members a copy was made for.
+ * @param {{secretId: string, groupShareId: string|null, members: Array<{userId: string, certificate: string}>}} share The source, the group share the copies hang on and the members a copy was made for.
  * @param {Array<object>} stale The rows the server answered `stale_source`.
  * @return {Promise<Array<object>>} The rows encrypted again.
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
  */
-export function encryptAgain(store, secretId, groupShareId, members, stale) {
+export function encryptAgain(store, { secretId, groupShareId, members }, stale) {
 	const again = new Set(stale.map((row) => row.targetUserId))
 	return store.encryptForMembers(
 		secretId,

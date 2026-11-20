@@ -29,9 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateTime;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
-use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretVersionLock;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolder;
@@ -48,6 +47,13 @@ use Throwable;
  *   share row and its restriction; each collaborator is one of those.
  */
 class TeamFolderShareService {
+
+	/**
+	 * The source version check, made on first use.
+	 *
+	 * @var ShareSourceVersion|null
+	 */
+	private ?ShareSourceVersion $sourceVersions = null;
 
 	/**
 	 * Constructor for TeamFolderShareService.
@@ -74,7 +80,6 @@ class TeamFolderShareService {
 		private IDBConnection $db,
 		private LoggerInterface $logger,
 		private ?ShareRestrictionResolver $restrictions = null,
-		private ?SecretMapper $secrets = null,
 	) {
 	}//end __construct()
 
@@ -119,7 +124,8 @@ class TeamFolderShareService {
 		$run = new FanOutRun(teamFolder: $teamFolder, subtreeSecretIds: $subtreeSecretIds, userId: $userId);
 		$this->db->beginTransaction();
 		try {
-			$versions = $this->lockSourceVersions(shares: $shares, run: $run);
+			// The source of every row that names its version is locked first, the lock a share-save takes.
+			$versions = $this->sourceVersions()->lockNamed(rows: $shares, allowedIds: $run->subtreeSecretIds);
 			$outcome = $this->createFanOutShares(shares: $shares, run: $run, versions: $versions);
 			$this->db->commit();
 		} catch (Throwable $exception) {
@@ -149,9 +155,9 @@ class TeamFolderShareService {
 		$outcome = ['rows' => [], 'skipped' => [], 'recipients' => []];
 		foreach ($shares as $row) {
 			$share = new FanOutShareRow(row: $row);
-			$stale = $this->staleSkip(share: $share, row: $row, versions: $versions);
-			if ($stale !== null) {
-				$outcome['skipped'][] = $stale;
+			$refusal = $this->sourceVersions()->refusal(row: $row, versions: $versions);
+			if ($refusal !== null) {
+				$outcome['skipped'][] = $share->skipped(reason: $refusal['reason']) + $refusal['extra'];
 				continue;
 			}
 
@@ -169,68 +175,15 @@ class TeamFolderShareService {
 	}//end createFanOutShares()
 
 	/**
-	 * Take the row lock of every folder secret a row names a version of, in id order so two fan-outs never
-	 * wait on each other, and read the version each holds: the lock a share-save takes (keepiq#1255).
+	 * The source version check over this connection.
 	 *
-	 * @param array<int,array<string,mixed>> $shares The submitted rows
-	 * @param FanOutRun                      $run    The fan-out
-	 *
-	 * @return array<string,DateTime|null> The version by source id, null for a source that is gone
+	 * @return ShareSourceVersion
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
-	private function lockSourceVersions(array $shares, FanOutRun $run): array {
-		if ($this->secrets === null) {
-			return [];
-		}
-
-		$ids = [];
-		foreach ($shares as $row) {
-			$sourceId = (string)($row['sourceSecretId'] ?? '');
-			if (ShareSourceVersion::sent(row: $row) !== null && isset($run->subtreeSecretIds[$sourceId]) === true) {
-				$ids[$sourceId] = true;
-			}
-		}
-
-		$ids = array_keys($ids);
-		sort($ids);
-		$versions = [];
-		foreach ($ids as $sourceId) {
-			$versions[$sourceId] = $this->secrets->lockVersion(id: (string)$sourceId);
-		}
-
-		return $versions;
-	}//end lockSourceVersions()
-
-	/**
-	 * The skip of a row encrypted from a version its source no longer holds, `stale_source` with the current
-	 * version, or `invalid` for a version that is not a moment; null when the row may go on.
-	 *
-	 * @param FanOutShareRow              $share    The row
-	 * @param array<string,mixed>         $row      The submitted row
-	 * @param array<string,DateTime|null> $versions The locked versions
-	 *
-	 * @return array<string,string|null>|null
-	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
-	 */
-	private function staleSkip(FanOutShareRow $share, array $row, array $versions): ?array {
-		$sent = ShareSourceVersion::sent(row: $row);
-		if ($sent === '') {
-			return $share->skipped(reason: 'invalid');
-		}
-
-		if ($sent === null || array_key_exists($share->sourceSecretId, $versions) === false) {
-			return null;
-		}
-
-		$current = $versions[$share->sourceSecretId];
-		if (ShareSourceVersion::isCurrent(sent: $sent, current: $current) === true) {
-			return null;
-		}
-
-		return $share->skipped(reason: 'stale_source') + ['sourceUpdatedAt' => $current?->format(DATE_ATOM)];
-	}//end staleSkip()
+	private function sourceVersions(): ShareSourceVersion {
+		return $this->sourceVersions ??= new ShareSourceVersion(locks: new SecretVersionLock(db: $this->db));
+	}//end sourceVersions()
 
 	/**
 	 * Tell each new recipient once: one notification per recipient per

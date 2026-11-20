@@ -97,18 +97,6 @@ final class DirectShareRow {
 	}//end created()
 
 	/**
-	 * The source version the row's ciphertext was encrypted from, as the browser sent it; null when the row
-	 * names none (an older client), and '' when it names one that is not a moment.
-	 *
-	 * @return string|null
-	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
-	 */
-	public function sourceVersion(): ?string {
-		return ShareSourceVersion::sent(row: $this->row);
-	}//end sourceVersion()
-
-	/**
 	 * The outcome of a row encrypted from an older version: `stale_source` with the current version, so the
 	 * browser decrypts the source again and sends the row once more.
 	 *
