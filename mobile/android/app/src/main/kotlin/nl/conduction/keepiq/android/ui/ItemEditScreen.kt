@@ -249,21 +249,27 @@ fun ItemEditScreen(
 private fun ExtraFields(draft: ItemDraft, error: (String) -> DraftProblem?, onChange: (ItemDraft) -> Unit) {
     Text(stringResource(R.string.detail_extra_fields), style = MaterialTheme.typography.titleSmall)
     draft.fields.forEachIndexed { i, (name, value) ->
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                TextInput(stringResource(R.string.edit_field_name), name, error("field-$i")) { n ->
-                    onChange(draft.copy(fields = draft.fields.toMutableList().also { it[i] = n to value }))
+        // Keyed by the row count too, so a removed row's Show state never passes to the row taking its place.
+        key(draft.fields.size, i) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    TextInput(stringResource(R.string.edit_field_name), name, error("field-$i")) { n ->
+                        onChange(draft.copy(fields = draft.fields.toMutableList().also { it[i] = n to value }))
+                    }
+                    val update: (String) -> Unit = { v -> onChange(draft.copy(fields = draft.fields.toMutableList().also { it[i] = name to v })) }
+                    if (ItemCodec.masksField(name, draft.schemaOf(i))) {
+                        SecretInput(stringResource(R.string.edit_field_value), value, null, onGenerate = null, onChange = update)
+                    } else {
+                        TextInput(stringResource(R.string.edit_field_value), value, null, onChange = update)
+                    }
                 }
-                TextInput(stringResource(R.string.edit_field_value), value, null) { v ->
-                    onChange(draft.copy(fields = draft.fields.toMutableList().also { it[i] = name to v }))
+                IconButton(onClick = { onChange(draft.withoutField(i)) }) {
+                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.cd_remove_field, name))
                 }
-            }
-            IconButton(onClick = { onChange(draft.copy(fields = draft.fields.filterIndexed { j, _ -> j != i })) }) {
-                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.cd_remove_field, name))
             }
         }
     }
-    TextButton(onClick = { onChange(draft.copy(fields = draft.fields + ("" to ""))) }) { Text(stringResource(R.string.edit_add_field)) }
+    TextButton(onClick = { onChange(draft.withField()) }) { Text(stringResource(R.string.edit_add_field)) }
 }
 
 @Composable

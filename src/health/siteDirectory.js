@@ -27,7 +27,9 @@ export function hostOf(raw) {
 		return null
 	}
 	// `localhost:8080` is a host and port, not a scheme.
-	const withScheme = /^[a-z][a-z\d+.-]*:(?!\d)/i.test(trimmed) ? trimmed : `https://${trimmed}`
+	const withScheme = /^[a-z][a-z\d+.-]*:(?!\d)/i.test(trimmed)
+		? trimmed
+		: `https://${trimmed}`
 	return webHostname(withScheme)
 }
 
@@ -77,7 +79,9 @@ export function directoryEntry(list, raw) {
 	if (host === null) {
 		return null
 	}
-	const domain = [host, siteDomain(raw)].find((candidate) => candidate && Object.hasOwn(list, candidate))
+	const domain = [host, siteDomain(raw)].find(
+		(candidate) => candidate && Object.hasOwn(list, candidate),
+	)
 	return domain ? { domain, documentation: httpsOrNull(list[domain]) } : null
 }
 
@@ -104,15 +108,28 @@ function httpsOrNull(value) {
  * @spec openspec/changes/archive/2026-11-17-health-site-security-checks/tasks.md#task-3.2
  */
 export function vaultSiteFacts(secrets, typeNameById) {
-	const seedDomains = new Set()
-	const passkeyDomains = new Set()
-	const setByType = new Map([['totp', seedDomains], ['passkey', passkeyDomains]])
+	return {
+		seedDomains: domainsOfType(secrets, typeNameById, 'totp'),
+		passkeyDomains: domainsOfType(secrets, typeNameById, 'passkey'),
+	}
+}
+
+/**
+ * The registrable domains of the secrets of one type.
+ *
+ * @param {Array<object>} secrets The listed secrets, plaintext fields only.
+ * @param {Map<string|number, string>} typeNameById Secret type id -> type name.
+ * @param {string} typeName The type to collect, `totp` or `passkey`.
+ * @return {Set<string>}
+ */
+function domainsOfType(secrets, typeNameById, typeName) {
+	const domains = new Set()
 	for (const secret of secrets) {
-		const set = setByType.get(typeNameById.get(secret?.typeId))
-		const domain = set ? siteDomain(secret.url) : null
+		const isOfType = typeNameById.get(secret?.typeId) === typeName
+		const domain = isOfType ? siteDomain(secret.url) : null
 		if (domain !== null) {
-			set.add(domain)
+			domains.add(domain)
 		}
 	}
-	return { seedDomains, passkeyDomains }
+	return domains
 }

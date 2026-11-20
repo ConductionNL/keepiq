@@ -114,7 +114,11 @@ export default {
 		 */
 		title() {
 			if (this.finished) {
-				return this.t('keepiq', 'Shared {ok} of {total} secrets', this.reportCounts)
+				return this.t(
+					'keepiq',
+					'Shared {ok} of {total} secrets',
+					this.reportCounts,
+				)
 			}
 			return this.t('keepiq', 'Share {count} secrets', {
 				count: this.bulk.selectionCount,

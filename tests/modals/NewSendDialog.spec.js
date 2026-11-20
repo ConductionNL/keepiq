@@ -20,7 +20,8 @@ const stubs = {
 	NcDialog: {
 		props: ['open', 'name'],
 		emits: ['update:open'],
-		template: '<div v-if="open" data-testid="dialog"><slot /><slot name="actions" /></div>',
+		template:
+			'<div v-if="open" data-testid="dialog"><slot /><slot name="actions" /></div>',
 	},
 	NcNoteCard: { template: '<div v-bind="$attrs" class="note"><slot /></div>' },
 	NcSelect: {
@@ -31,7 +32,8 @@ const stubs = {
 	NcButton: {
 		props: ['disabled'],
 		emits: ['click'],
-		template: '<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 }
 
@@ -45,7 +47,9 @@ describe('NewSendDialog', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		store = useEphemeralSendStore()
-		store.createSend = vi.fn().mockResolvedValue('https://cloud.example/s/abc#key')
+		store.createSend = vi
+			.fn()
+			.mockResolvedValue('https://cloud.example/s/abc#key')
 	})
 
 	it('keeps Create disabled until there is content', async () => {
@@ -83,7 +87,9 @@ describe('NewSendDialog', () => {
 
 		await wrapper.vm.onCreate()
 
-		expect(store.createSend).toHaveBeenCalledWith(expect.objectContaining({ ttlSeconds: 0 }))
+		expect(store.createSend).toHaveBeenCalledWith(
+			expect.objectContaining({ ttlSeconds: 0 }),
+		)
 	})
 
 	it('shows the link once, hides the form and forgets the plaintext', async () => {
@@ -94,7 +100,9 @@ describe('NewSendDialog', () => {
 		await wrapper.vm.onCreate()
 		await flush()
 
-		expect(wrapper.find('[data-testid="send-link"]').element.value).toBe('https://cloud.example/s/abc#key')
+		expect(wrapper.find('[data-testid="send-link"]').element.value).toBe(
+			'https://cloud.example/s/abc#key',
+		)
 		expect(wrapper.find('[data-testid="send-link-once"]').exists()).toBe(true)
 		expect(wrapper.find('[data-testid="send-payload"]').exists()).toBe(false)
 		expect(wrapper.find('[data-testid="send-create"]').exists()).toBe(false)
@@ -124,7 +132,10 @@ describe('NewSendDialog', () => {
 
 	it('copies the link to the clipboard and tolerates a refused clipboard', async () => {
 		const writeText = vi.fn().mockResolvedValue()
-		Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+		Object.defineProperty(navigator, 'clipboard', {
+			value: { writeText },
+			configurable: true,
+		})
 		const wrapper = mountDialog()
 		await wrapper.vm.onCreate()
 		await flush()

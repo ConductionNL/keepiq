@@ -90,18 +90,24 @@
 				:removeOnly="!totpEditable"
 				:disabled="saving || loading || viewOnly" />
 
-			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
+			<NcTextField
+				v-if="showUrl"
+				v-model="url"
+				:label="t('keepiq', 'URL (optional)')" />
 
+			<!-- On a type without a URL, only addresses already stored show. -->
 			<AdditionalUrlsField
+				v-if="showUrl || additionalUrls.length > 0"
 				v-model="additionalUrls"
 				:disabled="saving || loading || viewOnly || isCopy" />
 
-			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+			<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
 				:fields="typedFields"
 				:values="typedValues"
+				:schemas="storedSchemas"
 				:missing="typedMissing"
 				:disabled="saving || loading"
 				@update:values="onTypedValues" />
@@ -109,6 +115,7 @@
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving || loading"
+				:reservedNames="reservedMemberNames"
 				@update:members="additionalFields = $event" />
 
 			<SecretTagsField
@@ -117,13 +124,10 @@
 				@update:modelValue="tags = $event" />
 
 			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
-			<NcCheckboxRadioSwitch
+			<RepromptSwitch
 				:modelValue="reprompt"
 				:disabled="saving || loading"
-				data-testid="secret-reprompt"
-				@update:modelValue="reprompt = $event">
-				{{ t('keepiq', 'Ask for my master password before showing or filling this item') }}
-			</NcCheckboxRadioSwitch>
+				@update:modelValue="reprompt = $event" />
 
 			<PolicyBlockedNote :verdict="policyVerdict" />
 		</div>
@@ -151,7 +155,6 @@
 <script>
 import {
 	NcButton,
-	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
@@ -162,6 +165,7 @@ import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
+import RepromptSwitch from '../components/RepromptSwitch.vue'
 import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -183,9 +187,15 @@ import {
 	authenticatorKeyError,
 	normaliseAuthenticatorKey,
 } from '../totp/authenticatorKey.js'
-import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
+import {
+	membersToObject,
+	membersValid,
+	objectToMembers,
+} from '../utils/additionalFields.js'
 import { sameUrls } from '../utils/additionalUrls.js'
+import { leavesOut } from '../utils/builtinTypeFields.js'
 import { isViewOnlyCopy } from '../utils/copyGrade.js'
+import { cleanSchema, schemasOf, valuesFit } from '../utils/fieldSchema.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'
 import { mergeTypedValues, splitTypedValues } from '../utils/typedFields.js'
@@ -200,11 +210,11 @@ export default {
 	name: 'SecretEditDialog',
 
 	components: {
-		NcCheckboxRadioSwitch,
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
 		AuthenticatorKeyField,
 		PolicyBlockedNote,
+		RepromptSwitch,
 		SecretPayloadFields,
 		SecretTagsField,
 		TypedFieldsForm,
@@ -260,6 +270,10 @@ export default {
 			/** A new authenticator key being entered; the saved one is never loaded here. */
 			totpInput: '',
 			additionalFields: [],
+			/** The type fields' values as loaded, so only a changed one must fit. */
+			loadedTypedValues: {},
+			/** The custom fields as loaded, so only a changed one must fit. */
+			loadedMembers: [],
 			tags: [],
 			reprompt: false,
 			policy: null,
@@ -267,6 +281,17 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The schemas stored on the secret being edited, so a type's own
+		 * field they hide is masked in the form.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		storedSchemas() {
+			return schemasOf(this.original?.additionalFields)
+		},
+
 		/**
 		 * This secret's type as translated display text. Replaces the type
 		 * SELECT this dialog used to render — see the template comment on why
@@ -277,6 +302,34 @@ export default {
 		 */
 		typeLabel() {
 			return secretTypeLabel(useSecretTypeStore().typesById[this.typeId])
+		},
+
+		/**
+		 * Whether the login field is shown: when the type uses it, or when the
+		 * secret already holds a login, so it never becomes unreachable.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showLogin() {
+			return (
+				!leavesOut(this.selectedTypeName, 'login')
+				|| Boolean(this.original?.login)
+			)
+		},
+
+		/**
+		 * Whether the URL field is shown: when the type uses it, or when the
+		 * secret already holds a URL.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showUrl() {
+			return (
+				!leavesOut(this.selectedTypeName, 'url')
+				|| Boolean(this.original?.url)
+			)
 		},
 
 		/**
@@ -377,6 +430,7 @@ export default {
 
 		/**
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
 		canSubmit() {
 			return (
@@ -386,6 +440,49 @@ export default {
 				&& this.name.trim() !== ''
 				&& this.policyVerdict.compliant
 				&& this.totpError === ''
+				&& valuesFit(
+					this.changedMembers,
+					this.changedTypedFields,
+					this.typedValues,
+				)
+				&& membersValid(
+					this.additionalFields,
+					this.reservedMemberNames,
+					this.changedMembers,
+				)
+			)
+		},
+
+		/**
+		 * The custom fields added or changed in this dialog, by name, value or
+		 * schema. Only those must fit, as for the type's own fields: a value
+		 * written elsewhere that does not fit its schema shows its warning but
+		 * does not block an unrelated change.
+		 *
+		 * @return {Array<object>} The members.
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 */
+		changedMembers() {
+			const key = (m) =>
+				JSON.stringify([m.name, m.value, cleanSchema(m.schema)])
+			const loaded = new Set(this.loadedMembers.map(key))
+			return this.additionalFields.filter((m) => !loaded.has(key(m)))
+		},
+
+		/**
+		 * The type's fields whose value changed in this dialog. Only those must
+		 * fit their schema to save: a value stored before the field had one,
+		 * such as a Database Port of "default", shows its warning but does not
+		 * block a rename or a password change.
+		 *
+		 * @return {Array<object>} The fields.
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 */
+		changedTypedFields() {
+			return this.typedFields.filter(
+				(f) =>
+					(this.typedValues[f.key] ?? '')
+					!== (this.loadedTypedValues[f.key] ?? ''),
 			)
 		},
 	},
@@ -429,7 +526,9 @@ export default {
 				this.typeId = secret.typeId || null
 				this.value = secret.key || ''
 				this.url = secret.url || ''
-				this.additionalUrls = Array.isArray(secret.additionalUrls) ? [...secret.additionalUrls] : []
+				this.additionalUrls = Array.isArray(secret.additionalUrls)
+					? [...secret.additionalUrls]
+					: []
 				this.login = secret.login || ''
 				this.tags = Array.isArray(secret.tags) ? [...secret.tags] : []
 				this.reprompt = secret.reprompt === true
@@ -445,10 +544,12 @@ export default {
 					this.typedFields,
 				)
 				this.typedValues = split.values
+				this.loadedTypedValues = { ...split.values }
 				// An SSH key's public key and fingerprint have their own fields.
 				this.additionalFields = objectToMembers(
 					this.takeSshMembers(split.rest),
 				)
+				this.loadedMembers = this.additionalFields.map((m) => ({ ...m }))
 
 				// Seed the per-type composite fields from the decrypted
 				// payload (card-identity-items §3.1); a legacy plain value
@@ -508,7 +609,9 @@ export default {
 				useSecretStore().writeBackSettled(this.secretId),
 			])
 			this.viewOnly = isViewOnlyCopy(context, this.secretId)
-			this.isCopy = Boolean(context?.sourceSecretId) && context.sourceSecretId !== this.secretId
+			this.isCopy =
+				Boolean(context?.sourceSecretId)
+				&& context.sourceSecretId !== this.secretId
 			if (context?.sourceSecretId === this.secretId) {
 				return null
 			}
@@ -578,7 +681,10 @@ export default {
 				if ((this.url || '') !== (o.url || '')) {
 					diff.url = this.url || null
 				}
-				if (!this.isCopy && !sameUrls(this.additionalUrls, o.additionalUrls)) {
+				if (
+					!this.isCopy
+					&& !sameUrls(this.additionalUrls, o.additionalUrls)
+				) {
 					diff.additionalUrls = [...this.additionalUrls]
 				}
 				if ((this.effectiveValue || '') !== (o.key || '')) {
@@ -603,6 +709,7 @@ export default {
 						membersToObject(this.additionalFields),
 						this.typedFields,
 						this.typedValues,
+						o.additionalFields,
 					),
 
 					...ssh,
@@ -632,6 +739,7 @@ export default {
 						priorFree,
 						this.typedFields,
 						priorSplit.values,
+						o.additionalFields,
 					),
 
 					...priorSsh,

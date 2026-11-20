@@ -29,7 +29,8 @@ function mountSection() {
 					methods: {
 						t: (_app, key, vars) =>
 							Object.entries(vars || {}).reduce(
-								(acc, [name, value]) => acc.replace(`{${name}}`, value),
+								(acc, [name, value]) =>
+									acc.replace(`{${name}}`, value),
 								key,
 							),
 					},
@@ -97,7 +98,9 @@ describe('CaHealthSection status', () => {
 		await flushPromises()
 
 		expect(
-			wrapper.findAll('[data-testid="ca-issued-counts"] li').map((li) => li.text()),
+			wrapper
+				.findAll('[data-testid="ca-issued-counts"] li')
+				.map((li) => li.text()),
 		).toEqual([
 			'Active user vault certificates: 4',
 			'Active application certificates: 2',
@@ -109,7 +112,8 @@ describe('CaHealthSection status', () => {
 
 describe('CaHealthSection actions', () => {
 	it('offers only retry bootstrap when not configured, and refreshes after it', async () => {
-		const get = vi.spyOn(axios, 'get')
+		const get = vi
+			.spyOn(axios, 'get')
 			.mockResolvedValueOnce({ data: { status: 'not_configured' } })
 			.mockResolvedValueOnce({ data: { status: 'healthy' } })
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
@@ -132,7 +136,9 @@ describe('CaHealthSection actions', () => {
 	it.each(['healthy', 'expiring_soon'])(
 		'offers force renew intermediate when %s, posts it and refreshes',
 		async (status) => {
-			const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: { status } })
+			const get = vi
+				.spyOn(axios, 'get')
+				.mockResolvedValue({ data: { status } })
 			const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
 			const wrapper = mountSection()
 			await flushPromises()
@@ -141,14 +147,18 @@ describe('CaHealthSection actions', () => {
 			await button(wrapper, 'Force renew intermediate').trigger('click')
 			await flushPromises()
 
-			expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/ca/renew-intermediate')
+			expect(post).toHaveBeenCalledWith(
+				'/apps/keepiq/api/v1/ca/renew-intermediate',
+			)
 			expect(get).toHaveBeenCalledTimes(2)
 			expect(wrapper.vm.loading).toBe(false)
 		},
 	)
 
 	it('offers no renewal while action is required', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { status: 'action_required' } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { status: 'action_required' },
+		})
 		const wrapper = mountSection()
 		await flushPromises()
 

@@ -191,6 +191,9 @@ class AccessRequest extends Entity implements JsonSerializable {
 	 *
 	 * @return AccessWindow|null
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) DateTimeImmutable::createFromMutable()
+	 *   and AddressRange::parse() are named constructors of value objects.
+	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
 	public function approvedWindow(): ?AccessWindow {

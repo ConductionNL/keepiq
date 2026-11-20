@@ -28,11 +28,13 @@ const stubs = {
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
+		template:
+			'<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
 	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
@@ -110,7 +112,9 @@ describe('ComplianceSnapshotDialog', () => {
 		const wrapper = mountDialog(null)
 
 		expect(wrapper.find('[data-open]').attributes('data-open')).toBe('false')
-		expect(wrapper.find('[data-testid="compliance-detail"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="compliance-detail"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('renders sections with known titles and falls back to the key', () => {
@@ -118,9 +122,15 @@ describe('ComplianceSnapshotDialog', () => {
 
 		expect(wrapper.find('[data-open]').attributes('data-open')).toBe('true')
 		const headings = wrapper.findAll('h4').map((h) => h.text())
-		expect(headings).toEqual(['Adoption', 'customSection', 'Configuration snapshot'])
+		expect(headings).toEqual([
+			'Adoption',
+			'customSection',
+			'Configuration snapshot',
+		])
 		expect(wrapper.text()).toContain('{"a":1}')
-		expect(wrapper.find('[data-testid="compliance-boundary"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="compliance-boundary"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('maps every known section to its title', () => {
@@ -183,7 +193,11 @@ describe('ComplianceSnapshotDialog', () => {
 			blob = b
 			return 'blob:fake'
 		})
-		const wrapper = mountDialog({ ...REPORT, configSnapshot: null, aggregate: null })
+		const wrapper = mountDialog({
+			...REPORT,
+			configSnapshot: null,
+			aggregate: null,
+		})
 
 		await wrapper.vm.exportCsv()
 
@@ -202,7 +216,9 @@ describe('ComplianceSnapshotDialog', () => {
 
 		expect(window.open).toHaveBeenCalledWith('', '_blank')
 		const html = printWindow.document.write.mock.calls[0][0]
-		expect(html.startsWith('<html><head><title>Keepiq compliance snapshot</title>')).toBe(true)
+		expect(
+			html.startsWith('<html><head><title>Keepiq compliance snapshot</title>'),
+		).toBe(true)
 		expect(html).toContain('Adoption')
 		expect(printWindow.document.close).toHaveBeenCalled()
 		expect(printWindow.print).toHaveBeenCalled()

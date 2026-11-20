@@ -14,14 +14,12 @@
 
 import { describe, expect, it } from 'vitest'
 import {
-	fieldKindOf,
-	fieldValueOf,
 	memberNameError,
 	membersToObject,
-	normaliseKind,
 	objectToMembers,
 	RESERVED_MEMBER_NAMES,
 } from '../../src/utils/additionalFields.js'
+import { fieldValueOf } from '../../src/utils/fieldSchema.js'
 
 describe('additional-field naming rules', () => {
 	it('refuses every reserved name, with a reason', () => {
@@ -107,61 +105,63 @@ describe('additional-field shape conversion', () => {
 
 	it('stringifies non-string member values', () => {
 		expect(objectToMembers({ port: 8080, on: true })).toEqual([
-			{ name: 'port', value: '8080', kind: 'text' },
-			{ name: 'on', value: 'true', kind: 'text' },
+			{ name: 'port', value: '8080', schema: { type: 'string' } },
+			{ name: 'on', value: 'true', schema: { type: 'string' } },
 		])
 	})
 })
 
 /**
- * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-custom-fields-carry-a-schema
  */
-describe('custom field kinds', () => {
-	it('reads an old blob without kinds as text, exactly as before', () => {
-		expect(
-			objectToMembers({ 'Recovery code': 'abc-123', tenant: 'acme' }),
-		).toEqual([
-			{ name: 'Recovery code', value: 'abc-123', kind: 'text' },
-			{ name: 'tenant', value: 'acme', kind: 'text' },
+describe('fields from a 0.3.14 test build', () => {
+	const legacy = {
+		'Recovery code': { value: 'abc-123', kind: 'hidden' },
+		Active: { value: 'true', kind: 'boolean' },
+		tenant: 'acme',
+	}
+
+	it('reads a `{ value, kind }` field as its value with the schema of its kind', () => {
+		expect(objectToMembers(legacy)).toEqual([
+			{
+				name: 'Recovery code',
+				value: 'abc-123',
+				schema: { type: 'string', hidden: true },
+			},
+			{ name: 'Active', value: 'true', schema: { type: 'boolean' } },
+			{ name: 'tenant', value: 'acme', schema: { type: 'string' } },
 		])
 	})
 
-	it('stores a text field as a bare string, so the blob shape is unchanged', () => {
-		expect(
-			membersToObject([{ name: 'tenant', value: 'acme', kind: 'text' }]),
-		).toEqual({ tenant: 'acme' })
-		expect(membersToObject([{ name: 'tenant', value: 'acme' }])).toEqual({
+	it('saves it back under `@schema`', () => {
+		expect(membersToObject(objectToMembers(legacy))).toEqual({
+			'Recovery code': 'abc-123',
+			Active: 'true',
 			tenant: 'acme',
+			'@schema': {
+				'Recovery code': { type: 'string', hidden: true },
+				Active: { type: 'boolean' },
+			},
 		})
 	})
 
-	it('stores hidden and boolean fields with their kind in the blob', () => {
-		expect(
-			membersToObject([
-				{ name: 'Recovery code', value: 'abc-123', kind: 'hidden' },
-				{ name: 'Active', value: 'true', kind: 'boolean' },
-			]),
-		).toEqual({
-			'Recovery code': { value: 'abc-123', kind: 'hidden' },
-			Active: { value: 'true', kind: 'boolean' },
+	it('lets a stored schema win over the kind', () => {
+		const blob = {
+			PIN: { value: '1234', kind: 'hidden' },
+			'@schema': {
+				PIN: { type: 'string', pattern: '^[0-9]{4}$', hidden: true },
+			},
+		}
+		expect(objectToMembers(blob)[0].schema).toEqual({
+			type: 'string',
+			pattern: '^[0-9]{4}$',
+			hidden: true,
 		})
 	})
 
-	it('round-trips every kind through the blob', () => {
-		const members = [
-			{ name: 'a', value: 'plain', kind: 'text' },
-			{ name: 'b', value: 's3cret', kind: 'hidden' },
-			{ name: 'c', value: 'false', kind: 'boolean' },
-		]
-		expect(
-			objectToMembers(JSON.parse(JSON.stringify(membersToObject(members)))),
-		).toEqual(members)
-	})
-
-	it('reads an unknown kind as text', () => {
-		expect(normaliseKind('linked')).toBe('text')
-		expect(fieldKindOf({ value: 'x', kind: 'linked' })).toBe('text')
+	it('reads the text of either shape', () => {
 		expect(fieldValueOf({ value: 'x', kind: 'linked' })).toBe('x')
+		expect(fieldValueOf('y')).toBe('y')
 		expect(fieldValueOf(undefined)).toBe('')
 	})
 })

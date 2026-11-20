@@ -185,6 +185,10 @@ jobs:
       enable-frontend: true
       enable-eslint: true
       enable-phpunit: true
+      # PHPUnit on every database Nextcloud supports that we can run in CI,
+      # so a query that only works on PostgreSQL shows up before a customer
+      # on MySQL or SQLite finds it.
+      database-test-matrix: '["pgsql", "mysql", "sqlite"]'
       enable-newman: true
       # Keepiq needs no other app (ADR-006). OpenRegister is installed HERE so this
       # suite covers the integrations that need it: the Flows pages and the
@@ -282,7 +286,12 @@ jobs:
       # renders the English source inside an otherwise translated form, silently.
       # The fleet had 30,459 such strings, so this records the current count and
       # fails only when it GROWS — burning it down stays an ordinary PR.
-      frontend-checks: '["check:manifest", "test:l10n", "format", "check:l10n-js", "check:schema-l10n"]'
+      # `check:path-case` fails when two tracked paths differ only in case.
+      # Linux holds both; Windows and macOS hold one file for the pair, so Git
+      # shows a phantom change, refuses branch switches, and `git add .` writes
+      # one file over the other (that lost a spec on keepiq#1830). The failure
+      # message says how to rename by case only without leaving the old path.
+      frontend-checks: '["check:manifest", "check:path-case", "test:l10n", "format", "check:l10n-js", "check:schema-l10n"]'
 
       # ── Coverage ratchet ─────────────────────────────────────────────────
       # `enable-coverage-guard` defaults to FALSE, which is why both

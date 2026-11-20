@@ -30,6 +30,7 @@ import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 import { useShareStore } from '../../src/store/modules/share.js'
 import { useUserPreferencesStore } from '../../src/store/modules/userPreferences.js'
+import { goldenMarkup } from '../fixtures/goldenMarkup.js'
 
 vi.mock('../../src/policy/policy.js', () => ({
 	fetchPolicy: vi.fn().mockResolvedValue(null),
@@ -115,6 +116,12 @@ const stubs = {
 	},
 	NcTextField: field('text'),
 	NcPasswordField: field('password'),
+	NcTextArea: {
+		props: ['modelValue', 'label', 'required', 'disabled'],
+		emits: ['update:modelValue'],
+		template:
+			'<textarea :aria-label="label" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+	},
 	NcNoteCard: {
 		props: ['type'],
 		template: '<div class="note" :data-type="type"><slot /></div>',
@@ -137,7 +144,7 @@ const stubs = {
 		template: '<div class="typed" />',
 	},
 	AdditionalFieldsEditor: {
-		props: ['members', 'disabled'],
+		props: ['members', 'disabled', 'reservedNames'],
 		template: '<div class="additional" />',
 	},
 	SecretTagsField: {
@@ -169,12 +176,7 @@ async function flush(wrapper) {
  * @return {string} The form markup without scope ids, comments or layout whitespace.
  */
 function formHtml(wrapper) {
-	return wrapper
-		.find('.secret-form')
-		.html()
-		.replace(/ data-v-[0-9a-f]+=""/g, '')
-		.replace(/<!--[\s\S]*?-->/g, '')
-		.replace(/>\s+</g, '><')
+	return goldenMarkup(wrapper.find('.secret-form').html())
 }
 
 /**
@@ -274,7 +276,8 @@ describe('create dialog value part (golden)', () => {
 		return wrapper
 	}
 
-	for (const typeId of ['type-login', 'type-note']) {
+	// A note is several lines: it is a text area without the generator.
+	for (const typeId of ['type-login']) {
 		it(`${typeId}: typed value, generator, save`, async () => {
 			const wrapper = await create(typeId)
 			const empty = { html: formHtml(wrapper), state: formState(wrapper) }
@@ -302,6 +305,23 @@ describe('create dialog value part (golden)', () => {
 			})
 		})
 	}
+
+	it('type-note: a text area, no generator, save', async () => {
+		const wrapper = await create('type-note')
+		const empty = { html: formHtml(wrapper), state: formState(wrapper) }
+		await type(
+			wrapper,
+			'textarea[data-testid="secret-value-multiline"]',
+			'line one\nline two',
+		)
+		const typed = formState(wrapper)
+		await wrapper.vm.submit()
+		check('create type-note', {
+			empty,
+			typed,
+			created: mask(useSecretStore().createSecret.mock.calls),
+		})
+	})
 
 	it('card: fields, checksum hint, save', async () => {
 		const wrapper = await create('type-card')

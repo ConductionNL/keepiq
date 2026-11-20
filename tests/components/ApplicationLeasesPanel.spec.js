@@ -16,9 +16,8 @@ vi.mock('../../src/store/modules/lease.js', () => ({
 	useLeaseStore: () => leaseStore,
 }))
 
-const { default: Panel } = await import(
-	'../../src/components/application/ApplicationLeasesPanel.vue'
-)
+const { default: Panel } =
+	await import('../../src/components/application/ApplicationLeasesPanel.vue')
 const { localDateTime } = await import('../../src/utils/dateTime.js')
 
 /**
@@ -104,7 +103,9 @@ describe('ApplicationLeasesPanel', () => {
 			const revoke = vi.fn()
 			const vm = makeVm({ revoke })
 
-			revoke.mockRejectedValueOnce({ response: { data: { message: 'Denied' } } })
+			revoke.mockRejectedValueOnce({
+				response: { data: { message: 'Denied' } },
+			})
 			await vm.onRevoke({ id: 'l7' })
 			expect(vm.error).toBe('Denied')
 

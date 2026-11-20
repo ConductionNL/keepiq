@@ -66,7 +66,10 @@ describe('syncNow', () => {
 		const offline = useOfflineStore()
 		offline.available = true
 		useSessionStore().aesKey = { key: 1 }
-		vi.spyOn(offline, 'replayQueue').mockResolvedValue({ synced: 0, stopped: false })
+		vi.spyOn(offline, 'replayQueue').mockResolvedValue({
+			synced: 0,
+			stopped: false,
+		})
 		return offline
 	}
 
@@ -103,7 +106,9 @@ describe('syncNow', () => {
 		offline.servedFromCache = true
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: { syncedAt: 'T1', a: 1 } })
 		await expect(offline.syncNow()).resolves.toBe(true)
-		expect(axios.get).toHaveBeenCalledWith('/apps/keepiq/api/v1/offline/manifest')
+		expect(axios.get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/offline/manifest',
+		)
 		expect(cache.writeSnapshot).toHaveBeenCalledWith({
 			sealed: { syncedAt: 'T1', a: 1 },
 		})
@@ -182,7 +187,11 @@ describe('the failure a replay error stores', () => {
 				{ error: 'partner_upgrade_required', requiredVersion: '3.1' },
 				{ fromShareSave: true },
 			),
-			{ code: 'partner_upgrade_required', partners: [], requiredVersion: '3.1' },
+			{
+				code: 'partner_upgrade_required',
+				partners: [],
+				requiredVersion: '3.1',
+			},
 		],
 		'refused share save': [
 			httpError(400, { error: 'bad_patch' }, { fromShareSave: true }),
@@ -218,7 +227,11 @@ describe('the failure a replay error stores', () => {
 				return
 			}
 			expect(kind).toBe('failed')
-			expect(setStatus).toHaveBeenCalledWith({ entryId: 'e' }, 'failed', expected)
+			expect(setStatus).toHaveBeenCalledWith(
+				{ entryId: 'e' },
+				'failed',
+				expected,
+			)
 		})
 	}
 })
@@ -236,7 +249,9 @@ describe('enqueue', () => {
 
 	it('refuses while edits are not queued', async () => {
 		const offline = useOfflineStore()
-		await expect(offline.enqueue({ op: 'update', secretId: 's' })).rejects.toThrow(
+		await expect(
+			offline.enqueue({ op: 'update', secretId: 's' }),
+		).rejects.toThrow(
 			'Keepiq is read-only offline. Your administrator has not turned on offline edits.',
 		)
 		expect(cache.putQueueEntry).not.toHaveBeenCalled()
@@ -281,7 +296,9 @@ describe('enqueue', () => {
 
 	it('a second update is merged into the first entry, and a failed one is left alone', async () => {
 		const offline = editing()
-		offline.entries = [{ entryId: 'f', secretId: 's', status: 'failed', op: 'update' }]
+		offline.entries = [
+			{ entryId: 'f', secretId: 's', status: 'failed', op: 'update' },
+		]
 		await offline.enqueue({ op: 'update', secretId: 's', body: { name: 'a' } })
 		await offline.enqueue({
 			op: 'update',
@@ -310,16 +327,28 @@ describe('replayQueue', () => {
 	it('does not start while one runs, offline, from the cache or locked', async () => {
 		const { offline, replayOne } = replaying({})
 		offline.replaying = true
-		await expect(offline.replayQueue()).resolves.toEqual({ synced: 0, stopped: true })
+		await expect(offline.replayQueue()).resolves.toEqual({
+			synced: 0,
+			stopped: true,
+		})
 		offline.replaying = false
 		offline.online = false
-		await expect(offline.replayQueue()).resolves.toEqual({ synced: 0, stopped: true })
+		await expect(offline.replayQueue()).resolves.toEqual({
+			synced: 0,
+			stopped: true,
+		})
 		offline.online = true
 		offline.servedFromCache = true
-		await expect(offline.replayQueue()).resolves.toEqual({ synced: 0, stopped: true })
+		await expect(offline.replayQueue()).resolves.toEqual({
+			synced: 0,
+			stopped: true,
+		})
 		offline.servedFromCache = false
 		useSessionStore().cryptoKey = null
-		await expect(offline.replayQueue()).resolves.toEqual({ synced: 0, stopped: true })
+		await expect(offline.replayQueue()).resolves.toEqual({
+			synced: 0,
+			stopped: true,
+		})
 		expect(offline.loadQueue).not.toHaveBeenCalled()
 		expect(replayOne).not.toHaveBeenCalled()
 	})
@@ -341,8 +370,16 @@ describe('replayQueue', () => {
 			{ entryId: 'd', status: 'queued', queuedAt: '6' },
 			{ entryId: 'e', status: 'queued', queuedAt: '7' },
 		]
-		await expect(offline.replayQueue()).resolves.toEqual({ synced: 2, stopped: true })
-		expect(replayOne.mock.calls.map(([e]) => e.entryId)).toEqual(['a', 'b', 'c', 'd'])
+		await expect(offline.replayQueue()).resolves.toEqual({
+			synced: 2,
+			stopped: true,
+		})
+		expect(replayOne.mock.calls.map(([e]) => e.entryId)).toEqual([
+			'a',
+			'b',
+			'c',
+			'd',
+		])
 		expect(offline.replaying).toBe(false)
 	})
 
@@ -352,7 +389,10 @@ describe('replayQueue', () => {
 			{ entryId: 'a', status: 'queued', queuedAt: '1' },
 			{ entryId: 'b', status: 'queued', queuedAt: '2' },
 		]
-		await expect(offline.replayQueue()).resolves.toEqual({ synced: 1, stopped: false })
+		await expect(offline.replayQueue()).resolves.toEqual({
+			synced: 1,
+			stopped: false,
+		})
 		offline.loadQueue.mockRejectedValue(new Error('boom'))
 		await expect(offline.replayQueue()).rejects.toThrow('boom')
 		expect(offline.replaying).toBe(false)

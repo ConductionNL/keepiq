@@ -16,7 +16,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import ShareApprovalView from '../../src/views/ShareApprovalView.vue'
 import { useShareApprovalStore } from '../../src/store/modules/shareApproval.js'
 
-const SHARE_REQUEST = { sourceSecretId: 's-1', requesterId: 'bob', targetUserId: 'carol' }
+const SHARE_REQUEST = {
+	sourceSecretId: 's-1',
+	requesterId: 'bob',
+	targetUserId: 'carol',
+}
 
 /**
  * A `t()` that fills in its placeholders, so the question's names are checked.
@@ -26,8 +30,8 @@ const SHARE_REQUEST = { sourceSecretId: 's-1', requesterId: 'bob', targetUserId:
  * @param {object} vars The placeholder values.
  * @return {string} The text with its placeholders filled in.
  */
-function substitute (_app, text, vars = {}) {
-  return text.replace(/\{(\w+)\}/g, (all, name) => vars[name] ?? all)
+function substitute(_app, text, vars = {}) {
+	return text.replace(/\{(\w+)\}/g, (all, name) => vars[name] ?? all)
 }
 
 /**
@@ -61,7 +65,10 @@ describe('ShareApprovalView deny and refused links', () => {
 		const store = useShareApprovalStore()
 		store.denyShareRequest = vi.fn().mockResolvedValue(undefined)
 		store.denyGroupMember = vi.fn()
-		const wrapper = mountOn({ params: { kind: 'share-request' }, query: SHARE_REQUEST })
+		const wrapper = mountOn({
+			params: { kind: 'share-request' },
+			query: SHARE_REQUEST,
+		})
 
 		await wrapper.find('[data-testid="share-approval-deny"]').trigger('click')
 		await flushPromises()
@@ -73,13 +80,18 @@ describe('ShareApprovalView deny and refused links', () => {
 		expect(wrapper.find('[data-testid="share-approval-outcome"]').text()).toBe(
 			'Denied. Nothing was shared.',
 		)
-		expect(wrapper.find('[data-testid="share-approval-deny"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="share-approval-deny"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('keeps the buttons and says to try again when the deny fails', async () => {
 		const store = useShareApprovalStore()
 		store.denyShareRequest = vi.fn().mockRejectedValue(new Error('down'))
-		const wrapper = mountOn({ params: { kind: 'share-request' }, query: SHARE_REQUEST })
+		const wrapper = mountOn({
+			params: { kind: 'share-request' },
+			query: SHARE_REQUEST,
+		})
 
 		await wrapper.vm.deny()
 
@@ -109,14 +121,24 @@ describe('ShareApprovalView deny and refused links', () => {
 	})
 
 	it.each([
-		['an unknown kind', { params: { kind: 'something-else' }, query: SHARE_REQUEST }],
-		['an incomplete group-member link', { params: { kind: 'group-member' }, query: { groupShareId: 'gs-1' } }],
+		[
+			'an unknown kind',
+			{ params: { kind: 'something-else' }, query: SHARE_REQUEST },
+		],
+		[
+			'an incomplete group-member link',
+			{ params: { kind: 'group-member' }, query: { groupShareId: 'gs-1' } },
+		],
 		['no route at all', undefined],
 	])('refuses %s', (_label, route) => {
 		const wrapper = mountOn(route)
 
 		expect(wrapper.vm.request).toBeNull()
-		expect(wrapper.find('[data-testid="share-approval-invalid"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="share-approval-approve"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="share-approval-invalid"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.find('[data-testid="share-approval-approve"]').exists()).toBe(
+			false,
+		)
 	})
 })

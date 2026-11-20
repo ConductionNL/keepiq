@@ -20,7 +20,9 @@
 			class="additional-urls-field__row">
 			<NcTextField
 				:modelValue="url"
-				:label="t('keepiq', 'Website address {number}', { number: index + 2 })"
+				:label="
+					t('keepiq', 'Website address {number}', { number: index + 2 })
+				"
 				:maxlength="maxLength"
 				:disabled="disabled"
 				data-testid="additional-url-input"
@@ -47,7 +49,12 @@
 			{{ t('keepiq', 'Add a website address') }}
 		</NcButton>
 		<p class="additional-urls-field__help" data-testid="additional-urls-help">
-			{{ t('keepiq', 'The login is suggested and found on each of these addresses. Website addresses are not encrypted. Server administrators can read them, as they can the main address.') }}
+			{{
+				t(
+					'keepiq',
+					'The login is suggested and found on each of these addresses. Website addresses are not encrypted. Server administrators can read them, as they can the main address.',
+				)
+			}}
 		</p>
 	</fieldset>
 </template>
@@ -95,7 +102,10 @@ export default {
 
 	watch: {
 		modelValue(value) {
-			if (normaliseUrls(value).join('\n') !== normaliseUrls(this.rows).join('\n')) {
+			if (
+				normaliseUrls(value).join('\n')
+				!== normaliseUrls(this.rows).join('\n')
+			) {
 				this.rows = [...value]
 			}
 		},

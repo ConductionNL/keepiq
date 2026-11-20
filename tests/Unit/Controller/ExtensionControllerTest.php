@@ -36,8 +36,8 @@ use Psr\Log\LoggerInterface;
  * @uses   \OCA\Keepiq\Db\Secret
  * @uses   \OCA\Keepiq\Service\AdminSettingsService
  * @uses   \OCA\Keepiq\Service\Flow\VaultFlowTriggerCatalog
- * @uses   \OCA\Keepiq\Service\SiteImageSettings
  * @uses   \OCA\Keepiq\Service\PasswordPolicyService
+ * @uses   \OCA\Keepiq\Service\SiteImageSettings
  * @uses   \OCA\Keepiq\Service\TrustedExtensionOrigins
  */
 class ExtensionControllerTest extends TestCase {

@@ -761,8 +761,9 @@
 									"type": "custom-fields",
 									"fields": [
 										{
-											"fieldType": "string",
+											"id": "field-1",
 											"label": "notes",
+											"fieldType": "string",
 											"value": "n"
 										}
 									]
@@ -1155,8 +1156,9 @@
 									"type": "custom-fields",
 									"fields": [
 										{
-											"fieldType": "string",
+											"id": "field-1",
 											"label": "notes",
+											"fieldType": "string",
 											"value": "n"
 										}
 									]
@@ -1541,8 +1543,9 @@
 									"type": "custom-fields",
 									"fields": [
 										{
-											"fieldType": "string",
+											"id": "field-1",
 											"label": "notes",
+											"fieldType": "string",
 											"value": "n"
 										}
 									]

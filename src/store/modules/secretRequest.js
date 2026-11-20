@@ -90,6 +90,47 @@ async function addFillField(fill, entry) {
 	fill.additionalMembers[name] = String(value)
 }
 
+/**
+ * What a create request posts for a member the caller leaves out or empty.
+ *
+ * @type {Readonly<object>}
+ */
+const REQUEST_DEFAULTS = Object.freeze({
+	// A FRESH request omits secretId and encryptionSuiteId: the
+	// server creates the placeholder Secret and derives the suite
+	// from it, so the client has nothing to point at or look up.
+	secretId: '',
+	encryptionSuiteId: '',
+	// The schema of each requested custom field, so the fill
+	// page shows and checks it.
+	fieldSchemas: Object.freeze({}),
+	expiresAt: null,
+	name: null,
+	folderId: null,
+	// The type a FRESH request's placeholder is created as; null
+	// leaves the server's default.
+	typeId: null,
+})
+
+/**
+ * The body of a create request, with every optional member defaulted.
+ *
+ * @param {object} payload The request fields.
+ * @return {object} The body to post.
+ * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+function requestBody(payload) {
+	const body = {
+		requestedFields: payload.requestedFields,
+		isReRequest: payload.isReRequest === true,
+	}
+	for (const [key, fallback] of Object.entries(REQUEST_DEFAULTS)) {
+		body[key] = payload[key] || fallback
+	}
+	return body
+}
+
 export const useSecretRequestStore = defineStore('secretRequest', {
 	state: () => ({
 		/** @type {Array<object>} Requests for the currently focused secret. */
@@ -170,6 +211,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @return {Promise<object>} The created request.
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		async createRequest(payload) {
 			this.loading = true
@@ -177,18 +219,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			try {
 				const response = await axios.post(
 					generateUrl('/apps/keepiq/api/v1/secret-requests'),
-					{
-						// A FRESH request omits secretId and encryptionSuiteId: the
-						// server creates the placeholder Secret and derives the suite
-						// from it, so the client has nothing to point at or look up.
-						secretId: payload.secretId || '',
-						encryptionSuiteId: payload.encryptionSuiteId || '',
-						requestedFields: payload.requestedFields,
-						isReRequest: payload.isReRequest === true,
-						expiresAt: payload.expiresAt || null,
-						name: payload.name || null,
-						folderId: payload.folderId || null,
-					},
+					requestBody(payload),
 				)
 				this.secretRequests.unshift(response.data)
 				return response.data

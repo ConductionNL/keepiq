@@ -13,9 +13,7 @@
  */
 export function localDateTime(iso) {
 	const parsed = Date.parse(iso ?? '')
-	return Number.isNaN(parsed)
-		? (iso ?? '')
-		: new Date(parsed).toLocaleString()
+	return Number.isNaN(parsed) ? (iso ?? '') : new Date(parsed).toLocaleString()
 }
 
 /**

@@ -48,9 +48,22 @@ beforeEach(() => {
 					}
 					return {
 						drawImage: (drawable, x, y, width, height) => {
-							drawn = { drawable, x, y, width, height, canvas, kind, options }
+							drawn = {
+								drawable,
+								x,
+								y,
+								width,
+								height,
+								canvas,
+								kind,
+								options,
+							}
 						},
-						getImageData: (x, y, width, height) => ({ data: 'pixels', width, height }),
+						getImageData: (x, y, width, height) => ({
+							data: 'pixels',
+							width,
+							height,
+						}),
 					}
 				},
 			}
@@ -102,9 +115,12 @@ describe('readImagePixels', () => {
 
 	it('lets the canvas scale a large image when the browser cannot resize', async () => {
 		imageSize = { naturalWidth: 1000, naturalHeight: 3200 }
-		vi.stubGlobal('createImageBitmap', vi.fn(async () => {
-			throw new Error('no resize options')
-		}))
+		vi.stubGlobal(
+			'createImageBitmap',
+			vi.fn(async () => {
+				throw new Error('no resize options')
+			}),
+		)
 		const pixels = await readImagePixels({})
 		expect(drawn.drawable).toBeInstanceOf(FakeImage)
 		expect(pixels).toEqual({ data: 'pixels', width: 500, height: 1600 })

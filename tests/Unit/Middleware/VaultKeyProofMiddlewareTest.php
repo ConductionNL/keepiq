@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCA\Keepiq\Middleware\VaultKeyProofMiddleware;
 use OCA\Keepiq\Service\EncryptionSuiteService;
@@ -298,7 +299,7 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 		$this->assertStringEndsWith('GuardFixtureController::guardedActive', $metadata['route']);
 		$this->assertSame(
 			['route', 'purpose', 'reason'],
-			AuditEventTypes::WHITELIST[AuditEventTypes::KEY_PROOF_REFUSED]
+			AuditMetadataPolicy::WHITELIST[AuditEventTypes::KEY_PROOF_REFUSED]
 		);
 	}//end testAfterExceptionRecordsAKeyProofRefusedAuditEvent()
 

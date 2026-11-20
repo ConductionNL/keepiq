@@ -20,9 +20,10 @@
 -->
 <template>
 	<section class="keepiq-ssh-key" data-testid="ssh-key-fields">
-		<NcTextArea
+		<MaskedTextArea
 			:modelValue="privateKey"
 			:label="t('keepiq', 'Private key')"
+			:required="required"
 			:error="privateKeyError !== ''"
 			:helperText="privateKeyError"
 			:disabled="disabled || busy"
@@ -97,9 +98,10 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
-import { NcButton, NcLoadingIcon, NcTextArea, NcTextField } from '@nextcloud/vue'
+import { NcButton, NcLoadingIcon, NcTextField } from '@nextcloud/vue'
 import FileUpload from 'vue-material-design-icons/FileUpload.vue'
 import KeyPlus from 'vue-material-design-icons/KeyPlus.vue'
+import MaskedTextArea from './MaskedTextArea.vue'
 import {
 	fingerprintOf,
 	generateKeyPair,
@@ -131,9 +133,9 @@ export default {
 	components: {
 		FileUpload,
 		KeyPlus,
+		MaskedTextArea,
 		NcButton,
 		NcLoadingIcon,
-		NcTextArea,
 		NcTextField,
 	},
 
@@ -142,6 +144,12 @@ export default {
 		privateKey: {
 			type: String,
 			default: '',
+		},
+
+		/** Whether the private key is marked as required, as in the create dialog. */
+		required: {
+			type: Boolean,
+			default: false,
 		},
 
 		/** The OpenSSH public key line. */
@@ -318,8 +326,11 @@ export default {
 	display: none;
 }
 
-.keepiq-ssh-key__mono :deep(textarea),
-.keepiq-ssh-key__mono :deep(input) {
+/* Through :deep from the section: the private key's class lands on the
+   text area inside MaskedTextArea, which carries no scope id of this file. */
+.keepiq-ssh-key :deep(.keepiq-ssh-key__mono textarea),
+.keepiq-ssh-key :deep(.keepiq-ssh-key__mono input),
+.keepiq-ssh-key :deep(textarea.keepiq-ssh-key__mono) {
 	font-family: var(--font-face-monospace, monospace);
 }
 

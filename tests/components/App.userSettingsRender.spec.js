@@ -31,20 +31,23 @@ vi.mock('../../src/store/store.js', () => ({
 
 const CnAppRootStub = {
 	name: 'CnAppRoot',
-	template: '<div class="cn-app-root"><slot name="menu" /><slot name="sidebar" /><slot name="user-settings" /></div>',
+	template:
+		'<div class="cn-app-root"><slot name="menu" /><slot name="sidebar" /><slot name="user-settings" /></div>',
 }
 
 const NcAppSettingsSectionStub = {
 	name: 'NcAppSettingsSection',
 	props: ['id', 'name'],
-	template: '<section :data-section="id"><h3>{{ name }}</h3><slot name="icon" /><slot /></section>',
+	template:
+		'<section :data-section="id"><h3>{{ name }}</h3><slot name="icon" /><slot /></section>',
 }
 
 const NcButtonStub = {
 	name: 'NcButton',
 	props: ['variant', 'disabled'],
 	emits: ['click'],
-	template: '<button :data-variant="variant" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+	template:
+		'<button :data-variant="variant" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 }
 
 const NcNoteCardStub = {
@@ -61,21 +64,29 @@ const NcNoteCardStub = {
  * @return {Promise<import('@vue/test-utils').VueWrapper>} The wrapper.
  */
 async function mountShell(state = {}, secretId = undefined) {
-	const wrapper = mount({ ...App, created() {} }, {
-		shallow: true,
-		global: {
-			stubs: {
-				CnAppRoot: CnAppRootStub,
-				NcAppSettingsSection: NcAppSettingsSectionStub,
-				NcButton: NcButtonStub,
-				NcNoteCard: NcNoteCardStub,
-			},
-			mocks: {
-				$route: { name: 'SecretList', params: secretId ? { id: secretId } : {}, query: {}, path: '/secrets' },
-				$router: { push: vi.fn(), replace: vi.fn() },
+	const wrapper = mount(
+		{ ...App, created() {} },
+		{
+			shallow: true,
+			global: {
+				stubs: {
+					CnAppRoot: CnAppRootStub,
+					NcAppSettingsSection: NcAppSettingsSectionStub,
+					NcButton: NcButtonStub,
+					NcNoteCard: NcNoteCardStub,
+				},
+				mocks: {
+					$route: {
+						name: 'SecretList',
+						params: secretId ? { id: secretId } : {},
+						query: {},
+						path: '/secrets',
+					},
+					$router: { push: vi.fn(), replace: vi.fn() },
+				},
 			},
 		},
-	})
+	)
 	await wrapper.setData(state)
 	return wrapper
 }
@@ -89,65 +100,124 @@ describe('App.vue user-settings render', () => {
 	it('renders every settings section into the dialog slot', async () => {
 		const wrapper = await mountShell()
 
-		const ids = wrapper.findAll('section').map((s) => s.attributes('data-section'))
-		expect(ids).toEqual(['session', 'defaults', 'expiry-rules', 'other-organisations', 'security', 'encryption'])
+		const ids = wrapper
+			.findAll('section')
+			.map((s) => s.attributes('data-section'))
+		expect(ids).toEqual([
+			'session',
+			'defaults',
+			'expiry-rules',
+			'other-organisations',
+			'security',
+			'encryption',
+		])
 		expect(wrapper.find('[data-section="session"] h3').text()).toBe('Session')
 	})
 
 	it('shows the compromise form only after the button is pressed, and hides it again', async () => {
 		const wrapper = await mountShell()
-		const button = wrapper.findAll('[data-section="security"] button').find((b) => b.text() === 'My master password was compromised')
+		const button = wrapper
+			.findAll('[data-section="security"] button')
+			.find((b) => b.text() === 'My master password was compromised')
 
-		expect(wrapper.findComponent({ name: 'CompromiseRecoveryForm' }).exists()).toBe(false)
+		expect(
+			wrapper.findComponent({ name: 'CompromiseRecoveryForm' }).exists(),
+		).toBe(false)
 		await button.trigger('click')
-		expect(wrapper.findComponent({ name: 'CompromiseRecoveryForm' }).exists()).toBe(true)
+		expect(
+			wrapper.findComponent({ name: 'CompromiseRecoveryForm' }).exists(),
+		).toBe(true)
 		await button.trigger('click')
-		expect(wrapper.findComponent({ name: 'CompromiseRecoveryForm' }).exists()).toBe(false)
+		expect(
+			wrapper.findComponent({ name: 'CompromiseRecoveryForm' }).exists(),
+		).toBe(false)
 	})
 
 	it('shows the empty state when there is no encryption suite', async () => {
 		const wrapper = await mountShell()
 
 		expect(wrapper.find('.user-settings__suite-info').exists()).toBe(false)
-		expect(wrapper.findComponent({ name: 'NcEmptyContent' }).props('name')).toBe('No encryption suite')
+		expect(wrapper.findComponent({ name: 'NcEmptyContent' }).props('name')).toBe(
+			'No encryption suite',
+		)
 	})
 
 	it('shows the active suite and opens the revoke confirmation from its button', async () => {
-		useEncryptionSuiteStore().currentSuite = { id: 'suite-1', status: 'active', createdAt: '2026-01-02' }
+		useEncryptionSuiteStore().currentSuite = {
+			id: 'suite-1',
+			status: 'active',
+			createdAt: '2026-01-02',
+		}
 		const wrapper = await mountShell()
 		const info = wrapper.find('.user-settings__suite-info')
 
 		expect(info.text()).toContain('active')
 		expect(info.text()).toContain('2026-01-02')
 		expect(info.text()).toContain('suite-1')
-		expect(wrapper.findComponent({ name: 'VaultEncryptionDetails' }).props('suiteId')).toBe('suite-1')
+		expect(
+			wrapper
+				.findComponent({ name: 'VaultEncryptionDetails' })
+				.props('suiteId'),
+		).toBe('suite-1')
 		expect(wrapper.find('[data-testid="revoke-confirm"]').exists()).toBe(false)
 
-		await info.findAll('button').find((b) => b.text() === 'Revoke encryption suite').trigger('click')
+		await info
+			.findAll('button')
+			.find((b) => b.text() === 'Revoke encryption suite')
+			.trigger('click')
 
 		expect(wrapper.vm.revokeConfirm).toBe(true)
-		expect(wrapper.find('[data-note="warning"]').text()).toContain('Revoking your encryption suite')
+		expect(wrapper.find('[data-note="warning"]').text()).toContain(
+			'Revoking your encryption suite',
+		)
 	})
 
 	it('keeps confirm disabled until a reason and a password are given', async () => {
-		useEncryptionSuiteStore().currentSuite = { id: 's', status: 'active', createdAt: '' }
+		useEncryptionSuiteStore().currentSuite = {
+			id: 's',
+			status: 'active',
+			createdAt: '',
+		}
 		const wrapper = await mountShell({ revokeConfirm: true })
 
-		expect(wrapper.find('[data-testid="revoke-confirm"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper.find('[data-testid="revoke-confirm"]').attributes('disabled'),
+		).toBeDefined()
 		await wrapper.setData({ revokeReason: 'lost', revokePassword: 'pw' })
-		expect(wrapper.find('[data-testid="revoke-confirm"]').attributes('disabled')).toBeUndefined()
-		expect(wrapper.find('[data-testid="revoke-confirm"]').text()).toBe('Confirm revocation')
+		expect(
+			wrapper.find('[data-testid="revoke-confirm"]').attributes('disabled'),
+		).toBeUndefined()
+		expect(wrapper.find('[data-testid="revoke-confirm"]').text()).toBe(
+			'Confirm revocation',
+		)
 		await wrapper.setData({ revoking: true })
-		expect(wrapper.find('[data-testid="revoke-confirm"]').text()).toBe('Revoking…')
-		expect(wrapper.find('[data-testid="revoke-confirm"]').attributes('disabled')).toBeDefined()
+		expect(wrapper.find('[data-testid="revoke-confirm"]').text()).toBe(
+			'Revoking…',
+		)
+		expect(
+			wrapper.find('[data-testid="revoke-confirm"]').attributes('disabled'),
+		).toBeDefined()
 	})
 
 	it('names the emergency-access loss and revokes with it accepted', async () => {
-		useEncryptionSuiteStore().currentSuite = { id: 's', status: 'active', createdAt: '' }
-		const wrapper = await mountShell({ revokeConfirm: true, revokeReason: 'lost', revokePassword: 'pw', revokeEmergencyCount: 2 })
-		const handleRevoke = vi.spyOn(wrapper.vm, 'handleRevoke').mockResolvedValue(undefined)
+		useEncryptionSuiteStore().currentSuite = {
+			id: 's',
+			status: 'active',
+			createdAt: '',
+		}
+		const wrapper = await mountShell({
+			revokeConfirm: true,
+			revokeReason: 'lost',
+			revokePassword: 'pw',
+			revokeEmergencyCount: 2,
+		})
+		const handleRevoke = vi
+			.spyOn(wrapper.vm, 'handleRevoke')
+			.mockResolvedValue(undefined)
 
-		expect(wrapper.find('[data-testid="revoke-emergency-warning"]').text()).toContain('contacts')
+		expect(
+			wrapper.find('[data-testid="revoke-emergency-warning"]').text(),
+		).toContain('contacts')
 		const confirm = wrapper.find('[data-testid="revoke-confirm"]')
 		expect(confirm.text()).toBe('Revoke and delete emergency access')
 		await confirm.trigger('click')
@@ -155,38 +225,77 @@ describe('App.vue user-settings render', () => {
 	})
 
 	it('closes the confirmation on cancel', async () => {
-		useEncryptionSuiteStore().currentSuite = { id: 's', status: 'active', createdAt: '' }
-		const wrapper = await mountShell({ revokeConfirm: true, revokeReason: 'lost', revokePassword: 'pw' })
+		useEncryptionSuiteStore().currentSuite = {
+			id: 's',
+			status: 'active',
+			createdAt: '',
+		}
+		const wrapper = await mountShell({
+			revokeConfirm: true,
+			revokeReason: 'lost',
+			revokePassword: 'pw',
+		})
 
-		await wrapper.findAll('button').find((b) => b.text() === 'Cancel').trigger('click')
+		await wrapper
+			.findAll('button')
+			.find((b) => b.text() === 'Cancel')
+			.trigger('click')
 
 		expect(wrapper.vm.revokeConfirm).toBe(false)
 		expect(wrapper.find('[data-testid="revoke-confirm"]').exists()).toBe(false)
 	})
 
 	it('offers no revocation for a suite that is not active', async () => {
-		useEncryptionSuiteStore().currentSuite = { id: 's', status: 'revoked', createdAt: '' }
+		useEncryptionSuiteStore().currentSuite = {
+			id: 's',
+			status: 'revoked',
+			createdAt: '',
+		}
 		const wrapper = await mountShell()
 
-		expect(wrapper.findAll('button').some((b) => b.text() === 'Revoke encryption suite')).toBe(false)
+		expect(
+			wrapper
+				.findAll('button')
+				.some((b) => b.text() === 'Revoke encryption suite'),
+		).toBe(false)
 	})
 
 	it('shows the revocation outcome notes', async () => {
-		useEncryptionSuiteStore().currentSuite = { id: 's', status: 'revoked', createdAt: '' }
-		const wrapper = await mountShell({ revokeSuccess: true, revokeError: 'refused' })
+		useEncryptionSuiteStore().currentSuite = {
+			id: 's',
+			status: 'revoked',
+			createdAt: '',
+		}
+		const wrapper = await mountShell({
+			revokeSuccess: true,
+			revokeError: 'refused',
+		})
 
-		expect(wrapper.find('[data-note="success"]').text()).toContain('Encryption suite revoked')
+		expect(wrapper.find('[data-note="success"]').text()).toContain(
+			'Encryption suite revoked',
+		)
 		expect(wrapper.find('[data-note="error"]').text()).toBe('refused')
 	})
 
 	it('saves the timeout picked in the session section', async () => {
 		const wrapper = await mountShell()
-		const save = vi.spyOn(useSessionStore(), 'saveTimeoutPreference').mockResolvedValue(undefined)
-		expect(wrapper.find('[data-testid="session-timeout-select"]').exists()).toBe(true)
-		wrapper.findComponent({ name: 'NcSelect' }).vm.$emit('update:modelValue', '30min')
+		const save = vi
+			.spyOn(useSessionStore(), 'saveTimeoutPreference')
+			.mockResolvedValue(undefined)
+		expect(wrapper.find('[data-testid="session-timeout-select"]').exists()).toBe(
+			true,
+		)
+		wrapper
+			.findComponent({ name: 'NcSelect' })
+			.vm.$emit('update:modelValue', '30min')
 
 		expect(save).toHaveBeenCalledWith('30min')
-		expect(wrapper.findComponent({ name: 'NcSelect' }).props('reduce')({ value: '10min', label: 'x' })).toBe('10min')
+		expect(
+			wrapper.findComponent({ name: 'NcSelect' }).props('reduce')({
+				value: '10min',
+				label: 'x',
+			}),
+		).toBe('10min')
 	})
 
 	it('renders the detail sidebar for the routed secret and closes it on its event', async () => {
@@ -201,7 +310,9 @@ describe('App.vue user-settings render', () => {
 	it('renders the app nav into the menu slot with the manifest', async () => {
 		const wrapper = await mountShell()
 
-		expect(wrapper.findComponent({ name: 'KeepiqAppNav' }).props('manifest')).toBe(wrapper.vm.manifest)
+		expect(
+			wrapper.findComponent({ name: 'KeepiqAppNav' }).props('manifest'),
+		).toBe(wrapper.vm.manifest)
 	})
 })
 
@@ -219,7 +330,9 @@ describe('App.vue store passthroughs and integrations handler', () => {
 	it('keeps the page components and adds the Integrations header action', () => {
 		const page = { name: 'Page' }
 
-		const components = App.computed.shellCustomComponents.call({ customComponents: { Page: page } })
+		const components = App.computed.shellCustomComponents.call({
+			customComponents: { Page: page },
+		})
 
 		expect(Object.keys(components)).toEqual(['Page', 'openIntegriqConnections'])
 		expect(components.Page).toBe(page)
@@ -234,8 +347,17 @@ describe('App.vue created() timers and sync', () => {
 		vi.useFakeTimers()
 		initializeStores.mockReset().mockResolvedValue(undefined)
 		context = {
-			sessionStore: { loadTimeoutPreference: vi.fn(), checkTimeout: vi.fn(), isLocked: false },
-			offlineStore: { bindConnectivity: vi.fn(), ensureLockHook: vi.fn(), online: true, syncNow: vi.fn() },
+			sessionStore: {
+				loadTimeoutPreference: vi.fn(),
+				checkTimeout: vi.fn(),
+				isLocked: false,
+			},
+			offlineStore: {
+				bindConnectivity: vi.fn(),
+				ensureLockHook: vi.fn(),
+				online: true,
+				syncNow: vi.fn(),
+			},
 			registerServiceWorker: vi.fn(),
 			handleActivity: () => {},
 			handleVisibilityChange: () => {},

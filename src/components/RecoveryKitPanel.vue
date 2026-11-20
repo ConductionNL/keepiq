@@ -16,7 +16,12 @@
 			{{ t('keepiq', 'Recovery kit') }}
 		</h3>
 		<p class="recovery-kit__hint">
-			{{ t('keepiq', 'A recovery kit lets you back into your vault if you lose your master password. Keep it offline.') }}
+			{{
+				t(
+					'keepiq',
+					'A recovery kit lets you back into your vault if you lose your master password. Keep it offline.',
+				)
+			}}
 		</p>
 		<p data-testid="recovery-kit-status">
 			{{ statusText }}
@@ -24,19 +29,33 @@
 
 		<template v-if="code">
 			<NcNoteCard type="warning">
-				{{ t('keepiq', 'Write down or save this code now. It is shown only once.') }}
+				{{
+					t(
+						'keepiq',
+						'Write down or save this code now. It is shown only once.',
+					)
+				}}
 			</NcNoteCard>
 			<p class="recovery-kit__code" data-testid="recovery-kit-code">
 				{{ code }}
 			</p>
 			<div class="recovery-kit__actions">
-				<NcButton variant="primary" data-testid="recovery-kit-download" @click="download">
+				<NcButton
+					variant="primary"
+					data-testid="recovery-kit-download"
+					@click="download">
 					{{ t('keepiq', 'Download') }}
 				</NcButton>
-				<NcButton variant="secondary" data-testid="recovery-kit-print" @click="print">
+				<NcButton
+					variant="secondary"
+					data-testid="recovery-kit-print"
+					@click="print">
 					{{ t('keepiq', 'Print') }}
 				</NcButton>
-				<NcButton variant="tertiary" data-testid="recovery-kit-done" @click="code = ''">
+				<NcButton
+					variant="tertiary"
+					data-testid="recovery-kit-done"
+					@click="code = ''">
 					{{ t('keepiq', 'Done') }}
 				</NcButton>
 			</div>
@@ -57,7 +76,11 @@
 					:disabled="busy || (asking && !masterPassword)"
 					data-testid="recovery-kit-create"
 					@click="asking ? create() : (asking = true)">
-					{{ kit ? t('keepiq', 'Make a new recovery kit') : t('keepiq', 'Make a recovery kit') }}
+					{{
+						kit
+							? t('keepiq', 'Make a new recovery kit')
+							: t('keepiq', 'Make a recovery kit')
+					}}
 				</NcButton>
 			</div>
 		</template>
@@ -101,7 +124,9 @@ export default {
 			if (!this.kit) {
 				return t('keepiq', 'You have no recovery kit.')
 			}
-			return t('keepiq', 'Your recovery kit was made on {date}.', { date: String(this.kit.createdAt ?? '').slice(0, 10) })
+			return t('keepiq', 'Your recovery kit was made on {date}.', {
+				date: String(this.kit.createdAt ?? '').slice(0, 10),
+			})
 		},
 	},
 
@@ -130,13 +155,21 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				const { code, kit } = await createRecoveryKit(useSessionStore().encryptedPrivateKey, this.masterPassword)
+				const { code, kit } = await createRecoveryKit(
+					useSessionStore().encryptedPrivateKey,
+					this.masterPassword,
+				)
 				this.code = code
 				this.kit = kit
 				this.madeOn = new Date().toISOString().slice(0, 10)
 				this.asking = false
 			} catch (e) {
-				this.error = e?.response?.data?.message || t('keepiq', 'The recovery kit could not be made. Check your master password.')
+				this.error =
+					e?.response?.data?.message
+					|| t(
+						'keepiq',
+						'The recovery kit could not be made. Check your master password.',
+					)
 			} finally {
 				this.masterPassword = ''
 				this.busy = false
@@ -148,7 +181,14 @@ export default {
 		 * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-a-user-can-create-a-recovery-kit-that-reopens-their-own-vault
 		 */
 		kitText() {
-			return recoveryKitText({ code: this.code, account: getCurrentUser()?.uid ?? '', createdAt: this.madeOn }, t)
+			return recoveryKitText(
+				{
+					code: this.code,
+					account: getCurrentUser()?.uid ?? '',
+					createdAt: this.madeOn,
+				},
+				t,
+			)
 		},
 
 		/**
@@ -158,7 +198,9 @@ export default {
 		 */
 		download() {
 			const link = document.createElement('a')
-			link.href = URL.createObjectURL(new Blob([this.kitText()], { type: 'text/plain' }))
+			link.href = URL.createObjectURL(
+				new Blob([this.kitText()], { type: 'text/plain' }),
+			)
 			link.download = 'keepiq-recovery-kit.txt'
 			link.click()
 			URL.revokeObjectURL(link.href)
@@ -172,7 +214,10 @@ export default {
 		print() {
 			const page = window.open('', '_blank', 'noopener=no')
 			if (!page) {
-				this.error = t('keepiq', 'The print page was blocked. Download the kit instead.')
+				this.error = t(
+					'keepiq',
+					'The print page was blocked. Download the kit instead.',
+				)
 				return
 			}
 			const pre = page.document.createElement('pre')

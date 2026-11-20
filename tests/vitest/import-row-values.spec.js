@@ -33,7 +33,18 @@ describe('makeRow', () => {
 			errors: [],
 		})
 		expect(
-			makeRow({ name: 0, url: false, login: 5, password: '', additionalFields: { a: 1 }, folder: 7, type: null }, 1),
+			makeRow(
+				{
+					name: 0,
+					url: false,
+					login: 5,
+					password: '',
+					additionalFields: { a: 1 },
+					folder: 7,
+					type: null,
+				},
+				1,
+			),
 		).toEqual({
 			sourceRow: 1,
 			name: '0',
@@ -68,15 +79,32 @@ describe('attachTotp', () => {
 })
 
 describe('attachPasskeys', () => {
-	const passkey = (id, rpId, privateKey) => ({ credentialId: id, rpId, privateKey })
+	const passkey = (id, rpId, privateKey) => ({
+		credentialId: id,
+		rpId,
+		privateKey,
+	})
 
 	it('adds new passkeys, folds a repeat and returns a clash', () => {
 		const row = makeRow({}, 1)
 		expect(attachPasskeys(row, [])).toEqual([])
 		expect(row.passkeys).toBeUndefined()
-		expect(attachPasskeys(row, [passkey('A', 'a.test', 'K1'), passkey('A', 'b.test', 'K2')])).toEqual([])
+		expect(
+			attachPasskeys(row, [
+				passkey('A', 'a.test', 'K1'),
+				passkey('A', 'b.test', 'K2'),
+			]),
+		).toEqual([])
 		const clash = passkey('A', 'a.test', 'OTHER')
-		expect(attachPasskeys(row, [passkey('A', 'a.test', 'K1'), clash, passkey('B', 'a.test', 'K3')])).toEqual([clash])
-		expect(JSON.parse(row.passkeys).map((p) => `${p.credentialId}@${p.rpId}`)).toEqual(['A@a.test', 'A@b.test', 'B@a.test'])
+		expect(
+			attachPasskeys(row, [
+				passkey('A', 'a.test', 'K1'),
+				clash,
+				passkey('B', 'a.test', 'K3'),
+			]),
+		).toEqual([clash])
+		expect(
+			JSON.parse(row.passkeys).map((p) => `${p.credentialId}@${p.rpId}`),
+		).toEqual(['A@a.test', 'A@b.test', 'B@a.test'])
 	})
 })

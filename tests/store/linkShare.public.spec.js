@@ -29,15 +29,22 @@ describe('useLinkShareStore public access', () => {
 
 		const share = await store.fetchPublicLinkShare('a/b c')
 
-		expect(get.mock.calls[0][0]).toMatch(/\/apps\/keepiq\/api\/v1\/public\/link-shares\/a%2Fb%20c$/)
-		expect(share).toEqual({ encryptedSecretSnapshot: 'blob', argon2idSalt: 'salt' })
+		expect(get.mock.calls[0][0]).toMatch(
+			/\/apps\/keepiq\/api\/v1\/public\/link-shares\/a%2Fb%20c$/,
+		)
+		expect(share).toEqual({
+			encryptedSecretSnapshot: 'blob',
+			argon2idSalt: 'salt',
+		})
 	})
 
 	it('fetchPublicLinkShare lets a not-found answer through to the caller', async () => {
 		vi.spyOn(axios, 'get').mockRejectedValue({ response: { status: 404 } })
 		const store = useLinkShareStore()
 
-		await expect(store.fetchPublicLinkShare('gone')).rejects.toEqual({ response: { status: 404 } })
+		await expect(store.fetchPublicLinkShare('gone')).rejects.toEqual({
+			response: { status: 404 },
+		})
 	})
 
 	it('confirmPublicLinkShare posts an empty body to the confirm URL and returns the usage', async () => {
@@ -48,14 +55,19 @@ describe('useLinkShareStore public access', () => {
 
 		const usage = await store.confirmPublicLinkShare('tok?1')
 
-		expect(post.mock.calls[0][0]).toMatch(/\/apps\/keepiq\/api\/v1\/public\/link-shares\/tok%3F1\/confirm$/)
+		expect(post.mock.calls[0][0]).toMatch(
+			/\/apps\/keepiq\/api\/v1\/public\/link-shares\/tok%3F1\/confirm$/,
+		)
 		expect(post.mock.calls[0][1]).toEqual({})
 		expect(usage).toEqual({ usageCount: 1, usageLimit: 3, remaining: 2 })
 	})
 
 	it('decryptPublicSnapshot opens the blob with the right password', async () => {
 		const snapshot = { title: 'Router', fields: { password: 'p4ss' } }
-		const { blob, salt } = await encryptSnapshot(JSON.stringify(snapshot), 'correct horse')
+		const { blob, salt } = await encryptSnapshot(
+			JSON.stringify(snapshot),
+			'correct horse',
+		)
 		const store = useLinkShareStore()
 
 		const opened = await store.decryptPublicSnapshot(
@@ -67,11 +79,17 @@ describe('useLinkShareStore public access', () => {
 	})
 
 	it('decryptPublicSnapshot refuses a wrong password', async () => {
-		const { blob, salt } = await encryptSnapshot(JSON.stringify({ title: 'x' }), 'correct horse')
+		const { blob, salt } = await encryptSnapshot(
+			JSON.stringify({ title: 'x' }),
+			'correct horse',
+		)
 		const store = useLinkShareStore()
 
 		await expect(
-			store.decryptPublicSnapshot({ encryptedSecretSnapshot: blob, argon2idSalt: salt }, 'wrong'),
+			store.decryptPublicSnapshot(
+				{ encryptedSecretSnapshot: blob, argon2idSalt: salt },
+				'wrong',
+			),
 		).rejects.toBeDefined()
 	})
 })

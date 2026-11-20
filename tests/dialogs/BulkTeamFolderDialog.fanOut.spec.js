@@ -76,7 +76,9 @@ describe.each([
 	it('is done, keeping the earlier names, when the fan-out fails', async () => {
 		const wrapper = mountArmed()
 		wrapper.vm.refused = ['old']
-		useTeamFolderStore().runFanOut = vi.fn().mockRejectedValue(new Error('Fan-out failed'))
+		useTeamFolderStore().runFanOut = vi
+			.fn()
+			.mockRejectedValue(new Error('Fan-out failed'))
 		await wrapper.vm[method]()
 		expect(wrapper.vm.refused).toEqual(['old'])
 		expect(wrapper.emitted('done')).toHaveLength(1)

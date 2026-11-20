@@ -21,22 +21,26 @@ const STUBS = {
 	NcDialog: {
 		props: ['name', 'open', 'size'],
 		emits: ['update:open'],
-		template: '<div class="dialog" :data-name="name"><button class="dialog-close" @click="$emit(\'update:open\', false)" /><slot /><slot name="actions" /></div>',
+		template:
+			'<div class="dialog" :data-name="name"><button class="dialog-close" @click="$emit(\'update:open\', false)" /><slot /><slot name="actions" /></div>',
 	},
 	NcButton: {
 		props: ['disabled', 'variant'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	RecipientPicker: {
 		props: ['modelValue', 'disabled'],
 		emits: ['update:modelValue'],
-		template: '<input class="recipient" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+		template:
+			'<input class="recipient" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 	},
 	ShareRestrictionFields: {
 		props: ['modelValue'],
 		emits: ['update:modelValue'],
-		template: '<button class="restrict" @click="$emit(\'update:modelValue\', { useOnly: true, endDate: \'\' })" />',
+		template:
+			'<button class="restrict" @click="$emit(\'update:modelValue\', { useOnly: true, endDate: \'\' })" />',
 	},
 	BulkRunPanel: {
 		emits: ['retry'],
@@ -53,7 +57,10 @@ describe('BulkShareDialog controls', () => {
 		setActivePinia(createPinia())
 		bulk = useBulkStore()
 		prompt = useKeyProofPromptStore()
-		wrapper = mount(BulkShareDialog, { props: { open: true }, global: { stubs: STUBS } })
+		wrapper = mount(BulkShareDialog, {
+			props: { open: true },
+			global: { stubs: STUBS },
+		})
 	})
 
 	afterEach(() => {
@@ -76,7 +83,9 @@ describe('BulkShareDialog controls', () => {
 
 		await wrapper.find('input.recipient').setValue('bob')
 
-		expect(wrapper.find('[data-testid="bulk-share-run"]').attributes('disabled')).toBeUndefined()
+		expect(
+			wrapper.find('[data-testid="bulk-share-run"]').attributes('disabled'),
+		).toBeUndefined()
 	})
 
 	it('names a recipient without an active suite and never asks for the password', async () => {
@@ -87,14 +96,21 @@ describe('BulkShareDialog controls', () => {
 		await wrapper.vm.onRun()
 		await wrapper.vm.$nextTick()
 
-		expect(axios.get).toHaveBeenCalledWith('/apps/keepiq/api/v1/shares/recipient-certificate', { params: { userId: 'bob' } })
-		expect(wrapper.find('[data-testid="bulk-share-error"]').text()).toBe('Recipient has no active encryption suite')
+		expect(axios.get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/shares/recipient-certificate',
+			{ params: { userId: 'bob' } },
+		)
+		expect(wrapper.find('[data-testid="bulk-share-error"]').text()).toBe(
+			'Recipient has no active encryption suite',
+		)
 		expect(ask).not.toHaveBeenCalled()
 		expect(wrapper.vm.ran).toBe(false)
 	})
 
 	it('shows the server message for any other lookup failure', async () => {
-		vi.spyOn(axios, 'get').mockRejectedValue({ response: { status: 500, data: { message: 'Suite store down' } } })
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { status: 500, data: { message: 'Suite store down' } },
+		})
 
 		await wrapper.vm.onRun()
 
@@ -122,7 +138,11 @@ describe('BulkShareDialog controls', () => {
 		await wrapper.vm.onRun()
 
 		expect(wrapper.vm.certificate).toBe('')
-		expect(run).toHaveBeenCalledWith(bulk.selectedIds, expect.any(Function), 'Sharing secrets')
+		expect(run).toHaveBeenCalledWith(
+			bulk.selectedIds,
+			expect.any(Function),
+			'Sharing secrets',
+		)
 		expect(wrapper.vm.runPassword).toBe('')
 		expect(wrapper.vm.ran).toBe(true)
 		expect(wrapper.emitted('done')).toEqual([[]])
@@ -131,11 +151,13 @@ describe('BulkShareDialog controls', () => {
 	it('retries the failed subset from the report panel behind a fresh password', async () => {
 		wrapper.vm.ran = true
 		vi.spyOn(prompt, 'ask').mockResolvedValue('pw')
-		const retry = vi.spyOn(bulk, 'retryFailed').mockImplementation(async (perItem) => {
-			expect(wrapper.vm.runPassword).toBe('pw')
-			vi.spyOn(wrapper.vm, 'shareOne').mockResolvedValue({ status: 'ok' })
-			await perItem('s-1')
-		})
+		const retry = vi
+			.spyOn(bulk, 'retryFailed')
+			.mockImplementation(async (perItem) => {
+				expect(wrapper.vm.runPassword).toBe('pw')
+				vi.spyOn(wrapper.vm, 'shareOne').mockResolvedValue({ status: 'ok' })
+				await perItem('s-1')
+			})
 		await wrapper.vm.$nextTick()
 
 		await wrapper.find('button.retry').trigger('click')
@@ -160,9 +182,13 @@ describe('BulkShareDialog controls', () => {
 		bulk.report = [{ status: 'ok' }, { status: 'skipped' }]
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.find('.dialog').attributes('data-name')).toBe('Shared {ok} of {total} secrets')
+		expect(wrapper.find('.dialog').attributes('data-name')).toBe(
+			'Shared {ok} of {total} secrets',
+		)
 		expect(wrapper.vm.reportCounts).toEqual({ ok: 1, total: 2 })
 		expect(wrapper.find('[data-testid="bulk-share-run"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="bulk-share-recipient"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="bulk-share-recipient"]').exists()).toBe(
+			false,
+		)
 	})
 })

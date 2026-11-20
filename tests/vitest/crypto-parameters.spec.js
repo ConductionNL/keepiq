@@ -19,10 +19,7 @@ import {
 	deriveUnlockKeyRaw,
 	MASTER_KEY_PARAMETERS,
 } from '../../src/crypto/aes.js'
-import {
-	ARGON2_PARAMETERS,
-	deriveAesKeyArgon2id,
-} from '../../src/crypto/argon2.js'
+import { ARGON2_PARAMETERS, deriveAesKeyArgon2id } from '../../src/crypto/argon2.js'
 import { CRYPTO_PARAMETERS, technicalNames } from '../../src/crypto/parameters.js'
 import { generateKeyPair, RSA_PARAMETERS } from '../../src/crypto/rsa.js'
 

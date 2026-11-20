@@ -36,10 +36,10 @@ use RuntimeException;
  * Golden record of getAdminSettings().
  *
  * @covers \OCA\Keepiq\Service\AdminSettingsService
- * @uses   \OCA\Keepiq\Service\PasswordPolicyService
- * @uses   \OCA\Keepiq\Service\TrustedExtensionOrigins
  * @uses   \OCA\Keepiq\Service\Flow\VaultFlowTriggerCatalog
+ * @uses   \OCA\Keepiq\Service\PasswordPolicyService
  * @uses   \OCA\Keepiq\Service\SiteImageSettings
+ * @uses   \OCA\Keepiq\Service\TrustedExtensionOrigins
  */
 class AdminSettingsPayloadGoldenTest extends TestCase {
 	private const GOLDEN = __DIR__.'/golden/admin-settings-payload.json';

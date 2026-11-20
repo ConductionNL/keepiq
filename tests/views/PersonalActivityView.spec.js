@@ -20,9 +20,8 @@ vi.mock('../../src/store/modules/audit.js', () => ({
 	useAuditStore: () => auditStore,
 }))
 
-const { default: PersonalActivityView } = await import(
-	'../../src/views/PersonalActivityView.vue'
-)
+const { default: PersonalActivityView } =
+	await import('../../src/views/PersonalActivityView.vue')
 
 describe('PersonalActivityView', () => {
 	beforeEach(() => {

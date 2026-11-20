@@ -48,7 +48,10 @@ export function normaliseUrls(value) {
 export function sameUrls(a, b) {
 	const left = normaliseUrls(a)
 	const right = normaliseUrls(b)
-	return left.length === right.length && left.every((url, index) => url === right[index])
+	return (
+		left.length === right.length
+		&& left.every((url, index) => url === right[index])
+	)
 }
 
 /**
@@ -73,7 +76,9 @@ function webHref(url) {
 	const candidate = /^[a-z][a-z0-9+.-]*:/i.test(url) ? url : `https://${url}`
 	try {
 		const parsed = new URL(candidate)
-		return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : null
+		return parsed.protocol === 'https:' || parsed.protocol === 'http:'
+			? parsed.href
+			: null
 	} catch {
 		return null
 	}
