@@ -25,8 +25,10 @@ use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
@@ -35,6 +37,7 @@ use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareRowVerdict;
 use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\IDBConnection;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -66,6 +69,9 @@ class ShareSaveRequiredGuardTest extends TestCase {
 
 	private ?ShareTarget $copyRow = null;
 
+	/** The verdict on the row's own share row when it is not one with a row (AMBIGUOUS, UNJUDGED) */
+	private ?string $verdictState = null;
+
 	/**
 	 * Alice's `src`, by default shared with nobody.
 	 *
@@ -75,7 +81,11 @@ class ShareSaveRequiredGuardTest extends TestCase {
 		parent::setUp();
 		$this->rowJudge = $this->createMock(ShareRowJudge::class);
 		$this->rowJudge->method('forCopy')->willReturnCallback(
-			fn (): ShareRowVerdict => ($this->copyRow === null ? new ShareRowVerdict(state: ShareRowVerdict::NONE) : new ShareRowVerdict(state: ShareRowVerdict::TRUSTED, row: $this->copyRow))
+			fn (): ShareRowVerdict => match (true) {
+				$this->verdictState !== null => new ShareRowVerdict(state: $this->verdictState),
+				$this->copyRow !== null => new ShareRowVerdict(state: ShareRowVerdict::TRUSTED, row: $this->copyRow),
+				default => new ShareRowVerdict(state: ShareRowVerdict::NONE),
+			}
 		);
 		$this->rowJudge->method('scanPending')->willReturnCallback(static fn (string $refusal): ShareScanPendingException => new ShareScanPendingException($refusal));
 		$this->guards = $this->createMock(ShareSyncGuards::class);
@@ -199,9 +209,96 @@ class ShareSaveRequiredGuardTest extends TestCase {
 	}//end testAnUnsharedValueOrANameStillSaves()
 
 	/**
-	 * Through SecretService::updateAlone(): a new value of a shared secret is
-	 * refused before anything is written, the stored ciphertext sent again is
-	 * no change, and update(), which the share-save uses, is not guarded.
+	 * A row whose own share row the pending scan cannot judge waits for it,
+	 * whatever guard ran before.
+	 *
+	 * @return void
+	 */
+	public function testARowWhoseShareRowTheScanCannotJudgeWaitsForTheScan(): void {
+		$this->verdictState = ShareRowVerdict::UNJUDGED;
+		$this->expectException(ShareScanPendingException::class);
+		$this->guard()->assertSavedAlone(row: $this->row(), fields: ['key']);
+	}//end testARowWhoseShareRowTheScanCannotJudgeWaitsForTheScan()
+
+	/**
+	 * A row named by more than one share row is not found, as in the share-save.
+	 *
+	 * @return void
+	 */
+	public function testARowWithAnAmbiguousShareRowIsNotFound(): void {
+		$this->verdictState = ShareRowVerdict::AMBIGUOUS;
+		$this->expectException(NotFoundException::class);
+		$this->guard()->assertSavedAlone(row: $this->row(), fields: ['key']);
+	}//end testARowWithAnAmbiguousShareRowIsNotFound()
+
+	/**
+	 * A SecretService over the given mapper, view-only guard and this test's share-save guard.
+	 *
+	 * @param SecretMapper $secrets The rows
+	 * @param ViewOnlyCopyGuard $viewOnlyCopies The view-only guard
+	 *
+	 * @return SecretService
+	 */
+	private function service(SecretMapper $secrets, ViewOnlyCopyGuard $viewOnlyCopies): SecretService {
+		return new SecretService(
+			mapper: $secrets,
+			typeService: $this->createMock(SecretTypeService::class),
+			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+			migrationService: $this->createMock(MigrationService::class),
+			linkShareService: $this->createMock(LinkShareService::class),
+			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(IDBConnection::class),
+			viewOnlyCopies: $viewOnlyCopies,
+			shareSaveRequired: $this->guard(),
+		);
+	}//end service()
+
+	/**
+	 * Through SecretService::updateAlone(), a new value of a shared secret
+	 * is refused before anything is written.
+	 *
+	 * @return void
+	 */
+	public function testUpdateAloneRefusesASharedValueBeforeAnyWrite(): void {
+		$this->copies = ['copy' => ['secretId' => 'copy', 'holder' => 'recipient', 'targetUserId' => 'bob']];
+		$secrets = $this->createMock(SecretMapper::class);
+		$secrets->method('findById')->willReturnCallback(fn (): Secret => $this->row());
+		$secrets->expects($this->never())->method('advanceVersion');
+		$secrets->expects($this->never())->method('update');
+		$secrets->expects($this->never())->method('insert');
+
+		$this->expectException(ShareSaveRequiredException::class);
+		$this->service(secrets: $secrets, viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class))
+			->updateAlone(id: 'src', data: ['key' => 'NEW'], userId: 'alice');
+	}//end testUpdateAloneRefusesASharedValueBeforeAnyWrite()
+
+	/**
+	 * Through updateAlone(), a copy its holder may only view keeps the
+	 * view_only refusal, even when it has live copies of its own.
+	 *
+	 * @return void
+	 */
+	public function testUpdateAloneRefusesAViewOnlyCopyAsViewOnly(): void {
+		$this->copyRow = new ShareTarget();
+		$this->copyRow->setSourceSecretId('elsewhere');
+		$this->copies = ['copy' => ['secretId' => 'copy', 'holder' => 'recipient', 'targetUserId' => 'bob']];
+		$source = new Secret();
+		$source->setId('elsewhere');
+		$secrets = $this->createMock(SecretMapper::class);
+		$secrets->method('findById')->willReturnCallback(fn (string $id): Secret => ($id === 'elsewhere') ? $source : $this->row());
+		$secrets->expects($this->never())->method('update');
+		$contexts = $this->createStub(ShareWriteContext::class);
+		$contexts->method('standingOn')->willReturn([]);
+		$contexts->method('writesForEveryone')->willReturn(false);
+		$viewOnly = new ViewOnlyCopyGuard(rowJudge: $this->rowJudge, secrets: $secrets, contexts: $contexts);
+
+		$this->expectException(ViewOnlyCopyException::class);
+		$this->service(secrets: $secrets, viewOnlyCopies: $viewOnly)->updateAlone(id: 'src', data: ['key' => 'NEW'], userId: 'alice');
+	}//end testUpdateAloneRefusesAViewOnlyCopyAsViewOnly()
+
+	/**
+	 * Through updateAlone(), the stored ciphertext sent again is no change,
+	 * and update(), which the share-save uses, is not guarded.
 	 *
 	 * @return void
 	 */
@@ -211,24 +308,7 @@ class ShareSaveRequiredGuardTest extends TestCase {
 		$secrets->method('findById')->willReturnCallback(fn (): Secret => $this->row());
 		$secrets->method('advanceVersion')->willReturn(1);
 		$secrets->method('update')->willReturnArgument(0);
-		$service = new SecretService(
-			mapper: $secrets,
-			typeService: $this->createMock(SecretTypeService::class),
-			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-			migrationService: $this->createMock(MigrationService::class),
-			linkShareService: $this->createMock(LinkShareService::class),
-			logger: $this->createMock(LoggerInterface::class),
-			db: $this->createMock(IDBConnection::class),
-			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
-			shareSaveRequired: $this->guard(),
-		);
-
-		try {
-			$service->updateAlone(id: 'src', data: ['key' => 'NEW'], userId: 'alice');
-			$this->fail('A new value of a shared secret must go through the share-save');
-		} catch (ShareSaveRequiredException) {
-			$this->addToAssertionCount(1);
-		}
+		$service = $this->service(secrets: $secrets, viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class));
 
 		$this->assertSame('Renamed', $service->updateAlone(id: 'src', data: ['name' => 'Renamed', 'key' => 'OLD'], userId: 'alice')->getName());
 		$this->assertSame('NEW', $service->update(id: 'src', data: ['key' => 'NEW'], userId: 'alice')->getKey());

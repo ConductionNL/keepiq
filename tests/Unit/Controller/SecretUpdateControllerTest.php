@@ -31,6 +31,7 @@ use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Http;
 use OCP\IDBConnection;
@@ -215,6 +216,7 @@ class SecretUpdateControllerTest extends TestCase {
 			versionService: $versions,
 			db: $this->createMock(IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 		);
 
 		$response = $this->controller(['key' => 'NEW-CIPHERTEXT'], $service)->update('s-1');

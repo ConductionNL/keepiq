@@ -32,6 +32,7 @@ use OCA\Keepiq\Service\SecretRequestService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -151,6 +152,7 @@ class SecretServiceApplicationVaultTest extends TestCase {
 			logger: $this->logger,
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			secretRequestService: $this->secretRequestService,
 			shareService: $this->shareService,
 			groupShareMapper: $this->groupShareMapper,

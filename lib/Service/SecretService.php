@@ -133,6 +133,7 @@ class SecretService implements SecretServiceInterface {
 	 * @param LoggerInterface $logger The logger interface
 	 * @param IDBConnection $db The transaction an update's version lock runs in
 	 * @param ViewOnlyCopyGuard $viewOnlyCopies Refuses a value change of a copy its holder may not write
+	 * @param ShareSaveRequiredGuard $shareSaveRequired Refuses a plain update of a shared secret's value (keepiq#1300)
 	 * @param SecretRequestService|null $secretRequestService The secret-request service
 	 * @param ShareService|null $shareService The share service
 	 * @param GroupShareMapper|null $groupShareMapper The group-share mapper
@@ -153,7 +154,6 @@ class SecretService implements SecretServiceInterface {
 	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
 	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 * @param BrokerMintRecorder|null $brokerMints Stores a broker mint's notAfter and who it was minted for
-	 * @param ShareSaveRequiredGuard|null $shareSaveRequired Refuses a plain update of a shared secret's value (keepiq#1300)
 	 *
 	 * @return void
 	 */
@@ -166,6 +166,7 @@ class SecretService implements SecretServiceInterface {
 		private LoggerInterface $logger,
 		private IDBConnection $db,
 		private ViewOnlyCopyGuard $viewOnlyCopies,
+		private ShareSaveRequiredGuard $shareSaveRequired,
 		private ?SecretRequestService $secretRequestService = null,
 		private ?ShareService $shareService = null,
 		private ?GroupShareMapper $groupShareMapper = null,
@@ -184,7 +185,6 @@ class SecretService implements SecretServiceInterface {
 		private ?SecretUrlMapper $urlMapper = null,
 		private ?PrivilegedCopyGate $privilegedGate = null,
 		private ?BrokerMintRecorder $brokerMints = null,
-		private ?ShareSaveRequiredGuard $shareSaveRequired = null,
 	) {
 	}//end __construct()
 
@@ -1118,7 +1118,7 @@ class SecretService implements SecretServiceInterface {
 		$secret = $this->loadForUpdate(id: $id, fields: array_keys($data), userId: $userId);
 		$changed = $this->changedValueFields(secret: $secret, data: $data);
 		$this->viewOnlyCopies->assertMayChangeValue(row: $secret, fields: $changed, userId: $userId);
-		$this->shareSaveRequired?->assertSavedAlone(row: $secret, fields: $changed);
+		$this->shareSaveRequired->assertSavedAlone(row: $secret, fields: $changed);
 
 		return $this->updateLoaded(secret: $secret, data: $data, userId: $userId);
 	}//end updateAlone()

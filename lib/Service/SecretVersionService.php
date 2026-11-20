@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Kernel\Contracts\SecretVersionServiceInterface;
@@ -67,6 +68,7 @@ class SecretVersionService implements SecretVersionServiceInterface {
 	 * @param LoggerInterface $logger The logger
 	 * @param IDBConnection $db The restore's transaction
 	 * @param ViewOnlyCopyGuard $viewOnlyCopies Refuses a restore of a copy its holder may not write
+	 * @param ShareSaveRequiredGuard $shareSaveRequired Refuses a restore of a shared secret's value onto one row (keepiq#1300)
 	 * @param IEventDispatcher|null $eventDispatcher The audit event dispatcher
 	 * @param AuditEventFactory $auditEvents The audit-event factory
 	 * @param OfflineEditGuard $editGuard Refuses a restore over a head that moved on
@@ -84,6 +86,7 @@ class SecretVersionService implements SecretVersionServiceInterface {
 		private LoggerInterface $logger,
 		private IDBConnection $db,
 		private ViewOnlyCopyGuard $viewOnlyCopies,
+		private ShareSaveRequiredGuard $shareSaveRequired,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
@@ -243,8 +246,8 @@ class SecretVersionService implements SecretVersionServiceInterface {
 
 	/**
 	 * Restore a version on the head row alone, after snapshotting the head.
-	 * Copies are not written here: a restore that must reach them is a
-	 * share-save with `restoredFrom`. The head is moved off the version just
+	 * Copies are not written here, so a restore that changes the value of a
+	 * shared secret is refused: it is a share-save with `restoredFrom`. The head is moved off the version just
 	 * read (the base, when one is given) by a compare-and-set inside the
 	 * transaction, as a share-save does, so a save that commits after the
 	 * read is refused here rather than overwritten unsnapshotted.
@@ -260,9 +263,11 @@ class SecretVersionService implements SecretVersionServiceInterface {
 	 * @throws \OCA\Keepiq\Exception\NotFoundException When the head is a copy whose source cannot be resolved
 	 * @throws StaleWriteException When the head moved on from `$baseUpdatedAt`, or from the version read
 	 * @throws ShareScanPendingException When the head is a copy whose share row waits for the share quarantine scan
+	 * @throws ShareSaveRequiredException When the restore changes the value of a shared secret
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
 	 */
 	public function restore(string $versionId, string $userId, ?string $baseUpdatedAt = null): Secret {
 		$version = $this->getVersion(versionId: $versionId, userId: $userId);
@@ -274,6 +279,7 @@ class SecretVersionService implements SecretVersionServiceInterface {
 			fields: ViewOnlyCopyGuard::VALUE_FIELDS,
 			userId: $userId
 		);
+		$this->shareSaveRequired->assertSavedAlone(row: $secret, fields: $this->changedValueFields(secret: $secret, version: $version));
 		$this->editGuard->assertUnchangedSince(secret: $secret, baseUpdatedAt: $baseUpdatedAt);
 
 		$restored = $this->atomic(
@@ -286,6 +292,54 @@ class SecretVersionService implements SecretVersionServiceInterface {
 
 		return $restored;
 	}//end restore()
+
+	/**
+	 * The value fields a restore of the version writes with a new value, as
+	 * writeVersionValues() writes them: a TOTP or passkeys the version does
+	 * not hold (null) stays, and an empty one is none.
+	 *
+	 * @param Secret $secret The head
+	 * @param SecretVersion $version The version restored
+	 *
+	 * @return string[]
+	 */
+	private function changedValueFields(Secret $secret, SecretVersion $version): array {
+		$restored = [
+			'key'              => $version->getKey(),
+			'login'            => $version->getLogin(),
+			'additionalFields' => $version->getAdditionalFields(),
+		];
+		foreach (['totp' => $version->getTotp(), 'passkeys' => $version->getPasskeys()] as $field => $value) {
+			if ($value !== null) {
+				$restored[$field] = $this->emptyAsNone(value: $value);
+			}
+		}
+
+		$current = [
+			'key'              => $secret->getKey(),
+			'login'            => $secret->getLogin(),
+			'additionalFields' => $secret->getAdditionalFields(),
+			'totp'             => $this->emptyAsNone(value: $secret->getTotp()),
+			'passkeys'         => $this->emptyAsNone(value: $secret->getPasskeys()),
+		];
+
+		return array_keys(array_filter($restored, static fn (?string $value, string $field): bool => $value !== $current[$field], ARRAY_FILTER_USE_BOTH));
+	}//end changedValueFields()
+
+	/**
+	 * A TOTP or passkeys value, with an empty one as none, as a restore stores it.
+	 *
+	 * @param string|null $value The ciphertext
+	 *
+	 * @return string|null
+	 */
+	private function emptyAsNone(?string $value): ?string {
+		if ($value === '') {
+			return null;
+		}
+
+		return $value;
+	}//end emptyAsNone()
 
 	/**
 	 * The restore's transaction body: move the head off the version read,

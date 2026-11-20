@@ -7,8 +7,9 @@
  * row of a shared secret only: a source with live copies or active partner
  * shares, or a copy whose holder writes its source for everyone. Such a
  * change goes through the share-save, which writes every copy in the same
- * transaction (keepiq#1300). The share-save itself, a secret request fill
- * and a version restore keep their own paths.
+ * transaction (keepiq#1300). The plain update and a version restore run
+ * it; the share-save itself and a secret request fill (values sealed to the
+ * requester) keep their own paths.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -29,6 +30,7 @@ namespace OCA\Keepiq\Service;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
@@ -60,9 +62,9 @@ class ShareSaveRequiredGuard {
 
 	/**
 	 * Refuse a change of a value field when the row is a copy, or has live
-	 * copies or active partner shares. Run after ViewOnlyCopyGuard, which
-	 * refuses a copy its holder may only view and a share row it cannot judge,
-	 * so a copy that reaches here is one its holder writes for everyone.
+	 * copies or active partner shares. A share row of the row itself that
+	 * is ambiguous or waits for the scan is refused here too, as the
+	 * share-save does, whatever ran before.
 	 *
 	 * @param Secret $row The caller's row, already checked to be theirs
 	 * @param string[] $fields The value fields the change writes with a new value
@@ -70,7 +72,8 @@ class ShareSaveRequiredGuard {
 	 * @return void
 	 *
 	 * @throws ShareSaveRequiredException When the change must go through the share-save
-	 * @throws ShareScanPendingException When a copy's share row waits for the share quarantine scan
+	 * @throws ShareScanPendingException When a share row of the row or of a copy waits for the share quarantine scan
+	 * @throws NotFoundException When the row's own share row is ambiguous
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
 	 */
@@ -79,19 +82,39 @@ class ShareSaveRequiredGuard {
 			return;
 		}
 
-		if ($this->rowJudge->forCopy(copy: $row)->trustedRow() !== null) {
+		$verdict = $this->rowJudge->forCopy(copy: $row);
+		if ($verdict->state === ShareRowVerdict::AMBIGUOUS) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		if ($verdict->state === ShareRowVerdict::UNJUDGED) {
+			throw $this->scanPending();
+		}
+
+		if ($verdict->trustedRow() !== null) {
 			throw new ShareSaveRequiredException();
 		}
 
 		['copies' => $copies, 'unjudged' => $unjudged] = $this->guards->liveCopies(source: $row, leaveOut: $row->getId());
 		if ($unjudged !== []) {
-			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be changed yet');
+			throw $this->scanPending();
 		}
 
 		if ($copies !== [] || $this->hasActivePartnerShare(row: $row) === true) {
 			throw new ShareSaveRequiredException();
 		}
 	}//end assertSavedAlone()
+
+	/**
+	 * The refusal while a share row waits for the share quarantine scan.
+	 *
+	 * @return ShareScanPendingException
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
+	 */
+	private function scanPending(): ShareScanPendingException {
+		return $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan and cannot be changed yet');
+	}//end scanPending()
 
 	/**
 	 * Whether the row has a partner share the share-save writes.

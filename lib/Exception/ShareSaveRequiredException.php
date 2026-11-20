@@ -44,6 +44,6 @@ class ShareSaveRequiredException extends ConflictException {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
 	 */
 	public function __construct() {
-		parent::__construct(message: 'This secret is shared, so a change of its value must reach every copy; save it through the share-save');
+		parent::__construct(message: 'This item is shared, and every copy must change with it. Update the app, or make the change in the web app.');
 	}//end __construct()
 }//end class
