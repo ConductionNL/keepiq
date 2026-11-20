@@ -143,10 +143,15 @@ class FederationController extends Controller {
 		}
 
 		try {
-			return new JSONResponse(data: $this->batch->lookup(shareIds: $ids, userId: $user->getUID()));
+			$answer = $this->batch->lookup(shareIds: $ids, userId: $user->getUID());
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}
+
+		// Both are maps by share id, also when empty: an empty PHP array would go out as a JSON list.
+		return new JSONResponse(
+			data: ['certificates' => (object)$answer['certificates'], 'refused' => (object)$answer['refused']]
+		);
 	}//end recipientCertificates()
 
 	/**

@@ -315,7 +315,8 @@ test('share with a user of a partner instance, update, and revoke', async ({
 	await openSecret(alice, sourceId)
 	await alice.getByTestId('secret-detail-edit').click()
 	// The first share-save learns it must carry Bob's copy, the browser
-	// fetches his certificate again, and the second carries both.
+	// fetches his certificate again through the batch lookup over Alice's
+	// own partner shares (#1256), and the second carries both.
 	const isShareSave = (r: { url(): string; request(): { method(): string } }) =>
 		r.url().endsWith(`/api/v1/secrets/${sourceId}/share-save`)
 		&& r.request().method() === 'PUT'
@@ -324,7 +325,7 @@ test('share with a user of a partner instance, update, and revoke', async ({
 	)
 	const certificate = alice.waitForResponse(
 		(r) =>
-			r.url().endsWith('/api/v1/federation/recipient-certificate')
+			r.url().endsWith('/api/v1/federation/recipient-certificates')
 			&& r.request().method() === 'POST',
 	)
 	const saved = alice.waitForResponse(
@@ -338,7 +339,11 @@ test('share with a user of a partner instance, update, and revoke', async ({
 	const refusal = await (await incomplete).json()
 	expect(refusal.error).toBe('incomplete')
 	expect(refusal.federated.missing).toHaveLength(1)
-	expect((await certificate).status()).toBe(200)
+	const lookup = await certificate
+	expect(lookup.status()).toBe(200)
+	const answer = await lookup.json()
+	expect(Object.keys(answer.certificates)).toEqual(refusal.federated.missing)
+	expect(Object.keys(answer.refused)).toEqual([])
 	const response = await saved
 	expect(response.status()).toBe(200)
 	expect(JSON.stringify(response.request().postDataJSON())).not.toContain(
