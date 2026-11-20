@@ -121,8 +121,24 @@ class FederationControllerBatchLookupTest extends TestCase {
 		$response = $this->controller(uid: 'alice')->recipientCertificates(shareIds: ['s1', null, 's2']);
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
-		$this->assertSame(expected: $answer, actual: $response->getData());
+		$this->assertSame(expected: json_encode(value: $answer), actual: json_encode(value: $response->getData()));
 	}//end testTheAnswerIsTheServicesForTheCaller()
+
+	/**
+	 * An answer with nothing refused still sends `refused` as a map, not a list.
+	 *
+	 * @return void
+	 */
+	public function testEmptyListsGoOutAsMaps(): void {
+		$this->batch->method('lookup')->willReturn(['certificates' => ['s1' => ['cloudId' => 'bob@a.example']], 'refused' => []]);
+
+		$response = $this->controller(uid: 'alice')->recipientCertificates(shareIds: ['s1']);
+
+		$this->assertSame(
+			expected: '{"certificates":{"s1":{"cloudId":"bob@a.example"}},"refused":{}}',
+			actual: json_encode(value: $response->getData())
+		);
+	}//end testEmptyListsGoOutAsMaps()
 
 	/**
 	 * More than the bound is 400 with the service's reason.
