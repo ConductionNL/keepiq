@@ -136,6 +136,53 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		).toBe(true)
 	})
 
+	it('treats the recipient of a received copy as a recipient, not its owner (#1298)', async () => {
+		// The copy is owned by its recipient; the write-context names its source.
+		axios.get.mockImplementation(async (url) => ({
+			data: url.endsWith('/write-context')
+				? { sourceSecretId: 'src-1', effectiveGrade: 'read' }
+				: [],
+		}))
+		const wrapper = await mountDetail({
+			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
+			currentUser: 'bob',
+		})
+
+		for (const testId of [
+			'secret-detail-share-list',
+			'secret-detail-group-share-list',
+			'secret-detail-delegation-manager',
+			'secret-detail-admin-handover',
+		]) {
+			expect(wrapper.find(`[data-testid="${testId}"]`).exists(), testId).toBe(
+				false,
+			)
+		}
+		const form = wrapper.find('[data-testid="secret-detail-share-request"]')
+		expect(form.exists()).toBe(true)
+		// The request goes to the source's owner.
+		expect(form.attributes('secretid')).toBe('src-1')
+	})
+
+	it('keeps the owner controls for a delegate on their copy', async () => {
+		axios.get.mockImplementation(async (url) => ({
+			data: url.endsWith('/write-context')
+				? { sourceSecretId: 'src-1', effectiveGrade: 'owner' }
+				: [],
+		}))
+		const wrapper = await mountDetail({
+			secret: { id: 'copy-1', name: 'GitHub', key: 'CIPHER', ownerId: 'bob' },
+			currentUser: 'bob',
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="secret-detail-share-request"]').exists(),
+		).toBe(false)
+	})
+
 	it('hides the entire sharing tab when no secret is loaded', async () => {
 		// The component's mounted hook will set `secret` via fetchSecret;
 		// when our store stub returns null, the v-if="!error && secret"

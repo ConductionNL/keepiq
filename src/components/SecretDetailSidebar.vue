@@ -1059,25 +1059,25 @@
 							</h3>
 							<div class="secret-detail__row-value">
 								<ShareList
-									v-if="isOwner"
+									v-if="managesSharing"
 									:secretId="secretId"
 									data-testid="secret-detail-share-list" />
 
 								<GroupShareList
-									v-if="isOwner"
+									v-if="managesSharing"
 									:secretId="secretId"
 									data-testid="secret-detail-group-share-list" />
 
 								<DelegationManager
-									v-if="isOwner"
+									v-if="managesSharing"
 									:secretId="secretId"
 									:canReclaim="true"
 									data-testid="secret-detail-delegation-manager"
 									@reclaimed="onReclaimed" />
 
 								<ShareRequestForm
-									v-if="isRecipient && !isOwner"
-									:secretId="secretId"
+									v-if="!managesSharing"
+									:secretId="shareRequestSecretId"
 									data-testid="secret-detail-share-request" />
 
 								<!--
@@ -2098,8 +2098,8 @@ export default {
 		},
 
 		/**
-		 * True when the current user owns the secret. Owners see the
-		 * recipient list + delegation manager.
+		 * True when the current user holds the secret, which includes the
+		 * recipient of a received copy; who shares it is managesSharing.
 		 *
 		 * @return {boolean}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
@@ -2112,6 +2112,33 @@ export default {
 			// has serialized it since its first version, so every response
 			// (offline snapshots included) carries it.
 			return this.secret.ownerId === this.currentUserId
+		},
+
+		/**
+		 * True when the current user may share the secret: its source's owner
+		 * or a delegate. They see the recipient list + delegation manager;
+		 * anyone else gets the share-request form. A received copy is owned by
+		 * its recipient, so the write-context decides when it is known.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
+		managesSharing() {
+			if (typeof this.writeContext?.effectiveGrade === 'string') {
+				return this.writeContext.effectiveGrade === 'owner'
+			}
+			return this.isOwner
+		},
+
+		/**
+		 * The secret a share request names: the source of a received copy, as
+		 * the request goes to its owner.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+		 */
+		shareRequestSecretId() {
+			return this.writeContext?.sourceSecretId || this.secretId
 		},
 
 		/**
