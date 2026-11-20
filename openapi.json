@@ -9160,6 +9160,93 @@
                 }
             }
         },
+        "/federation/recipient-certificates": {
+            "post": {
+                "operationId": "federation-recipient-certificates",
+                "summary": "Look up the certificates of the caller's own active partner shares in one request, at most 100 distinct share ids",
+                "description": "Look up the certificates of the caller's own active partner shares in one request, at most 100 distinct share ids. The answer is `{certificates: {shareId: <the single lookup's answer>}, refused: {shareId: {status, message}}}`: a share that is unknown, someone else's or not active is refused as `unknown_share` (404), and a lookup the partner refuses carries the single route's status and reason. The request counts once against the rate limit, as it answers only for shares the caller already shares.",
+                "tags": [
+                    "federation"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "shareIds": {
+                                        "type": "array",
+                                        "items": {}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request is invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/federation/status": {
             "get": {
                 "operationId": "federation-status",

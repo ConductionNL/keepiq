@@ -28,6 +28,7 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\FederatedCertificateServiceInterface;
+use OCA\Keepiq\Service\PartnerCertificateBatchService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -49,6 +50,7 @@ class FederationController extends Controller {
 	 * @param IRequest $request The request object
 	 * @param FederatedCertificateServiceInterface $certificates The federated certificate lookup
 	 * @param IUserSession $userSession The user session
+	 * @param PartnerCertificateBatchService $batch The batch lookup over the caller's own partner shares
 	 *
 	 * @return void
 	 *
@@ -58,6 +60,7 @@ class FederationController extends Controller {
 		IRequest $request,
 		private FederatedCertificateServiceInterface $certificates,
 		private IUserSession $userSession,
+		private PartnerCertificateBatchService $batch,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
@@ -106,6 +109,45 @@ class FederationController extends Controller {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: $status);
 		}//end try
 	}//end recipientCertificate()
+
+	/**
+	 * Look up the certificates of the caller's own active partner shares in one request, at most 100 distinct
+	 * share ids. The answer is `{certificates: {shareId: <the single lookup's answer>}, refused: {shareId:
+	 * {status, message}}}`: a share that is unknown, someone else's or not active is refused as `unknown_share`
+	 * (404), and a lookup the partner refuses carries the single route's status and reason. The request counts
+	 * once against the rate limit, as it answers only for shares the caller already shares.
+	 *
+	 * @param array<array-key,mixed> $shareIds The partner shares
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @no-admin-idor-exempt Answers only for partner shares whose owner is the caller
+	 *   (PartnerCertificateBatchService::lookup() checks owner and status per share), and refuses every
+	 *   other id with the same `unknown_share`, so no other user's share is revealed.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+	 */
+	#[NoAdminRequired]
+	#[UserRateLimit(limit: 60, period: 60)]
+	public function recipientCertificates(array $shareIds = []): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$ids = array_values(array_filter($shareIds, static fn ($id): bool => is_string($id) && $id !== ''));
+		if ($ids === []) {
+			return new JSONResponse(data: ['message' => 'shareIds_required'], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			return new JSONResponse(data: $this->batch->lookup(shareIds: $ids, userId: $user->getUID()));
+		} catch (InvalidArgumentException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+	}//end recipientCertificates()
 
 	/**
 	 * Whether the share dialog may offer a recipient at another

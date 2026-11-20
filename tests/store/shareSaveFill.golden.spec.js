@@ -121,9 +121,8 @@ vi.mock('../../src/store/modules/federatedShare.js', async (importOriginal) => {
 	const real = await importOriginal()
 	return {
 		...real,
-		useFederatedShareStore: () => ({
-			lookup: async (cloudId) => {
-				trace.push(['lookup', cloudId])
+		useFederatedShareStore: () => {
+			const verified = (cloudId) => {
 				const answer = world.partners[cloudId] ?? { fail: 'server' }
 				if (answer.fail) {
 					throw world.failures[answer.fail](cloudId)
@@ -136,8 +135,28 @@ vi.mock('../../src/store/modules/federatedShare.js', async (importOriginal) => {
 						? { valueFields: answer.valueFields }
 						: {}),
 				}
-			},
-		}),
+			}
+			return {
+				lookup: async (cloudId) => {
+					trace.push(['lookup', cloudId])
+					return verified(cloudId)
+				},
+				// The batch answers each share with its recipient or the
+				// error the single lookup would have thrown (keepiq#1256).
+				lookupShares: async (shares) => {
+					trace.push(['lookupShares', shares.map((s) => s.shareId)])
+					return new Map(
+						shares.map((share) => {
+							try {
+								return [share.shareId, { recipient: verified(share.recipientCloudId) }]
+							} catch (error) {
+								return [share.shareId, { error }]
+							}
+						}),
+					)
+				},
+			}
+		},
 	}
 })
 

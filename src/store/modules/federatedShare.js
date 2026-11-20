@@ -260,6 +260,53 @@ async function postWithKeyProof(refusal, attempt) {
 	}
 }
 
+/**
+ * One share's refusal in a batch certificate lookup, shaped like the axios
+ * error the single lookup rejects with, so share-save reads both alike.
+ */
+export class PartnerLookupRefusal extends Error {
+	/**
+	 * @param {{status: number, message: string}} refusal The server's status and reason.
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+	 */
+	constructor(refusal) {
+		super(`Partner lookup refused: ${refusal?.message ?? 'unknown'}`)
+		this.name = 'PartnerLookupRefusal'
+		this.response = {
+			status: Number(refusal?.status) || 0,
+			data: { message: refusal?.message },
+		}
+	}
+}
+
+/**
+ * Verify one certificate answer for the cloud id that was asked: it must be
+ * for that cloud id and chain to the pinned partner root. Only the verified
+ * key goes on, never the certificate text.
+ *
+ * @param {string} requested The cloud id that was asked.
+ * @param {object} answer The server's answer.
+ * @return {Promise<{cloudId: string, fingerprint: string, spki: Uint8Array, valueFields: Array<string>}>}
+ * @throws {CloudIdMismatchError} The answer is for another cloud id.
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-a-verified-remote-certificate
+ */
+async function verifiedAnswer(requested, answer) {
+	const expected = canonicalCloudId(resolvedForm(requested))
+	if (expected === '' || canonicalCloudId(answer?.cloudId) !== expected) {
+		throw new CloudIdMismatchError(requested)
+	}
+	const { fingerprint, spki } = await verifyFederatedCertificate({
+		certificate: answer.certificate,
+		chain: answer.chain,
+		partnerRootFingerprint: answer.partnerRootFingerprint,
+		cloudId: answer.cloudId,
+	})
+	const valueFields = Array.isArray(answer.valueFields)
+		? answer.valueFields.filter((field) => BLOB_FIELDS.includes(field))
+		: []
+	return { cloudId: answer.cloudId, fingerprint, spki, valueFields }
+}
+
 export const useFederatedShareStore = defineStore('federatedShare', {
 	state: () => ({
 		/** @type {boolean|null} Whether any outbound partner exists; null until asked. */
@@ -308,21 +355,54 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				generateUrl('/apps/keepiq/api/v1/federation/recipient-certificate'),
 				{ cloudId: requested },
 			)
-			const answer = response.data
-			const expected = canonicalCloudId(resolvedForm(requested))
-			if (expected === '' || canonicalCloudId(answer?.cloudId) !== expected) {
-				throw new CloudIdMismatchError(requested)
+			return verifiedAnswer(requested, response.data)
+		},
+
+		/**
+		 * Fetch and verify the certificates of the user's own partner shares
+		 * in one request, at most 100 (keepiq#1256). Each share comes back
+		 * either with its verified recipient, as lookup() returns it, or with
+		 * the error lookup() would have thrown for it: a CloudIdMismatchError
+		 * or FederatedCertificateError when its answer does not verify, or a
+		 * PartnerLookupRefusal carrying the server's status and reason. A
+		 * share the answer leaves out is refused as `unknown_share`. The
+		 * request itself rejects as lookup() does, a 429 included.
+		 *
+		 * @param {Array<{shareId: string, recipientCloudId: string}>} shares The partner shares.
+		 * @return {Promise<Map<string, {recipient?: object, error?: Error}>>} By share id.
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+		 */
+		async lookupShares(shares) {
+			const response = await axios.post(
+				generateUrl('/apps/keepiq/api/v1/federation/recipient-certificates'),
+				{ shareIds: shares.map((share) => share.shareId) },
+			)
+			const certificates = response.data?.certificates ?? {}
+			const refused = response.data?.refused ?? {}
+			const results = new Map()
+			for (const share of shares) {
+				const own = (map) => Object.hasOwn(map, share.shareId)
+				let result
+				if (own(certificates)) {
+					try {
+						result = {
+							recipient: await verifiedAnswer(
+								share.recipientCloudId,
+								certificates[share.shareId],
+							),
+						}
+					} catch (error) {
+						result = { error }
+					}
+				} else {
+					const refusal = own(refused)
+						? refused[share.shareId]
+						: { status: 404, message: 'unknown_share' }
+					result = { error: new PartnerLookupRefusal(refusal) }
+				}
+				results.set(share.shareId, result)
 			}
-			const { fingerprint, spki } = await verifyFederatedCertificate({
-				certificate: answer.certificate,
-				chain: answer.chain,
-				partnerRootFingerprint: answer.partnerRootFingerprint,
-				cloudId: answer.cloudId,
-			})
-			const valueFields = Array.isArray(answer.valueFields)
-				? answer.valueFields.filter((field) => BLOB_FIELDS.includes(field))
-				: []
-			return { cloudId: answer.cloudId, fingerprint, spki, valueFields }
+			return results
 		},
 
 		/**

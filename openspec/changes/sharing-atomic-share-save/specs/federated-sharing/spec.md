@@ -140,6 +140,30 @@ When the partner certificate lookup for an active partner share answers that the
 
 #### Scenario: Many partner shares wait out the lookup limit
 
+- **GIVEN** a secret shared with 250 partner shares, looked up in batches of 100
+- **WHEN** Alice saves a new password and the lookup is rate-limited before the third batch
+- **THEN** the dialog MUST say it is waiting, and the save MUST go through in one share-save once the limit allows the remaining batch
+
+### Requirement: The owner looks up their partner shares' certificates in one request
+
+The system MUST offer the owner a batch certificate lookup over their own partner shares, `POST /api/v1/federation/recipient-certificates` with `{shareIds}`, at most 100 distinct share ids per request, counted once against the per-user lookup rate limit. It MUST answer, per share, the certificate, chain, partner root fingerprint and value fields the single lookup answers, asking each distinct recipient's partner once through the same signed, allowlisted lookup. A share id that is unknown, belongs to another user or is not active MUST be refused as `unknown_share` with status 404, the same for all three. A lookup the partner refuses MUST be refused for that recipient's shares only, with the single lookup's status and reason, and MUST NOT fail the other shares. The web app MUST look up the partner shares a share-save has to fill through this lookup, in batches of at most 100, MUST verify every answer in the browser against the pinned partner root exactly as a single answer, and MUST treat each refused share as the single lookup's refusal would have been treated. A share whose certificate a failed save verified MUST NOT be looked up again within the reuse window.
+
+#### Scenario: Seventy partner shares take one lookup
+
 - **GIVEN** a secret shared with 70 partner shares
-- **WHEN** Alice saves a new password and the lookup is rate-limited after 60 partners
-- **THEN** the dialog MUST say it is waiting, and the save MUST go through in one share-save once the limit allows the remaining lookups
+- **WHEN** Alice saves a new password
+- **THEN** the web app MUST look the 70 shares up in one request and MUST NOT wait on the lookup limit
+- **AND** the save MUST go through in one share-save
+
+#### Scenario: Another user's partner share is not looked up
+
+- **GIVEN** Mallory names one of Alice's partner share ids, and a suspended share of her own, in a batch lookup
+- **WHEN** the server answers
+- **THEN** both MUST be refused as `unknown_share` with status 404, and no partner MUST be asked
+
+#### Scenario: One unreachable partner does not fail the others
+
+- **GIVEN** a secret shared with Bob, whose instance is down, and with Carol, whose instance answers
+- **WHEN** Alice's browser looks up both shares in one request
+- **THEN** Carol's certificate MUST be answered and Bob's share MUST be refused as `partner_unreachable` with status 502
+- **AND** Alice MUST be offered to save without Bob, as for a single lookup

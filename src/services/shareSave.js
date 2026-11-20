@@ -68,6 +68,12 @@ const PARTNER_GONE = new Map([
  */
 export const PARTNER_LIMIT_WAIT_CAP_MS = 5 * 60 * 1000
 
+/**
+ * Partner shares per batch certificate lookup, the server's bound
+ * (`PartnerCertificateBatchService::MAX_SHARES`).
+ */
+export const PARTNER_LOOKUP_BATCH = 100
+
 /** The wait when a 429 names no `Retry-After`. */
 const PARTNER_LIMIT_FALLBACK_MS = 60 * 1000
 
@@ -323,33 +329,18 @@ export async function saveShared({
 	let waited = 0
 
 	/**
-	 * A partner's verified certificate: one a failed save kept, or a fresh
-	 * lookup that waits out the lookup limit up to the cap.
+	 * Run a lookup, waiting out the partner lookup limit up to the cap that
+	 * one save shares across all its lookups.
 	 *
-	 * @param {{shareId: string, recipientCloudId: string}} share The partner share.
-	 * @return {Promise<{cloudId: string, fingerprint: string, spki: Uint8Array}>}
+	 * @param {() => Promise<object>} lookup The lookup request.
+	 * @return {Promise<object>} The lookup's answer.
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-many-partner-shares-wait-out-the-lookup-limit
 	 */
-	const partnerCertificate = async (share) => {
-		const kept = verifiedPartners.get(share.shareId)
-		if (
-			kept?.recipientCloudId === share.recipientCloudId
-			&& Date.now() - kept.at < VERIFIED_PARTNER_TTL_MS
-		) {
-			verifiedNow.set(share.shareId, kept)
-			return kept.recipient
-		}
+	const withinLookupLimit = async (lookup) => {
 		for (;;) {
 			let limited
 			try {
-				const recipient = await useFederatedShareStore().lookup(
-					share.recipientCloudId,
-				)
-				verifiedNow.set(share.shareId, {
-					recipientCloudId: share.recipientCloudId,
-					recipient,
-					at: Date.now(),
-				})
-				return recipient
+				return await lookup()
 			} catch (e) {
 				if (e?.response?.status !== 429) {
 					throw e
@@ -369,6 +360,78 @@ export async function saveShared({
 				throw new Error('Vault is locked')
 			}
 		}
+	}
+
+	/**
+	 * A kept certificate a failed save verified for this share, still fresh.
+	 *
+	 * @param {{shareId: string, recipientCloudId: string}} share The partner share.
+	 * @return {object|undefined} The kept entry.
+	 */
+	const keptFor = (share) => {
+		const kept = verifiedPartners.get(share.shareId)
+		return kept?.recipientCloudId === share.recipientCloudId
+			&& Date.now() - kept.at < VERIFIED_PARTNER_TTL_MS
+			? kept
+			: undefined
+	}
+
+	/** Batch lookup results by share id, each `{recipient}` or `{error}`. */
+	const prefetched = new Map()
+
+	/**
+	 * Look the given partner shares up in batches of at most 100, one call
+	 * each against the lookup limit, before they are filled (keepiq#1256).
+	 * Shares a failed save kept a certificate for are not asked again.
+	 *
+	 * @param {Array<{shareId: string, recipientCloudId: string}>} shares The partner shares to fill.
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+	 */
+	const prefetchPartners = async (shares) => {
+		const ask = shares.filter(
+			(share) => !keptFor(share) && !prefetched.has(share.shareId),
+		)
+		for (let i = 0; i < ask.length; i += PARTNER_LOOKUP_BATCH) {
+			const chunk = ask.slice(i, i + PARTNER_LOOKUP_BATCH)
+			const results = await withinLookupLimit(() =>
+				useFederatedShareStore().lookupShares(chunk),
+			)
+			for (const [shareId, result] of results) {
+				prefetched.set(shareId, result)
+			}
+		}
+	}
+
+	/**
+	 * A partner's verified certificate: one a failed save kept, one the batch
+	 * lookup fetched, or a single lookup that waits out the lookup limit up
+	 * to the cap.
+	 *
+	 * @param {{shareId: string, recipientCloudId: string}} share The partner share.
+	 * @return {Promise<{cloudId: string, fingerprint: string, spki: Uint8Array}>}
+	 */
+	const partnerCertificate = async (share) => {
+		const kept = keptFor(share)
+		if (kept) {
+			verifiedNow.set(share.shareId, kept)
+			return kept.recipient
+		}
+		const batched = prefetched.get(share.shareId)
+		prefetched.delete(share.shareId)
+		if (batched?.error) {
+			throw batched.error
+		}
+		const recipient = batched?.recipient
+			?? (await withinLookupLimit(() =>
+				useFederatedShareStore().lookup(share.recipientCloudId),
+			))
+		verifiedNow.set(share.shareId, {
+			recipientCloudId: share.recipientCloudId,
+			recipient,
+			at: Date.now(),
+		})
+		return recipient
 	}
 
 	const url = generateUrl(`/apps/keepiq/api/v1/secrets/${id}/share-save`)
@@ -521,6 +584,7 @@ export async function saveShared({
 			(r) => !federated.has(r.shareId) && !suspend.has(r.shareId),
 		)
 		const found = { unreachable: [], tooOld: [] }
+		await prefetchPartners(todo)
 		for (const share of todo) {
 			await fillPartner(share, found)
 		}

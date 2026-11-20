@@ -38,6 +38,7 @@ use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Listener\FederationOcmDiscoveryListener;
 use OCA\Keepiq\Service\FederatedCertificateService;
+use OCA\Keepiq\Service\PartnerCertificateBatchService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\ShareService;
@@ -126,7 +127,12 @@ class FederationLookupTest extends TestCase {
 		$user->method('getUID')->willReturn('alice');
 		$session->method('getUser')->willReturn($user);
 
-		return new FederationController($this->createMock(IRequest::class), $service, $session);
+		return new FederationController(
+			request: $this->createMock(originalClassName: IRequest::class),
+			certificates: $service,
+			userSession: $session,
+			batch: $this->createStub(originalClassName: PartnerCertificateBatchService::class),
+		);
 	}
 
 	/**
@@ -372,7 +378,8 @@ class FederationLookupTest extends TestCase {
 		$anonymous = new FederationController(
 			$this->createMock(IRequest::class),
 			$this->createMock(FederatedCertificateService::class),
-			$session
+			$session,
+			$this->createStub(originalClassName: PartnerCertificateBatchService::class)
 		);
 
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $anonymous->recipientCertificate('bob@cloud.partner.example')->getStatus());

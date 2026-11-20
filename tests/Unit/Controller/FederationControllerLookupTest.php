@@ -22,6 +22,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\FederationController;
 use OCA\Keepiq\Kernel\Contracts\FederatedCertificateServiceInterface;
+use OCA\Keepiq\Service\PartnerCertificateBatchService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
@@ -69,6 +70,7 @@ class FederationControllerLookupTest extends TestCase {
 			request: $this->createStub(IRequest::class),
 			certificates: $this->certificates,
 			userSession: $session,
+			batch: $this->createStub(originalClassName: PartnerCertificateBatchService::class),
 		);
 	}//end controller()
 
