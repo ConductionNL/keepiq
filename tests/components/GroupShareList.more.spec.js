@@ -46,28 +46,41 @@ describe('GroupShareList more', () => {
 		await wrapper.find('[data-testid="group-share-open-form"]').trigger('click')
 		expect(wrapper.find('[data-testid="group-share-form"]').exists()).toBe(true)
 
-		await wrapper.find('[data-testid="group-share-form-cancel"]').trigger('click')
+		await wrapper
+			.find('[data-testid="group-share-form-cancel"]')
+			.trigger('click')
 
 		expect(wrapper.find('[data-testid="group-share-form"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="group-share-open-form"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="group-share-open-form"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('resets the result and the form and loads the group shares of the next secret', async () => {
 		const wrapper = await mountList()
 		wrapper.vm.onShared({ group: { id: 'finance' }, received: 1, skipped: 0 })
-		expect(wrapper.vm.result).toEqual({ group: 'finance', received: 1, skipped: 0, refused: 0 })
+		expect(wrapper.vm.result).toEqual({
+			group: 'finance',
+			received: 1,
+			skipped: 0,
+			refused: 0,
+		})
 		wrapper.vm.formOpen = true
 
 		await wrapper.setProps({ secretId: 's-2' })
 		await flushPromises()
 
-		expect(get).toHaveBeenLastCalledWith('/apps/keepiq/api/v1/secrets/s-2/group-shares')
+		expect(get).toHaveBeenLastCalledWith(
+			'/apps/keepiq/api/v1/secrets/s-2/group-shares',
+		)
 		expect(wrapper.vm.result).toBeNull()
 		expect(wrapper.vm.formOpen).toBe(false)
-		expect(wrapper.find('[data-testid="group-share-result"]').exists()).toBe(false)
-		expect(wrapper.findAll('[data-testid="group-share-row"]').map((r) => r.text())).toEqual([
-			expect.stringContaining('hr'),
-		])
+		expect(wrapper.find('[data-testid="group-share-result"]').exists()).toBe(
+			false,
+		)
+		expect(
+			wrapper.findAll('[data-testid="group-share-row"]').map((r) => r.text()),
+		).toEqual([expect.stringContaining('hr')])
 	})
 
 	it('fetches nothing when the secret id is cleared, but still resets', async () => {
@@ -84,11 +97,21 @@ describe('GroupShareList more', () => {
 	it('names the group by its id when it has no label, and an empty name without a group', async () => {
 		const wrapper = await mountList()
 
-		wrapper.vm.onShared({ group: { id: 'finance' }, received: 2, skipped: 1, refused: 0 })
+		wrapper.vm.onShared({
+			group: { id: 'finance' },
+			received: 2,
+			skipped: 1,
+			refused: 0,
+		})
 		expect(wrapper.vm.result.group).toBe('finance')
 
 		wrapper.vm.onShared({ received: 0, skipped: 0 })
-		expect(wrapper.vm.result).toEqual({ group: '', received: 0, skipped: 0, refused: 0 })
+		expect(wrapper.vm.result).toEqual({
+			group: '',
+			received: 0,
+			skipped: 0,
+			refused: 0,
+		})
 	})
 
 	it('shows the error of a failed revoke and keeps the row', async () => {
@@ -101,7 +124,9 @@ describe('GroupShareList more', () => {
 		await flushPromises()
 
 		expect(del).toHaveBeenCalledWith('/apps/keepiq/api/v1/group-shares/gs-1')
-		expect(wrapper.find('[data-testid="group-share-list-error"]').text()).toBe('Not allowed')
+		expect(wrapper.find('[data-testid="group-share-list-error"]').text()).toBe(
+			'Not allowed',
+		)
 		expect(wrapper.findAll('[data-testid="group-share-row"]')).toHaveLength(1)
 	})
 })

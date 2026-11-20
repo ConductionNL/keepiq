@@ -219,10 +219,7 @@ import NavMenuEntry from './NavMenuEntry.vue'
 import { useFolderStore } from '../../store/modules/folder.js'
 import { useSessionStore } from '../../store/modules/session.js'
 import { useTeamFolderStore } from '../../store/modules/teamFolder.js'
-import {
-	currentAppsWebRoots,
-	isMenuEntryVisible,
-} from '../../utils/navEntries.js'
+import { currentAppsWebRoots, isMenuEntryVisible } from '../../utils/navEntries.js'
 
 /**
  * Keepiq's manifest-driven left rail with the recursive vault/folder tree.

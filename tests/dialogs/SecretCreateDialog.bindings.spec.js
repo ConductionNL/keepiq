@@ -36,21 +36,49 @@ const stubs = {
 	NcButton: {
 		props: ['disabled', 'variant', 'ariaLabel', 'title'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
-	NcSelect: emitter('NcSelect', ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue', 'label']),
-	NcTextField: emitter('NcTextField', ['modelValue', 'label', 'placeholder', 'disabled', 'required']),
-	NcPasswordField: { props: ['modelValue', 'label'], template: '<input type="password" />' },
+	NcSelect: emitter('NcSelect', [
+		'options',
+		'reduce',
+		'inputLabel',
+		'clearable',
+		'modelValue',
+		'label',
+	]),
+	NcTextField: emitter('NcTextField', [
+		'modelValue',
+		'label',
+		'placeholder',
+		'disabled',
+		'required',
+	]),
+	NcPasswordField: {
+		props: ['modelValue', 'label'],
+		template: '<input type="password" />',
+	},
 	NcNoteCard: { props: ['type'], template: '<div><slot /></div>' },
 	NcLoadingIcon: { template: '<span />' },
-	NcCheckboxRadioSwitch: emitter('NcCheckboxRadioSwitch', ['modelValue', 'disabled']),
+	NcCheckboxRadioSwitch: emitter('NcCheckboxRadioSwitch', [
+		'modelValue',
+		'disabled',
+	]),
 	Plus: { template: '<i />' },
 	Dice5: { template: '<i />' },
 	KeyGeneratorModal: { props: ['open'], template: '<div />' },
 	AdditionalUrlsField: emitter('AdditionalUrlsField', ['modelValue', 'disabled']),
-	AdditionalFieldsEditor: emitter('AdditionalFieldsEditor', ['members', 'disabled']),
+	AdditionalFieldsEditor: emitter('AdditionalFieldsEditor', [
+		'members',
+		'disabled',
+	]),
 	SecretTagsField: emitter('SecretTagsField', ['modelValue', 'disabled']),
-	DestinationSelect: emitter('DestinationSelect', ['modelValue', 'onlyIds', 'label', 'mode']),
+	DestinationSelect: emitter('DestinationSelect', [
+		'modelValue',
+		'onlyIds',
+		'label',
+		'mode',
+	]),
 }
 
 describe('SecretCreateDialog form wiring', () => {
@@ -85,10 +113,13 @@ describe('SecretCreateDialog form wiring', () => {
 
 	it('writes the type select and its reduced option into typeId', async () => {
 		const wrapper = await open()
-		const select = wrapper.findAllComponents({ name: 'NcSelect' })
+		const select = wrapper
+			.findAllComponents({ name: 'NcSelect' })
 			.find((s) => s.props('inputLabel') === 'Type')
 
-		expect(select.props('reduce')({ value: 'type-note', label: 'Note' })).toBe('type-note')
+		expect(select.props('reduce')({ value: 'type-note', label: 'Note' })).toBe(
+			'type-note',
+		)
 		select.vm.$emit('update:modelValue', 'type-note')
 
 		expect(wrapper.vm.typeId).toBe('type-note')
@@ -110,13 +141,22 @@ describe('SecretCreateDialog form wiring', () => {
 		const wrapper = await open()
 		const members = [{ key: 'pin', value: '1234' }]
 
-		wrapper.findComponent({ name: 'AdditionalUrlsField' }).vm.$emit('update:modelValue', ['https://b.test'])
-		wrapper.findComponent({ name: 'AdditionalFieldsEditor' }).vm.$emit('update:members', members)
-		wrapper.findComponent({ name: 'SecretTagsField' }).vm.$emit('update:modelValue', ['bank'])
-		wrapper.findAllComponents({ name: 'NcCheckboxRadioSwitch' })
+		wrapper
+			.findComponent({ name: 'AdditionalUrlsField' })
+			.vm.$emit('update:modelValue', ['https://b.test'])
+		wrapper
+			.findComponent({ name: 'AdditionalFieldsEditor' })
+			.vm.$emit('update:members', members)
+		wrapper
+			.findComponent({ name: 'SecretTagsField' })
+			.vm.$emit('update:modelValue', ['bank'])
+		wrapper
+			.findAllComponents({ name: 'NcCheckboxRadioSwitch' })
 			.find((s) => s.attributes('data-testid') === 'secret-reprompt')
 			.vm.$emit('update:modelValue', true)
-		wrapper.findComponent({ name: 'DestinationSelect' }).vm.$emit('update:modelValue', 'f1')
+		wrapper
+			.findComponent({ name: 'DestinationSelect' })
+			.vm.$emit('update:modelValue', 'f1')
 
 		expect(wrapper.vm.additionalUrls).toEqual(['https://b.test'])
 		expect(wrapper.vm.additionalFields).toEqual(members)
@@ -128,7 +168,10 @@ describe('SecretCreateDialog form wiring', () => {
 	it('closes on Cancel', async () => {
 		const wrapper = await open()
 
-		await wrapper.findAll('button').find((b) => b.text() === 'Cancel').trigger('click')
+		await wrapper
+			.findAll('button')
+			.find((b) => b.text() === 'Cancel')
+			.trigger('click')
 
 		expect(wrapper.vm.open).toBe(false)
 		expect(wrapper.emitted('close')).toHaveLength(1)

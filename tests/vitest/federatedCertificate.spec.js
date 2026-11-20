@@ -1015,7 +1015,13 @@ describe('verifyFederatedCertificate on chains built here', () => {
 			OID.nameConstraints,
 			derElement(
 				0x30,
-				derElement(0xa0, derElement(0x30, derElement(0x82, ascii('cloud.partner.example')))),
+				derElement(
+					0xa0,
+					derElement(
+						0x30,
+						derElement(0x82, ascii('cloud.partner.example')),
+					),
+				),
 			),
 			critical,
 		)

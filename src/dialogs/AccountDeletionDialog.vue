@@ -204,7 +204,6 @@ export default {
 			this.report = null
 			this.error = null
 		},
-
 	},
 }
 </script>

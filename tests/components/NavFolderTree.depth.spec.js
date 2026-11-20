@@ -11,18 +11,25 @@
 
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import NavFolderTree, { NAV_TREE_MAX_DEPTH } from '../../src/components/KeepiqAppNav/NavFolderTree.vue'
+import NavFolderTree, {
+	NAV_TREE_MAX_DEPTH,
+} from '../../src/components/KeepiqAppNav/NavFolderTree.vue'
 
 const NcAppNavigationItem = {
 	name: 'NcAppNavigationItem',
 	props: ['name', 'to', 'active', 'allowCollapse', 'open'],
 	emits: ['update:open'],
-	template: '<li :data-name="name" v-bind="$attrs"><slot name="icon" /><slot name="actions" /><slot /></li>',
+	template:
+		'<li :data-name="name" v-bind="$attrs"><slot name="icon" /><slot name="actions" /><slot /></li>',
 }
 
 const stubs = {
 	NcAppNavigationItem,
-	NcActionButton: { emits: ['click'], template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>' },
+	NcActionButton: {
+		emits: ['click'],
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+	},
 	NcActionSeparator: { template: '<hr />' },
 }
 
@@ -34,7 +41,11 @@ const stubs = {
  * @return {object[]} The top level.
  */
 function chain(length, leaves = []) {
-	let node = { id: `f${length - 1}`, name: `Folder ${length - 1}`, children: leaves }
+	let node = {
+		id: `f${length - 1}`,
+		name: `Folder ${length - 1}`,
+		children: leaves,
+	}
 	for (let level = length - 2; level >= 0; level--) {
 		node = { id: `f${level}`, name: `Folder ${level}`, children: [node] }
 	}
@@ -59,24 +70,34 @@ function mountTree(props) {
  * @return {object} The item component.
  */
 function item(wrapper, name) {
-	return wrapper.findAllComponents(NcAppNavigationItem).find((found) => found.props('name') === name)
+	return wrapper
+		.findAllComponents(NcAppNavigationItem)
+		.find((found) => found.props('name') === name)
 }
 
 describe('NavFolderTree depth and actions', () => {
-	it.each(['edit', 'share', 'move', 'delete'])('emits %s with the vault the menu belongs to', async (action) => {
-		const wrapper = mountTree({ folders: chain(2) })
+	it.each(['edit', 'share', 'move', 'delete'])(
+		'emits %s with the vault the menu belongs to',
+		async (action) => {
+			const wrapper = mountTree({ folders: chain(2) })
 
-		await wrapper.find(`[data-testid="nav-folder-${action}-f0"]`).trigger('click')
+			await wrapper
+				.find(`[data-testid="nav-folder-${action}-f0"]`)
+				.trigger('click')
 
-		expect(wrapper.emitted(action)).toHaveLength(1)
-		expect(wrapper.emitted(action)[0][0].id).toBe('f0')
-	})
+			expect(wrapper.emitted(action)).toHaveLength(1)
+			expect(wrapper.emitted(action)[0][0].id).toBe('f0')
+		},
+	)
 
 	it('links every row to its folder and opens rows until the user collapses one', async () => {
 		const wrapper = mountTree({ folders: chain(2) })
 		const vault = item(wrapper, 'Folder 0')
 
-		expect(vault.props('to')).toEqual({ name: 'SecretListFolder', params: { folderId: 'f0' } })
+		expect(vault.props('to')).toEqual({
+			name: 'SecretListFolder',
+			params: { folderId: 'f0' },
+		})
 		expect(vault.props('open')).toBe(true)
 		expect(vault.props('allowCollapse')).toBe(true)
 		expect(item(wrapper, 'Folder 1').props('allowCollapse')).toBe(false)
@@ -106,24 +127,44 @@ describe('NavFolderTree depth and actions', () => {
 		const ellipsis = wrapper.find(`[data-testid="nav-folder-ellipsis-${last}"]`)
 		expect(ellipsis.exists()).toBe(true)
 		const stand = item(wrapper, '…')
-		expect(stand.props('to')).toEqual({ name: 'SecretListFolder', params: { folderId: `f${NAV_TREE_MAX_DEPTH}` } })
+		expect(stand.props('to')).toEqual({
+			name: 'SecretListFolder',
+			params: { folderId: `f${NAV_TREE_MAX_DEPTH}` },
+		})
 		expect(stand.props('active')).toBe(false)
 	})
 
 	it('sends a "…" over several hidden children to the capped folder itself, and lights it when asked', () => {
-		const hidden = [{ id: 'h1', name: 'H1', children: [] }, { id: 'h2', name: 'H2', children: [] }]
+		const hidden = [
+			{ id: 'h1', name: 'H1', children: [] },
+			{ id: 'h2', name: 'H2', children: [] },
+		]
 		const last = `f${NAV_TREE_MAX_DEPTH - 1}`
-		const wrapper = mountTree({ folders: chain(NAV_TREE_MAX_DEPTH, hidden), ellipsisHighlightId: last })
+		const wrapper = mountTree({
+			folders: chain(NAV_TREE_MAX_DEPTH, hidden),
+			ellipsisHighlightId: last,
+		})
 
 		const stand = item(wrapper, '…')
-		expect(stand.props('to')).toEqual({ name: 'SecretListFolder', params: { folderId: last } })
+		expect(stand.props('to')).toEqual({
+			name: 'SecretListFolder',
+			params: { folderId: last },
+		})
 		expect(stand.props('active')).toBe(true)
 		expect(item(wrapper, 'H1')).toBeUndefined()
-		expect(item(wrapper, `Folder ${NAV_TREE_MAX_DEPTH - 1}`).props('active')).toBe(false)
+		expect(
+			item(wrapper, `Folder ${NAV_TREE_MAX_DEPTH - 1}`).props('active'),
+		).toBe(false)
 	})
 
 	it('renders nothing for an empty level and no "…" for a childless folder at the cap', () => {
-		expect(mountTree({ folders: [] }).findAllComponents(NcAppNavigationItem)).toHaveLength(0)
-		expect(mountTree({ folders: chain(NAV_TREE_MAX_DEPTH) }).find('[data-testid^="nav-folder-ellipsis-"]').exists()).toBe(false)
+		expect(
+			mountTree({ folders: [] }).findAllComponents(NcAppNavigationItem),
+		).toHaveLength(0)
+		expect(
+			mountTree({ folders: chain(NAV_TREE_MAX_DEPTH) })
+				.find('[data-testid^="nav-folder-ellipsis-"]')
+				.exists(),
+		).toBe(false)
 	})
 })

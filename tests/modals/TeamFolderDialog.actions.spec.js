@@ -30,14 +30,21 @@ vi.mock('../../src/policy/policy.js', () => ({
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
-const FOLDER = { id: 'tf-1', folderId: 'folder-1', folderName: 'DevOps', members: [] }
+const FOLDER = {
+	id: 'tf-1',
+	folderId: 'folder-1',
+	folderName: 'DevOps',
+	members: [],
+}
 
 describe('TeamFolderDialog actions', () => {
 	let store
 
 	beforeEach(() => {
 		setActivePinia(createPinia())
-		fetchPolicy.mockReset().mockResolvedValue({ team_folder_auto_confirm: false })
+		fetchPolicy
+			.mockReset()
+			.mockResolvedValue({ team_folder_auto_confirm: false })
 		useShareStore().searchShareableRecipients = vi.fn().mockResolvedValue([])
 		useGroupStore().fetchGroups = vi.fn().mockResolvedValue([])
 		store = useTeamFolderStore()
@@ -112,7 +119,9 @@ describe('TeamFolderDialog actions', () => {
 		expect(wrapper.vm.error).toBe(null)
 		expect(wrapper.vm.busy).toBe(false)
 
-		store.shareFolder.mockRejectedValue({ response: { data: { message: 'Already shared' } } })
+		store.shareFolder.mockRejectedValue({
+			response: { data: { message: 'Already shared' } },
+		})
 		await wrapper.vm.onShareFolder()
 		expect(wrapper.vm.error).toBe('Already shared')
 		expect(wrapper.vm.busy).toBe(false)
@@ -139,7 +148,9 @@ describe('TeamFolderDialog actions', () => {
 	})
 
 	it('keeps the entered member when adding is refused', async () => {
-		store.addMember.mockRejectedValue({ response: { data: { message: 'No such user' } } })
+		store.addMember.mockRejectedValue({
+			response: { data: { message: 'No such user' } },
+		})
 		const wrapper = mountDialog()
 		wrapper.vm.newMemberId = 'ghost'
 
@@ -204,7 +215,9 @@ describe('TeamFolderDialog actions', () => {
 		expect(wrapper.vm.skippedSecrets).toEqual([])
 		expect(wrapper.vm.refusedSecrets).toEqual([])
 
-		store.runFanOut.mockRejectedValue({ response: { data: { message: 'Locked' } } })
+		store.runFanOut.mockRejectedValue({
+			response: { data: { message: 'Locked' } },
+		})
 		await wrapper.vm.onRunFanOut()
 		expect(wrapper.vm.error).toBe('Locked')
 	})

@@ -20,7 +20,10 @@ import os from 'node:os'
 import path from 'node:path'
 import stylelint from 'stylelint'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import plugin, { bareHexColors, ruleName } from '../../scripts/stylelint/no-bare-hex-color.mjs'
+import plugin, {
+	bareHexColors,
+	ruleName,
+} from '../../scripts/stylelint/no-bare-hex-color.mjs'
 
 const ROOT = path.resolve(__dirname, '../..')
 
@@ -41,10 +44,12 @@ describe('bareHexColors', () => {
 	})
 
 	it('rejects a hex colour in another function, even next to a var()', () => {
-		expect(bareHexColors('linear-gradient(var(--x, #111), #222)'))
-			.toEqual([{ hex: '#222', index: 32 }])
-		expect(bareHexColors('rgba(0, 0, 0, .5), inset 0 0 #000'))
-			.toEqual([{ hex: '#000', index: 29 }])
+		expect(bareHexColors('linear-gradient(var(--x, #111), #222)')).toEqual([
+			{ hex: '#222', index: 32 },
+		])
+		expect(bareHexColors('rgba(0, 0, 0, .5), inset 0 0 #000')).toEqual([
+			{ hex: '#000', index: 29 },
+		])
 	})
 
 	it('ignores strings, ids and non-colour hashes', () => {
@@ -55,13 +60,16 @@ describe('bareHexColors', () => {
 })
 
 describe('keepiq/no-bare-hex-color', () => {
-	const lint = (code) => stylelint.lint({
-		code,
-		config: { plugins: [plugin], rules: { [ruleName]: true } },
-	})
+	const lint = (code) =>
+		stylelint.lint({
+			code,
+			config: { plugins: [plugin], rules: { [ruleName]: true } },
+		})
 
 	it('reports a hard-coded colour in a stylesheet', async () => {
-		const { results } = await lint('.a { color: #ff0000; border: 1px solid var(--color-border, #ddd); }')
+		const { results } = await lint(
+			'.a { color: #ff0000; border: 1px solid var(--color-border, #ddd); }',
+		)
 		const warnings = results[0].warnings
 		expect(warnings).toHaveLength(1)
 		expect(warnings[0].rule).toBe(ruleName)
@@ -70,7 +78,9 @@ describe('keepiq/no-bare-hex-color', () => {
 	})
 
 	it('passes theme variables with fallbacks', async () => {
-		const { results } = await lint('.a { color: var(--color-primary-element-text, #fff); background: var(--color-primary-element); }')
+		const { results } = await lint(
+			'.a { color: var(--color-primary-element-text, #fff); background: var(--color-primary-element); }',
+		)
 		expect(results[0].warnings).toEqual([])
 	})
 
@@ -89,13 +99,21 @@ describe('Dutch coverage gate (check-l10n-nl.js)', () => {
 		fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'keepiq-l10n-nl-'))
 		fs.mkdirSync(path.join(fixture, 'src'))
 		fs.mkdirSync(path.join(fixture, 'l10n'))
-		fs.writeFileSync(path.join(fixture, 'package.json'), JSON.stringify({ name: 'keepiq' }))
-		fs.writeFileSync(path.join(fixture, 'src', 'Probe.vue'),
-			"<template><p>{{ t('keepiq', 'Vault') }} {{ t('keepiq', 'Deliberately untranslated') }}</p></template>\n")
-		fs.writeFileSync(path.join(fixture, 'l10n', 'nl.json'), JSON.stringify({
-			translations: { Vault: 'Kluis' },
-			pluralForm: 'nplurals=2; plural=(n != 1);',
-		}))
+		fs.writeFileSync(
+			path.join(fixture, 'package.json'),
+			JSON.stringify({ name: 'keepiq' }),
+		)
+		fs.writeFileSync(
+			path.join(fixture, 'src', 'Probe.vue'),
+			"<template><p>{{ t('keepiq', 'Vault') }} {{ t('keepiq', 'Deliberately untranslated') }}</p></template>\n",
+		)
+		fs.writeFileSync(
+			path.join(fixture, 'l10n', 'nl.json'),
+			JSON.stringify({
+				translations: { Vault: 'Kluis' },
+				pluralForm: 'nplurals=2; plural=(n != 1);',
+			}),
+		)
 	})
 
 	afterAll(() => {
@@ -103,7 +121,10 @@ describe('Dutch coverage gate (check-l10n-nl.js)', () => {
 	})
 
 	it('fails and names a key that has no Dutch entry', () => {
-		const run = spawnSync(process.execPath, [gate], { cwd: fixture, encoding: 'utf8' })
+		const run = spawnSync(process.execPath, [gate], {
+			cwd: fixture,
+			encoding: 'utf8',
+		})
 		expect(run.status).toBe(1)
 		expect(run.stderr).toContain('MISSING from l10n/nl.json')
 		expect(run.stderr).toContain('"Deliberately untranslated"')
@@ -111,16 +132,27 @@ describe('Dutch coverage gate (check-l10n-nl.js)', () => {
 	})
 
 	it('refuses --write, which would seed English as Dutch', () => {
-		const run = spawnSync(process.execPath, [gate, '--write'], { cwd: fixture, encoding: 'utf8' })
+		const run = spawnSync(process.execPath, [gate, '--write'], {
+			cwd: fixture,
+			encoding: 'utf8',
+		})
 		expect(run.status).toBe(2)
-		expect(JSON.parse(fs.readFileSync(path.join(fixture, 'l10n', 'nl.json'), 'utf8')).translations)
-			.toEqual({ Vault: 'Kluis' })
+		expect(
+			JSON.parse(
+				fs.readFileSync(path.join(fixture, 'l10n', 'nl.json'), 'utf8'),
+			).translations,
+		).toEqual({ Vault: 'Kluis' })
 	})
 
 	it('passes on the app: every key used in src/ has a Dutch entry', () => {
-		const run = spawnSync(process.execPath, [gate], { cwd: ROOT, encoding: 'utf8' })
+		const run = spawnSync(process.execPath, [gate], {
+			cwd: ROOT,
+			encoding: 'utf8',
+		})
 		expect(run.stderr).toBe('')
 		expect(run.status).toBe(0)
-		expect(run.stdout).toContain('every used translation key is present in l10n/nl.json')
+		expect(run.stdout).toContain(
+			'every used translation key is present in l10n/nl.json',
+		)
 	})
 })

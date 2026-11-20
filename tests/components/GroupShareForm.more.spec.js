@@ -54,7 +54,9 @@ describe('GroupShareForm controls', () => {
 	}
 
 	it('shares with the group picked in the select and the restriction set in the fields', async () => {
-		const share = vi.spyOn(store, 'shareWithGroup').mockResolvedValue({ received: 4, skipped: 0 })
+		const share = vi
+			.spyOn(store, 'shareWithGroup')
+			.mockResolvedValue({ received: 4, skipped: 0 })
 		const wrapper = mountForm()
 		const submit = wrapper.find('[data-testid="group-share-form-submit"]')
 		expect(submit.attributes('disabled')).toBeDefined()
@@ -66,7 +68,9 @@ describe('GroupShareForm controls', () => {
 
 		expect(submit.attributes('disabled')).toBeUndefined()
 		expect(wrapper.findComponent(NcSelect).props('modelValue')).toEqual(FINANCE)
-		expect(wrapper.findComponent(ShareRestrictionFields).props('modelValue')).toEqual({
+		expect(
+			wrapper.findComponent(ShareRestrictionFields).props('modelValue'),
+		).toEqual({
 			useOnly: true,
 			endDate: '',
 		})
@@ -74,8 +78,13 @@ describe('GroupShareForm controls', () => {
 		await wrapper.find('form').trigger('submit')
 		await flushPromises()
 
-		expect(share).toHaveBeenCalledWith('s-1', 'finance', { useOnly: true, expiresAt: null })
-		expect(wrapper.emitted('shared')).toEqual([[{ group: FINANCE, received: 4, skipped: 0 }]])
+		expect(share).toHaveBeenCalledWith('s-1', 'finance', {
+			useOnly: true,
+			expiresAt: null,
+		})
+		expect(wrapper.emitted('shared')).toEqual([
+			[{ group: FINANCE, received: 4, skipped: 0 }],
+		])
 	})
 
 	it('runs the group search from the select and offers its results', async () => {

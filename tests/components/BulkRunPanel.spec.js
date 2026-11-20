@@ -19,7 +19,10 @@ import { useSecretStore } from '../../src/store/modules/secret.js'
 const substitutingT = {
 	methods: {
 		t: (_app, key, vars) =>
-			Object.entries(vars || {}).reduce((acc, [name, value]) => acc.replace(`{${name}}`, value), key),
+			Object.entries(vars || {}).reduce(
+				(acc, [name, value]) => acc.replace(`{${name}}`, value),
+				key,
+			),
 	},
 }
 
@@ -45,10 +48,18 @@ describe('BulkRunPanel', () => {
 	}
 
 	it('shows the progress while running and cancels through the store', async () => {
-		bulk.progress = { running: true, done: 2, total: 5, label: 'Moving', cancelled: false }
+		bulk.progress = {
+			running: true,
+			done: 2,
+			total: 5,
+			label: 'Moving',
+			cancelled: false,
+		}
 		const wrapper = mountPanel()
 
-		expect(wrapper.find('[data-testid="bulk-progress-label"]').text()).toBe('Moving — 2 / 5')
+		expect(wrapper.find('[data-testid="bulk-progress-label"]').text()).toBe(
+			'Moving — 2 / 5',
+		)
 		expect(wrapper.find('[data-testid="bulk-report"]').exists()).toBe(false)
 		await wrapper.find('[data-testid="bulk-cancel"]').trigger('click')
 		expect(bulk.cancel).toHaveBeenCalledTimes(1)
@@ -61,12 +72,16 @@ describe('BulkRunPanel', () => {
 		]
 		const wrapper = mountPanel()
 
-		const cells = wrapper.findAll('[data-testid="bulk-report"] tbody tr').map((row) => row.findAll('td').map((td) => td.text()))
+		const cells = wrapper
+			.findAll('[data-testid="bulk-report"] tbody tr')
+			.map((row) => row.findAll('td').map((td) => td.text()))
 		expect(cells).toEqual([
 			['Mailserver', 'ok', ''],
 			['s-gone', 'skipped', 'cancelled'],
 		])
-		expect(wrapper.find('[data-testid="bulk-retry-failed"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="bulk-retry-failed"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('offers a retry of the failed items only, and emits it', async () => {

@@ -21,7 +21,11 @@ const { methods } = HealthReportView
  * @return {object}
  */
 function makeVm(updateSecret) {
-	const vm = { secrets: { updateSecret }, httpsError: '', reanalyse: vi.fn().mockResolvedValue() }
+	const vm = {
+		secrets: { updateSecret },
+		httpsError: '',
+		reanalyse: vi.fn().mockResolvedValue(),
+	}
 	vm.changeToHttps = methods.changeToHttps.bind(vm)
 	return vm
 }
@@ -35,9 +39,15 @@ describe('HealthReportView changeToHttps', () => {
 		const updateSecret = vi.fn().mockResolvedValue({})
 		const vm = makeVm(updateSecret)
 
-		await vm.changeToHttps({ id: 's1', name: 'Intranet', url: 'http://intranet.example.org' })
+		await vm.changeToHttps({
+			id: 's1',
+			name: 'Intranet',
+			url: 'http://intranet.example.org',
+		})
 
-		expect(updateSecret).toHaveBeenCalledWith('s1', { url: 'https://intranet.example.org' })
+		expect(updateSecret).toHaveBeenCalledWith('s1', {
+			url: 'https://intranet.example.org',
+		})
 		expect(vm.reanalyse).toHaveBeenCalledOnce()
 		expect(vm.httpsError).toBe('')
 	})
@@ -45,7 +55,11 @@ describe('HealthReportView changeToHttps', () => {
 	it('reports a failed save and analyses nothing', async () => {
 		const vm = makeVm(vi.fn().mockRejectedValue(new Error('409')))
 
-		await vm.changeToHttps({ id: 's1', name: 'Intranet', url: 'http://intranet.example.org' })
+		await vm.changeToHttps({
+			id: 's1',
+			name: 'Intranet',
+			url: 'http://intranet.example.org',
+		})
 
 		expect(vm.reanalyse).not.toHaveBeenCalled()
 		// The test t() returns the source string; the name is a placeholder of it.

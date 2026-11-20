@@ -4,11 +4,10 @@
  * Keepiq Audit Event Types
  *
  * The single source of truth for dot-namespaced audit event-type strings
- * (add-secret-audit-trail §2.2) and the per-event-type metadata whitelist.
- * A string event_type (not an enum column) means new event families never
- * require a database migration (design D2); the whitelist (design D3) makes
- * the no-secret-material guarantee structural — AuditService validates every
- * recorded entry against the map for its event type.
+ * (add-secret-audit-trail §2.2). A string event_type (not an enum column)
+ * means new event families never require a database migration (design D2).
+ * The per-event-type metadata whitelist (design D3) lives in
+ * AuditMetadataPolicy.
  *
  * @category Event
  * @package  OCA\Keepiq\Event\Audit
@@ -265,36 +264,4 @@ final class AuditEventTypes {
 	public const FEDERATED_SHARE_RECIPIENT_RESUMED = 'federated_share.recipient_resumed';
 	// A partner's lookup answer advertised other value fields than recorded (keepiq#1325).
 	public const FEDERATION_PARTNER_VALUE_FIELDS_CHANGED = 'federation_partner.value_fields_changed';
-
-	/**
-	 * Metadata keys that may never appear in an audit entry.
-	 *
-	 * @var string[]
-	 */
-	public const FORBIDDEN_KEYS = AuditMetadataPolicy::FORBIDDEN_KEYS;
-
-	/**
-	 * Per-event-type whitelist of permitted metadata keys.
-	 *
-	 * @var array<string,string[]>
-	 */
-	public const WHITELIST = AuditMetadataPolicy::WHITELIST;
-
-	/**
-	 * The whitelisted metadata keys whose values reference a user id.
-	 *
-	 * @var string[]
-	 */
-	public const USER_REFERENCING_METADATA_KEYS = AuditMetadataPolicy::USER_REFERENCING_METADATA_KEYS;
-
-	/**
-	 * Whether an event type is known to the whitelist.
-	 *
-	 * @param string $eventType The event type
-	 *
-	 * @return bool
-	 */
-	public static function isKnown(string $eventType): bool {
-		return array_key_exists($eventType, self::WHITELIST);
-	}//end isKnown()
 }//end class

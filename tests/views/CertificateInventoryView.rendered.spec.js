@@ -139,9 +139,9 @@ describe('CertificateInventoryView rendered', () => {
 		expect(wrapper.find('[data-testid="cert-suite-key-v1"]').text()).toBe(
 			'RSA, 4096-bit',
 		)
-		expect(
-			wrapper.find('[data-testid="cert-suite-signature-v1"]').text(),
-		).toBe('sha256WithRSAEncryption')
+		expect(wrapper.find('[data-testid="cert-suite-signature-v1"]').text()).toBe(
+			'sha256WithRSAEncryption',
+		)
 		const headers = wrapper
 			.find('[data-testid="cert-suites-section"]')
 			.findAll('th')
@@ -158,9 +158,9 @@ describe('CertificateInventoryView rendered', () => {
 		const wrapper = await mountView()
 
 		expect(wrapper.find('[data-testid="cert-suite-key-v1"]').text()).toBe('—')
-		expect(
-			wrapper.find('[data-testid="cert-suite-signature-v1"]').text(),
-		).toBe('—')
+		expect(wrapper.find('[data-testid="cert-suite-signature-v1"]').text()).toBe(
+			'—',
+		)
 	})
 
 	it('renders the CA rows when the inventory carries them', async () => {

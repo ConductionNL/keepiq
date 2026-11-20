@@ -203,7 +203,9 @@ function attestationJson(created) {
 		type: 'public-key',
 		response: {
 			clientDataJSON: optionalBase64Url(created.response?.clientDataJSON),
-			attestationObject: optionalBase64Url(created.response?.attestationObject),
+			attestationObject: optionalBase64Url(
+				created.response?.attestationObject,
+			),
 		},
 	}
 }
@@ -220,12 +222,22 @@ function assertionJson(assertion) {
 		id,
 		rawId: id,
 		type: 'public-key',
-		response: {
-			clientDataJSON: optionalBase64Url(assertion.response?.clientDataJSON),
-			authenticatorData: optionalBase64Url(assertion.response?.authenticatorData),
-			signature: optionalBase64Url(assertion.response?.signature),
-			userHandle: optionalBase64Url(assertion.response?.userHandle),
-		},
+		response: assertionResponseJson(assertion.response),
+	}
+}
+
+/**
+ * A get() credential's response as the JSON the server verifies.
+ *
+ * @param {object|undefined} response The get() credential's response.
+ * @return {object}
+ */
+function assertionResponseJson(response) {
+	return {
+		clientDataJSON: optionalBase64Url(response?.clientDataJSON),
+		authenticatorData: optionalBase64Url(response?.authenticatorData),
+		signature: optionalBase64Url(response?.signature),
+		userHandle: optionalBase64Url(response?.userHandle),
 	}
 }
 
@@ -305,7 +317,9 @@ function passkeyRequest(options) {
 	const evalByCredential = {}
 	for (const credential of options.credentials) {
 		evalByCredential[toBase64Url(fromBase64Url(credential.credentialId))] = {
-			first: Uint8Array.from(atob(credential.prfSalt), (ch) => ch.charCodeAt(0)),
+			first: Uint8Array.from(atob(credential.prfSalt), (ch) =>
+				ch.charCodeAt(0),
+			),
 		}
 	}
 	return {

@@ -57,8 +57,18 @@ const stubs = {
 }
 
 const VERSIONS = [
-	{ id: 'v-3', versionNumber: 3, actorId: 'alice', createdAt: '2026-05-02T10:00:00Z' },
-	{ id: 'v-2', versionNumber: 2, actorId: 'bob', createdAt: '2026-04-01T09:30:00Z' },
+	{
+		id: 'v-3',
+		versionNumber: 3,
+		actorId: 'alice',
+		createdAt: '2026-05-02T10:00:00Z',
+	},
+	{
+		id: 'v-2',
+		versionNumber: 2,
+		actorId: 'bob',
+		createdAt: '2026-04-01T09:30:00Z',
+	},
 ]
 
 describe('VersionHistoryPanel', () => {
@@ -69,7 +79,9 @@ describe('VersionHistoryPanel', () => {
 		store = useSecretVersionStore()
 		store.versions = VERSIONS.map((v) => ({ ...v }))
 		store.fetchVersions = vi.fn().mockResolvedValue()
-		store.viewVersion = vi.fn().mockResolvedValue({ id: 'v-2', name: 'Old name', key: 'old' })
+		store.viewVersion = vi
+			.fn()
+			.mockResolvedValue({ id: 'v-2', name: 'Old name', key: 'old' })
 		store.restore = vi.fn().mockResolvedValue()
 		store.reset = vi.fn()
 	})

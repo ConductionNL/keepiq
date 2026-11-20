@@ -81,6 +81,9 @@ class ShareSaveService implements ShareSaveServiceInterface {
 	 *
 	 * @return void
 	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Container-injected
+	 *   collaborators, not a call signature anyone writes by hand.
+	 *
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(

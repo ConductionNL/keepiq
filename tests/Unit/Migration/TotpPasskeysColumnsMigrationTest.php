@@ -276,6 +276,18 @@ class TotpPasskeysColumnsMigrationTest extends TestCase {
 			public function addColumn(string $column, mixed $type, array $options = []): void {
 				$this->added[$this->name][$column] = $options;
 			}
+
+			/**
+			 * @param list<string> $columns
+			 */
+			public function setPrimaryKey(array $columns): void {
+			}
+
+			/**
+			 * @param list<string> $columns
+			 */
+			public function addIndex(array $columns, ?string $indexName = null): void {
+			}
 		};
 	}//end recordingTable()
 }//end class

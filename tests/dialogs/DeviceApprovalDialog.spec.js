@@ -33,7 +33,8 @@ const stubs = {
 	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
@@ -165,7 +166,9 @@ describe('DeviceApprovalDialog', () => {
 			.find('[data-testid="device-approval-password"]')
 			.setValue('secret')
 
-		await wrapper.find('[data-testid="device-approval-approve"]').trigger('click')
+		await wrapper
+			.find('[data-testid="device-approval-approve"]')
+			.trigger('click')
 		await flush()
 
 		expect(store.approve).toHaveBeenCalledWith(REQUEST, 'secret')

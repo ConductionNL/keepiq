@@ -126,6 +126,11 @@ class SecretTest extends TestCase {
 		$withPasskeys = new Secret();
 		$withPasskeys->setPasskeys('ENCRYPTED_PASSKEYS');
 		$this->assertFalse($withPasskeys->holdsNoValues());
+
+		// A placeholder filled with custom fields only holds them pending until the owner opens it.
+		$withPending = new Secret();
+		$withPending->appendPendingAdditionalFields(ciphertext: 'FILLED_BLOB', schemas: []);
+		$this->assertFalse($withPending->holdsNoValues());
 	}//end testHoldsNoValuesCountsTotpAndPasskeys()
 
 	/**
@@ -204,4 +209,31 @@ class SecretTest extends TestCase {
 		$secret->setPendingAdditionalFields('{"a":"FILL_1","b":7,"c":"FILL_2","d":null}');
 		$this->assertSame(['FILL_1', 'FILL_2'], $secret->pendingAdditionalFieldList());
 	}//end testPendingAdditionalFieldListReadsOnlyStrings()
+
+	/**
+	 * A fill held back with its request's schemas keeps them next to its blob,
+	 * an older entry stored as a bare string reads with none, and dropping the
+	 * merged blobs drops their schemas with them.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testPendingSchemasStayAlignedWithTheirBlobs(): void {
+		$hidden = ['PIN' => ['type' => 'string', 'hidden' => true]];
+		$secret = new Secret();
+		$secret->setPendingAdditionalFields('["OLD_FILL"]');
+		$secret->appendPendingAdditionalFields(ciphertext: 'PIN_FILL', schemas: $hidden);
+		$secret->appendPendingAdditionalFields(ciphertext: 'PLAIN_FILL', schemas: []);
+
+		$this->assertSame(['OLD_FILL', 'PIN_FILL', 'PLAIN_FILL'], $secret->pendingAdditionalFieldList());
+		$this->assertEquals([(object)[], (object)$hidden, (object)[]], $secret->jsonSerialize()['pendingFieldSchemas']);
+
+		$secret->dropMergedPending(count: 1);
+		$this->assertSame(['PIN_FILL', 'PLAIN_FILL'], $secret->pendingAdditionalFieldList());
+		$this->assertEquals([(object)$hidden, (object)[]], $secret->jsonSerialize()['pendingFieldSchemas']);
+
+		$secret->dropMergedPending(count: 2);
+		$this->assertNull($secret->getPendingAdditionalFields());
+	}//end testPendingSchemasStayAlignedWithTheirBlobs()
 }//end class

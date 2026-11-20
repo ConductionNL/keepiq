@@ -165,11 +165,17 @@ describe('WriteSecretForAppDialog', () => {
 	it("submit: falls back to the error's own message, then to the dialog's text", async () => {
 		const store = useApplicationStore()
 		const wrapper = mount(WriteSecretForAppDialog, {
-			propsData: { open: true, applicationId: 'app-1', applicationName: 'Test App' },
+			propsData: {
+				open: true,
+				applicationId: 'app-1',
+				applicationName: 'Test App',
+			},
 			global: { stubs: ncStubs },
 		})
 		await wrapper.setData({ name: 'GitHub PAT', value: 'ghp_AAA' })
-		store.writeSecretForApplication = vi.fn().mockRejectedValue(new Error('down'))
+		store.writeSecretForApplication = vi
+			.fn()
+			.mockRejectedValue(new Error('down'))
 		await wrapper.vm.submit()
 		expect(wrapper.vm.error).toBe('down')
 		store.writeSecretForApplication = vi.fn().mockRejectedValue({})

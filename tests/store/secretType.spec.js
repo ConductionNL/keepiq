@@ -77,7 +77,9 @@ describe('useSecretTypeStore', () => {
 		})
 
 		it('still fetches when cache-served but no types are cached', async () => {
-			const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: [{ id: 'x' }] })
+			const get = vi
+				.spyOn(axios, 'get')
+				.mockResolvedValue({ data: [{ id: 'x' }] })
 			const offline = useOfflineStore()
 			offline.servedFromCache = true
 			offline.vault = {}
@@ -91,8 +93,14 @@ describe('useSecretTypeStore', () => {
 
 		it.each([
 			['a Network Error message', Object.assign(new Error('Network Error'))],
-			['an ERR_NETWORK code', Object.assign(new Error('x'), { code: 'ERR_NETWORK' })],
-			['a request without a response', Object.assign(new Error('x'), { request: {} })],
+			[
+				'an ERR_NETWORK code',
+				Object.assign(new Error('x'), { code: 'ERR_NETWORK' }),
+			],
+			[
+				'a request without a response',
+				Object.assign(new Error('x'), { request: {} }),
+			],
 		])('falls back to the cached types on %s', async (_label, err) => {
 			vi.spyOn(axios, 'get').mockRejectedValue(err)
 			const offline = useOfflineStore()
@@ -153,15 +161,25 @@ describe('useSecretTypeStore', () => {
 				scope: 'user',
 			})
 			expect(created).toEqual({ id: 't1', name: 'wifi' })
-			expect(store.types).toEqual([{ id: 'login' }, { id: 't1', name: 'wifi' }])
+			expect(store.types).toEqual([
+				{ id: 'login' },
+				{ id: 't1', name: 'wifi' },
+			])
 		})
 
 		it('forwards an explicit scope and a field list', async () => {
-			const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 't2' } })
+			const post = vi
+				.spyOn(axios, 'post')
+				.mockResolvedValue({ data: { id: 't2' } })
 			const store = useSecretTypeStore()
 			const fields = [{ key: 'ssid', type: 'text' }]
 
-			await store.createType({ name: 'wifi', label: 'Wi-Fi', scope: 'global', fields })
+			await store.createType({
+				name: 'wifi',
+				label: 'Wi-Fi',
+				scope: 'global',
+				fields,
+			})
 
 			expect(post).toHaveBeenCalledWith(TYPES_URL, {
 				name: 'wifi',
@@ -184,17 +202,26 @@ describe('useSecretTypeStore', () => {
 
 			expect(put).toHaveBeenCalledWith(`${TYPES_URL}/b`, { label: 'New' })
 			expect(updated).toEqual({ id: 'b', label: 'New' })
-			expect(store.types).toEqual([{ id: 'a' }, { id: 'b', label: 'New' }, { id: 'c' }])
+			expect(store.types).toEqual([
+				{ id: 'a' },
+				{ id: 'b', label: 'New' },
+				{ id: 'c' },
+			])
 		})
 
 		it('sends the field list when given', async () => {
-			const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: { id: 'b' } })
+			const put = vi
+				.spyOn(axios, 'put')
+				.mockResolvedValue({ data: { id: 'b' } })
 			const store = useSecretTypeStore()
 			const fields = [{ key: 'pin' }]
 
 			await store.updateType('b', 'Card', fields)
 
-			expect(put).toHaveBeenCalledWith(`${TYPES_URL}/b`, { label: 'Card', fields })
+			expect(put).toHaveBeenCalledWith(`${TYPES_URL}/b`, {
+				label: 'Card',
+				fields,
+			})
 		})
 
 		it('leaves the list alone when the type is not loaded', async () => {

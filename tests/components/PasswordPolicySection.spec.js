@@ -24,7 +24,11 @@ const URL = '/apps/keepiq/api/settings'
 
 async function mountSection() {
 	const wrapper = mount(PasswordPolicySection, {
-		global: { stubs: { CnSettingsSection: { template: '<section><slot /></section>' } } },
+		global: {
+			stubs: {
+				CnSettingsSection: { template: '<section><slot /></section>' },
+			},
+		},
 	})
 	await flush()
 	return wrapper
@@ -38,7 +42,10 @@ describe('PasswordPolicySection', () => {
 
 	it('loads the stored floors', async () => {
 		const get = vi.spyOn(axios, 'get').mockResolvedValue({
-			data: { master_password_min_length: '16', master_password_min_score: '4' },
+			data: {
+				master_password_min_length: '16',
+				master_password_min_score: '4',
+			},
 		})
 		const wrapper = await mountSection()
 
@@ -48,7 +55,9 @@ describe('PasswordPolicySection', () => {
 	})
 
 	it('falls back to 12 and 3 when the stored values are not numbers', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { master_password_min_length: '' } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { master_password_min_length: '' },
+		})
 		const wrapper = await mountSection()
 
 		expect(wrapper.vm.minLength).toBe(12)
@@ -92,7 +101,12 @@ describe('PasswordPolicySection', () => {
 	it('shows the values the server stored and drops the cached policy', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
 		vi.spyOn(axios, 'post').mockResolvedValue({
-			data: { config: { master_password_min_length: '14', master_password_min_score: '4' } },
+			data: {
+				config: {
+					master_password_min_length: '14',
+					master_password_min_score: '4',
+				},
+			},
 		})
 		const wrapper = await mountSection()
 
@@ -118,7 +132,9 @@ describe('PasswordPolicySection', () => {
 
 	it('reports a refused write with the server message and keeps the cache', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
-		vi.spyOn(axios, 'post').mockRejectedValue({ response: { data: { message: 'Too short' } } })
+		vi.spyOn(axios, 'post').mockRejectedValue({
+			response: { data: { message: 'Too short' } },
+		})
 		const wrapper = await mountSection()
 
 		await wrapper.vm.save()

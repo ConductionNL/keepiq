@@ -65,6 +65,9 @@ final class AccessWindow {
 	 *
 	 * @throws InvalidArgumentException When the approval reaches outside the request or a range does not parse.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AddressRange::parse() is the value
+	 *   object's validating named constructor.
+	 *
 	 * @spec openspec/changes/archive/2026-11-17-capability-requirements-from-the-matrix/tasks.md#task-3.1
 	 */
 	public static function approve(

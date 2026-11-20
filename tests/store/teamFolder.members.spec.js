@@ -40,7 +40,9 @@ describe('teamFolder membership actions', () => {
 			const store = useTeamFolderStore()
 			await store.fetchTeamFolders()
 
-			expect(get.mock.calls[0][0]).toContain('/apps/keepiq/api/v1/team-folders')
+			expect(get.mock.calls[0][0]).toContain(
+				'/apps/keepiq/api/v1/team-folders',
+			)
 			expect(store.owned).toEqual([{ id: 'tf-1' }])
 			expect(store.memberOf).toEqual([{ id: 'tf-2' }])
 			expect(store.loading).toBe(false)
@@ -86,7 +88,9 @@ describe('teamFolder membership actions', () => {
 	})
 
 	it('shareFolder posts the folder id, reloads and returns the row', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'tf-9' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'tf-9' } })
 		const store = useTeamFolderStore()
 
 		const row = await store.shareFolder('folder-7')
@@ -99,7 +103,9 @@ describe('teamFolder membership actions', () => {
 	})
 
 	it('addMember posts the member and its restriction, then reloads', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { recipients: 2 } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { recipients: 2 } })
 		const store = useTeamFolderStore()
 
 		const result = await store.addMember('tf-1', 'group', 'ops', {
@@ -107,7 +113,9 @@ describe('teamFolder membership actions', () => {
 			expiresAt: '2027-01-01',
 		})
 
-		expect(post.mock.calls[0][0]).toContain('/apps/keepiq/api/v1/team-folders/tf-1/members')
+		expect(post.mock.calls[0][0]).toContain(
+			'/apps/keepiq/api/v1/team-folders/tf-1/members',
+		)
 		expect(post.mock.calls[0][1]).toEqual({
 			memberType: 'group',
 			memberId: 'ops',
@@ -124,39 +132,54 @@ describe('teamFolder membership actions', () => {
 
 		await store.addMember('tf-1', 'user', 'kim')
 
-		expect(post.mock.calls[0][1]).toEqual({ memberType: 'user', memberId: 'kim' })
+		expect(post.mock.calls[0][1]).toEqual({
+			memberType: 'user',
+			memberId: 'kim',
+		})
 	})
 
 	it('removeMember deletes the membership row and reloads', async () => {
-		const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: { revoked: 3 } })
+		const del = vi
+			.spyOn(axios, 'delete')
+			.mockResolvedValue({ data: { revoked: 3 } })
 		const store = useTeamFolderStore()
 
 		const result = await store.removeMember('tf-1', 'm-4')
 
-		expect(del.mock.calls[0][0]).toContain('/apps/keepiq/api/v1/team-folders/tf-1/members/m-4')
+		expect(del.mock.calls[0][0]).toContain(
+			'/apps/keepiq/api/v1/team-folders/tf-1/members/m-4',
+		)
 		expect(result).toEqual({ revoked: 3 })
 		expect(get).toHaveBeenCalledTimes(1)
 	})
 
 	it('setMemberGrade patches the grade and reloads', async () => {
-		const patch = vi.spyOn(axios, 'patch').mockResolvedValue({ data: { grade: 'write' } })
+		const patch = vi
+			.spyOn(axios, 'patch')
+			.mockResolvedValue({ data: { grade: 'write' } })
 		const store = useTeamFolderStore()
 
 		const result = await store.setMemberGrade('tf-1', 'm-4', 'write')
 
-		expect(patch.mock.calls[0][0]).toContain('/apps/keepiq/api/v1/team-folders/tf-1/members/m-4')
+		expect(patch.mock.calls[0][0]).toContain(
+			'/apps/keepiq/api/v1/team-folders/tf-1/members/m-4',
+		)
 		expect(patch.mock.calls[0][1]).toEqual({ grade: 'write' })
 		expect(result).toEqual({ grade: 'write' })
 		expect(get).toHaveBeenCalledTimes(1)
 	})
 
 	it('unshareFolder deletes the team folder and reloads', async () => {
-		const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: { revoked: 5 } })
+		const del = vi
+			.spyOn(axios, 'delete')
+			.mockResolvedValue({ data: { revoked: 5 } })
 		const store = useTeamFolderStore()
 
 		const result = await store.unshareFolder('tf-1')
 
-		expect(del.mock.calls[0][0]).toMatch(/\/apps\/keepiq\/api\/v1\/team-folders\/tf-1$/)
+		expect(del.mock.calls[0][0]).toMatch(
+			/\/apps\/keepiq\/api\/v1\/team-folders\/tf-1$/,
+		)
 		expect(result).toEqual({ revoked: 5 })
 		expect(get).toHaveBeenCalledTimes(1)
 	})
@@ -182,14 +205,28 @@ describe('teamFolder membership actions', () => {
 	describe('regrantAttachments', () => {
 		it('re-grants each row whose recipient has a certificate, in order', async () => {
 			const attachments = useAttachmentStore()
-			const regrant = vi.spyOn(attachments, 'regrantForRecipient').mockResolvedValue(undefined)
+			const regrant = vi
+				.spyOn(attachments, 'regrantForRecipient')
+				.mockResolvedValue(undefined)
 			const store = useTeamFolderStore()
 
 			await store.regrantAttachments(
 				[
-					{ sourceSecretId: 's-1', recipientSecretId: 'c-1', targetUserId: 'kim' },
-					{ sourceSecretId: 's-2', recipientSecretId: 'c-2', targetUserId: 'nocert' },
-					{ sourceSecretId: 's-3', recipientSecretId: 'c-3', targetUserId: 'lee' },
+					{
+						sourceSecretId: 's-1',
+						recipientSecretId: 'c-1',
+						targetUserId: 'kim',
+					},
+					{
+						sourceSecretId: 's-2',
+						recipientSecretId: 'c-2',
+						targetUserId: 'nocert',
+					},
+					{
+						sourceSecretId: 's-3',
+						recipientSecretId: 'c-3',
+						targetUserId: 'lee',
+					},
 				],
 				{ kim: 'CERT-KIM', lee: 'CERT-LEE' },
 			)
@@ -220,8 +257,16 @@ describe('teamFolder membership actions', () => {
 			await expect(
 				store.regrantAttachments(
 					[
-						{ sourceSecretId: 's-1', recipientSecretId: 'c-1', targetUserId: 'kim' },
-						{ sourceSecretId: 's-2', recipientSecretId: 'c-2', targetUserId: 'lee' },
+						{
+							sourceSecretId: 's-1',
+							recipientSecretId: 'c-1',
+							targetUserId: 'kim',
+						},
+						{
+							sourceSecretId: 's-2',
+							recipientSecretId: 'c-2',
+							targetUserId: 'lee',
+						},
 					],
 					{ kim: 'CERT-KIM', lee: 'CERT-LEE' },
 				),

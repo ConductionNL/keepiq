@@ -170,8 +170,7 @@ function goesOnAfter(run, outcome) {
  * @return {void}
  */
 function halted(run) {
-	run.halted =
-		'Migration could not reach the server; no records were changed.'
+	run.halted = 'Migration could not reach the server; no records were changed.'
 }
 
 /**

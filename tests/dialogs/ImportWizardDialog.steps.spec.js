@@ -24,10 +24,12 @@ import { useSessionStore } from '../../src/store/modules/session.js'
 // global t when its module loads, so fill the placeholders before the import:
 // these tests read the counts the dialog passes in.
 vi.hoisted(() => {
-	globalThis.t = (app, s, vars = {}) => s.replace(/{(\w+)}/g, (m, k) => (k in vars ? vars[k] : m))
+	globalThis.t = (app, s, vars = {}) =>
+		s.replace(/{(\w+)}/g, (m, k) => (k in vars ? vars[k] : m))
 })
 
-const { default: ImportWizardDialog } = await import('../../src/dialogs/ImportWizardDialog.vue')
+const { default: ImportWizardDialog } =
+	await import('../../src/dialogs/ImportWizardDialog.vue')
 
 const ncStubs = {
 	NcDialog: {
@@ -38,7 +40,10 @@ const ncStubs = {
 		props: ['variant', 'disabled'],
 		template: '<button :disabled="disabled"><slot /></button>',
 	},
-	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div class="note" :data-type="type"><slot /></div>',
+	},
 	NcSelect: {
 		name: 'NcSelect',
 		props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'],
@@ -56,7 +61,10 @@ const ncStubs = {
 		template: '<label class="switch"><slot /></label>',
 	},
 	NcLoadingIcon: { props: ['size'], template: '<div />' },
-	NcEmptyContent: { props: ['name'], template: '<div class="empty">{{ name }}</div>' },
+	NcEmptyContent: {
+		props: ['name'],
+		template: '<div class="empty">{{ name }}</div>',
+	},
 }
 
 const mountOpts = { global: { stubs: ncStubs } }
@@ -68,7 +76,10 @@ const mountOpts = { global: { stubs: ncStubs } }
  */
 function openWizard() {
 	useSessionStore().cryptoKey = { fake: true }
-	const wrapper = mount(ImportWizardDialog, { props: { open: true }, ...mountOpts })
+	const wrapper = mount(ImportWizardDialog, {
+		props: { open: true },
+		...mountOpts,
+	})
 	return { wrapper, store: useImportStore() }
 }
 
@@ -93,7 +104,9 @@ function blobText(blob) {
  * @param {string} label The button text.
  * @return {object} The button wrapper.
  */
-const button = (wrapper, label) => wrapper.findAll('button').find((b) => b.text() === label)
+function button(wrapper, label) {
+	return wrapper.findAll('button').find((b) => b.text() === label)
+}
 
 describe('ImportWizardDialog steps', () => {
 	beforeEach(() => {
@@ -125,12 +138,22 @@ describe('ImportWizardDialog steps', () => {
 		select.vm.$emit('update:modelValue', backup.value)
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.find('.passphrase').attributes('aria-label')).toBe('Backup passphrase')
+		expect(wrapper.find('.passphrase').attributes('aria-label')).toBe(
+			'Backup passphrase',
+		)
 	})
 
 	it('reveals one masked login cell at a time', async () => {
 		const { wrapper, store } = openWizard()
-		store.rows = [{ sourceRow: 3, name: 'Bank', login: 'alice', password: 'pw', errors: [] }]
+		store.rows = [
+			{
+				sourceRow: 3,
+				name: 'Bank',
+				login: 'alice',
+				password: 'pw',
+				errors: [],
+			},
+		]
 		store.goToStep('mapping')
 		await wrapper.vm.$nextTick()
 
@@ -141,7 +164,11 @@ describe('ImportWizardDialog steps', () => {
 
 		expect(cells()[2]).toBe('alice Hide')
 		expect(cells()[3]).toBe('•••••••• Show')
-		expect(wrapper.get('[data-testid="import-reveal-3-login"]').attributes('aria-label')).toBe('Hide this value')
+		expect(
+			wrapper
+				.get('[data-testid="import-reveal-3-login"]')
+				.attributes('aria-label'),
+		).toBe('Hide this value')
 	})
 
 	it('follows the one-folder switch on the folders step', async () => {
@@ -196,7 +223,9 @@ describe('ImportWizardDialog steps', () => {
 			skippedDuplicates: 1,
 			rejected: 1,
 			foldersCreated: 2,
-			rejectedRows: [{ sourceRow: 4, name: 'Bad, row', reason: 'missing name' }],
+			rejectedRows: [
+				{ sourceRow: 4, name: 'Bad, row', reason: 'missing name' },
+			],
 		}
 		store.goToStep('summary')
 		await wrapper.vm.$nextTick()
@@ -207,7 +236,11 @@ describe('ImportWizardDialog steps', () => {
 			'Rejected: 1',
 			'Folders created: 2',
 		])
-		expect(wrapper.findAll('tbody td').map((td) => td.text())).toEqual(['4', 'Bad, row', 'missing name'])
+		expect(wrapper.findAll('tbody td').map((td) => td.text())).toEqual([
+			'4',
+			'Bad, row',
+			'missing name',
+		])
 
 		const blobs = []
 		URL.createObjectURL = vi.fn((blob) => {
@@ -215,16 +248,20 @@ describe('ImportWizardDialog steps', () => {
 			return 'blob:rejected'
 		})
 		URL.revokeObjectURL = vi.fn()
-		const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function () {
-			expect(this.download).toBe('keepiq-import-rejected.csv')
-			expect(this.href).toBe('blob:rejected')
-		})
+		const click = vi
+			.spyOn(HTMLAnchorElement.prototype, 'click')
+			.mockImplementation(function () {
+				expect(this.download).toBe('keepiq-import-rejected.csv')
+				expect(this.href).toBe('blob:rejected')
+			})
 
 		await button(wrapper, 'Download rejected rows').trigger('click')
 
 		expect(click).toHaveBeenCalledTimes(1)
 		expect(blobs[0].type).toBe('text/csv')
-		expect(await blobText(blobs[0])).toBe('row,name,reason\r\n4,"Bad, row",missing name')
+		expect(await blobText(blobs[0])).toBe(
+			'row,name,reason\r\n4,"Bad, row",missing name',
+		)
 		expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:rejected')
 		expect(document.querySelector('a[download]')).toBeNull()
 		expect(button(wrapper, 'Back')).toBeUndefined()

@@ -27,11 +27,13 @@ const stubs = {
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
+		template:
+			'<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
 	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
@@ -53,8 +55,8 @@ function mountDialog() {
 	return mount(KeyProofPromptDialog, { global: { stubs } })
 }
 
-function confirmButton (wrapper) {
-  return wrapper.find('[data-testid="key-proof-prompt-confirm"]')
+function confirmButton(wrapper) {
+	return wrapper.find('[data-testid="key-proof-prompt-confirm"]')
 }
 
 describe('KeyProofPromptDialog', () => {
@@ -74,9 +76,9 @@ describe('KeyProofPromptDialog', () => {
 	it('renders nothing until the store asks', () => {
 		const wrapper = mountDialog()
 
-		expect(wrapper.find('[data-testid="key-proof-prompt-password"]').exists()).toBe(
-			false,
-		)
+		expect(
+			wrapper.find('[data-testid="key-proof-prompt-password"]').exists(),
+		).toBe(false)
 	})
 
 	it('shows the reason and enables confirm once a password is typed', async () => {

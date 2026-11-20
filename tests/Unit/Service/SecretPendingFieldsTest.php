@@ -83,7 +83,7 @@ class SecretPendingFieldsTest extends TestCase {
 		$this->secret->setOwnerType('user');
 		$this->secret->setOwnerId('alice');
 		$this->secret->setAdditionalFields('OWN_BLOB');
-		$this->secret->setPendingAdditionalFieldList(['FILL_1', 'FILL_2']);
+		$this->secret->setPendingAdditionalFields('["FILL_1","FILL_2"]');
 
 		$this->mapper = $this->createMock(SecretMapper::class);
 		$this->mapper->method('findById')->willReturn($this->secret);

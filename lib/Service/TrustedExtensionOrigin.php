@@ -65,6 +65,7 @@ final class TrustedExtensionOrigin implements CeremonyStep {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by the library's CeremonyStep.
 	 * @SuppressWarnings(PHPMD.LongVariable) Parameter names fixed by the library's CeremonyStep.
+	 * @psalm-suppress UnusedParam Signature fixed by the library's CeremonyStep.
 	 *
 	 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-passkey-trust/spec.md#requirement-extension-ceremonies-pass-only-for-trusted-extension-origins
 	 */

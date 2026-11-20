@@ -25,7 +25,10 @@ import { useEncryptionSuiteStore } from '../../src/store/modules/encryptionSuite
  * @return {string} The interpolated text.
  */
 function interpolate(app, text, vars) {
-	return Object.keys(vars ?? {}).reduce((out, key) => out.replace(`{${key}}`, String(vars[key])), text)
+	return Object.keys(vars ?? {}).reduce(
+		(out, key) => out.replace(`{${key}}`, String(vars[key])),
+		text,
+	)
 }
 
 /**
@@ -85,7 +88,9 @@ describe('CompromiseRecoveryForm paths', () => {
 
 	it('takes the old password from its field', async () => {
 		const wrapper = mountForm()
-		await wrapper.findComponent({ name: 'NcPasswordField' }).vm.$emit('update:modelValue', 'old-secret')
+		await wrapper
+			.findComponent({ name: 'NcPasswordField' })
+			.vm.$emit('update:modelValue', 'old-secret')
 
 		expect(wrapper.vm.oldPassword).toBe('old-secret')
 	})
@@ -98,12 +103,16 @@ describe('CompromiseRecoveryForm paths', () => {
 		await wrapper.vm.handleRetry()
 
 		expect(resume).not.toHaveBeenCalled()
-		expect(wrapper.vm.error).toBe('Re-enter your old password to retry the remaining secrets.')
+		expect(wrapper.vm.error).toBe(
+			'Re-enter your old password to retry the remaining secrets.',
+		)
 		expect(wrapper.vm.phase).toBe('idle')
 	})
 
 	it('shows why a retry failed and stays where it was', async () => {
-		const resume = vi.spyOn(store, 'resumeMigration').mockRejectedValue({ response: { data: { message: 'Vault is locked' } } })
+		const resume = vi.spyOn(store, 'resumeMigration').mockRejectedValue({
+			response: { data: { message: 'Vault is locked' } },
+		})
 		const wrapper = mountForm()
 		wrapper.vm.activeOldPassword = 'old-secret'
 		wrapper.vm.phase = 'running'
@@ -118,20 +127,29 @@ describe('CompromiseRecoveryForm paths', () => {
 
 	it.each([
 		[{ code: 'key_proof_required', message: 'Proof needed' }],
-		[{ response: { data: { error: 'key_proof_required', message: 'Proof needed' } } }],
-	])('re-asks for the previous password when finishing needs a proof (%j)', async (refusal) => {
-		vi.spyOn(store, 'acceptMigrationLosses').mockRejectedValue(refusal)
-		const wrapper = mountForm()
-		wrapper.vm.phase = 'running'
+		[
+			{
+				response: {
+					data: { error: 'key_proof_required', message: 'Proof needed' },
+				},
+			},
+		],
+	])(
+		're-asks for the previous password when finishing needs a proof (%j)',
+		async (refusal) => {
+			vi.spyOn(store, 'acceptMigrationLosses').mockRejectedValue(refusal)
+			const wrapper = mountForm()
+			wrapper.vm.phase = 'running'
 
-		await wrapper.vm.handleAcceptLosses()
-		await flushPromises()
+			await wrapper.vm.handleAcceptLosses()
+			await flushPromises()
 
-		expect(wrapper.vm.needsReauth).toBe(true)
-		expect(wrapper.vm.error).toBe('Proof needed')
-		expect(wrapper.vm.phase).toBe('running')
-		expect(wrapper.vm.loading).toBe(false)
-	})
+			expect(wrapper.vm.needsReauth).toBe(true)
+			expect(wrapper.vm.error).toBe('Proof needed')
+			expect(wrapper.vm.phase).toBe('running')
+			expect(wrapper.vm.loading).toBe(false)
+		},
+	)
 
 	it('does not re-ask for the password on any other refusal, and falls back to a generic message', async () => {
 		vi.spyOn(store, 'acceptMigrationLosses').mockRejectedValue({})
@@ -145,7 +163,9 @@ describe('CompromiseRecoveryForm paths', () => {
 
 	it('finishes with the re-entered password when none was retained', async () => {
 		store.migrationStatus = { id: 'mig-1' }
-		const accept = vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({ residualContacts: [] })
+		const accept = vi
+			.spyOn(store, 'acceptMigrationLosses')
+			.mockResolvedValue({ residualContacts: [] })
 		const wrapper = mountForm()
 		wrapper.vm.needsReauth = true
 		wrapper.vm.oldPassword = 'typed-again'

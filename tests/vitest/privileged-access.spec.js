@@ -31,20 +31,35 @@ describe('requestState', () => {
 	})
 
 	it('places a moment against the approved window, end exclusive', () => {
-		expect(requestState(approved, new Date('2026-11-16T13:59:59Z'))).toBe('upcoming')
-		expect(requestState(approved, new Date('2026-11-16T14:00:00Z'))).toBe('active')
-		expect(requestState(approved, new Date('2026-11-16T15:59:59Z'))).toBe('active')
-		expect(requestState(approved, new Date('2026-11-16T16:00:00Z'))).toBe('ended')
+		expect(requestState(approved, new Date('2026-11-16T13:59:59Z'))).toBe(
+			'upcoming',
+		)
+		expect(requestState(approved, new Date('2026-11-16T14:00:00Z'))).toBe(
+			'active',
+		)
+		expect(requestState(approved, new Date('2026-11-16T15:59:59Z'))).toBe(
+			'active',
+		)
+		expect(requestState(approved, new Date('2026-11-16T16:00:00Z'))).toBe(
+			'ended',
+		)
 	})
 
 	it('treats an approval without a window as still pending', () => {
-		expect(requestState({ status: 'approved', approvedStart: null, approvedEnd: null }, new Date())).toBe('pending')
+		expect(
+			requestState(
+				{ status: 'approved', approvedStart: null, approvedEnd: null },
+				new Date(),
+			),
+		).toBe('pending')
 	})
 })
 
 describe('localInputToIso', () => {
 	it('turns a local input into the same moment in UTC', () => {
-		expect(localInputToIso('2026-11-16T14:00')).toBe(new Date('2026-11-16T14:00').toISOString())
+		expect(localInputToIso('2026-11-16T14:00')).toBe(
+			new Date('2026-11-16T14:00').toISOString(),
+		)
 	})
 
 	it('answers empty for nothing or a non-date', () => {
@@ -56,11 +71,9 @@ describe('localInputToIso', () => {
 
 describe('parseRanges', () => {
 	it('splits on commas, spaces and new lines and drops duplicates', () => {
-		expect(parseRanges('192.0.2.0/24, 2001:db8::/32\n192.0.2.0/24  10.0.0.0/8')).toEqual([
-			'192.0.2.0/24',
-			'2001:db8::/32',
-			'10.0.0.0/8',
-		])
+		expect(
+			parseRanges('192.0.2.0/24, 2001:db8::/32\n192.0.2.0/24  10.0.0.0/8'),
+		).toEqual(['192.0.2.0/24', '2001:db8::/32', '10.0.0.0/8'])
 	})
 
 	it('answers no ranges for blank input', () => {
@@ -71,9 +84,18 @@ describe('parseRanges', () => {
 
 describe('shouldOfferRotation', () => {
 	it('offers rotation once an approved window has ended', () => {
-		expect(shouldOfferRotation([approved], new Date('2026-11-16T17:00:00Z'))).toBe(true)
-		expect(shouldOfferRotation([approved], new Date('2026-11-16T15:00:00Z'))).toBe(false)
-		expect(shouldOfferRotation([{ status: 'denied' }], new Date('2026-11-16T17:00:00Z'))).toBe(false)
+		expect(
+			shouldOfferRotation([approved], new Date('2026-11-16T17:00:00Z')),
+		).toBe(true)
+		expect(
+			shouldOfferRotation([approved], new Date('2026-11-16T15:00:00Z')),
+		).toBe(false)
+		expect(
+			shouldOfferRotation(
+				[{ status: 'denied' }],
+				new Date('2026-11-16T17:00:00Z'),
+			),
+		).toBe(false)
 		expect(shouldOfferRotation(undefined, new Date())).toBe(false)
 	})
 })

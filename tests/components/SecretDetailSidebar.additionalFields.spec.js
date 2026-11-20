@@ -16,6 +16,7 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import SchemaValueView from '../../src/components/SchemaValueView.vue'
 import SecretDetailSidebar from '../../src/components/SecretDetailSidebar.vue'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
@@ -118,92 +119,59 @@ describe('SecretDetailSidebar — additional fields', () => {
 	})
 
 	/**
-	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-hidden-custom-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
 	 */
-	describe('field kinds', () => {
-		it('shows every field of an old blob without kinds as plain text', async () => {
-			const wrapper = await mountDetail({
-				'Recovery code': 'abc-123',
-				tenant: 'acme',
-			})
-
-			expect(wrapper.text()).toContain('abc-123')
-			expect(wrapper.text()).toContain('acme')
-			expect(
-				wrapper
-					.find('[data-testid="secret-detail-field-reveal-Recovery code"]')
-					.exists(),
-			).toBe(false)
-		})
-
-		it('keeps a hidden value out of the DOM text until Show', async () => {
+	describe('fields from a 0.3.14 test build', () => {
+		it('keeps a `{ value, kind }` hidden value out of the DOM text', async () => {
 			const wrapper = await mountDetail({
 				'Recovery code': { value: 'abc-123', kind: 'hidden' },
 				tenant: 'acme',
 			})
 
 			expect(wrapper.text()).not.toContain('abc-123')
-			expect(
-				wrapper
-					.find('[data-testid="secret-detail-field-Recovery code"]')
-					.text(),
-			).toBe('••••••••')
-
-			await wrapper
-				.find('[data-testid="secret-detail-field-reveal-Recovery code"]')
-				.trigger('click')
-
-			expect(
-				wrapper
-					.find('[data-testid="secret-detail-field-Recovery code"]')
-					.text(),
-			).toBe('abc-123')
-
-			await wrapper
-				.find('[data-testid="secret-detail-field-reveal-Recovery code"]')
-				.trigger('click')
-			expect(wrapper.text()).not.toContain('abc-123')
-		})
-
-		it('copies the real hidden value without revealing it', async () => {
-			const wrapper = await mountDetail({
-				PIN: { value: '4711', kind: 'hidden' },
+			expect(wrapper.text()).toContain('acme')
+			expect(wrapper.vm.ownMembers[0]).toEqual({
+				name: 'Recovery code',
+				value: 'abc-123',
+				schema: { type: 'string', hidden: true },
 			})
-
-			const copy = wrapper.find('[data-testid="secret-detail-field-copy-PIN"]')
-			expect(copy.attributes('data-value')).toBe('4711')
-			expect(wrapper.text()).not.toContain('4711')
 		})
 
-		it('shows a yes or no field as Yes or No', async () => {
+		it('shows a `{ value, kind }` yes or no field as Yes or No', async () => {
 			const wrapper = await mountDetail({
 				Active: { value: 'true', kind: 'boolean' },
-				Archived: { value: 'false', kind: 'boolean' },
 			})
 
-			expect(
-				wrapper.find('[data-testid="secret-detail-field-Active"]').text(),
-			).toBe('Yes')
-			expect(
-				wrapper.find('[data-testid="secret-detail-field-Archived"]').text(),
-			).toBe('No')
+			expect(wrapper.findComponent(SchemaValueView).text()).toBe('Yes')
+		})
+	})
+
+	it('remounts a field when another secret opens, so no reveal carries over', async () => {
+		const wrapper = await mountDetail({
+			PIN: '4711',
+			'@schema': { PIN: { type: 'string', hidden: true } },
+		})
+		const before = wrapper.findComponent(SchemaValueView).vm
+
+		await wrapper.setProps({ secretId: 's-2' })
+		await flush()
+		await flush()
+
+		expect(wrapper.findComponent(SchemaValueView).vm).not.toBe(before)
+	})
+
+	// @spec openspec/specs/vault-custom-fields/spec.md#requirement-any-custom-field-can-be-hidden
+	it('names a hidden field’s copy button Copy value, not Copy password', () => {
+		const view = mount(SchemaValueView, {
+			props: {
+				label: 'PIN',
+				value: '4711',
+				schema: { type: 'string', hidden: true },
+			},
 		})
 
-		it('forgets a reveal when another secret opens', async () => {
-			const wrapper = await mountDetail({
-				PIN: { value: '4711', kind: 'hidden' },
-			})
-			await wrapper
-				.find('[data-testid="secret-detail-field-reveal-PIN"]')
-				.trigger('click')
-			expect(wrapper.text()).toContain('4711')
-
-			await wrapper.setProps({ secretId: 's-2' })
-			await flush()
-			await flush()
-
-			expect(wrapper.text()).not.toContain('4711')
-		})
+		expect(view.find('button[aria-label="Copy value"]').exists()).toBe(true)
+		expect(view.find('button[aria-label="Copy password"]').exists()).toBe(false)
 	})
 
 	/**
@@ -229,7 +197,7 @@ describe('SecretDetailSidebar — additional fields', () => {
 					.find('[data-testid="secret-detail-ssh-copy-public-key"]')
 					.attributes('data-value'),
 			).toBe(publicKey)
-			expect(wrapper.vm.hasAdditionalFields).toBe(false)
+			expect(wrapper.vm.ownMembers).toEqual([])
 		})
 
 		it('leaves a publicKey member of another type in the additional fields', async () => {
@@ -238,7 +206,9 @@ describe('SecretDetailSidebar — additional fields', () => {
 			expect(wrapper.find('[data-testid="secret-detail-ssh"]').exists()).toBe(
 				false,
 			)
-			expect(wrapper.vm.hasAdditionalFields).toBe(true)
+			expect(wrapper.vm.ownMembers.map((member) => member.name)).toEqual([
+				'publicKey',
+			])
 		})
 	})
 })

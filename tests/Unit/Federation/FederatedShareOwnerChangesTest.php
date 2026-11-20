@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
@@ -260,9 +261,9 @@ class FederatedShareOwnerChangesTest extends TestCase {
 			foreach ($secrets as $secret) {
 				$this->assertStringNotContainsString($secret, $entry, $event->getEventType());
 			}
-			$allowed = AuditEventTypes::WHITELIST[$event->getEventType()];
+			$allowed = AuditMetadataPolicy::WHITELIST[$event->getEventType()];
 			$this->assertSame([], array_diff(array_keys($event->getMetadata()), $allowed), $event->getEventType());
-			$this->assertSame([], array_intersect(array_keys($event->getMetadata()), AuditEventTypes::FORBIDDEN_KEYS));
+			$this->assertSame([], array_intersect(array_keys($event->getMetadata()), AuditMetadataPolicy::FORBIDDEN_KEYS));
 		}
 	}
 

@@ -21,7 +21,8 @@ import { useTeamFolderStore } from '../../src/store/modules/teamFolder.js'
 const STUBS = {
 	NcDialog: {
 		emits: ['update:open'],
-		template: '<div><button data-testid="dismiss" @click="$emit(\'update:open\', false)" /><slot /><slot name="actions" /></div>',
+		template:
+			'<div><button data-testid="dismiss" @click="$emit(\'update:open\', false)" /><slot /><slot name="actions" /></div>',
 	},
 	NcButton: { template: '<button v-bind="$attrs"><slot /></button>' },
 	NcSelect: {
@@ -65,25 +66,39 @@ describe('BulkTeamFolderDialog choices and move', () => {
 		]
 		const wrapper = mountDialog()
 
-		expect(wrapper.findComponent({ name: 'NcSelect' }).props('options')).toEqual([
-			{ id: 'tf-1', folderId: 'f-1', label: 'Finance' },
-			{ id: 'tf-2', folderId: 'f-unloaded', label: 'f-unloaded' },
-		])
+		expect(wrapper.findComponent({ name: 'NcSelect' }).props('options')).toEqual(
+			[
+				{ id: 'tf-1', folderId: 'f-1', label: 'Finance' },
+				{ id: 'tf-2', folderId: 'f-unloaded', label: 'f-unloaded' },
+			],
+		)
 	})
 
 	it('takes the picked team folder as the target and enables the run', async () => {
 		const wrapper = mountDialog()
-		expect(wrapper.find('[data-testid="bulk-team-folder-run"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="bulk-team-folder-run"]')
+				.attributes('disabled'),
+		).toBeDefined()
 
-		wrapper.findComponent({ name: 'NcSelect' }).vm.$emit('update:modelValue', { id: 'tf-1', folderId: 'f-1' })
+		wrapper
+			.findComponent({ name: 'NcSelect' })
+			.vm.$emit('update:modelValue', { id: 'tf-1', folderId: 'f-1' })
 		await wrapper.vm.$nextTick()
 
 		expect(wrapper.vm.target).toEqual({ id: 'tf-1', folderId: 'f-1' })
-		expect(wrapper.find('[data-testid="bulk-team-folder-run"]').attributes('disabled')).toBeUndefined()
+		expect(
+			wrapper
+				.find('[data-testid="bulk-team-folder-run"]')
+				.attributes('disabled'),
+		).toBeUndefined()
 	})
 
 	it('moves one secret by setting only its folder to the target folder', async () => {
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({})
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({})
 		const wrapper = mountDialog()
 		wrapper.vm.target = { id: 'tf-1', folderId: 'f-1' }
 
@@ -92,12 +107,16 @@ describe('BulkTeamFolderDialog choices and move', () => {
 	})
 
 	it('still mounts when loading the team folders fails', async () => {
-		teamFolders.fetchTeamFolders = vi.fn().mockRejectedValue(new Error('offline'))
+		teamFolders.fetchTeamFolders = vi
+			.fn()
+			.mockRejectedValue(new Error('offline'))
 		const wrapper = mountDialog()
 		await flushPromises()
 
 		expect(teamFolders.fetchTeamFolders).toHaveBeenCalledTimes(1)
-		expect(wrapper.find('[data-testid="bulk-team-folder-close"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="bulk-team-folder-close"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('emits close from the Close button and from dismissing the dialog', async () => {

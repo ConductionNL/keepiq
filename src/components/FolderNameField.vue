@@ -12,11 +12,7 @@
 
 	<NcTextField
 		:modelValue="modelValue"
-		:label="
-			vaultLevel
-				? t('keepiq', 'Vault name')
-				: t('keepiq', 'Folder name')
-		"
+		:label="vaultLevel ? t('keepiq', 'Vault name') : t('keepiq', 'Folder name')"
 		:required="true"
 		@update:modelValue="$emit('update:modelValue', $event)" />
 </template>

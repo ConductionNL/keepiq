@@ -34,7 +34,8 @@ const stubs = {
 	NcButton: {
 		props: ['variant', 'disabled', 'wide'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcNoteCard: {
 		props: ['type'],
@@ -110,7 +111,9 @@ describe('DeviceApprovalRequest flows', () => {
 		expect(wrapper.find('[data-testid="device-approval-phrase"]').text()).toBe(
 			'one two three',
 		)
-		expect(wrapper.text()).toContain('Open Keepiq on a device where it is unlocked')
+		expect(wrapper.text()).toContain(
+			'Open Keepiq on a device where it is unlocked',
+		)
 		expect(device.pollOnce).not.toHaveBeenCalled()
 
 		await vi.advanceTimersByTimeAsync(POLL_MS)
@@ -204,7 +207,9 @@ describe('DeviceApprovalRequest flows', () => {
 		await vi.advanceTimersByTimeAsync(POLL_MS * 2)
 		expect(device.pollOnce).not.toHaveBeenCalled()
 		expect(
-			wrapper.find('[data-testid="device-approval-start"]').attributes('disabled'),
+			wrapper
+				.find('[data-testid="device-approval-start"]')
+				.attributes('disabled'),
 		).toBeUndefined()
 	})
 
@@ -304,7 +309,9 @@ describe('DeviceApprovalRequest flows', () => {
 				const wrapper = await askOrganisation()
 
 				expect(recovery.startRequest).toHaveBeenCalledWith('device')
-				const block = wrapper.find('[data-testid="device-approval-organisation"]')
+				const block = wrapper.find(
+					'[data-testid="device-approval-organisation"]',
+				)
 				expect(block.find('.device-approval-request__phrase').text()).toBe(
 					'red green blue',
 				)
@@ -321,7 +328,9 @@ describe('DeviceApprovalRequest flows', () => {
 					'No officers',
 				)
 				expect(
-					wrapper.find('[data-testid="device-approval-organisation"]').exists(),
+					wrapper
+						.find('[data-testid="device-approval-organisation"]')
+						.exists(),
 				).toBe(false)
 			})
 
@@ -372,11 +381,13 @@ describe('DeviceApprovalRequest flows', () => {
 				await flush()
 
 				expect(
-					wrapper.find('[data-testid="device-approval-organisation"]').exists(),
+					wrapper
+						.find('[data-testid="device-approval-organisation"]')
+						.exists(),
 				).toBe(true)
-				expect(wrapper.find('.device-approval-request__error').exists()).toBe(
-					false,
-				)
+				expect(
+					wrapper.find('.device-approval-request__error').exists(),
+				).toBe(false)
 			})
 
 			it.each(['declined', 'expired'])(
@@ -398,11 +409,15 @@ describe('DeviceApprovalRequest flows', () => {
 							.find('[data-testid="device-approval-organisation"]')
 							.exists(),
 					).toBe(false)
-					expect(wrapper.find('.device-approval-request__error').text()).toBe(
+					expect(
+						wrapper.find('.device-approval-request__error').text(),
+					).toBe(
 						'The request ended. Ask again or use your master password.',
 					)
 					expect(
-						wrapper.find('[data-testid="device-approval-start"]').exists(),
+						wrapper
+							.find('[data-testid="device-approval-start"]')
+							.exists(),
 					).toBe(true)
 				},
 			)

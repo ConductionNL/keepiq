@@ -44,8 +44,10 @@
 					v-model="passkeysEnabled"
 					type="checkbox"
 					data-testid="extension-passkeys-enabled"
-					@change="save">
-				<span>{{ t('keepiq', 'Allow passkey unlock in the extension') }}</span>
+					@change="save" />
+				<span>{{
+					t('keepiq', 'Allow passkey unlock in the extension')
+				}}</span>
 			</label>
 			<div v-if="pinnedOrigins.length" class="extension-settings__field">
 				<span>{{ t('keepiq', 'Official extension builds') }}</span>
@@ -56,7 +58,9 @@
 				</ul>
 			</div>
 			<label class="extension-settings__field">
-				<span>{{ t('keepiq', 'Other extension builds allowed to use passkeys') }}</span>
+				<span>{{
+					t('keepiq', 'Other extension builds allowed to use passkeys')
+				}}</span>
 				<textarea
 					v-model="originsText"
 					rows="3"

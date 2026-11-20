@@ -31,12 +31,14 @@ const stubs = {
 	NcButton: {
 		props: ['disabled'],
 		emits: ['click'],
-		template: '<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	ComplianceSnapshotDialog: {
 		props: ['report'],
 		emits: ['close'],
-		template: '<div data-testid="snapshot-dialog" :data-report="report ? report.id : \'\'" />',
+		template:
+			'<div data-testid="snapshot-dialog" :data-report="report ? report.id : \'\'" />',
 	},
 }
 
@@ -48,10 +50,17 @@ const METRICS = {
 	auditIntegrity: { totalEntries: 900, retentionDays: 365 },
 }
 
-function mockLoad(metrics = METRICS, reports = [{ id: 'r1', generatedAt: null, generatedBy: 'admin', appVersion: '1.0.0' }]) {
+function mockLoad(
+	metrics = METRICS,
+	reports = [
+		{ id: 'r1', generatedAt: null, generatedBy: 'admin', appVersion: '1.0.0' },
+	],
+) {
 	return vi.spyOn(axios, 'get').mockImplementation((url) => {
 		if (url.endsWith('/compliance/metrics')) {
-			return Promise.resolve({ data: { metrics, computedAt: '2026-11-01 10:00' } })
+			return Promise.resolve({
+				data: { metrics, computedAt: '2026-11-01 10:00' },
+			})
 		}
 		if (url.endsWith('/compliance/reports')) {
 			return Promise.resolve({ data: reports })
@@ -61,7 +70,9 @@ function mockLoad(metrics = METRICS, reports = [{ id: 'r1', generatedAt: null, g
 }
 
 async function mountSection() {
-	const wrapper = mount(ComplianceSection, { global: { stubs, mixins: [tWithVars] } })
+	const wrapper = mount(ComplianceSection, {
+		global: { stubs, mixins: [tWithVars] },
+	})
 	await flush()
 	return wrapper
 }
@@ -82,7 +93,9 @@ describe('ComplianceSection', () => {
 		expect(card).toContain('Outstanding shares (user/group/link): 3 / 2 / 1')
 		expect(card).toContain('Open rotation flags: 5')
 		expect(card).toContain('Audit entries retained: 900 (365 days)')
-		expect(wrapper.findAll('[data-testid="compliance-report-list"] tbody tr')).toHaveLength(1)
+		expect(
+			wrapper.findAll('[data-testid="compliance-report-list"] tbody tr'),
+		).toHaveLength(1)
 	})
 
 	it('shows zeros for missing metric groups', async () => {
@@ -90,22 +103,37 @@ describe('ComplianceSection', () => {
 		const wrapper = await mountSection()
 
 		expect(wrapper.vm.openFlagTotal).toBe(0)
-		expect(wrapper.find('[data-testid="compliance-posture-card"]').text()).toContain('Total secrets: 0')
-		expect(wrapper.find('[data-testid="compliance-report-list"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="compliance-posture-card"]').text(),
+		).toContain('Total secrets: 0')
+		expect(wrapper.find('[data-testid="compliance-report-list"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('shows the load error and no posture card', async () => {
-		vi.spyOn(axios, 'get').mockRejectedValue({ response: { data: { message: 'Admins only' } } })
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { data: { message: 'Admins only' } },
+		})
 		const wrapper = await mountSection()
 
-		expect(wrapper.find('[data-testid="compliance-error"]').text()).toBe('Admins only')
-		expect(wrapper.find('[data-testid="compliance-posture-card"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="compliance-error"]').text()).toBe(
+			'Admins only',
+		)
+		expect(
+			wrapper.find('[data-testid="compliance-posture-card"]').exists(),
+		).toBe(false)
 	})
 
 	it('generates a snapshot, prepends it and opens it', async () => {
 		mockLoad()
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({
-			data: { id: 'r2', generatedAt: null, generatedBy: 'admin', appVersion: '1.1.0' },
+			data: {
+				id: 'r2',
+				generatedAt: null,
+				generatedBy: 'admin',
+				appVersion: '1.1.0',
+			},
 		})
 		const wrapper = await mountSection()
 
@@ -114,7 +142,11 @@ describe('ComplianceSection', () => {
 
 		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/compliance/reports')
 		expect(wrapper.vm.reports.map((r) => r.id)).toEqual(['r2', 'r1'])
-		expect(wrapper.find('[data-testid="snapshot-dialog"]').attributes('data-report')).toBe('r2')
+		expect(
+			wrapper
+				.find('[data-testid="snapshot-dialog"]')
+				.attributes('data-report'),
+		).toBe('r2')
 		expect(wrapper.vm.busy).toBe(false)
 	})
 
@@ -147,7 +179,9 @@ describe('ComplianceSection', () => {
 	it('reports a snapshot that cannot be opened', async () => {
 		mockLoad()
 		const wrapper = await mountSection()
-		vi.spyOn(axios, 'get').mockRejectedValue({ response: { data: { message: 'Gone' } } })
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: { data: { message: 'Gone' } },
+		})
 
 		await wrapper.vm.openReport('r9')
 

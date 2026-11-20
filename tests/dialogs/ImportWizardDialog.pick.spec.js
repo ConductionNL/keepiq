@@ -33,19 +33,32 @@ const ncStubs = {
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
-	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
-	NcSelect: { props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'], template: '<div />' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div class="note" :data-type="type"><slot /></div>',
+	},
+	NcSelect: {
+		props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'],
+		template: '<div />',
+	},
 	NcPasswordField: {
 		name: 'NcPasswordField',
 		props: ['modelValue', 'label'],
 		emits: ['update:modelValue'],
 		template: '<input type="password" class="passphrase" />',
 	},
-	NcCheckboxRadioSwitch: { props: ['modelValue'], template: '<label><slot /></label>' },
+	NcCheckboxRadioSwitch: {
+		props: ['modelValue'],
+		template: '<label><slot /></label>',
+	},
 	NcLoadingIcon: { props: ['size'], template: '<div />' },
-	NcEmptyContent: { props: ['name'], template: '<div class="empty">{{ name }}</div>' },
+	NcEmptyContent: {
+		props: ['name'],
+		template: '<div class="empty">{{ name }}</div>',
+	},
 }
 
 /**
@@ -55,7 +68,10 @@ const ncStubs = {
  */
 function openWizard() {
 	useSessionStore().cryptoKey = { fake: true }
-	const wrapper = mount(ImportWizardDialog, { props: { open: true }, global: { stubs: ncStubs } })
+	const wrapper = mount(ImportWizardDialog, {
+		props: { open: true },
+		global: { stubs: ncStubs },
+	})
 	return { wrapper, store: useImportStore() }
 }
 
@@ -70,11 +86,13 @@ function pickEvent(name, text) {
 	const head = new Uint8Array([0x6e, 0x61, 0x6d, 0x65]).buffer
 	return {
 		target: {
-			files: [{
-				name,
-				slice: () => ({ arrayBuffer: async () => head }),
-				text: async () => text,
-			}],
+			files: [
+				{
+					name,
+					slice: () => ({ arrayBuffer: async () => head }),
+					text: async () => text,
+				},
+			],
 		},
 	}
 }
@@ -105,9 +123,15 @@ describe('ImportWizardDialog file pick and advance', () => {
 		const parse = vi.spyOn(store, 'parseFile').mockResolvedValue()
 		wrapper.vm.passphrase = 'secret phrase'
 
-		await wrapper.vm.onFilePicked(pickEvent('vault.csv', 'name,login\nBank,alice'))
+		await wrapper.vm.onFilePicked(
+			pickEvent('vault.csv', 'name,login\nBank,alice'),
+		)
 
-		expect(parse).toHaveBeenCalledWith('name,login\nBank,alice', wrapper.vm.format, { passphrase: 'secret phrase' })
+		expect(parse).toHaveBeenCalledWith(
+			'name,login\nBank,alice',
+			wrapper.vm.format,
+			{ passphrase: 'secret phrase' },
+		)
 		expect(wrapper.vm.sourceName).toBe('vault.csv')
 		expect(store.step).toBe('mapping')
 	})
@@ -132,7 +156,9 @@ describe('ImportWizardDialog file pick and advance', () => {
 		await input.trigger('change')
 		await new Promise((resolve) => setTimeout(resolve, 0))
 
-		expect(parse).toHaveBeenCalledWith('a', wrapper.vm.format, { passphrase: '' })
+		expect(parse).toHaveBeenCalledWith('a', wrapper.vm.format, {
+			passphrase: '',
+		})
 		expect(wrapper.vm.sourceName).toBe('picked.csv')
 	})
 
@@ -141,7 +167,9 @@ describe('ImportWizardDialog file pick and advance', () => {
 		wrapper.vm.format = listParsers().find((p) => p.requiresPassphrase).id
 		await wrapper.vm.$nextTick()
 
-		wrapper.findComponent({ name: 'NcPasswordField' }).vm.$emit('update:modelValue', 'typed')
+		wrapper
+			.findComponent({ name: 'NcPasswordField' })
+			.vm.$emit('update:modelValue', 'typed')
 
 		expect(wrapper.vm.passphrase).toBe('typed')
 	})
