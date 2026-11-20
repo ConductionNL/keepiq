@@ -101,6 +101,30 @@ class DelegationAuthorizer {
 	}//end requireDelegableSecret()
 
 	/**
+	 * Refuse a received copy: its recipient owns it, but only the source's
+	 * owner delegates (user-sharing: recipients do not share directly).
+	 *
+	 * @param Secret $secret The Secret to delegate
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the Secret is a received copy
+	 * @throws ShareScanPendingException When the row naming it waits for the share quarantine scan
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 */
+	public function requireOriginal(Secret $secret): void {
+		$verdict = $this->rowJudge->forCopy(copy: $secret);
+		if ($verdict->awaitsTheScan() === true) {
+			throw $this->rowJudge->scanPending(refusal: 'This secret waits for the share quarantine scan, so it cannot be delegated yet');
+		}
+
+		if ($verdict->countsAsCopy() === true) {
+			throw new InvalidArgumentException(message: 'A received copy cannot be delegated');
+		}
+	}//end requireOriginal()
+
+	/**
 	 * Assert that $userId may use the admin handover path: an instance admin
 	 * or a holder of the People and offboarding area (admin-scoped-roles D5).
 	 *

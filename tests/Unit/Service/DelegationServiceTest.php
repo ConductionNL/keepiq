@@ -147,6 +147,22 @@ class DelegationServiceTest extends TestCase {
 	}//end testCreateDelegationRejectsSelf()
 
 	/**
+	 * A recipient owns their received copy but may not delegate it: only the
+	 * source's owner delegates (keepiq#1298).
+	 *
+	 * @return void
+	 */
+	public function testCreateDelegationRefusesAReceivedCopy(): void {
+		[$service, $mapper, $secretMapper] = $this->build();
+		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'bob', id: 'copy-of-bob'));
+		$mapper->expects(matcher: $this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('A received copy cannot be delegated');
+		$service->createDelegation(secretId: 'copy-of-bob', delegatedTo: 'carol', initiatedBy: 'bob');
+	}//end testCreateDelegationRefusesAReceivedCopy()
+
+	/**
 	 * createDelegation refuses unknown secrets.
 	 *
 	 * @return void
@@ -260,6 +276,8 @@ class DelegationServiceTest extends TestCase {
 		$secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
 		$groupManager = $this->createMock(originalClassName: IGroupManager::class);
+		// The secrets these tests delegate are originals, never received copies.
+		$shareTargetMapper->method('findByRecipientSecret')->willThrowException(new DoesNotExistException(msg: 'none'));
 
 		$service = new DelegationService(
 			mapper: $mapper,
