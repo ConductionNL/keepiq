@@ -245,6 +245,24 @@ The web app MUST read the copy's write-context to tell a view-only copy apart. O
 - THEN the detail view MUST NOT show Edit, Restore or "Ask for new values"
 - AND it MUST say that the secret is shared with V to view only
 
+### Requirement: A value change of a shared secret goes through the share-save
+The plain update `PUT /api/v1/secrets/{id}` writes one row. It MUST refuse a change of `key`, `login`, `additionalFields`, `totp` or `passkeys` and change nothing when the row is a received copy, or when it is a source with a live copy or an active partner share. Such a change goes through `PUT /api/v1/secrets/{id}/share-save`, which writes every copy in the same transaction. A field sent with the value already stored is not a change, and a change of any other field, such as the name or the folder, MUST still save. The refusal MUST answer 409 with `error` and `code` set to `share_save_required`. A copy whose holder may only view it keeps the `view_only` refusal of "View-Only Copies". The web app, the browser extension and the mobile apps send every value change through the share-save (keepiq#1300).
+
+#### Scenario: An owner's plain update of a shared secret's value
+- GIVEN a secret Alice shared with Bob
+- WHEN Alice sends `PUT /api/v1/secrets/{id}` for her secret with a new `key`
+- THEN the system MUST answer 409 with `error` `share_save_required` and leave Alice's secret and Bob's copy unchanged
+
+#### Scenario: A team-folder Editor's plain update of their copy
+- GIVEN user E holds a `write` grade on a team folder containing secret S
+- WHEN E sends `PUT /api/v1/secrets/{id}` for their copy of S with a new `login`
+- THEN the system MUST answer 409 with `error` `share_save_required` and leave every row of S unchanged
+
+#### Scenario: A plain update of an unshared secret or of a name
+- GIVEN a secret Alice shared with nobody, and a secret she shared with Bob
+- WHEN Alice changes the first one's `key`, and the second one's name, through `PUT /api/v1/secrets/{id}`
+- THEN both changes MUST save
+
 ### Requirement: Share with Group (Static Expansion)
 The system MUST allow a secret owner to share a secret with a Nextcloud user group. At the moment of sharing, the system MUST create an individual SecretShare (with `group_share_id` set) for each current member of the group who has an active EncryptionSuite. A GroupShare record MUST be created to track the relationship.
 

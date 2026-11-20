@@ -43,6 +43,7 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
@@ -152,6 +153,7 @@ class SecretService implements SecretServiceInterface {
 	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
 	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 * @param BrokerMintRecorder|null $brokerMints Stores a broker mint's notAfter and who it was minted for
+	 * @param ShareSaveRequiredGuard|null $shareSaveRequired Refuses a plain update of a shared secret's value (keepiq#1300)
 	 *
 	 * @return void
 	 */
@@ -182,6 +184,7 @@ class SecretService implements SecretServiceInterface {
 		private ?SecretUrlMapper $urlMapper = null,
 		private ?PrivilegedCopyGate $privilegedGate = null,
 		private ?BrokerMintRecorder $brokerMints = null,
+		private ?ShareSaveRequiredGuard $shareSaveRequired = null,
 	) {
 	}//end __construct()
 
@@ -1086,6 +1089,58 @@ class SecretService implements SecretServiceInterface {
 			userId: $userId
 		);
 
+		return $this->updateLoaded(secret: $secret, data: $data, userId: $userId, savedAt: $savedAt, restoring: $restoring);
+	}//end update()
+
+	/**
+	 * Update a secret through the plain `PUT /api/v1/secrets/{id}`: as
+	 * update(), but a change of its value is refused when it would reach this
+	 * row only, on a secret with copies or partner shares or on a copy its
+	 * holder writes for everyone. That change goes through the share-save.
+	 *
+	 * @param string $id The secret ID
+	 * @param array<string,mixed> $data The fields to update
+	 * @param string $userId The requesting Nextcloud user ID
+	 *
+	 * @return Secret
+	 *
+	 * @throws NotFoundException When the secret does not exist
+	 * @throws ForbiddenException When the secret belongs to another user, or its value changes on a copy its holder may only view
+	 * @throws WriteLockedException When a compromise-recovery migration is in progress
+	 * @throws InvalidArgumentException When a provided field is invalid
+	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on after it was read
+	 * @throws ShareScanPendingException When a share row of the secret waits for the share quarantine scan
+	 * @throws ShareSaveRequiredException When the value change must go through the share-save
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
+	 */
+	public function updateAlone(string $id, array $data, string $userId): Secret {
+		$secret = $this->loadForUpdate(id: $id, fields: array_keys($data), userId: $userId);
+		$changed = $this->changedValueFields(secret: $secret, data: $data);
+		$this->viewOnlyCopies->assertMayChangeValue(row: $secret, fields: $changed, userId: $userId);
+		$this->shareSaveRequired?->assertSavedAlone(row: $secret, fields: $changed);
+
+		return $this->updateLoaded(secret: $secret, data: $data, userId: $userId);
+	}//end updateAlone()
+
+	/**
+	 * Apply an update to a row loaded and checked by update() or updateAlone().
+	 *
+	 * @param Secret $secret The row as loaded
+	 * @param array<string,mixed> $data The fields to update
+	 * @param string $userId The requesting Nextcloud user ID
+	 * @param DateTime|null $savedAt The new version; a share-save passes the one it already locked in
+	 * @param bool $restoring Whether the data is a version being restored (a share-save restore)
+	 *
+	 * @return Secret
+	 *
+	 * @throws InvalidArgumentException When a provided field is invalid
+	 * @throws StaleWriteException When `baseUpdatedAt` names an older version, or the row moved on after it was read
+	 *
+	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) As update().
+	 */
+	private function updateLoaded(Secret $secret, array $data, string $userId, ?DateTime $savedAt = null, bool $restoring = false): Secret {
 		// The run locks the write against the version just read, whether or
 		// not the client named one; the edit guard compares a named one. A
 		// share-save locked its own version already. The pre-update snapshot
@@ -1100,7 +1155,7 @@ class SecretService implements SecretServiceInterface {
 		);
 
 		return $this->applyUpdate(run: $run);
-	}//end update()
+	}//end updateLoaded()
 
 	/**
 	 * Apply an owner update in order: the metadata fields, the team folder

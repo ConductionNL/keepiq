@@ -21,6 +21,7 @@ use OCA\Keepiq\Controller\SecretUpdateController;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Exception\WriteLockedException;
@@ -94,7 +95,7 @@ class SecretUpdateControllerTest extends TestCase {
 	 */
 	public function testForwardsOnlyThePresentFields(): void {
 		$controller = $this->controller(['name' => 'New', 'url' => null, 'login' => '', 'mergedPending' => '2']);
-		$this->secretService->expects($this->once())->method('update')
+		$this->secretService->expects($this->once())->method('updateAlone')
 			->with('s-1', ['name' => 'New', 'login' => '', 'mergedPending' => 2], 'alice')
 			->willReturn($this->secret());
 
@@ -110,13 +111,13 @@ class SecretUpdateControllerTest extends TestCase {
 	 */
 	public function testAnEmptyTotpOrPasskeysClearsAndANullOneIsLeftOut(): void {
 		$controller = $this->controller(['totp' => 'TOTP-CIPHER', 'passkeys' => '']);
-		$this->secretService->expects($this->once())->method('update')
+		$this->secretService->expects($this->once())->method('updateAlone')
 			->with('s-1', ['totp' => 'TOTP-CIPHER', 'passkeys' => ''], 'alice')
 			->willReturn($this->secret());
 		$this->assertSame(Http::STATUS_OK, $controller->update('s-1')->getStatus());
 
 		$controller = $this->controller(['key' => 'NEW-CIPHER', 'totp' => null, 'passkeys' => null]);
-		$this->secretService->expects($this->once())->method('update')
+		$this->secretService->expects($this->once())->method('updateAlone')
 			->with('s-1', ['key' => 'NEW-CIPHER'], 'alice')
 			->willReturn($this->secret());
 		$this->assertSame(Http::STATUS_OK, $controller->update('s-1')->getStatus());
@@ -132,7 +133,7 @@ class SecretUpdateControllerTest extends TestCase {
 	 */
 	public function testAStaleBaseAnswers409WithTheCurrentRow(): void {
 		$controller = $this->controller(['name' => 'Offline name', 'baseUpdatedAt' => '2026-10-01T09:00:00+00:00']);
-		$this->secretService->expects($this->once())->method('update')
+		$this->secretService->expects($this->once())->method('updateAlone')
 			->with('s-1', ['name' => 'Offline name', 'baseUpdatedAt' => '2026-10-01T09:00:00+00:00'], 'alice')
 			->willThrowException(new StaleWriteException(current: $this->secret()));
 
@@ -160,7 +161,7 @@ class SecretUpdateControllerTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($user);
 		$service = $this->createMock(SecretService::class);
-		$service->method('update')->willReturnOnConsecutiveCalls(
+		$service->method('updateAlone')->willReturnOnConsecutiveCalls(
 			$this->secret(),
 			$this->throwException(new StaleWriteException(current: $this->secret()))
 		);
@@ -232,7 +233,7 @@ class SecretUpdateControllerTest extends TestCase {
 	 */
 	public function testAnUpdateWithoutABaseThatMovesTwiceAnswers409(): void {
 		$controller = $this->controller(['key' => 'NEW-CIPHERTEXT']);
-		$this->secretService->expects($this->exactly(2))->method('update')
+		$this->secretService->expects($this->exactly(2))->method('updateAlone')
 			->with('s-1', ['key' => 'NEW-CIPHERTEXT'], 'alice')
 			->willThrowException(new StaleWriteException(current: $this->secret()));
 
@@ -249,7 +250,7 @@ class SecretUpdateControllerTest extends TestCase {
 	 */
 	public function testAWriteLockAnswers423(): void {
 		$controller = $this->controller(['name' => 'X']);
-		$this->secretService->method('update')->willThrowException(new WriteLockedException('locked'));
+		$this->secretService->method('updateAlone')->willThrowException(new WriteLockedException('locked'));
 
 		$this->assertSame(423, $controller->update('s-1')->getStatus());
 	}//end testAWriteLockAnswers423()
@@ -262,7 +263,7 @@ class SecretUpdateControllerTest extends TestCase {
 	 */
 	public function testAValueChangeOfAViewOnlyCopyAnswers403(): void {
 		$controller = $this->controller(['key' => 'NEW']);
-		$this->secretService->expects($this->once())->method('update')
+		$this->secretService->expects($this->once())->method('updateAlone')
 			->willThrowException(new ViewOnlyCopyException());
 
 		$response = $controller->update('s-1');
@@ -270,6 +271,26 @@ class SecretUpdateControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 		$this->assertSame(['message' => Secret::VIEW_ONLY_REFUSAL, 'code' => 'view_only'], $response->getData());
 	}//end testAValueChangeOfAViewOnlyCopyAnswers403()
+
+	/**
+	 * A value change of a shared secret answers 409 `share_save_required`,
+	 * and is not tried again (keepiq#1300).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
+	 */
+	public function testAValueChangeOfASharedSecretAnswers409ShareSaveRequired(): void {
+		$controller = $this->controller(['key' => 'NEW']);
+		$this->secretService->expects($this->once())->method('updateAlone')
+			->willThrowException(new ShareSaveRequiredException());
+
+		$response = $controller->update('s-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('share_save_required', $response->getData()['error']);
+		$this->assertSame('share_save_required', $response->getData()['code']);
+	}//end testAValueChangeOfASharedSecretAnswers409ShareSaveRequired()
 
 	/**
 	 * Without a user nothing is updated and the answer is 401.
@@ -280,7 +301,7 @@ class SecretUpdateControllerTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn(null);
 		$service = $this->createMock(SecretService::class);
-		$service->expects($this->never())->method('update');
+		$service->expects($this->never())->method('updateAlone');
 		$controller = new SecretUpdateController(request: $this->createMock(IRequest::class), secretService: $service, userSession: $session);
 
 		$response = $controller->update('s-1');
@@ -296,14 +317,14 @@ class SecretUpdateControllerTest extends TestCase {
 	 */
 	public function testAnUnknownSecretIs404AndInvalidInputIs400(): void {
 		$controller = $this->controller(['name' => 'X']);
-		$this->secretService->method('update')->willThrowException(new NotFoundException('Secret not found'));
+		$this->secretService->method('updateAlone')->willThrowException(new NotFoundException('Secret not found'));
 
 		$response = $controller->update('s-1');
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 		$this->assertSame(['message' => 'Secret not found'], $response->getData());
 
 		$controller = $this->controller(['name' => '']);
-		$this->secretService->method('update')->willThrowException(new InvalidArgumentException('Name is required'));
+		$this->secretService->method('updateAlone')->willThrowException(new InvalidArgumentException('Name is required'));
 
 		$response = $controller->update('s-1');
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
