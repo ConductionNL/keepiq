@@ -718,7 +718,7 @@ export default {
 		 *
 		 * @return {Array<string>} The locked field names.
 		 *
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
 		 */
 		lockedFields() {
@@ -806,7 +806,7 @@ export default {
 		 * @return {void}
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
 		 */
 		typeId() {
 			this.requestedFields = [
@@ -1104,7 +1104,7 @@ export default {
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-fresh-requests-do-not-re-ask-for-values-that-already-exist
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
 		 */
 		defaultSelection() {
 			if (this.isReRequest) {

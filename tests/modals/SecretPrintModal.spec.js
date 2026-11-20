@@ -7,7 +7,7 @@
  * the name, address, username and password, never a one-time code seed, and
  * opens the browser's print dialog.
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
  */
 
 import { mount } from '@vue/test-utils'

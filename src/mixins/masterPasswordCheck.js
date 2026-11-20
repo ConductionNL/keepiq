@@ -18,7 +18,7 @@ export default {
 		 * Whether the confirm button waits: nothing typed yet, or a check runs.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		masterPasswordPending() {
 			return this.masterPassword.length === 0 || this.busy
@@ -50,7 +50,7 @@ export default {
 		 * runs or nothing is typed, and the field is cleared afterwards either way.
 		 *
 		 * @return {Promise<boolean>} Whether the password opens the vault key
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		async masterPasswordChecked() {
 			if (this.busy || this.masterPassword.length === 0) {

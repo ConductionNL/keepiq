@@ -8,7 +8,7 @@
   the print sheet rendered and the browser's print dialog opened. A wrong
   password renders no sheet. Nothing is sent to the server.
 
-  @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+  @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 -->
 <template>
 	<NcDialog
@@ -106,7 +106,7 @@ export default {
 		 * The session store, read by the master password check.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		sessionStore() {
 			return useSessionStore()
@@ -120,7 +120,7 @@ export default {
 		 * Check the master password; render the sheet and print only when it opens the vault key.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		async onVerify() {
 			if (!(await this.masterPasswordChecked())) {
@@ -135,7 +135,7 @@ export default {
 		 * Open the browser's print dialog over the rendered sheet.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		print() {
 			if (this.verified) {

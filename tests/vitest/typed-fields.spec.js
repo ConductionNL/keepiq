@@ -54,7 +54,7 @@ describe('typedFields', () => {
 		})
 	})
 
-	// openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+	// openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
 	it('removes a typed member that is cleared, and keeps one that was already empty', () => {
 		const original = { Host: 'h', 'Root password': '' }
 

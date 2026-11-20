@@ -85,7 +85,7 @@ class SecretRequestFillController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.2
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	#[PublicPage]

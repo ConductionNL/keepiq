@@ -6,7 +6,7 @@
  * in the list until `uploadPending()`, a refused file stays with its
  * reason, and a retry uploads only what is still listed.
  *
- * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+ * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
  */
 
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'

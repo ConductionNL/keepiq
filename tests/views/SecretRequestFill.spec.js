@@ -135,7 +135,7 @@ describe('SecretRequestFill', () => {
 		expect(key).toContain('Hidden')
 	})
 
-	// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	// @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	it('asks for a certificate in text areas that keep its lines', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
 			data: {

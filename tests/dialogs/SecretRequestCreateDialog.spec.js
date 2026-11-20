@@ -482,7 +482,7 @@ describe('SecretRequestCreateDialog', () => {
 			})
 		})
 
-		// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		// @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
 		it('asks for a certificate with the certificate ticked and locked', async () => {
 			const wrapper = await mountFresh()
 
@@ -504,7 +504,7 @@ describe('SecretRequestCreateDialog', () => {
 			expect(wrapper.vm.canSubmit).toBe(true)
 		})
 
-		// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		// @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
 		it('asks for a database by username, without a URL', async () => {
 			const wrapper = await mountFresh()
 
@@ -521,7 +521,7 @@ describe('SecretRequestCreateDialog', () => {
 			expect(wrapper.vm.requestedFields).toEqual(['key'])
 		})
 
-		// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+		// @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
 		it('asks for a login with the password ticked and locked', async () => {
 			const wrapper = await mountFresh()
 

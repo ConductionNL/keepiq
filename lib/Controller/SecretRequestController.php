@@ -259,7 +259,7 @@ class SecretRequestController extends OCSController {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	private function typeId(): ?string {
 		$raw = $this->request->getParam('typeId');

@@ -171,7 +171,7 @@ export default {
 	 * Show a public value at once; a use-only value is never revealed.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+	 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 	 */
 	async mounted() {
 		if (this.shownAtOnce && !this.useOnly) {

@@ -63,7 +63,7 @@ export const NOT_REQUESTABLE_TYPE_NAMES = Object.freeze([
  *
  * @param {string} typeName The type's system name.
  * @return {boolean}
- * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+ * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
  */
 export function isRequestableTypeName(typeName) {
 	return !NOT_REQUESTABLE_TYPE_NAMES.includes(typeName)

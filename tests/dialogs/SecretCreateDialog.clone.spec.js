@@ -7,7 +7,7 @@
  * source's type, name with " (copy)", URL, login, value, additional fields
  * and folder, says what is not copied, and saves through the ordinary create.
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
  */
 
 import { mount } from '@vue/test-utils'

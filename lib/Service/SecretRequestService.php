@@ -119,7 +119,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *                                  requested), 423 (locked) or 408 (expired).
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function getByToken(string $token): SecretRequest {
 		$request = $this->policy->requireOpenByToken(token: $token);
@@ -135,7 +135,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	private function typeIdOf(string $secretId): ?string {
 		try {
@@ -180,7 +180,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @return string|null The type name, or null when it cannot be resolved
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	 */
 	public function secretTypeName(SecretRequest $request): ?string {
 		return $this->policy->secretTypeName(secretId: $request->getSecretId());
@@ -219,7 +219,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @throws \OCA\Keepiq\Exception\ShareScanPendingException When the share row naming the secret waits for the share quarantine scan
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.5
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function fill(string $token, array $encryptedFields, array $plainFields = []): SecretRequest {
 		$entity = $this->policy->requireOpenByToken(token: $token);
@@ -285,7 +285,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * @throws InvalidArgumentException When a field name has nowhere to be stored, or with code 403 for a type that cannot be requested
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	private function persistFilledValues(
 		SecretRequest $request,
@@ -520,7 +520,7 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 *
 	 * @throws InvalidArgumentException With code 403 for another user's Secret or for a type that cannot be requested.
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	private function requireRequestableSecret(string $secretId, string $userId): ?Secret {
 		try {

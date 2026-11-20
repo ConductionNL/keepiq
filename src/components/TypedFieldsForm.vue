@@ -97,7 +97,7 @@ export default {
 		 * @param {{label: string, displayLabel?: string, required: boolean}} field The field.
 		 * @return {string} The label.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
 		 */
 		fieldLabel(field) {
 			const label = field.displayLabel ?? field.label

@@ -8,7 +8,7 @@
   it is never shown, and in print it is the only thing on the page. The
   one-time code seed is not a prop and is never printed (D4).
 
-  @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+  @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 -->
 <template>
 	<Teleport to="body">

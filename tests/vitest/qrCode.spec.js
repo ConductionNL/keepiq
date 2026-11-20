@@ -6,7 +6,7 @@
  * a code built by `qrMatrix()` decodes back to the exact password, including
  * characters outside Latin-1, and `qrPath()` draws one square per dark module.
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
  */
 
 import { describe, expect, it } from 'vitest'

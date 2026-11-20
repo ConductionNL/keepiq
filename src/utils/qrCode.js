@@ -11,7 +11,7 @@
  * outside Latin-1 would encode to other bytes than the user typed; handing it
  * the UTF-8 bytes as one character each keeps every byte exact.
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
  */
 
 import qrcode from 'qrcode-generator'
@@ -28,7 +28,7 @@ export const QUIET_ZONE = 4
  * @param {string} text The text to encode.
  * @return {{size: number, dark: boolean[][]}} The module count per side and, per row, whether each module is dark.
  * @throws {TypeError} When the text is not a non-empty string.
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
  */
 export function qrMatrix(text) {
 	if (typeof text !== 'string' || text === '') {
@@ -59,7 +59,7 @@ export function qrMatrix(text) {
  *
  * @param {{size: number, dark: boolean[][]}} matrix The matrix from {@link qrMatrix}.
  * @return {string} The path's `d` attribute.
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
  */
 export function qrPath(matrix) {
 	const parts = []

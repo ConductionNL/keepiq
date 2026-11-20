@@ -228,7 +228,7 @@ export const PREVIEW_KINDS = Object.freeze({
  *
  * @param {?string} contentType The decrypted content type.
  * @return {'image'|'pdf'|'text'|null}
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
  */
 export function previewKind(contentType) {
 	const type = String(contentType || '')
@@ -377,7 +377,7 @@ export const useAttachmentStore = defineStore('attachment', {
 		 * @param {File} file The picked file.
 		 * @return {Promise<void>} Rejects with the server's reason.
 		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		async uploadFile(secretId, file) {
 			const session = useSessionStore()
@@ -446,7 +446,7 @@ export const useAttachmentStore = defineStore('attachment', {
 		 *
 		 * @param {object} attachment The listed attachment row.
 		 * @return {Promise<{kind: 'image'|'pdf'|'text', url: ?string, text: ?string}>}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
 		 */
 		async preview(attachment) {
 			const kind = previewKind(attachment?.contentType)

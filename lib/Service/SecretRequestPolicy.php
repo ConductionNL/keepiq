@@ -52,7 +52,7 @@ use RuntimeException;
  * 50, from the same two methods: each is a short chain of lookups that may
  * miss, and every miss is a branch.
  *
- * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+ * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
  */
 class SecretRequestPolicy {
 	/**
@@ -235,7 +235,7 @@ class SecretRequestPolicy {
 	 * @throws InvalidArgumentException With code 403 for a type in NOT_REQUESTABLE_TYPE_NAMES.
 	 * @throws RuntimeException When the type mapper dependency is not wired.
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function requireRequestableType(?string $typeId): void {
 		if ($typeId === null || $typeId === '') {
@@ -272,7 +272,7 @@ class SecretRequestPolicy {
 	 *
 	 * @throws InvalidArgumentException With code 410 for a type in NOT_REQUESTABLE_TYPE_NAMES.
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function requireRequestableByLink(?string $typeId): void {
 		try {
@@ -298,7 +298,7 @@ class SecretRequestPolicy {
 	 *
 	 * @return string One of self::REASONS
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function refusalOfLink(string $reason, int $status): string {
 		if ($reason === self::REASON_UNKNOWN && $status === self::REFUSALS[self::REASON_UNAVAILABLE]['code']) {
@@ -323,7 +323,7 @@ class SecretRequestPolicy {
 	 *
 	 * @return string|null The type name, or null when it cannot be resolved
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	 */
 	public function secretTypeName(string $secretId): ?string {
 		if ($this->secretMapper === null || $this->typeMapper === null) {

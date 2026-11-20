@@ -406,7 +406,7 @@
         "secrets",
         "secrets-write-ui",
         "vault-custom-field-kinds-and-ssh-key",
-        "vault-item-clone-preview-and-print",
+        "secret-item-actions",
         "vault-website-addresses",
         "bulk-actions",
         "user-settings",
@@ -457,7 +457,7 @@
       "area": "vault",
       "overlay": null,
       "specs": [
-        "vault-item-clone-preview-and-print",
+        "secret-item-actions",
         "encrypted-attachments"
       ]
     },
@@ -1692,7 +1692,7 @@
       "id": "vault-22",
       "area": "vault",
       "name": "Clone an existing item as the starting point for a new one.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -1700,12 +1700,13 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-item-clone-preview-and-print on 2026-09-27. Before: grep -rni 'clone\\|duplicate\\|make a copy' src --include=*.vue: only import-wizard duplicate handling; no clone action in SecretDetailSidebar.vue or SecretList.vue menus",
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue:148 Clone in the More menu (canClone :1567, hidden for passkeys) -> openClone :2528 -> src/dialogs/SecretCreateDialog.vue:295 prefill prop seeds type, name + ' (copy)', address, username, value, additional fields and folder, with a note at :25 that attachments, shares and history are not copied -> normal create path; vitest tests/dialogs and Playwright tests/e2e/workflows/secret-item-actions.spec.ts (written, not yet run live)",
         "owner": "ConductionNL/keepiq",
-        "note": "There is no clone or duplicate action on a secret.",
-        "change": "openspec/changes/vault-item-clone-preview-and-print",
-        "requirement": "openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions :: Clone a secret"
+        "note": "Clone opens a prefilled create dialog and saves a new, unshared item; attachments, shares, history and passkey material are not copied.",
+        "requirement": "openspec/specs/secret-item-actions :: Clone a secret",
+        "reachedOn": "SecretList page (/secrets) -> secret detail sidebar -> More -> Clone",
+        "spec": "openspec/specs/secret-item-actions"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1850,7 +1851,7 @@
       "id": "vault-26",
       "area": "vault",
       "name": "Preview an attached file without downloading it.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "partial",
       "passbolt": "no",
@@ -1858,13 +1859,13 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-item-clone-preview-and-print on 2026-09-27. Before: src/components/AttachmentPanel.vue:42-44 offers only 'Download attachment' (store.download); appinfo/routes.php:350 attachment#download returns the ciphertext blob; no preview component",
+        "state": "built",
+        "evidence": "src/components/AttachmentPanel.vue:41 Preview attachment button (canPreview) -> src/store/modules/attachment.js:441 preview() decrypts in the browser to an object URL for allowed types and refuses image/svg+xml -> src/modals/AttachmentPreviewModal.vue image, PDF in a sandboxed frame (:30), text; the URL is revoked on close",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretDetailSidebar attachment panel (download only)",
-        "note": "Attachments decrypt to a download; there is no in-app preview.",
-        "change": "openspec/changes/vault-item-clone-preview-and-print",
-        "requirement": "openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions :: Preview an attachment in the browser"
+        "reachedOn": "SecretList page (/secrets) -> secret detail sidebar -> Attachments -> Preview attachment",
+        "note": "Images, PDFs and text attachments preview in the app, decrypted in the browser, without writing a file to disk.",
+        "requirement": "openspec/specs/secret-item-actions :: Preview an attachment in the browser",
+        "spec": "openspec/specs/secret-item-actions"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -2006,7 +2007,7 @@
       "id": "vault-30",
       "area": "vault",
       "name": "Print a login, or show its password as a QR code to type it on another device.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
@@ -2014,13 +2015,13 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-item-clone-preview-and-print on 2026-09-27. Before: searched 'qrcode', 'QRCode', 'print(' in src/ lib/: only src/dialogs/ComplianceSnapshotDialog.vue:201 prints the compliance report",
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue:188 Print and Show as QR code on a login (canPrintOrShowQr) -> src/modals/SecretPrintModal.vue:126 master password re-check (masterPasswordCheck mixin) then src/components/SecretPrintSheet.vue and window.print() :142; src/modals/SecretQrModal.vue:160 same check, QR drawn in the browser by src/utils/qrCode.js; no seed on either",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "A secret cannot be printed or shown as a QR code.",
-        "change": "openspec/changes/vault-item-clone-preview-and-print",
-        "requirement": "openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions :: Print a login or show its password as a QR code"
+        "reachedOn": "SecretList page (/secrets) -> secret detail sidebar of a login -> More -> Print / Show as QR code",
+        "note": "A login prints as a sheet with name, address, username and password, or shows its password as a QR code, only after the master password is entered again; the one-time code seed is never included.",
+        "requirement": "openspec/specs/secret-item-actions :: Print a login or show its password as a QR code",
+        "spec": "openspec/specs/secret-item-actions"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -5372,7 +5373,7 @@
         "note": "This checkout only contains keepiq's own code; whether integriq or another Conduction app actually stores its connection credentials in keepiq today cannot be settled from here, only that keepiq ships and documents a ready contract for it.",
         "spec": "openspec/specs/secret-store-api",
         "requirement": "openspec/specs/secret-store-api :: Secret Reference Format and Consumption Contract",
-        "plan": "openspec/changes/connection-certificate-expiry-for-integriq"
+        "plan": "openspec/changes/archive/2026-11-20-connection-certificate-expiry-for-integriq"
       },
       "rowSource": "own",
       "provider": "keepiq",

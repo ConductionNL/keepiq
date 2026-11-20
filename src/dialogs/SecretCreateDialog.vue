@@ -215,7 +215,7 @@ import { valueFieldsSupported } from '../utils/valueFields.js'
  *
  * @param {string} name The source's name.
  * @return {string}
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
  */
 export function cloneName(name) {
 	return t('keepiq', '{name} (copy)', { name: String(name || '').trim() })
@@ -411,7 +411,7 @@ export default {
 		 * the value form marks it as the type's own required fields are.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
 		 */
 		valueRequired() {
 			return true
@@ -421,7 +421,7 @@ export default {
 		 * Whether the chosen type uses the login field.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		showLogin() {
 			return !leavesOut(this.selectedTypeName, 'login')
@@ -431,7 +431,7 @@ export default {
 		 * Whether the chosen type uses the URL field.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		showUrl() {
 			return !leavesOut(this.selectedTypeName, 'url')
@@ -442,7 +442,7 @@ export default {
 		 * typed before switching type is not saved unseen.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		loginToSave() {
 			return this.showLogin ? this.login || '' : ''
@@ -452,7 +452,7 @@ export default {
 		 * The URL to save: none when the type leaves the field out.
 		 *
 		 * @return {string|null}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		urlToSave() {
 			return this.showUrl ? this.url || null : null
@@ -499,7 +499,7 @@ export default {
 		 *
 		 * @return {boolean}
 		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		canSubmit() {
 			if (this.created) {
@@ -518,7 +518,7 @@ export default {
 		 * the user will own, while not served from the offline cache.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		canAddFiles() {
 			return !this.contributeTo && !useOfflineStore().readOnly
@@ -528,7 +528,7 @@ export default {
 		 * Why listed files cannot be added, '' when they can.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		filesUnavailable() {
 			if (this.canAddFiles) {
@@ -589,7 +589,7 @@ export default {
 		 *
 		 * @param {number} count The files the drop zone lists.
 		 * @return {void}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		pendingFiles(count) {
 			if (this.created && count === 0 && !this.saving) {
@@ -641,7 +641,7 @@ export default {
 		 *
 		 * @param {object} source The decrypted secret.
 		 * @return {void}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
 		 */
 		applyPrefillPayload(source) {
 			this.value = source.key || ''
@@ -727,7 +727,7 @@ export default {
 		 * @param {object} [ssh] The SSH key members (sshKeyToSave).
 		 * @return {object} The value part of the create body.
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valueFields(ssh = {}) {
 			const blob = this.additionalBlob(ssh)
@@ -833,7 +833,7 @@ export default {
 		 * open with the refused files listed. Never creates the secret again.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		async uploadFiles() {
 			const zone = this.$refs.dropZone
@@ -856,7 +856,7 @@ export default {
 		 * Retry the refused files of the created secret.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		async retryUploads() {
 			this.saving = true

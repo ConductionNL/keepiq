@@ -27,7 +27,7 @@ use OCP\EventDispatcher\Event;
  * and collects exactly two fields, `notAfter` and `renewUrl`. An event that
  * nobody answered reads as "expiry unknown". Nothing is stored anywhere.
  *
- * @spec openspec/changes/connection-certificate-expiry-for-integriq/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
+ * @spec openspec/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
  */
 class CredentialExpiryRequestedEvent extends Event {
 	/**
@@ -83,7 +83,7 @@ class CredentialExpiryRequestedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/connection-certificate-expiry-for-integriq/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
+	 * @spec openspec/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
 	 */
 	public function answer(string $notAfter, string $renewUrl): void {
 		$this->notAfter = $notAfter;

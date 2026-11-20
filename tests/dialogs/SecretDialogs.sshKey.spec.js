@@ -167,7 +167,7 @@ describe('SecretCreateDialog — SSH key', () => {
 		)
 	})
 
-	// openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+	// openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
 	it('clones an SSH key ready to save, keeping its custom fields', async () => {
 		const pair = await generateKeyPair()
 		const wrapper = mount(SecretCreateDialog, {

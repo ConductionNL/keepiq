@@ -8,7 +8,7 @@
   URL, which is revoked when the modal closes or goes away; nothing is saved
   to the device and no server URL serves the plaintext.
 
-  @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+  @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
 -->
 <template>
 	<NcDialog
@@ -90,7 +90,7 @@ export default {
 	 * Revoke the object URL however the modal goes away.
 	 *
 	 * @return {void}
-	 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+	 * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
 	 */
 	beforeUnmount() {
 		this.revoke()
@@ -102,7 +102,7 @@ export default {
 		 *
 		 * @param {boolean} open The dialog's new open state.
 		 * @return {void}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
 		 */
 		onUpdateOpen(open) {
 			if (open) {

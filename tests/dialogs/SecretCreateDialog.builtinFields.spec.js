@@ -6,8 +6,8 @@
  * that keeps its line breaks, with no login field, and its private key goes
  * into the additional fields under its fixed name.
  *
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
 
 import { mount } from '@vue/test-utils'
@@ -166,7 +166,7 @@ describe('SecretCreateDialog built-in type fields', () => {
 		expect(createSecret.mock.calls[0][0].url).toBeNull()
 	})
 
-	// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
+	// @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
 	it('asks a login for its password, marked as required', async () => {
 		const wrapper = await mountOn('type-login')
 
@@ -184,7 +184,7 @@ describe('SecretCreateDialog built-in type fields', () => {
 		expect(wrapper.vm.canSubmit).toBe(true)
 	})
 
-	// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
+	// @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
 	it('marks a multi-line value as required too', async () => {
 		const wrapper = await mountOn('type-certificate')
 

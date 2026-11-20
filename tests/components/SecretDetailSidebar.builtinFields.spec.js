@@ -6,7 +6,7 @@
  * line breaks, its private key and passphrase stay masked until revealed, and
  * a member the person added shows as a label above its value.
  *
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
  */
 
 import { mount } from '@vue/test-utils'

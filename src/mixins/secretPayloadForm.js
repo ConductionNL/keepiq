@@ -65,7 +65,7 @@ export const secretPayloadForm = {
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valueLabel() {
 			return (
@@ -79,7 +79,7 @@ export const secretPayloadForm = {
 		 * note is: a password input would drop the line breaks of a PEM block.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valueMultiline() {
 			return valueFieldOf(this.selectedTypeName)?.kind === 'multiline'
@@ -91,7 +91,7 @@ export const secretPayloadForm = {
 		 * for the master password before a reveal, is not.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		valuePublic() {
 			return (
@@ -105,7 +105,7 @@ export const secretPayloadForm = {
 		 * The login field's label: "Username" on a database, else "Login".
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		loginLabel() {
 			return (
@@ -120,7 +120,7 @@ export const secretPayloadForm = {
 		 *
 		 * @return {Array<object>} The fields.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		typedFields() {
 			return typeFieldsOf(useSecretTypeStore().typesById[this.typeId])
@@ -174,7 +174,7 @@ export const secretPayloadForm = {
 		 *
 		 * @return {object}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
 		 */
 		payloadFields() {
 			return {
@@ -200,7 +200,7 @@ export const secretPayloadForm = {
 		 * requires the value.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
 		 */
 		payloadValueLabel() {
 			if (this.valueRequired !== true) {

@@ -250,7 +250,7 @@ describe('a copy without a write grade', () => {
 	})
 })
 
-// openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+// openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 describe('a secret of a type that cannot be requested', () => {
 	it.each([
 		['a payment card', 'card', false],

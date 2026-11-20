@@ -35,7 +35,7 @@ use Throwable;
  * and consuming app it was minted for, which the expiry answer to integriq is
  * gated on (connection-certificate-expiry-for-integriq tasks 1.1 and 2.1).
  *
- * @spec openspec/changes/connection-certificate-expiry-for-integriq/specs/certificate-lifecycle/spec.md#requirement-a-certificate-minted-for-a-connection-carries-its-expiry
+ * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-a-certificate-minted-for-a-connection-carries-its-expiry
  */
 class BrokerMintRecorder {
 	/**
@@ -80,7 +80,7 @@ class BrokerMintRecorder {
 	 *
 	 * @throws InvalidArgumentException When `notAfter` is not a date
 	 *
-	 * @spec openspec/changes/connection-certificate-expiry-for-integriq/specs/certificate-lifecycle/spec.md#requirement-a-certificate-minted-for-a-connection-carries-its-expiry
+	 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-a-certificate-minted-for-a-connection-carries-its-expiry
 	 */
 	public function applyExpiry(Secret $secret, array $data): void {
 		if (array_key_exists(self::NOT_AFTER, $data) === false) {
@@ -99,7 +99,7 @@ class BrokerMintRecorder {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/connection-certificate-expiry-for-integriq/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
+	 * @spec openspec/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
 	 */
 	public function record(Secret $secret, array $data): void {
 		if (array_key_exists(self::ORGANISATION, $data) === false && array_key_exists(self::CONSUMER, $data) === false) {

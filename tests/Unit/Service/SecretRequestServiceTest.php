@@ -1888,7 +1888,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testFreshRequestRefusesANotRequestableTypeWithoutAPlaceholder(): void {
 		$this->secretService->expects($this->never())->method('create');
@@ -1911,7 +1911,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testRequestOnACardSecretIsRefused(): void {
 		$card = new Secret();
@@ -1939,7 +1939,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testALinkIsRefusedOnceItsSecretBecameACard(): void {
 		$this->mapper->method('findByToken')->willReturn($this->buildPending());
@@ -1987,7 +1987,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testAnotherUsersCardIsRefusedWithoutNamingItsType(): void {
 		$this->secretMapper->method('findById')->willReturn($this->cardSecret());
@@ -2012,7 +2012,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testReRequestOnACardSecretIsRefused(): void {
 		$this->secretMapper->method('findById')->willReturn($this->cardSecret());
@@ -2048,7 +2048,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testAFillIsRefusedOnceItsSecretBecameACard(): void {
 		$entity = $this->buildPending();
