@@ -133,5 +133,7 @@ screens/
 /playwright-report-federation/
 /test-results-federation/
 
-# Claude Code: local settings and agent worktrees.
-/.claude/
+# Claude Code: local settings and agent worktrees. Shared agent commands
+# in .claude/commands/ are committed.
+/.claude/*
+!/.claude/commands/
