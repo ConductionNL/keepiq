@@ -69,7 +69,11 @@ import BulkRunPanel from '../components/BulkRunPanel.vue'
 import RecipientPicker from '../components/share/RecipientPicker.vue'
 import ShareRestrictionFields from '../components/share/ShareRestrictionFields.vue'
 import bulkRunDialog from '../mixins/bulkRunDialog.js'
-import { copyCiphertext, recipientFields } from '../services/recipientCopy.js'
+import {
+	copyCiphertext,
+	recipientFields,
+	sourceVersion,
+} from '../services/recipientCopy.js'
 import { useKeyProofPromptStore } from '../store/modules/keyProofPrompt.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useShareStore } from '../store/modules/share.js'
@@ -159,24 +163,44 @@ export default {
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		async registerCopy(secretId, plain) {
-			const shareStore = useShareStore()
-			const blob = await shareStore.encryptForRecipient(
-				recipientFields(plain),
-				this.certificate,
-			)
-			const { items, masterPassword } = await shareStore.registerBatch(
-				[
-					{
-						sourceSecretId: secretId,
-						targetUserId: this.targetUserId,
-						...copyCiphertext(blob),
-						...restrictionPayload(this.restriction),
-					},
-				],
-				{ masterPassword: this.runPassword },
+			const { items, masterPassword } = await useShareStore().registerBatch(
+				[await this.copyRow(secretId, plain)],
+				{
+					masterPassword: this.runPassword,
+					// A save replaced the value meanwhile: share the new one (#1255).
+					rebuild: async () => [
+						await this.copyRow(
+							secretId,
+							await useSecretStore().fetchSecret(secretId),
+						),
+					],
+				},
 			)
 			this.runPassword = masterPassword
 			return items[0]
+		},
+
+		/**
+		 * The register-batch row of the recipient's copy, encrypted from the
+		 * given decrypted source and naming the version it came from.
+		 *
+		 * @param {string} secretId The secret id.
+		 * @param {object} source The decrypted secret.
+		 * @return {Promise<object>}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+		 */
+		async copyRow(secretId, source) {
+			const blob = await useShareStore().encryptForRecipient(
+				recipientFields(source),
+				this.certificate,
+			)
+			return {
+				sourceSecretId: secretId,
+				targetUserId: this.targetUserId,
+				...copyCiphertext(blob),
+				...restrictionPayload(this.restriction),
+				...sourceVersion(source),
+			}
 		},
 
 		/**

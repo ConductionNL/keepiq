@@ -93,7 +93,7 @@ describe('shareWithGroup', () => {
 			{ userId: 'c' },
 			{ userId: 'd' },
 		])
-		expect(register).toHaveBeenCalledWith(['rows'])
+		expect(register).toHaveBeenCalledWith(['rows'], { rebuild: expect.any(Function) })
 		expect(result).toEqual({ received: 2, skipped: 2, refused: 1 })
 	})
 

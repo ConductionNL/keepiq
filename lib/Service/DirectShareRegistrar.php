@@ -36,10 +36,12 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretVersionLock;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Exception\StaleShareSourceException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\DB\Exception as DbException;
 use OCP\IDBConnection;
@@ -63,6 +65,13 @@ class DirectShareRegistrar {
 	 * @var ShareAuditTrail
 	 */
 	private ShareAuditTrail $auditTrail;
+
+	/**
+	 * The source version check, made on first use.
+	 *
+	 * @var ShareSourceVersion|null
+	 */
+	private ?ShareSourceVersion $sourceVersions = null;
 
 	/**
 	 * Constructor for DirectShareRegistrar.
@@ -221,7 +230,16 @@ class DirectShareRegistrar {
 			return $share->outcome(status: 'exists');
 		}
 
-		$copy = $this->mintAndLink(mint: $mint);
+		if ($this->sourceVersions()?->sent(row: $share->row) === '') {
+			return $share->outcome(status: 'invalid');
+		}
+
+		try {
+			$copy = $this->mintAndLink(mint: $mint);
+		} catch (StaleShareSourceException $stale) {
+			return $share->stale(current: $stale->currentVersion());
+		}
+
 		if (is_string($copy) === true) {
 			return $share->outcome(status: $copy);
 		}
@@ -268,6 +286,8 @@ class DirectShareRegistrar {
 	 *
 	 * @return Secret|string The copy, or the status when neither it nor its row was written:
 	 *   `copy_fields_mismatch` when the row's totp or passkeys does not mirror the source's, `no_suite`, `exists`
+	 *
+	 * @throws StaleShareSourceException When the row names a source version that is no longer current; nothing is written
 	 */
 	private function mintAndLink(DirectShareMint $mint): Secret|string {
 		// A copy without the source's TOTP seed or passkeys, or with ones it
@@ -278,6 +298,7 @@ class DirectShareRegistrar {
 
 		$this->connection?->beginTransaction();
 		try {
+			$this->assertSourceCurrent(mint: $mint);
 			$copy = $this->mintCopy(mint: $mint);
 			if ($copy === null) {
 				$this->connection?->rollBack();
@@ -303,6 +324,49 @@ class DirectShareRegistrar {
 
 		return $copy;
 	}//end mintAndLink()
+
+	/**
+	 * The source version check over this registrar's connection, made on first use; none without one.
+	 *
+	 * @return ShareSourceVersion|null
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 */
+	private function sourceVersions(): ?ShareSourceVersion {
+		if ($this->connection === null) {
+			return null;
+		}
+
+		return $this->sourceVersions ??= new ShareSourceVersion(locks: new SecretVersionLock(db: $this->connection));
+	}//end sourceVersions()
+
+	/**
+	 * Refuse a row encrypted from an older version of the row it was encrypted from, under the source's row
+	 * lock, the lock a share-save takes first. That is the source itself, or the caller's own copy of it when a
+	 * delegate shares from their copy: a share-save writes that copy in the same transaction, so its version
+	 * is read after the source's lock, in the order a share-save takes them. A row that names no version (an
+	 * older client) is not checked.
+	 *
+	 * @param DirectShareMint $mint The row and its resolved source
+	 *
+	 * @return void
+	 *
+	 * @throws StaleShareSourceException When the row it was encrypted from moved on since
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 */
+	private function assertSourceCurrent(DirectShareMint $mint): void {
+		$versions = $this->sourceVersions();
+		$sent     = $versions?->sent(row: $mint->share->row);
+		if ($versions === null || $sent === null || $sent === '') {
+			return;
+		}
+
+		$current = $versions->lockedVersion(sourceId: $mint->source->getId(), readId: $mint->share->sourceSecretId);
+		if ($versions->isCurrent(sent: $sent, current: $current) === false) {
+			throw new StaleShareSourceException(current: $current);
+		}
+	}//end assertSourceCurrent()
 
 	/**
 	 * Mint the recipient's copy of the source from the row's ciphertexts.

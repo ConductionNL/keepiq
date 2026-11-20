@@ -100,6 +100,12 @@ function shareeUserRows(response) {
 	]
 }
 
+/**
+ * How many times register-batch sends rows again that were encrypted from a
+ * version the source no longer holds (#1255).
+ */
+export const MAX_STALE_SOURCE_ROUNDS = 3
+
 export const useShareStore = defineStore('share', {
 	state: () => ({
 		/** @type {Array<object>} The shares for the currently focused secret. */
@@ -415,13 +421,58 @@ export const useShareStore = defineStore('share', {
 		 * already has it from earlier in the same action; it is returned so a
 		 * bulk run asks once and builds a fresh single-use proof per request.
 		 *
+		 * A row carries the `sourceUpdatedAt` of the version it was encrypted
+		 * from. When the source moved on meanwhile, as a share-save does, the
+		 * server answers that row `stale_source` and mints nothing (#1255);
+		 * with `rebuild` the stale rows are encrypted again from the current
+		 * version and sent once more, at most three times.
+		 *
 		 * @param {Array<object>} rows The register-batch rows.
 		 * @param {object} [options] Options.
 		 * @param {string} [options.masterPassword] A password asked for earlier in this action.
+		 * @param {(stale: Array<object>) => Promise<Array<object>>} [options.rebuild] Encrypts the given rows again from the source's current version.
+		 * @return {Promise<{items: Array<object>, masterPassword: string}>} One item per row, in row order.
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+		 */
+		async registerBatch(rows, { masterPassword = '', rebuild = null } = {}) {
+			const keyOf = (row) => `${row.sourceSecretId}\u0000${row.targetUserId}`
+			const order = rows.map(keyOf)
+			const outcome = new Map()
+			let pending = rows
+			let password = masterPassword
+			for (let round = 0; ; round++) {
+				const sent = await this.sendRegisterBatch(pending, password)
+				password = sent.masterPassword
+				sent.items.forEach((item, i) => {
+					outcome.set(pending[i] ? keyOf(pending[i]) : `extra-${round}-${i}`, item)
+				})
+				const stale = pending.filter(
+					(row, i) => sent.items[i]?.status === 'stale_source',
+				)
+				if (stale.length === 0 || !rebuild || round >= MAX_STALE_SOURCE_ROUNDS) {
+					break
+				}
+				pending = await rebuild(stale)
+				if (pending.length === 0) {
+					break
+				}
+			}
+			return {
+				items: order.map((key) => outcome.get(key)).filter(Boolean),
+				masterPassword: password,
+			}
+		},
+
+		/**
+		 * One register-batch request with a fresh vault-key proof.
+		 *
+		 * @param {Array<object>} rows The rows.
+		 * @param {string} masterPassword A password asked for earlier in this action.
 		 * @return {Promise<{items: Array<object>, masterPassword: string}>}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 		 */
-		async registerBatch(rows, { masterPassword = '' } = {}) {
+		async sendRegisterBatch(rows, masterPassword) {
 			const proof = await sessionKeyProofHeaders({
 				purpose: PROOF_PURPOSE.SHARE_REGISTER_BATCH,
 				reason: t(

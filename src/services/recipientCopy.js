@@ -49,3 +49,18 @@ export function copyCiphertext(blob) {
 		encryptedPasskeys: blob.passkeys ?? null,
 	}
 }
+
+/**
+ * The source version a copy row was encrypted from, for register-batch to
+ * refuse the row when the source moved on meanwhile (#1255); nothing when
+ * the decrypted secret names no version.
+ *
+ * @param {object} plain The decrypted source.
+ * @return {{sourceUpdatedAt?: string}}
+ * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ */
+export function sourceVersion(plain) {
+	return typeof plain?.updatedAt === 'string' && plain.updatedAt !== ''
+		? { sourceUpdatedAt: plain.updatedAt }
+		: {}
+}

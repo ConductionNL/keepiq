@@ -29,7 +29,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use DateTime;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
+use OCA\Keepiq\Db\SecretVersionLock;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolder;
@@ -46,6 +48,13 @@ use Throwable;
  *   share row and its restriction; each collaborator is one of those.
  */
 class TeamFolderShareService {
+
+	/**
+	 * The source version check, made on first use.
+	 *
+	 * @var ShareSourceVersion|null
+	 */
+	private ?ShareSourceVersion $sourceVersions = null;
 
 	/**
 	 * Constructor for TeamFolderShareService.
@@ -116,7 +125,9 @@ class TeamFolderShareService {
 		$run = new FanOutRun(teamFolder: $teamFolder, subtreeSecretIds: $subtreeSecretIds, userId: $userId);
 		$this->db->beginTransaction();
 		try {
-			$outcome = $this->createFanOutShares(shares: $shares, run: $run);
+			// The source of every row that names its version is locked first, the lock a share-save takes.
+			$versions = $this->sourceVersions()->lockNamed(rows: $shares, allowedIds: $run->subtreeSecretIds);
+			$outcome = $this->createFanOutShares(shares: $shares, run: $run, versions: $versions);
 			$this->db->commit();
 		} catch (Throwable $exception) {
 			$this->db->rollBack();
@@ -135,15 +146,22 @@ class TeamFolderShareService {
 	/**
 	 * Create the share of every submitted row, or note why not.
 	 *
-	 * @param array<int,array<string,mixed>> $shares The submitted rows
-	 * @param FanOutRun                      $run    The fan-out
+	 * @param array<int,array<string,mixed>> $shares   The submitted rows
+	 * @param FanOutRun                      $run      The fan-out
+	 * @param array<string,DateTime|null>    $versions The locked version of each source a row names a version of
 	 *
-	 * @return array{rows: list<array<string,string>>, skipped: list<array<string,string>>, recipients: array<string,bool>}
+	 * @return array{rows: list<array<string,string>>, skipped: list<array<string,string|null>>, recipients: array<string,bool>}
 	 */
-	private function createFanOutShares(array $shares, FanOutRun $run): array {
+	private function createFanOutShares(array $shares, FanOutRun $run, array $versions = []): array {
 		$outcome = ['rows' => [], 'skipped' => [], 'recipients' => []];
 		foreach ($shares as $row) {
 			$share = new FanOutShareRow(row: $row);
+			$refusal = $this->sourceVersions()->refusal(row: $row, versions: $versions);
+			if ($refusal !== null) {
+				$outcome['skipped'][] = $share->skipped(reason: $refusal['reason']) + $refusal['extra'];
+				continue;
+			}
+
 			$created = $this->createFanOutShare(share: $share, run: $run);
 			if (is_string($created) === true) {
 				$outcome['skipped'][] = $share->skipped(reason: $created);
@@ -156,6 +174,17 @@ class TeamFolderShareService {
 
 		return $outcome;
 	}//end createFanOutShares()
+
+	/**
+	 * The source version check over this connection.
+	 *
+	 * @return ShareSourceVersion
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 */
+	private function sourceVersions(): ShareSourceVersion {
+		return $this->sourceVersions ??= new ShareSourceVersion(locks: new SecretVersionLock(db: $this->db));
+	}//end sourceVersions()
 
 	/**
 	 * Tell each new recipient once: one notification per recipient per
