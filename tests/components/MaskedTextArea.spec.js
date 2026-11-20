@@ -6,7 +6,7 @@
  * opening Edit on a note or a private key does not put it on screen; an empty
  * one is open to paste into, and a public value is never masked.
  *
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 
 import { mount } from '@vue/test-utils'

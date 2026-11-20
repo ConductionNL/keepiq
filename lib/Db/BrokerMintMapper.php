@@ -29,7 +29,7 @@ use OCP\IDBConnection;
  *
  * @template-extends QBMapper<BrokerMint>
  *
- * @spec openspec/changes/connection-certificate-expiry-for-integriq/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
+ * @spec openspec/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
  */
 class BrokerMintMapper extends QBMapper {
 	/**
@@ -48,7 +48,7 @@ class BrokerMintMapper extends QBMapper {
 	 *
 	 * @return BrokerMint|null
 	 *
-	 * @spec openspec/changes/connection-certificate-expiry-for-integriq/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
+	 * @spec openspec/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
 	 */
 	public function findBySecret(string $secretId): ?BrokerMint {
 		$qb = $this->db->getQueryBuilder();

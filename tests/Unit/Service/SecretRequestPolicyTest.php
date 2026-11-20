@@ -463,7 +463,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	#[DataProvider('notRequestableTypeProvider')]
 	public function testANotRequestableTypeIsRefused(string $typeName): void {
@@ -495,7 +495,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testOtherTypesAndTheDefaultCanBeRequested(): void {
 		$policy = $this->policyWithType(typeName: 'ssh_key');
@@ -513,7 +513,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testANamedTypeWithoutATypeMapperIsRefused(): void {
 		$this->expectException(RuntimeException::class);
@@ -526,7 +526,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	 */
 	public function testTheSecretTypeNameIsResolved(): void {
 		$secret = new Secret();
@@ -544,7 +544,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	 */
 	public function testAnUnresolvableSecretTypeIsNull(): void {
 		$this->assertNull($this->policyWithSecret(secret: new Secret())->secretTypeName(secretId: 'sec-1'));
@@ -558,7 +558,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	 */
 	public function testACustomTypeNameIsNotGiven(): void {
 		$secret = new Secret();

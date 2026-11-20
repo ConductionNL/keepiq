@@ -217,7 +217,7 @@ export default {
 		 *
 		 * @param {object} attachment The listed attachment row.
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
 		 */
 		canPreview(attachment) {
 			return previewKind(attachment?.contentType) !== null
@@ -228,7 +228,7 @@ export default {
 		 *
 		 * @param {object} attachment The listed attachment row.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
 		 */
 		async openPreview(attachment) {
 			try {

@@ -7,7 +7,7 @@
   Show is pressed. An empty one starts open, so a key can be pasted at once.
   A public value, such as a certificate, is never masked.
 
-  @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+  @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 -->
 <template>
 	<div class="masked-text-area">
@@ -96,7 +96,7 @@ export default {
 		 * Whether the text area shows.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		shown() {
 			return this.public || this.revealed
@@ -111,7 +111,7 @@ export default {
 		 * @param {boolean} isPublic Whether it is public now.
 		 * @param {boolean} wasPublic Whether it was.
 		 * @return {void}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		public(isPublic, wasPublic) {
 			if (wasPublic && !isPublic) {
@@ -126,7 +126,7 @@ export default {
 		 * @param {string} value The new value.
 		 * @param {string} previous The old value.
 		 * @return {void}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		modelValue(value, previous) {
 			if (!this.typed && previous === '' && value !== '') {
@@ -143,7 +143,7 @@ export default {
 		 *
 		 * @param {string} value The value.
 		 * @return {void}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		onInput(value) {
 			this.typed = true

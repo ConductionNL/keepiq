@@ -120,7 +120,7 @@ describe('PasswordField', () => {
 		expect(wrapper.vm.label).toBe('My API token')
 	})
 
-	// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+	// @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 	it('reveals a multi-line value in a text area that keeps its line breaks', async () => {
 		const pem = '-----BEGIN KEY-----\nAAAA\n-----END KEY-----'
 		const resolve = vi.fn().mockResolvedValue(pem)
@@ -142,7 +142,7 @@ describe('PasswordField', () => {
 		expect(wrapper.vm.rows).toBe(20)
 	})
 
-	// @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+	// @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 	it('shows an always-shown value at once, without a show/hide toggle', async () => {
 		const resolve = vi.fn().mockResolvedValue('public')
 		const wrapper = mount(PasswordField, {

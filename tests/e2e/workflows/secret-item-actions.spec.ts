@@ -12,7 +12,7 @@
  * one renders name, address, username and password and never the key; Show
  * as QR code shows a code only after the master password.
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md
+ * @spec openspec/specs/secret-item-actions/spec.md
  */
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'
 

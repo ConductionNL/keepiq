@@ -7,7 +7,7 @@
  * and is not offered for a passkey item, a use-only copy or while offline.
  * Options-object style, like SecretDetailSidebar.dialogs.spec.js.
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
  */
 
 import { createPinia, setActivePinia } from 'pinia'

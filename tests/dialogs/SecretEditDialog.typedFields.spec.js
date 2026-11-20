@@ -193,7 +193,7 @@ async function mountSecret(secret) {
 	return wrapper
 }
 
-// openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+// openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
 describe('SecretEditDialog on a built-in type with data from before', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
@@ -216,7 +216,7 @@ describe('SecretEditDialog on a built-in type with data from before', () => {
 		session.certificate = 'PEM'
 	})
 
-	// openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+	// openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 	it('masks a certificate saved with its private key, as the sidebar does', async () => {
 		const bundle = await mountSecret({
 			typeId: 'type-cert',

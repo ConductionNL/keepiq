@@ -9,7 +9,7 @@
   code is generated in the browser; nothing is fetched or sent. The one-time
   code seed is never encoded (D4).
 
-  @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+  @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 -->
 <template>
 	<NcDialog
@@ -120,7 +120,7 @@ export default {
 		 * The session store, read by the master password check.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		sessionStore() {
 			return useSessionStore()
@@ -130,7 +130,7 @@ export default {
 		 * The SVG's side in modules, quiet zone included.
 		 *
 		 * @return {number}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		box() {
 			return this.matrix ? this.matrix.size + 2 * QUIET_ZONE : 0
@@ -140,7 +140,7 @@ export default {
 		 * The dark modules as one SVG path.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		path() {
 			return this.matrix ? qrPath(this.matrix) : ''
@@ -154,7 +154,7 @@ export default {
 		 * Check the master password; build the code only when it opens the vault key.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		async onVerify() {
 			if (await this.masterPasswordChecked()) {

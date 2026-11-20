@@ -37,7 +37,7 @@ use PHPUnit\Framework\TestCase;
  * integriq learns the expiry of its own organisation certificate, and of
  * nothing else.
  *
- * @spec openspec/changes/connection-certificate-expiry-for-integriq/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
+ * @spec openspec/specs/integration-boundary/spec.md#requirement-integriq-may-learn-when-its-own-connection-certificate-expires
  */
 #[CoversClass(CredentialExpiryRequestedListener::class)]
 #[CoversClass(CredentialExpiryRequestedEvent::class)]

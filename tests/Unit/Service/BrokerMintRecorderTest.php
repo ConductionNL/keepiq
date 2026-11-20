@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * A broker mint carries the certificate's notAfter into expires_at, and who it
  * was minted for into the mint record, without touching the ciphertext.
  *
- * @spec openspec/changes/connection-certificate-expiry-for-integriq/specs/certificate-lifecycle/spec.md#requirement-a-certificate-minted-for-a-connection-carries-its-expiry
+ * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-a-certificate-minted-for-a-connection-carries-its-expiry
  */
 #[CoversClass(BrokerMintRecorder::class)]
 #[UsesClass(SecretService::class)]

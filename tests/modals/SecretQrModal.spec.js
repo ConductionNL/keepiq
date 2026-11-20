@@ -6,7 +6,7 @@
  * built only after the master password verifies, and the code shown decodes
  * back to the password.
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
  */
 
 import { mount } from '@vue/test-utils'

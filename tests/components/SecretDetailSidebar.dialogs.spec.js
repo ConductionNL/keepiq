@@ -50,7 +50,7 @@ describe('SecretDetailSidebar dialogs', () => {
 		expect(events).toEqual(['load', 'refreshList'])
 	})
 
-	// @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+	// @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 	it('reloads the attachments after an edit save, which may have added files', () => {
 		const fetchAttachments = vi.fn().mockRejectedValue(new Error('offline'))
 		useAttachmentStore().fetchAttachments = fetchAttachments

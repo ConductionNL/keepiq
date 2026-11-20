@@ -148,7 +148,7 @@ class SecretRequestFillControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	 */
 	public function testShowNamesTheTypeOfTheSecretBeingFilled(): void {
 		$request = $this->makeRequest();
@@ -504,7 +504,7 @@ class SecretRequestFillControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
 	 */
 	public function testARefusedFillCarriesItsReason(): void {
 		$this->secretRequestService->method('fill')->willThrowException(

@@ -8,7 +8,7 @@
  * and the dialog that guards it. The one-time code seed is deliberately not
  * one of them (vault-item-clone-preview-and-print D4).
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
  */
 export default {
 	/** The login's name. */

@@ -329,7 +329,7 @@ interface SecretRequestServiceInterface {
 	 *
 	 * @return string|null The type name, or null when it cannot be resolved
 	 *
-	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 	 */
 	public function secretTypeName(SecretRequest $request): ?string;
 }//end interface

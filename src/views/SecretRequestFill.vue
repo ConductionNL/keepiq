@@ -435,7 +435,7 @@ export default {
 		 *
 		 * @return {string} The label to render.
 		 *
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 		 */
 		inputLabel(field) {
 			const typeName = this.store.publicRequest?.secret_type ?? ''
@@ -465,7 +465,7 @@ export default {
 		 *
 		 * @return {string} The input kind.
 		 *
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		inputType(field) {
@@ -543,7 +543,7 @@ export default {
 		 *
 		 * @return {boolean} True when the value is shown as a fixed mask.
 		 *
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 		 */
 		masksSummary(field) {
 			const schema = this.schemaOf(field)
@@ -562,7 +562,7 @@ export default {
 		 *
 		 * @param {string} field The requested field name.
 		 * @return {object|null} The field definition.
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 		 */
 		ownField(field) {
 			const typeName = this.store.publicRequest?.secret_type ?? ''
@@ -578,7 +578,7 @@ export default {
 		 *
 		 * @param {string} field The requested field name.
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 		 */
 		typeDecidesMasking(field) {
 			return ['hidden', 'multiline'].includes(this.ownField(field)?.kind)
@@ -661,7 +661,7 @@ export default {
 		 *
 		 * @param {string} field The requested field name.
 		 * @return {string} The text.
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
 		 */
 		summaryValue(field) {
 			if (this.inputType(field) === 'checkbox') {

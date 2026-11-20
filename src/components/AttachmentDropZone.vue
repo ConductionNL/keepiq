@@ -7,7 +7,7 @@
   its save; each file is then encrypted and uploaded through the attachment
   store, under the same limits as the sidebar upload.
 
-  @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+  @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 -->
 <template>
 	<div
@@ -158,7 +158,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		canAdd() {
 			return !this.disabled && !this.unavailable
@@ -194,7 +194,7 @@ export default {
 	 * A file dropped beside the zone would otherwise be opened by the
 	 * browser in place of the app, losing the dialog.
 	 *
-	 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 	 */
 	mounted() {
 		window.addEventListener('dragover', this.swallowFileDrop)
@@ -215,7 +215,7 @@ export default {
 		 *
 		 * @param {string} secretId The saved secret.
 		 * @return {Promise<boolean>} Whether every file uploaded.
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		async uploadPending(secretId) {
 			// A file whose own Retry is running is not sent a second time.
@@ -230,7 +230,7 @@ export default {
 		 * @param {string} secretId The saved secret.
 		 * @param {object} entry The listed file.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		async uploadOne(secretId, entry) {
 			if (entry.status === 'uploading') {
@@ -250,7 +250,7 @@ export default {
 		/**
 		 * @param {object} entry The refused file.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		retry(entry) {
 			return this.uploadOne(this.secretId, entry)
@@ -259,7 +259,7 @@ export default {
 		/**
 		 * @param {object} entry The listed file.
 		 * @return {void}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		remove(entry) {
 			this.pending = this.pending.filter((other) => other !== entry)
@@ -268,7 +268,7 @@ export default {
 		/**
 		 * @param {FileList|Array<File>|null} files The picked or dropped files.
 		 * @return {void}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		add(files) {
 			for (const file of Array.from(files || [])) {
@@ -333,7 +333,7 @@ export default {
 		/**
 		 * @param {DragEvent} event A drag over or drop anywhere on the page.
 		 * @return {void}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		swallowFileDrop(event) {
 			if (Array.from(event.dataTransfer?.types || []).includes('Files')) {

@@ -37,7 +37,7 @@ A guard test MUST assert the absence of leaf configuration in the register JSON 
 - **THEN** the guard test fails and the change MUST be rejected until this spec's requirements are explicitly modified
 
 ### Requirement: Expiry And Rotation Visibility Stays In-App
-Certificate and secret expiry awareness MUST continue to be served by Keepiq's own surfaces — the expiry scan jobs (`ScanCertificateExpiryJob`, `CheckRootCertificateExpiry` with 90/30/7-day thresholds, `ScanExpiringSecretsJob` with policy reminder thresholds), Nextcloud notifications, rotation flags, and the dashboard — and MUST NOT be re-implemented as a calendar leaf or external feed. These surfaces answer under the vault's own ACL: a user is notified only about entries they can access.
+Certificate and secret expiry awareness MUST continue to be served by Keepiq's own surfaces — the expiry scan jobs (`ScanCertificateExpiryJob`, `CheckRootCertificateExpiry` with 90/30/7-day thresholds, `ScanExpiringSecretsJob` with policy reminder thresholds), Nextcloud notifications, rotation flags, and the dashboard — and MUST NOT be re-implemented as a calendar leaf or external feed. These surfaces answer under the vault's own ACL: a user is notified only about entries they can access. The one exception is the expiry of an organisation credential that integriq minted through the credential broker for its own connection, which keepiq MAY answer to integriq as set out in "Integriq may learn when its own connection certificate expires".
 
 #### Scenario: Expiring certificate surfaces without leaving the app
 - **WHEN** a certificate crosses a notification threshold before its `notAfter`
@@ -51,3 +51,24 @@ Any future change that surfaces Keepiq data through an integration leaf MUST (1)
 #### Scenario: A metadata-only proposal is evaluated against the gate
 - **WHEN** a change proposes surfacing rotation-due counts (numbers only, no entry names) on a dashboard leaf
 - **THEN** the change is only acceptable if it modifies this capability and demonstrates conditions (2) and (3) hold for the exact fields shipped
+
+### Requirement: Integriq may learn when its own connection certificate expires
+
+keepiq SHALL answer integriq's in-process `CredentialExpiryRequestedEvent` with exactly two fields, the certificate's `notAfter` and a `renewUrl` to the secret's page in keepiq, and only when the credential is an organisation credential minted through the broker for the consumer `integriq` and belongs to the organisation named in the request. It SHALL answer nothing for any other credential. It SHALL NOT return a name, subject, issuer, folder or any material, and SHALL NOT write the answer to OpenRegister or any other store.
+
+#### Scenario: integriq gets the expiry of its BRP certificate
+
+@e2e exclude an in-process event with no keepiq browser surface; the integriq connection monitor e2e shows the result.
+
+- **GIVEN** a certificate secret minted by integriq for organisation Zuiddrecht, expiring on 30 November 2026
+- **WHEN** integriq asks for its expiry acting for Zuiddrecht
+- **THEN** keepiq SHALL answer `notAfter` 2026-11-30 and a link to the secret
+- **AND** the answer SHALL carry no other field
+
+#### Scenario: A personal or foreign credential gets no answer
+
+@e2e exclude an in-process event; covered by CredentialExpiryRequestedListenerTest.
+
+- **GIVEN** a personal vault certificate, and a certificate of another organisation
+- **WHEN** integriq asks for either expiry
+- **THEN** keepiq SHALL answer nothing

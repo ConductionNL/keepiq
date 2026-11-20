@@ -7,7 +7,7 @@
  * download into memory, and every other type, SVG included, is refused before
  * anything is fetched.
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
  */
 
 import axios from '@nextcloud/axios'

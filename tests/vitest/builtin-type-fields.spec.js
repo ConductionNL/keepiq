@@ -5,8 +5,8 @@
  * The built-in item types' own forms: the value field, the extra fields
  * stored under a fixed English name, and the generic fields left out.
  *
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
 
 import { describe, expect, it } from 'vitest'

@@ -17,4 +17,4 @@ Spec only in this PR. Tier V1. integriq's monitor waits on this.
 
 ## 3. Verify
 
-- [ ] 3.1 `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, `npm run lint`, `npm run test:l10n` once before push.
+- [x] 3.1 `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, `npm run lint`, `npm run test:l10n` once before push. Done on 20 Nov 2026 over development with the change merged (#1899): lint, PHPCS, Psalm, PHPStan and PHPUnit (5749 tests, 0 failed) pass; PHPMD reports only the existing `ExcessiveClassComplexity` of `SecretRequestService` (52 > 50), which is also on development and not in this change's files; `npm run lint` 0 errors; `npm run test:l10n` OK.

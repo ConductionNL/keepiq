@@ -331,7 +331,7 @@ export default {
 		 * secret already holds a login, so it never becomes unreachable.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		showLogin() {
 			return (
@@ -345,7 +345,7 @@ export default {
 		 * secret already holds a URL.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		showUrl() {
 			return (
@@ -453,7 +453,7 @@ export default {
 		/**
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		canSubmit() {
 			// Once saved, the button only retries the uploads.
@@ -520,7 +520,7 @@ export default {
 		 * the secret and it is not served from the offline cache.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		canAddFiles() {
 			const ownerId = this.original?.ownerId
@@ -537,7 +537,7 @@ export default {
 		 * Why listed files cannot be added, '' when they can.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		filesUnavailable() {
 			if (this.canAddFiles) {
@@ -556,7 +556,7 @@ export default {
 		 *
 		 * @param {number} count The files the drop zone lists.
 		 * @return {void}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		pendingFiles(count) {
 			if (this.savedSecret && count === 0 && !this.saving) {
@@ -878,7 +878,7 @@ export default {
 		 * open with the refused files listed; never saves the secret again.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		async uploadFiles() {
 			const zone = this.$refs.dropZone
@@ -900,7 +900,7 @@ export default {
 		 * Retry the refused files of the saved secret.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		async retryUploads() {
 			this.saving = true
@@ -920,7 +920,7 @@ export default {
 		 * @param {boolean} value The new open state.
 		 * @return {void}
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		onUpdateOpen(value) {
 			if (!value && this.savedSecret) {

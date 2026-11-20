@@ -19,7 +19,7 @@ import { typedFieldsOf } from './typedFields.js'
  * loaded translations. A field may state a `schema` its value must fit.
  *
  * @return {object} The definitions.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function definitions() {
@@ -47,7 +47,7 @@ function definitions() {
  * The passphrase of a private key, as a certificate and an SSH key keep it.
  *
  * @return {object} The field.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 function passphraseField() {
 	return {
@@ -63,7 +63,7 @@ function passphraseField() {
  * and that key's passphrase.
  *
  * @return {object} The definition.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 function certificateDefinition() {
 	return {
@@ -90,7 +90,7 @@ function certificateDefinition() {
  * An API key, with its API secret.
  *
  * @return {object} The definition.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 function apiKeyDefinition() {
 	return {
@@ -112,7 +112,7 @@ function apiKeyDefinition() {
  * A database: a username, host, port and database name instead of a URL.
  *
  * @return {object} The definition.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
  */
 function databaseDefinition() {
@@ -154,7 +154,7 @@ function databaseDefinition() {
  * fingerprint have their own form, SshKeyFields, so they are not fields here.
  *
  * @return {object} The definition.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 function sshKeyDefinition() {
 	return {
@@ -170,7 +170,7 @@ function sshKeyDefinition() {
  *
  * @param {string} typeName The type's system name.
  * @return {object|null} The definition.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 function definitionOf(typeName) {
 	return definitions()[typeName] ?? null
@@ -183,7 +183,7 @@ function definitionOf(typeName) {
  *
  * @param {string|null|undefined} value The value.
  * @return {boolean}
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 export function holdsPrivateKey(value) {
 	return /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/.test(value || '')
@@ -196,7 +196,7 @@ export function holdsPrivateKey(value) {
  *
  * @param {string} typeName The type's system name.
  * @return {{label: string, kind: string, public?: boolean}|null} The value field.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 export function valueFieldOf(typeName) {
 	return definitionOf(typeName)?.value ?? null
@@ -208,7 +208,7 @@ export function valueFieldOf(typeName) {
  * @param {string} typeName The type's system name.
  * @param {boolean} optional Whether the form marks the field optional.
  * @return {string|null} The label.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 export function loginLabelOf(typeName, optional = false) {
 	const labels = definitionOf(typeName)?.loginLabel
@@ -224,7 +224,7 @@ export function loginLabelOf(typeName, optional = false) {
  * @param {string} typeName The type's system name.
  * @param {string} field `login` or `url`.
  * @return {boolean} True when the type has no use for the field.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 export function leavesOut(typeName, field) {
 	return (definitionOf(typeName)?.leaveOut ?? []).includes(field)
@@ -235,7 +235,7 @@ export function leavesOut(typeName, field) {
  *
  * @param {string} typeName The type's system name.
  * @return {boolean} True when the value is ticked and locked.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-a-request-always-asks-for-the-required-fields-of-its-type
  */
 export function valueLockedInRequests(typeName) {
 	return definitionOf(typeName)?.lockedInRequests === true
@@ -247,7 +247,7 @@ export function valueLockedInRequests(typeName) {
  *
  * @param {object|undefined|null} type A secret type from the type store.
  * @return {Array<{key: string, label: string, displayLabel?: string, kind: string, required?: boolean}>} The fields.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
  */
 export function typeFieldsOf(type) {
 	const builtin = definitionOf(type?.name)
@@ -260,7 +260,7 @@ export function typeFieldsOf(type) {
  * @param {string} typeName The type's system name.
  * @param {string} name The member name in the additional fields.
  * @return {object|null} The field.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
 export function builtinFieldNamed(typeName, name) {
 	return (
@@ -275,7 +275,7 @@ export function builtinFieldNamed(typeName, name) {
  * @param {string} typeName The type's system name.
  * @param {string} name The member name.
  * @return {string} The label.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
 export function memberLabel(typeName, name) {
 	return builtinFieldNamed(typeName, name)?.displayLabel ?? name

@@ -133,7 +133,7 @@ export function splitTypedValues(blob, fields) {
  * @param {object|null} [original] The blob the form was opened from.
  * @return {object} The blob.
  * @spec openspec/specs/admin-secret-types/spec.md#requirement-typed-fields-storage
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
 export function mergeTypedValues(rest, fields, values, original = null) {
 	const had =
@@ -158,7 +158,7 @@ export function mergeTypedValues(rest, fields, values, original = null) {
  * @param {Array<string>} merged The typed members written into it.
  * @param {object} stored The schemas of the blob the form was opened from.
  * @return {object} The blob.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
 function withStoredSchemas(out, merged, stored) {
 	const kept = {}
@@ -177,7 +177,7 @@ function withStoredSchemas(out, merged, stored) {
  *
  * @param {string|number|boolean|object|null|undefined} value The value.
  * @return {string} The text.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
 function asText(value) {
 	return value === null || value === undefined ? '' : String(value)
@@ -192,7 +192,7 @@ function asText(value) {
  * @param {string} label The field's member name.
  * @param {string|undefined} value The value in the form.
  * @return {string|number|boolean|object|null|undefined} The member value, or undefined to leave it out.
- * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
+ * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-field-values-keep-a-fixed-name
  */
 function typedMember(had, label, value) {
 	const text = asText(value)

@@ -6,7 +6,7 @@
  * 2.2): offered for images, PDFs and plain text only, shown in a modal, and
  * the object URL is revoked when the modal closes. Nothing is downloaded.
  *
- * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-preview-an-attachment-in-the-browser
  */
 
 import { mount } from '@vue/test-utils'

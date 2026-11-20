@@ -1562,7 +1562,7 @@ export default {
 		 * credential is bound to one item.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
 		 */
 		canClone() {
 			return (
@@ -1578,7 +1578,7 @@ export default {
 		 * password, on a copy the user may reveal (not use-only).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		canPrintOrShowQr() {
 			if (!this.secret || this.useOnly || typeof this.secret.key !== 'string' || this.secret.key === '') {
@@ -1752,7 +1752,7 @@ export default {
 		 * order, each with its translated label.
 		 *
 		 * @return {Array<{field: object, label: string, value: string}>}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 		 */
 		typeMembers() {
 			if (!this.hasAdditionalFields) {
@@ -1780,7 +1780,7 @@ export default {
 		 * secret's type does not define, each with its schema.
 		 *
 		 * @return {Array<{name: string, value: string, schema: object}>}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
 		 */
 		ownMembers() {
@@ -1965,7 +1965,7 @@ export default {
 		 * @return {string}
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		keyLabel() {
 			return this.valueField?.label ?? t('keepiq', 'Key')
@@ -1975,7 +1975,7 @@ export default {
 		 * The type's own value field, or null for the generic one.
 		 *
 		 * @return {{label: string, kind: string, public?: boolean}|null}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 		 */
 		valueField() {
 			return valueFieldOf(this.typeName)
@@ -1987,7 +1987,7 @@ export default {
 		 * certificate saved before it had its own Private key field may do.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 		 */
 		valueShownAtOnce() {
 			return (
@@ -2000,7 +2000,7 @@ export default {
 		 * The login row's label: "Username" on a database, else "Login".
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		loginLabel() {
 			return loginLabelOf(this.typeName) ?? t('keepiq', 'Login')
@@ -2272,7 +2272,7 @@ export default {
 		 *
 		 * @param {{kind: string, public?: boolean}} field The field.
 		 * @return {boolean} True when the field is masked.
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 		 */
 		isMaskedField(field) {
 			return (
@@ -2288,7 +2288,7 @@ export default {
 		 *
 		 * @param {string|number|boolean} value The member's decrypted value.
 		 * @return {function(): Promise<string>} The resolver.
-		 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
 		 */
 		memberResolver(value) {
 			return async () => String(value)
@@ -2499,7 +2499,7 @@ export default {
 		 *
 		 * @return {void}
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
-		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		openEditDialog() {
 			this.cnOpenModal('secret-edit', {
@@ -2523,7 +2523,7 @@ export default {
 		 * after the master password re-prompt (crypto-item-reprompt D2).
 		 *
 		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
 		 */
 		openClone() {
 			if (!this.secret) {
@@ -2544,7 +2544,7 @@ export default {
 		 * Open the create dialog prefilled from this secret.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
 		 */
 		openCloneDialog() {
 			this.cnOpenModal('secret-create', {
@@ -2566,7 +2566,7 @@ export default {
 		 * before it renders the sheet; a flagged item answers its re-prompt first.
 		 *
 		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		openPrint() {
 			return this.openRevealModal('secret-print', () => ({
@@ -2581,7 +2581,7 @@ export default {
 		 * Open Show as QR code for this login, behind the same check as Print.
 		 *
 		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		openQr() {
 			return this.openRevealModal('secret-qr', () => ({
@@ -2598,7 +2598,7 @@ export default {
 		 * @param {string} name The registry key.
 		 * @param {() => object} props Builds the modal's props.
 		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
-		 * @spec openspec/changes/vault-item-clone-preview-and-print/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
 		 */
 		openRevealModal(name, props) {
 			if (!this.secret || !this.canPrintOrShowQr) {

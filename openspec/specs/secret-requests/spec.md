@@ -66,6 +66,21 @@ A RE-REQUEST is the only creation path that targets an existing Secret, per the 
 - WHEN both are created
 - THEN each MUST have its own unfilled Secret, and neither MUST write into a Secret created for the other
 
+#### Scenario: A fresh request files its Secret as the chosen type
+@e2e exclude Service-level routing with no visual surface of its own; driven by SecretRequestServiceTest::testFreshRequestFilesThePlaceholderAsTheChosenType and ::testFreshRequestWithoutATypeLeavesTheDefault, and SecretRequestControllerTest::testCreateForwardsTheChosenTypeToTheFreshPath.
+- GIVEN a user creates a fresh request and names a secret type
+- WHEN the system creates the unfilled Secret
+- THEN that Secret MUST have the named type, validated and subject to the team folder rule exactly as for a Secret the user creates directly
+- AND without a named type the Secret MUST get the default type
+
+#### Scenario: A fresh request is asked by type
+@e2e exclude Dialog state with no server round-trip of its own; driven by the SecretRequestCreateDialog spec (type select lists the creatable types, the field list follows the type, only a required field is pre-ticked, creation needs one ticked field, the type travels with the request).
+- GIVEN a user opens the dialog to ask for a new credential
+- WHEN they pick a type
+- THEN the requested fields MUST list that type's fields, with only the fields the type requires ticked (`builtin-type-fields`)
+- AND the request MUST NOT be creatable until at least one field is ticked
+- AND the chosen type MUST be sent with the request
+
 #### Scenario: Create request for application secret
 - GIVEN a user has an active EncryptionSuite and an application exists with an active EncryptionSuite
 - WHEN the user creates a SecretRequest targeting the application's vault
@@ -430,6 +445,36 @@ This is in addition to the existing fill-in refusals (see Requirement: Fill In v
 - **GIVEN** a compromise force-revoke terminated a migration, and the termination unlocked the request back to `pending` on the old suite
 - **WHEN** someone opens or submits its fill-in link
 - **THEN** the system MUST refuse with `410` and reason `unavailable`
+
+### Requirement: Item Types That Cannot Be Requested
+The system MUST refuse any SecretRequest for a payment card, an identity, an authenticator (TOTP) key or a passkey, whether it is a fresh request asked as one of those types or a fill-in or re-request on an existing Secret of one. Asking someone for their card or identity details through a fill link has no legitimate use this flow needs to serve; it is what fraud looks like. An authenticator key is the seed of that person's one-time codes, and a passkey holds the private key of that person's credential, so whoever is handed either can sign in as them; a one-time code itself expires within a minute, before a requester could use it. A holder MUST still be able to store, edit and share these types themselves: only requesting them is refused. The interface MUST NOT offer a request for them, and the server MUST refuse one regardless of the interface: also when the Secret's type is changed to one of them after the request was made, so opening or filling the link MUST be refused then. The rule is about the Secret's type: custom fields on another type that happen to be named like card or identity fields are out of its scope.
+
+#### Scenario: A fresh request asked as a type that cannot be requested
+@e2e exclude Server-side refusal with no visual surface beyond the type list; driven by SecretRequestPolicyTest (the four types refused, other types and the default allowed) and SecretRequestServiceTest::testFreshRequestRefusesANotRequestableTypeWithoutAPlaceholder.
+- GIVEN a user creates a fresh request naming the payment card, identity, authenticator or passkey type
+- WHEN the request is submitted
+- THEN the system MUST refuse it with an authorization error
+- AND MUST NOT create a placeholder Secret
+
+#### Scenario: A fill-in or re-request on an existing Secret of such a type
+@e2e exclude Server-side refusal; driven by SecretRequestServiceTest::testRequestOnACardSecretIsRefused, and the sidebar spec for the hidden request action.
+- GIVEN a user owns a Secret of the payment card, identity, authenticator or passkey type
+- WHEN they ask someone to fill it in, or ask for new values
+- THEN the system MUST refuse the request with an authorization error
+- AND the Secret's detail view MUST NOT offer either action
+
+#### Scenario: The Secret's type changes after the request was made
+@e2e exclude Server-side refusal; driven by SecretRequestServiceTest::testALinkIsRefusedOnceItsSecretBecameACard and ::testAFillIsRefusedOnceItsSecretBecameACard.
+- GIVEN a pending request on a Login Secret
+- WHEN its owner changes the Secret to the payment card type
+- THEN opening the fill link MUST be refused as a link that is no longer available, with the same status and reason as any other, so the recipient is not told the type
+- AND a fill MUST be refused the same way with nothing written, leaving the request pending
+
+#### Scenario: SSH keys stay requestable
+@e2e exclude Server-side rule; driven by SecretRequestPolicyTest::testOtherTypesAndTheDefaultCanBeRequested.
+- GIVEN a user needs a vendor's SSH key to reach a system the vendor runs
+- WHEN they create a request asked as the SSH Key type
+- THEN the system MUST accept it, so the key travels encrypted instead of in a plain email
 
 ## User Stories
 
