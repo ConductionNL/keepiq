@@ -127,7 +127,12 @@ class FederationLookupTest extends TestCase {
 		$user->method('getUID')->willReturn('alice');
 		$session->method('getUser')->willReturn($user);
 
-		return new FederationController($this->createMock(IRequest::class), $service, $session, $this->createStub(originalClassName: PartnerCertificateBatchService::class));
+		return new FederationController(
+			request: $this->createMock(originalClassName: IRequest::class),
+			certificates: $service,
+			userSession: $session,
+			batch: $this->createStub(originalClassName: PartnerCertificateBatchService::class),
+		);
 	}
 
 	/**
