@@ -79,7 +79,7 @@ export default {
 		 *
 		 * @return {Array<{value: string, label: string}>} The options.
 		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		typeOptions() {
 			return useSecretTypeStore()

@@ -335,7 +335,7 @@ export default {
 		 *
 		 * @return {Array<{value: string, label: string}>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		typeOptions() {
 			return useSecretTypeStore()
@@ -351,7 +351,7 @@ export default {
 		 * when the server stores the field.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		showAuthenticator() {
 			return this.selectedTypeName === 'login' && valueFieldsSupported()
@@ -361,7 +361,7 @@ export default {
 		 * Why the entered authenticator key blocks the save, '' when it does not.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		totpError() {
 			return this.showAuthenticator
@@ -373,7 +373,7 @@ export default {
 		 * The authenticator key to save with the login, '' for none.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		totpToSave() {
 			return this.showAuthenticator

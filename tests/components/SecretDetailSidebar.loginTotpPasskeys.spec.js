@@ -7,8 +7,8 @@
  * metadata, never a private key; Delete is offered only where the login may
  * be changed, and saves the remaining passkeys with the base versions.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-the-login-shows-a-live-code
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-login-shows-a-live-code
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 import axios from '@nextcloud/axios'

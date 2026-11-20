@@ -109,7 +109,7 @@ export default {
 		 * Whether this version carries passkeys to list.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		hasPasskeys() {
 			return passkeyEntries(this.version?.passkeys).length > 0

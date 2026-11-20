@@ -5,7 +5,7 @@
  * Whether a vault row holds a one-time code or passkeys. A row carries its
  * `totp` and `passkeys` as ciphertext, so only their presence is read.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 import { translate as t } from '@nextcloud/l10n'
@@ -13,7 +13,7 @@ import { translate as t } from '@nextcloud/l10n'
 /**
  * @param {object|null|undefined} row A vault row.
  * @return {boolean} Whether it holds a one-time code (null and '' are none).
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function rowHasCode(row) {
 	return typeof row?.totp === 'string' && row.totp !== ''
@@ -22,7 +22,7 @@ export function rowHasCode(row) {
 /**
  * @param {object|null|undefined} row A vault row.
  * @return {boolean} Whether it holds passkeys (null and '' are none).
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function rowHasPasskeys(row) {
 	return typeof row?.passkeys === 'string' && row.passkeys !== ''
@@ -46,7 +46,7 @@ function codeRowLabel(name, passkeys) {
  *
  * @param {object} row A vault row.
  * @return {string} The label.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function rowOpenLabel(row) {
 	const name = row?.name ?? ''

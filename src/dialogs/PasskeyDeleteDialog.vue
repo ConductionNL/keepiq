@@ -8,7 +8,7 @@
 
   Lives in its own file per ADR-004.
 
-  @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+  @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 -->
 <template>
 	<NcDialog
