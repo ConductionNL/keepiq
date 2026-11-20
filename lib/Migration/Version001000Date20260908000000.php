@@ -186,6 +186,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [],
 		],
+		'broker_mints' => Version001022Date20261117160000::DEFINITION,
 		'ca_certs' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
