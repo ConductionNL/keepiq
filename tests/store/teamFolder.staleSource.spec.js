@@ -4,7 +4,8 @@
  *
  * Both team folder fan-outs name the version of the source they decrypted,
  * and a row the server skips as `stale_source` is decrypted and sent again
- * (#1255). A member or manager reading their own copy names no version.
+ * (#1255). A member or manager reading their own copy names the source's
+ * version from the write context, read before the copy.
  *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
  */
@@ -105,14 +106,68 @@ describe('team folder fan-outs and a source a save replaced', () => {
 		expect(result.created).toBe(0)
 	})
 
-	it("names no version for a manager's own copy", async () => {
+	it("names the source's version for a manager's own copy, read before the copy", async () => {
 		const posts = server({ current: NEW })
-		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ id: 'm-copy', key: 'pw', updatedAt: OLD })
+		const order = []
+		vi.spyOn(useShareStore(), 'fetchWriteContext').mockImplementation(async (id) => {
+			order.push(`context ${id}`)
+			return { sourceSecretId: 's1', sourceUpdatedAt: NEW }
+		})
+		vi.spyOn(useSecretStore(), 'fetchSecret').mockImplementation(async (id) => {
+			order.push(`read ${id}`)
+			return { id, key: 'pw', updatedAt: OLD }
+		})
 
 		await ownerRun({ id: 's1', name: 'Bank', copyId: 'm-copy' }).runFanOut('tf-ops')
 
+		expect(order).toEqual(['context m-copy', 'read m-copy'])
 		expect(posts).toHaveLength(1)
+		expect(posts[0][0].sourceUpdatedAt).toBe(NEW)
+	})
+
+	it('names no version when the write context names another source or fails', async () => {
+		const posts = server({ current: NEW })
+		const context = vi.spyOn(useShareStore(), 'fetchWriteContext')
+		context.mockResolvedValueOnce({ sourceSecretId: 'm-copy', sourceUpdatedAt: OLD })
+		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ id: 'm-copy', key: 'pw', updatedAt: OLD })
+
+		await ownerRun({ id: 's1', name: 'Bank', copyId: 'm-copy' }).runFanOut('tf-ops')
+		context.mockRejectedValueOnce(new Error('404'))
+		await ownerRun({ id: 's1', name: 'Bank', copyId: 'm-copy' }).runFanOut('tf-ops')
+
+		expect(posts).toHaveLength(2)
 		expect(posts[0][0]).not.toHaveProperty('sourceUpdatedAt')
+		expect(posts[1][0]).not.toHaveProperty('sourceUpdatedAt')
+	})
+
+	it("names the source's version for a member's own copy in the automatic confirmation", async () => {
+		const posts = server({ current: NEW })
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
+			if (url.endsWith('/pending-confirmations')) {
+				return {
+					data: {
+						enabled: true,
+						folders: [
+							{
+								teamFolderId: 'tf-ops',
+								missing: [{ secretId: 's1', userId: 'kim', ownCopyId: 'own-1' }],
+								recipients: [{ userId: 'kim', certificate: 'PEM-KIM' }],
+							},
+						],
+					},
+				}
+			}
+			if (url.endsWith('/write-context')) {
+				return { data: { sourceSecretId: 's1', sourceUpdatedAt: NEW } }
+			}
+			return { data: { id: 'own-1', key: 'CIPHER', updatedAt: OLD } }
+		})
+		vi.spyOn(useSecretStore(), 'decryptSecret').mockResolvedValue({ key: 'pw' })
+
+		await useTeamFolderStore().autoConfirm()
+
+		expect(posts).toHaveLength(1)
+		expect(posts[0][0].sourceUpdatedAt).toBe(NEW)
 	})
 
 	it('resends a stale row of the automatic confirmation', async () => {
