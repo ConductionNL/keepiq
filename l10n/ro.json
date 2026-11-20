@@ -2048,7 +2048,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Aceste site-uri oferă chei de acces, iar seiful dvs. nu conține niciuna pentru ele. O cheie de acces nu poate fi furată prin phishing și nici refolosită.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Date despre site-uri: 2FA Directory (MIT) și Passkeys Directory (CC BY 4.0), de 2factorauth și contribuitori.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Autentificare în doi pași disponibilă și Cheie de acces disponibilă nu sunt disponibile: directorul de site-uri nu a putut fi încărcat. Celelalte constatări nu sunt afectate.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Autentificare în doi pași disponibilă și Cheie de acces disponibilă nu sunt disponibile: administratorul dvs. nu a activat directorul de site-uri."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Autentificare în doi pași disponibilă și Cheie de acces disponibilă nu sunt disponibile: administratorul dvs. nu a activat directorul de site-uri.",
+        "Authenticator seeds": "Chei de autentificator",
+        "Chosen folders": "Dosare alese",
+        "Chosen types": "Tipuri alese",
+        "Export selected": "Exportați selecția",
+        "Leave out": "Excludeți",
+        "Types": "Tipuri",
+        "Usernames": "Nume de utilizator"
     },
     "plurals": null
 }

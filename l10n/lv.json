@@ -2048,7 +2048,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Šīs vietnes piedāvā piekļuves atslēgas, bet Jūsu glabātavā tām nav piekļuves atslēgas. Piekļuves atslēgu nevar izkrāpt ar pikšķerēšanu vai izmantot atkārtoti.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Vietņu dati: 2FA Directory (MIT) un Passkeys Directory (CC BY 4.0), autori 2factorauth un līdzautori.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Divpakāpju pieteikšanās pieejama un Piekļuves atslēga pieejama nav pieejamas: vietņu katalogu neizdevās ielādēt. Citus konstatējumus tas neietekmē.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Divpakāpju pieteikšanās pieejama un Piekļuves atslēga pieejama nav pieejamas: Jūsu administrators nav ieslēdzis vietņu katalogu."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Divpakāpju pieteikšanās pieejama un Piekļuves atslēga pieejama nav pieejamas: Jūsu administrators nav ieslēdzis vietņu katalogu.",
+        "Authenticator seeds": "Autentifikatora atslēgas",
+        "Chosen folders": "Izvēlētās mapes",
+        "Chosen types": "Izvēlētie veidi",
+        "Export selected": "Eksportēt atlasītos",
+        "Leave out": "Neiekļaut",
+        "Types": "Veidi",
+        "Usernames": "Lietotājvārdi"
     },
     "plurals": null
 }

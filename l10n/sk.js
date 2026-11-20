@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Tieto weby ponúkajú prístupové kľúče a váš trezor pre ne neobsahuje žiadny prístupový kľúč. Prístupový kľúč sa nedá vylákať phishingom ani znova použiť.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Údaje webov: 2FA Directory (MIT) a Passkeys Directory (CC BY 4.0), od 2factorauth a prispievateľov.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Dvojfázové prihlásenie k dispozícii a Prístupový kľúč k dispozícii nie sú dostupné: adresár webov sa nepodarilo načítať. Ostatné zistenia to neovplyvňuje.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dvojfázové prihlásenie k dispozícii a Prístupový kľúč k dispozícii nie sú dostupné: váš správca nezapol adresár webov."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dvojfázové prihlásenie k dispozícii a Prístupový kľúč k dispozícii nie sú dostupné: váš správca nezapol adresár webov.",
+        "Authenticator seeds": "Kľúče autentifikátora",
+        "Chosen folders": "Vybrané priečinky",
+        "Chosen types": "Vybrané typy",
+        "Export selected": "Exportovať vybrané",
+        "Leave out": "Vynechať",
+        "Types": "Typy",
+        "Usernames": "Používateľské mená"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

@@ -2022,7 +2022,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Þessi vefsvæði bjóða upp á aðgangslykla og hólfið þitt geymir engan aðgangslykil fyrir þau. Ekki er hægt að stela aðgangslykli með vefveiðum eða endurnota hann.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Gögn vefsvæða: 2FA Directory (MIT) og Passkeys Directory (CC BY 4.0), frá 2factorauth og þátttakendum.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Tveggja þátta innskráning í boði og Aðgangslykill í boði eru ekki tiltæk: ekki tókst að hlaða vefsvæðaskránni. Aðrar niðurstöður verða ekki fyrir áhrifum.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tveggja þátta innskráning í boði og Aðgangslykill í boði eru ekki tiltæk: kerfisstjórinn þinn hefur ekki kveikt á vefsvæðaskránni."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tveggja þátta innskráning í boði og Aðgangslykill í boði eru ekki tiltæk: kerfisstjórinn þinn hefur ekki kveikt á vefsvæðaskránni.",
+        "Authenticator seeds": "Lyklar auðkennara",
+        "Chosen folders": "Valdar möppur",
+        "Chosen types": "Valdar tegundir",
+        "Export selected": "Flytja út valið",
+        "Leave out": "Sleppa",
+        "Types": "Tegundir",
+        "Usernames": "Notendanöfn"
     },
     "plurals": null
 }

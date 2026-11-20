@@ -2022,7 +2022,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Questi siti offrono passkey e la tua cassaforte non ne contiene per loro. Una passkey non può essere sottratta con il phishing né riutilizzata.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Dati dei siti: 2FA Directory (MIT) e Passkeys Directory (CC BY 4.0), di 2factorauth e collaboratori.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Accesso a due fattori disponibile e Passkey disponibile non sono disponibili: non è stato possibile caricare la directory dei siti. Gli altri risultati non sono interessati.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Accesso a due fattori disponibile e Passkey disponibile non sono disponibili: il tuo amministratore non ha attivato la directory dei siti."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Accesso a due fattori disponibile e Passkey disponibile non sono disponibili: il tuo amministratore non ha attivato la directory dei siti.",
+        "Authenticator seeds": "Chiavi dell'autenticatore",
+        "Chosen folders": "Cartelle scelte",
+        "Chosen types": "Tipi scelti",
+        "Export selected": "Esporta selezionati",
+        "Leave out": "Escludi",
+        "Types": "Tipi",
+        "Usernames": "Nomi utente"
     },
     "plurals": null
 }

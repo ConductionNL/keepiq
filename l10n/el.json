@@ -2022,7 +2022,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Αυτοί οι ιστότοποι προσφέρουν κλειδιά πρόσβασης και το θησαυροφυλάκιό σας δεν περιέχει κλειδί πρόσβασης για αυτούς. Ένα κλειδί πρόσβασης δεν μπορεί να υποκλαπεί με ηλεκτρονικό ψάρεμα ούτε να επαναχρησιμοποιηθεί.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Δεδομένα ιστότοπων: 2FA Directory (MIT) και Passkeys Directory (CC BY 4.0), από το 2factorauth και τους συντελεστές.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Τα «Διαθέσιμη σύνδεση δύο παραγόντων» και «Διαθέσιμο κλειδί πρόσβασης» δεν είναι διαθέσιμα: δεν ήταν δυνατή η φόρτωση του καταλόγου ιστότοπων. Τα υπόλοιπα ευρήματα δεν επηρεάζονται.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Τα «Διαθέσιμη σύνδεση δύο παραγόντων» και «Διαθέσιμο κλειδί πρόσβασης» δεν είναι διαθέσιμα: ο διαχειριστής σας δεν έχει ενεργοποιήσει τον κατάλογο ιστότοπων."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Τα «Διαθέσιμη σύνδεση δύο παραγόντων» και «Διαθέσιμο κλειδί πρόσβασης» δεν είναι διαθέσιμα: ο διαχειριστής σας δεν έχει ενεργοποιήσει τον κατάλογο ιστότοπων.",
+        "Authenticator seeds": "Κλειδιά επαληθευτή",
+        "Chosen folders": "Επιλεγμένοι φάκελοι",
+        "Chosen types": "Επιλεγμένοι τύποι",
+        "Export selected": "Εξαγωγή επιλεγμένων",
+        "Leave out": "Παράλειψη",
+        "Types": "Τύποι",
+        "Usernames": "Ονόματα χρηστών"
     },
     "plurals": null
 }

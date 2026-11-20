@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Need saidid pakuvad pääsuvõtmeid, kuid sinu hoidlas pole nende jaoks pääsuvõtit. Pääsuvõtit ei saa õngitseda ega uuesti kasutada.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Saitide andmed: 2FA Directory (MIT) ja Passkeys Directory (CC BY 4.0), autorid 2factorauth ja kaastöötajad.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Kaheastmeline sisselogimine saadaval ja Pääsuvõti saadaval pole kättesaadavad: saitide kataloogi ei õnnestunud laadida. Teisi leide see ei mõjuta.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Kaheastmeline sisselogimine saadaval ja Pääsuvõti saadaval pole kättesaadavad: sinu administraator pole saitide kataloogi sisse lülitanud."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Kaheastmeline sisselogimine saadaval ja Pääsuvõti saadaval pole kättesaadavad: sinu administraator pole saitide kataloogi sisse lülitanud.",
+        "Authenticator seeds": "Autentija võtmed",
+        "Chosen folders": "Valitud kaustad",
+        "Chosen types": "Valitud tüübid",
+        "Export selected": "Ekspordi valitud",
+        "Leave out": "Jäta välja",
+        "Types": "Tüübid",
+        "Usernames": "Kasutajanimed"
     },
     "nplurals=2; plural=(n != 1);"
 )

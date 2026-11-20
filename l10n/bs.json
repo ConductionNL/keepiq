@@ -2048,7 +2048,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Ove web-stranice nude pristupne ključeve, a vaš trezor nema pristupni ključ za njih. Pristupni ključ se ne može ukrasti phishingom niti ponovo upotrijebiti.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Podaci o web-stranicama: 2FA Directory (MIT) i Passkeys Directory (CC BY 4.0), autori 2factorauth i saradnici.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Dostupna prijava u dva koraka i Dostupan pristupni ključ nisu dostupni: imenik web-stranica nije se mogao učitati. Ostali nalazi nisu pogođeni.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dostupna prijava u dva koraka i Dostupan pristupni ključ nisu dostupni: vaš administrator nije uključio imenik web-stranica."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dostupna prijava u dva koraka i Dostupan pristupni ključ nisu dostupni: vaš administrator nije uključio imenik web-stranica.",
+        "Authenticator seeds": "Ključevi autentifikatora",
+        "Chosen folders": "Odabrane mape",
+        "Chosen types": "Odabrane vrste",
+        "Export selected": "Izvezi odabrano",
+        "Leave out": "Izostavi",
+        "Types": "Vrste",
+        "Usernames": "Korisnička imena"
     },
     "plurals": null
 }

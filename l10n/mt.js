@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Dawn is-siti joffru passkeys, u l-kaxxaforti tiegħek ma fiha l-ebda passkey għalihom. Passkey ma tistax tinsteraq bil-phishing jew terġa' tintuża.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Data tas-siti: 2FA Directory (MIT) u Passkeys Directory (CC BY 4.0), minn 2factorauth u l-kontributuri.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Żewġ fatturi disponibbli u Passkey disponibbli mhumiex disponibbli: id-direttorju tas-siti ma setax jitgħabba. Is-sejbiet l-oħra mhumiex affettwati.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Żewġ fatturi disponibbli u Passkey disponibbli mhumiex disponibbli: l-amministratur tiegħek ma xegħelx id-direttorju tas-siti."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Żewġ fatturi disponibbli u Passkey disponibbli mhumiex disponibbli: l-amministratur tiegħek ma xegħelx id-direttorju tas-siti.",
+        "Authenticator seeds": "Ċwievet tal-awtentikatur",
+        "Chosen folders": "Folders magħżula",
+        "Chosen types": "Tipi magħżula",
+        "Export selected": "Esporta l-magħżula",
+        "Leave out": "Ħalli barra",
+        "Types": "Tipi",
+        "Usernames": "Ismijiet tal-utenti"
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

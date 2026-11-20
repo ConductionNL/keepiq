@@ -2022,7 +2022,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Ezek a webhelyek hozzáférési kulcsot kínálnak, de a széfje nem tartalmaz hozzájuk hozzáférési kulcsot. A hozzáférési kulcs nem csalható ki adathalászattal, és nem használható újra.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Webhelyadatok: 2FA Directory (MIT) és Passkeys Directory (CC BY 4.0), készítette: 2factorauth és a közreműködők.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "A „Kétlépcsős bejelentkezés elérhető” és a „Hozzáférési kulcs elérhető” nem érhető el: a webhelykatalógust nem sikerült betölteni. A többi megállapítást ez nem érinti.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "A „Kétlépcsős bejelentkezés elérhető” és a „Hozzáférési kulcs elérhető” nem érhető el: a rendszergazda nem kapcsolta be a webhelykatalógust."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "A „Kétlépcsős bejelentkezés elérhető” és a „Hozzáférési kulcs elérhető” nem érhető el: a rendszergazda nem kapcsolta be a webhelykatalógust.",
+        "Authenticator seeds": "Hitelesítőkulcsok",
+        "Chosen folders": "Kiválasztott mappák",
+        "Chosen types": "Kiválasztott típusok",
+        "Export selected": "Kijelöltek exportálása",
+        "Leave out": "Kihagyás",
+        "Types": "Típusok",
+        "Usernames": "Felhasználónevek"
     },
     "plurals": null
 }

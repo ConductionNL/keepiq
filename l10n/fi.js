@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Nämä sivustot tarjoavat pääsyavaimia, eikä holvissasi ole niille pääsyavainta. Pääsyavainta ei voi kalastella eikä käyttää uudelleen.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Sivustotiedot: 2FA Directory (MIT) ja Passkeys Directory (CC BY 4.0), tekijät 2factorauth ja avustajat.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Kaksivaiheinen kirjautuminen saatavilla ja Pääsyavain saatavilla eivät ole käytettävissä: sivustohakemistoa ei voitu ladata. Muut havainnot eivät muutu.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Kaksivaiheinen kirjautuminen saatavilla ja Pääsyavain saatavilla eivät ole käytettävissä: ylläpitäjäsi ei ole ottanut sivustohakemistoa käyttöön."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Kaksivaiheinen kirjautuminen saatavilla ja Pääsyavain saatavilla eivät ole käytettävissä: ylläpitäjäsi ei ole ottanut sivustohakemistoa käyttöön.",
+        "Authenticator seeds": "Autentikaattoriavaimet",
+        "Chosen folders": "Valitut kansiot",
+        "Chosen types": "Valitut tyypit",
+        "Export selected": "Vie valitut",
+        "Leave out": "Jätä pois",
+        "Types": "Tyypit",
+        "Usernames": "Käyttäjätunnukset"
     },
     "nplurals=2; plural=(n != 1);"
 )
