@@ -7,7 +7,7 @@
  * jsQR, which is loaded on first use so it stays out of the main bundle. The
  * image never leaves the browser and nothing is stored.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 import { translate as t } from '@nextcloud/l10n'
@@ -70,7 +70,7 @@ function loadImage(file) {
  *
  * @param {Blob} file The image.
  * @return {Promise<{data: Uint8ClampedArray, width: number, height: number}>} The pixels.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export async function readImagePixels(file) {
 	const { image, release } = await loadImage(file)
@@ -89,7 +89,7 @@ export async function readImagePixels(file) {
  *
  * @param {HTMLImageElement} image The loaded image.
  * @return {{width: number, height: number, scale: number}} The size and the scale applied.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 function scaledSize(image) {
 	const naturalWidth = image.naturalWidth || image.width
@@ -109,7 +109,7 @@ function scaledSize(image) {
  * @param {Blob} file The image.
  * @param {{width: number, height: number, scale: number}} size The size to draw at.
  * @return {Promise<ImageBitmap|null>} The resized bitmap, or null to let the canvas scale the image.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 async function resizedBitmap(file, size) {
 	if (size.scale >= 1 || typeof createImageBitmap !== 'function') {
@@ -134,7 +134,7 @@ async function resizedBitmap(file, size) {
  * @param {{width: number, height: number}} size The size to draw at.
  * @return {ImageData} The pixels.
  * @throws {Error} When the browser offers no 2D canvas context.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 function drawnPixels(drawable, size) {
 	const { width, height } = size
@@ -161,7 +161,7 @@ function drawnPixels(drawable, size) {
  * @throws {QrImageError} With a message to show when the file is not an image
  *   or too large, the reader cannot load, it holds no QR code, or its QR code
  *   is not an authenticator key.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export async function decodeQrImage(file, deps = {}) {
 	assertDecodableFile(file)
@@ -181,7 +181,7 @@ export async function decodeQrImage(file, deps = {}) {
  * @param {Blob} file The image the user picked.
  * @return {void}
  * @throws {QrImageError} When the file cannot be decoded.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 function assertDecodableFile(file) {
 	if (!file || (file.type && !String(file.type).startsWith('image/'))) {
@@ -201,7 +201,7 @@ function assertDecodableFile(file) {
  * @param {(file: Blob) => Promise<ImageData>} readPixels Image file to pixels.
  * @return {Promise<ImageData>} The pixels.
  * @throws {QrImageError} When the image cannot be read.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 async function readPixelsOrRefuse(file, readPixels) {
 	try {
@@ -217,7 +217,7 @@ async function readPixelsOrRefuse(file, readPixels) {
  * @param {() => Promise<QrDecoder>} loadDecoder Resolves the jsQR function.
  * @return {Promise<QrDecoder>} The decoder.
  * @throws {QrImageError} When the reader cannot load.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 async function loadDecoderOrRefuse(loadDecoder) {
 	try {
@@ -239,7 +239,7 @@ async function loadDecoderOrRefuse(loadDecoder) {
  * @param {ImageData} image The pixels.
  * @return {string} The QR text.
  * @throws {QrImageError} When the pixels cannot be scanned or hold no QR code.
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 function scanQrText(jsQR, image) {
 	let result

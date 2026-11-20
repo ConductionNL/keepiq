@@ -242,7 +242,7 @@ export default {
 		 * here too.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		openLabel() {
 			return rowOpenLabel(this.secret)

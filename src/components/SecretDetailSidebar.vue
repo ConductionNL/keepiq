@@ -2136,7 +2136,7 @@ export default {
 		 * here, but the server stores it on any secret.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-the-login-shows-a-live-code
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-login-shows-a-live-code
 		 */
 		fieldTotp() {
 			return this.secret?.totp || ''
@@ -2147,7 +2147,7 @@ export default {
 		 * it has none.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		fieldPasskeysJson() {
 			return this.secret?.passkeys || ''
@@ -2157,7 +2157,7 @@ export default {
 		 * How many passkeys the `passkeys` field lists.
 		 *
 		 * @return {number}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		fieldPasskeyCount() {
 			return passkeyEntries(this.fieldPasskeysJson).length
@@ -2169,7 +2169,7 @@ export default {
 		 * value fields.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		canChangeValue() {
 			return (
@@ -2600,7 +2600,7 @@ export default {
 		 *
 		 * @param {string} passkeys The remaining passkeys value, '' for none.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 		 */
 		async onDeletePasskey(passkeys) {

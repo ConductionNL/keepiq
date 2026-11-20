@@ -121,7 +121,7 @@ export default {
 		 * Leave the private key row out entirely: a login's passkeys never
 		 * show or copy their private key.
 		 *
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		hidePrivateKey: {
 			type: Boolean,

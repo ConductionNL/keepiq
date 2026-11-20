@@ -39,7 +39,7 @@ export const NOT_CREATABLE_TYPE_NAMES = Object.freeze(['totp', 'passkey'])
  *
  * @param {object|null|undefined} type The type record ({ name }).
  * @return {boolean}
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function isCreatableType(type) {
 	return Boolean(type) && !NOT_CREATABLE_TYPE_NAMES.includes(type.name)

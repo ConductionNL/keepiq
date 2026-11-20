@@ -5,7 +5,7 @@
  * The authenticator key a user enters on a login, typed or read from a QR
  * image: what is accepted, how it is stored, and the readable refusals.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 import { describe, expect, it, vi } from 'vitest'

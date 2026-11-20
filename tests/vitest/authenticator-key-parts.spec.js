@@ -5,7 +5,7 @@
  * The key stored for TOTP parameters held one by one (CXF, KeePass), and the
  * refusal for a QR reader that throws on the pixels it is given.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 
 import { describe, expect, it } from 'vitest'

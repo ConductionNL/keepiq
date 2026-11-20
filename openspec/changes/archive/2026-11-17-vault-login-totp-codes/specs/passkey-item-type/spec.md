@@ -2,7 +2,7 @@
 
 ### Requirement: New passkeys live on the login
 
-A login MUST be able to hold its passkeys in its own encrypted `passkeys` field, as a JSON array whose entries each follow the canonical credential schema of this spec, exactly as a standalone passkey item holds one credential in `key`. That field is where new passkeys belong. The web app MUST NOT offer the Passkey type in the create dialog or as the default item type, and a saved default of Passkey MUST fall back to Login. A passkey on a login MUST be listed by its metadata only; its private key MUST NOT be shown or copyable in any mode, unlike the reveal and copy that a standalone passkey item gates.
+A login MUST be able to hold its passkeys in its own encrypted `passkeys` field, as a JSON array whose entries each follow the canonical credential schema of this spec, exactly as a standalone passkey item holds one credential in `key`. That field is where new passkeys belong. The web app MUST NOT offer the Passkey type in the create dialog or as the default item type, and a saved default of Passkey MUST fall back to Login.
 
 #### Scenario: The create dialog offers no Passkey type
 
@@ -16,6 +16,16 @@ A login MUST be able to hold its passkeys in its own encrypted `passkeys` field,
 - **WHEN** the web app decrypts and lists it
 - **THEN** each entry MUST be read with the same canonical schema as a standalone passkey item's `key`
 - **AND** its relying party, user name and created date MUST be shown without its private key
+
+### Requirement: A login's passkeys never show a private key
+
+A passkey on a login MUST be listed by its metadata only; its private key MUST NOT be shown or copyable in any mode, unlike the reveal and copy that a standalone passkey item gates.
+
+#### Scenario: A login's passkey in any mode
+
+- **GIVEN** a login whose `passkeys` field holds one credential
+- **WHEN** its owner or a use-only, view-only or read-only recipient opens it
+- **THEN** no reveal or copy action for the private key MUST be offered
 
 ### Requirement: Existing passkey items keep working
 
