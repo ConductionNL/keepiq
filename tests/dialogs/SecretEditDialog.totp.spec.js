@@ -7,7 +7,7 @@
  * Replace sends the new key, and a key that cannot be used blocks the save.
  * The change goes through the same diff and base versions as any other.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 import { mount } from '@vue/test-utils'

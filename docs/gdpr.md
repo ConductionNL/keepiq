@@ -41,8 +41,35 @@ browser. Neither sends plaintext, a passphrase, or a derived key to the server.
 
 ### Scope
 
-Both modes export the whole vault or a selected folder subtree. Scope never
-changes the security gating of the chosen mode.
+Every mode exports the whole vault, or only what you choose:
+
+- **Chosen folders**: the secrets in those folders and their subfolders.
+- **Chosen types**: the secrets of those types, system or custom.
+- **Selected items**: from the list, select the items and use **Export
+  selected** on the selection strip; the export holds exactly those.
+
+Choosing folders or types and then choosing none exports the whole vault, never
+an empty file by accident. Scope never changes the security gating of the
+chosen mode.
+
+### Fields to leave out
+
+Under **Leave out** you can drop usernames, additional fields or authenticator
+seeds from every exported secret. A file with fields left out says so: it
+carries `partial: true` and the list of fields left out, so a restore knows it
+is not a full copy.
+
+### Nothing is left out in silence
+
+When some secrets could not be decrypted, the dialog says how many before
+anything is written, and the export waits until you choose to continue without
+them.
+
+### Types travel by name
+
+Each exported secret carries its type's name (`typeName`) and, for a custom
+type, its label (`typeLabel`), so a backup restores with its types on another
+account or another instance, where type ids differ.
 
 ## GDPR data export (Art. 15, right of access)
 

@@ -356,7 +356,7 @@ export default {
 		 * Whether a key can be entered: on a login only.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		totpEditable() {
 			return this.selectedTypeName === 'login'
@@ -368,7 +368,7 @@ export default {
 		 * that key can be removed.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		showAuthenticator() {
 			return (this.totpEditable || this.totpSaved) && valueFieldsSupported()
@@ -379,7 +379,7 @@ export default {
 		 * presence is read; the seed itself never reaches the form.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		totpSaved() {
 			return Boolean(this.original?.totp)
@@ -389,7 +389,7 @@ export default {
 		 * Why the entered authenticator key blocks the save, '' when it does not.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		totpError() {
 			if (!this.showAuthenticator || !this.totpEditable) {
@@ -406,7 +406,7 @@ export default {
 		 * one, or undefined to leave it as it is.
 		 *
 		 * @return {string|undefined}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		totpChange() {
 			if (!this.showAuthenticator) {

@@ -35,7 +35,7 @@ export function resolveDefaultView(saved) {
  * @param {Array<{id: string, name: string}>} types The secret types.
  * @return {string|null} A type id, or null when no type may be created.
  * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 export function resolveDefaultTypeId(saved, types) {
 	const creatable = types.filter(isCreatableType)

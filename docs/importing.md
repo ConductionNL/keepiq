@@ -48,6 +48,22 @@ guidance.
    reasons), and how many folders were created. You can download the rejected
    rows as a CSV (generated locally, never uploaded) to fix and re-import.
 
+## Restoring a Keepiq backup
+
+A restored secret keeps its type. Each row is matched in this order:
+
+1. the system type with the backup's type name;
+2. a custom type of your own with that name;
+3. a new custom type with the backup's name and label, created once for all
+   rows that need it;
+4. the default type, with a warning naming the row.
+
+A backup written before type names were exported carries type ids; system types
+are recovered from those, because their ids are the same on every instance.
+The summary lists the types it created and every row that fell back, and every
+restored or rejected row names its position in the backup. A backup made with
+fields left out is restored as it is, and the summary says it was partial.
+
 ## What is not imported
 
 - **Shares, link shares, and delegations** — set these up again in Keepiq.

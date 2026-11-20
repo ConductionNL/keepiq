@@ -8,7 +8,7 @@
   into the form: the field shows that one is saved and offers Replace and
   Remove, so the seed is never on screen after saving.
 
-  @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+  @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 -->
 <template>
 	<div class="authenticator-key" data-testid="authenticator-key">
@@ -213,7 +213,7 @@ export default {
 		 * Why the entered key cannot be saved, '' when it can.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		inputError() {
 			return authenticatorKeyError(this.value)
@@ -313,7 +313,7 @@ export default {
 		 *
 		 * @param {Event} event The file input change.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		async onFile(event) {
 			const input = event.target

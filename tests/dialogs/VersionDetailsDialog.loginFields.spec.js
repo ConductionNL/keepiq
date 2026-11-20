@@ -5,7 +5,7 @@
  * A version of a login in the version details dialog: that a seed was set
  * shows, the seed never does; its passkeys list by their metadata only.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 import { mount } from '@vue/test-utils'

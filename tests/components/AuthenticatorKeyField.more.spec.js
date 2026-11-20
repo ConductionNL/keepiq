@@ -8,7 +8,7 @@
  * Remove when the removal is undone, and a QR error clears once typing
  * starts.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
 
 import { mount } from '@vue/test-utils'

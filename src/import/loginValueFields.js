@@ -9,7 +9,7 @@
  * credentials (loginPasskeys.js). A row without either has no such
  * property, so the commit sends nothing for it.
  *
- * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
+ * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
