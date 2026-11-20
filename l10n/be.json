@@ -2048,7 +2048,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Гэтыя сайты прапануюць ключы доступу, а ў вашым сховішчы няма для іх ключа доступу. Ключ доступу немагчыма выцягнуць фішынгам або выкарыстаць паўторна.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Даныя пра сайты: 2FA Directory (MIT) і Passkeys Directory (CC BY 4.0), ад 2factorauth і ўдзельнікаў праекта.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "«Даступны двухфактарны ўваход» і «Даступны ключ доступу» недаступныя: не ўдалося загрузіць каталог сайтаў. Іншыя вынікі гэта не закранае.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "«Даступны двухфактарны ўваход» і «Даступны ключ доступу» недаступныя: ваш адміністратар не ўключыў каталог сайтаў."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "«Даступны двухфактарны ўваход» і «Даступны ключ доступу» недаступныя: ваш адміністратар не ўключыў каталог сайтаў.",
+        "Authenticator seeds": "Ключы аўтэнтыфікатара",
+        "Chosen folders": "Выбраныя папкі",
+        "Chosen types": "Выбраныя тыпы",
+        "Export selected": "Экспартаваць выбранае",
+        "Leave out": "Не ўключаць",
+        "Types": "Тыпы",
+        "Usernames": "Імёны карыстальнікаў"
     },
     "plurals": null
 }

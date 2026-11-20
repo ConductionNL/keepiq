@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Šios svetainės siūlo prieigos raktus, o jūsų saugykloje jiems nėra prieigos rakto. Prieigos rakto negalima išvilioti sukčiavimu ar panaudoti pakartotinai.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Svetainių duomenys: 2FA Directory (MIT) ir Passkeys Directory (CC BY 4.0), 2factorauth ir bendraautoriai.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Galimas dviejų veiksnių prisijungimas ir Galimas prieigos raktas nepasiekiami: nepavyko įkelti svetainių katalogo. Kitiems radiniams tai neturi įtakos.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Galimas dviejų veiksnių prisijungimas ir Galimas prieigos raktas nepasiekiami: jūsų administratorius neįjungė svetainių katalogo."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Galimas dviejų veiksnių prisijungimas ir Galimas prieigos raktas nepasiekiami: jūsų administratorius neįjungė svetainių katalogo.",
+        "Authenticator seeds": "Autentifikatoriaus raktai",
+        "Chosen folders": "Pasirinkti aplankai",
+        "Chosen types": "Pasirinkti tipai",
+        "Export selected": "Eksportuoti pasirinktus",
+        "Leave out": "Neįtraukti",
+        "Types": "Tipai",
+        "Usernames": "Naudotojų vardai"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

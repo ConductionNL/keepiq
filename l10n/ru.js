@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Эти сайты предлагают ключи доступа, а в вашем хранилище нет для них ключа доступа. Ключ доступа нельзя выманить фишингом или использовать повторно.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Данные о сайтах: 2FA Directory (MIT) и Passkeys Directory (CC BY 4.0), от 2factorauth и участников проекта.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "«Доступен двухфакторный вход» и «Доступен ключ доступа» недоступны: не удалось загрузить каталог сайтов. Остальные результаты это не затрагивает.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "«Доступен двухфакторный вход» и «Доступен ключ доступа» недоступны: ваш администратор не включил каталог сайтов."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "«Доступен двухфакторный вход» и «Доступен ключ доступа» недоступны: ваш администратор не включил каталог сайтов.",
+        "Authenticator seeds": "Ключи аутентификатора",
+        "Chosen folders": "Выбранные папки",
+        "Chosen types": "Выбранные типы",
+        "Export selected": "Экспортировать выбранное",
+        "Leave out": "Исключить",
+        "Types": "Типы",
+        "Usernames": "Имена пользователей"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

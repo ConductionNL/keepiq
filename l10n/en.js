@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.": "This is not a private key. Paste an OpenSSH or PEM private key, or generate one.",
         "This is not an OpenSSH public key.": "This is not an OpenSSH public key.",
         "This public key does not belong to the private key.": "This public key does not belong to the private key.",
-        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently."
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.",
+        "Authenticator seeds": "Authenticator seeds",
+        "Chosen folders": "Chosen folders",
+        "Chosen types": "Chosen types",
+        "Export selected": "Export selected",
+        "Leave out": "Leave out",
+        "Types": "Types",
+        "Usernames": "Usernames"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Estes sites oferecem chaves de acesso e o seu cofre não tem nenhuma para eles. Uma chave de acesso não pode ser roubada por phishing nem reutilizada.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Dados dos sites: 2FA Directory (MIT) e Passkeys Directory (CC BY 4.0), por 2factorauth e colaboradores.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Autenticação de dois fatores disponível e Chave de acesso disponível não estão disponíveis: não foi possível carregar o diretório de sites. As outras conclusões não são afetadas.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Autenticação de dois fatores disponível e Chave de acesso disponível não estão disponíveis: o seu administrador não ativou o diretório de sites."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Autenticação de dois fatores disponível e Chave de acesso disponível não estão disponíveis: o seu administrador não ativou o diretório de sites.",
+        "Authenticator seeds": "Chaves de autenticador",
+        "Chosen folders": "Pastas escolhidas",
+        "Chosen types": "Tipos escolhidos",
+        "Export selected": "Exportar seleção",
+        "Leave out": "Excluir",
+        "Types": "Tipos",
+        "Usernames": "Nomes de utilizador"
     },
     "nplurals=2; plural=(n != 1);"
 )

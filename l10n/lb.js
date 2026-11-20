@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Dës Websäite bidden Passkeys un, an Ären Tresor huet kee Passkey fir si. E Passkey kann net duerch Phishing geklaut oder nach eng Kéier benotzt ginn.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Websäitendonnéeën: 2FA Directory (MIT) a Passkeys Directory (CC BY 4.0), vu 2factorauth a Mataarbechter.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Zwee-Faktor disponibel a Passkey disponibel sinn net disponibel: D'Websäitenverzeechnes konnt net geluede ginn. Aner Resultater sinn net betraff.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Zwee-Faktor disponibel a Passkey disponibel sinn net disponibel: Ären Administrateur huet d'Websäitenverzeechnes net ageschalt."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Zwee-Faktor disponibel a Passkey disponibel sinn net disponibel: Ären Administrateur huet d'Websäitenverzeechnes net ageschalt.",
+        "Authenticator seeds": "Authentifikatorschlësselen",
+        "Chosen folders": "Gewielten Dossieren",
+        "Chosen types": "Gewielten Typen",
+        "Export selected": "Auswiel exportéieren",
+        "Leave out": "Ewechloossen",
+        "Types": "Typen",
+        "Usernames": "Benotzernimm"
     },
     "nplurals=2; plural=(n != 1);"
 )

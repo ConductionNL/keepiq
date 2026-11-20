@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Ta spletna mesta ponujajo ključe za dostop, vaš trezor pa zanje nima ključa za dostop. Ključa za dostop ni mogoče ukrasti z ribarjenjem ali ga znova uporabiti.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Podatki o spletnih mestih: 2FA Directory (MIT) in Passkeys Directory (CC BY 4.0), avtorji 2factorauth in sodelavci.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Dvostopenjska prijava na voljo in Ključ za dostop na voljo nista na voljo: imenika spletnih mest ni bilo mogoče naložiti. Druge ugotovitve niso prizadete.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dvostopenjska prijava na voljo in Ključ za dostop na voljo nista na voljo: vaš skrbnik ni vklopil imenika spletnih mest."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Dvostopenjska prijava na voljo in Ključ za dostop na voljo nista na voljo: vaš skrbnik ni vklopil imenika spletnih mest.",
+        "Authenticator seeds": "Ključi avtentikatorja",
+        "Chosen folders": "Izbrane mape",
+        "Chosen types": "Izbrane vrste",
+        "Export selected": "Izvozi izbrano",
+        "Leave out": "Izpusti",
+        "Types": "Vrste",
+        "Usernames": "Uporabniška imena"
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

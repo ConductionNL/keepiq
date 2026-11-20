@@ -1996,7 +1996,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Bu siteler geçiş anahtarları sunuyor ve kasanızda bunlar için geçiş anahtarı yok. Geçiş anahtarı kimlik avıyla ele geçirilemez ve yeniden kullanılamaz.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Site verileri: 2FA Directory (MIT) ve Passkeys Directory (CC BY 4.0), 2factorauth ve katkıda bulunanlar tarafından.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "\"İki adımlı giriş kullanılabilir\" ve \"Geçiş anahtarı kullanılabilir\" kullanılamıyor: site dizini yüklenemedi. Diğer bulgular etkilenmez.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "\"İki adımlı giriş kullanılabilir\" ve \"Geçiş anahtarı kullanılabilir\" kullanılamıyor: yöneticiniz site dizinini açmadı."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "\"İki adımlı giriş kullanılabilir\" ve \"Geçiş anahtarı kullanılabilir\" kullanılamıyor: yöneticiniz site dizinini açmadı.",
+        "Authenticator seeds": "Kimlik doğrulayıcı anahtarları",
+        "Chosen folders": "Seçilen klasörler",
+        "Chosen types": "Seçilen türler",
+        "Export selected": "Seçilenleri dışa aktar",
+        "Leave out": "Hariç tut",
+        "Types": "Türler",
+        "Usernames": "Kullanıcı adları"
     },
     "plurals": null
 }

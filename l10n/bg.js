@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Тези сайтове предлагат ключове за достъп, а трезорът ви не съдържа ключ за достъп за тях. Ключ за достъп не може да бъде откраднат чрез фишинг или използван повторно.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Данни за сайтовете: 2FA Directory (MIT) и Passkeys Directory (CC BY 4.0), от 2factorauth и сътрудници.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Налично двуфакторно влизане и Наличен ключ за достъп не са налични: указателят на сайтове не можа да се зареди. Другите констатации не са засегнати.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Налично двуфакторно влизане и Наличен ключ за достъп не са налични: администраторът ви не е включил указателя на сайтове."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Налично двуфакторно влизане и Наличен ключ за достъп не са налични: администраторът ви не е включил указателя на сайтове.",
+        "Authenticator seeds": "Ключове на удостоверителя",
+        "Chosen folders": "Избрани папки",
+        "Chosen types": "Избрани типове",
+        "Export selected": "Износ на избраните",
+        "Leave out": "Изключване",
+        "Types": "Типове",
+        "Usernames": "Потребителски имена"
     },
     "nplurals=2; plural=(n != 1);"
 )

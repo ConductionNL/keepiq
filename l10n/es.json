@@ -2022,7 +2022,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Estos sitios ofrecen llaves de acceso, y su bóveda no contiene ninguna para ellos. Una llave de acceso no puede robarse mediante phishing ni reutilizarse.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Datos de sitios: 2FA Directory (MIT) y Passkeys Directory (CC BY 4.0), de 2factorauth y colaboradores.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Inicio de sesión en dos pasos disponible y Llave de acceso disponible no están disponibles: no se pudo cargar el directorio de sitios. Los demás hallazgos no se ven afectados.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Inicio de sesión en dos pasos disponible y Llave de acceso disponible no están disponibles: su administrador no ha activado el directorio de sitios."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Inicio de sesión en dos pasos disponible y Llave de acceso disponible no están disponibles: su administrador no ha activado el directorio de sitios.",
+        "Authenticator seeds": "Claves de autenticador",
+        "Chosen folders": "Carpetas elegidas",
+        "Chosen types": "Tipos elegidos",
+        "Export selected": "Exportar selección",
+        "Leave out": "Excluir",
+        "Types": "Tipos",
+        "Usernames": "Nombres de usuario"
     },
     "plurals": null
 }

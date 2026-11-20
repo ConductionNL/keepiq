@@ -2022,7 +2022,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "De här webbplatserna erbjuder passnycklar, och ditt valv har ingen passnyckel för dem. En passnyckel kan inte nätfiskas eller återanvändas.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Webbplatsdata: 2FA Directory (MIT) och Passkeys Directory (CC BY 4.0), av 2factorauth och bidragsgivare.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Tvåstegsinloggning tillgänglig och Passnyckel tillgänglig är inte tillgängliga: webbplatskatalogen kunde inte läsas in. Andra fynd påverkas inte.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tvåstegsinloggning tillgänglig och Passnyckel tillgänglig är inte tillgängliga: din administratör har inte slagit på webbplatskatalogen."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tvåstegsinloggning tillgänglig och Passnyckel tillgänglig är inte tillgängliga: din administratör har inte slagit på webbplatskatalogen.",
+        "Authenticator seeds": "Autentiserarnycklar",
+        "Chosen folders": "Valda mappar",
+        "Chosen types": "Valda typer",
+        "Export selected": "Exportera valda",
+        "Leave out": "Utelämna",
+        "Types": "Typer",
+        "Usernames": "Användarnamn"
     },
     "plurals": null
 }

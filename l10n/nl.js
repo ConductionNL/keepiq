@@ -1950,7 +1950,14 @@ OC.L10N.register(
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Sitegegevens: 2FA Directory (MIT) en Passkeys Directory (CC BY 4.0), door 2factorauth en bijdragers.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: de sitedirectory kon niet worden geladen. Andere bevindingen blijven gelden.",
         "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Tweestapsaanmelding beschikbaar en Passkey beschikbaar zijn niet beschikbaar: je beheerder heeft de sitedirectory niet aangezet.",
-        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Dit patroon kan niet worden gebruikt: het heeft te veel optionele of herhaalde delen om snel te controleren, of de server leest het anders."
+        "This pattern cannot be used: it has too many optional or repeated parts to check quickly, or the server reads it differently.": "Dit patroon kan niet worden gebruikt: het heeft te veel optionele of herhaalde delen om snel te controleren, of de server leest het anders.",
+        "Authenticator seeds": "Authenticatorsleutels",
+        "Chosen folders": "Gekozen mappen",
+        "Chosen types": "Gekozen typen",
+        "Export selected": "Selectie exporteren",
+        "Leave out": "Weglaten",
+        "Types": "Typen",
+        "Usernames": "Gebruikersnamen"
     },
     "nplurals=2; plural=(n != 1);"
 )

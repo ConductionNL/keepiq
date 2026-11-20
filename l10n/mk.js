@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Овие веб-локации нудат клучеви за пристап, а вашиот трезор нема клуч за пристап за нив. Клучот за пристап не може да се украде со фишинг ниту повторно да се користи.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Податоци за веб-локациите: 2FA Directory (MIT) и Passkeys Directory (CC BY 4.0), од 2factorauth и соработниците.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Достапна најава во два чекора и Достапен клуч за пристап не се достапни: именикот на веб-локации не можеше да се вчита. Другите наоди не се засегнати.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Достапна најава во два чекора и Достапен клуч за пристап не се достапни: вашиот администратор не го вклучил именикот на веб-локации."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Достапна најава во два чекора и Достапен клуч за пристап не се достапни: вашиот администратор не го вклучил именикот на веб-локации.",
+        "Authenticator seeds": "Клучеви на автентикаторот",
+        "Chosen folders": "Избрани папки",
+        "Chosen types": "Избрани типови",
+        "Export selected": "Извези ги избраните",
+        "Leave out": "Изостави",
+        "Types": "Типови",
+        "Usernames": "Кориснички имиња"
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

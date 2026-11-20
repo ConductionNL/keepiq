@@ -2022,7 +2022,14 @@
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Aquests llocs ofereixen claus d’accés, i la vostra caixa forta no en conté cap per a ells. Una clau d’accés no es pot robar amb pesca de credencials ni reutilitzar.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Dades dels llocs: 2FA Directory (MIT) i Passkeys Directory (CC BY 4.0), de 2factorauth i col·laboradors.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Inici de sessió en dos passos disponible i Clau d’accés disponible no estan disponibles: no s'ha pogut carregar el directori de llocs. La resta de resultats no es veuen afectats.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Inici de sessió en dos passos disponible i Clau d’accés disponible no estan disponibles: l'administrador no ha activat el directori de llocs."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Inici de sessió en dos passos disponible i Clau d’accés disponible no estan disponibles: l'administrador no ha activat el directori de llocs.",
+        "Authenticator seeds": "Claus d'autenticador",
+        "Chosen folders": "Carpetes escollides",
+        "Chosen types": "Tipus escollits",
+        "Export selected": "Exporta la selecció",
+        "Leave out": "Exclou",
+        "Types": "Tipus",
+        "Usernames": "Noms d'usuari"
     },
     "plurals": null
 }

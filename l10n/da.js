@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Disse websteder tilbyder adgangsnøgler, og din boks indeholder ingen adgangsnøgle til dem. En adgangsnøgle kan ikke phishes eller genbruges.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Webstedsdata: 2FA Directory (MIT) og Passkeys Directory (CC BY 4.0), af 2factorauth og bidragydere.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Totrinslogin tilgængeligt og Adgangsnøgle tilgængelig er ikke tilgængelige: webstedskataloget kunne ikke indlæses. Andre fund påvirkes ikke.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Totrinslogin tilgængeligt og Adgangsnøgle tilgængelig er ikke tilgængelige: din administrator har ikke slået webstedskataloget til."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Totrinslogin tilgængeligt og Adgangsnøgle tilgængelig er ikke tilgængelige: din administrator har ikke slået webstedskataloget til.",
+        "Authenticator seeds": "Autentifikatornøgler",
+        "Chosen folders": "Valgte mapper",
+        "Chosen types": "Valgte typer",
+        "Export selected": "Eksportér valgte",
+        "Leave out": "Udelad",
+        "Types": "Typer",
+        "Usernames": "Brugernavne"
     },
     "nplurals=2; plural=(n != 1);"
 )

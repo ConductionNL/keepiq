@@ -1945,7 +1945,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Këto sajte ofrojnë çelësa hyrjeje dhe kasaforta juaj nuk ka çelës hyrjeje për to. Një çelës hyrjeje nuk mund të vidhet me mashtrim (phishing) dhe as të ripërdoret.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Të dhënat e sajteve: 2FA Directory (MIT) dhe Passkeys Directory (CC BY 4.0), nga 2factorauth dhe kontribuuesit.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "\"Hyrja me dy faktorë e disponueshme\" dhe \"Çelës hyrjeje i disponueshëm\" nuk janë të disponueshme: drejtoria e sajteve nuk u ngarkua dot. Gjetjet e tjera nuk preken.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "\"Hyrja me dy faktorë e disponueshme\" dhe \"Çelës hyrjeje i disponueshëm\" nuk janë të disponueshme: administratori juaj nuk e ka aktivizuar drejtorinë e sajteve."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "\"Hyrja me dy faktorë e disponueshme\" dhe \"Çelës hyrjeje i disponueshëm\" nuk janë të disponueshme: administratori juaj nuk e ka aktivizuar drejtorinë e sajteve.",
+        "Authenticator seeds": "Çelësat e autentikuesit",
+        "Chosen folders": "Dosjet e zgjedhura",
+        "Chosen types": "Llojet e zgjedhura",
+        "Export selected": "Eksporto të përzgjedhurat",
+        "Leave out": "Përjashto",
+        "Types": "Llojet",
+        "Usernames": "Emrat e përdoruesve"
     },
     "nplurals=2; plural=(n != 1);"
 )

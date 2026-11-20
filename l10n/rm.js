@@ -1921,7 +1921,14 @@ OC.L10N.register(
         "These sites offer passkeys, and your vault holds no passkey for them. A passkey cannot be phished or reused.": "Questas websites porschan clavs d'access, e Vossa cassaforta na cuntegna nagina clav d'access per ellas. Ina clav d'access na po betg vegnir engulada cun phishing u reutilisada.",
         "Site data: 2FA Directory (MIT) and Passkeys Directory (CC BY 4.0), by 2factorauth and contributors.": "Datas da websites: 2FA Directory (MIT) e Passkeys Directory (CC BY 4.0), da 2factorauth e contribuents.",
         "Two-factor available and Passkey available are unavailable: the site directory could not be loaded. Other findings are unaffected.": "Annunzia en dus pass disponibla e Clav d'access disponibla n'èn betg disponiblas: il register da websites n'ha betg pudì vegnir chargià. Las autras constataziuns n'èn betg pertutgadas.",
-        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Annunzia en dus pass disponibla e Clav d'access disponibla n'èn betg disponiblas: Voss administratur n'ha betg activà il register da websites."
+        "Two-factor available and Passkey available are unavailable: your administrator has not switched on the site directory.": "Annunzia en dus pass disponibla e Clav d'access disponibla n'èn betg disponiblas: Voss administratur n'ha betg activà il register da websites.",
+        "Authenticator seeds": "Clavs d'autentificatur",
+        "Chosen folders": "Cartellas tschernidas",
+        "Chosen types": "Tips tschernids",
+        "Export selected": "Exportar la selecziun",
+        "Leave out": "Exclauder",
+        "Types": "Tips",
+        "Usernames": "Nums d'utilisader"
     },
     "nplurals=1; plural=0;"
 )
