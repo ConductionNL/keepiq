@@ -203,6 +203,51 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		}
 	})
 
+	it("says a copy's sharing waits for the scan, and shows the owner controls once a retry answers", async () => {
+		serveWriteContext(
+			Object.assign(new Error('scan'), {
+				response: {
+					status: 409,
+					data: {
+						error: 'share_scan_pending',
+						message: 'Waits for the scan',
+					},
+				},
+			}),
+		)
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+
+		const note = wrapper.find(
+			'[data-testid="secret-detail-sharing-unavailable"]',
+		)
+		expect(note.text()).toContain('Waits for the scan')
+		expect(has(wrapper, 'secret-detail-share-list')).toBe(false)
+
+		serveWriteContext({ sourceSecretId: 's-1', effectiveGrade: 'owner' })
+		await wrapper
+			.find('[data-testid="secret-detail-sharing-retry"]')
+			.trigger('click')
+		await flush()
+
+		expect(has(wrapper, 'secret-detail-sharing-unavailable')).toBe(false)
+		expect(has(wrapper, 'secret-detail-share-list')).toBe(true)
+	})
+
+	it('says sharing could not be loaded after a network error', async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+
+		expect(
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]').text(),
+		).toContain('Sharing options could not be loaded.')
+	})
+
 	it('offers no share request when the write-context names no source', async () => {
 		serveWriteContext({ sourceSecretId: null, effectiveGrade: 'none' })
 		const wrapper = await mountDetail({

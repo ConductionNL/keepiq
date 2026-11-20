@@ -1036,10 +1036,13 @@
 			  Sharing — §12.6 integration. Renders the RecipientList,
 			  ShareRequestForm (recipient role), and DelegationManager
 			  stand-alone primitives the §12.x build cycle shipped.
-			  Visibility derives from the current user's role:
-			    - owner / delegate → ShareList + DelegationManager;
+			  Visibility derives from the current user's role on the source,
+			  from the write-context (managesSharing):
+			    - owner            → ShareList + DelegationManager;
+			    - delegate         → ShareList (of the source), no delegating;
 			    - recipient        → ShareRequestForm (request that the
-			                          owner share with a third party).
+			                          owner share with a third party);
+			    - unknown          → a note with a retry.
 			-->
 				<!-- The same grouped rows as "Advanced": one box, each part an
 				     icon + muted label with its content beneath. -->
@@ -1058,6 +1061,21 @@
 								{{ t('keepiq', 'Sharing') }}
 							</h3>
 							<div class="secret-detail__row-value">
+								<!-- The role is unknown: say so and ask again, never guess. -->
+								<div
+									v-if="sharingUnavailable"
+									class="secret-detail__sharing-unavailable"
+									data-testid="secret-detail-sharing-unavailable">
+									<p>{{ sharingUnavailableText }}</p>
+									<NcButton
+										variant="tertiary"
+										:disabled="writeContextRetrying"
+										data-testid="secret-detail-sharing-retry"
+										@click="retryWriteContext">
+										{{ t('keepiq', 'Try again') }}
+									</NcButton>
+								</div>
+
 								<!-- A delegate's copy lists the source's shares. -->
 								<ShareList
 									v-if="managesSharing === true"
@@ -1491,6 +1509,9 @@ export default {
 			viewOnlyCopy: false,
 			/** The write-context read with the secret on show, or null. */
 			writeContext: null,
+			/** Why the write-context could not be read, when the server said. */
+			writeContextFailure: '',
+			writeContextRetrying: false,
 			/** A passkey delete is being saved. */
 			passkeySaving: false,
 			/** Per-field reveal state for the card rows (masked by default). */
@@ -2127,9 +2148,10 @@ export default {
 
 		/**
 		 * True when the current user may share the secret: its source's owner
-		 * or a delegate. They see the recipient list + delegation manager;
-		 * anyone else gets the share-request form. A received copy is owned by
-		 * its recipient, so only the write-context decides: null while it is
+		 * or a delegate. They see the recipient lists; only the source's owner
+		 * also gets the delegation manager. Anyone else with a known source
+		 * gets the share-request form. A received copy is owned by its
+		 * recipient, so only the write-context decides: null while it is
 		 * unknown, and then neither shows.
 		 *
 		 * @return {boolean|null}
@@ -2152,6 +2174,33 @@ export default {
 		 */
 		sharingSourceId() {
 			return this.writeContext?.sourceSecretId || ''
+		},
+
+		/**
+		 * Whether the sharing section has nothing to offer because the role
+		 * or the source is unknown; it then says so and offers a retry.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
+		sharingUnavailable() {
+			return (
+				this.managesSharing === null
+				|| (this.managesSharing === false && this.sharingSourceId === '')
+			)
+		},
+
+		/**
+		 * Why sharing is unavailable: the server's message when it gave one.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
+		sharingUnavailableText() {
+			return (
+				this.writeContextFailure
+				|| t('keepiq', 'Sharing options could not be loaded.')
+			)
 		},
 
 		/**
@@ -2349,7 +2398,7 @@ export default {
 				// Fetched together and applied together, so the flags below
 				// always describe the secret on show and a view-only copy
 				// never shows Edit while its write-context is on its way.
-				const [secret, context] = await Promise.all([
+				const [secret, answer] = await Promise.all([
 					useSecretStore().fetchSecret(id),
 					this.fetchWriteContext(id),
 				])
@@ -2361,14 +2410,7 @@ export default {
 				// Retire the previous secret's decrypted plaintext with the
 				// secret it came from. See `secretLoadToken` in data().
 				this.secretLoadToken += 1
-				// Write-grade badge (folder-permission-grades §4.3) — a
-				// copy the user may team-write shows the sync warning; one
-				// without a write grade is view only.
-				this.teamWritable =
-					['write', 'manage'].includes(context?.effectiveGrade)
-					&& context.sourceSecretId !== id
-				this.viewOnlyCopy = isViewOnlyCopy(context, id)
-				this.writeContext = context ?? null
+				this.applyWriteContext(answer, id)
 			} catch (e) {
 				if (id !== this.secretId) {
 					return
@@ -2400,19 +2442,71 @@ export default {
 		},
 
 		/**
-		 * The write-context of a secret, or null when it cannot be read: the
-		 * secret then loads without a write grade badge or view-only state.
+		 * The write-context of a secret, or a null context when it cannot be
+		 * read: the secret then loads without a write grade badge, view-only
+		 * state or sharing role. The failure is the server's message when the
+		 * copy's row waits for the quarantine scan, else empty.
 		 *
 		 * @param {string} id The secret.
-		 * @return {Promise<object|null>}
+		 * @return {Promise<{context: object|null, failure: string}>}
 		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
 		 */
 		async fetchWriteContext(id) {
 			try {
 				const { useShareStore } = await import('../store/modules/share.js')
-				return await useShareStore().fetchWriteContext(id)
-			} catch {
-				return null
+				return {
+					context: await useShareStore().fetchWriteContext(id),
+					failure: '',
+				}
+			} catch (e) {
+				const data = e?.response?.data
+				return {
+					context: null,
+					failure:
+						data?.error === 'share_scan_pending'
+							? data.message || ''
+							: '',
+				}
+			}
+		},
+
+		/**
+		 * Apply a write-context answer for the secret on show.
+		 *
+		 * @param {{context: object|null, failure: string}} answer From fetchWriteContext().
+		 * @param {string} id The secret it was read for.
+		 * @return {void}
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+		 */
+		applyWriteContext({ context, failure }, id) {
+			// Write-grade badge (folder-permission-grades §4.3) — a copy the
+			// user may team-write shows the sync warning; one without a write
+			// grade is view only.
+			this.teamWritable =
+				['write', 'manage'].includes(context?.effectiveGrade)
+				&& context.sourceSecretId !== id
+			this.viewOnlyCopy = isViewOnlyCopy(context, id)
+			this.writeContext = context ?? null
+			this.writeContextFailure = failure
+		},
+
+		/**
+		 * Read the write-context again after it could not be read. It only
+		 * asks again; the sharing role never falls back to `ownerId`.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
+		async retryWriteContext() {
+			const id = this.secretId
+			this.writeContextRetrying = true
+			try {
+				const answer = await this.fetchWriteContext(id)
+				if (id === this.secretId) {
+					this.applyWriteContext(answer, id)
+				}
+			} finally {
+				this.writeContextRetrying = false
 			}
 		},
 
@@ -3162,7 +3256,8 @@ h3.secret-detail__row-label {
 	margin-bottom: 12px;
 }
 
-.secret-detail__offline-note {
+.secret-detail__offline-note,
+.secret-detail__sharing-unavailable {
 	margin-top: 8px;
 	color: var(--color-text-maxcontrast);
 }

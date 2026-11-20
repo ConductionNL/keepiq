@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "A feltöltés sikertelen",
         "Folders cannot be attached. Drop the files inside them instead.": "Mappák nem csatolhatók. Húzza ide inkább a bennük lévő fájlokat.",
         "Files cannot be added while you are offline. Remove them to save.": "Offline állapotban nem adhatók hozzá fájlok. A mentéshez távolítsa el őket.",
-        "Files can only be added to a secret you own. Remove them to save.": "Fájlok csak a saját titkához adhatók hozzá. A mentéshez távolítsa el őket."
+        "Files can only be added to a secret you own. Remove them to save.": "Fájlok csak a saját titkához adhatók hozzá. A mentéshez távolítsa el őket.",
+        "Sharing options could not be loaded.": "A megosztási beállításokat nem sikerült betölteni."
     },
     "nplurals=2; plural=(n != 1);"
 )

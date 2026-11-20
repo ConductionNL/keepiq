@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Yükleme başarısız oldu",
         "Folders cannot be attached. Drop the files inside them instead.": "Klasörler eklenemez. Bunun yerine içlerindeki dosyaları bırakın.",
         "Files cannot be added while you are offline. Remove them to save.": "Çevrimdışıyken dosya eklenemez. Kaydetmek için bunları kaldırın.",
-        "Files can only be added to a secret you own. Remove them to save.": "Dosyalar yalnızca size ait bir gizliye eklenebilir. Kaydetmek için bunları kaldırın."
+        "Files can only be added to a secret you own. Remove them to save.": "Dosyalar yalnızca size ait bir gizliye eklenebilir. Kaydetmek için bunları kaldırın.",
+        "Sharing options could not be loaded.": "Paylaşım seçenekleri yüklenemedi."
     },
     "nplurals=1; plural=0;"
 )

@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Lähetys epäonnistui",
         "Folders cannot be attached. Drop the files inside them instead.": "Kansioita ei voi liittää. Pudota sen sijaan niiden sisältämät tiedostot.",
         "Files cannot be added while you are offline. Remove them to save.": "Tiedostoja ei voi lisätä ollessasi offline-tilassa. Poista ne tallentaaksesi.",
-        "Files can only be added to a secret you own. Remove them to save.": "Tiedostoja voi lisätä vain omistamaasi salaisuuteen. Poista ne tallentaaksesi."
+        "Files can only be added to a secret you own. Remove them to save.": "Tiedostoja voi lisätä vain omistamaasi salaisuuteen. Poista ne tallentaaksesi.",
+        "Sharing options could not be loaded.": "Jakamisen asetuksia ei voitu ladata."
     },
     "nplurals=2; plural=(n != 1);"
 )

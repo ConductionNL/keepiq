@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Įkelti nepavyko",
         "Folders cannot be attached. Drop the files inside them instead.": "Aplankų pridėti negalima. Vietoj to nutempkite juose esančius failus.",
         "Files cannot be added while you are offline. Remove them to save.": "Neprisijungus failų pridėti negalima. Pašalinkite juos, kad išsaugotumėte.",
-        "Files can only be added to a secret you own. Remove them to save.": "Failus galima pridėti tik prie jums priklausančios paslapties. Pašalinkite juos, kad išsaugotumėte."
+        "Files can only be added to a secret you own. Remove them to save.": "Failus galima pridėti tik prie jums priklausančios paslapties. Pašalinkite juos, kad išsaugotumėte.",
+        "Sharing options could not be loaded.": "Nepavyko įkelti bendrinimo parinkčių."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

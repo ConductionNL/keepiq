@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Nahrání se nezdařilo",
         "Folders cannot be attached. Drop the files inside them instead.": "Složky nelze připojit. Přetáhněte místo toho soubory v nich.",
         "Files cannot be added while you are offline. Remove them to save.": "Soubory nelze přidat, když jste offline. Odeberte je, abyste mohli uložit.",
-        "Files can only be added to a secret you own. Remove them to save.": "Soubory lze přidat jen k tajemství, které vlastníte. Odeberte je, abyste mohli uložit."
+        "Files can only be added to a secret you own. Remove them to save.": "Soubory lze přidat jen k tajemství, které vlastníte. Odeberte je, abyste mohli uložit.",
+        "Sharing options could not be loaded.": "Možnosti sdílení se nepodařilo načíst."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )
