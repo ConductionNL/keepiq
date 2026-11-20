@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use DateTime;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\SecretVersionLock;
 use OCA\Keepiq\Db\ShareTarget;
