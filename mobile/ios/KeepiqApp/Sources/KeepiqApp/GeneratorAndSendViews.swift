@@ -240,7 +240,7 @@ struct SendListView: View {
             sends = list
             problem = nil
         } else {
-            problem = result?.problemOrNull?.write ?? WriteProblem(kind: .unreachable, serverMessage: nil, status: 0)
+            problem = result?.problemOrNull?.write ?? WriteProblem(kind: .unreachable, serverMessage: nil, status: 0, partners: [], requiredVersion: nil)
         }
     }
 }

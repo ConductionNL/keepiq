@@ -158,9 +158,34 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
     /** POST /api/v1/secrets with an already-encrypted body. */
     suspend fun createSecret(body: JsonObject): JsonObject? = request(HttpMethod.Post, "/api/v1/secrets", body) as? JsonObject
 
-    /** PUT /api/v1/secrets/{id} with an already-encrypted body. */
+    /** PUT /api/v1/secrets/{id} with an already-encrypted body. A value change goes through [shareSave] instead. */
     suspend fun updateSecret(id: String, body: JsonObject): JsonObject? =
         request(HttpMethod.Put, "/api/v1/secrets/" + encodePath(id), body) as? JsonObject
+
+    /** GET /api/v1/secrets/{id}/write-context: the source a save goes to, and the caller's grade on it. */
+    suspend fun writeContext(id: String): JsonObject? =
+        request(HttpMethod.Get, "/api/v1/secrets/" + encodePath(id) + "/write-context") as? JsonObject
+
+    /** PUT /api/v1/secrets/{id}/share-save: the row and every copy and partner share in one transaction (ShareSaveService). */
+    suspend fun shareSave(id: String, body: JsonObject): JsonObject? =
+        request(HttpMethod.Put, "/api/v1/secrets/" + encodePath(id) + "/share-save", body) as? JsonObject
+
+    /** POST /api/v1/shares/recipient-certificates: the vault certificates of these users. */
+    suspend fun recipientCertificates(userIds: List<String>): JsonObject? = request(
+        HttpMethod.Post,
+        "/api/v1/shares/recipient-certificates",
+        JsonObject(mapOf("userIds" to JsonArray(userIds.map { JsonPrimitive(it) }))),
+    ) as? JsonObject
+
+    /** POST /api/v1/federation/recipient-certificate: a partner recipient's certificate, chain and pin. */
+    suspend fun federatedRecipientCertificate(cloudId: String): JsonObject? = request(
+        HttpMethod.Post,
+        "/api/v1/federation/recipient-certificate",
+        JsonObject(mapOf("cloudId" to JsonPrimitive(cloudId))),
+    ) as? JsonObject
+
+    /** The paired account's id, which keeps one account's verified partners apart from another's. */
+    val accountId: String get() = account.id
 
     /**
      * POST /api/v1/extension/pair: proves the app password works and reports

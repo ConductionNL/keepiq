@@ -61,7 +61,15 @@ class VaultRepositoryTest {
     private fun dec(text: String) = RsaFields.decrypt(text, privateKey)
 
     private val requests = mutableListOf<Pair<String, String>>()
+
+    /** Each write's body; for a share-save, its `patch`, which is the body a plain PUT sent. */
     private val bodies = mutableListOf<JsonObject>()
+
+    /** Each share-save's whole body. */
+    private val shareSaves = mutableListOf<JsonObject>()
+
+    /** Rows write-context grades as a copy shared with the user to view only. */
+    private var viewOnly = setOf<String>()
     private var offline = false
     private var refuseWrites = false
     private var cachingOff = false
@@ -104,16 +112,30 @@ class VaultRepositoryTest {
             return@MockEngine respond("""{"ok":true,"apiVersion":1,"capabilities":$capabilities}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
         }
         requests += request.method.value to path
-        (request.body as? TextContent)?.let { bodies += Json.parseToJsonElement(it.text).jsonObject }
+        (request.body as? TextContent)?.let {
+            val sent = Json.parseToJsonElement(it.text).jsonObject
+            if (path.endsWith("/share-save")) {
+                shareSaves += sent
+                sent["patch"]?.let { patch -> bodies += patch.jsonObject }
+            } else {
+                bodies += sent
+            }
+        }
         if (offline) throw IOException("no network")
         if (request.method == HttpMethod.Put && staleWrites > 0) {
             staleWrites--
             afterStale()
-            return@MockEngine respond("""{"message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
+            return@MockEngine respond("""{"error":"stale","message":"This secret changed since your copy was made"}""", HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"))
         }
         val write = request.method != HttpMethod.Get
         val body = when {
             write && refuseWrites -> """{"ocs":{"meta":{"status":"failure","statuscode":403,"message":""},"data":{"error":"read_only","message":"You can only read this item."}}}"""
+            // The user's own row, with no copies; or a copy of someone else's source, shared to view only.
+            path.endsWith("/write-context") -> {
+                val id = path.removePrefix("/api/v1/secrets/").removeSuffix("/write-context")
+                val grade = if (id in viewOnly) """"source-x","effectiveGrade":"read"""" else """"$id","effectiveGrade":"owner""""
+                """{"sourceSecretId":$grade,"ownerCertificate":null,"sourceUpdatedAt":"2026-10-03T09:00:00+00:00"}"""
+            }
             path == "/api/v1/offline/manifest" && cachingOff ->
                 return@MockEngine respond("""{"message":"Offline caching is off"}""", HttpStatusCode(428, "Precondition Required"))
             path == "/api/v1/suites" -> """[{"id":"suite-9","status":"active","unlockKeyEpoch":2}]"""
@@ -268,8 +290,46 @@ class VaultRepositoryTest {
         assertEquals(WriteProblemKind.SERVER_MESSAGE, result.problem.kind)
         assertEquals("You can only read this item.", result.problem.serverMessage)
         // No sync after a refused write: the stored value stays.
-        assertEquals("PUT" to "/api/v1/secrets/s1", requests.last())
+        assertEquals("PUT" to "/api/v1/secrets/s1/share-save", requests.last())
         assertEquals("geheim-1", dec(store.secret("s1")!!.key!!))
+    }
+
+    @Test
+    fun aValueChangeGoesThroughShareSaveOnTheVersionTheFormOpened() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.openForEdit("s1")).item
+        assertIs<WriteResult.Saved>(repo.update(item, ItemCodec.draft(item, item.type).copy(secret = "nieuw")))
+        assertTrue(("GET" to "/api/v1/secrets/s1/write-context") in requests)
+        assertTrue(requests.none { it == "PUT" to "/api/v1/secrets/s1" }, "no plain PUT of a value: $requests")
+        val sent = shareSaves.single()
+        assertEquals("2026-10-03T09:00:00+00:00", sent["baseUpdatedAt"]!!.jsonPrimitive.content)
+        // Its own source: no source version, and the copy and partner lists the server fills in when there are any.
+        assertFalse("sourceBaseUpdatedAt" in sent)
+        assertEquals(setOf("baseUpdatedAt", "patch", "copies", "skipped", "federated", "suspend"), sent.keys)
+        assertEquals("nieuw", dec(bodies.single()["key"]!!.jsonPrimitive.content))
+    }
+
+    @Test
+    fun aChangeOfNameOrFolderOnlyStaysAPlainPut() = runTest {
+        repo.refresh(SyncTrigger.START)
+        val item = assertIs<OpenResult.Opened>(repo.openForEdit("s1")).item
+        assertIs<WriteResult.Saved>(repo.update(item, ItemCodec.draft(item, item.type).copy(name = "Huisbank 2")))
+        assertTrue(("PUT" to "/api/v1/secrets/s1") in requests)
+        assertTrue(shareSaves.isEmpty())
+    }
+
+    @Test
+    fun aCopySharedToViewOnlyOffersNoEditAndSavesNoValue() = runTest {
+        repo.refresh(SyncTrigger.START)
+        viewOnly = setOf("s1")
+        assertTrue(repo.isViewOnly("s1"))
+        assertFalse(repo.isViewOnly("s4"))
+        assertEquals(WriteProblemKind.VIEW_ONLY, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
+        // A form opened before the grade was lowered is refused at save, before anything is written.
+        val item = assertIs<OpenResult.Opened>(repo.open("s1")).item
+        val refused = assertIs<WriteResult.Refused>(repo.update(item, ItemCodec.draft(item, item.type).copy(secret = "x")))
+        assertEquals(WriteProblemKind.VIEW_ONLY, refused.problem.kind)
+        assertTrue(requests.none { it.first == "PUT" }, "$requests")
     }
 
     @Test
@@ -460,10 +520,10 @@ class VaultRepositoryTest {
         // Another client added "b" since the phone opened the login.
         mailRow = mailRowWith(passkeysOf("a", "b"))
         assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
-        assertEquals("PUT" to "/api/v1/secrets/s4", requests.first { it.first == "PUT" })
+        assertEquals("PUT" to "/api/v1/secrets/s4/share-save", requests.first { it.first == "PUT" })
         val body = bodies.single()
-        assertEquals(setOf("passkeys", "baseUpdatedAt"), body.keys)
-        assertEquals("2026-10-03T09:00:00+00:00", body["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals(setOf("passkeys"), body.keys)
+        assertEquals("2026-10-03T09:00:00+00:00", shareSaves.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf("b"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
     }
 
@@ -477,7 +537,7 @@ class VaultRepositoryTest {
         assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
         assertEquals(listOf("PUT", "PUT"), requests.filter { it.first == "PUT" }.map { it.first })
         val body = bodies.last()
-        assertEquals("2026-10-03T10:00:00+00:00", body["baseUpdatedAt"]!!.jsonPrimitive.content)
+        assertEquals("2026-10-03T10:00:00+00:00", shareSaves.last()["baseUpdatedAt"]!!.jsonPrimitive.content)
         assertEquals(listOf("b", "c"), LoginPasskeys.credentials(dec(body["passkeys"]!!.jsonPrimitive.content)).map { it.credentialId })
 
         staleWrites = 2
@@ -491,7 +551,8 @@ class VaultRepositoryTest {
         mailRow = mailRowWith(passkeysOf("a"))
         val item = assertIs<OpenResult.Opened>(repo.open("s4")).item
         assertIs<WriteResult.Saved>(repo.deletePasskey(item, "a", "mail.example"))
-        assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""), "baseUpdatedAt" to JsonPrimitive("2026-10-03T09:00:00+00:00"))), bodies.single())
+        assertEquals(JsonObject(mapOf("passkeys" to JsonPrimitive(""))), bodies.single())
+        assertEquals("2026-10-03T09:00:00+00:00", shareSaves.single()["baseUpdatedAt"]!!.jsonPrimitive.content)
     }
 
     @Test

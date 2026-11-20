@@ -45,6 +45,7 @@ class MobileSession(
      */
     fun close() {
         keys.forget()
+        VerifiedPartners.forget()
         runCatching { store?.close() }
     }
 

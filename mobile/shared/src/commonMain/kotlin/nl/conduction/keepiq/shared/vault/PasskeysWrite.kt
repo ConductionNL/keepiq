@@ -20,11 +20,12 @@ class ServerUnreachableException(cause: Throwable) : KeepiqApiException(0, "Cann
 /**
  * The read-modify-write of a login's `passkeys` (mobile-login-totp-passkeys
  * D7, D11, D12): the login is read fresh, the change is made on the
- * decrypted value, and the PUT carries the row's `updatedAt` as
+ * decrypted value, and the share-save carries the row's `updatedAt` as
  * `baseUpdatedAt`, so a change saved elsewhere in between is refused with
  * 409 (lib/Service/OfflineEditGuard.php) instead of overwritten. After that
  * refusal the login is read and changed once more; a second refusal fails.
- * A server that does not store `passkeys` refuses before the PUT
+ * The share-save writes every copy and partner share too (keepiq#1300).
+ * A server that does not store `passkeys` refuses before the write
  * (KeepiqApi.requireLoginFields).
  */
 object PasskeysWrite {
@@ -40,7 +41,14 @@ object PasskeysWrite {
      * the login is not there, and [ServerUnreachableException] only when the
      * fresh read got no answer at all.
      */
-    suspend fun <T> rewrite(api: KeepiqApi, keys: VaultKeys, id: String, change: (fresh: VaultRow, stored: String) -> Change<T>): T {
+    suspend fun <T> rewrite(
+        api: KeepiqApi,
+        keys: VaultKeys,
+        id: String,
+        now: () -> Long = MobileSession::nowMillis,
+        change: (fresh: VaultRow, stored: String) -> Change<T>,
+    ): T {
+        val shareSave = ShareSave(api, keys, now)
         var attempt = 0
         while (true) {
             val row = try {
@@ -60,12 +68,14 @@ object PasskeysWrite {
             val passkeys = next.passkeys ?: return next.result
             api.requireLoginFields()
             try {
-                api.updateSecret(id, ItemCodec.passkeysBody(passkeys, keys, fresh.updatedAt))
+                shareSave.saveFresh(fresh, ItemCodec.passkeysBody(passkeys, keys), mapOf("passkeys" to passkeys), vouchEmpty = true)
                 return next.result
-            } catch (e: KeepiqApiException) {
-                attempt++
-                if (e.status != STALE_WRITE || attempt > 1) throw e
+            } catch (e: Exception) {
+                if (!isStale(e) || ++attempt > 1) throw e
             }
         }
     }
+
+    private fun isStale(e: Exception): Boolean =
+        (e is KeepiqApiException && e.status == STALE_WRITE && e.code == "stale") || (e is ShareSaveException && e.code == ShareSave.STALE_SOURCE)
 }

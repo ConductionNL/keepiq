@@ -53,6 +53,7 @@ import nl.conduction.keepiq.shared.vault.DecryptedItem
 import nl.conduction.keepiq.shared.vault.FormKind
 import nl.conduction.keepiq.shared.vault.OpenResult
 import nl.conduction.keepiq.shared.vault.PasskeySummary
+import nl.conduction.keepiq.shared.vault.ShareSaveNote
 import nl.conduction.keepiq.shared.vault.VaultIndex
 import nl.conduction.keepiq.shared.vault.WriteProblem
 import nl.conduction.keepiq.shared.vault.WriteResult
@@ -91,7 +92,14 @@ fun ItemDetailScreen(
         }
     }
     val scope = rememberCoroutineScope()
+    // What the last save could not deliver to everyone, said once.
+    val note = remember(id) { session.repository.takeShareSaveNote(id) }
+    var viewOnly by remember(id) { mutableStateOf(false) }
     LaunchedEffect(id) { result = io { session.repository.open(id) } }
+    LaunchedEffect(result) {
+        val opened = (result as? OpenResult.Opened)?.item
+        if (opened != null && !opened.fromCache && !opened.row.useOnly) viewOnly = io { session.repository.isViewOnly(id) }
+    }
 
     when (val r = result) {
         null -> Message(stringResource(R.string.vault_loading))
@@ -102,6 +110,8 @@ fun ItemDetailScreen(
             folderPath = VaultIndex.folderPath(session.repository.state.folders, r.item.row.folderId)
                 ?: stringResource(R.string.vault_no_folder),
             offline = session.repository.state.offline,
+            viewOnly = viewOnly,
+            note = note,
             problem = problem,
             modifier = modifier,
             onCopy = onCopy,
@@ -222,6 +232,10 @@ internal fun ItemDetail(
     onPasskeyFocused: () -> Unit = {},
     /** A passkey was just deleted: said in a polite live region, as focus alone tells a screen reader nothing. */
     passkeyDeleted: Boolean = false,
+    /** A copy shared to view only: no Edit, no passkey Delete (keepiq#1300). */
+    viewOnly: Boolean = false,
+    /** What the last save could not deliver to everyone. */
+    note: ShareSaveNote? = null,
 ) {
     val row = item.row
     val editFocus = remember { FocusMove() }
@@ -230,6 +244,8 @@ internal fun ItemDetail(
         Text(row.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text("${item.type?.label ?: item.typeName} · $folderPath", style = MaterialTheme.typography.bodyMedium)
         DetailNotes(item, problem, passkeyDeleted)
+        if (viewOnly && !row.readOnly) Note(stringResource(R.string.detail_view_only))
+        note?.let { Note(shareSaveNoteText(it)) }
         if (row.blocked) {
             Note(row.blockedReason ?: stringResource(R.string.detail_blocked))
             return@Column
@@ -237,7 +253,7 @@ internal fun ItemDetail(
 
         KindFields(item, onCopy)
         if (item.hasSavedKey) SavedKeyRow(item, onCopy)
-        val mayDelete = !row.useOnly && !row.readOnly && !offline
+        val mayDelete = !row.useOnly && !row.readOnly && !viewOnly && !offline
         if (!row.useOnly) {
             PasskeyRows(item.passkeys, mayDelete, focusPasskey, onDeletePasskey, onPasskeyFocused)
             if (item.passkeysError) Text(stringResource(R.string.detail_passkeys_error), color = MaterialTheme.colorScheme.error)
@@ -252,7 +268,7 @@ internal fun ItemDetail(
         if (!row.useOnly) MoreFields(item, onCopy)
 
         HorizontalDivider()
-        if (!row.useOnly) WriteActions(item, offline, editFocus, onEdit, onMove, onSendLogin)
+        if (!row.useOnly) WriteActions(item, offline, viewOnly, editFocus, onEdit, onMove, onSendLogin)
         OutlinedButton(onClick = onTrash, enabled = !offline) { Text(stringResource(R.string.action_trash)) }
         if (offline) Text(stringResource(R.string.write_offline), style = MaterialTheme.typography.bodySmall)
     }
@@ -343,14 +359,16 @@ private fun MoreFields(item: DecryptedItem, onCopy: (String) -> Unit) {
 private fun WriteActions(
     item: DecryptedItem,
     offline: Boolean,
+    viewOnly: Boolean,
     editFocus: FocusMove,
     onEdit: () -> Unit,
     onMove: () -> Unit,
     onSendLogin: () -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onEdit, enabled = !offline, modifier = Modifier.focusMove(editFocus)) { Text(stringResource(R.string.action_edit)) }
-        OutlinedButton(onClick = onMove, enabled = !offline) { Text(stringResource(R.string.action_move)) }
+        // A view-only copy still moves: a move files the holder's own copy.
+        if (!viewOnly) OutlinedButton(onClick = onEdit, enabled = !offline, modifier = Modifier.focusMove(editFocus)) { Text(stringResource(R.string.action_edit)) }
+        OutlinedButton(onClick = onMove, enabled = !offline, modifier = if (viewOnly) Modifier.focusMove(editFocus) else Modifier) { Text(stringResource(R.string.action_move)) }
     }
     if (item.kind == FormKind.LOGIN) {
         OutlinedButton(onClick = onSendLogin, enabled = !offline) { Text(stringResource(R.string.cd_new_send)) }

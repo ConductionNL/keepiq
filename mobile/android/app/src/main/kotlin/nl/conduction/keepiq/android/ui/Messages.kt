@@ -14,6 +14,7 @@ import nl.conduction.keepiq.shared.generator.GeneratorErrorCode
 import nl.conduction.keepiq.shared.generator.GeneratorException
 import nl.conduction.keepiq.shared.send.SendFormProblem
 import nl.conduction.keepiq.shared.vault.DraftProblem
+import nl.conduction.keepiq.shared.vault.ShareSaveNote
 import nl.conduction.keepiq.shared.vault.VaultLockedException
 import nl.conduction.keepiq.shared.vault.WriteProblem
 import nl.conduction.keepiq.shared.vault.WriteProblemKind
@@ -39,7 +40,34 @@ fun writeProblemText(problem: WriteProblem): String = when (problem.kind) {
     WriteProblemKind.REFUSED -> stringResource(R.string.write_refused)
     WriteProblemKind.UNREACHABLE -> stringResource(R.string.write_unreachable)
     WriteProblemKind.FAILED -> stringResource(R.string.write_failed)
+    WriteProblemKind.VIEW_ONLY -> stringResource(R.string.detail_view_only)
+    WriteProblemKind.STALE_SOURCE -> stringResource(R.string.write_stale_source)
+    WriteProblemKind.INCOMPLETE -> stringResource(R.string.write_incomplete)
+    WriteProblemKind.UNVERIFIED -> stringResource(R.string.write_unverified)
+    WriteProblemKind.UNREADABLE -> stringResource(R.string.write_unreadable)
+    WriteProblemKind.BAD_CERTIFICATE -> stringResource(R.string.write_bad_certificate)
+    WriteProblemKind.PARTNER_UNREACHABLE -> stringResource(R.string.write_partner_unreachable, problem.partnerNames)
+    WriteProblemKind.PARTNER_UPGRADE_REQUIRED -> {
+        val text = if (problem.partners.isEmpty()) {
+            stringResource(R.string.write_partner_upgrade_unnamed)
+        } else {
+            stringResource(R.string.write_partner_upgrade, problem.partnerNames)
+        }
+        problem.requiredVersion?.let { text + " " + stringResource(R.string.write_partner_upgrade_version, it) } ?: text
+    }
+    WriteProblemKind.PARTNER_CLOCK -> stringResource(R.string.write_partner_clock)
+    WriteProblemKind.PARTNER_LOOKUP_LIMIT -> stringResource(R.string.write_partner_lookup_limit)
+    WriteProblemKind.FEDERATION_UNAVAILABLE -> stringResource(R.string.write_federation_unavailable)
+    WriteProblemKind.KEEPIQ_OUTDATED -> stringResource(R.string.write_keepiq_outdated)
 }
+
+/** What a share-save could not deliver to everyone, for the item's detail. */
+@Composable
+fun shareSaveNoteText(note: ShareSaveNote): String = buildList {
+    if (note.ownerOnly) add(stringResource(R.string.share_save_owner_only))
+    if (note.suspended.isNotEmpty()) add(stringResource(R.string.share_save_suspended, note.suspended.joinToString(", ")))
+    if (note.paused.isNotEmpty()) add(stringResource(R.string.share_save_paused, note.paused.joinToString(", ")))
+}.joinToString("\n")
 
 @Composable
 fun draftProblemText(problem: DraftProblem): String = stringResource(

@@ -121,8 +121,32 @@ func writeProblemText(_ problem: WriteProblem) -> String {
     case .serverMessage: return L("write_server", problem.serverMessage ?? "")
     case .refused: return L("write_refused")
     case .unreachable: return L("write_unreachable")
+    case .viewOnly: return L("detail_view_only")
+    case .staleSource: return L("write_stale_source")
+    case .incomplete: return L("write_incomplete")
+    case .unverified: return L("write_unverified")
+    case .unreadable: return L("write_unreadable")
+    case .badCertificate: return L("write_bad_certificate")
+    case .partnerUnreachable: return L("write_partner_unreachable", problem.partnerNames)
+    case .partnerUpgradeRequired:
+        let text = problem.partners.isEmpty ? L("write_partner_upgrade_unnamed") : L("write_partner_upgrade", problem.partnerNames)
+        guard let version = problem.requiredVersion else { return text }
+        return text + " " + L("write_partner_upgrade_version", version)
+    case .partnerClock: return L("write_partner_clock")
+    case .partnerLookupLimit: return L("write_partner_lookup_limit")
+    case .federationUnavailable: return L("write_federation_unavailable")
+    case .keepiqOutdated: return L("write_keepiq_outdated")
     default: return L("write_failed")
     }
+}
+
+/// What a share-save could not deliver to everyone, for the item's detail.
+func shareSaveNoteText(_ note: ShareSaveNote) -> String {
+    var lines: [String] = []
+    if note.ownerOnly { lines.append(L("share_save_owner_only")) }
+    if !note.suspended.isEmpty { lines.append(L("share_save_suspended", note.suspended.joined(separator: ", "))) }
+    if !note.paused.isEmpty { lines.append(L("share_save_paused", note.paused.joined(separator: ", "))) }
+    return lines.joined(separator: "\n")
 }
 
 func draftProblemText(_ problem: DraftProblem) -> String {
