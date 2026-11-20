@@ -62,7 +62,13 @@ describe('HealthCategory', () => {
 					shareCount: 3,
 					breach: { count: 7 },
 				},
-				{ id: 's2', name: 'Bank', folderPath: '', shareCount: 1, breach: { count: 1 } },
+				{
+					id: 's2',
+					name: 'Bank',
+					folderPath: '',
+					shareCount: 1,
+					breach: { count: 1 },
+				},
 				{ id: 's3', name: 'Shop', shareCount: 0, breach: { count: 0 } },
 			],
 		})
@@ -74,16 +80,21 @@ describe('HealthCategory', () => {
 		const first = wrapper.find('[data-testid="finding-s1"]')
 		expect(first.find('.health-category__name').text()).toBe('Mail')
 		expect(first.find('.health-category__path').text()).toBe('Work / Mail')
-		const firstMeta = first.findAll('.health-category__meta').map((m) => m.text())
+		const firstMeta = first
+			.findAll('.health-category__meta')
+			.map((m) => m.text())
 		// The n() stub picks the plural form for counts other than one.
-		expect(firstMeta).toEqual(['shared with %n secrets', 'seen %n times in breaches'])
+		expect(firstMeta).toEqual([
+			'shared with %n secrets',
+			'seen %n times in breaches',
+		])
 
 		const second = wrapper.find('[data-testid="finding-s2"]')
 		expect(second.find('.health-category__path').exists()).toBe(false)
 		// shareCount 1 is not "shared"; a breach count of 1 uses the singular.
-		expect(second.findAll('.health-category__meta').map((m) => m.text())).toEqual([
-			'seen %n time in breaches',
-		])
+		expect(
+			second.findAll('.health-category__meta').map((m) => m.text()),
+		).toEqual(['seen %n time in breaches'])
 
 		const third = wrapper.find('[data-testid="finding-s3"]')
 		expect(third.findAll('.health-category__meta')).toHaveLength(0)

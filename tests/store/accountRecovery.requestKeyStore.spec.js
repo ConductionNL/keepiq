@@ -113,7 +113,9 @@ describe('requestKeyStore', () => {
 
 		expect(idb.opens).toEqual([{ name: 'keepiq-account-recovery', version: 1 }])
 		expect(typeof db.transaction).toBe('function')
-		expect(idb.databases.get('keepiq-account-recovery').has('requests')).toBe(true)
+		expect(idb.databases.get('keepiq-account-recovery').has('requests')).toBe(
+			true,
+		)
 	})
 
 	it('keeps a request key under its request id and reads it back', async () => {
@@ -147,7 +149,9 @@ describe('requestKeyStore', () => {
 		const full = new Error('quota')
 		vi.stubGlobal('indexedDB', fakeIndexedDb({ writeError: full }))
 
-		await expect(requestKeyStore.put('req-1', { publicKeyRaw: 'x' })).rejects.toBe(full)
+		await expect(
+			requestKeyStore.put('req-1', { publicKeyRaw: 'x' }),
+		).rejects.toBe(full)
 	})
 
 	it('treats a failed delete as done, so cleanup never blocks the flow', async () => {

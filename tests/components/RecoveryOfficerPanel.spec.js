@@ -104,9 +104,7 @@ describe('RecoveryOfficerPanel', () => {
 		const wrapper = await mountPanel({ officer: false })
 
 		expect(store.fetchOfficer).toHaveBeenCalledTimes(1)
-		expect(wrapper.find('[data-testid="recovery-officer"]').exists()).toBe(
-			false,
-		)
+		expect(wrapper.find('[data-testid="recovery-officer"]').exists()).toBe(false)
 	})
 
 	it('shows nothing and does not throw when the officer view cannot load', async () => {
@@ -120,9 +118,10 @@ describe('RecoveryOfficerPanel', () => {
 	it('offers to create the key until one exists, and creates it on click', async () => {
 		let release
 		store.createKey = vi.fn(
-			() => new Promise((resolve) => {
-				release = resolve
-			}),
+			() =>
+				new Promise((resolve) => {
+					release = resolve
+				}),
 		)
 		const wrapper = await mountPanel({ officer: true, key: null, requests: [] })
 
@@ -139,12 +138,18 @@ describe('RecoveryOfficerPanel', () => {
 	})
 
 	it('says no one is asking when the key exists and there are no requests', async () => {
-		const wrapper = await mountPanel({ officer: true, key: { id: 'k' }, requests: [] })
+		const wrapper = await mountPanel({
+			officer: true,
+			key: { id: 'k' },
+			requests: [],
+		})
 
 		expect(wrapper.find('[data-testid="recovery-create-key"]').exists()).toBe(
 			false,
 		)
-		expect(wrapper.text()).toContain('No one is asking to recover their account.')
+		expect(wrapper.text()).toContain(
+			'No one is asking to recover their account.',
+		)
 	})
 
 	it('shows the user, the approval count and the phrase to compare', async () => {
@@ -195,7 +200,10 @@ describe('RecoveryOfficerPanel', () => {
 		await flush()
 
 		expect(store.approve).toHaveBeenCalledTimes(1)
-		expect(store.approve.mock.calls[0][0]).toMatchObject({ id: 'r1', userId: 'alice' })
+		expect(store.approve.mock.calls[0][0]).toMatchObject({
+			id: 'r1',
+			userId: 'alice',
+		})
 		expect(store.approve.mock.calls[0][1]).toBe('hunter2')
 		expect(wrapper.find('.password-field').element.value).toBe('')
 		expect(approve.attributes('disabled')).toBeDefined()
@@ -237,7 +245,9 @@ describe('RecoveryOfficerPanel', () => {
 		const wrapper = await mountPanel({
 			officer: true,
 			key: { id: 'k' },
-			requests: [request({ status: 'approved', approvedByMe: true, approvals: 2 })],
+			requests: [
+				request({ status: 'approved', approvedByMe: true, approvals: 2 }),
+			],
 		})
 
 		expect(wrapper.find('[data-testid="recovery-decline-r1"]').exists()).toBe(
@@ -250,7 +260,10 @@ describe('RecoveryOfficerPanel', () => {
 		await flush()
 
 		expect(store.handOff).toHaveBeenCalledTimes(1)
-		expect(store.handOff.mock.calls[0][0]).toMatchObject({ id: 'r1', status: 'approved' })
+		expect(store.handOff.mock.calls[0][0]).toMatchObject({
+			id: 'r1',
+			status: 'approved',
+		})
 	})
 
 	it('offers no hand-over once handed off or when another officer approved', async () => {
@@ -258,7 +271,12 @@ describe('RecoveryOfficerPanel', () => {
 			officer: true,
 			key: { id: 'k' },
 			requests: [
-				request({ id: 'r1', status: 'approved', approvedByMe: true, handedOff: true }),
+				request({
+					id: 'r1',
+					status: 'approved',
+					approvedByMe: true,
+					handedOff: true,
+				}),
 				request({ id: 'r2', status: 'approved', approvedByMe: false }),
 			],
 		})
@@ -272,9 +290,9 @@ describe('RecoveryOfficerPanel', () => {
 	})
 
 	it("shows the server's message when an action fails and keeps the typed password", async () => {
-		store.approve = vi
-			.fn()
-			.mockRejectedValue({ response: { data: { message: 'Wrong master password' } } })
+		store.approve = vi.fn().mockRejectedValue({
+			response: { data: { message: 'Wrong master password' } },
+		})
 		const wrapper = await mountPanel({
 			officer: true,
 			key: { id: 'k' },

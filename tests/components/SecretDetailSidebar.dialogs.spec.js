@@ -54,8 +54,17 @@ describe('SecretDetailSidebar dialogs', () => {
 		ctx.openMove()
 		const [name, props] = ctx.cnOpenModal.mock.calls[0]
 		expect(name).toBe('secret-move')
-		expect(Object.keys(props)).toEqual(['subject', 'secretId', 'currentFolderId', 'onSaved'])
-		expect(props).toMatchObject({ subject: 'secret', secretId: 's1', currentFolderId: 'f1' })
+		expect(Object.keys(props)).toEqual([
+			'subject',
+			'secretId',
+			'currentFolderId',
+			'onSaved',
+		])
+		expect(props).toMatchObject({
+			subject: 'secret',
+			secretId: 's1',
+			currentFolderId: 'f1',
+		})
 		props.onSaved()
 		expect(events).toEqual(['load', 'refreshList'])
 	})

@@ -113,10 +113,12 @@ function totpParameters(parts) {
  * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
  */
 function isBareSecret(totp) {
-	return totp.period === TOTP_DEFAULTS.period
+	return (
+		totp.period === TOTP_DEFAULTS.period
 		&& totp.digits === TOTP_DEFAULTS.digits
 		&& totp.algorithm === TOTP_DEFAULTS.algorithm
 		&& totp.label === ''
+	)
 }
 
 /**

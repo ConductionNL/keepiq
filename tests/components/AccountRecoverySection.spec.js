@@ -26,9 +26,13 @@ const stubs = {
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
-	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div class="note" :data-type="type"><slot /></div>',
+	},
 }
 
 /**
@@ -52,12 +56,22 @@ describe('AccountRecoverySection', () => {
 	})
 
 	it('loads the policy, officers and threshold into the form', async () => {
-		const wrapper = await mountWith({ policy: 'optional', officers: ['ada', 'bob'], threshold: 2 })
+		const wrapper = await mountWith({
+			policy: 'optional',
+			officers: ['ada', 'bob'],
+			threshold: 2,
+		})
 
 		expect(axios.get).toHaveBeenCalledWith(API)
-		expect(wrapper.find('[data-testid="account-recovery-policy"]').element.value).toBe('optional')
-		expect(wrapper.find('[data-testid="account-recovery-officers"]').element.value).toBe('ada, bob')
-		const threshold = wrapper.find('[data-testid="account-recovery-threshold"]').element
+		expect(
+			wrapper.find('[data-testid="account-recovery-policy"]').element.value,
+		).toBe('optional')
+		expect(
+			wrapper.find('[data-testid="account-recovery-officers"]').element.value,
+		).toBe('ada, bob')
+		const threshold = wrapper.find(
+			'[data-testid="account-recovery-threshold"]',
+		).element
 		expect(threshold.value).toBe('2')
 		expect(threshold.getAttribute('max')).toBe('2')
 	})
@@ -70,24 +84,41 @@ describe('AccountRecoverySection', () => {
 			activeKey: { id: 'k1', fingerprint: 'AB:CD' },
 		})
 
-		expect(wrapper.find('[data-testid="account-recovery-fingerprint"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="account-recovery-retire"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="account-recovery-fingerprint"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="account-recovery-retire"]').exists(),
+		).toBe(true)
 		expect(wrapper.text()).not.toContain('No recovery key yet.')
 	})
 
 	it('says no key exists yet when recovery is on without one', async () => {
-		const wrapper = await mountWith({ policy: 'optional', officers: [], threshold: 1, activeKey: null })
+		const wrapper = await mountWith({
+			policy: 'optional',
+			officers: [],
+			threshold: 1,
+			activeKey: null,
+		})
 
-		expect(wrapper.find('[data-testid="account-recovery-fingerprint"]').exists()).toBe(false)
-		expect(wrapper.text()).toContain('No recovery key yet. One of the officers creates it in their Keepiq settings.')
+		expect(
+			wrapper.find('[data-testid="account-recovery-fingerprint"]').exists(),
+		).toBe(false)
+		expect(wrapper.text()).toContain(
+			'No recovery key yet. One of the officers creates it in their Keepiq settings.',
+		)
 	})
 
 	it('shows neither the key nor the hint while recovery is off', async () => {
 		const wrapper = await mountWith({ policy: 'off' })
 
-		expect(wrapper.find('[data-testid="account-recovery-fingerprint"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="account-recovery-fingerprint"]').exists(),
+		).toBe(false)
 		expect(wrapper.text()).not.toContain('No recovery key yet.')
-		expect(wrapper.find('[data-testid="account-recovery-removed"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="account-recovery-removed"]').exists(),
+		).toBe(false)
 	})
 
 	it('keeps the defaults when loading fails', async () => {
@@ -102,35 +133,66 @@ describe('AccountRecoverySection', () => {
 	})
 
 	it('saves the edited form, trimming officers, and warns about removed ones', async () => {
-		const wrapper = await mountWith({ policy: 'off', officers: [], threshold: 1 })
+		const wrapper = await mountWith({
+			policy: 'off',
+			officers: [],
+			threshold: 1,
+		})
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({
-			data: { policy: 'required', officers: ['ada', 'cy'], threshold: 2, removed: ['bob'] },
+			data: {
+				policy: 'required',
+				officers: ['ada', 'cy'],
+				threshold: 2,
+				removed: ['bob'],
+			},
 		})
 
-		await wrapper.find('[data-testid="account-recovery-policy"]').setValue('required')
-		await wrapper.find('[data-testid="account-recovery-officers"]').setValue(' ada , ,cy ')
-		await wrapper.find('[data-testid="account-recovery-threshold"]').setValue('2')
+		await wrapper
+			.find('[data-testid="account-recovery-policy"]')
+			.setValue('required')
+		await wrapper
+			.find('[data-testid="account-recovery-officers"]')
+			.setValue(' ada , ,cy ')
+		await wrapper
+			.find('[data-testid="account-recovery-threshold"]')
+			.setValue('2')
 		await wrapper.find('[data-testid="account-recovery-save"]').trigger('click')
 		await flushPromises()
 
 		expect(confirmPassword).toHaveBeenCalledTimes(1)
-		expect(put).toHaveBeenCalledWith(API, { policy: 'required', officers: ['ada', 'cy'], threshold: 2 })
+		expect(put).toHaveBeenCalledWith(API, {
+			policy: 'required',
+			officers: ['ada', 'cy'],
+			threshold: 2,
+		})
 		const removed = wrapper.find('[data-testid="account-recovery-removed"]')
 		expect(removed.exists()).toBe(true)
 		expect(removed.attributes('data-type')).toBe('warning')
-		expect(wrapper.find('[data-testid="account-recovery-officers"]').element.value).toBe('ada, cy')
+		expect(
+			wrapper.find('[data-testid="account-recovery-officers"]').element.value,
+		).toBe('ada, cy')
 	})
 
 	it('shows the server message when saving is refused', async () => {
-		const wrapper = await mountWith({ policy: 'optional', officers: ['ada'], threshold: 1 })
-		vi.spyOn(axios, 'put').mockRejectedValue({ response: { data: { message: 'Threshold too high' } } })
+		const wrapper = await mountWith({
+			policy: 'optional',
+			officers: ['ada'],
+			threshold: 1,
+		})
+		vi.spyOn(axios, 'put').mockRejectedValue({
+			response: { data: { message: 'Threshold too high' } },
+		})
 
 		await wrapper.find('[data-testid="account-recovery-save"]').trigger('click')
 		await flushPromises()
 
 		const note = wrapper.find('.note[data-type="error"]')
 		expect(note.text()).toBe('Threshold too high')
-		expect(wrapper.find('[data-testid="account-recovery-save"]').attributes('disabled')).toBeUndefined()
+		expect(
+			wrapper
+				.find('[data-testid="account-recovery-save"]')
+				.attributes('disabled'),
+		).toBeUndefined()
 	})
 
 	it('retires the key from its button and then shows the no-key hint', async () => {
@@ -142,11 +204,15 @@ describe('AccountRecoverySection', () => {
 		})
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
 
-		await wrapper.find('[data-testid="account-recovery-retire"]').trigger('click')
+		await wrapper
+			.find('[data-testid="account-recovery-retire"]')
+			.trigger('click')
 		await flushPromises()
 
 		expect(post).toHaveBeenCalledWith(`${API}/keys/k7/retire`)
-		expect(wrapper.find('[data-testid="account-recovery-fingerprint"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="account-recovery-fingerprint"]').exists(),
+		).toBe(false)
 		expect(wrapper.text()).toContain('No recovery key yet.')
 	})
 
@@ -159,10 +225,14 @@ describe('AccountRecoverySection', () => {
 		})
 		vi.spyOn(axios, 'post').mockRejectedValue(new Error('Officers must approve'))
 
-		await wrapper.find('[data-testid="account-recovery-retire"]').trigger('click')
+		await wrapper
+			.find('[data-testid="account-recovery-retire"]')
+			.trigger('click')
 		await flushPromises()
 
 		expect(wrapper.vm.activeKey).toEqual({ id: 'k7', fingerprint: 'EF' })
-		expect(wrapper.find('.note[data-type="error"]').text()).toBe('Officers must approve')
+		expect(wrapper.find('.note[data-type="error"]').text()).toBe(
+			'Officers must approve',
+		)
 	})
 })

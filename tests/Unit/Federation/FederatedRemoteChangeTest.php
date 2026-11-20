@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;
 use OCA\Keepiq\Service\FederatedCopyService;
 use OCA\Keepiq\Service\FederatedRemoteChangeService;
@@ -192,7 +193,7 @@ class FederatedRemoteChangeTest extends TestCase {
 			foreach (['OLD-CIPHER-KEY-FOR-BOB', 'NEW-CIPHER-KEY-FOR-BOB', 'NEW-CIPHER-LOGIN', self::SHARED_SECRET, hash('sha256', self::SHARED_SECRET)] as $secret) {
 				$this->assertStringNotContainsString($secret, $entry);
 			}
-			$this->assertSame([], array_diff(array_keys($event->getMetadata()), AuditEventTypes::WHITELIST[$event->getEventType()]));
+			$this->assertSame([], array_diff(array_keys($event->getMetadata()), AuditMetadataPolicy::WHITELIST[$event->getEventType()]));
 		}
 	}
 

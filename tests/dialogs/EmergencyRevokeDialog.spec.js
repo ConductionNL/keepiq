@@ -25,11 +25,13 @@ const stubs = {
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
+		template:
+			'<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
 	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
@@ -52,8 +54,8 @@ function mountDialog(props = {}) {
 	})
 }
 
-function confirmButton (wrapper) {
-  return wrapper.find('[data-testid="emergency-revoke-confirm"]')
+function confirmButton(wrapper) {
+	return wrapper.find('[data-testid="emergency-revoke-confirm"]')
 }
 
 describe('EmergencyRevokeDialog', () => {

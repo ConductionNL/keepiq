@@ -159,7 +159,14 @@ function analyseRow(row, ctx) {
 	const age = ageInDays(row.keyUpdatedAt, ctx.now)
 	const { breach, breached } = breachVerdict(d, ctx.breachResults)
 	const site = siteSuggestions(row, ctx.siteDirectory)
-	const flags = rowFlags(row, { score, shareCount, age, breached, site, cutoff: ctx.cutoff })
+	const flags = rowFlags(row, {
+		score,
+		shareCount,
+		age,
+		breached,
+		site,
+		cutoff: ctx.cutoff,
+	})
 
 	if (flags.length === 0 && score === null) {
 		return null
@@ -239,8 +246,14 @@ function siteSuggestions(row, siteDirectory) {
 		return { twoFactor: null, passkey: null }
 	}
 	return {
-		twoFactor: row.hasSeed === true ? null : directoryEntry(siteDirectory.totp, row.url),
-		passkey: row.hasPasskey === true ? null : directoryEntry(siteDirectory.passkeys, row.url),
+		twoFactor:
+			row.hasSeed === true
+				? null
+				: directoryEntry(siteDirectory.totp, row.url),
+		passkey:
+			row.hasPasskey === true
+				? null
+				: directoryEntry(siteDirectory.passkeys, row.url),
 	}
 }
 

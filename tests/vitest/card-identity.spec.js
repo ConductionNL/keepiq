@@ -30,10 +30,13 @@ import { parseBitwardenJson } from '../../src/import/parsers/bitwarden.js'
 import brandVectors from '../vectors/cards/brand-vectors.json'
 
 describe('card brand vectors', () => {
-	it.each(brandVectors.vectors)('labels $number as $label', ({ number, label, brand }) => {
-		expect(cardBrand(number)).toBe(label)
-		expect(cardBrandInfo(number)?.id ?? null).toBe(brand)
-	})
+	it.each(brandVectors.vectors)(
+		'labels $number as $label',
+		({ number, label, brand }) => {
+			expect(cardBrand(number)).toBe(label)
+			expect(cardBrandInfo(number)?.id ?? null).toBe(brand)
+		},
+	)
 })
 
 describe('card brand table', () => {
@@ -46,25 +49,48 @@ describe('card brand table', () => {
 			expect(end.length).toBe(start.length)
 			expect(start <= end).toBe(true)
 		}
-		expect(brand.lengths.every((length) => length >= 12 && length <= 19)).toBe(true)
+		expect(brand.lengths.every((length) => length >= 12 && length <= 19)).toBe(
+			true,
+		)
 		for (const gaps of Object.values(brand.gaps)) {
 			expect(gaps.every((gap, at) => gap > (gaps[at - 1] ?? 0))).toBe(true)
 		}
-		expect(brand.code === null || brand.code.size === 3 || brand.code.size === 4).toBe(true)
+		expect(
+			brand.code === null || brand.code.size === 3 || brand.code.size === 4,
+		).toBe(true)
 		expect((brand.networks ?? []).every((id) => ids.has(id))).toBe(true)
 	})
 
 	it('has unique ids and no two brands tie for the narrowest range on a vector', () => {
 		expect(ids.size).toBe(cardBrands.brands.length)
-		const ranges = cardBrands.brands.flatMap((brand) => brand.ranges.map((range) => {
-			const [start, end] = Array.isArray(range) ? range : [range, range]
-			return { id: brand.id, start, end, width: Number(end.padEnd(8, '9')) - Number(start.padEnd(8, '0')) }
-		}))
+		const ranges = cardBrands.brands.flatMap((brand) =>
+			brand.ranges.map((range) => {
+				const [start, end] = Array.isArray(range) ? range : [range, range]
+				return {
+					id: brand.id,
+					start,
+					end,
+					width: Number(end.padEnd(8, '9')) - Number(start.padEnd(8, '0')),
+				}
+			}),
+		)
 		for (const { number } of brandVectors.vectors) {
 			const digits = number.replace(/\D/g, '')
-			const hits = ranges.filter(({ start, end }) => digits.length >= start.length && digits.slice(0, start.length) >= start && digits.slice(0, start.length) <= end)
+			const hits = ranges.filter(
+				({ start, end }) =>
+					digits.length >= start.length
+					&& digits.slice(0, start.length) >= start
+					&& digits.slice(0, start.length) <= end,
+			)
 			const narrowest = Math.min(...hits.map((hit) => hit.width))
-			expect(new Set(hits.filter((hit) => hit.width === narrowest).map((hit) => hit.id)).size, number).toBeLessThanOrEqual(1)
+			expect(
+				new Set(
+					hits
+						.filter((hit) => hit.width === narrowest)
+						.map((hit) => hit.id),
+				).size,
+				number,
+			).toBeLessThanOrEqual(1)
 		}
 	})
 })
@@ -75,7 +101,11 @@ describe('card number grouping and masking', () => {
 		['30569309025904', '3056 930902 5904', '3056 •••••• 5904'],
 		['100000000000009', '1000 00000 000009', '1000 ••••• ••0009'],
 		['4111-1111-1111-1111', '4111 1111 1111 1111', '4111 •••• •••• 1111'],
-		['6200000000000000005', '6200 0000 0000 0000 005', '6200 •••• •••• •••0 005'],
+		[
+			'6200000000000000005',
+			'6200 0000 0000 0000 005',
+			'6200 •••• •••• •••0 005',
+		],
 		['9999888877776666', '9999 8888 7777 6666', '9999 •••• •••• 6666'],
 	])('%s', (number, formatted, masked) => {
 		expect(formatCardNumber(number)).toBe(formatted)
@@ -90,7 +120,10 @@ describe('card number grouping and masking', () => {
 
 describe('card format hints', () => {
 	it('hints at a length the brand does not issue', () => {
-		expect(cardNumberHint('37828224631000')).toEqual({ code: 'length', brand: 'American Express' })
+		expect(cardNumberHint('37828224631000')).toEqual({
+			code: 'length',
+			brand: 'American Express',
+		})
 		expect(cardNumberHint('99998888777')).toEqual({ code: 'lengthUnknown' })
 		expect(cardNumberHint('378282246310005')).toBeNull()
 		expect(cardNumberHint('')).toBeNull()
@@ -102,9 +135,17 @@ describe('card format hints', () => {
 	})
 
 	it('hints at a security code of the wrong length', () => {
-		expect(securityCodeHint('378282246310005', '123')).toEqual({ brand: 'American Express', name: 'CID', size: 4 })
+		expect(securityCodeHint('378282246310005', '123')).toEqual({
+			brand: 'American Express',
+			name: 'CID',
+			size: 4,
+		})
 		expect(securityCodeHint('378282246310005', '1234')).toBeNull()
-		expect(securityCodeHint('4111111111111111', '1234')).toEqual({ brand: 'Visa', name: 'CVV', size: 3 })
+		expect(securityCodeHint('4111111111111111', '1234')).toEqual({
+			brand: 'Visa',
+			name: 'CVV',
+			size: 3,
+		})
 		expect(securityCodeHint('6703000000000000', '123')).toBeNull()
 		expect(securityCodeHint('9999888877776666', '12')).toBeNull()
 	})
@@ -253,7 +294,9 @@ describe('card identity edge cases', () => {
 	})
 
 	it('hints the length of an unknown number outside 12 to 19 digits only', () => {
-		expect(cardNumberHint('00000000000000000000')).toEqual({ code: 'lengthUnknown' })
+		expect(cardNumberHint('00000000000000000000')).toEqual({
+			code: 'lengthUnknown',
+		})
 		expect(cardNumberHint('000000000000')).toBeNull()
 		expect(cardNumberHint('000000000001')).toEqual({ code: 'luhn' })
 	})

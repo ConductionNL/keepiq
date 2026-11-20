@@ -22,7 +22,9 @@ describe('authenticatorKeyFromParts', () => {
 	})
 
 	it('returns the bare secret, compacted and upper-cased, for default parameters', () => {
-		expect(authenticatorKeyFromParts({ secret: 'jbsw y3dp ehpk 3pxp' })).toBe(SECRET)
+		expect(authenticatorKeyFromParts({ secret: 'jbsw y3dp ehpk 3pxp' })).toBe(
+			SECRET,
+		)
 		expect(
 			authenticatorKeyFromParts({
 				secret: SECRET,
@@ -49,7 +51,11 @@ describe('authenticatorKeyFromParts', () => {
 
 	it('builds a link with the label when there is an issuer or account', () => {
 		expect(
-			authenticatorKeyFromParts({ secret: SECRET, issuer: 'Bank', account: 'alice' }),
+			authenticatorKeyFromParts({
+				secret: SECRET,
+				issuer: 'Bank',
+				account: 'alice',
+			}),
 		).toBe(
 			'otpauth://totp/Bank%3Aalice?secret=JBSWY3DPEHPK3PXP&period=30&digits=6&algorithm=SHA1&issuer=Bank',
 		)
@@ -69,7 +75,9 @@ describe('authenticatorKeyFromParts', () => {
 		).toBe(
 			'otpauth://totp/?secret=JBSWY3DPEHPK3PXP&period=60&digits=8&algorithm=SHA256',
 		)
-		expect(authenticatorKeyFromParts({ secret: SECRET, algorithm: 'HMAC-SHA-512' })).toBe(
+		expect(
+			authenticatorKeyFromParts({ secret: SECRET, algorithm: 'HMAC-SHA-512' }),
+		).toBe(
 			'otpauth://totp/?secret=JBSWY3DPEHPK3PXP&period=30&digits=6&algorithm=SHA512',
 		)
 	})
@@ -87,7 +95,11 @@ describe('decodeQrImage reader failure', () => {
 			decodeQrImage(
 				{ type: 'image/png' },
 				{
-					readPixels: async () => ({ data: new Uint8ClampedArray(16), width: 2, height: 2 }),
+					readPixels: async () => ({
+						data: new Uint8ClampedArray(16),
+						width: 2,
+						height: 2,
+					}),
 					loadDecoder: async () => () => {
 						throw new Error('bad pixels')
 					},
@@ -101,7 +113,11 @@ describe('decodeQrImage reader failure', () => {
 			decodeQrImage(
 				{},
 				{
-					readPixels: async () => ({ data: new Uint8ClampedArray(16), width: 2, height: 2 }),
+					readPixels: async () => ({
+						data: new Uint8ClampedArray(16),
+						width: 2,
+						height: 2,
+					}),
 					loadDecoder: async () => () => ({ data: '' }),
 				},
 			),

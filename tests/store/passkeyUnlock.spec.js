@@ -139,8 +139,15 @@ describe('passkey unlock with the second enrolled passkey (keepiq#744)', () => {
 		await expect(usePasskeyStore().unlockWithPasskey()).resolves.toBe(true)
 
 		const { publicKey } = get.mock.calls[0][0]
-		expect(Array.from(new Uint8Array(publicKey.challenge))).toEqual([107, 230, 255])
-		expect(publicKey.allowCredentials.map((c) => [c.type, Array.from(new Uint8Array(c.id))])).toEqual([
+		expect(Array.from(new Uint8Array(publicKey.challenge))).toEqual([
+			107, 230, 255,
+		])
+		expect(
+			publicKey.allowCredentials.map((c) => [
+				c.type,
+				Array.from(new Uint8Array(c.id)),
+			]),
+		).toEqual([
 			['public-key', [1, 2, 3]],
 			['public-key', [4, 5, 6]],
 		])
@@ -167,11 +174,15 @@ describe('passkey unlock with the second enrolled passkey (keepiq#744)', () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
 			data: { challenge: 'AAAA', credentials: [FIRST] },
 		})
-		vi.spyOn(axios, 'post').mockRejectedValue(new Error('The passkey could not be verified'))
+		vi.spyOn(axios, 'post').mockRejectedValue(
+			new Error('The passkey could not be verified'),
+		)
 		const unlock = vi.spyOn(useSessionStore(), 'unlockWithRawKey')
 		authenticator([1, 2, 3], new Uint8Array([7]).buffer)
 
-		await expect(usePasskeyStore().unlockWithPasskey()).rejects.toThrow('The passkey could not be verified')
+		await expect(usePasskeyStore().unlockWithPasskey()).rejects.toThrow(
+			'The passkey could not be verified',
+		)
 		expect(derived).toHaveLength(0)
 		expect(unlock).not.toHaveBeenCalled()
 	})
@@ -181,11 +192,15 @@ describe('passkey unlock with the second enrolled passkey (keepiq#744)', () => {
 			data: { challenge: 'AAAA', credentials: [] },
 		})
 		const store = usePasskeyStore()
-		await expect(store.unlockWithPasskey()).rejects.toThrow('No passkey enrolled for unlock')
+		await expect(store.unlockWithPasskey()).rejects.toThrow(
+			'No passkey enrolled for unlock',
+		)
 		get.mockResolvedValue({ data: { challenge: 'AAAA', credentials: [FIRST] } })
 		const unlock = vi.spyOn(useSessionStore(), 'unlockWithRawKey')
 		authenticator([1, 2, 3], undefined)
-		await expect(store.unlockWithPasskey()).rejects.toThrow('Passkey unlock failed — no PRF result')
+		await expect(store.unlockWithPasskey()).rejects.toThrow(
+			'Passkey unlock failed — no PRF result',
+		)
 		expect(unlock).not.toHaveBeenCalled()
 	})
 })

@@ -29,7 +29,15 @@ describe('isInsecureAddress', () => {
 	})
 
 	it('does not flag https, other schemes or no address', () => {
-		for (const address of ['https://example.com', 'ftp://example.com', 'example.com', '', null, undefined, 42]) {
+		for (const address of [
+			'https://example.com',
+			'ftp://example.com',
+			'example.com',
+			'',
+			null,
+			undefined,
+			42,
+		]) {
 			expect(isInsecureAddress(address)).toBe(false)
 		}
 	})
@@ -53,7 +61,13 @@ describe('isInsecureAddress', () => {
 	})
 
 	it('flags the public hosts next to the private ranges', () => {
-		for (const address of ['http://172.15.0.1', 'http://172.32.0.1', 'http://192.169.0.1', 'http://11.0.0.1', 'http://[2001:db8::1]/']) {
+		for (const address of [
+			'http://172.15.0.1',
+			'http://172.32.0.1',
+			'http://192.169.0.1',
+			'http://11.0.0.1',
+			'http://[2001:db8::1]/',
+		]) {
 			expect(isInsecureAddress(address)).toBe(true)
 		}
 	})
@@ -71,8 +85,12 @@ describe('isInsecureAddress', () => {
 
 describe('httpsAddress', () => {
 	it('changes only the scheme', () => {
-		expect(httpsAddress('http://intranet.example.org')).toBe('https://intranet.example.org')
-		expect(httpsAddress('HTTP://example.com:8080/a?b=http://c')).toBe('https://example.com:8080/a?b=http://c')
+		expect(httpsAddress('http://intranet.example.org')).toBe(
+			'https://intranet.example.org',
+		)
+		expect(httpsAddress('HTTP://example.com:8080/a?b=http://c')).toBe(
+			'https://example.com:8080/a?b=http://c',
+		)
 	})
 })
 
@@ -80,9 +98,24 @@ describe('engine: insecure-address', () => {
 	it('flags a login saved with http and carries its address', async () => {
 		const { findings, summary } = await analyse(
 			[
-				{ id: 'h', name: 'Intranet', url: 'http://intranet.example.org', value: 'c0rrect-H0rse-battery-staple-91!' },
-				{ id: 's', name: 'Bank', url: 'https://bank.example.org', value: 'An0ther-L0ng-unique-value-55?' },
-				{ id: 'l', name: 'Router', url: 'http://192.168.1.1', value: 'Y3t-an0ther-unique-value-31#' },
+				{
+					id: 'h',
+					name: 'Intranet',
+					url: 'http://intranet.example.org',
+					value: 'c0rrect-H0rse-battery-staple-91!',
+				},
+				{
+					id: 's',
+					name: 'Bank',
+					url: 'https://bank.example.org',
+					value: 'An0ther-L0ng-unique-value-55?',
+				},
+				{
+					id: 'l',
+					name: 'Router',
+					url: 'http://192.168.1.1',
+					value: 'Y3t-an0ther-unique-value-31#',
+				},
 			],
 			{ digest, stalenessThreshold: 'never' },
 		)
@@ -95,19 +128,36 @@ describe('engine: insecure-address', () => {
 
 	it('lists a login whose only finding is its address', async () => {
 		const { findings } = await analyse(
-			[{ id: 'h', name: 'Intranet', url: 'http://intranet.example.org', value: '' }],
+			[
+				{
+					id: 'h',
+					name: 'Intranet',
+					url: 'http://intranet.example.org',
+					value: '',
+				},
+			],
 			{ digest, stalenessThreshold: 'never' },
 		)
 
 		expect(findings).toEqual([
-			expect.objectContaining({ id: 'h', flags: ['insecure-address'], score: null }),
+			expect.objectContaining({
+				id: 'h',
+				flags: ['insecure-address'],
+				score: null,
+			}),
 		])
 	})
 
 	it('does not lower the vault score', async () => {
 		const value = 'c0rrect-H0rse-battery-staple-91!'
-		const http = await analyse([{ id: 'h', name: 'A', url: 'http://example.com', value }], { digest, stalenessThreshold: 'never' })
-		const https = await analyse([{ id: 'h', name: 'A', url: 'https://example.com', value }], { digest, stalenessThreshold: 'never' })
+		const http = await analyse(
+			[{ id: 'h', name: 'A', url: 'http://example.com', value }],
+			{ digest, stalenessThreshold: 'never' },
+		)
+		const https = await analyse(
+			[{ id: 'h', name: 'A', url: 'https://example.com', value }],
+			{ digest, stalenessThreshold: 'never' },
+		)
 
 		expect(http.score).toBe(https.score)
 	})

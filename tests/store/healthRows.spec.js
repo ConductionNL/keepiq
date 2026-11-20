@@ -66,8 +66,16 @@ describe('loadDecryptedRows', () => {
 		vi.restoreAllMocks()
 		vi.spyOn(axios, 'get').mockImplementation(async (url) =>
 			url.endsWith('/offline/manifest')
-				? { data: { secrets: [{ id: 'plain', sourceUpdatedAt: null }, { id: 'full', sourceUpdatedAt: 'S' }] } }
-				: { data: { items: ITEMS } })
+				? {
+						data: {
+							secrets: [
+								{ id: 'plain', sourceUpdatedAt: null },
+								{ id: 'full', sourceUpdatedAt: 'S' },
+							],
+						},
+					}
+				: { data: { items: ITEMS } },
+		)
 	})
 
 	it('decrypts only the analysable secrets into rows with their fallbacks', async () => {

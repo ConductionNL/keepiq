@@ -34,7 +34,8 @@ const stubs = {
 	NcButton: {
 		props: ['disabled'],
 		emits: ['click'],
-		template: '<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 }
 
@@ -44,7 +45,9 @@ describe('NewSendDialog wiring', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		store = useEphemeralSendStore()
-		store.createSend = vi.fn().mockResolvedValue('https://cloud.example/s/abc#key')
+		store.createSend = vi
+			.fn()
+			.mockResolvedValue('https://cloud.example/s/abc#key')
 	})
 
 	function mountDialog() {

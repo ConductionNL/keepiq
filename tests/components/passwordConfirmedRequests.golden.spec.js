@@ -30,14 +30,18 @@ vi.mock('../../src/crypto/keyProof.js', () => ({
 }))
 
 const API = '/apps/keepiq/api/v1/recovery/admin'
-const REFUSED = { response: { status: 403, data: { message: 'Administrators only' } } }
+const REFUSED = {
+	response: { status: 403, data: { message: 'Administrators only' } },
+}
 
 let events
 
 beforeEach(() => {
 	setActivePinia(createPinia())
 	events = []
-	confirmPassword.mockReset().mockImplementation(async () => events.push('confirm'))
+	confirmPassword
+		.mockReset()
+		.mockImplementation(async () => events.push('confirm'))
 })
 
 afterEach(() => {
@@ -49,7 +53,12 @@ afterEach(() => {
  */
 async function section() {
 	vi.spyOn(axios, 'get').mockResolvedValue({
-		data: { policy: 'optional', officers: ['ada', 'bob'], threshold: 2, activeKey: { id: 'k1' } },
+		data: {
+			policy: 'optional',
+			officers: ['ada', 'bob'],
+			threshold: 2,
+			activeKey: { id: 'k1' },
+		},
 	})
 	const wrapper = shallowMount(AccountRecoverySection)
 	await flushPromises()
@@ -62,13 +71,26 @@ describe('AccountRecoverySection.save', () => {
 		const wrapper = await section()
 		const put = vi.spyOn(axios, 'put').mockImplementation(async (url, body) => {
 			events.push(['put', url, body, wrapper.vm.busy, wrapper.vm.error])
-			return { data: { policy: 'required', officers: ['ada'], threshold: 1, removed: ['bob'] } }
+			return {
+				data: {
+					policy: 'required',
+					officers: ['ada'],
+					threshold: 1,
+					removed: ['bob'],
+				},
+			}
 		})
 		await wrapper.vm.save()
 		expect(put).toHaveBeenCalledTimes(1)
 		expect(events).toEqual([
 			'confirm',
-			['put', API, { policy: 'optional', officers: ['ada', 'bob'], threshold: 2 }, true, null],
+			[
+				'put',
+				API,
+				{ policy: 'optional', officers: ['ada', 'bob'], threshold: 2 },
+				true,
+				null,
+			],
 		])
 		expect(wrapper.vm.removedOfficers).toEqual(['bob'])
 		expect(wrapper.vm.policy).toBe('required')
@@ -124,7 +146,9 @@ describe('encryptionSuite.postNewSuite', () => {
 	const BODY = { publicKey: 'PK', encryptedPrivateKey: 'EPK' }
 
 	it('creates without a confirmation when the server allows it', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 's1' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 's1' } })
 		const response = await useEncryptionSuiteStore().postNewSuite(BODY)
 		expect(response).toEqual({ data: { id: 's1' } })
 		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/suites', BODY)
@@ -149,12 +173,18 @@ describe('encryptionSuite.postNewSuite', () => {
 	})
 
 	it('re-enrols nothing when the confirmation is cancelled, and passes other refusals on', async () => {
-		const post = vi.spyOn(axios, 'post').mockRejectedValue({ response: { data: { error: 'reauthentication_required' } } })
+		const post = vi.spyOn(axios, 'post').mockRejectedValue({
+			response: { data: { error: 'reauthentication_required' } },
+		})
 		confirmPassword.mockRejectedValueOnce(new Error('Dialog closed'))
-		await expect(useEncryptionSuiteStore().postNewSuite(BODY)).rejects.toThrow('Dialog closed')
+		await expect(useEncryptionSuiteStore().postNewSuite(BODY)).rejects.toThrow(
+			'Dialog closed',
+		)
 		expect(post).toHaveBeenCalledTimes(1)
 		post.mockRejectedValue(REFUSED)
-		await expect(useEncryptionSuiteStore().postNewSuite(BODY)).rejects.toBe(REFUSED)
+		await expect(useEncryptionSuiteStore().postNewSuite(BODY)).rejects.toBe(
+			REFUSED,
+		)
 		expect(confirmPassword).toHaveBeenCalledTimes(1)
 	})
 })

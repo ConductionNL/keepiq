@@ -24,12 +24,23 @@ const stubs = {
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
-	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div class="note" :data-type="type"><slot /></div>',
+	},
 	NcSelect: {
 		name: 'NcSelect',
-		props: ['modelValue', 'options', 'label', 'filterable', 'loading', 'inputLabel'],
+		props: [
+			'modelValue',
+			'options',
+			'label',
+			'filterable',
+			'loading',
+			'inputLabel',
+		],
 		emits: ['update:modelValue', 'search'],
 		template: '<div class="select" />',
 	},
@@ -68,7 +79,8 @@ describe('OffboardingSection flow', () => {
 	it('enables the run only for two different users, then opens the confirmation', async () => {
 		const wrapper = mountSection()
 		const run = () => wrapper.find('[data-testid="offboarding-run"]')
-		const dialog = () => wrapper.findComponent({ name: 'OffboardingConfirmDialog' })
+		const dialog = () =>
+			wrapper.findComponent({ name: 'OffboardingConfirmDialog' })
 		expect(run().attributes('disabled')).toBeDefined()
 
 		await pickers(wrapper)[0].vm.$emit('update:modelValue', ALICE)
@@ -80,7 +92,11 @@ describe('OffboardingSection flow', () => {
 		expect(dialog().props('open')).toBe(false)
 
 		await run().trigger('click')
-		expect(dialog().props()).toEqual({ open: true, leavingUserId: 'alice', successorUserId: 'bob' })
+		expect(dialog().props()).toEqual({
+			open: true,
+			leavingUserId: 'alice',
+			successorUserId: 'bob',
+		})
 
 		await dialog().vm.$emit('update:open', false)
 		expect(dialog().props('open')).toBe(false)
@@ -88,42 +104,75 @@ describe('OffboardingSection flow', () => {
 
 	it('posts both users when the dialog confirms and shows the summary', async () => {
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({
-			data: { revoked: 2, transferred: 1, skipped: [], membershipsRemoved: 0, stillCoveredByGroups: [] },
+			data: {
+				revoked: 2,
+				transferred: 1,
+				skipped: [],
+				membershipsRemoved: 0,
+				stillCoveredByGroups: [],
+			},
 		})
 		const wrapper = mountSection()
 		await pickers(wrapper)[0].vm.$emit('update:modelValue', ALICE)
 		await pickers(wrapper)[1].vm.$emit('update:modelValue', BOB)
 		await wrapper.find('[data-testid="offboarding-run"]').trigger('click')
 
-		await wrapper.findComponent({ name: 'OffboardingConfirmDialog' }).vm.$emit('confirm')
+		await wrapper
+			.findComponent({ name: 'OffboardingConfirmDialog' })
+			.vm.$emit('confirm')
 		await flushPromises()
 
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/team-folders/offboard', {
-			leavingUserId: 'alice',
-			successorUserId: 'bob',
-		})
-		expect(wrapper.findComponent({ name: 'OffboardingConfirmDialog' }).props('open')).toBe(false)
-		expect(wrapper.find('[data-testid="offboarding-summary"]').attributes('data-type')).toBe('success')
-		expect(wrapper.find('[data-testid="offboarding-error"]').exists()).toBe(false)
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/team-folders/offboard',
+			{
+				leavingUserId: 'alice',
+				successorUserId: 'bob',
+			},
+		)
+		expect(
+			wrapper
+				.findComponent({ name: 'OffboardingConfirmDialog' })
+				.props('open'),
+		).toBe(false)
+		expect(
+			wrapper
+				.find('[data-testid="offboarding-summary"]')
+				.attributes('data-type'),
+		).toBe('success')
+		expect(wrapper.find('[data-testid="offboarding-error"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('shows the server message when the run is refused', async () => {
-		vi.spyOn(axios, 'post').mockRejectedValue({ response: { data: { message: 'Successor has no vault' } } })
+		vi.spyOn(axios, 'post').mockRejectedValue({
+			response: { data: { message: 'Successor has no vault' } },
+		})
 		const wrapper = mountSection()
 		await pickers(wrapper)[0].vm.$emit('update:modelValue', ALICE)
 		await pickers(wrapper)[1].vm.$emit('update:modelValue', BOB)
 
-		await wrapper.findComponent({ name: 'OffboardingConfirmDialog' }).vm.$emit('confirm')
+		await wrapper
+			.findComponent({ name: 'OffboardingConfirmDialog' })
+			.vm.$emit('confirm')
 		await flushPromises()
 
-		expect(wrapper.find('[data-testid="offboarding-error"]').text()).toBe('Successor has no vault')
-		expect(wrapper.find('[data-testid="offboarding-summary"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="offboarding-run"]').attributes('disabled')).toBeUndefined()
+		expect(wrapper.find('[data-testid="offboarding-error"]').text()).toBe(
+			'Successor has no vault',
+		)
+		expect(wrapper.find('[data-testid="offboarding-summary"]').exists()).toBe(
+			false,
+		)
+		expect(
+			wrapper.find('[data-testid="offboarding-run"]').attributes('disabled'),
+		).toBeUndefined()
 	})
 
 	it('offers the users a search finds, and none when the search fails', async () => {
 		const store = useMemberOverviewStore()
-		const search = vi.spyOn(store, 'searchUsers').mockResolvedValueOnce([ALICE, BOB])
+		const search = vi
+			.spyOn(store, 'searchUsers')
+			.mockResolvedValueOnce([ALICE, BOB])
 		const wrapper = mountSection()
 
 		await pickers(wrapper)[1].vm.$emit('search', 'b')
@@ -146,10 +195,16 @@ describe('OffboardingSection flow', () => {
 
 		store.prefillOffboarding('carol')
 		await flushPromises()
-		expect(pickers(wrapper)[0].props('modelValue')).toEqual({ userId: 'carol', displayName: 'carol' })
+		expect(pickers(wrapper)[0].props('modelValue')).toEqual({
+			userId: 'carol',
+			displayName: 'carol',
+		})
 
 		store.prefillOffboarding('')
 		await flushPromises()
-		expect(pickers(wrapper)[0].props('modelValue')).toEqual({ userId: 'carol', displayName: 'carol' })
+		expect(pickers(wrapper)[0].props('modelValue')).toEqual({
+			userId: 'carol',
+			displayName: 'carol',
+		})
 	})
 })

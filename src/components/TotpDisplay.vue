@@ -1,15 +1,15 @@
 <template>
 	<div class="totp-display" data-testid="totp-display">
 		<div v-if="locked" class="totp-display__locked">
-			<NcButton
-				variant="secondary"
-				data-testid="totp-show"
-				@click="unlock">
+			<NcButton variant="secondary" data-testid="totp-show" @click="unlock">
 				{{ t('keepiq', 'Show one-time code') }}
 			</NcButton>
 		</div>
 
-		<div v-else-if="invalid" class="totp-display__invalid" data-testid="totp-invalid">
+		<div
+			v-else-if="invalid"
+			class="totp-display__invalid"
+			data-testid="totp-invalid">
 			<AlertCircleOutline :size="20" />
 			<span>{{ t('keepiq', 'Not a valid authenticator secret') }}</span>
 		</div>

@@ -27,11 +27,14 @@ const service = vi.hoisted(() => ({
 vi.mock('../../src/services/recoveryKit.js', () => service)
 vi.mock('@nextcloud/auth', () => ({ getCurrentUser: () => ({ uid: 'alice' }) }))
 vi.mock('@nextcloud/l10n', () => ({
-	translate: (_app, text, vars = {}) => text.replace(/\{(\w+)\}/g, (match, name) => String(vars[name] ?? match)),
+	translate: (_app, text, vars = {}) =>
+		text.replace(/\{(\w+)\}/g, (match, name) => String(vars[name] ?? match)),
 }))
 
-const { default: RecoveryKitPanel } = await import('../../src/components/RecoveryKitPanel.vue')
-const { default: RecoveryKitUnlock } = await import('../../src/components/RecoveryKitUnlock.vue')
+const { default: RecoveryKitPanel } =
+	await import('../../src/components/RecoveryKitPanel.vue')
+const { default: RecoveryKitUnlock } =
+	await import('../../src/components/RecoveryKitUnlock.vue')
 const { useSessionStore } = await import('../../src/store/modules/session.js')
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -40,18 +43,24 @@ const stubs = {
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
-	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div class="note" :data-type="type"><slot /></div>',
+	},
 	NcPasswordField: {
 		props: ['modelValue', 'label', 'disabled'],
 		emits: ['update:modelValue'],
-		template: '<input class="password" :disabled="disabled" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+		template:
+			'<input class="password" :disabled="disabled" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 	},
 	NcTextField: {
 		props: ['modelValue', 'label', 'disabled'],
 		emits: ['update:modelValue'],
-		template: '<input class="text" :disabled="disabled" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+		template:
+			'<input class="text" :disabled="disabled" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 	},
 }
 
@@ -75,33 +84,62 @@ beforeEach(() => {
 describe('RecoveryKitPanel', () => {
 	it('says there is no kit, and when the current one was made', async () => {
 		service.recoveryKitStatus.mockResolvedValueOnce(null)
-		expect((await mounted(RecoveryKitPanel)).get('[data-testid="recovery-kit-status"]').text()).toBe('You have no recovery kit.')
+		expect(
+			(await mounted(RecoveryKitPanel))
+				.get('[data-testid="recovery-kit-status"]')
+				.text(),
+		).toBe('You have no recovery kit.')
 
-		service.recoveryKitStatus.mockResolvedValueOnce({ suiteId: 's-1', createdAt: '2026-11-01T10:00:00+00:00' })
+		service.recoveryKitStatus.mockResolvedValueOnce({
+			suiteId: 's-1',
+			createdAt: '2026-11-01T10:00:00+00:00',
+		})
 		const wrapper = await mounted(RecoveryKitPanel)
-		expect(wrapper.get('[data-testid="recovery-kit-status"]').text()).toBe('Your recovery kit was made on 2026-11-01.')
-		expect(wrapper.get('[data-testid="recovery-kit-create"]').text()).toBe('Make a new recovery kit')
+		expect(wrapper.get('[data-testid="recovery-kit-status"]').text()).toBe(
+			'Your recovery kit was made on 2026-11-01.',
+		)
+		expect(wrapper.get('[data-testid="recovery-kit-create"]').text()).toBe(
+			'Make a new recovery kit',
+		)
 	})
 
 	it('makes a kit with the typed master password and shows the code once, with download and print', async () => {
 		service.recoveryKitStatus.mockResolvedValue(null)
-		service.createRecoveryKit.mockResolvedValue({ code: 'ABCD-EFGH', kit: { suiteId: 's-1', createdAt: '2026-11-14T10:00:00+00:00' } })
+		service.createRecoveryKit.mockResolvedValue({
+			code: 'ABCD-EFGH',
+			kit: { suiteId: 's-1', createdAt: '2026-11-14T10:00:00+00:00' },
+		})
 		useSessionStore().encryptedPrivateKey = 'ENVELOPE'
 		const wrapper = await mounted(RecoveryKitPanel)
 
 		await wrapper.get('[data-testid="recovery-kit-create"]').trigger('click')
-		await wrapper.get('[data-testid="recovery-kit-password"]').setValue('master password')
+		await wrapper
+			.get('[data-testid="recovery-kit-password"]')
+			.setValue('master password')
 		await wrapper.get('[data-testid="recovery-kit-create"]').trigger('click')
 		await flush()
 
-		expect(service.createRecoveryKit).toHaveBeenCalledWith('ENVELOPE', 'master password')
-		expect(wrapper.get('[data-testid="recovery-kit-code"]').text()).toBe('ABCD-EFGH')
-		expect(wrapper.find('[data-testid="recovery-kit-download"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="recovery-kit-print"]').exists()).toBe(true)
-		expect(wrapper.get('[data-testid="recovery-kit-status"]').text()).toBe('Your recovery kit was made on 2026-11-14.')
+		expect(service.createRecoveryKit).toHaveBeenCalledWith(
+			'ENVELOPE',
+			'master password',
+		)
+		expect(wrapper.get('[data-testid="recovery-kit-code"]').text()).toBe(
+			'ABCD-EFGH',
+		)
+		expect(wrapper.find('[data-testid="recovery-kit-download"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.find('[data-testid="recovery-kit-print"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.get('[data-testid="recovery-kit-status"]').text()).toBe(
+			'Your recovery kit was made on 2026-11-14.',
+		)
 
 		await wrapper.get('[data-testid="recovery-kit-done"]').trigger('click')
-		expect(wrapper.find('[data-testid="recovery-kit-code"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="recovery-kit-code"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('reports a failure and shows no code', async () => {
@@ -114,8 +152,12 @@ describe('RecoveryKitPanel', () => {
 		await wrapper.get('[data-testid="recovery-kit-create"]').trigger('click')
 		await flush()
 
-		expect(wrapper.find('[data-testid="recovery-kit-code"]').exists()).toBe(false)
-		expect(wrapper.get('[role="alert"]').text()).toBe('The recovery kit could not be made. Check your master password.')
+		expect(wrapper.find('[data-testid="recovery-kit-code"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.get('[role="alert"]').text()).toBe(
+			'The recovery kit could not be made. Check your master password.',
+		)
 	})
 })
 
@@ -123,51 +165,93 @@ describe('RecoveryKitUnlock', () => {
 	it('offers nothing to a user without a kit', async () => {
 		service.recoveryKitStatus.mockResolvedValue(null)
 
-		expect((await mounted(RecoveryKitUnlock)).find('[data-testid="recovery-kit-unlock"]').exists()).toBe(false)
+		expect(
+			(await mounted(RecoveryKitUnlock))
+				.find('[data-testid="recovery-kit-unlock"]')
+				.exists(),
+		).toBe(false)
 	})
 
 	it('recovers, unlocks with the new password and offers a new kit before continuing', async () => {
-		service.recoveryKitStatus.mockResolvedValue({ suiteId: 's-1', createdAt: '2026-11-01T10:00:00+00:00' })
+		service.recoveryKitStatus.mockResolvedValue({
+			suiteId: 's-1',
+			createdAt: '2026-11-01T10:00:00+00:00',
+		})
 		service.recoverWithCode.mockResolvedValue(undefined)
 		const session = useSessionStore()
 		session.unlock = vi.fn().mockResolvedValue(undefined)
 		const wrapper = await mounted(RecoveryKitUnlock)
 
-		await wrapper.get('[data-testid="recovery-kit-unlock-start"]').trigger('click')
-		const submit = () => wrapper.get('[data-testid="recovery-kit-unlock-submit"]')
-		await wrapper.get('[data-testid="recovery-kit-unlock-code"]').setValue('0123-4567-89ab-cdef-ghjk-mnpq-rstv-wxyz')
-		await wrapper.get('[data-testid="recovery-kit-unlock-password"]').setValue('a new master password')
-		await wrapper.get('[data-testid="recovery-kit-unlock-repeat"]').setValue('a new master passwor')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-start"]')
+			.trigger('click')
+		const submit = () =>
+			wrapper.get('[data-testid="recovery-kit-unlock-submit"]')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-code"]')
+			.setValue('0123-4567-89ab-cdef-ghjk-mnpq-rstv-wxyz')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-password"]')
+			.setValue('a new master password')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-repeat"]')
+			.setValue('a new master passwor')
 		expect(submit().attributes('disabled')).toBeDefined()
-		await wrapper.get('[data-testid="recovery-kit-unlock-repeat"]').setValue('a new master password')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-repeat"]')
+			.setValue('a new master password')
 		await submit().trigger('click')
 		await flush()
 
-		expect(service.recoverWithCode).toHaveBeenCalledWith('0123-4567-89ab-cdef-ghjk-mnpq-rstv-wxyz', 'a new master password')
+		expect(service.recoverWithCode).toHaveBeenCalledWith(
+			'0123-4567-89ab-cdef-ghjk-mnpq-rstv-wxyz',
+			'a new master password',
+		)
 		expect(session.unlock).toHaveBeenCalledWith('a new master password')
 		expect(wrapper.find('[data-testid="recovery-kit"]').exists()).toBe(true)
 		expect(wrapper.emitted('recovered')).toBeUndefined()
 
-		await wrapper.get('[data-testid="recovery-kit-unlock-continue"]').trigger('click')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-continue"]')
+			.trigger('click')
 		expect(wrapper.emitted('recovered')).toHaveLength(1)
 	})
 
 	it('opens nothing on a wrong code, and says so', async () => {
-		service.recoveryKitStatus.mockResolvedValue({ suiteId: 's-1', createdAt: null })
-		service.recoverWithCode.mockRejectedValue(new Error('The recovery code does not open this vault'))
+		service.recoveryKitStatus.mockResolvedValue({
+			suiteId: 's-1',
+			createdAt: null,
+		})
+		service.recoverWithCode.mockRejectedValue(
+			new Error('The recovery code does not open this vault'),
+		)
 		const session = useSessionStore()
 		session.unlock = vi.fn()
 		const wrapper = await mounted(RecoveryKitUnlock)
 
-		await wrapper.get('[data-testid="recovery-kit-unlock-start"]').trigger('click')
-		await wrapper.get('[data-testid="recovery-kit-unlock-code"]').setValue('0123-4567-89ab-cdef-ghjk-mnpq-rstv-wxyz')
-		await wrapper.get('[data-testid="recovery-kit-unlock-password"]').setValue('a new master password')
-		await wrapper.get('[data-testid="recovery-kit-unlock-repeat"]').setValue('a new master password')
-		await wrapper.get('[data-testid="recovery-kit-unlock-submit"]').trigger('click')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-start"]')
+			.trigger('click')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-code"]')
+			.setValue('0123-4567-89ab-cdef-ghjk-mnpq-rstv-wxyz')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-password"]')
+			.setValue('a new master password')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-repeat"]')
+			.setValue('a new master password')
+		await wrapper
+			.get('[data-testid="recovery-kit-unlock-submit"]')
+			.trigger('click')
 		await flush()
 
 		expect(session.unlock).not.toHaveBeenCalled()
-		expect(wrapper.get('[role="alert"]').text()).toBe('This recovery code does not open your vault.')
-		expect(wrapper.find('[data-testid="recovery-kit-unlock-continue"]').exists()).toBe(false)
+		expect(wrapper.get('[role="alert"]').text()).toBe(
+			'This recovery code does not open your vault.',
+		)
+		expect(
+			wrapper.find('[data-testid="recovery-kit-unlock-continue"]').exists(),
+		).toBe(false)
 	})
 })

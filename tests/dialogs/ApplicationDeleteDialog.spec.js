@@ -24,11 +24,13 @@ const stubs = {
 	},
 	NcNoteCard: {
 		props: ['type'],
-		template: '<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
+		template:
+			'<div :class="`note note--${type}`" v-bind="$attrs"><slot /></div>',
 	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
@@ -53,7 +55,9 @@ describe('ApplicationDeleteDialog', () => {
 		const wrapper = mountDialog(false)
 
 		expect(wrapper.find('[data-open]').attributes('data-open')).toBe('false')
-		expect(wrapper.find('[data-testid="title"]').text()).toBe('Delete application')
+		expect(wrapper.find('[data-testid="title"]').text()).toBe(
+			'Delete application',
+		)
 		expect(
 			wrapper.find('[data-testid="application-delete-warning"]').text(),
 		).toBe('Delete this application? This cascades to its secrets.')
@@ -62,7 +66,9 @@ describe('ApplicationDeleteDialog', () => {
 	it('emits confirm, and only confirm, from the delete button', async () => {
 		const wrapper = mountDialog()
 
-		await wrapper.find('[data-testid="application-delete-confirm"]').trigger('click')
+		await wrapper
+			.find('[data-testid="application-delete-confirm"]')
+			.trigger('click')
 
 		expect(wrapper.emitted('confirm')).toHaveLength(1)
 		expect(wrapper.emitted('close')).toBeUndefined()
@@ -71,7 +77,9 @@ describe('ApplicationDeleteDialog', () => {
 	it('emits close from cancel and from dismissal, never confirm', async () => {
 		const wrapper = mountDialog()
 
-		await wrapper.find('[data-testid="application-delete-cancel"]').trigger('click')
+		await wrapper
+			.find('[data-testid="application-delete-cancel"]')
+			.trigger('click')
 		wrapper.findComponent({ name: 'NcDialog' }).vm.$emit('update:open', false)
 
 		expect(wrapper.emitted('close')).toHaveLength(2)

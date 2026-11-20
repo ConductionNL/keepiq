@@ -28,7 +28,7 @@ use OCA\Keepiq\Db\PrivilegedLogin;
 use OCA\Keepiq\Db\PrivilegedLoginMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
@@ -59,6 +59,13 @@ class PrivilegedAccessService {
 	public const MAX_REASON_LENGTH = 500;
 
 	/**
+	 * Builds the audit events this service records.
+	 *
+	 * @var AuditEventFactory
+	 */
+	private AuditEventFactory $auditEvents;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param SecretMapper          $secrets       The secrets
@@ -82,6 +89,7 @@ class PrivilegedAccessService {
 		private ITimeFactory $time,
 		private LoggerInterface $logger,
 	) {
+		$this->auditEvents = new AuditEventFactory();
 	}//end __construct()
 
 	/**
@@ -138,25 +146,22 @@ class PrivilegedAccessService {
 			return $privileged;
 		}
 
-		if ($privileged === true) {
-			$flag = new PrivilegedLogin();
-			$flag->setId(Uuid::uuid4()->toString());
-			$flag->setSecretId($secret->getId());
-			$flag->setOwnerId($ownerId);
-			$flag->setCreatedAt($this->now());
-			$this->flags->insert($flag);
-		} else {
+		if ($privileged === false) {
 			$this->flags->deleteBySecret(secretId: $secret->getId());
+			$this->record(actorId: $ownerId, eventType: AuditEventTypes::PRIVILEGED_ACCESS_UNMARKED, secret: $secret, metadata: []);
+
+			return false;
 		}
 
-		$eventType = AuditEventTypes::PRIVILEGED_ACCESS_UNMARKED;
-		if ($privileged === true) {
-			$eventType = AuditEventTypes::PRIVILEGED_ACCESS_MARKED;
-		}
+		$flag = new PrivilegedLogin();
+		$flag->setId(Uuid::uuid4()->toString());
+		$flag->setSecretId($secret->getId());
+		$flag->setOwnerId($ownerId);
+		$flag->setCreatedAt($this->now());
+		$this->flags->insert($flag);
+		$this->record(actorId: $ownerId, eventType: AuditEventTypes::PRIVILEGED_ACCESS_MARKED, secret: $secret, metadata: []);
 
-		$this->record(actorId: $ownerId, eventType: $eventType, secret: $secret, metadata: []);
-
-		return $privileged;
+		return true;
 	}//end setPrivileged()
 
 	/**
@@ -247,6 +252,10 @@ class PrivilegedAccessService {
 	 *
 	 * @throws NotFoundException When the caller has no such request
 	 * @throws InvalidArgumentException When it was already answered, or the approval widens it or a range does not parse
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AccessWindow::approve() and
+	 *   DateTimeImmutable::createFromMutable() are named constructors of value
+	 *   objects; there is no instance to inject.
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-use-of-a-privileged-login-needs-an-approved-time-window
 	 */
@@ -512,7 +521,7 @@ class PrivilegedAccessService {
 	private function record(string $actorId, string $eventType, Secret $secret, array $metadata): void {
 		try {
 			$this->audit->record(
-				AuditEvent::forUser(
+				$this->auditEvents->forUser(
 					actorId: $actorId,
 					eventType: $eventType,
 					objectType: 'secret',
@@ -553,6 +562,9 @@ class PrivilegedAccessService {
 	 * @param DateTimeImmutable $moment The moment
 	 *
 	 * @return DateTime
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) DateTime::createFromImmutable() is
+	 *   a named constructor on a PHP built-in.
 	 */
 	private static function mutable(DateTimeImmutable $moment): DateTime {
 		return DateTime::createFromImmutable($moment);

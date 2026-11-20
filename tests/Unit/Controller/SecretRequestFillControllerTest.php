@@ -143,6 +143,48 @@ class SecretRequestFillControllerTest extends TestCase {
 	}//end testShowReturnsTheCertificateAndRequestedFields()
 
 	/**
+	 * Show names the type of the Secret the request fills, so the fill page can
+	 * use the type's own labels and inputs.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/builtin-type-fields/spec.md#requirement-the-fill-page-shows-the-fields-of-the-requested-type
+	 */
+	public function testShowNamesTheTypeOfTheSecretBeingFilled(): void {
+		$request = $this->makeRequest();
+		$this->secretRequestService->method('getByToken')->willReturn($request);
+		$this->secretRequestService->expects($this->once())
+			->method('secretTypeName')->with($request)->willReturn('certificate');
+		$this->encryptionSuiteService->method('getSuite')->willReturn($this->makeSuite());
+
+		$data = $this->controller->show(token: 'tok-1')->getData();
+
+		$this->assertSame(expected: 'certificate', actual: $data['secret_type']);
+	}//end testShowNamesTheTypeOfTheSecretBeingFilled()
+
+	/**
+	 * Show hands the fill page the requested fields' schemas, and an empty
+	 * object when the request has none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testShowReturnsTheFieldSchemas(): void {
+		$request = $this->makeRequest();
+		$request->setFieldSchemas('{"PIN":{"type":"string","hidden":true}}');
+		$plain = $this->makeRequest();
+		$this->secretRequestService->method('getByToken')->willReturnOnConsecutiveCalls($request, $plain);
+		$this->encryptionSuiteService->method('getSuite')->willReturn($this->makeSuite());
+
+		$typed = $this->controller->show(token: 'tok-1')->getData();
+		$none  = $this->controller->show(token: 'tok-1')->getData();
+
+		$this->assertEquals(expected: (object)['PIN' => ['type' => 'string', 'hidden' => true]], actual: $typed['field_schemas']);
+		$this->assertSame(expected: '{}', actual: json_encode($none['field_schemas']));
+	}//end testShowReturnsTheFieldSchemas()
+
+	/**
 	 * Show propagates the InvalidArgumentException HTTP code (e.g. 410 Gone).
 	 *
 	 * @return void
@@ -448,10 +490,31 @@ class SecretRequestFillControllerTest extends TestCase {
 	 */
 	public function testFillWithAnUncodedRefusalIs400(): void {
 		$this->secretRequestService->method('fill')->willThrowException(new InvalidArgumentException(message: 'Bad field'));
+		$this->secretRequestService->method('refusalReason')->willReturn('unknown');
 
 		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'CIPHER']);
 
 		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
-		$this->assertSame(expected: ['message' => 'Bad field'], actual: $response->getData());
+		$this->assertSame(expected: ['message' => 'Bad field', 'reason' => 'unknown'], actual: $response->getData());
 	}//end testFillWithAnUncodedRefusalIs400()
+
+	/**
+	 * A fill refused because the link is no longer available carries the
+	 * reason, so the page shows it in the recipient's language.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-builtin-type-fields/specs/secret-requests/spec.md#requirement-item-types-that-cannot-be-requested
+	 */
+	public function testARefusedFillCarriesItsReason(): void {
+		$this->secretRequestService->method('fill')->willThrowException(
+			new InvalidArgumentException(message: 'Request is no longer available', code: Http::STATUS_GONE)
+		);
+		$this->secretRequestService->method('refusalReason')->with('tok-1')->willReturn('unavailable');
+
+		$response = $this->controller->fill(token: 'tok-1', encryptedFields: ['key' => 'CIPHER']);
+
+		$this->assertSame(expected: Http::STATUS_GONE, actual: $response->getStatus());
+		$this->assertSame(expected: 'unavailable', actual: $response->getData()['reason']);
+	}//end testARefusedFillCarriesItsReason()
 }//end class

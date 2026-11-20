@@ -56,27 +56,49 @@ describe('App.vue handleRevoke', () => {
 	it.each([
 		[{ usableEmergencyContacts: 3 }, 3],
 		[{}, 1],
-	])('asks to accept the emergency-access loss, keeping the form (%#)', async (data, count) => {
-		const context = shell(vi.fn().mockRejectedValue({
-			response: { status: 409, data: { error: 'emergency_access_present', ...data } },
-		}))
+	])(
+		'asks to accept the emergency-access loss, keeping the form (%#)',
+		async (data, count) => {
+			const context = shell(
+				vi.fn().mockRejectedValue({
+					response: {
+						status: 409,
+						data: { error: 'emergency_access_present', ...data },
+					},
+				}),
+			)
 
-		await context.handleRevoke()
+			await context.handleRevoke()
 
-		expect(context).toMatchObject({
-			revoking: false,
-			revokeError: null,
-			revokeSuccess: false,
-			revokeConfirm: true,
-			revokeReason: 'lost laptop',
-			revokePassword: 'master',
-			revokeEmergencyCount: count,
-		})
-	})
+			expect(context).toMatchObject({
+				revoking: false,
+				revokeError: null,
+				revokeSuccess: false,
+				revokeConfirm: true,
+				revokeReason: 'lost laptop',
+				revokePassword: 'master',
+				revokeEmergencyCount: count,
+			})
+		},
+	)
 
 	it.each([
-		[{ response: { status: 409, data: { error: 'other', message: 'conflict' } } }, 'conflict'],
-		[{ response: { status: 403, data: { message: 'refused' } }, message: 'x' }, 'refused'],
+		[
+			{
+				response: {
+					status: 409,
+					data: { error: 'other', message: 'conflict' },
+				},
+			},
+			'conflict',
+		],
+		[
+			{
+				response: { status: 403, data: { message: 'refused' } },
+				message: 'x',
+			},
+			'refused',
+		],
 		[{ message: 'network down' }, 'network down'],
 		[{}, 'Failed to revoke suite'],
 	])('shows any other failure and keeps the form (%#)', async (failure, text) => {

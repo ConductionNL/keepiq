@@ -132,7 +132,9 @@ describe('useEmergencyAccessStore — more', () => {
 
 	describe('list loads', () => {
 		it('fetchContacts stores an array body and resets loading', async () => {
-			const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: [{ id: 'c1' }] })
+			const get = vi
+				.spyOn(axios, 'get')
+				.mockResolvedValue({ data: [{ id: 'c1' }] })
 			const store = useEmergencyAccessStore()
 			const pending = store.fetchContacts()
 			expect(store.loading).toBe(true)
@@ -176,19 +178,25 @@ describe('useEmergencyAccessStore — more', () => {
 	describe('designate (real crypto)', () => {
 		it('posts an envelope only the grantee opens, with a verifiable proof', async () => {
 			unlockedGrantor()
-			const get = vi.spyOn(axios, 'get').mockImplementation(async (url, config) => {
-				if (url === `${API}/grantee-certificate`) {
-					return { data: { certificate: grantee.publicKeyPem } }
-				}
-				if (url === '/apps/keepiq/api/v1/suites/suite-1/proof-challenge') {
-					expect(config).toEqual({
-						params: { purpose: 'emergency-access-designate' },
-					})
-					return { data: { nonce: 'nonce-1' } }
-				}
-				return { data: [{ id: 'rel-1', state: 'active' }] }
-			})
-			const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'rel-1' } })
+			const get = vi
+				.spyOn(axios, 'get')
+				.mockImplementation(async (url, config) => {
+					if (url === `${API}/grantee-certificate`) {
+						return { data: { certificate: grantee.publicKeyPem } }
+					}
+					if (
+						url === '/apps/keepiq/api/v1/suites/suite-1/proof-challenge'
+					) {
+						expect(config).toEqual({
+							params: { purpose: 'emergency-access-designate' },
+						})
+						return { data: { nonce: 'nonce-1' } }
+					}
+					return { data: [{ id: 'rel-1', state: 'active' }] }
+				})
+			const post = vi
+				.spyOn(axios, 'post')
+				.mockResolvedValue({ data: { id: 'rel-1' } })
 			const store = useEmergencyAccessStore()
 
 			const result = await store.designate({
@@ -258,14 +266,20 @@ describe('useEmergencyAccessStore — more', () => {
 	describe('revoke (real crypto)', () => {
 		it('deletes with a proof bound to the relationship id, then reloads contacts', async () => {
 			unlockedGrantor()
-			const get = vi.spyOn(axios, 'get').mockImplementation(async (url, config) => {
-				if (url.endsWith('/proof-challenge')) {
-					expect(url).toBe('/apps/keepiq/api/v1/suites/suite-1/proof-challenge')
-					expect(config.params.purpose).toBe('emergency-access-destroy')
-					return { data: { nonce: 'nonce-2' } }
-				}
-				return { data: [] }
-			})
+			const get = vi
+				.spyOn(axios, 'get')
+				.mockImplementation(async (url, config) => {
+					if (url.endsWith('/proof-challenge')) {
+						expect(url).toBe(
+							'/apps/keepiq/api/v1/suites/suite-1/proof-challenge',
+						)
+						expect(config.params.purpose).toBe(
+							'emergency-access-destroy',
+						)
+						return { data: { nonce: 'nonce-2' } }
+					}
+					return { data: [] }
+				})
 			const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: {} })
 			const store = useEmergencyAccessStore()
 			store.contacts = [{ id: 'rel-9' }]
@@ -276,7 +290,12 @@ describe('useEmergencyAccessStore — more', () => {
 			expect(url).toBe(`${API}/contacts/rel-9`)
 			expect(config.headers[HEADER_NONCE]).toBe('nonce-2')
 			await expect(
-				verifyProof(grantor.publicKeyPem, 'nonce-2', ['rel-9'], config.headers[HEADER_PROOF]),
+				verifyProof(
+					grantor.publicKeyPem,
+					'nonce-2',
+					['rel-9'],
+					config.headers[HEADER_PROOF],
+				),
 			).resolves.toBe(true)
 			expect(get).toHaveBeenLastCalledWith(`${API}/contacts`)
 			expect(store.contacts).toEqual([])
@@ -335,7 +354,10 @@ describe('useEmergencyAccessStore — more', () => {
 
 	describe('recover (real crypto)', () => {
 		it('opens the fetched envelope with the grantee own session key', async () => {
-			const envelope = await buildRecoveryEnvelope(grantor.pem, grantee.publicKeyPem)
+			const envelope = await buildRecoveryEnvelope(
+				grantor.pem,
+				grantee.publicKeyPem,
+			)
 			const session = useSessionStore()
 			session.cryptoKey = grantee.decryptKey
 			const get = vi

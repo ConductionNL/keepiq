@@ -19,15 +19,31 @@ import { useFederatedShareStore } from '../../src/store/modules/federatedShare.j
 import { useLinkShareStore } from '../../src/store/modules/linkShare.js'
 
 const stubs = {
-	NcDialog: { props: ['name', 'open', 'size'], template: '<div><slot /><slot name="actions" /></div>' },
-	NcButton: { props: ['type', 'disabled', 'ariaLabel'], template: '<button :disabled="disabled" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>' },
-	NcSelect: { props: ['options', 'reduce', 'inputLabel', 'clearable', 'value'], template: '<div />' },
-	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
+	NcDialog: {
+		props: ['name', 'open', 'size'],
+		template: '<div><slot /><slot name="actions" /></div>',
+	},
+	NcButton: {
+		props: ['type', 'disabled', 'ariaLabel'],
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\', $event)"><slot name="icon" /><slot /></button>',
+	},
+	NcSelect: {
+		props: ['options', 'reduce', 'inputLabel', 'clearable', 'value'],
+		template: '<div />',
+	},
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div class="note" :data-type="type"><slot /></div>',
+	},
 	NcLoadingIcon: { template: '<span />' },
 	ShareVariant: { template: '<i />' },
 	AccountPlus: { template: '<i />' },
 	Delete: { template: '<i />' },
-	CopyButton: { props: ['value', 'label'], template: '<button>{{ value }}</button>' },
+	CopyButton: {
+		props: ['value', 'label'],
+		template: '<button>{{ value }}</button>',
+	},
 }
 
 /**
@@ -36,7 +52,10 @@ const stubs = {
  * @return {Promise<object>} The wrapper.
  */
 async function mountDialog() {
-	const wrapper = mount(SecretShareDialog, { props: { secretId: 'secret-42' }, global: { stubs } })
+	const wrapper = mount(SecretShareDialog, {
+		props: { secretId: 'secret-42' },
+		global: { stubs },
+	})
 	await flushPromises()
 	return wrapper
 }
@@ -55,7 +74,9 @@ describe('SecretShareDialog when a call fails', () => {
 	})
 
 	it('shows the server message when the shares cannot be loaded, and stops loading', async () => {
-		vi.spyOn(linkShares, 'fetchLinkShares').mockRejectedValue({ response: { data: { message: 'Not your secret' } } })
+		vi.spyOn(linkShares, 'fetchLinkShares').mockRejectedValue({
+			response: { data: { message: 'Not your secret' } },
+		})
 		const wrapper = await mountDialog()
 
 		expect(linkShares.fetchLinkShares).toHaveBeenCalledWith('secret-42')
@@ -64,7 +85,9 @@ describe('SecretShareDialog when a call fails', () => {
 	})
 
 	it('falls back to the error message, then to a fixed sentence, when loading fails', async () => {
-		const fetch = vi.spyOn(linkShares, 'fetchLinkShares').mockRejectedValueOnce(new Error('Network Error'))
+		const fetch = vi
+			.spyOn(linkShares, 'fetchLinkShares')
+			.mockRejectedValueOnce(new Error('Network Error'))
 		const wrapper = await mountDialog()
 		expect(wrapper.vm.error).toBe('Network Error')
 
@@ -78,7 +101,9 @@ describe('SecretShareDialog when a call fails', () => {
 		const remove = vi.spyOn(linkShares, 'deleteLinkShare')
 		const wrapper = await mountDialog()
 
-		remove.mockRejectedValueOnce({ response: { data: { message: 'Already revoked' } } })
+		remove.mockRejectedValueOnce({
+			response: { data: { message: 'Already revoked' } },
+		})
 		await wrapper.vm.revoke('ls-1')
 		expect(remove).toHaveBeenCalledWith('ls-1')
 		expect(wrapper.vm.error).toBe('Already revoked')
@@ -101,7 +126,9 @@ describe('SecretShareDialog when a call fails', () => {
 		const wrapper = await mountDialog()
 
 		expect(wrapper.vm.formatDate('not-a-date')).toBe('not-a-date')
-		expect(wrapper.vm.formatDate('2026-12-31T12:00:00Z')).toBe(new Date('2026-12-31T12:00:00Z').toLocaleDateString())
+		expect(wrapper.vm.formatDate('2026-12-31T12:00:00Z')).toBe(
+			new Date('2026-12-31T12:00:00Z').toLocaleDateString(),
+		)
 	})
 
 	it('records whether federation is available and forgets the one-time password on unmount', async () => {

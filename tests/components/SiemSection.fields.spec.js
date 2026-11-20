@@ -22,19 +22,28 @@ const stubs = {
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcNoteCard: { template: '<div class="note"><slot /></div>' },
 	NcSelect: {
 		name: 'NcSelect',
-		props: ['modelValue', 'options', 'inputLabel', 'label', 'clearable', 'multiple'],
+		props: [
+			'modelValue',
+			'options',
+			'inputLabel',
+			'label',
+			'clearable',
+			'multiple',
+		],
 		emits: ['update:modelValue'],
 		template: '<div class="select" />',
 	},
 	NcTextField: {
 		props: ['modelValue', 'label', 'placeholder', 'type'],
 		emits: ['update:modelValue'],
-		template: '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
+		template:
+			'<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
 	},
 	NcCheckboxRadioSwitch: {
 		name: 'NcCheckboxRadioSwitch',
@@ -61,7 +70,9 @@ async function openForm() {
  * @return {object} The NcSelect stub.
  */
 function picker(wrapper, testid) {
-	return wrapper.findAllComponents({ name: 'NcSelect' }).find((c) => c.attributes('data-testid') === testid)
+	return wrapper
+		.findAllComponents({ name: 'NcSelect' })
+		.find((c) => c.attributes('data-testid') === testid)
 }
 
 /**
@@ -70,7 +81,9 @@ function picker(wrapper, testid) {
  * @return {object} The switch stub.
  */
 function toggle(wrapper, testid) {
-	return wrapper.findAllComponents({ name: 'NcCheckboxRadioSwitch' }).find((c) => c.attributes('data-testid') === testid)
+	return wrapper
+		.findAllComponents({ name: 'NcCheckboxRadioSwitch' })
+		.find((c) => c.attributes('data-testid') === testid)
 }
 
 describe('SiemSection form fields', () => {
@@ -79,20 +92,37 @@ describe('SiemSection form fields', () => {
 	})
 
 	it('creates a Sentinel sink with every field the form holds', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'n1', name: 'SOC', type: 'sentinel' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'n1', name: 'SOC', type: 'sentinel' } })
 		const wrapper = await openForm()
 
-		await picker(wrapper, 'siem-form-connector').vm.$emit('update:modelValue', { id: 'sentinel', label: 'Microsoft Sentinel' })
+		await picker(wrapper, 'siem-form-connector').vm.$emit('update:modelValue', {
+			id: 'sentinel',
+			label: 'Microsoft Sentinel',
+		})
 		await wrapper.find('[data-testid="siem-form-name"]').setValue('SOC')
-		await wrapper.find('[data-testid="siem-form-endpoint"]').setValue('https://dce.example')
+		await wrapper
+			.find('[data-testid="siem-form-endpoint"]')
+			.setValue('https://dce.example')
 		await wrapper.find('[data-testid="siem-form-tenant"]').setValue('tenant-1')
 		await wrapper.find('[data-testid="siem-form-client"]').setValue('client-1')
 		await wrapper.find('[data-testid="siem-form-dcr"]').setValue('dcr-1')
-		await wrapper.find('[data-testid="siem-form-stream"]').setValue('Custom-Audit')
-		await wrapper.find('[data-testid="siem-form-credential"]').setValue('client-secret')
-		await picker(wrapper, 'siem-form-categories').vm.$emit('update:modelValue', ['secret', 'share'])
+		await wrapper
+			.find('[data-testid="siem-form-stream"]')
+			.setValue('Custom-Audit')
+		await wrapper
+			.find('[data-testid="siem-form-credential"]')
+			.setValue('client-secret')
+		await picker(wrapper, 'siem-form-categories').vm.$emit('update:modelValue', [
+			'secret',
+			'share',
+		])
 		await wrapper.find('[data-testid="siem-form-queuecap"]').setValue('250')
-		await toggle(wrapper, 'siem-form-enabled').vm.$emit('update:modelValue', false)
+		await toggle(wrapper, 'siem-form-enabled').vm.$emit(
+			'update:modelValue',
+			false,
+		)
 		await wrapper.find('[data-testid="siem-form-save"]').trigger('click')
 		await flushPromises()
 
@@ -120,23 +150,37 @@ describe('SiemSection form fields', () => {
 
 	it('keeps Save disabled until the Sentinel ids are filled', async () => {
 		const wrapper = await openForm()
-		await picker(wrapper, 'siem-form-connector').vm.$emit('update:modelValue', { id: 'sentinel' })
-		await wrapper.find('[data-testid="siem-form-endpoint"]').setValue('https://dce.example')
+		await picker(wrapper, 'siem-form-connector').vm.$emit('update:modelValue', {
+			id: 'sentinel',
+		})
+		await wrapper
+			.find('[data-testid="siem-form-endpoint"]')
+			.setValue('https://dce.example')
 		await wrapper.find('[data-testid="siem-form-credential"]').setValue('x')
 		await wrapper.find('[data-testid="siem-form-tenant"]').setValue('t')
 		await wrapper.find('[data-testid="siem-form-client"]').setValue('c')
 
-		expect(wrapper.find('[data-testid="siem-form-save"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper.find('[data-testid="siem-form-save"]').attributes('disabled'),
+		).toBeDefined()
 		await wrapper.find('[data-testid="siem-form-dcr"]').setValue('d')
-		expect(wrapper.find('[data-testid="siem-form-save"]').attributes('disabled')).toBeUndefined()
+		expect(
+			wrapper.find('[data-testid="siem-form-save"]').attributes('disabled'),
+		).toBeUndefined()
 	})
 
 	it('creates a CEF syslog sink with TLS switched off and its connector as name', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'n2', name: 'syslog_cef', type: 'syslog' } })
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'n2', name: 'syslog_cef', type: 'syslog' },
+		})
 		const wrapper = await openForm()
 
-		await picker(wrapper, 'siem-form-connector').vm.$emit('update:modelValue', { id: 'syslog_cef' })
-		await wrapper.find('[data-testid="siem-form-endpoint"]').setValue('logs.example:6514')
+		await picker(wrapper, 'siem-form-connector').vm.$emit('update:modelValue', {
+			id: 'syslog_cef',
+		})
+		await wrapper
+			.find('[data-testid="siem-form-endpoint"]')
+			.setValue('logs.example:6514')
 		await toggle(wrapper, 'siem-form-tls').vm.$emit('update:modelValue', false)
 		await wrapper.find('[data-testid="siem-form-save"]').trigger('click')
 		await flushPromises()
@@ -155,11 +199,17 @@ describe('SiemSection form fields', () => {
 	})
 
 	it('sends the webhook signing secret', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'n3', name: 'hook', type: 'webhook' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'n3', name: 'hook', type: 'webhook' } })
 		const wrapper = await openForm()
 
-		await picker(wrapper, 'siem-form-connector').vm.$emit('update:modelValue', { id: 'webhook' })
-		await wrapper.find('[data-testid="siem-form-endpoint"]').setValue('https://hooks.example/audit')
+		await picker(wrapper, 'siem-form-connector').vm.$emit('update:modelValue', {
+			id: 'webhook',
+		})
+		await wrapper
+			.find('[data-testid="siem-form-endpoint"]')
+			.setValue('https://hooks.example/audit')
 		await wrapper.find('[data-testid="siem-form-secret"]').setValue('sign-me')
 		await wrapper.find('[data-testid="siem-form-save"]').trigger('click')
 		await flushPromises()
@@ -173,15 +223,23 @@ describe('SiemSection form fields', () => {
 	})
 
 	it('sends the Splunk sourcetype as a connector option', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'n4', name: 'splunk', type: 'splunk_hec' } })
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'n4', name: 'splunk', type: 'splunk_hec' },
+		})
 		const wrapper = await openForm()
 
-		await wrapper.find('[data-testid="siem-form-endpoint"]').setValue('https://splunk.example/services/collector/event')
+		await wrapper
+			.find('[data-testid="siem-form-endpoint"]')
+			.setValue('https://splunk.example/services/collector/event')
 		await wrapper.find('[data-testid="siem-form-credential"]').setValue('hec')
-		await wrapper.find('[data-testid="siem-form-sourcetype"]').setValue('keepiq:audit')
+		await wrapper
+			.find('[data-testid="siem-form-sourcetype"]')
+			.setValue('keepiq:audit')
 		await wrapper.find('[data-testid="siem-form-save"]').trigger('click')
 		await flushPromises()
 
-		expect(post.mock.calls[0][1].connectorOptions).toEqual({ sourcetype: 'keepiq:audit' })
+		expect(post.mock.calls[0][1].connectorOptions).toEqual({
+			sourcetype: 'keepiq:audit',
+		})
 	})
 })

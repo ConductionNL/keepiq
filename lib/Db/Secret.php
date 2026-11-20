@@ -476,7 +476,11 @@ class Secret extends Entity implements JsonSerializable {
 	 * a credential and its history. The costs are not symmetric, so this one errs
 	 * toward reporting that a value is present.
 	 *
-	 * @return bool True when every value column is empty
+	 * A filled extra-field blob still waiting for the owner's browser to merge
+	 * it is a value too: a placeholder filled with custom fields only holds
+	 * nothing else until then.
+	 *
+	 * @return bool True when every value column is empty and no filled blob is pending
 	 *
 	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
@@ -486,7 +490,8 @@ class Secret extends Entity implements JsonSerializable {
 			&& (string)$this->additionalFields === ''
 			&& (string)$this->totp === ''
 			&& (string)$this->passkeys === ''
-			&& (string)$this->url === '';
+			&& (string)$this->url === ''
+			&& $this->pending()->isEmpty();
 	}//end holdsNoValues()
 
 	/**
@@ -595,6 +600,7 @@ class Secret extends Entity implements JsonSerializable {
 			'tombstoneReason' => $this->tombstoneReason,
 			...$this->holderFields(),
 			'pendingAdditionalFields' => $this->pendingAdditionalFieldList(),
+			'pendingFieldSchemas' => $this->pendingFieldSchemaList(),
 		];
 	}//end jsonSerialize()
 
@@ -626,35 +632,46 @@ class Secret extends Entity implements JsonSerializable {
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 	 */
 	public function pendingAdditionalFieldList(): array {
-		if ($this->pendingAdditionalFields === null || $this->pendingAdditionalFields === '') {
-			return [];
-		}
-
-		$decoded = json_decode($this->pendingAdditionalFields, true);
-		if (is_array($decoded) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($decoded, 'is_string'));
+		return $this->pending()->ciphertexts();
 	}//end pendingAdditionalFieldList()
 
 	/**
-	 * Store the pending extra-field ciphertexts (null when the list is empty).
+	 * The schemas each pending blob's request carried, in the same order as
+	 * pendingAdditionalFieldList(): an object by field name, empty for a blob
+	 * held back without any.
 	 *
-	 * @param list<string> $ciphertexts The pending ciphertexts, oldest first
+	 * @return list<object>
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	private function pendingFieldSchemaList(): array {
+		return $this->pending()->schemas();
+	}//end pendingFieldSchemaList()
+
+	/**
+	 * Hold a filled extra-field blob back for the owner's browser, with the
+	 * server-checked schemas of the request that filled it, so the merge never
+	 * needs the request again, also once it is gone.
+	 *
+	 * @param string              $ciphertext The filled blob
+	 * @param array<string,mixed> $schemas    The request's field schemas, by name
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
-	public function setPendingAdditionalFieldList(array $ciphertexts): void {
-		if ($ciphertexts === []) {
-			$this->setPendingAdditionalFields(null);
-			return;
-		}
+	public function appendPendingAdditionalFields(string $ciphertext, array $schemas): void {
+		$this->setPendingAdditionalFields($this->pending()->with(ciphertext: $ciphertext, schemas: $schemas)->toColumn());
+	}//end appendPendingAdditionalFields()
 
-		$this->setPendingAdditionalFields(json_encode(array_values($ciphertexts)));
-	}//end setPendingAdditionalFieldList()
+	/**
+	 * The pending extra-field blobs as the column holds them.
+	 *
+	 * @return PendingAdditionalFields
+	 */
+	private function pending(): PendingAdditionalFields {
+		return new PendingAdditionalFields(column: $this->pendingAdditionalFields);
+	}//end pending()
 
 	/**
 	 * Drop the oldest $count pending blobs: the ones the owner's client read
@@ -671,7 +688,7 @@ class Secret extends Entity implements JsonSerializable {
 			return;
 		}
 
-		$this->setPendingAdditionalFieldList(array_slice($this->pendingAdditionalFieldList(), $count));
+		$this->setPendingAdditionalFields($this->pending()->withoutOldest(count: $count)->toColumn());
 	}//end dropMergedPending()
 
 	/**

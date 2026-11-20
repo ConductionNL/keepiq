@@ -22,21 +22,27 @@ const stubs = {
 		emits: ['update:open'],
 		template: '<div><slot /><slot name="actions" /></div>',
 	},
-	NcNoteCard: { props: ['type'], template: '<div :class="`note--${type}`"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div :class="`note--${type}`"><slot /></div>',
+	},
 	NcButton: {
 		props: ['disabled', 'variant'],
 		emits: ['click'],
-		template: '<button :data-variant="variant" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :data-variant="variant" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
 		emits: ['update:modelValue'],
-		template: '<input data-testid="password" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
+		template:
+			'<input data-testid="password" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
 	},
 	NcTextField: {
 		props: ['modelValue', 'label'],
 		emits: ['update:modelValue'],
-		template: '<input data-testid="confirmation" :aria-label="label" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
+		template:
+			'<input data-testid="confirmation" :aria-label="label" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
 	},
 }
 
@@ -46,7 +52,16 @@ function mountDialog() {
 		global: {
 			stubs,
 			// The setup's global t() returns the raw template; this one fills it in.
-			mixins: [{ methods: { t: (app, s, vars) => s.replace(/\{(\w+)\}/g, (m, k) => (vars && k in vars ? vars[k] : m)) } }],
+			mixins: [
+				{
+					methods: {
+						t: (app, s, vars) =>
+							s.replace(/\{(\w+)\}/g, (m, k) =>
+								vars && k in vars ? vars[k] : m,
+							),
+					},
+				},
+			],
 		},
 	})
 }
@@ -60,8 +75,11 @@ beforeEach(() => {
 
 describe('AccountDeletionDialog', () => {
 	it('asks for the exact confirmation phrase', () => {
-		expect(mountDialog().find('[data-testid="confirmation"]').attributes('aria-label'))
-			.toBe('Type "DELETE MY KEEPIQ DATA" to confirm')
+		expect(
+			mountDialog()
+				.find('[data-testid="confirmation"]')
+				.attributes('aria-label'),
+		).toBe('Type "DELETE MY KEEPIQ DATA" to confirm')
 	})
 
 	it('enables delete only with a password and the exact phrase', async () => {
@@ -71,10 +89,14 @@ describe('AccountDeletionDialog', () => {
 		await wrapper.find('[data-testid="password"]').setValue('pw')
 		expect(deleteButton(wrapper).attributes('disabled')).toBeDefined()
 
-		await wrapper.find('[data-testid="confirmation"]').setValue('delete my keepiq data')
+		await wrapper
+			.find('[data-testid="confirmation"]')
+			.setValue('delete my keepiq data')
 		expect(deleteButton(wrapper).attributes('disabled')).toBeDefined()
 
-		await wrapper.find('[data-testid="confirmation"]').setValue('DELETE MY KEEPIQ DATA')
+		await wrapper
+			.find('[data-testid="confirmation"]')
+			.setValue('DELETE MY KEEPIQ DATA')
 		expect(deleteButton(wrapper).attributes('disabled')).toBeUndefined()
 
 		await wrapper.find('[data-testid="password"]').setValue('')
@@ -110,7 +132,9 @@ describe('AccountDeletionDialog', () => {
 		}
 		await wrapper.vm.$nextTick()
 
-		const items = wrapper.findAll('li').map((li) => li.text().replace(/\s+/g, ' '))
+		const items = wrapper
+			.findAll('li')
+			.map((li) => li.text().replace(/\s+/g, ' '))
 		expect(items).toEqual([
 			'Secrets deleted: 4',
 			'Secrets transferred to a delegate: 1',
@@ -140,7 +164,12 @@ describe('AccountDeletionDialog', () => {
 			confirmation: wrapper.vm.confirmation,
 			report: wrapper.vm.report,
 			error: wrapper.vm.error,
-		}).toEqual({ masterPassword: '', confirmation: '', report: null, error: null })
+		}).toEqual({
+			masterPassword: '',
+			confirmation: '',
+			report: null,
+			error: null,
+		})
 		expect(wrapper.emitted('update:open')).toEqual([[false]])
 	})
 })

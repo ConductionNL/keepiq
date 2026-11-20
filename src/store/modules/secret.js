@@ -10,6 +10,7 @@ import {
 	saveShared,
 	VALUE_FIELDS,
 } from '../../services/shareSave.js'
+import { mergeFilledBlob } from '../../utils/fieldSchema.js'
 import { secretPlacement } from '../../utils/secretPlacement.js'
 import { isAccessExpired } from '../../utils/shareRestriction.js'
 import { BLOB_FIELDS } from '../../utils/valueFields.js'
@@ -291,7 +292,8 @@ async function decryptBlobFields(decrypted, cryptoKey) {
 
 /**
  * Merge the request-filled pending blobs into the decrypted extra fields,
- * and count them as merged only when every blob merged.
+ * and count them as merged only when every blob merged. Each blob comes with
+ * the schemas its request carried, which the server stored with it.
  *
  * @param {object} decrypted The decrypted secret.
  * @param {CryptoKey} cryptoKey The session private key.
@@ -306,6 +308,9 @@ async function mergePendingInto(decrypted, cryptoKey) {
 		decrypted.additionalFields,
 		pending,
 		cryptoKey,
+		Array.isArray(decrypted.pendingFieldSchemas)
+			? decrypted.pendingFieldSchemas
+			: [],
 	)
 	decrypted.additionalFields = merged.fields
 	decrypted.mergedPending = merged.complete ? pending.length : 0
@@ -779,40 +784,62 @@ function keepOpenVersion(store, save) {
 /**
  * Merge request-filled extra-field blobs into the owner's own extra fields
  * (keepiq#750). Each pending blob is the JSON object of the members one fill
- * supplied; later fills win for a member they both name. A blob that cannot
- * be decrypted is skipped and makes the merge incomplete, so it is not
- * dropped from the server.
+ * supplied; later fills win for a member they both name. A `@schema` in a
+ * filled blob is ignored, because the filler seals the blob and can put
+ * anything in it: a filled field keeps the owner's schema, or gets the one
+ * its request carried. A blob that cannot be decrypted is skipped and makes
+ * the merge incomplete, so it is not dropped from the server.
  *
  * @param {object|string|null|undefined} own The owner's decrypted extra fields.
  * @param {Array<string>} pending The pending ciphertexts, oldest first.
  * @param {CryptoKey} cryptoKey The session private key.
+ * @param {Array<object>} schemas Each blob's request schemas by field name, in the same order.
  * @return {Promise<{fields: object|string|null, complete: boolean}>}
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
-async function mergePendingFields(own, pending, cryptoKey) {
-	if (
-		own !== null
-		&& own !== undefined
-		&& (typeof own !== 'object' || Array.isArray(own))
-	) {
+async function mergePendingFields(own, pending, cryptoKey, schemas) {
+	if (own !== null && own !== undefined && !isMemberObject(own)) {
 		// Not a member object: there is nothing to merge into safely.
 		return { fields: own, complete: false }
 	}
-	const fields = { ...(own || {}) }
+	let fields = { ...own }
 	let complete = true
-	for (const ciphertext of pending) {
-		try {
-			const members = JSON.parse(await rsaDecrypt(ciphertext, cryptoKey))
-			if (members && typeof members === 'object' && !Array.isArray(members)) {
-				Object.assign(fields, members)
-			} else {
-				complete = false
-			}
-		} catch {
+	for (const [index, ciphertext] of pending.entries()) {
+		const members = await filledMembers(ciphertext, cryptoKey)
+		if (members === null) {
 			complete = false
+		} else {
+			fields = mergeFilledBlob(fields, members, schemas[index] ?? {})
 		}
 	}
 	return { fields, complete }
+}
+
+/**
+ * The members of one request-filled blob, or null when it cannot be
+ * decrypted or holds no member object.
+ *
+ * @param {string} ciphertext The pending ciphertext.
+ * @param {CryptoKey} cryptoKey The session private key.
+ * @return {Promise<object|null>}
+ * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ */
+async function filledMembers(ciphertext, cryptoKey) {
+	try {
+		const members = JSON.parse(await rsaDecrypt(ciphertext, cryptoKey))
+		return isMemberObject(members) ? members : null
+	} catch {
+		return null
+	}
+}
+
+/**
+ * @param {unknown} value A decrypted value.
+ * @return {boolean} Whether it is an object of members, not null or an array.
+ */
+function isMemberObject(value) {
+	return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 export const useSecretStore = defineStore('secret', {
@@ -1247,7 +1274,10 @@ export const useSecretStore = defineStore('secret', {
 				payload.reprompt = true
 			}
 			// Plain text like `url`, so search and the extension match (vault-website-addresses D1).
-			if (Array.isArray(data.additionalUrls) && data.additionalUrls.length > 0) {
+			if (
+				Array.isArray(data.additionalUrls)
+				&& data.additionalUrls.length > 0
+			) {
 				payload.additionalUrls = data.additionalUrls
 			}
 			await encryptOptionalFields(payload, { data, publicKey })

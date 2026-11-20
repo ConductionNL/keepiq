@@ -202,9 +202,9 @@ describe('submitFill step by step', () => {
 		const post = vi.spyOn(axios, 'post')
 		const store = useSecretRequestStore()
 		store.publicRequest = { token: 'tok-1', public_certificate: 'PEM' }
-		await expect(store.submitFill('tok-1', { url: 'u', note: null })).rejects.toThrow(
-			'Field "note" is required',
-		)
+		await expect(
+			store.submitFill('tok-1', { url: 'u', note: null }),
+		).rejects.toThrow('Field "note" is required')
 		store.publicRequest = { token: 'tok-1' }
 		await expect(store.submitFill('tok-1', { key: 'k' })).rejects.toThrow(
 			'Public certificate is missing for this request',

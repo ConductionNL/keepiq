@@ -34,10 +34,17 @@ function mountBanner() {
 					methods: {
 						t: (app, text, vars) =>
 							vars
-								? Object.keys(vars).reduce((out, k) => out.replace(`{${k}}`, String(vars[k])), text)
+								? Object.keys(vars).reduce(
+										(out, k) =>
+											out.replace(`{${k}}`, String(vars[k])),
+										text,
+									)
 								: text,
 						n: (app, singular, plural, count) =>
-							(count === 1 ? singular : plural).replace('%n', String(count)),
+							(count === 1 ? singular : plural).replace(
+								'%n',
+								String(count),
+							),
 					},
 				},
 			],
@@ -76,11 +83,15 @@ describe('MigrationResumeBanner flow', () => {
 		await wrapper.find('[data-testid="migration-resume-open"]').trigger('click')
 
 		expect(wrapper.findAll('form')).toHaveLength(2)
-		expect(wrapper.find('[data-testid="migration-resume-open"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="migration-resume-open"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('resumes with the password typed into the resume form', async () => {
-		const resume = vi.spyOn(store, 'resumeMigration').mockResolvedValue({ migrated: 3, failed: 0 })
+		const resume = vi
+			.spyOn(store, 'resumeMigration')
+			.mockResolvedValue({ migrated: 3, failed: 0 })
 		const wrapper = mountBanner()
 		await wrapper.find('[data-testid="migration-resume-open"]').trigger('click')
 
@@ -95,7 +106,9 @@ describe('MigrationResumeBanner flow', () => {
 	})
 
 	it('aborts with the password typed into the abort form', async () => {
-		const abort = vi.spyOn(store, 'abortMigration').mockResolvedValue({ aborted: true })
+		const abort = vi
+			.spyOn(store, 'abortMigration')
+			.mockResolvedValue({ aborted: true })
 		const wrapper = mountBanner()
 		await wrapper.find('[data-testid="migration-resume-open"]').trigger('click')
 
@@ -109,7 +122,14 @@ describe('MigrationResumeBanner flow', () => {
 	})
 
 	it.each([
-		[{ response: { data: { message: 'Records already moved; resume instead.' } } }, 'Records already moved; resume instead.'],
+		[
+			{
+				response: {
+					data: { message: 'Records already moved; resume instead.' },
+				},
+			},
+			'Records already moved; resume instead.',
+		],
 		[new Error('Network down'), 'Network down'],
 		[{}, 'Could not abort the rotation.'],
 	])('says why an abort was refused (%#)', async (failure, message) => {
@@ -124,7 +144,9 @@ describe('MigrationResumeBanner flow', () => {
 		expect(wrapper.find('.keepiq-migration-banner__error').text()).toBe(message)
 		expect(wrapper.vm.abortPassword).toBe('')
 		expect(wrapper.vm.busy).toBe(false)
-		expect(wrapper.find('[data-testid="migration-resume-banner"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="migration-resume-banner"]').exists(),
+		).toBe(true)
 	})
 
 	it('shows the progress of a running resume, never fewer in total than done', async () => {

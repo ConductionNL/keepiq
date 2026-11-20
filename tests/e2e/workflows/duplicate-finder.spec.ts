@@ -83,8 +83,18 @@ test.describe('duplicate finder', () => {
 		expect(login, 'the login secret type').toBeTruthy()
 
 		const first = await storeLogin(page, login!.id, 'GitHub', 'Same-pass-2026!')
-		const second = await storeLogin(page, login!.id, 'GitHub (import 2)', 'Same-pass-2026!')
-		const third = await storeLogin(page, login!.id, 'GitHub (old)', 'Other-pass-2026!')
+		const second = await storeLogin(
+			page,
+			login!.id,
+			'GitHub (import 2)',
+			'Same-pass-2026!',
+		)
+		const third = await storeLogin(
+			page,
+			login!.id,
+			'GitHub (old)',
+			'Other-pass-2026!',
+		)
 
 		const bodies: string[] = []
 		page.on('request', (request) => {
