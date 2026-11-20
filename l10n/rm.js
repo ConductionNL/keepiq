@@ -1937,7 +1937,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "Code QR dal pled-clav da {name}",
         "Show as QR code": "Mussar sco code QR",
         "Show QR code": "Mussar il code QR",
-        "The print dialog was opened. Close this window when you are done.": "Il dialog da stampar è vegnì avert. Serrai questa fanestra, cura che Vus essas a fin."
+        "The print dialog was opened. Close this window when you are done.": "Il dialog da stampar è vegnì avert. Serrai questa fanestra, cura che Vus essas a fin.",
+        "Add file": "Agiuntar ina datoteca",
+        "Drop files here to attach them": "Tira las datotecas qua per las agiuntar",
+        "Remove {name}": "Allontanar {name}",
+        "Retry upload": "Empruvar da chargiar si danovamain",
+        "Retry upload of {name}": "Empruvar da chargiar si {name} danovamain",
+        "The secret was saved, but some files could not be added.": "Il secret è vegnì memorisà, ma intginas datotecas n'han betg pudì vegnir agiuntadas.",
+        "Upload failed": "Chargiar si n'è betg reussì",
+        "Folders cannot be attached. Drop the files inside them instead.": "Ordinaturs na pon betg vegnir agiuntads. Tira empè las datotecas en els.",
+        "Files cannot be added while you are offline. Remove them to save.": "Datotecas na pon betg vegnir agiuntadas offline. Allontanai ellas per memorisar.",
+        "Files can only be added to a secret you own. Remove them to save.": "Datotecas pon mo vegnir agiuntadas ad in secret che tutga a vus. Allontanai ellas per memorisar."
     },
     "nplurals=1; plural=0;"
 )

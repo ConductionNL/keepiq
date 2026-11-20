@@ -1961,7 +1961,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "Código QR da palavra-passe de {name}",
         "Show as QR code": "Mostrar como código QR",
         "Show QR code": "Mostrar código QR",
-        "The print dialog was opened. Close this window when you are done.": "A caixa de diálogo de impressão foi aberta. Feche esta janela quando terminar."
+        "The print dialog was opened. Close this window when you are done.": "A caixa de diálogo de impressão foi aberta. Feche esta janela quando terminar.",
+        "Add file": "Adicionar ficheiro",
+        "Drop files here to attach them": "Largue ficheiros aqui para os anexar",
+        "Remove {name}": "Remover {name}",
+        "Retry upload": "Repetir o envio",
+        "Retry upload of {name}": "Repetir o envio de {name}",
+        "The secret was saved, but some files could not be added.": "O segredo foi guardado, mas não foi possível adicionar alguns ficheiros.",
+        "Upload failed": "Falha no envio",
+        "Folders cannot be attached. Drop the files inside them instead.": "Não é possível anexar pastas. Em vez disso, largue os ficheiros que contêm.",
+        "Files cannot be added while you are offline. Remove them to save.": "Não é possível adicionar ficheiros enquanto está offline. Remova-os para guardar.",
+        "Files can only be added to a secret you own. Remove them to save.": "Só é possível adicionar ficheiros a um segredo que seja seu. Remova-os para guardar."
     },
     "nplurals=2; plural=(n != 1);"
 )

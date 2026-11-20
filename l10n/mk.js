@@ -1961,7 +1961,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR-код на лозинката за {name}",
         "Show as QR code": "Прикажи како QR-код",
         "Show QR code": "Прикажи QR-код",
-        "The print dialog was opened. Close this window when you are done.": "Дијалогот за печатење е отворен. Затворете го овој прозорец кога ќе завршите."
+        "The print dialog was opened. Close this window when you are done.": "Дијалогот за печатење е отворен. Затворете го овој прозорец кога ќе завршите.",
+        "Add file": "Додај датотека",
+        "Drop files here to attach them": "Спуштете датотеки тука за да ги приложите",
+        "Remove {name}": "Отстрани {name}",
+        "Retry upload": "Повторно прикачување",
+        "Retry upload of {name}": "Повторно прикачување на {name}",
+        "The secret was saved, but some files could not be added.": "Тајната е зачувана, но некои датотеки не можеа да се додадат.",
+        "Upload failed": "Прикачувањето не успеа",
+        "Folders cannot be attached. Drop the files inside them instead.": "Папките не можат да се приложат. Наместо тоа, спуштете ги датотеките од нив.",
+        "Files cannot be added while you are offline. Remove them to save.": "Не може да се додаваат датотеки додека сте офлајн. Отстранете ги за да зачувате.",
+        "Files can only be added to a secret you own. Remove them to save.": "Датотеки може да се додаваат само на ваша тајна. Отстранете ги за да зачувате."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

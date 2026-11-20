@@ -20,6 +20,12 @@ Saving creates an ordinary new secret: a new id, encrypted fresh in your browser
 
 Clone is not offered for a passkey item, whose credential belongs to one item only, for a use-only copy, whose value you cannot see, or while you are offline.
 
+## Add files while creating or editing
+
+The **New secret** and **Edit secret** dialogs have a drop zone at the bottom. Drop one or more files on it, or choose **Add file**. The files wait in the dialog and are uploaded only after **Create secret** or **Save** succeeds, so **Cancel** adds nothing. Each file is encrypted in your browser and counts against the same size limit and quota as an upload from the sidebar.
+
+When a file is refused, for example because it is larger than the limit, the secret stays saved and the dialog stays open with the reason next to the file. Retry it, or remove it to close the dialog. The drop zone is shown only on secrets you own and not while you are offline.
+
 ## Preview an attachment
 
 Images (PNG, JPEG, GIF, WebP), PDFs and plain-text attachments have a **Preview** button next to Download. The file is decrypted in your browser and shown in a dialog from memory: nothing is saved to your device, and the in-memory copy is released when you close the dialog. A PDF is shown in a sandboxed frame.

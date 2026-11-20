@@ -1961,7 +1961,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR kód hesla pre {name}",
         "Show as QR code": "Zobraziť ako QR kód",
         "Show QR code": "Zobraziť QR kód",
-        "The print dialog was opened. Close this window when you are done.": "Dialógové okno tlače bolo otvorené. Keď skončíte, zatvorte toto okno."
+        "The print dialog was opened. Close this window when you are done.": "Dialógové okno tlače bolo otvorené. Keď skončíte, zatvorte toto okno.",
+        "Add file": "Pridať súbor",
+        "Drop files here to attach them": "Presuňte sem súbory a priložte ich",
+        "Remove {name}": "Odobrať {name}",
+        "Retry upload": "Skúsiť nahrať znova",
+        "Retry upload of {name}": "Skúsiť znova nahrať {name}",
+        "The secret was saved, but some files could not be added.": "Tajomstvo bolo uložené, ale niektoré súbory sa nepodarilo pridať.",
+        "Upload failed": "Nahrávanie zlyhalo",
+        "Folders cannot be attached. Drop the files inside them instead.": "Priečinky nemožno priložiť. Presuňte namiesto toho súbory v nich.",
+        "Files cannot be added while you are offline. Remove them to save.": "Súbory nemožno pridať, keď ste offline. Odoberte ich, aby ste mohli uložiť.",
+        "Files can only be added to a secret you own. Remove them to save.": "Súbory možno pridať len k tajomstvu, ktoré vlastníte. Odoberte ich, aby ste mohli uložiť."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

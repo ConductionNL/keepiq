@@ -1961,7 +1961,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "Kirje {name} parooli QR-kood",
         "Show as QR code": "Näita QR-koodina",
         "Show QR code": "Näita QR-koodi",
-        "The print dialog was opened. Close this window when you are done.": "Printimisdialoog avati. Sulge see aken, kui oled lõpetanud."
+        "The print dialog was opened. Close this window when you are done.": "Printimisdialoog avati. Sulge see aken, kui oled lõpetanud.",
+        "Add file": "Lisa fail",
+        "Drop files here to attach them": "Lohista failid siia, et need manustada",
+        "Remove {name}": "Eemalda {name}",
+        "Retry upload": "Proovi uuesti üles laadida",
+        "Retry upload of {name}": "Proovi {name} uuesti üles laadida",
+        "The secret was saved, but some files could not be added.": "Saladus salvestati, kuid mõnda faili ei õnnestunud lisada.",
+        "Upload failed": "Üleslaadimine ebaõnnestus",
+        "Folders cannot be attached. Drop the files inside them instead.": "Kaustu ei saa manustada. Lohistage selle asemel nendes olevad failid.",
+        "Files cannot be added while you are offline. Remove them to save.": "Faile ei saa võrguühenduseta lisada. Salvestamiseks eemaldage need.",
+        "Files can only be added to a secret you own. Remove them to save.": "Faile saab lisada ainult teie enda saladusele. Salvestamiseks eemaldage need."
     },
     "nplurals=2; plural=(n != 1);"
 )

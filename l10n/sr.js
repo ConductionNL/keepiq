@@ -1961,7 +1961,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR код лозинке за {name}",
         "Show as QR code": "Прикажи као QR код",
         "Show QR code": "Прикажи QR код",
-        "The print dialog was opened. Close this window when you are done.": "Дијалог за штампање је отворен. Затворите овај прозор када завршите."
+        "The print dialog was opened. Close this window when you are done.": "Дијалог за штампање је отворен. Затворите овај прозор када завршите.",
+        "Add file": "Додај датотеку",
+        "Drop files here to attach them": "Превуците датотеке овде да бисте их приложили",
+        "Remove {name}": "Уклони {name}",
+        "Retry upload": "Поново покушај отпремање",
+        "Retry upload of {name}": "Поново покушај отпремање датотеке {name}",
+        "The secret was saved, but some files could not be added.": "Тајна је сачувана, али неке датотеке није било могуће додати.",
+        "Upload failed": "Отпремање није успело",
+        "Folders cannot be attached. Drop the files inside them instead.": "Фасцикле се не могу приложити. Уместо тога превуците датотеке из њих.",
+        "Files cannot be added while you are offline. Remove them to save.": "Датотеке се не могу додати док сте ван мреже. Уклоните их да бисте сачували.",
+        "Files can only be added to a secret you own. Remove them to save.": "Датотеке се могу додати само тајни коју поседујете. Уклоните их да бисте сачували."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

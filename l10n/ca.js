@@ -1961,7 +1961,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "Codi QR de la contrasenya de {name}",
         "Show as QR code": "Mostra com a codi QR",
         "Show QR code": "Mostra el codi QR",
-        "The print dialog was opened. Close this window when you are done.": "S'ha obert el diàleg d'impressió. Tanqueu aquesta finestra quan hàgiu acabat."
+        "The print dialog was opened. Close this window when you are done.": "S'ha obert el diàleg d'impressió. Tanqueu aquesta finestra quan hàgiu acabat.",
+        "Add file": "Afegeix un fitxer",
+        "Drop files here to attach them": "Deixeu anar fitxers aquí per adjuntar-los",
+        "Remove {name}": "Elimina {name}",
+        "Retry upload": "Torna a pujar",
+        "Retry upload of {name}": "Torna a pujar {name}",
+        "The secret was saved, but some files could not be added.": "El secret s'ha desat, però no s'han pogut afegir alguns fitxers.",
+        "Upload failed": "No s'ha pogut pujar",
+        "Folders cannot be attached. Drop the files inside them instead.": "No es poden adjuntar carpetes. Deixeu anar els fitxers que contenen.",
+        "Files cannot be added while you are offline. Remove them to save.": "No es poden afegir fitxers mentre esteu fora de línia. Elimineu-los per desar.",
+        "Files can only be added to a secret you own. Remove them to save.": "Només es poden afegir fitxers a un secret que sigui vostre. Elimineu-los per desar."
     },
     "nplurals=2; plural=(n != 1);"
 )

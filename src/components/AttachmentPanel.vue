@@ -108,7 +108,11 @@ import Download from 'vue-material-design-icons/Download.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 import AttachmentPreviewModal from '../modals/AttachmentPreviewModal.vue'
-import { previewKind, useAttachmentStore } from '../store/modules/attachment.js'
+import {
+	humanSize,
+	previewKind,
+	useAttachmentStore,
+} from '../store/modules/attachment.js'
 
 export default {
 	name: 'AttachmentPanel',
@@ -244,16 +248,7 @@ export default {
 		 * @spec exclude Presentation-only formatter: renders a byte count as a human-readable size.
 		 */
 		humanSize(bytes) {
-			if (bytes == null) {
-				return ''
-			}
-			if (bytes < 1024) {
-				return `${bytes} B`
-			}
-			if (bytes < 1048576) {
-				return `${(bytes / 1024).toFixed(1)} KB`
-			}
-			return `${(bytes / 1048576).toFixed(1)} MB`
+			return humanSize(bytes)
 		},
 	},
 }

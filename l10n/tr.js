@@ -1961,7 +1961,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "{name} parolasının QR kodu",
         "Show as QR code": "QR kodu olarak göster",
         "Show QR code": "QR kodunu göster",
-        "The print dialog was opened. Close this window when you are done.": "Yazdırma penceresi açıldı. İşiniz bittiğinde bu pencereyi kapatın."
+        "The print dialog was opened. Close this window when you are done.": "Yazdırma penceresi açıldı. İşiniz bittiğinde bu pencereyi kapatın.",
+        "Add file": "Dosya ekle",
+        "Drop files here to attach them": "Eklemek için dosyaları buraya bırakın",
+        "Remove {name}": "{name} öğesini kaldır",
+        "Retry upload": "Yüklemeyi yeniden dene",
+        "Retry upload of {name}": "{name} yüklemesini yeniden dene",
+        "The secret was saved, but some files could not be added.": "Gizli kaydedildi, ancak bazı dosyalar eklenemedi.",
+        "Upload failed": "Yükleme başarısız oldu",
+        "Folders cannot be attached. Drop the files inside them instead.": "Klasörler eklenemez. Bunun yerine içlerindeki dosyaları bırakın.",
+        "Files cannot be added while you are offline. Remove them to save.": "Çevrimdışıyken dosya eklenemez. Kaydetmek için bunları kaldırın.",
+        "Files can only be added to a secret you own. Remove them to save.": "Dosyalar yalnızca size ait bir gizliye eklenebilir. Kaydetmek için bunları kaldırın."
     },
     "nplurals=1; plural=0;"
 )

@@ -1961,7 +1961,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "{name} jelszavának QR-kódja",
         "Show as QR code": "Megjelenítés QR-kódként",
         "Show QR code": "QR-kód megjelenítése",
-        "The print dialog was opened. Close this window when you are done.": "A nyomtatási párbeszédablak megnyílt. Ha végzett, zárja be ezt az ablakot."
+        "The print dialog was opened. Close this window when you are done.": "A nyomtatási párbeszédablak megnyílt. Ha végzett, zárja be ezt az ablakot.",
+        "Add file": "Fájl hozzáadása",
+        "Drop files here to attach them": "Húzza ide a fájlokat a csatolásukhoz",
+        "Remove {name}": "{name} eltávolítása",
+        "Retry upload": "Feltöltés újrapróbálása",
+        "Retry upload of {name}": "{name} feltöltésének újrapróbálása",
+        "The secret was saved, but some files could not be added.": "A titok mentve, de néhány fájlt nem sikerült hozzáadni.",
+        "Upload failed": "A feltöltés sikertelen",
+        "Folders cannot be attached. Drop the files inside them instead.": "Mappák nem csatolhatók. Húzza ide inkább a bennük lévő fájlokat.",
+        "Files cannot be added while you are offline. Remove them to save.": "Offline állapotban nem adhatók hozzá fájlok. A mentéshez távolítsa el őket.",
+        "Files can only be added to a secret you own. Remove them to save.": "Fájlok csak a saját titkához adhatók hozzá. A mentéshez távolítsa el őket."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1966,7 +1966,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR-code van het wachtwoord van {name}",
         "Show as QR code": "Tonen als QR-code",
         "Show QR code": "QR-code tonen",
-        "The print dialog was opened. Close this window when you are done.": "Het afdrukvenster is geopend. Sluit dit venster als je klaar bent."
+        "The print dialog was opened. Close this window when you are done.": "Het afdrukvenster is geopend. Sluit dit venster als je klaar bent.",
+        "Add file": "Bestand toevoegen",
+        "Drop files here to attach them": "Sleep bestanden hierheen om ze toe te voegen",
+        "Remove {name}": "{name} verwijderen",
+        "Retry upload": "Uploaden opnieuw proberen",
+        "Retry upload of {name}": "Uploaden van {name} opnieuw proberen",
+        "The secret was saved, but some files could not be added.": "Het geheim is opgeslagen, maar sommige bestanden konden niet worden toegevoegd.",
+        "Upload failed": "Uploaden mislukt",
+        "Folders cannot be attached. Drop the files inside them instead.": "Mappen kunnen niet worden toegevoegd. Sleep in plaats daarvan de bestanden erin.",
+        "Files cannot be added while you are offline. Remove them to save.": "Bestanden kunnen niet worden toegevoegd terwijl je offline bent. Verwijder ze om op te slaan.",
+        "Files can only be added to a secret you own. Remove them to save.": "Bestanden kunnen alleen worden toegevoegd aan een geheim dat van jou is. Verwijder ze om op te slaan."
     },
     "nplurals=2; plural=(n != 1);"
 )

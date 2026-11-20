@@ -2038,7 +2038,17 @@
         "QR code of the password of {name}": "QR-kóði lykilorðs {name}",
         "Show as QR code": "Sýna sem QR-kóða",
         "Show QR code": "Sýna QR-kóða",
-        "The print dialog was opened. Close this window when you are done.": "Prentglugginn var opnaður. Lokaðu þessum glugga að því loknu."
+        "The print dialog was opened. Close this window when you are done.": "Prentglugginn var opnaður. Lokaðu þessum glugga að því loknu.",
+        "Add file": "Bæta við skrá",
+        "Drop files here to attach them": "Slepptu skrám hér til að hengja þær við",
+        "Remove {name}": "Fjarlægja {name}",
+        "Retry upload": "Reyna upphleðslu aftur",
+        "Retry upload of {name}": "Reyna upphleðslu á {name} aftur",
+        "The secret was saved, but some files could not be added.": "Leyndarmálið var vistað, en ekki tókst að bæta sumum skrám við.",
+        "Upload failed": "Upphleðsla mistókst",
+        "Folders cannot be attached. Drop the files inside them instead.": "Ekki er hægt að hengja möppur við. Slepptu frekar skránum í þeim.",
+        "Files cannot be added while you are offline. Remove them to save.": "Ekki er hægt að bæta við skrám án nettengingar. Fjarlægðu þær til að vista.",
+        "Files can only be added to a secret you own. Remove them to save.": "Aðeins er hægt að bæta skrám við leyndarmál sem þú átt. Fjarlægðu þær til að vista."
     },
     "plurals": null
 }

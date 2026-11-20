@@ -1961,7 +1961,17 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR-Code des Passworts von {name}",
         "Show as QR code": "Als QR-Code anzeigen",
         "Show QR code": "QR-Code anzeigen",
-        "The print dialog was opened. Close this window when you are done.": "Der Druckdialog wurde geöffnet. Schließen Sie dieses Fenster, wenn Sie fertig sind."
+        "The print dialog was opened. Close this window when you are done.": "Der Druckdialog wurde geöffnet. Schließen Sie dieses Fenster, wenn Sie fertig sind.",
+        "Add file": "Datei hinzufügen",
+        "Drop files here to attach them": "Dateien hier ablegen, um sie anzuhängen",
+        "Remove {name}": "{name} entfernen",
+        "Retry upload": "Hochladen wiederholen",
+        "Retry upload of {name}": "Hochladen von {name} wiederholen",
+        "The secret was saved, but some files could not be added.": "Das Geheimnis wurde gespeichert, aber einige Dateien konnten nicht hinzugefügt werden.",
+        "Upload failed": "Hochladen fehlgeschlagen",
+        "Folders cannot be attached. Drop the files inside them instead.": "Ordner können nicht angehängt werden. Legen Sie stattdessen die Dateien darin ab.",
+        "Files cannot be added while you are offline. Remove them to save.": "Dateien können offline nicht hinzugefügt werden. Entfernen Sie sie, um zu speichern.",
+        "Files can only be added to a secret you own. Remove them to save.": "Dateien können nur zu einem eigenen Geheimnis hinzugefügt werden. Entfernen Sie sie, um zu speichern."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -2064,7 +2064,17 @@
         "QR code of the password of {name}": "QR kod lozinke za {name}",
         "Show as QR code": "Prikaži kao QR kod",
         "Show QR code": "Prikaži QR kod",
-        "The print dialog was opened. Close this window when you are done.": "Dijaloški okvir za ispis je otvoren. Zatvorite ovaj prozor kada završite."
+        "The print dialog was opened. Close this window when you are done.": "Dijaloški okvir za ispis je otvoren. Zatvorite ovaj prozor kada završite.",
+        "Add file": "Dodaj datoteku",
+        "Drop files here to attach them": "Ispustite datoteke ovdje da ih priložite",
+        "Remove {name}": "Ukloni {name}",
+        "Retry upload": "Ponovi prijenos",
+        "Retry upload of {name}": "Ponovi prijenos datoteke {name}",
+        "The secret was saved, but some files could not be added.": "Tajna je spremljena, ali neke datoteke nije bilo moguće dodati.",
+        "Upload failed": "Prijenos nije uspio",
+        "Folders cannot be attached. Drop the files inside them instead.": "Mape se ne mogu priložiti. Umjesto toga ispustite datoteke iz njih.",
+        "Files cannot be added while you are offline. Remove them to save.": "Datoteke se ne mogu dodati dok ste izvan mreže. Uklonite ih da biste spremili.",
+        "Files can only be added to a secret you own. Remove them to save.": "Datoteke se mogu dodati samo tajni koju posjedujete. Uklonite ih da biste spremili."
     },
     "plurals": null
 }

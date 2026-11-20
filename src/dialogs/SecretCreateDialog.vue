@@ -19,109 +19,121 @@
 			<NcNoteCard v-if="locked" type="warning">
 				{{ t('keepiq', 'Unlock the vault before creating a secret.') }}
 			</NcNoteCard>
-			<NcNoteCard
-				v-if="prefill"
-				type="info"
-				data-testid="secret-create-clone-note">
-				{{
-					t(
-						'keepiq',
-						'This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.',
-					)
-				}}
-			</NcNoteCard>
+			<!-- Once created, only the files still to upload remain. -->
+			<template v-if="!created">
+				<NcNoteCard
+					v-if="prefill"
+					type="info"
+					data-testid="secret-create-clone-note">
+					{{
+						t(
+							'keepiq',
+							'This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.',
+						)
+					}}
+				</NcNoteCard>
 
-			<NcTextField
-				v-model="name"
-				:label="t('keepiq', 'Name')"
-				:required="true" />
+				<NcTextField
+					v-model="name"
+					:label="t('keepiq', 'Name')"
+					:required="true" />
 
-			<NcSelect
-				v-model="typeId"
-				:options="typeOptions"
-				:inputLabel="t('keepiq', 'Type')"
-				:reduce="(opt) => opt.value"
-				:clearable="false" />
+				<NcSelect
+					v-model="typeId"
+					:options="typeOptions"
+					:inputLabel="t('keepiq', 'Type')"
+					:reduce="(opt) => opt.value"
+					:clearable="false" />
 
-			<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
+				<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
-			<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
+				<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
 
-			<AuthenticatorKeyField
-				v-if="showAuthenticator"
-				v-model:value="totpInput"
-				mode="replace"
-				:disabled="saving" />
+				<AuthenticatorKeyField
+					v-if="showAuthenticator"
+					v-model:value="totpInput"
+					mode="replace"
+					:disabled="saving" />
 
-			<NcTextField
-				v-if="showUrl"
-				v-model="url"
-				:label="t('keepiq', 'URL (optional)')" />
+				<NcTextField
+					v-if="showUrl"
+					v-model="url"
+					:label="t('keepiq', 'URL (optional)')" />
 
-			<AdditionalUrlsField
-				v-if="showUrl"
-				v-model="additionalUrls"
-				:disabled="saving" />
+				<AdditionalUrlsField
+					v-if="showUrl"
+					v-model="additionalUrls"
+					:disabled="saving" />
 
-			<TypedFieldsForm
-				v-if="typedFields.length > 0"
-				:fields="typedFields"
-				:values="typedValues"
-				:schemas="storedSchemas"
-				:missing="typedMissing"
+				<TypedFieldsForm
+					v-if="typedFields.length > 0"
+					:fields="typedFields"
+					:values="typedValues"
+					:schemas="storedSchemas"
+					:missing="typedMissing"
+					:disabled="saving"
+					@update:values="onTypedValues" />
+
+				<AdditionalFieldsEditor
+					:members="additionalFields"
+					:disabled="saving"
+					:reservedNames="reservedMemberNames"
+					@update:members="additionalFields = $event" />
+
+				<SecretTagsField
+					:modelValue="tags"
+					:disabled="saving"
+					@update:modelValue="tags = $event" />
+
+				<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
+				<RepromptSwitch
+					:modelValue="reprompt"
+					:disabled="saving"
+					@update:modelValue="reprompt = $event" />
+
+				<!-- The shared destination picker (no "Vault root" option, by
+				     design): a secret always lives in a vault, so creating one
+				     at the root cannot be offered. Replaces a local NcSelect
+				     that still listed the root. -->
+				<!-- The team folder ownership policy (admin-vault-policies §4.3):
+				     a covered type goes into one of the user's own team folders,
+				     or into a team folder they can write to. -->
+				<NcNoteCard
+					v-if="ownershipApplies"
+					type="info"
+					data-testid="secret-create-ownership">
+					{{
+						t(
+							'keepiq',
+							'Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.',
+						)
+					}}
+				</NcNoteCard>
+				<NcSelect
+					v-if="ownershipApplies && contributable.length > 0"
+					v-model="contributeTo"
+					:options="contributable"
+					label="folderName"
+					:inputLabel="t('keepiq', 'Team folder you can write to')"
+					data-testid="secret-create-contribute-to" />
+				<DestinationSelect
+					v-if="!contributeTo"
+					v-model="selectedFolderId"
+					mode="folders"
+					:onlyIds="ownershipApplies ? ownTeamFolderIds : null"
+					:label="t('keepiq', 'Folder')" />
+
+				<PolicyBlockedNote :verdict="policyVerdict" />
+			</template>
+
+			<AttachmentDropZone
+				v-if="canAddFiles || pendingFiles > 0"
+				ref="dropZone"
+				:unavailable="filesUnavailable"
 				:disabled="saving"
-				@update:values="onTypedValues" />
-
-			<AdditionalFieldsEditor
-				:members="additionalFields"
-				:disabled="saving"
-				:reservedNames="reservedMemberNames"
-				@update:members="additionalFields = $event" />
-
-			<SecretTagsField
-				:modelValue="tags"
-				:disabled="saving"
-				@update:modelValue="tags = $event" />
-
-			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
-			<RepromptSwitch
-				:modelValue="reprompt"
-				:disabled="saving"
-				@update:modelValue="reprompt = $event" />
-
-			<!-- The shared destination picker (no "Vault root" option, by
-			     design): a secret always lives in a vault, so creating one
-			     at the root cannot be offered. Replaces a local NcSelect
-			     that still listed the root. -->
-			<!-- The team folder ownership policy (admin-vault-policies §4.3):
-			     a covered type goes into one of the user's own team folders,
-			     or into a team folder they can write to. -->
-			<NcNoteCard
-				v-if="ownershipApplies"
-				type="info"
-				data-testid="secret-create-ownership">
-				{{
-					t(
-						'keepiq',
-						'Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.',
-					)
-				}}
-			</NcNoteCard>
-			<NcSelect
-				v-if="ownershipApplies && contributable.length > 0"
-				v-model="contributeTo"
-				:options="contributable"
-				label="folderName"
-				:inputLabel="t('keepiq', 'Team folder you can write to')"
-				data-testid="secret-create-contribute-to" />
-			<DestinationSelect
-				v-if="!contributeTo"
-				v-model="selectedFolderId"
-				mode="folders"
-				:onlyIds="ownershipApplies ? ownTeamFolderIds : null"
-				:label="t('keepiq', 'Folder')" />
-
-			<PolicyBlockedNote :verdict="policyVerdict" />
+				:secretId="created ? created.id : null"
+				@update:pending="pendingFiles = $event"
+				@update:busy="filesBusy = $event" />
 		</div>
 
 		<template #actions>
@@ -133,7 +145,11 @@
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<Plus v-else :size="20" />
 				</template>
-				{{ t('keepiq', 'Create secret') }}
+				{{
+					created
+						? t('keepiq', 'Retry upload')
+						: t('keepiq', 'Create secret')
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -153,6 +169,7 @@ import {
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
+import AttachmentDropZone from '../components/AttachmentDropZone.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
@@ -169,6 +186,7 @@ import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
 import { secretSaveGuards } from '../mixins/secretSaveGuards.js'
 import { evaluateScore } from '../policy/policy.js'
 import { useFolderStore } from '../store/modules/folder.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
@@ -236,6 +254,7 @@ export default {
 	components: {
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
+		AttachmentDropZone,
 		AuthenticatorKeyField,
 		TypedFieldsForm,
 		DestinationSelect,
@@ -282,6 +301,12 @@ export default {
 	data() {
 		return {
 			open: true,
+			/** The created secret while files are still to upload to it. */
+			created: null,
+			/** How many files the drop zone lists. */
+			pendingFiles: 0,
+			/** Whether a file is uploading on its own Retry. */
+			filesBusy: false,
 			name: this.prefill ? cloneName(this.prefill.name) : '',
 			typeId: this.prefill?.typeId || null,
 			url: this.prefill?.url || '',
@@ -470,11 +495,48 @@ export default {
 		 * cannot live at the vault root), and the type's own required value
 		 * present and policy-compliant, and every field value fitting its schema.
 		 *
+		 * Once created, it only retries the uploads.
+		 *
 		 * @return {boolean}
 		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		canSubmit() {
-			return this.formReady && this.valueReady
+			if (this.created) {
+				return !this.saving && !this.filesBusy
+			}
+			// Listed files that can no longer be added must be removed first.
+			return (
+				this.formReady
+				&& this.valueReady
+				&& (this.canAddFiles || this.pendingFiles === 0)
+			)
+		},
+
+		/**
+		 * Files can be added where the sidebar allows uploads: to a secret
+		 * the user will own, while not served from the offline cache.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		canAddFiles() {
+			return !this.contributeTo && !useOfflineStore().readOnly
+		},
+
+		/**
+		 * Why listed files cannot be added, '' when they can.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		filesUnavailable() {
+			if (this.canAddFiles) {
+				return ''
+			}
+			return useOfflineStore().readOnly
+				? t('keepiq', 'Files cannot be added while you are offline. Remove them to save.')
+				: t('keepiq', 'Files can only be added to a secret you own. Remove them to save.')
 		},
 
 		/**
@@ -517,6 +579,23 @@ export default {
 				return Object.values(this.identity).some((v) => v !== '')
 			}
 			return this.value !== '' && this.policyVerdict.compliant
+		},
+	},
+
+	watch: {
+		/**
+		 * After the create, the dialog closes once no file is left: the last
+		 * one uploaded on its own Retry, or removed.
+		 *
+		 * @param {number} count The files the drop zone lists.
+		 * @return {void}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		pendingFiles(count) {
+			if (this.created && count === 0 && !this.saving) {
+				this.created = null
+				this.onUpdateOpen(false)
+			}
 		},
 	},
 
@@ -685,6 +764,9 @@ export default {
 		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async submit() {
+			if (this.created) {
+				return this.retryUploads()
+			}
 			if (this.saveBlocked()) {
 				return
 			}
@@ -734,12 +816,53 @@ export default {
 				if (this.onSaved) {
 					this.onSaved(created)
 				}
-				this.onUpdateOpen(false)
+				this.created = created
+				await this.uploadFiles()
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
 					|| t('keepiq', 'Failed to create secret')
+			} finally {
+				this.saving = false
+			}
+		},
+
+		/**
+		 * Upload the waiting files to the created secret and close, or stay
+		 * open with the refused files listed. Never creates the secret again.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		async uploadFiles() {
+			const zone = this.$refs.dropZone
+			// Without the zone, listed files can no longer be sent: not a success.
+			const uploaded = zone
+				? await zone.uploadPending(this.created.id)
+				: this.pendingFiles === 0
+			if (!uploaded) {
+				this.error = t(
+					'keepiq',
+					'The secret was saved, but some files could not be added.',
+				)
+				return
+			}
+			this.created = null
+			this.onUpdateOpen(false)
+		},
+
+		/**
+		 * Retry the refused files of the created secret.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		async retryUploads() {
+			this.saving = true
+			this.error = ''
+			try {
+				await this.uploadFiles()
 			} finally {
 				this.saving = false
 			}
