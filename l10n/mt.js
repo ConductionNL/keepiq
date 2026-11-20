@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "Kodiċi QR tal-password ta' {name}",
         "Show as QR code": "Uri bħala kodiċi QR",
         "Show QR code": "Uri l-kodiċi QR",
-        "The print dialog was opened. Close this window when you are done.": "Id-djalogu tal-ipprintjar infetaħ. Agħlaq din it-tieqa meta tlesti."
+        "The print dialog was opened. Close this window when you are done.": "Id-djalogu tal-ipprintjar infetaħ. Agħlaq din it-tieqa meta tlesti.",
+        "Add file": "Żid fajl",
+        "Drop files here to attach them": "Itfa' l-fajls hawn biex tehmeżhom",
+        "Remove {name}": "Neħħi {name}",
+        "Retry upload": "Erġa' pprova t-tlugħ",
+        "Retry upload of {name}": "Erġa' pprova t-tlugħ ta' {name}",
+        "The secret was saved, but some files could not be added.": "Is-sigriet ġie salvat, iżda xi fajls ma setgħux jiżdiedu.",
+        "Upload failed": "It-tlugħ falla",
+        "Folders cannot be attached. Drop the files inside them instead.": "Il-folders ma jistgħux jiġu mehmuża. Minflok, itfa' l-fajls li fihom."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

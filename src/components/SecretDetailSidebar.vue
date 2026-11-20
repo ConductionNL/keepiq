@@ -1343,6 +1343,7 @@ import {
 	SSH_KEY_TYPE_NAME,
 	SSH_PUBLIC_KEY_MEMBER,
 } from '../ssh/sshKey.js'
+import { useAttachmentStore } from '../store/modules/attachment.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
@@ -2498,11 +2499,18 @@ export default {
 		 *
 		 * @return {void}
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		openEditDialog() {
 			this.cnOpenModal('secret-edit', {
 				secretId: this.secretId,
-				onSaved: () => this.reloadWithList(),
+				onSaved: () => {
+					this.reloadWithList()
+					// The dialog may have added files; the panel only refetches on a secret switch.
+					useAttachmentStore()
+						.fetchAttachments(this.secretId)
+						.catch(() => {})
+				},
 			})
 		},
 

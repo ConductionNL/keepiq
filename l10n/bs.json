@@ -2064,7 +2064,15 @@
         "QR code of the password of {name}": "QR kod lozinke za {name}",
         "Show as QR code": "Prikaži kao QR kod",
         "Show QR code": "Prikaži QR kod",
-        "The print dialog was opened. Close this window when you are done.": "Dijalog za štampanje je otvoren. Zatvorite ovaj prozor kada završite."
+        "The print dialog was opened. Close this window when you are done.": "Dijalog za štampanje je otvoren. Zatvorite ovaj prozor kada završite.",
+        "Add file": "Dodaj datoteku",
+        "Drop files here to attach them": "Ispustite datoteke ovdje da ih priložite",
+        "Remove {name}": "Ukloni {name}",
+        "Retry upload": "Ponovi otpremanje",
+        "Retry upload of {name}": "Ponovi otpremanje datoteke {name}",
+        "The secret was saved, but some files could not be added.": "Tajna je spremljena, ali neke datoteke nije bilo moguće dodati.",
+        "Upload failed": "Otpremanje nije uspjelo",
+        "Folders cannot be attached. Drop the files inside them instead.": "Mape se ne mogu priložiti. Umjesto toga ispustite datoteke iz njih."
     },
     "plurals": null
 }

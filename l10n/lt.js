@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "{name} slaptažodžio QR kodas",
         "Show as QR code": "Rodyti kaip QR kodą",
         "Show QR code": "Rodyti QR kodą",
-        "The print dialog was opened. Close this window when you are done.": "Atidarytas spausdinimo dialogas. Baigę uždarykite šį langą."
+        "The print dialog was opened. Close this window when you are done.": "Atidarytas spausdinimo dialogas. Baigę uždarykite šį langą.",
+        "Add file": "Įtraukti failą",
+        "Drop files here to attach them": "Nutempkite failus čia, kad juos pridėtumėte",
+        "Remove {name}": "Pašalinti {name}",
+        "Retry upload": "Bandyti įkelti dar kartą",
+        "Retry upload of {name}": "Bandyti įkelti {name} dar kartą",
+        "The secret was saved, but some files could not be added.": "Paslaptis išsaugota, bet kai kurių failų nepavyko pridėti.",
+        "Upload failed": "Įkelti nepavyko",
+        "Folders cannot be attached. Drop the files inside them instead.": "Aplankų pridėti negalima. Vietoj to nutempkite juose esančius failus."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "Kohteen {name} salasanan QR-koodi",
         "Show as QR code": "Näytä QR-koodina",
         "Show QR code": "Näytä QR-koodi",
-        "The print dialog was opened. Close this window when you are done.": "Tulostusikkuna avattiin. Sulje tämä ikkuna, kun olet valmis."
+        "The print dialog was opened. Close this window when you are done.": "Tulostusikkuna avattiin. Sulje tämä ikkuna, kun olet valmis.",
+        "Add file": "Lisää tiedosto",
+        "Drop files here to attach them": "Pudota tiedostot tähän liittääksesi ne",
+        "Remove {name}": "Poista {name}",
+        "Retry upload": "Yritä lähetystä uudelleen",
+        "Retry upload of {name}": "Yritä tiedoston {name} lähetystä uudelleen",
+        "The secret was saved, but some files could not be added.": "Salaisuus tallennettiin, mutta joitakin tiedostoja ei voitu lisätä.",
+        "Upload failed": "Lähetys epäonnistui",
+        "Folders cannot be attached. Drop the files inside them instead.": "Kansioita ei voi liittää. Pudota sen sijaan niiden sisältämät tiedostot."
     },
     "nplurals=2; plural=(n != 1);"
 )

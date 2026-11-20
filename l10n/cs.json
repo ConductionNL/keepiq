@@ -2064,7 +2064,15 @@
         "QR code of the password of {name}": "QR kód hesla pro {name}",
         "Show as QR code": "Zobrazit jako QR kód",
         "Show QR code": "Zobrazit QR kód",
-        "The print dialog was opened. Close this window when you are done.": "Dialog tisku byl otevřen. Až budete hotovi, zavřete toto okno."
+        "The print dialog was opened. Close this window when you are done.": "Dialog tisku byl otevřen. Až budete hotovi, zavřete toto okno.",
+        "Add file": "Přidat soubor",
+        "Drop files here to attach them": "Přetáhněte sem soubory a připojte je",
+        "Remove {name}": "Odebrat {name}",
+        "Retry upload": "Zkusit nahrát znovu",
+        "Retry upload of {name}": "Zkusit znovu nahrát {name}",
+        "The secret was saved, but some files could not be added.": "Tajemství bylo uloženo, ale některé soubory se nepodařilo přidat.",
+        "Upload failed": "Nahrání se nezdařilo",
+        "Folders cannot be attached. Drop the files inside them instead.": "Složky nelze připojit. Přetáhněte místo toho soubory v nich."
     },
     "plurals": null
 }

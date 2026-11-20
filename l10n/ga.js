@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "Cód QR phasfhocal {name}",
         "Show as QR code": "Taispeáin mar chód QR",
         "Show QR code": "Taispeáin an cód QR",
-        "The print dialog was opened. Close this window when you are done.": "Osclaíodh an dialóg phriontála. Dún an fhuinneog seo nuair a bheidh tú críochnaithe."
+        "The print dialog was opened. Close this window when you are done.": "Osclaíodh an dialóg phriontála. Dún an fhuinneog seo nuair a bheidh tú críochnaithe.",
+        "Add file": "Cuir comhad leis",
+        "Drop files here to attach them": "Scaoil comhaid anseo chun iad a cheangal",
+        "Remove {name}": "Bain {name}",
+        "Retry upload": "Bain triail eile as an uaslódáil",
+        "Retry upload of {name}": "Bain triail eile as uaslódáil {name}",
+        "The secret was saved, but some files could not be added.": "Sábháladh an rún, ach níorbh fhéidir roinnt comhad a chur leis.",
+        "Upload failed": "Theip ar an uaslódáil",
+        "Folders cannot be attached. Drop the files inside them instead.": "Ní féidir fillteáin a cheangal. Scaoil na comhaid atá iontu ina ionad sin."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

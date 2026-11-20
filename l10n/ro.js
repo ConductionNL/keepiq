@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "Codul QR al parolei pentru {name}",
         "Show as QR code": "Afișați ca cod QR",
         "Show QR code": "Afișați codul QR",
-        "The print dialog was opened. Close this window when you are done.": "Dialogul de imprimare a fost deschis. Închideți această fereastră când ați terminat."
+        "The print dialog was opened. Close this window when you are done.": "Dialogul de imprimare a fost deschis. Închideți această fereastră când ați terminat.",
+        "Add file": "Adăugați un fișier",
+        "Drop files here to attach them": "Plasați fișierele aici pentru a le atașa",
+        "Remove {name}": "Eliminați {name}",
+        "Retry upload": "Reîncercați încărcarea",
+        "Retry upload of {name}": "Reîncercați încărcarea pentru {name}",
+        "The secret was saved, but some files could not be added.": "Secretul a fost salvat, dar unele fișiere nu au putut fi adăugate.",
+        "Upload failed": "Încărcarea a eșuat",
+        "Folders cannot be attached. Drop the files inside them instead.": "Folderele nu pot fi atașate. Plasați în schimb fișierele din ele."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

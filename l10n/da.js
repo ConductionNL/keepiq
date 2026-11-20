@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR-kode for adgangskoden til {name}",
         "Show as QR code": "Vis som QR-kode",
         "Show QR code": "Vis QR-kode",
-        "The print dialog was opened. Close this window when you are done.": "Udskriftsdialogen blev åbnet. Luk dette vindue, når du er færdig."
+        "The print dialog was opened. Close this window when you are done.": "Udskriftsdialogen blev åbnet. Luk dette vindue, når du er færdig.",
+        "Add file": "Tilføj fil",
+        "Drop files here to attach them": "Slip filer her for at vedhæfte dem",
+        "Remove {name}": "Fjern {name}",
+        "Retry upload": "Prøv upload igen",
+        "Retry upload of {name}": "Prøv upload af {name} igen",
+        "The secret was saved, but some files could not be added.": "Hemmeligheden blev gemt, men nogle filer kunne ikke tilføjes.",
+        "Upload failed": "Upload mislykkedes",
+        "Folders cannot be attached. Drop the files inside them instead.": "Mapper kan ikke vedhæftes. Slip i stedet filerne i dem."
     },
     "nplurals=2; plural=(n != 1);"
 )

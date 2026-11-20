@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "Kodi QR i fjalëkalimit të {name}",
         "Show as QR code": "Shfaq si kod QR",
         "Show QR code": "Shfaq kodin QR",
-        "The print dialog was opened. Close this window when you are done.": "Dritarja e printimit u hap. Mbylleni këtë dritare kur të keni mbaruar."
+        "The print dialog was opened. Close this window when you are done.": "Dritarja e printimit u hap. Mbylleni këtë dritare kur të keni mbaruar.",
+        "Add file": "Shto skedar",
+        "Drop files here to attach them": "Lëshoni skedarët këtu për t'i bashkëngjitur",
+        "Remove {name}": "Hiq {name}",
+        "Retry upload": "Riprovo ngarkimin",
+        "Retry upload of {name}": "Riprovo ngarkimin e {name}",
+        "The secret was saved, but some files could not be added.": "Sekreti u ruajt, por disa skedarë nuk mund të shtoheshin.",
+        "Upload failed": "Ngarkimi dështoi",
+        "Folders cannot be attached. Drop the files inside them instead.": "Dosjet nuk mund të bashkëngjiten. Lëshoni në vend të tyre skedarët që përmbajnë."
     },
     "nplurals=2; plural=(n != 1);"
 )

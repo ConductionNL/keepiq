@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR-код пароля {name}",
         "Show as QR code": "Показать как QR-код",
         "Show QR code": "Показать QR-код",
-        "The print dialog was opened. Close this window when you are done.": "Диалог печати открыт. Закройте это окно, когда закончите."
+        "The print dialog was opened. Close this window when you are done.": "Диалог печати открыт. Закройте это окно, когда закончите.",
+        "Add file": "Добавить файл",
+        "Drop files here to attach them": "Перетащите файлы сюда, чтобы прикрепить их",
+        "Remove {name}": "Удалить {name}",
+        "Retry upload": "Повторить загрузку",
+        "Retry upload of {name}": "Повторить загрузку {name}",
+        "The secret was saved, but some files could not be added.": "Секрет сохранён, но некоторые файлы не удалось добавить.",
+        "Upload failed": "Не удалось загрузить",
+        "Folders cannot be attached. Drop the files inside them instead.": "Папки нельзя прикрепить. Перетащите вместо этого файлы из них."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

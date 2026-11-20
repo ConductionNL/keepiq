@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR-Code vum Passwuert fir {name}",
         "Show as QR code": "Als QR-Code weisen",
         "Show QR code": "QR-Code weisen",
-        "The print dialog was opened. Close this window when you are done.": "Den Dréckdialog gouf opgemaach. Maacht dës Fënster zou, wann Dir fäerdeg sidd."
+        "The print dialog was opened. Close this window when you are done.": "Den Dréckdialog gouf opgemaach. Maacht dës Fënster zou, wann Dir fäerdeg sidd.",
+        "Add file": "Fichier dobäisetzen",
+        "Drop files here to attach them": "Fichieren hei ofleeën, fir se unzehänken",
+        "Remove {name}": "{name} ewechhuelen",
+        "Retry upload": "Eroplueden nach eng Kéier probéieren",
+        "Retry upload of {name}": "Eroplueden vun {name} nach eng Kéier probéieren",
+        "The secret was saved, but some files could not be added.": "D'Geheimnis gouf gespäichert, mee e puer Fichiere konnten net dobäigesat ginn.",
+        "Upload failed": "Eroplueden ass feelgeschloen",
+        "Folders cannot be attached. Drop the files inside them instead.": "Dossiere kënnen net ugehaange ginn. Leet amplaz d'Fichieren dran of."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR-kod för lösenordet till {name}",
         "Show as QR code": "Visa som QR-kod",
         "Show QR code": "Visa QR-kod",
-        "The print dialog was opened. Close this window when you are done.": "Utskriftsdialogen öppnades. Stäng det här fönstret när du är klar."
+        "The print dialog was opened. Close this window when you are done.": "Utskriftsdialogen öppnades. Stäng det här fönstret när du är klar.",
+        "Add file": "Lägg till fil",
+        "Drop files here to attach them": "Släpp filer här för att bifoga dem",
+        "Remove {name}": "Ta bort {name}",
+        "Retry upload": "Försök ladda upp igen",
+        "Retry upload of {name}": "Försök ladda upp {name} igen",
+        "The secret was saved, but some files could not be added.": "Hemligheten sparades, men vissa filer kunde inte läggas till.",
+        "Upload failed": "Uppladdningen misslyckades",
+        "Folders cannot be attached. Drop the files inside them instead.": "Mappar kan inte bifogas. Släpp i stället filerna i dem."
     },
     "nplurals=2; plural=(n != 1);"
 )

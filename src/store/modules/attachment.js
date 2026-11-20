@@ -239,6 +239,26 @@ export function previewKind(contentType) {
 }
 
 /**
+ * Human-readable size.
+ *
+ * @param {?number} bytes The byte count.
+ * @return {string} e.g. "1.2 MB", '' when unknown.
+ * @spec exclude Presentation-only formatter: renders a byte count as a human-readable size.
+ */
+export function humanSize(bytes) {
+	if (bytes === null || bytes === undefined) {
+		return ''
+	}
+	if (bytes < 1024) {
+		return `${bytes} B`
+	}
+	if (bytes < 1048576) {
+		return `${(bytes / 1024).toFixed(1)} KB`
+	}
+	return `${(bytes / 1048576).toFixed(1)} MB`
+}
+
+/**
  * Trigger a local save of decrypted bytes under the attachment's name.
  *
  * @param {Uint8Array} plaintext The plaintext bytes.
@@ -350,6 +370,31 @@ export const useAttachmentStore = defineStore('attachment', {
 		},
 
 		/**
+		 * Encrypt and upload a file without touching the listed attachments,
+		 * which may belong to another secret than the one uploaded to.
+		 *
+		 * @param {string} secretId The owning secret id.
+		 * @param {File} file The picked file.
+		 * @return {Promise<void>} Rejects with the server's reason.
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		async uploadFile(secretId, file) {
+			const session = useSessionStore()
+			if (!session.certificate) {
+				throw new Error('Vault is locked')
+			}
+			try {
+				await axios.post(
+					attachmentsUrl(secretId),
+					await sealedUpload(file, session),
+				)
+			} catch (e) {
+				throw new Error(failureText(e, 'Upload failed'), { cause: e })
+			}
+		},
+
+		/**
 		 * Encrypt and upload a file against an owned secret.
 		 *
 		 * @param {string} secretId The owning secret id.
@@ -359,17 +404,10 @@ export const useAttachmentStore = defineStore('attachment', {
 		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
 		 */
 		async upload(secretId, file) {
-			const session = useSessionStore()
-			if (!session.certificate) {
-				throw new Error('Vault is locked')
-			}
 			this.loading = true
 			this.error = null
 			try {
-				await axios.post(
-					attachmentsUrl(secretId),
-					await sealedUpload(file, session),
-				)
+				await this.uploadFile(secretId, file)
 				await this.fetchAttachments(secretId)
 			} catch (e) {
 				this.error = failureText(e, 'Upload failed')

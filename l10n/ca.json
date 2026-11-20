@@ -2038,7 +2038,15 @@
         "QR code of the password of {name}": "Codi QR de la contrasenya de {name}",
         "Show as QR code": "Mostra com a codi QR",
         "Show QR code": "Mostra el codi QR",
-        "The print dialog was opened. Close this window when you are done.": "S'ha obert el diàleg d'impressió. Tanqueu aquesta finestra quan hàgiu acabat."
+        "The print dialog was opened. Close this window when you are done.": "S'ha obert el diàleg d'impressió. Tanqueu aquesta finestra quan hàgiu acabat.",
+        "Add file": "Afegeix un fitxer",
+        "Drop files here to attach them": "Deixeu anar fitxers aquí per adjuntar-los",
+        "Remove {name}": "Elimina {name}",
+        "Retry upload": "Torna a pujar",
+        "Retry upload of {name}": "Torna a pujar {name}",
+        "The secret was saved, but some files could not be added.": "El secret s'ha desat, però no s'han pogut afegir alguns fitxers.",
+        "Upload failed": "No s'ha pogut pujar",
+        "Folders cannot be attached. Drop the files inside them instead.": "No es poden adjuntar carpetes. Deixeu anar els fitxers que contenen."
     },
     "plurals": null
 }

@@ -13,6 +13,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretDetailSidebar from '../../src/components/SecretDetailSidebar.vue'
+import { useAttachmentStore } from '../../src/store/modules/attachment.js'
 
 let events
 
@@ -47,6 +48,18 @@ describe('SecretDetailSidebar dialogs', () => {
 		expect(events).toEqual([])
 		props.onSaved()
 		expect(events).toEqual(['load', 'refreshList'])
+	})
+
+	// @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+	it('reloads the attachments after an edit save, which may have added files', () => {
+		const fetchAttachments = vi.fn().mockRejectedValue(new Error('offline'))
+		useAttachmentStore().fetchAttachments = fetchAttachments
+		const ctx = sidebar({ id: 's1', folderId: 'f1' })
+		ctx.openEdit()
+
+		ctx.cnOpenModal.mock.calls[0][1].onSaved()
+
+		expect(fetchAttachments).toHaveBeenCalledWith('s1')
 	})
 
 	it('opens the move dialog with the current folder; a save reloads the detail, then the list', () => {

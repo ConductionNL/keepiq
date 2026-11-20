@@ -2038,7 +2038,15 @@
         "QR code of the password of {name}": "Κωδικός QR του κωδικού πρόσβασης του {name}",
         "Show as QR code": "Εμφάνιση ως κωδικός QR",
         "Show QR code": "Εμφάνιση κωδικού QR",
-        "The print dialog was opened. Close this window when you are done.": "Το παράθυρο διαλόγου εκτύπωσης άνοιξε. Κλείστε αυτό το παράθυρο όταν τελειώσετε."
+        "The print dialog was opened. Close this window when you are done.": "Το παράθυρο διαλόγου εκτύπωσης άνοιξε. Κλείστε αυτό το παράθυρο όταν τελειώσετε.",
+        "Add file": "Προσθήκη αρχείου",
+        "Drop files here to attach them": "Αποθέστε αρχεία εδώ για να τα επισυνάψετε",
+        "Remove {name}": "Αφαίρεση {name}",
+        "Retry upload": "Επανάληψη μεταφόρτωσης",
+        "Retry upload of {name}": "Επανάληψη μεταφόρτωσης του {name}",
+        "The secret was saved, but some files could not be added.": "Το μυστικό αποθηκεύτηκε, αλλά ορισμένα αρχεία δεν ήταν δυνατό να προστεθούν.",
+        "Upload failed": "Η μεταφόρτωση απέτυχε",
+        "Folders cannot be attached. Drop the files inside them instead.": "Οι φάκελοι δεν μπορούν να επισυναφθούν. Αποθέστε αντί αυτού τα αρχεία που περιέχουν."
     },
     "plurals": null
 }

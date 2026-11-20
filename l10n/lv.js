@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "{name} paroles QR kods",
         "Show as QR code": "Rādīt kā QR kodu",
         "Show QR code": "Rādīt QR kodu",
-        "The print dialog was opened. Close this window when you are done.": "Drukāšanas dialogs tika atvērts. Pēc pabeigšanas aizveriet šo logu."
+        "The print dialog was opened. Close this window when you are done.": "Drukāšanas dialogs tika atvērts. Pēc pabeigšanas aizveriet šo logu.",
+        "Add file": "Pievienot failu",
+        "Drop files here to attach them": "Nometiet failus šeit, lai tos pievienotu",
+        "Remove {name}": "Noņemt {name}",
+        "Retry upload": "Mēģināt augšupielādēt vēlreiz",
+        "Retry upload of {name}": "Mēģināt augšupielādēt {name} vēlreiz",
+        "The secret was saved, but some files could not be added.": "Noslēpums tika saglabāts, bet dažus failus neizdevās pievienot.",
+        "Upload failed": "Augšupielāde neizdevās",
+        "Folders cannot be attached. Drop the files inside them instead.": "Mapes nevar pievienot. Tā vietā nometiet tajās esošos failus."
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

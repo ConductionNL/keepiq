@@ -51,85 +51,96 @@
 				}}
 			</NcNoteCard>
 
-			<NcTextField
-				v-model="name"
-				:label="t('keepiq', 'Name')"
-				:required="true" />
+			<!-- Once saved, only the files still to upload remain. -->
+			<template v-if="!savedSecret">
+				<NcTextField
+					v-model="name"
+					:label="t('keepiq', 'Name')"
+					:required="true" />
 
-			<!--
-				Type is READ-ONLY once a secret exists, and deliberately so.
-				The payload shape is type-dependent — the card and identity
-				composites below render conditionally on `isCard` / `isIdentity`
-				and serialize into `key` differently — so switching a Login to a
-				Card left the card fields empty and the login fields
-				unreachable, while the diff happily sent the new `typeId`.
-				Bitwarden and 1Password both make type immutable after creation
-				for the same reason. It stays a select in the CREATE dialog,
-				where there is no existing payload to invalidate.
-			-->
-			<div class="secret-form__readonly">
-				<span class="secret-form__readonly-label">
-					{{ t('keepiq', 'Type') }}
-				</span>
-				<span
-					class="secret-form__readonly-value"
-					data-testid="secret-edit-type">
-					{{ typeLabel }}
-				</span>
-			</div>
+				<!--
+					Type is READ-ONLY once a secret exists, and deliberately so.
+					The payload shape is type-dependent — the card and identity
+					composites below render conditionally on `isCard` / `isIdentity`
+					and serialize into `key` differently — so switching a Login to a
+					Card left the card fields empty and the login fields
+					unreachable, while the diff happily sent the new `typeId`.
+					Bitwarden and 1Password both make type immutable after creation
+					for the same reason. It stays a select in the CREATE dialog,
+					where there is no existing payload to invalidate.
+				-->
+				<div class="secret-form__readonly">
+					<span class="secret-form__readonly-label">
+						{{ t('keepiq', 'Type') }}
+					</span>
+					<span
+						class="secret-form__readonly-value"
+						data-testid="secret-edit-type">
+						{{ typeLabel }}
+					</span>
+				</div>
 
-			<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
+				<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
 
-			<!-- The saved seed is never loaded into the form: the field only
-			     says one is saved and offers Replace and Remove. -->
-			<AuthenticatorKeyField
-				v-if="showAuthenticator"
-				v-model:mode="totpMode"
-				v-model:value="totpInput"
-				:saved="totpSaved"
-				:removeOnly="!totpEditable"
-				:disabled="saving || loading || viewOnly" />
+				<!-- The saved seed is never loaded into the form: the field only
+				     says one is saved and offers Replace and Remove. -->
+				<AuthenticatorKeyField
+					v-if="showAuthenticator"
+					v-model:mode="totpMode"
+					v-model:value="totpInput"
+					:saved="totpSaved"
+					:removeOnly="!totpEditable"
+					:disabled="saving || loading || viewOnly" />
 
-			<NcTextField
-				v-if="showUrl"
-				v-model="url"
-				:label="t('keepiq', 'URL (optional)')" />
+				<NcTextField
+					v-if="showUrl"
+					v-model="url"
+					:label="t('keepiq', 'URL (optional)')" />
 
-			<!-- On a type without a URL, only addresses already stored show. -->
-			<AdditionalUrlsField
-				v-if="showUrl || additionalUrls.length > 0"
-				v-model="additionalUrls"
-				:disabled="saving || loading || viewOnly || isCopy" />
+				<!-- On a type without a URL, only addresses already stored show. -->
+				<AdditionalUrlsField
+					v-if="showUrl || additionalUrls.length > 0"
+					v-model="additionalUrls"
+					:disabled="saving || loading || viewOnly || isCopy" />
 
-			<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
+				<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
 
-			<TypedFieldsForm
-				v-if="typedFields.length > 0"
-				:fields="typedFields"
-				:values="typedValues"
-				:schemas="storedSchemas"
-				:missing="typedMissing"
-				:disabled="saving || loading"
-				@update:values="onTypedValues" />
+				<TypedFieldsForm
+					v-if="typedFields.length > 0"
+					:fields="typedFields"
+					:values="typedValues"
+					:schemas="storedSchemas"
+					:missing="typedMissing"
+					:disabled="saving || loading"
+					@update:values="onTypedValues" />
 
-			<AdditionalFieldsEditor
-				:members="additionalFields"
-				:disabled="saving || loading"
-				:reservedNames="reservedMemberNames"
-				@update:members="additionalFields = $event" />
+				<AdditionalFieldsEditor
+					:members="additionalFields"
+					:disabled="saving || loading"
+					:reservedNames="reservedMemberNames"
+					@update:members="additionalFields = $event" />
 
-			<SecretTagsField
-				:modelValue="tags"
-				:disabled="saving || loading"
-				@update:modelValue="tags = $event" />
+				<SecretTagsField
+					:modelValue="tags"
+					:disabled="saving || loading"
+					@update:modelValue="tags = $event" />
 
-			<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
-			<RepromptSwitch
-				:modelValue="reprompt"
-				:disabled="saving || loading"
-				@update:modelValue="reprompt = $event" />
+				<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
+				<RepromptSwitch
+					:modelValue="reprompt"
+					:disabled="saving || loading"
+					@update:modelValue="reprompt = $event" />
 
-			<PolicyBlockedNote :verdict="policyVerdict" />
+				<PolicyBlockedNote :verdict="policyVerdict" />
+			</template>
+
+			<AttachmentDropZone
+				v-if="canAddFiles"
+				ref="dropZone"
+				:disabled="saving"
+				:secretId="savedSecret ? secretId : null"
+				@update:pending="pendingFiles = $event"
+				@update:busy="filesBusy = $event" />
 		</div>
 
 		<template #actions>
@@ -146,7 +157,9 @@
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<ContentSave v-else :size="20" />
 				</template>
-				{{ t('keepiq', 'Save') }}
+				{{
+					savedSecret ? t('keepiq', 'Retry upload') : t('keepiq', 'Save')
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -163,6 +176,7 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
+import AttachmentDropZone from '../components/AttachmentDropZone.vue'
 import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
 import RepromptSwitch from '../components/RepromptSwitch.vue'
@@ -212,6 +226,7 @@ export default {
 	components: {
 		AdditionalFieldsEditor,
 		AdditionalUrlsField,
+		AttachmentDropZone,
 		AuthenticatorKeyField,
 		PolicyBlockedNote,
 		RepromptSwitch,
@@ -247,6 +262,12 @@ export default {
 	data() {
 		return {
 			open: true,
+			/** The saved secret while files are still to upload to it. */
+			savedSecret: null,
+			/** How many files the drop zone lists. */
+			pendingFiles: 0,
+			/** Whether a file is uploading on its own Retry. */
+			filesBusy: false,
 			loading: true,
 			saving: false,
 			waitingForPartners: false,
@@ -431,8 +452,13 @@ export default {
 		/**
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		canSubmit() {
+			// Once saved, the button only retries the uploads.
+			if (this.savedSecret) {
+				return !this.saving && !this.filesBusy
+			}
 			return (
 				!this.loading
 				&& !this.saving
@@ -484,6 +510,42 @@ export default {
 					(this.typedValues[f.key] ?? '')
 					!== (this.loadedTypedValues[f.key] ?? ''),
 			)
+		},
+
+		/**
+		 * Files can be added where the sidebar allows uploads: the user owns
+		 * the secret and it is not served from the offline cache.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		canAddFiles() {
+			const ownerId = this.original?.ownerId
+			return (
+				Boolean(ownerId)
+				&& ownerId === (window.OC?.currentUser ?? null)
+				&& !this.viewOnly
+				&& !this.isCopy
+				&& !useOfflineStore().readOnly
+			)
+		},
+	},
+
+	watch: {
+		/**
+		 * After the save, the dialog closes once no file is left: the last
+		 * one uploaded on its own Retry, or removed.
+		 *
+		 * @param {number} count The files the drop zone lists.
+		 * @return {void}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		pendingFiles(count) {
+			if (this.savedSecret && count === 0 && !this.saving) {
+				this.reportSaved()
+				this.savedSecret = null
+				this.onUpdateOpen(false)
+			}
 		},
 	},
 
@@ -642,6 +704,9 @@ export default {
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
 		async submit(options = {}) {
+			if (this.savedSecret) {
+				return this.retryUploads()
+			}
 			if (this.saveBlocked()) {
 				return
 			}
@@ -774,11 +839,8 @@ export default {
 				if (!sameTags(this.tags, o.tags)) {
 					await useSecretStore().setTags(this.secretId, this.tags)
 				}
-				this.$emit('saved', updated)
-				if (this.onSaved) {
-					this.onSaved(updated)
-				}
-				this.onUpdateOpen(false)
+				this.savedSecret = updated
+				await this.uploadFiles()
 			} catch (e) {
 				this.unreachablePartners =
 					e?.code === 'partner_unreachable'
@@ -791,6 +853,59 @@ export default {
 					|| t('keepiq', 'Failed to save secret')
 			} finally {
 				this.saving = false
+			}
+		},
+
+		/**
+		 * Upload the waiting files to the saved secret, then tell the caller
+		 * it was saved, so the sidebar reloads with the new attachments. Stays
+		 * open with the refused files listed; never saves the secret again.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		async uploadFiles() {
+			const zone = this.$refs.dropZone
+			// Without the zone, listed files can no longer be sent: not a success.
+			const uploaded = zone
+				? await zone.uploadPending(this.secretId)
+				: this.pendingFiles === 0
+			this.reportSaved()
+			if (!uploaded) {
+				this.error = t(
+					'keepiq',
+					'The secret was saved, but some files could not be added.',
+				)
+				return
+			}
+			this.savedSecret = null
+			this.onUpdateOpen(false)
+		},
+
+		/**
+		 * Retry the refused files of the saved secret.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/attachments-in-secret-modals/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		async retryUploads() {
+			this.saving = true
+			this.error = ''
+			try {
+				await this.uploadFiles()
+			} finally {
+				this.saving = false
+			}
+		},
+
+		/**
+		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
+		reportSaved() {
+			this.$emit('saved', this.savedSecret)
+			if (this.onSaved) {
+				this.onSaved(this.savedSecret)
 			}
 		},
 	},

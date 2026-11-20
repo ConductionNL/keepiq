@@ -1961,7 +1961,15 @@ OC.L10N.register(
         "QR code of the password of {name}": "QR-kóði lykilorðs {name}",
         "Show as QR code": "Sýna sem QR-kóða",
         "Show QR code": "Sýna QR-kóða",
-        "The print dialog was opened. Close this window when you are done.": "Prentglugginn var opnaður. Lokaðu þessum glugga að því loknu."
+        "The print dialog was opened. Close this window when you are done.": "Prentglugginn var opnaður. Lokaðu þessum glugga að því loknu.",
+        "Add file": "Bæta við skrá",
+        "Drop files here to attach them": "Slepptu skrám hér til að hengja þær við",
+        "Remove {name}": "Fjarlægja {name}",
+        "Retry upload": "Reyna upphleðslu aftur",
+        "Retry upload of {name}": "Reyna upphleðslu á {name} aftur",
+        "The secret was saved, but some files could not be added.": "Leyndarmálið var vistað, en ekki tókst að bæta sumum skrám við.",
+        "Upload failed": "Upphleðsla mistókst",
+        "Folders cannot be attached. Drop the files inside them instead.": "Ekki er hægt að hengja möppur við. Slepptu frekar skránum í þeim."
     },
     "nplurals=2; plural=(n != 1);"
 )
