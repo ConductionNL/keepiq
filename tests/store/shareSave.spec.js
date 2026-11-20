@@ -599,7 +599,8 @@ describe('saveShared on the owner path', () => {
 			expect(error).toBeInstanceOf(ShareSaveError)
 			expect(error.code).toBe('partner_lookup_limit')
 			expect(shareSaveErrorText(error)).toContain('try again in a minute')
-			expect(log.partnerLookups).toEqual(Array(6).fill('bob@partner'))
+			// One batch call per try, each asking for both partner shares.
+			expect(log.partnerBatches).toEqual(Array(6).fill(['fs-1', 'fs-2']))
 			expect(log.saves).toHaveLength(1)
 		})
 
@@ -608,7 +609,7 @@ describe('saveShared on the owner path', () => {
 
 			expect(waits).toEqual([200000])
 			expect(error.code).toBe('partner_lookup_limit')
-			expect(log.partnerLookups).toHaveLength(2)
+			expect(log.partnerBatches).toHaveLength(2)
 			expect(log.saves).toHaveLength(1)
 		})
 	})

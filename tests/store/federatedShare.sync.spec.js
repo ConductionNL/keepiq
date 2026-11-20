@@ -183,10 +183,37 @@ describe('a value change reaches federated recipients', () => {
 		expect(log.saves).toHaveLength(1)
 	})
 
-	it('waits out the lookup limit and saves 70 partner shares in one call', async () => {
+	it('looks 70 partner shares up in one call and saves them without waiting (#1256)', async () => {
+		const partners = Array.from({ length: 70 }, (_, i) => ({
+			shareId: `fs-${i}`,
+			recipientCloudId: BOB,
+		}))
+		const log = shareSaveServer({
+			id: 'src',
+			partners,
+			lookup: { [BOB]: VALID },
+			lookupLimit: { perMinute: 60, retryAfter: '60' },
+		})
+		const waits = []
+
+		const result = await saveShared({
+			...SAVE,
+			onWait: (ms) => waits.push(ms),
+		})
+
+		expect(waits).toEqual([])
+		expect(result.federated.written).toBe(70)
+		expect(log.partnerBatches).toEqual([partners.map((p) => p.shareId)])
+		expect(log.partnerLookups).toEqual([BOB])
+		expect(log.saves).toHaveLength(2)
+		expect(log.saves.at(-1).federated).toHaveLength(70)
+		expect(log.saves.at(-1).suspend).toEqual([])
+	})
+
+	it('looks 250 partner shares up in batches of 100 and waits out the limit between them', async () => {
 		vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] })
 		try {
-			const partners = Array.from({ length: 70 }, (_, i) => ({
+			const partners = Array.from({ length: 250 }, (_, i) => ({
 				shareId: `fs-${i}`,
 				recipientCloudId: BOB,
 			}))
@@ -194,7 +221,7 @@ describe('a value change reaches federated recipients', () => {
 				id: 'src',
 				partners,
 				lookup: { [BOB]: VALID },
-				lookupLimit: { perMinute: 60, retryAfter: '60' },
+				lookupLimit: { perMinute: 2, retryAfter: '60' },
 			})
 			const waits = []
 
@@ -206,11 +233,12 @@ describe('a value change reaches federated recipients', () => {
 			)
 
 			expect(waits).toEqual([60000])
-			expect(result.federated.written).toBe(70)
-			expect(log.partnerLookups).toHaveLength(71)
-			expect(log.saves).toHaveLength(2)
-			expect(log.saves.at(-1).federated).toHaveLength(70)
-			expect(log.saves.at(-1).suspend).toEqual([])
+			// The third call hit the limit and went again after the wait.
+			expect(log.partnerBatches.map((ids) => ids.length)).toEqual([100, 100, 50, 50])
+			expect(result.secret).toBeTruthy()
+			// Above 100 partner shares the save stages them in chunks.
+			const sent = log.saves.slice(1).flatMap((body) => body.federated ?? [])
+			expect(new Set(sent.map((entry) => entry.shareId)).size).toBe(250)
 		} finally {
 			vi.useRealTimers()
 		}
@@ -223,7 +251,7 @@ describe('a value change reaches federated recipients', () => {
 				id: 'src',
 				partners: [PARTNERS[0], { shareId: 'fs-2', recipientCloudId: BOB }],
 				lookup: { [BOB]: VALID },
-				lookupLimit: { perMinute: 1, retryAfter: '60' },
+				lookupLimit: { perMinute: 0, retryAfter: '60' },
 			})
 
 			const result = await settleWithTimers(
@@ -233,7 +261,7 @@ describe('a value change reaches federated recipients', () => {
 			expect(result).toBeInstanceOf(Error)
 			expect(result.message).toBe('Vault is locked')
 			// The limited lookup is not retried, and nothing beyond the optimistic save is sent.
-			expect(log.partnerLookups).toEqual([BOB, BOB])
+			expect(log.partnerBatches).toEqual([['fs-1', 'fs-2']])
 			expect(log.saves).toHaveLength(1)
 		} finally {
 			vi.useRealTimers()

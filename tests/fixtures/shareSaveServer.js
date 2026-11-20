@@ -85,7 +85,7 @@ export async function settleWithTimers(promise) {
  * @param {object} [options.posts] Other POST answers by URL suffix, or a function of the body that may throw.
  * @param {{perMinute: number, retryAfter?: string}} [options.lookupLimit] The partner lookup limit, a 429 above it.
  * @param {(body: object, n: number) => void} [options.onSave] Called with each save body; may throw.
- * @return {{saves: Array, lookups: Array, plainPuts: Array, partnerLookups: Array}}
+ * @return {{saves: Array, lookups: Array, plainPuts: Array, partnerLookups: Array, partnerBatches: Array}}
  */
 export function shareSaveServer({
 	id,
@@ -99,9 +99,37 @@ export function shareSaveServer({
 	lookupLimit = null,
 	onSave = null,
 }) {
-	const log = { saves: [], lookups: [], plainPuts: [], partnerLookups: [] }
+	const log = {
+		saves: [],
+		lookups: [],
+		plainPuts: [],
+		partnerLookups: [],
+		partnerBatches: [],
+	}
 	let stage = null
 	const lookupTimes = []
+
+	/**
+	 * Count one partner lookup call against the limit, a 429 above it.
+	 *
+	 * @return {void}
+	 */
+	const limitLookup = () => {
+		if (!lookupLimit) {
+			return
+		}
+		const recent = lookupTimes.filter((at) => Date.now() - at < 60000)
+		if (recent.length >= lookupLimit.perMinute) {
+			throw httpError(
+				429,
+				{ message: 'Too Many Requests' },
+				lookupLimit.retryAfter === undefined
+					? {}
+					: { 'retry-after': lookupLimit.retryAfter },
+			)
+		}
+		lookupTimes.push(Date.now())
+	}
 
 	vi.spyOn(axios, 'get').mockImplementation(async (url) => {
 		if (url.endsWith('/write-context')) {
@@ -143,21 +171,43 @@ export function shareSaveServer({
 				},
 			}
 		}
+		if (url.endsWith('/federation/recipient-certificates')) {
+			// The batch over the owner's own partner shares: one call against
+			// the limit, each recipient asked once, a refusal per share.
+			log.partnerBatches.push(body.shareIds)
+			const byShare = new Map(partners.map((p) => [p.shareId, p.recipientCloudId]))
+			const cloudIds = [
+				...new Set(body.shareIds.map((shareId) => byShare.get(shareId)).filter(Boolean)),
+			]
+			log.partnerLookups.push(...cloudIds)
+			limitLookup()
+			const limited = cloudIds
+				.map((cloudId) => lookup[cloudId]?.reject)
+				.find((reject) => reject?.response?.status === 429)
+			if (limited) {
+				throw limited
+			}
+			const certificates = {}
+			const refused = {}
+			for (const shareId of body.shareIds) {
+				const cloudId = byShare.get(shareId)
+				const answer = cloudId === undefined ? undefined : lookup[cloudId]
+				if (cloudId === undefined) {
+					refused[shareId] = { status: 404, message: 'unknown_share' }
+				} else if (!answer || answer.reject) {
+					const reject = answer?.reject?.response
+					refused[shareId] = reject
+						? { status: reject.status, message: reject.data?.message }
+						: { status: 502, message: 'partner_unreachable' }
+				} else {
+					certificates[shareId] = { cloudId: echoedCloudId(cloudId), ...answer }
+				}
+			}
+			return { data: { certificates, refused } }
+		}
 		if (url.endsWith('/federation/recipient-certificate')) {
 			log.partnerLookups.push(body.cloudId)
-			if (lookupLimit) {
-				const recent = lookupTimes.filter((at) => Date.now() - at < 60000)
-				if (recent.length >= lookupLimit.perMinute) {
-					throw httpError(
-						429,
-						{ message: 'Too Many Requests' },
-						lookupLimit.retryAfter === undefined
-							? {}
-							: { 'retry-after': lookupLimit.retryAfter },
-					)
-				}
-				lookupTimes.push(Date.now())
-			}
+			limitLookup()
 			const answer = lookup[body.cloudId]
 			if (!answer || answer.reject) {
 				throw (

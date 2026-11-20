@@ -154,17 +154,26 @@ describe('a share save reaching a partner', () => {
 		// The fixture chain has no private key for Bob, so this one partner
 		// verifies to a key the test holds.
 		const log = shareSaveServer({ id: 'src', partners: PARTNERS })
-		vi.spyOn(useFederatedShareStore(), 'lookup').mockResolvedValue({
-			cloudId: BOB,
-			fingerprint: 'AB:CD',
-			spki: new Uint8Array(
-				createPublicKey(RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM).export({
-					type: 'spki',
-					format: 'der',
-				}),
-			),
-			valueFields: ['totp', 'passkeys'],
-		})
+		vi.spyOn(useFederatedShareStore(), 'lookupShares').mockResolvedValue(
+			new Map([
+				[
+					'fs-1',
+					{
+						recipient: {
+							cloudId: BOB,
+							fingerprint: 'AB:CD',
+							spki: new Uint8Array(
+								createPublicKey(RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM).export({
+									type: 'spki',
+									format: 'der',
+								}),
+							),
+							valueFields: ['totp', 'passkeys'],
+						},
+					},
+				],
+			]),
+		)
 
 		await saveShared({
 			id: 'src',
