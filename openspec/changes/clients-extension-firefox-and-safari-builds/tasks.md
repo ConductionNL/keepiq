@@ -7,7 +7,7 @@
 
 ## 2. CI
 
-- [ ] 2.1 Add a workflow job that builds all packages and loads Chromium and Firefox headless to check the background starts. Verify: the workflow run. `.github/workflows/browser-extension.yml`; the Chromium check was run locally (service worker answered get-state; control: the Firefox package in Chromium fails with no service worker). The Firefox check first runs in CI on the PR.
+- [x] 2.1 Add a workflow job that builds all packages and loads Chromium and Firefox headless to check the background starts. Verify: the workflow run. `.github/workflows/browser-extension.yml`; the Chromium check was run locally (service worker answered get-state; control: the Firefox package in Chromium fails with no service worker). The Firefox check first runs in CI on the PR. Done (21 Nov 2026): `scripts/firefox-smoke.ts` installs the Firefox package as a temporary add-on, requires its background running, opens the popup at the URL its policy gives and asks `settings.get` from it in the chrome context, with extensions in process; the `check-and-build` job passed on PR #1939 ("The background answered settings.get", "Firefox smoke test passed").
 
 ## 3. Close out
 
