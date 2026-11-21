@@ -6,80 +6,22 @@
  */
 import { randomUUID } from 'node:crypto'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { command, type DriverOptions, endSession, newSession, sleep, step as driverStep, waitUntilUp } from './webdriver'
 
 /** The id in `browser_specific_settings.gecko`, which the uuid pref maps to a fixed `moz-extension://` host. */
 export const GECKO_ID = 'keepiq@conduction.nl'
 
-export interface FirefoxSmokeOptions {
-	driver: string
+/** `upMs` also bounds the wait for the background to answer. */
+export interface FirefoxSmokeOptions extends DriverOptions {
 	extensionPath: string
 	/** The `moz-extension://` host the extension gets, so the test knows its popup's address. */
 	uuid: string
-	/** How long to wait for geckodriver, and then for the background, to answer. */
-	upMs: number
-	pollMs: number
-	/** Longest any one WebDriver request may take. */
-	requestMs: number
 }
+
+const step = <T>(name: string, run: () => Promise<T>) => driverStep('Firefox', name, run)
 
 /** What the popup page's script hands back: the background's reply, or why the message went unanswered. */
 export type BackgroundAnswer = { ok: true; reply: unknown } | { ok: false; error: string }
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-/**
- * Runs one step, and names it in the error when it fails.
- *
- * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
- */
-async function step<T>(name: string, run: () => Promise<T>): Promise<T> {
-	try {
-		return await run()
-	} catch (error) {
-		throw new Error(`Firefox smoke test failed at "${name}": ${error instanceof Error ? error.message : String(error)}`, { cause: error })
-	}
-}
-
-/**
- * Polls `url` until it answers OK, or fails after `upMs`.
- *
- * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
- */
-async function waitUntilUp(url: string, options: FirefoxSmokeOptions): Promise<void> {
-	const deadline = Date.now() + options.upMs
-	for (;;) {
-		const ok = await fetch(url).then((response) => response.ok, () => false)
-		if (ok) return
-		if (Date.now() >= deadline) throw new Error(`${url} did not answer within ${options.upMs} ms`)
-		await sleep(options.pollMs)
-	}
-}
-
-/**
- * WebDriver classic: the reply's `value`, or its error thrown.
- *
- * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
- */
-async function command(options: FirefoxSmokeOptions, method: string, path: string, body?: object): Promise<unknown> {
-	let response: Response
-	try {
-		response = await fetch(`${options.driver}${path}`, {
-			method,
-			headers: body ? { 'Content-Type': 'application/json' } : undefined,
-			body: body ? JSON.stringify(body) : undefined,
-			signal: AbortSignal.timeout(options.requestMs),
-		})
-	} catch (error) {
-		const timedOut = error instanceof Error && error.name === 'TimeoutError'
-		throw new Error(`${method} ${path}: ${timedOut ? `no answer within ${options.requestMs} ms` : String(error)}`, { cause: error })
-	}
-	const reply = (await response.json().catch(() => ({}))) as { value?: unknown }
-	if (!response.ok) {
-		const error = (reply.value ?? {}) as { error?: unknown; message?: unknown }
-		throw new Error(`${method} ${path}: HTTP ${response.status} ${String(error.error ?? '')} ${String(error.message ?? '')}`.trim())
-	}
-	return reply.value
-}
 
 /**
  * Headless Firefox with the extension's `moz-extension://` host fixed to `uuid`.
@@ -142,12 +84,7 @@ async function askBackground(options: FirefoxSmokeOptions, sessionId: string): P
  */
 export async function smoke(options: FirefoxSmokeOptions): Promise<void> {
 	await step('geckodriver status', () => waitUntilUp(`${options.driver}/status`, options))
-	const sessionId = await step('new session', async () => {
-		const value = await command(options, 'POST', '/session', sessionCapabilities(options.uuid))
-		const id = (value as { sessionId?: unknown } | null)?.sessionId
-		if (typeof id !== 'string') throw new Error(`no sessionId in ${JSON.stringify(value)}`)
-		return id
-	})
+	const sessionId = await step('new session', () => newSession(options, sessionCapabilities(options.uuid)))
 	try {
 		const addonId = await step('install the extension', () =>
 			command(options, 'POST', `/session/${sessionId}/moz/addon/install`, { path: options.extensionPath, temporary: true }))
@@ -157,7 +94,7 @@ export async function smoke(options: FirefoxSmokeOptions): Promise<void> {
 		const reply = await step('ask the background', () => askBackground(options, sessionId))
 		console.log(`The background answered settings.get: ${JSON.stringify(reply)}`)
 	} finally {
-		await command(options, 'DELETE', `/session/${sessionId}`).catch((error: unknown) => console.warn('Could not end the WebDriver session', error))
+		await endSession(options, sessionId)
 	}
 }
 

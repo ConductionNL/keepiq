@@ -9,60 +9,15 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { promisify } from 'node:util'
+import { command, type DriverOptions, endSession, newSession, step as driverStep, waitUntilUp } from './webdriver'
 
-export interface SmokeOptions {
-	driver: string
+export interface SmokeOptions extends DriverOptions {
 	extensionPath: string
-	/** How long to wait for safaridriver to answer. */
-	upMs: number
-	pollMs: number
-	/** Longest any one WebDriver request may take: a hung Safari otherwise stalls until undici's 5 minute headers timeout. */
-	requestMs: number
 	/** The folder's contents as a base64 zip, `manifest.json` at its root. */
 	zipFolder: (path: string) => Promise<string>
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-async function step<T>(name: string, run: () => Promise<T>): Promise<T> {
-	try {
-		return await run()
-	} catch (error) {
-		throw new Error(`Safari smoke test failed at "${name}": ${error instanceof Error ? error.message : String(error)}`, { cause: error })
-	}
-}
-
-async function waitUntilUp(url: string, options: SmokeOptions): Promise<void> {
-	const deadline = Date.now() + options.upMs
-	for (;;) {
-		const ok = await fetch(url).then((response) => response.ok, () => false)
-		if (ok) return
-		if (Date.now() >= deadline) throw new Error(`${url} did not answer within ${options.upMs} ms`)
-		await sleep(options.pollMs)
-	}
-}
-
-/** WebDriver classic: the reply's `value`, or its error thrown. */
-async function command(options: SmokeOptions, method: string, path: string, body?: object): Promise<unknown> {
-	let response: Response
-	try {
-		response = await fetch(`${options.driver}${path}`, {
-			method,
-			headers: body ? { 'Content-Type': 'application/json' } : undefined,
-			body: body ? JSON.stringify(body) : undefined,
-			signal: AbortSignal.timeout(options.requestMs),
-		})
-	} catch (error) {
-		const timedOut = error instanceof Error && error.name === 'TimeoutError'
-		throw new Error(`${method} ${path}: ${timedOut ? `no answer within ${options.requestMs} ms` : String(error)}`, { cause: error })
-	}
-	const reply = (await response.json().catch(() => ({}))) as { value?: unknown }
-	if (!response.ok) {
-		const error = (reply.value ?? {}) as { error?: unknown; message?: unknown }
-		throw new Error(`${method} ${path}: HTTP ${response.status} ${String(error.error ?? '')} ${String(error.message ?? '')}`.trim())
-	}
-	return reply.value
-}
+const step = <T>(name: string, run: () => Promise<T>) => driverStep('Safari', name, run)
 
 /** The install reply is the id itself or `{ extension: id }`; Safari 26 sends the latter. */
 export function extensionIdOf(value: unknown): string | undefined {
@@ -88,17 +43,12 @@ async function install(options: SmokeOptions, sessionId: string): Promise<string
 
 export async function smoke(options: SmokeOptions): Promise<void> {
 	await step('safaridriver status', () => waitUntilUp(`${options.driver}/status`, options))
-	const sessionId = await step('new session', async () => {
-		const value = await command(options, 'POST', '/session', { capabilities: { alwaysMatch: { browserName: 'safari' } } })
-		const id = (value as { sessionId?: unknown } | null)?.sessionId
-		if (typeof id !== 'string') throw new Error(`no sessionId in ${JSON.stringify(value)}`)
-		return id
-	})
+	const sessionId = await step('new session', () => newSession(options, { capabilities: { alwaysMatch: { browserName: 'safari' } } }))
 	try {
 		const extensionId = await step('install the extension', () => install(options, sessionId))
 		console.log(`Installed ${options.extensionPath} as ${extensionId}`)
 	} finally {
-		await command(options, 'DELETE', `/session/${sessionId}`).catch((error: unknown) => console.warn('Could not end the WebDriver session', error))
+		await endSession(options, sessionId)
 	}
 }
 
