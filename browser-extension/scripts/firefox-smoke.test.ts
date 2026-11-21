@@ -56,7 +56,7 @@ describe('sessionCapabilities', () => {
 	it('asks for headless Firefox with the extension host fixed to the uuid', () => {
 		const firefox = (sessionCapabilities(UUID) as { capabilities: { alwaysMatch: Record<string, { args: string[]; prefs: Record<string, string> }> } })
 			.capabilities.alwaysMatch['moz:firefoxOptions']!
-		expect(firefox.args).toEqual(['-headless', '-remote-allow-system-access'])
+		expect(firefox.args).toEqual(['-headless'])
 		expect(JSON.parse(firefox.prefs['extensions.webextensions.uuids']!)).toEqual({ [GECKO_ID]: UUID })
 	})
 })

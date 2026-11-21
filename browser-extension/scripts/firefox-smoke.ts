@@ -3,7 +3,7 @@
  * answer a request from the extension's own popup page (spec `clients-browser-builds` § Firefox starts the background, task 2.1 of `clients-extension-firefox-and-safari-builds`).
  * Playwright cannot load a WebExtension into Firefox, so this speaks WebDriver classic to geckodriver directly. WebDriver
  * may not navigate to a `moz-extension://` page, so the chrome context opens the popup in a tab of its own.
- * Expects `geckodriver --port 4444` running; `npm run test:firefox-smoke`.
+ * Expects `geckodriver --port 4444 --allow-system-access` running; `npm run test:firefox-smoke`.
  */
 import { randomUUID } from 'node:crypto'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -35,8 +35,8 @@ export function sessionCapabilities(uuid: string): object {
 			alwaysMatch: {
 				browserName: 'firefox',
 				'moz:firefoxOptions': {
-					// System access lets the chrome context read the background's state and open the popup page.
-					args: ['-headless', '-remote-allow-system-access'],
+					// geckodriver runs with `--allow-system-access`, so the chrome context can read the background's state and open the popup page.
+					args: ['-headless'],
 					prefs: { 'extensions.webextensions.uuids': JSON.stringify({ [GECKO_ID]: uuid }) },
 				},
 			},

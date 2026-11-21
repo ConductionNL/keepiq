@@ -52,7 +52,7 @@ jobs:
       # The runner image ships Firefox and geckodriver; the background must answer the popup (spec clients-browser-builds).
       - name: Load the Firefox package in headless Firefox
         run: |
-          "${GECKOWEBDRIVER:+$GECKOWEBDRIVER/}geckodriver" --port 4444 &
+          "${GECKOWEBDRIVER:+$GECKOWEBDRIVER/}geckodriver" --port 4444 --allow-system-access &
           npm run test:firefox-smoke
       # Shows a Safari build break here, without waiting for the macOS job.
       - run: npm run build:safari
