@@ -323,6 +323,38 @@ kotlin.sourceSets.commonTest {
     kotlin.srcDir(generateAutofillVectors)
 }
 
+// The partner certificate chains the web app and the extension verify
+// (federated-certificate tests) are compiled into commonTest the same way.
+val certificateFixtures = mapOf(
+    "federation" to layout.projectDirectory.file("../../tests/fixtures/federation-chain.json"),
+    "caConstraints" to layout.projectDirectory.file("../../browser-extension/src/testing/ca-constraints-chain.json"),
+    "phpseclib" to layout.projectDirectory.file("../../browser-extension/src/testing/phpseclib-chain.json"),
+)
+val generatedCertificateFixtures = layout.buildDirectory.dir("generated/certificate-fixtures/kotlin")
+val generateCertificateFixtures by tasks.registering {
+    certificateFixtures.values.forEach { inputs.file(it).withPathSensitivity(PathSensitivity.RELATIVE) }
+    outputs.dir(generatedCertificateFixtures)
+    val sources = certificateFixtures.mapValues { it.value.asFile }
+    val outDir = generatedCertificateFixtures.get().asFile
+    doLast {
+        val body = StringBuilder()
+        body.append("// Generated from the partner certificate fixtures by :shared:generateCertificateFixtures. Do not edit.\n")
+        body.append("package nl.conduction.keepiq.shared.vectors\n\n")
+        body.append("internal object GeneratedCertificateFixtures {\n")
+        for ((name, file) in sources) {
+            val parts = Base64.getEncoder().encodeToString(file.readBytes()).chunked(16_000).joinToString(",\n        ") { "\"$it\"" }
+            body.append("    val $name: List<String> = listOf(\n        $parts,\n    )\n")
+        }
+        body.append("}\n")
+        val target = File(outDir, "nl/conduction/keepiq/shared/vectors/GeneratedCertificateFixtures.kt")
+        target.parentFile.mkdirs()
+        target.writeText(body.toString())
+    }
+}
+kotlin.sourceSets.commonTest {
+    kotlin.srcDir(generateCertificateFixtures)
+}
+
 // The jvm tests write ciphertext produced by this core for the vector inputs.
 // tests/vitest/crypto-vectors-kotlin.spec.js opens it with the web modules.
 // -Pkeepiq.writeKotlinVectors=true writes the committed copy instead.

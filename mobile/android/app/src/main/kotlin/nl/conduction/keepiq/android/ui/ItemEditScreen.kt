@@ -69,6 +69,7 @@ import nl.conduction.keepiq.shared.vault.OpenResult
 import nl.conduction.keepiq.shared.vault.SecretType
 import nl.conduction.keepiq.shared.vault.VaultIndex
 import nl.conduction.keepiq.shared.vault.WriteProblem
+import nl.conduction.keepiq.shared.vault.WriteProblemKind
 import nl.conduction.keepiq.shared.vault.WriteResult
 
 /**
@@ -201,26 +202,31 @@ fun ItemEditScreen(
 
         problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
         error("fields")?.let { Text(draftProblemText(it), color = MaterialTheme.colorScheme.error) }
+        fun save(withoutUnreachable: Set<String>) {
+            focus.clearFocus()
+            showErrors = true
+            if (errors.isNotEmpty()) return
+            busy = true
+            problem = null
+            scope.launch {
+                val current = item
+                val result = io { if (current == null) repository.create(draft, type) else repository.update(current, draft, withoutUnreachable) }
+                busy = false
+                when (result) {
+                    is WriteResult.Saved -> onSaved(result.id)
+                    is WriteResult.Refused -> problem = result.problem
+                }
+            }
+        }
+        // Leaving out the partners that can't be reached pauses sharing with them until the item is shared with them again.
+        val unreachable = problem?.takeIf { it.kind == WriteProblemKind.PARTNER_UNREACHABLE }?.partners
+        if (!unreachable.isNullOrEmpty()) {
+            OutlinedButton(enabled = !busy && !repository.state.offline, onClick = { save(unreachable.map { it.shareId }.toSet()) }) {
+                Text(stringResource(R.string.action_save_without_them))
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
-                enabled = !busy && !repository.state.offline,
-                onClick = {
-                    focus.clearFocus()
-                    showErrors = true
-                    if (errors.isNotEmpty()) return@Button
-                    busy = true
-                    problem = null
-                    scope.launch {
-                        val current = item
-                        val result = io { if (current == null) repository.create(draft, type) else repository.update(current, draft) }
-                        busy = false
-                        when (result) {
-                            is WriteResult.Saved -> onSaved(result.id)
-                            is WriteResult.Refused -> problem = result.problem
-                        }
-                    }
-                },
-            ) { Text(stringResource(R.string.action_save)) }
+            Button(enabled = !busy && !repository.state.offline, onClick = { save(emptySet()) }) { Text(stringResource(R.string.action_save)) }
             OutlinedButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) }
         }
         if (repository.state.offline) Text(stringResource(R.string.write_offline), style = MaterialTheme.typography.bodySmall)

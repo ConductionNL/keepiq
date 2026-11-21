@@ -57,6 +57,7 @@ import nl.conduction.keepiq.android.autofill.AutofillCore
 import nl.conduction.keepiq.android.ui.ScreenColumn
 import nl.conduction.keepiq.android.ui.UnlockScreen
 import nl.conduction.keepiq.shared.autofill.AutofillChoices
+import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.autofill.AutofillIndexHub
 import nl.conduction.keepiq.shared.autofill.AutofillSaver
 import nl.conduction.keepiq.shared.autofill.SaveResult
@@ -170,7 +171,7 @@ class CredentialProviderActivity : FragmentActivity() {
             ?: return getError(NoCredentialException())
         val clientData = option.clientDataHash?.let { ClientData.hashed(it) } ?: ClientData.build(ClientData.GET, get.challenge, caller.origin)
         val api = core.api(accountId) ?: return getError(GetCredentialUnknownException("no account"))
-        val assertion = Passkeys.sign(api, keys, choice, clientData, rpId)
+        val assertion = Passkeys.sign(api, keys, choice, clientData, rpId, resync = { reread(accountId, keys) })
         // The index holds the item as it was: read it again, so the next sign starts from the new counter.
         if (assertion.counter > 0) refreshIndex(accountId, keys, always = true)
         return Intent().also {
@@ -206,7 +207,7 @@ class CredentialProviderActivity : FragmentActivity() {
                 }
                 val clientData = call.clientDataHash?.let { ClientData.hashed(it) }
                     ?: ClientData.build(ClientData.CREATE, WebAuthnJson.challenge(call.requestJson) ?: ByteArray(0), caller.origin)
-                val registration = Passkeys.create(api, keys, index, create, clientData, System.currentTimeMillis())
+                val registration = Passkeys.create(api, keys, index, create, clientData, System.currentTimeMillis(), resync = { reread(accountId, keys) })
                 refreshIndex(accountId, keys, always = true)
                 Intent().also {
                     PendingIntentHandler.setCreateCredentialResponse(it, CreatePublicKeyCredentialResponse(WebAuthnJson.registrationResponse(registration)))
@@ -215,7 +216,13 @@ class CredentialProviderActivity : FragmentActivity() {
             is CreatePasswordRequest -> {
                 val label = core.identities.label(caller.identity.packageName)
                 val saved = AutofillSaver(api, keys).save(caller.passwordTarget(core.identities), index, call.id, call.password, label, null)
-                if (saved == SaveResult.REFUSED) return createErrorIntent(CreateCredentialUnknownException("refused"))
+                when (saved) {
+                    SaveResult.REFUSED -> return createErrorIntent(CreateCredentialUnknownException("refused"))
+                    SaveResult.NOT_UPDATED -> return createErrorIntent(CreateCredentialUnknownException(getString(R.string.autofill_not_updated_shared)))
+                    SaveResult.VIEW_ONLY -> return createErrorIntent(CreateCredentialUnknownException(getString(R.string.autofill_not_updated_view_only)))
+                    SaveResult.FAILED -> return createErrorIntent(CreateCredentialUnknownException(getString(R.string.autofill_not_updated)))
+                    else -> Unit
+                }
                 refreshIndex(accountId, keys, always = true)
                 Intent().also { PendingIntentHandler.setCreateCredentialResponse(it, CreatePasswordResponse()) }
             }
@@ -234,6 +241,12 @@ class CredentialProviderActivity : FragmentActivity() {
             VaultRepository(api, keys, null, null, { System.currentTimeMillis() }, { AutofillIndexHub.refreshed(accountId, it, keys) })
                 .refresh(SyncTrigger.MANUAL)
         }
+    }
+
+    /** The index read again, for a write that found the item changed since it was built. */
+    private suspend fun reread(accountId: String, keys: VaultKeys): AutofillIndex {
+        refreshIndex(accountId, keys, always = true)
+        return core.indexOf(accountId)
     }
 
     private fun getError(e: GetCredentialException): Intent = Intent().also { PendingIntentHandler.setGetCredentialException(it, e) }

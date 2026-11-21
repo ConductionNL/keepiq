@@ -22,6 +22,11 @@ internal object Vectors {
     val send: JsonObject by lazy { load(GeneratedVectors.send) }
     val totp: JsonObject by lazy { load(GeneratedVectors.totp) }
     val passkey: JsonObject by lazy { load(GeneratedVectors.passkey) }
+
+    /** The partner certificate chains: tests/fixtures/federation-chain.json and the extension's two, by name. */
+    val federationChain: JsonObject by lazy { load(GeneratedCertificateFixtures.federation) }
+    val caConstraintsChain: JsonObject by lazy { load(GeneratedCertificateFixtures.caConstraints) }
+    val phpseclibChain: JsonObject by lazy { load(GeneratedCertificateFixtures.phpseclib) }
 }
 
 internal fun JsonObject.str(name: String): String = getValue(name).jsonPrimitive.content

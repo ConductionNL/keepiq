@@ -12,8 +12,11 @@ import nl.conduction.keepiq.shared.autofill.SiteMatch
 import nl.conduction.keepiq.shared.crypto.ClientData
 import nl.conduction.keepiq.shared.crypto.Encoding
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
+import nl.conduction.keepiq.shared.sync.SyncTrigger
 import nl.conduction.keepiq.shared.vault.LoginPasskeys
+import nl.conduction.keepiq.shared.vault.MobileSession
 import nl.conduction.keepiq.shared.vault.VaultKeys
+import nl.conduction.keepiq.shared.vault.VaultRepository
 
 /**
  * One passkey for ASCredentialIdentityStore (design D7): the rpId, the user
@@ -85,7 +88,7 @@ object ApplePasskeys {
 
     @Throws(Exception::class)
     suspend fun signIn(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientDataHash: String, rpId: String): AppleAssertion {
-        val a = Passkeys.sign(api, keys, choice, ClientData.hashed(Encoding.fromBase64(clientDataHash)), rpId)
+        val a = Passkeys.sign(api, keys, choice, ClientData.hashed(Encoding.fromBase64(clientDataHash)), rpId, resync = { reread(api, keys) })
         return AppleAssertion(
             userHandle = a.userHandle?.let { base64(it) } ?: "",
             signature = base64(a.signature),
@@ -115,9 +118,21 @@ object ApplePasskeys {
             algorithms = algorithms,
             excludeCredentialIds = emptyList(),
         )
-        val r = Passkeys.create(api, keys, AutofillIndex.fromJson(siteJson), request, ClientData.hashed(Encoding.fromBase64(clientDataHash)), nowMillis)
+        val r = Passkeys.create(
+            api, keys, AutofillIndex.fromJson(siteJson), request, ClientData.hashed(Encoding.fromBase64(clientDataHash)), nowMillis,
+            resync = { reread(api, keys) },
+        )
         return AppleRegistration(base64(r.credentialId), base64(r.attestationObject), userName)
     }
+
+    /**
+     * The vault read again from the server, for a passkey write that found
+     * its item changed since the site file was written: the AutoFill
+     * extension can't sync the app's store, so it reads the list as
+     * Android's provider does without one.
+     */
+    private suspend fun reread(api: KeepiqApi, keys: VaultKeys): AutofillIndex =
+        AutofillIndex.of(VaultRepository(api, keys, null, null, MobileSession::nowMillis).refresh(SyncTrigger.MANUAL))
 
     private fun base64(bytes: ByteArray): String = Encoding.toBase64(bytes)
 }

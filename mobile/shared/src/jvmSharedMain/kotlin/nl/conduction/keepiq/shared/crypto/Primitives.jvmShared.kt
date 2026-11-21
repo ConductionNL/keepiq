@@ -16,6 +16,7 @@ import java.security.interfaces.ECPublicKey
 import java.security.spec.ECGenParameterSpec
 import java.security.spec.MGF1ParameterSpec
 import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.PSSParameterSpec
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
 import javax.crypto.Mac
@@ -127,6 +128,25 @@ internal actual object Primitives {
             d = fixed32((pair.private as ECPrivateKey).s),
             point = byteArrayOf(0x04) + fixed32(point.affineX) + fixed32(point.affineY),
         )
+    }
+
+    actual fun rsaSha256Verify(spki: ByteArray, data: ByteArray, signature: ByteArray, pss: Boolean): Boolean = try {
+        val key = KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(spki))
+        val verifier = if (pss) pssSha256() else Signature.getInstance("SHA256withRSA")
+        verifier.run {
+            initVerify(key)
+            update(data)
+            verify(signature)
+        }
+    } catch (e: GeneralSecurityException) {
+        false
+    }
+
+    /** Android's Conscrypt names PSS `SHA256withRSA/PSS`, MGF1-SHA-256 with a 32-byte salt; the JDK only `RSASSA-PSS` with parameters. */
+    private fun pssSha256(): Signature = try {
+        Signature.getInstance("SHA256withRSA/PSS")
+    } catch (e: java.security.NoSuchAlgorithmException) {
+        Signature.getInstance("RSASSA-PSS").apply { setParameter(PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1)) }
     }
 
     /** A non-negative integer as exactly 32 big-endian bytes (BigInteger adds a sign byte or drops leading zeros). */
