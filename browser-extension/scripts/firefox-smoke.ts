@@ -2,7 +2,7 @@
  * Loads `.output/firefox-mv2` into headless Firefox over geckodriver, requires its background to be running and to
  * answer a request from the extension's own popup page (spec `clients-browser-builds` § Firefox starts the background, task 2.1 of `clients-extension-firefox-and-safari-builds`).
  * Playwright cannot load a WebExtension into Firefox, so this speaks WebDriver classic to geckodriver directly. WebDriver
- * may not navigate to a `moz-extension://` page, so the chrome context opens the popup in a tab of its own.
+ * may not navigate to a `moz-extension://` page, so the chrome context opens the popup in a tab of its own and asks from it.
  * Expects `geckodriver --port 4444 --allow-system-access` running; `npm run test:firefox-smoke`.
  */
 import { randomUUID } from 'node:crypto'
@@ -37,7 +37,11 @@ export function sessionCapabilities(uuid: string): object {
 				'moz:firefoxOptions': {
 					// geckodriver runs with `--allow-system-access`, so the chrome context can read the background's state and open the popup page.
 					args: ['-headless'],
-					prefs: { 'extensions.webextensions.uuids': JSON.stringify({ [GECKO_ID]: uuid }) },
+					prefs: {
+						'extensions.webextensions.uuids': JSON.stringify({ [GECKO_ID]: uuid }),
+						// In process, the chrome context reaches the popup page; WebDriver's content context never follows a tab into the extension process.
+						'extensions.webextensions.remote': false,
+					},
 				},
 			},
 		},
@@ -45,16 +49,19 @@ export function sessionCapabilities(uuid: string): object {
 }
 
 /**
- * The script the popup page runs: one request the background answers (`settings.get`, read-only), and its reply.
+ * Chrome context: the selected tab's popup page sends one request the background answers (`settings.get`, read-only),
+ * and hands back its reply. Xray wrappers hide the page's own `browser`, so it is read through `wrappedJSObject`.
  *
  * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
  */
 export const ASK_BACKGROUND = `const done = arguments[arguments.length - 1];
-// WebDriver's sandbox sees the page through Xray wrappers, which hide the page's own \`browser\`.
-const api = (typeof window !== 'undefined' && window.wrappedJSObject && window.wrappedJSObject.browser) || (typeof browser !== 'undefined' ? browser : undefined);
-if (!api) return done({ ok: false, error: 'no browser API on ' + (typeof location !== 'undefined' ? location.href : 'the page') });
+const page = Services.wm.getMostRecentWindow('navigator:browser').gBrowser.selectedBrowser.contentWindow;
+if (!page) return done({ ok: false, error: 'the popup page runs out of process' });
+const href = String(page.location.href);
+const api = href.startsWith('moz-extension://') && page.document.readyState === 'complete' ? page.wrappedJSObject.browser : undefined;
+if (!api) return done({ ok: false, error: 'no browser API on ' + href });
 api.runtime.sendMessage({ kind: 'settings.get' }).then(
-	(reply) => done({ ok: reply !== undefined, reply, error: reply === undefined ? 'no reply' : undefined }),
+	(reply) => done({ ok: reply !== undefined, reply: reply === undefined ? undefined : JSON.parse(JSON.stringify(reply)), error: reply === undefined ? 'no reply' : undefined }),
 	(error) => done({ ok: false, error: String(error) }),
 );`
 
@@ -99,13 +106,13 @@ export function openedExtensionPage(value: unknown): value is string {
 }
 
 /**
- * Runs `script` with `args` in the chrome context, and returns its value.
+ * Runs `script` with `args` in the chrome context, and returns its value; an `async` script hands it to its last argument.
  *
  * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
  */
-async function inChrome(options: FirefoxSmokeOptions, sessionId: string, script: string, args: unknown[]): Promise<unknown> {
+async function inChrome(options: FirefoxSmokeOptions, sessionId: string, script: string, args: unknown[], mode: 'sync' | 'async' = 'sync'): Promise<unknown> {
 	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context: 'chrome' })
-	return await command(options, 'POST', `/session/${sessionId}/execute/sync`, { script, args })
+	return await command(options, 'POST', `/session/${sessionId}/execute/${mode}`, { script, args })
 }
 
 /**
@@ -129,19 +136,14 @@ async function until(options: FirefoxSmokeOptions, what: string, attempt: () => 
 }
 
 /**
- * Opens the popup page in a new tab from the chrome context and moves WebDriver onto that tab.
+ * Opens the popup page in a new selected tab from the chrome context.
  *
  * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
  */
 async function openPopup(options: FirefoxSmokeOptions, sessionId: string): Promise<void> {
-	const before = await command(options, 'GET', `/session/${sessionId}/window/handles`) as string[]
 	const url = await inChrome(options, sessionId, OPEN_TAB, [GECKO_ID, 'popup.html'])
 	if (!openedExtensionPage(url)) throw new Error(`no popup page to open: ${JSON.stringify(url)}`)
 	console.log(`Opened ${url}`)
-	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context: 'content' })
-	const handles = await until(options, 'no new tab opened', () => command(options, 'GET', `/session/${sessionId}/window/handles`),
-		(value) => Array.isArray(value) && value.length > before.length) as string[]
-	await command(options, 'POST', `/session/${sessionId}/window`, { handle: handles.find((handle) => !before.includes(handle)) })
 }
 
 /**
@@ -163,7 +165,7 @@ export async function smoke(options: FirefoxSmokeOptions): Promise<void> {
 		console.log('The background is running')
 		await step('open the popup page', () => openPopup(options, sessionId))
 		const answer = await step('ask the background', () => until(options, 'the background did not answer',
-			() => command(options, 'POST', `/session/${sessionId}/execute/async`, { script: ASK_BACKGROUND, args: [] }), answered))
+			() => inChrome(options, sessionId, ASK_BACKGROUND, [], 'async'), answered))
 		console.log(`The background answered settings.get: ${JSON.stringify((answer as { reply: unknown }).reply)}`)
 	} finally {
 		await endSession(options, sessionId)

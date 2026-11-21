@@ -9,7 +9,6 @@ type Route = (body: Record<string, unknown> | undefined) => { status?: number; v
 
 /** geckodriver as `fetch` sees it; `routes` overrides a `METHOD path`. */
 function fakeDriver(routes: Record<string, Route> = {}) {
-	let handlesCalls = 0
 	const calls: string[] = []
 	const bodies: Record<string, unknown>[] = []
 	const defaults: Record<string, Route> = {
@@ -18,8 +17,6 @@ function fakeDriver(routes: Record<string, Route> = {}) {
 		'POST http://driver/session/s1/moz/addon/install': () => ({ value: GECKO_ID }),
 		'POST http://driver/session/s1/moz/context': () => ({ value: null }),
 		'POST http://driver/session/s1/execute/sync': (body) => ({ value: body?.script === BACKGROUND_STATE ? 'running' : `moz-extension://${UUID}/popup.html` }),
-		'GET http://driver/session/s1/window/handles': () => ({ value: handlesCalls++ === 0 ? ['h1'] : ['h1', 'h2'] }),
-		'POST http://driver/session/s1/window': () => ({ value: null }),
 		'POST http://driver/session/s1/execute/async': () => ({ value: { ok: true, reply: { theme: 'system' } } }),
 		'DELETE http://driver/session/s1': () => ({ value: null }),
 	}
@@ -53,11 +50,12 @@ afterEach(() => {
 const logged = () => log.mock.calls.map((call: unknown[]) => String(call[0]))
 
 describe('sessionCapabilities', () => {
-	it('asks for headless Firefox with the extension host fixed to the uuid', () => {
-		const firefox = (sessionCapabilities(UUID) as { capabilities: { alwaysMatch: Record<string, { args: string[]; prefs: Record<string, string> }> } })
+	it('asks for headless Firefox with the extension host fixed to the uuid, and extensions in process', () => {
+		const firefox = (sessionCapabilities(UUID) as { capabilities: { alwaysMatch: Record<string, { args: string[]; prefs: Record<string, string | boolean> }> } })
 			.capabilities.alwaysMatch['moz:firefoxOptions']!
 		expect(firefox.args).toEqual(['-headless'])
-		expect(JSON.parse(firefox.prefs['extensions.webextensions.uuids']!)).toEqual({ [GECKO_ID]: UUID })
+		expect(JSON.parse(String(firefox.prefs['extensions.webextensions.uuids']))).toEqual({ [GECKO_ID]: UUID })
+		expect(firefox.prefs['extensions.webextensions.remote']).toBe(false)
 	})
 })
 
@@ -79,44 +77,56 @@ describe('openedExtensionPage', () => {
 	})
 })
 
+/** The browser window the chrome context sees, with `page` as the selected tab's content window. */
+function stubPage(page: object | null) {
+	vi.stubGlobal('Services', { wm: { getMostRecentWindow: () => ({ gBrowser: { selectedBrowser: { contentWindow: page } } }) } })
+}
+
+const popup = (browser: object | undefined, href = 'moz-extension://x/popup.html', readyState = 'complete') =>
+	({ location: { href }, document: { readyState }, wrappedJSObject: { browser } })
+
+const ask = () => new Promise((resolve) => new Function(ASK_BACKGROUND).call(null, resolve))
+
 describe('ASK_BACKGROUND', () => {
-	it('sends the read-only settings.get and hands back the reply', async () => {
-		const sendMessage = vi.fn(async () => ({ theme: 'system' }))
-		const result = await new Promise((resolve) => new Function('browser', ASK_BACKGROUND).call(null, { runtime: { sendMessage } }, resolve))
+	it('sends the read-only settings.get through the popup page\'s own browser and hands back a copy of the reply', async () => {
+		const reply = { theme: 'system' }
+		const sendMessage = vi.fn(async () => reply)
+		stubPage(popup({ runtime: { sendMessage } }))
+		const result = await ask() as { reply: unknown }
 		expect(sendMessage).toHaveBeenCalledWith({ kind: 'settings.get' })
 		expect(result).toEqual({ ok: true, reply: { theme: 'system' }, error: undefined })
+		expect(result.reply).not.toBe(reply)
 	})
 
-	it('reads the page\'s browser through wrappedJSObject, and fails without one', async () => {
-		const sendMessage = vi.fn(async () => ({}))
-		vi.stubGlobal('window', { wrappedJSObject: { browser: { runtime: { sendMessage } } } })
-		const result = await new Promise((resolve) => new Function(ASK_BACKGROUND).call(null, resolve))
-		expect(result).toEqual({ ok: true, reply: {}, error: undefined })
-		vi.stubGlobal('window', { wrappedJSObject: {} })
-		expect(await new Promise((resolve) => new Function(ASK_BACKGROUND).call(null, resolve))).toEqual({ ok: false, error: 'no browser API on the page' })
-		vi.stubGlobal('location', { href: 'about:blank' })
-		expect(await new Promise((resolve) => new Function(ASK_BACKGROUND).call(null, resolve))).toEqual({ ok: false, error: 'no browser API on about:blank' })
-		vi.unstubAllGlobals()
+	it.each([
+		['the tab runs out of process', null, { ok: false, error: 'the popup page runs out of process' }],
+		['the tab is still on about:blank', popup({ runtime: {} }, 'about:blank'), { ok: false, error: 'no browser API on about:blank' }],
+		['the popup is still loading', popup({ runtime: {} }, 'moz-extension://x/popup.html', 'loading'), { ok: false, error: 'no browser API on moz-extension://x/popup.html' }],
+		['the page has no browser API', popup(undefined), { ok: false, error: 'no browser API on moz-extension://x/popup.html' }],
+	])('fails without asking when %s', async (_, page, expected) => {
+		stubPage(page)
+		expect(await ask()).toEqual(expected)
 	})
 
 	it.each([
 		['no listener answered', async () => undefined, { ok: false, reply: undefined, error: 'no reply' }],
 		['the message failed', async () => { throw new Error('Could not establish connection. Receiving end does not exist.') }, { ok: false, error: 'Error: Could not establish connection. Receiving end does not exist.' }],
 	])('reports failure when %s', async (_, sendMessage, expected) => {
-		const result = await new Promise((resolve) => new Function('browser', ASK_BACKGROUND).call(null, { runtime: { sendMessage } }, resolve))
-		expect(result).toEqual(expected)
+		stubPage(popup({ runtime: { sendMessage } }))
+		expect(await ask()).toEqual(expected)
 	})
 })
 
 describe('smoke', () => {
-	it('installs the build as a temporary add-on, needs the background running, opens its popup in a new tab, needs its answer and ends the session', async () => {
+	it('installs the build as a temporary add-on, needs the background running, opens its popup in a new tab, asks from it in the chrome context and ends the session', async () => {
 		const { calls, bodies } = fakeDriver()
 		await smoke(options)
 		expect(bodies).toContainEqual({ path: '/abs/.output/firefox-mv2', temporary: true })
 		expect(bodies).toContainEqual({ script: BACKGROUND_STATE, args: [GECKO_ID] })
 		expect(bodies).toContainEqual({ script: OPEN_TAB, args: [GECKO_ID, 'popup.html'] })
-		expect(bodies).toContainEqual({ handle: 'h2' })
-		expect(calls.indexOf('POST http://driver/session/s1/window')).toBeLessThan(calls.indexOf('POST http://driver/session/s1/execute/async'))
+		expect(bodies).toContainEqual({ script: ASK_BACKGROUND, args: [] })
+		expect(calls.lastIndexOf('POST http://driver/session/s1/moz/context')).toBeLessThan(calls.indexOf('POST http://driver/session/s1/execute/async'))
+		expect(bodies).not.toContainEqual({ context: 'content' })
 		expect(logged()).toEqual(expect.arrayContaining([`Installed /abs/.output/firefox-mv2 as ${GECKO_ID}`, 'The background is running', `Opened moz-extension://${UUID}/popup.html`, 'The background answered settings.get: {"theme":"system"}']))
 		expect(calls.at(-1)).toBe('DELETE http://driver/session/s1')
 	})
@@ -136,11 +146,6 @@ describe('smoke', () => {
 		await expect(smoke(options)).rejects.toThrow('at "open the popup page": no popup page to open: "not installed"')
 		expect(calls).not.toContain('POST http://driver/session/s1/execute/async')
 		expect(calls).toContain('DELETE http://driver/session/s1')
-	})
-
-	it('fails when the popup tab never appears', async () => {
-		fakeDriver({ 'GET http://driver/session/s1/window/handles': () => ({ value: ['h1'] }) })
-		await expect(smoke(options)).rejects.toThrow('at "open the popup page": no new tab opened within 20 ms: ["h1"]')
 	})
 
 	it('asks again when the page is not ready yet', async () => {
