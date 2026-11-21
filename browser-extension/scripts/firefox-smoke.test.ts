@@ -82,6 +82,9 @@ describe('ASK_BACKGROUND', () => {
 		expect(result).toEqual({ ok: true, reply: {}, error: undefined })
 		vi.stubGlobal('window', { wrappedJSObject: {} })
 		expect(await new Promise((resolve) => new Function(ASK_BACKGROUND).call(null, resolve))).toEqual({ ok: false, error: 'no browser API on the page' })
+		vi.stubGlobal('location', { href: 'about:blank' })
+		expect(await new Promise((resolve) => new Function(ASK_BACKGROUND).call(null, resolve))).toEqual({ ok: false, error: 'no browser API on about:blank' })
+		vi.unstubAllGlobals()
 	})
 
 	it.each([
