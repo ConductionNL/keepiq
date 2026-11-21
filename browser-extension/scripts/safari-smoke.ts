@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { promisify } from 'node:util'
-import { command, type DriverOptions, endSession, newSession, step as driverStep, waitUntilUp } from './webdriver'
+import { command, type DriverOptions, endSession, newSession, step as driverStep, waitUntilUp } from './webdriver.ts'
 
 export interface SmokeOptions extends DriverOptions {
 	extensionPath: string
