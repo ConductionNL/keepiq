@@ -80,6 +80,9 @@ describe('openedExtensionPage', () => {
 /** The browser window the chrome context sees, with `page` as the selected tab's content window. */
 function stubPage(page: object | null) {
 	vi.stubGlobal('Services', { wm: { getMostRecentWindow: () => ({ gBrowser: { selectedBrowser: { contentWindow: page } } }) } })
+	const cu = { cloneInto: vi.fn((value: unknown) => value), exportFunction: vi.fn((fn: unknown, _scope: unknown) => fn) }
+	vi.stubGlobal('Cu', cu)
+	return cu
 }
 
 const popup = (browser: object | undefined, href = 'moz-extension://x/popup.html', readyState = 'complete') =>
@@ -91,9 +94,13 @@ describe('ASK_BACKGROUND', () => {
 	it('sends the read-only settings.get through the popup page\'s own browser and hands back a copy of the reply', async () => {
 		const reply = { theme: 'system' }
 		const sendMessage = vi.fn(async () => reply)
-		stubPage(popup({ runtime: { sendMessage } }))
+		const page = popup({ runtime: { sendMessage } })
+		const cu = stubPage(page)
 		const result = await ask() as { reply: unknown }
 		expect(sendMessage).toHaveBeenCalledWith({ kind: 'settings.get' })
+		expect(cu.cloneInto).toHaveBeenCalledWith({ kind: 'settings.get' }, page)
+		expect(cu.exportFunction).toHaveBeenCalledTimes(2)
+		expect(cu.exportFunction.mock.calls.every((call) => call[1] === page)).toBe(true)
 		expect(result).toEqual({ ok: true, reply: { theme: 'system' }, error: undefined })
 		expect(result.reply).not.toBe(reply)
 	})

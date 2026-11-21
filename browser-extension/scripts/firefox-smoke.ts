@@ -60,9 +60,10 @@ if (!page) return done({ ok: false, error: 'the popup page runs out of process' 
 const href = String(page.location.href);
 const api = href.startsWith('moz-extension://') && page.document.readyState === 'complete' ? page.wrappedJSObject.browser : undefined;
 if (!api) return done({ ok: false, error: 'no browser API on ' + href });
-api.runtime.sendMessage({ kind: 'settings.get' }).then(
-	(reply) => done({ ok: reply !== undefined, reply: reply === undefined ? undefined : JSON.parse(JSON.stringify(reply)), error: reply === undefined ? 'no reply' : undefined }),
-	(error) => done({ ok: false, error: String(error) }),
+// The page's API refuses chrome objects, so the message and the callbacks are made the page's own.
+api.runtime.sendMessage(Cu.cloneInto({ kind: 'settings.get' }, page)).then(
+	Cu.exportFunction((reply) => done({ ok: reply !== undefined, reply: reply === undefined ? undefined : JSON.parse(JSON.stringify(reply)), error: reply === undefined ? 'no reply' : undefined }), page),
+	Cu.exportFunction((error) => done({ ok: false, error: String(error) }), page),
 );`
 
 /**
