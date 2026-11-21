@@ -118,9 +118,35 @@ export async function openPage(page: Page, url = '/inline-list.html'): Promise<v
 
 // A pick within 500 ms of the list showing is ignored without a word, so the pickers below retry until it lands.
 
+/**
+ * Whether the list shows the insecure-page question, which a login fill on the `http:` test site asks first (spec `health-site-checks`).
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
+export async function insecureQuestionOpen(page: Page): Promise<boolean> {
+	return (await listFrame(page)?.locator('[role=alertdialog]').count().catch(() => 0) ?? 0) > 0
+}
+
+/**
+ * Answers the insecure-page question with a real click on Fill, as a user's; false when no question is open.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
+export async function answerInsecure(page: Page): Promise<boolean> {
+	if (!(await insecureQuestionOpen(page))) return false
+	const box = await listFrame(page)?.locator('[role=alertdialog] button.btn--primary').boundingBox({ timeout: 1000 }).catch(() => null)
+	if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+	return true
+}
+
+/**
+ * The test site is on `http:`, so the pick asks first; Fill on the question, behind the same guard, fills.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
 export async function mousePickFills(page: Page, field: Locator): Promise<void> {
 	await expect(async () => {
-		if ((await values(field))[0] !== LOGIN.username) await clickFirstRow(page)
+		if ((await values(field))[0] !== LOGIN.username && !(await answerInsecure(page))) await clickFirstRow(page)
 		await expect.poll(() => values(field), { timeout: 1000 }).toEqual(FILLED)
 	}).toPass()
 }
@@ -163,8 +189,33 @@ export async function keyboardPick(page: Page, done: () => Promise<boolean>): Pr
 	}).toPass()
 }
 
+/**
+ * Whether focus in the list is on the question's Fill button.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
+const fillFocused = async (page: Page) => await listFrame(page)?.evaluate(() => document.activeElement?.classList.contains('btn--primary') === true).catch(() => false) ?? false
+
+/**
+ * Enter on the first row, then, as the `http:` test site asks first, Tab from Cancel to Fill and Enter.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
 export async function keyboardPickFills(page: Page, field: Locator): Promise<void> {
-	await keyboardPick(page, async () => (await values(field))[0] === LOGIN.username)
+	await focusFirstRow(page)
+	await expect(async () => {
+		if ((await values(field))[0] !== LOGIN.username) {
+			if (await insecureQuestionOpen(page)) {
+				if (!(await fillFocused(page))) await page.keyboard.press('Tab')
+				expect(await fillFocused(page)).toBe(true)
+			} else {
+				// Enter outside the list would submit the page's form.
+				expect(await listFocus(page)).toBe('option')
+			}
+			await page.keyboard.press('Enter')
+		}
+		await expect.poll(async () => (await values(field))[0], { timeout: 1000 }).toBe(LOGIN.username)
+	}).toPass()
 	expect(await values(field)).toEqual(FILLED)
 }
 

@@ -2,7 +2,7 @@
  * TOTP autofill in real Chromium (spec `totp-autofill`): the list on a code field, its pick in each layout of the
  * test site, and the code the page then accepts as right for its key.
  */
-import { clickField, expect, holds, listFrame, listOpen, listText, test } from './fixtures'
+import { answerInsecure, clickField, expect, holds, listFrame, listOpen, listText, test } from './fixtures'
 import type { Locator, Page } from '@playwright/test'
 
 test.use({ totp: true })
@@ -10,11 +10,16 @@ test.use({ totp: true })
 const codeInputs = (page: Page) => page.locator('[data-code]')
 const typed = async (page: Page) => (await codeInputs(page).evaluateAll((inputs: HTMLInputElement[]) => inputs.map((input) => input.value))).join('')
 
-/** Clicks the code row, retrying while the list's 500 ms guard ignores it, until the page's inputs hold the code. */
+/**
+ * Clicks the code row, and Fill on the insecure-page question, retrying while the list's 500 ms guard ignores it, until the page's inputs hold the code.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
 async function pickCode(page: Page, field: Locator): Promise<void> {
 	await clickField(page, field)
 	await expect(async () => {
-		if ((await typed(page)).length < 6) {
+		// The test site is on `http:`, so the pick asks first; Fill on the question fills.
+		if ((await typed(page)).length < 6 && !(await answerInsecure(page))) {
 			const box = await listFrame(page)?.locator('[role=option]').first().boundingBox({ timeout: 1000 }).catch(() => null)
 			if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
 		}
@@ -50,7 +55,7 @@ test('a login pick on a form with a code field fills the code too', async ({ pag
 	const username = page.locator('input[name=username]')
 	await clickField(page, username)
 	await expect(async () => {
-		if (await username.inputValue() === '') {
+		if (await username.inputValue() === '' && !(await answerInsecure(page))) {
 			const box = await listFrame(page)?.locator('[role=option]').first().boundingBox({ timeout: 1000 }).catch(() => null)
 			if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
 		}
