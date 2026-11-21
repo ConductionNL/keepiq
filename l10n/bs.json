@@ -2074,7 +2074,8 @@
         "Upload failed": "Otpremanje nije uspjelo",
         "Folders cannot be attached. Drop the files inside them instead.": "Mape se ne mogu priložiti. Umjesto toga ispustite datoteke iz njih.",
         "Files cannot be added while you are offline. Remove them to save.": "Datoteke se ne mogu dodati dok ste van mreže. Uklonite ih da biste spremili.",
-        "Files can only be added to a secret you own. Remove them to save.": "Datoteke se mogu dodati samo tajni koju posjedujete. Uklonite ih da biste spremili."
+        "Files can only be added to a secret you own. Remove them to save.": "Datoteke se mogu dodati samo tajni koju posjedujete. Uklonite ih da biste spremili.",
+        "Sharing options could not be loaded.": "Opcije dijeljenja nije bilo moguće učitati."
     },
     "plurals": null
 }

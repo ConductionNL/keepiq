@@ -1976,7 +1976,8 @@ OC.L10N.register(
         "Upload failed": "Uploaden mislukt",
         "Folders cannot be attached. Drop the files inside them instead.": "Mappen kunnen niet worden toegevoegd. Sleep in plaats daarvan de bestanden erin.",
         "Files cannot be added while you are offline. Remove them to save.": "Bestanden kunnen niet worden toegevoegd terwijl je offline bent. Verwijder ze om op te slaan.",
-        "Files can only be added to a secret you own. Remove them to save.": "Bestanden kunnen alleen worden toegevoegd aan een geheim dat van jou is. Verwijder ze om op te slaan."
+        "Files can only be added to a secret you own. Remove them to save.": "Bestanden kunnen alleen worden toegevoegd aan een geheim dat van jou is. Verwijder ze om op te slaan.",
+        "Sharing options could not be loaded.": "De deelopties konden niet worden geladen."
     },
     "nplurals=2; plural=(n != 1);"
 )

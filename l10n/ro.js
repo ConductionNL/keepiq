@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Încărcarea a eșuat",
         "Folders cannot be attached. Drop the files inside them instead.": "Folderele nu pot fi atașate. Plasați în schimb fișierele din ele.",
         "Files cannot be added while you are offline. Remove them to save.": "Nu se pot adăuga fișiere cât timp sunteți offline. Eliminați-le pentru a salva.",
-        "Files can only be added to a secret you own. Remove them to save.": "Fișierele pot fi adăugate doar la un secret care vă aparține. Eliminați-le pentru a salva."
+        "Files can only be added to a secret you own. Remove them to save.": "Fișierele pot fi adăugate doar la un secret care vă aparține. Eliminați-le pentru a salva.",
+        "Sharing options could not be loaded.": "Opțiunile de partajare nu au putut fi încărcate."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

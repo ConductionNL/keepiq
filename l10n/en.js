@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Upload failed",
         "Folders cannot be attached. Drop the files inside them instead.": "Folders cannot be attached. Drop the files inside them instead.",
         "Files can only be added to a secret you own. Remove them to save.": "Files can only be added to a secret you own. Remove them to save.",
-        "Files cannot be added while you are offline. Remove them to save.": "Files cannot be added while you are offline. Remove them to save."
+        "Files cannot be added while you are offline. Remove them to save.": "Files cannot be added while you are offline. Remove them to save.",
+        "Sharing options could not be loaded.": "Sharing options could not be loaded."
     },
     "nplurals=2; plural=(n != 1);"
 )

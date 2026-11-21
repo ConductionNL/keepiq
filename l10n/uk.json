@@ -2074,7 +2074,8 @@
         "Upload failed": "Не вдалося завантажити",
         "Folders cannot be attached. Drop the files inside them instead.": "Теки не можна долучити. Натомість перетягніть файли з них.",
         "Files cannot be added while you are offline. Remove them to save.": "Не можна додавати файли без підключення до мережі. Вилучіть їх, щоб зберегти.",
-        "Files can only be added to a secret you own. Remove them to save.": "Файли можна додавати лише до власного секрету. Вилучіть їх, щоб зберегти."
+        "Files can only be added to a secret you own. Remove them to save.": "Файли можна додавати лише до власного секрету. Вилучіть їх, щоб зберегти.",
+        "Sharing options could not be loaded.": "Не вдалося завантажити параметри спільного доступу."
     },
     "plurals": null
 }

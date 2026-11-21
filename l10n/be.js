@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Не ўдалося запампаваць",
         "Folders cannot be attached. Drop the files inside them instead.": "Папкі нельга далучыць. Перацягніце файлы з іх.",
         "Files cannot be added while you are offline. Remove them to save.": "Файлы нельга дадаць, пакуль вы па-за сеткай. Выдаліце іх, каб захаваць.",
-        "Files can only be added to a secret you own. Remove them to save.": "Файлы можна дадаваць толькі да ўласнага сакрэту. Выдаліце іх, каб захаваць."
+        "Files can only be added to a secret you own. Remove them to save.": "Файлы можна дадаваць толькі да ўласнага сакрэту. Выдаліце іх, каб захаваць.",
+        "Sharing options could not be loaded.": "Не ўдалося загрузіць параметры абагульвання."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

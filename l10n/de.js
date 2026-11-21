@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Hochladen fehlgeschlagen",
         "Folders cannot be attached. Drop the files inside them instead.": "Ordner können nicht angehängt werden. Legen Sie stattdessen die Dateien darin ab.",
         "Files cannot be added while you are offline. Remove them to save.": "Dateien können offline nicht hinzugefügt werden. Entfernen Sie sie, um zu speichern.",
-        "Files can only be added to a secret you own. Remove them to save.": "Dateien können nur zu einem eigenen Geheimnis hinzugefügt werden. Entfernen Sie sie, um zu speichern."
+        "Files can only be added to a secret you own. Remove them to save.": "Dateien können nur zu einem eigenen Geheimnis hinzugefügt werden. Entfernen Sie sie, um zu speichern.",
+        "Sharing options could not be loaded.": "Die Optionen zum Teilen konnten nicht geladen werden."
     },
     "nplurals=2; plural=(n != 1);"
 )

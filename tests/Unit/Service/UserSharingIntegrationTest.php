@@ -370,6 +370,9 @@ class UserSharingIntegrationTest extends TestCase {
 		$shareRow->setSecretId('c-1');
 		$shareTargetMapper->method('findBySourceSecretAndTargetUser')
 			->willReturn($shareRow);
+		// s-1 is an original, no received copy.
+		$shareTargetMapper->method('findByRecipientSecret')
+			->willThrowException(new DoesNotExistException('none'));
 
 		$mapper->expects($this->once())->method('insert')->willReturnArgument(0);
 		$row = $service->createAdminHandover(

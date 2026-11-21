@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Upload mislykkedes",
         "Folders cannot be attached. Drop the files inside them instead.": "Mapper kan ikke vedhæftes. Slip i stedet filerne i dem.",
         "Files cannot be added while you are offline. Remove them to save.": "Filer kan ikke tilføjes, mens du er offline. Fjern dem for at gemme.",
-        "Files can only be added to a secret you own. Remove them to save.": "Filer kan kun tilføjes til en hemmelighed, du ejer. Fjern dem for at gemme."
+        "Files can only be added to a secret you own. Remove them to save.": "Filer kan kun tilføjes til en hemmelighed, du ejer. Fjern dem for at gemme.",
+        "Sharing options could not be loaded.": "Delingsindstillingerne kunne ikke indlæses."
     },
     "nplurals=2; plural=(n != 1);"
 )

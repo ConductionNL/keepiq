@@ -95,6 +95,30 @@ describe('GroupShareList', () => {
 		)
 	})
 
+	it("lists a delegate's source and shares from their copy", async () => {
+		const fetch = vi
+			.spyOn(useGroupShareStore(), 'fetchGroupShares')
+			.mockResolvedValue()
+		const wrapper = mount(GroupShareList, {
+			props: { secretId: 'copy-1', sourceSecretId: 'src-1' },
+		})
+		await flushPromises()
+		expect(fetch).toHaveBeenCalledWith('src-1')
+
+		// The form shares from the copy, the one the delegate can decrypt.
+		await wrapper.find('[data-testid="group-share-open-form"]').trigger('click')
+		expect(
+			wrapper.findComponent({ name: 'GroupShareForm' }).props('secretId'),
+		).toBe('copy-1')
+
+		await wrapper.setProps({ secretId: 'copy-2', sourceSecretId: 'src-2' })
+		await flushPromises()
+		expect(fetch).toHaveBeenLastCalledWith('src-2')
+		expect(wrapper.findComponent({ name: 'GroupShareForm' }).exists()).toBe(
+			false,
+		)
+	})
+
 	it('revokes a group share', async () => {
 		const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: {} })
 		const wrapper = mount(GroupShareList, { props: { secretId: 's-1' } })

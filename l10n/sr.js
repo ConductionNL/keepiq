@@ -1971,7 +1971,8 @@ OC.L10N.register(
         "Upload failed": "Отпремање није успело",
         "Folders cannot be attached. Drop the files inside them instead.": "Фасцикле се не могу приложити. Уместо тога превуците датотеке из њих.",
         "Files cannot be added while you are offline. Remove them to save.": "Датотеке се не могу додати док сте ван мреже. Уклоните их да бисте сачували.",
-        "Files can only be added to a secret you own. Remove them to save.": "Датотеке се могу додати само тајни коју поседујете. Уклоните их да бисте сачували."
+        "Files can only be added to a secret you own. Remove them to save.": "Датотеке се могу додати само тајни коју поседујете. Уклоните их да бисте сачували.",
+        "Sharing options could not be loaded.": "Опције дељења није било могуће учитати."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
