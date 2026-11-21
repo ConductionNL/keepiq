@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { answered, ASK_BACKGROUND, GECKO_ID, sessionCapabilities, smoke, type FirefoxSmokeOptions } from './firefox-smoke'
+import { answered, ASK_BACKGROUND, BACKGROUND_STATE, GECKO_ID, OPEN_TAB, sessionCapabilities, smoke, type FirefoxSmokeOptions } from './firefox-smoke'
 
 const UUID = '0b6f2a3c-1d4e-4f5a-8b6c-7d8e9f0a1b2c'
 const options: FirefoxSmokeOptions = { driver: 'http://driver', extensionPath: '/abs/.output/firefox-mv2', uuid: UUID, upMs: 20, pollMs: 1, requestMs: 1_000 }
@@ -9,13 +9,17 @@ type Route = (body: Record<string, unknown> | undefined) => { status?: number; v
 
 /** geckodriver as `fetch` sees it; `routes` overrides a `METHOD path`. */
 function fakeDriver(routes: Record<string, Route> = {}) {
+	let handlesCalls = 0
 	const calls: string[] = []
 	const bodies: Record<string, unknown>[] = []
 	const defaults: Record<string, Route> = {
 		'GET http://driver/status': () => ({ value: { ready: true } }),
 		'POST http://driver/session': () => ({ value: { sessionId: 's1', capabilities: {} } }),
 		'POST http://driver/session/s1/moz/addon/install': () => ({ value: GECKO_ID }),
-		'POST http://driver/session/s1/url': () => ({ value: null }),
+		'POST http://driver/session/s1/moz/context': () => ({ value: null }),
+		'POST http://driver/session/s1/execute/sync': (body) => ({ value: body?.script === BACKGROUND_STATE ? 'running' : true }),
+		'GET http://driver/session/s1/window/handles': () => ({ value: handlesCalls++ === 0 ? ['h1'] : ['h1', 'h2'] }),
+		'POST http://driver/session/s1/window': () => ({ value: null }),
 		'POST http://driver/session/s1/execute/async': () => ({ value: { ok: true, reply: { theme: 'system' } } }),
 		'DELETE http://driver/session/s1': () => ({ value: null }),
 	}
@@ -52,7 +56,7 @@ describe('sessionCapabilities', () => {
 	it('asks for headless Firefox with the extension host fixed to the uuid', () => {
 		const firefox = (sessionCapabilities(UUID) as { capabilities: { alwaysMatch: Record<string, { args: string[]; prefs: Record<string, string> }> } })
 			.capabilities.alwaysMatch['moz:firefoxOptions']!
-		expect(firefox.args).toEqual(['-headless'])
+		expect(firefox.args).toEqual(['-headless', '-remote-allow-system-access'])
 		expect(JSON.parse(firefox.prefs['extensions.webextensions.uuids']!)).toEqual({ [GECKO_ID]: UUID })
 	})
 })
@@ -81,14 +85,38 @@ describe('ASK_BACKGROUND', () => {
 })
 
 describe('smoke', () => {
-	it('installs the build as a temporary add-on, opens its popup, needs the background to answer and ends the session', async () => {
+	it('installs the build as a temporary add-on, needs the background running, opens its popup in a new tab, needs its answer and ends the session', async () => {
 		const { calls, bodies } = fakeDriver()
 		await smoke(options)
 		expect(bodies).toContainEqual({ path: '/abs/.output/firefox-mv2', temporary: true })
-		expect(bodies).toContainEqual({ url: `moz-extension://${UUID}/popup.html` })
-		expect(logged()).toContain(`Installed /abs/.output/firefox-mv2 as ${GECKO_ID}`)
-		expect(logged()).toContain('The background answered settings.get: {"theme":"system"}')
+		expect(bodies).toContainEqual({ script: BACKGROUND_STATE, args: [GECKO_ID] })
+		expect(bodies).toContainEqual({ script: OPEN_TAB, args: [`moz-extension://${UUID}/popup.html`] })
+		expect(bodies).toContainEqual({ handle: 'h2' })
+		expect(calls.indexOf('POST http://driver/session/s1/window')).toBeLessThan(calls.indexOf('POST http://driver/session/s1/execute/async'))
+		expect(logged()).toEqual(expect.arrayContaining([`Installed /abs/.output/firefox-mv2 as ${GECKO_ID}`, 'The background is running', 'The background answered settings.get: {"theme":"system"}']))
 		expect(calls.at(-1)).toBe('DELETE http://driver/session/s1')
+	})
+
+	it('waits while the background starts, and fails naming its last state when it never runs', async () => {
+		let state = 0
+		fakeDriver({ 'POST http://driver/session/s1/execute/sync': (body) => ({ value: body?.script === BACKGROUND_STATE ? (++state < 3 ? 'starting' : 'running') : true }) })
+		await smoke({ ...options, upMs: 1_000 })
+		expect(state).toBe(3)
+		const { calls } = fakeDriver({ 'POST http://driver/session/s1/execute/sync': () => ({ value: 'stopped' }) })
+		await expect(smoke(options)).rejects.toThrow('Firefox smoke test failed at "start the background": the background is not running within 20 ms: "stopped"')
+		expect(calls).not.toContain('POST http://driver/session/s1/execute/async')
+	})
+
+	it('fails when the popup tab never appears', async () => {
+		fakeDriver({ 'GET http://driver/session/s1/window/handles': () => ({ value: ['h1'] }) })
+		await expect(smoke(options)).rejects.toThrow('at "open the popup page": no new tab opened within 20 ms: ["h1"]')
+	})
+
+	it('asks again when the page is not ready yet', async () => {
+		let asked = 0
+		fakeDriver({ 'POST http://driver/session/s1/execute/async': () => (++asked < 2 ? { status: 500, value: { error: 'javascript error', message: 'browser is not defined' } } : { value: { ok: true, reply: {} } }) })
+		await smoke({ ...options, upMs: 1_000 })
+		expect(asked).toBe(2)
 	})
 
 	it('asks again while the background is starting', async () => {
@@ -109,7 +137,7 @@ describe('smoke', () => {
 	it('fails when the add-on installs under another id', async () => {
 		const { calls } = fakeDriver({ 'POST http://driver/session/s1/moz/addon/install': () => ({ value: 'other@example.org' }) })
 		await expect(smoke(options)).rejects.toThrow(`installed as "other@example.org", not ${GECKO_ID}`)
-		expect(calls).not.toContain('POST http://driver/session/s1/url')
+		expect(calls).not.toContain('POST http://driver/session/s1/moz/context')
 		expect(calls).toContain('DELETE http://driver/session/s1')
 	})
 
@@ -125,8 +153,8 @@ describe('smoke', () => {
 
 	it('cuts off a request Firefox never answers', async () => {
 		vi.spyOn(console, 'warn').mockImplementation(() => {})
-		fakeDriver({ 'POST http://driver/session/s1/url': () => 'hang', 'DELETE http://driver/session/s1': () => 'hang' })
-		await expect(smoke({ ...options, requestMs: 20 })).rejects.toThrow('POST /session/s1/url: no answer within 20 ms')
+		fakeDriver({ 'POST http://driver/session/s1/moz/addon/install': () => 'hang', 'DELETE http://driver/session/s1': () => 'hang' })
+		await expect(smoke({ ...options, requestMs: 20 })).rejects.toThrow('POST /session/s1/moz/addon/install: no answer within 20 ms')
 	})
 
 	it('fails when geckodriver does not answer', async () => {

@@ -1,7 +1,8 @@
 /**
- * Loads `.output/firefox-mv2` into headless Firefox over geckodriver and requires its background to answer a request
- * from the extension's own popup page (spec `clients-browser-builds` § Firefox starts the background, task 2.1 of `clients-extension-firefox-and-safari-builds`).
- * Playwright cannot load a WebExtension into Firefox, so this speaks WebDriver classic to geckodriver directly.
+ * Loads `.output/firefox-mv2` into headless Firefox over geckodriver, requires its background to be running and to
+ * answer a request from the extension's own popup page (spec `clients-browser-builds` § Firefox starts the background, task 2.1 of `clients-extension-firefox-and-safari-builds`).
+ * Playwright cannot load a WebExtension into Firefox, so this speaks WebDriver classic to geckodriver directly. WebDriver
+ * may not navigate to a `moz-extension://` page, so the chrome context opens the popup in a tab of its own.
  * Expects `geckodriver --port 4444` running; `npm run test:firefox-smoke`.
  */
 import { randomUUID } from 'node:crypto'
@@ -34,7 +35,8 @@ export function sessionCapabilities(uuid: string): object {
 			alwaysMatch: {
 				browserName: 'firefox',
 				'moz:firefoxOptions': {
-					args: ['-headless'],
+					// System access lets the chrome context read the background's state and open the popup page.
+					args: ['-headless', '-remote-allow-system-access'],
 					prefs: { 'extensions.webextensions.uuids': JSON.stringify({ [GECKO_ID]: uuid }) },
 				},
 			},
@@ -63,22 +65,71 @@ export function answered(value: unknown): value is { ok: true; reply: unknown } 
 }
 
 /**
- * Asks the background from the popup page until it answers, or fails after `upMs` with the last reason.
+ * Chrome context: the extension's background state (`running` once its script ran), or why there is none.
  *
  * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
  */
-async function askBackground(options: FirefoxSmokeOptions, sessionId: string): Promise<unknown> {
+export const BACKGROUND_STATE = `const policy = WebExtensionPolicy.getByID(arguments[0]);
+if (!policy) return 'not installed';
+return policy.extension?.backgroundState ?? 'no background state';`
+
+/**
+ * Chrome context: opens `arguments[0]` in a new tab of the browser window, as the system, and selects it.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
+export const OPEN_TAB = `const win = Services.wm.getMostRecentWindow('navigator:browser');
+const tab = win.gBrowser.addTab(arguments[0], { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
+win.gBrowser.selectedTab = tab;
+return true;`
+
+/**
+ * Runs `script` with `args` in the chrome or the content context, and returns its value.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
+async function inContext(options: FirefoxSmokeOptions, sessionId: string, context: 'chrome' | 'content', script: string, args: unknown[]): Promise<unknown> {
+	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context })
+	return await command(options, 'POST', `/session/${sessionId}/execute/sync`, { script, args })
+}
+
+/**
+ * Calls `attempt` until `done` holds for its value, or fails after `upMs` with the last value or error.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
+async function until(options: FirefoxSmokeOptions, what: string, attempt: () => Promise<unknown>, done: (value: unknown) => boolean): Promise<unknown> {
 	const deadline = Date.now() + options.upMs
 	for (;;) {
-		const value = await command(options, 'POST', `/session/${sessionId}/execute/async`, { script: ASK_BACKGROUND, args: [] })
-		if (answered(value)) return value.reply
-		if (Date.now() >= deadline) throw new Error(`the background did not answer within ${options.upMs} ms: ${JSON.stringify(value)}`)
+		let last: unknown
+		try {
+			last = await attempt()
+			if (done(last)) return last
+		} catch (error) {
+			last = error instanceof Error ? error.message : String(error)
+		}
+		if (Date.now() >= deadline) throw new Error(`${what} within ${options.upMs} ms: ${JSON.stringify(last)}`)
 		await sleep(options.pollMs)
 	}
 }
 
 /**
- * Installs the build as a temporary add-on, opens its popup page and requires the background's answer.
+ * Opens the popup page in a new tab from the chrome context and moves WebDriver onto that tab.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
+async function openPopup(options: FirefoxSmokeOptions, sessionId: string): Promise<void> {
+	const before = await command(options, 'GET', `/session/${sessionId}/window/handles`) as string[]
+	await inContext(options, sessionId, 'chrome', OPEN_TAB, [`moz-extension://${options.uuid}/popup.html`])
+	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context: 'content' })
+	const handles = await until(options, 'no new tab opened', () => command(options, 'GET', `/session/${sessionId}/window/handles`),
+		(value) => Array.isArray(value) && value.length > before.length) as string[]
+	await command(options, 'POST', `/session/${sessionId}/window`, { handle: handles.find((handle) => !before.includes(handle)) })
+}
+
+/**
+ * Installs the build as a temporary add-on, requires its background running, opens its popup page and requires the
+ * background's answer to it.
  *
  * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
  */
@@ -90,9 +141,13 @@ export async function smoke(options: FirefoxSmokeOptions): Promise<void> {
 			command(options, 'POST', `/session/${sessionId}/moz/addon/install`, { path: options.extensionPath, temporary: true }))
 		if (addonId !== GECKO_ID) throw new Error(`Firefox smoke test failed at "install the extension": installed as ${JSON.stringify(addonId)}, not ${GECKO_ID}`)
 		console.log(`Installed ${options.extensionPath} as ${GECKO_ID}`)
-		await step('open the popup page', () => command(options, 'POST', `/session/${sessionId}/url`, { url: `moz-extension://${options.uuid}/popup.html` }))
-		const reply = await step('ask the background', () => askBackground(options, sessionId))
-		console.log(`The background answered settings.get: ${JSON.stringify(reply)}`)
+		await step('start the background', () => until(options, 'the background is not running',
+			() => inContext(options, sessionId, 'chrome', BACKGROUND_STATE, [GECKO_ID]), (state) => state === 'running'))
+		console.log('The background is running')
+		await step('open the popup page', () => openPopup(options, sessionId))
+		const answer = await step('ask the background', () => until(options, 'the background did not answer',
+			() => command(options, 'POST', `/session/${sessionId}/execute/async`, { script: ASK_BACKGROUND, args: [] }), answered))
+		console.log(`The background answered settings.get: ${JSON.stringify((answer as { reply: unknown }).reply)}`)
 	} finally {
 		await endSession(options, sessionId)
 	}
