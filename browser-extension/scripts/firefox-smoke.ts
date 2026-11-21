@@ -107,13 +107,23 @@ export function openedExtensionPage(value: unknown): value is string {
 }
 
 /**
- * Runs `script` with `args` in the chrome context, and returns its value; an `async` script hands it to its last argument.
+ * Runs `script` with `args` in the chrome context, and returns its value.
  *
  * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
  */
-async function inChrome(options: FirefoxSmokeOptions, sessionId: string, script: string, args: unknown[], mode: 'sync' | 'async' = 'sync'): Promise<unknown> {
+async function inChrome(options: FirefoxSmokeOptions, sessionId: string, script: string, args: unknown[]): Promise<unknown> {
 	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context: 'chrome' })
-	return await command(options, 'POST', `/session/${sessionId}/execute/${mode}`, { script, args })
+	return await command(options, 'POST', `/session/${sessionId}/execute/sync`, { script, args })
+}
+
+/**
+ * Runs `script` in the chrome context without arguments, and returns the value it hands to its callback.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
+async function inChromeAsync(options: FirefoxSmokeOptions, sessionId: string, script: string): Promise<unknown> {
+	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context: 'chrome' })
+	return await command(options, 'POST', `/session/${sessionId}/execute/async`, { script, args: [] })
 }
 
 /**
@@ -166,7 +176,7 @@ export async function smoke(options: FirefoxSmokeOptions): Promise<void> {
 		console.log('The background is running')
 		await step('open the popup page', () => openPopup(options, sessionId))
 		const answer = await step('ask the background', () => until(options, 'the background did not answer',
-			() => inChrome(options, sessionId, ASK_BACKGROUND, [], 'async'), answered))
+			() => inChromeAsync(options, sessionId, ASK_BACKGROUND), answered))
 		console.log(`The background answered settings.get: ${JSON.stringify((answer as { reply: unknown }).reply)}`)
 	} finally {
 		await endSession(options, sessionId)
