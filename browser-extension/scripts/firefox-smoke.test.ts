@@ -75,6 +75,15 @@ describe('ASK_BACKGROUND', () => {
 		expect(result).toEqual({ ok: true, reply: { theme: 'system' }, error: undefined })
 	})
 
+	it('reads the page\'s browser through wrappedJSObject, and fails without one', async () => {
+		const sendMessage = vi.fn(async () => ({}))
+		vi.stubGlobal('window', { wrappedJSObject: { browser: { runtime: { sendMessage } } } })
+		const result = await new Promise((resolve) => new Function(ASK_BACKGROUND).call(null, resolve))
+		expect(result).toEqual({ ok: true, reply: {}, error: undefined })
+		vi.stubGlobal('window', { wrappedJSObject: {} })
+		expect(await new Promise((resolve) => new Function(ASK_BACKGROUND).call(null, resolve))).toEqual({ ok: false, error: 'no browser API on the page' })
+	})
+
 	it.each([
 		['no listener answered', async () => undefined, { ok: false, reply: undefined, error: 'no reply' }],
 		['the message failed', async () => { throw new Error('Could not establish connection. Receiving end does not exist.') }, { ok: false, error: 'Error: Could not establish connection. Receiving end does not exist.' }],

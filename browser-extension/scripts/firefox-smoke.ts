@@ -50,7 +50,10 @@ export function sessionCapabilities(uuid: string): object {
  * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
  */
 export const ASK_BACKGROUND = `const done = arguments[arguments.length - 1];
-browser.runtime.sendMessage({ kind: 'settings.get' }).then(
+// WebDriver's sandbox sees the page through Xray wrappers, which hide the page's own \`browser\`.
+const api = (typeof window !== 'undefined' && window.wrappedJSObject && window.wrappedJSObject.browser) || (typeof browser !== 'undefined' ? browser : undefined);
+if (!api) return done({ ok: false, error: 'no browser API on the page' });
+api.runtime.sendMessage({ kind: 'settings.get' }).then(
 	(reply) => done({ ok: reply !== undefined, reply, error: reply === undefined ? 'no reply' : undefined }),
 	(error) => done({ ok: false, error: String(error) }),
 );`
