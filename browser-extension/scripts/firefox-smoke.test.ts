@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { answered, ASK_BACKGROUND, BACKGROUND_STATE, GECKO_ID, OPEN_TAB, sessionCapabilities, smoke, type FirefoxSmokeOptions } from './firefox-smoke'
+import { answered, ASK_BACKGROUND, BACKGROUND_STATE, GECKO_ID, OPEN_TAB, openedExtensionPage, sessionCapabilities, smoke, type FirefoxSmokeOptions } from './firefox-smoke'
 
 const UUID = '0b6f2a3c-1d4e-4f5a-8b6c-7d8e9f0a1b2c'
 const options: FirefoxSmokeOptions = { driver: 'http://driver', extensionPath: '/abs/.output/firefox-mv2', uuid: UUID, upMs: 20, pollMs: 1, requestMs: 1_000 }
@@ -17,7 +17,7 @@ function fakeDriver(routes: Record<string, Route> = {}) {
 		'POST http://driver/session': () => ({ value: { sessionId: 's1', capabilities: {} } }),
 		'POST http://driver/session/s1/moz/addon/install': () => ({ value: GECKO_ID }),
 		'POST http://driver/session/s1/moz/context': () => ({ value: null }),
-		'POST http://driver/session/s1/execute/sync': (body) => ({ value: body?.script === BACKGROUND_STATE ? 'running' : true }),
+		'POST http://driver/session/s1/execute/sync': (body) => ({ value: body?.script === BACKGROUND_STATE ? 'running' : `moz-extension://${UUID}/popup.html` }),
 		'GET http://driver/session/s1/window/handles': () => ({ value: handlesCalls++ === 0 ? ['h1'] : ['h1', 'h2'] }),
 		'POST http://driver/session/s1/window': () => ({ value: null }),
 		'POST http://driver/session/s1/execute/async': () => ({ value: { ok: true, reply: { theme: 'system' } } }),
@@ -67,6 +67,18 @@ describe('answered', () => {
 	})
 })
 
+describe('openedExtensionPage', () => {
+	it.each([
+		[`moz-extension://${UUID}/popup.html`, true],
+		['not installed', false],
+		['about:blank', false],
+		[true, false],
+		[null, false],
+	])('%j is an opened extension page: %s', (value, expected) => {
+		expect(openedExtensionPage(value)).toBe(expected)
+	})
+})
+
 describe('ASK_BACKGROUND', () => {
 	it('sends the read-only settings.get and hands back the reply', async () => {
 		const sendMessage = vi.fn(async () => ({ theme: 'system' }))
@@ -102,21 +114,28 @@ describe('smoke', () => {
 		await smoke(options)
 		expect(bodies).toContainEqual({ path: '/abs/.output/firefox-mv2', temporary: true })
 		expect(bodies).toContainEqual({ script: BACKGROUND_STATE, args: [GECKO_ID] })
-		expect(bodies).toContainEqual({ script: OPEN_TAB, args: [`moz-extension://${UUID}/popup.html`] })
+		expect(bodies).toContainEqual({ script: OPEN_TAB, args: [GECKO_ID, 'popup.html'] })
 		expect(bodies).toContainEqual({ handle: 'h2' })
 		expect(calls.indexOf('POST http://driver/session/s1/window')).toBeLessThan(calls.indexOf('POST http://driver/session/s1/execute/async'))
-		expect(logged()).toEqual(expect.arrayContaining([`Installed /abs/.output/firefox-mv2 as ${GECKO_ID}`, 'The background is running', 'The background answered settings.get: {"theme":"system"}']))
+		expect(logged()).toEqual(expect.arrayContaining([`Installed /abs/.output/firefox-mv2 as ${GECKO_ID}`, 'The background is running', `Opened moz-extension://${UUID}/popup.html`, 'The background answered settings.get: {"theme":"system"}']))
 		expect(calls.at(-1)).toBe('DELETE http://driver/session/s1')
 	})
 
 	it('waits while the background starts, and fails naming its last state when it never runs', async () => {
 		let state = 0
-		fakeDriver({ 'POST http://driver/session/s1/execute/sync': (body) => ({ value: body?.script === BACKGROUND_STATE ? (++state < 3 ? 'starting' : 'running') : true }) })
+		fakeDriver({ 'POST http://driver/session/s1/execute/sync': (body) => ({ value: body?.script === BACKGROUND_STATE ? (++state < 3 ? 'starting' : 'running') : `moz-extension://${UUID}/popup.html` }) })
 		await smoke({ ...options, upMs: 1_000 })
 		expect(state).toBe(3)
 		const { calls } = fakeDriver({ 'POST http://driver/session/s1/execute/sync': () => ({ value: 'stopped' }) })
 		await expect(smoke(options)).rejects.toThrow('Firefox smoke test failed at "start the background": the background is not running within 20 ms: "stopped"')
 		expect(calls).not.toContain('POST http://driver/session/s1/execute/async')
+	})
+
+	it('fails, without asking, when the chrome context finds no popup page to open', async () => {
+		const { calls } = fakeDriver({ 'POST http://driver/session/s1/execute/sync': (body) => ({ value: body?.script === BACKGROUND_STATE ? 'running' : 'not installed' }) })
+		await expect(smoke(options)).rejects.toThrow('at "open the popup page": no popup page to open: "not installed"')
+		expect(calls).not.toContain('POST http://driver/session/s1/execute/async')
+		expect(calls).toContain('DELETE http://driver/session/s1')
 	})
 
 	it('fails when the popup tab never appears', async () => {

@@ -77,14 +77,26 @@ if (!policy) return 'not installed';
 return policy.extension?.backgroundState ?? 'no background state';`
 
 /**
- * Chrome context: opens `arguments[0]` in a new tab of the browser window, as the system, and selects it.
+ * Chrome context: opens the extension's page `arguments[1]` in a new trusted tab and selects it; returns its URL, or why
+ * there is none. The URL comes from the extension's own policy, since a guessed host left the tab on `about:blank`.
  *
  * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
  */
-export const OPEN_TAB = `const win = Services.wm.getMostRecentWindow('navigator:browser');
-const tab = win.gBrowser.addTab(arguments[0], { triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal() });
-win.gBrowser.selectedTab = tab;
-return true;`
+export const OPEN_TAB = `const policy = WebExtensionPolicy.getByID(arguments[0]);
+if (!policy) return 'not installed';
+const url = policy.getURL(arguments[1]);
+const win = Services.wm.getMostRecentWindow('navigator:browser');
+win.gBrowser.selectedTab = win.gBrowser.addTrustedTab(url);
+return url;`
+
+/**
+ * Whether `OPEN_TAB` answered a `moz-extension://` URL rather than a reason.
+ *
+ * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
+ */
+export function openedExtensionPage(value: unknown): value is string {
+	return typeof value === 'string' && value.startsWith('moz-extension://')
+}
 
 /**
  * Runs `script` with `args` in the chrome context, and returns its value.
@@ -123,7 +135,9 @@ async function until(options: FirefoxSmokeOptions, what: string, attempt: () => 
  */
 async function openPopup(options: FirefoxSmokeOptions, sessionId: string): Promise<void> {
 	const before = await command(options, 'GET', `/session/${sessionId}/window/handles`) as string[]
-	await inChrome(options, sessionId, OPEN_TAB, [`moz-extension://${options.uuid}/popup.html`])
+	const url = await inChrome(options, sessionId, OPEN_TAB, [GECKO_ID, 'popup.html'])
+	if (!openedExtensionPage(url)) throw new Error(`no popup page to open: ${JSON.stringify(url)}`)
+	console.log(`Opened ${url}`)
 	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context: 'content' })
 	const handles = await until(options, 'no new tab opened', () => command(options, 'GET', `/session/${sessionId}/window/handles`),
 		(value) => Array.isArray(value) && value.length > before.length) as string[]
