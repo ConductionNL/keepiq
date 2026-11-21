@@ -80,7 +80,7 @@ describe('openedExtensionPage', () => {
 /** The browser window the chrome context sees, with `page` as the selected tab's content window. */
 function stubPage(page: object | null) {
 	vi.stubGlobal('Services', { wm: { getMostRecentWindow: () => ({ gBrowser: { selectedBrowser: { contentWindow: page } } }) } })
-	const cu = { cloneInto: vi.fn((value: unknown) => value), exportFunction: vi.fn((fn: unknown, _scope: unknown) => fn) }
+	const cu = { cloneInto: vi.fn((value: unknown) => value), exportFunction: vi.fn<(fn: unknown, scope: unknown) => unknown>((fn) => fn) }
 	vi.stubGlobal('Cu', cu)
 	return cu
 }
