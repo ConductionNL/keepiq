@@ -11,6 +11,7 @@
  * store specs; the real crypto is covered in tests/vitest.
  *
  * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 
 import axios from '@nextcloud/axios'
@@ -84,21 +85,28 @@ describe('secret store: pending request-filled extra fields (keepiq#750)', () =>
 		expect(decrypted.mergedPending).toBe(0)
 	})
 
-	it('writes the merged blob back on open and says how many it merged', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({
-			data: served(['ENC({"C":"c"})']),
-		})
-		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: { id: 's1' } })
+	it('writes the merged blob back after opening and says how many it merged', async () => {
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => ({
+			data: url.endsWith('/write-context')
+				? { sourceSecretId: 's1', effectiveGrade: 'owner' }
+				: { ...served(['ENC({"C":"c"})']), updatedAt: 'v1' },
+		}))
+		const put = vi
+			.spyOn(axios, 'put')
+			.mockResolvedValue({ data: { secret: { id: 's1', updatedAt: 'v2' } } })
 
 		const store = useSecretStore()
 		const opened = await store.fetchSecret('s1')
+		expect(opened.additionalFields).toEqual({ A: 'a', B: 'b', C: 'c' })
 
+		// The write-back runs after the open, as a share save.
+		await vi.waitFor(() => expect(opened.mergedPending).toBe(0))
 		expect(put).toHaveBeenCalledTimes(1)
 		const body = put.mock.calls[0][1]
-		expect(body.additionalFields).toBe('ENC({"A":"a","B":"b","C":"c"})')
-		expect(body.mergedPending).toBe(1)
-		expect(opened.additionalFields).toEqual({ A: 'a', B: 'b', C: 'c' })
-		expect(opened.mergedPending).toBe(0)
+		expect(body.baseUpdatedAt).toBe('v1')
+		expect(body.patch.additionalFields).toBe('ENC({"A":"a","B":"b","C":"c"})')
+		expect(body.patch.mergedPending).toBe(1)
+		expect(opened.updatedAt).toBe('v2')
 	})
 
 	it('writes nothing back when nothing is pending', async () => {
@@ -108,5 +116,70 @@ describe('secret store: pending request-filled extra fields (keepiq#750)', () =>
 		await useSecretStore().fetchSecret('s1')
 
 		expect(put).not.toHaveBeenCalled()
+	})
+
+	it('keeps the owner’s schemas when a fill seals its own', async () => {
+		const decrypted = await useSecretStore().decryptSecret({
+			...served([
+				'ENC({"PIN":"1234","@schema":{"A":{"type":"string"},"PIN":{"type":"boolean"}}})',
+			]),
+			additionalFields:
+				'ENC({"A":"a","PIN":"","@schema":{"A":{"type":"string","hidden":true},"PIN":{"type":"string","pattern":"^[0-9]{4}$"}}})',
+		})
+
+		expect(decrypted.additionalFields).toEqual({
+			A: 'a',
+			PIN: '1234',
+			'@schema': {
+				A: { type: 'string', hidden: true },
+				PIN: { type: 'string', pattern: '^[0-9]{4}$' },
+			},
+		})
+	})
+})
+
+describe('secret store: the schemas a request carries', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		const session = useSessionStore()
+		session.certificate = 'PEM'
+		session.cryptoKey = { fake: 'unlocked' }
+	})
+
+	it('gives a filled field without a stored schema the one stored with its blob, never the fill’s', async () => {
+		const get = vi.spyOn(axios, 'get')
+		const decrypted = await useSecretStore().decryptSecret({
+			...served([
+				'ENC({"PIN":"1","@schema":{"PIN":{"type":"string"}}})',
+				'ENC({"A":"true"})',
+			]),
+			pendingFieldSchemas: [
+				{ PIN: { type: 'string', hidden: true } },
+				{ A: { type: 'boolean' } },
+			],
+		})
+
+		expect(decrypted.additionalFields).toEqual({
+			A: 'true',
+			B: 'b',
+			PIN: '1',
+			'@schema': {
+				PIN: { type: 'string', hidden: true },
+				A: { type: 'boolean' },
+			},
+		})
+		expect(decrypted.mergedPending).toBe(2)
+		// Nothing is read: the schemas came with the secret, also offline.
+		expect(get).not.toHaveBeenCalled()
+	})
+
+	it('merges a blob held back before schemas were stored as text', async () => {
+		const decrypted = await useSecretStore().decryptSecret(
+			served(['ENC({"PIN":"1234"})']),
+		)
+
+		expect(decrypted.additionalFields).toEqual({ A: 'a', B: 'b', PIN: '1234' })
+		expect(decrypted.mergedPending).toBe(1)
 	})
 })

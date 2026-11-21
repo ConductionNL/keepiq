@@ -43,9 +43,27 @@ kotlin {
     }
     // mobile/ios links this as KeepiqShared.xcframework.
     val xcframework = XCFramework("KeepiqShared")
-    // Argon2id on iOS: the reference C code, compiled per target into a
-    // static library that cinterop bundles into the klib (task 1.3.1).
-    val argon2Dir = layout.projectDirectory.dir("src/nativeInterop/argon2")
+    // Argon2id on iOS: the reference C code (P-H-C/phc-winner-argon2, CC0 or
+    // Apache 2.0), the pinned release source checked against its SHA-256,
+    // compiled per target into a static library that cinterop bundles into
+    // the klib (task 1.3.1).
+    val argon2Version = "20190702"
+    val argon2Sha256 = "daf972a89577f8772602bf2eb38b6a3dd3d922bf5724d45e7f9589b5e830442c"
+    val argon2Root = layout.buildDirectory.dir("argon2-source").get().asFile
+    val argon2Dir = layout.buildDirectory.dir("argon2-source/phc-winner-argon2-$argon2Version").get()
+    val argon2Source = tasks.register<Exec>("argon2Source") {
+        onlyIf { System.getProperty("os.name").startsWith("Mac") }
+        inputs.property("version", argon2Version)
+        inputs.property("sha256", argon2Sha256)
+        outputs.dir(argon2Dir)
+        commandLine(
+            "bash", "-c",
+            "set -euo pipefail; rm -rf '$argon2Root'; mkdir -p '$argon2Root'; cd '$argon2Root'; " +
+                "curl -fsSL -o src.tar.gz https://github.com/P-H-C/phc-winner-argon2/archive/refs/tags/$argon2Version.tar.gz; " +
+                "echo '$argon2Sha256  src.tar.gz' | shasum -a 256 -c -; " +
+                "tar xzf src.tar.gz; rm src.tar.gz",
+        )
+    }
     val argon2Sources = listOf("argon2.c", "core.c", "encoding.c", "ref.c", "thread.c", "blake2/blake2b.c")
     val iosTargets = mapOf(
         iosX64() to ("iphonesimulator" to "x86_64-apple-ios17.0-simulator"),
@@ -108,7 +126,7 @@ kotlin {
         val (sdk, triple) = toolchain
         val libDir = layout.buildDirectory.dir("argon2/${target.name}").get().asFile
         val buildArgon2 = tasks.register<Exec>("buildArgon2${target.name.replaceFirstChar { it.uppercase() }}") {
-            inputs.dir(argon2Dir)
+            inputs.files(argon2Source)
             outputs.dir(libDir)
             val src = argon2Dir.dir("src").asFile
             val include = argon2Dir.dir("include").asFile
@@ -326,6 +344,14 @@ tasks.named<Test>("jvmTest") {
 // The iOS simulator tests name every test in the CI log, so a store test
 // that did not run cannot pass for one that did (task 1.6.1).
 tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest>().configureEach {
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
+// Each test by name in the CI log (jvm, Android and the iOS simulator), so
+// a task's evidence is the test that ran, not only the task that passed.
+tasks.withType<org.gradle.api.tasks.testing.AbstractTestTask>().configureEach {
     testLogging {
         events("passed", "skipped", "failed")
     }

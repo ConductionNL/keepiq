@@ -40,7 +40,7 @@ The Generator tab MUST offer the sub-tabs Password, Passphrase and Username, ope
 - **THEN** a capitalised list word with four digits is shown
 
 ### Requirement: Password options
-The Password sub-tab MUST offer a length from 8 to 128 (default 14), toggles for uppercase, lowercase, numbers and special characters (on, on, on, off), minimum numbers and minimum special characters (0 to 9, default 1), and avoiding ambiguous characters (on; leaves out I, O, l, 0 and 1). At least one class MUST stay on, the length MUST grow to fit the minimums, and the org policy MUST be applied.
+The Password sub-tab MUST offer a length from 8 to 128 (default 14), toggles for uppercase, lowercase, numbers and special characters (on, on, on, off), minimum numbers and minimum special characters (0 to 9, default 1), and avoiding ambiguous characters (on; leaves out I, O, l, 0 and 1). At least one class MUST stay on, the length MUST grow to the sum of the minimums, counting one for every other chosen class (see extension-generator-policy), and the org policy MUST be applied.
 
 #### Scenario: Avoid ambiguous characters
 @e2e exclude Browser-extension popup. Covered by tests/vitest/generator-options.spec.js and live in Chromium.

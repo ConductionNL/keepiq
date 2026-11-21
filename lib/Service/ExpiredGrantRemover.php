@@ -109,10 +109,10 @@ class ExpiredGrantRemover {
 			$removed += $this->attempt(
 				removal: function () use ($membership): bool {
 					$teamFolder = $this->teamFolderMapper->findById(id: $membership->getTeamFolderId());
-					$this->teamFolders->removeMember(
+					$this->teamFolders->expireMember(
 						teamFolderId: (string)$teamFolder->getId(),
 						membershipId: $membership->getId(),
-						userId: $teamFolder->getOwnerId()
+						ownerId: $teamFolder->getOwnerId()
 					);
 					return true;
 				}

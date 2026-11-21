@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Autocomplete off</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Autocomplete off</h1>
+		<p class="tests">The form and both fields say <code>autocomplete="off"</code>, which Keepiq ignores: fill, the inline list and the save bar work as on the basic login.</p>
+		<form method="post" action="/autocomplete-off" autocomplete="off">
+			<label>Username <input name="username" type="text" autocomplete="off"></label>
+			<label>Password <input name="password" type="password" autocomplete="off"></label>
+			<button type="submit">Log in</button>
+		</form>
+	</main>
+</body>
+</html>

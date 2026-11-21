@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Card fields in a frame</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body class="frame">
+	<!-- The card fields card-iframe.html frames, as a payment provider's frame holds them. -->
+	<form method="post" action="/card-frame">
+		<label>Card number <input name="cardnumber" autocomplete="cc-number" inputmode="numeric"></label>
+		<label>Expiry <input name="exp" autocomplete="cc-exp" placeholder="MM/YY"></label>
+		<label>CVC <input name="cvc" autocomplete="cc-csc" maxlength="4" inputmode="numeric"></label>
+	</form>
+</body>
+</html>

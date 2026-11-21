@@ -16,6 +16,7 @@ use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -25,6 +26,8 @@ use PHPUnit\Framework\TestCase;
  * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
  */
 class ShareRestrictionResolverTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 
 	/** @var SecretMapper&MockObject */
 	private SecretMapper $secrets;
@@ -71,6 +74,7 @@ class ShareRestrictionResolverTest extends TestCase {
 			groupShareMapper: $this->groupShares,
 			teamFolders: $this->teamFolders,
 			groupManager: $this->groups,
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 	}
 
@@ -116,6 +120,7 @@ class ShareRestrictionResolverTest extends TestCase {
 			$this->groupShares,
 			$this->teamFolders,
 			$this->groups,
+			$this->clearedQuarantineScan(),
 		);
 
 		$effective = $resolver->effectiveFor($this->directTarget(true, new DateTime('2026-12-01T00:00:00Z')));
@@ -150,6 +155,7 @@ class ShareRestrictionResolverTest extends TestCase {
 			$groupShares,
 			$this->teamFolders,
 			$groups,
+			$this->clearedQuarantineScan(),
 		);
 
 		$this->assertFalse($resolver->effectiveFor($this->directTarget(true, null))->useOnly);
@@ -162,6 +168,7 @@ class ShareRestrictionResolverTest extends TestCase {
 			$groupShares,
 			$this->teamFolders,
 			$groups2,
+			$this->clearedQuarantineScan(),
 		);
 		$this->assertTrue($resolver2->effectiveFor($this->directTarget(true, null))->useOnly);
 	}
@@ -192,6 +199,24 @@ class ShareRestrictionResolverTest extends TestCase {
 	}
 
 	/**
+	 * Defence in depth (GHSA-m5p9-6pw7-pf3g): a share row whose copy is NOT
+	 * held by its target (the copy belongs to another user) is left untouched —
+	 * resolveTarget returns false and writes nothing, so resolving a
+	 * restriction can never rewrite another user's secret.
+	 *
+	 * @return void
+	 */
+	public function testACopyNotHeldByItsTargetIsLeftUntouched(): void {
+		$this->secrets->expects($this->never())->method('update');
+
+		// The copy is owned by bob (setUp), but this row's target is mallory.
+		$target = $this->directTarget(true, new DateTime('2099-01-01T00:00:00Z'));
+		$target->setTargetUserId('mallory');
+
+		$this->assertFalse($this->resolver->resolveTarget($target));
+	}
+
+	/**
 	 * A write membership carrying the flag never makes a copy use-only.
 	 *
 	 * @return void
@@ -208,6 +233,7 @@ class ShareRestrictionResolverTest extends TestCase {
 			$this->groupShares,
 			$teamFolders,
 			$this->groups,
+			$this->clearedQuarantineScan(),
 		);
 
 		$target = $this->directTarget(false, null);

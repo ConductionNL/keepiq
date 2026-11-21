@@ -440,4 +440,89 @@ class CertificateIssuanceServiceTest extends TestCase {
 		$this->assertSame('kept@example.com', openssl_x509_parse((string)$suite->getCertificate())['subject']['CN']);
 
 	}//end testReissueKeepsAnExistingCommonName()
+
+	/**
+	 * Assert a certificate carries a critical basicConstraints of CA:FALSE.
+	 *
+	 * @param string $certPem The certificate PEM
+	 * @param string $path Which issuance path made it
+	 *
+	 * @return void
+	 */
+	private function assertNoCa(string $certPem, string $path): void {
+		$this->assertSame(
+			'CA:FALSE',
+			openssl_x509_parse($certPem)['extensions']['basicConstraints'] ?? null,
+			"the $path certificate is not marked CA:FALSE"
+		);
+
+		$der = base64_decode(preg_replace('/-----[A-Z ]+-----|\s/', '', $certPem));
+		// The extnID 2.5.29.19, then critical TRUE.
+		$this->assertStringContainsString("\x06\x03\x55\x1d\x13\x01\x01\xff", $der, "the $path basicConstraints is not critical");
+
+	}//end assertNoCa()
+
+	/**
+	 * A user or application certificate is no CA. openssl_csr_sign()
+	 * without its own extensions section takes the host openssl.cnf
+	 * default, v3_ca on most systems, which marked such certificates
+	 * CA:TRUE. Every issuance path is pinned: both openssl_csr_sign() calls
+	 * and the phpseclib fallback.
+	 *
+	 * @return void
+	 */
+	public function testEveryIssuancePathMarksTheCertificateNoCa(): void {
+		[$pub, $priv] = $this->makeRsaKeypair(2048);
+		$withPrivateKey = $this->service->signPublicKey($pub, 'leaf@example.com', $priv);
+		// Only the openssl path writes the full DEFAULT_DN.
+		$this->assertArrayHasKey('ST', openssl_x509_parse($withPrivateKey)['subject'], 'expected the openssl path');
+		$this->assertNoCa($withPrivateKey, 'openssl_csr_sign() signPublicKey');
+
+		$key = openssl_pkey_get_private($priv);
+		$csr = openssl_csr_new(['commonName' => 'csr@example.com'], $key, ['digest_alg' => 'sha256']);
+		openssl_csr_export($csr, $csrPem);
+		$this->assertNoCa($this->service->signCsr($csrPem), 'openssl_csr_sign() signCsr');
+
+		// A CSR signs itself, so a public-only key always ends on phpseclib,
+		// which writes no stateOrProvinceName.
+		[$browserPub] = $this->makeRsaKeypair(4096);
+		$withPublicKeyOnly = $this->service->signPublicKey($browserPub, 'browser@example.com');
+		$this->assertArrayNotHasKey('ST', openssl_x509_parse($withPublicKeyOnly)['subject'], 'expected the phpseclib path');
+		$this->assertNoCa($withPublicKeyOnly, 'phpseclib');
+
+	}//end testEveryIssuancePathMarksTheCertificateNoCa()
+
+	/**
+	 * A suite certificate issued CA:TRUE before must come back from a
+	 * re-issue as no CA, with its public key kept.
+	 *
+	 * @return void
+	 */
+	public function testReissueMarksACaCertificateNoCa(): void {
+		[, $priv] = $this->makeRsaKeypair(2048);
+		$config = tempnam(sys_get_temp_dir(), 'keepiq-ca');
+		file_put_contents($config, "[ca]\nbasicConstraints = critical,CA:true\n");
+		$key = openssl_pkey_get_private($priv);
+		$csr = openssl_csr_new(['commonName' => 'old@example.com'], $key, ['digest_alg' => 'sha256']);
+		$old = openssl_csr_sign(
+			$csr,
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+			365,
+			['digest_alg' => 'sha256', 'config' => $config, 'x509_extensions' => 'ca'],
+			7
+		);
+		unlink($config);
+		openssl_x509_export($old, $oldPem);
+		$this->assertSame('CA:TRUE', openssl_x509_parse($oldPem)['extensions']['basicConstraints'] ?? null, 'fixture must start as a CA');
+
+		$suite = new EncryptionSuite();
+		$suite->setOwnerId('old@example.com');
+		$suite->setCertificate($oldPem);
+
+		$this->assertTrue($this->service->reissueSuiteCertificate($suite));
+		$this->assertNoCa((string)$suite->getCertificate(), 're-issued');
+		$this->assertSame($this->modulusOf($oldPem), $this->modulusOf((string)$suite->getCertificate()));
+
+	}//end testReissueMarksACaCertificateNoCa()
 }//end class

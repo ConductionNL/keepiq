@@ -31,9 +31,11 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\EmergencyAccessAuditTrail;
 use OCA\Keepiq\Service\EmergencyAccessService;
+use OCA\Keepiq\Service\EmergencyDesignation;
 use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\NotificationService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -180,11 +182,13 @@ class EmergencyAccessServiceTest extends TestCase {
 		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
 
 		$contact = $this->service->designate(
-			grantorUserId: 'alice',
-			granteeUserId: 'bob',
-			waitPeriodDays: 7,
-			accessLevel: 'view',
-			recoveryEnvelope: 'ENVELOPE-CIPHERTEXT',
+			new EmergencyDesignation(
+				grantorUserId: 'alice',
+				granteeUserId: 'bob',
+				waitPeriodDays: 7,
+				accessLevel: 'view',
+				recoveryEnvelope: 'ENVELOPE-CIPHERTEXT',
+			)
 		);
 
 		$this->assertSame(EmergencyContact::STATE_GRANTED, $contact->getState());
@@ -199,7 +203,7 @@ class EmergencyAccessServiceTest extends TestCase {
 	 */
 	public function testDesignateRejectsNonViewLevel(): void {
 		$this->expectException(InvalidArgumentException::class);
-		$this->service->designate('alice', 'bob', 7, 'takeover', 'ENV');
+		$this->service->designate(new EmergencyDesignation('alice', 'bob', 7, 'takeover', 'ENV'));
 	}//end testDesignateRejectsNonViewLevel()
 
 	/**
@@ -209,7 +213,7 @@ class EmergencyAccessServiceTest extends TestCase {
 	 */
 	public function testDesignateRejectsBadWaitPeriod(): void {
 		$this->expectException(InvalidArgumentException::class);
-		$this->service->designate('alice', 'bob', 5, 'view', 'ENV');
+		$this->service->designate(new EmergencyDesignation('alice', 'bob', 5, 'view', 'ENV'));
 	}//end testDesignateRejectsBadWaitPeriod()
 
 	/**
@@ -220,7 +224,7 @@ class EmergencyAccessServiceTest extends TestCase {
 	public function testDesignateRejectsGranteeWithoutSuite(): void {
 		$this->suiteMapper->method('findActiveByOwner')->willThrowException(new DoesNotExistException('none'));
 		$this->expectException(InvalidArgumentException::class);
-		$this->service->designate('alice', 'bob', 7, 'view', 'ENV');
+		$this->service->designate(new EmergencyDesignation('alice', 'bob', 7, 'view', 'ENV'));
 	}//end testDesignateRejectsGranteeWithoutSuite()
 
 	/**
@@ -422,7 +426,7 @@ class EmergencyAccessServiceTest extends TestCase {
 		foreach ($this->dispatched as $event) {
 			$encoded = json_encode($event->getMetadata());
 			$this->assertStringNotContainsString('ENVELOPE-CIPHERTEXT', (string)$encoded);
-			foreach (AuditEventTypes::FORBIDDEN_KEYS as $forbidden) {
+			foreach (AuditMetadataPolicy::FORBIDDEN_KEYS as $forbidden) {
 				$this->assertArrayNotHasKey($forbidden, $event->getMetadata());
 			}
 		}

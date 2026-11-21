@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service\Siem;
 
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 
 /**
  * Reads the fields of a SiemService::buildPayload() array for the
@@ -75,7 +75,7 @@ final class PayloadView {
 			return [];
 		}
 
-		foreach (AuditEventTypes::FORBIDDEN_KEYS as $forbidden) {
+		foreach (AuditMetadataPolicy::FORBIDDEN_KEYS as $forbidden) {
 			unset($metadata[$forbidden]);
 		}
 

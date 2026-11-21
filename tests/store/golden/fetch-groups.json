@@ -1,0 +1,358 @@
+{
+	"groups out of order": {
+		"result": {
+			"returned": [
+				{
+					"id": "a",
+					"label": "a"
+				},
+				{
+					"id": "b",
+					"label": "b"
+				},
+				{
+					"id": "c",
+					"label": "c"
+				}
+			]
+		},
+		"store": {
+			"groups": [
+				{
+					"id": "a",
+					"label": "a"
+				},
+				{
+					"id": "b",
+					"label": "b"
+				},
+				{
+					"id": "c",
+					"label": "c"
+				}
+			],
+			"error": null,
+			"loading": false
+		},
+		"requests": [
+			{
+				"url": "/ocs/cloud/groups",
+				"config": {
+					"headers": {
+						"OCS-APIRequest": "true"
+					},
+					"params": {
+						"format": "json",
+						"search": "ad",
+						"limit": 100
+					}
+				}
+			}
+		]
+	},
+	"no groups key": {
+		"result": {
+			"returned": []
+		},
+		"store": {
+			"groups": [],
+			"error": null,
+			"loading": false
+		},
+		"requests": [
+			{
+				"url": "/ocs/cloud/groups",
+				"config": {
+					"headers": {
+						"OCS-APIRequest": "true"
+					},
+					"params": {
+						"format": "json",
+						"search": "",
+						"limit": 100
+					}
+				}
+			}
+		]
+	},
+	"groups not a list": {
+		"result": {
+			"returned": []
+		},
+		"store": {
+			"groups": [],
+			"error": null,
+			"loading": false
+		},
+		"requests": [
+			{
+				"url": "/ocs/cloud/groups",
+				"config": {
+					"headers": {
+						"OCS-APIRequest": "true"
+					},
+					"params": {
+						"format": "json",
+						"search": "",
+						"limit": 100
+					}
+				}
+			}
+		]
+	},
+	"empty data": {
+		"result": {
+			"returned": []
+		},
+		"store": {
+			"groups": [],
+			"error": null,
+			"loading": false
+		},
+		"requests": [
+			{
+				"url": "/ocs/cloud/groups",
+				"config": {
+					"headers": {
+						"OCS-APIRequest": "true"
+					},
+					"params": {
+						"format": "json",
+						"search": "",
+						"limit": 100
+					}
+				}
+			}
+		]
+	},
+	"failure with an OCS message": {
+		"result": {
+			"threw": "boom"
+		},
+		"store": {
+			"groups": [],
+			"error": "Not allowed",
+			"loading": false
+		},
+		"requests": [
+			{
+				"url": "/ocs/cloud/groups",
+				"config": {
+					"headers": {
+						"OCS-APIRequest": "true"
+					},
+					"params": {
+						"format": "json",
+						"search": "",
+						"limit": 100
+					}
+				}
+			}
+		]
+	},
+	"failure with only a message": {
+		"result": {
+			"threw": "network down"
+		},
+		"store": {
+			"groups": [],
+			"error": "network down",
+			"loading": false
+		},
+		"requests": [
+			{
+				"url": "/ocs/cloud/groups",
+				"config": {
+					"headers": {
+						"OCS-APIRequest": "true"
+					},
+					"params": {
+						"format": "json",
+						"search": "",
+						"limit": 100
+					}
+				}
+			}
+		]
+	},
+	"failure with nothing": {
+		"result": {
+			"threw": ""
+		},
+		"store": {
+			"groups": [],
+			"error": "Failed to search groups",
+			"loading": false
+		},
+		"requests": [
+			{
+				"url": "/ocs/cloud/groups",
+				"config": {
+					"headers": {
+						"OCS-APIRequest": "true"
+					},
+					"params": {
+						"format": "json",
+						"search": "",
+						"limit": 100
+					}
+				}
+			}
+		]
+	},
+	"race: older answer arrives last": {
+		"a": {
+			"returned": [
+				{
+					"id": "old",
+					"label": "old"
+				}
+			]
+		},
+		"b": {
+			"returned": [
+				{
+					"id": "new",
+					"label": "new"
+				}
+			]
+		},
+		"steps": [
+			{
+				"groups": [],
+				"error": null,
+				"loading": true
+			},
+			{
+				"groups": [
+					{
+						"id": "new",
+						"label": "new"
+					}
+				],
+				"error": null,
+				"loading": false
+			},
+			{
+				"groups": [
+					{
+						"id": "new",
+						"label": "new"
+					}
+				],
+				"error": null,
+				"loading": false
+			}
+		]
+	},
+	"race: older failure arrives last": {
+		"a": {
+			"threw": "old failed"
+		},
+		"b": {
+			"returned": [
+				{
+					"id": "new",
+					"label": "new"
+				}
+			]
+		},
+		"steps": [
+			{
+				"groups": [],
+				"error": null,
+				"loading": true
+			},
+			{
+				"groups": [
+					{
+						"id": "new",
+						"label": "new"
+					}
+				],
+				"error": null,
+				"loading": false
+			},
+			{
+				"groups": [
+					{
+						"id": "new",
+						"label": "new"
+					}
+				],
+				"error": null,
+				"loading": false
+			}
+		]
+	},
+	"race: newer failure, older answer last": {
+		"a": {
+			"returned": [
+				{
+					"id": "old",
+					"label": "old"
+				}
+			]
+		},
+		"b": {
+			"threw": "new failed"
+		},
+		"steps": [
+			{
+				"groups": [],
+				"error": null,
+				"loading": true
+			},
+			{
+				"groups": [],
+				"error": "New",
+				"loading": false
+			},
+			{
+				"groups": [],
+				"error": "New",
+				"loading": false
+			}
+		]
+	},
+	"race: in order": {
+		"a": {
+			"returned": [
+				{
+					"id": "old",
+					"label": "old"
+				}
+			]
+		},
+		"b": {
+			"returned": [
+				{
+					"id": "new",
+					"label": "new"
+				}
+			]
+		},
+		"steps": [
+			{
+				"groups": [],
+				"error": null,
+				"loading": true
+			},
+			{
+				"groups": [],
+				"error": null,
+				"loading": true
+			},
+			{
+				"groups": [
+					{
+						"id": "new",
+						"label": "new"
+					}
+				],
+				"error": null,
+				"loading": false
+			}
+		]
+	}
+}

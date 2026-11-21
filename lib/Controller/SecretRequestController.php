@@ -26,8 +26,10 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\SecretRequestService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\SecretRequestServiceInterface;
+use OCA\Keepiq\Service\RequestedFields;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -37,6 +39,9 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for SecretRequest CRUD.
+ *
+ * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequestController extends OCSController {
 	/**
@@ -74,17 +79,17 @@ class SecretRequestController extends OCSController {
 	 * Constructor for SecretRequestController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param SecretRequestService $service The secret-request service
+	 * @param SecretRequestServiceInterface $service The secret-request service
 	 * @param IUserSession $session The user session
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private SecretRequestService $service,
+		private SecretRequestServiceInterface $service,
 		private IUserSession $session,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -113,6 +118,10 @@ class SecretRequestController extends OCSController {
 	/**
 	 * List secret requests for a given Secret — owner-only.
 	 *
+	 * Each request carries its `requestedFields` and, in `fieldSchemas`, the schema
+	 * of each requested custom field by name; the owner's browser gives a filled
+	 * field without a stored schema the one its request carries.
+	 *
 	 * @param string $secretId The Secret ID
 	 *
 	 * @NoAdminRequired
@@ -131,10 +140,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$requests = $this->service->listBySecret(secretId: $secretId, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(
@@ -144,6 +150,12 @@ class SecretRequestController extends OCSController {
 
 	/**
 	 * Create a new pending secret request.
+	 *
+	 * The type of the Secret a fresh request creates arrives as `typeId` in the body,
+	 * and the schemas of requested custom fields as `fieldSchemas`, an object of JSON
+	 * Schema properties by field name. Both are read from the body rather than the
+	 * signature. The created request answers with the same `fieldSchemas`. A request
+	 * for an application's secret carries none: `fieldSchemas` on one is refused with a 400.
 	 *
 	 * @param string $secretId The Secret ID (unfilled or to-be-overwritten)
 	 * @param string $encryptionSuiteId The recipient's active suite ID
@@ -159,6 +171,8 @@ class SecretRequestController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secret-requests/tasks.md#task-4.1
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $isReRequest is a field of the POST
 	 *   body that the Nextcloud router binds by name, not an internal switch a caller
@@ -182,10 +196,6 @@ class SecretRequestController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		// Resolve the three creation paths to one explicit mode here, so the
-		// dispatcher below is a plain lookup rather than a flag-driven branch.
-		// An applicationId wins over the re-request discriminator, matching
-		// the original precedence.
 		// A re-request overwrites values in an existing Secret, so it cannot be
 		// asked for without naming one. Refused explicitly rather than left to
 		// fail deeper with a generic 'secretId is required', because the two
@@ -197,41 +207,106 @@ class SecretRequestController extends OCSController {
 			);
 		}
 
-		$mode = match (true) {
+		try {
+			$entity = $this->dispatchCreate(
+				mode: $this->createMode(secretId: $secretId, isReRequest: $isReRequest, applicationId: $applicationId),
+				secretId: $secretId,
+				encryptionSuiteId: $encryptionSuiteId,
+				requestedFields: new RequestedFields(names: $requestedFields, schemas: $this->fieldSchemas()),
+				expiry: $this->parseExpiry(expiresAt: $expiresAt),
+				applicationId: (string)$applicationId,
+				userId: $user->getUID(),
+				placeholder: [
+					'name' => $name,
+					'folderId' => $folderId,
+					'typeId' => $this->typeId(),
+				]
+			);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(
+				data: ['message' => $e->getMessage()],
+				statusCode: $this->refusalStatus(exception: $e)
+			);
+		}//end try
+
+		return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
+	}//end create()
+
+	/**
+	 * The schemas of the requested custom fields from the body; empty when none were sent.
+	 *
+	 * Read from the request rather than bound as a parameter, so create() stays within the
+	 * parameter limit, as typeId() is.
+	 *
+	 * @return array<mixed>
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	private function fieldSchemas(): array {
+		$raw = $this->request->getParam('fieldSchemas');
+		if (is_array($raw) === false) {
+			return [];
+		}
+
+		return $raw;
+	}//end fieldSchemas()
+
+	/**
+	 * The type of the Secret a FRESH request creates, from the body; null when none was sent.
+	 *
+	 * Read from the request rather than bound as a parameter, so create() stays within the
+	 * parameter limit.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	private function typeId(): ?string {
+		$raw = $this->request->getParam('typeId');
+		if (is_string($raw) === false || $raw === '') {
+			return null;
+		}
+
+		return $raw;
+	}//end typeId()
+
+	/**
+	 * Resolve the three creation paths to one explicit mode, so the dispatcher
+	 * is a plain lookup rather than a flag-driven branch. An applicationId wins
+	 * over the re-request discriminator.
+	 *
+	 * @param string $secretId The Secret named in the request, or ''
+	 * @param bool $isReRequest Whether the request is a re-request
+	 * @param string|null $applicationId The owning application ID, if any
+	 *
+	 * @return string One of the MODE_* constants
+	 */
+	private function createMode(string $secretId, bool $isReRequest, ?string $applicationId): string {
+		return match (true) {
 			($applicationId !== null && $applicationId !== '') => self::MODE_APPLICATION,
 			($isReRequest === true) => self::MODE_RE_REQUEST,
 			// No Secret named and not a re-request: the system creates one.
 			($secretId === '') => self::MODE_FRESH,
 			default => self::MODE_PLAIN,
 		};
+	}//end createMode()
 
-		try {
-			$entity = $this->dispatchCreate(
-				mode: $mode,
-				secretId: $secretId,
-				encryptionSuiteId: $encryptionSuiteId,
-				requestedFields: $requestedFields,
-				expiry: $this->parseExpiry(expiresAt: $expiresAt),
-				applicationId: (string)$applicationId,
-				userId: $user->getUID(),
-				name: $name,
-				folderId: $folderId
-			);
-		} catch (InvalidArgumentException $e) {
-			$code = $e->getCode();
-			$status = Http::STATUS_BAD_REQUEST;
-			if ($code === 403 || $code === 404 || $code === 409) {
-				$status = $code;
-			}
+	/**
+	 * Map a service refusal to its HTTP status: 403, 404 and 409 pass
+	 * through, anything else is a 400.
+	 *
+	 * @param InvalidArgumentException $exception The service refusal
+	 *
+	 * @return int The HTTP status
+	 */
+	private function refusalStatus(InvalidArgumentException $exception): int {
+		$code = $exception->getCode();
+		if ($code === 403 || $code === 404 || $code === 409) {
+			return $code;
+		}
 
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: $status
-			);
-		}//end try
-
-		return new JSONResponse(data: $entity->jsonSerialize(), statusCode: Http::STATUS_CREATED);
-	}//end create()
+		return Http::STATUS_BAD_REQUEST;
+	}//end refusalStatus()
 
 	/**
 	 * Parse the optional expiry timestamp. An unparseable value surfaces as
@@ -261,28 +336,29 @@ class SecretRequestController extends OCSController {
 	 * @param string $mode One of the MODE_* constants
 	 * @param string $secretId The Secret ID
 	 * @param string $encryptionSuiteId The recipient's active suite ID
-	 * @param array<string> $requestedFields Field names to be filled in
+	 * @param RequestedFields $requestedFields Field names to be filled in, with the schemas of the custom ones
 	 * @param DateTime|null $expiry Parsed expiry, or null
 	 * @param string $applicationId Owning application ID ('' unless
 	 *                              $mode is MODE_APPLICATION)
 	 * @param string $userId The requesting user
-	 * @param string|null $name Name for a FRESH request's created Secret
-	 * @param string|null $folderId Folder for that created Secret
+	 * @param array{name: ?string, folderId: ?string, typeId: ?string} $placeholder What a
+	 *        FRESH request's created Secret is made from; unused by the other modes
 	 *
 	 * @return \OCA\Keepiq\Db\SecretRequest
 	 *
 	 * @throws InvalidArgumentException Propagated from the service.
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	private function dispatchCreate(
 		string $mode,
 		string $secretId,
 		string $encryptionSuiteId,
-		array $requestedFields,
+		RequestedFields $requestedFields,
 		?DateTime $expiry,
 		string $applicationId,
 		string $userId,
-		?string $name = null,
-		?string $folderId = null,
+		array $placeholder,
 	): \OCA\Keepiq\Db\SecretRequest {
 		if ($mode === self::MODE_APPLICATION) {
 			return $this->service->createForApplication(
@@ -298,8 +374,7 @@ class SecretRequestController extends OCSController {
 			return $this->service->createForUserVault(
 				userId: $userId,
 				requestedFields: $requestedFields,
-				name: $name,
-				folderId: $folderId,
+				placeholder: $placeholder,
 				expiresAt: $expiry,
 			);
 		}
@@ -344,10 +419,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$entity = $this->service->approve(requestId: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $entity->jsonSerialize());
@@ -374,10 +446,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$entity = $this->service->decline(requestId: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $entity->jsonSerialize());
@@ -409,10 +478,7 @@ class SecretRequestController extends OCSController {
 		try {
 			$entity = $this->service->decline(requestId: $id, userId: $user->getUID());
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: ['status' => 'deleted', 'request' => $entity->jsonSerialize()]);

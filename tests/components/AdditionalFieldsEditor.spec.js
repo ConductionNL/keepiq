@@ -76,7 +76,7 @@ describe('AdditionalFieldsEditor', () => {
 		await wrapper.find('[data-testid="additional-field-add"]').trigger('click')
 
 		expect(wrapper.emitted('update:members')[0][0]).toEqual([
-			{ name: 'client-id', value: '' },
+			{ name: 'client-id', value: '', schema: { type: 'string' } },
 		])
 		// The input clears, so the next name does not have to be deleted first.
 		expect(wrapper.vm.newName).toBe('')

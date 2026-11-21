@@ -1,0 +1,680 @@
+{
+	"default": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [
+			{
+				"name": "Plain",
+				"url": "https://a.test",
+				"type": "login",
+				"login": "u",
+				"password": "p",
+				"additionalFields": {
+					"notes": "n"
+				},
+				"folder": "Work"
+			},
+			{
+				"name": "Deep one",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub/Deep",
+				"totp": "otpauth://totp/A?secret=JBSWY3DPEHPK3PXP",
+				"passkeys": "[{\"id\":1}]"
+			},
+			{
+				"name": "Empty blobs",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub"
+			},
+			{
+				"name": "Type id only",
+				"url": null,
+				"type": "t-note",
+				"login": null,
+				"password": "x",
+				"additionalFields": null,
+				"folder": "Home"
+			},
+			{
+				"name": "",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "no name",
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "Unknown folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "Orphan folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Orphan"
+			},
+			{
+				"name": "Cycle",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "LoopB/LoopA"
+			},
+			{
+				"name": "Use only string",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work"
+			},
+			{
+				"name": "Zero folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": ""
+			}
+		],
+		"folders": [
+			{
+				"path": "Work"
+			},
+			{
+				"path": "Work/Sub"
+			},
+			{
+				"path": "Work/Sub/Deep"
+			},
+			{
+				"path": "Home"
+			},
+			{
+				"path": "Orphan"
+			},
+			{
+				"path": "LoopB/LoopA"
+			},
+			{
+				"path": "LoopB"
+			}
+		]
+	},
+	"explicit vault": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [
+			{
+				"name": "Plain",
+				"url": "https://a.test",
+				"type": "login",
+				"login": "u",
+				"password": "p",
+				"additionalFields": {
+					"notes": "n"
+				},
+				"folder": "Work"
+			},
+			{
+				"name": "Deep one",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub/Deep",
+				"totp": "otpauth://totp/A?secret=JBSWY3DPEHPK3PXP",
+				"passkeys": "[{\"id\":1}]"
+			},
+			{
+				"name": "Empty blobs",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub"
+			},
+			{
+				"name": "Type id only",
+				"url": null,
+				"type": "t-note",
+				"login": null,
+				"password": "x",
+				"additionalFields": null,
+				"folder": "Home"
+			},
+			{
+				"name": "",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "no name",
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "Unknown folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "Orphan folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Orphan"
+			},
+			{
+				"name": "Cycle",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "LoopB/LoopA"
+			},
+			{
+				"name": "Use only string",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work"
+			},
+			{
+				"name": "Zero folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": ""
+			}
+		],
+		"folders": [
+			{
+				"path": "Work"
+			},
+			{
+				"path": "Work/Sub"
+			},
+			{
+				"path": "Work/Sub/Deep"
+			},
+			{
+				"path": "Home"
+			},
+			{
+				"path": "Orphan"
+			},
+			{
+				"path": "LoopB/LoopA"
+			},
+			{
+				"path": "LoopB"
+			}
+		]
+	},
+	"null": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [
+			{
+				"name": "Plain",
+				"url": "https://a.test",
+				"type": "login",
+				"login": "u",
+				"password": "p",
+				"additionalFields": {
+					"notes": "n"
+				},
+				"folder": "Work"
+			},
+			{
+				"name": "Deep one",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub/Deep",
+				"totp": "otpauth://totp/A?secret=JBSWY3DPEHPK3PXP",
+				"passkeys": "[{\"id\":1}]"
+			},
+			{
+				"name": "Empty blobs",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub"
+			},
+			{
+				"name": "Type id only",
+				"url": null,
+				"type": "t-note",
+				"login": null,
+				"password": "x",
+				"additionalFields": null,
+				"folder": "Home"
+			},
+			{
+				"name": "",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "no name",
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "Unknown folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "Orphan folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Orphan"
+			},
+			{
+				"name": "Cycle",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "LoopB/LoopA"
+			},
+			{
+				"name": "Use only string",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work"
+			},
+			{
+				"name": "Zero folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": ""
+			}
+		],
+		"folders": [
+			{
+				"path": "Work"
+			},
+			{
+				"path": "Work/Sub"
+			},
+			{
+				"path": "Work/Sub/Deep"
+			},
+			{
+				"path": "Home"
+			},
+			{
+				"path": "Orphan"
+			},
+			{
+				"path": "LoopB/LoopA"
+			},
+			{
+				"path": "LoopB"
+			}
+		]
+	},
+	"unknown mode": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [
+			{
+				"name": "Plain",
+				"url": "https://a.test",
+				"type": "login",
+				"login": "u",
+				"password": "p",
+				"additionalFields": {
+					"notes": "n"
+				},
+				"folder": "Work"
+			},
+			{
+				"name": "Deep one",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub/Deep",
+				"totp": "otpauth://totp/A?secret=JBSWY3DPEHPK3PXP",
+				"passkeys": "[{\"id\":1}]"
+			},
+			{
+				"name": "Empty blobs",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub"
+			},
+			{
+				"name": "Type id only",
+				"url": null,
+				"type": "t-note",
+				"login": null,
+				"password": "x",
+				"additionalFields": null,
+				"folder": "Home"
+			},
+			{
+				"name": "",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": null,
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "no name",
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "Unknown folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": ""
+			},
+			{
+				"name": "Orphan folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Orphan"
+			},
+			{
+				"name": "Cycle",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "LoopB/LoopA"
+			},
+			{
+				"name": "Use only string",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work"
+			},
+			{
+				"name": "Zero folder",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": ""
+			}
+		],
+		"folders": [
+			{
+				"path": "Work"
+			},
+			{
+				"path": "Work/Sub"
+			},
+			{
+				"path": "Work/Sub/Deep"
+			},
+			{
+				"path": "Home"
+			},
+			{
+				"path": "Orphan"
+			},
+			{
+				"path": "LoopB/LoopA"
+			},
+			{
+				"path": "LoopB"
+			}
+		]
+	},
+	"folders Work": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [
+			{
+				"name": "Plain",
+				"url": "https://a.test",
+				"type": "login",
+				"login": "u",
+				"password": "p",
+				"additionalFields": {
+					"notes": "n"
+				},
+				"folder": "Work"
+			},
+			{
+				"name": "Deep one",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub/Deep",
+				"totp": "otpauth://totp/A?secret=JBSWY3DPEHPK3PXP",
+				"passkeys": "[{\"id\":1}]"
+			},
+			{
+				"name": "Empty blobs",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub"
+			},
+			{
+				"name": "Use only string",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work"
+			}
+		],
+		"folders": [
+			{
+				"path": "Work"
+			},
+			{
+				"path": "Work/Sub"
+			},
+			{
+				"path": "Work/Sub/Deep"
+			}
+		]
+	},
+	"folders Sub and Home": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [
+			{
+				"name": "Deep one",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub/Deep",
+				"totp": "otpauth://totp/A?secret=JBSWY3DPEHPK3PXP",
+				"passkeys": "[{\"id\":1}]"
+			},
+			{
+				"name": "Empty blobs",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "Work/Sub"
+			},
+			{
+				"name": "Type id only",
+				"url": null,
+				"type": "t-note",
+				"login": null,
+				"password": "x",
+				"additionalFields": null,
+				"folder": "Home"
+			}
+		],
+		"folders": [
+			{
+				"path": "Work/Sub"
+			},
+			{
+				"path": "Work/Sub/Deep"
+			},
+			{
+				"path": "Home"
+			}
+		]
+	},
+	"folders cycle": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [
+			{
+				"name": "Cycle",
+				"url": null,
+				"type": "login",
+				"login": null,
+				"password": "k",
+				"additionalFields": null,
+				"folder": "LoopB/LoopA"
+			}
+		],
+		"folders": [
+			{
+				"path": "LoopB/LoopA"
+			},
+			{
+				"path": "LoopB"
+			}
+		]
+	},
+	"folders none listed": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [],
+		"folders": []
+	},
+	"folders unknown id": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [],
+		"folders": []
+	},
+	"folders zero id": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [],
+		"folders": []
+	},
+	"folders null id": {
+		"format": "keepiq-vault",
+		"version": 1,
+		"secrets": [],
+		"folders": []
+	}
+}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="nl">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Card checkout in Dutch</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1 lang="en">Card checkout in Dutch</h1>
+		<p class="tests" lang="en">Dutch labels without tokens and an "MMJJ" expiry. A card with expiry 03/27 fills the expiry with "0327". The PIN field stays empty: a card's PIN is never filled.</p>
+		<form method="post" action="/afrekenen">
+			<label>Naam op de kaart <input name="naam"></label>
+			<label>Kaartnummer <input name="kaartnummer" inputmode="numeric"></label>
+			<label>Vervaldatum <input name="vervaldatum" placeholder="MMJJ" maxlength="4"></label>
+			<label>Beveiligingscode <input name="beveiligingscode" maxlength="4" inputmode="numeric"></label>
+			<label>PIN <input name="pin" inputmode="numeric"></label>
+			<button type="submit">Betalen</button>
+		</form>
+	</main>
+</body>
+</html>

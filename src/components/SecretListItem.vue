@@ -3,7 +3,7 @@
 		class="secret-list-item"
 		role="button"
 		tabindex="0"
-		:aria-label="t('keepiq', 'Open {name}', { name: secret.name })"
+		:aria-label="openLabel"
 		:class="{ 'secret-list-item--blocked': secret.blocked }"
 		@click="$emit('open', secret.id)"
 		@keydown.enter="onRowActivate"
@@ -22,6 +22,17 @@
 		<span class="secret-list-item__main">
 			<span class="secret-list-item__name">
 				{{ secret.name }}
+				<!-- Asks for the master password before use (crypto-item-reprompt). -->
+				<span
+					v-if="secret.reprompt === true"
+					class="secret-list-item__reprompt"
+					role="img"
+					:aria-label="t('keepiq', 'Asks for your master password')"
+					:title="t('keepiq', 'Asks for your master password')"
+					data-testid="secret-reprompt-marker">
+					<Lock :size="14" />
+				</span>
+				<LoginExtrasMarkers :secret="secret" />
 				<StrengthBadge v-if="!secret.blocked" :secretId="secret.id" />
 			</span>
 			<span v-if="secret.url" class="secret-list-item__url">{{
@@ -125,6 +136,7 @@
 			<CopyButton
 				:resolve="resolveKey"
 				:useOnly="secret.useOnly === true"
+				:guard="revealGuard"
 				:label="t('keepiq', 'Copy password')"
 				@copied="$emit('copied')" />
 		</span>
@@ -140,11 +152,14 @@ import Lock from 'vue-material-design-icons/Lock.vue'
 import Star from 'vue-material-design-icons/Star.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import CopyButton from './CopyButton.vue'
+import LoginExtrasMarkers from './LoginExtrasMarkers.vue'
 import SecretTypeIcon from './SecretTypeIcon.vue'
 import StrengthBadge from './StrengthBadge.vue'
 import VaultIndicator from './VaultIndicator.vue'
+import { needsReprompt, useReprompt } from '../composables/useReprompt.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { resolveFaviconUrl } from '../utils/favicon.js'
+import { rowOpenLabel } from '../utils/valueFieldMarkers.js'
 
 /**
  * A single secret row: favicon (or type icon), name, url, and a copy button.
@@ -161,6 +176,7 @@ export default {
 		Lock,
 		AlertOutline,
 		CopyButton,
+		LoginExtrasMarkers,
 		SecretTypeIcon,
 		StrengthBadge,
 		VaultIndicator,
@@ -209,6 +225,29 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The master password re-prompt the copy button awaits, or null when
+		 * the holder did not flag this item (crypto-item-reprompt D2).
+		 *
+		 * @return {Function|null}
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		revealGuard() {
+			return needsReprompt(this.secret) ? useReprompt(() => this.secret) : null
+		},
+
+		/**
+		 * The row's accessible name. A role=button row hides its content
+		 * from screen readers, so the code and passkey markers are named
+		 * here too.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		openLabel() {
+			return rowOpenLabel(this.secret)
+		},
+
 		/**
 		 * Whether the holder starred this row.
 		 *
@@ -329,6 +368,12 @@ export default {
 </script>
 
 <style scoped>
+.secret-list-item__reprompt {
+	display: inline-flex;
+	vertical-align: middle;
+	color: var(--color-text-maxcontrast);
+}
+
 .secret-list-item {
 	display: flex;
 	align-items: center;

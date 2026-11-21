@@ -33,13 +33,7 @@ export function subfolderRows(folders, selectedFolderId, searchTerm = '') {
 		.trim()
 		.toLowerCase()
 	return (folders || [])
-		.filter(
-			(folder) =>
-				folder
-				&& (selectedFolderId
-					? folder.parentId === selectedFolderId
-					: !folder.parentId),
-		)
+		.filter((folder) => isChildOf(folder, selectedFolderId))
 		.filter(
 			(folder) =>
 				needle === ''
@@ -48,16 +42,53 @@ export function subfolderRows(folders, selectedFolderId, searchTerm = '') {
 					.includes(needle),
 		)
 		.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
-		.map((folder) => ({
-			id: `${FOLDER_ROW_PREFIX}${folder.id}`,
-			folderId: folder.id,
-			name: folder.name,
-			isFolder: true,
-			// Vault personalization keys ride along so the
-			// root rows can render the picked icon + color.
-			customIcon: folder.customIcon ?? null,
-			customColor: folder.customColor ?? null,
-		}))
+		.map(folderRow)
+}
+
+/**
+ * @param {object|null} folder A folder, if any.
+ * @param {string|null} parentId The parent folder (null = vault root).
+ * @return {boolean} Whether the folder sits directly under that parent.
+ */
+function isChildOf(folder, parentId) {
+	return folder && (parentId ? folder.parentId === parentId : !folder.parentId)
+}
+
+/**
+ * The list row of a folder. Vault personalization keys ride along so the root
+ * rows can render the picked icon + color.
+ *
+ * @param {object} folder The folder.
+ * @return {{id: string, folderId: string, name: string, isFolder: true}}
+ */
+function folderRow(folder) {
+	return {
+		id: `${FOLDER_ROW_PREFIX}${folder.id}`,
+		folderId: folder.id,
+		name: folder.name,
+		isFolder: true,
+		customIcon: folder.customIcon ?? null,
+		customColor: folder.customColor ?? null,
+	}
+}
+
+/**
+ * @param {Array<object>|null} folders The flat folder list.
+ * @return {Map<string|null, Array<object>>} Each parent's children, by name.
+ */
+function siblingsByParent(folders) {
+	const byParent = new Map()
+	for (const folder of folders || []) {
+		const key = folder.parentId ?? null
+		if (!byParent.has(key)) {
+			byParent.set(key, [])
+		}
+		byParent.get(key).push(folder)
+	}
+	for (const siblings of byParent.values()) {
+		siblings.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+	}
+	return byParent
 }
 
 /**
@@ -129,18 +160,7 @@ export function rootVaultOf(folders, folderId) {
  * @spec openspec/specs/secrets/spec.md#requirement-folder-management
  */
 export function destinationRows(folders, excludeId = null) {
-	const byParent = new Map()
-	for (const folder of folders || []) {
-		const key = folder.parentId ?? null
-		if (!byParent.has(key)) {
-			byParent.set(key, [])
-		}
-		byParent.get(key).push(folder)
-	}
-	for (const siblings of byParent.values()) {
-		siblings.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-	}
-
+	const byParent = siblingsByParent(folders)
 	const rows = []
 	const walk = (parentId, depth) => {
 		for (const folder of byParent.get(parentId) ?? []) {

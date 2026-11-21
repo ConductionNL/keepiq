@@ -31,9 +31,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\TeamFolderConfirmationService;
-use OCA\Keepiq\Service\TeamFolderService;
+use OCA\Keepiq\Exception\ShareScanPendingException;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderConfirmationServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderServiceInterface;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -49,19 +51,19 @@ class TeamFolderController extends OCSController {
 	 * Constructor for TeamFolderController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param TeamFolderService $teamFolderService The team-folder service
+	 * @param TeamFolderServiceInterface $teamFolderService The team-folder service
 	 * @param IUserSession $userSession The user session
-	 * @param TeamFolderConfirmationService $confirmations Automatic member confirmation
+	 * @param TeamFolderConfirmationServiceInterface $confirmations Automatic member confirmation
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private TeamFolderService $teamFolderService,
+		private TeamFolderServiceInterface $teamFolderService,
 		private IUserSession $userSession,
-		private TeamFolderConfirmationService $confirmations,
+		private TeamFolderConfirmationServiceInterface $confirmations,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -113,10 +115,7 @@ class TeamFolderController extends OCSController {
 		try {
 			$teamFolder = $this->teamFolderService->shareFolder(folderId: $folderId, userId: $userId);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $teamFolder->jsonSerialize(), statusCode: Http::STATUS_CREATED);
@@ -143,11 +142,13 @@ class TeamFolderController extends OCSController {
 
 		try {
 			$revoked = $this->teamFolderService->unshareFolder(teamFolderId: $id, userId: $userId);
-		} catch (InvalidArgumentException $exception) {
+		} catch (ShareScanPendingException $exception) {
 			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
+				data: ['error' => 'share_scan_pending', 'message' => $exception->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
 			);
+		} catch (InvalidArgumentException $exception) {
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: ['revoked' => $revoked]);
@@ -203,10 +204,7 @@ class TeamFolderController extends OCSController {
 		try {
 			$state = $this->teamFolderService->reconcile(teamFolderId: $id, userId: $userId);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $state);
@@ -243,10 +241,7 @@ class TeamFolderController extends OCSController {
 				userId: $userId
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $result, statusCode: Http::STATUS_CREATED);
@@ -280,10 +275,7 @@ class TeamFolderController extends OCSController {
 				adminId: $userId
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return new MessageResponse(error: $exception, status: Http::STATUS_FORBIDDEN);
 		}
 
 		return new JSONResponse(data: $summary);

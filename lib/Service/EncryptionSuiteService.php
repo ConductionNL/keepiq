@@ -29,6 +29,7 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
 use OCA\Keepiq\Exception\ReinstateRefusedException;
+use OCA\Keepiq\Kernel\Contracts\EncryptionSuiteServiceInterface;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -46,7 +47,7 @@ use Psr\Log\LoggerInterface;
  *   reinstate takes; checking it in a caller would leave the service open.
  *   The guard's own audit-trail reads already live in SuiteReinstateGuard.
  */
-class EncryptionSuiteService {
+class EncryptionSuiteService implements EncryptionSuiteServiceInterface {
 	/**
 	 * Constructor for EncryptionSuiteService.
 	 *

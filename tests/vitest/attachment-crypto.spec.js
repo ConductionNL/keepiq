@@ -117,4 +117,32 @@ describe('attachment store crypto', () => {
 		const text = await global.__lastBlob.text()
 		expect(text).toBe(PLAINTEXT)
 	}, 30000)
+
+	// The dialogs upload for a secret the sidebar may not be showing.
+	it('uploadFile posts ciphertext and leaves the listed attachments alone', async () => {
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
+		const get = vi.spyOn(axios, 'get')
+		const store = useAttachmentStore()
+		store.attachments = [{ id: 'shown-in-sidebar' }]
+
+		await store.uploadFile('sec-2', new File([PLAINTEXT], FILENAME))
+
+		expect(post.mock.calls[0][0]).toContain('/secrets/sec-2/attachments')
+		expect(JSON.stringify(post.mock.calls[0][1])).not.toContain(FILENAME)
+		expect(get).not.toHaveBeenCalled()
+		expect(store.attachments).toEqual([{ id: 'shown-in-sidebar' }])
+		expect(store.error).toBeNull()
+	}, 30000)
+
+	it('uploadFile rejects with the server reason', async () => {
+		vi.spyOn(axios, 'post').mockRejectedValue({
+			response: { data: { message: 'Attachment exceeds the per-attachment limit' } },
+		})
+		const store = useAttachmentStore()
+
+		await expect(
+			store.uploadFile('sec-2', new File([PLAINTEXT], FILENAME)),
+		).rejects.toThrow('Attachment exceeds the per-attachment limit')
+		expect(store.error).toBeNull()
+	}, 30000)
 })

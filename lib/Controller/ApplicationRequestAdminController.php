@@ -42,10 +42,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\SecretRequest;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\ApplicationRequestAdminService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\ApplicationRequestAdminServiceInterface;
 use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -63,9 +63,9 @@ class ApplicationRequestAdminController extends Controller {
 	 * Constructor for ApplicationRequestAdminController.
 	 *
 	 * @param IRequest $request The request
-	 * @param ApplicationRequestAdminService $service The admin-scoped request service
+	 * @param ApplicationRequestAdminServiceInterface $service The admin-scoped request service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Applications admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the Applications admin area
 	 *
 	 * @return void
 	 *
@@ -73,11 +73,11 @@ class ApplicationRequestAdminController extends Controller {
 	 */
 	public function __construct(
 		IRequest $request,
-		private ApplicationRequestAdminService $service,
+		private ApplicationRequestAdminServiceInterface $service,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**

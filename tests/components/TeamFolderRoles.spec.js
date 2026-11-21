@@ -137,6 +137,110 @@ describe('team-folder roles', () => {
 		).toBe(true)
 	})
 
+	it('a manager cannot change a row that covers a manager, but may remove it', async () => {
+		currentUid = 'olga'
+		mockList({
+			owned: [],
+			memberOf: [
+				{
+					id: 'tf-1',
+					folderId: 'folder-1',
+					folderName: 'DevOps',
+					ownerId: 'alice',
+					grade: 'manage',
+					members: [
+						...members,
+						{
+							id: 'm-leads',
+							memberType: 'group',
+							memberId: 'leads',
+							grade: 'read',
+							addedBy: 'alice',
+						},
+					],
+					ownerOnlyMemberIds: ['m-olga', 'm-leads'],
+				},
+			],
+		})
+		const wrapper = await mountDialog()
+		expect(
+			wrapper
+				.find('[data-testid="team-folder-grade-leads"]')
+				.attributes('disabled'),
+		).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="team-folder-grade-vic"]')
+				.attributes('disabled'),
+		).toBeUndefined()
+		expect(
+			wrapper.find('[data-testid="team-folder-remove-leads"]').exists(),
+		).toBe(true)
+		// The greyed-out control says why, to sighted and screen-reader users.
+		const select = wrapper.find('[data-testid="team-folder-grade-leads"]')
+		const reason = wrapper.find('[data-testid="team-folder-owner-only-leads"]')
+		expect(reason.text()).toBe(
+			'Only the owner can change a manager, or a membership that covers a manager.',
+		)
+		expect(select.attributes('aria-describedby')).toBe(reason.attributes('id'))
+		expect(select.attributes('title')).toBe(reason.text())
+		expect(
+			wrapper.find('[data-testid="team-folder-owner-only-vic"]').exists(),
+		).toBe(false)
+	})
+
+	it('a manager is not offered to approve their own join', async () => {
+		currentUid = 'olga'
+		mockList({
+			owned: [],
+			memberOf: [
+				{
+					id: 'tf-1',
+					folderId: 'folder-1',
+					folderName: 'DevOps',
+					ownerId: 'alice',
+					grade: 'manage',
+					members,
+					ownerOnlyMemberIds: ['m-olga'],
+				},
+			],
+		})
+		axios.get.mockImplementation((url) =>
+			Promise.resolve({
+				data: url.includes('/reconcile')
+					? {
+							secrets: [],
+							recipients: [],
+							missing: [
+								{ userId: 'olga', secretId: 's-1' },
+								{ userId: 'bob', secretId: 's-1' },
+							],
+						}
+					: {
+							owned: [],
+							memberOf: [
+								{
+									id: 'tf-1',
+									folderId: 'folder-1',
+									folderName: 'DevOps',
+									ownerId: 'alice',
+									grade: 'manage',
+									members,
+									ownerOnlyMemberIds: ['m-olga'],
+								},
+							],
+						},
+			}),
+		)
+		const wrapper = await mountDialog()
+		expect(
+			wrapper.find('[data-testid="team-folder-approve-bob"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="team-folder-approve-olga"]').exists(),
+		).toBe(false)
+	})
+
 	it('a viewer gets no dialog content at all', async () => {
 		currentUid = 'vic'
 		mockList({
@@ -197,5 +301,68 @@ describe('team-folder roles', () => {
 			}),
 		])
 		expect(result.skipped).toEqual(['Mail'])
+		expect(result.refused).toEqual([])
+	})
+
+	it('names the secrets the server would not copy for a one-time code or passkeys it would lose', async () => {
+		const store = useTeamFolderStore()
+		store.reconcile = vi.fn().mockResolvedValue({
+			secrets: [{ id: 'sec-1', name: 'Wiki' }],
+			recipients: [{ userId: 'bob', certificate: 'PEM' }],
+			missing: [{ secretId: 'sec-1', userId: 'bob' }],
+		})
+		store.regrantAttachments = vi.fn().mockResolvedValue()
+		useSecretStore().fetchSecret = vi
+			.fn()
+			.mockResolvedValue({ key: 'k', login: 'l', additionalFields: null })
+		useShareStore().encryptForRecipient = vi
+			.fn()
+			.mockResolvedValue({ key: 'CIPHER' })
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: {
+				created: 0,
+				rows: [],
+				skipped: [
+					{
+						sourceSecretId: 'sec-1',
+						targetUserId: 'bob',
+						reason: 'copy_fields_mismatch',
+					},
+				],
+			},
+		})
+
+		const result = await store.runFanOut('tf-1')
+
+		expect(result.refused).toEqual(['Wiki'])
+		expect(result.skipped).toEqual([])
+	})
+
+	it('shows the refused secrets after approving one waiting member', async () => {
+		currentUid = 'alice'
+		mockList({
+			owned: [
+				{
+					id: 'tf-1',
+					folderId: 'folder-1',
+					folderName: 'DevOps',
+					ownerId: 'alice',
+					grade: 'write',
+				},
+			],
+			memberOf: [],
+		})
+		const wrapper = await mountDialog()
+		vi.spyOn(wrapper.vm.store, 'approveMember').mockResolvedValue({
+			created: 0,
+			cancelled: false,
+			skipped: [],
+			refused: ['Wiki'],
+		})
+		wrapper.vm.refresh = vi.fn().mockResolvedValue()
+
+		await wrapper.vm.onApproveMember('bob')
+
+		expect(wrapper.vm.refusedSecrets).toEqual(['Wiki'])
 	})
 })

@@ -63,7 +63,8 @@ var (
 	// the last read of the same address (the server answered 304 to the ETag).
 	ErrNotModified = errors.New("keepiq: not modified")
 	// ErrKeyMismatch is returned when the envelope was encrypted to a
-	// certificate other than the one configured with WithCertificate.
+	// certificate other than the one configured with WithCertificate, or
+	// names no certificate fingerprint while one is configured.
 	ErrKeyMismatch = errors.New("keepiq: the envelope is encrypted to a different certificate")
 	// ErrPreconditionFailed is returned by UpdateIfMatch when the secret
 	// changed since the ETag was read (HTTP 412); nothing was written.
@@ -163,7 +164,8 @@ func WithHTTPClient(h *http.Client) Option { return func(c *Client) { c.http = h
 
 // WithCertificate sets the application's certificate (PEM). New checks that it
 // belongs to the private key, and every read then refuses an envelope whose
-// certificate fingerprint differs, before any decryption, with ErrKeyMismatch.
+// certificate fingerprint differs or is missing, before any decryption, with
+// ErrKeyMismatch.
 func WithCertificate(pem string) Option { return func(c *Client) { c.certPEM = pem } }
 
 // WithClock replaces time.Now, for tests.
@@ -407,9 +409,9 @@ type envelope struct {
 		ExpiresAt    string `json:"expiresAt"`
 	} `json:"secret"`
 	Encryption struct {
-		SuiteID                string `json:"suiteId"`
-		CertificateFingerprint string `json:"certificateFingerprint"`
-		Scheme                 string `json:"scheme"`
+		SuiteID                string          `json:"suiteId"`
+		CertificateFingerprint json.RawMessage `json:"certificateFingerprint"`
+		Scheme                 string          `json:"scheme"`
 	} `json:"encryption"`
 	Ciphertext struct {
 		Key              *string `json:"key"`
@@ -497,13 +499,35 @@ func (c *Client) decodeOne(resp *http.Response, body []byte) (*Secret, error) {
 	return s, nil
 }
 
+// keyMismatch is ErrKeyMismatch with a message of its own.
+type keyMismatch string
+
+func (e keyMismatch) Error() string { return string(e) }
+
+func (e keyMismatch) Is(target error) bool { return target == ErrKeyMismatch }
+
+// errNoFingerprint refuses an envelope without a usable fingerprint while a certificate is configured.
+const errNoFingerprint = keyMismatch("keepiq: the envelope names no certificate fingerprint")
+
+// fingerprintText is the envelope's fingerprint when it is a JSON string, and "" otherwise.
+func fingerprintText(raw json.RawMessage) string {
+	var text string
+	if json.Unmarshal(raw, &text) != nil {
+		return ""
+	}
+	return text
+}
+
 // open checks the envelope and decrypts it in this process.
 func (c *Client) open(env *envelope) (*Secret, error) {
 	if env.Encryption.Scheme != Scheme {
 		return nil, fmt.Errorf("keepiq: unsupported encryption scheme %q", env.Encryption.Scheme)
 	}
-	if c.fingerprint != "" && env.Encryption.CertificateFingerprint != "" &&
-		!strings.EqualFold(env.Encryption.CertificateFingerprint, c.fingerprint) {
+	fingerprint := fingerprintText(env.Encryption.CertificateFingerprint)
+	if c.fingerprint != "" && fingerprint == "" {
+		return nil, errNoFingerprint
+	}
+	if c.fingerprint != "" && !strings.EqualFold(fingerprint, c.fingerprint) {
 		return nil, ErrKeyMismatch
 	}
 	s := &Secret{
@@ -511,7 +535,7 @@ func (c *Client) open(env *envelope) (*Secret, error) {
 		FolderPath: env.Secret.FolderPath, Type: env.Secret.Type,
 		CreatedAt: env.Secret.CreatedAt, UpdatedAt: env.Secret.UpdatedAt, KeyUpdatedAt: env.Secret.KeyUpdatedAt,
 		ExpiresAt:              env.Secret.ExpiresAt,
-		CertificateFingerprint: env.Encryption.CertificateFingerprint,
+		CertificateFingerprint: fingerprint,
 	}
 	for _, f := range []struct {
 		ct  *string

@@ -27,9 +27,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
-use OCA\Keepiq\Service\CertificateLifecycleService;
+use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\AdminAreaAuthorizerInterface;
+use OCA\Keepiq\Kernel\Contracts\CertificateLifecycleServiceInterface;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -47,19 +48,19 @@ class CertificateController extends OCSController {
 	 * Constructor for CertificateController.
 	 *
 	 * @param IRequest $request The request object
-	 * @param CertificateLifecycleService $service The lifecycle service
+	 * @param CertificateLifecycleServiceInterface $service The lifecycle service
 	 * @param IUserSession $userSession The user session
-	 * @param AdminAreaAuthorizer $areas Whether the caller holds the General admin area
+	 * @param AdminAreaAuthorizerInterface $areas Whether the caller holds the General admin area
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
-		private CertificateLifecycleService $service,
+		private CertificateLifecycleServiceInterface $service,
 		private IUserSession $userSession,
-		private AdminAreaAuthorizer $areas,
+		private AdminAreaAuthorizerInterface $areas,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -152,6 +153,9 @@ class CertificateController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Secret not found'], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		} catch (StaleWriteException $exception) {
+			// The secret moved twice while its expiry was set from notAfter.
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_CONFLICT);
 		}
 
 		return new JSONResponse(data: $row->jsonSerialize());

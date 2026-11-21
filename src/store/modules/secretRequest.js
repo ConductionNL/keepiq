@@ -22,6 +22,115 @@ import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 
+// The field model (secret-requests spec, Requestable Fields):
+//   key / login          -> their own ciphertext columns
+//   url                  -> PLAINTEXT metadata, searchable
+//   anything else        -> a member of the ONE encrypted
+//                           additionalFields blob
+//
+// `url` must not be encrypted: the column is searchable plaintext,
+// so ciphertext there breaks search and shows the owner base64.
+const ENCRYPTED_FIELDS = ['key', 'login']
+const PLAINTEXT_FIELDS = ['url']
+const ADDITIONAL_BLOB = 'additionalFields'
+
+/**
+ * The fill's body: url in plain, key and login each encrypted, and every
+ * other field a member of one encrypted additionalFields blob. An empty
+ * value is refused.
+ *
+ * @param {Record<string,string>} fields The plaintext field map.
+ * @param {CryptoKey} publicKey The requester's public key.
+ * @return {Promise<{encryptedFields: object, plainFields: object}>}
+ * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ */
+async function sealedFill(fields, publicKey) {
+	const fill = {
+		publicKey,
+		encryptedFields: {},
+		plainFields: {},
+		additionalMembers: {},
+	}
+	for (const entry of Object.entries(fields)) {
+		await addFillField(fill, entry)
+	}
+	if (Object.keys(fill.additionalMembers).length > 0) {
+		fill.encryptedFields[ADDITIONAL_BLOB] = await rsaEncrypt(
+			JSON.stringify(fill.additionalMembers),
+			publicKey,
+		)
+	}
+	return { encryptedFields: fill.encryptedFields, plainFields: fill.plainFields }
+}
+
+/**
+ * Put one field where the field model says it goes.
+ *
+ * @param {object} fill The fill being sealed.
+ * @param {Array<string>} entry The field's name and value.
+ * @return {Promise<void>}
+ * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ */
+async function addFillField(fill, entry) {
+	const [name, value] = entry
+	if (value == null || value === '') {
+		throw new Error(`Field "${name}" is required`)
+	}
+	if (PLAINTEXT_FIELDS.includes(name)) {
+		fill.plainFields[name] = String(value)
+		return
+	}
+	if (ENCRYPTED_FIELDS.includes(name)) {
+		fill.encryptedFields[name] = await rsaEncrypt(String(value), fill.publicKey)
+		return
+	}
+	// Collected and encrypted together: the server stores one blob and
+	// cannot see inside it, so the members are assembled here rather than
+	// sent individually.
+	fill.additionalMembers[name] = String(value)
+}
+
+/**
+ * What a create request posts for a member the caller leaves out or empty.
+ *
+ * @type {Readonly<object>}
+ */
+const REQUEST_DEFAULTS = Object.freeze({
+	// A FRESH request omits secretId and encryptionSuiteId: the
+	// server creates the placeholder Secret and derives the suite
+	// from it, so the client has nothing to point at or look up.
+	secretId: '',
+	encryptionSuiteId: '',
+	// The schema of each requested custom field, so the fill
+	// page shows and checks it.
+	fieldSchemas: Object.freeze({}),
+	expiresAt: null,
+	name: null,
+	folderId: null,
+	// The type a FRESH request's placeholder is created as; null
+	// leaves the server's default.
+	typeId: null,
+})
+
+/**
+ * The body of a create request, with every optional member defaulted.
+ *
+ * @param {object} payload The request fields.
+ * @return {object} The body to post.
+ * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+ */
+function requestBody(payload) {
+	const body = {
+		requestedFields: payload.requestedFields,
+		isReRequest: payload.isReRequest === true,
+	}
+	for (const [key, fallback] of Object.entries(REQUEST_DEFAULTS)) {
+		body[key] = payload[key] || fallback
+	}
+	return body
+}
+
 export const useSecretRequestStore = defineStore('secretRequest', {
 	state: () => ({
 		/** @type {Array<object>} Requests for the currently focused secret. */
@@ -102,6 +211,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * @return {Promise<object>} The created request.
 		 *
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 		 */
 		async createRequest(payload) {
 			this.loading = true
@@ -109,18 +219,7 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 			try {
 				const response = await axios.post(
 					generateUrl('/apps/keepiq/api/v1/secret-requests'),
-					{
-						// A FRESH request omits secretId and encryptionSuiteId: the
-						// server creates the placeholder Secret and derives the suite
-						// from it, so the client has nothing to point at or look up.
-						secretId: payload.secretId || '',
-						encryptionSuiteId: payload.encryptionSuiteId || '',
-						requestedFields: payload.requestedFields,
-						isReRequest: payload.isReRequest === true,
-						expiresAt: payload.expiresAt || null,
-						name: payload.name || null,
-						folderId: payload.folderId || null,
-					},
+					requestBody(payload),
 				)
 				this.secretRequests.unshift(response.data)
 				return response.data
@@ -331,60 +430,11 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 				throw new Error('Public certificate is missing for this request')
 			}
 			const publicKey = await importPublicKey(certificate)
-
-			// The field model (secret-requests spec, Requestable Fields):
-			//   key / login          -> their own ciphertext columns
-			//   url                  -> PLAINTEXT metadata, searchable
-			//   anything else        -> a member of the ONE encrypted
-			//                           additionalFields blob
-			//
-			// `url` must not be encrypted: the column is searchable plaintext,
-			// so ciphertext there breaks search and shows the owner base64.
-			const ENCRYPTED_FIELDS = ['key', 'login']
-			const PLAINTEXT_FIELDS = ['url']
-			const ADDITIONAL_BLOB = 'additionalFields'
-
-			const encryptedFields = {}
-			const plainFields = {}
-			const additionalMembers = {}
-
-			for (const [name, value] of Object.entries(fields)) {
-				if (value == null || value === '') {
-					throw new Error(`Field "${name}" is required`)
-				}
-
-				if (PLAINTEXT_FIELDS.includes(name)) {
-					plainFields[name] = String(value)
-					continue
-				}
-
-				if (ENCRYPTED_FIELDS.includes(name)) {
-					// eslint-disable-next-line no-await-in-loop
-					encryptedFields[name] = await rsaEncrypt(
-						String(value),
-						publicKey,
-					)
-					continue
-				}
-
-				// Collected and encrypted together below: the server stores one
-				// blob and cannot see inside it, so the members are assembled
-				// here rather than sent individually.
-				additionalMembers[name] = String(value)
-			}
-
-			if (Object.keys(additionalMembers).length > 0) {
-				encryptedFields[ADDITIONAL_BLOB] = await rsaEncrypt(
-					JSON.stringify(additionalMembers),
-					publicKey,
-				)
-			}
-
 			const response = await axios.post(
 				generateUrl(
 					`/apps/keepiq/api/v1/public/secret-requests/${token}/fill`,
 				),
-				{ encryptedFields, plainFields },
+				await sealedFill(fields, publicKey),
 			)
 			return response.data
 		},

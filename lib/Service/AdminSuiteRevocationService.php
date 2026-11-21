@@ -28,6 +28,7 @@ use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Kernel\Contracts\AdminSuiteRevocationServiceInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -36,13 +37,7 @@ use Throwable;
  *
  * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
  */
-class AdminSuiteRevocationService {
-	/**
-	 * The `error` of a compromise revoke whose migration end failed.
-	 *
-	 * @var string
-	 */
-	public const MIGRATION_END_FAILED = 'migration_end_failed';
+class AdminSuiteRevocationService implements AdminSuiteRevocationServiceInterface {
 
 	/**
 	 * Constructor.
@@ -113,7 +108,7 @@ class AdminSuiteRevocationService {
 	 * The blast radius is collected from BOTH ends of an open migration before
 	 * either is revoked, because each revoke's cascade deletes the ShareTargets
 	 * the lookup reads (keepiq#864). Containment then stamps and warns, revokes
-	 * the user's link shares and passkeys (LinkShareService::deleteByUserId via
+	 * the user's link shares and passkeys (LinkShareService::deleteMadeBy via
 	 * MigrationService, keepiq#858) and ends their sessions (keepiq#860). Its
 	 * failures are counted and returned as `cascadeIncomplete`, so the
 	 * administrator is not told containment ran when part of it did not

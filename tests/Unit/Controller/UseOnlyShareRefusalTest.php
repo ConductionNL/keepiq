@@ -23,6 +23,9 @@ use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
+use OCA\Keepiq\Service\ShareSync\ShareWriteContext;
 use OCA\Keepiq\Service\ShareSyncService;
 use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\UseOnlyUseRecorder;
@@ -35,6 +38,7 @@ use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -49,6 +53,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
  */
 class UseOnlyShareRefusalTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/** @var ShareTargetMapper&MockObject */
 	private ShareTargetMapper $targets;
@@ -117,7 +122,7 @@ class UseOnlyShareRefusalTest extends TestCase {
 		$auth = new ShareAuthorizationService(
 			secretMapper: $this->secrets,
 			delegationMapper: $delegations,
-			suiteMapper: $this->suites,
+			rowJudge: $this->shareRowJudge(secrets: $this->secrets),
 		);
 		$groupShares = $this->createMock(GroupShareMapper::class);
 		$groupShares->method('findBySecret')->willReturn([]);
@@ -129,14 +134,13 @@ class UseOnlyShareRefusalTest extends TestCase {
 			groupShareMapper: $groupShares,
 			teamFolders: $teamFolders,
 			groupManager: $this->createMock(IGroupManager::class),
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 		$notifications = $this->createMock(NotificationService::class);
 		$db = $this->createMock(IDBConnection::class);
 
 		$service = new ShareService(
 			mapper: $this->targets,
-			db: $db,
-			notificationService: $notifications,
 			auth: $auth,
 			directRegistrar: new DirectShareRegistrar(
 				mapper: $this->targets,
@@ -145,13 +149,16 @@ class UseOnlyShareRefusalTest extends TestCase {
 				notificationService: $notifications,
 				groupShareMapper: $groupShares,
 				restrictions: $resolver,
+				rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			),
 			syncService: new ShareSyncService(
-				mapper: $this->targets,
+				rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 				secretMapper: $this->secrets,
-				suiteMapper: $this->suites,
 				db: $db,
 				auth: $auth,
+				versionService: $this->createMock(SecretVersionService::class),
+				guards: new ShareSyncGuards(rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets), secrets: $this->secrets, suites: $this->suites, auth: $auth),
+				contexts: new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $this->targets), suites: $this->suites, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
 				mapper: $this->targets,
@@ -159,8 +166,10 @@ class UseOnlyShareRefusalTest extends TestCase {
 				db: $db,
 				logger: $this->createMock(LoggerInterface::class),
 				auth: $auth,
+				quarantineScan: $this->clearedQuarantineScan(),
 			),
 			restrictions: $resolver,
+			quarantineScan: $this->clearedQuarantineScan(),
 		);
 
 		return new ShareController($this->createMock(IRequest::class), $service, $this->session($uid));
@@ -219,15 +228,11 @@ class UseOnlyShareRefusalTest extends TestCase {
 
 		$controller = $this->shareController('alice');
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $controller->update('share-1', false, '2020-01-01T00:00:00Z')->getStatus());
-		$this->assertSame(
-			Http::STATUS_BAD_REQUEST,
-			$controller->create('src', 'carla', 'copy-c', null, false, '2020-01-01T00:00:00Z')->getStatus()
-		);
 	}
 
 	/**
-	 * Bob cannot share his use-only copy onward, by any of the three share
-	 * routes, even from a modified client.
+	 * Bob cannot share his use-only copy onward through the register-batch
+	 * route (the only share-create surface), even from a modified client.
 	 *
 	 * @return void
 	 */
@@ -236,17 +241,10 @@ class UseOnlyShareRefusalTest extends TestCase {
 		$this->targets->expects($this->never())->method('insert');
 		$controller = $this->shareController('bob');
 
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $controller->create('copy', 'bob-private', 'copy-x')->getStatus());
-
 		$batch = $controller->registerBatch(
 			[['sourceSecretId' => 'copy', 'targetUserId' => 'bob-private', 'encryptedKey' => 'CIPHER']]
 		);
 		$this->assertSame('restricted', $batch->getData()['items'][0]['status']);
-
-		$this->assertSame(
-			Http::STATUS_BAD_REQUEST,
-			$controller->createBatch('copy', [['targetUserId' => 'x', 'recipientSecretId' => 'y']], 'gs-1')->getStatus()
-		);
 	}
 
 	/**
@@ -282,7 +280,11 @@ class UseOnlyShareRefusalTest extends TestCase {
 	private function useController(string $uid, IEventDispatcher $dispatcher): UseOnlyController {
 		return new UseOnlyController(
 			$this->createMock(IRequest::class),
-			new UseOnlyUseRecorder($this->secrets, $this->targets, $dispatcher),
+			new UseOnlyUseRecorder(
+				secretMapper: $this->secrets,
+				rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
+				eventDispatcher: $dispatcher
+			),
 			$this->session($uid),
 		);
 	}

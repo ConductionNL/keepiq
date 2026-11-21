@@ -8,8 +8,10 @@
  * them, so a vector can only drift when the web app's format drifts:
  *
  *   src/crypto/rsa.js, src/crypto/aes.js, src/crypto/envelope.js,
- *   src/crypto/argon2.js, src/send/sendCrypto.js, src/totp/totp.js,
- *   src/passkey/passkey.js, browser-extension/src/passkey/webauthn.js
+ *   src/crypto/argon2.js, src/send/sendCrypto.js, src/totp/totp.js
+ *
+ * passkey.json is frozen: it was written by the old browser extension's
+ * webauthn.js, which is gone, so this script no longer rewrites it.
  *
  * RSA-OAEP, AES-GCM and ECDSA output is randomised, so a vector carries the
  * output produced once plus the key that opens or verifies it. Re-running the
@@ -72,10 +74,6 @@ const envelopeMod = await import(join(ROOT, 'src/crypto/envelope.js'))
 const argon2 = await import(join(ROOT, 'src/crypto/argon2.js'))
 const sendCrypto = await import(join(ROOT, 'src/send/sendCrypto.js'))
 const totp = await import(join(ROOT, 'src/totp/totp.js'))
-const passkey = await import(join(ROOT, 'src/passkey/passkey.js'))
-const webauthn = await import(
-	join(ROOT, 'browser-extension/src/passkey/webauthn.js')
-)
 
 /**
  * Base64 of bytes.
@@ -360,94 +358,4 @@ write('totp.json', {
 		'TOTP codes from parseOtpauth + generateTotp (src/totp/totp.js). algorithm/digits/period are what the parser resolved; refused lists inputs the parser rejects.',
 	cases: totpCases,
 	refused,
-})
-
-// --- passkey assertion ------------------------------------------------------
-
-const ecPair = await crypto.subtle.generateKey(
-	{ name: 'ECDSA', namedCurve: 'P-256' },
-	true,
-	['sign', 'verify'],
-)
-const userHandle = new TextEncoder().encode('user-7f3a')
-const credentialIdBytes = Uint8Array.from({ length: 16 }, (_, i) => 0xa0 + i)
-const record = passkey.buildPasskeyCredential({
-	credentialId: webauthn._internals.b64urlEncode(credentialIdBytes),
-	rpId: 'login.example.nl',
-	rpName: 'Example Login',
-	userName: 'alice@example.nl',
-	userDisplayName: 'Alice de Vries',
-	userHandle: webauthn._internals.b64urlEncode(userHandle),
-	privateKey:
-		pem(await crypto.subtle.exportKey('pkcs8', ecPair.privateKey), 'PRIVATE KEY')
-		+ '\n',
-	algorithm: -7,
-	counter: 41,
-	transports: ['internal', 'hybrid'],
-	createdAt: '2026-10-04T12:00:00.000Z',
-})
-const challenge = Uint8Array.from({ length: 32 }, (_, i) => (i * 7) & 0xff)
-const origin = 'https://login.example.nl'
-const passkeyCases = []
-for (const counter of [41, 0]) {
-	const stored = { ...record, counter }
-	const { assertion, counter: next } = await webauthn.getAssertion(
-		{
-			challenge: webauthn._internals.b64urlEncode(challenge),
-			rpId: record.rpId,
-		},
-		origin,
-		stored,
-	)
-	passkeyCases.push({
-		storedCounter: counter,
-		nextCounter: next,
-		clientDataJSON: b64(Uint8Array.from(assertion.response.clientDataJSON)),
-		authenticatorData: b64(
-			Uint8Array.from(assertion.response.authenticatorData),
-		),
-		signatureDer: b64(Uint8Array.from(assertion.response.signature)),
-		userHandle: b64(Uint8Array.from(assertion.response.userHandle)),
-		rawId: b64(Uint8Array.from(assertion.rawId)),
-	})
-}
-// A passkey the extension creates (createCredential), as the vault saves it:
-// the phone must sign with its key and rebuild its attestation (task 5.3).
-const created = await webauthn.createCredential(
-	{
-		rp: { id: 'login.example.nl', name: 'Example Login' },
-		user: {
-			id: webauthn._internals.b64urlEncode(userHandle),
-			name: 'alice@example.nl',
-			displayName: 'Alice de Vries',
-		},
-		challenge: webauthn._internals.b64urlEncode(challenge),
-		pubKeyCredParams: [
-			{ type: 'public-key', alg: -7 },
-			{ type: 'public-key', alg: -257 },
-		],
-	},
-	origin,
-)
-write('passkey.json', {
-	description:
-		'Passkey item JSON (src/passkey/passkey.js serializePasskey) and ES256 assertions from browser-extension/src/passkey/webauthn.js getAssertion. Signatures are DER and verify with publicKeySpki. registration is a passkey webauthn.js createCredential made, with its item JSON, clientDataJSON and attestationObject.',
-	itemJson: passkey.serializePasskey(record),
-	publicKeySpki: b64(await crypto.subtle.exportKey('spki', ecPair.publicKey)),
-	challengeBase64Url: webauthn._internals.b64urlEncode(challenge),
-	origin,
-	assertions: passkeyCases,
-	registration: {
-		origin,
-		itemJson: passkey.serializePasskey({
-			...created.record,
-			createdAt: '2026-10-05T10:00:00.000Z',
-		}),
-		clientDataJSON: b64(
-			Uint8Array.from(created.credential.response.clientDataJSON),
-		),
-		attestationObject: b64(
-			Uint8Array.from(created.credential.response.attestationObject),
-		),
-	},
 })

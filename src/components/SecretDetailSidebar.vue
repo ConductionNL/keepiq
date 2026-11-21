@@ -77,6 +77,7 @@
 						(!offlineReadOnly || offlineEditable)
 						&& !useOnly
 						&& !federatedReadOnly
+						&& !viewOnlyCopy
 					"
 					variant="primary"
 					data-testid="secret-detail-edit"
@@ -141,6 +142,18 @@
 							</template>
 							{{ t('keepiq', 'Move') }}
 						</NcActionButton>
+						<!-- vault-item-clone-preview-and-print: a prefilled create of a
+						     new secret; never for a passkey item or a use-only copy. -->
+						<NcActionButton
+							v-if="canClone"
+							:closeAfterClick="true"
+							data-testid="secret-detail-clone"
+							@click="openClone">
+							<template #icon>
+								<ContentDuplicate :size="20" />
+							</template>
+							{{ t('keepiq', 'Clone') }}
+						</NcActionButton>
 						<NcActionButton
 							v-if="!offlineReadOnly && !federatedReadOnly"
 							:closeAfterClick="true"
@@ -169,6 +182,30 @@
 						</NcActionButton>
 						<NcActionSeparator />
 					</template>
+					<!-- vault-item-clone-preview-and-print D3: a login the user may
+					     reveal; works offline too, as it reads only the decrypted
+					     detail. Both ask for the master password first. -->
+					<template v-if="canPrintOrShowQr">
+						<NcActionButton
+							:closeAfterClick="true"
+							data-testid="secret-detail-print"
+							@click="openPrint">
+							<template #icon>
+								<Printer :size="20" />
+							</template>
+							{{ t('keepiq', 'Print') }}
+						</NcActionButton>
+						<NcActionButton
+							:closeAfterClick="true"
+							data-testid="secret-detail-qr"
+							@click="openQr">
+							<template #icon>
+								<Qrcode :size="20" />
+							</template>
+							{{ t('keepiq', 'Show as QR code') }}
+						</NcActionButton>
+						<NcActionSeparator />
+					</template>
 					<NcActionButton
 						:closeAfterClick="true"
 						data-testid="secret-detail-close"
@@ -190,6 +227,16 @@
 				<Lock />
 			</template>
 		</NcEmptyContent>
+
+		<!-- A privileged login outside an approved window: the detail panel
+		     offers to ask the owner for access (capability-requirements-from-
+		     the-matrix 3.1). -->
+		<div
+			v-if="error && privilegedRefused"
+			class="secret-detail__box"
+			data-testid="secret-detail-privileged-refused">
+			<PrivilegedAccessPanel :secretId="secretId" />
+		</div>
 
 		<div v-if="!error && secret" class="secret-detail__card">
 			<!-- Use-only copy (sharing-use-only-and-expiring-shares D3): the
@@ -217,6 +264,20 @@
 						'keepiq',
 						'{sender} shared this from another organisation. You can read it, but not change or share it.',
 						{ sender: secret.federatedSource || t('keepiq', 'Someone') },
+					)
+				}}
+			</NcNoteCard>
+			<!-- A copy without a write grade: its holder files, stars and
+			     archives it, but its value changes only through a writer.
+			     A use-only copy has its own note above. -->
+			<NcNoteCard
+				v-if="viewOnlyCopy && !useOnly"
+				type="info"
+				data-testid="secret-detail-view-only">
+				{{
+					t(
+						'keepiq',
+						'Shared with you to view only. Ask its owner for edit rights to change it.',
 					)
 				}}
 			</NcNoteCard>
@@ -256,11 +317,19 @@
 						)
 					}}
 				</p>
-				<p>
+				<p v-if="!(secret.totp || secret.passkeys)">
 					{{
 						t(
 							'keepiq',
 							'Change it at its source, then save the new value here. Saving a new value clears this warning.',
+						)
+					}}
+				</p>
+				<p v-else>
+					{{
+						t(
+							'keepiq',
+							'This login also holds a one-time code or passkeys, which were exposed too. Replace each of them, and remove the old passkeys instead of only adding new ones. The warning clears once all of them are replaced.',
 						)
 					}}
 				</p>
@@ -280,7 +349,7 @@
 					</span>
 					<div class="secret-detail__row-main">
 						<span class="secret-detail__row-label">{{
-							t('keepiq', 'Login')
+							loginLabel
 						}}</span>
 						<div class="secret-detail__row-value">
 							{{ secret.login }}
@@ -288,6 +357,7 @@
 					</div>
 					<span class="secret-detail__row-trailing">
 						<CopyButton
+							:guard="revealGuard"
 							:value="secret.login"
 							:label="t('keepiq', 'Copy login')" />
 					</span>
@@ -309,10 +379,53 @@
 								:key="secretLoadToken"
 								:label="keyLabel"
 								:useOnly="useOnly"
+								:multiline="valueField?.kind === 'multiline'"
+								:alwaysShown="valueShownAtOnce"
+								:guard="revealGuard"
 								:resolve="resolveKey" />
 						</div>
 					</div>
 				</div>
+
+				<!-- The type's own fields, such as a certificate's private key
+				     or a database's host, sit with the value they belong to.
+				     They are stored in the additional fields, but only the
+				     members a person added show under "Additional fields". -->
+				<template v-if="!useOnly">
+					<div
+						v-for="member in typeMembers"
+						:key="member.field.label"
+						class="secret-detail__row"
+						data-testid="secret-detail-type-field">
+						<span class="secret-detail__row-icon">
+							<KeyVariant v-if="member.masked" :size="20" />
+							<FormatListBulleted v-else :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<!-- A public multi-line field, such as an SSH public
+							     key, keeps its lines but is not masked. -->
+							<div
+								v-if="member.masked || member.field.public"
+								class="secret-detail__row-value">
+								<PasswordField
+									:key="`${secretLoadToken}-${member.field.label}`"
+									:label="member.label"
+									:multiline="member.field.kind === 'multiline'"
+									:alwaysShown="member.field.public === true"
+									:guard="revealGuard"
+									:resolve="memberResolver(member.value)" />
+							</div>
+							<template v-else>
+								<span class="secret-detail__row-label">{{
+									member.label
+								}}</span>
+								<div class="secret-detail__row-value">
+									{{ member.value }}
+								</div>
+							</template>
+						</div>
+					</div>
+				</template>
 
 				<div
 					v-if="isTotp"
@@ -327,6 +440,7 @@
 						<div class="secret-detail__row-value">
 							<TotpDisplay
 								:seed="secret.key || ''"
+								:guard="revealGuard"
 								data-testid="secret-detail-totp" />
 						</div>
 					</div>
@@ -378,7 +492,7 @@
 						</span>
 						<div class="secret-detail__row-main">
 							<span class="secret-detail__row-label">{{
-								t('keepiq', 'Number')
+								cardNumberLabel
 							}}</span>
 							<div
 								class="secret-detail__row-value secret-detail__row-value--mono"
@@ -413,6 +527,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.number"
 								:label="t('keepiq', 'Copy number')" />
 						</span>
@@ -469,6 +584,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.cvv"
 								:label="t('keepiq', 'Copy CVV')" />
 						</span>
@@ -511,6 +627,7 @@
 								</template>
 							</NcButton>
 							<CopyButton
+								:guard="revealGuard"
 								:value="cardPayload.pin"
 								:label="t('keepiq', 'Copy PIN')" />
 						</span>
@@ -622,7 +739,7 @@
 											: t('keepiq', 'Show')
 									"
 									data-testid="identity-reveal-bsn"
-									@click="bsnRevealed = !bsnRevealed">
+									@click="toggleBsn">
 									<template #icon>
 										<EyeOffOutline
 											v-if="bsnRevealed"
@@ -631,6 +748,7 @@
 									</template>
 								</NcButton>
 								<CopyButton
+									:guard="revealGuard"
 									:value="identityPayload.bsn"
 									:label="t('keepiq', 'Copy BSN')" />
 							</span>
@@ -640,6 +758,14 @@
 			</template>
 
 			<div v-if="secret.url" class="secret-detail__box">
+				<img
+					v-if="previewSrc"
+					:src="previewSrc"
+					:alt="t('keepiq', 'Preview of {site}', { site: secret.url })"
+					class="secret-detail__preview"
+					referrerpolicy="no-referrer"
+					loading="lazy"
+					data-testid="secret-detail-preview" />
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<Web :size="20" />
@@ -649,18 +775,158 @@
 							t('keepiq', 'URL')
 						}}</span>
 						<div class="secret-detail__row-value">
+							<!-- Only a web or mail address is a link: another
+							     scheme, such as javascript:, shows as text. -->
 							<a
-								:href="secret.url"
+								v-if="urlHref"
+								:href="urlHref"
 								target="_blank"
 								rel="noopener noreferrer">
 								{{ secret.url }}
 							</a>
+							<span v-else>{{ secret.url }}</span>
+						</div>
+						<a
+							v-if="changePasswordHref"
+							:href="changePasswordHref"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="secret-detail__change-password"
+							data-testid="secret-detail-change-password">
+							{{ t('keepiq', 'Change password') }}
+						</a>
+					</div>
+				</div>
+				<div
+					v-if="extraUrls.length > 0"
+					class="secret-detail__row secret-detail__row--block"
+					data-testid="secret-detail-extra-urls">
+					<span class="secret-detail__row-icon">
+						<Web :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'More website addresses')
+						}}</span>
+						<ul class="secret-detail__row-value secret-detail__url-list">
+							<li v-for="extra in extraUrls" :key="extra.url">
+								<a
+									v-if="extra.href"
+									:href="extra.href"
+									target="_blank"
+									rel="noopener noreferrer">
+									{{ extra.url }}
+								</a>
+								<span v-else>{{ extra.url }}</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
+			<!-- The secret's own one-time code and passkeys, in a box of their
+			     own so they show whatever the type (an identity hides the
+			     box above). The seed and the private keys are never
+			     rendered, so these rows show on a use-only copy too: its
+			     holder may use the code. -->
+			<div
+				v-if="fieldTotp || fieldPasskeyCount > 0"
+				class="secret-detail__box">
+				<div
+					v-if="fieldTotp"
+					class="secret-detail__row secret-detail__row--block">
+					<span class="secret-detail__row-icon">
+						<ClockOutline :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'One-time code')
+						}}</span>
+						<div class="secret-detail__row-value">
+							<TotpDisplay
+								:seed="fieldTotp"
+								:guard="revealGuard"
+								data-testid="secret-detail-login-totp" />
+						</div>
+					</div>
+				</div>
+
+				<div
+					v-if="fieldPasskeyCount > 0"
+					class="secret-detail__row secret-detail__row--block">
+					<span class="secret-detail__row-icon">
+						<Fingerprint :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Passkeys')
+						}}</span>
+						<div class="secret-detail__row-value">
+							<PasskeyList
+								ref="passkeyList"
+								:passkeysJson="fieldPasskeysJson"
+								:canDelete="canChangeValue"
+								:busy="passkeySaving"
+								data-testid="secret-detail-login-passkeys"
+								@delete="onDeletePasskey" />
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div v-if="hasAdditionalFields && !useOnly" class="secret-detail__box">
+			<!-- The SSH key's public half and its derived fingerprint, from
+			     the encrypted additional fields (vault-ssh-key-item). The
+			     private key is the key row above. -->
+			<div
+				v-if="sshPublicKey && !useOnly"
+				class="secret-detail__box"
+				data-testid="secret-detail-ssh">
+				<div class="secret-detail__row">
+					<span class="secret-detail__row-icon">
+						<KeyVariant :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Public key')
+						}}</span>
+						<div
+							class="secret-detail__row-value secret-detail__row-value--mono"
+							data-testid="secret-detail-ssh-public-key">
+							{{ sshPublicKey }}
+						</div>
+					</div>
+					<span class="secret-detail__row-trailing">
+						<CopyButton
+							:guard="revealGuard"
+							:value="sshPublicKey"
+							:label="t('keepiq', 'Copy public key')"
+							data-testid="secret-detail-ssh-copy-public-key" />
+					</span>
+				</div>
+				<div v-if="sshFingerprint" class="secret-detail__row">
+					<span class="secret-detail__row-icon">
+						<Fingerprint :size="20" />
+					</span>
+					<div class="secret-detail__row-main">
+						<span class="secret-detail__row-label">{{
+							t('keepiq', 'Fingerprint')
+						}}</span>
+						<div
+							class="secret-detail__row-value secret-detail__row-value--mono"
+							data-testid="secret-detail-ssh-fingerprint">
+							{{ sshFingerprint }}
+						</div>
+					</div>
+					<span class="secret-detail__row-trailing">
+						<CopyButton
+							:guard="revealGuard"
+							:value="sshFingerprint"
+							:label="t('keepiq', 'Copy fingerprint')" />
+					</span>
+				</div>
+			</div>
+
+			<div v-if="ownMembers.length > 0 && !useOnly" class="secret-detail__box">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<FormatListBulleted :size="20" />
@@ -669,18 +935,25 @@
 						<span class="secret-detail__row-label">{{
 							t('keepiq', 'Additional fields')
 						}}</span>
-						<dl class="secret-detail__extra">
-							<template
-								v-for="(value, key) in secret.additionalFields"
-								:key="key">
-								<dt>
-									{{ key }}
-								</dt>
-								<dd>
-									{{ value }}
-								</dd>
-							</template>
-						</dl>
+						<div class="secret-detail__row-value">
+							<dl class="secret-detail__extra">
+								<div
+									v-for="member in ownMembers"
+									:key="`${secretLoadToken}-${member.name}`"
+									class="secret-detail__extra-item">
+									<dt>
+										{{ member.name }}
+									</dt>
+									<dd>
+										<SchemaValueView
+											:value="member.value"
+											:schema="member.schema"
+											:label="member.name"
+											:guard="revealGuard" />
+									</dd>
+								</div>
+							</dl>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -768,103 +1041,148 @@
 			    - recipient        → ShareRequestForm (request that the
 			                          owner share with a third party).
 			-->
-				<section
-					v-if="canSeeSharing"
-					class="secret-detail__sharing"
-					data-testid="secret-detail-sharing">
-					<h3 class="secret-detail__sharing-heading">
-						{{ t('keepiq', 'Sharing') }}
-					</h3>
+				<!-- The same grouped rows as "Advanced": one box, each part an
+				     icon + muted label with its content beneath. -->
+				<div
+					v-if="canSeeSharing || isOwner"
+					class="secret-detail__box secret-detail__more">
+					<section
+						v-if="canSeeSharing"
+						class="secret-detail__row secret-detail__row--block"
+						data-testid="secret-detail-sharing">
+						<span class="secret-detail__row-icon">
+							<ShareVariant :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<h3 class="secret-detail__row-label">
+								{{ t('keepiq', 'Sharing') }}
+							</h3>
+							<div class="secret-detail__row-value">
+								<ShareList
+									v-if="isOwner"
+									:secretId="secretId"
+									data-testid="secret-detail-share-list" />
 
-					<ShareList
-						v-if="isOwner"
-						:secretId="secretId"
-						data-testid="secret-detail-share-list" />
+								<GroupShareList
+									v-if="isOwner"
+									:secretId="secretId"
+									data-testid="secret-detail-group-share-list" />
 
-					<GroupShareList
-						v-if="isOwner"
-						:secretId="secretId"
-						data-testid="secret-detail-group-share-list" />
+								<DelegationManager
+									v-if="isOwner"
+									:secretId="secretId"
+									:canReclaim="true"
+									data-testid="secret-detail-delegation-manager"
+									@reclaimed="onReclaimed" />
 
-					<DelegationManager
-						v-if="isOwner"
-						:secretId="secretId"
-						:canReclaim="true"
-						data-testid="secret-detail-delegation-manager"
-						@reclaimed="onReclaimed" />
+								<ShareRequestForm
+									v-if="isRecipient && !isOwner"
+									:secretId="secretId"
+									data-testid="secret-detail-share-request" />
 
-					<ShareRequestForm
-						v-if="isRecipient && !isOwner"
-						:secretId="secretId"
-						data-testid="secret-detail-share-request" />
+								<!--
+							  Vault-admin takeover (user-sharing spec.md § Ownership
+							  Delegation). Only offered to a vault admin looking at
+							  somebody else's secret — the owner has ShareList and
+							  DelegationManager above instead. The server re-checks group
+							  membership AND that the admin already holds a share, so this
+							  condition decides what to SHOW, never what is allowed.
+							-->
+								<AdminHandoverPanel
+									v-if="!isOwner"
+									:secretId="secretId"
+									data-testid="secret-detail-admin-handover" />
+							</div>
+						</div>
+					</section>
 
 					<!--
-				  Vault-admin takeover (user-sharing spec.md § Ownership
-				  Delegation). Only offered to a vault admin looking at
-				  somebody else's secret — the owner has ShareList and
-				  DelegationManager above instead. The server re-checks group
-				  membership AND that the admin already holds a share, so this
-				  condition decides what to SHOW, never what is allowed.
-				-->
-					<AdminHandoverPanel
-						v-if="!isOwner"
-						:secretId="secretId"
-						data-testid="secret-detail-admin-handover" />
-				</section>
-
-				<!--
 			  Requests section — implement-secret-requests §8.4. Owners see
 			  a paginated list of pending/fulfilled/locked SecretRequests +
 			  a "Request fill-in" button that opens SecretRequestCreateDialog
 			  for write-without-read filling.
 			-->
-				<section
-					v-if="isOwner"
-					class="secret-detail__requests"
-					data-testid="secret-detail-requests">
-					<h3 class="secret-detail__requests-heading">
-						{{ t('keepiq', 'Requests') }}
-					</h3>
+					<section
+						v-if="isOwner"
+						class="secret-detail__row secret-detail__row--block"
+						data-testid="secret-detail-requests">
+						<span class="secret-detail__row-icon">
+							<MessageQuestionOutline :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<h3 class="secret-detail__row-label">
+								{{ t('keepiq', 'Requests') }}
+							</h3>
+							<div class="secret-detail__row-value">
+								<!-- Not for a payment card, identity, authenticator key or
+								     passkey: asking someone for those through a fill link is
+								     what fraud looks like, and the server refuses it. Their
+								     request history still shows. -->
+								<div
+									v-if="
+										!viewOnlyCopy
+										&& isRequestableTypeName(typeName)
+									"
+									class="secret-detail__requests-actions">
+									<!-- This action always targets THIS Secret, so the label
+								     says which of the two things it does. Asking for a
+								     credential you do not have yet starts from the vault,
+								     not from inside a Secret. -->
+									<NcButton
+										variant="secondary"
+										data-testid="secret-detail-request-create"
+										@click="openRequestCreate">
+										{{
+											secretHasValue
+												? t('keepiq', 'Ask for new values')
+												: t(
+														'keepiq',
+														'Ask someone to fill this in',
+													)
+										}}
+									</NcButton>
+								</div>
 
-					<div class="secret-detail__requests-actions">
-						<!-- This action always targets THIS Secret, so the label
-					     says which of the two things it does. Asking for a
-					     credential you do not have yet starts from the vault,
-					     not from inside a Secret. -->
-						<NcButton
-							variant="secondary"
-							data-testid="secret-detail-request-create"
-							@click="openRequestCreate">
-							{{
-								secretHasValue
-									? t('keepiq', 'Ask for new values')
-									: t('keepiq', 'Ask someone to fill this in')
-							}}
-						</NcButton>
-					</div>
+								<SecretRequestList
+									:secretId="secretId"
+									data-testid="secret-detail-request-list" />
 
-					<SecretRequestList
-						:secretId="secretId"
-						data-testid="secret-detail-request-list" />
+								<SecretRequestCreateDialog
+									v-if="requestDialogOpen"
+									:open="requestDialogOpen"
+									:secret="secret"
+									:isReRequest="secretHasValue"
+									data-testid="secret-detail-request-dialog"
+									@update:open="requestDialogOpen = $event"
+									@created="onRequestCreated" />
+							</div>
+						</div>
+					</section>
 
-					<SecretRequestCreateDialog
-						v-if="requestDialogOpen"
-						:open="requestDialogOpen"
-						:secret="secret"
-						:isReRequest="secretHasValue"
-						data-testid="secret-detail-request-dialog"
-						@update:open="requestDialogOpen = $event"
-						@created="onRequestCreated" />
-				</section>
-
-				<!--
-			  Activity — add-secret-audit-trail §5.2. The audit trail
-			  for this secret, owner-scoped, newest first.
-			-->
-				<SecretActivityTab
-					v-if="isOwner"
-					:secretId="secretId"
-					data-testid="secret-detail-activity" />
+					<!--
+				  Activity — add-secret-audit-trail §5.2. The audit trail
+				  for this secret, owner-scoped, newest first. The row labels
+				  it, so the tab drops its own heading.
+				-->
+					<section
+						v-if="isOwner"
+						class="secret-detail__row secret-detail__row--block">
+						<span class="secret-detail__row-icon">
+							<TimelineClockOutline :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<h3 class="secret-detail__row-label">
+								{{ t('keepiq', 'Activity') }}
+							</h3>
+							<div class="secret-detail__row-value">
+								<SecretActivityTab
+									:secretId="secretId"
+									:hideHeading="true"
+									data-testid="secret-detail-activity" />
+							</div>
+						</div>
+					</section>
+				</div>
 			</details>
 
 			<details v-if="isOwner" class="secret-detail__accordion">
@@ -890,7 +1208,7 @@
 								<VersionHistoryPanel
 									v-if="!useOnly"
 									:secretId="secretId"
-									:canManage="isOwner"
+									:canManage="isOwner && !viewOnlyCopy"
 									@restored="load" />
 							</div>
 						</div>
@@ -925,6 +1243,20 @@
 							</div>
 						</div>
 					</div>
+
+					<div class="secret-detail__row secret-detail__row--block">
+						<span class="secret-detail__row-icon">
+							<ShieldOutline :size="20" />
+						</span>
+						<div class="secret-detail__row-main">
+							<span class="secret-detail__row-label">{{
+								t('keepiq', 'Privileged access')
+							}}</span>
+							<div class="secret-detail__row-value">
+								<PrivilegedAccessPanel :secretId="secretId" />
+							</div>
+						</div>
+					</div>
 				</div>
 			</details>
 		</div>
@@ -952,6 +1284,7 @@ import CalendarMonthOutline from 'vue-material-design-icons/CalendarMonthOutline
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ClockOutline from 'vue-material-design-icons/ClockOutline.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import ContentDuplicate from 'vue-material-design-icons/ContentDuplicate.vue'
 import CreditCardOutline from 'vue-material-design-icons/CreditCardOutline.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Dialpad from 'vue-material-design-icons/Dialpad.vue'
@@ -964,21 +1297,28 @@ import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue
 import History from 'vue-material-design-icons/History.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
+import MessageQuestionOutline from 'vue-material-design-icons/MessageQuestionOutline.vue'
 import NoteTextOutline from 'vue-material-design-icons/NoteTextOutline.vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Printer from 'vue-material-design-icons/Printer.vue'
+import Qrcode from 'vue-material-design-icons/Qrcode.vue'
 import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import ShieldOutline from 'vue-material-design-icons/ShieldOutline.vue'
 import Star from 'vue-material-design-icons/Star.vue'
 import StarOutline from 'vue-material-design-icons/StarOutline.vue'
+import TimelineClockOutline from 'vue-material-design-icons/TimelineClockOutline.vue'
 import Web from 'vue-material-design-icons/Web.vue'
 import SecretRequestCreateDialog from '../dialogs/SecretRequestCreateDialog.vue'
 import AttachmentPanel from './AttachmentPanel.vue'
 import CopyButton from './CopyButton.vue'
 import HoneyPanel from './HoneyPanel.vue'
 import PasskeyDisplay from './PasskeyDisplay.vue'
+import PasskeyList from './PasskeyList.vue'
 import PasswordField from './PasswordField.vue'
+import PrivilegedAccessPanel from './PrivilegedAccessPanel.vue'
 import RotationPanel from './RotationPanel.vue'
+import SchemaValueView from './SchemaValueView.vue'
 import SecretActivityTab from './SecretActivityTab.vue'
 import SecretRequestList from './secretRequest/SecretRequestList.vue'
 import AdminHandoverPanel from './share/AdminHandoverPanel.vue'
@@ -989,14 +1329,49 @@ import ShareRequestForm from './share/ShareRequestForm.vue'
 import TotpDisplay from './TotpDisplay.vue'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
-import { cardLast4, parsePayload } from '../cardIdentity/cardIdentity.js'
+import {
+	cardBrandInfo,
+	formatCardNumber,
+	maskCardNumber,
+	parsePayload,
+} from '../cardIdentity/cardIdentity.js'
+import { needsReprompt, useReprompt } from '../composables/useReprompt.js'
+import { passkeyEntries } from '../passkey/loginPasskeys.js'
+import { shareSaveErrorText } from '../services/shareSave.js'
+import {
+	SSH_FINGERPRINT_MEMBER,
+	SSH_KEY_TYPE_NAME,
+	SSH_PUBLIC_KEY_MEMBER,
+} from '../ssh/sshKey.js'
+import { useAttachmentStore } from '../store/modules/attachment.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
-import { isRefusal } from '../utils/refusal.js'
-import { secretTypeLabel } from '../utils/secretTypes.js'
+import { extraUrlLinks } from '../utils/additionalUrls.js'
+import {
+	holdsPrivateKey,
+	loginLabelOf,
+	typeFieldsOf,
+	valueFieldOf,
+} from '../utils/builtinTypeFields.js'
+import { isViewOnlyCopy } from '../utils/copyGrade.js'
+import {
+	fieldsOf,
+	fieldValueOf,
+	isHiddenSchema,
+	schemasOf,
+} from '../utils/fieldSchema.js'
+import { isRefusal, refusalCode } from '../utils/refusal.js'
+import { linkHref } from '../utils/safeLink.js'
+import { isRequestableTypeName, secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
+import {
+	changePasswordUrl,
+	previewImageUrl,
+	previewTemplate,
+} from '../utils/siteImages.js'
+import { valueFieldsSupported } from '../utils/valueFields.js'
 import { rootVaultOf } from '../utils/vaultList.js'
 
 /**
@@ -1034,26 +1409,34 @@ export default {
 		Delete,
 		Fingerprint,
 		Flash,
+		ContentDuplicate,
+		Printer,
+		Qrcode,
 		FolderMove,
 		FormatListBulleted,
 		History,
 		KeyVariant,
 		Lock,
+		MessageQuestionOutline,
 		NoteTextOutline,
 		Paperclip,
 		Pencil,
 		ShareVariant,
 		Star,
 		StarOutline,
+		TimelineClockOutline,
 		Web,
 		AdminHandoverPanel,
 		AttachmentPanel,
 		CopyButton,
 		DelegationManager,
 		HoneyPanel,
+		PrivilegedAccessPanel,
 		PasskeyDisplay,
+		PasskeyList,
 		PasswordField,
 		RotationPanel,
+		SchemaValueView,
 		SecretActivityTab,
 		SecretRequestCreateDialog,
 		SecretRequestList,
@@ -1089,7 +1472,16 @@ export default {
 			loading: true,
 			error: '',
 			requestDialogOpen: false,
+			// The server refused this copy of a privileged login outside an
+			// approved window (capability-requirements-from-the-matrix 3.1).
+			privilegedRefused: false,
 			teamWritable: false,
+			/** A copy without a write grade: no edit, restore or new request. */
+			viewOnlyCopy: false,
+			/** The write-context read with the secret on show, or null. */
+			writeContext: null,
+			/** A passkey delete is being saved. */
+			passkeySaving: false,
 			/** Per-field reveal state for the card rows (masked by default). */
 			cardRevealed: { number: false, cvv: false, pin: false },
 			/** Reveal state for the identity's BSN row (masked by default). */
@@ -1121,6 +1513,81 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The master password re-prompt every reveal path of this item awaits,
+		 * or null when the holder did not flag it (crypto-item-reprompt D2).
+		 *
+		 * @return {Function|null}
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		revealGuard() {
+			return needsReprompt(this.secret) ? useReprompt(() => this.secret) : null
+		},
+
+		/**
+		 * The login's extra website addresses, each with a link only when it
+		 * is a web address, so a typed `javascript:` never becomes one.
+		 *
+		 * @return {Array<{url: string, href: string|null}>}
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+		 */
+		extraUrls() {
+			return extraUrlLinks(this.secret?.additionalUrls)
+		},
+
+		/**
+		 * The site preview image, only when an admin set a preview service:
+		 * with no template nothing is requested.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-site-icons-and-previews-are-opt-in-per-instance
+		 */
+		previewSrc() {
+			return previewImageUrl(previewTemplate(), this.secret?.url)
+		},
+
+		/**
+		 * The site's change-password page, null without a web address.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/specs/website-addresses/spec.md#requirement-open-the-sites-change-password-page
+		 */
+		changePasswordHref() {
+			return changePasswordUrl(this.secret?.url)
+		},
+
+		/**
+		 * Whether the secret may be cloned: online, its value visible to the
+		 * holder (not a use-only copy), and not a passkey item, whose
+		 * credential is bound to one item.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		canClone() {
+			return (
+				Boolean(this.secret)
+				&& !this.offlineReadOnly
+				&& !this.useOnly
+				&& !this.isPasskey
+			)
+		},
+
+		/**
+		 * Whether Print and Show as QR code are offered: a login with a
+		 * password, on a copy the user may reveal (not use-only).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		canPrintOrShowQr() {
+			if (!this.secret || this.useOnly || typeof this.secret.key !== 'string' || this.secret.key === '') {
+				return false
+			}
+			const type = useSecretTypeStore().typesById[this.secret.typeId]
+			return Boolean(type) && type.name === 'login'
+		},
+
 		/**
 		 * Whether the open secret is archived (vault-trash-and-archive).
 		 *
@@ -1276,8 +1743,102 @@ export default {
 				blob !== null
 				&& blob !== undefined
 				&& typeof blob === 'object'
-				&& Object.keys(blob).length > 0
+				&& Object.keys(fieldsOf(blob)).length > 0
 			)
+		},
+
+		/**
+		 * The fields of the secret's type that hold a value, in the type's
+		 * order, each with its translated label.
+		 *
+		 * @return {Array<{field: object, label: string, value: string}>}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		typeMembers() {
+			if (!this.hasAdditionalFields) {
+				return []
+			}
+			const fields = fieldsOf(this.secret.additionalFields)
+			// A schema stored for a type's own field, written through the API
+			// or a merge, can hide it too.
+			const schemas = schemasOf(this.secret.additionalFields)
+			const type = useSecretTypeStore().typesById[this.secret.typeId]
+			return typeFieldsOf(type)
+				.filter((field) => Object.hasOwn(fields, field.label))
+				.map((field) => ({
+					field,
+					label: field.displayLabel ?? field.label,
+					value: fields[field.label],
+					masked:
+						this.isMaskedField(field)
+						|| isHiddenSchema(schemas[field.label]),
+				}))
+		},
+
+		/**
+		 * The members a person added themselves: every additional field the
+		 * secret's type does not define, each with its schema.
+		 *
+		 * @return {Array<{name: string, value: string, schema: object}>}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		ownMembers() {
+			if (!this.hasAdditionalFields) {
+				return []
+			}
+			const typeNames = new Set(this.typeMembers.map((m) => m.field.label))
+			// An SSH key's public key and fingerprint have their own rows.
+			if (this.isSshKey) {
+				typeNames.add(SSH_PUBLIC_KEY_MEMBER)
+				typeNames.add(SSH_FINGERPRINT_MEMBER)
+			}
+			const schemas = schemasOf(this.secret.additionalFields)
+			return Object.entries(fieldsOf(this.secret.additionalFields))
+				.filter(([name]) => !typeNames.has(name))
+				.map(([name, value]) => ({
+					name,
+					value:
+						value === null || value === undefined ? '' : String(value),
+					schema: schemas[name] ?? { type: 'string' },
+				}))
+		},
+
+		/**
+		 * Whether this secret is the `ssh_key` system type.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		isSshKey() {
+			const type = useSecretTypeStore().typesById[this.secret?.typeId]
+			return Boolean(type) && type.name === SSH_KEY_TYPE_NAME
+		},
+
+		/**
+		 * The SSH key's public key line from the encrypted blob, '' when none.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		sshPublicKey() {
+			const blob = this.secret?.additionalFields
+			return this.isSshKey && blob && typeof blob === 'object'
+				? fieldValueOf(blob[SSH_PUBLIC_KEY_MEMBER])
+				: ''
+		},
+
+		/**
+		 * The SSH key's stored fingerprint, '' when none.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
+		 */
+		sshFingerprint() {
+			const blob = this.secret?.additionalFields
+			return this.sshPublicKey !== ''
+				? fieldValueOf(blob[SSH_FINGERPRINT_MEMBER])
+				: ''
 		},
 
 		/**
@@ -1349,18 +1910,27 @@ export default {
 		},
 
 		/**
-		 * The revealed card number in display form: digit groups of four,
-		 * space-separated, regardless of how the number was typed in.
+		 * The revealed card number grouped as its brand prints it, regardless
+		 * of how the number was typed in.
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberFormatted() {
-			const digits = String(this.cardPayload?.number || '').replace(/\D/g, '')
-			if (!digits) {
-				return String(this.cardPayload?.number || '')
-			}
-			return digits.replace(/(.{4})/g, '$1 ').trim()
+			return formatCardNumber(this.cardPayload?.number || '')
+		},
+
+		/**
+		 * The number row's label, with the brand derived from the number.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 */
+		cardNumberLabel() {
+			const brand = cardBrandInfo(this.cardPayload?.number || '')
+			return brand
+				? this.t('keepiq', 'Number · {brand}', { brand: brand.label })
+				: this.t('keepiq', 'Number')
 		},
 
 		/**
@@ -1378,32 +1948,71 @@ export default {
 		},
 
 		/**
-		 * The masked card number, Proton-style: first and last four digits
-		 * visible, the middle groups dotted. Falls back to full dots when
-		 * the number is too short to expose anything meaningfully.
+		 * The masked card number, Proton-style: first group and last four
+		 * digits visible in the brand's grouping, fully dotted when too short.
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		cardNumberMasked() {
-			const digits = String(this.cardPayload?.number || '').replace(/\D/g, '')
-			const last4 = cardLast4(this.cardPayload?.number || '')
-			if (digits.length < 12 || !last4) {
-				return '•••• •••• •••• ••••'
-			}
-			return `${digits.slice(0, 4)} •••• •••• ${last4}`
+			return maskCardNumber(this.cardPayload?.number || '')
 		},
 
 		/**
-		 * The label for the decrypted key field, which reads "Note" for the
-		 * `note` system type and "Key" otherwise.
+		 * The label for the decrypted key field: the type's own, such as
+		 * "Note" or "Certificate", else "Key".
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
 		keyLabel() {
-			return this.isNote ? t('keepiq', 'Note') : t('keepiq', 'Key')
+			return this.valueField?.label ?? t('keepiq', 'Key')
+		},
+
+		/**
+		 * The type's own value field, or null for the generic one.
+		 *
+		 * @return {{label: string, kind: string, public?: boolean}|null}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		valueField() {
+			return valueFieldOf(this.typeName)
+		},
+
+		/**
+		 * Whether the value shows at once: only a public one, such as a
+		 * certificate, and not when it holds a private key, which a
+		 * certificate saved before it had its own Private key field may do.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		valueShownAtOnce() {
+			return (
+				this.valueField?.public === true
+				&& !holdsPrivateKey(this.secret?.key)
+			)
+		},
+
+		/**
+		 * The login row's label: "Username" on a database, else "Login".
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		loginLabel() {
+			return loginLabelOf(this.typeName) ?? t('keepiq', 'Login')
+		},
+
+		/**
+		 * The system name of the secret's type, '' while none is loaded.
+		 *
+		 * @spec exclude Trivial lookup: resolves the secret's type id to its name.
+		 */
+		typeName() {
+			return useSecretTypeStore().typesById[this.secret?.typeId]?.name ?? ''
 		},
 
 		/**
@@ -1419,6 +2028,17 @@ export default {
 			}
 			const type = useSecretTypeStore().typesById[this.secret.typeId]
 			return Boolean(type) && type.name === 'totp'
+		},
+
+		/**
+		 * The link for the secret's URL: only a web or mail address, so a
+		 * `javascript:` or `data:` URL is never a live link.
+		 *
+		 * @return {string|null} The href, or null to show the URL as text.
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		urlHref() {
+			return linkHref(this.secret?.url)
 		},
 
 		/**
@@ -1553,6 +2173,57 @@ export default {
 		federatedReadOnly() {
 			return this.secret?.readOnly === true
 		},
+
+		/**
+		 * The secret's decrypted `totp` field, for the code row only; '' when
+		 * it has none. Read whatever the type: only a login can be given one
+		 * here, but the server stores it on any secret.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-login-shows-a-live-code
+		 */
+		fieldTotp() {
+			return this.secret?.totp || ''
+		},
+
+		/**
+		 * The secret's decrypted `passkeys` field, whatever the type; '' when
+		 * it has none.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		fieldPasskeysJson() {
+			return this.secret?.passkeys || ''
+		},
+
+		/**
+		 * How many passkeys the `passkeys` field lists.
+		 *
+		 * @return {number}
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		fieldPasskeyCount() {
+			return passkeyEntries(this.fieldPasskeysJson).length
+		},
+
+		/**
+		 * Whether the holder may change this secret's value from here: the
+		 * same rule as the Edit button, and the server stores the login's
+		 * value fields.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		canChangeValue() {
+			return (
+				(!this.offlineReadOnly || this.offlineEditable)
+				&& !this.useOnly
+				&& !this.federatedReadOnly
+				&& !this.viewOnlyCopy
+				&& valueFieldsSupported()
+			)
+		},
 	},
 
 	watch: {
@@ -1592,6 +2263,36 @@ export default {
 
 	methods: {
 		t,
+		isRequestableTypeName,
+
+		/**
+		 * Whether a field of the type is shown masked: a hidden or
+		 * multi-line field, such as a passphrase or a private key, unless
+		 * it is public, as an SSH public key is.
+		 *
+		 * @param {{kind: string, public?: boolean}} field The field.
+		 * @return {boolean} True when the field is masked.
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		isMaskedField(field) {
+			return (
+				field.kind === 'hidden'
+				|| (field.kind === 'multiline' && field.public !== true)
+			)
+		},
+
+		/**
+		 * The resolver a masked member's field reveals and copies through.
+		 * Built here because a template cannot reach `Promise`: Vue only
+		 * exposes a fixed list of globals to template expressions.
+		 *
+		 * @param {string|number|boolean} value The member's decrypted value.
+		 * @return {function(): Promise<string>} The resolver.
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-detail-sidebar-shows-the-fields-of-the-type
+		 */
+		memberResolver(value) {
+			return async () => String(value)
+		},
 
 		/**
 		 * Load and decrypt the secret.
@@ -1600,29 +2301,48 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async load() {
+			const id = this.secretId
 			this.loading = true
 			this.error = ''
+			this.privilegedRefused = false
 			try {
-				this.secret = await useSecretStore().fetchSecret(this.secretId)
+				// Fetched together and applied together, so the flags below
+				// always describe the secret on show and a view-only copy
+				// never shows Edit while its write-context is on its way.
+				const [secret, context] = await Promise.all([
+					useSecretStore().fetchSecret(id),
+					this.fetchWriteContext(id),
+				])
+				// An answer for a secret the sidebar has left is dropped.
+				if (id !== this.secretId) {
+					return
+				}
+				this.secret = secret
 				// Retire the previous secret's decrypted plaintext with the
 				// secret it came from. See `secretLoadToken` in data().
 				this.secretLoadToken += 1
 				// Write-grade badge (folder-permission-grades §4.3) — a
-				// copy the user may team-write shows the sync warning.
-				try {
-					const { useShareStore } =
-						await import('../store/modules/share.js')
-					const context = await useShareStore().fetchWriteContext(
-						this.secretId,
-					)
-					this.teamWritable =
-						['write', 'manage'].includes(context.effectiveGrade)
-						&& context.sourceSecretId !== this.secretId
-				} catch {
-					this.teamWritable = false
-				}
+				// copy the user may team-write shows the sync warning; one
+				// without a write grade is view only.
+				this.teamWritable =
+					['write', 'manage'].includes(context?.effectiveGrade)
+					&& context.sourceSecretId !== id
+				this.viewOnlyCopy = isViewOnlyCopy(context, id)
+				this.writeContext = context ?? null
 			} catch (e) {
-				if (isRefusal(e)) {
+				if (id !== this.secretId) {
+					return
+				}
+				if (
+					isRefusal(e)
+					&& refusalCode(e) === 'privileged_access_required'
+				) {
+					this.privilegedRefused = true
+					this.error = t(
+						'keepiq',
+						'This login can only be used in a time window its owner approved.',
+					)
+				} else if (isRefusal(e)) {
 					this.error = t(
 						'keepiq',
 						'This secret is locked because its encryption suite was revoked.',
@@ -1633,7 +2353,26 @@ export default {
 						|| t('keepiq', 'Failed to load secret')
 				}
 			} finally {
-				this.loading = false
+				if (id === this.secretId) {
+					this.loading = false
+				}
+			}
+		},
+
+		/**
+		 * The write-context of a secret, or null when it cannot be read: the
+		 * secret then loads without a write grade badge or view-only state.
+		 *
+		 * @param {string} id The secret.
+		 * @return {Promise<object|null>}
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-a-write-grade-member-may-update-a-folder-secret-for-all-recipients
+		 */
+		async fetchWriteContext(id) {
+			try {
+				const { useShareStore } = await import('../store/modules/share.js')
+				return await useShareStore().fetchWriteContext(id)
+			} catch {
+				return null
 			}
 		},
 
@@ -1667,13 +2406,49 @@ export default {
 		 * Toggle one card field's reveal state (masked by default).
 		 *
 		 * @param {string} field The field name (number | cvv | pin).
-		 * @return {void}
+		 * @return {Promise<void>}
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
 		 */
-		toggleCardField(field) {
+		async toggleCardField(field) {
+			if (!this.cardRevealed[field] && !(await this.allowedToReveal())) {
+				return
+			}
 			this.cardRevealed = {
 				...this.cardRevealed,
 				[field]: !this.cardRevealed[field],
+			}
+		},
+
+		/**
+		 * Show or hide the BSN; showing a flagged item's asks first.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		async toggleBsn() {
+			if (!this.bsnRevealed && !(await this.allowedToReveal())) {
+				return
+			}
+			this.bsnRevealed = !this.bsnRevealed
+		},
+
+		/**
+		 * Whether this item may be revealed now: at once when it is not
+		 * flagged, after the master password re-prompt when it is.
+		 *
+		 * @return {Promise<boolean>}
+		 * @spec openspec/changes/archive/2026-11-17-crypto-item-reprompt/tasks.md#task-2.2
+		 */
+		async allowedToReveal() {
+			if (!this.revealGuard) {
+				return true
+			}
+			try {
+				await this.revealGuard()
+				return true
+			} catch {
+				return false
 			}
 		},
 
@@ -1688,20 +2463,156 @@ export default {
 		},
 
 		/**
-		 * Open the edit dialog for this secret; reload the detail and the
-		 * list behind it on success.
+		 * Reload the detail, then the list behind it, after a dialog saved.
 		 *
 		 * @return {void}
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
+		reloadWithList() {
+			this.load()
+			this.refreshList()
+		},
+
+		/**
+		 * Open the edit dialog for this secret; reload the detail and the
+		 * list behind it on success.
+		 *
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 */
 		openEdit() {
+			// A flagged item opens its edit form only after the re-prompt;
+			// any other opens at once (crypto-item-reprompt D2).
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.openEditDialog()
+					}
+				})
+			}
+			this.openEditDialog()
+			return undefined
+		},
+
+		/**
+		 * Open the edit dialog itself.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		openEditDialog() {
 			this.cnOpenModal('secret-edit', {
 				secretId: this.secretId,
 				onSaved: () => {
-					this.load()
-					this.refreshList()
+					this.reloadWithList()
+					// The dialog may have added files; the panel only refetches on a secret switch.
+					useAttachmentStore()
+						.fetchAttachments(this.secretId)
+						.catch(() => {})
 				},
 			})
+		},
+
+		/**
+		 * Open the create dialog prefilled from this secret's decrypted fields.
+		 * Saving is an ordinary create: a new id, fresh ciphertext, no shares,
+		 * attachments, history, passkeys or one-time code.
+		 *
+		 * A flagged item opens the prefilled form, which holds its value, only
+		 * after the master password re-prompt (crypto-item-reprompt D2).
+		 *
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		openClone() {
+			if (!this.secret) {
+				return undefined
+			}
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.openCloneDialog()
+					}
+				})
+			}
+			this.openCloneDialog()
+			return undefined
+		},
+
+		/**
+		 * Open the create dialog prefilled from this secret.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		openCloneDialog() {
+			this.cnOpenModal('secret-create', {
+				folderId: this.secret.folderId || null,
+				prefill: {
+					typeId: this.secret.typeId || null,
+					name: this.secret.name || '',
+					url: this.secret.url || '',
+					login: this.secret.login || '',
+					key: this.secret.key || '',
+					additionalFields: this.secret.additionalFields ?? null,
+				},
+				onSaved: () => this.reloadWithList(),
+			})
+		},
+
+		/**
+		 * Open Print for this login. The modal asks for the master password
+		 * before it renders the sheet; a flagged item answers its re-prompt first.
+		 *
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		openPrint() {
+			return this.openRevealModal('secret-print', () => ({
+				name: this.secret.name || '',
+				url: this.secret.url || '',
+				login: this.secret.login || '',
+				password: this.secret.key,
+			}))
+		},
+
+		/**
+		 * Open Show as QR code for this login, behind the same check as Print.
+		 *
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		openQr() {
+			return this.openRevealModal('secret-qr', () => ({
+				secretName: this.secret.name || '',
+				password: this.secret.key,
+			}))
+		},
+
+		/**
+		 * Open a modal that shows this login's password, after a flagged
+		 * item's re-prompt where it has one. Only the fields the modal shows
+		 * are handed over; never the one-time code seed or passkeys (D4).
+		 *
+		 * @param {string} name The registry key.
+		 * @param {() => object} props Builds the modal's props.
+		 * @return {Promise<void>|undefined} Settles once a flagged item's re-prompt was answered.
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-print-a-login-or-show-its-password-as-a-qr-code
+		 */
+		openRevealModal(name, props) {
+			if (!this.secret || !this.canPrintOrShowQr) {
+				return undefined
+			}
+			if (this.revealGuard) {
+				return this.allowedToReveal().then((allowed) => {
+					if (allowed) {
+						this.cnOpenModal(name, props())
+					}
+				})
+			}
+			this.cnOpenModal(name, props())
+			return undefined
 		},
 
 		/**
@@ -1716,10 +2627,7 @@ export default {
 				subject: 'secret',
 				secretId: this.secretId,
 				currentFolderId: this.secret ? this.secret.folderId || null : null,
-				onSaved: () => {
-					this.load()
-					this.refreshList()
-				},
+				onSaved: () => this.reloadWithList(),
 			})
 		},
 
@@ -1789,6 +2697,122 @@ export default {
 					this.$emit('close')
 				},
 			})
+		},
+
+		/**
+		 * Save the login's passkeys without the one the user deleted, with
+		 * the base versions the edit dialog sends, then reload the detail.
+		 *
+		 * @param {string} passkeys The remaining passkeys value, '' for none.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		async onDeletePasskey(passkeys) {
+			if (!this.canChangeValue || this.passkeySaving) {
+				return
+			}
+			const id = this.secretId
+			this.passkeySaving = true
+			try {
+				const store = useSecretStore()
+				// A merge write-back that saved moves both versions, so they
+				// are read after it.
+				const writeBack = await store.writeBackSettled(id)
+				await store.updateSecret(
+					id,
+					{ passkeys },
+					{
+						baseUpdatedAt: this.secret.updatedAt,
+						sourceBaseUpdatedAt: this.sourceBaseFor(id, writeBack),
+					},
+				)
+				if (id === this.secretId) {
+					await this.load()
+					await this.$nextTick()
+					this.focusAfterPasskeyDelete()
+				}
+				this.refreshList()
+			} catch (e) {
+				showError(this.passkeyDeleteErrorText(e))
+			} finally {
+				this.passkeySaving = false
+			}
+		},
+
+		/**
+		 * The message for a failed passkey delete. An unreachable partner
+		 * gets its own wording: the shared share-save text offers to save
+		 * without them, which only the edit dialog can do.
+		 *
+		 * @param {Error} e The failure.
+		 * @return {string}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+		 */
+		passkeyDeleteErrorText(e) {
+			if (e?.code === 'partner_unreachable') {
+				return t(
+					'keepiq',
+					'A partner organisation this secret is shared with cannot be reached, so the passkey was not deleted. Try again later.',
+				)
+			}
+			return (
+				shareSaveErrorText(e) || t('keepiq', 'Could not delete the passkey')
+			)
+		},
+
+		/**
+		 * The deleted passkey's row is gone: focus the list when passkeys
+		 * remain, else the Edit button, else the detail itself.
+		 *
+		 * @return {void}
+		 * @spec exclude Focus management after a re-render.
+		 */
+		focusAfterPasskeyDelete() {
+			if (this.$refs.passkeyList) {
+				this.$refs.passkeyList.focus()
+				return
+			}
+			const edit = this.$el?.querySelector?.(
+				'[data-testid="secret-detail-edit"]',
+			)
+			const target = edit?.matches?.('button')
+				? edit
+				: edit?.querySelector?.('button')
+			if (target) {
+				target.focus()
+				return
+			}
+			const card = this.$el?.querySelector?.('.secret-detail__card')
+			if (card) {
+				card.setAttribute('tabindex', '-1')
+				card.focus()
+			}
+		},
+
+		/**
+		 * The source version a change of this copy is based on, as the edit
+		 * dialog reads it: the cached one offline, null for an own secret,
+		 * else the one a saved write-back wrote or the write-context names.
+		 *
+		 * @param {string} id The secret.
+		 * @param {object|null|undefined} writeBack The settled write-back.
+		 * @return {string|null}
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+		 */
+		sourceBaseFor(id, writeBack) {
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find(
+					(secret) => secret.id === id,
+				)
+				return cached?.sourceUpdatedAt ?? null
+			}
+			const context = this.writeContext
+			if (context?.sourceSecretId === id) {
+				return null
+			}
+			return writeBack?.sourceUpdatedAt ?? context?.sourceUpdatedAt ?? null
 		},
 
 		/**
@@ -1978,6 +3002,13 @@ details[open] > summary .secret-detail__accordion-chevron {
 	letter-spacing: 0.04em;
 }
 
+/* A hidden additional field: the masked value, Show and Copy on one line. */
+.secret-detail__extra-hidden {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
 /* Identity section headings: plain text OUTSIDE the boxes (Proton). */
 .secret-detail__section-heading {
 	margin: 16px 0 8px;
@@ -2023,6 +3054,37 @@ details[open] > summary .secret-detail__accordion-chevron {
 	min-width: 0;
 }
 
+/* Additional fields: each a muted label above its value, like the rows.
+   Nextcloud's core CSS makes every dt and dd an inline-block with a fixed
+   130px right-aligned dt, which shrinks a value to its content; the list
+   resets that so each value spans the box. */
+.secret-detail__extra {
+	margin: 0;
+	padding: 0;
+}
+
+.secret-detail__extra-item + .secret-detail__extra-item {
+	margin-top: 10px;
+}
+
+.secret-detail__extra dt,
+.secret-detail__extra dd {
+	display: block;
+	width: auto;
+	padding: 0;
+	text-align: start;
+}
+
+.secret-detail__extra dt {
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+}
+
+.secret-detail__extra dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
 /* Metadata box (Proton): tight rows, no separators. */
 .secret-detail__box--meta .secret-detail__row {
 	padding: 8px 0;
@@ -2032,28 +3094,28 @@ details[open] > summary .secret-detail__accordion-chevron {
 	border-top: none;
 }
 
-.secret-detail__sharing {
-	margin-top: 24px;
-	padding-top: 16px;
-	border-top: 1px solid var(--color-border);
+/* "More information": a row label is a real heading for screen readers,
+   so it drops the large top margin and weight Nextcloud's core h3 adds. */
+h3.secret-detail__row-label {
+	margin-top: 0;
+	font-weight: normal;
+	line-height: inherit;
 }
 
-.secret-detail__sharing-heading {
-	margin: 0 0 12px;
-	font-size: 1.1rem;
+/* The sharing and request panels each bring their own headings ("Shared
+   with", "Delegations", ...) at the core h3/h4 sizes; inside a row they
+   read as one size of sub-heading, with even space between panels. */
+.secret-detail__more .secret-detail__row-value :deep(h3),
+.secret-detail__more .secret-detail__row-value :deep(h4) {
+	margin: 0 0 4px;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 1.4;
 	color: var(--color-main-text);
 }
 
-.secret-detail__requests {
-	margin-top: 24px;
-	padding-top: 16px;
-	border-top: 1px solid var(--color-border);
-}
-
-.secret-detail__requests-heading {
-	margin: 0 0 12px;
-	font-size: 1.1rem;
-	color: var(--color-main-text);
+.secret-detail__more .secret-detail__row-value > * + * {
+	margin-top: 16px;
 }
 
 .secret-detail__requests-actions {
@@ -2074,5 +3136,26 @@ details[open] > summary .secret-detail__accordion-chevron {
 	font-weight: 600;
 	background-color: var(--color-primary-element-light, #dbe9f5);
 	color: var(--color-main-text, #222);
+}
+
+.secret-detail__url-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.secret-detail__preview {
+	display: block;
+	width: 100%;
+	max-height: 160px;
+	object-fit: cover;
+	border-radius: var(--border-radius-large);
+	margin-bottom: 8px;
+}
+
+.secret-detail__change-password {
+	display: inline-block;
+	margin-top: 4px;
+	color: var(--color-primary-element);
 }
 </style>

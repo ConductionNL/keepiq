@@ -34,11 +34,13 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\SecretRequestController;
 use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\RequestedFields;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -81,6 +83,27 @@ class SecretRequestControllerTest extends TestCase {
 	}//end setUp()
 
 	/**
+	 * A controller whose request body carries these values, such as `fieldSchemas`
+	 * and `typeId`, which create() reads from the body rather than binding.
+	 *
+	 * @param array<string,mixed> $body The body values by key
+	 *
+	 * @return SecretRequestController
+	 */
+	private function controllerWithBody(array $body): SecretRequestController {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static fn (string $key) => $body[$key] ?? null
+		);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+
+		return new SecretRequestController(request: $request, service: $this->service, session: $session);
+	}//end controllerWithBody()
+
+	/**
 	 * Build a persisted request for the service mocks to return.
 	 *
 	 * @return SecretRequest
@@ -108,7 +131,12 @@ class SecretRequestControllerTest extends TestCase {
 	public function testCreateWithoutASecretIdTakesTheFreshPath(): void {
 		$this->service->expects($this->once())
 			->method('createForUserVault')
-			->with('alice', ['key', 'url'], 'Supplier API key', null, null)
+			->with(
+				'alice',
+				new RequestedFields(names: ['key', 'url']),
+				['name' => 'Supplier API key', 'folderId' => null, 'typeId' => null],
+				null
+			)
 			->willReturn($this->made());
 		$this->service->expects($this->never())->method('create');
 		$this->service->expects($this->never())->method('createReRequest');
@@ -120,6 +148,33 @@ class SecretRequestControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
 	}//end testCreateWithoutASecretIdTakesTheFreshPath()
+
+	/**
+	 * The fresh path forwards the chosen type for the placeholder.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
+	 */
+	public function testCreateForwardsTheChosenTypeToTheFreshPath(): void {
+		$this->service->expects($this->once())
+			->method('createForUserVault')
+			->with(
+				'alice',
+				new RequestedFields(names: ['key']),
+				['name' => 'Supplier TLS certificate', 'folderId' => 'folder-1', 'typeId' => 'type-certificate'],
+				null
+			)
+			->willReturn($this->made());
+
+		$response = $this->controllerWithBody(body: ['typeId' => 'type-certificate'])->create(
+			requestedFields: ['key'],
+			name: 'Supplier TLS certificate',
+			folderId: 'folder-1',
+		);
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+	}//end testCreateForwardsTheChosenTypeToTheFreshPath()
 
 	/**
 	 * A re-request without a secretId is refused explicitly.
@@ -213,6 +268,47 @@ class SecretRequestControllerTest extends TestCase {
 	}//end testAnApplicationIdTakesTheApplicationPath()
 
 	/**
+	 * The schemas in the body's `fieldSchemas` reach the service, also on
+	 * an application's request.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testTheBodySchemasReachTheService(): void {
+		$schemas = ['PIN' => ['type' => 'string', 'hidden' => true]];
+		$this->service->expects($this->once())
+			->method('create')
+			->with('sec-1', 'suite-1', new RequestedFields(names: ['PIN'], schemas: $schemas), false, null, 'alice')
+			->willReturn($this->made());
+		$this->service->expects($this->once())
+			->method('createForApplication')
+			->with('sec-1', 'app-1', new RequestedFields(names: ['PIN'], schemas: $schemas), null, 'alice')
+			->willReturn($this->made());
+
+		$controller = $this->controllerWithBody(body: ['fieldSchemas' => $schemas]);
+		$controller->create(secretId: 'sec-1', encryptionSuiteId: 'suite-1', requestedFields: ['PIN']);
+		$controller->create(secretId: 'sec-1', requestedFields: ['PIN'], applicationId: 'app-1');
+	}//end testTheBodySchemasReachTheService()
+
+	/**
+	 * A `fieldSchemas` that is not an object is read as none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function testABodySchemaThatIsNoObjectIsReadAsNone(): void {
+		$this->service->expects($this->once())
+			->method('create')
+			->with('sec-1', 'suite-1', new RequestedFields(names: ['PIN']), false, null, 'alice')
+			->willReturn($this->made());
+
+		$this->controllerWithBody(body: ['fieldSchemas' => 'PIN'])
+			->create(secretId: 'sec-1', encryptionSuiteId: 'suite-1', requestedFields: ['PIN']);
+	}//end testABodySchemaThatIsNoObjectIsReadAsNone()
+
+	/**
 	 * An unauthenticated caller is refused before any service call.
 	 *
 	 * @return void
@@ -235,4 +331,59 @@ class SecretRequestControllerTest extends TestCase {
 			$controller->create(requestedFields: ['key'])->getStatus()
 		);
 	}//end testUnauthenticatedCreateIsRefused()
+	/**
+	 * Service refusal codes map to an HTTP status: 403, 404 and 409 pass
+	 * through, anything else is a 400; the message is returned as-is.
+	 *
+	 * @return array<string, array{int, int}>
+	 */
+	public static function refusalCodes(): array {
+		return [
+			'forbidden' => [403, Http::STATUS_FORBIDDEN],
+			'not found' => [404, Http::STATUS_NOT_FOUND],
+			'conflict' => [409, Http::STATUS_CONFLICT],
+			'no code' => [0, Http::STATUS_BAD_REQUEST],
+			'unauthorized code' => [401, Http::STATUS_BAD_REQUEST],
+			'server code' => [500, Http::STATUS_BAD_REQUEST],
+		];
+	}//end refusalCodes()
+
+	/**
+	 * A service refusal becomes the mapped status with the service message.
+	 *
+	 * @param int $code The exception code the service throws
+	 * @param int $expected The expected HTTP status
+	 *
+	 * @return void
+	 */
+	#[DataProvider('refusalCodes')]
+	public function testAServiceRefusalMapsToItsStatus(int $code, int $expected): void {
+		$this->service->method('createForUserVault')
+			->willThrowException(new \InvalidArgumentException('Refused for a reason', $code));
+
+		$response = $this->controller->create(requestedFields: ['key'], name: 'N');
+
+		$this->assertSame($expected, $response->getStatus());
+		$this->assertSame(['message' => 'Refused for a reason'], $response->getData());
+	}//end testAServiceRefusalMapsToItsStatus()
+
+	/**
+	 * An empty applicationId does not select the application path.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyApplicationIdKeepsThePlainPath(): void {
+		$this->service->expects($this->once())
+			->method('create')
+			->willReturn($this->made());
+		$this->service->expects($this->never())->method('createForApplication');
+
+		$response = $this->controller->create(
+			secretId: 'sec-1',
+			requestedFields: ['key'],
+			applicationId: '',
+		);
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+	}//end testAnEmptyApplicationIdKeepsThePlainPath()
 }//end class

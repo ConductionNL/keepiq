@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Iframes</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main class="wide">
+		<a class="back" href="/">All test pages</a>
+		<h1>Iframes</h1>
+		<p class="tests">The first frame is on this site and should fill. The second is on <code>127.0.0.1</code>, another site, and should not fill from a <code>localhost</code> login.</p>
+		<h2>Same site</h2>
+		<iframe id="same" title="Login form on the same site"></iframe>
+		<h2>Cross site</h2>
+		<iframe id="cross" title="Login form on another site"></iframe>
+	</main>
+	<script>
+		document.getElementById('same').src = '/login.html'
+		document.getElementById('cross').src = `http://127.0.0.1:${location.port}/login.html`
+	</script>
+</body>
+</html>

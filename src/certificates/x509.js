@@ -15,6 +15,9 @@
  * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-metadata-parsing-split-by-pem-readability
  */
 
+import { decodeOid } from '../crypto/oid.js'
+import { decodePem } from '../crypto/pem.js'
+
 /** Common DN attribute OIDs → short labels. */
 const DN_OIDS = {
 	'2.5.4.3': 'CN',
@@ -49,6 +52,22 @@ function pemToDer(pem) {
 		}
 		return bytes
 	} catch (e) {
+		return null
+	}
+}
+
+/**
+ * Decode a certificate for a trust decision: unlike the display parser,
+ * which reads the first certificate of a bundle, the text must be exactly
+ * one certificate block, so the key used later is the one checked here.
+ *
+ * @param {string} pem The PEM text.
+ * @return {Uint8Array|null} DER bytes, or null for anything else.
+ */
+function strictPemToDer(pem) {
+	try {
+		return decodePem(pem, ['CERTIFICATE']).der
+	} catch {
 		return null
 	}
 }
@@ -93,30 +112,6 @@ function children(bytes, tlv) {
 		cursor = child.end
 	}
 	return out
-}
-
-/**
- * Decode an OID value to dotted notation.
- *
- * @param {Uint8Array} bytes The DER buffer.
- * @param {{start: number, end: number}} tlv The OID TLV.
- * @return {string} Dotted OID.
- */
-function decodeOid(bytes, tlv) {
-	const parts = []
-	let value = 0
-	for (let i = tlv.start; i < tlv.end; i++) {
-		value = value * 128 + (bytes[i] & 0x7f)
-		if ((bytes[i] & 0x80) === 0) {
-			if (parts.length === 0) {
-				parts.push(Math.floor(value / 40), value % 40)
-			} else {
-				parts.push(value)
-			}
-			value = 0
-		}
-	}
-	return parts.join('.')
 }
 
 /**
@@ -193,6 +188,29 @@ function decodeSerialHex(bytes, tlv) {
 }
 
 /**
+ * The TLVs of the display fields of a certificate:
+ * Certificate ::= SEQUENCE { tbsCertificate, signatureAlgorithm, signature },
+ * and in the TBS an optional [0] EXPLICIT version, then serial, signature,
+ * issuer, validity and subject.
+ *
+ * @param {Uint8Array} der The certificate (DER).
+ * @return {{serial: object, issuer: object, subject: object, notBefore: object, notAfter: object}}
+ */
+function displayTlvsOf(der) {
+	const [tbs] = children(der, readTlv(der, 0))
+	const tbsChildren = children(der, tbs)
+	const index = tbsChildren[0] && tbsChildren[0].tag === 0xa0 ? 1 : 0
+	const [notBefore, notAfter] = children(der, tbsChildren[index + 3])
+	return {
+		serial: tbsChildren[index],
+		issuer: tbsChildren[index + 2],
+		subject: tbsChildren[index + 4],
+		notBefore,
+		notAfter,
+	}
+}
+
+/**
  * Parse the non-secret display fields of a PEM certificate.
  *
  * @param {string} pem The decrypted PEM text (never sent anywhere by this module).
@@ -205,33 +223,15 @@ export async function parseCertificatePem(pem) {
 		return null
 	}
 	try {
-		// Certificate ::= SEQUENCE { tbsCertificate, signatureAlgorithm, signature }
-		const certificate = readTlv(der, 0)
-		const [tbs] = children(der, certificate)
-		const tbsChildren = children(der, tbs)
-		let index = 0
-		// [0] EXPLICIT version — optional.
-		if (tbsChildren[0] && tbsChildren[0].tag === 0xa0) {
-			index = 1
-		}
-		const serialTlv = tbsChildren[index]
-		const issuerTlv = tbsChildren[index + 2]
-		const validityTlv = tbsChildren[index + 3]
-		const subjectTlv = tbsChildren[index + 4]
-		const [notBeforeTlv, notAfterTlv] = children(der, validityTlv)
-
-		const digest = await crypto.subtle.digest('SHA-256', der)
-		const fingerprint = Array.from(new Uint8Array(digest))
-			.map((b) => b.toString(16).padStart(2, '0'))
-			.join('')
-
+		const tlvs = displayTlvsOf(der)
+		const fingerprint = await sha256Hex(der)
 		return {
-			subject: decodeName(der, subjectTlv),
-			issuer: decodeName(der, issuerTlv),
-			serial: decodeSerialHex(der, serialTlv),
+			subject: decodeName(der, tlvs.subject),
+			issuer: decodeName(der, tlvs.issuer),
+			serial: decodeSerialHex(der, tlvs.serial),
 			fingerprintSha256: `sha256:${fingerprint}`,
-			notBefore: decodeTime(der, notBeforeTlv),
-			notAfter: decodeTime(der, notAfterTlv),
+			notBefore: decodeTime(der, tlvs.notBefore),
+			notAfter: decodeTime(der, tlvs.notAfter),
 		}
 	} catch (e) {
 		return null
@@ -258,26 +258,23 @@ function spkiOf(der) {
 	}
 	const index = fields[0] && fields[0].tag === 0xa0 ? 6 : 5
 	const spki = fields[index]
+	if (!spki || spki.tag !== 0x30 || spki.end > tbs.end) {
+		throw new Error('No SubjectPublicKeyInfo in the certificate')
+	}
 	return der.slice(spki.headerStart, spki.end)
 }
 
 /**
- * Whether `certificatePem` carries a valid RSA (PKCS #1 v1.5, SHA-256)
- * signature by the key of `issuerPem`. Checks the signature only, not dates
+ * Whether the certificate `der` carries a valid RSA (PKCS #1 v1.5, SHA-256)
+ * signature by the key of `issuerDer`. Checks the signature only, not dates
  * or extensions: enough to tell that the instance CA issued a certificate
  * (crypto-organisation-account-recovery D5).
  *
- * @param {string} certificatePem The certificate to check.
- * @param {string} issuerPem The issuer certificate.
+ * @param {Uint8Array} der The certificate to check.
+ * @param {Uint8Array} issuerDer The issuer certificate.
  * @return {Promise<boolean>}
- * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
  */
-export async function isIssuedBy(certificatePem, issuerPem) {
-	const der = pemToDer(certificatePem)
-	const issuerDer = pemToDer(issuerPem)
-	if (!der || !issuerDer) {
-		return false
-	}
+async function issuedBy(der, issuerDer) {
 	try {
 		const certificate = readTlv(der, 0)
 		const [tbs, , signature] = children(der, certificate)
@@ -304,41 +301,46 @@ export async function isIssuedBy(certificatePem, issuerPem) {
 }
 
 /**
- * Whether a certificate chains through `chain` (issuer first, root last) to
- * a root that signed itself.
+ * Check that a certificate chains through `chain` (issuer first, root last)
+ * to a root that signed itself, and read its fingerprint and public key from
+ * the same bytes, so the caller encrypts to exactly the key that was checked.
+ * The fingerprint is the value the server shows as
+ * RecoveryKeyService::fingerprint().
  *
  * @param {string} certificatePem The leaf certificate.
  * @param {Array<string>} chain The issuer certificates, nearest first.
- * @return {Promise<boolean>}
+ * @return {Promise<{fingerprint: string, spki: Uint8Array}|null>} The leaf's
+ *   SHA-256 (hex) and SubjectPublicKeyInfo (DER), or null when it does not chain.
  * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
  */
-export async function chainsTo(certificatePem, chain) {
-	if (!Array.isArray(chain) || chain.length === 0) {
-		return false
+export async function verifiedCertificate(certificatePem, chain) {
+	const der = strictPemToDer(certificatePem)
+	if (der === null || !Array.isArray(chain) || chain.length === 0) {
+		return null
 	}
-	let current = certificatePem
-	for (const issuer of chain) {
-		if (!(await isIssuedBy(current, issuer))) {
-			return false
+	let current = der
+	for (const issuerPem of chain) {
+		const issuer = strictPemToDer(issuerPem)
+		if (issuer === null || !(await issuedBy(current, issuer))) {
+			return null
 		}
 		current = issuer
 	}
-	return isIssuedBy(current, current)
+	if (!(await issuedBy(current, current))) {
+		return null
+	}
+	try {
+		return { fingerprint: await sha256Hex(der), spki: spkiOf(der) }
+	} catch {
+		return null
+	}
 }
 
 /**
- * The SHA-256 fingerprint (hex) of a PEM certificate's DER bytes, the same
- * value the server shows as RecoveryKeyService::fingerprint().
- *
- * @param {string} certificatePem The certificate.
- * @return {Promise<string>}
- * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+ * @param {Uint8Array} der DER bytes.
+ * @return {Promise<string>} Lowercase hex SHA-256.
  */
-export async function certificateFingerprint(certificatePem) {
-	const der = pemToDer(certificatePem)
-	if (!der) {
-		return ''
-	}
+async function sha256Hex(der) {
 	const digest = await crypto.subtle.digest('SHA-256', der)
 	return Array.from(new Uint8Array(digest))
 		.map((b) => b.toString(16).padStart(2, '0'))

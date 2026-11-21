@@ -31,6 +31,9 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<SiemSink>
  */
 class SiemSinkMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for SiemSinkMapper.
 	 *
@@ -52,12 +55,7 @@ class SiemSinkMapper extends QBMapper {
 	 * @throws DoesNotExistException When no row matches
 	 */
 	public function findById(string $id): SiemSink {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

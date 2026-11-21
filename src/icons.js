@@ -21,8 +21,11 @@ import CertificateOutline from 'vue-material-design-icons/CertificateOutline.vue
 import ChartBoxOutline from 'vue-material-design-icons/ChartBoxOutline.vue'
 import ClipboardList from 'vue-material-design-icons/ClipboardList.vue'
 import CogOutline from 'vue-material-design-icons/CogOutline.vue'
+import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
+import FolderPlus from 'vue-material-design-icons/FolderPlus.vue'
 import Home from 'vue-material-design-icons/Home.vue'
 import InboxArrowDownOutline from 'vue-material-design-icons/InboxArrowDownOutline.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
@@ -31,6 +34,7 @@ import MapMarkerPath from 'vue-material-design-icons/MapMarkerPath.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import PowerPlugOutline from 'vue-material-design-icons/PowerPlugOutline.vue'
 import Pulse from 'vue-material-design-icons/Pulse.vue'
+import Safe from 'vue-material-design-icons/Safe.vue'
 import ShieldKeyOutline from 'vue-material-design-icons/ShieldKeyOutline.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
@@ -46,8 +50,11 @@ export default {
 	ChartBoxOutline,
 	ClipboardList,
 	CogOutline,
+	ContentSaveOutline,
+	Delete,
 	FileDocumentOutline,
 	FolderOutline,
+	FolderPlus,
 	Home,
 	InboxArrowDownOutline,
 	KeyVariant,
@@ -56,6 +63,7 @@ export default {
 	Plus,
 	PowerPlugOutline,
 	Pulse,
+	Safe,
 	ShieldKeyOutline,
 	Sitemap,
 	TrashCanOutline,

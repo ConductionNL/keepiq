@@ -9,13 +9,15 @@
  * Snapshot shape written to IndexedDB:
  *   {
  *     suite:    { id, certificate, privateKey (envelope), status },  // ciphertext/params only
- *     secrets:  [{ id, folderId, typeId, key, login, additionalFields, // RSA ciphertext as-is
+ *     secrets:  [{ id, folderId, typeId, key, login, additionalFields, totp, passkeys, // RSA ciphertext as-is
+ *                  updatedAt, sourceUpdatedAt,  // versions, in plain
  *                  meta }],  // encryptMetadata({name,url}) — encrypted at rest
  *     folders:  [{ id, parentId, meta }],  // encryptMetadata({name}) — encrypted at rest
  *     syncedAt: string,
  *   }
  *
  * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
+ * @spec openspec/changes/sharing-atomic-share-save/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
  */
 import { decryptMetadata, encryptMetadata } from '../crypto/metadata.js'
 
@@ -36,10 +38,15 @@ export async function encryptSnapshot(aesKey, manifest) {
 			key: s.key,
 			login: s.login,
 			additionalFields: s.additionalFields,
+			totp: s.totp ?? null,
+			passkeys: s.passkeys ?? null,
 			encryptionSuiteId: s.encryptionSuiteId,
 			expiresAt: s.expiresAt,
 			// The version an offline edit is based on (offline-edit-queue).
 			updatedAt: s.updatedAt ?? null,
+			// On a copy, the source version that edit is made from; null on
+			// an own secret.
+			sourceUpdatedAt: s.sourceUpdatedAt ?? null,
 			// Plaintext metadata encrypted at rest (never stored in the clear).
 			meta: await encryptMetadata(aesKey, { name: s.name, url: s.url }),
 		})),
@@ -93,9 +100,12 @@ export async function decryptSnapshot(aesKey, snapshot) {
 				key: s.key,
 				login: s.login,
 				additionalFields: s.additionalFields,
+				totp: s.totp ?? null,
+				passkeys: s.passkeys ?? null,
 				encryptionSuiteId: s.encryptionSuiteId,
 				expiresAt: s.expiresAt,
 				updatedAt: s.updatedAt ?? null,
+				sourceUpdatedAt: s.sourceUpdatedAt ?? null,
 			}
 		}),
 	)

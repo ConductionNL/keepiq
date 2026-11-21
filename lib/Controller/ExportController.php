@@ -30,9 +30,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Event\SecretExportedEvent;
-use OCA\Keepiq\Service\VaultPolicyService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\VaultPolicyServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -53,11 +53,12 @@ class ExportController extends Controller {
 	private const MODES = ['encrypted-backup', 'plaintext-csv', 'cxf', 'cxp'];
 
 	/**
-	 * The accepted export scopes.
+	 * The accepted export scopes. `selection` is a hand-picked set of items,
+	 * sent to another provider (portability-cxp-cross-provider-transfer).
 	 *
 	 * @var string[]
 	 */
-	private const SCOPES = ['vault', 'folders'];
+	private const SCOPES = ['vault', 'folders', 'selection'];
 
 	/**
 	 * Constructor for ExportController.
@@ -65,7 +66,7 @@ class ExportController extends Controller {
 	 * @param IRequest $request The request
 	 * @param IUserSession $userSession The user session
 	 * @param IEventDispatcher $dispatcher The event dispatcher
-	 * @param VaultPolicyService $vaultPolicies The vault policies (export ban)
+	 * @param VaultPolicyServiceInterface $vaultPolicies The vault policies (export ban)
 	 *
 	 * @return void
 	 */
@@ -73,9 +74,9 @@ class ExportController extends Controller {
 		IRequest $request,
 		private IUserSession $userSession,
 		private IEventDispatcher $dispatcher,
-		private VaultPolicyService $vaultPolicies,
+		private VaultPolicyServiceInterface $vaultPolicies,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -109,7 +110,7 @@ class ExportController extends Controller {
 		// here BEFORE the browser offers the file, so refusing the report
 		// aborts the download. The GDPR access package never reports a mode
 		// and stays available.
-		if ($this->vaultPolicies->appliesTo(policy: VaultPolicyService::EXPORT_DISABLED, userId: $user->getUID()) === true) {
+		if ($this->vaultPolicies->appliesTo(policy: VaultPolicyServiceInterface::EXPORT_DISABLED, userId: $user->getUID()) === true) {
 			return new JSONResponse(
 				data: [
 					'message' => 'Your organisation does not allow exporting your personal vault',

@@ -19,162 +19,121 @@
 			<NcNoteCard v-if="locked" type="warning">
 				{{ t('keepiq', 'Unlock the vault before creating a secret.') }}
 			</NcNoteCard>
-
-			<NcTextField
-				v-model="name"
-				:label="t('keepiq', 'Name')"
-				:required="true" />
-
-			<NcSelect
-				v-model="typeId"
-				:options="typeOptions"
-				:inputLabel="t('keepiq', 'Type')"
-				:reduce="(opt) => opt.value"
-				:clearable="false" />
-
-			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
-
-			<!-- Card / identity composite payloads (card-identity-items §3.1):
-			     per-type field sets serialized to the encrypted key on save. -->
-			<template v-if="isCard">
-				<NcPasswordField
-					v-model="card.number"
-					:label="t('keepiq', 'Card number')"
-					data-testid="card-number" />
+			<!-- Once created, only the files still to upload remain. -->
+			<template v-if="!created">
 				<NcNoteCard
-					v-if="card.number !== '' && !luhnOk"
-					type="warning"
-					data-testid="card-luhn-hint">
+					v-if="prefill"
+					type="info"
+					data-testid="secret-create-clone-note">
 					{{
 						t(
 							'keepiq',
-							'This number does not pass the card checksum — double-check it (saving is not blocked).',
+							'This is a copy of another secret. Attachments, shares, history, passkeys and the one-time code are not copied.',
 						)
 					}}
 				</NcNoteCard>
+
 				<NcTextField
-					v-model="card.expiry"
-					:label="t('keepiq', 'Expiry (MM/YY)')"
-					data-testid="card-expiry" />
-				<NcPasswordField
-					v-model="card.cvv"
-					:label="t('keepiq', 'CVV')"
-					data-testid="card-cvv" />
-				<NcPasswordField
-					v-model="card.pin"
-					:label="t('keepiq', 'PIN (optional)')"
-					data-testid="card-pin" />
+					v-model="name"
+					:label="t('keepiq', 'Name')"
+					:required="true" />
+
+				<NcSelect
+					v-model="typeId"
+					:options="typeOptions"
+					:inputLabel="t('keepiq', 'Type')"
+					:reduce="(opt) => opt.value"
+					:clearable="false" />
+
+				<NcTextField v-if="showLogin" v-model="login" :label="loginLabel" />
+
+				<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
+
+				<AuthenticatorKeyField
+					v-if="showAuthenticator"
+					v-model:value="totpInput"
+					mode="replace"
+					:disabled="saving" />
+
 				<NcTextField
-					v-model="card.cardholder"
-					:label="t('keepiq', 'Cardholder name')"
-					data-testid="card-cardholder" />
+					v-if="showUrl"
+					v-model="url"
+					:label="t('keepiq', 'URL (optional)')" />
+
+				<AdditionalUrlsField
+					v-if="showUrl"
+					v-model="additionalUrls"
+					:disabled="saving" />
+
+				<TypedFieldsForm
+					v-if="typedFields.length > 0"
+					:fields="typedFields"
+					:values="typedValues"
+					:schemas="storedSchemas"
+					:missing="typedMissing"
+					:disabled="saving"
+					@update:values="onTypedValues" />
+
+				<AdditionalFieldsEditor
+					:members="additionalFields"
+					:disabled="saving"
+					:reservedNames="reservedMemberNames"
+					@update:members="additionalFields = $event" />
+
+				<SecretTagsField
+					:modelValue="tags"
+					:disabled="saving"
+					@update:modelValue="tags = $event" />
+
+				<!-- Ask for the master password before this item is used (crypto-item-reprompt). -->
+				<RepromptSwitch
+					:modelValue="reprompt"
+					:disabled="saving"
+					@update:modelValue="reprompt = $event" />
+
+				<!-- The shared destination picker (no "Vault root" option, by
+				     design): a secret always lives in a vault, so creating one
+				     at the root cannot be offered. Replaces a local NcSelect
+				     that still listed the root. -->
+				<!-- The team folder ownership policy (admin-vault-policies §4.3):
+				     a covered type goes into one of the user's own team folders,
+				     or into a team folder they can write to. -->
+				<NcNoteCard
+					v-if="ownershipApplies"
+					type="info"
+					data-testid="secret-create-ownership">
+					{{
+						t(
+							'keepiq',
+							'Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.',
+						)
+					}}
+				</NcNoteCard>
+				<NcSelect
+					v-if="ownershipApplies && contributable.length > 0"
+					v-model="contributeTo"
+					:options="contributable"
+					label="folderName"
+					:inputLabel="t('keepiq', 'Team folder you can write to')"
+					data-testid="secret-create-contribute-to" />
+				<DestinationSelect
+					v-if="!contributeTo"
+					v-model="selectedFolderId"
+					mode="folders"
+					:onlyIds="ownershipApplies ? ownTeamFolderIds : null"
+					:label="t('keepiq', 'Folder')" />
+
+				<PolicyBlockedNote :verdict="policyVerdict" />
 			</template>
-			<template v-else-if="isIdentity">
-				<NcTextField
-					v-model="identity.firstName"
-					:label="t('keepiq', 'First name')"
-					data-testid="identity-first-name" />
-				<NcTextField
-					v-model="identity.lastName"
-					:label="t('keepiq', 'Last name')"
-					data-testid="identity-last-name" />
-				<NcTextField
-					v-model="identity.address"
-					:label="t('keepiq', 'Address')"
-					data-testid="identity-address" />
-				<NcTextField
-					v-model="identity.phone"
-					:label="t('keepiq', 'Phone')"
-					data-testid="identity-phone" />
-				<NcTextField
-					v-model="identity.email"
-					:label="t('keepiq', 'Email')"
-					data-testid="identity-email" />
-				<NcPasswordField
-					v-model="identity.bsn"
-					:label="t('keepiq', 'BSN')"
-					data-testid="identity-bsn" />
-			</template>
-			<div v-else class="secret-form__value-row">
-				<NcPasswordField
-					v-model="value"
-					class="secret-form__value-field"
-					:label="valueLabel" />
-				<NcButton
-					variant="tertiary-no-background"
-					:title="t('keepiq', 'Generate a strong key')"
-					:aria-label="t('keepiq', 'Generate a strong key')"
-					@click="openGenerator">
-					<template #icon>
-						<Dice5 :size="20" />
-					</template>
-				</NcButton>
-			</div>
 
-			<KeyGeneratorModal
-				v-if="generatorOpen"
-				:open="generatorOpen"
-				@update:open="generatorOpen = $event"
-				@generated="onGenerated" />
-
-			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
-
-			<TypedFieldsForm
-				v-if="typedFields.length > 0"
-				:fields="typedFields"
-				:values="typedValues"
-				:missing="typedMissing"
+			<AttachmentDropZone
+				v-if="canAddFiles || pendingFiles > 0"
+				ref="dropZone"
+				:unavailable="filesUnavailable"
 				:disabled="saving"
-				@update:values="onTypedValues" />
-
-			<AdditionalFieldsEditor
-				:members="additionalFields"
-				:disabled="saving"
-				@update:members="additionalFields = $event" />
-
-			<SecretTagsField
-				:modelValue="tags"
-				:disabled="saving"
-				@update:modelValue="tags = $event" />
-
-			<!-- The shared destination picker (no "Vault root" option, by
-			     design): a secret always lives in a vault, so creating one
-			     at the root cannot be offered. Replaces a local NcSelect
-			     that still listed the root. -->
-			<!-- The team folder ownership policy (admin-vault-policies §4.3):
-			     a covered type goes into one of the user's own team folders,
-			     or into a team folder they can write to. -->
-			<NcNoteCard
-				v-if="ownershipApplies"
-				type="info"
-				data-testid="secret-create-ownership">
-				{{
-					t(
-						'keepiq',
-						'Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.',
-					)
-				}}
-			</NcNoteCard>
-			<NcSelect
-				v-if="ownershipApplies && contributable.length > 0"
-				v-model="contributeTo"
-				:options="contributable"
-				label="folderName"
-				:inputLabel="t('keepiq', 'Team folder you can write to')"
-				data-testid="secret-create-contribute-to" />
-			<DestinationSelect
-				v-if="!contributeTo"
-				v-model="selectedFolderId"
-				mode="folders"
-				:onlyIds="ownershipApplies ? ownTeamFolderIds : null"
-				:label="t('keepiq', 'Folder')" />
-
-			<NcNoteCard
-				v-if="!policyVerdict.compliant"
-				type="warning"
-				data-testid="policy-blocked">
-				{{ policyVerdict.reason }}
-			</NcNoteCard>
+				:secretId="created ? created.id : null"
+				@update:pending="pendingFiles = $event"
+				@update:busy="filesBusy = $event" />
 		</div>
 
 		<template #actions>
@@ -186,7 +145,11 @@
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<Plus v-else :size="20" />
 				</template>
-				{{ t('keepiq', 'Create secret') }}
+				{{
+					created
+						? t('keepiq', 'Retry upload')
+						: t('keepiq', 'Create secret')
+				}}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -200,26 +163,30 @@ import {
 	NcDialog,
 	NcLoadingIcon,
 	NcNoteCard,
-	NcPasswordField,
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
-import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import AdditionalUrlsField from '../components/AdditionalUrlsField.vue'
+import AttachmentDropZone from '../components/AttachmentDropZone.vue'
+import AuthenticatorKeyField from '../components/AuthenticatorKeyField.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
+import PolicyBlockedNote from '../components/PolicyBlockedNote.vue'
+import RepromptSwitch from '../components/RepromptSwitch.vue'
+import SecretPayloadFields from '../components/SecretPayloadFields.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
-import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
-	CARD_TYPE_NAME,
-	IDENTITY_TYPE_NAME,
-	luhnValid,
-	serializeCard,
-	serializeIdentity,
+	CARD_FIELDS,
+	IDENTITY_FIELDS,
+	parsePayload,
 } from '../cardIdentity/cardIdentity.js'
-import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
+import { secretPayloadForm } from '../mixins/secretPayloadForm.js'
+import { secretSaveGuards } from '../mixins/secretSaveGuards.js'
+import { evaluateScore } from '../policy/policy.js'
 import { useFolderStore } from '../store/modules/folder.js'
+import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
@@ -228,13 +195,31 @@ import {
 	resolveDefaultTypeId,
 	useUserPreferencesStore,
 } from '../store/modules/userPreferences.js'
-import { membersToObject } from '../utils/additionalFields.js'
-import { secretTypeLabel } from '../utils/secretTypes.js'
 import {
-	mergeTypedValues,
-	missingRequired,
-	typedFieldsOf,
-} from '../utils/typedFields.js'
+	authenticatorKeyError,
+	normaliseAuthenticatorKey,
+} from '../totp/authenticatorKey.js'
+import {
+	membersToObject,
+	membersValid,
+	objectToMembers,
+} from '../utils/additionalFields.js'
+import { leavesOut } from '../utils/builtinTypeFields.js'
+import { schemasOf, valuesFit } from '../utils/fieldSchema.js'
+import { isCreatableType, secretTypeLabel } from '../utils/secretTypes.js'
+import { mergeTypedValues, splitTypedValues } from '../utils/typedFields.js'
+import { valueFieldsSupported } from '../utils/valueFields.js'
+
+/**
+ * The name of a clone: the source's name with " (copy)".
+ *
+ * @param {string} name The source's name.
+ * @return {string}
+ * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+ */
+export function cloneName(name) {
+	return t('keepiq', '{name} (copy)', { name: String(name || '').trim() })
+}
 
 /**
  * Every folder id at or below the given roots.
@@ -268,20 +253,25 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		AdditionalUrlsField,
+		AttachmentDropZone,
+		AuthenticatorKeyField,
 		TypedFieldsForm,
 		DestinationSelect,
+		PolicyBlockedNote,
+		RepromptSwitch,
+		SecretPayloadFields,
 		SecretTagsField,
-		Dice5,
-		KeyGeneratorModal,
 		NcButton,
 		NcDialog,
 		NcLoadingIcon,
 		NcNoteCard,
-		NcPasswordField,
 		NcSelect,
 		NcTextField,
 		Plus,
 	},
+
+	mixins: [secretPayloadForm, secretSaveGuards],
 
 	props: {
 		/** The folder to create the secret in (defaults to the current view). */
@@ -295,21 +285,43 @@ export default {
 			type: Function,
 			default: null,
 		},
+
+		/**
+		 * A decrypted secret to clone: the form starts from its type, name
+		 * (with " (copy)"), URL, login, value, additional fields and folder.
+		 * Attachments, shares, history, passkeys and the one-time code are not
+		 * taken over; saving is an ordinary create of a new secret.
+		 */
+		prefill: {
+			type: Object,
+			default: null,
+		},
 	},
 
 	data() {
 		return {
 			open: true,
-			name: '',
-			typeId: null,
-			value: '',
-			url: '',
-			login: '',
+			/** The created secret while files are still to upload to it. */
+			created: null,
+			/** How many files the drop zone lists. */
+			pendingFiles: 0,
+			/** Whether a file is uploading on its own Retry. */
+			filesBusy: false,
+			name: this.prefill ? cloneName(this.prefill.name) : '',
+			typeId: this.prefill?.typeId || null,
+			url: this.prefill?.url || '',
+			/** The extra website addresses (vault-website-addresses). */
+			additionalUrls: Array.isArray(this.prefill?.additionalUrls)
+				? [...this.prefill.additionalUrls]
+				: [],
+
+			login: this.prefill?.login || '',
+			/** The authenticator key being entered on a login. */
+			totpInput: '',
 			additionalFields: [],
 			tags: [],
-			typedValues: {},
-			typedMissing: [],
-			selectedFolderId: this.folderId,
+			reprompt: false,
+			selectedFolderId: this.folderId ?? this.prefill?.folderId ?? null,
 			/** Team folders the user can write to but does not own (admin-vault-policies §4.3). */
 			contributable: [],
 			/** The chosen contributable team folder, or null. */
@@ -318,22 +330,22 @@ export default {
 			ownTeamFolderIds: [],
 			saving: false,
 			error: '',
-			generatorOpen: false,
-			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
-			identity: {
-				firstName: '',
-				lastName: '',
-				address: '',
-				phone: '',
-				email: '',
-				bsn: '',
-			},
-
 			policy: null,
 		}
 	},
 
 	computed: {
+		/**
+		 * The schemas stored on the secret being cloned, none for a new one, so a type's own
+		 * field they hide is masked in the form.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-each-schema-has-its-own-input-and-display
+		 */
+		storedSchemas() {
+			return schemasOf(this.prefill?.additionalFields)
+		},
+
 		/**
 		 * @spec exclude Store-state passthrough: reads the session lock flag for display gating.
 		 */
@@ -342,51 +354,108 @@ export default {
 		},
 
 		/**
-		 * The seeded secret types as select options, labels translated.
+		 * The types new secrets may be created as, as select options with
+		 * translated labels. Authenticator and Passkey are left out: a login
+		 * carries its own one-time code and passkeys.
 		 *
 		 * @return {Array<{value: string, label: string}>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		typeOptions() {
-			return useSecretTypeStore().types.map((type) => ({
-				value: type.id,
-				label: secretTypeLabel(type),
-			}))
+			return useSecretTypeStore()
+				.types.filter(isCreatableType)
+				.map((type) => ({
+					value: type.id,
+					label: secretTypeLabel(type),
+				}))
 		},
 
 		/**
-		 * The label for the secret-value field, which reads "Note" for the
-		 * `note` system type and "Secret value" otherwise.
+		 * Whether the login's authenticator key can be entered: on a login,
+		 * when the server stores the field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		showAuthenticator() {
+			return this.selectedTypeName === 'login' && valueFieldsSupported()
+		},
+
+		/**
+		 * Why the entered authenticator key blocks the save, '' when it does not.
 		 *
 		 * @return {string}
-		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
-		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
-		valueLabel() {
-			const type = useSecretTypeStore().typesById[this.typeId]
-			return type && type.name === 'note'
-				? t('keepiq', 'Note')
-				: t('keepiq', 'Secret value')
+		totpError() {
+			return this.showAuthenticator
+				? authenticatorKeyError(this.totpInput)
+				: ''
 		},
 
 		/**
-		 * The fields an administrator defined on the chosen type; empty for
-		 * the built-in types, which keep their own forms.
+		 * The authenticator key to save with the login, '' for none.
 		 *
-		 * @return {Array<object>} The fields.
-		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 * @return {string}
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
-		typedFields() {
-			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
+		totpToSave() {
+			return this.showAuthenticator
+				? normaliseAuthenticatorKey(this.totpInput)
+				: ''
 		},
 
 		/**
-		 * The selected type's system name (card-identity-items §3.1).
+		 * The value is required here: Create stays disabled without it, so
+		 * the value form marks it as the type's own required fields are.
 		 *
-		 * @spec exclude Trivial lookup: resolves the selected type id to its name.
+		 * @return {boolean}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-the-create-dialog-marks-the-value-as-required
 		 */
-		selectedTypeName() {
-			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
+		valueRequired() {
+			return true
+		},
+
+		/**
+		 * Whether the chosen type uses the login field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showLogin() {
+			return !leavesOut(this.selectedTypeName, 'login')
+		},
+
+		/**
+		 * Whether the chosen type uses the URL field.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		showUrl() {
+			return !leavesOut(this.selectedTypeName, 'url')
+		},
+
+		/**
+		 * The login to save: none when the type leaves the field out, so one
+		 * typed before switching type is not saved unseen.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		loginToSave() {
+			return this.showLogin ? this.login || '' : ''
+		},
+
+		/**
+		 * The URL to save: none when the type leaves the field out.
+		 *
+		 * @return {string|null}
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
+		 */
+		urlToSave() {
+			return this.showUrl ? this.url || null : null
 		},
 
 		/**
@@ -404,38 +473,6 @@ export default {
 			)
 		},
 
-		isCard() {
-			return this.selectedTypeName === CARD_TYPE_NAME
-		},
-
-		isIdentity() {
-			return this.selectedTypeName === IDENTITY_TYPE_NAME
-		},
-
-		/**
-		 * Best-effort Luhn hint — never blocks saving (§3.2).
-		 *
-		 * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
-		 */
-		luhnOk() {
-			return luhnValid(this.card.number)
-		},
-
-		/**
-		 * The value serialized for the encrypted key field.
-		 *
-		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
-		 */
-		effectiveValue() {
-			if (this.isCard) {
-				return serializeCard(this.card)
-			}
-			if (this.isIdentity) {
-				return serializeIdentity(this.identity)
-			}
-			return this.value
-		},
-
 		/**
 		 * Org-policy score gate on the manual value (org-password-policies
 		 * §4.2): exempt types skip; the reason renders and submit stays
@@ -446,7 +483,8 @@ export default {
 		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 */
 		policyVerdict() {
-			if (this.isCard || this.isIdentity) {
+			// An SSH private key is not a password; a strength score of it means nothing.
+			if (this.isCard || this.isIdentity || this.isSshKey) {
 				return { compliant: true, reason: null }
 			}
 			return evaluateScore(this.policy, this.selectedTypeName, this.value)
@@ -455,18 +493,85 @@ export default {
 		/**
 		 * Whether Create may run: not busy, named, a folder chosen (secrets
 		 * cannot live at the vault root), and the type's own required value
-		 * present and policy-compliant.
+		 * present and policy-compliant, and every field value fitting its schema.
+		 *
+		 * Once created, it only retries the uploads.
 		 *
 		 * @return {boolean}
-		 * @spec exclude Form-enablement guard; no domain behaviour.
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
 		 */
 		canSubmit() {
+			if (this.created) {
+				return !this.saving && !this.filesBusy
+			}
+			// Listed files that can no longer be added must be removed first.
+			return (
+				this.formReady
+				&& this.valueReady
+				&& (this.canAddFiles || this.pendingFiles === 0)
+			)
+		},
+
+		/**
+		 * Files can be added where the sidebar allows uploads: to a secret
+		 * the user will own, while not served from the offline cache.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		canAddFiles() {
+			return !this.contributeTo && !useOfflineStore().readOnly
+		},
+
+		/**
+		 * Why listed files cannot be added, '' when they can.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		filesUnavailable() {
+			if (this.canAddFiles) {
+				return ''
+			}
+			return useOfflineStore().readOnly
+				? t('keepiq', 'Files cannot be added while you are offline. Remove them to save.')
+				: t('keepiq', 'Files can only be added to a secret you own. Remove them to save.')
+		},
+
+		/**
+		 * Whether the form around the value is ready: not busy, named, every
+		 * field value fitting its schema, a folder chosen and no code error.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
+		 */
+		formReady() {
 			if (this.saving || this.locked || this.name.trim() === '') {
+				return false
+			}
+			// A value that does not fit its field's schema is never stored, nor
+			// a field named like one of the type's own or with a schema the
+			// server refuses.
+			if (
+				!valuesFit(this.additionalFields, this.typedFields, this.typedValues)
+				|| !membersValid(this.additionalFields, this.reservedMemberNames)
+			) {
 				return false
 			}
 			if (!this.selectedFolderId && !this.contributeTo) {
 				return false
 			}
+			return this.totpError === ''
+		},
+
+		/**
+		 * Whether the type's own required value is present and policy-compliant.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 */
+		valueReady() {
 			if (this.isCard) {
 				return this.card.number !== ''
 			}
@@ -474,6 +579,23 @@ export default {
 				return Object.values(this.identity).some((v) => v !== '')
 			}
 			return this.value !== '' && this.policyVerdict.compliant
+		},
+	},
+
+	watch: {
+		/**
+		 * After the create, the dialog closes once no file is left: the last
+		 * one uploaded on its own Retry, or removed.
+		 *
+		 * @param {number} count The files the drop zone lists.
+		 * @return {void}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		pendingFiles(count) {
+			if (this.created && count === 0 && !this.saving) {
+				this.created = null
+				this.onUpdateOpen(false)
+			}
 		},
 	},
 
@@ -485,11 +607,11 @@ export default {
 	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 	 */
 	async mounted() {
-		this.policy = await fetchPolicy()
-		const typeStore = useSecretTypeStore()
-		if (typeStore.types.length === 0) {
-			await typeStore.fetchTypes()
+		await this.loadPolicyAndTypes()
+		if (this.prefill) {
+			this.applyPrefillPayload(this.prefill)
 		}
+		const typeStore = useSecretTypeStore()
 		if (this.typeId === null && typeStore.types.length > 0) {
 			// The user's saved default type; Login when it no longer exists (vault-20).
 			const prefs = useUserPreferencesStore()
@@ -510,6 +632,41 @@ export default {
 
 	methods: {
 		t,
+
+		/**
+		 * Seed the value, the composite card or identity fields and the
+		 * additional fields from the secret being cloned. Runs once the types
+		 * are loaded, so the typed fields of an administrator-defined type
+		 * come out of the blob into their own form.
+		 *
+		 * @param {object} source The decrypted secret.
+		 * @return {void}
+		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 */
+		applyPrefillPayload(source) {
+			this.value = source.key || ''
+			const split = splitTypedValues(source.additionalFields, this.typedFields)
+			this.typedValues = split.values
+			// An SSH key's public key and fingerprint have their own fields.
+			this.additionalFields = objectToMembers(this.takeSshMembers(split.rest))
+			const payload = parsePayload(source.key || '')
+			if (payload !== null && this.isCard) {
+				for (const field of CARD_FIELDS) {
+					this.card[field] =
+						payload[field] === null || payload[field] === undefined
+							? ''
+							: String(payload[field])
+				}
+			}
+			if (payload !== null && this.isIdentity) {
+				for (const field of IDENTITY_FIELDS) {
+					this.identity[field] =
+						payload[field] === null || payload[field] === undefined
+							? ''
+							: String(payload[field])
+				}
+			}
+		},
 
 		/**
 		 * Where a covered type may go: folders inside the user's own team
@@ -540,71 +697,57 @@ export default {
 		},
 
 		/**
-		 * Take the typed values and clear the marks of fields now filled.
-		 *
-		 * @param {object} values The values by field key.
-		 * @return {void}
-		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
-		 */
-		onTypedValues(values) {
-			this.typedValues = values
-			this.typedMissing = this.typedMissing.filter((key) =>
-				missingRequired(this.typedFields, values).includes(key),
-			)
-		},
-
-		/**
 		 * The additional-fields object to encrypt: the free members plus the
-		 * typed values.
+		 * typed values, plus an SSH key's public key and fingerprint.
 		 *
+		 * @param {object} [ssh] The SSH key members (sshKeyToSave).
 		 * @return {object} The blob.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-typed-fields-storage
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
-		additionalBlob() {
-			return mergeTypedValues(
-				membersToObject(this.additionalFields),
-				this.typedFields,
-				this.typedValues,
-			)
-		},
+		additionalBlob(ssh = {}) {
+			return {
+				// A clone keeps the schemas stored for its source's type fields.
+				...mergeTypedValues(
+					membersToObject(this.additionalFields),
+					this.typedFields,
+					this.typedValues,
+					this.prefill?.additionalFields ?? null,
+				),
 
-		/**
-		 * Forward the open-state change; emit `close` when dismissed.
-		 *
-		 * @param {boolean} value The new open state.
-		 * @return {void}
-		 *
-		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
-		 */
-		onUpdateOpen(value) {
-			this.open = value
-			if (!value) {
-				this.$emit('close')
+				...ssh,
 			}
 		},
 
 		/**
-		 * Open the key generator dialog.
+		 * What a new secret carries after its name, type and folder: the url,
+		 * login and value, then the additional fields and the authenticator
+		 * key when there are any.
 		 *
-		 * @return {void}
-		 *
-		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
+		 * @param {object} [ssh] The SSH key members (sshKeyToSave).
+		 * @return {object} The value part of the create body.
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/specs/builtin-type-fields/spec.md#requirement-built-in-types-carry-their-own-fields
 		 */
-		openGenerator() {
-			this.generatorOpen = true
-		},
+		valueFields(ssh = {}) {
+			const blob = this.additionalBlob(ssh)
+			return {
+				url: this.urlToSave,
+				...(this.showUrl && this.additionalUrls.length > 0
+					? { additionalUrls: [...this.additionalUrls] }
+					: {}),
 
-		/**
-		 * Receive the generated key from the modal and copy it into the value field.
-		 *
-		 * @param {string} key The generated key.
-		 * @return {void}
-		 *
-		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
-		 */
-		onGenerated(key) {
-			if (typeof key === 'string' && key.length > 0) {
-				this.value = key
+				login: this.loginToSave,
+				key: this.effectiveValue,
+				// Only when there ARE members: the store encrypts whatever it is
+				// handed, so passing {} unconditionally would write an empty
+				// ciphertext blob onto every secret ever created here.
+				// The typed values ride in the same blob, named by field label,
+				// so the server only ever sees their ciphertext (admin-18).
+				...(Object.keys(blob).length > 0 ? { additionalFields: blob } : {}),
+
+				// Only when entered, like the additional fields above.
+				...(this.totpToSave ? { totp: this.totpToSave } : {}),
 			}
 		},
 
@@ -618,32 +761,30 @@ export default {
 		 * @return {Promise<void>}
 		 *
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+		 * @spec openspec/specs/vault-ssh-key-item/spec.md#requirement-ssh-key-item-form
 		 */
 		async submit() {
-			if (!this.canSubmit) {
-				return
+			if (this.created) {
+				return this.retryUploads()
 			}
-			// A required field of the type blocks the save and is marked (admin-18).
-			this.typedMissing = missingRequired(this.typedFields, this.typedValues)
-			if (this.typedMissing.length > 0) {
+			if (this.saveBlocked()) {
 				return
 			}
 			this.saving = true
 			this.error = ''
 			try {
-				// HIBP block (org-password-policies §4.2): k-anonymity check
-				// BEFORE encryption; only the 5-char prefix leaves the browser.
-				if (!this.isCard && !this.isIdentity) {
-					const hibpReason = await evaluateHibp(
-						this.policy,
-						this.selectedTypeName,
-						this.value,
-					)
-					if (hibpReason !== null) {
-						this.error = hibpReason
-						this.saving = false
-						return
-					}
+				// A malformed SSH key is refused on its field; nothing is saved.
+				const ssh = this.isSshKey ? await this.sshKeyToSave() : {}
+				if (ssh === null) {
+					return
+				}
+				if (
+					!this.isCard
+					&& !this.isIdentity
+					&& !this.isSshKey
+					&& (await this.breachBlocked())
+				) {
+					return
 				}
 				if (this.contributeTo) {
 					// A team folder this user can write to but does not own
@@ -653,12 +794,7 @@ export default {
 						{
 							name: this.name.trim(),
 							typeId: this.typeId,
-							url: this.url || null,
-							login: this.login || '',
-							key: this.effectiveValue,
-							...(Object.keys(this.additionalBlob()).length > 0
-								? { additionalFields: this.additionalBlob() }
-								: {}),
+							...this.valueFields(ssh),
 						},
 					)
 					this.$emit('saved', result.secret)
@@ -669,17 +805,8 @@ export default {
 					name: this.name.trim(),
 					typeId: this.typeId,
 					folderId: this.selectedFolderId,
-					url: this.url || null,
-					login: this.login || '',
-					key: this.effectiveValue,
-					// Only when there ARE members: the store encrypts whatever it is
-					// handed, so passing {} unconditionally would write an empty
-					// ciphertext blob onto every secret ever created here.
-					// The typed values ride in the same blob, named by field label,
-					// so the server only ever sees their ciphertext (admin-18).
-					...(Object.keys(this.additionalBlob()).length > 0
-						? { additionalFields: this.additionalBlob() }
-						: {}),
+					...(this.reprompt ? { reprompt: true } : {}),
+					...this.valueFields(ssh),
 				})
 				// Tags are stored apart from the value (vault-favourites-tags-and-last-used).
 				if (this.tags.length > 0 && created?.id) {
@@ -689,7 +816,8 @@ export default {
 				if (this.onSaved) {
 					this.onSaved(created)
 				}
-				this.onUpdateOpen(false)
+				this.created = created
+				await this.uploadFiles()
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message
@@ -699,25 +827,48 @@ export default {
 				this.saving = false
 			}
 		},
+
+		/**
+		 * Upload the waiting files to the created secret and close, or stay
+		 * open with the refused files listed. Never creates the secret again.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		async uploadFiles() {
+			const zone = this.$refs.dropZone
+			// Without the zone, listed files can no longer be sent: not a success.
+			const uploaded = zone
+				? await zone.uploadPending(this.created.id)
+				: this.pendingFiles === 0
+			if (!uploaded) {
+				this.error = t(
+					'keepiq',
+					'The secret was saved, but some files could not be added.',
+				)
+				return
+			}
+			this.created = null
+			this.onUpdateOpen(false)
+		},
+
+		/**
+		 * Retry the refused files of the created secret.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-add-attachments-from-the-create-and-edit-secret-dialogs
+		 */
+		async retryUploads() {
+			this.saving = true
+			this.error = ''
+			try {
+				await this.uploadFiles()
+			} finally {
+				this.saving = false
+			}
+		},
 	},
 }
 </script>
 
-<style scoped>
-.secret-form {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 4px 0;
-}
-
-.secret-form__value-row {
-	display: flex;
-	align-items: flex-end;
-	gap: 8px;
-}
-
-.secret-form__value-field {
-	flex: 1 1 auto;
-}
-</style>
+<style scoped src="./secretForm.css"></style>

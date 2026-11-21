@@ -1,0 +1,241 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`postResults > settles every kind of record, window by window 1`] = `
+{
+  "outcome": {
+    "committed": 3,
+    "failures": [
+      {
+        "error": "old key",
+        "id": "s2",
+        "name": "Two",
+        "store": "secrets",
+        "unrecoverable": true,
+      },
+      {
+        "error": "Migration failed",
+        "id": "s3",
+        "name": null,
+        "store": "secrets",
+        "unrecoverable": true,
+      },
+    ],
+    "halt": null,
+    "retryable": [
+      {
+        "error": "Temporarily failed",
+        "id": "s4",
+        "name": null,
+        "store": "secrets",
+      },
+      {
+        "error": "network down",
+        "id": "s5",
+        "name": null,
+        "store": "secrets",
+      },
+      {
+        "error": "guard said no",
+        "id": "s6",
+        "name": null,
+        "store": "secrets",
+      },
+      {
+        "error": "plain string",
+        "id": "s7",
+        "name": null,
+        "store": "secrets",
+      },
+      {
+        "error": "Unknown migration store: mystery",
+        "id": "x1",
+        "name": null,
+        "store": "mystery",
+      },
+      {
+        "error": "blip",
+        "id": "s8",
+        "name": null,
+        "store": "secrets",
+      },
+    ],
+  },
+  "posts": [
+    [
+      "/apps/keepiq/api/v1/migrations/m1/secrets/s1",
+      {
+        "id": "s1",
+        "sealed": true,
+      },
+    ],
+    [
+      "/apps/keepiq/api/v1/migrations/m1/versions/v1",
+      {
+        "id": "v1",
+        "sealed": true,
+      },
+    ],
+    [
+      "/apps/keepiq/api/v1/migrations/m1/attachment-grants/g1",
+      {
+        "id": "g1",
+        "sealed": true,
+      },
+    ],
+    [
+      "/apps/keepiq/api/v1/migrations/m1/secrets/s2",
+      {
+        "error": "old key",
+      },
+    ],
+    [
+      "/apps/keepiq/api/v1/migrations/m1/secrets/s3",
+      {
+        "error": undefined,
+      },
+    ],
+    [
+      "/apps/keepiq/api/v1/migrations/m1/secrets/s5",
+      {
+        "id": "s5",
+        "sealed": true,
+      },
+    ],
+    [
+      "/apps/keepiq/api/v1/migrations/m1/secrets/s6",
+      {
+        "id": "s6",
+        "sealed": true,
+      },
+    ],
+    [
+      "/apps/keepiq/api/v1/migrations/m1/secrets/s7",
+      {
+        "id": "s7",
+        "sealed": true,
+      },
+    ],
+  ],
+}
+`;
+
+exports[`postResults > stops after the window that halted, keeping the first halt reason 1`] = `
+{
+  "outcome": {
+    "committed": 1,
+    "failures": [],
+    "halt": "Re-encryption could not be verified",
+    "retryable": [],
+  },
+  "posts": [
+    "/apps/keepiq/api/v1/migrations/m1/secrets/s1",
+    "/apps/keepiq/api/v1/migrations/m1/secrets/s3",
+  ],
+}
+`;
+
+exports[`runMigration > halts with the offline message when a page commits and fails nothing 1`] = `
+[
+  "Migration could not reach the server; no records were changed.",
+  0,
+  {
+    "done": 0,
+    "phase": "halted",
+    "total": 0,
+  },
+]
+`;
+
+exports[`runMigration > reports progress over the records it dispatches and returns the run 1`] = `
+{
+  "dropped": 0,
+  "failures": [
+    {
+      "error": "bad",
+      "id": "v1",
+      "name": null,
+      "store": "versions",
+      "unrecoverable": true,
+    },
+  ],
+  "final": {
+    "done": 2,
+    "phase": "done",
+    "total": 2,
+  },
+  "outcome": {
+    "droppedVersions": 0,
+    "failed": 1,
+    "failures": [
+      {
+        "error": "bad",
+        "id": "v1",
+        "name": null,
+        "store": "versions",
+        "unrecoverable": true,
+      },
+    ],
+    "migrated": 2,
+    "usedWorker": true,
+  },
+  "progress": [
+    {
+      "done": 0,
+      "phase": "migrating",
+      "total": 3,
+      "url": "/apps/keepiq/api/v1/migrations/m1/secrets/s1",
+    },
+    {
+      "done": 0,
+      "phase": "migrating",
+      "total": 3,
+      "url": "/apps/keepiq/api/v1/migrations/m1/versions/v1",
+    },
+    {
+      "done": 0,
+      "phase": "migrating",
+      "total": 3,
+      "url": "/apps/keepiq/api/v1/migrations/m1/attachment-grants/g1",
+    },
+    {
+      "done": 1,
+      "phase": "migrating",
+      "total": 2,
+      "url": "/apps/keepiq/api/v1/migrations/m1/secrets/s2",
+    },
+  ],
+  "runner": null,
+  "runs": [
+    [
+      "s1",
+      "v1",
+      "g1",
+    ],
+    [
+      "s2",
+    ],
+    "disposed",
+  ],
+}
+`;
+
+exports[`runMigration > throws the halt with what was migrated and failed, and marks the progress halted 1`] = `
+{
+  "failures": [],
+  "message": "Re-encryption could not be verified",
+  "migrated": 1,
+  "name": "MigrationHaltedError",
+  "progress": {
+    "done": 1,
+    "phase": "halted",
+    "total": 1,
+  },
+  "runs": [
+    [
+      "s1",
+      "s2",
+    ],
+    "disposed",
+  ],
+}
+`;

@@ -240,6 +240,27 @@ class DashboardControllerTest extends TestCase {
 
 
 	/**
+	 * The web app reads whether a login's one-time code and passkeys are stored, and the release that
+	 * first stored them, from the server, so the page holds no version number of its own.
+	 *
+	 * @return void
+	 */
+	public function testPageDeclaresTheLoginValueFields(): void {
+		$provided = [];
+		$this->initialState->method('provideInitialState')
+			->willReturnCallback(
+				function (string $key, mixed $data) use (&$provided): void {
+					$provided[$key] = $data;
+				}
+			);
+
+		$this->controller()->page();
+
+		$this->assertSame(['since' => Application::TOTP_PASSKEYS_FIELDS_SINCE], $provided['loginValueFields'] ?? null);
+	}//end testPageDeclaresTheLoginValueFields()
+
+
+	/**
 	 * A holder of the Applications area gets the pending-applications
 	 * counter: the flag follows the area, not instance admin alone
 	 * (admin-scoped-roles §2.2).

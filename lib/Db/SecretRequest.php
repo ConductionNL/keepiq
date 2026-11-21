@@ -38,6 +38,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setToken(string $token)
  * @method string getRequestedFields()
  * @method void setRequestedFields(string $requestedFields)
+ * @method string|null getFieldSchemas()
+ * @method void setFieldSchemas(?string $fieldSchemas)
  * @method string getStatus()
  * @method void setStatus(string $status)
  * @method bool getIsReRequest()
@@ -50,8 +52,13 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method DateTime|null getFulfilledAt()
  * @method void setFulfilledAt(?DateTime $fulfilledAt)
+ *
+ * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
  */
 class SecretRequest extends Entity implements JsonSerializable {
+
+	use StringPrimaryKey;
+
 	public const STATUS_PENDING = 'pending';
 	public const STATUS_FULFILLED = 'fulfilled';
 	public const STATUS_DECLINED = 'declined';
@@ -126,6 +133,13 @@ class SecretRequest extends Entity implements JsonSerializable {
 	protected string $requestedFields = '[]';
 
 	/**
+	 * JSON-encoded schemas of the requested custom fields, by field name.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $fieldSchemas = null;
+
+	/**
 	 * Request lifecycle: pending / fulfilled / declined / locked.
 	 *
 	 * @var string
@@ -175,26 +189,6 @@ class SecretRequest extends Entity implements JsonSerializable {
 	public $id = '';
 
 	/**
-	 * Get the UUID primary key.
-	 *
-	 * @return string
-	 */
-	public function getId(): string {
-		return (string)$this->id;
-	}//end getId()
-
-	/**
-	 * Set the UUID primary key.
-	 *
-	 * @param string $id The UUID
-	 *
-	 * @return void
-	 */
-	public function setId($id): void {
-		$this->setter(name: 'id', args: [$id]);
-	}//end setId()
-
-	/**
 	 * Constructor for SecretRequest.
 	 *
 	 * @return void
@@ -205,6 +199,7 @@ class SecretRequest extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'encryptionSuiteId', type: 'string');
 		$this->addType(fieldName: 'token', type: 'string');
 		$this->addType(fieldName: 'requestedFields', type: 'string');
+		$this->addType(fieldName: 'fieldSchemas', type: 'string');
 		$this->addType(fieldName: 'status', type: 'string');
 		$this->addType(fieldName: 'isReRequest', type: 'boolean');
 		$this->addType(fieldName: 'expiresAt', type: 'datetime');
@@ -266,9 +261,29 @@ class SecretRequest extends Entity implements JsonSerializable {
 	}//end isExpired()
 
 	/**
+	 * The schemas of the requested custom fields, by field name.
+	 *
+	 * An object even when empty, so a client reads one shape whatever the request holds.
+	 *
+	 * @return object
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	public function decodedFieldSchemas(): object {
+		$decoded = json_decode((string)$this->fieldSchemas, true);
+		if (is_array($decoded) === false) {
+			return (object)[];
+		}
+
+		return (object)$decoded;
+	}//end decodedFieldSchemas()
+
+	/**
 	 * Serialize the entity to an array for the API.
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
 	public function jsonSerialize(): array {
 		$requested = json_decode($this->requestedFields, true);
@@ -282,6 +297,7 @@ class SecretRequest extends Entity implements JsonSerializable {
 			'encryptionSuiteId' => $this->encryptionSuiteId,
 			'token' => $this->token,
 			'requestedFields' => $requested,
+			'fieldSchemas' => $this->decodedFieldSchemas(),
 			'status' => $this->status,
 			'isReRequest' => $this->isReRequest,
 			'expiresAt' => $this->expiresAt?->format('c'),

@@ -46,6 +46,7 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Http;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudFederationFactory;
@@ -125,6 +126,7 @@ class FederatedSourceDetailsTest extends TestCase {
 	private function put(array $params) {
 		$secrets = $this->createMock(SecretMapper::class);
 		$secrets->method('findById')->willReturn($this->source);
+		$secrets->method('advanceVersion')->willReturn(1);
 		$secrets->method('update')->willReturnArgument(0);
 
 		$shareMapper = $this->createMock(FederatedShareMapper::class);
@@ -132,6 +134,8 @@ class FederatedSourceDetailsTest extends TestCase {
 			fn (string $id): array => ($id === 'src') ? $this->shares : []
 		);
 		$shareMapper->method('update')->willReturnArgument(0);
+		$shareMapper->method('updateIfActive')->willReturn(1);
+		$shareMapper->method('updateIfUnchanged')->willReturn(1);
 
 		$factory = $this->createMock(ICloudFederationFactory::class);
 		$factory->method('getCloudFederationNotification')->willReturnCallback(static fn () => new FakeCloudFederationNotification());
@@ -182,6 +186,8 @@ class FederatedSourceDetailsTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			federatedShares: $federated,
 		);
 

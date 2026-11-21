@@ -164,6 +164,12 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			// default; this test timed out before its assertion from #1024 on,
 			// so neither entry was ever needed until the timeout was fixed.
 			/\/api\/v1\/recovery\/enrolment$/,
+			// RecoveryKitUnlock on the lock screen asks whether the session user
+			// holds a recovery kit, to offer "I lost my master password"
+			// (crypto-recovery-kit). The answer is `{kit: {suiteId, createdAt}}`
+			// or `{kit: null}`; the wrapped copy is the separate `/copy` route,
+			// which stays unlisted.
+			/\/api\/v1\/recovery-kit$/,
 			// CnAppRoot's setup() calls useSupportDialog(appId, { persistence:
 			// 'server' }) unconditionally — same shell layer, and for the same
 			// reason, as the /api/settings entry above: it runs before any route

@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -72,7 +72,7 @@ class MetricsController extends Controller {
 		private readonly IConfig $config,
 		private readonly LoggerInterface $logger,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -97,7 +97,7 @@ class MetricsController extends Controller {
 		$lines = [
 			'# HELP keepiq_info Application information',
 			'# TYPE keepiq_info gauge',
-			'keepiq_info{version="' . $this->escapeLabel(value: $this->appManager->getAppVersion(Application::APP_ID))
+			'keepiq_info{version="' . $this->escapeLabel(value: $this->appManager->getAppVersion(AppIdentity::APP_ID))
 				. '",php_version="' . $this->escapeLabel(value: PHP_VERSION)
 				. '",nextcloud_version="' . $this->escapeLabel(value: $this->config->getSystemValueString('version', 'unknown'))
 				. '"} 1',

@@ -30,8 +30,8 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use OCA\Keepiq\Db\SiemSink;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Exception\SiemDeliveryException;
+use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Service\Siem\CefFormatter;
 use OCA\Keepiq\Service\Siem\SentinelRowFormatter;
 use OCA\Keepiq\Service\Siem\SplunkHecFormatter;
@@ -146,7 +146,7 @@ class SiemTransport {
 	 * @return string
 	 */
 	private function appVersion(): string {
-		$version = $this->appManager?->getAppVersion(KeepiqApp::APP_ID);
+		$version = $this->appManager?->getAppVersion(AppIdentity::APP_ID);
 		if ($version === null || $version === '') {
 			return 'unknown';
 		}
@@ -342,16 +342,35 @@ class SiemTransport {
 	 * @throws SiemDeliveryException On transport failure
 	 */
 	private function deliverSyslog(SiemSink $sink, string $payloadJson): void {
+		$socket = $this->openSyslogSocket(sink: $sink);
+		try {
+			$this->writeSyslogFrame(socket: $socket, payloadJson: $payloadJson);
+		} finally {
+			fclose($socket);
+		}
+	}//end deliverSyslog()
+
+	/**
+	 * Connect to the sink's syslog endpoint over TCP, or TLS when configured.
+	 *
+	 * The stream_socket_client() call warns on an unreachable endpoint and
+	 * returns false. Its detail is not re-reported: a failure is described by
+	 * class, status and host only (keepiq#728).
+	 *
+	 * @param SiemSink $sink The sink (endpoint host:port)
+	 *
+	 * @return resource
+	 *
+	 * @throws SiemDeliveryException When the endpoint cannot be reached
+	 */
+	private function openSyslogSocket(SiemSink $sink) {
 		$endpoint = $sink->getEndpoint();
-		$scheme = 'tcp://';
+		$scheme   = 'tcp://';
 		if ($sink->getTls() === true) {
 			$scheme = 'tls://';
 		}
 
-		// The stream_socket_client() call warns on an unreachable endpoint and
-		// returns false. Its detail is not re-reported: a failure is described
-		// by class, status and host only (keepiq#728).
-		$errno = 0;
+		$errno  = 0;
 		$errstr = '';
 		$socket = $this->withoutDiagnostics(
 			call: static function () use ($scheme, $endpoint, &$errno, &$errstr) {
@@ -367,20 +386,30 @@ class SiemTransport {
 			throw new SiemDeliveryException(message: 'syslog connect failed');
 		}
 
-		try {
-			// RFC 5424: <PRI>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID SD MSG
-			// PRI 134 = facility 16 (local0), severity 6 (informational).
-			$message = '<134>1 ' . (new DateTime())->format('c') . ' nextcloud keepiq - - - ' . $payloadJson;
-			// RFC 6587 octet-counted framing for TCP transport.
-			$frame = strlen($message) . ' ' . $message;
-			$written = fwrite($socket, $frame);
-			if ($written === false || $written < strlen($frame)) {
-				throw new SiemDeliveryException(message: 'syslog write failed');
-			}
-		} finally {
-			fclose($socket);
+		return $socket;
+	}//end openSyslogSocket()
+
+	/**
+	 * Write one RFC 5424 message, RFC 6587 octet-counted for TCP.
+	 *
+	 * <PRI>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID SD MSG, where PRI
+	 * 134 = facility 16 (local0), severity 6 (informational).
+	 *
+	 * @param resource $socket      The connected socket
+	 * @param string   $payloadJson The JSON payload
+	 *
+	 * @return void
+	 *
+	 * @throws SiemDeliveryException When the frame is not written whole
+	 */
+	private function writeSyslogFrame($socket, string $payloadJson): void {
+		$message = '<134>1 ' . (new DateTime())->format('c') . ' nextcloud keepiq - - - ' . $payloadJson;
+		$frame   = strlen($message) . ' ' . $message;
+		$written = fwrite($socket, $frame);
+		if ($written === false || $written < strlen($frame)) {
+			throw new SiemDeliveryException(message: 'syslog write failed');
 		}
-	}//end deliverSyslog()
+	}//end writeSyslogFrame()
 
 	/**
 	 * HTTPS webhook delivery with an HMAC-SHA256 signature header

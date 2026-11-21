@@ -8,6 +8,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import nl.conduction.keepiq.shared.crypto.Encoding
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
@@ -60,7 +61,17 @@ object Composite {
 }
 
 /** What a passkey item shows: never its private key (extension-vault "a passkey's private key stays in the worker"). */
-data class PasskeySummary(val rpId: String, val rpName: String?, val userName: String?, val createdAt: String?)
+data class PasskeySummary(val credentialId: String, val rpId: String, val rpName: String?, val userName: String?, val createdAt: String?) {
+    companion object {
+        fun of(c: PasskeyCredential) = PasskeySummary(
+            c.credentialId,
+            c.rpId,
+            c.rpName.ifEmpty { null },
+            c.userName.ifEmpty { c.userDisplayName }.ifEmpty { null },
+            c.createdAt.ifEmpty { null },
+        )
+    }
+}
 
 /**
  * An opened item. [secret] is the decrypted `key` field; it is empty for a
@@ -77,6 +88,14 @@ class DecryptedItem(
     val passkey: PasskeySummary?,
     /** Read from the offline store because the server could not be reached. */
     val fromCache: Boolean,
+    /** The decrypted `totp` field: shown only as a code, never as itself. */
+    val totpSeed: String = "",
+    /** The `totp` field holds a value. */
+    val hasSavedKey: Boolean = false,
+    /** The passkeys in the `passkeys` field; none for a use-only copy. */
+    val passkeys: List<PasskeySummary> = emptyList(),
+    /** The `passkeys` field holds a value that could not be read. */
+    val passkeysError: Boolean = false,
 ) {
     val kind: FormKind get() = FormKind.of(typeName)
 
@@ -95,19 +114,48 @@ class DecryptedItem(
     val typedValues: List<Pair<TypeField, String>>
         get() = (type?.fields ?: emptyList()).map { f -> f to (additionalFields?.get(f.label)?.asText() ?: "") }
 
-    /** Additional fields that are neither notes nor typed fields. */
+    /**
+     * Additional fields that are neither notes, typed fields nor the web app's
+     * field schemas. A `@schema` member that holds no schema map is a field of
+     * its own, shown as [ItemCodec.RENAMED_SCHEMA_FIELD] unless that name is
+     * taken, as the web app (fieldsOf) and [ItemCodec.draft] show it.
+     */
     val extraFields: List<Pair<String, String>>
         get() {
+            val fields = additionalFields ?: return emptyList()
             val typed = type?.fields?.map { it.label }?.toSet() ?: emptySet()
             val notes = notesKey()
-            return additionalFields?.entries
-                ?.filter { (k, _) -> k != notes && k !in typed }
-                ?.map { (k, v) -> k to v.asText() } ?: emptyList()
+            return fields.entries
+                .filter { (k, _) -> k != notes && k !in typed }
+                .mapNotNull { (k, v) ->
+                    when {
+                        k != ItemCodec.SCHEMA_FIELD -> k to v.asText()
+                        ItemCodec.isSchemaMap(v) || ItemCodec.RENAMED_SCHEMA_FIELD in fields -> null
+                        else -> ItemCodec.RENAMED_SCHEMA_FIELD to v.asText()
+                    }
+                }
         }
 
-    /** The TOTP parameters, or null when the value is not an authenticator secret. */
+    /**
+     * Whether an extra field is shown masked until revealed: hidden in the
+     * web app's field schemas, a `{ value, kind: "hidden" }` entry, or a member
+     * a built-in type keeps a secret in.
+     */
+    fun masksExtra(name: String): Boolean {
+        val schema = (additionalFields?.get(ItemCodec.SCHEMA_FIELD) as? JsonObject)?.get(name) as? JsonObject
+        val kinded = ((additionalFields?.get(name) as? JsonObject)?.get("kind") as? JsonPrimitive)?.contentOrNull == "hidden"
+        return kinded || ItemCodec.masks(name, schema)
+    }
+
+    /**
+     * The TOTP parameters: an Authenticator item's value, else the item's
+     * own `totp` field; null when there is none or it is not readable.
+     */
     val totp: Totp.Params?
-        get() = if (kind == FormKind.TOTP && secret.isNotBlank()) runCatching { Totp.parse(secret) }.getOrNull() else null
+        get() {
+            val seed = if (kind == FormKind.TOTP) secret else totpSeed
+            return if (seed.isNotBlank()) runCatching { Totp.parse(seed) }.getOrNull() else null
+        }
 
     private fun notesKey(): String? = additionalFields?.keys?.firstOrNull { it.lowercase() == ItemCodec.NOTES_FIELD }
 
@@ -125,9 +173,16 @@ data class ItemParts(
     val login: String,
     val key: String,
     val additionalFields: JsonObject?,
+    /** The new seed: null leaves it as it is, `""` removes it. */
+    val totp: String? = null,
+    /** The passkeys JSON array, on create only. */
+    val passkeys: String? = null,
 ) {
     override fun toString(): String = "ItemParts(name=$name, folderId=$folderId)"
 }
+
+/** What the Authenticator key field does with a login's `totp` on save (mobile-login-totp-passkeys D8). */
+enum class KeyEdit { KEEP, REPLACE, REMOVE }
 
 /** The form's draft (draftFromItem). */
 data class ItemDraft(
@@ -144,13 +199,32 @@ data class ItemDraft(
     val typed: Map<String, String> = emptyMap(),
     /** Other additional fields, name and value, in order. */
     val fields: List<Pair<String, String>> = emptyList(),
-    /** Additional members that are not text: kept as they are, never shown. */
+    /** Each field's schema from `@schema` as JSON text, "" for none, by row: it goes with its row, so a rename keeps it. */
+    val fieldSchemas: List<String> = emptyList(),
+    /** Additional members that are not text, and under `@schema` the schemas of members that are no row: kept as they are, never shown. */
     val preserved: Map<String, JsonElement> = emptyMap(),
+    /** The item has a saved key; the key itself is never in the draft. */
+    val hasSavedKey: Boolean = false,
+    val keyEdit: KeyEdit = KeyEdit.KEEP,
+    /** The key typed under [KeyEdit.REPLACE]. */
+    val newKey: String = "",
 ) {
     override fun toString(): String = "ItemDraft(kind=$kind, name=$name)"
 
     val fieldNames: List<String> get() = fields.map { it.first }
     val fieldValues: List<String> get() = fields.map { it.second }
+
+    /** Row [i]'s schema as JSON text, "" for none. */
+    fun schemaOf(i: Int): String = fieldSchemas.getOrElse(i) { "" }
+
+    /** The same draft with an empty row added. */
+    fun withField(): ItemDraft = copy(fields = fields + ("" to ""), fieldSchemas = List(fields.size) { schemaOf(it) } + "")
+
+    /** The same draft without row [i], and without its schema. */
+    fun withoutField(i: Int): ItemDraft = copy(
+        fields = fields.filterIndexed { j, _ -> j != i },
+        fieldSchemas = List(fields.size) { schemaOf(it) }.filterIndexed { j, _ -> j != i },
+    )
 
     /**
      * The same draft with what a form edited; kind, type and preserved
@@ -167,9 +241,10 @@ data class ItemDraft(
         typed: Map<String, String>,
         fieldNames: List<String>,
         fieldValues: List<String>,
+        fieldSchemas: List<String>,
     ): ItemDraft = copy(
         name = name, url = url, folderId = folderId, login = login, secret = secret, notes = notes,
-        composite = composite, typed = typed, fields = fieldNames.zip(fieldValues),
+        composite = composite, typed = typed, fields = fieldNames.zip(fieldValues), fieldSchemas = fieldSchemas,
     )
 }
 
@@ -183,35 +258,64 @@ enum class DraftProblem { NAME_MISSING, TOO_LONG, FIELD_NAME_MISSING, FIELD_NAME
  */
 object ItemCodec {
     const val NOTES_FIELD = "notes"
+    /** The web app's member holding each field's schema: not a field, kept as it is on save. */
+    const val SCHEMA_FIELD = "@schema"
+    /** The name a `@schema` member that holds no schema map is kept under (src/utils/fieldSchema.js RENAMED_SCHEMA_FIELD). */
+    const val RENAMED_SCHEMA_FIELD = "@schema (imported)"
+    /** The members the web app's built-in types keep a secret in (src/utils/builtinTypeFields.js). */
+    val SECRET_TYPE_MEMBERS = setOf("Private key", "Passphrase", "API secret")
     const val MAX_NAME_CHARS = 255
     const val MAX_FIELD_CHARS = 4096
     const val MAX_PAYLOAD_BYTES = 65536
 
-    /** RESERVED_MEMBER_NAMES (src/utils/additionalFields.js), plus the notes member. */
-    val RESERVED_FIELD_NAMES = setOf("key", "login", "url")
+    /** RESERVED_MEMBER_NAMES (src/utils/additionalFields.js) and the schema member; the notes member is checked apart. */
+    val RESERVED_FIELD_NAMES = setOf("key", "login", "url", SCHEMA_FIELD)
+
+    /** Whether a field's value is shown masked: hidden in its schema, or a member a built-in type keeps a secret in. */
+    fun masks(name: String, schema: JsonObject?): Boolean {
+        val hidden = (schema?.get("hidden") as? JsonPrimitive)?.booleanOrNull == true ||
+            (schema?.get("format") as? JsonPrimitive)?.contentOrNull == "password"
+        return hidden || name.trim() in SECRET_TYPE_MEMBERS
+    }
+
+    /** [masks] for an edit form row, with its schema as [ItemDraft.fieldSchemas] holds it. */
+    fun masksField(name: String, schema: String): Boolean = masks(name, schemaObject(schema))
+
+    private fun schemaObject(text: String): JsonObject? =
+        if (text.isEmpty()) null else runCatching { Json.parseToJsonElement(text) as? JsonObject }.getOrNull()
+
+    /** `@schema` as a schema map, an object of objects; null for anything else, which is a field a person named so. */
+    private fun schemaMap(stored: JsonElement?): JsonObject? = (stored as? JsonObject)?.takeIf { map -> map.values.all { it is JsonObject } }
+
+    /** Whether a `@schema` member holds a schema map, as the web app's isSchemaMap reads it. */
+    fun isSchemaMap(stored: JsonElement?): Boolean = schemaMap(stored) != null
 
     /**
      * Opens an item. A blocked item is not decrypted. A use-only copy shows
      * its login name and, for an authenticator, the current code, as the web
      * app may (use-only-shares); its value and additional fields stay closed.
+     * With [withSeed] false a login's own `totp` stays ciphertext: the item
+     * says a key is saved, never what it is (mobile-login-totp-passkeys D8).
      */
-    fun open(row: VaultRow, type: SecretType?, keys: VaultKeys, fromCache: Boolean, now: () -> String = { "" }): DecryptedItem {
+    fun open(row: VaultRow, type: SecretType?, keys: VaultKeys, fromCache: Boolean, now: () -> String = { "" }, withSeed: Boolean = true): DecryptedItem {
         val typeName = type?.name ?: "login"
         val kind = FormKind.of(typeName)
         if (row.blocked) {
             return DecryptedItem(row, typeName, type, "", "", null, false, null, fromCache)
         }
         val login = keys.decryptField(row.login)
+        val hasSavedKey = !row.totp.isNullOrEmpty()
+        // A field that cannot be decrypted shows as unreadable; the rest of the item still opens.
+        // Without [withSeed] (the edit screen), the saved key is not decrypted at all: only that one is saved.
+        val totpSeed = if (hasSavedKey && withSeed) runCatching { keys.decryptField(row.totp) }.getOrDefault("") else ""
         if (row.useOnly) {
             val code = if (kind == FormKind.TOTP) keys.decryptField(row.key) else ""
-            return DecryptedItem(row, typeName, type, login, code, null, false, null, fromCache)
+            return DecryptedItem(row, typeName, type, login, code, null, false, null, fromCache, totpSeed, hasSavedKey)
         }
         var secret = keys.decryptField(row.key)
         var passkey: PasskeySummary? = null
         if (kind == FormKind.PASSKEY) {
-            passkey = PasskeyCredential.parse(secret, now)?.let {
-                PasskeySummary(it.rpId, it.rpName.ifEmpty { null }, (it.userName.ifEmpty { it.userDisplayName }).ifEmpty { null }, it.createdAt.ifEmpty { null })
-            }
+            passkey = PasskeyCredential.parse(secret, now)?.let { PasskeySummary.of(it) }
             secret = ""
         }
         var fields: JsonObject? = null
@@ -220,7 +324,12 @@ object ItemCodec {
             val parsed = runCatching { Json.parseToJsonElement(keys.decryptField(row.additionalFields)) }.getOrNull()
             if (parsed is JsonObject) fields = parsed else fieldsError = true
         }
-        return DecryptedItem(row, typeName, type, login, secret, fields, fieldsError, passkey, fromCache)
+        val passkeysText = if (!row.passkeys.isNullOrEmpty()) runCatching { keys.decryptField(row.passkeys) }.getOrNull() else ""
+        val passkeys = LoginPasskeys.credentials(passkeysText ?: "").map { PasskeySummary.of(it) }
+        return DecryptedItem(
+            row, typeName, type, login, secret, fields, fieldsError, passkey, fromCache,
+            totpSeed, hasSavedKey, passkeys, passkeysError = passkeysText == null || (passkeysText.isNotEmpty() && passkeys.isEmpty()),
+        )
     }
 
     /** draftFromItem; an empty draft of [type] when [item] is null. */
@@ -233,16 +342,27 @@ object ItemCodec {
         val typed = LinkedHashMap<String, String>()
         type?.fields?.forEach { typed[it.key] = "" }
         val extra = ArrayList<Pair<String, String>>()
+        val extraSchemas = ArrayList<String>()
         val preserved = LinkedHashMap<String, JsonElement>()
+        val schemas = schemaMap(fields[SCHEMA_FIELD])
+        val otherSchemas = LinkedHashMap<String, JsonElement>()
         for ((name, value) in fields) {
-            if (name == notesKey) continue
-            val key = typedLabels[name]
-            when {
-                key != null -> typed[key] = value.asText()
-                value is JsonPrimitive && value.isString -> extra += name to value.content
-                else -> preserved[name] = value
+            val schema = schemas?.get(name)
+            if (name == SCHEMA_FIELD) {
+                if (schemas == null && RENAMED_SCHEMA_FIELD !in fields) keep(RENAMED_SCHEMA_FIELD, value, extra, extraSchemas, preserved)
+                continue
             }
+            // parts() writes the notes back as `notes`, so their schema goes with that name.
+            if (name == notesKey) {
+                if (schema != null) otherSchemas[NOTES_FIELD] = schema
+                continue
+            }
+            val key = typedLabels[name]
+            if (key != null) typed[key] = value.asText()
+            val isRow = key == null && keep(name, value, extra, extraSchemas, preserved, schema)
+            if (!isRow && schema != null) otherSchemas[name] = schema
         }
+        if (otherSchemas.isNotEmpty()) preserved[SCHEMA_FIELD] = JsonObject(otherSchemas)
         val composite = if (kind == FormKind.CARD || kind == FormKind.IDENTITY) {
             val parsed = Composite.parse(item.secret) ?: emptyMap()
             Composite.fieldsOf(kind).associateWith { parsed[it] ?: "" }
@@ -261,8 +381,28 @@ object ItemCodec {
             composite = composite,
             typed = typed,
             fields = extra,
+            fieldSchemas = extraSchemas,
             preserved = preserved,
+            hasSavedKey = item.hasSavedKey,
         )
+    }
+
+    /** A text member becomes a row with its schema and returns true; any other value is preserved. */
+    private fun keep(
+        name: String,
+        value: JsonElement,
+        extra: MutableList<Pair<String, String>>,
+        extraSchemas: MutableList<String>,
+        preserved: MutableMap<String, JsonElement>,
+        schema: JsonElement? = null,
+    ): Boolean {
+        if (value !is JsonPrimitive || !value.isString) {
+            preserved[name] = value
+            return false
+        }
+        extra += name to value.content
+        extraSchemas += schema?.toString() ?: ""
+        return true
     }
 
     /** partsFromDraft, with the typed fields merged under their labels (mergeTypedValues). */
@@ -273,13 +413,24 @@ object ItemCodec {
             else -> draft.secret
         }
         val fields = LinkedHashMap<String, JsonElement>()
-        fields.putAll(draft.preserved)
-        for ((name, value) in draft.fields) fields[name.trim()] = JsonPrimitive(value)
+        val schemas = LinkedHashMap<String, JsonElement>()
+        for ((name, value) in draft.preserved) {
+            if (name == SCHEMA_FIELD && value is JsonObject) schemas.putAll(value) else fields[name] = value
+        }
+        draft.fields.forEachIndexed { i, (name, value) ->
+            val clean = name.trim()
+            fields[clean] = JsonPrimitive(value)
+            val schema = schemaObject(draft.schemaOf(i))
+            if (schema != null) schemas[clean] = schema else schemas.remove(clean)
+        }
         for (f in type?.fields ?: emptyList()) {
             val value = draft.typed[f.key] ?: ""
             if (value != "") fields[f.label] = JsonPrimitive(value) else fields.remove(f.label)
         }
         if (draft.kind != FormKind.NOTE && draft.notes.trim().isNotEmpty()) fields[NOTES_FIELD] = JsonPrimitive(draft.notes)
+        // Only the schemas of fields still there, as the web app's withSchemas keeps them.
+        val kept = schemas.filterKeys { it in fields }
+        if (kept.isNotEmpty()) fields[SCHEMA_FIELD] = JsonObject(kept)
         return ItemParts(
             name = draft.name.trim(),
             url = draft.url.trim(),
@@ -287,6 +438,11 @@ object ItemCodec {
             login = if (draft.kind == FormKind.LOGIN || draft.kind == FormKind.GENERIC) draft.login else "",
             key = key,
             additionalFields = if (fields.isEmpty()) null else JsonObject(fields),
+            totp = when (draft.keyEdit) {
+                KeyEdit.KEEP -> null
+                KeyEdit.REPLACE -> draft.newKey.trim()
+                KeyEdit.REMOVE -> ""
+            },
         )
     }
 
@@ -315,6 +471,9 @@ object ItemCodec {
         if (draft.kind == FormKind.TOTP && draft.secret.trim().isNotEmpty() && runCatching { Totp.parse(draft.secret) }.isFailure) {
             errors["secret"] = DraftProblem.NOT_AN_AUTHENTICATOR_SECRET
         }
+        if (draft.keyEdit == KeyEdit.REPLACE && runCatching { Totp.parse(draft.newKey.trim()) }.isFailure) {
+            errors["totp"] = DraftProblem.NOT_AN_AUTHENTICATOR_SECRET
+        }
         val parts = parts(draft, type)
         if (Encoding.utf8(parts.key).size > MAX_PAYLOAD_BYTES) errors["secret"] = DraftProblem.TOO_LONG
         if (parts.additionalFields != null && Encoding.utf8(parts.additionalFields.toString()).size > MAX_PAYLOAD_BYTES) {
@@ -331,6 +490,7 @@ object ItemCodec {
         if (before.login != after.login) add("login")
         if (before.key != after.key) add("key")
         if (before.additionalFields != after.additionalFields) add("additionalFields")
+        if (after.totp != null) add("totp")
     }
 
     /**
@@ -347,6 +507,8 @@ object ItemCodec {
         body["key"] = JsonPrimitive(keys.encryptField(parts.key))
         if (parts.login.isNotEmpty()) body["login"] = JsonPrimitive(keys.encryptField(parts.login))
         parts.additionalFields?.let { body["additionalFields"] = JsonPrimitive(keys.encryptField(it.toString())) }
+        parts.totp?.takeIf { it.isNotEmpty() }?.let { body["totp"] = JsonPrimitive(keys.encryptField(it)) }
+        parts.passkeys?.takeIf { it.isNotEmpty() }?.let { body["passkeys"] = JsonPrimitive(keys.encryptField(it)) }
         return JsonObject(body)
     }
 
@@ -365,8 +527,25 @@ object ItemCodec {
         if ("additionalFields" in changed) {
             body["additionalFields"] = parts.additionalFields?.let { JsonPrimitive(keys.encryptField(it.toString())) } ?: JsonNull
         }
+        if ("totp" in changed) body["totp"] = encryptedOrEmpty(parts.totp ?: "", keys)
         return JsonObject(body)
     }
+
+    /**
+     * The body that sets a login's passkeys: `''` when none remain, never an
+     * encrypted empty string. With [baseUpdatedAt], the `updatedAt` of the
+     * row the change was made on, the server refuses the write when the
+     * login changed since (PasskeysWrite).
+     */
+    fun passkeysBody(json: String, keys: VaultKeys, baseUpdatedAt: String? = null): JsonObject = JsonObject(
+        buildMap {
+            put("passkeys", encryptedOrEmpty(json, keys))
+            baseUpdatedAt?.let { put("baseUpdatedAt", JsonPrimitive(it)) }
+        },
+    )
+
+    private fun encryptedOrEmpty(text: String, keys: VaultKeys): JsonPrimitive =
+        JsonPrimitive(if (text.isEmpty()) "" else keys.encryptField(text))
 
     private fun String?.json(): JsonElement = if (this == null) JsonNull else JsonPrimitive(this)
 }

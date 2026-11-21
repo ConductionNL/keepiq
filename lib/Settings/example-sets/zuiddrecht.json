@@ -1,0 +1,14 @@
+{
+	"set": "zuiddrecht",
+	"$comment": "keepiq's part of the Zuiddrecht example set: the demo employee Pieter gets a vault, so the unlocked app can be shown. The set writes only app config: who gets a demo vault and the demo master password it opens with. The vault itself is minted by keepiq's SeedDemoVaults repair step on the next `occ maintenance:repair` (or app upgrade), only for an existing account that is not an administrator and has no vault yet, and holds only the made-up secrets of lib/Settings/demo-vault.json. The password is public on purpose: never name an account here that will keep real secrets. Install with `occ openregister:example-set:install zuiddrecht`, then run `occ maintenance:repair`.",
+	"appConfig": [
+		{
+			"key": "demo_vault_owners",
+			"value": "{{cast:pieter.uid}}"
+		},
+		{
+			"key": "demo_vault_master_password",
+			"value": "zuiddrecht-demo-kluis"
+		}
+	]
+}

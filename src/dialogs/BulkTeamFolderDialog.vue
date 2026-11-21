@@ -43,6 +43,18 @@
 			     dialog, so an ungated panel showed the previous run's table on
 			     a fresh open. -->
 			<BulkRunPanel v-if="ran || bulk.progress.running" @retry="onRetry" />
+			<NcNoteCard
+				v-if="refused.length > 0"
+				type="warning"
+				data-testid="bulk-tf-refused">
+				{{
+					t(
+						'keepiq',
+						'These secrets hold a one-time code or passkeys that this version of Keepiq cannot copy yet, so the new members did not get them: {names}',
+						{ names: refused.join(', ') },
+					)
+				}}
+			</NcNoteCard>
 		</div>
 		<template #actions>
 			<NcButton
@@ -64,9 +76,9 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcSelect } from '@nextcloud/vue'
+import { NcButton, NcDialog, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
-import { useBulkStore } from '../store/modules/bulk.js'
+import bulkRunDialog from '../mixins/bulkRunDialog.js'
 import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
@@ -76,34 +88,23 @@ export default {
 	components: {
 		NcButton,
 		NcDialog,
+		NcNoteCard,
 		NcSelect,
 		BulkRunPanel,
 	},
 
-	props: {
-		open: {
-			type: Boolean,
-			default: false,
-		},
-	},
+	mixins: [bulkRunDialog],
 
 	emits: ['close', 'done'],
 	data() {
 		return {
 			target: null,
-			/** Whether a run was started FROM THIS DIALOG (the store's report outlives it). */
-			ran: false,
+			/** Secrets the server would not copy to the members: a one-time code or passkeys it cannot copy yet. */
+			refused: [],
 		}
 	},
 
 	computed: {
-		/**
-		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
-		 */
-		bulk() {
-			return useBulkStore()
-		},
-
 		/**
 		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
 		 */
@@ -143,10 +144,7 @@ export default {
 				return this.t(
 					'keepiq',
 					'Added {ok} of {total} secrets to the team folder',
-					{
-						ok: this.bulk.report.filter((r) => r.status === 'ok').length,
-						total: this.bulk.report.length,
-					},
+					this.reportCounts,
 				)
 			}
 			return this.t('keepiq', 'Add {count} secrets to a team folder', {
@@ -211,13 +209,7 @@ export default {
 				(id) => this.moveOne(id),
 				this.t('keepiq', 'Adding to team folder'),
 			)
-			try {
-				await this.teamFolderStore.runFanOut(this.target.id)
-			} catch {
-				// Fan-out errors surface via the team-folder store; the
-				// idempotent reconcile picks up missing pairs on retry.
-			}
-			this.$emit('done')
+			await this.fanOutAndFinish()
 		},
 
 		/**
@@ -232,10 +224,23 @@ export default {
 				(id) => this.moveOne(id),
 				this.t('keepiq', 'Retrying'),
 			)
+			await this.fanOutAndFinish()
+		},
+
+		/**
+		 * Run the membership fan-out once for the target folder, name the
+		 * copies the server refused, and report the dialog done.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
+		 */
+		async fanOutAndFinish() {
 			try {
-				await this.teamFolderStore.runFanOut(this.target.id)
+				const result = await this.teamFolderStore.runFanOut(this.target.id)
+				this.refused = result?.refused ?? []
 			} catch {
-				// See onRun.
+				// Fan-out errors surface via the team-folder store; the
+				// idempotent reconcile picks up missing pairs on retry.
 			}
 			this.$emit('done')
 		},

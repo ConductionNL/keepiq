@@ -38,10 +38,11 @@ namespace OCA\Keepiq\Controller;
 use DateTime;
 use Exception;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\SecretRequest;
-use OCA\Keepiq\Service\ApplicationSecretRequestService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\ApplicationSecretRequestServiceInterface;
+use OCA\Keepiq\Support\MessageResponse;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -58,7 +59,7 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 	 * Constructor.
 	 *
 	 * @param IRequest $request The request
-	 * @param ApplicationSecretRequestService $secretRequestService The machine request service
+	 * @param ApplicationSecretRequestServiceInterface $secretRequestService The machine request service
 	 * @param FolderMapper $folderMapper Resolves an optional folder path
 	 * @param IURLGenerator $urlGenerator Builds the absolute fill-link URL
 	 *
@@ -66,11 +67,11 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 	 */
 	public function __construct(
 		IRequest $request,
-		private ApplicationSecretRequestService $secretRequestService,
+		private ApplicationSecretRequestServiceInterface $secretRequestService,
 		private FolderMapper $folderMapper,
 		private IURLGenerator $urlGenerator,
 	) {
-		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -97,10 +98,7 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 				applicationId: $application->getId()
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(
@@ -138,17 +136,11 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 				expiresAt: $this->optionalExpiry()
 			);
 		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_BAD_REQUEST);
 		} catch (Exception $e) {
 			// Guard refusals (pending/rejected application, revoked or
 			// compromised suite, a rotation in progress) land here.
-			return new JSONResponse(
-				data: ['message' => $e->getMessage()],
-				statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
-			);
+			return new MessageResponse(error: $e, status: Http::STATUS_UNPROCESSABLE_ENTITY);
 		}//end try
 
 		return new JSONResponse(
@@ -353,14 +345,14 @@ class ApplicationSecretRequestsController extends ApplicationApiController {
 			// the createWebHistory router — it showed recipients the lock
 			// screen.
 			'fillLinkUrl' => $this->urlGenerator->getAbsoluteURL(
-				$this->urlGenerator->linkToRoute(KeepiqApp::APP_ID . '.publicShell.page')
+				$this->urlGenerator->linkToRoute(AppIdentity::APP_ID . '.publicShell.page')
 				. '/share/request/' . $request->getToken()
 			),
 			// Kept alongside it so a machine polling for fulfilment does not
 			// have to parse the human URL.
 			'fillApiUrl' => $this->urlGenerator->getAbsoluteURL(
 				$this->urlGenerator->linkToRoute(
-					KeepiqApp::APP_ID . '.secretRequestFill.show',
+					AppIdentity::APP_ID . '.secretRequestFill.show',
 					['token' => $request->getToken()]
 				)
 			),

@@ -50,7 +50,7 @@ When the browser is online and the vault is unlocked, the web app MUST replay qu
 
 ### Requirement: Concurrent server changes are never overwritten silently
 
-`PUT /api/v1/secrets/{id}` and `DELETE /api/v1/secrets/{id}` MUST accept an optional `baseUpdatedAt`; when it is present and differs from the stored `updatedAt`, the server MUST change nothing and answer `409 Conflict` with the current row. On a 409 the web app MUST stop that entry and let the user keep their offline version or the server version.
+`PUT /api/v1/secrets/{id}` and `DELETE /api/v1/secrets/{id}` MUST accept an optional `baseUpdatedAt`; when it is present and differs from the stored `updatedAt`, the server MUST change nothing and answer `409 Conflict` with the current row. On such a conflict the web app MUST stop that entry and let the user keep their offline version or the server version. A 409 with `error: share_scan_pending` (user-sharing) is not a conflict: the entry moves to the failed list with the server's message and a Try again action, and the replay goes on with the next entry.
 
 #### Scenario: The secret changed online meanwhile
 
@@ -67,13 +67,14 @@ When the browser is online and the vault is unlocked, the web app MUST replay qu
 
 ### Requirement: Failed entries are kept, never dropped silently
 
-A replay answered with 403 or 404 MUST move the entry to a failed list where the user can copy their values (decrypted in the browser) or discard the entry. A 423 or a network error MUST keep the entry queued. An entry whose owner row saved but whose recipient sync failed MUST retry only the sync step.
+A replay answered with 403 or 404, or a value change of a copy the user may only view (user-sharing, "View-Only Copies"), MUST move the entry to a failed list where the user can copy their values (decrypted in the browser) or discard the entry. A 423 or a network error MUST keep the entry queued. An entry whose owner row saved but whose recipient sync failed MUST retry only the sync step.
 
 #### Scenario: Write grade removed while offline
 
 - **GIVEN** a team-folder member who edited a folder secret offline, and whose grade was lowered to read meanwhile
-- **WHEN** the replay's sync request is refused with 403
-- **THEN** the entry MUST appear under "Changes that could not sync" with copy and discard actions
+- **WHEN** the replay runs
+- **THEN** the replay MUST send nothing for the entry, since the copy is now view-only
+- **AND** the entry MUST appear under "Changes that could not sync" with copy and discard actions
 
 ### Requirement: Pending changes block logout and rotation
 

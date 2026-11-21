@@ -28,6 +28,7 @@ use OCA\Keepiq\Backup\BackupSettings;
 use OCA\Keepiq\BackgroundJob\ScheduledVaultBackupJob;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Service\AuditService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Files\AppData\IAppDataFactory;
@@ -209,7 +210,7 @@ class BackupServiceTest extends TestCase {
 		$this->assertSame('ok', $this->store['backup_last_status']);
 		$this->assertSame(AuditEventTypes::BACKUP_CREATED, $this->events[0]->getEventType());
 		$metadata = $this->events[0]->getMetadata();
-		$this->assertSame([], array_diff(array_keys($metadata), AuditEventTypes::WHITELIST[AuditEventTypes::BACKUP_CREATED]));
+		$this->assertSame([], array_diff(array_keys($metadata), AuditMetadataPolicy::WHITELIST[AuditEventTypes::BACKUP_CREATED]));
 		$this->assertFalse($metadata['encrypted']);
 	}//end testRunStoresAuditsAndPrunes()
 

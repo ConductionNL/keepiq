@@ -3,7 +3,7 @@ name: Standalone (no other app)
 # Keepiq must install and work with no other Conduction app (ADR-006,
 # standalone-app-shell). This job pins that promise: one Nextcloud with Keepiq
 # ALONE (no OpenRegister, no integriq, no Hermiq), provisioned by the same
-# browser-extension/capture setup docs-media.yml uses, then
+# tests/server setup, then
 #
 # - a smoke check: the other apps are not enabled, the login page and
 #   Keepiq's health answer 200, metrics answers an admin;
@@ -22,7 +22,7 @@ on:
       - "src/**"
       - "appinfo/**"
       - "tests/e2e/**"
-      - "browser-extension/capture/**"
+      - "tests/server/**"
       - ".github/workflows/standalone.yml"
   push:
     branches: [development]
@@ -31,7 +31,7 @@ on:
       - "src/**"
       - "appinfo/**"
       - "tests/e2e/**"
-      - "browser-extension/capture/**"
+      - "tests/server/**"
       - ".github/workflows/standalone.yml"
   workflow_dispatch:
 
@@ -44,18 +44,18 @@ jobs:
     timeout-minutes: 45
     env:
       PROJECT: kq-standalone
-      KQ_MEDIA_PORT: "8188"
+      KQ_TEST_PORT: "8188"
       BASE: http://localhost:8188
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           path: keepiq
           persist-credentials: false
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: "8.3"
           tools: composer:v2
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           # npm 11, which the lockfile needs; Node 22 ships npm 10.
           node-version: "24"
@@ -68,10 +68,10 @@ jobs:
           npm run build
 
       - name: Start the instance
-        run: docker compose -p "$PROJECT" -f keepiq/browser-extension/capture/compose.yaml up -d
+        run: docker compose -p "$PROJECT" -f keepiq/tests/server/compose.yaml up -d
       # No OpenRegister directory: the setup copies in and enables Keepiq only.
       - name: Provision it with Keepiq alone
-        run: bash keepiq/browser-extension/capture/setup.sh "$PROJECT" keepiq
+        run: bash keepiq/tests/server/setup.sh "$PROJECT" keepiq
 
       - name: Smoke check
         run: |
@@ -109,7 +109,7 @@ jobs:
       - name: Server log
         if: failure()
         run: docker exec "${PROJECT}-nc-1" tail -n 200 /var/www/html/data/nextcloud.log || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: standalone-playwright-report

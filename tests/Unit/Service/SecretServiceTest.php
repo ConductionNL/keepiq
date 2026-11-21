@@ -27,8 +27,10 @@ use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\CredentialFields;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
+use OCA\Keepiq\Exception\ViewOnlyCopyException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Service\FolderOwnershipGuard;
 use OCA\Keepiq\Service\LinkShareService;
@@ -36,6 +38,7 @@ use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -76,6 +79,11 @@ class SecretServiceTest extends TestCase {
 	private $linkShareService;
 
 	/**
+	 * @var FolderOwnershipGuard
+	 */
+	private FolderOwnershipGuard $folderOwnership;
+
+	/**
 	 * Set up fixtures.
 	 *
 	 * @return void
@@ -100,6 +108,7 @@ class SecretServiceTest extends TestCase {
 				return $folder;
 			}
 		);
+		$this->folderOwnership = new FolderOwnershipGuard($folderMapper);
 
 		$this->service = new SecretService(
 			mapper: $this->mapper,
@@ -108,7 +117,9 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $logger,
-			folderOwnership: new FolderOwnershipGuard($folderMapper),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			folderOwnership: $this->folderOwnership,
 		);
 	}//end setUp()
 
@@ -304,7 +315,7 @@ class SecretServiceTest extends TestCase {
 
 		// versionService is not wired in setUp (it is an optional dependency), so
 		// the snapshot branch would be dead here without an explicit instance.
-		$versionService = $this->createMock(SecretVersionService::class);
+		$versionService = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versionService->expects($this->never())->method('snapshot');
 		$service = $this->serviceWithVersions($versionService);
 
@@ -340,7 +351,7 @@ class SecretServiceTest extends TestCase {
 		$this->mapper->method('findById')->willReturn($filled);
 		$this->mapper->method('update')->willReturnArgument(0);
 
-		$versionService = $this->createMock(SecretVersionService::class);
+		$versionService = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versionService->expects($this->once())->method('snapshot');
 		$service = $this->serviceWithVersions($versionService);
 
@@ -366,6 +377,8 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			versionService: $versionService,
 		);
 	}//end serviceWithVersions()
@@ -462,6 +475,8 @@ class SecretServiceTest extends TestCase {
 		$item = $result['items'][0];
 		$this->assertTrue($item['blocked']);
 		$this->assertArrayNotHasKey('key', $item);
+		$this->assertArrayNotHasKey('totp', $item);
+		$this->assertArrayNotHasKey('passkeys', $item);
 		$this->assertArrayHasKey('blockedReason', $item);
 		$this->assertSame('GitHub', $item['name']);
 	}//end testListBlockedSecretOmitsCiphertext()
@@ -472,7 +487,10 @@ class SecretServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testListActiveSecretIncludesCiphertext(): void {
-		$this->mapper->method('findByOwner')->willReturn([$this->makeSecret()]);
+		$secret = $this->makeSecret();
+		$secret->setTotp('TOTP-CIPHERTEXT');
+		$secret->setPasskeys('PASSKEYS-CIPHERTEXT');
+		$this->mapper->method('findByOwner')->willReturn([$secret]);
 		$this->mapper->method('countByOwner')->willReturn(1);
 		$this->suiteMapper->method('findById')->willReturn($this->makeSuite(status: 'active'));
 
@@ -488,6 +506,8 @@ class SecretServiceTest extends TestCase {
 		$item = $result['items'][0];
 		$this->assertFalse($item['blocked']);
 		$this->assertSame('CIPHERTEXT', $item['key']);
+		$this->assertSame('TOTP-CIPHERTEXT', $item['totp']);
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $item['passkeys']);
 	}//end testListActiveSecretIncludesCiphertext()
 
 	/**
@@ -639,6 +659,232 @@ class SecretServiceTest extends TestCase {
 	}//end testUnchangedKeyPreservesPossiblyCompromised()
 
 	/**
+	 * A flagged login whose TOTP seed or passkeys were exposed with its password
+	 * keeps the warning when only the password changes.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testAKeyOnlyChangeKeepsTheWarningWhileTotpOrPasskeysStayExposed(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stamp = new \DateTime('2026-01-01T00:00:00+00:00');
+		$rows = [];
+		foreach (['setTotp', 'setPasskeys'] as $setter) {
+			$old = $this->makeSecret(id: $setter);
+			$old->setKey('OLD-CIPHERTEXT');
+			$old->$setter('EXPOSED-CIPHERTEXT');
+			$old->setPossiblyCompromisedAt(clone $stamp);
+			$rows[$setter] = $old;
+		}
+
+		$this->mapper->method('findById')->willReturnCallback(static fn (string $id): Secret => $rows[$id]);
+
+		foreach (array_keys($rows) as $id) {
+			$secret = $this->service->update(id: $id, data: ['key' => 'REPLACED-CIPHERTEXT'], userId: 'alice');
+			$this->assertNotNull($secret->getPossiblyCompromisedAt(), $id);
+		}
+	}//end testAKeyOnlyChangeKeepsTheWarningWhileTotpOrPasskeysStayExposed()
+
+	/**
+	 * The warning clears once no credential is left exposed, whether the
+	 * credentials are replaced in one save or one after the other, and a
+	 * cleared TOTP counts as replaced.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testTheWarningClearsOnceNoCredentialIsLeftExposed(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$flagged = new \DateTime('2026-01-01T00:00:00+00:00');
+		$after = new \DateTime('2026-01-02T00:00:00+00:00');
+		$cases = [
+			// Both in one save.
+			'together' => [['key' => 'NEW-KEY', 'totp' => 'NEW-TOTP'], null, null],
+			// The password went first; the seed now.
+			'key first' => [['totp' => 'NEW-TOTP'], $after, null],
+			// The seed went first; the password now.
+			'totp first' => [['key' => 'NEW-KEY'], null, $after],
+			// The seed is removed rather than replaced.
+			'totp cleared' => [['key' => 'NEW-KEY', 'totp' => ''], null, null],
+		];
+		$rows = [];
+		foreach ($cases as $id => [, $keyChangedAt, $totpChangedAt]) {
+			$old = $this->makeSecret(id: $id);
+			$old->setKey('OLD-KEY');
+			$old->setTotp('OLD-TOTP');
+			$old->setKeyUpdatedAt($keyChangedAt ?? new \DateTime('2025-12-01T00:00:00+00:00'));
+			$old->setTotpUpdatedAt($totpChangedAt);
+			$old->setPossiblyCompromisedAt(clone $flagged);
+			$rows[$id] = $old;
+		}
+
+		$this->mapper->method('findById')->willReturnCallback(static fn (string $id): Secret => $rows[$id]);
+
+		foreach ($cases as $id => [$data]) {
+			$this->assertNull($this->service->update(id: $id, data: $data, userId: 'alice')->getPossiblyCompromisedAt(), $id);
+		}
+	}//end testTheWarningClearsOnceNoCredentialIsLeftExposed()
+
+	/**
+	 * A share-save restore writes the version's credentials back: old values
+	 * that replace nothing and have no change time. The flagged secret keeps
+	 * its warning through the restore and through a following TOTP-only
+	 * change, as the key and passkeys stay exposed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreReplacesNoExposedTotpOrPasskeys(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$exposedSince = new \DateTime('2026-09-01T00:00:00+00:00');
+		$head = $this->makeSecret();
+		$head->setKey('CURRENT-KEY');
+		$head->setTotp('CURRENT-TOTP');
+		$head->setPasskeys('CURRENT-PASSKEYS');
+		$head->setKeyUpdatedAt(clone $exposedSince);
+		$head->setTotpUpdatedAt(clone $exposedSince);
+		$head->setPasskeysUpdatedAt(clone $exposedSince);
+		$head->setPossiblyCompromisedAt(new \DateTime('2026-10-01T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturnCallback(
+			static function () use (&$head): Secret {
+				return clone $head;
+			}
+		);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->update(
+			id: 's-1',
+			data: ['key' => 'VERSION-KEY', 'totp' => 'VERSION-TOTP', 'passkeys' => 'VERSION-PASSKEYS'],
+			userId: 'alice',
+			restoring: true
+		);
+		$this->assertNotNull($restored->getPossiblyCompromisedAt());
+		$this->assertNull($restored->getKeyUpdatedAt());
+		$this->assertNull($restored->getTotpUpdatedAt());
+		$this->assertNull($restored->getPasskeysUpdatedAt());
+
+		$head = $restored;
+		$secret = $this->service->update(id: 's-1', data: ['totp' => 'NEW-TOTP'], userId: 'alice');
+		$this->assertNotNull($secret->getPossiblyCompromisedAt());
+	}//end testARestoreReplacesNoExposedTotpOrPasskeys()
+
+	/**
+	 * A share-save restore of a version from before the compromise keeps the warning
+	 * on a head whose TOTP was rotated after it was raised: the restored TOTP and key
+	 * are the exposed ones and take no change time from the head.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreOfAPreCompromiseVersionKeepsTheWarning(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$head = $this->makeSecret();
+		$head->setKey('CURRENT-KEY');
+		$head->setTotp('CURRENT-TOTP');
+		$head->setKeyUpdatedAt(new \DateTime('2026-09-01T00:00:00+00:00'));
+		$head->setTotpUpdatedAt(new \DateTime('2026-10-05T00:00:00+00:00'));
+		$head->setPossiblyCompromisedAt(new \DateTime('2026-10-01T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($head);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->update(
+			id: 's-1',
+			data: ['key' => 'PRE-FLAG-KEY', 'totp' => 'PRE-FLAG-TOTP'],
+			userId: 'alice',
+			restoring: true
+		);
+
+		$this->assertNotNull($restored->getPossiblyCompromisedAt());
+		$this->assertNull($restored->getKeyUpdatedAt());
+		$this->assertNull($restored->getTotpUpdatedAt());
+	}//end testARestoreOfAPreCompromiseVersionKeepsTheWarning()
+
+	/**
+	 * A share-save restore on a row whose warning is cleared but whose `suite_compromise` flag is still open writes
+	 * the old key back with no change time, so it cannot prove that flag.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreUnderAnOpenCompromiseFlagLeavesTheKeyNoAge(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$head = $this->makeSecret();
+		$head->setKey('CURRENT-KEY');
+		$head->setKeyUpdatedAt(new \DateTime('2026-10-05T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($head);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+		$versionService = $this->createPartialMock(SecretVersionService::class, ['snapshot', 'compromiseFlagOpen']);
+		$versionService->method('compromiseFlagOpen')->with('s-1')->willReturn(true);
+
+		$restored = $this->serviceWithVersions($versionService)->update(
+			id: 's-1',
+			data: ['key' => 'PRE-FLAG-KEY'],
+			userId: 'alice',
+			restoring: true
+		);
+
+		$this->assertNull($restored->getKeyUpdatedAt());
+		$this->assertFalse(
+			(new CredentialFields())->provesRotation(
+				secret: $restored,
+				reason: 'suite_compromise',
+				frozen: new \DateTime('2026-09-01T00:00:00+00:00')
+			)
+		);
+	}//end testARestoreUnderAnOpenCompromiseFlagLeavesTheKeyNoAge()
+
+	/**
+	 * A share-save restore whose patch carries a TOTP other than the head's, one the
+	 * version need not have held, gets no change time that could read as after the flag.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-possibly-compromised-flag-lifecycle
+	 */
+	public function testARestoreWithAnotherTotpStampsNoChangeTime(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$head = $this->makeSecret();
+		$head->setTotp('CURRENT-TOTP');
+		$head->setTotpUpdatedAt(new \DateTime('2026-01-01T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($head);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+
+		$restored = $this->service->update(id: 's-1', data: ['totp' => 'NEVER-HELD'], userId: 'alice', restoring: true);
+
+		$this->assertSame('NEVER-HELD', $restored->getTotp());
+		$this->assertNull($restored->getTotpUpdatedAt());
+	}//end testARestoreWithAnotherTotpStampsNoChangeTime()
+
+	/**
+	 * A TOTP-only or passkeys-only change stamps that field's change time, which
+	 * moves the credential change time a rotation proof reads; the key's age is
+	 * left alone, so a password rotation policy still sees the old password.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md
+	 */
+	public function testATotpOrPasskeysChangeStampsItsOwnChangeTime(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$keyAge = new \DateTime('2026-01-01T00:00:00+00:00');
+		$old = $this->makeSecret();
+		$old->setKeyUpdatedAt(clone $keyAge);
+		$this->mapper->method('findById')->willReturn($old);
+
+		$secret = $this->service->update(id: 's-1', data: ['totp' => 'NEW-TOTP', 'passkeys' => ''], userId: 'alice');
+
+		$this->assertSame($keyAge->getTimestamp(), $secret->getKeyUpdatedAt()->getTimestamp());
+		$this->assertNotNull($secret->getTotpUpdatedAt());
+		$this->assertNull($secret->getPasskeysUpdatedAt(), 'an unchanged (still empty) field is not stamped');
+		$this->assertGreaterThan($keyAge, (new CredentialFields())->lastChangedAt(secret: $secret));
+	}//end testATotpOrPasskeysChangeStampsItsOwnChangeTime()
+
+	/**
 	 * Renaming a secret (or any non-key edit) MUST NOT reset keyUpdatedAt.
 	 *
 	 * @return void
@@ -730,6 +976,8 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $logger,
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			secretRequestService: null,
 			shareService: null,
 			groupShareMapper: $groupShareMapper,
@@ -989,6 +1237,13 @@ class SecretServiceTest extends TestCase {
 		$stored->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
 		$this->mapper->method('findById')->willReturn($stored);
 		$this->mapper->expects($this->exactly(2))->method('update')->willReturnArgument(0);
+		$locks = [];
+		$this->mapper->expects($this->exactly(2))->method('advanceVersion')->willReturnCallback(
+			static function (string $id, \DateTime $base, \DateTime $savedAt) use (&$locks): int {
+				$locks[] = [$base->getTimestamp(), $savedAt->getTimestamp()];
+				return 1;
+			}
+		);
 
 		$this->service->update(
 			id: 's-1',
@@ -999,5 +1254,387 @@ class SecretServiceTest extends TestCase {
 
 		$this->service->update(id: 's-1', data: ['name' => 'No base'], userId: 'alice');
 		$this->assertSame('No base', $stored->getName());
+
+		// Each update is locked against the version it read.
+		$this->assertSame((new \DateTime('2026-10-02T10:00:00+00:00'))->getTimestamp(), $locks[0][0]);
+		$this->assertSame($locks[0][1], $locks[1][0]);
 	}//end testUpdateWithAMatchingOrAbsentBaseUpdates()
+
+	/**
+	 * The update with a base and the one without it.
+	 *
+	 * @return array<string,array{0:array<string,string>}>
+	 */
+	public static function baseOrNone(): array {
+		return [
+			'with a base'    => [['baseUpdatedAt' => '2026-10-02T10:00:00+00:00']],
+			'without a base' => [[]],
+		];
+	}//end baseOrNone()
+
+	/**
+	 * A save that commits after the update's read but before its write moves
+	 * the row: the compare-and-set finds it gone, and the update is refused
+	 * and rolled back instead of overwriting the save, whether or not the
+	 * client named a base.
+	 *
+	 * @param array<string,string> $base The client's base, if any
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('baseOrNone')]
+	public function testUpdateOverARowThatMovesAfterItsReadIsRefused(array $base): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$stored->setName('Router');
+		$stored->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->expects($this->once())->method('advanceVersion')->willReturn(0);
+		$this->mapper->expects($this->never())->method('update');
+		$versions = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
+		$versions->expects($this->never())->method('snapshot');
+		$transaction = [];
+		$db = $this->createMock(\OCP\IDBConnection::class);
+		$db->method('beginTransaction')->willReturnCallback(static function () use (&$transaction): void {
+			$transaction[] = 'begin';
+		});
+		$db->method('rollBack')->willReturnCallback(static function () use (&$transaction): void {
+			$transaction[] = 'rollback';
+		});
+		$service = new SecretService(
+			mapper: $this->mapper,
+			typeService: $this->typeService,
+			suiteMapper: $this->suiteMapper,
+			migrationService: $this->migrationService,
+			linkShareService: $this->linkShareService,
+			logger: $this->createMock(LoggerInterface::class),
+			versionService: $versions,
+			db: $db,
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+		);
+
+		try {
+			$service->update(id: 's-1', data: ['key' => 'NEW-CIPHERTEXT'] + $base, userId: 'alice');
+			$this->fail('A row that moved after the read must be refused');
+		} catch (\OCA\Keepiq\Exception\StaleWriteException $e) {
+			$this->assertSame('s-1', $e->getCurrent()->getId());
+		}
+
+		$this->assertSame(['begin', 'rollback'], $transaction);
+	}//end testUpdateOverARowThatMovesAfterItsReadIsRefused()
+
+	/**
+	 * An update without a base still moves the row past its stored version,
+	 * even within the same second, so an edit made on that version cannot
+	 * pass the stale check afterwards.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testUpdateWithoutABaseMovesTheRowPastItsStoredVersion(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$version = (new \DateTime('+1 hour'))->getTimestamp();
+		$stored->setUpdatedAt(new \DateTime('@'.$version));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->expects($this->once())->method('advanceVersion')
+			->with('s-1', $this->anything(), $this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $version + 1))
+			->willReturn(1);
+
+		$secret = $this->service->update(id: 's-1', data: ['name' => 'No base'], userId: 'alice');
+
+		$this->assertSame($version + 1, $secret->getUpdatedAt()?->getTimestamp());
+	}//end testUpdateWithoutABaseMovesTheRowPastItsStoredVersion()
+
+	/**
+	 * A share-save gives the row the version it already locked in, not "now".
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testUpdateTakesTheVersionAShareSaveLockedIn(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->mapper->method('findById')->willReturn($this->makeSecret());
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->expects($this->never())->method('advanceVersion');
+		$savedAt = new \DateTime('2030-01-01T00:00:01+00:00');
+
+		$secret = $this->service->update(id: 's-1', data: ['key' => 'NEW-CIPHERTEXT'], userId: 'alice', savedAt: $savedAt);
+
+		$this->assertSame($savedAt->getTimestamp(), $secret->getUpdatedAt()?->getTimestamp());
+	}//end testUpdateTakesTheVersionAShareSaveLockedIn()
+
+	/**
+	 * Setting an expiry moves the row off the version it read to one after
+	 * it, even when the stored version sits ahead of now, so the version
+	 * never goes back.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testSetExpiryMovesTheRowPastItsStoredVersion(): void {
+		$stored = $this->makeSecret();
+		$version = (new \DateTime('+1 hour'))->getTimestamp();
+		$stored->setUpdatedAt(new \DateTime('@'.$version));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('update')->willReturnArgument(0);
+		$this->mapper->expects($this->once())->method('advanceVersion')
+			->with(
+				's-1',
+				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $version),
+				$this->callback(static fn (\DateTime $at): bool => $at->getTimestamp() === $version + 1)
+			)
+			->willReturn(1);
+		$expiry = new \DateTime('2027-01-01T00:00:00+00:00');
+
+		$secret = $this->service->setExpiry(id: 's-1', expiresAt: $expiry, userId: 'alice');
+
+		$this->assertSame($version + 1, $secret->getUpdatedAt()?->getTimestamp());
+		$this->assertSame($expiry, $secret->getExpiresAt());
+	}//end testSetExpiryMovesTheRowPastItsStoredVersion()
+
+	/**
+	 * A save that lands between the expiry's read and its write keeps its
+	 * value, and the expiry is set once more on the row as it is now.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testSetExpiryOverARowThatMovesIsSetOnTheCurrentRow(): void {
+		$read = $this->makeSecret();
+		$read->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
+		$moved = $this->makeSecret();
+		$moved->setKey('SAVED-MEANWHILE');
+		$moved->setUpdatedAt(new \DateTime('2026-10-02T10:00:01+00:00'));
+		$this->mapper->method('findById')->willReturnOnConsecutiveCalls($read, $moved);
+		$bases = [];
+		$this->mapper->expects($this->exactly(2))->method('advanceVersion')->willReturnCallback(
+			static function (string $id, \DateTime $base) use (&$bases): int {
+				$bases[] = $base->getTimestamp();
+				return (count($bases) === 1) ? 0 : 1;
+			}
+		);
+		$this->mapper->expects($this->once())->method('update')->with($this->identicalTo($moved))->willReturnArgument(0);
+		$expiry = new \DateTime('2027-01-01T00:00:00+00:00');
+
+		$secret = $this->service->setExpiry(id: 's-1', expiresAt: $expiry, userId: 'alice');
+
+		$this->assertSame($moved, $secret);
+		$this->assertSame('SAVED-MEANWHILE', $secret->getKey());
+		$this->assertSame($expiry, $secret->getExpiresAt());
+		$this->assertSame([$read->getUpdatedAt()?->getTimestamp(), (new \DateTime('2026-10-02T10:00:01+00:00'))->getTimestamp()], $bases);
+	}//end testSetExpiryOverARowThatMovesIsSetOnTheCurrentRow()
+
+	/**
+	 * loadForUpdate refuses what update() refuses, before any write.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function testLoadForUpdateRefusesWhatUpdateRefuses(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$useOnly = $this->makeSecret();
+		$useOnly->setUseOnly(true);
+		$foreign = $this->makeSecret();
+		$foreign->setOwnerId('mallory');
+		$this->mapper->method('findById')->willReturnOnConsecutiveCalls($this->makeSecret(), $useOnly, $foreign);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->assertSame('s-1', $this->service->loadForUpdate(id: 's-1', fields: ['key'], userId: 'alice')->getId());
+		foreach (['A use-only copy cannot be changed', 'Secret belongs to another user'] as $refusal) {
+			try {
+				$this->service->loadForUpdate(id: 's-1', fields: ['key'], userId: 'alice');
+				$this->fail('Refusal expected: '.$refusal);
+			} catch (ForbiddenException $e) {
+				$this->assertSame($refusal, $e->getMessage());
+			}
+		}
+	}//end testLoadForUpdateRefusesWhatUpdateRefuses()
+
+	/**
+	 * The service with a view-only guard that records the fields it is asked
+	 * about and refuses any value change.
+	 *
+	 * @param array<int,string[]> $asked Receives the fields of each call
+	 *
+	 * @return SecretService
+	 */
+	private function serviceWithViewOnlyGuard(array &$asked): SecretService {
+		$guard = $this->createMock(ViewOnlyCopyGuard::class);
+		$guard->method('assertMayChangeValue')->willReturnCallback(
+			static function (Secret $row, array $fields, string $userId) use (&$asked): void {
+				$asked[] = $fields;
+				if ($fields !== []) {
+					throw new ViewOnlyCopyException();
+				}
+			}
+		);
+
+		return new SecretService(
+			mapper: $this->mapper,
+			typeService: $this->typeService,
+			suiteMapper: $this->suiteMapper,
+			migrationService: $this->migrationService,
+			linkShareService: $this->linkShareService,
+			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			folderOwnership: $this->folderOwnership,
+			viewOnlyCopies: $guard,
+		);
+	}//end serviceWithViewOnlyGuard()
+
+	/**
+	 * A new key, login or extra-field blob on a view-only copy is refused
+	 * before anything is written (keepiq#1287).
+	 *
+	 * @return void
+	 */
+	public function testAValueChangeOfAViewOnlyCopyIsRefusedBeforeAnyWrite(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$stored->setLogin('LOGIN');
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->expects($this->never())->method('update');
+		$asked = [];
+		$service = $this->serviceWithViewOnlyGuard(asked: $asked);
+
+		$changes = [
+			['name' => 'Renamed', 'key' => 'NEW-CIPHERTEXT'],
+			['login' => null],
+			['additionalFields' => 'EXTRA'],
+			['totp' => 'TOTP-CIPHERTEXT'],
+			['passkeys' => 'PASSKEYS-CIPHERTEXT'],
+		];
+		foreach ($changes as $data) {
+			try {
+				$service->update(id: 's-1', data: $data, userId: 'alice');
+				$this->fail('A value change of a view-only copy must be refused');
+			} catch (ViewOnlyCopyException $e) {
+				$this->assertSame(Secret::VIEW_ONLY_REFUSAL, $e->getMessage());
+			}
+		}
+
+		$this->assertSame([['key'], ['login'], ['additionalFields'], ['totp'], ['passkeys']], $asked);
+		$this->assertSame('GitHub', $stored->getName());
+		$this->assertSame('CIPHERTEXT', $stored->getKey());
+	}//end testAValueChangeOfAViewOnlyCopyIsRefusedBeforeAnyWrite()
+
+	/**
+	 * Filing and renaming a view-only copy still work, and so does an update
+	 * that resends the stored value unchanged (keepiq#1287).
+	 *
+	 * @return void
+	 */
+	public function testAViewOnlyCopyIsStillFiledRenamedAndResentUnchanged(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+		$this->mapper->expects($this->exactly(2))->method('update')->willReturnArgument(0);
+		$asked = [];
+		$service = $this->serviceWithViewOnlyGuard(asked: $asked);
+
+		$service->update(id: 's-1', data: ['folderId' => 'f-1'], userId: 'alice');
+		$secret = $service->update(
+			id: 's-1',
+			data: ['name' => 'Renamed', 'key' => 'CIPHERTEXT', 'login' => '', 'additionalFields' => null, 'totp' => null, 'passkeys' => ''],
+			userId: 'alice'
+		);
+
+		$this->assertSame([[], []], $asked);
+		$this->assertSame('f-1', $secret->getFolderId());
+		$this->assertSame('Renamed', $secret->getName());
+	}//end testAViewOnlyCopyIsStillFiledRenamedAndResentUnchanged()
+
+	/**
+	 * Create stores the totp and passkeys ciphertext as sent, and leaves them
+	 * null when a client does not send them (keepiq#1325).
+	 *
+	 * @return void
+	 */
+	public function testCreateStoresTotpAndPasskeys(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->makeSuite());
+		$this->typeService->method('resolveTypeForSecret')->willReturn('login-id');
+
+		$secret = $this->service->create(
+			data: ['name' => 'GitHub', 'key' => 'CIPHERTEXT', 'totp' => 'TOTP-CIPHERTEXT', 'passkeys' => 'PASSKEYS-CIPHERTEXT'],
+			userId: 'alice',
+		);
+		$this->assertSame('TOTP-CIPHERTEXT', $secret->getTotp());
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $secret->getPasskeys());
+		$this->assertSame('TOTP-CIPHERTEXT', $secret->jsonSerialize()['totp']);
+		$this->assertSame('PASSKEYS-CIPHERTEXT', $secret->jsonSerialize()['passkeys']);
+
+		$legacy = $this->service->create(data: ['name' => 'Old client', 'key' => 'CIPHERTEXT'], userId: 'alice');
+		$this->assertNull($legacy->getTotp());
+		$this->assertNull($legacy->getPasskeys());
+	}//end testCreateStoresTotpAndPasskeys()
+
+	/**
+	 * An update that names totp or passkeys sets them, an explicit null
+	 * clears them, and an update that leaves them out keeps the stored
+	 * values (keepiq#1325).
+	 *
+	 * @return void
+	 */
+	public function testUpdateSetsTotpAndPasskeysAndKeepsThemWhenAbsent(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$stored->setTotp('OLD-TOTP');
+		$stored->setPasskeys('OLD-PASSKEYS');
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->method('advanceVersion')->willReturn(1);
+
+		$secret = $this->service->update(id: 's-1', data: ['name' => 'Renamed', 'key' => 'NEW-CIPHERTEXT'], userId: 'alice');
+		$this->assertSame('OLD-TOTP', $secret->getTotp());
+		$this->assertSame('OLD-PASSKEYS', $secret->getPasskeys());
+
+		$secret = $this->service->update(id: 's-1', data: ['totp' => 'NEW-TOTP', 'passkeys' => 'NEW-PASSKEYS'], userId: 'alice');
+		$this->assertSame('NEW-TOTP', $secret->getTotp());
+		$this->assertSame('NEW-PASSKEYS', $secret->getPasskeys());
+
+		$secret = $this->service->update(id: 's-1', data: ['totp' => null, 'passkeys' => ''], userId: 'alice');
+		$this->assertNull($secret->getTotp());
+		$this->assertNull($secret->getPasskeys());
+		$this->assertSame('NEW-CIPHERTEXT', $secret->getKey());
+	}//end testUpdateSetsTotpAndPasskeysAndKeepsThemWhenAbsent()
+
+	/**
+	 * A rename that also carries a new totp or passkeys value does not send
+	 * partner recipients a details notice: the value reaches them through
+	 * the share-save, as for the other value fields.
+	 *
+	 * @return void
+	 */
+	public function testARenameWithANewTotpOrPasskeysSendsNoDetailsNotice(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$this->mapper->method('findById')->willReturnCallback(fn (): Secret => $this->makeSecret());
+		$federated = $this->createMock(\OCA\Keepiq\Service\FederatedShareService::class);
+		$federated->expects($this->once())->method('detailsChanged')->with('s-1', 'alice');
+		$service = new SecretService(
+			mapper: $this->mapper,
+			typeService: $this->typeService,
+			suiteMapper: $this->suiteMapper,
+			migrationService: $this->migrationService,
+			linkShareService: $this->linkShareService,
+			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			folderOwnership: $this->folderOwnership,
+			federatedShares: $federated,
+		);
+
+		$service->update(id: 's-1', data: ['name' => 'Renamed', 'totp' => 'NEW-TOTP'], userId: 'alice');
+		$service->update(id: 's-1', data: ['name' => 'Renamed', 'passkeys' => 'NEW-PASSKEYS'], userId: 'alice');
+		$service->update(id: 's-1', data: ['name' => 'Renamed'], userId: 'alice');
+	}//end testARenameWithANewTotpOrPasskeysSendsNoDetailsNotice()
 }//end class

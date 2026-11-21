@@ -30,6 +30,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Exception\DuplicateFolderNameException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
@@ -88,7 +89,41 @@ class FolderCascadeService {
 	}//end moveSecretsFrom()
 
 	/**
-	 * Apply a single per-subfolder resolution action (delete/move/keep).
+	 * Refuse a per-subfolder resolution action before any of the delete is written.
+	 *
+	 * @param Folder $subfolder The direct subfolder
+	 * @param string $action The action: delete, move, or keep
+	 * @param Folder $deleted The folder being deleted
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the action is unknown
+	 * @throws DuplicateFolderNameException When a kept subfolder's name is taken one level up
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
+	 */
+	public function assertSubfolderAction(Folder $subfolder, string $action, Folder $deleted): void {
+		if (in_array($action, ['delete', 'move', 'keep'], true) === false) {
+			throw new InvalidArgumentException('Unknown subfolder action: ' . $action);
+		}
+
+		// Siblings have unique names, so a kept subfolder named like the deleted folder only meets that folder.
+		if ($action !== 'keep' || $subfolder->getName() === $deleted->getName()) {
+			return;
+		}
+
+		$this->nameGuard->assertNameUnique(
+			ownerType: $subfolder->getOwnerType(),
+			ownerId: $subfolder->getOwnerId(),
+			parentId: $deleted->getParentId(),
+			name: $subfolder->getName(),
+			excludeId: $subfolder->getId()
+		);
+	}//end assertSubfolderAction()
+
+	/**
+	 * Apply a single per-subfolder resolution action (delete/move/keep)
+	 * that assertSubfolderAction accepted.
 	 *
 	 * @param Folder $subfolder The direct subfolder
 	 * @param string $action The action: delete, move, or keep
@@ -121,14 +156,6 @@ class FolderCascadeService {
 				break;
 
 			case 'keep':
-				$this->nameGuard->assertNameUnique(
-					ownerType: $subfolder->getOwnerType(),
-					ownerId: $subfolder->getOwnerId(),
-					parentId: $deletedParentId,
-					name: $subfolder->getName(),
-					excludeId: $subfolder->getId()
-				);
-
 				$subfolder->setParentId($deletedParentId);
 				$subfolder->setUpdatedAt(new DateTime());
 				$this->mapper->update($subfolder);

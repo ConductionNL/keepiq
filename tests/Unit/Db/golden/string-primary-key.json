@@ -1,0 +1,522 @@
+{
+    "Application": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "Attachment": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "AttachmentGrant": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "CACertificate": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "CertificateMetadata": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "ComplianceReport": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "DashboardSetting": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "DeviceApproval": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "EmergencyContact": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "EncryptionSuite": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "EphemeralSend": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "ExpiryPolicy": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "FederatedInbound": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "FederatedShare": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "FederationPartner": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "Folder": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "GroupShare": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "HoneyAlert": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "HoneyFlag": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "LinkShare": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "MachineLease": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "PasskeyCredential": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "RecoveryApproval": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "RecoveryEnrolment": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "RecoveryKey": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "RecoveryOfficer": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "RecoveryRequest": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "RotationFlag": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "Secret": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "SecretDelegation": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "SecretRequest": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "SecretType": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "SecretVersion": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "ShareSaveStage": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "ShareTarget": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "SiemQueueItem": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "SiemSink": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "SuiteMigration": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "TeamFolder": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    },
+    "TeamFolderMember": {
+        "fresh": "",
+        "freshDirty": [],
+        "afterString": "0f9a-uuid",
+        "dirtyAfterString": [
+            "id"
+        ],
+        "dirtyAfterSame": [],
+        "afterInt": "42",
+        "afterIntType": "string",
+        "fromRow": "row-id",
+        "fromRowDirty": []
+    }
+}

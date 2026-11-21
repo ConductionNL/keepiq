@@ -43,6 +43,8 @@ class KeepiqClientTest {
     private val storage = InMemorySecureStorage()
 
     private var apiVersion = 1
+    /** The pair response's capabilities array; null leaves the key out. */
+    private var capabilities: String? = """["match","totp-field","passkeys-field"]"""
     private var acceptedPassword = "app-password-1"
     private var unlockBlocked: String? = null
     private var revoked = mutableListOf<String>()
@@ -85,7 +87,7 @@ class KeepiqClientTest {
             }
             password != acceptedPassword -> respond("""{"error":"unauthorized"}""", HttpStatusCode.Unauthorized, json)
             path.endsWith("/api/v1/extension/pair") -> respond(
-                """{"ok":true,"user":"alice","apiVersion":$apiVersion,"serverVersion":"2.4.0","capabilities":["match"]}""",
+                """{"ok":true,"user":"alice","apiVersion":$apiVersion,"serverVersion":"2.4.0"${capabilities?.let { ",\"capabilities\":$it" } ?: ""}}""",
                 HttpStatusCode.OK,
                 json,
             )
@@ -113,6 +115,16 @@ class KeepiqClientTest {
         val e = assertFailsWith<PairingException> { client.pairManually("cloud.example.com", "alice", "app-password-1") }
         assertTrue(e.message!!.contains("API version 2"))
         assertTrue(client.accounts.accounts().isEmpty())
+    }
+
+    @Test
+    fun pairingRefusesAServerWithoutLoginFields() = runTest {
+        for (missing in listOf("""["match","totp-field"]""", """["match","passkeys-field"]""", null)) {
+            capabilities = missing
+            val e = assertFailsWith<PairingException>("capabilities $missing") { client.pairManually("cloud.example.com", "alice", "app-password-1") }
+            assertTrue(e.message!!.contains("update Keepiq"))
+            assertTrue(client.accounts.accounts().isEmpty())
+        }
     }
 
     @Test

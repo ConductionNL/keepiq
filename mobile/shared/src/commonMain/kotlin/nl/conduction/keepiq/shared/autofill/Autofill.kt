@@ -32,10 +32,10 @@ object AutofillChoices {
             runCatching { LoginChoice(e.id, e.name, keys.decryptField(e.login), keys.decryptField(e.key), e.useOnly) }.getOrNull()
         }
 
-    /** The current code of each matched authenticator item (task 4.3 and 4.5). */
+    /** The current code of each matched authenticator item or login with a seed (task 4.3 and 4.5). */
     fun codes(index: AutofillIndex, target: AutofillTarget, keys: VaultKeys, nowMillis: Long): List<CodeChoice> =
         index.candidates(target, totp = true).mapNotNull { e ->
-            runCatching { CodeChoice(e.id, e.name, Totp.generate(Totp.parse(keys.decryptField(e.key)), nowMillis)) }.getOrNull()
+            runCatching { CodeChoice(e.id, e.name, Totp.generate(Totp.parse(keys.decryptField(e.seed)), nowMillis)) }.getOrNull()
         }
 }
 

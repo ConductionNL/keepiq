@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Card checkout</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	<main>
+		<a class="back" href="/">All test pages</a>
+		<h1>Card checkout</h1>
+		<p class="tests">A checkout with <code>cc-*</code> tokens and a <code>type=password</code> CVC. Every card field opens the card list, never the login list, and a pick fills all four. Submitting offers no save bar.</p>
+		<form method="post" action="/checkout">
+			<label>Name on card <input name="ccname" autocomplete="cc-name"></label>
+			<label>Card number <input name="cardnumber" autocomplete="cc-number" inputmode="numeric"></label>
+			<label>Expiry <input name="exp" autocomplete="cc-exp" placeholder="MM/YY"></label>
+			<label>CVC <input name="cvc" type="password" autocomplete="cc-csc" maxlength="4" inputmode="numeric"></label>
+			<button type="submit">Pay</button>
+		</form>
+	</main>
+</body>
+</html>

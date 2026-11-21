@@ -24,6 +24,7 @@ namespace OCA\Keepiq\Db;
 use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -32,6 +33,9 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<EphemeralSend>
  */
 class EphemeralSendMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for EphemeralSendMapper.
 	 *
@@ -53,12 +57,7 @@ class EphemeralSendMapper extends QBMapper {
 	 * @throws DoesNotExistException When no row matches
 	 */
 	public function findById(string $id): EphemeralSend {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**
@@ -121,4 +120,46 @@ class EphemeralSendMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findPurgeable()
+	/**
+	 * Atomically count one serve of the ciphertext as a view, and as an
+	 * attempt when the send has a password, but only while views remain and
+	 * the attempts since the last confirmed decrypt are below the cap.
+	 * Returns 1 when the ciphertext may be served, 0 otherwise.
+	 *
+	 * @param string $token        The URL token
+	 * @param int    $attemptsCap  The attempt cap
+	 * @param bool   $countAttempt Whether the serve is also a password attempt
+	 *
+	 * @return int The number of affected rows
+	 */
+	public function countServeIfAllowed(string $token, int $attemptsCap, bool $countAttempt): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('view_count', $qb->createFunction('view_count + 1'));
+		if ($countAttempt === true) {
+			$qb->set('failed_attempts', $qb->createFunction('failed_attempts + 1'));
+		}
+
+		$qb->where($qb->expr()->eq('token', $qb->createNamedParameter($token)))
+			->andWhere($qb->expr()->lt('view_count', 'max_views'))
+			->andWhere($qb->expr()->lt('failed_attempts', $qb->createNamedParameter($attemptsCap, IQueryBuilder::PARAM_INT)));
+
+		return $qb->executeStatement();
+	}//end countServeIfAllowed()
+
+	/**
+	 * Reset the attempts of a send after a confirmed decrypt.
+	 *
+	 * @param string $token The URL token
+	 *
+	 * @return int The number of affected rows
+	 */
+	public function resetFailedAttempts(string $token): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('failed_attempts', $qb->createNamedParameter(0, IQueryBuilder::PARAM_INT))
+			->where($qb->expr()->eq('token', $qb->createNamedParameter($token)));
+
+		return $qb->executeStatement();
+	}//end resetFailedAttempts()
 }//end class

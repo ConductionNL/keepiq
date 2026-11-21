@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Db;
 
 use DateTime;
+use DateTimeZone;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
@@ -42,6 +43,9 @@ use OCP\IDBConnection;
  *   method; the favourite and last-used writes belong with the table.
  */
 class SecretMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Neither trashed nor archived: the everyday vault.
 	 *
@@ -112,13 +116,68 @@ class SecretMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function findById(string $id): Secret {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
+
+	/**
+	 * Find secrets by their UUIDs, keyed by id; unknown ids are left out.
+	 *
+	 * @param string[] $ids The secret IDs
+	 *
+	 * @return array<string,Secret>
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 */
+	public function findByIds(array $ids): array {
+		$found = [];
+		foreach (array_chunk(array_values(array_unique($ids)), 1000) as $chunk) {
+			$qb = $this->db->getQueryBuilder();
+			$qb->select('*')
+				->from($this->getTableName())
+				->where($qb->expr()->in('id', $qb->createNamedParameter($chunk, IQueryBuilder::PARAM_STR_ARRAY)));
+
+			foreach ($this->findEntities(query: $qb) as $secret) {
+				$found[$secret->getId()] = $secret;
+			}
+		}
+
+		return $found;
+	}//end findByIds()
+
+	/**
+	 * Move a row from version `$base` to `$savedAt`, only if it is still at
+	 * `$base`. The UPDATE also holds the row lock until the transaction ends,
+	 * so a concurrent save of the same row waits and then finds it moved.
+	 * `$savedAt` must differ from `$base`: MySQL counts an unchanged row as 0.
+	 *
+	 * @param string   $id      The secret ID
+	 * @param DateTime $base    The version the caller's edit was made from
+	 * @param DateTime $savedAt The new version
+	 *
+	 * @return int The number of rows changed: 0 when the row moved on or is gone
+	 *
+	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 */
+	public function advanceVersion(string $id, DateTime $base, DateTime $savedAt): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('updated_at', $qb->createNamedParameter($this->utcSeconds(moment: $savedAt)))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->eq('updated_at', $qb->createNamedParameter($this->utcSeconds(moment: $base))));
+
+		return $qb->executeStatement();
+	}//end advanceVersion()
+
+	/**
+	 * A moment as the DATETIME column holds it: UTC, whole seconds.
+	 *
+	 * @param DateTime $moment The moment
+	 *
+	 * @return string
+	 */
+	private function utcSeconds(DateTime $moment): string {
+		return (clone $moment)->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+	}//end utcSeconds()
 
 	/**
 	 * Resolve a sort column from the allow-list, defaulting to name.
@@ -157,6 +216,89 @@ class SecretMapper extends QBMapper {
 			)
 		);
 	}//end excludeAccessExpired()
+
+	/**
+	 * A query over every column of the secrets table.
+	 *
+	 * @return IQueryBuilder
+	 */
+	private function selectAll(): IQueryBuilder {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName());
+
+		return $qb;
+	}//end selectAll()
+
+	/**
+	 * A query counting rows of the secrets table as `cnt`.
+	 *
+	 * @return IQueryBuilder
+	 */
+	private function selectCount(): IQueryBuilder {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select($qb->func()->count('*', 'cnt'))
+			->from($this->getTableName());
+
+		return $qb;
+	}//end selectCount()
+
+	/**
+	 * A query over every column of one owner's secrets.
+	 *
+	 * @param string $ownerType The owner type
+	 * @param string $ownerId The owner ID
+	 *
+	 * @return IQueryBuilder
+	 */
+	private function selectOwned(string $ownerType, string $ownerId): IQueryBuilder {
+		$qb = $this->selectAll();
+		$qb->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+		return $qb;
+	}//end selectOwned()
+
+	/**
+	 * Narrow to live (neither trashed nor archived) rows whose name or url
+	 * matches a LIKE pattern.
+	 *
+	 * @param IQueryBuilder $qb The query to narrow
+	 * @param string $like The escaped LIKE pattern
+	 *
+	 * @return void
+	 */
+	private function andWhereLiveMatching(IQueryBuilder $qb, string $like): void {
+		// An extra address of the login matches as its main address does
+		// (vault-website-addresses D1).
+		$byName = $qb->expr()->iLike('name', $qb->createNamedParameter($like));
+		$byUrl = $qb->expr()->iLike('url', $qb->createNamedParameter($like));
+		$extra = $this->db->getQueryBuilder();
+		$extra->select('su.secret_id')
+			->from(SecretUrlMapper::TABLE, 'su')
+			->where($extra->expr()->iLike('su.url', $qb->createNamedParameter($like)));
+
+		$qb->andWhere($qb->expr()->orX($byName, $byUrl, $qb->expr()->in('id', $qb->createFunction($extra->getSQL()))))
+			->andWhere($qb->expr()->isNull('trashed_at'))
+			->andWhere($qb->expr()->isNull('archived_at'));
+	}//end andWhereLiveMatching()
+
+	/**
+	 * Delete every secret of one owner.
+	 *
+	 * @param string $ownerType The owner type
+	 * @param string $ownerId The owner ID
+	 *
+	 * @return int The number of rows deleted
+	 */
+	private function deleteOwned(string $ownerType, string $ownerId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+		return $qb->executeStatement();
+	}//end deleteOwned()
 
 	/**
 	 * The recipient copies whose access ends in (from, to]. A null `from`
@@ -232,31 +374,25 @@ class SecretMapper extends QBMapper {
 		?bool $favourite = null,
 		?string $tag = null,
 	): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+		$filter = new SecretListFilter(
+			ownerType: $ownerType,
+			ownerId: $ownerId,
+			folderId: $folderId,
+			typeId: $typeId,
+			state: $state,
+			favourite: $favourite,
+			tag: $tag
+		);
 
-		if ($folderId !== null) {
-			$qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
-		}
-
-		if ($typeId !== null) {
-			$qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
-		}
-
-		(new SecretStateFilter())->apply(qb: $qb, state: $state);
+		$qb = $this->selectAll();
+		$filter->narrow(qb: $qb);
 		$this->excludeAccessExpired(qb: $qb);
-		$organisation = new SecretListOrganisation();
-		$organisation->apply(qb: $qb, ownerId: $ownerId, favourite: $favourite, tag: $tag);
-
-		$dir = 'ASC';
-		if (strtolower($direction) === 'desc') {
-			$dir = 'DESC';
-		}
-
-		$organisation->order(qb: $qb, column: $this->resolveSortColumn(sort: $sort), direction: $dir);
+		$organisation = $filter->organise(qb: $qb);
+		$organisation->order(
+			qb: $qb,
+			column: $this->resolveSortColumn(sort: $sort),
+			direction: $organisation->sqlDirection(requested: $direction)
+		);
 		$qb->setMaxResults($limit)
 			->setFirstResult($offset);
 
@@ -306,12 +442,8 @@ class SecretMapper extends QBMapper {
 		string $name,
 		?string $folderId = null,
 	): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
-			->andWhere($qb->expr()->eq('name', $qb->createNamedParameter($name)));
+		$qb = $this->selectOwned(ownerType: $ownerType, ownerId: $ownerId);
+		$qb->andWhere($qb->expr()->eq('name', $qb->createNamedParameter($name)));
 
 		if ($folderId !== null) {
 			$qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
@@ -343,20 +475,16 @@ class SecretMapper extends QBMapper {
 		DateTime $since,
 		int $limit = 1000,
 	): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
-			->andWhere(
-				$qb->expr()->gt(
-					'updated_at',
-					$qb->createNamedParameter(
-						$since->format('Y-m-d H:i:s'),
-						IQueryBuilder::PARAM_STR
-					)
+		$qb = $this->selectOwned(ownerType: $ownerType, ownerId: $ownerId);
+		$qb->andWhere(
+			$qb->expr()->gt(
+				'updated_at',
+				$qb->createNamedParameter(
+					$since->format('Y-m-d H:i:s'),
+					IQueryBuilder::PARAM_STR
 				)
 			)
+		)
 			->orderBy('updated_at', 'ASC')
 			->setMaxResults($limit);
 
@@ -388,29 +516,22 @@ class SecretMapper extends QBMapper {
 		?bool $favourite = null,
 		?string $tag = null,
 	): int {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'cnt'))
-			->from($this->getTableName())
-			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+		$filter = new SecretListFilter(
+			ownerType: $ownerType,
+			ownerId: $ownerId,
+			folderId: $folderId,
+			typeId: $typeId,
+			state: $state,
+			favourite: $favourite,
+			tag: $tag
+		);
 
-		if ($folderId !== null) {
-			$qb->andWhere($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
-		}
-
-		if ($typeId !== null) {
-			$qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
-		}
-
-		(new SecretStateFilter())->apply(qb: $qb, state: $state);
+		$qb = $this->selectCount();
+		$filter->narrow(qb: $qb);
 		$this->excludeAccessExpired(qb: $qb);
-		(new SecretListOrganisation())->apply(qb: $qb, ownerId: $ownerId, favourite: $favourite, tag: $tag);
+		$filter->organise(qb: $qb);
 
-		$result = $qb->executeQuery();
-		$row = $result->fetch();
-		$result->closeCursor();
-
-		return (int)($row['cnt'] ?? 0);
+		return (new QueryCount())->read(qb: $qb);
 	}//end countByOwner()
 
 	/**
@@ -423,21 +544,15 @@ class SecretMapper extends QBMapper {
 	 * @return int
 	 */
 	public function countByTypeId(string $typeId, ?\DateTime $expiresBefore = null): int {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'cnt'))
-			->from($this->getTableName())
-			->where($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
+		$qb = $this->selectCount();
+		$qb->where($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
 
 		if ($expiresBefore !== null) {
 			$qb->andWhere($qb->expr()->isNotNull('expires_at'))
 				->andWhere($qb->expr()->lt('expires_at', $qb->createNamedParameter($expiresBefore, 'datetime')));
 		}
 
-		$result = $qb->executeQuery();
-		$row = $result->fetch();
-		$result->closeCursor();
-
-		return (int)($row['cnt'] ?? 0);
+		return (new QueryCount())->read(qb: $qb);
 	}//end countByTypeId()
 
 	/**
@@ -448,10 +563,8 @@ class SecretMapper extends QBMapper {
 	 * @return Secret[]
 	 */
 	public function findByFolderId(string $folderId): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
+		$qb = $this->selectAll();
+		$qb->where($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
 
 		return $this->findEntities(query: $qb);
 	}//end findByFolderId()
@@ -464,16 +577,10 @@ class SecretMapper extends QBMapper {
 	 * @return int
 	 */
 	public function countByFolder(string $folderId): int {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'cnt'))
-			->from($this->getTableName())
-			->where($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
+		$qb = $this->selectCount();
+		$qb->where($qb->expr()->eq('folder_id', $qb->createNamedParameter($folderId)));
 
-		$result = $qb->executeQuery();
-		$row = $result->fetch();
-		$result->closeCursor();
-
-		return (int)($row['cnt'] ?? 0);
+		return (new QueryCount())->read(qb: $qb);
 	}//end countByFolder()
 
 	/**
@@ -489,21 +596,15 @@ class SecretMapper extends QBMapper {
 			return 0;
 		}
 
-		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'cnt'))
-			->from($this->getTableName())
-			->where(
-				$qb->expr()->in(
-					'folder_id',
-					$qb->createNamedParameter($folderIds, IQueryBuilder::PARAM_STR_ARRAY)
-				)
-			);
+		$qb = $this->selectCount();
+		$qb->where(
+			$qb->expr()->in(
+				'folder_id',
+				$qb->createNamedParameter($folderIds, IQueryBuilder::PARAM_STR_ARRAY)
+			)
+		);
 
-		$result = $qb->executeQuery();
-		$row = $result->fetch();
-		$result->closeCursor();
-
-		return (int)($row['cnt'] ?? 0);
+		return (new QueryCount())->read(qb: $qb);
 	}//end countByFolderIds()
 
 	/**
@@ -524,20 +625,9 @@ class SecretMapper extends QBMapper {
 	public function searchByNameOrUrl(string $ownerType, string $ownerId, string $term, int $limit = 200): array {
 		$like = '%' . $this->db->escapeLikeParameter($term) . '%';
 
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
-			->andWhere(
-				$qb->expr()->orX(
-					$qb->expr()->iLike('name', $qb->createNamedParameter($like)),
-					$qb->expr()->iLike('url', $qb->createNamedParameter($like))
-				)
-			)
-			->andWhere($qb->expr()->isNull('trashed_at'))
-			->andWhere($qb->expr()->isNull('archived_at'))
-			->setMaxResults(max(1, $limit));
+		$qb = $this->selectOwned(ownerType: $ownerType, ownerId: $ownerId);
+		$this->andWhereLiveMatching(qb: $qb, like: $like);
+		$qb->setMaxResults(max(1, $limit));
 		$this->excludeAccessExpired(qb: $qb);
 
 		return $this->findEntities(query: $qb);
@@ -556,20 +646,9 @@ class SecretMapper extends QBMapper {
 	public function findForUnifiedSearch(string $userId, string $term, int $limit): array {
 		$like = '%' . $this->db->escapeLikeParameter($term) . '%';
 
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($userId)))
-			->andWhere(
-				$qb->expr()->orX(
-					$qb->expr()->iLike('name', $qb->createNamedParameter($like)),
-					$qb->expr()->iLike('url', $qb->createNamedParameter($like))
-				)
-			)
-			->andWhere($qb->expr()->isNull('trashed_at'))
-			->andWhere($qb->expr()->isNull('archived_at'))
-			->orderBy('name', 'ASC')
+		$qb = $this->selectOwned(ownerType: 'user', ownerId: $userId);
+		$this->andWhereLiveMatching(qb: $qb, like: $like);
+		$qb->orderBy('name', 'ASC')
 			->setMaxResults($limit);
 		$this->excludeAccessExpired(qb: $qb);
 
@@ -638,12 +717,7 @@ class SecretMapper extends QBMapper {
 	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function deleteByOwnerUser(string $ownerId): int {
-		$qb = $this->db->getQueryBuilder();
-		$qb->delete($this->getTableName())
-			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
-
-		return $qb->executeStatement();
+		return $this->deleteOwned(ownerType: 'user', ownerId: $ownerId);
 	}//end deleteByOwnerUser()
 
 	/**
@@ -657,12 +731,7 @@ class SecretMapper extends QBMapper {
 	 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
 	 */
 	public function deleteByOwnerApplication(string $applicationId): int {
-		$qb = $this->db->getQueryBuilder();
-		$qb->delete($this->getTableName())
-			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('application')))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($applicationId)));
-
-		return $qb->executeStatement();
+		return $this->deleteOwned(ownerType: 'application', ownerId: $applicationId);
 	}//end deleteByOwnerApplication()
 
 	/**
@@ -691,6 +760,8 @@ class SecretMapper extends QBMapper {
 
 	/**
 	 * Reassign the owner of a single secret (delegation ownership transfer).
+	 * Only the secret row: SecretOwnerTransferService moves its partner
+	 * shares and the previous owner's link shares with it.
 	 *
 	 * @param string $secretId The Secret ID
 	 * @param string $newOwnerId The delegate's Nextcloud user ID
@@ -756,18 +827,10 @@ class SecretMapper extends QBMapper {
 		string $ownerType,
 		string $ownerId,
 	): int {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'cnt'))
-			->from($this->getTableName())
-			->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
-			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+		$qb = $this->selectCount();
+		(new SuiteOwnerRef(encryptionSuiteId: $encryptionSuiteId, ownerType: $ownerType, ownerId: $ownerId))->narrow(qb: $qb);
 
-		$result = $qb->executeQuery();
-		$row = $result->fetch();
-		$result->closeCursor();
-
-		return (int)($row['cnt'] ?? 0);
+		return (new QueryCount())->read(qb: $qb);
 	}//end countBySuiteForOwner()
 
 	/**
@@ -795,19 +858,11 @@ class SecretMapper extends QBMapper {
 		string $ownerType,
 		string $ownerId,
 	): int {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'cnt'))
-			->from($this->getTableName())
-			->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
-			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+		$qb = $this->selectCount();
+		(new SuiteOwnerRef(encryptionSuiteId: $encryptionSuiteId, ownerType: $ownerType, ownerId: $ownerId))->narrow(qb: $qb)
 			->andWhere($qb->expr()->isNull('migration_error'));
 
-		$result = $qb->executeQuery();
-		$row = $result->fetch();
-		$result->closeCursor();
-
-		return (int)($row['cnt'] ?? 0);
+		return (new QueryCount())->read(qb: $qb);
 	}//end countUnaccountedBySuiteForOwner()
 
 	/**
@@ -832,12 +887,8 @@ class SecretMapper extends QBMapper {
 		string $ownerId,
 		int $limit = 500,
 	): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
-			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+		$qb = $this->selectAll();
+		(new SuiteOwnerRef(encryptionSuiteId: $encryptionSuiteId, ownerType: $ownerType, ownerId: $ownerId))->narrow(qb: $qb)
 			->andWhere($qb->expr()->isNotNull('migration_error'))
 			->orderBy('name', 'ASC')
 			->setMaxResults(max(1, $limit));
@@ -869,12 +920,8 @@ class SecretMapper extends QBMapper {
 		int $limit = 100,
 		int $offset = 0,
 	): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
-			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
-			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)))
+		$qb = $this->selectAll();
+		(new SuiteOwnerRef(encryptionSuiteId: $encryptionSuiteId, ownerType: $ownerType, ownerId: $ownerId))->narrow(qb: $qb)
 			->orderBy('id', 'ASC')
 			->setMaxResults(max(1, $limit))
 			->setFirstResult(max(0, $offset));

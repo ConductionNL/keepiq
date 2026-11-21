@@ -58,15 +58,16 @@ struct ItemDetailView: View {
             if row.blocked {
                 Text(row.blockedReason ?? L("detail_blocked"))
             } else {
+                if item.kind == .totp { Section { TotpRow(item: item, onCopy: model.copy) } }
                 Section { fields(item) }
                 if !row.useOnly {
                     Section {
-                        Button(L("action_edit")) { editing = true }.disabled(offline)
-                        Button(L("action_move")) { moving = true }.disabled(offline)
+                        Button { editing = true } label: { Text(L("action_edit")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
+                        Button { moving = true } label: { Text(L("action_move")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
                     }
                 }
                 Section {
-                    Button(L("action_trash"), role: .destructive) { confirmTrash = true }.disabled(offline)
+                    Button(role: .destructive) { confirmTrash = true } label: { Text(L("action_trash")).foregroundStyle(KeepiqPalette.destructive) }.disabled(offline)
                     if offline { Text(L("write_offline")).font(.footnote) }
                 }
             }
@@ -102,8 +103,6 @@ struct ItemDetailView: View {
             if !row.useOnly {
                 FieldRow(label: kind == .login ? L("detail_password") : L("detail_value"), value: item.secret, masked: true, onCopy: model.copy)
             }
-        } else if kind == .totp {
-            TotpRow(item: item, onCopy: model.copy)
         } else if kind == .note {
             if !row.useOnly { FieldRow(label: L("detail_notes"), value: item.secret, onCopy: model.copy) }
         } else if kind == .card || kind == .identity {
@@ -137,7 +136,8 @@ struct ItemDetailView: View {
             }
             if item.additionalFieldsError { Text(L("detail_fields_error")).foregroundStyle(.red) }
             ForEach(Array(item.extraFields.enumerated()), id: \.offset) { _, pair in
-                FieldRow(label: (pair.first as? String) ?? "", value: (pair.second as? String) ?? "", onCopy: model.copy)
+                let name = (pair.first as? String) ?? ""
+                FieldRow(label: name, value: (pair.second as? String) ?? "", masked: item.masksExtra(name: name), onCopy: model.copy)
             }
         }
     }
@@ -158,30 +158,38 @@ struct ItemDetailView: View {
 private struct TotpRow: View {
     let item: DecryptedItem
     let onCopy: (String) -> Void
+    /// The countdown ring grows with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var gaugeSize: CGFloat = 44
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
+        // At the accessibility text sizes the countdown and Copy go under the
+        // code, so the code keeps the full width instead of being squeezed.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading)) : AnyLayout(HStackLayout())
         if let params = item.totp {
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 let millis = Int64(context.date.timeIntervalSince1970 * 1000)
                 let code = Totp.shared.generate(params: params, epochMillis: millis)
                 let left = Totp.shared.secondsRemaining(period: params.period, epochMillis: millis)
                 VStack(alignment: .leading) {
-                    Text(L("detail_code")).font(.caption).foregroundStyle(.secondary)
-                    HStack {
+                    Text(L("detail_code")).font(.caption).foregroundStyle(KeepiqPalette.secondaryText)
+                    layout {
                         Text(code).font(.title.monospaced()).accessibilityIdentifier("totpCode")
                         // A circular ProgressView spins on iOS whatever its value, so
                         // the seconds left are a gauge with the number in it.
                         Gauge(value: Double(left), in: 0...Double(params.period)) {
                             EmptyView()
-                        } currentValueLabel: {
-                            Text("\(Int(left))")
                         }
                         .gaugeStyle(.accessoryCircularCapacity)
+                        .tint(KeepiqPalette.accent)
                         .scaleEffect(0.7)
-                        .frame(width: 44, height: 44)
+                        .frame(width: gaugeSize, height: gaugeSize)
+                        // The accessory style draws its value label for widgets, with
+                        // vibrancy; a plain Text keeps the full contrast of the primary colour.
+                        .overlay { Text("\(Int(left))").font(.caption2).monospacedDigit().foregroundStyle(.primary) }
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(L("detail_code_seconds", Int(left)))
-                        Spacer()
+                        if !typeSize.isAccessibilitySize { Spacer() }
                         Button(L("action_copy")) { onCopy(code) }
                             .frame(minWidth: 44, minHeight: 44)
                             .accessibilityLabel(L("cd_copy_field", L("detail_code")))
@@ -246,6 +254,8 @@ struct ItemEditView: View {
     @State private var typed: [String: String] = [:]
     @State private var fieldNames: [String] = []
     @State private var fieldValues: [String] = []
+    /// Each row's schema as JSON text, "" for none, kept with its row through a rename.
+    @State private var fieldSchemas: [String] = []
     @State private var problem: WriteProblem?
     @State private var showErrors = false
     @State private var busy = false
@@ -282,7 +292,7 @@ struct ItemEditView: View {
         // Load once: coming back to the form keeps what the user typed.
         guard base == nil else { return }
         if let itemId {
-            let opened = try? await model.repository.open(id: itemId)
+            let opened = try? await model.repository.openForEdit(id: itemId)
             if let opened = opened as? OpenResult.Opened {
                 item = opened.item
                 type = opened.item.type
@@ -322,12 +332,13 @@ struct ItemEditView: View {
         typed = draft.typed
         fieldNames = draft.fieldNames
         fieldValues = draft.fieldValues
+        fieldSchemas = draft.fieldSchemas
     }
 
     private func current(_ base: ItemDraft) -> ItemDraft {
         base.edited(
             name: name, url: url, folderId: folder, login: login, secret: secret, notes: notes,
-            composite: composite, typed: typed, fieldNames: fieldNames, fieldValues: fieldValues
+            composite: composite, typed: typed, fieldNames: fieldNames, fieldValues: fieldValues, fieldSchemas: fieldSchemas
         )
     }
 
@@ -391,14 +402,21 @@ struct ItemEditView: View {
                 }
             }
             if kind != .passkey {
-                Section(L("detail_extra_fields")) {
+                Section(titled: L("detail_extra_fields")) {
                     ForEach(fieldNames.indices, id: \.self) { i in
                         VStack {
                             LabeledInput(label: L("edit_field_name"), text: $fieldNames[i], problem: error("field-\(i)"))
-                            LabeledInput(label: L("edit_field_value"), text: $fieldValues[i], problem: nil)
+                            if ItemCodec.shared.masksField(name: fieldNames[i], schema: i < fieldSchemas.count ? fieldSchemas[i] : "") {
+                                // Keyed by the row count too, so a removed row's Show state never passes to the row taking its place.
+                                SecretInput(label: L("edit_field_value"), text: $fieldValues[i], problem: nil, onGenerate: nil)
+                                    .id("\(i)-\(fieldNames.count)")
+                            } else {
+                                LabeledInput(label: L("edit_field_value"), text: $fieldValues[i], problem: nil)
+                            }
                             Button(L("action_remove"), role: .destructive) {
                                 fieldNames.remove(at: i)
                                 fieldValues.remove(at: i)
+                                if i < fieldSchemas.count { fieldSchemas.remove(at: i) }
                             }
                             .accessibilityLabel(L("cd_remove_field", fieldNames[i]))
                         }
@@ -406,6 +424,7 @@ struct ItemEditView: View {
                     Button(L("edit_add_field")) {
                         fieldNames.append("")
                         fieldValues.append("")
+                        fieldSchemas.append("")
                     }
                 }
             }

@@ -27,11 +27,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Service\OrgOwnershipGuard;
-use OCA\Keepiq\Service\TeamFolderContributionService;
+use OCA\Keepiq\Kernel\AppIdentity;
+use OCA\Keepiq\Kernel\Contracts\OrgOwnershipGuardInterface;
+use OCA\Keepiq\Kernel\Contracts\TeamFolderContributionServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -48,8 +48,8 @@ class TeamFolderContributionController extends Controller {
 	 *
 	 * @param IRequest $request The request
 	 * @param IUserSession $userSession The user session
-	 * @param TeamFolderContributionService $contributions Write-grade member contributions
-	 * @param OrgOwnershipGuard $ownership The ownership policy findings
+	 * @param TeamFolderContributionServiceInterface $contributions Write-grade member contributions
+	 * @param OrgOwnershipGuardInterface $ownership The ownership policy findings
 	 *
 	 * @return void
 	 *
@@ -58,10 +58,10 @@ class TeamFolderContributionController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private IUserSession $userSession,
-		private TeamFolderContributionService $contributions,
-		private OrgOwnershipGuard $ownership,
+		private TeamFolderContributionServiceInterface $contributions,
+		private OrgOwnershipGuardInterface $ownership,
 	) {
-		parent::__construct(appName: Application::APP_ID, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 	}//end __construct()
 
 	/**
@@ -146,7 +146,7 @@ class TeamFolderContributionController extends Controller {
 	/**
 	 * A write-grade member saves a new secret into a team folder they do not
 	 * own (admin-vault-policies D5). The body carries the owner ciphertext
-	 * (`key`, `login`, `additionalFields`), metadata and one `copies` row per
+	 * (`key`, `login`, `additionalFields`, `totp`, `passkeys`), metadata and one `copies` row per
 	 * member. The grade is checked in the service before anything is stored;
 	 * a read-grade member or a non-member gets 403.
 	 *
@@ -166,7 +166,7 @@ class TeamFolderContributionController extends Controller {
 		}
 
 		$data = [];
-		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'copies'] as $field) {
+		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'totp', 'passkeys', 'copies'] as $field) {
 			$data[$field] = $this->request->getParam($field);
 		}
 
@@ -181,7 +181,7 @@ class TeamFolderContributionController extends Controller {
 		}
 
 		return new JSONResponse(
-			data: ['secret' => $result['secret']->jsonSerialize(), 'copies' => $result['copies']],
+			data: ['secret' => $result['secret']->jsonSerialize(), 'copies' => $result['copies'], 'skipped' => $result['skipped']],
 			statusCode: Http::STATUS_CREATED
 		);
 	}//end contribute()

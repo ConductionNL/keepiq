@@ -170,9 +170,9 @@ $extra = [
 
     // User-to-user sharing — implement-user-sharing §9.
     ['name' => 'share#index',       'url' => '/api/v1/secrets/{secretId}/shares',       'verb' => 'GET'],
-    ['name' => 'share#create',      'url' => '/api/v1/secrets/{secretId}/shares',       'verb' => 'POST'],
-    ['name' => 'share#createBatch', 'url' => '/api/v1/secrets/{secretId}/shares/batch', 'verb' => 'POST'],
     // Bulk direct-share registration + recipient-cert lookup (bulk-actions §6.1).
+    // Shares are created only through register-batch, which mints each
+    // recipient copy server-side (GHSA-m5p9-6pw7-pf3g).
     ['name' => 'share#registerBatch',        'url' => '/api/v1/shares/register-batch',        'verb' => 'POST'],
     ['name' => 'share#recipientCertificate', 'url' => '/api/v1/shares/recipient-certificate', 'verb' => 'GET'],
     ['name' => 'recipientStatus#status',     'url' => '/api/v1/shares/recipient-status',      'verb' => 'POST'],
@@ -180,6 +180,8 @@ $extra = [
     // and the sharee-search pages these ids come from can be long.
     ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],
     ['name' => 'share#sync',        'url' => '/api/v1/secrets/{secretId}/sync',         'verb' => 'PUT'],
+    // The row, every copy and every partner share in one transaction (#1254).
+    ['name' => 'shareSave#save',    'url' => '/api/v1/secrets/{id}/share-save',         'verb' => 'PUT'],
     ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',                     'verb' => 'DELETE'],
     // Use-only flag and end date of a direct share (sharing-use-only-and-expiring-shares §2.1).
     ['name' => 'share#update',      'url' => '/api/v1/shares/{id}',                     'verb' => 'PATCH'],
@@ -188,7 +190,9 @@ $extra = [
     ['name' => 'groupShare#index',            'url' => '/api/v1/secrets/{secretId}/group-shares',           'verb' => 'GET'],
     ['name' => 'groupShare#create',           'url' => '/api/v1/secrets/{secretId}/group-shares',           'verb' => 'POST'],
     ['name' => 'groupShare#destroy',          'url' => '/api/v1/group-shares/{id}',                         'verb' => 'DELETE'],
-    ['name' => 'groupShare#approveNewMember', 'url' => '/api/v1/group-shares/{id}/approve-new-member',      'verb' => 'POST'],
+    // New group members' copies are registered through register-batch, which
+    // mints each copy server-side (GHSA-m5p9-6pw7-pf3g); approval only dismisses
+    // the notification.
     ['name' => 'groupShare#denyNewMember',    'url' => '/api/v1/group-shares/{id}/deny-new-member',         'verb' => 'POST'],
 
     // Share requests — implement-user-sharing §9.3.
@@ -279,6 +283,15 @@ $extra = [
     ['name' => 'honey#acknowledge', 'url' => '/api/v1/honey/alerts/{id}/acknowledge', 'verb' => 'POST'],
     ['name' => 'honey#snooze',      'url' => '/api/v1/honey/alerts/{id}/snooze',     'verb' => 'POST'],
 
+    // Privileged logins (capability-requirements-from-the-matrix 3.1):
+    // ownership and holding are checked in the service.
+    ['name' => 'privilegedAccess#status',  'url' => '/api/v1/secrets/{id}/privileged',                 'verb' => 'GET'],
+    ['name' => 'privilegedAccess#update',  'url' => '/api/v1/secrets/{id}/privileged',                 'verb' => 'PUT'],
+    ['name' => 'privilegedAccess#request', 'url' => '/api/v1/secrets/{id}/access-requests',            'verb' => 'POST'],
+    ['name' => 'privilegedAccess#pending', 'url' => '/api/v1/access-requests',                         'verb' => 'GET'],
+    ['name' => 'privilegedAccess#approve', 'url' => '/api/v1/access-requests/{requestId}/approve',     'verb' => 'POST'],
+    ['name' => 'privilegedAccess#deny',    'url' => '/api/v1/access-requests/{requestId}/deny',        'verb' => 'POST'],
+
     // Offline cache (offline-readonly-cache §1.4) — owner-scoped
     // consolidated snapshot; 403 when the admin off switch is set.
     ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],
@@ -301,6 +314,12 @@ $extra = [
     ['name' => 'recoveryUser#myRequest',      'url' => '/api/v1/recovery/requests/mine',              'verb' => 'GET'],
     ['name' => 'recoveryUser#createRequest',  'url' => '/api/v1/recovery/requests',                   'verb' => 'POST'],
     ['name' => 'recoveryUser#complete',       'url' => '/api/v1/recovery/requests/{id}/complete',     'verb' => 'POST'],
+    // A user's own recovery kit (crypto-recovery-kit): the session user only.
+    ['name' => 'recoveryKit#show',            'url' => '/api/v1/recovery-kit',                        'verb' => 'GET'],
+    ['name' => 'recoveryKit#create',          'url' => '/api/v1/recovery-kit',                        'verb' => 'PUT'],
+    ['name' => 'recoveryKit#revoke',          'url' => '/api/v1/recovery-kit',                        'verb' => 'DELETE'],
+    ['name' => 'recoveryKit#fetch',           'url' => '/api/v1/recovery-kit/copy',                   'verb' => 'GET'],
+    ['name' => 'recoveryKit#spend',           'url' => '/api/v1/recovery-kit/spent',                  'verb' => 'POST'],
     // New device approval (crypto-new-device-approval). The fixed paths come
     // before the {id} ones.
     ['name' => 'deviceApproval#status',  'url' => '/api/v1/device-approvals/status',       'verb' => 'GET'],
@@ -324,6 +343,7 @@ $extra = [
     ['name' => 'passkey#challenge',    'url' => '/api/v1/passkeys/challenge',     'verb' => 'GET'],
     ['name' => 'passkey#create',       'url' => '/api/v1/passkeys',               'verb' => 'POST'],
     ['name' => 'passkey#loginOptions', 'url' => '/api/v1/passkeys/login-options', 'verb' => 'GET'],
+    ['name' => 'passkey#unlock',       'url' => '/api/v1/passkeys/unlock',        'verb' => 'POST'],
     ['name' => 'passkey#used',         'url' => '/api/v1/passkeys/{id}/used',     'verb' => 'POST'],
     ['name' => 'passkey#destroy',      'url' => '/api/v1/passkeys/{id}',          'verb' => 'DELETE'],
 
@@ -384,6 +404,7 @@ $extra = [
     ['name' => 'federationPartner#update',  'url' => '/api/v1/federation/partners/{id}',    'verb' => 'PUT'],
     ['name' => 'federationPartner#destroy', 'url' => '/api/v1/federation/partners/{id}',    'verb' => 'DELETE'],
     ['name' => 'federation#recipientCertificate', 'url' => '/api/v1/federation/recipient-certificate', 'verb' => 'POST'],
+    ['name' => 'federation#recipientCertificates', 'url' => '/api/v1/federation/recipient-certificates', 'verb' => 'POST'],
     ['name' => 'federation#status', 'url' => '/api/v1/federation/status', 'verb' => 'GET'],
     // Federated shares (sharing-federated-recipients D4): the owner posts the
     // ciphertext made for a partner's user; the recipient accepts or declines
@@ -504,6 +525,10 @@ $extra = [
     // request URI next to the user id on every log line (keepiq#866).
     ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range', 'verb' => 'POST'],
 
+    // Site directory copy for the health report's site checks
+    // (health-site-security-checks D2). Takes nothing from the browser.
+    ['name' => 'siteDirectory#index', 'url' => '/api/v1/site-directory', 'verb' => 'GET'],
+
     // GDPR data-subject endpoints (secret-export-gdpr D3/D4). All self-scoped
     // to the session user — no user selector. Master-password re-auth on the
     // delete is enforced client-side (ADR-003); the typed confirmation phrase
@@ -533,7 +558,8 @@ $extra = [
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
 ];
 
-return [
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\Keepiq\Middleware\Support\ApiPathAliases::withVersionedAliases([
     'routes' => array_merge(
         [
             ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
@@ -546,6 +572,8 @@ return [
             // Observability (hydra ADR-006): health is public, metrics admin-only.
             ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
             ['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
+            // The OpenAPI document of the versioned API (NL API Design Rules /core/doc-openapi).
+            ['name' => 'openApi#show', 'url' => '/api/v1/openapi.json', 'verb' => 'GET'],
         ],
         $extra,
         [
@@ -558,4 +586,4 @@ return [
             ],
         ]
     ),
-];
+]);

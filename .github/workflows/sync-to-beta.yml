@@ -4,6 +4,9 @@ on:
   push:
     branches: [development]
 
+permissions:
+  contents: read
+
 jobs:
   sync:
     uses: ConductionNL/.github/.github/workflows/sync-to-beta.yml@main

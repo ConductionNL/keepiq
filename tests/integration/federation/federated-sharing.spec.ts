@@ -314,16 +314,42 @@ test('share with a user of a partner instance, update, and revoke', async ({
 	// 3. Alice changes the password; the change reaches Bob's copy.
 	await openSecret(alice, sourceId)
 	await alice.getByTestId('secret-detail-edit').click()
-	const synced = alice.waitForResponse(
+	// The first share-save learns it must carry Bob's copy, the browser
+	// fetches his certificate again through the batch lookup over Alice's
+	// own partner shares (#1256), and the second carries both.
+	const isShareSave = (r: { url(): string; request(): { method(): string } }) =>
+		r.url().endsWith(`/api/v1/secrets/${sourceId}/share-save`)
+		&& r.request().method() === 'PUT'
+	const incomplete = alice.waitForResponse(
+		(r) => isShareSave(r) && r.status() === 409,
+	)
+	const certificate = alice.waitForResponse(
 		(r) =>
-			/\/api\/v1\/federated-shares\/[0-9a-f-]+$/.test(r.url())
-			&& r.request().method() === 'PUT',
+			r.url().endsWith('/api/v1/federation/recipient-certificates')
+			&& r.request().method() === 'POST',
+	)
+	const saved = alice.waitForResponse(
+		(r) => isShareSave(r) && r.status() !== 409,
 		{ timeout: 60_000 },
 	)
 	const dialog = alice.getByRole('dialog', { name: 'Edit secret' })
-	await dialog.getByRole('textbox', { name: 'Secret value' }).fill(NEW_PASSWORD)
+	// "Production Database" is a database, whose value field is its Password.
+	await dialog.getByRole('textbox', { name: 'Password' }).fill(NEW_PASSWORD)
 	await dialog.getByRole('button', { name: 'Save' }).click()
-	expect((await synced).status()).toBe(200)
+	const refusal = await (await incomplete).json()
+	expect(refusal.error).toBe('incomplete')
+	expect(refusal.federated.missing).toHaveLength(1)
+	const lookup = await certificate
+	expect(lookup.status()).toBe(200)
+	const answer = await lookup.json()
+	expect(Object.keys(answer.certificates)).toEqual(refusal.federated.missing)
+	expect(Object.keys(answer.refused)).toEqual([])
+	const response = await saved
+	expect(response.status()).toBe(200)
+	expect(JSON.stringify(response.request().postDataJSON())).not.toContain(
+		NEW_PASSWORD,
+	)
+	expect((await response.json()).federated.written).toBe(1)
 
 	await expect
 		.poll(

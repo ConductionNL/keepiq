@@ -39,6 +39,18 @@
 			}}
 		</NcNoteCard>
 
+		<NcNoteCard
+			v-if="hasSuspended"
+			type="error"
+			data-testid="passkey-suspended-note">
+			{{
+				t(
+					'keepiq',
+					'A passkey was suspended because its authenticator reported an unexpected sign-in count. It no longer unlocks your vault. If you do not recognise the device, revoke the passkey and change your Nextcloud app passwords.',
+				)
+			}}
+		</NcNoteCard>
+
 		<ul
 			v-if="store.credentials.length"
 			class="passkey-manager__list"
@@ -58,7 +70,8 @@
 				>
 				<span
 					:class="`passkey-manager__status passkey-manager__status--${cred.status}`"
-					>{{ cred.status }}</span
+					:data-testid="`passkey-status-${cred.id}`"
+					>{{ statusLabel(cred.status) }}</span
 				>
 				<span class="passkey-manager__muted">{{
 					cred.lastUsedAt
@@ -160,6 +173,16 @@ export default {
 		hasStale() {
 			return this.store.credentials.some((c) => c.status === 'stale')
 		},
+
+		/**
+		 * Whether a passkey was suspended after a counter that went back.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-biometric-unlock/spec.md#requirement-unlock-the-extension-with-the-enrolled-passkey
+		 */
+		hasSuspended() {
+			return this.store.credentials.some((c) => c.status === 'suspended')
+		},
 	},
 
 	/**
@@ -174,6 +197,22 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * The readable name of a passkey status.
+		 *
+		 * @param {string} status active, stale or suspended.
+		 * @return {string}
+		 * @spec openspec/changes/extension-passkey-enrolment/specs/extension-biometric-unlock/spec.md#requirement-unlock-the-extension-with-the-enrolled-passkey
+		 */
+		statusLabel(status) {
+			const labels = {
+				active: this.t('keepiq', 'Active'),
+				stale: this.t('keepiq', 'Needs enrolling again'),
+				suspended: this.t('keepiq', 'Suspended'),
+			}
+			return labels[status] ?? status
+		},
+
 		/**
 		 * Run the enrollment ceremony.
 		 *
@@ -258,6 +297,10 @@ export default {
 
 	&__status--stale {
 		color: var(--color-warning-text);
+	}
+
+	&__status--suspended {
+		color: var(--color-error-text);
 	}
 
 	&__form {

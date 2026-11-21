@@ -22,7 +22,8 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\LinkShare;
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
@@ -31,9 +32,15 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\NewLinkShare;
 use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareGrantReader;
+use OCA\Keepiq\Service\TeamFolderQueryService;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\IGroupManager;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -42,6 +49,7 @@ use RuntimeException;
  * Tests for LinkShareService.
  */
 class LinkShareServiceTest extends TestCase {
+	use ShareRowJudgeFixture;
 
 	/**
 	 * The service under test.
@@ -89,8 +97,36 @@ class LinkShareServiceTest extends TestCase {
 					throw new DoesNotExistException('not a copy');
 				}
 
+				// A real row: its target holds the copy it names.
 				$row = new ShareTarget();
 				$row->setSourceSecretId($this->copies[$copyId]);
+				$row->setTargetUserId((string)($this->secretRows[$copyId] ?? null)?->getOwnerId());
+				$row->setSecretId($copyId);
+				return $row;
+			}
+		);
+		// A user's own copy of a source: the copies of it whose row they own.
+		$this->shareTargets->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			function (string $sourceSecretId, string $targetUserId): ShareTarget {
+				$own = array_keys(array_filter(
+					$this->copies,
+					fn (string $source, string $copyId): bool => $source === $sourceSecretId
+						&& ($this->secretRows[$copyId] ?? null)?->getOwnerId() === $targetUserId,
+					ARRAY_FILTER_USE_BOTH
+				));
+				if (count($own) > 1) {
+					throw new MultipleObjectsReturnedException('two copies');
+				}
+
+				if ($own === []) {
+					throw new DoesNotExistException('no copy');
+				}
+
+				$row = new ShareTarget();
+				$row->setSourceSecretId($sourceSecretId);
+				$row->setTargetUserId($targetUserId);
+				$row->setSecretId((string)$own[0]);
+				$row->setExpiresAt($this->rowEndsAt[$own[0]] ?? null);
 				return $row;
 			}
 		);
@@ -102,8 +138,7 @@ class LinkShareServiceTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $this->secrets,
 				delegationMapper: $this->delegations,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-				shareTargetMapper: $this->shareTargets,
+				rowJudge: $this->shareRowJudge(targets: $this->shareTargets, secrets: $this->secrets),
 			),
 		);
 	}//end setUp()
@@ -128,6 +163,13 @@ class LinkShareServiceTest extends TestCase {
 	 * @var array<string,string>
 	 */
 	private array $copies = [];
+
+	/**
+	 * The end date of a copy's direct share row: copy id => end date.
+	 *
+	 * @var array<string,DateTime>
+	 */
+	private array $rowEndsAt = [];
 
 	/**
 	 * The mocked secret mapper.
@@ -176,13 +218,15 @@ class LinkShareServiceTest extends TestCase {
 	 */
 	private function createAs(string $secretId, string $userId): LinkShare {
 		return $this->service->create(
-			secretId: $secretId,
-			encryptedSnapshot: 'the-blob',
-			salt: 'the-salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 1,
-			expiresAt: null,
-			userId: $userId
+			link: new NewLinkShare(
+				secretId: $secretId,
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: $userId
+			)
 		);
 	}//end createAs()
 
@@ -211,6 +255,170 @@ class LinkShareServiceTest extends TestCase {
 
 		$this->assertSame('bob', $this->createAs(secretId: 'copy-bob', userId: 'bob')->getCreatedBy());
 	}//end testADelegateMayCreateALinkShareFromTheirCopy()
+
+	/**
+	 * A delegate who names the SOURCE is judged on their own copy: a use-only
+	 * copy may not leave as a link, whichever id the delegate names.
+	 *
+	 * @return void
+	 */
+	public function testADelegateNamingTheSourceIsJudgedOnTheirOwnRestrictedCopy(): void {
+		$copy = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$copy->setUseOnly(true);
+		$this->secretRows['copy-bob'] = $copy;
+		$this->copies['copy-bob'] = 'secret-1';
+		$this->delegates[] = 'secret-1/bob';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'bob');
+	}//end testADelegateNamingTheSourceIsJudgedOnTheirOwnRestrictedCopy()
+
+	/**
+	 * A delegate naming another recipient's copy of the same source does not
+	 * reach the source through it, as on register-batch: only the delegate's
+	 * own copy resolves, so the link row never hangs on someone else's secret.
+	 *
+	 * @return void
+	 */
+	public function testADelegateMayNotShareFromAnotherRecipientsCopy(): void {
+		$this->secretRows['copy-dave'] = $this->secret(id: 'copy-dave', ownerId: 'dave');
+		$this->secretRows['copy-carol'] = $this->secret(id: 'copy-carol', ownerId: 'carol');
+		$this->copies['copy-dave'] = 'secret-1';
+		$this->copies['copy-carol'] = 'secret-1';
+		$this->delegates[] = 'secret-1/dave';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(DoesNotExistException::class);
+		$this->createAs(secretId: 'copy-carol', userId: 'dave');
+	}//end testADelegateMayNotShareFromAnotherRecipientsCopy()
+
+	/**
+	 * An active delegate who holds no copy of the source (it was revoked or it
+	 * expired) has no grant left to share from: refused.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithNoCopyIsRefused(): void {
+		$this->delegates[] = 'secret-1/dave';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'dave');
+	}//end testADelegateWithNoCopyIsRefused()
+
+	/**
+	 * A delegate with two copies of the source has no single grant to judge:
+	 * refused.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithTwoCopiesIsRefused(): void {
+		$this->secretRows['copy-dave-1'] = $this->secret(id: 'copy-dave-1', ownerId: 'dave');
+		$this->secretRows['copy-dave-2'] = $this->secret(id: 'copy-dave-2', ownerId: 'dave');
+		$this->copies['copy-dave-1'] = 'secret-1';
+		$this->copies['copy-dave-2'] = 'secret-1';
+		$this->delegates[] = 'secret-1/dave';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'dave');
+	}//end testADelegateWithTwoCopiesIsRefused()
+
+	/**
+	 * A link share service whose authorization judges a delegate by the grants
+	 * reaching their copy: secret-1 is shared use-only and permanently with
+	 * the group `team`, which bob is in.
+	 *
+	 * @return LinkShareService
+	 */
+	private function serviceJudgingGrants(): LinkShareService {
+		$useOnly = new GroupShare();
+		$useOnly->setId('gs-team');
+		$useOnly->setSecretId('secret-1');
+		$useOnly->setGroupId('team');
+		$useOnly->setUseOnly(true);
+		$groupShares = $this->createMock(GroupShareMapper::class);
+		$groupShares->method('findBySecret')->willReturn([$useOnly]);
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('isInGroup')->willReturnCallback(static fn (string $userId, string $groupId): bool => $userId === 'bob' && $groupId === 'team');
+		$teamFolders = $this->createMock(TeamFolderQueryService::class);
+		$teamFolders->method('coveringMemberships')->willReturn([]);
+
+		return new LinkShareService(
+			mapper: $this->mapper,
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			shareAuth: new ShareAuthorizationService(
+				secretMapper: $this->secrets,
+				delegationMapper: $this->delegations,
+				rowJudge: $this->shareRowJudge(targets: $this->shareTargets, secrets: $this->secrets),
+				grants: new ShareGrantReader(
+					secretMapper: $this->secrets,
+					groupShareMapper: $groupShares,
+					teamFolders: $teamFolders,
+					groupManager: $groups,
+				),
+			),
+		);
+	}//end serviceJudgingGrants()
+
+	/**
+	 * A delegate needs one grant unrestricted on its own (GHSA-m5p9-6pw7-pf3g):
+	 * bob's full direct share ends tomorrow and his group's share is use-only
+	 * and permanent. His copy combines them into full and permanent, but
+	 * neither grant is, so he may not make a link from it.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused(): void {
+		$this->secretRows['copy-bob'] = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$this->copies['copy-bob'] = 'secret-1';
+		$this->rowEndsAt['copy-bob'] = new DateTime('+1 day');
+		$this->delegates[] = 'secret-1/bob';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
+		$this->serviceJudgingGrants()->create(
+			link: new NewLinkShare(
+				secretId: 'copy-bob',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: 'bob'
+			)
+		);
+	}//end testADelegateWhoseGrantsAreOnlyUnrestrictedCombinedIsRefused()
+
+	/**
+	 * The same delegate with a permanent full direct share has a grant
+	 * unrestricted on its own, so the use-only group share does not stop them.
+	 *
+	 * @return void
+	 */
+	public function testADelegateWithOneUnrestrictedGrantMayCreateALink(): void {
+		$this->secretRows['copy-bob'] = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$this->copies['copy-bob'] = 'secret-1';
+		$this->delegates[] = 'secret-1/bob';
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$link = $this->serviceJudgingGrants()->create(
+			link: new NewLinkShare(
+				secretId: 'copy-bob',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: 'bob'
+			)
+		);
+
+		$this->assertSame('bob', $link->getCreatedBy());
+	}//end testADelegateWithOneUnrestrictedGrantMayCreateALink()
 
 	/**
 	 * A plain recipient owns their copy row, but the copy's source is not
@@ -254,21 +462,22 @@ class LinkShareServiceTest extends TestCase {
 			shareAuth: new ShareAuthorizationService(
 				secretMapper: $secrets,
 				delegationMapper: $this->delegations,
-				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
-				shareTargetMapper: $this->shareTargets,
+				rowJudge: $this->shareRowJudge(targets: $this->shareTargets, secrets: $secrets),
 			),
 		);
 		$this->mapper->expects($this->never())->method('insert');
 
 		$this->expectException(DoesNotExistException::class);
 		$service->create(
-			secretId: 'nope',
-			encryptedSnapshot: 'the-blob',
-			salt: 'the-salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 1,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'nope',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 	}//end testAMissingSecretIsRefusedTheSameWay()
 
@@ -316,13 +525,15 @@ class LinkShareServiceTest extends TestCase {
 			);
 
 		$result = $this->service->create(
-			secretId: 'secret-9',
-			encryptedSnapshot: 'the-blob',
-			salt: 'the-salt',
-			encryptionSuiteId: 'suite-42',
-			usageLimit: 5,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'secret-9',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-42',
+				usageLimit: 5,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 
 		$this->assertSame('secret-9', $result->getSecretId());
@@ -335,6 +546,53 @@ class LinkShareServiceTest extends TestCase {
 	}//end testCreateGeneratesTokenAndPersists()
 
 	/**
+	 * A link share whose end date has already passed is refused before anything is stored.
+	 *
+	 * @return void
+	 */
+	public function testCreateRejectsAnEndDateInThePast(): void {
+		$this->mapper->expects($this->never())->method('insert');
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('The end date must lie in the future');
+
+		$this->service->create(
+			link: new NewLinkShare(
+				secretId: 'secret-9',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-42',
+				usageLimit: 1,
+				expiresAt: new DateTime('-1 day'),
+				userId: 'alice'
+			)
+		);
+	}//end testCreateRejectsAnEndDateInThePast()
+
+	/**
+	 * A link share with an end date in the future is stored with that end date.
+	 *
+	 * @return void
+	 */
+	public function testCreateKeepsAnEndDateInTheFuture(): void {
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+		$end = new DateTime('+2 days');
+
+		$result = $this->service->create(
+			link: new NewLinkShare(
+				secretId: 'secret-9',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-42',
+				usageLimit: 1,
+				expiresAt: $end,
+				userId: 'alice'
+			)
+		);
+
+		$this->assertSame($end, $result->getExpiresAt());
+	}//end testCreateKeepsAnEndDateInTheFuture()
+
+	/**
 	 * Test create rejects a usage limit below the minimum.
 	 *
 	 * @return void
@@ -344,13 +602,15 @@ class LinkShareServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 
 		$this->service->create(
-			secretId: 'secret-1',
-			encryptedSnapshot: 'blob',
-			salt: 'salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 0,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'secret-1',
+				encryptedSnapshot: 'blob',
+				salt: 'salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 0,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 	}//end testCreateRejectsUsageLimitZero()
 
@@ -364,13 +624,15 @@ class LinkShareServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 
 		$this->service->create(
-			secretId: 'secret-1',
-			encryptedSnapshot: 'blob',
-			salt: 'salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 11,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'secret-1',
+				encryptedSnapshot: 'blob',
+				salt: 'salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 11,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 	}//end testCreateRejectsUsageLimitEleven()
 
@@ -384,13 +646,15 @@ class LinkShareServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 
 		$this->service->create(
-			secretId: 'secret-1',
-			encryptedSnapshot: '',
-			salt: 'salt',
-			encryptionSuiteId: 'suite-1',
-			usageLimit: 1,
-			expiresAt: null,
-			userId: 'alice'
+			link: new NewLinkShare(
+				secretId: 'secret-1',
+				encryptedSnapshot: '',
+				salt: 'salt',
+				encryptionSuiteId: 'suite-1',
+				usageLimit: 1,
+				expiresAt: null,
+				userId: 'alice'
+			)
 		);
 	}//end testCreateRejectsEmptySnapshot()
 
@@ -463,53 +727,97 @@ class LinkShareServiceTest extends TestCase {
 	}//end testGetByTokenThrowsAndDeletesWhenBruteForced()
 
 	/**
-	 * Test confirmAccess increments usage atomically and resets failures.
+	 * Serving the snapshot counts a use and an attempt before the blob is
+	 * returned, and a share with uses left stays.
 	 *
 	 * @return void
 	 */
-	public function testConfirmAccessIncrementsUsage(): void {
-		$updated = $this->makeShare(['usageCount' => 2, 'usageLimit' => 3]);
+	public function testServeCountsTheUseBeforeReturningTheBlob(): void {
+		$before = $this->makeShare(['usageCount' => 1, 'usageLimit' => 3]);
+		$after = $this->makeShare(['usageCount' => 2, 'usageLimit' => 3, 'failedAttempts' => 1]);
 		$this->mapper->expects($this->once())
-			->method('incrementUsageIfBelowLimit')
-			->with('tok')
+			->method('countServeIfAllowed')
+			->with('tok', 5)
 			->willReturn(1);
-		$this->mapper->method('findByToken')->with('tok')->willReturn($updated);
-		// Not yet at the limit, so it must NOT be deleted.
+		$this->mapper->method('findByToken')->willReturnOnConsecutiveCalls($before, $after);
 		$this->mapper->expects($this->never())->method('delete');
+
+		$payload = $this->service->serve('tok');
+
+		$this->assertSame('blob', $payload['encryptedSecretSnapshot']);
+	}//end testServeCountsTheUseBeforeReturningTheBlob()
+
+	/**
+	 * The serve that reaches the usage limit deletes the share, without a
+	 * confirm from the client.
+	 *
+	 * @return void
+	 */
+	public function testServeBurnsAtTheUsageLimitWithoutAConfirm(): void {
+		$before = $this->makeShare(['usageCount' => 0, 'usageLimit' => 1]);
+		$after = $this->makeShare(['usageCount' => 1, 'usageLimit' => 1, 'failedAttempts' => 1]);
+		$this->mapper->method('countServeIfAllowed')->willReturn(1);
+		$this->mapper->method('findByToken')->willReturnOnConsecutiveCalls($before, $after);
+		$this->mapper->expects($this->once())->method('delete')->with($after);
+
+		$this->service->serve('tok');
+	}//end testServeBurnsAtTheUsageLimitWithoutAConfirm()
+
+	/**
+	 * The fifth serve without a confirmed decrypt deletes the share.
+	 *
+	 * @return void
+	 */
+	public function testServeBurnsAtTheAttemptCap(): void {
+		$before = $this->makeShare(['usageCount' => 4, 'usageLimit' => 10, 'failedAttempts' => 4]);
+		$after = $this->makeShare(['usageCount' => 5, 'usageLimit' => 10, 'failedAttempts' => 5]);
+		$this->mapper->method('countServeIfAllowed')->willReturn(1);
+		$this->mapper->method('findByToken')->willReturnOnConsecutiveCalls($before, $after);
+		$this->mapper->expects($this->once())->method('delete')->with($after);
+
+		$this->service->serve('tok');
+	}//end testServeBurnsAtTheAttemptCap()
+
+	/**
+	 * When the atomic count affects no row, no blob is served.
+	 *
+	 * @return void
+	 */
+	public function testServeRefusesWhenTheCountAffectsNoRow(): void {
+		$this->mapper->method('findByToken')->willReturn($this->makeShare());
+		$this->mapper->method('countServeIfAllowed')->willReturn(0);
+
+		$this->expectException(RuntimeException::class);
+		$this->service->serve('tok');
+	}//end testServeRefusesWhenTheCountAffectsNoRow()
+
+	/**
+	 * A confirm resets the attempts and counts no use.
+	 *
+	 * @return void
+	 */
+	public function testConfirmAccessResetsAttemptsAndCountsNoUse(): void {
+		$this->mapper->method('findByToken')->willReturn($this->makeShare(['usageCount' => 2, 'failedAttempts' => 1]));
+		$this->mapper->expects($this->once())->method('resetFailedAttempts')->with('tok');
+		$this->mapper->expects($this->never())->method('incrementUsageIfBelowLimit');
 
 		$result = $this->service->confirmAccess('tok');
 
 		$this->assertSame(2, $result->getUsageCount());
-	}//end testConfirmAccessIncrementsUsage()
+		$this->assertSame(0, $result->getFailedAttempts());
+	}//end testConfirmAccessResetsAttemptsAndCountsNoUse()
 
 	/**
-	 * Test confirmAccess deletes the share when the limit is reached.
+	 * A confirm for a share that is gone throws.
 	 *
 	 * @return void
 	 */
-	public function testConfirmAccessDeletesWhenLimitReached(): void {
-		$updated = $this->makeShare(['usageCount' => 3, 'usageLimit' => 3]);
-		$this->mapper->method('incrementUsageIfBelowLimit')->willReturn(1);
-		$this->mapper->method('findByToken')->willReturn($updated);
-		$this->mapper->expects($this->once())->method('delete')->with($updated);
-
-		$result = $this->service->confirmAccess('tok');
-
-		$this->assertSame(3, $result->getUsageCount());
-	}//end testConfirmAccessDeletesWhenLimitReached()
-
-	/**
-	 * Test confirmAccess throws when the atomic update affects no rows.
-	 *
-	 * @return void
-	 */
-	public function testConfirmAccessThrowsWhenNoRowsAffected(): void {
-		$this->mapper->method('incrementUsageIfBelowLimit')->willReturn(0);
-		$this->mapper->expects($this->never())->method('findByToken');
+	public function testConfirmAccessThrowsWhenTheShareIsGone(): void {
+		$this->mapper->method('findByToken')->willThrowException(new DoesNotExistException('gone'));
 
 		$this->expectException(RuntimeException::class);
 		$this->service->confirmAccess('tok');
-	}//end testConfirmAccessThrowsWhenNoRowsAffected()
+	}//end testConfirmAccessThrowsWhenTheShareIsGone()
 
 	/**
 	 * Test recordFailedAttempt increments the counter below the threshold.
@@ -628,13 +936,65 @@ class LinkShareServiceTest extends TestCase {
 	}//end testDeleteBySecretIdCascades()
 
 	/**
-	 * Test deleteByUserId cascades to the mapper.
+	 * Test deleteMadeBy cascades to the mapper.
 	 *
 	 * @return void
 	 */
-	public function testDeleteByUserIdCascades(): void {
-		$this->mapper->expects($this->once())->method('deleteByUserId')->with('alice');
+	public function testDeleteMadeByCascades(): void {
+		$this->mapper->expects($this->once())->method('deleteMadeBy')->with('alice');
 
-		$this->service->deleteByUserId('alice');
-	}//end testDeleteByUserIdCascades()
+		$this->service->deleteMadeBy('alice');
+	}//end testDeleteMadeByCascades()
+
+	/**
+	 * A created link share stores every field, is logged and is audited with
+	 * its expiry.
+	 *
+	 * @return void
+	 */
+	public function testCreateStoresLogsAndAuditsTheLinkShare(): void {
+		$calls = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('info')->willReturnCallback(static function (string $message) use (&$calls): void {
+			$calls[] = ['info', $message];
+		});
+		$events = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$events->method('dispatchTyped')->willReturnCallback(static function (\OCA\Keepiq\Event\Audit\AuditEvent $event) use (&$calls): void {
+			$calls[] = ['audit', $event->getActorId(), $event->getEventType(), $event->getObjectId() !== null, $event->getMetadata()];
+		});
+		$this->mapper->method('insert')->willReturnCallback(static function (LinkShare $row) use (&$calls): LinkShare {
+			$calls[] = ['insert', strlen((string)$row->getId()), $row->getSecretId(), strlen((string)$row->getToken()), $row->getEncryptedSecretSnapshot(), $row->getArgon2idSalt(), $row->getEncryptionSuiteId(), $row->getUsageLimit(), $row->getUsageCount(), $row->getFailedAttempts(), $row->getCreatedBy(), $row->getCreatedAt() !== null, $row->getExpiresAt()?->format('Y-m-d')];
+			return $row;
+		});
+		$service = new LinkShareService(
+			mapper: $this->mapper,
+			logger: $logger,
+			writeLockService: $this->createMock(WriteLockService::class),
+			shareAuth: new ShareAuthorizationService(
+				secretMapper: $this->secrets,
+				delegationMapper: $this->delegations,
+				rowJudge: $this->shareRowJudge(targets: $this->shareTargets, secrets: $this->secrets),
+			),
+			auditTrail: new \OCA\Keepiq\Service\LinkShareAuditTrail(eventDispatcher: $events),
+		);
+
+		$service->create(
+			link: new NewLinkShare(
+				secretId: 'secret-1',
+				encryptedSnapshot: 'the-blob',
+				salt: 'the-salt',
+				encryptionSuiteId: 'suite-7',
+				usageLimit: 10,
+				expiresAt: new DateTime('2099-05-06T07:08:09+00:00'),
+				userId: 'alice'
+			)
+		);
+
+		$this->assertSame(['insert', 36, 'secret-1', 32, 'the-blob', 'the-salt', 'suite-7', 10, 0, 0, 'alice', true, '2099-05-06'], $calls[0]);
+		$this->assertSame(['info', 'Keepiq: link share created for secret secret-1 by alice'], $calls[1]);
+		$this->assertSame('audit', $calls[2][0]);
+		$this->assertSame('alice', $calls[2][1]);
+		$this->assertCount(3, $calls);
+		$this->assertSame('2099-05-06T07:08:09+00:00', $calls[2][4]['expiresAt'] ?? null);
+	}//end testCreateStoresLogsAndAuditsTheLinkShare()
 }//end class

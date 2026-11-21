@@ -42,6 +42,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\FederatedCopyDeclineService;
@@ -96,6 +97,9 @@ class FederatedCopyRestoreTest extends TestCase {
 	private array $audit = [];
 
 	private int $pulls = 0;
+
+	/** @var \Closure|null Runs once while the signature of the next request Alice receives is checked */
+	private ?\Closure $meanwhile = null;
 
 	/** @var string|null The verified signer of the request Alice receives */
 	private ?string $signer = 'cloud.partner.example';
@@ -286,6 +290,11 @@ class FederatedCopyRestoreTest extends TestCase {
 		$ocm = $this->createMock(IOCMDiscoveryService::class);
 		$ocm->method('getIncomingSignedRequest')->willReturnCallback(
 			function () {
+				if ($this->meanwhile !== null) {
+					$meanwhile = $this->meanwhile;
+					$this->meanwhile = null;
+					$meanwhile();
+				}
 				if ($this->signer === null) {
 					return null;
 				}
@@ -304,7 +313,7 @@ class FederatedCopyRestoreTest extends TestCase {
 	private function alicesProvider(): KeepiqSecretFederationProvider {
 		$shares = $this->createMock(FederatedShareMapper::class);
 		$shares->method('findById')->willReturnCallback(
-			fn (string $id): FederatedShare => ($this->outbound !== null && $id === self::SHARE_ID) ? $this->outbound : throw new DoesNotExistException('none')
+			fn (string $id): FederatedShare => ($this->outbound !== null && $id === self::SHARE_ID) ? clone $this->outbound : throw new DoesNotExistException('none')
 		);
 		$shares->method('findBySourceSecret')->willReturnCallback(
 			fn (string $sourceId): array => array_values(array_filter(
@@ -312,7 +321,26 @@ class FederatedCopyRestoreTest extends TestCase {
 				static fn (FederatedShare $row): bool => $row->getSourceSecretId() === $sourceId
 			))
 		);
-		$shares->method('update')->willReturnArgument(0);
+		// $this->outbound is what the database holds; a read gets a copy.
+		$shares->method('update')->willReturnCallback(
+			function (FederatedShare $row): FederatedShare {
+				$this->outbound = clone $row;
+				return $row;
+			}
+		);
+		$shares->method('updateIfStatus')->willReturnCallback(
+			function (FederatedShare $row, string $status, string $ending): int {
+				if ($this->outbound === null
+					|| $this->outbound->getStatus() !== $status
+					|| $this->outbound->getPendingNotification() === $ending
+				) {
+					return 0;
+				}
+
+				$this->outbound = clone $row;
+				return 1;
+			}
+		);
 
 		$changes = $this->createMock(FederatedRemoteChangeService::class);
 		$changes->method('senderOf')->willReturn('');
@@ -340,8 +368,8 @@ class FederatedCopyRestoreTest extends TestCase {
 			foreach (['NEW-CIPHER-FOR-BOB', 'OLD-CIPHER-FOR-BOB', self::SHARED_SECRET, hash('sha256', self::SHARED_SECRET)] as $secret) {
 				$this->assertStringNotContainsString($secret, $entry);
 			}
-			$this->assertArrayHasKey($event->getEventType(), AuditEventTypes::WHITELIST);
-			$this->assertSame([], array_diff(array_keys($event->getMetadata()), AuditEventTypes::WHITELIST[$event->getEventType()]));
+			$this->assertArrayHasKey($event->getEventType(), AuditMetadataPolicy::WHITELIST);
+			$this->assertSame([], array_diff(array_keys($event->getMetadata()), AuditMetadataPolicy::WHITELIST[$event->getEventType()]));
 		}
 	}
 
@@ -433,6 +461,47 @@ class FederatedCopyRestoreTest extends TestCase {
 		$this->assertSame(FederatedInbound::STATUS_REVOKED, $this->inbound->getStatus());
 		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->outbound->getStatus());
 		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+	}
+
+	/**
+	 * Alice revokes while the signature of Bob's accept is checked (a
+	 * partner can stall that check), and the revoke's own unshare fails.
+	 * The accept must not make the share live again.
+	 */
+	public function testARevokeThatLandedWhileTheAcceptWasCheckedStaysEnded(): void {
+		$this->meanwhile = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_REVOKED);
+			$this->outbound->setPendingNotification('SHARE_UNSHARED');
+			$this->outbound->setNotifyAttempts(1);
+		};
+
+		try {
+			$this->alicesProvider()->notificationReceived('SHARE_ACCEPTED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+			$this->fail('the accept was applied');
+		} catch (ShareNotFound) {
+			// The answer for a share that ended.
+		}
+
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->outbound->getStatus());
+		$this->assertSame('SHARE_UNSHARED', $this->outbound->getPendingNotification());
+		$this->assertSame(1, $this->outbound->getNotifyAttempts());
+		$this->assertSame([], $this->audit);
+	}
+
+	/**
+	 * Two accepts for the same share cross: the one that loses the race
+	 * finds the share live and is answered as for a live share.
+	 */
+	public function testAnAcceptThatLosesToAnotherAcceptFindsTheShareLive(): void {
+		$this->meanwhile = function (): void {
+			$this->outbound->setStatus(FederatedShare::STATUS_ACTIVE);
+		};
+
+		$result = $this->alicesProvider()->notificationReceived('SHARE_ACCEPTED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
+
+		$this->assertSame([], $result);
+		$this->assertSame(FederatedShare::STATUS_ACTIVE, $this->outbound->getStatus());
+		$this->assertSame([], $this->audit);
 	}
 
 	public function testAShareTheOwnerAlreadyRemovedStaysEnded(): void {

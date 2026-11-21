@@ -167,6 +167,7 @@ class EncryptServiceTest extends TestCase {
 		$envelope = $this->encrypt->aesEncrypt('secret', $key);
 
 		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
+		$this->expectExceptionMessage('AES-256-GCM decryption failed (authentication tag mismatch)');
 		$this->decrypt->aesDecrypt($envelope, $wrongKey);
 	}//end testAesGcmWrongKeyFails()
 
@@ -187,6 +188,7 @@ class EncryptServiceTest extends TestCase {
 		$encrypted = $this->encrypt->encryptPrivateKey($this->privateKeyPem, $password);
 
 		$this->expectException(\OCA\Keepiq\Exception\DecryptionException::class);
+		$this->expectExceptionMessage('Private key decryption failed (wrong password or corrupted blob)');
 		$this->decrypt->decryptPrivateKey($encrypted, $wrongPassword);
 	}//end testEncryptPrivateKeyWrongPasswordFails()
 
@@ -393,4 +395,25 @@ class EncryptServiceTest extends TestCase {
 		$this->expectExceptionMessage('Invalid base64 envelope');
 		$this->decrypt->decryptPrivateKey('!!!bad-base64!!!', 'password');
 	}//end testDecryptPrivateKeyInvalidBase64()
+
+	public function testEnvelopesCarryTheVersionSaltIvCiphertextAndTag(): void {
+		$raw = base64_decode($this->encrypt->aesEncrypt('secret', random_bytes(32)), true);
+		$this->assertSame(1, unpack('N', substr($raw, 0, 4))[1]);
+		$this->assertSame(str_repeat("\0", 16), substr($raw, 4, 16));
+		$this->assertSame(4 + 16 + 12 + strlen('secret') + 16, strlen($raw));
+
+		$salted = base64_decode($this->encrypt->encryptPrivateKey('pem', 'password'), true);
+		$this->assertSame(1, unpack('N', substr($salted, 0, 4))[1]);
+		$this->assertNotSame(str_repeat("\0", 16), substr($salted, 4, 16));
+		$this->assertSame(4 + 16 + 12 + strlen('pem') + 16, strlen($salted));
+		$key = $this->decrypt->deriveKey('password', substr($salted, 4, 16));
+		$this->assertSame($key, $this->encrypt->deriveKey('password', substr($salted, 4, 16)));
+		$this->assertSame(32, strlen($key));
+	}//end testEnvelopesCarryTheVersionSaltIvCiphertextAndTag()
+
+	public function testDeriveKeyIsPbkdf2Sha256WithSixHundredThousandIterations(): void {
+		$expected = hash_pbkdf2('sha256', 'password', str_repeat('s', 16), 600000, 32, true);
+		$this->assertSame($expected, $this->encrypt->deriveKey('password', str_repeat('s', 16)));
+		$this->assertSame($expected, $this->decrypt->deriveKey('password', str_repeat('s', 16)));
+	}//end testDeriveKeyIsPbkdf2Sha256WithSixHundredThousandIterations()
 }//end class

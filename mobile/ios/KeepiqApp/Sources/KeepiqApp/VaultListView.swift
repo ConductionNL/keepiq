@@ -169,7 +169,7 @@ private struct EntryRow: View {
                 .split(separator: "/").first.map(String.init) ?? ""
             let details = detailText(host: host)
             if !details.isEmpty {
-                Text(details).font(.footnote).foregroundStyle(.secondary)
+                Text(details).font(.footnote).foregroundStyle(KeepiqPalette.secondaryText)
             }
         }
         .frame(minHeight: 44)

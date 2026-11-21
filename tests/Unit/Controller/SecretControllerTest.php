@@ -189,6 +189,69 @@ class SecretControllerTest extends TestCase {
 	}//end testCreateReturns201()
 
 	/**
+	 * create() hands totp and passkeys to the service, and show() returns them.
+	 *
+	 * @return void
+	 */
+	public function testCreateAndShowCarryTotpAndPasskeys(): void {
+		$secret = $this->makeSecret();
+		$secret->setTotp('TOTP-CIPHER');
+		$secret->setPasskeys('PASSKEYS-CIPHER');
+		$this->secretService->expects($this->once())->method('create')
+			->with($this->callback(
+				static fn (array $data): bool => $data['totp'] === 'TOTP-CIPHER' && $data['passkeys'] === 'PASSKEYS-CIPHER'
+			))
+			->willReturn($secret);
+		$this->secretService->method('get')->willReturn($secret);
+
+		$response = $this->controller->create(name: 'GitHub', key: 'ENCRYPTED', totp: 'TOTP-CIPHER', passkeys: 'PASSKEYS-CIPHER');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame('TOTP-CIPHER', $response->getData()['totp']);
+
+		$shown = $this->controller->show('s-1')->getData();
+		$this->assertSame('TOTP-CIPHER', $shown['totp']);
+		$this->assertSame('PASSKEYS-CIPHER', $shown['passkeys']);
+	}//end testCreateAndShowCarryTotpAndPasskeys()
+
+	/**
+	 * An application-owned create that carries totp or passkeys reaches the
+	 * service with them, and its refusal answers 400.
+	 *
+	 * @return void
+	 */
+	public function testApplicationCreateWithTotpOrPasskeysIsRefused(): void {
+		$this->secretService->expects($this->exactly(2))->method('createForApplication')
+			->willReturnCallback(
+				static function (array $data): never {
+					if ($data['totp'] === null && $data['passkeys'] === null) {
+						throw new \LogicException('the value field did not reach the service');
+					}
+
+					throw new \InvalidArgumentException('totp and passkeys are not supported on an application-owned secret');
+				}
+			);
+
+		foreach (['totp' => 'TOTP-CIPHER', 'passkeys' => 'PASSKEYS-CIPHER'] as $field => $value) {
+			$response = $this->controller->create(
+				...['name' => 'App', 'key' => 'ENCRYPTED', 'ownerType' => 'application', 'ownerId' => 'openregister', $field => $value]
+			);
+			$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		}
+	}//end testApplicationCreateWithTotpOrPasskeysIsRefused()
+
+	/**
+	 * An application-owned create without totp or passkeys goes ahead.
+	 *
+	 * @return void
+	 */
+	public function testApplicationCreateWithoutTotpOrPasskeysGoesAhead(): void {
+		$this->secretService->expects($this->once())->method('createForApplication')->willReturn($this->makeSecret());
+
+		$response = $this->controller->create(name: 'App', key: 'ENCRYPTED', ownerType: 'application', ownerId: 'openregister');
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+	}//end testApplicationCreateWithoutTotpOrPasskeysGoesAhead()
+
+	/**
 	 * index() returns the service list result.
 	 *
 	 * @return void

@@ -57,29 +57,60 @@ final class CefFormatter {
 	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
 	 */
 	public function format(array $payload, string $appVersion): string {
-		$view = new PayloadView(payload: $payload);
+		$view  = new PayloadView(payload: $payload);
+		$pairs = [];
+		foreach ($this->extensionsOf(view: $view) as $key => $value) {
+			$pairs[] = $key . '=' . self::extension(value: $value);
+		}
+
+		return implode('|', $this->headerOf(view: $view, appVersion: $appVersion)) . '|' . implode(' ', $pairs);
+	}//end format()
+
+	/**
+	 * The seven header fields: version, vendor, product, product version,
+	 * event class, name and severity.
+	 *
+	 * @param PayloadView $view       The payload
+	 * @param string      $appVersion The Keepiq version
+	 *
+	 * @return list<string>
+	 *
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
+	 */
+	private function headerOf(PayloadView $view, string $appVersion): array {
 		$eventType = $view->get(field: 'eventType');
-		$category = $view->get(field: 'category');
-		$header = [
+		return [
 			'CEF:0',
 			'Conduction',
 			'Keepiq',
 			self::header(value: $appVersion),
 			self::header(value: $eventType),
 			self::header(value: str_replace(['.', '_'], ' ', $eventType)),
-			(string)(self::SEVERITY[$category] ?? self::DEFAULT_SEVERITY),
+			(string)(self::SEVERITY[$view->get(field: 'category')] ?? self::DEFAULT_SEVERITY),
 		];
+	}//end headerOf()
 
+	/**
+	 * The extension fields, in order; `suser` only for a user actor.
+	 *
+	 * @param PayloadView $view The payload
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
+	 */
+	private function extensionsOf(PayloadView $view): array {
+		$eventType  = $view->get(field: 'eventType');
 		$extensions = [
 			'rt' => (string)(int)($view->epoch() * 1000),
-			'cat' => $category,
+			'cat' => $view->get(field: 'category'),
 			'act' => $eventType,
 		];
 		if ($view->get(field: 'actorType') === 'user') {
 			$extensions['suser'] = $view->get(field: 'actorId');
 		}
 
-		$extensions += [
+		return $extensions + [
 			'cs1Label' => 'actorType',
 			'cs1' => $view->get(field: 'actorType'),
 			'cs2Label' => 'objectType',
@@ -88,14 +119,8 @@ final class CefFormatter {
 			'cs3' => $view->get(field: 'objectId'),
 			'msg' => (string)json_encode((object)$view->metadata()),
 		];
+	}//end extensionsOf()
 
-		$pairs = [];
-		foreach ($extensions as $key => $value) {
-			$pairs[] = $key . '=' . self::extension(value: $value);
-		}
-
-		return implode('|', $header) . '|' . implode(' ', $pairs);
-	}//end format()
 
 	/**
 	 * Escape a header field: backslash and pipe.

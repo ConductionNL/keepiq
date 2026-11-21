@@ -1,0 +1,125 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`searchGroups > merges exact and other matches, drops empty and repeated ids, labels and caps them 1`] = `
+[
+  "/ocs/v2.phpapps/files_sharing/api/v1/sharees",
+  {
+    "headers": {
+      "OCS-APIRequest": "true",
+    },
+    "params": {
+      "format": "json",
+      "itemType": "file",
+      "lookup": false,
+      "perPage": 25,
+      "search": "g",
+      "shareType": 1,
+    },
+  },
+]
+`;
+
+exports[`searchGroups > merges exact and other matches, drops empty and repeated ids, labels and caps them 2`] = `
+[
+  {
+    "id": "g1",
+    "label": "Exact",
+  },
+  {
+    "id": "g0",
+    "label": "g0",
+  },
+  {
+    "id": "g2",
+    "label": "g2",
+  },
+  {
+    "id": "g3",
+    "label": "G3",
+  },
+  {
+    "id": "g4",
+    "label": "g4",
+  },
+  {
+    "id": "g5",
+    "label": "G5",
+  },
+  {
+    "id": "g6",
+    "label": "g6",
+  },
+  {
+    "id": "g7",
+    "label": "G7",
+  },
+  {
+    "id": "g8",
+    "label": "g8",
+  },
+  {
+    "id": "g9",
+    "label": "G9",
+  },
+  {
+    "id": "g10",
+    "label": "g10",
+  },
+  {
+    "id": "g11",
+    "label": "G11",
+  },
+  {
+    "id": "g12",
+    "label": "g12",
+  },
+  {
+    "id": "g13",
+    "label": "G13",
+  },
+  {
+    "id": "g14",
+    "label": "g14",
+  },
+  {
+    "id": "g15",
+    "label": "G15",
+  },
+  {
+    "id": "g16",
+    "label": "g16",
+  },
+  {
+    "id": "g17",
+    "label": "G17",
+  },
+  {
+    "id": "g18",
+    "label": "g18",
+  },
+  {
+    "id": "g19",
+    "label": "G19",
+  },
+  {
+    "id": "g20",
+    "label": "g20",
+  },
+  {
+    "id": "g21",
+    "label": "G21",
+  },
+  {
+    "id": "g22",
+    "label": "g22",
+  },
+  {
+    "id": "g23",
+    "label": "G23",
+  },
+  {
+    "id": "g24",
+    "label": "g24",
+  },
+]
+`;

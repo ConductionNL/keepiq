@@ -18,6 +18,7 @@
  */
 
 import { decryptPrivateKey } from './aes.js'
+import { decodePem } from './pem.js'
 
 /**
  * The exact string the server verifies (VaultKeyProofService::signedMessage):
@@ -29,7 +30,7 @@ import { decryptPrivateKey } from './aes.js'
  * @param {string[]} boundValues The bound request-parameter values, in order.
  * @return {Promise<Uint8Array>} The UTF-8 bytes of the message to sign.
  */
-async function signedMessageBytes(nonce, boundValues) {
+export async function signedMessageBytes(nonce, boundValues) {
 	const encoder = new TextEncoder()
 	const lines = [nonce]
 	for (const value of boundValues) {
@@ -71,17 +72,22 @@ export async function proveMasterPassword(
 	// A wrong password throws here (AES-GCM tag mismatch) before anything signs.
 	const pem = await decryptPrivateKey(encryptedPrivateKey, masterPassword)
 
-	const pkcs8 = Uint8Array.from(
-		atob(
-			pem
-				.replace(/-----BEGIN PRIVATE KEY-----/, '')
-				.replace(/-----END PRIVATE KEY-----/, '')
-				.replace(/-----BEGIN RSA PRIVATE KEY-----/, '')
-				.replace(/-----END RSA PRIVATE KEY-----/, '')
-				.replace(/\s/g, ''),
-		),
-		(c) => c.charCodeAt(0),
-	)
+	return provePrivateKey(pem, nonce, boundValues)
+}
+
+/**
+ * Sign a proof challenge with a private key the browser already holds, such
+ * as one just unwrapped from a recovery kit (crypto-recovery-kit 2.3). The
+ * signature is the one proveMasterPassword() makes.
+ *
+ * @param {string} pem The PKCS#8 private key PEM.
+ * @param {string} nonce The server challenge.
+ * @param {string[]} [boundValues] The request values the proof commits to, in order.
+ * @return {Promise<string>} The base64 signature.
+ * @spec openspec/specs/vault-recovery-kit/spec.md#requirement-the-recovery-code-reopens-the-vault-and-sets-a-new-master-password
+ */
+export async function provePrivateKey(pem, nonce, boundValues = []) {
+	const { der: pkcs8 } = decodePem(pem, ['PRIVATE KEY', 'RSA PRIVATE KEY'])
 
 	// Re-import for SIGNING specifically — a distinct capability from the
 	// session key, which is imported non-extractable and ['decrypt'] only.

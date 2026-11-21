@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Db;
 
 use DateTime;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\ShareTarget;
 use PHPUnit\Framework\TestCase;
 
@@ -131,4 +132,66 @@ class ShareTargetTest extends TestCase {
 		$entity->setGroupShareId(null);
 		$this->assertNull($entity->getGroupShareId());
 	}//end testGroupShareIdIsOptional()
+
+	/**
+	 * Build a secret for the ownership-guard tests.
+	 *
+	 * @param string $id        The id
+	 * @param string $ownerType The owner type
+	 * @param string $ownerId   The owner id
+	 *
+	 * @return Secret
+	 */
+	private function secret(string $id, string $ownerType, string $ownerId): Secret {
+		$secret = new Secret();
+		$secret->setId($id);
+		$secret->setOwnerType($ownerType);
+		$secret->setOwnerId($ownerId);
+		return $secret;
+	}//end secret()
+
+	/**
+	 * isHeldByTarget is true only when the copy is the one named, user-owned,
+	 * and owned by the row's target (GHSA-m5p9-6pw7-pf3g).
+	 *
+	 * @return void
+	 */
+	public function testIsHeldByTargetRecognisesAGenuineRecipientCopy(): void {
+		$row = new ShareTarget();
+		$row->setSecretId('copy-1');
+		$row->setTargetUserId('bob');
+
+		$this->assertTrue($row->isHeldByTarget($this->secret('copy-1', 'user', 'bob')));
+	}//end testIsHeldByTargetRecognisesAGenuineRecipientCopy()
+
+	/**
+	 * A copy owned by another user, a team-owned copy, or a different id is not
+	 * held by the target — the cross-user corruption the guard refuses.
+	 *
+	 * @return void
+	 */
+	public function testIsHeldByTargetRefusesACopyNotHeldByTheTarget(): void {
+		$row = new ShareTarget();
+		$row->setSecretId('copy-1');
+		$row->setTargetUserId('bob');
+
+		$this->assertFalse($row->isHeldByTarget($this->secret('copy-1', 'user', 'alice')), 'owned by another user');
+		$this->assertFalse($row->isHeldByTarget($this->secret('copy-1', 'team', 'bob')), 'team-owned');
+		$this->assertFalse($row->isHeldByTarget($this->secret('other', 'user', 'bob')), 'a different copy id');
+	}//end testIsHeldByTargetRefusesACopyNotHeldByTheTarget()
+
+	/**
+	 * The guard does NOT stop the core advisory case where the target IS the
+	 * owner of a pre-existing secret — that is closed by retiring the
+	 * client-supplied-id create path. Here it returns true.
+	 *
+	 * @return void
+	 */
+	public function testIsHeldByTargetDoesNotStopTheTargetEqualsOwnerCase(): void {
+		$row = new ShareTarget();
+		$row->setSecretId('alices-own');
+		$row->setTargetUserId('alice');
+
+		$this->assertTrue($row->isHeldByTarget($this->secret('alices-own', 'user', 'alice')));
+	}//end testIsHeldByTargetDoesNotStopTheTargetEqualsOwnerCase()
 }//end class

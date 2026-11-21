@@ -32,6 +32,7 @@ use OCA\Keepiq\Service\SecretRequestService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -148,6 +149,8 @@ class SecretServiceApplicationVaultTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->linkShareService,
 			logger: $this->logger,
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			secretRequestService: $this->secretRequestService,
 			shareService: $this->shareService,
 			groupShareMapper: $this->groupShareMapper,

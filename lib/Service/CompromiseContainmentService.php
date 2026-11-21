@@ -36,7 +36,6 @@ use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Listener\MarksCompromisedSecrets;
 use OCP\Authentication\Token\IProvider;
 use Psr\Log\LoggerInterface;
@@ -59,7 +58,7 @@ class CompromiseContainmentService {
 	 * Constructor.
 	 *
 	 * @param SecretMapper           $secretMapper           Blast-radius lookup and stamp
-	 * @param ShareTargetMapper      $shareTargetMapper      Resolves shared sources and outbound copies
+	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param EmergencyContactMapper $contactMapper Finds grantors exposed through the revoked key
 	 * @param NotificationService    $notificationService    Warns the affected users
 	 * @param MigrationService       $migrationService       Revokes the owner's link shares and passkeys
@@ -71,7 +70,7 @@ class CompromiseContainmentService {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudge $rowJudge,
 		private EmergencyContactMapper $contactMapper,
 		private NotificationService $notificationService,
 		private MigrationService $migrationService,
@@ -198,8 +197,9 @@ class CompromiseContainmentService {
 		}
 
 		foreach ($secrets as $secret) {
-			$failed = false;
-			$target = $this->resolveTarget(secret: $secret, failed: $failed);
+			$failed   = false;
+			$unjudged = false;
+			$target   = $this->resolveTarget(secret: $secret, failed: $failed, unjudged: $unjudged);
 			if ($failed === true) {
 				$radius->addFailure();
 			}
@@ -207,7 +207,9 @@ class CompromiseContainmentService {
 			$radius->addSealed(secret: $secret, target: $target);
 			// After a failed lookup $secret may be a copy, and its outbound
 			// lookup would fail on the same cause: one failure, counted once.
-			if ($target === $secret && $failed === false) {
+			// A row the pending scan cannot judge is no such cause: the people
+			// $secret was shared with are still warned.
+			if ($target === $secret && ($failed === false || $unjudged === true)) {
 				$this->collectOutbound(radius: $radius, secret: $secret);
 			}
 		}
@@ -217,7 +219,9 @@ class CompromiseContainmentService {
 	 * Collect the copies other users hold of one of the revoked user's secrets.
 	 *
 	 * Those recipients are the only people left who can act on the value, and
-	 * nothing else tells them (keepiq#872).
+	 * nothing else tells them (keepiq#872). A row the pending quarantine scan
+	 * holds back, or whose target does not hold its copy, is left out: its
+	 * copy may be its holder's own secret.
 	 *
 	 * @param CompromiseBlastRadius $radius The radius being collected
 	 * @param Secret                $secret The revoked user's own secret
@@ -226,14 +230,16 @@ class CompromiseContainmentService {
 	 */
 	private function collectOutbound(CompromiseBlastRadius $radius, Secret $secret): void {
 		try {
-			foreach ($this->shareTargetMapper->findBySourceSecret($secret->getId()) as $shareTarget) {
+			foreach ($this->rowJudge->rowsOfSource(sourceId: $secret->getId())->notHeldBack() as $shareTarget) {
 				$recipientId = $shareTarget->getTargetUserId();
 				if ($recipientId === '' || $recipientId === $secret->getOwnerId()) {
 					continue;
 				}
 
 				$copy = $this->secretMapper->findById($shareTarget->getSecretId());
-				$radius->addOutbound(recipientId: $recipientId, copy: $copy);
+				if ($shareTarget->isHeldByTarget(copy: $copy) === true) {
+					$radius->addOutbound(recipientId: $recipientId, copy: $copy);
+				}
 			}
 		} catch (Throwable $exception) {
 			$radius->addFailure();

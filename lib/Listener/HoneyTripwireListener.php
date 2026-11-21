@@ -27,11 +27,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Db\LinkShareMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
-use OCA\Keepiq\Service\HoneyTripwireService;
-use OCP\AppFramework\Db\DoesNotExistException;
+use OCA\Keepiq\Kernel\Contracts\HoneyTripwireServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\ShareRowJudgeInterface;
+use OCA\Keepiq\Service\HoneyAccess;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IRequest;
@@ -47,18 +47,18 @@ class HoneyTripwireListener implements IEventListener {
 	/**
 	 * Constructor for HoneyTripwireListener.
 	 *
-	 * @param HoneyTripwireService $honeyService The honey tripwire service
+	 * @param HoneyTripwireServiceInterface $honeyService The honey tripwire service
 	 * @param LinkShareMapper $linkShareMapper Link → secret resolution
-	 * @param ShareTargetMapper $shareTargetMapper Copy → source resolution
+	 * @param ShareRowJudgeInterface $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param IRequest $request IP/user-agent source
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private HoneyTripwireService $honeyService,
+		private HoneyTripwireServiceInterface $honeyService,
 		private LinkShareMapper $linkShareMapper,
-		private ShareTargetMapper $shareTargetMapper,
+		private ShareRowJudgeInterface $rowJudge,
 		private IRequest $request,
 		private LoggerInterface $logger,
 	) {
@@ -141,12 +141,14 @@ class HoneyTripwireListener implements IEventListener {
 		if ($eventType === AuditEventTypes::SECRET_READ && $event->getObjectType() === 'secret') {
 			$secretId = (string)$event->getObjectId();
 			$hit = $this->honeyService->raiseAlert(
-				secretId: $secretId,
-				accessorType: $event->getActorType(),
-				accessorId: $event->getActorId(),
-				channel: 'ui',
-				remoteIp: $remoteIp,
-				userAgent: $userAgent,
+				access: new HoneyAccess(
+					secretId: $secretId,
+					accessorType: $event->getActorType(),
+					accessorId: $event->getActorId(),
+					channel: 'ui',
+					remoteIp: $remoteIp,
+					userAgent: $userAgent,
+				)
 			);
 			if ($hit === false) {
 				// Not flagged directly — a share-recipient copy read
@@ -159,12 +161,14 @@ class HoneyTripwireListener implements IEventListener {
 
 		if ($eventType === AuditEventTypes::APPLICATION_SECRET_RETRIEVED && $event->getObjectType() === 'secret') {
 			$this->honeyService->raiseAlert(
-				secretId: (string)$event->getObjectId(),
-				accessorType: $event->getActorType(),
-				accessorId: $event->getActorId(),
-				channel: 'machine_api',
-				remoteIp: $remoteIp,
-				userAgent: $userAgent,
+				access: new HoneyAccess(
+					secretId: (string)$event->getObjectId(),
+					accessorType: $event->getActorType(),
+					accessorId: $event->getActorId(),
+					channel: 'machine_api',
+					remoteIp: $remoteIp,
+					userAgent: $userAgent,
+				)
 			);
 
 			return;
@@ -173,19 +177,23 @@ class HoneyTripwireListener implements IEventListener {
 		if ($eventType === AuditEventTypes::LINK_SHARE_ACCESSED && $event->getObjectType() === 'link_share') {
 			$linkShare = $this->linkShareMapper->findById((string)$event->getObjectId());
 			$this->honeyService->raiseAlert(
-				secretId: $linkShare->getSecretId(),
-				accessorType: $event->getActorType(),
-				accessorId: $event->getActorId(),
-				channel: 'link',
-				remoteIp: $remoteIp,
-				userAgent: $userAgent,
+				access: new HoneyAccess(
+					secretId: $linkShare->getSecretId(),
+					accessorType: $event->getActorType(),
+					accessorId: $event->getActorId(),
+					channel: 'link',
+					remoteIp: $remoteIp,
+					userAgent: $userAgent,
+				)
 			);
 		}
 	}//end trip()
 
 	/**
 	 * A read of a share-recipient COPY trips the wire of its flagged
-	 * source secret (channel: share).
+	 * source secret (channel: share). Only a trusted share row
+	 * (ShareRowJudge) makes the read secret a copy: a read of a secret a
+	 * held-back row names trips nothing on that row's source.
 	 *
 	 * @param AuditEvent $event The read event
 	 * @param string $copySecretId The read (possibly copy) secret id
@@ -195,19 +203,20 @@ class HoneyTripwireListener implements IEventListener {
 	 * @return void
 	 */
 	private function tripSourceOfCopy(AuditEvent $event, string $copySecretId, ?string $remoteIp, ?string $userAgent): void {
-		try {
-			$shareTarget = $this->shareTargetMapper->findByRecipientSecret($copySecretId);
-		} catch (DoesNotExistException) {
+		$shareTarget = $this->rowJudge->forCopyId(copyId: $copySecretId)->trustedRow();
+		if ($shareTarget === null) {
 			return;
 		}
 
 		$this->honeyService->raiseAlert(
-			secretId: $shareTarget->getSourceSecretId(),
-			accessorType: $event->getActorType(),
-			accessorId: $event->getActorId(),
-			channel: 'share',
-			remoteIp: $remoteIp,
-			userAgent: $userAgent,
+			access: new HoneyAccess(
+				secretId: $shareTarget->getSourceSecretId(),
+				accessorType: $event->getActorType(),
+				accessorId: $event->getActorId(),
+				channel: 'share',
+				remoteIp: $remoteIp,
+				userAgent: $userAgent,
+			)
 		);
 	}//end tripSourceOfCopy()
 }//end class

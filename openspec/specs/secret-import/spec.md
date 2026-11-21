@@ -2,16 +2,18 @@
 
 ## Purpose
 TBD - created by archiving change secret-import. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Client-Side Parsing and E2E Guarantee
-The system MUST parse import files entirely in the browser. The plaintext content of an import file MUST NEVER be transmitted to the server. Before any data is persisted, every sensitive field (key, login, additional_fields) MUST be encrypted in the browser with the owner's active EncryptionSuite public certificate, using the same WebCrypto encryption path as Create Secret. This preserves the encryption-suites spec guarantees: the server stores and receives only encrypted blobs, and no plaintext secret value ever exists server-side.
+The system MUST parse import files entirely in the browser. The plaintext content of an import file MUST NEVER be transmitted to the server. Before any data is persisted, every sensitive field (key, login, additional_fields, totp, passkeys) MUST be encrypted in the browser with the owner's active EncryptionSuite public certificate, using the same WebCrypto encryption path as Create Secret. This preserves the encryption-suites spec guarantees: the server stores and receives only encrypted blobs, and no plaintext secret value ever exists server-side.
 
 An import MUST only be possible while the vault is unlocked (the owner's CryptoKey is in the browser session per the encryption-suites Session Mechanism requirement). Parsed plaintext rows MUST be held only in JavaScript memory — never written to `localStorage`, `sessionStorage`, or IndexedDB — and MUST be discarded when the import wizard closes.
 
 #### Scenario: Plaintext never sent to server
 @e2e exclude Covered by the import-store vitest plaintext-never-in-request-body assertion + the ImportService envelope-validation PHPUnit; a Playwright DOM check cannot prove ciphertext-only payloads.
 - **WHEN** a user imports a file containing plaintext credentials
-- **THEN** every HTTP request issued by the import flow MUST contain only encrypted blobs for key, login, and additional_fields
+- **THEN** every HTTP request issued by the import flow MUST contain only encrypted blobs for key, login, additional_fields, totp, and passkeys
 - **AND** the plaintext-permitted fields in any request MUST be limited to name, url, type, and folder path — the same fields the secrets spec stores unencrypted
 
 #### Scenario: Import requires unlocked vault
@@ -31,15 +33,17 @@ The system MUST support importing from: generic CSV, Bitwarden JSON export, Bitw
 KDBX (`.kdbx` binary KeePass container) import is OUT OF SCOPE for v1: KDBX is an encrypted container, not an interchange format — supporting it would require shipping a second full crypto stack in the browser and prompting users for a foreign master password inside Keepiq. When a KDBX file is detected (magic bytes), the system MUST reject it with guidance to use KeePass's `File → Export → KeePass XML (2.x)` function and import the resulting XML.
 
 #### Scenario: Bitwarden JSON import
-@e2e exclude Format parsing (login items, TOTP, collections) covered exhaustively by the import-parsers vitest with fixtures; the e2e drives the generic-CSV path end-to-end.
+@e2e exclude Format parsing (login items, TOTP, passkeys, collections) covered exhaustively by the import-parsers and passkey vitest with fixtures; the e2e drives the generic-CSV path end-to-end.
 - **WHEN** a user selects Bitwarden JSON and provides a valid Bitwarden export file
-- **THEN** the system MUST parse login items into rows with name, url, login, key, and additional fields (including notes and the TOTP seed as an opaque additional field)
+- **THEN** the system MUST parse login items into rows with name, url, login, key, and additional fields (including notes)
+- **AND** a login's TOTP seed and passkeys MUST go on that login's own `totp` and `passkeys` fields, never into separate items; a seed that is not an authenticator key (such as a Steam code) MUST stay an additional field
 - **AND** Bitwarden folder/collection names MUST be captured as folder paths
 
 #### Scenario: KeePass XML import
 @e2e exclude Nested-group + History-ignored parsing covered by the import-parsers vitest with a KeePass XML fixture.
 - **WHEN** a user selects KeePass XML and provides a KeePass 2.x XML export
 - **THEN** the system MUST parse entries with their group hierarchy as folder paths
+- **AND** an entry's `otp` string, or its `TimeOtp-Secret-Base32` folded with `TimeOtp-Period`, `TimeOtp-Length` and `TimeOtp-Algorithm`, MUST go on that entry's own `totp` field
 - **AND** entry `History` elements MUST be ignored (only current values import)
 
 #### Scenario: KDBX file rejected with guidance
@@ -117,6 +121,13 @@ The system MUST provide an authenticated batch endpoint that accepts arrays of a
 - **AND** the response MUST identify the failed index and reason
 - **AND** the failed row MUST appear in the rejected list of the summary report
 
+#### Scenario: A login's TOTP seed and passkeys are imported with it
+@e2e exclude Per-item ciphertext validation of the batch endpoint; covered by PHPUnit (ImportServiceTest).
+- **WHEN** an item carries `totp` or `passkeys`
+- **THEN** each MUST be stored on the created secret, and `''` or an absent field MUST count as not set
+- **AND** each MUST be a ciphertext as `rsaEncrypt` produces it: base64 of a chunk count followed by that many whole RSA blocks of at least 256 bytes, so a plaintext base32 seed or passkey JSON fails the item
+- **NOTE** this is the server side only: the web import does not send these fields yet and still splits a seed off into a `totp`-typed secret, which keepiq#1327 changes
+
 #### Scenario: Large vault import shows progress
 @e2e exclude Chunking at 50 + progress counters covered by the import-store vitest (120 rows produce three chunks of 50/50/20, committedChunks tracked); a 2,000-row Playwright import is impractical.
 - **WHEN** a user commits an import of 2,000 accepted rows
@@ -143,4 +154,3 @@ After commit, the system MUST display a summary report: count of secrets importe
 #### Scenario: Summary after a mixed import
 - **WHEN** an import completes with 95 created, 2 skipped duplicates, and 3 rejected rows
 - **THEN** the summary MUST show all four counts (including folders created) and the per-row rejection reasons
-

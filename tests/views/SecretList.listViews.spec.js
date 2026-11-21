@@ -69,6 +69,23 @@ describe('SecretList — cards/table columns (fix-brief bugs 8+9)', () => {
 		expect(label).toBe('Payment Card')
 	})
 
+	// keepiq#1326: new items cannot be created as these types, but existing
+	// ones must stay findable through the filter.
+	it('keeps Authenticator and Passkey in the type filter', () => {
+		useSecretTypeStore().types = [
+			{ id: 'type-login', name: 'login', label: 'Login' },
+			{ id: 'type-totp', name: 'totp', label: 'Authenticator' },
+			{ id: 'type-passkey', name: 'passkey', label: 'Passkey' },
+		]
+
+		const options = SecretList.computed.typeFilterOptions.call({})
+		expect(options.map((option) => option.value)).toEqual([
+			'type-login',
+			'type-totp',
+			'type-passkey',
+		])
+	})
+
 	it('renders an empty Type label while the catalogue has not loaded', () => {
 		const label = SecretList.methods.typeLabelFor.call(
 			{},

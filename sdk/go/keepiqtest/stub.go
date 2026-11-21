@@ -217,30 +217,10 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p := r.URL.Path
 	switch {
 	case p == Webroot+"/apps/keepiq/api/v1/app/.well-known/keepiq":
-		writeJSON(w, 200, map[string]any{
-			"apiVersion":    1,
-			"tokenEndpoint": Webroot + "/apps/keepiq/api/v1/app/token",
-			"grantType":     "urn:ietf:params:oauth:grant-type:jwt-bearer",
-			"assertion":     map[string]any{"alg": "RS256", "audience": "keepiq"},
-			"secrets": map[string]any{
-				"list": api, "byId": api + "/{id}", "byName": api + "/by-name/{name}", "create": api, "update": api + "/{id}",
-			},
-			"lease": map[string]any{"supported": s.Leases},
-		})
+		s.serveDiscovery(w)
 		return
 	case p == Webroot+"/apps/keepiq/api/v1/app/token" && r.Method == http.MethodPost:
-		vals, _ := url.ParseQuery(string(body))
-		if vals.Get("grant_type") != "urn:ietf:params:oauth:grant-type:jwt-bearer" || !s.validAssertion(vals.Get("assertion")) {
-			writeJSON(w, 401, map[string]any{"error": "invalid_grant"})
-			return
-		}
-		s.Exchanges++
-		tok := fmt.Sprintf("tok-%d", s.Exchanges)
-		if s.tokens == nil {
-			s.tokens = map[string]bool{}
-		}
-		s.tokens[tok] = true
-		writeJSON(w, 200, map[string]any{"access_token": tok, "token_type": "Bearer", "expires_in": 300})
+		s.serveToken(w, body)
 		return
 	}
 	// Every issued token stays valid until RevokeNext revokes them all, as on
@@ -254,102 +234,159 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	switch {
 	case p == api && r.Method == http.MethodGet:
-		since := r.URL.Query().Get("updated_since")
-		ids := make([]string, 0, len(s.Envelopes))
-		for id := range s.Envelopes {
-			ids = append(ids, id)
-		}
-		sort.Strings(ids)
-		var items []any
-		for _, id := range ids {
-			e := s.Envelopes[id]
-			if since == "" || e["secret"].(map[string]any)["updatedAt"].(string) > since {
-				items = append(items, e)
-			}
-		}
-		writeJSON(w, 200, map[string]any{"format": "doriath-machine-secret-v1", "items": items, "total": len(items)})
+		s.serveList(w, r)
 	case strings.HasPrefix(p, api+"/by-name/"):
-		name, _ := url.PathUnescape(strings.TrimPrefix(p, api+"/by-name/"))
-		folder := r.URL.Query().Get("folder")
-		var hits []map[string]any
-		ids := make([]string, 0, len(s.Envelopes))
-		for id := range s.Envelopes {
-			ids = append(ids, id)
-		}
-		sort.Strings(ids)
-		for _, id := range ids {
-			e := s.Envelopes[id]
-			m := e["secret"].(map[string]any)
-			if m["name"] == name && (folder == "" || m["folderPath"] == strings.Trim(folder, "/")) {
-				hits = append(hits, e)
-			}
-		}
-		switch len(hits) {
-		case 0:
-			writeJSON(w, 404, map[string]any{"message": "Secret not found"})
-		case 1:
-			s.envelope(w, r, hits[0])
-		default:
-			var cands []any
-			for _, h := range hits {
-				m := h["secret"].(map[string]any)
-				cands = append(cands, map[string]any{"id": m["id"], "name": m["name"], "folderPath": m["folderPath"], "updatedAt": m["updatedAt"]})
-			}
-			writeJSON(w, 409, map[string]any{"message": "Multiple secrets match this name; disambiguate by folder or rename", "candidates": cands})
-		}
+		s.serveByName(w, r, p)
 	case p == api && r.Method == http.MethodPost:
-		var in map[string]any
-		_ = json.Unmarshal(body, &in)
-		if in["name"] == nil || in["name"] == "" {
-			writeJSON(w, 400, map[string]any{"message": "A secret requires a name and a key"})
-			return
-		}
-		id := fmt.Sprintf("sec-new-%d", len(s.Envelopes))
-		ct := map[string]any{"key": in["key"], "login": in["login"], "additionalFields": in["additionalFields"]}
-		e := s.newEnvelope(id, in, ct)
-		s.Envelopes[id] = e
-		writeJSON(w, 201, e)
+		s.serveCreate(w, body)
 	case strings.HasPrefix(p, api+"/") && r.Method == http.MethodPut:
-		id, _ := url.PathUnescape(strings.TrimPrefix(p, api+"/"))
-		e, ok := s.Envelopes[id]
-		if !ok {
-			writeJSON(w, 404, map[string]any{"message": "Secret not found"})
-			return
-		}
-		if im := r.Header.Get("If-Match"); im != "" && im != s.etagOf(e) {
-			w.Header().Set("ETag", s.etagOf(e))
-			writeJSON(w, 412, map[string]any{"message": "The secret changed since it was read"})
-			return
-		}
-		s.PutCount++
-		var in map[string]any
-		_ = json.Unmarshal(body, &in)
-		ct := e["ciphertext"].(map[string]any)
-		for _, f := range []string{"key", "login", "additionalFields"} {
-			if v, ok := in[f]; ok {
-				ct[f] = v
-			}
-		}
-		meta := e["secret"].(map[string]any)
-		for _, f := range []string{"name", "url"} {
-			if v, ok := in[f]; ok {
-				meta[f] = v
-			}
-		}
-		s.updates++
-		meta["updatedAt"] = fmt.Sprintf("2026-10-02T12:%02d:00+00:00", s.updates%60)
-		s.envelope(w, r, e)
+		s.serveUpdate(w, r, p, body)
 	case strings.HasPrefix(p, api+"/") && r.Method == http.MethodGet:
-		id, _ := url.PathUnescape(strings.TrimPrefix(p, api+"/"))
-		e, ok := s.Envelopes[id]
-		if !ok {
-			writeJSON(w, 404, map[string]any{"message": "Secret not found"})
-			return
-		}
-		s.envelope(w, r, e)
+		s.serveGet(w, r, p)
 	default:
 		writeJSON(w, 404, map[string]any{"message": "no route " + p})
 	}
+}
+
+// serveDiscovery answers the discovery document.
+func (s *Stub) serveDiscovery(w http.ResponseWriter) {
+	writeJSON(w, 200, map[string]any{
+		"apiVersion":    1,
+		"tokenEndpoint": Webroot + "/apps/keepiq/api/v1/app/token",
+		"grantType":     "urn:ietf:params:oauth:grant-type:jwt-bearer",
+		"assertion":     map[string]any{"alg": "RS256", "audience": "keepiq"},
+		"secrets": map[string]any{
+			"list": api, "byId": api + "/{id}", "byName": api + "/by-name/{name}", "create": api, "update": api + "/{id}",
+		},
+		"lease": map[string]any{"supported": s.Leases},
+	})
+}
+
+// serveToken answers the RFC 7523 token exchange.
+func (s *Stub) serveToken(w http.ResponseWriter, body []byte) {
+	vals, _ := url.ParseQuery(string(body))
+	if vals.Get("grant_type") != "urn:ietf:params:oauth:grant-type:jwt-bearer" || !s.validAssertion(vals.Get("assertion")) {
+		writeJSON(w, 401, map[string]any{"error": "invalid_grant"})
+		return
+	}
+	s.Exchanges++
+	tok := fmt.Sprintf("tok-%d", s.Exchanges)
+	if s.tokens == nil {
+		s.tokens = map[string]bool{}
+	}
+	s.tokens[tok] = true
+	writeJSON(w, 200, map[string]any{"access_token": tok, "token_type": "Bearer", "expires_in": 300})
+}
+
+// sortedIDs is every envelope id, sorted, so answers do not depend on map order.
+func (s *Stub) sortedIDs() []string {
+	ids := make([]string, 0, len(s.Envelopes))
+	for id := range s.Envelopes {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	return ids
+}
+
+// serveList answers the secrets list, filtered by updated_since.
+func (s *Stub) serveList(w http.ResponseWriter, r *http.Request) {
+	since := r.URL.Query().Get("updated_since")
+	ids := s.sortedIDs()
+	var items []any
+	for _, id := range ids {
+		e := s.Envelopes[id]
+		if since == "" || e["secret"].(map[string]any)["updatedAt"].(string) > since {
+			items = append(items, e)
+		}
+	}
+	writeJSON(w, 200, map[string]any{"format": "doriath-machine-secret-v1", "items": items, "total": len(items)})
+}
+
+// serveByName answers a by-name lookup: 404, the envelope, or 409 with candidates.
+func (s *Stub) serveByName(w http.ResponseWriter, r *http.Request, p string) {
+	name, _ := url.PathUnescape(strings.TrimPrefix(p, api+"/by-name/"))
+	folder := r.URL.Query().Get("folder")
+	var hits []map[string]any
+	ids := s.sortedIDs()
+	for _, id := range ids {
+		e := s.Envelopes[id]
+		m := e["secret"].(map[string]any)
+		if m["name"] == name && (folder == "" || m["folderPath"] == strings.Trim(folder, "/")) {
+			hits = append(hits, e)
+		}
+	}
+	switch len(hits) {
+	case 0:
+		writeJSON(w, 404, map[string]any{"message": "Secret not found"})
+	case 1:
+		s.envelope(w, r, hits[0])
+	default:
+		var cands []any
+		for _, h := range hits {
+			m := h["secret"].(map[string]any)
+			cands = append(cands, map[string]any{"id": m["id"], "name": m["name"], "folderPath": m["folderPath"], "updatedAt": m["updatedAt"]})
+		}
+		writeJSON(w, 409, map[string]any{"message": "Multiple secrets match this name; disambiguate by folder or rename", "candidates": cands})
+	}
+}
+
+// serveCreate files a new secret.
+func (s *Stub) serveCreate(w http.ResponseWriter, body []byte) {
+	var in map[string]any
+	_ = json.Unmarshal(body, &in)
+	if in["name"] == nil || in["name"] == "" {
+		writeJSON(w, 400, map[string]any{"message": "A secret requires a name and a key"})
+		return
+	}
+	id := fmt.Sprintf("sec-new-%d", len(s.Envelopes))
+	ct := map[string]any{"key": in["key"], "login": in["login"], "additionalFields": in["additionalFields"]}
+	e := s.newEnvelope(id, in, ct)
+	s.Envelopes[id] = e
+	writeJSON(w, 201, e)
+}
+
+// serveUpdate updates a secret, honouring If-Match.
+func (s *Stub) serveUpdate(w http.ResponseWriter, r *http.Request, p string, body []byte) {
+	id, _ := url.PathUnescape(strings.TrimPrefix(p, api+"/"))
+	e, ok := s.Envelopes[id]
+	if !ok {
+		writeJSON(w, 404, map[string]any{"message": "Secret not found"})
+		return
+	}
+	if im := r.Header.Get("If-Match"); im != "" && im != s.etagOf(e) {
+		w.Header().Set("ETag", s.etagOf(e))
+		writeJSON(w, 412, map[string]any{"message": "The secret changed since it was read"})
+		return
+	}
+	s.PutCount++
+	var in map[string]any
+	_ = json.Unmarshal(body, &in)
+	ct := e["ciphertext"].(map[string]any)
+	for _, f := range []string{"key", "login", "additionalFields"} {
+		if v, ok := in[f]; ok {
+			ct[f] = v
+		}
+	}
+	meta := e["secret"].(map[string]any)
+	for _, f := range []string{"name", "url"} {
+		if v, ok := in[f]; ok {
+			meta[f] = v
+		}
+	}
+	s.updates++
+	meta["updatedAt"] = fmt.Sprintf("2026-10-02T12:%02d:00+00:00", s.updates%60)
+	s.envelope(w, r, e)
+}
+
+// serveGet answers a secret by id.
+func (s *Stub) serveGet(w http.ResponseWriter, r *http.Request, p string) {
+	id, _ := url.PathUnescape(strings.TrimPrefix(p, api+"/"))
+	e, ok := s.Envelopes[id]
+	if !ok {
+		writeJSON(w, 404, map[string]any{"message": "Secret not found"})
+		return
+	}
+	s.envelope(w, r, e)
 }
 
 func (s *Stub) etagOf(e map[string]any) string {

@@ -9,9 +9,13 @@
  */
 
 import { fromBase64, toBase64 } from './deviceApproval.js'
-import { buildRecoveryEnvelope, openRecoveryEnvelope } from './emergencyEnvelope.js'
+import {
+	buildRecoveryEnvelope,
+	buildRecoveryEnvelopeForKey,
+	openRecoveryEnvelope,
+} from './emergencyEnvelope.js'
 import { open, seal } from './hpke.js'
-import { generateKeyPair, importPrivateKey } from './rsa.js'
+import { generateKeyPair, importPrivateKey, importSpkiPublicKey } from './rsa.js'
 
 /** HPKE info for the handoff, so a sealed key cannot be reused elsewhere. */
 export const ACCOUNT_RECOVERY_INFO = 'keepiq-account-recovery-v1'
@@ -55,15 +59,19 @@ export async function createRecoveryKey(officerCertificates) {
 }
 
 /**
- * Wrap this user's suite private key to the recovery certificate (D1).
+ * Wrap this user's suite private key to the recovery certificate (D1), to
+ * the key that was read from it when it was verified.
  *
  * @param {string} userPrivateKeyPem The user's private key, decrypted just now.
- * @param {string} recoveryCertificatePem The active recovery certificate.
+ * @param {Uint8Array} recoverySpki The verified recovery certificate's SubjectPublicKeyInfo.
  * @return {Promise<string>} The enrolment envelope.
  * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
  */
-export function buildEnrolmentEnvelope(userPrivateKeyPem, recoveryCertificatePem) {
-	return buildRecoveryEnvelope(userPrivateKeyPem, recoveryCertificatePem)
+export async function buildEnrolmentEnvelope(userPrivateKeyPem, recoverySpki) {
+	return buildRecoveryEnvelopeForKey(
+		userPrivateKeyPem,
+		await importSpkiPublicKey(recoverySpki),
+	)
 }
 
 /**

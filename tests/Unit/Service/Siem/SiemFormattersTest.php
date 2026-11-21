@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service\Siem;
 
-use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Service\Siem\CefFormatter;
 use OCA\Keepiq\Service\Siem\JsonFormatter;
 use OCA\Keepiq\Service\Siem\SentinelRowFormatter;
@@ -69,6 +69,22 @@ class SiemFormattersTest extends TestCase {
 			$line
 		);
 	}//end testCefLine()
+
+	/**
+	 * An actor that is not a user names no suser, and an empty metadata is {}.
+	 *
+	 * @return void
+	 */
+	public function testCefLineOfASystemActor(): void {
+		$payload = self::payload('secret.updated', []);
+		$payload['actorType'] = 'application';
+		$payload['actorId'] = 'app-1';
+		$this->assertSame(
+			'CEF:0|Conduction|Keepiq|2|secret.updated|secret updated|3|rt=1790942400000 cat=secret act=secret.updated'
+			. ' cs1Label=actorType cs1=application cs2Label=objectType cs2=suite cs3Label=objectId cs3=suite-9 msg={}',
+			(new CefFormatter())->format($payload, '2')
+		);
+	}//end testCefLineOfASystemActor()
 
 	/**
 	 * Header fields escape \ and |; extension values escape \, = and line breaks.
@@ -164,7 +180,7 @@ class SiemFormattersTest extends TestCase {
 	 */
 	public function testNoFormatterCarriesAnythingButThePayload(): void {
 		$metadata = ['suiteId' => 'suite-9'];
-		foreach (AuditEventTypes::FORBIDDEN_KEYS as $i => $key) {
+		foreach (AuditMetadataPolicy::FORBIDDEN_KEYS as $i => $key) {
 			$metadata[$key] = 'PLANTED-SECRET-' . $i;
 		}
 
@@ -179,7 +195,7 @@ class SiemFormattersTest extends TestCase {
 		];
 		foreach ($outputs as $name => $out) {
 			$this->assertStringNotContainsString('PLANTED', $out, $name . ' carries planted material');
-			foreach (AuditEventTypes::FORBIDDEN_KEYS as $key) {
+			foreach (AuditMetadataPolicy::FORBIDDEN_KEYS as $key) {
 				$this->assertStringNotContainsString('"' . $key . '"', $out, $name . ' carries the key ' . $key);
 			}
 		}

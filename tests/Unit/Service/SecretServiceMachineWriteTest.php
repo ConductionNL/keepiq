@@ -34,6 +34,7 @@ use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use PHPUnit\Framework\TestCase;
@@ -70,6 +71,8 @@ class SecretServiceMachineWriteTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 		);
 
 		$this->typeService->method('resolveTypeForSecret')->willReturn('api_key');
@@ -293,7 +296,7 @@ class SecretServiceMachineWriteTest extends TestCase {
 				return new \OCA\Keepiq\Db\AuditEntry();
 			}
 		);
-		$versionService = $this->createMock(SecretVersionService::class);
+		$versionService = $this->createPartialMock(SecretVersionService::class, ['snapshot']);
 		$versionService->method('snapshot')->willReturnCallback(
 			function (Secret $preUpdate) use (&$snapshots) {
 				$snapshots[] = $preUpdate;
@@ -308,6 +311,8 @@ class SecretServiceMachineWriteTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(\OCP\IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			auditService: $auditService,
 			versionService: $versionService,
 		);
@@ -474,6 +479,85 @@ class SecretServiceMachineWriteTest extends TestCase {
 		$this->assertCount(1, $audits);
 		$this->assertSame(['name'], $audits[0]->getMetadata()['changedFields']);
 	}//end testUpdateByApplicationNoContentChangeIsNotVersioned()
+
+	/**
+	 * Every application-owned write refuses a `totp` or `passkeys` value and
+	 * writes nothing, instead of storing the secret without it.
+	 *
+	 * @return void
+	 */
+	public function testApplicationWritesRefuseTotpAndPasskeys(): void {
+		$this->suiteMapper->method('findActiveByOwner')->willReturn(new EncryptionSuite());
+		$this->mapper->method('findById')->willReturn($this->appSecret('s1', 'app-1'));
+		$this->mapper->expects($this->never())->method('insert');
+		$this->mapper->expects($this->never())->method('update');
+
+		$writes = [
+			'createByApplication' => fn (array $extra) => $this->service->createByApplication(
+				data: ['name' => 'token', 'key' => 'CIPHER'] + $extra,
+				applicationId: 'app-1'
+			),
+			'createForApplication' => fn (array $extra) => $this->service->createForApplication(
+				data: ['name' => 'token', 'key' => 'CIPHER'] + $extra,
+				applicationId: 'app-1',
+				writingUserId: 'alice'
+			),
+			'updateByApplication' => fn (array $extra) => $this->service->updateByApplication(
+				id: 's1',
+				data: ['name' => 'token'] + $extra,
+				applicationId: 'app-1'
+			),
+		];
+		foreach ($writes as $name => $write) {
+			foreach (['totp' => 'TOTP-CIPHER', 'passkeys' => 'PASSKEYS-CIPHER'] as $field => $value) {
+				try {
+					$write([$field => $value]);
+					$this->fail($name.' accepted '.$field);
+				} catch (\InvalidArgumentException $refused) {
+					$this->assertStringContainsString('application-owned', $refused->getMessage());
+				}
+			}
+		}
+	}//end testApplicationWritesRefuseTotpAndPasskeys()
+
+	/**
+	 * An empty `totp` or `passkeys` means "not set" and does not stop an
+	 * application-owned create.
+	 *
+	 * @return void
+	 */
+	public function testCreateForApplicationAcceptsAnEmptyTotpOrPasskeys(): void {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($suite);
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$secret = $this->service->createForApplication(
+			data: ['name' => 'token', 'key' => 'CIPHER', 'totp' => '', 'passkeys' => ''],
+			applicationId: 'app-1',
+			writingUserId: 'alice'
+		);
+
+		$this->assertNull($secret->getTotp());
+		$this->assertNull($secret->getPasskeys());
+	}//end testCreateForApplicationAcceptsAnEmptyTotpOrPasskeys()
+
+	/**
+	 * An empty `totp` or `passkeys` an application write is allowed to send
+	 * changes nothing, so the audit does not name it.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationDoesNotAuditAnAcceptedEmptyTotp(): void {
+		$audits = [];
+		$snapshots = [];
+		$service = $this->recordingService($audits, $snapshots);
+		$this->mapper->method('findById')->willReturn($this->appSecret('s1', 'app-1'));
+
+		$service->updateByApplication(id: 's1', data: ['name' => 'token', 'totp' => '', 'passkeys' => ''], applicationId: 'app-1');
+
+		$this->assertSame(['name'], $audits[0]->getMetadata()['changedFields']);
+	}//end testUpdateByApplicationDoesNotAuditAnAcceptedEmptyTotp()
 
 	/**
 	 * A refused field leaves the row unwritten: validation happens before

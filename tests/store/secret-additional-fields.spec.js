@@ -83,28 +83,49 @@ describe('secret store — additional fields', () => {
 		expect(withoutBlob).not.toContain('shhh')
 	})
 
+	/**
+	 * A value change goes through the share save; its own-row patch is what
+	 * these tests look at.
+	 *
+	 * @return {import('vitest').MockInstance}
+	 */
+	function shareSaveServer() {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { sourceSecretId: 's1', effectiveGrade: 'owner' },
+		})
+		return vi
+			.spyOn(axios, 'put')
+			.mockResolvedValue({ data: { secret: { id: 's1' } } })
+	}
+
 	it('rewrites the whole blob when one member changes', async () => {
 		// The blob IS the storage unit, so there is no per-member update: an edit
 		// sends every member the dialog held.
-		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: { id: 's1' } })
+		const put = shareSaveServer()
 
-		await useSecretStore().updateSecret('s1', {
-			additionalFields: { 'client-id': 'CHANGED', tenant: 'acme' },
-		})
+		await useSecretStore().updateSecret(
+			's1',
+			{ additionalFields: { 'client-id': 'CHANGED', tenant: 'acme' } },
+			{ baseUpdatedAt: '2026-10-01T10:00:00+00:00' },
+		)
 
-		expect(put.mock.calls[0][1].additionalFields).toBe(
+		expect(put.mock.calls[0][1].patch.additionalFields).toBe(
 			'ENC({"client-id":"CHANGED","tenant":"acme"})',
 		)
 	})
 
 	it('sends an EMPTY blob, not null, when the last member is removed', async () => {
-		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: { id: 's1' } })
+		const put = shareSaveServer()
 
-		await useSecretStore().updateSecret('s1', { additionalFields: {} })
+		await useSecretStore().updateSecret(
+			's1',
+			{ additionalFields: {} },
+			{ baseUpdatedAt: '2026-10-01T10:00:00+00:00' },
+		)
 
-		const body = put.mock.calls[0][1]
-		expect(body.additionalFields).toBe('ENC({})')
-		expect(body.additionalFields).not.toBeNull()
+		const patch = put.mock.calls[0][1].patch
+		expect(patch.additionalFields).toBe('ENC({})')
+		expect(patch.additionalFields).not.toBeNull()
 	})
 
 	it('leaves the stored blob alone when the caller sends nothing', async () => {

@@ -39,6 +39,9 @@ use OCP\IDBConnection;
  * @extends QBMapper<Folder>
  */
 class FolderMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for FolderMapper.
 	 *
@@ -61,12 +64,7 @@ class FolderMapper extends QBMapper {
 	 * @throws MultipleObjectsReturnedException
 	 */
 	public function findById(string $id): Folder {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 
 	/**

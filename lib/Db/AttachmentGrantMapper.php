@@ -32,6 +32,9 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<AttachmentGrant>
  */
 class AttachmentGrantMapper extends QBMapper {
+
+	use FindsByStringId;
+
 	/**
 	 * Constructor for AttachmentGrantMapper.
 	 *
@@ -238,11 +241,6 @@ class AttachmentGrantMapper extends QBMapper {
 	 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	public function findById(string $id): AttachmentGrant {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('*')
-			->from($this->getTableName())
-			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)));
-
-		return $this->findEntity(query: $qb);
+		return $this->findEntity(query: $this->stringIdQuery(id: $id));
 	}//end findById()
 }//end class

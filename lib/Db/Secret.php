@@ -33,6 +33,10 @@ use OCP\AppFramework\Db\Entity;
 /**
  * Entity representing a secret.
  *
+ * The getId() tag restates the real method's type: psalm reads an inherited
+ * tag before a real method, and Entity tags getId() as int.
+ *
+ * @method string getId()
  * @method string getName()
  * @method void setName(string $name)
  * @method string|null getUrl()
@@ -47,6 +51,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setLogin(?string $login)
  * @method string|null getAdditionalFields()
  * @method void setAdditionalFields(?string $additionalFields)
+ * @method string|null getTotp()
+ * @method void setTotp(?string $totp)
+ * @method string|null getPasskeys()
+ * @method void setPasskeys(?string $passkeys)
  * @method string getEncryptionSuiteId()
  * @method void setEncryptionSuiteId(string $encryptionSuiteId)
  * @method string getOwnerType()
@@ -57,6 +65,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setPossiblyCompromisedAt(?DateTime $possiblyCompromisedAt)
  * @method DateTime|null getKeyUpdatedAt()
  * @method void setKeyUpdatedAt(?DateTime $keyUpdatedAt)
+ * @method DateTime|null getTotpUpdatedAt()
+ * @method void setTotpUpdatedAt(?DateTime $totpUpdatedAt)
+ * @method DateTime|null getPasskeysUpdatedAt()
+ * @method void setPasskeysUpdatedAt(?DateTime $passkeysUpdatedAt)
  * @method DateTime|null getExpiresAt()
  * @method void setExpiresAt(?DateTime $expiresAt)
  * @method string|null getMigrationError()
@@ -74,6 +86,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setLastUsedAt(?DateTime $lastUsedAt)
  * @method bool|null getUseOnly()
  * @method void setUseOnly(bool $useOnly)
+ * @method bool|null getReprompt()
+ * @method void setReprompt(bool $reprompt)
  * @method DateTime|null getAccessExpiresAt()
  * @method void setAccessExpiresAt(?DateTime $accessExpiresAt)
  * @method bool|null getReadOnly()
@@ -92,6 +106,8 @@ use OCP\AppFramework\Db\Entity;
  */
 class Secret extends Entity implements JsonSerializable {
 
+	use StringPrimaryKey;
+
 	/**
 	 * What every share path answers when asked to share a use-only or
 	 * time-limited copy onward (sharing-use-only-and-expiring-shares D4).
@@ -109,6 +125,14 @@ class Secret extends Entity implements JsonSerializable {
 	public const READ_ONLY_REFUSAL = 'A copy from another organisation is read-only';
 
 	/**
+	 * What a value change of a copy answers when its holder may not write
+	 * the source (keepiq#1287).
+	 *
+	 * @var string
+	 */
+	public const VIEW_ONLY_REFUSAL = 'Shared with you to view only. Ask its owner for edit rights to change it.';
+
+	/**
 	 * What the holder of a read-only copy may still change: where it is filed
 	 * (sharing-federated-recipients task 3.5). `baseUpdatedAt` only names the
 	 * version an offline move was made from.
@@ -116,6 +140,20 @@ class Secret extends Entity implements JsonSerializable {
 	 * @var string[]
 	 */
 	public const FILING_FIELDS = ['folderId', 'baseUpdatedAt'];
+
+	/**
+	 * Every encrypted value field of a secret, by its API name.
+	 *
+	 * @var string[]
+	 */
+	public const VALUE_FIELDS = ['key', 'login', 'additionalFields', 'totp', 'passkeys'];
+
+	/**
+	 * The value fields a partner instance on an older Keepiq can store.
+	 *
+	 * @var string[]
+	 */
+	public const LEGACY_VALUE_FIELDS = ['key', 'login', 'additionalFields'];
 
 	/**
 	 * The plaintext secret name.
@@ -167,6 +205,20 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?string $additionalFields = null;
 
 	/**
+	 * The RSA-encrypted TOTP seed blob (base64, nullable).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $totp = null;
+
+	/**
+	 * The RSA-encrypted passkeys JSON blob (base64, nullable).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $passkeys = null;
+
+	/**
 	 * The EncryptionSuite used to encrypt this secret.
 	 *
 	 * @var string
@@ -209,6 +261,20 @@ class Secret extends Entity implements JsonSerializable {
 	 * @var DateTime|null
 	 */
 	protected ?DateTime $keyUpdatedAt = null;
+
+	/**
+	 * When the `totp` ciphertext last changed (nullable), kept like `keyUpdatedAt`.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $totpUpdatedAt = null;
+
+	/**
+	 * When the `passkeys` ciphertext last changed (nullable), kept like `keyUpdatedAt`.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $passkeysUpdatedAt = null;
 
 	/**
 	 * Optional per-secret expiry instant (rotation-expiry-policies §2.3).
@@ -279,6 +345,15 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?bool $useOnly = false;
 
 	/**
+	 * Whether the holder asked to type the master password again before this
+	 * item is shown, copied, edited or filled (crypto-item-reprompt D1). Plain
+	 * metadata on the holder's own row; it says nothing about the value.
+	 *
+	 * @var boolean|null
+	 */
+	protected ?bool $reprompt = false;
+
+	/**
 	 * When the holder's access to this recipient copy ends (nullable = no
 	 * end). Not to be confused with expiresAt, which is credential expiry.
 	 *
@@ -346,26 +421,6 @@ class Secret extends Entity implements JsonSerializable {
 	public $id = '';
 
 	/**
-	 * Get the UUID primary key.
-	 *
-	 * @return string
-	 */
-	public function getId(): string {
-		return (string)$this->id;
-	}//end getId()
-
-	/**
-	 * Set the UUID primary key.
-	 *
-	 * @param string $id The UUID
-	 *
-	 * @return void
-	 */
-	public function setId($id): void {
-		$this->setter(name: 'id', args: [$id]);
-	}//end setId()
-
-	/**
 	 * Constructor for Secret.
 	 *
 	 * @return void
@@ -379,11 +434,15 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'key', type: 'string');
 		$this->addType(fieldName: 'login', type: 'string');
 		$this->addType(fieldName: 'additionalFields', type: 'string');
+		$this->addType(fieldName: 'totp', type: 'string');
+		$this->addType(fieldName: 'passkeys', type: 'string');
 		$this->addType(fieldName: 'encryptionSuiteId', type: 'string');
 		$this->addType(fieldName: 'ownerType', type: 'string');
 		$this->addType(fieldName: 'ownerId', type: 'string');
 		$this->addType(fieldName: 'possiblyCompromisedAt', type: 'datetime');
 		$this->addType(fieldName: 'keyUpdatedAt', type: 'datetime');
+		$this->addType(fieldName: 'totpUpdatedAt', type: 'datetime');
+		$this->addType(fieldName: 'passkeysUpdatedAt', type: 'datetime');
 		$this->addType(fieldName: 'expiresAt', type: 'datetime');
 		$this->addType(fieldName: 'migrationError', type: 'string');
 		$this->addType(fieldName: 'tombstonedAt', type: 'datetime');
@@ -393,6 +452,7 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'isFavourite', type: 'boolean');
 		$this->addType(fieldName: 'lastUsedAt', type: 'datetime');
 		$this->addType(fieldName: 'useOnly', type: 'boolean');
+		$this->addType(fieldName: 'reprompt', type: 'boolean');
 		$this->addType(fieldName: 'accessExpiresAt', type: 'datetime');
 		$this->addType(fieldName: 'readOnly', type: 'boolean');
 		$this->addType(fieldName: 'federatedSource', type: 'string');
@@ -416,7 +476,11 @@ class Secret extends Entity implements JsonSerializable {
 	 * a credential and its history. The costs are not symmetric, so this one errs
 	 * toward reporting that a value is present.
 	 *
-	 * @return bool True when every value column is empty
+	 * A filled extra-field blob still waiting for the owner's browser to merge
+	 * it is a value too: a placeholder filled with custom fields only holds
+	 * nothing else until then.
+	 *
+	 * @return bool True when every value column is empty and no filled blob is pending
 	 *
 	 * @spec openspec/changes/request-first-secret-requests/specs/secrets/spec.md#requirement-unfilled-request-placeholder
 	 */
@@ -424,7 +488,10 @@ class Secret extends Entity implements JsonSerializable {
 		return (string)$this->key === ''
 			&& (string)$this->login === ''
 			&& (string)$this->additionalFields === ''
-			&& (string)$this->url === '';
+			&& (string)$this->totp === ''
+			&& (string)$this->passkeys === ''
+			&& (string)$this->url === ''
+			&& $this->pending()->isEmpty();
 	}//end holdsNoValues()
 
 	/**
@@ -518,6 +585,8 @@ class Secret extends Entity implements JsonSerializable {
 			'key' => $this->key,
 			'login' => $this->login,
 			'additionalFields' => $this->additionalFields,
+			'totp' => $this->totp,
+			'passkeys' => $this->passkeys,
 			'encryptionSuiteId' => $this->encryptionSuiteId,
 			'ownerType' => $this->ownerType,
 			'ownerId' => $this->ownerId,
@@ -529,17 +598,31 @@ class Secret extends Entity implements JsonSerializable {
 			'possiblyCompromisedAt' => $this->possiblyCompromisedAt?->format('c'),
 			'tombstonedAt' => $this->tombstonedAt?->format('c'),
 			'tombstoneReason' => $this->tombstoneReason,
+			...$this->holderFields(),
+			'pendingAdditionalFields' => $this->pendingAdditionalFieldList(),
+			'pendingFieldSchemas' => $this->pendingFieldSchemaList(),
+		];
+	}//end jsonSerialize()
+
+	/**
+	 * The holder's own state of this row, shared by both serialisations in
+	 * this order: trash, archive, favourite, use and access flags.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function holderFields(): array {
+		return [
 			'trashedAt' => $this->trashedAt?->format('c'),
 			'archivedAt' => $this->archivedAt?->format('c'),
 			'favourite' => ($this->isFavourite === true),
 			'lastUsedAt' => $this->lastUsedAt?->format('c'),
 			'useOnly' => ($this->useOnly === true),
+			'reprompt' => ($this->reprompt === true),
 			'accessExpiresAt' => $this->accessExpiresAt?->format('c'),
 			'readOnly' => ($this->readOnly === true),
 			'federatedSource' => $this->federatedSource,
-			'pendingAdditionalFields' => $this->pendingAdditionalFieldList(),
 		];
-	}//end jsonSerialize()
+	}//end holderFields()
 
 	/**
 	 * The pending extra-field ciphertexts as a list (empty when none).
@@ -549,35 +632,46 @@ class Secret extends Entity implements JsonSerializable {
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 	 */
 	public function pendingAdditionalFieldList(): array {
-		if ($this->pendingAdditionalFields === null || $this->pendingAdditionalFields === '') {
-			return [];
-		}
-
-		$decoded = json_decode($this->pendingAdditionalFields, true);
-		if (is_array($decoded) === false) {
-			return [];
-		}
-
-		return array_values(array_filter($decoded, 'is_string'));
+		return $this->pending()->ciphertexts();
 	}//end pendingAdditionalFieldList()
 
 	/**
-	 * Store the pending extra-field ciphertexts (null when the list is empty).
+	 * The schemas each pending blob's request carried, in the same order as
+	 * pendingAdditionalFieldList(): an object by field name, empty for a blob
+	 * held back without any.
 	 *
-	 * @param list<string> $ciphertexts The pending ciphertexts, oldest first
+	 * @return list<object>
+	 *
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
+	 */
+	private function pendingFieldSchemaList(): array {
+		return $this->pending()->schemas();
+	}//end pendingFieldSchemaList()
+
+	/**
+	 * Hold a filled extra-field blob back for the owner's browser, with the
+	 * server-checked schemas of the request that filled it, so the merge never
+	 * needs the request again, also once it is gone.
+	 *
+	 * @param string              $ciphertext The filled blob
+	 * @param array<string,mixed> $schemas    The request's field schemas, by name
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-request-carries-the-schemas-of-its-fields
 	 */
-	public function setPendingAdditionalFieldList(array $ciphertexts): void {
-		if ($ciphertexts === []) {
-			$this->setPendingAdditionalFields(null);
-			return;
-		}
+	public function appendPendingAdditionalFields(string $ciphertext, array $schemas): void {
+		$this->setPendingAdditionalFields($this->pending()->with(ciphertext: $ciphertext, schemas: $schemas)->toColumn());
+	}//end appendPendingAdditionalFields()
 
-		$this->setPendingAdditionalFields(json_encode(array_values($ciphertexts)));
-	}//end setPendingAdditionalFieldList()
+	/**
+	 * The pending extra-field blobs as the column holds them.
+	 *
+	 * @return PendingAdditionalFields
+	 */
+	private function pending(): PendingAdditionalFields {
+		return new PendingAdditionalFields(column: $this->pendingAdditionalFields);
+	}//end pending()
 
 	/**
 	 * Drop the oldest $count pending blobs: the ones the owner's client read
@@ -594,7 +688,7 @@ class Secret extends Entity implements JsonSerializable {
 			return;
 		}
 
-		$this->setPendingAdditionalFieldList(array_slice($this->pendingAdditionalFieldList(), $count));
+		$this->setPendingAdditionalFields($this->pending()->withoutOldest(count: $count)->toColumn());
 	}//end dropMergedPending()
 
 	/**
@@ -627,14 +721,7 @@ class Secret extends Entity implements JsonSerializable {
 			'possiblyCompromisedAt' => $this->possiblyCompromisedAt?->format('c'),
 			'migrationError' => $this->migrationError,
 			'unrecoverable' => ($this->migrationError !== null),
-			'trashedAt' => $this->trashedAt?->format('c'),
-			'archivedAt' => $this->archivedAt?->format('c'),
-			'favourite' => ($this->isFavourite === true),
-			'lastUsedAt' => $this->lastUsedAt?->format('c'),
-			'useOnly' => ($this->useOnly === true),
-			'accessExpiresAt' => $this->accessExpiresAt?->format('c'),
-			'readOnly' => ($this->readOnly === true),
-			'federatedSource' => $this->federatedSource,
+			...$this->holderFields(),
 			'createdAt' => $this->createdAt?->format('c'),
 			'updatedAt' => $this->updatedAt?->format('c'),
 		];

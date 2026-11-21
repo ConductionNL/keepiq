@@ -24,13 +24,13 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Federation;
 
-use OCA\Keepiq\Service\FederatedCopyDeclineService;
-use OCA\Keepiq\Service\FederatedDeclineReceiver;
-use OCA\Keepiq\Service\FederatedRemoteChangeService;
-use OCA\Keepiq\Service\FederatedShareReceiver;
-use OCA\Keepiq\Service\FederatedShareService;
-use OCP\Federation\ISignedCloudFederationProvider;
+use OCA\Keepiq\Kernel\Contracts\FederatedCopyDeclineServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\FederatedDeclineReceiverInterface;
+use OCA\Keepiq\Kernel\Contracts\FederatedRemoteChangeServiceInterface;
+use OCA\Keepiq\Kernel\Contracts\FederatedShareReceiverInterface;
+use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCP\Federation\ICloudFederationShare;
+use OCP\Federation\ISignedCloudFederationProvider;
 
 /**
  * Receives Keepiq secrets shared from partner instances.
@@ -41,18 +41,18 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	/**
 	 * Constructor for KeepiqSecretFederationProvider.
 	 *
-	 * @param FederatedShareReceiver $receiver Takes incoming shares in
-	 * @param FederatedRemoteChangeService $remoteChanges Applies updates and revocations
-	 * @param FederatedDeclineReceiver|null $declines The owner's side of a recipient deleting their copy
+	 * @param FederatedShareReceiverInterface $receiver Takes incoming shares in
+	 * @param FederatedRemoteChangeServiceInterface $remoteChanges Applies updates and revocations
+	 * @param FederatedDeclineReceiverInterface|null $declines The owner's side of a recipient deleting their copy
 	 *
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only; no behaviour.
 	 */
 	public function __construct(
-		private FederatedShareReceiver $receiver,
-		private FederatedRemoteChangeService $remoteChanges,
-		private ?FederatedDeclineReceiver $declines = null,
+		private FederatedShareReceiverInterface $receiver,
+		private FederatedRemoteChangeServiceInterface $remoteChanges,
+		private ?FederatedDeclineReceiverInterface $declines = null,
 	) {
 	}//end __construct()
 
@@ -64,7 +64,7 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function getShareType() {
-		return FederatedShareService::RESOURCE_TYPE;
+		return FederatedShareServiceInterface::RESOURCE_TYPE;
 	}//end getShareType()
 
 	/**
@@ -98,12 +98,12 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 */
 	public function notificationReceived(string $notificationType, string $providerId, array $notification) {
 		// The recipient removed their copy: the owner's side (task 4.4).
-		if ($notificationType === FederatedCopyDeclineService::SHARE_DECLINED && $this->declines !== null) {
+		if ($notificationType === FederatedCopyDeclineServiceInterface::SHARE_DECLINED && $this->declines !== null) {
 			return $this->declines->handle(providerId: $providerId, notification: $notification);
 		}
 
 		// The recipient restored a declined copy and takes the share back.
-		if ($notificationType === FederatedCopyDeclineService::SHARE_ACCEPTED && $this->declines !== null) {
+		if ($notificationType === FederatedCopyDeclineServiceInterface::SHARE_ACCEPTED && $this->declines !== null) {
 			return $this->declines->resume(providerId: $providerId, notification: $notification);
 		}
 

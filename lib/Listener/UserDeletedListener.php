@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Listener;
 
-use OCA\Keepiq\Service\AccountDeletionService;
+use OCA\Keepiq\Kernel\Contracts\AccountDeletionServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\User\Events\UserDeletedEvent;
@@ -42,13 +42,13 @@ class UserDeletedListener implements IEventListener {
 	/**
 	 * Constructor for UserDeletedListener.
 	 *
-	 * @param AccountDeletionService $deletionService The deletion-cascade service
+	 * @param AccountDeletionServiceInterface $deletionService The deletion-cascade service
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private AccountDeletionService $deletionService,
+		private AccountDeletionServiceInterface $deletionService,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()

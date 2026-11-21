@@ -1,0 +1,963 @@
+{
+	"passphrase: none": {
+		"refusals": {
+			"GeneratorError: A passphrase must have 4 to 12 words": 384
+		},
+		"first": [
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":\"(undefined)\"}",
+				"anew-startup-disfigure-acrobat-basket"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":false}",
+				"customer-passive-nuclei-agility-jubilant"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":true}",
+				"genre-freely-stuffing7-alumni-immovable"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":\"true\"}",
+				"nimble-cause-scalded-android-sternum"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":\"(undefined)\"}",
+				"rink-trustee-amuser-antitoxic-dating"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":false}",
+				"tile-rearview-factual-arbitrary-crisply"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":true}",
+				"ascension-hydroxide-delighted-aspire9-overtake"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":\"true\"}",
+				"defiance-cymbal-moonwalk-autopilot-upgrade"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":\"(undefined)\"}",
+				"Graded-Geriatric-Staleness-Backside-Unretired"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":false}",
+				"Ouch-Chump-Rise-Ladle-Extinct"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":true}",
+				"Sample-Uncombed-Abide-Laurel-Rewrite5"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":\"true\"}",
+				"Truth-Rejoin-Epilepsy-Lifting-Repeated"
+			]
+		],
+		"digest": "3a6fc08157780583"
+	},
+	"passphrase: disabled": {
+		"refusals": {
+			"GeneratorError: A passphrase must have 4 to 12 words": 384
+		},
+		"first": [
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":\"(undefined)\"}",
+				"anew-startup-disfigure-acrobat-basket"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":false}",
+				"customer-passive-nuclei-agility-jubilant"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":true}",
+				"genre-freely-stuffing7-alumni-immovable"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":\"true\"}",
+				"nimble-cause-scalded-android-sternum"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":\"(undefined)\"}",
+				"rink-trustee-amuser-antitoxic-dating"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":false}",
+				"tile-rearview-factual-arbitrary-crisply"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":true}",
+				"ascension-hydroxide-delighted-aspire9-overtake"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":\"true\"}",
+				"defiance-cymbal-moonwalk-autopilot-upgrade"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":\"(undefined)\"}",
+				"Graded-Geriatric-Staleness-Backside-Unretired"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":false}",
+				"Ouch-Chump-Rise-Ladle-Extinct"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":true}",
+				"Sample-Uncombed-Abide-Laurel-Rewrite5"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":\"true\"}",
+				"Truth-Rejoin-Epilepsy-Lifting-Repeated"
+			]
+		],
+		"digest": "3a6fc08157780583"
+	},
+	"passphrase: no passphrase": {
+		"refusals": {
+			"GeneratorError: Your organisation has switched passphrases off": 864
+		},
+		"first": [],
+		"digest": "63a48605007ff833"
+	},
+	"passphrase: upper digit symbol, floor 40": {
+		"refusals": {
+			"GeneratorError: A passphrase must have 4 to 12 words": 384
+		},
+		"first": [
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":\"(undefined)\"}",
+				"Anew-Startup-Disfigure9-Acrobat-Basket-Tattle"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":false}",
+				"Customer-Passive-Nuclei6-Agility-Jubilant"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":true}",
+				"Genre-Freely-Stuffing7-Alumni-Immovable-Recital"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":\"true\"}",
+				"Nimble-Cause-Scalded-Android4-Sternum-Bakeshop"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":\"(undefined)\"}",
+				"Rink-Trustee-Amuser-Antitoxic5-Dating-Kissing"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":false}",
+				"Tile-Rearview-Factual-Arbitrary2-Crisply"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":true}",
+				"Ascension-Hydroxide-Delighted-Aspire9-Overtake"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":\"true\"}",
+				"Defiance-Cymbal-Moonwalk-Autopilot-Upgrade0"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":\"(undefined)\"}",
+				"Graded-Geriatric-Staleness-Backside-Unretired7"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":false}",
+				"Ouch-Chump-Rise-Ladle-Extinct8-Backstage"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":true}",
+				"Sample-Uncombed-Abide-Laurel-Rewrite5-Keenness"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":\"true\"}",
+				"Truth6-Rejoin-Epilepsy-Lifting-Repeated-Tackling"
+			]
+		],
+		"digest": "5db644532b984105"
+	},
+	"passphrase: symbol only": {
+		"refusals": {
+			"GeneratorError: A passphrase must have 4 to 12 words": 384
+		},
+		"first": [
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":\"(undefined)\"}",
+				"anew-startup-disfigure-acrobat-basket"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":false}",
+				"customer-passive-nuclei-agility-jubilant"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":true}",
+				"genre-freely-stuffing7-alumni-immovable"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":\"(undefined)\",\"includeNumber\":\"true\"}",
+				"nimble-cause-scalded-android-sternum"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":\"(undefined)\"}",
+				"rink-trustee-amuser-antitoxic-dating"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":false}",
+				"tile-rearview-factual-arbitrary-crisply"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":true}",
+				"ascension-hydroxide-delighted-aspire9-overtake"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":false,\"includeNumber\":\"true\"}",
+				"defiance-cymbal-moonwalk-autopilot-upgrade"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":\"(undefined)\"}",
+				"Graded-Geriatric-Staleness-Backside-Unretired"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":false}",
+				"Ouch-Chump-Rise-Ladle-Extinct"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":true}",
+				"Sample-Uncombed-Abide-Laurel-Rewrite5"
+			],
+			[
+				"{\"words\":\"(undefined)\",\"separator\":\"(undefined)\",\"capitalise\":true,\"includeNumber\":\"true\"}",
+				"Truth-Rejoin-Epilepsy-Lifting-Repeated"
+			]
+		],
+		"digest": "d3b629764b8404ba"
+	},
+	"regex classes: none": [
+		[
+			"[\\d]{8} #1",
+			{
+				"value": "78527618"
+			}
+		],
+		[
+			"[\\d]{8} #2",
+			{
+				"value": "29632749"
+			}
+		],
+		[
+			"[\\w]{10} #1",
+			{
+				"value": "8s3lWVXPQL"
+			}
+		],
+		[
+			"[\\w]{10} #2",
+			{
+				"value": "E8tRyJVgrq"
+			}
+		],
+		[
+			"[\\s\\d]{8} #1",
+			{
+				"value": "13624998"
+			}
+		],
+		[
+			"[\\s\\d]{8} #2",
+			{
+				"value": "959585 5"
+			}
+		],
+		[
+			"[a\\-z]{8} #1",
+			{
+				"value": "az---aza"
+			}
+		],
+		[
+			"[a\\-z]{8} #2",
+			{
+				"value": "-aazzaaz"
+			}
+		],
+		[
+			"[\\.\\]x]{8} #1",
+			{
+				"value": ".x]]].x."
+			}
+		],
+		[
+			"[\\.\\]x]{8} #2",
+			{
+				"value": "]..xx..x"
+			}
+		],
+		[
+			"[z-a]{8} #1",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[z-a]{8} #2",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[a-]{8} #1",
+			{
+				"value": "-a-a-a-a"
+			}
+		],
+		[
+			"[a-]{8} #2",
+			{
+				"value": "a-a-a-a-"
+			}
+		],
+		[
+			"[^a-z]{10} #1",
+			{
+				"value": "X'ZAL7*{DK"
+			}
+		],
+		[
+			"[^a-z]{10} #2",
+			{
+				"value": "%X#^)\\GZ)$"
+			}
+		],
+		[
+			"[^\\w]{10} #1",
+			{
+				"value": "@+?|&:>^-:"
+			}
+		],
+		[
+			"[^\\w]{10} #2",
+			{
+				"value": ",>-{{(&,|="
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #1",
+			{
+				"value": "yF0C1E122A30"
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #2",
+			{
+				"value": "3FF1EFD11F12"
+			}
+		],
+		[
+			"\\d{8} #1",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"\\d{8} #2",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"[\\q]{8} #1",
+			{
+				"refused": "GeneratorError: The character set must contain at least 2 distinct characters"
+			}
+		],
+		[
+			"[\\q]{8} #2",
+			{
+				"refused": "GeneratorError: The character set must contain at least 2 distinct characters"
+			}
+		]
+	],
+	"regex classes: disabled": [
+		[
+			"[\\d]{8} #1",
+			{
+				"value": "78527618"
+			}
+		],
+		[
+			"[\\d]{8} #2",
+			{
+				"value": "29632749"
+			}
+		],
+		[
+			"[\\w]{10} #1",
+			{
+				"value": "8s3lWVXPQL"
+			}
+		],
+		[
+			"[\\w]{10} #2",
+			{
+				"value": "E8tRyJVgrq"
+			}
+		],
+		[
+			"[\\s\\d]{8} #1",
+			{
+				"value": "13624998"
+			}
+		],
+		[
+			"[\\s\\d]{8} #2",
+			{
+				"value": "959585 5"
+			}
+		],
+		[
+			"[a\\-z]{8} #1",
+			{
+				"value": "az---aza"
+			}
+		],
+		[
+			"[a\\-z]{8} #2",
+			{
+				"value": "-aazzaaz"
+			}
+		],
+		[
+			"[\\.\\]x]{8} #1",
+			{
+				"value": ".x]]].x."
+			}
+		],
+		[
+			"[\\.\\]x]{8} #2",
+			{
+				"value": "]..xx..x"
+			}
+		],
+		[
+			"[z-a]{8} #1",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[z-a]{8} #2",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[a-]{8} #1",
+			{
+				"value": "-a-a-a-a"
+			}
+		],
+		[
+			"[a-]{8} #2",
+			{
+				"value": "a-a-a-a-"
+			}
+		],
+		[
+			"[^a-z]{10} #1",
+			{
+				"value": "X'ZAL7*{DK"
+			}
+		],
+		[
+			"[^a-z]{10} #2",
+			{
+				"value": "%X#^)\\GZ)$"
+			}
+		],
+		[
+			"[^\\w]{10} #1",
+			{
+				"value": "@+?|&:>^-:"
+			}
+		],
+		[
+			"[^\\w]{10} #2",
+			{
+				"value": ",>-{{(&,|="
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #1",
+			{
+				"value": "yF0C1E122A30"
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #2",
+			{
+				"value": "3FF1EFD11F12"
+			}
+		],
+		[
+			"\\d{8} #1",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"\\d{8} #2",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"[\\q]{8} #1",
+			{
+				"refused": "GeneratorError: The character set must contain at least 2 distinct characters"
+			}
+		],
+		[
+			"[\\q]{8} #2",
+			{
+				"refused": "GeneratorError: The character set must contain at least 2 distinct characters"
+			}
+		]
+	],
+	"regex classes: no passphrase": [
+		[
+			"[\\d]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\d]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\w]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\w]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\s\\d]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\s\\d]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[a\\-z]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[a\\-z]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\.\\]x]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\.\\]x]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[z-a]{8} #1",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[z-a]{8} #2",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[a-]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[a-]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[^a-z]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[^a-z]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[^\\w]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[^\\w]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #1",
+			{
+				"value": "yF0C1E122A30"
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #2",
+			{
+				"value": "3FF1EFD11F12"
+			}
+		],
+		[
+			"\\d{8} #1",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"\\d{8} #2",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"[\\q]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\q]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		]
+	],
+	"regex classes: upper digit symbol, floor 40": [
+		[
+			"[\\d]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[\\d]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[\\w]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[\\w]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[\\s\\d]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[\\s\\d]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[a\\-z]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[a\\-z]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[\\.\\]x]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[\\.\\]x]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[z-a]{8} #1",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[z-a]{8} #2",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[a-]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[a-]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[^a-z]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[^a-z]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[^\\w]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[^\\w]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"\\d{8} #1",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"\\d{8} #2",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"[\\q]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		],
+		[
+			"[\\q]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 40 characters"
+			}
+		]
+	],
+	"regex classes: symbol only": [
+		[
+			"[\\d]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\d]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\w]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\w]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\s\\d]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\s\\d]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[a\\-z]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[a\\-z]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\.\\]x]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\.\\]x]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[z-a]{8} #1",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[z-a]{8} #2",
+			{
+				"refused": "GeneratorError: The regex pattern is syntactically invalid"
+			}
+		],
+		[
+			"[a-]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[a-]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[^a-z]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[^a-z]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[^\\w]{10} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[^\\w]{10} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #1",
+			{
+				"refused": "GeneratorError: The regex excludes the symbol characters the org policy requires"
+			}
+		],
+		[
+			"[A-Fx-z0-3]{12} #2",
+			{
+				"refused": "GeneratorError: The regex excludes the symbol characters the org policy requires"
+			}
+		],
+		[
+			"\\d{8} #1",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"\\d{8} #2",
+			{
+				"refused": "GeneratorError: The regex must contain a character class (e.g. [a-zA-Z0-9])"
+			}
+		],
+		[
+			"[\\q]{8} #1",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		],
+		[
+			"[\\q]{8} #2",
+			{
+				"refused": "GeneratorError: The regex cannot reach the org policy minimum length of 12 characters"
+			}
+		]
+	]
+}
