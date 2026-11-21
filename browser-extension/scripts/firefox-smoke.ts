@@ -84,12 +84,12 @@ win.gBrowser.selectedTab = tab;
 return true;`
 
 /**
- * Runs `script` with `args` in the chrome or the content context, and returns its value.
+ * Runs `script` with `args` in the chrome context, and returns its value.
  *
  * @spec openspec/changes/clients-extension-firefox-and-safari-builds/tasks.md#task-2.1
  */
-async function inContext(options: FirefoxSmokeOptions, sessionId: string, context: 'chrome' | 'content', script: string, args: unknown[]): Promise<unknown> {
-	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context })
+async function inChrome(options: FirefoxSmokeOptions, sessionId: string, script: string, args: unknown[]): Promise<unknown> {
+	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context: 'chrome' })
 	return await command(options, 'POST', `/session/${sessionId}/execute/sync`, { script, args })
 }
 
@@ -120,7 +120,7 @@ async function until(options: FirefoxSmokeOptions, what: string, attempt: () => 
  */
 async function openPopup(options: FirefoxSmokeOptions, sessionId: string): Promise<void> {
 	const before = await command(options, 'GET', `/session/${sessionId}/window/handles`) as string[]
-	await inContext(options, sessionId, 'chrome', OPEN_TAB, [`moz-extension://${options.uuid}/popup.html`])
+	await inChrome(options, sessionId, OPEN_TAB, [`moz-extension://${options.uuid}/popup.html`])
 	await command(options, 'POST', `/session/${sessionId}/moz/context`, { context: 'content' })
 	const handles = await until(options, 'no new tab opened', () => command(options, 'GET', `/session/${sessionId}/window/handles`),
 		(value) => Array.isArray(value) && value.length > before.length) as string[]
@@ -142,7 +142,7 @@ export async function smoke(options: FirefoxSmokeOptions): Promise<void> {
 		if (addonId !== GECKO_ID) throw new Error(`Firefox smoke test failed at "install the extension": installed as ${JSON.stringify(addonId)}, not ${GECKO_ID}`)
 		console.log(`Installed ${options.extensionPath} as ${GECKO_ID}`)
 		await step('start the background', () => until(options, 'the background is not running',
-			() => inContext(options, sessionId, 'chrome', BACKGROUND_STATE, [GECKO_ID]), (state) => state === 'running'))
+			() => inChrome(options, sessionId, BACKGROUND_STATE, [GECKO_ID]), (state) => state === 'running'))
 		console.log('The background is running')
 		await step('open the popup page', () => openPopup(options, sessionId))
 		const answer = await step('ask the background', () => until(options, 'the background did not answer',
