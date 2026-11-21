@@ -1,7 +1,8 @@
 name: Browser extension
 
 # Tests, typechecks, lints and builds the WXT extension in browser-extension/
-# for Chromium MV3, Firefox MV2 and Safari MV3, packages the Safari build in its
+# for Chromium MV3, Firefox MV2 and Safari MV3, loads the Firefox build in
+# headless Firefox, packages the Safari build in its
 # macOS app and installs it in Safari. The crypto tests read the web app's
 # vectors, so a change to those runs this too.
 
@@ -48,6 +49,11 @@ jobs:
       - run: npm run build:firefox
       - name: Lint the Firefox package
         run: npx web-ext lint --source-dir .output/firefox-mv2 --warnings-as-errors=false
+      # The runner image ships Firefox and geckodriver; the background must answer the popup (spec clients-browser-builds).
+      - name: Load the Firefox package in headless Firefox
+        run: |
+          "${GECKOWEBDRIVER:+$GECKOWEBDRIVER/}geckodriver" --port 4444 --allow-system-access &
+          npm run test:firefox-smoke
       # Shows a Safari build break here, without waiting for the macOS job.
       - run: npm run build:safari
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
