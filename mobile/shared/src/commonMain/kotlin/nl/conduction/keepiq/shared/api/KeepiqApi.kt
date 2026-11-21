@@ -5,6 +5,7 @@ package nl.conduction.keepiq.shared.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.header
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
@@ -280,10 +281,27 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
         const val SECRETS_PAGE_SIZE = 100
         const val MAX_SECRET_PAGES = 1000
 
-        /** An HttpClient for [KeepiqApi]: no redirects, non-2xx handled by [request]. */
+        /** How long a connection may take to open (OkHttp; NSURLSession has no separate connect timeout). */
+        const val CONNECT_TIMEOUT_MS = 15_000L
+
+        /**
+         * How long a connection may stay silent. On iOS this is the
+         * NSURLRequest timeout, which otherwise defaults to 60 seconds: a
+         * request that stalls before reaching the server then kept the app
+         * busy for a minute without a word (the iOS e2e flake of 2026-11-04).
+         * There is no limit on the whole request, so a slow but moving
+         * transfer still completes.
+         */
+        const val SOCKET_TIMEOUT_MS = 20_000L
+
+        /** An HttpClient for [KeepiqApi]: no redirects, non-2xx handled by [request], stalls end in an error. */
         fun httpClient(engine: HttpClientEngine): HttpClient = HttpClient(engine) {
             expectSuccess = false
             followRedirects = false
+            install(HttpTimeout) {
+                connectTimeoutMillis = CONNECT_TIMEOUT_MS
+                socketTimeoutMillis = SOCKET_TIMEOUT_MS
+            }
         }
 
         internal fun refusalCode(text: String): String? = try {
