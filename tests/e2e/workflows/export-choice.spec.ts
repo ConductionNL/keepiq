@@ -8,6 +8,8 @@
  *     plaintext CSV holds exactly those three;
  *   - export one chosen type with usernames left out: every row is of that
  *     type and no row carries a username;
+ *   - export two chosen folders narrowed to the type API key: the file holds
+ *     exactly the API keys in those two folders;
  *   - a round trip: an encrypted backup restored by a fresh user keeps every
  *     type, the custom one included.
  *
@@ -77,6 +79,57 @@ test.describe('export choice', () => {
 			expect(csv).toContain(`E2E export ${stamp} ${n}`)
 		}
 		expect(csv).not.toContain(`E2E export ${stamp} 4`)
+	})
+
+	test('two chosen folders narrowed to the type API key', async ({ page }) => {
+		await gotoLockSettled(page)
+		await unlockVault(page, DEV_MASTER_PASSWORD)
+		await gotoVaultRoute(page, 'secrets')
+		const types = (await api(page, 'GET', '/secret-types')).body as Array<{ id: string; name: string; label?: string }>
+		const typeId = (name: string): string => {
+			const found = types.find((t) => t.name === name)
+			expect(found, `the ${name} secret type`).toBeTruthy()
+			return found?.id as string
+		}
+		const folderNames = ['A', 'B', 'C'].map((letter) => `E2E export folder ${stamp} ${letter}`)
+		for (const folderName of folderNames) {
+			const folderId = await withStore<string>(
+				page,
+				'folder',
+				'async (store, name) => (await store.createFolder(name)).id',
+				folderName,
+			)
+			for (const type of ['api_key', 'note']) {
+				await withStore(
+					page,
+					'secret',
+					'async (store, data) => (await store.createSecret(data)).id',
+					{ name: `${folderName} ${type}`, key: `value ${type}`, typeId: typeId(type), folderId },
+				)
+			}
+		}
+
+		await clickOverflowAction(page, 'open-export')
+		const dialog = page.locator('.modal-container').filter({ hasText: 'Export format' })
+		await dialog.getByTestId('export-scope-kind').click()
+		await page.getByRole('option', { name: 'Chosen folders' }).click()
+		await dialog.getByTestId('export-scope-folders').click()
+		await page.getByRole('option', { name: folderNames[0] }).click()
+		await page.getByRole('option', { name: folderNames[1] }).click()
+		await page.keyboard.press('Escape')
+		await dialog.getByTestId('export-scope-types').click()
+		await page.getByRole('option', { name: /^(API Key|api_key)$/ }).first().click()
+		await page.keyboard.press('Escape')
+
+		const csv = await writeCsv(page)
+
+		expect(csv).toContain(`${folderNames[0]} api_key`)
+		expect(csv).toContain(`${folderNames[1]} api_key`)
+		expect(csv).not.toContain(`${folderNames[2]} api_key`)
+		for (const folderName of folderNames) {
+			expect(csv).not.toContain(`${folderName} note`)
+		}
+		expect(dataRows(csv)).toHaveLength(2)
 	})
 
 	test('one chosen type, usernames left out', async ({ page }) => {

@@ -93,6 +93,32 @@ describe('ExportDialog.onExport', () => {
 		expect(backup.mock.calls[0][4]).toEqual({ types: [], omitFields: ['totp'] })
 	})
 
+	it('narrows the chosen folders to the chosen types', async () => {
+		// @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		const wrapper = mountExport()
+		const backup = vi.spyOn(useExportStore(), 'exportBackup').mockResolvedValue()
+		wrapper.vm.scopeKind = 'folders'
+		wrapper.vm.scopeFolderIds = ['f1', 'f2']
+		wrapper.vm.scopeTypeIds = ['t-api-key']
+		await wrapper.vm.onExport()
+		expect(backup.mock.calls[0][3]).toEqual({ folderIds: ['f1', 'f2'], typeIds: ['t-api-key'] })
+	})
+
+	it('offers the type choice with chosen folders and chosen types only', async () => {
+		// @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		const wrapper = mountExport()
+		const shown = (id) => wrapper.find(`[data-testid="${id}"]`).exists()
+		expect(shown('export-scope-types')).toBe(false)
+		wrapper.vm.scopeKind = 'folders'
+		await wrapper.vm.$nextTick()
+		expect(shown('export-scope-folders')).toBe(true)
+		expect(shown('export-scope-types')).toBe(true)
+		wrapper.vm.scopeKind = 'types'
+		await wrapper.vm.$nextTick()
+		expect(shown('export-scope-folders')).toBe(false)
+		expect(shown('export-scope-types')).toBe(true)
+	})
+
 	it('exports only the selected items when opened from the bulk strip', async () => {
 		const wrapper = mountExport({
 			selectedIds: ['s1'],

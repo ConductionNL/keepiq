@@ -43,7 +43,7 @@ browser. Neither sends plaintext, a passphrase, or a derived key to the server.
 
 Every mode exports the whole vault, or only what you choose:
 
-- **Chosen folders**: the secrets in those folders and their subfolders.
+- **Chosen folders**: the secrets in those folders and their subfolders. You can narrow them to chosen types too, for example only the API keys in two folders.
 - **Chosen types**: the secrets of those types, system or custom.
 - **Selected items**: from the list, select the items and use **Export
   selected** on the selection strip; the export holds exactly those.

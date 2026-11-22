@@ -21,15 +21,17 @@ export const SCOPE_KINDS = Object.freeze(['vault', 'folders', 'types', 'selectio
  * Build the serializer scope.
  *
  * Folders and types filter on the ids chosen; none chosen is the whole vault,
- * never an empty file by accident. A selection exports exactly the selected
- * items, and an empty selection exports nothing, as the serializer reads it.
+ * never an empty file by accident. Chosen folders can be narrowed to chosen
+ * types, and a secret then has to pass both filters (D1). A selection exports
+ * exactly the selected items, and an empty selection exports nothing, as the
+ * serializer reads it.
  *
  * @param {object} choice What the user chose.
  * @param {string} choice.kind One of SCOPE_KINDS.
  * @param {Array<string>} [choice.folderIds] The chosen folders.
  * @param {Array<string>} [choice.typeIds] The chosen types.
  * @param {Array<string>} [choice.secretIds] The selected items.
- * @return {object} `{mode: 'vault'}`, `{folderIds}`, `{typeIds}` or `{mode: 'selection', secretIds}`.
+ * @return {object} `{mode: 'vault'}`, `{folderIds}`, `{folderIds, typeIds}`, `{typeIds}` or `{mode: 'selection', secretIds}`.
  * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  */
 export function buildScope(choice) {
@@ -38,11 +40,21 @@ export function buildScope(choice) {
 	if (kind === 'selection') {
 		return { mode: 'selection', secretIds: ids(choice.secretIds) }
 	}
-	if (kind === 'folders' && ids(choice.folderIds).length > 0) {
-		return { folderIds: ids(choice.folderIds) }
+	const folderIds = ids(choice?.folderIds)
+	const typeIds = ids(choice?.typeIds)
+	if (kind === 'folders') {
+		// Chosen folders may be narrowed to chosen types: the filters combine (D1).
+		const scope = {}
+		if (folderIds.length > 0) {
+			scope.folderIds = folderIds
+		}
+		if (typeIds.length > 0) {
+			scope.typeIds = typeIds
+		}
+		return Object.keys(scope).length > 0 ? scope : { mode: 'vault' }
 	}
-	if (kind === 'types' && ids(choice.typeIds).length > 0) {
-		return { typeIds: ids(choice.typeIds) }
+	if (kind === 'types' && typeIds.length > 0) {
+		return { typeIds }
 	}
 	return { mode: 'vault' }
 }

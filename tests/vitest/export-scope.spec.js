@@ -37,6 +37,22 @@ describe('buildScope', () => {
 		expect(names(serializeVault(secrets, folders, scope, { types }))).toEqual(['Mail', 'Router'])
 	})
 
+	it('exports two chosen folders narrowed to one type', () => {
+		const scope = buildScope({ kind: 'folders', folderIds: ['f1', 'f3'], typeIds: [TYPE_LOGIN] })
+		expect(scope).toEqual({ folderIds: ['f1', 'f3'], typeIds: [TYPE_LOGIN] })
+		expect(names(serializeVault(secrets, folders, scope, { types }))).toEqual(['Bank', 'Mail'])
+		const custom = buildScope({ kind: 'folders', folderIds: ['f1', 'f3'], typeIds: [TYPE_CUSTOM] })
+		expect(serializeVault(secrets, folders, custom, { types }).secrets).toHaveLength(0)
+	})
+
+	it('reads chosen folders with only types chosen as a type filter', () => {
+		expect(buildScope({ kind: 'folders', folderIds: [], typeIds: [TYPE_CUSTOM] })).toEqual({ typeIds: [TYPE_CUSTOM] })
+	})
+
+	it('ignores chosen folders when the scope is chosen types', () => {
+		expect(buildScope({ kind: 'types', folderIds: ['f1'], typeIds: [TYPE_CUSTOM] })).toEqual({ typeIds: [TYPE_CUSTOM] })
+	})
+
 	it('exports one chosen type', () => {
 		const scope = buildScope({ kind: 'types', typeIds: [TYPE_CUSTOM] })
 		expect(names(serializeVault(secrets, folders, scope, { types }))).toEqual(['Router'])
