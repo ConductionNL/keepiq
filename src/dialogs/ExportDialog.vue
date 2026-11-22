@@ -127,7 +127,7 @@
 					:options="folderOptions"
 					:reduce="(opt) => opt.value" />
 				<NcSelect
-					v-if="scopeKind === 'types'"
+					v-if="scopeKind === 'types' || scopeKind === 'folders'"
 					v-model="scopeTypeIds"
 					data-testid="export-scope-types"
 					multiple
@@ -288,7 +288,7 @@ export default {
 			scopeKind: 'vault',
 			/** The folders chosen when scopeKind is folders. */
 			scopeFolderIds: [],
-			/** The types chosen when scopeKind is types. */
+			/** The types chosen when scopeKind is types, or to narrow chosen folders. */
 			scopeTypeIds: [],
 			/** The fields to leave out (OMITTABLE_FIELDS). */
 			omitFields: [],
