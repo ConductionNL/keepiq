@@ -1,0 +1,40 @@
+# Design: share-save no longer misses partner shares without saying so
+
+## Context
+
+- `ShareSaveScope::requirement()` builds what a share-save must name. On the copy-editor path it requires the source and every other copy, no partner shares, and answers `ownerOnly` when the source has any. On the owner path it requires every copy and the active partner shares of the source, filtered to those whose owner is the caller.
+- `ShareSaveService::assertCopyEditorRequest()` refuses partner entries from a copy editor (`federated_owner_only`).
+- A transfer (`SecretOwnerTransferService::transfer`) makes the new owner the source's owner and hands its partner shares to them, but the source stays encrypted for the previous owner. Team offboarding (`TeamSecretTransferService::transfer`) needs the successor to hold a judged recipient copy already, so the successor edits through it.
+- Account deletion (`AccountDeletionService::deleteAllFor`) snapshots the user's secrets, transfers the delegated ones, and then runs `AccountShareCleanupService::detachGrantedShares` over the whole snapshot, which tombstones and unlinks every copy of a transferred secret too.
+- `FederatedShareService::create` checks only that the caller owns the row and `assertOnwardShareable()`, so a recipient's full copy passes.
+
+## Goals
+
+- Every active partner share of a secret is written by a save of its owner, or the save says it wasn't.
+- The successor of an offboarded user and the delegate of a deleted user reach the secret's partner shares with their next save.
+
+## Non-goals
+
+- Writing partner shares from a copy editor who doesn't own the source; partner shares stay the owner's.
+- Keeping other recipients' copies linked on account deletion; only the delegate's own copy is kept.
+- Repairing delegate copies that earlier account deletions already detached.
+- The received-copy refusal on the team-folder fan-out, which the user-sharing spec lists as a separate follow-up.
+- `PUT /api/v1/secrets/{id}`, which writes no copies and no partner shares by design.
+
+## Decisions
+
+**D1. The owner writes partner shares through a copy.** A copy editor whose user id is the source's owner id takes the owner's partner-share rules: `requirement()` requires the source's active partner shares and answers `ownerOnly: false`, and `assertCopyEditorRequest()` accepts partner entries. Everything else about the copy-editor path stays, including `sourceBaseUpdatedAt`. Ownership is read from the source row inside the transaction, as the completeness check already is. A delegate who doesn't own the source keeps the copy-editor rules. The clients look up and verify the certificates of the partner shares the server requires; on the copy-editor path they do so when the `incomplete` answer names partner shares, and send them with the next attempt.
+
+**D2. A partner share that isn't the owner's stops the save.** On every path that writes partner shares (D1 included), an active partner share of the source whose owner isn't the source's owner makes share-save answer 409 `partner_share_owner_mismatch` and write nothing. The server logs a warning with the secret id and the share ids. The clients show the refusal as an error that names the cause and the remedy: an administrator runs `occ maintenance:repair`, whose `ReownTransferredPartnerShares` step hands the share to the secret's owner. Refusing, not reporting, keeps the drift visible until it is fixed, and such a share isn't served to the partner anyway.
+
+**D3. A received copy is never a partner share's source.** `FederatedShareService::create` refuses a source that is a recipient's copy, with the test group shares use (`ShareRowJudge::isReceivedCopy`) and the refusal `register-batch` gives, `not_shareable`. There is no delegate exception: partner shares are the owner's (D1), and a delegate shares with a partner only once they own the secret. Which share rows count follows the runtime rules for judged rows; a row the pending quarantine scan cannot judge answers 409 `share_scan_pending`, so an unclear case never lets a copy out, and a row the scan quarantines doesn't make its secret a copy.
+
+**D4. Partner shares made from a copy before D3 are reported.** share-save counts the active partner shares whose source is a copy the save writes: the editor's own copy on the copy-editor path, and every copy the save is required to write and doesn't skip. The source's own partner shares are not counted: the save writes them (owner path and D1), or `ownerOnly` already reports them. The count is answered as `federated.notReached`, and the clients say that this many partner organisations got the secret from a copy and didn't get the change. The share-save doesn't write them: they hang off a copy whose holder may not be the caller, so the caller can't be required to encrypt for them, and D3 keeps new ones from appearing. A count shows no partner, cloud id or share id.
+
+**D5. Account deletion keeps the delegate's own copy.** `transferDelegatedSecrets` reports which secrets it handed to which delegate. For those secrets, `detachGrantedShares` leaves the share row whose target is the new owner, and the copy it links, untouched, when the runtime row judge trusts that row; every other copy is detached as before, and so is the delegate's when the row isn't trusted. The kept copy makes the delegate a copy editor who owns the source, so D1 applies. Group-share definitions of the secret are still removed, so a kept row that came from one of them loses its `groupShareId` and stays as a direct share.
+
+## Risks and trade-offs
+
+- D2 blocks an owner's value edit until an administrator runs the repair step. The repair step runs after every upgrade (`post-migration`), so this only happens with drift written after it last ran.
+- D4 leaves partner shares made from a copy on their old value. Their partners keep that value until the copy holder revokes the share; the clients say so on every save that touches them.
+- D5 keeps one share row of a deleted user's secret. It names the delegate and the secret only, so no personal data of the deleted user stays on it.
