@@ -23,6 +23,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
@@ -55,6 +56,7 @@ class ShareSaveScope {
 	 * @param FederatedShareMapper $federatedShares Outbound partner shares
 	 * @param ShareSyncService $sync Who may write for every copy
 	 * @param ShareSyncGuards $guards Whether the source is writable, the live copies and their holders' vault keys
+	 * @param SecretDelegationMapper $delegations Who owned the source before, as its delegations name them
 	 * @param LoggerInterface|null $logger Warns about partner shares that are not the secret owner's
 	 *
 	 * @return void
@@ -67,6 +69,7 @@ class ShareSaveScope {
 		private FederatedShareMapper $federatedShares,
 		private ShareSyncService $sync,
 		private ShareSyncGuards $guards,
+		private SecretDelegationMapper $delegations,
 		private ?LoggerInterface $logger = null,
 	) {
 	}//end __construct()
@@ -225,8 +228,10 @@ class ShareSaveScope {
 	}//end writerOn()
 
 	/**
-	 * Refuse partner entries from a caller who does not own the source:
+	 * Refuse partner entries from a caller who does not own the source and never did:
 	 * only the secret's owner writes partner shares, through the source or their own copy.
+	 * A former owner, whose secret was transferred away after a save asked them for its partner shares, passes,
+	 * so the completeness check answers them as it would under the lock: `incomplete`, with no partner share required.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param ShareSaveEntries $entries The request's lists
@@ -239,13 +244,36 @@ class ShareSaveScope {
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
 	public function assertMayNamePartners(ShareSavePath $path, ShareSaveEntries $entries, string $userId): void {
-		if ($entries->federatedCount() > 0 && $path->ownsSource(userId: $userId) === false) {
-			throw new ShareSaveRefusal(
-				error: 'federated_owner_only',
-				message: 'Only the owner writes partner shares'
-			);
+		if ($entries->federatedCount() === 0 || $path->ownsSource(userId: $userId) === true
+			|| $this->ownedBefore(source: $path->source, userId: $userId) === true
+		) {
+			return;
 		}
+
+		throw new ShareSaveRefusal(
+			error: 'federated_owner_only',
+			message: 'Only the owner writes partner shares'
+		);
 	}//end assertMayNamePartners()
+
+	/**
+	 * Whether the caller owned the source before: a delegation of it names them as the owner who handed it on.
+	 * Every transfer away from a living owner records one, as each delegation names the owner it was made by.
+	 *
+	 * @param Secret $source The source
+	 * @param string $userId The caller
+	 *
+	 * @return bool
+	 */
+	private function ownedBefore(Secret $source, string $userId): bool {
+		foreach ($this->delegations->findBySecret(secretId: $source->getId()) as $delegation) {
+			if ($delegation->getOriginalOwnerId() === $userId) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end ownedBefore()
 
 	/**
 	 * Refuse lists that are not exactly the rows to write:

@@ -351,6 +351,7 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 				sync: $sync,
 				guards: $guards,
 				rowJudge: $judge,
+				delegations: $this->createMock(SecretDelegationMapper::class),
 			),
 			$guards,
 			$sync,

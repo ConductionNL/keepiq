@@ -15,6 +15,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
 use OCA\Keepiq\Db\ShareTarget;
@@ -327,6 +328,7 @@ final class ShareSaveScopeRefusalsTest extends TestCase {
 			federatedShares: $this->createMock(FederatedShareMapper::class),
 			sync: $this->sync,
 			guards: $this->guards,
+			delegations: $this->createMock(SecretDelegationMapper::class),
 		);
 	}//end scope()
 }//end class
