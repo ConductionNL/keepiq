@@ -18,7 +18,8 @@
  *    permanent, owner reassigned). The user's link shares on them are deleted
  *    with the rest of the user's link shares, not handed to the delegate.
  *    Links the user made that an earlier transfer handed to someone else stay
- *    with their holder; their maker is recorded as a deleted account.
+ *    with their holder; their maker is recorded as a deleted account. The
+ *    delegate's own copy stays linked when its share row is trusted.
  *  - Recipient copies of secrets the user shared are detached: the link is
  *    severed and the copy is tombstoned with a non-personal reason. No personal
  *    data of the deleted user is ever written to a recipient's copy.
@@ -128,12 +129,12 @@ class AccountDeletionService implements AccountDeletionServiceInterface {
 		// with that holder, with a deleted-account marker as their maker.
 		$report->linkMakersForgotten = $this->linkShareMapper->forgetOriginalCreator(userId: $userId);
 
-		$this->shareCleanup->transferDelegatedSecrets(
+		$handedTo = $this->shareCleanup->transferDelegatedSecrets(
 			userId: $userId,
 			ownedSecrets: $ownedSecrets,
 			report: $report
 		);
-		$this->shareCleanup->detachGrantedShares(ownedSecrets: $ownedSecrets, report: $report);
+		$this->shareCleanup->detachGrantedShares(ownedSecrets: $ownedSecrets, report: $report, handedTo: $handedTo);
 		$this->shareCleanup->removeReceivedShares(userId: $userId, report: $report);
 		$this->shareCleanup->removeShareSaveStages(userId: $userId);
 

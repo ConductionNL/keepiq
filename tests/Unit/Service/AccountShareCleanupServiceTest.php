@@ -82,6 +82,7 @@ class AccountShareCleanupServiceTest extends TestCase {
 			stageMapper: $this->createMock(ShareSaveStageMapper::class),
 			ownerTransfer: $this->createMock(SecretOwnerTransferService::class),
 			quarantineScan: $this->clearedQuarantineScan(),
+			rowJudge: $this->shareRowJudge(targets: $this->shareMapper, secrets: $this->secretMapper),
 		);
 	}//end setUp()
 
@@ -132,7 +133,7 @@ class AccountShareCleanupServiceTest extends TestCase {
 			->with('copy-1', AccountShareCleanupService::TOMBSTONE_REASON);
 
 		$report = new DeletionReport();
-		$this->service->detachGrantedShares([$this->secret('src-1', 'user', 'alice')], $report);
+		$this->service->detachGrantedShares([$this->secret('src-1', 'user', 'alice')], $report, []);
 		$this->assertSame(1, $report->sharesDetached);
 	}//end testTombstonesACopyHeldByItsTarget()
 
@@ -150,7 +151,7 @@ class AccountShareCleanupServiceTest extends TestCase {
 		$this->secretMapper->expects($this->never())->method('tombstone');
 
 		$report = new DeletionReport();
-		$this->service->detachGrantedShares([$this->secret('src-1', 'user', 'alice')], $report);
+		$this->service->detachGrantedShares([$this->secret('src-1', 'user', 'alice')], $report, []);
 		$this->assertSame(0, $report->sharesDetached);
 	}//end testNeverTombstonesACopyNotHeldByItsTarget()
 

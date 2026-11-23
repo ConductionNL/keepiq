@@ -37,10 +37,11 @@ use OCP\IDBConnection;
  *
  * @extends QBMapper<ShareTarget>
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
- *   A mapper's public surface is its query set. The eleventh, findPage(),
- *   lets the share quarantine scan job resolve every live copy a page at a
- *   time; splitting share-row queries across two mappers over one table
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 12 against a threshold of 10.
+ *   A mapper's public surface is its query set: findPage() lets the share
+ *   quarantine scan job resolve every live copy a page at a time, and
+ *   deleteBySourceSecretExcept() lets account deletion keep the delegate's
+ *   row; splitting share-row queries across two mappers over one table
  *   would only move them.
  */
 class ShareTargetMapper extends QBMapper {
@@ -145,6 +146,25 @@ class ShareTargetMapper extends QBMapper {
 
 		$qb->executeStatement();
 	}//end deleteBySourceSecret()
+
+	/**
+	 * Delete every share target of a source secret but one.
+	 *
+	 * @param string $sourceSecretId The source secret ID
+	 * @param string $keepId         The share target to keep
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 */
+	public function deleteBySourceSecretExcept(string $sourceSecretId, string $keepId): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('source_secret_id', $qb->createNamedParameter($sourceSecretId)))
+			->andWhere($qb->expr()->neq('id', $qb->createNamedParameter($keepId)));
+
+		$qb->executeStatement();
+	}//end deleteBySourceSecretExcept()
 
 	/**
 	 * Find the live share target identifying a (source secret, recipient user)

@@ -43,7 +43,11 @@ use OCA\Keepiq\Service\AccountDeletionService;
 use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\AccountSuiteCleanupService;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
+use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
@@ -85,6 +89,7 @@ class AccountDeletionServiceTest extends TestCase {
 			'passkey' => $this->createMock(PasskeyMapper::class),
 			'stage' => $this->createMock(ShareSaveStageMapper::class),
 			'federated' => $this->createMock(FederatedShareMapper::class),
+			'scan' => $this->createMock(ShareQuarantineScanner::class),
 		];
 
 		return new AccountDeletionService(
@@ -106,7 +111,8 @@ class AccountDeletionServiceTest extends TestCase {
 					federatedShares: $this->m['federated'],
 					linkShares: $this->m['link'],
 				),
-				quarantineScan: $this->clearedQuarantineScan(),
+				quarantineScan: $this->m['scan'],
+				rowJudge: $this->shareRowJudge(targets: $this->m['share'], secrets: $this->m['secret'], scanner: $this->m['scan']),
 			),
 			suiteCleanup: new AccountSuiteCleanupService(
 				suiteMapper: $this->m['suite'],
@@ -532,4 +538,301 @@ class AccountDeletionServiceTest extends TestCase {
 		$this->assertSame(2, $report->jsonSerialize()['emergencyContactsDeleted']);
 		$this->assertSame(2, $report->jsonSerialize()['passkeysDeleted']);
 	}//end testErasureRemovesEscrowedEmergencyKeysAndPasskeys()
+
+	/**
+	 * The rows of the D5 cases, by id: Alice's `sec-1`, Dave's copy `c-dave`
+	 * and Carol's copy `c-carol`.
+	 *
+	 * @var array<string,Secret>
+	 */
+	private array $secrets = [];
+
+	/**
+	 * The live share rows, by id.
+	 *
+	 * @var array<string,ShareTarget>
+	 */
+	private array $shareRows = [];
+
+	/**
+	 * The group shares of `sec-1`.
+	 *
+	 * @var list<GroupShare>
+	 */
+	private array $groupShares = [];
+
+	/**
+	 * The copies tombstoned, in order.
+	 *
+	 * @var list<string>
+	 */
+	private array $tombstoned = [];
+
+	/**
+	 * Alice's `sec-1` is shared with Dave and Carol, and Dave holds an active
+	 * delegation on it. The mappers keep their rows in this test, so a second
+	 * run of the cascade sees what the first one left.
+	 *
+	 * @param string|null $daveGroupShareId The group share Dave's row came from, if any
+	 *
+	 * @return AccountDeletionService
+	 */
+	private function sharedWithTheDelegate(?string $daveGroupShareId = null): AccountDeletionService {
+		$service = $this->build();
+		$this->secrets = [
+			'sec-1' => $this->secret('sec-1'),
+			'c-dave' => $this->secret('c-dave', 'dave'),
+			'c-carol' => $this->secret('c-carol', 'carol'),
+		];
+		$this->shareRows = [
+			'st-dave' => $this->shareRow(id: 'st-dave', copyId: 'c-dave', target: 'dave', groupShareId: $daveGroupShareId),
+			'st-carol' => $this->shareRow(id: 'st-carol', copyId: 'c-carol', target: 'carol'),
+		];
+		if ($daveGroupShareId !== null) {
+			$groupShare = new GroupShare();
+			$groupShare->setId($daveGroupShareId);
+			$groupShare->setSecretId('sec-1');
+			$this->groupShares = [$groupShare];
+		}
+
+		$delegation = new SecretDelegation();
+		$delegation->setSecretId('sec-1');
+		$delegation->setOriginalOwnerId('alice');
+		$delegation->setDelegatedTo('dave');
+		$this->m['delegation']->method('findByOriginalOwner')->willReturn([$delegation]);
+
+		$this->wireSecretTable();
+		$this->wireShareTable();
+		$this->m['group']->method('findBySecret')->willReturnCallback(fn (string $secretId): array => array_values(
+			array_filter($this->groupShares, static fn (GroupShare $share): bool => $share->getSecretId() === $secretId)
+		));
+		$this->m['group']->method('deleteBySecret')->willReturnCallback(function (string $secretId): void {
+			$this->groupShares = array_values(array_filter($this->groupShares, static fn (GroupShare $share): bool => $share->getSecretId() !== $secretId));
+		});
+
+		$this->m['link']->method('findByCreatedBy')->willReturn([]);
+		$this->m['suite']->method('findByOwner')->willReturn([]);
+		$this->m['folder']->method('deleteByOwnerUser')->willReturn(0);
+		$this->m['request']->method('deleteByCreatedBy')->willReturn(0);
+		$this->m['suite']->method('deleteByOwnerUser')->willReturn(0);
+		$this->m['migration']->method('deleteBySuiteIds')->willReturn(0);
+
+		return $service;
+	}//end sharedWithTheDelegate()
+
+	/**
+	 * A share row of `sec-1`.
+	 *
+	 * @param string $id The row id
+	 * @param string $copyId The copy it names
+	 * @param string $target Its target
+	 * @param string|null $groupShareId The group share it came from, if any
+	 *
+	 * @return ShareTarget
+	 */
+	private function shareRow(string $id, string $copyId, string $target, ?string $groupShareId = null): ShareTarget {
+		$row = new ShareTarget();
+		$row->setId($id);
+		$row->setSourceSecretId('sec-1');
+		$row->setSecretId($copyId);
+		$row->setTargetUserId($target);
+		$row->setGroupShareId($groupShareId);
+
+		return $row;
+	}//end shareRow()
+
+	/**
+	 * The secret mapper over $this->secrets.
+	 *
+	 * @return void
+	 */
+	private function wireSecretTable(): void {
+		$secrets = $this->m['secret'];
+		$secrets->method('findByOwner')->willReturnCallback(fn (string $ownerType, string $ownerId): array => array_values(
+			array_filter($this->secrets, static fn (Secret $secret): bool => $secret->getOwnerId() === $ownerId)
+		));
+		$secrets->method('findById')->willReturnCallback(
+			fn (string $id): Secret => ($this->secrets[$id] ?? throw new DoesNotExistException('none'))
+		);
+		$secrets->method('reassignOwner')->willReturnCallback(function (string $secretId, string $newOwnerId): void {
+			$this->secrets[$secretId]->setOwnerId($newOwnerId);
+		});
+		$secrets->method('tombstone')->willReturnCallback(function (string $secretId): void {
+			$this->tombstoned[] = $secretId;
+		});
+		$secrets->method('deleteByOwnerUser')->willReturnCallback(function (string $ownerId): int {
+			$before = count($this->secrets);
+			$this->secrets = array_filter($this->secrets, static fn (Secret $secret): bool => $secret->getOwnerId() !== $ownerId);
+			return $before - count($this->secrets);
+		});
+	}//end wireSecretTable()
+
+	/**
+	 * The share-target mapper over $this->shareRows.
+	 *
+	 * @return void
+	 */
+	private function wireShareTable(): void {
+		$shares = $this->m['share'];
+		$bySource = fn (string $sourceId): array => array_values(
+			array_filter($this->shareRows, static fn (ShareTarget $row): bool => $row->getSourceSecretId() === $sourceId)
+		);
+		$shares->method('findBySourceSecret')->willReturnCallback($bySource);
+		$shares->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			function (string $sourceId, string $targetUserId) use ($bySource): ShareTarget {
+				$rows = array_values(array_filter($bySource($sourceId), static fn (ShareTarget $row): bool => $row->getTargetUserId() === $targetUserId));
+				if (count($rows) > 1) {
+					throw new MultipleObjectsReturnedException('two');
+				}
+
+				return ($rows[0] ?? throw new DoesNotExistException('none'));
+			}
+		);
+		$shares->method('findByRecipientSecret')->willThrowException(new DoesNotExistException('none'));
+		$shares->method('deleteBySourceSecret')->willReturnCallback(function (string $sourceId): void {
+			$this->shareRows = array_filter($this->shareRows, static fn (ShareTarget $row): bool => $row->getSourceSecretId() !== $sourceId);
+		});
+		$shares->method('deleteBySourceSecretExcept')->willReturnCallback(function (string $sourceId, string $keepId): void {
+			$this->shareRows = array_filter(
+				$this->shareRows,
+				static fn (ShareTarget $row): bool => $row->getSourceSecretId() !== $sourceId || $row->getId() === $keepId
+			);
+		});
+		$shares->method('update')->willReturnCallback(function (ShareTarget $row): ShareTarget {
+			$this->shareRows[$row->getId()] = $row;
+			return $row;
+		});
+		$shares->method('findByTargetUser')->willReturn([]);
+		$shares->method('deleteByTargetUser')->willReturn(0);
+	}//end wireShareTable()
+
+	/**
+	 * The delegate's copy stays linked and untouched; the other recipient's
+	 * copy is detached as before.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#scenario-the-delegate-keeps-their-linked-copy
+	 */
+	public function testTheDelegateKeepsTheirLinkedCopy(): void {
+		$service = $this->sharedWithTheDelegate();
+
+		$report = $service->deleteAllFor('alice');
+
+		$this->assertSame('dave', $this->secrets['sec-1']->getOwnerId());
+		$this->assertSame(['st-dave'], array_keys($this->shareRows));
+		$this->assertSame('c-dave', $this->shareRows['st-dave']->getSecretId());
+		$this->assertSame(['c-carol'], $this->tombstoned);
+		$this->assertSame(1, $report->sharesDetached);
+	}//end testTheDelegateKeepsTheirLinkedCopy()
+
+	/**
+	 * A delegate's row from a group share stays their link once the group
+	 * share is removed: it no longer names the group share, so no grant
+	 * reader looks for one.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 */
+	public function testTheDelegatesRowFromAGroupShareStaysTheirLink(): void {
+		$service = $this->sharedWithTheDelegate(daveGroupShareId: 'gs-1');
+
+		$service->deleteAllFor('alice');
+
+		$this->assertSame([], $this->groupShares);
+		$this->assertSame(['st-dave'], array_keys($this->shareRows));
+		$this->assertNull($this->shareRows['st-dave']->getGroupShareId());
+		$this->assertSame(['c-carol'], $this->tombstoned);
+	}//end testTheDelegatesRowFromAGroupShareStaysTheirLink()
+
+	/**
+	 * Every way the delegate's share row is not trusted by the row judge.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function untrustedDelegateRows(): array {
+		return [
+			'the pending scan quarantines it' => ['quarantined'],
+			'the pending scan cannot judge it' => ['unjudged'],
+			'it names a copy the delegate does not hold' => ['foreign'],
+			'two rows name the delegate' => ['ambiguous'],
+		];
+	}//end untrustedDelegateRows()
+
+	/**
+	 * A delegate's row the row judge does not trust is detached like any
+	 * other: nothing is kept, and the copy is tombstoned only as before.
+	 *
+	 * @param string $how How the row is untrusted
+	 *
+	 * @return void
+	 *
+	 * @dataProvider untrustedDelegateRows
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 */
+	public function testAnUntrustedDelegateRowIsDetached(string $how): void {
+		$service = $this->sharedWithTheDelegate();
+		$expectTombstoned = ['c-dave', 'c-carol'];
+		if ($how === 'quarantined' || $how === 'unjudged') {
+			$held = ShareQuarantineScanner::HELD_QUARANTINED;
+			if ($how === 'unjudged') {
+				$held = ShareQuarantineScanner::HELD_UNJUDGED;
+			}
+
+			$this->m['scan']->method('heldBack')->willReturnCallback(
+				static fn (ShareTarget $row): ?string => ($row->getId() === 'st-dave') ? $held : null
+			);
+			// The copy of a row the scan holds back is left as it is.
+			$expectTombstoned = ['c-carol'];
+		} elseif ($how === 'foreign') {
+			$this->secrets['c-dave']->setOwnerId('mallory');
+			$expectTombstoned = ['c-carol'];
+		} else {
+			$this->secrets['c-dave-2'] = $this->secret('c-dave-2', 'dave');
+			$this->shareRows['st-dave-2'] = $this->shareRow(id: 'st-dave-2', copyId: 'c-dave-2', target: 'dave', groupShareId: 'gs-1');
+			$expectTombstoned = ['c-dave', 'c-carol', 'c-dave-2'];
+		}
+
+		$this->m['share']->expects($this->never())->method('deleteBySourceSecretExcept');
+		$this->m['share']->expects($this->never())->method('update');
+
+		$service->deleteAllFor('alice');
+
+		$this->assertSame('dave', $this->secrets['sec-1']->getOwnerId());
+		$this->assertSame([], $this->shareRows);
+		$this->assertSame($expectTombstoned, $this->tombstoned);
+	}//end testAnUntrustedDelegateRowIsDetached()
+
+	/**
+	 * Running the cascade again after the delegate kept their copy changes
+	 * nothing more: the secret is the delegate's, so it is not Alice's to
+	 * detach.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/gdpr-compliance/spec.md
+	 */
+	public function testARerunAfterTheDelegateKeptTheirCopyChangesNothing(): void {
+		$service = $this->sharedWithTheDelegate(daveGroupShareId: 'gs-1');
+		$service->deleteAllFor('alice');
+		$after = [
+			'owner' => $this->secrets['sec-1']->getOwnerId(),
+			'rows' => array_map(static fn (ShareTarget $row): array => $row->jsonSerialize(), $this->shareRows),
+			'tombstoned' => $this->tombstoned,
+			'groupShares' => $this->groupShares,
+		];
+
+		$report = $service->deleteAllFor('alice');
+
+		$this->assertSame($after, [
+			'owner' => $this->secrets['sec-1']->getOwnerId(),
+			'rows' => array_map(static fn (ShareTarget $row): array => $row->jsonSerialize(), $this->shareRows),
+			'tombstoned' => $this->tombstoned,
+			'groupShares' => $this->groupShares,
+		]);
+		$this->assertSame(0, $report->secretsTransferred);
+		$this->assertSame(0, $report->sharesDetached);
+	}//end testARerunAfterTheDelegateKeptTheirCopyChangesNothing()
 }//end class

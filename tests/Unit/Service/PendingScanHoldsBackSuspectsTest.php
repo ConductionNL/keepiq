@@ -734,9 +734,14 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			stageMapper: $this->createMock(ShareSaveStageMapper::class),
 			ownerTransfer: $this->createMock(SecretOwnerTransferService::class),
 			quarantineScan: $this->scanner(pending: $pending),
+			rowJudge: $this->shareRowJudge(
+				targets: new ShareTargetMapper(db: $this->db),
+				secrets: new SecretMapper(db: $this->db),
+				scanner: $this->scanner(pending: $pending)
+			),
 		);
 
-		$service->detachGrantedShares(ownedSecrets: [$this->sourceA], report: new DeletionReport());
+		$service->detachGrantedShares(ownedSecrets: [$this->sourceA], report: new DeletionReport(), handedTo: []);
 
 		$this->assertSame(($pending === false), $this->storedV()?->getTombstonedAt() !== null);
 		$this->assertSame(($pending === true ? 1 : 0), $this->quarantineAudits(row: $row));
