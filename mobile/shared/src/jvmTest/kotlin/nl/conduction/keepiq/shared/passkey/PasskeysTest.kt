@@ -461,6 +461,16 @@ class PasskeysTest {
     }
 
     @Test
+    fun aReadAgainShowsEachReadToItsCallerFailedOrNot() = runTest {
+        // Android's provider feeds AutofillIndexHub from this callback.
+        val seen = mutableListOf<VaultState>()
+        Passkeys.reread(api, keys) { seen += it }
+        manifestStatus = HttpStatusCode.ServiceUnavailable
+        assertFailsWith<WriteProblemException> { Passkeys.reread(api, keys) { seen += it } }
+        assertEquals(listOf(null, WriteProblemKind.FAILED), seen.map { it.readProblem?.kind })
+    }
+
+    @Test
     fun aCounterIsNotWrittenOnALoginWhoseKeyTheIndexDoesNotHold() = runTest {
         val (record, _) = made("login.example.nl", 4)
         freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","totp":"${enc("ANOTHERSEED")}","passkeys":"${enc(array(record))}","updatedAt":"$UPDATED_AT"}"""

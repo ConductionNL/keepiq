@@ -488,7 +488,7 @@ struct ItemEditView: View {
             } else if let refused = outcome as? WriteResult.Refused {
                 problem = refused.problem
             } else {
-                problem = WriteProblem(kind: .failed, serverMessage: nil, status: 0, partners: [], requiredVersion: nil)
+                problem = WriteProblem(kind: .failed)
             }
         }
     }

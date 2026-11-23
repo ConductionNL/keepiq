@@ -16,6 +16,7 @@ import nl.conduction.keepiq.shared.crypto.ClientData
 import nl.conduction.keepiq.shared.crypto.PasskeyCredential
 import nl.conduction.keepiq.shared.crypto.WebAuthn
 import nl.conduction.keepiq.shared.send.IsoTime
+import nl.conduction.keepiq.shared.sync.SyncTrigger
 import nl.conduction.keepiq.shared.vault.ItemCodec
 import nl.conduction.keepiq.shared.vault.ItemParts
 import nl.conduction.keepiq.shared.vault.LoginGoneException
@@ -26,6 +27,7 @@ import nl.conduction.keepiq.shared.vault.ServerUnreachableException
 import nl.conduction.keepiq.shared.vault.ShareSave
 import nl.conduction.keepiq.shared.vault.ShareSaveException
 import nl.conduction.keepiq.shared.vault.VaultKeys
+import nl.conduction.keepiq.shared.vault.VaultRepository
 import nl.conduction.keepiq.shared.vault.VaultRow
 import nl.conduction.keepiq.shared.vault.VaultState
 import nl.conduction.keepiq.shared.vault.WriteProblemException
@@ -99,11 +101,13 @@ object Passkeys {
     }
 
     /**
-     * The index of the vault read again for a `resync`, or a
-     * [WriteProblemException] when that read went offline, locked the vault
-     * or was refused ([VaultState.readProblem]).
+     * The vault read again from the server for a `resync`, by a provider
+     * that holds no store of it, as its index; a [WriteProblemException] when
+     * that read went offline, locked the vault or was refused
+     * ([VaultState.readProblem]). [onRefreshed] sees the read either way.
      */
-    fun reread(state: VaultState): AutofillIndex {
+    suspend fun reread(api: KeepiqApi, keys: VaultKeys, onRefreshed: (VaultState) -> Unit = {}): AutofillIndex {
+        val state = VaultRepository(api, keys, null, null, MobileSession::nowMillis, onRefreshed).refresh(SyncTrigger.MANUAL)
         state.readProblem?.let { throw WriteProblemException(it) }
         return AutofillIndex.of(state)
     }

@@ -70,10 +70,7 @@ import nl.conduction.keepiq.shared.passkey.ExcludedCredentialException
 import nl.conduction.keepiq.shared.passkey.PasskeyChoice
 import nl.conduction.keepiq.shared.passkey.Passkeys
 import nl.conduction.keepiq.shared.passkey.WebAuthnJson
-import nl.conduction.keepiq.shared.sync.SyncTrigger
 import nl.conduction.keepiq.shared.vault.VaultKeys
-import nl.conduction.keepiq.shared.vault.VaultRepository
-import nl.conduction.keepiq.shared.vault.VaultState
 
 /**
  * What happens after a pick in Android's Credential Manager sheet (task
@@ -239,15 +236,12 @@ class CredentialProviderActivity : FragmentActivity() {
     private suspend fun refreshIndex(accountId: String, keys: VaultKeys, always: Boolean) {
         if (!always && core.indexOf(accountId).entries.isNotEmpty()) return
         val api = core.api(accountId) ?: return
-        runCatching { read(api, accountId, keys) }
+        runCatching { reread(api, accountId, keys) }
     }
 
-    private suspend fun read(api: KeepiqApi, accountId: String, keys: VaultKeys): VaultState =
-        VaultRepository(api, keys, null, null, { System.currentTimeMillis() }, { AutofillIndexHub.refreshed(accountId, it, keys) })
-            .refresh(SyncTrigger.MANUAL)
-
-    /** The index read again, for a write that found the item changed since it was built; a read that fails throws ([Passkeys.reread]). */
-    private suspend fun reread(api: KeepiqApi, accountId: String, keys: VaultKeys): AutofillIndex = Passkeys.reread(read(api, accountId, keys))
+    /** The index read again, which [AutofillIndexHub] sees too; a read that fails throws ([Passkeys.reread]). */
+    private suspend fun reread(api: KeepiqApi, accountId: String, keys: VaultKeys): AutofillIndex =
+        Passkeys.reread(api, keys) { AutofillIndexHub.refreshed(accountId, it, keys) }
 
     private fun getError(e: GetCredentialException): Intent = Intent().also { PendingIntentHandler.setGetCredentialException(it, e) }
 

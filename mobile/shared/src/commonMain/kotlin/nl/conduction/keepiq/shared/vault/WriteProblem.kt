@@ -91,6 +91,9 @@ data class WriteProblem(
     val requiredVersion: String? = null,
     val lockReason: LockReason? = null,
 ) {
+    /** Swift gets no default arguments, so it builds a problem of just a kind with this `init(kind:)`. */
+    constructor(kind: WriteProblemKind) : this(kind, null)
+
     /** The partners' cloud ids, for the message. */
     val partnerNames: String get() = partners.joinToString(", ") { it.recipientCloudId }
 
