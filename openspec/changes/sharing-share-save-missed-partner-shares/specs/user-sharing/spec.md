@@ -47,7 +47,7 @@ Both paths share only an ORIGINAL secret as the source. A received copy — a se
 - AND the other rows of the batch are handled as usual, as with any other per-row status
 
 ### Requirement: A share-save names every copy or is refused
-The server MUST answer 409 `incomplete` with the required lists, and change nothing, unless `copies` plus `skipped` name exactly the copies the caller must write and `federated` plus `suspend` name exactly the active partner shares of the source. On the owner path the required copies MUST be every copy of the source that has not expired; on the copy-editor path they MUST be the source and every other copy. Partner shares MUST be required only when the caller owns the source, on the owner path or the copy-editor path; any other copy editor MUST NOT send any, and the response MUST say whether partner shares exist that the save couldn't reach. A `no_vault_key` skip MUST be refused when the holder has an active vault key. The check MUST be repeated inside the transaction.
+The server MUST answer 409 `incomplete` with the required lists, and change nothing, unless `copies` plus `skipped` name exactly the copies the caller must write and `federated` plus `suspend` name exactly the active partner shares of the source. On the owner path the required copies MUST be every copy of the source that has not expired; on the copy-editor path they MUST be the source and every other copy. Partner shares MUST be required only when the caller owns the source, on the owner path or the copy-editor path; any other copy editor MUST NOT send any, the server MUST answer such a save or stage call with 409 `incomplete` requiring none, and the response MUST say whether partner shares exist that the save couldn't reach. A `no_vault_key` skip MUST be refused when the holder has an active vault key. The check MUST be repeated inside the transaction.
 
 #### Scenario: A recipient added during the save is caught
 - GIVEN an owner who encrypted a change for one recipient
@@ -64,10 +64,8 @@ The server MUST answer 409 `incomplete` with the required lists, and change noth
 - GIVEN Dave owns a secret, saves it through his own copy, and the secret has an active partner share
 - WHEN Dave's share-save names no partner shares
 - THEN the server MUST answer 409 `incomplete` naming that partner share
-- AND a delegate who never owned the secret MUST still be refused with `federated_owner_only` when their save names it
-
-#### Scenario: A former owner's retry is answered as incomplete
-- GIVEN Dave saved through his own copy, got 409 `incomplete` naming the secret's partner shares, and the secret passed to someone else before his retry
-- WHEN Dave's retry names those partner shares
-- THEN the server MUST answer 409 `incomplete` requiring no partner shares, and write nothing
-- AND Dave's browser MUST drop the partner shares and send the save again as a copy editor
+#### Scenario: A copy editor who doesn't own the secret names partner shares
+- GIVEN Carol is a delegate or write-grade editor of a secret she doesn't own, or Dave saved through his own copy, got 409 `incomplete` naming the secret's partner shares, and the secret passed to someone else before his retry
+- WHEN their share-save, or any stage call of it, names partner shares to write or suspend
+- THEN the server MUST answer 409 `incomplete` requiring no partner shares, naming only the ids they sent as unexpected, and write nothing
+- AND their browser MUST drop the partner shares and send the save again as a copy editor
