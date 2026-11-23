@@ -64,4 +64,10 @@ The server MUST answer 409 `incomplete` with the required lists, and change noth
 - GIVEN Dave owns a secret, saves it through his own copy, and the secret has an active partner share
 - WHEN Dave's share-save names no partner shares
 - THEN the server MUST answer 409 `incomplete` naming that partner share
-- AND a delegate who does not own the secret MUST still be refused with `federated_owner_only` when their save names it
+- AND a delegate who never owned the secret MUST still be refused with `federated_owner_only` when their save names it
+
+#### Scenario: A former owner's retry is answered as incomplete
+- GIVEN Dave saved through his own copy, got 409 `incomplete` naming the secret's partner shares, and the secret passed to someone else before his retry
+- WHEN Dave's retry names those partner shares
+- THEN the server MUST answer 409 `incomplete` requiring no partner shares, and write nothing
+- AND Dave's browser MUST drop the partner shares and send the save again as a copy editor
