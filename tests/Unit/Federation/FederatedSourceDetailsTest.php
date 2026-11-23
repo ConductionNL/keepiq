@@ -44,6 +44,7 @@ use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareRowJudge;
@@ -165,6 +166,7 @@ class FederatedSourceDetailsTest extends TestCase {
 		$messenger = new FederatedShareMessenger($ocm, $factory, $this->cloudIdManager(), $this->createMock(IUserManager::class));
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueBool')->willReturn(false);
+		$delivery = new FederatedNotificationDelivery($shareMapper, $messenger, $audit, $secrets);
 		$federated = new FederatedShareService(
 			shareMapper: $shareMapper,
 			secretMapper: $secrets,
@@ -177,8 +179,9 @@ class FederatedSourceDetailsTest extends TestCase {
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: $messenger,
 			random: $this->createMock(ISecureRandom::class),
-			delivery: new FederatedNotificationDelivery($shareMapper, $messenger, $audit),
+			delivery: $delivery,
 			audit: $audit,
+			revoker: new PartnerShareRevoker($shareMapper, $delivery, $audit),
 		);
 
 		$typeService = $this->createMock(SecretTypeService::class);

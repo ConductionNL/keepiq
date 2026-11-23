@@ -57,6 +57,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -154,6 +155,7 @@ class SecretService implements SecretServiceInterface {
 	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
 	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 * @param BrokerMintRecorder|null $brokerMints Stores a broker mint's notAfter and who it was minted for
+	 * @param PartnerShareRevoker|null $partnerShares Revokes the partner shares of a deleted secret; without it a delete is refused
 	 *
 	 * @return void
 	 */
@@ -185,6 +187,7 @@ class SecretService implements SecretServiceInterface {
 		private ?SecretUrlMapper $urlMapper = null,
 		private ?PrivilegedCopyGate $privilegedGate = null,
 		private ?BrokerMintRecorder $brokerMints = null,
+		private ?PartnerShareRevoker $partnerShares = null,
 	) {
 	}//end __construct()
 
@@ -1485,25 +1488,46 @@ class SecretService implements SecretServiceInterface {
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws RuntimeException When the partner shares cannot be ended; nothing is deleted then
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
 	 */
 	public function delete(string $id, string $userId, ?string $purgeReason = null): void {
 		$secret = $this->loadOwned(id: $id, userId: $userId);
+		$deletion = new SecretDeletion(userId: $userId, purgeReason: $purgeReason);
 
+		// First, so a delete that stops part-way leaves the partner shares revoked rather than live.
+		$this->endPartnerShares(secretId: $id, deletion: $deletion);
 		$this->deleteSharingGraph(secretId: $id);
 		$this->deleteSecretData(secretId: $id);
 		$this->mapper->delete($secret);
 		$this->logger->info("Keepiq: secret {$id} deleted by {$userId}");
 
-		$this->dispatchAudit(
-			event: $this->deletionEvent(
-				secret: $secret,
-				deletion: new SecretDeletion(userId: $userId, purgeReason: $purgeReason)
-			)
-		);
+		$this->dispatchAudit(event: $this->deletionEvent(secret: $secret, deletion: $deletion));
 	}//end delete()
+
+	/**
+	 * Revoke the partner shares of a secret that is deleted for good, so each partner deletes its copy.
+	 * The owner's delete tells every partner now; the retention job leaves that to the retry job.
+	 *
+	 * @param string         $secretId The secret ID
+	 * @param SecretDeletion $deletion Who deletes it, and why when it is a purge
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
+	 */
+	private function endPartnerShares(string $secretId, SecretDeletion $deletion): void {
+		$partnerShares = $this->partnerShares ?? throw new RuntimeException('The partner shares of a deleted secret cannot be ended');
+		if ($deletion->byRetention() === true) {
+			$partnerShares->queueForRetentionPurge(secretId: $secretId);
+			return;
+		}
+
+		$partnerShares->revokeForDeletedSecret(secretId: $secretId, userId: $deletion->userId);
+	}//end endPartnerShares()
 
 	/**
 	 * Remove the sharing graph of a secret: derived link shares, secret

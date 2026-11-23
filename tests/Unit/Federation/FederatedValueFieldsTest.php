@@ -49,6 +49,7 @@ use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederatedValueFields;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
 use OCA\Keepiq\Service\SecretTypeService;
@@ -201,6 +202,7 @@ class FederatedValueFieldsTest extends TestCase {
 			}
 		);
 
+		$delivery = new FederatedNotificationDelivery($mapper, $messenger, $audit, $secrets);
 		$this->service = new FederatedShareService(
 			shareMapper: $mapper,
 			secretMapper: $secrets,
@@ -213,8 +215,9 @@ class FederatedValueFieldsTest extends TestCase {
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: $messenger,
 			random: $random,
-			delivery: new FederatedNotificationDelivery($mapper, $messenger, $audit),
+			delivery: $delivery,
 			audit: $audit,
+			revoker: new PartnerShareRevoker($mapper, $delivery, $audit),
 			logger: $this->warningLog(),
 		);
 

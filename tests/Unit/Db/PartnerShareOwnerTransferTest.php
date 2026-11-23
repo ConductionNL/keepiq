@@ -34,6 +34,7 @@ use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCP\Federation\ICloudIdManager;
 use OCP\IDBConnection;
@@ -119,6 +120,7 @@ class PartnerShareOwnerTransferTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $this->createMock(FederatedNotificationDelivery::class),
 			audit: $this->createMock(FederatedShareAuditTrail::class),
+			revoker: $this->createMock(PartnerShareRevoker::class),
 		);
 	}
 
@@ -189,5 +191,47 @@ class PartnerShareOwnerTransferTest extends TestCase {
 		$output = $this->createMock(IOutput::class);
 		$output->expects($this->once())->method('info')->with($this->stringContains(': 0 partner share(s)'));
 		$step->run($output);
+	}
+
+	/**
+	 * An account deletion finds the partner shares of every secret the user owns, trashed ones too and whatever the share's own owner:
+	 * not those of a secret someone else owns now, nor those of an application's secret.
+	 */
+	public function testTheSharesOfTheSecretsAUserOwnsAreFoundBySecretNotByShareOwner(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		$own = $this->insertSecret(ownerId: 'transfer-test-alice');
+		$trashed = $this->insertSecret(ownerId: 'transfer-test-alice');
+		$trashed->setTrashedAt(new DateTime(self::BASE));
+		(new SecretMapper(db: $this->db))->update($trashed);
+		$live = $this->insertPartnerShare(sourceSecretId: $own->getId(), ownerId: 'transfer-test-alice');
+		$declined = $this->insertPartnerShare(sourceSecretId: $own->getId(), ownerId: 'transfer-test-alice', status: FederatedShare::STATUS_DECLINED);
+		$ofTrashed = $this->insertPartnerShare(sourceSecretId: $trashed->getId(), ownerId: 'transfer-test-alice');
+		// Left with a previous owner when the secret passed to Alice.
+		$leftWithCarol = $this->insertPartnerShare(sourceSecretId: $own->getId(), ownerId: 'transfer-test-carol');
+		$this->insertPartnerShare(sourceSecretId: $this->insertSecret(ownerId: 'transfer-test-dave')->getId(), ownerId: 'transfer-test-alice');
+		$this->insertPartnerShare(sourceSecretId: $this->insertSecret(ownerId: 'transfer-test-alice', ownerType: 'application')->getId(), ownerId: 'transfer-test-alice');
+		$this->insertPartnerShare(sourceSecretId: Uuid::uuid4()->toString(), ownerId: 'transfer-test-alice');
+
+		$found = array_map(static fn (FederatedShare $share): string => $share->getId(), $mapper->findBySourceOwnerUser(ownerId: 'transfer-test-alice'));
+
+		sort($found);
+		$expected = [$live->getId(), $declined->getId(), $ofTrashed->getId(), $leftWithCarol->getId()];
+		sort($expected);
+		$this->assertSame($expected, $found);
+	}
+
+	/**
+	 * A declined share is deleted only while it is still declined.
+	 */
+	public function testDeleteIfStatusLeavesAShareWhoseStatusChanged(): void {
+		$mapper = new FederatedShareMapper(db: $this->db);
+		$secret = $this->insertSecret(ownerId: 'transfer-test-alice');
+		$declined = $this->insertPartnerShare(sourceSecretId: $secret->getId(), ownerId: 'transfer-test-alice', status: FederatedShare::STATUS_DECLINED);
+		$acceptedBack = $this->insertPartnerShare(sourceSecretId: $secret->getId(), ownerId: 'transfer-test-alice');
+
+		$this->assertSame(1, $mapper->deleteIfStatus(share: $declined, status: FederatedShare::STATUS_DECLINED));
+		$this->assertSame(0, $mapper->deleteIfStatus(share: $acceptedBack, status: FederatedShare::STATUS_DECLINED));
+
+		$this->assertSame([$acceptedBack->getId()], array_map(static fn (FederatedShare $share): string => $share->getId(), $mapper->findBySourceSecret(sourceSecretId: $secret->getId())));
 	}
 }

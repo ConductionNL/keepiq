@@ -110,7 +110,9 @@ interface FederatedShareServiceInterface {
 	/**
 	 * Revoke a share: nothing is served any more, and the recipient's
 	 * instance is told to delete its copy (task 4.2). The row goes once that
-	 * notification arrives; until then the retry job keeps trying.
+	 * notification arrives.
+	 * A failed notification is tried up to 6 times in all while the secret exists, after which the owner sees the share failed,
+	 * and for 30 days once the secret is deleted for good.
 	 *
 	 * @param string $shareId The federated share
 	 * @param string $userId The owner

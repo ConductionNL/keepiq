@@ -108,7 +108,7 @@ The owner's browser MUST encrypt the value, login and additional fields, and the
 
 ### Requirement: Owner updates reach the remote copy and revocation removes it
 
-When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. A share whose partner was removed, whose recipient certificate no longer verifies, or whose lookup answers for another cloud id than the share's, MUST be suspended and shown to the owner.
+When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. When the shared secret is deleted for good, by purging it from the trash, by the trash retention job or by deleting the owner's account, the sending server MUST revoke each of its partner shares the same way, and keep retrying the `SHARE_UNSHARED` for at least 30 days until the partner takes it, with no more than 6 hours between attempts. Only after 30 days without success MAY it drop the share, recording the failure in the audit trail. On such a deletion, a share the recipient declined is removed without a notification. When a `SHARE_UNSHARED` arrives for a share the receiving server has already ended, for example because the answer to an earlier one was lost, the receiving server MUST answer it as taken once the shared secret and the partner's signature check out, and MUST NOT count it as a failed request; any other notification for an ended share MUST still be refused. A share whose partner was removed, whose recipient certificate no longer verifies, or whose lookup answers for another cloud id than the share's, MUST be suspended and shown to the owner.
 
 #### Scenario: A password change reaches Bob
 
@@ -128,6 +128,28 @@ When the owner updates a federated shared secret, the owner's browser MUST encry
 - **GIVEN** a federated share accepted by Bob
 - **WHEN** Alice revokes it
 - **THEN** Bob's server MUST delete the copy from Bob's vault
+
+#### Scenario: Deleting the secret for good removes Bob's copy
+
+- **GIVEN** a federated share accepted by Bob
+- **WHEN** Alice's secret is deleted for good, because she purges it from the trash, the retention job purges it or her account is deleted
+- **THEN** Alice's server MUST send `SHARE_UNSHARED` for Bob's share, and retry it for at least 30 days until Bob's server takes it
+- **AND** Bob's server MUST delete the copy from Bob's vault
+
+#### Scenario: An unreachable partner is retried for 30 days
+
+- **GIVEN** a federated share accepted by Bob, whose server is down for a day
+- **WHEN** Alice's secret is deleted for good
+- **THEN** Alice's server MUST keep retrying the `SHARE_UNSHARED`, at most 6 hours apart, and MUST NOT give it up after a fixed number of attempts
+- **AND** once Bob's server is back and takes it, Bob's copy MUST be deleted
+- **AND** only a share still not taken after 30 days MAY be dropped, with the failure recorded in the audit trail
+
+#### Scenario: A repeated unshare is taken
+
+- **GIVEN** Bob's server deleted his copy after a `SHARE_UNSHARED`, but its answer never reached Alice's server
+- **WHEN** Alice's server sends the `SHARE_UNSHARED` again
+- **THEN** Bob's server MUST answer it as taken, so Alice's server stops retrying
+- **AND** Bob's server MUST NOT count it as a failed request against Alice's server
 
 ### Requirement: Remote copies are read-only
 

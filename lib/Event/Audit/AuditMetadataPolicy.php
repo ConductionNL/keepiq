@@ -213,7 +213,7 @@ final class AuditMetadataPolicy {
 		AuditEventTypes::FEDERATED_SHARE_UPDATED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
 		AuditEventTypes::FEDERATED_SHARE_REVOKED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
 		AuditEventTypes::FEDERATED_SHARE_SUSPENDED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'reason'],
-		AuditEventTypes::FEDERATED_SHARE_FAILED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'notification'],
+		AuditEventTypes::FEDERATED_SHARE_FAILED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'notification', 'reason'],
 		AuditEventTypes::FEDERATED_SHARE_RECEIVED => ['inboundShareId', 'senderCloudId', 'partnerId'],
 		AuditEventTypes::FEDERATED_SHARE_ACCEPTED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		AuditEventTypes::FEDERATED_SHARE_DECLINED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],

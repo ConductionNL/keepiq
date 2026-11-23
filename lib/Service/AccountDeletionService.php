@@ -24,6 +24,8 @@
  *    data of the deleted user is ever written to a recipient's copy.
  *  - Received share copies in the deleted user's vault are hard-deleted; the
  *    original owners' secrets are untouched.
+ *  - Partner shares of the user's own secrets are revoked, and the retry job tells each partner to delete its copy.
+ *    Those of delegated secrets go with the secret to the delegate.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -82,8 +84,11 @@ class AccountDeletionService implements AccountDeletionServiceInterface {
 	 * @param AccountShareCleanupService $shareCleanup The share-cascade steps
 	 * @param AccountSuiteCleanupService $suiteCleanup The suite-cascade step
 	 * @param SecretChildDataCleaner $childData The attachment/version cascade
+	 * @param PartnerShareRevoker $partnerShares Revokes the partner shares of the user's own secrets
 	 *
 	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list, one collaborator per cascade step.
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
@@ -95,6 +100,7 @@ class AccountDeletionService implements AccountDeletionServiceInterface {
 		private AccountShareCleanupService $shareCleanup,
 		private AccountSuiteCleanupService $suiteCleanup,
 		private SecretChildDataCleaner $childData,
+		private PartnerShareRevoker $partnerShares,
 	) {
 	}//end __construct()
 
@@ -108,6 +114,7 @@ class AccountDeletionService implements AccountDeletionServiceInterface {
 	 * @return DeletionReport The per-entity counts
 	 *
 	 * @spec openspec/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
 	 */
 	public function deleteAllFor(string $userId, string $trigger = 'user-deleted'): DeletionReport {
 		$report = new DeletionReport();
@@ -133,6 +140,8 @@ class AccountDeletionService implements AccountDeletionServiceInterface {
 			ownedSecrets: $ownedSecrets,
 			report: $report
 		);
+		// After the delegated secrets went to their delegates and before the user's secrets go: the shares are found through those secrets.
+		$this->partnerShares->queueForDeletedAccount(userId: $userId);
 		$this->shareCleanup->detachGrantedShares(ownedSecrets: $ownedSecrets, report: $report);
 		$this->shareCleanup->removeReceivedShares(userId: $userId, report: $report);
 		$this->shareCleanup->removeShareSaveStages(userId: $userId);

@@ -37,6 +37,7 @@ use OCA\Keepiq\Service\AttachmentService;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\RotationPolicyService;
 use OCA\Keepiq\Service\SecretRequestService;
 use OCA\Keepiq\Service\SecretService;
@@ -49,6 +50,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Tests the cascade and audit of the two delete paths.
@@ -158,6 +160,10 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 			rotationService: $this->recorder(class: RotationPolicyService::class, methods: ['deleteForSecret']),
 			auditEvents: new AuditEventFactory(),
 			tagMapper: $this->recorder(class: SecretTagMapper::class, methods: ['deleteBySecret']),
+			partnerShares: $this->recorder(
+				class: PartnerShareRevoker::class,
+				methods: ['revokeForDeletedSecret', 'queueForRetentionPurge']
+			),
 		);
 	}//end setUp()
 
@@ -193,7 +199,7 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 	];
 
 	/**
-	 * An owner's delete removes the sharing graph, then the secret's own data, then the row.
+	 * An owner's delete revokes the partner shares, removes the sharing graph, then the secret's own data, then the row.
 	 *
 	 * @return void
 	 */
@@ -204,6 +210,7 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 
 		$this->assertSame(
 			array_merge(
+				['PartnerShareRevoker.revokeForDeletedSecret(s-1,bob)'],
 				self::SHARING_GRAPH,
 				[
 					'AttachmentService.deleteForSecret(s-1)',
@@ -237,6 +244,11 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 		$this->service->delete(id: 's-1', userId: 'bob', purgeReason: 'owner');
 		$this->service->delete(id: 's-1', userId: 'bob', purgeReason: 'retention');
 
+		// The owner's purge tells the partners now; the retention job leaves that to the retry job.
+		$this->assertSame(
+			['PartnerShareRevoker.revokeForDeletedSecret(s-1,bob)', 'PartnerShareRevoker.queueForRetentionPurge(s-1)'],
+			array_values(array_filter($this->calls, static fn (string $call): bool => str_starts_with($call, 'PartnerShareRevoker.')))
+		);
 		$this->assertCount(2, $this->audited);
 		[$owner, $retention] = $this->audited;
 		$this->assertSame('secret.purged', $owner->getEventType());
@@ -317,4 +329,40 @@ class SecretServiceDeleteCascadeTest extends TestCase {
 		$this->assertSame([], $this->calls);
 		$this->assertSame([], $this->audited);
 	}//end testApplicationDeleteSkipsWhatIsNotItsOwn()
+
+	/**
+	 * Without the partner share revoker a delete is refused before anything goes, so no partner keeps a copy of a deleted secret unknowingly.
+	 *
+	 * @return void
+	 */
+	public function testADeleteWithoutThePartnerShareRevokerIsRefusedBeforeAnythingGoes(): void {
+		$this->row(ownerType: 'user', ownerId: 'bob');
+		$mapper = $this->createMock(SecretMapper::class);
+		$mapper->method('findById')->willReturnCallback(fn (): Secret => $this->row);
+		$mapper->expects($this->never())->method('delete');
+		$service = new SecretService(
+			mapper: $mapper,
+			typeService: $this->createMock(SecretTypeService::class),
+			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+			migrationService: $this->createMock(MigrationService::class),
+			linkShareService: $this->recorder(class: LinkShareService::class, methods: ['deleteBySecretId']),
+			logger: $this->createMock(LoggerInterface::class),
+			db: $this->createMock(IDBConnection::class),
+			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
+			shareService: $this->recorder(class: ShareService::class, methods: ['deleteAllForSecret']),
+			attachmentService: $this->recorder(class: AttachmentService::class, methods: ['deleteForSecret', 'deleteGrantsForSecretCopy']),
+		);
+
+		foreach (['owner', 'retention'] as $reason) {
+			try {
+				$service->delete(id: 's-1', userId: 'bob', purgeReason: $reason);
+				$this->fail('A delete without the partner share revoker went ahead');
+			} catch (RuntimeException $e) {
+				$this->assertSame('The partner shares of a deleted secret cannot be ended', $e->getMessage());
+			}
+		}
+
+		$this->assertSame([], $this->calls);
+	}//end testADeleteWithoutThePartnerShareRevokerIsRefusedBeforeAnythingGoes()
 }//end class

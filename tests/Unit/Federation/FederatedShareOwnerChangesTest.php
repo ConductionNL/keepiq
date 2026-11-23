@@ -38,6 +38,7 @@ use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -192,7 +193,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		);
 		$audit = new FederatedShareAuditTrail($dispatcher);
 		$messenger = new FederatedShareMessenger($ocm, $factory, $this->cloudIdManager(), $this->createMock(IUserManager::class));
-		$this->delivery = new FederatedNotificationDelivery($mapper, $messenger, $audit);
+		$this->delivery = new FederatedNotificationDelivery($mapper, $messenger, $audit, $secrets);
 
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueBool')->willReturn(false);
@@ -210,6 +211,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $this->delivery,
 			audit: $audit,
+			revoker: new PartnerShareRevoker($mapper, $this->delivery, $audit),
 		);
 	}
 
