@@ -43,6 +43,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
+use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Kernel\Contracts\FederatedShareServiceInterface;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -90,6 +91,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @param ISecureRandom $random The shared secret
 	 * @param FederatedNotificationDelivery $delivery Notifications with retries
 	 * @param FederatedShareAuditTrail $audit Identifier-only audit
+	 * @param ShareRowJudge $rowJudge Judged share rows: whether a secret to share is a received copy
 	 * @param LoggerInterface|null $logger Warns about a pull refused for the value fields it did not declare
 	 *
 	 * @return void
@@ -108,6 +110,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 		private ISecureRandom $random,
 		private FederatedNotificationDelivery $delivery,
 		private FederatedShareAuditTrail $audit,
+		private ShareRowJudge $rowJudge,
 		private ?LoggerInterface $logger = null,
 	) {
 		$this->valueFields = new FederatedValueFields();
@@ -126,12 +129,15 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @return FederatedShare
 	 *
 	 * @throws NotFoundException When the secret is not the user's own
-	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `unknown_recipient`, `already_shared`, or
-	 *   `copy_fields_mismatch` when its totp or passkeys does not mirror the source's
+	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `unknown_recipient`, `already_shared`,
+	 *   `not_shareable` when the secret is a received copy, or `copy_fields_mismatch` when its totp or passkeys
+	 *   does not mirror the source's
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row that may name it a copy
 	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
 	 * @throws RuntimeException `federation_unavailable`, or `delivery_failed` when the partner refused it
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 	 */
 	public function create(
 		string $secretId,
@@ -147,6 +153,12 @@ class FederatedShareService implements FederatedShareServiceInterface {
 		$source = $this->ownedSecret(secretId: $secretId, userId: $userId);
 		// A read-only or restricted copy never leaves (task 3.4).
 		$source->assertOnwardShareable();
+		// Nor does a full one: partner shares hang off the original, which only its owner's save writes.
+		$this->rowJudge->assertNotReceivedCopy(
+			secret: $source,
+			pending: 'This secret waits for the share quarantine scan, so it cannot be shared yet',
+			refusal: 'not_shareable'
+		);
 
 		$certFingerprint = $this->assertCiphertext(certFingerprint: $certFingerprint, ciphertext: $ciphertext);
 

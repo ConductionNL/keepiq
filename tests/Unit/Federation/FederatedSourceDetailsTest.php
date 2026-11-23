@@ -59,6 +59,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -67,6 +68,7 @@ require_once __DIR__ . '/OcmDoubles.php';
 
 class FederatedSourceDetailsTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private Secret $source;
 
@@ -175,6 +177,7 @@ class FederatedSourceDetailsTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: new FederatedNotificationDelivery($shareMapper, $messenger, $audit),
 			audit: $audit,
+			rowJudge: $this->shareRowJudge(),
 		);
 
 		$typeService = $this->createMock(SecretTypeService::class);

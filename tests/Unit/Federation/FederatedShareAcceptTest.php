@@ -60,6 +60,7 @@ use OCP\OCM\Events\OCMEndpointRequestEvent;
 use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\ICrypto;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -67,6 +68,7 @@ require_once __DIR__ . '/FederationFixtures.php';
 
 class FederatedShareAcceptTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private const SHARE_ID = '6d1f6c1e-0000-4000-8000-000000000001';
 	private const SHARED_SECRET = 'the-shared-secret';
@@ -325,6 +327,7 @@ class FederatedShareAcceptTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $this->createMock(\OCA\Keepiq\Service\FederatedNotificationDelivery::class),
 			audit: new \OCA\Keepiq\Service\FederatedShareAuditTrail(),
+			rowJudge: $this->shareRowJudge(),
 		);
 
 		return new FederationOcmRequestListener($this->createMock(FederatedCertificateService::class), $service);

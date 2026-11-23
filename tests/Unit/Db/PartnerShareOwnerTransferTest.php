@@ -39,6 +39,7 @@ use OCP\Federation\ICloudIdManager;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -48,6 +49,8 @@ use Ramsey\Uuid\Uuid;
  * rolled back after each test.
  */
 class PartnerShareOwnerTransferTest extends TestCase {
+	use ShareRowJudgeFixture;
+
 	private const BASE = '2026-10-01T10:00:00+00:00';
 
 	private ?IDBConnection $db = null;
@@ -119,6 +122,7 @@ class PartnerShareOwnerTransferTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $this->createMock(FederatedNotificationDelivery::class),
 			audit: $this->createMock(FederatedShareAuditTrail::class),
+			rowJudge: $this->shareRowJudge(),
 		);
 	}
 

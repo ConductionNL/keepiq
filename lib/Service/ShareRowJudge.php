@@ -33,6 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
@@ -206,6 +207,52 @@ class ShareRowJudge implements ShareRowJudgeInterface {
 	public function judgeRows(array $rows): JudgedShareRows {
 		return new JudgedShareRows(rows: array_values($rows), judge: fn (ShareTarget $row): ?string => $this->verdict(row: $row));
 	}//end judgeRows()
+
+	/**
+	 * Whether a share source is itself a received copy, which is never shared
+	 * onward (ShareRowVerdict::countsAsCopy()). Fails open to "original" only
+	 * when no row names it, or the pending quarantine scan quarantines the one
+	 * that does; an ambiguous match and a row its target does not hold count
+	 * as a copy, and a row the scan cannot judge refuses.
+	 *
+	 * @param Secret $secret  The share source
+	 * @param string $refusal What waits for the scan, as scanPending() takes it
+	 *
+	 * @return bool
+	 *
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming it
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
+	 */
+	public function isReceivedCopy(Secret $secret, string $refusal): bool {
+		$verdict = $this->forCopy(copy: $secret);
+		if ($verdict->awaitsTheScan() === true) {
+			throw $this->scanPending(refusal: $refusal);
+		}
+
+		return $verdict->countsAsCopy();
+	}//end isReceivedCopy()
+
+	/**
+	 * Refuse a share source that is itself a received copy (isReceivedCopy()).
+	 *
+	 * @param Secret $secret  The share source
+	 * @param string $pending What waits for the scan, as scanPending() takes it
+	 * @param string $refusal The message of the refusal of a copy
+	 *
+	 * @return void
+	 *
+	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row naming it
+	 * @throws InvalidArgumentException When it is a received copy
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+	 */
+	public function assertNotReceivedCopy(Secret $secret, string $pending, string $refusal): void {
+		if ($this->isReceivedCopy(secret: $secret, refusal: $pending) === true) {
+			throw new InvalidArgumentException(message: $refusal);
+		}
+	}//end assertNotReceivedCopy()
 
 	/**
 	 * The refusal of a request that reaches a row the pending scan cannot

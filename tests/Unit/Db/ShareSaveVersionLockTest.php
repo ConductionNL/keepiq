@@ -272,6 +272,7 @@ class ShareSaveVersionLockTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $delivery,
 			audit: $this->createMock(FederatedShareAuditTrail::class),
+			rowJudge: $this->shareRowJudge(),
 		);
 	}
 

@@ -28,11 +28,16 @@ use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
@@ -52,6 +57,7 @@ require_once __DIR__ . '/OcmDoubles.php';
 
 class FederatedShareSendTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private const CIPHER_KEY = 'CIPHER-KEY-FOR-BOB';
 	private const CIPHER_LOGIN = 'CIPHER-LOGIN-FOR-BOB';
@@ -69,6 +75,12 @@ class FederatedShareSendTest extends TestCase {
 	private int $deliveryStatus = 201;
 
 	private ICloudFederationProviderManager&MockObject $ocm;
+
+	/** @var list<ShareTarget> The share rows naming a secret as a copy */
+	private array $copyRows = [];
+
+	/** The pending quarantine scan; null holds no row back */
+	private ?ShareQuarantineScanner $scanner = null;
 
 	protected function setUp(): void {
 		$this->skipWithoutFederation();
@@ -165,6 +177,7 @@ class FederatedShareSendTest extends TestCase {
 			random: $random,
 			delivery: $this->createMock(\OCA\Keepiq\Service\FederatedNotificationDelivery::class),
 			audit: new \OCA\Keepiq\Service\FederatedShareAuditTrail(),
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargets(), secrets: $secrets, scanner: $this->scanner),
 		);
 
 		$user = $this->createMock(IUser::class);
@@ -173,6 +186,64 @@ class FederatedShareSendTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 
 		return new FederatedShareController($this->createMock(IRequest::class), $service, $session);
+	}
+
+	/**
+	 * The share rows, found by the copy they name from $this->copyRows.
+	 *
+	 * @return ShareTargetMapper
+	 */
+	private function shareTargets(): ShareTargetMapper {
+		$targets = $this->createMock(ShareTargetMapper::class);
+		$targets->method('findByRecipientSecret')->willReturnCallback(
+			function (string $copyId): ShareTarget {
+				$rows = array_values(array_filter($this->copyRows, static fn (ShareTarget $row): bool => $row->getSecretId() === $copyId));
+				if ($rows === []) {
+					throw new DoesNotExistException('not a copy');
+				}
+
+				if (count($rows) > 1) {
+					throw new MultipleObjectsReturnedException('two rows');
+				}
+
+				return $rows[0];
+			}
+		);
+
+		return $targets;
+	}
+
+	/**
+	 * A share row making `src` the copy that `$holder` received of `orig`.
+	 *
+	 * @param string $holder The row's target
+	 * @param string|null $groupShareId The group share it came from, if any
+	 *
+	 * @return ShareTarget
+	 */
+	private function copyRow(string $holder = 'alice', ?string $groupShareId = null): ShareTarget {
+		$row = new ShareTarget();
+		$row->setId('st-'.count($this->copyRows));
+		$row->setSourceSecretId('orig');
+		$row->setSecretId('src');
+		$row->setTargetUserId($holder);
+		$row->setGroupShareId($groupShareId);
+
+		return $row;
+	}
+
+	/**
+	 * A pending quarantine scan answering `$verdict` for every row.
+	 *
+	 * @param string $verdict What heldBack() answers
+	 *
+	 * @return ShareQuarantineScanner
+	 */
+	private function scanAnswering(string $verdict): ShareQuarantineScanner {
+		$scanner = $this->createMock(ShareQuarantineScanner::class);
+		$scanner->method('heldBack')->willReturn($verdict);
+
+		return $scanner;
 	}
 
 	/**
@@ -310,5 +381,85 @@ class FederatedShareSendTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $list->getStatus());
 		$this->assertSame('bob@cloud.partner.example', $list->getData()[0]['recipientCloudId']);
 		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller([], 'mallory')->index('src')->getStatus());
+	}
+
+	/**
+	 * Every way a share row can name Alice's `src` as a copy she received.
+	 *
+	 * @return array<string,array{0:list<array{0:string,1:?string}>,1:?string,2:int,3:string}> The rows (holder,
+	 *   group share), the scan's verdict, the status and the answer's code
+	 */
+	public static function receivedCopies(): array {
+		return [
+			'a plain recipient\'s copy' => [[['alice', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			// A delegation on the source changes nothing here: partner shares are the owner's.
+			'a delegate\'s copy' => [[['alice', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a copy reached through a group share' => [[['alice', 'gs-1']], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a copy two share rows name' => [[['alice', null], ['alice', 'gs-1']], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a row whose target does not hold it' => [[['carol', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a row the pending scan cannot judge' => [[['alice', null]], ShareQuarantineScanner::HELD_UNJUDGED, Http::STATUS_CONFLICT, 'share_scan_pending'],
+			'a foreign row the pending scan cannot judge' => [[['carol', null]], ShareQuarantineScanner::HELD_UNJUDGED, Http::STATUS_CONFLICT, 'share_scan_pending'],
+		];
+	}
+
+	/**
+	 * @param list<array{0:string,1:?string}> $rows The share rows naming `src`
+	 * @param string|null $verdict What the pending scan answers for each, null when it holds none back
+	 * @param int $status The status the refusal answers
+	 * @param string $code The refusal's code
+	 *
+	 * @dataProvider receivedCopies
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 */
+	public function testAReceivedCopyIsNotSharedWithAPartner(array $rows, ?string $verdict, int $status, string $code): void {
+		foreach ($rows as [$holder, $groupShareId]) {
+			$this->copyRows[] = $this->copyRow(holder: $holder, groupShareId: $groupShareId);
+		}
+
+		if ($verdict !== null) {
+			$this->scanner = $this->scanAnswering(verdict: $verdict);
+		}
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame($status, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame($code, ($data['error'] ?? $data['message']));
+		$this->assertSame([], $this->rows);
+		$this->assertSame([], $this->sent);
+	}
+
+	/**
+	 * An original, or a secret whose only row the pending scan quarantines,
+	 * is Alice's own, as register-batch and group shares judge it.
+	 *
+	 * @return array<string,array{0:bool}>
+	 */
+	public static function originals(): array {
+		return [
+			'no share row names it' => [false],
+			'the row naming it is quarantined' => [true],
+		];
+	}
+
+	/**
+	 * @param bool $quarantined Whether a quarantined row names `src`
+	 *
+	 * @dataProvider originals
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-owners-original-is-still-shared
+	 */
+	public function testTheOwnersOriginalIsStillShared(bool $quarantined): void {
+		if ($quarantined === true) {
+			$this->copyRows[] = $this->copyRow();
+			$this->scanner = $this->scanAnswering(verdict: ShareQuarantineScanner::HELD_QUARANTINED);
+		}
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertCount(1, $this->rows);
+		$this->assertCount(1, $this->sent);
 	}
 }

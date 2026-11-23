@@ -51,6 +51,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/FederationFixtures.php';
@@ -58,6 +59,7 @@ require_once __DIR__ . '/OcmDoubles.php';
 
 class FederatedShareOwnerChangesTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private const SHARED_SECRET = 'the-shared-secret';
 	private const NEW_KEY = 'NEW-CIPHER-KEY-FOR-BOB';
@@ -210,6 +212,7 @@ class FederatedShareOwnerChangesTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $this->delivery,
 			audit: $audit,
+			rowJudge: $this->shareRowJudge(),
 		);
 	}
 

@@ -69,6 +69,7 @@ use OCP\OCM\Events\OCMEndpointRequestEvent;
 use OCP\OCM\IOCMDiscoveryService;
 use OCP\Security\ICrypto;
 use OCP\Security\ISecureRandom;
+use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -77,6 +78,7 @@ require_once __DIR__ . '/OcmDoubles.php';
 
 class FederatedValueFieldsTest extends TestCase {
 	use FederationFixtures;
+	use ShareRowJudgeFixture;
 
 	private const SHARE_ID = '6d1f6c1e-0000-4000-8000-000000000001';
 	private const SHARED_SECRET = 'the-shared-secret';
@@ -215,6 +217,7 @@ class FederatedValueFieldsTest extends TestCase {
 			random: $random,
 			delivery: new FederatedNotificationDelivery($mapper, $messenger, $audit),
 			audit: $audit,
+			rowJudge: $this->shareRowJudge(),
 			logger: $this->warningLog(),
 		);
 
