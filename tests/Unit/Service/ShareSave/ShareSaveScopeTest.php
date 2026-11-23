@@ -7,7 +7,6 @@ namespace OCA\Keepiq\Tests\Unit\Service\ShareSave;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
@@ -63,7 +62,6 @@ class ShareSaveScopeTest extends TestCase {
 			federatedShares: $this->federated,
 			sync: $this->createMock(ShareSyncService::class),
 			guards: $guards,
-			delegations: $this->createMock(SecretDelegationMapper::class),
 		);
 	}
 

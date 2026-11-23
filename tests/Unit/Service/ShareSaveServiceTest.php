@@ -27,7 +27,6 @@ use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareSaveStage;
@@ -101,9 +100,6 @@ class ShareSaveServiceTest extends TestCase {
 
 	/** @var array<int,FederatedShare> */
 	private array $partnerShares = [];
-
-	/** @var list<SecretDelegation> The delegations of every secret */
-	private array $delegationRows = [];
 
 	private ?ShareTarget $lateTarget = null;
 
@@ -357,11 +353,6 @@ class ShareSaveServiceTest extends TestCase {
 			contexts: new ShareWriteContext(suites: $this->suites, auth: ($auth ?? $this->auth), rowJudge: $judge),
 			rowJudge: $judge,
 		);
-		$delegations = $this->createMock(SecretDelegationMapper::class);
-		$delegations->method('findBySecret')->willReturnCallback(fn (string $secretId): array => array_values(
-			array_filter($this->delegationRows, static fn (SecretDelegation $row): bool => $row->getSecretId() === $secretId)
-		));
-
 		return new ShareSaveService(
 			secrets: $this->secrets,
 			secretMapper: $this->secretMapper,
@@ -375,7 +366,6 @@ class ShareSaveServiceTest extends TestCase {
 				sync: $sync,
 				guards: $guards,
 				rowJudge: $judge,
-				delegations: $delegations,
 				logger: $logger,
 			),
 			stages: new ShareSaveStages(mapper: $this->stageMapper),
@@ -891,16 +881,6 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame([], $body['federated']['required']);
 	}
 
-	public function testACopyEditorNeverWritesPartnerShares(): void {
-		$this->bobWritesOnAGrade();
-		$request = $this->bobRequest(['suspend' => [['shareId' => 'fs-1', 'reason' => 'unverified']]]);
-
-		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $request, userId: 'bob'));
-
-		$this->assertSame('federated_owner_only', $refusal->getError());
-		$this->assertSame(400, $refusal->getStatus());
-	}
-
 	public function testACopyEditorNamesTheSourceVersion(): void {
 		$this->bobWritesOnAGrade();
 
@@ -909,21 +889,6 @@ class ShareSaveServiceTest extends TestCase {
 		);
 
 		$this->assertSame('source_base_required', $refusal->getError());
-	}
-
-	public function testACopyEditorNamingPartnerSharesIsRefusedBeforeTheMissingSourceVersion(): void {
-		$this->bobWritesOnAGrade();
-		$request = $this->bobRequest(
-			[
-				'suspend' => [['shareId' => 'fs-1', 'reason' => 'unverified']],
-				'sourceBaseUpdatedAt' => null,
-			]
-		);
-
-		$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $request, userId: 'bob'));
-
-		$this->assertSame('federated_owner_only', $refusal->getError());
-		$this->assertSame('Only the owner writes partner shares', $refusal->getMessage());
 	}
 
 	public function testACopyHolderWithoutAWriteGradeIsSentToTheirOwnRow(): void {
@@ -1765,40 +1730,144 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * Copy editors who do not own the source: a delegate, and a write-grade member.
+	 * Copy editors who do not own the source: a delegate who never owned it, a write-grade member,
+	 * and an owner whose secret was transferred to Erin.
 	 *
-	 * @return array<string,array{0:bool}>
+	 * @return array<string,array{0:string}>
 	 */
 	public static function copyEditorsWhoDoNotOwnTheSource(): array {
 		return [
-			'a delegate' => [true],
-			'a write-grade copy editor' => [false],
+			'a delegate who never owned it' => ['delegate'],
+			'a write-grade copy editor' => ['grade'],
+			'a former owner' => ['former'],
 		];
 	}
 
 	/**
-	 * @param bool $delegate Whether Bob is a delegate, otherwise he writes on a grade
+	 * Bob edits through his copy without owning the source, which has a second partner share he never named.
+	 *
+	 * @param string $caller `delegate`, `grade` or `former`
+	 *
+	 * @return void
+	 */
+	private function bobDoesNotOwnTheSource(string $caller): void {
+		match ($caller) {
+			'delegate' => $this->auth->method('isOwnerOrDelegate')->willReturn(true),
+			'grade' => $this->bobWritesOnAGrade(),
+			'former' => $this->bobOwnsTheSecret(),
+		};
+		if ($caller === 'former') {
+			$this->rows['src']->setOwnerId('erin');
+		}
+
+		$this->partnerShares[] = $this->partnerShare(id: 'fs-2', status: FederatedShare::STATUS_ACTIVE, owner: $this->rows['src']->getOwnerId());
+	}
+
+	/**
+	 * Bob's lists naming fs-1, as a partner share or as a suspend.
+	 *
+	 * @return array<string,list<array<string,mixed>>>
+	 */
+	private function bobsPartnerLists(): array {
+		return ['federated' => $this->bobsPartnerEntry(), 'suspend' => [['shareId' => 'fs-1', 'reason' => 'unverified']]];
+	}
+
+	/**
+	 * The answer the check under the lock gives a caller who does not own the source:
+	 * `incomplete`, requiring no partner share and echoing only the one Bob named.
+	 *
+	 * @param Throwable $refusal The refusal
+	 * @param string $label What was sent
+	 *
+	 * @return void
+	 */
+	private function assertIncompleteNamingNoPartnerShare(Throwable $refusal, string $label): void {
+		$this->assertInstanceOf(IncompleteShareSaveException::class, $refusal, $label);
+		$this->assertSame(409, $refusal->getStatus(), $label);
+		$body = $refusal->getBody();
+		$this->assertSame(['required' => [], 'missing' => [], 'unexpected' => ['fs-1']], $body['federated'], $label);
+		$this->assertStringNotContainsString('fs-2', (string)json_encode($body), $label);
+		$this->assertStringNotContainsString('partner.example', (string)json_encode($body), $label);
+	}
+
+	/**
+	 * @param string $caller `delegate`, `grade` or `former`
 	 *
 	 * @dataProvider copyEditorsWhoDoNotOwnTheSource
 	 *
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#scenario-the-owner-saving-through-a-copy-must-name-the-partner-shares
 	 */
-	public function testACopyEditorWhoDoesNotOwnTheSourceStillLeavesPartnersToTheOwner(bool $delegate): void {
-		if ($delegate === true) {
-			$this->auth->method('isOwnerOrDelegate')->willReturn(true);
-		} else {
-			$this->bobWritesOnAGrade();
-		}
+	public function testACopyEditorWhoDoesNotOwnTheSourceNamingPartnerSharesGetsTheIncompleteAnswer(string $caller): void {
+		$this->bobDoesNotOwnTheSource(caller: $caller);
+		$service = $this->service();
 
-		foreach (['federated' => $this->bobsPartnerEntry(), 'suspend' => [['shareId' => 'fs-1', 'reason' => 'unverified']]] as $list => $entries) {
-			$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest([$list => $entries]), userId: 'bob'));
-			$this->assertSame(['federated_owner_only', 400], [$refusal->getError(), $refusal->getStatus()], $list);
+		foreach ($this->bobsPartnerLists() as $list => $entries) {
+			$saved = $this->refusal(fn () => $service->save(id: 'c-bob', request: $this->bobRequest([$list => $entries]), userId: 'bob'));
+			$this->assertIncompleteNamingNoPartnerShare(refusal: $saved, label: 'save with '.$list);
+
+			$chunk = new ShareSaveRequest([
+				'baseUpdatedAt' => self::BOB_BASE,
+				'sourceBaseUpdatedAt' => self::BASE,
+				'stage' => ['final' => false],
+				'copies' => [['secretId' => 'c-carol', 'key' => 'K-CAROL']],
+				$list => $entries,
+			]);
+			$staged = $this->refusal(fn () => $service->stage(id: 'c-bob', request: $chunk, userId: 'bob'));
+			$this->assertIncompleteNamingNoPartnerShare(refusal: $staged, label: 'chunk with '.$list);
 		}
 
 		$this->assertSame([], $this->log);
-		$result = $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob');
+		$this->assertSame([], $this->copyWrites);
+		$this->assertSame([], $this->chunks);
+		$result = $service->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob');
 		$this->assertTrue($result['federated']['ownerOnly']);
 		$this->assertSame(0, $result['federated']['written']);
+	}
+
+	/**
+	 * Bob staged his partner share while he owned the secret, and it was transferred to Erin before his next call:
+	 * the next chunk and the final call both get the `incomplete` answer, not a refusal of the stage's size.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function testAStageAPartnerShareWentIntoBeforeATransferIsAnsweredIncomplete(): void {
+		$this->bobOwnsTheSecret();
+		$service = $this->service();
+		$stageId = $service->stage(
+			id: 'c-bob',
+			request: new ShareSaveRequest([
+				'baseUpdatedAt' => self::BOB_BASE,
+				'sourceBaseUpdatedAt' => self::BASE,
+				'stage' => ['final' => false],
+				'copies' => [['secretId' => 'c-carol', 'key' => 'K-CAROL']],
+				'federated' => $this->bobsPartnerEntry(),
+			]),
+			userId: 'bob'
+		)['stageId'];
+
+		$this->rows['src']->setOwnerId('erin');
+		$chunk = new ShareSaveRequest([
+			'baseUpdatedAt' => self::BOB_BASE,
+			'sourceBaseUpdatedAt' => self::BASE,
+			'stage' => ['id' => $stageId, 'final' => false],
+			'copies' => [['secretId' => 'src', 'key' => 'K-ALICE']],
+		]);
+		$this->assertIncompleteNamingNoPartnerShare(
+			refusal: $this->refusal(fn () => $service->stage(id: 'c-bob', request: $chunk, userId: 'bob')),
+			label: 'next chunk'
+		);
+
+		$final = $this->bobRequest(['stage' => ['id' => $stageId, 'final' => true], 'copies' => [['secretId' => 'src', 'key' => 'K-ALICE']]]);
+		$this->assertIncompleteNamingNoPartnerShare(
+			refusal: $this->refusal(fn () => $service->save(id: 'c-bob', request: $final, userId: 'bob')),
+			label: 'final call'
+		);
+
+		$this->assertCount(1, $this->chunks);
+		$this->assertSame([], $this->log);
+		$this->assertSame([], $this->copyWrites);
 	}
 
 	/**
@@ -1822,25 +1891,6 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * A delegation of the source.
-	 *
-	 * @param string $from The owner who handed it on
-	 * @param string $to Who it was handed to
-	 * @param bool $permanent Whether it is a transfer
-	 *
-	 * @return SecretDelegation
-	 */
-	private function delegation(string $from, string $to, bool $permanent): SecretDelegation {
-		$delegation = new SecretDelegation();
-		$delegation->setSecretId('src');
-		$delegation->setOriginalOwnerId($from);
-		$delegation->setDelegatedTo($to);
-		$delegation->setIsPermanent($permanent);
-
-		return $delegation;
-	}
-
-	/**
 	 * Bob was asked for the partner shares through his copy, and the secret was transferred to Erin before he sent them.
 	 * Whether the transfer committed before the pre-check or only before the lock, he gets the same `incomplete` answer,
 	 * naming no partner share, which his client recovers from by saving again without them.
@@ -1849,7 +1899,7 @@ class ShareSaveServiceTest extends TestCase {
 	 *
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
-	public function testAFormerOwnerRetryingThePartnerSharesGetsTheIncompleteAnswerBeforeTheLock(): void {
+	public function testAFormerOwnerGetsTheSameIncompleteAnswerBeforeTheLockAsUnderIt(): void {
 		$this->bobOwnsTheSecret();
 		$request = $this->bobRequest(['federated' => $this->bobsPartnerEntry()]);
 		$this->sourceOwnerUnderLock = 'erin';
@@ -1858,33 +1908,10 @@ class ShareSaveServiceTest extends TestCase {
 		$this->log = [];
 		$this->sourceOwnerUnderLock = null;
 		$this->rows['src']->setOwnerId('erin');
-		$this->delegationRows = [$this->delegation(from: 'bob', to: 'erin', permanent: true)];
 		$beforeTheLock = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $request, userId: 'bob'));
 
-		$this->assertInstanceOf(IncompleteShareSaveException::class, $beforeTheLock);
-		$this->assertSame(409, $beforeTheLock->getStatus());
+		$this->assertIncompleteNamingNoPartnerShare(refusal: $beforeTheLock, label: 'before the lock');
 		$this->assertSame($underLock->getBody(), $beforeTheLock->getBody());
-		$this->assertSame([], $beforeTheLock->getBody()['federated']['required']);
-		$this->assertSame([], $this->log);
-	}
-
-	/**
-	 * A copy editor who never owned the source is still refused before anything else, even when delegations of it name them:
-	 * being handed the secret as a delegate is not owning it.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
-	 */
-	public function testACopyEditorWhoNeverOwnedTheSourceIsStillRefusedPartnerShares(): void {
-		$this->auth->method('isOwnerOrDelegate')->willReturn(true);
-		$this->delegationRows = [$this->delegation(from: 'alice', to: 'bob', permanent: false)];
-
-		foreach (['federated' => $this->bobsPartnerEntry(), 'suspend' => [['shareId' => 'fs-1', 'reason' => 'unverified']]] as $list => $entries) {
-			$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest([$list => $entries]), userId: 'bob'));
-			$this->assertSame(['federated_owner_only', 400], [$refusal->getError(), $refusal->getStatus()], $list);
-		}
-
 		$this->assertSame([], $this->log);
 	}
 

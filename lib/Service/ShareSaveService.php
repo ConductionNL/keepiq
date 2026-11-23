@@ -229,7 +229,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 			userId: $userId
 		);
 
-		$this->assertCopyEditorRequest(path: $path, request: $request, userId: $userId);
+		$this->assertCopyEditorRequest(path: $path, request: $request);
 
 		$entries = $request->entries;
 		$expiresAt = null;
@@ -254,30 +254,27 @@ class ShareSaveService implements ShareSaveServiceInterface {
 			}
 		);
 
+		// Before a stage's reach check too, so every call of a caller who does not own the source gets the one answer.
+		$this->scope->assertMayNamePartners(path: $path, entries: $entries, userId: $userId);
+
 		return [$path, $entries, $expiresAt, $chunks];
 	}//end open()
 
 	/**
-	 * A copy editor must name the source version the edit was made from,
-	 * and writes partner shares only when they own the source.
+	 * A copy editor must name the source version the edit was made from.
 	 * Nothing to check for the owner saving the source itself.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param ShareSaveRequest $request The request
-	 * @param string $userId The caller
 	 *
-	 * @throws ShareSaveRefusal federated_owner_only or source_base_required
+	 * @throws ShareSaveRefusal source_base_required
 	 *
 	 * @return void
-	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
 	 */
-	private function assertCopyEditorRequest(ShareSavePath $path, ShareSaveRequest $request, string $userId): void {
+	private function assertCopyEditorRequest(ShareSavePath $path, ShareSaveRequest $request): void {
 		if ($path->isCopyEditor() === false) {
 			return;
 		}
-
-		$this->scope->assertMayNamePartners(path: $path, entries: $request->entries, userId: $userId);
 
 		if ($request->sourceBaseUpdatedAt === null) {
 			throw new ShareSaveRefusal(
