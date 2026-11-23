@@ -71,6 +71,7 @@ function renderWindow(view: PasskeyView, { replies = {}, unanswered, account: ac
 
 const heading = (name: string) => screen.findByRole('heading', { level: 1, name })
 const alertText = async () => (await screen.findByRole('alert')).textContent
+const MISMATCH_TEXT = 'Nothing was saved: a share of this item with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.'
 
 describe('sign in', () => {
 	it('lists each passkey by login and user name under the request, focuses the first, and picks it', async () => {
@@ -180,6 +181,16 @@ describe('sign in', () => {
 		})
 		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
 		expect(await alertText()).toBe('This login is waiting for a check of its shares that has not finished. Nothing was saved; try again later.')
+		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice' }))
+	})
+
+	it('shows a counter save refused for a partner share owner mismatch without Retry, with the first row focused', async () => {
+		const { user } = renderWindow(passkeyView({ rows: [row()] }), {
+			replies: { 'passkey.pick': { ok: false, code: 'write_failed', error: { code: 'partner_share_owner_mismatch' } } },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
+		expect(await alertText()).toBe(MISMATCH_TEXT)
 		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
 		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice' }))
 	})
@@ -489,6 +500,16 @@ describe('save', () => {
 		})
 		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
 		expect(await alertText()).toBe('This login is waiting for a check of its shares that has not finished. Nothing was saved; try again later.')
+		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice@example.test' }))
+	})
+
+	it('shows a save to a login refused for a partner share owner mismatch without Retry, with that login focused', async () => {
+		const { user } = renderWindow(createView({ targets: [target()] }), {
+			replies: { 'passkey.save': { ok: false, code: 'write_failed', error: { code: 'partner_share_owner_mismatch' } } },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
+		expect(await alertText()).toBe(MISMATCH_TEXT)
 		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
 		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice@example.test' }))
 	})

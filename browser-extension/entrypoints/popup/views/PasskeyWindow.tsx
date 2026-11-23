@@ -24,6 +24,9 @@ type Refusal = Extract<PasskeyWindowReply, { ok: false }>
 
 const PICK_CODES: readonly PasskeyFailure[] = ['ended', 'locked', 'stale', 'write_failed']
 
+/** Write failures no Retry from this window can clear. */
+const UNRETRYABLE: readonly VaultWriteError['code'][] = ['share_scan_pending', 'partner_share_owner_mismatch']
+
 /** Whether `passkey.verify` signed the held pick, or answers its signing as it answers a pick. */
 const answersPick = (reply: PasskeyWindowReply | undefined) => reply !== undefined && (reply.ok ? !reply.view : PICK_CODES.includes(reply.code))
 
@@ -213,8 +216,9 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 
 	const elsewhere = saving && savedFrom !== null && savedFrom !== (adding ? 'new' : 'list')
 	const showFailure = view && !view.locked && !confirming && !held && !view.alreadySaved && !elsewhere ? failure : null
-	// Only the server's background jobs end the share scan, so a Retry would fail the same way.
-	const retryable = showFailure !== null && showFailure.code !== 'share_scan_pending'
+	// Only the server's background jobs end the share scan, and only an administrator's repair a partner share owner
+	// mismatch, so a Retry would fail the same way.
+	const retryable = showFailure !== null && !UNRETRYABLE.includes(showFailure.code)
 	// A failure banner from a reply moves focus to Retry, so it counts as a step too.
 	const ready = useSettled(JSON.stringify([view, confirming, held, replacing?.itemId, showFailure, adding]))
 	const guarded = <A extends unknown[]>(action: (...args: A) => void) => (...args: A) => {
