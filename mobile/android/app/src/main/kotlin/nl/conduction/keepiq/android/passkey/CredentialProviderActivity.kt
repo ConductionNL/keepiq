@@ -56,6 +56,7 @@ import nl.conduction.keepiq.android.Screen
 import nl.conduction.keepiq.android.autofill.AutofillCore
 import nl.conduction.keepiq.android.ui.ScreenColumn
 import nl.conduction.keepiq.android.ui.UnlockScreen
+import nl.conduction.keepiq.shared.api.KeepiqApi
 import nl.conduction.keepiq.shared.autofill.AutofillChoices
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.autofill.AutofillIndexHub
@@ -72,6 +73,7 @@ import nl.conduction.keepiq.shared.passkey.WebAuthnJson
 import nl.conduction.keepiq.shared.sync.SyncTrigger
 import nl.conduction.keepiq.shared.vault.VaultKeys
 import nl.conduction.keepiq.shared.vault.VaultRepository
+import nl.conduction.keepiq.shared.vault.VaultState
 
 /**
  * What happens after a pick in Android's Credential Manager sheet (task
@@ -171,7 +173,7 @@ class CredentialProviderActivity : FragmentActivity() {
             ?: return getError(NoCredentialException())
         val clientData = option.clientDataHash?.let { ClientData.hashed(it) } ?: ClientData.build(ClientData.GET, get.challenge, caller.origin)
         val api = core.api(accountId) ?: return getError(GetCredentialUnknownException("no account"))
-        val assertion = Passkeys.sign(api, keys, choice, clientData, rpId, resync = { reread(accountId, keys) })
+        val assertion = Passkeys.sign(api, keys, choice, clientData, rpId, resync = { reread(api, accountId, keys) })
         // The index holds the item as it was: read it again, so the next sign starts from the new counter.
         if (assertion.counter > 0) refreshIndex(accountId, keys, always = true)
         return Intent().also {
@@ -207,7 +209,7 @@ class CredentialProviderActivity : FragmentActivity() {
                 }
                 val clientData = call.clientDataHash?.let { ClientData.hashed(it) }
                     ?: ClientData.build(ClientData.CREATE, WebAuthnJson.challenge(call.requestJson) ?: ByteArray(0), caller.origin)
-                val registration = Passkeys.create(api, keys, index, create, clientData, System.currentTimeMillis(), resync = { reread(accountId, keys) })
+                val registration = Passkeys.create(api, keys, index, create, clientData, System.currentTimeMillis(), resync = { reread(api, accountId, keys) })
                 refreshIndex(accountId, keys, always = true)
                 Intent().also {
                     PendingIntentHandler.setCreateCredentialResponse(it, CreatePublicKeyCredentialResponse(WebAuthnJson.registrationResponse(registration)))
@@ -237,17 +239,15 @@ class CredentialProviderActivity : FragmentActivity() {
     private suspend fun refreshIndex(accountId: String, keys: VaultKeys, always: Boolean) {
         if (!always && core.indexOf(accountId).entries.isNotEmpty()) return
         val api = core.api(accountId) ?: return
-        runCatching {
-            VaultRepository(api, keys, null, null, { System.currentTimeMillis() }, { AutofillIndexHub.refreshed(accountId, it, keys) })
-                .refresh(SyncTrigger.MANUAL)
-        }
+        runCatching { read(api, accountId, keys) }
     }
 
-    /** The index read again, for a write that found the item changed since it was built. */
-    private suspend fun reread(accountId: String, keys: VaultKeys): AutofillIndex {
-        refreshIndex(accountId, keys, always = true)
-        return core.indexOf(accountId)
-    }
+    private suspend fun read(api: KeepiqApi, accountId: String, keys: VaultKeys): VaultState =
+        VaultRepository(api, keys, null, null, { System.currentTimeMillis() }, { AutofillIndexHub.refreshed(accountId, it, keys) })
+            .refresh(SyncTrigger.MANUAL)
+
+    /** The index read again, for a write that found the item changed since it was built; a read that fails throws ([Passkeys.reread]). */
+    private suspend fun reread(api: KeepiqApi, accountId: String, keys: VaultKeys): AutofillIndex = Passkeys.reread(read(api, accountId, keys))
 
     private fun getError(e: GetCredentialException): Intent = Intent().also { PendingIntentHandler.setGetCredentialException(it, e) }
 

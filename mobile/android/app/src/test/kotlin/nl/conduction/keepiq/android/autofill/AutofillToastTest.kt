@@ -33,7 +33,7 @@ class AutofillToastTest {
         )
         assertEquals("Password not updated: this login is shared with you to view only.", toastOf(SaveResult.VIEW_ONLY))
         // Any other reason is not said to be a share; the app's edit form names it.
-        assertEquals("Password not updated: Keepiq could not save it. Open the login in the Keepiq app to see why.", toastOf(SaveResult.FAILED))
+        assertEquals("Password not updated: Keepiq could not save it. Try again or change it in the Keepiq app.", toastOf(SaveResult.FAILED))
     }
 
     @Test

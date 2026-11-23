@@ -91,6 +91,13 @@ class VaultRepositoryTest {
     private var manifestFails = false
     private var manifestUnreachable = false
 
+    /** The manifest's suite and `unlockBlocked`, which lock the vault when they differ from the one it was unlocked with. */
+    private var manifestSuite = """{"id":"suite-9","status":"active","unlockKeyEpoch":2}"""
+    private var manifestUnlockBlocked = "null"
+
+    /** How the manifest lists s1, or null to leave it out. */
+    private var listedS1: () -> String? = { loginRow }
+
     /** What GET /secrets/s1 answers instead of [loginRow], when set. */
     private var freshS1: String? = null
     private var offline = false
@@ -185,7 +192,7 @@ class VaultRepositoryTest {
                     HttpStatusCode.Conflict, headersOf(HttpHeaders.ContentType, "application/json"),
                 )
             path.endsWith("/share-save") && path.removePrefix("/api/v1/secrets/").removeSuffix("/share-save") in writerCopies -> """{"federated":{"ownerOnly":true}}"""
-            path == "/api/v1/offline/manifest" -> """{"suite":{"id":"suite-9","status":"active","unlockKeyEpoch":2},"secrets":[${(listOf(loginRow, useOnlyRow, blockedRow) + moreRows.map { it() }).joinToString(",")}],"folders":$folders,"types":$types,"unlockBlocked":null}"""
+            path == "/api/v1/offline/manifest" -> """{"suite":$manifestSuite,"secrets":[${(listOfNotNull(listedS1(), useOnlyRow, blockedRow) + moreRows.map { it() }).joinToString(",")}],"folders":$folders,"types":$types,"unlockBlocked":$manifestUnlockBlocked}"""
             path == "/api/v1/secrets/s1" && request.method == HttpMethod.Get -> freshS1 ?: loginRow
             path == "/api/v1/secrets/s2" && request.method == HttpMethod.Get -> useOnlyRow
             path == "/api/v1/secrets/s4" && request.method == HttpMethod.Get -> mailRow
@@ -409,6 +416,43 @@ class VaultRepositoryTest {
         manifestFails = false
         manifestUnreachable = true
         assertEquals(WriteProblemKind.OFFLINE, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
+    }
+
+    @Test
+    fun aSyncThatLocksInsideTheCacheMatchNamesTheLock() = runTest {
+        freshS1 = loginRow.replace("\"useOnly\"", "\"totp\":\"${enc(seed)}\",\"useOnly\"")
+        val locking = listOf(
+            LockReason.MASTER_PASSWORD_CHANGED to { manifestSuite = """{"id":"suite-9","status":"active","unlockKeyEpoch":3}""" },
+            LockReason.SUITE_CHANGED to { manifestSuite = """{"id":"suite-10","status":"active","unlockKeyEpoch":2}""" },
+            LockReason.UNLOCK_BLOCKED to { manifestUnlockBlocked = "\"two_factor\"" },
+        )
+        for ((reason, lock) in locking) {
+            manifestSuite = """{"id":"suite-9","status":"active","unlockKeyEpoch":2}"""
+            manifestUnlockBlocked = "null"
+            repo.refresh(SyncTrigger.START)
+            lock()
+            val problem = assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem
+            assertEquals(WriteProblem(WriteProblemKind.LOCKED, lockReason = reason), problem)
+        }
+    }
+
+    @Test
+    fun aRowBlockedInTheSyncInsideTheCacheMatchIsRefusedWithItsReason() = runTest {
+        repo.refresh(SyncTrigger.START)
+        freshS1 = loginRow.replace("\"useOnly\"", "\"totp\":\"${enc(seed)}\",\"useOnly\"")
+        listedS1 = { """{"id":"s1","name":"Huisbank","url":null,"typeId":"1","folderId":"f2","blocked":true,"blockedReason":"Old suite","updatedAt":"2026-10-03T09:00:00+00:00"}""" }
+        assertEquals(WriteProblem(WriteProblemKind.SERVER_MESSAGE, "Old suite"), assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem)
+        listedS1 = { """{"id":"s1","name":"Huisbank","url":null,"typeId":"1","folderId":"f2","blocked":true,"updatedAt":"2026-10-03T09:00:00+00:00"}""" }
+        assertEquals(WriteProblemKind.REFUSED, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
+    }
+
+    @Test
+    fun aRowMissingFromTheSyncInsideTheCacheMatchIsNotFoundNotAConflict() = runTest {
+        repo.refresh(SyncTrigger.START)
+        freshS1 = loginRow.replace("\"useOnly\"", "\"totp\":\"${enc(seed)}\",\"useOnly\"")
+        listedS1 = { null }
+        assertEquals(WriteProblemKind.NOT_FOUND, assertIs<OpenResult.Failed>(repo.openForEdit("s1")).problem.kind)
+        assertTrue(requests.none { it.first == "PUT" })
     }
 
     @Test

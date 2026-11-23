@@ -34,6 +34,8 @@ import nl.conduction.keepiq.shared.vault.RsaVaultKeys
 import nl.conduction.keepiq.shared.vault.SecretType
 import nl.conduction.keepiq.shared.vault.VaultRow
 import nl.conduction.keepiq.shared.vault.VaultState
+import nl.conduction.keepiq.shared.vault.WriteProblemException
+import nl.conduction.keepiq.shared.vault.WriteProblemKind
 import nl.conduction.keepiq.shared.vectors.Vectors
 import nl.conduction.keepiq.shared.vectors.str
 import kotlin.test.Test
@@ -101,6 +103,11 @@ class PasskeysTest {
 
     /** What GET /api/v1/secrets/l1 answers with instead of the login, when set. */
     private var freshStatus: HttpStatusCode? = null
+
+    /** What the manifest answers when the vault is read again: [manifestStatus], no connection, or [manifestBody]. */
+    private var manifestStatus: HttpStatusCode? = null
+    private var manifestUnreachable = false
+    private var manifestBody = """{"suite":{"id":"suite-9","status":"active","unlockKeyEpoch":2},"secrets":[],"folders":[],"types":[],"unlockBlocked":null}"""
     private val engine = MockEngine { request ->
         val path = request.url.encodedPath.substringAfter("/apps/keepiq")
         // The capability check before a write of `passkeys` (KeepiqApi.requireLoginFields).
@@ -119,6 +126,11 @@ class PasskeysTest {
             }
         }
         if (offline) throw java.io.IOException("no network")
+        if (path == "/api/v1/offline/manifest") {
+            if (manifestUnreachable) throw java.io.IOException("no network")
+            manifestStatus?.let { return@MockEngine respond("""{"message":"x"}""", it, headersOf(HttpHeaders.ContentType, "application/json")) }
+            return@MockEngine respond(manifestBody, headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
         if (request.method == HttpMethod.Put && refusePut) {
             return@MockEngine respond("""{"error":"read_only","message":"You can only read this item."}""", HttpStatusCode.Forbidden, headersOf(HttpHeaders.ContentType, "application/json"))
         }
@@ -410,6 +422,42 @@ class PasskeysTest {
         Passkeys.create(api, keys, index, creation("alice@example.nl"), ClientData.hashed(ByteArray(32)), 0, resync = { index })
         assertTrue(shareSaves.isEmpty())
         assertEquals("POST" to "/api/v1/secrets", requests.last())
+    }
+
+    @Test
+    fun aReadAgainThatFailsMakesNoNewLoginAndIsNotAConflict() = runTest {
+        val (existing, _) = made("login.example.nl", 4)
+        val (swapped, _) = made("login.example.nl", 0)
+        val entry = loginEntry("l1", "https://login.example.nl", "alice@example.nl", existing)
+        val siteJson = AutofillIndex(listOf(entry)).toJson()
+        val hash = Encoding.toBase64(ByteArray(32))
+        val failures = listOf(
+            WriteProblemKind.FAILED to { manifestStatus = HttpStatusCode.ServiceUnavailable },
+            WriteProblemKind.OFFLINE to { manifestUnreachable = true },
+            WriteProblemKind.LOCKED to { manifestBody = manifestBody.replace("suite-9", "suite-10") },
+        )
+        for ((kind, fail) in failures) {
+            manifestStatus = null
+            manifestUnreachable = false
+            manifestBody = manifestBody.replace("suite-10", "suite-9")
+            fail()
+            requests.clear()
+            // The index doesn't hold the server's passkeys, so iOS's provider reads the vault again, and that read fails.
+            freshLoginWith(swapped)
+            val registered = assertFailsWith<WriteProblemException> {
+                ApplePasskeys.register(api, keys, siteJson, "login.example.nl", "alice@example.nl", "", hash, listOf(-7L), 0)
+            }
+            assertEquals(kind, registered.problem.kind)
+            assertTrue(requests.none { it == "POST" to "/api/v1/secrets" }, "$requests")
+            assertTrue(requests.any { it.second == "/api/v1/offline/manifest" }, "$requests")
+
+            // A counter write on a login whose key changed since the index was built: the sign-in fails with the read's reason.
+            freshLogin = """{"id":"l1","name":"Example","url":"https://login.example.nl","typeId":"7","totp":"${enc("NEWSEED")}","passkeys":"${enc(array(existing))}","updatedAt":"$UPDATED_AT"}"""
+            val choice = Passkeys.candidates(AutofillIndex(listOf(entry)), "login.example.nl", keys).single()
+            val signed = assertFailsWith<WriteProblemException> { ApplePasskeys.signIn(api, keys, choice, hash, "login.example.nl") }
+            assertEquals(kind, signed.problem.kind)
+            assertTrue(shareSaves.isEmpty())
+        }
     }
 
     @Test

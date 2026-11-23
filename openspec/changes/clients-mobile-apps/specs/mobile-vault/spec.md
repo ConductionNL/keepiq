@@ -84,8 +84,8 @@ A change of an item's `key`, `login`, `additionalFields`, `totp` or `passkeys` M
 
 #### Scenario: A failed sync during the check
 - **GIVEN** an item changed elsewhere since the last sync
-- **WHEN** the user opens it for edit and the sync fails
-- **THEN** the phone names the failure, such as being offline, and does not say the server sent a value it doesn't hold
+- **WHEN** the user opens it for edit, or a site registers or signs in with a passkey on it, and the sync or the read of the vault fails
+- **THEN** the phone names the failure, such as being offline or a locked vault, does not say the server sent a value it doesn't hold, and makes no new login
 
 #### Scenario: A card member the form does not show
 - **GIVEN** a card shared with a partner organisation whose key holds a member the card form has no field for

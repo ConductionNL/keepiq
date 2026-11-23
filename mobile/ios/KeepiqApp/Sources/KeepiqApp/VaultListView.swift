@@ -146,14 +146,6 @@ struct VaultListView: View {
             }
         }
     }
-
-    private func lockText(_ reason: LockReason) -> String {
-        switch reason {
-        case .suiteChanged: return L("vault_locked_suite")
-        case .masterPasswordChanged: return L("vault_locked_password")
-        default: return L("vault_locked_two_factor")
-        }
-    }
 }
 
 private struct EntryRow: View {

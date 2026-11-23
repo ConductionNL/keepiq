@@ -129,10 +129,11 @@ object ApplePasskeys {
      * The vault read again from the server, for a passkey write that found
      * its item changed since the site file was written: the AutoFill
      * extension can't sync the app's store, so it reads the list as
-     * Android's provider does without one.
+     * Android's provider does without one. A read that fails throws
+     * ([Passkeys.reread]).
      */
     private suspend fun reread(api: KeepiqApi, keys: VaultKeys): AutofillIndex =
-        AutofillIndex.of(VaultRepository(api, keys, null, null, MobileSession::nowMillis).refresh(SyncTrigger.MANUAL))
+        Passkeys.reread(VaultRepository(api, keys, null, null, MobileSession::nowMillis).refresh(SyncTrigger.MANUAL))
 
     private fun base64(bytes: ByteArray): String = Encoding.toBase64(bytes)
 }

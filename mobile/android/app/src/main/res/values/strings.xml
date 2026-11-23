@@ -264,7 +264,7 @@
     <string name="autofill_saved">Login saved in Keepiq.</string>
     <string name="autofill_updated">Password updated in Keepiq.</string>
     <string name="autofill_not_updated_shared">Password not updated: this login is shared with a partner organisation. Change it in the Keepiq app or the web app so everyone gets it.</string>
-    <string name="autofill_not_updated">Password not updated: Keepiq could not save it. Open the login in the Keepiq app to see why.</string>
+    <string name="autofill_not_updated">Password not updated: Keepiq could not save it. Try again or change it in the Keepiq app.</string>
     <string name="autofill_not_updated_view_only">Password not updated: this login is shared with you to view only.</string>
     <string name="autofill_save_failed">Keepiq could not save this login. Add it in the app.</string>
     <string name="autofill_settings_title">Autofill</string>

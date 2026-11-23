@@ -27,6 +27,8 @@ import nl.conduction.keepiq.shared.vault.ShareSave
 import nl.conduction.keepiq.shared.vault.ShareSaveException
 import nl.conduction.keepiq.shared.vault.VaultKeys
 import nl.conduction.keepiq.shared.vault.VaultRow
+import nl.conduction.keepiq.shared.vault.VaultState
+import nl.conduction.keepiq.shared.vault.WriteProblemException
 
 /**
  * A stored passkey for the asked relying party, decrypted for one request:
@@ -86,12 +88,24 @@ object Passkeys {
     /**
      * Whether the index holds [fresh]'s [fields] for item [id], read again
      * through [resync] once when it doesn't, so a row changed elsewhere since
-     * the index was built gets through ([ShareSave.holds]).
+     * the index was built gets through ([ShareSave.holds]). A [resync] that
+     * could not read the vault throws ([reread]), so the write fails with
+     * that reason instead of as a mismatch.
      */
     private suspend fun indexHolds(fresh: VaultRow, held: Map<String, String?>, fields: Set<String>, resync: suspend () -> AutofillIndex?): Boolean {
         if (ShareSave.holds(fresh, held.filterKeys { it in fields })) return true
         val again = resync()?.entries?.firstOrNull { it.id == fresh.id } ?: return false
         return ShareSave.holds(fresh, again.held.filterKeys { it in fields })
+    }
+
+    /**
+     * The index of the vault read again for a `resync`, or a
+     * [WriteProblemException] when that read went offline, locked the vault
+     * or was refused ([VaultState.readProblem]).
+     */
+    fun reread(state: VaultState): AutofillIndex {
+        state.readProblem?.let { throw WriteProblemException(it) }
+        return AutofillIndex.of(state)
     }
 
     fun candidates(index: AutofillIndex, rpId: String, keys: VaultKeys, allowCredentialIds: List<String> = emptyList()): List<PasskeyChoice> {

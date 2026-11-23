@@ -7,6 +7,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import nl.conduction.keepiq.shared.api.KeepiqApiException
+import nl.conduction.keepiq.shared.sync.LockReason
 
 /** Why a write did not go through. The screens turn the kind into text in the user's language. */
 enum class WriteProblemKind {
@@ -69,6 +70,12 @@ enum class WriteProblemKind {
 
     /** The server sent a value the app doesn't hold for this item, even after a sync: it is not opened or changed. */
     CONFLICT,
+
+    /** The sync locked the vault; [WriteProblem.lockReason] says why. */
+    LOCKED,
+
+    /** The item is not in the vault the device holds, even after a sync. */
+    NOT_FOUND,
 }
 
 /** A refusal the phone already put in words, thrown through a write that reports it as [problem]. */
@@ -82,6 +89,7 @@ data class WriteProblem(
     /** The partner shares a partner refusal names. */
     val partners: List<PartnerShare> = emptyList(),
     val requiredVersion: String? = null,
+    val lockReason: LockReason? = null,
 ) {
     /** The partners' cloud ids, for the message. */
     val partnerNames: String get() = partners.joinToString(", ") { it.recipientCloudId }

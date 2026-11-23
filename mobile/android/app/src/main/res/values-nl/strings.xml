@@ -262,7 +262,7 @@
     <string name="autofill_saved">Login opgeslagen in Keepiq.</string>
     <string name="autofill_updated">Wachtwoord bijgewerkt in Keepiq.</string>
     <string name="autofill_not_updated_shared">Wachtwoord niet bijgewerkt: deze login is gedeeld met een partnerorganisatie. Wijzig hem in de Keepiq-app of de webapp, zodat iedereen hem krijgt.</string>
-    <string name="autofill_not_updated">Wachtwoord niet bijgewerkt: Keepiq kon het niet opslaan. Open de login in de Keepiq-app om te zien waarom.</string>
+    <string name="autofill_not_updated">Wachtwoord niet bijgewerkt: Keepiq kon het niet opslaan. Probeer het opnieuw of wijzig het in de Keepiq-app.</string>
     <string name="autofill_not_updated_view_only">Wachtwoord niet bijgewerkt: deze login is met je gedeeld om alleen te bekijken.</string>
     <string name="autofill_save_failed">Keepiq kon deze login niet opslaan. Voeg hem toe in de app.</string>
     <string name="autofill_settings_title">Automatisch invullen</string>

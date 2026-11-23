@@ -40,6 +40,14 @@ data class VaultState(
 
     fun typeNamed(name: String): SecretType? = types.firstOrNull { it.name == name }
 
+    /** Why this state is not a good read of the server: offline, locked or refused; null when it is one. */
+    val readProblem: WriteProblem?
+        get() = when {
+            offline -> WriteProblem(WriteProblemKind.OFFLINE)
+            locked != null -> WriteProblem(WriteProblemKind.LOCKED, lockReason = locked)
+            else -> problem
+        }
+
     companion object {
         val EMPTY = VaultState(emptyList(), emptyList(), emptyList(), null, offline = false, onlineOnly = false)
     }
@@ -220,21 +228,17 @@ class VaultRepository(
      * Null when the device holds [fresh]'s value ciphertexts for it, of
      * [fields], after one sync when it doesn't yet, so a row written elsewhere
      * since the last sync gets through (the extension's `cachedMatch`,
-     * [ShareSave.holds]); else why not. A sync never throws, so a failed one
-     * is told apart from a mismatch, which would otherwise read as one.
+     * [ShareSave.holds]); else why not, as the extension's `refuseMismatch`.
+     * A sync never throws, so a failed one is told apart from a mismatch,
+     * which would otherwise read as one ([VaultState.readProblem]).
      */
     private suspend fun unheld(fresh: VaultRow, fields: Collection<String> = ShareSave.VALUE_FIELDS): WriteProblem? {
         fun matches() = cachedRow(fresh.id)?.let { !it.blocked && ShareSave.holds(fresh, it.values.filterKeys { k -> k in fields }) } == true
         if (matches()) return null
-        val synced = refresh(SyncTrigger.AFTER_WRITE)
-        when {
-            synced.offline -> return WriteProblem(WriteProblemKind.OFFLINE)
-            synced.locked != null -> return WriteProblem(WriteProblemKind.SUITE_BLOCKED)
-            synced.problem != null -> return synced.problem
-        }
+        refresh(SyncTrigger.AFTER_WRITE).readProblem?.let { return it }
         if (matches()) return null
-        val cached = cachedRow(fresh.id)
-        if (cached?.blocked == true) return cached.blockedReason?.let { WriteProblem(WriteProblemKind.SERVER_MESSAGE, it) } ?: WriteProblem(WriteProblemKind.REFUSED)
+        val cached = cachedRow(fresh.id) ?: return WriteProblem(WriteProblemKind.NOT_FOUND)
+        if (cached.blocked) return cached.blockedReason?.let { WriteProblem(WriteProblemKind.SERVER_MESSAGE, it) } ?: WriteProblem(WriteProblemKind.REFUSED)
         return WriteProblem(WriteProblemKind.CONFLICT)
     }
 

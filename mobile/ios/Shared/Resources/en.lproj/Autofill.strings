@@ -22,7 +22,7 @@
 "add.save" = "Save and fill in";
 "add.refused" = "Keepiq does not save logins for this site.";
 "add.notUpdated" = "Password not updated: this login is shared with a partner organisation. Change it in the Keepiq app or the web app so everyone gets it.";
-"add.notUpdatedFailed" = "Password not updated: Keepiq could not save it. Open the login in the Keepiq app to see why.";
+"add.notUpdatedFailed" = "Password not updated: Keepiq could not save it. Try again or change it in the Keepiq app.";
 "add.viewOnly" = "Password not updated: this login is shared with you to view only.";
 /* Passkeys (clients-mobile-apps task 5.2). */
 "unlock.passkey" = "To use your passkey for %@.";

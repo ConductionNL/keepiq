@@ -62,6 +62,8 @@ fun writeProblemText(problem: WriteProblem, saveWithout: Boolean = true): String
     WriteProblemKind.FEDERATION_UNAVAILABLE -> stringResource(R.string.write_federation_unavailable)
     WriteProblemKind.KEEPIQ_OUTDATED -> stringResource(R.string.write_keepiq_outdated)
     WriteProblemKind.CONFLICT -> stringResource(R.string.write_conflict)
+    WriteProblemKind.LOCKED -> stringResource(problem.lockReason?.let { lockText(it) } ?: R.string.write_failed)
+    WriteProblemKind.NOT_FOUND -> stringResource(R.string.detail_missing)
 }
 
 /** What a share-save could not deliver to everyone, for the item's detail. */

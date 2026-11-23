@@ -137,7 +137,20 @@ func writeProblemText(_ problem: WriteProblem) -> String {
     case .federationUnavailable: return L("write_federation_unavailable")
     case .keepiqOutdated: return L("write_keepiq_outdated")
     case .conflict: return L("write_conflict")
+    case .locked:
+        guard let reason = problem.lockReason else { return L("write_failed") }
+        return lockText(reason)
+    case .notFound: return L("detail_missing")
     default: return L("write_failed")
+    }
+}
+
+/// Why a sync locked the vault.
+func lockText(_ reason: LockReason) -> String {
+    switch reason {
+    case .suiteChanged: return L("vault_locked_suite")
+    case .masterPasswordChanged: return L("vault_locked_password")
+    default: return L("vault_locked_two_factor")
     }
 }
 
