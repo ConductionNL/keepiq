@@ -76,6 +76,14 @@ const lastFinal = () => finalCalls().at(-1)!
 const sent = () => fetchMock.mock.calls.map(([input, init]) => `${init?.method ?? 'GET'} ${new URL(String(input)).pathname.replace('/index.php/apps/keepiq', '')}`)
 const bodiesOf = (line: string) => fetchMock.mock.calls.filter((_, i) => sent()[i] === line).map(([, init]) => JSON.parse(String(init!.body)) as Record<string, unknown>)
 
+/** The 409 `incomplete` answer, with the copies and partner shares the world requires. */
+function incomplete(shares: Array<typeof BOB>, skipRefused: string[] = [], unexpectedShares: string[] = []): Response {
+	return json({
+		error: 'incomplete', path: world.copyPath ? 'copy' : 'owner', sourceUpdatedAt: SOURCE_AT,
+		copies: { required: world.copies, missing: [], unexpected: [], skipRefused }, federated: { required: shares, missing: [], unexpected: unexpectedShares },
+	}, 409)
+}
+
 function judge(body: Body): Response {
 	saves.push(body)
 	const local = body.copies.length + body.skipped.length
@@ -84,6 +92,8 @@ function judge(body: Body): Response {
 	if (body.stage?.id && !stages.has(body.stage.id)) return json({ error: 'stage_unknown', message: 'The stage does not exist or expired' }, 404)
 	if (body.stage?.final === false) {
 		if (local + remote === 0) return json({ error: 'empty_chunk' }, 400)
+		// A copy editor who does not own the source names no partner share, on a chunk either.
+		if (world.copyPath && !world.ownsSource && remote > 0) return incomplete([], [], [...body.federated ?? [], ...body.suspend ?? []].map((entry) => entry.shareId))
 		const id = body.stage.id ?? crypto.randomUUID()
 		if (!body.stage.id) stages.clear()
 		stages.set(id, [...stages.get(id) ?? [], body])
@@ -108,14 +118,9 @@ function judge(body: Body): Response {
 	const skipRefused = skipped.filter((skip) => world.keyed.has(skip.secretId)).map((skip) => skip.secretId)
 	const required = world.copies.map((copy) => copy.secretId)
 	const shares = world.copyPath && !world.ownsSource ? [] : world.shares
-	const incomplete = required.some((id) => !named.includes(id)) || named.some((id) => !required.includes(id)) || skipRefused.length > 0
+	const missesOrAdds = required.some((id) => !named.includes(id)) || named.some((id) => !required.includes(id)) || skipRefused.length > 0
 		|| shares.some((share) => !shareIds.includes(share.shareId)) || shareIds.some((id) => !shares.some((share) => share.shareId === id))
-	if (incomplete) {
-		return json({
-			error: 'incomplete', path: world.copyPath ? 'copy' : 'owner', sourceUpdatedAt: SOURCE_AT,
-			copies: { required: world.copies, missing: [], unexpected: [], skipRefused }, federated: { required: shares, missing: [], unexpected: [] },
-		}, 409)
-	}
+	if (missesOrAdds) return incomplete(shares, skipRefused)
 	return json({
 		secret: secretRow(), sourceUpdatedAt: '2026-03-02T10:00:01+00:00', copies: { written: copies.length, skipped: skipped.length },
 		federated: {
@@ -457,6 +462,45 @@ describe('the copy-editor path', () => {
 			expect(await save({ opened: await openedX() })).toEqual({ suspended: [BOB.recipientCloudId] })
 			expect(lastFinal().federated).toEqual([])
 			expect(lastFinal().suspend).toEqual([{ shareId: BOB.shareId, reason: 'unknown_recipient' }])
+		})
+
+		describe('once the item passed on between two attempts', () => {
+			it('drops the partner shares the server no longer requires and saves again as a copy editor', async () => {
+				world.onFinal = (attempt) => {
+					if (attempt === 2) world.ownsSource = false
+				}
+				expect(await save({ opened: await openedX() })).toBeUndefined()
+				const [, named, without] = finalCalls()
+				expect(named!.federated!.map((entry) => entry.shareId)).toEqual([BOB.shareId])
+				expect(without).not.toHaveProperty('federated')
+				expect(without).not.toHaveProperty('suspend')
+				expect(without!.copies.map((copy) => copy.secretId)).toEqual(['src', 'c-carol'])
+			})
+
+			it.each([
+				['a verified partner share', 'federated', false],
+				['a suspend', 'suspend', true],
+			] as const)('drops %s when a stage chunk is answered incomplete, and stages the copies without it', async (_, list, unknown) => {
+				world.copies = [{ secretId: 'src', holder: 'owner', targetUserId: null }, ...Array.from({ length: 101 }, (_, i) => recipient(`c${i}`, `user${i}`))]
+				world.certificates = Object.fromEntries(world.copies.slice(1).map((copy) => [copy.targetUserId, CERT]))
+				// The lookup runs after the answer that required the share and before the chunk that names it.
+				world.lookups[BOB.recipientCloudId] = () => {
+					world.ownsSource = false
+					if (unknown) return json({ message: 'unknown_recipient' }, 404)
+					return json({ cloudId: BOB.recipientCloudId, certificate: F.bob, chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint, valueFields: [] })
+				}
+				expect(await save({ opened: await openedX() })).toBeUndefined()
+				const [, refused, chunk, final] = saves
+				expect(refused!.stage).toEqual({ final: false })
+				expect(refused![list]!.map((entry) => entry.shareId)).toEqual([BOB.shareId])
+				for (const body of [chunk!, final!]) {
+					expect(body).not.toHaveProperty('federated')
+					expect(body).not.toHaveProperty('suspend')
+				}
+				expect(chunk!.stage).toEqual({ final: false })
+				expect(final!.stage).toEqual({ id: expect.any(String), final: true })
+				expect([...chunk!.copies, ...final!.copies]).toHaveLength(102)
+			})
 		})
 	})
 

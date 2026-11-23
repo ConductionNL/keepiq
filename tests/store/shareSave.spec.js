@@ -1385,6 +1385,85 @@ describe("saveShared by the secret's owner through their own copy", () => {
 			expect('suspend' in body).toBe(false)
 		}
 	})
+
+	describe('once the secret passed on between two attempts', () => {
+		// Required of the owner on the first answer only; the server answers the next attempt as it answers any copy editor.
+		const partners = (n) =>
+			n === 1 ? [{ shareId: 'fs-1', recipientCloudId: PARTNER }] : []
+
+		it('drops the partner shares the server no longer requires and saves again as a copy editor', async () => {
+			const log = shareSaveServer({
+				id: 'copy-me',
+				context,
+				required,
+				partners,
+				lookup: { [PARTNER]: VALID },
+			})
+
+			const result = await save()
+
+			expect(result.federated.written).toBe(0)
+			expect(log.saves).toHaveLength(3)
+			expect(log.saves[1].federated.map((f) => f.shareId)).toEqual(['fs-1'])
+			expect('federated' in log.saves[2]).toBe(false)
+			expect('suspend' in log.saves[2]).toBe(false)
+			expect(log.saves[2].copies.map((c) => c.secretId)).toEqual(['src'])
+		})
+
+		it('drops them when a stage chunk is answered incomplete, and stages the copies without them', async () => {
+			const users = Array.from({ length: 150 }, (_, i) => `user-${i}`)
+			const all = [...required, ...users.map((u) => recipient(`copy-${u}`, u))]
+			const log = shareSaveServer({
+				id: 'copy-me',
+				context,
+				required: all,
+				partners,
+				suites: Object.fromEntries(users.map((u) => [u, BOB_CERT])),
+				lookup: { [PARTNER]: VALID },
+				onSave: (body, n) => {
+					const named = [
+						...(body.federated ?? []),
+						...(body.suspend ?? []),
+					]
+					if (
+						body.stage?.final === false
+						&& named.length > 0
+						&& partners(n).length === 0
+					) {
+						throw httpError(409, {
+							error: 'incomplete',
+							copies: {
+								required: all,
+								missing: [],
+								unexpected: [],
+								skipRefused: [],
+							},
+							federated: {
+								required: [],
+								missing: [],
+								unexpected: named.map((e) => e.shareId),
+							},
+						})
+					}
+				},
+			})
+
+			await save()
+
+			expect(log.saves.map((s) => s.stage)).toEqual([
+				undefined,
+				{ final: false },
+				{ final: false },
+				{ id: 'stage-1', final: true },
+			])
+			expect(log.saves[1].federated.map((f) => f.shareId)).toEqual(['fs-1'])
+			for (const body of log.saves.slice(2)) {
+				expect('federated' in body).toBe(false)
+				expect('suspend' in body).toBe(false)
+			}
+			expect(log.saves.slice(2).flatMap((s) => s.copies)).toHaveLength(151)
+		}, 60000)
+	})
 })
 
 describe('what a save tells about partner shares it did not write', () => {
