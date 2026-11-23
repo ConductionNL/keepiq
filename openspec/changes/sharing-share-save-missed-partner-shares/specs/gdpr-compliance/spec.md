@@ -16,7 +16,7 @@ Tombstone fields are display metadata only (the UI shows the copy as shared by a
 - **AND** the delegation MUST be marked permanent
 
 #### Scenario: The delegate keeps their linked copy
-@e2e exclude Server-side cascade semantics — the delegate's share row and copy survive the detach step; covered by PHPUnit (AccountDeletionServiceTest).
+@e2e exclude Server-side cascade semantics — the delegate's share row and copy survive the detach step; covered by PHPUnit (AccountDeletionServiceTest for the kept row, ShareSaveServiceTest testTheOwnerSavingThroughTheirCopyWritesThePartnerShares for the save).
 - **GIVEN** Alice's secret is shared with Dave and Carol, and Dave holds an active delegation on it
 - **WHEN** Alice's account data is deleted
 - **THEN** Dave's copy MUST stay linked to the secret and MUST NOT be tombstoned
