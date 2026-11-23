@@ -48,10 +48,10 @@ describe('ShareSaveNote', () => {
 	})
 
 	it.each([
-		['en', 1, 'Saved, but 1 partner organisation that got this item from a copy didn\'t get this change.'],
-		['en', 3, 'Saved, but 3 partner organisations that got this item from a copy didn\'t get this change.'],
-		['nl', 3, 'Opgeslagen, maar 3 partnerorganisaties die dit item via een kopie kregen, hebben deze wijziging niet gekregen.'],
-	] as const)('in %s, counts %i partner organisations that got the item from a copy', (locale, notReached, text) => {
+		['en', 1, 'Saved, but 1 recipient at a partner organisation got this item from a copy and didn\'t get this change.'],
+		['en', 3, 'Saved, but 3 recipients at partner organisations got this item from a copy and didn\'t get this change.'],
+		['nl', 3, 'Opgeslagen, maar 3 ontvangers bij partnerorganisaties kregen dit item via een kopie en hebben deze wijziging niet gekregen.'],
+	] as const)('in %s, counts %i recipients at partner organisations who got the item from a copy', (locale, notReached, text) => {
 		setLocale(locale)
 		expect(shown({ notReached })).toEqual([text])
 	})

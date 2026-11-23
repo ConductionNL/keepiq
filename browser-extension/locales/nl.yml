@@ -292,8 +292,8 @@ shareSave:
   suspended: Delen met {cloudIds} is gepauzeerd, omdat hun certificaat niet kon worden geverifieerd of hun organisatie de deling niet meer accepteert. De Keepiq-webapp toont de deling.
   paused: Delen met {cloudIds} is gepauzeerd tot je dit item opnieuw met hen deelt.
   notReached:
-    1: Opgeslagen, maar 1 partnerorganisatie die dit item via een kopie kreeg, heeft deze wijziging niet gekregen.
-    n: Opgeslagen, maar $1 partnerorganisaties die dit item via een kopie kregen, hebben deze wijziging niet gekregen.
+    1: Opgeslagen, maar 1 ontvanger bij een partnerorganisatie kreeg dit item via een kopie en heeft deze wijziging niet gekregen.
+    n: Opgeslagen, maar $1 ontvangers bij partnerorganisaties kregen dit item via een kopie en hebben deze wijziging niet gekregen.
 
 folders:
   add: Map toevoegen

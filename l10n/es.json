@@ -2050,11 +2050,11 @@
         "Files cannot be added while you are offline. Remove them to save.": "No se pueden añadir archivos sin conexión. Quítelos para guardar.",
         "Files can only be added to a secret you own. Remove them to save.": "Solo se pueden añadir archivos a un secreto que sea suyo. Quítelos para guardar.",
         "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "No se ha guardado nada: una compartición de este secreto con una organización asociada todavía pertenece a su propietario anterior. Un administrador debe reparar las comparticiones con organizaciones asociadas antes de que se pueda guardar este cambio.",
-        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Guardado, pero %n organización asociada que recibió este secreto a partir de una copia no ha recibido este cambio.",
-        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Guardado, pero %n organizaciones asociadas que recibieron este secreto a partir de una copia no han recibido este cambio.",
-        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
-            "Guardado, pero %n organización asociada que recibió este secreto a partir de una copia no ha recibido este cambio.",
-            "Guardado, pero %n organizaciones asociadas que recibieron este secreto a partir de una copia no han recibido este cambio."
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Guardado, pero %n destinatario de una organización asociada recibió este secreto a partir de una copia y no ha recibido este cambio.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Guardado, pero %n destinatarios de organizaciones asociadas recibieron este secreto a partir de una copia y no han recibido este cambio.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Guardado, pero %n destinatario de una organización asociada recibió este secreto a partir de una copia y no ha recibido este cambio.",
+            "Guardado, pero %n destinatarios de organizaciones asociadas recibieron este secreto a partir de una copia y no han recibido este cambio."
         ],
         "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Este secreto se ha compartido contigo, así que no se puede compartir con una organización asociada. No se ha compartido nada."
     },

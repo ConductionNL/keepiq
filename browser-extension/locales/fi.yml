@@ -292,8 +292,8 @@ shareSave:
   suspended: Jakaminen vastaanottajille {cloudIds} on keskeytetty, koska heidän varmennettaan ei voitu vahvistaa tai heidän organisaationsa ei enää hyväksy sitä. Keepiq-verkkosovellus näyttää jaon.
   paused: Jakaminen vastaanottajille {cloudIds} on keskeytetty, kunnes jaat kohteen heille uudelleen.
   notReached:
-    1: Tallennettu, mutta 1 kumppaniorganisaatio, joka sai tämän kohteen kopiosta, ei saanut tätä muutosta.
-    n: Tallennettu, mutta $1 kumppaniorganisaatiota, jotka saivat tämän kohteen kopiosta, ei saanut tätä muutosta.
+    1: Tallennettu, mutta 1 kumppaniorganisaation vastaanottaja sai tämän kohteen kopiosta eikä saanut tätä muutosta.
+    n: Tallennettu, mutta $1 kumppaniorganisaatioiden vastaanottajaa sai tämän kohteen kopiosta eikä saanut tätä muutosta.
 
 folders:
   add: Lisää kansio

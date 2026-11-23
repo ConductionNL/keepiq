@@ -292,8 +292,8 @@ shareSave:
   suspended: Zdieľanie s {cloudIds} je pozastavené, pretože ich certifikát sa nepodarilo overiť alebo ho ich organizácia už neprijíma. Zdieľanie zobrazí webová aplikácia Keepiq.
   paused: Zdieľanie s {cloudIds} je pozastavené, kým s nimi túto položku znova nezdieľate.
   notReached:
-    1: Uložené, ale táto zmena sa nedostala k 1 partnerskej organizácii, ktorá túto položku získala z kópie.
-    n: "Uložené, ale táto zmena sa nedostala k partnerským organizáciám, ktoré túto položku získali z kópie: $1"
+    1: Uložené, ale 1 príjemca v partnerskej organizácii získal túto položku z kópie a túto zmenu nedostal.
+    n: "Uložené, ale táto zmena sa nedostala k príjemcom v partnerských organizáciách, ktorí túto položku získali z kópie: $1"
 
 folders:
   add: Pridať priečinok

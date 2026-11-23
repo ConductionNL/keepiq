@@ -292,8 +292,8 @@ shareSave:
   suspended: "A megosztás szünetel velük: {cloudIds}, mert a tanúsítványuk nem ellenőrizhető, vagy a szervezetük már nem fogadja el. A Keepiq webalkalmazás mutatja a megosztást."
   paused: "A megosztás szünetel velük, amíg újra meg nem osztod velük az elemet: {cloudIds}."
   notReached:
-    1: Mentve, de 1 partnerszervezet, amely másolatból kapta meg ezt az elemet, nem kapta meg ezt a módosítást.
-    n: Mentve, de $1 partnerszervezet, amely másolatból kapta meg ezt az elemet, nem kapta meg ezt a módosítást.
+    1: Mentve, de 1 partnerszervezetnél lévő címzett másolatból kapta meg ezt az elemet, és nem kapta meg ezt a módosítást.
+    n: Mentve, de $1 partnerszervezeteknél lévő címzett másolatból kapta meg ezt az elemet, és nem kapta meg ezt a módosítást.
 
 folders:
   add: Mappa hozzáadása

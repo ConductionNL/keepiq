@@ -292,8 +292,8 @@ shareSave:
   suspended: Bendrinimas su {cloudIds} pristabdytas, nes nepavyko patvirtinti jų sertifikato arba jų organizacija jo nebepriima. Bendrinimą rodo Keepiq žiniatinklio programėlė.
   paused: Bendrinimas su {cloudIds} pristabdytas, kol vėl pasidalinsite šiuo elementu su jais.
   notReached:
-    1: Įrašyta, bet 1 partnerio organizacija, gavusi šį elementą iš kopijos, negavo šio pakeitimo.
-    n: Įrašyta, bet šio pakeitimo negavo partnerių organizacijos, gavusios šį elementą iš kopijos ($1).
+    1: Įrašyta, bet 1 gavėjas partnerio organizacijoje gavo šį elementą iš kopijos ir negavo šio pakeitimo.
+    n: Įrašyta, bet šio pakeitimo negavo gavėjai partnerių organizacijose, gavę šį elementą iš kopijos ($1).
 
 folders:
   add: Pridėti aplanką

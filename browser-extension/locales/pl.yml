@@ -292,8 +292,8 @@ shareSave:
   suspended: Udostępnianie dla {cloudIds} jest wstrzymane, ponieważ nie udało się zweryfikować ich certyfikatu lub ich organizacja już go nie akceptuje. Udostępnienie jest widoczne w aplikacji webowej Keepiq.
   paused: Udostępnianie dla {cloudIds} jest wstrzymane, dopóki ponownie nie udostępnisz im tego elementu.
   notReached:
-    1: Zapisano, ale 1 organizacja partnerska, która dostała ten element z kopii, nie otrzymała tej zmiany.
-    n: "Zapisano, ale tej zmiany nie otrzymały organizacje partnerskie, które dostały ten element z kopii: $1"
+    1: Zapisano, ale 1 odbiorca w organizacji partnerskiej dostał ten element z kopii i nie otrzymał tej zmiany.
+    n: "Zapisano, ale tej zmiany nie otrzymali odbiorcy w organizacjach partnerskich, którzy dostali ten element z kopii: $1"
 
 folders:
   add: Dodaj folder

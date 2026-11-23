@@ -292,8 +292,8 @@ shareSave:
   suspended: Deling med {cloudIds} er sat på pause, fordi deres certifikat ikke kunne bekræftes, eller deres organisation ikke længere accepterer det. Keepiq-webappen viser delingen.
   paused: Deling med {cloudIds} er sat på pause, indtil du deler dette element med dem igen.
   notReached:
-    1: Gemt, men 1 partnerorganisation, der fik dette element fra en kopi, fik ikke denne ændring.
-    n: Gemt, men $1 partnerorganisationer, der fik dette element fra en kopi, fik ikke denne ændring.
+    1: Gemt, men 1 modtager hos en partnerorganisation fik dette element fra en kopi og fik ikke denne ændring.
+    n: Gemt, men $1 modtagere hos partnerorganisationer fik dette element fra en kopi og fik ikke denne ændring.
 
 folders:
   add: Tilføj mappe

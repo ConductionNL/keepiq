@@ -292,8 +292,8 @@ shareSave:
   suspended: Jagamine saajatega {cloudIds} on peatatud, kuna nende sertifikaati ei õnnestunud kinnitada või nende organisatsioon ei aktsepteeri seda enam. Keepiqi veebirakendus näitab jagamist.
   paused: Jagamine saajatega {cloudIds} on peatatud, kuni jagad seda kirjet nendega uuesti.
   notReached:
-    1: Salvestatud, kuid 1 partnerorganisatsioon, mis sai selle kirje koopiast, ei saanud seda muudatust.
-    n: Salvestatud, kuid $1 partnerorganisatsiooni, mis said selle kirje koopiast, ei saanud seda muudatust.
+    1: Salvestatud, kuid 1 partnerorganisatsiooni saaja sai selle kirje koopiast ega saanud seda muudatust.
+    n: Salvestatud, kuid $1 partnerorganisatsioonide saajat said selle kirje koopiast ega saanud seda muudatust.
 
 folders:
   add: Lisa kaust

@@ -292,8 +292,8 @@ shareSave:
   suspended: Se ha pausado el uso compartido con {cloudIds}, porque no se pudo verificar su certificado o su organización ya no lo acepta. La aplicación web de Keepiq muestra el recurso compartido.
   paused: Se ha pausado el uso compartido con {cloudIds} hasta que vuelvas a compartir este elemento.
   notReached:
-    1: Guardado, pero 1 organización asociada que recibió este elemento a partir de una copia no ha recibido este cambio.
-    n: Guardado, pero $1 organizaciones asociadas que recibieron este elemento a partir de una copia no han recibido este cambio.
+    1: Guardado, pero 1 destinatario de una organización asociada recibió este elemento a partir de una copia y no ha recibido este cambio.
+    n: Guardado, pero $1 destinatarios de organizaciones asociadas recibieron este elemento a partir de una copia y no han recibido este cambio.
 
 folders:
   add: Añadir carpeta

@@ -2050,11 +2050,11 @@
         "Files can only be added to a secret you own. Remove them to save.": "Files can only be added to a secret you own. Remove them to save.",
         "Files cannot be added while you are offline. Remove them to save.": "Files cannot be added while you are offline. Remove them to save.",
         "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.",
-        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Saved, but %n partner organisation that got this secret from a copy did not get this change.",
-        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Saved, but %n partner organisations that got this secret from a copy did not get this change.",
-        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
-            "Saved, but %n partner organisation that got this secret from a copy did not get this change.",
-            "Saved, but %n partner organisations that got this secret from a copy did not get this change."
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.",
+            "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change."
         ],
         "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared."
     },

@@ -292,8 +292,8 @@ shareSave:
   suspended: Partajarea cu {cloudIds} este suspendată, deoarece certificatul lor nu a putut fi verificat sau organizația lor nu îl mai acceptă. Aplicația web Keepiq afișează partajarea.
   paused: Partajarea cu {cloudIds} este suspendată până când partajați din nou acest element cu ei.
   notReached:
-    1: Salvat, dar 1 organizație parteneră care a primit acest element dintr-o copie nu a primit această modificare.
-    n: Salvat, dar această modificare nu a ajuns la organizațiile partenere care au primit acest element dintr-o copie ($1).
+    1: Salvat, dar 1 destinatar dintr-o organizație parteneră a primit acest element dintr-o copie și nu a primit această modificare.
+    n: Salvat, dar această modificare nu a ajuns la destinatarii din organizațiile partenere care au primit acest element dintr-o copie ($1).
 
 folders:
   add: Adăugare dosar

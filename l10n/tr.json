@@ -2024,10 +2024,10 @@
         "Files cannot be added while you are offline. Remove them to save.": "Çevrimdışıyken dosya eklenemez. Kaydetmek için bunları kaldırın.",
         "Files can only be added to a secret you own. Remove them to save.": "Dosyalar yalnızca size ait bir gizliye eklenebilir. Kaydetmek için bunları kaldırın.",
         "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Hiçbir şey kaydedilmedi: bu gizlinin bir ortak kuruluşla paylaşımı hâlâ önceki sahibine ait. Bu değişikliğin kaydedilebilmesi için bir yöneticinin ortak kuruluş paylaşımlarını onarması gerekir.",
-        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Kaydedildi, ancak bu gizliyi bir kopyadan alan %n ortak kuruluş bu değişikliği almadı.",
-        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Kaydedildi, ancak bu gizliyi bir kopyadan alan %n ortak kuruluş bu değişikliği almadı.",
-        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
-            "Kaydedildi, ancak bu gizliyi bir kopyadan alan %n ortak kuruluş bu değişikliği almadı."
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Kaydedildi, ancak ortak kuruluşlardaki %n alıcı bu gizliyi bir kopyadan aldı ve bu değişikliği almadı.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Kaydedildi, ancak ortak kuruluşlardaki %n alıcı bu gizliyi bir kopyadan aldı ve bu değişikliği almadı.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Kaydedildi, ancak ortak kuruluşlardaki %n alıcı bu gizliyi bir kopyadan aldı ve bu değişikliği almadı."
         ],
         "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Bu gizli sizinle paylaşıldı, bu nedenle bir ortak kuruluşla paylaşılamaz. Hiçbir şey paylaşılmadı."
     },

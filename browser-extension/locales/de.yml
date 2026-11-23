@@ -292,8 +292,8 @@ shareSave:
   suspended: Das Teilen mit {cloudIds} ist pausiert, weil ihr Zertifikat nicht überprüft werden konnte oder ihre Organisation es nicht mehr akzeptiert. Die Keepiq-Web-App zeigt die Freigabe.
   paused: Das Teilen mit {cloudIds} ist pausiert, bis du diesen Eintrag erneut mit ihnen teilst.
   notReached:
-    1: Gespeichert, aber 1 Partnerorganisation, die diesen Eintrag aus einer Kopie erhalten hat, hat diese Änderung nicht erhalten.
-    n: Gespeichert, aber $1 Partnerorganisationen, die diesen Eintrag aus einer Kopie erhalten haben, haben diese Änderung nicht erhalten.
+    1: Gespeichert, aber 1 Empfänger bei einer Partnerorganisation hat diesen Eintrag aus einer Kopie erhalten und diese Änderung nicht erhalten.
+    n: Gespeichert, aber $1 Empfänger bei Partnerorganisationen haben diesen Eintrag aus einer Kopie erhalten und diese Änderung nicht erhalten.
 
 folders:
   add: Ordner hinzufügen

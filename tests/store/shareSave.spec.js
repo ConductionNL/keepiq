@@ -1400,14 +1400,14 @@ describe('what a save tells about partner shares it did not write', () => {
 	it.each([
 		[
 			1,
-			'Saved, but 1 partner organisation that got this secret from a copy did not get this change.',
+			'Saved, but 1 recipient at a partner organisation got this secret from a copy and did not get this change.',
 		],
 		[
 			3,
-			'Saved, but 3 partner organisations that got this secret from a copy did not get this change.',
+			'Saved, but 3 recipients at partner organisations got this secret from a copy and did not get this change.',
 		],
 	])(
-		'counts %i partner organisation(s) that got the secret from a copy',
+		'counts %i recipient(s) at partner organisations who got the secret from a copy',
 		(count, text) => {
 			expect(notReachedText(count)).toBe(text)
 		},
@@ -1440,7 +1440,7 @@ describe('what a save tells about partner shares it did not write', () => {
 			)
 
 			expect(showWarning).toHaveBeenCalledTimes(1)
-			expect(showWarning.mock.calls[0][0]).toContain('2 partner organisations')
+			expect(showWarning.mock.calls[0][0]).toContain('2 recipients at partner organisations')
 			expect(showInfo).not.toHaveBeenCalled()
 		},
 	)

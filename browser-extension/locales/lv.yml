@@ -292,8 +292,8 @@ shareSave:
   suspended: Kopīgošana ar {cloudIds} ir apturēta, jo viņu sertifikātu nevarēja pārbaudīt vai viņu organizācija to vairs nepieņem. Kopīgojumu parāda Keepiq tīmekļa lietotne.
   paused: Kopīgošana ar {cloudIds} ir apturēta, līdz atkal kopīgosiet šo vienumu ar viņiem.
   notReached:
-    1: Saglabāts, bet 1 partnera organizācija, kas šo vienumu saņēma no kopijas, nesaņēma šo izmaiņu.
-    n: Saglabāts, bet šo izmaiņu nesaņēma partneru organizācijas, kas šo vienumu saņēma no kopijas ($1).
+    1: Saglabāts, bet 1 saņēmējs partnera organizācijā saņēma šo vienumu no kopijas un nesaņēma šo izmaiņu.
+    n: Saglabāts, bet šo izmaiņu nesaņēma saņēmēji partneru organizācijās, kas šo vienumu saņēma no kopijas ($1).
 
 folders:
   add: Pievienot mapi

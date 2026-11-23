@@ -2076,12 +2076,12 @@
         "Files cannot be added while you are offline. Remove them to save.": "Файлы нельга дадаць, пакуль вы па-за сеткай. Выдаліце іх, каб захаваць.",
         "Files can only be added to a secret you own. Remove them to save.": "Файлы можна дадаваць толькі да ўласнага сакрэту. Выдаліце іх, каб захаваць.",
         "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Нічога не захавана: абагульванне гэтага сакрэту з партнёрскай арганізацыяй усё яшчэ належыць яго папярэдняму ўладальніку. Адміністратар павінен выправіць абагульванні з партнёрскімі арганізацыямі, перш чым гэтую змену можна будзе захаваць.",
-        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Захавана, але %n партнёрская арганізацыя, якая атрымала гэты сакрэт з копіі, не атрымала гэтую змену.",
-        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Захавана, але %n партнёрскіх арганізацый, якія атрымалі гэты сакрэт з копіі, не атрымалі гэтую змену.",
-        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
-            "Захавана, але %n партнёрская арганізацыя, якая атрымала гэты сакрэт з копіі, не атрымала гэтую змену.",
-            "Захавана, але %n партнёрскія арганізацыі, якія атрымалі гэты сакрэт з копіі, не атрымалі гэтую змену.",
-            "Захавана, але %n партнёрскіх арганізацый, якія атрымалі гэты сакрэт з копіі, не атрымалі гэтую змену."
+        "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Захавана, але %n атрымальнік у партнёрскай арганізацыі атрымаў гэты сакрэт з копіі і не атрымаў гэтую змену.",
+        "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Захавана, але %n атрымальнікаў у партнёрскіх арганізацыях атрымалі гэты сакрэт з копіі і не атрымалі гэтую змену.",
+        "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": [
+            "Захавана, але %n атрымальнік у партнёрскай арганізацыі атрымаў гэты сакрэт з копіі і не атрымаў гэтую змену.",
+            "Захавана, але %n атрымальнікі ў партнёрскіх арганізацыях атрымалі гэты сакрэт з копіі і не атрымалі гэтую змену.",
+            "Захавана, але %n атрымальнікаў у партнёрскіх арганізацыях атрымалі гэты сакрэт з копіі і не атрымалі гэтую змену."
         ],
         "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Гэты сакрэт абагулены з вамі, таму яго нельга абагуліць з партнёрскай арганізацыяй. Доступ не нададзены."
     },

@@ -292,8 +292,8 @@ shareSave:
   suspended: Tá comhroinnt le {cloudIds} curtha ar sos, toisc nárbh fhéidir a dteastas a fhíorú nó nach nglacann a n-eagraíocht leis a thuilleadh. Taispeánann aip ghréasáin Keepiq an chomhroinnt.
   paused: Tá comhroinnt le {cloudIds} curtha ar sos go dtí go gcomhroinnfidh tú an mhír seo leo arís.
   notReached:
-    1: Sábháilte, ach níor shroich an t-athrú seo 1 eagraíocht chomhpháirtíochta a fuair an mhír seo ó chóip.
-    n: "Sábháilte, ach níor shroich an t-athrú seo eagraíochtaí comhpháirtíochta a fuair an mhír seo ó chóip: $1"
+    1: Sábháilte, ach fuair 1 faighteoir in eagraíocht chomhpháirtíochta an mhír seo ó chóip agus níor shroich an t-athrú seo é.
+    n: "Sábháilte, ach níor shroich an t-athrú seo faighteoirí in eagraíochtaí comhpháirtíochta a fuair an mhír seo ó chóip: $1"
 
 folders:
   add: Cuir fillteán leis

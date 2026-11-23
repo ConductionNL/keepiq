@@ -292,8 +292,8 @@ shareSave:
   suspended: La condivisione con {cloudIds} è sospesa perché non è stato possibile verificare il loro certificato o la loro organizzazione non lo accetta più. L’app web di Keepiq mostra la condivisione.
   paused: La condivisione con {cloudIds} è sospesa finché non condividerai di nuovo questo elemento con loro.
   notReached:
-    1: Salvato, ma 1 organizzazione partner che ha ricevuto questo elemento da una copia non ha ricevuto questa modifica.
-    n: Salvato, ma $1 organizzazioni partner che hanno ricevuto questo elemento da una copia non hanno ricevuto questa modifica.
+    1: Salvato, ma 1 destinatario di un’organizzazione partner ha ricevuto questo elemento da una copia e non ha ricevuto questa modifica.
+    n: Salvato, ma $1 destinatari di organizzazioni partner hanno ricevuto questo elemento da una copia e non hanno ricevuto questa modifica.
 
 folders:
   add: Aggiungi cartella

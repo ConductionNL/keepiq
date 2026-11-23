@@ -292,8 +292,8 @@ shareSave:
   suspended: Delningen med {cloudIds} är pausad, eftersom deras certifikat inte kunde verifieras eller deras organisation inte längre godtar det. Keepiqs webbapp visar delningen.
   paused: Delningen med {cloudIds} är pausad tills du delar det här objektet med dem igen.
   notReached:
-    1: Sparat, men 1 partnerorganisation som fick det här objektet från en kopia fick inte den här ändringen.
-    n: Sparat, men $1 partnerorganisationer som fick det här objektet från en kopia fick inte den här ändringen.
+    1: Sparat, men 1 mottagare hos en partnerorganisation fick det här objektet från en kopia och fick inte den här ändringen.
+    n: Sparat, men $1 mottagare hos partnerorganisationer fick det här objektet från en kopia och fick inte den här ändringen.
 
 folders:
   add: Lägg till mapp

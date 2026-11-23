@@ -292,8 +292,8 @@ shareSave:
   suspended: Deljenje z {cloudIds} je začasno ustavljeno, ker njihovega potrdila ni bilo mogoče preveriti ali ga njihova organizacija ne sprejema več. Deljenje je prikazano v spletni aplikaciji Keepiq.
   paused: Deljenje z {cloudIds} je začasno ustavljeno, dokler tega elementa z njimi znova ne delite.
   notReached:
-    1: Shranjeno, vendar 1 partnerska organizacija, ki je ta element prejela iz kopije, te spremembe ni prejela.
-    n: "Shranjeno, vendar te spremembe niso prejele partnerske organizacije, ki so ta element prejele iz kopije: $1"
+    1: Shranjeno, vendar je 1 prejemnik v partnerski organizaciji ta element prejel iz kopije in te spremembe ni prejel.
+    n: "Shranjeno, vendar te spremembe niso prejeli prejemniki v partnerskih organizacijah, ki so ta element prejeli iz kopije: $1"
 
 folders:
   add: Dodaj mapo

@@ -297,8 +297,8 @@ shareSave:
   suspended: Sharing with {cloudIds} is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.
   paused: Sharing with {cloudIds} is paused until you share this item with them again.
   notReached:
-    1: Saved, but 1 partner organisation that got this item from a copy didn't get this change.
-    n: Saved, but $1 partner organisations that got this item from a copy didn't get this change.
+    1: Saved, but 1 recipient at a partner organisation got this item from a copy and didn't get this change.
+    n: Saved, but $1 recipients at partner organisations got this item from a copy and didn't get this change.
 
 folders:
   add: Add folder

@@ -833,10 +833,9 @@ async function encryptWhole(value, recipient) {
 }
 
 /**
- * Tell the user which partner organisations a save did not reach: those only
- * the owner's next save reaches, when a copy editor who does not own the
- * secret saved, and those that got the secret from a copy, which no save
- * reaches.
+ * Tell the user which recipients at partner organisations a save did not reach.
+ * Those only the owner's next save reaches, when a copy editor who does not own the secret saved, and those who got the
+ * secret from a copy, which no save reaches.
  *
  * @param {object} result A share-save answer.
  * @return {Promise<void>}
@@ -864,8 +863,8 @@ export async function notifyPartnerNotes(result) {
 }
 
 /**
- * The note for partner organisations that got the secret from a copy, which
- * no save reaches.
+ * The note for recipients at partner organisations who got the secret from a copy, which no save reaches.
+ * The count is of partner shares, one per recipient.
  *
  * @param {number} count How many partner shares hang off a copy the save wrote.
  * @return {string}
@@ -874,8 +873,8 @@ export async function notifyPartnerNotes(result) {
 export function notReachedText(count) {
 	return n(
 		'keepiq',
-		'Saved, but %n partner organisation that got this secret from a copy did not get this change.',
-		'Saved, but %n partner organisations that got this secret from a copy did not get this change.',
+		'Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.',
+		'Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.',
 		count,
 	)
 }

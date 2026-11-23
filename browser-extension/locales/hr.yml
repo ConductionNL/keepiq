@@ -292,8 +292,8 @@ shareSave:
   suspended: Dijeljenje s {cloudIds} pauzirano je jer njihov certifikat nije bilo moguće provjeriti ili ga njihova organizacija više ne prihvaća. Dijeljenje je prikazano u web-aplikaciji Keepiq.
   paused: Dijeljenje s {cloudIds} pauzirano je dok ovu stavku ponovno ne podijelite s njima.
   notReached:
-    1: Spremljeno, ali 1 partnerska organizacija koja je ovu stavku dobila iz kopije nije dobila ovu promjenu.
-    n: "Spremljeno, ali ova promjena nije stigla do partnerskih organizacija koje su ovu stavku dobile iz kopije: $1"
+    1: Spremljeno, ali 1 primatelj u partnerskoj organizaciji dobio je ovu stavku iz kopije i nije dobio ovu promjenu.
+    n: "Spremljeno, ali ova promjena nije stigla do primatelja u partnerskim organizacijama koji su ovu stavku dobili iz kopije: $1"
 
 folders:
   add: Dodaj mapu
