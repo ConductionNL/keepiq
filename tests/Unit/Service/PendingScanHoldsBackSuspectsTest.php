@@ -50,6 +50,7 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Service\DelegateCopyKeeper;
 use OCA\Keepiq\Service\DeletionReport;
 use OCA\Keepiq\Service\DirectShareRegistrar;
 use OCA\Keepiq\Service\GroupShareService;
@@ -61,6 +62,7 @@ use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\ShareRevocationService;
@@ -734,14 +736,24 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			stageMapper: $this->createMock(ShareSaveStageMapper::class),
 			ownerTransfer: $this->createMock(SecretOwnerTransferService::class),
 			quarantineScan: $this->scanner(pending: $pending),
-			rowJudge: $this->shareRowJudge(
-				targets: new ShareTargetMapper(db: $this->db),
-				secrets: new SecretMapper(db: $this->db),
-				scanner: $this->scanner(pending: $pending)
+			delegateCopies: new DelegateCopyKeeper(
+				rowJudge: $this->shareRowJudge(
+					targets: new ShareTargetMapper(db: $this->db),
+					secrets: new SecretMapper(db: $this->db),
+					scanner: $this->scanner(pending: $pending)
+				),
+				grants: $this->createMock(ShareGrantReader::class),
+				secretMapper: new SecretMapper(db: $this->db),
+				shareMapper: new ShareTargetMapper(db: $this->db),
 			),
 		);
 
-		$service->detachGrantedShares(ownedSecrets: [$this->sourceA], report: new DeletionReport(), handedTo: []);
+		$service->detachGrantedShares(
+			userId: $this->attacker,
+			ownedSecrets: [$this->sourceA],
+			report: new DeletionReport(),
+			handedTo: []
+		);
 
 		$this->assertSame(($pending === false), $this->storedV()?->getTombstonedAt() !== null);
 		$this->assertSame(($pending === true ? 1 : 0), $this->quarantineAudits(row: $row));

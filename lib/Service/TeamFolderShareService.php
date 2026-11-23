@@ -31,6 +31,7 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
+use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\SecretVersionLock;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
@@ -258,7 +259,8 @@ class TeamFolderShareService {
 		$confirmers = [];
 		foreach ($this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolder->getId()) as $row) {
 			$createdBy = $row->getCreatedBy();
-			if ($createdBy === '' || $createdBy === $teamFolder->getOwnerId()) {
+			// A deleted account's marker names no colleague to show.
+			if ($createdBy === '' || $createdBy === $teamFolder->getOwnerId() || $createdBy === LinkShareMapper::DELETED_ACCOUNT_MARKER) {
 				continue;
 			}
 

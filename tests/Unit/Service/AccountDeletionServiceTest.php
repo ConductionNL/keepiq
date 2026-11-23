@@ -44,12 +44,22 @@ use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\AccountSuiteCleanupService;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Service\DelegateCopyKeeper;
+use OCA\Keepiq\Service\ExpiredGrantRemover;
+use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
+use OCA\Keepiq\Service\ShareExpiryService;
+use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
+use OCA\Keepiq\Service\ShareRestrictionResolver;
+use OCA\Keepiq\Service\TeamFolderQueryService;
+use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
+use OCP\IGroupManager;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
 
@@ -66,6 +76,13 @@ class AccountDeletionServiceTest extends TestCase {
 	 * @var array<string,object>
 	 */
 	private array $m = [];
+
+	/**
+	 * The grant reader over the mocks, as the cascade and the resolver read grants.
+	 *
+	 * @var ShareGrantReader
+	 */
+	private ShareGrantReader $grants;
 
 	/**
 	 * Build the service with fresh mocks.
@@ -90,7 +107,15 @@ class AccountDeletionServiceTest extends TestCase {
 			'stage' => $this->createMock(ShareSaveStageMapper::class),
 			'federated' => $this->createMock(FederatedShareMapper::class),
 			'scan' => $this->createMock(ShareQuarantineScanner::class),
+			'teamFolders' => $this->createMock(TeamFolderQueryService::class),
+			'groups' => $this->createMock(IGroupManager::class),
 		];
+		$this->grants = new ShareGrantReader(
+			secretMapper: $this->m['secret'],
+			groupShareMapper: $this->m['group'],
+			teamFolders: $this->m['teamFolders'],
+			groupManager: $this->m['groups'],
+		);
 
 		return new AccountDeletionService(
 			secretMapper: $this->m['secret'],
@@ -112,7 +137,12 @@ class AccountDeletionServiceTest extends TestCase {
 					linkShares: $this->m['link'],
 				),
 				quarantineScan: $this->m['scan'],
-				rowJudge: $this->shareRowJudge(targets: $this->m['share'], secrets: $this->m['secret'], scanner: $this->m['scan']),
+				delegateCopies: new DelegateCopyKeeper(
+					rowJudge: $this->shareRowJudge(targets: $this->m['share'], secrets: $this->m['secret'], scanner: $this->m['scan']),
+					grants: $this->grants,
+					secretMapper: $this->m['secret'],
+					shareMapper: $this->m['share'],
+				),
 			),
 			suiteCleanup: new AccountSuiteCleanupService(
 				suiteMapper: $this->m['suite'],
@@ -569,6 +599,27 @@ class AccountDeletionServiceTest extends TestCase {
 	private array $tombstoned = [];
 
 	/**
+	 * The members of each group, by group id.
+	 *
+	 * @var array<string,list<string>>
+	 */
+	private array $groupMembers = [];
+
+	/**
+	 * The team-folder memberships covering `sec-1` for each user.
+	 *
+	 * @var array<string,list<TeamFolderMember>>
+	 */
+	private array $memberships = [];
+
+	/**
+	 * The secrets written by an update, in order.
+	 *
+	 * @var list<string>
+	 */
+	private array $updated = [];
+
+	/**
 	 * Alice's `sec-1` is shared with Dave and Carol, and Dave holds an active
 	 * delegation on it. The mappers keep their rows in this test, so a second
 	 * run of the cascade sees what the first one left.
@@ -609,6 +660,12 @@ class AccountDeletionServiceTest extends TestCase {
 		$this->m['group']->method('deleteBySecret')->willReturnCallback(function (string $secretId): void {
 			$this->groupShares = array_values(array_filter($this->groupShares, static fn (GroupShare $share): bool => $share->getSecretId() !== $secretId));
 		});
+		$this->m['groups']->method('isInGroup')->willReturnCallback(
+			fn (string $userId, string $groupId): bool => in_array($userId, ($this->groupMembers[$groupId] ?? []), true)
+		);
+		$this->m['teamFolders']->method('coveringMemberships')->willReturnCallback(
+			fn (Secret $secret, string $userId): array => ($this->memberships[$userId] ?? [])
+		);
 
 		$this->m['link']->method('findByCreatedBy')->willReturn([]);
 		$this->m['suite']->method('findByOwner')->willReturn([]);
@@ -637,6 +694,7 @@ class AccountDeletionServiceTest extends TestCase {
 		$row->setSecretId($copyId);
 		$row->setTargetUserId($target);
 		$row->setGroupShareId($groupShareId);
+		$row->setCreatedBy('alice');
 
 		return $row;
 	}//end shareRow()
@@ -660,6 +718,14 @@ class AccountDeletionServiceTest extends TestCase {
 		$secrets->method('tombstone')->willReturnCallback(function (string $secretId): void {
 			$this->tombstoned[] = $secretId;
 		});
+		$secrets->method('update')->willReturnCallback(function (Secret $secret): Secret {
+			$this->updated[] = $secret->getId();
+			$this->secrets[$secret->getId()] = $secret;
+			return $secret;
+		});
+		$secrets->method('findAccessEndingBetween')->willReturnCallback(fn (?DateTime $from, DateTime $to): array => array_values(
+			array_filter($this->secrets, static fn (Secret $secret): bool => $secret->getAccessExpiresAt() !== null && $secret->getAccessExpiresAt() <= $to)
+		));
 		$secrets->method('deleteByOwnerUser')->willReturnCallback(function (string $ownerId): int {
 			$before = count($this->secrets);
 			$this->secrets = array_filter($this->secrets, static fn (Secret $secret): bool => $secret->getOwnerId() !== $ownerId);
@@ -688,7 +754,17 @@ class AccountDeletionServiceTest extends TestCase {
 				return ($rows[0] ?? throw new DoesNotExistException('none'));
 			}
 		);
-		$shares->method('findByRecipientSecret')->willThrowException(new DoesNotExistException('none'));
+		$shares->method('findByRecipientSecret')->willReturnCallback(function (string $recipientSecretId): ShareTarget {
+			$rows = array_values(array_filter($this->shareRows, static fn (ShareTarget $row): bool => $row->getSecretId() === $recipientSecretId));
+			if (count($rows) > 1) {
+				throw new MultipleObjectsReturnedException('two');
+			}
+
+			return ($rows[0] ?? throw new DoesNotExistException('none'));
+		});
+		$shares->method('findById')->willReturnCallback(
+			fn (string $id): ShareTarget => ($this->shareRows[$id] ?? throw new DoesNotExistException('none'))
+		);
 		$shares->method('deleteBySourceSecret')->willReturnCallback(function (string $sourceId): void {
 			$this->shareRows = array_filter($this->shareRows, static fn (ShareTarget $row): bool => $row->getSourceSecretId() !== $sourceId);
 		});
@@ -835,4 +911,286 @@ class AccountDeletionServiceTest extends TestCase {
 		$this->assertSame(0, $report->secretsTransferred);
 		$this->assertSame(0, $report->sharesDetached);
 	}//end testARerunAfterTheDelegateKeptTheirCopyChangesNothing()
+
+	/**
+	 * Every way something limits the delegate's copy: the copy itself, the row's own fields, or a grant reaching it.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function limitedDelegateCopies(): array {
+		return [
+			'a use-only direct row' => ['use-only'],
+			'an expiring direct row' => ['expiring'],
+			'a read-only copy' => ['read-only'],
+			'a group copy use-only through the group share only' => ['group use-only'],
+			'a group copy expiring through the group share only' => ['group expiring'],
+			'a direct row whose own limit is not on the copy yet' => ['row limit only'],
+			'a copy limited without a grant saying so' => ['copy limit only'],
+			'a team-folder copy through a use-only membership' => ['folder use-only'],
+		];
+	}//end limitedDelegateCopies()
+
+	/**
+	 * The D5 setup with the delegate's copy limited one way.
+	 *
+	 * @param string $case How the copy is limited, as limitedDelegateCopies() names it
+	 *
+	 * @return AccountDeletionService
+	 */
+	private function limitedDelegateCopy(string $case): AccountDeletionService {
+		$fromGroup = in_array($case, ['group use-only', 'group expiring'], true);
+		$service   = $this->sharedWithTheDelegate(daveGroupShareId: ($fromGroup === true ? 'gs-1' : null));
+		$row  = $this->shareRows['st-dave'];
+		$copy = $this->secrets['c-dave'];
+		$end  = new DateTime('+1 week');
+		switch ($case) {
+			case 'use-only':
+				$row->setUseOnly(true);
+				$copy->setUseOnly(true);
+				break;
+			case 'expiring':
+				$row->setExpiresAt($end);
+				$copy->setAccessExpiresAt($end);
+				break;
+			case 'read-only':
+				$copy->setReadOnly(true);
+				break;
+			case 'group use-only':
+				$this->groupShares[0]->setUseOnly(true);
+				$copy->setUseOnly(true);
+				break;
+			case 'group expiring':
+				$this->groupShares[0]->setExpiresAt($end);
+				$copy->setAccessExpiresAt($end);
+				break;
+			case 'row limit only':
+				$row->setUseOnly(true);
+				break;
+			case 'copy limit only':
+				$copy->setAccessExpiresAt($end);
+				break;
+			default:
+				$row->setTeamFolderId('tf-1');
+				$membership = new TeamFolderMember();
+				$membership->setGrade('read');
+				$membership->setUseOnly(true);
+				$this->memberships['dave'] = [$membership];
+				$copy->setUseOnly(true);
+		}
+
+		return $service;
+	}//end limitedDelegateCopy()
+
+	/**
+	 * The limits a copy carries.
+	 *
+	 * @param Secret $copy The copy
+	 *
+	 * @return array{useOnly:bool,ends:string|null,readOnly:bool}
+	 */
+	private function limitsOf(Secret $copy): array {
+		return [
+			'useOnly' => ($copy->getUseOnly() === true),
+			'ends' => $copy->getAccessExpiresAt()?->format(DATE_ATOM),
+			'readOnly' => ($copy->getReadOnly() === true),
+		];
+	}//end limitsOf()
+
+	/**
+	 * The restriction resolver over the mocks, as every later resolve runs it.
+	 *
+	 * @return ShareRestrictionResolver
+	 */
+	private function resolver(): ShareRestrictionResolver {
+		return new ShareRestrictionResolver(
+			secretMapper: $this->m['secret'],
+			shareTargetMapper: $this->m['share'],
+			groupShareMapper: $this->m['group'],
+			teamFolders: $this->m['teamFolders'],
+			groupManager: $this->m['groups'],
+			quarantineScan: $this->m['scan'],
+			grants: $this->grants,
+		);
+	}//end resolver()
+
+	/**
+	 * A delegate's copy that anything limits is detached as before, and keeps its limits through a later resolve:
+	 * keeping it would leave a row with no limit of its own, and the next resolve would lift the copy's.
+	 *
+	 * @param string $case How the copy is limited
+	 *
+	 * @return void
+	 *
+	 * @dataProvider limitedDelegateCopies
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 */
+	public function testALimitedDelegateCopyIsDetached(string $case): void {
+		$service = $this->limitedDelegateCopy(case: $case);
+		$before  = $this->limitsOf(copy: $this->secrets['c-dave']);
+
+		$report = $service->deleteAllFor('alice');
+		$this->resolver()->resolveSource(sourceSecretId: 'sec-1');
+
+		$this->assertSame('dave', $this->secrets['sec-1']->getOwnerId());
+		$this->assertSame([], $this->shareRows);
+		$this->assertSame([], $this->groupShares);
+		$this->assertSame(['c-dave', 'c-carol'], $this->tombstoned);
+		$this->assertSame(2, $report->sharesDetached);
+		$this->assertSame($before, $this->limitsOf(copy: $this->secrets['c-dave']));
+		$this->assertNotContains('c-dave', $this->updated);
+	}//end testALimitedDelegateCopyIsDetached()
+
+	/**
+	 * A full grant beside a limited one, both ways round.
+	 *
+	 * @return array<string,array{0:bool}>
+	 */
+	public static function fullBesideLimitedGrants(): array {
+		return [
+			'a full direct row and a use-only group share' => [false],
+			'a use-only direct row and a full group share' => [true],
+		];
+	}//end fullBesideLimitedGrants()
+
+	/**
+	 * A full grant beside a limited one gives the delegate a full copy, as the most generous grant wins. One grant
+	 * that is not unlimited detaches the copy anyway: it keeps the full limits it had, so it never ends up less
+	 * restricted, and it cannot end up more restricted either, as a kept row standing on its own limited fields would.
+	 *
+	 * @param bool $rowLimited Whether the direct row is the limited grant (else the group share is)
+	 *
+	 * @return void
+	 *
+	 * @dataProvider fullBesideLimitedGrants
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 */
+	public function testAFullGrantBesideALimitedOneDetachesTheCopyAsItWas(bool $rowLimited): void {
+		$service = $this->sharedWithTheDelegate();
+		$this->shareRows['st-dave']->setUseOnly($rowLimited);
+		$groupShare = new GroupShare();
+		$groupShare->setId('gs-2');
+		$groupShare->setSecretId('sec-1');
+		$groupShare->setGroupId('team');
+		$groupShare->setUseOnly($rowLimited === false);
+		$this->groupShares = [$groupShare];
+		$this->groupMembers['team'] = ['dave'];
+		$this->resolver()->resolveSource(sourceSecretId: 'sec-1');
+		$before = $this->limitsOf(copy: $this->secrets['c-dave']);
+		$this->assertSame(['useOnly' => false, 'ends' => null, 'readOnly' => false], $before);
+
+		$service->deleteAllFor('alice');
+		$this->resolver()->resolveSource(sourceSecretId: 'sec-1');
+
+		$this->assertSame([], $this->shareRows);
+		$this->assertSame(['c-dave', 'c-carol'], $this->tombstoned);
+		$this->assertSame($before, $this->limitsOf(copy: $this->secrets['c-dave']));
+	}//end testAFullGrantBesideALimitedOneDetachesTheCopyAsItWas()
+
+	/**
+	 * A delegate's team-folder row whose membership is full is kept like any other unlimited row.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#scenario-the-delegate-keeps-their-linked-copy
+	 */
+	public function testAFullTeamFolderRowOfTheDelegateIsKept(): void {
+		$service = $this->sharedWithTheDelegate();
+		$this->shareRows['st-dave']->setTeamFolderId('tf-1');
+		$membership = new TeamFolderMember();
+		$membership->setGrade('write');
+		$this->memberships['dave'] = [$membership];
+
+		$service->deleteAllFor('alice');
+		$this->resolver()->resolveSource(sourceSecretId: 'sec-1');
+
+		$this->assertSame(['st-dave'], array_keys($this->shareRows));
+		$this->assertSame(['c-carol'], $this->tombstoned);
+		$this->assertSame(['useOnly' => false, 'ends' => null, 'readOnly' => false], $this->limitsOf(copy: $this->secrets['c-dave']));
+	}//end testAFullTeamFolderRowOfTheDelegateIsKept()
+
+	/**
+	 * The kept row names the deleted account's marker as its maker instead of the deleted user, and the delegate
+	 * still follows it: the row judge trusts it from both the pair and the copy. A maker who is someone else stays.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 */
+	public function testAKeptRowNamesTheDeletedAccountAsItsMaker(): void {
+		$service = $this->sharedWithTheDelegate(daveGroupShareId: 'gs-1');
+
+		$service->deleteAllFor('alice');
+
+		$row = $this->shareRows['st-dave'];
+		$this->assertSame(LinkShareMapper::DELETED_ACCOUNT_MARKER, $row->getCreatedBy());
+		$this->assertNotContains('alice', $row->jsonSerialize());
+		$judge = $this->shareRowJudge(targets: $this->m['share'], secrets: $this->m['secret'], scanner: $this->m['scan']);
+		$this->assertSame($row, $judge->forPair(sourceId: 'sec-1', targetUserId: 'dave')->trustedRow());
+		$this->assertSame($row, $judge->forCopy(copy: $this->secrets['c-dave'])->trustedRow());
+
+		$other = $this->sharedWithTheDelegate();
+		$this->shareRows['st-dave']->setCreatedBy('erin');
+		$other->deleteAllFor('alice');
+		$this->assertSame('erin', $this->shareRows['st-dave']->getCreatedBy());
+	}//end testAKeptRowNamesTheDeletedAccountAsItsMaker()
+
+	/**
+	 * An expiring group copy and a full one.
+	 *
+	 * @return array<string,array{0:bool}>
+	 */
+	public static function expiringOrFullGroupCopies(): array {
+		return [
+			'an expiring group copy is detached' => [true],
+			'a full group copy is kept' => [false],
+		];
+	}//end expiringOrFullGroupCopies()
+
+	/**
+	 * An expiry run after the end date leaves the detached expiring copy with its end date, so reads refuse it; it is
+	 * not lifted to a permanent copy. The kept full copy stays linked and full.
+	 *
+	 * @param bool $expiring Whether the group share, and so the copy, ends
+	 *
+	 * @return void
+	 *
+	 * @dataProvider expiringOrFullGroupCopies
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 */
+	public function testAnExpiryRunAfterTheEndDateNeverLiftsTheDelegatesCopy(bool $expiring): void {
+		$service = $this->sharedWithTheDelegate(daveGroupShareId: 'gs-1');
+		$end     = new DateTime('+1 day');
+		if ($expiring === true) {
+			$this->groupShares[0]->setExpiresAt($end);
+			$this->secrets['c-dave']->setAccessExpiresAt($end);
+		}
+
+		$service->deleteAllFor('alice');
+		$expiry = new ShareExpiryService(
+			secretMapper: $this->m['secret'],
+			targetMapper: $this->m['share'],
+			rowJudge: $this->shareRowJudge(targets: $this->m['share'], secrets: $this->m['secret'], scanner: $this->m['scan']),
+			restrictions: $this->resolver(),
+			remover: $this->createMock(ExpiredGrantRemover::class),
+			notifications: $this->createMock(NotificationService::class),
+		);
+		$ended = $expiry->expire(now: new DateTime('+2 days'));
+
+		$this->assertSame(0, $ended);
+		$this->assertNotContains('c-dave', $this->updated);
+		if ($expiring === true) {
+			$this->assertSame([], $this->shareRows);
+			$this->assertSame(
+				['useOnly' => false, 'ends' => $end->format(DATE_ATOM), 'readOnly' => false],
+				$this->limitsOf(copy: $this->secrets['c-dave'])
+			);
+			return;
+		}
+
+		$this->assertSame(['st-dave'], array_keys($this->shareRows));
+		$this->assertSame(['useOnly' => false, 'ends' => null, 'readOnly' => false], $this->limitsOf(copy: $this->secrets['c-dave']));
+	}//end testAnExpiryRunAfterTheEndDateNeverLiftsTheDelegatesCopy()
 }//end class

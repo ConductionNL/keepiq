@@ -1007,7 +1007,11 @@ class TeamFolderServiceTest extends TestCase {
 		$byHank = new ShareTarget();
 		$byHank->setTargetUserId('kim');
 		$byHank->setCreatedBy('hank');
-		$this->bulkGrantMapper->method('findByTeamFolder')->with('tf-ops')->willReturn([$byOwner, $byHank]);
+		// A row kept for a delegate when its maker's account was deleted names no colleague.
+		$byDeleted = new ShareTarget();
+		$byDeleted->setTargetUserId('dave');
+		$byDeleted->setCreatedBy(LinkShareMapper::DELETED_ACCOUNT_MARKER);
+		$this->bulkGrantMapper->method('findByTeamFolder')->with('tf-ops')->willReturn([$byOwner, $byHank, $byDeleted]);
 
 		$result = $this->service->reconcile(teamFolderId: 'tf-ops', userId: 'alice');
 

@@ -58,7 +58,7 @@ class AccountShareCleanupService {
 	 * @param ShareSaveStageMapper $stageMapper Staged share-save chunks
 	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner and link shares over
 	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
-	 * @param ShareRowJudge $rowJudge Judges the delegate's share row of a secret handed over
+	 * @param DelegateCopyKeeper $delegateCopies Decides whether the delegate of a secret handed over keeps their copy linked
 	 * @param LoggerInterface|null $logger The logger (skipped cross-user tombstones)
 	 *
 	 * @return void
@@ -73,7 +73,7 @@ class AccountShareCleanupService {
 		private ShareSaveStageMapper $stageMapper,
 		private SecretOwnerTransferService $ownerTransfer,
 		private ShareQuarantineScanner $quarantineScan,
-		private ShareRowJudge $rowJudge,
+		private DelegateCopyKeeper $delegateCopies,
 		private ?LoggerInterface $logger = null,
 	) {
 	}//end __construct()
@@ -138,10 +138,10 @@ class AccountShareCleanupService {
 	 * written to the recipient copy. GroupShares the user created are deleted
 	 * the same way (their per-member ShareTarget rows carry the groupShareId).
 	 *
-	 * A secret handed to a delegate keeps the delegate's own share row and
-	 * copy as they are, when the row judge trusts that row: the delegate now
-	 * owns the secret and saves it through that copy.
+	 * A secret handed to a delegate keeps the delegate's own share row and copy linked when DelegateCopyKeeper keeps
+	 * it: the delegate now owns the secret and saves it through that copy.
 	 *
+	 * @param string $userId The departing user
 	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets
 	 * @param DeletionReport $report The running report
 	 * @param array<string,string> $handedTo The new owner of each secret handed over, by secret id
@@ -151,9 +151,13 @@ class AccountShareCleanupService {
 	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
 	 */
-	public function detachGrantedShares(array $ownedSecrets, DeletionReport $report, array $handedTo): void {
+	public function detachGrantedShares(string $userId, array $ownedSecrets, DeletionReport $report, array $handedTo): void {
 		foreach ($ownedSecrets as $secret) {
-			$kept = $this->keptDelegateRow(secretId: $secret->getId(), newOwnerId: ($handedTo[$secret->getId()] ?? null));
+			$kept = $this->delegateCopies->keptRow(
+				secretId: $secret->getId(),
+				fromUserId: $userId,
+				newOwnerId: ($handedTo[$secret->getId()] ?? null)
+			);
 			foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secret->getId()) as $share) {
 				if ($share->getId() !== $kept?->getId()) {
 					$this->tombstoneCopy(share: $share, report: $report);
@@ -223,33 +227,6 @@ class AccountShareCleanupService {
 
 		$this->shareMapper->deleteBySourceSecretExcept(sourceSecretId: $sourceSecretId, keepId: $kept->getId());
 	}//end severLinks()
-
-	/**
-	 * The share row of the delegate a secret was handed to, when the row judge
-	 * trusts it; null when the secret was not handed over or the row is not
-	 * trusted, and its copy is then detached like any other. A row from a group
-	 * share no longer names it, as the group share is removed with the rest.
-	 *
-	 * @param string $secretId The secret
-	 * @param string|null $newOwnerId The delegate it was handed to, or null
-	 *
-	 * @return ShareTarget|null
-	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
-	 */
-	private function keptDelegateRow(string $secretId, ?string $newOwnerId): ?ShareTarget {
-		if ($newOwnerId === null) {
-			return null;
-		}
-
-		$row = $this->rowJudge->forPair(sourceId: $secretId, targetUserId: $newOwnerId)->trustedRow();
-		if ($row !== null && $row->getGroupShareId() !== null) {
-			$row->setGroupShareId(null);
-			$this->shareMapper->update($row);
-		}
-
-		return $row;
-	}//end keptDelegateRow()
 
 	/**
 	 * Step 3 — remove shares the user received.
