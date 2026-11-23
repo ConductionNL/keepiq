@@ -1949,7 +1949,7 @@
         "Files can only be added to a secret you own. Remove them to save.": "Datotecas pon mo vegnir agiuntadas ad in secret che tutga a vus. Allontanai ellas per memorisar.",
         "Sharing options could not be loaded.": "Las opziuns da cundivisiun n'han betg pudì vegnir chargiadas.",
         "Sharing options still could not be loaded.": "Las opziuns da cundivisiun n'han anc adina betg pudì vegnir chargiadas.",
-        "This copy offers no sharing options.": "Questa copia na porscha naginas opziuns da cundivisiun."
+        "Sharing is not available for this secret.": "La cundivisiun n'è betg disponibla per quest secret."
     },
     "plurals": null
 }

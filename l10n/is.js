@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Aðeins er hægt að bæta skrám við leyndarmál sem þú átt. Fjarlægðu þær til að vista.",
         "Sharing options could not be loaded.": "Ekki tókst að hlaða inn deilingarvalkostum.",
         "Sharing options still could not be loaded.": "Enn tókst ekki að hlaða inn deilingarvalkostum.",
-        "This copy offers no sharing options.": "Þetta afrit býður ekki upp á neina deilingarvalkosti."
+        "Sharing is not available for this secret.": "Deiling er ekki í boði fyrir þetta leyndarmál."
     },
     "nplurals=2; plural=(n != 1);"
 )

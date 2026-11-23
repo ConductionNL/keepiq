@@ -2077,7 +2077,7 @@
         "Files can only be added to a secret you own. Remove them to save.": "Файлы можна дадаваць толькі да ўласнага сакрэту. Выдаліце іх, каб захаваць.",
         "Sharing options could not be loaded.": "Не ўдалося загрузіць параметры абагульвання.",
         "Sharing options still could not be loaded.": "Параметры абагульвання ўсё яшчэ не ўдалося загрузіць.",
-        "This copy offers no sharing options.": "Гэтая копія не мае параметраў абагульвання."
+        "Sharing is not available for this secret.": "Абагульванне недаступнае для гэтага сакрэту."
     },
     "plurals": null
 }

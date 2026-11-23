@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Fișierele pot fi adăugate doar la un secret care vă aparține. Eliminați-le pentru a salva.",
         "Sharing options could not be loaded.": "Opțiunile de partajare nu au putut fi încărcate.",
         "Sharing options still could not be loaded.": "Opțiunile de partajare tot nu au putut fi încărcate.",
-        "This copy offers no sharing options.": "Această copie nu oferă opțiuni de partajare."
+        "Sharing is not available for this secret.": "Partajarea nu este disponibilă pentru acest secret."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

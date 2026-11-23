@@ -69,9 +69,53 @@ function serveWriteContext(context) {
 	})
 }
 
+/**
+ * Hold the write-context of `id` until the test settles it; any other
+ * secret's write-context fails.
+ *
+ * @param {string} id The secret whose write-context waits.
+ * @return {{reject: Function}} Settles the held request.
+ */
+function holdWriteContext(id) {
+	const held = {}
+	axios.get.mockClear()
+	axios.get.mockImplementation((url) => {
+		if (!url.endsWith('/write-context')) {
+			return Promise.resolve({ data: [] })
+		}
+		if (!url.includes(`/secrets/${id}/`)) {
+			return Promise.reject(new Error('offline'))
+		}
+		return new Promise((resolve, reject) => {
+			held.reject = reject
+		})
+	})
+	return held
+}
+
+/**
+ * How often the write-context was read since the last mockClear().
+ *
+ * @return {number}
+ */
+function writeContextReads() {
+	return axios.get.mock.calls.filter(([url]) => url.endsWith('/write-context'))
+		.length
+}
+
 const has = (wrapper, testId) => wrapper.find(`[data-testid="${testId}"]`).exists()
 
-async function mountDetail({ secret, currentUser }) {
+/**
+ * The sharing note's Try again button.
+ *
+ * @param {object} wrapper The mounted sidebar.
+ * @return {object} Its wrapper.
+ */
+function retryButton(wrapper) {
+	return wrapper.find('[data-testid="secret-detail-sharing-retry"]')
+}
+
+async function mountDetail({ secret, currentUser, attachTo }) {
 	window.OC = { currentUser }
 	// Pre-seed the secret store so the component's mounted hook resolves
 	// `fetchSecret` to our fixture rather than going through the live
@@ -86,6 +130,7 @@ async function mountDetail({ secret, currentUser }) {
 	// this must stay nested.
 	const wrapper = mount(SecretDetailSidebar, {
 		props: { secretId: secret?.id ?? 's-1' },
+		attachTo,
 		global: {
 			stubs: stubAll,
 		},
@@ -251,7 +296,7 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		).toContain('Sharing options could not be loaded.')
 	})
 
-	it('changes the status text on every retry that fails again', async () => {
+	it('re-announces the status on every retry that fails again', async () => {
 		serveWriteContext(new Error('offline'))
 		const wrapper = await mountDetail({
 			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
@@ -259,32 +304,108 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		})
 		const note = () =>
 			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]')
-		const retry = () =>
-			wrapper.find('[data-testid="secret-detail-sharing-retry"]')
 
-		await retry().trigger('click')
+		await retryButton(wrapper).trigger('click')
 		await flush()
 		expect(note().text()).toBe('Sharing options still could not be loaded.')
+		const shown = note().find('span').element
 
-		// A second failure reads the same, so the text empties while it runs.
-		let fail
-		axios.get.mockImplementation((url) =>
-			url.endsWith('/write-context')
-				? new Promise((resolve, reject) => {
-						fail = reject
-					})
-				: Promise.resolve({ data: [] }),
-		)
-		await retry().trigger('click')
-		await flush()
-		expect(note().text()).toBe('')
-
-		fail(new Error('offline'))
+		// The same words again: the text is inserted anew, so it is announced.
+		await retryButton(wrapper).trigger('click')
 		await flush()
 		expect(note().text()).toBe('Sharing options still could not be loaded.')
+		expect(note().find('span').element).not.toBe(shown)
 	})
 
-	it('offers no retry while offline, where it can only fail', async () => {
+	it('keeps focus on Try again while a retry runs and when it fails again', async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+			attachTo: document.body,
+		})
+		const held = holdWriteContext('s-1')
+		retryButton(wrapper).element.focus()
+
+		await retryButton(wrapper).trigger('click')
+		await flush()
+		// A disabled button loses focus in a browser (jsdom keeps it), so it
+		// is only marked disabled.
+		expect(retryButton(wrapper).attributes('disabled')).toBeUndefined()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('true')
+		expect(document.activeElement).toBe(retryButton(wrapper).element)
+
+		// A press while the retry runs asks nothing more.
+		await retryButton(wrapper).trigger('click')
+		await flush()
+		expect(writeContextReads()).toBe(1)
+
+		held.reject(new Error('offline'))
+		await flush()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('false')
+		expect(document.activeElement).toBe(retryButton(wrapper).element)
+		wrapper.unmount()
+	})
+
+	it.each([
+		['answers', { sourceSecretId: 's-1', effectiveGrade: 'owner' }],
+		['names no source', { sourceSecretId: null, effectiveGrade: 'none' }],
+	])(
+		'moves focus to the Sharing heading when a retry %s',
+		async (label, context) => {
+			serveWriteContext(new Error('offline'))
+			const wrapper = await mountDetail({
+				secret: {
+					id: 's-1',
+					name: 'GitHub',
+					key: 'CIPHER',
+					ownerId: 'alice',
+				},
+				currentUser: 'alice',
+				attachTo: document.body,
+			})
+			retryButton(wrapper).element.focus()
+
+			serveWriteContext(context)
+			await retryButton(wrapper).trigger('click')
+			await flush()
+
+			expect(has(wrapper, 'secret-detail-sharing-retry')).toBe(false)
+			expect(document.activeElement).toBe(
+				wrapper.find('[data-testid="secret-detail-sharing-heading"]')
+					.element,
+			)
+			wrapper.unmount()
+		},
+	)
+
+	it("leaves another secret's Try again usable while a retry runs", async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+		const held = holdWriteContext('s-1')
+		await retryButton(wrapper).trigger('click')
+		await flush()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('true')
+
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
+			id: 's-2',
+			name: 'GitLab',
+			key: 'CIPHER',
+			ownerId: 'alice',
+		})
+		await wrapper.setProps({ secretId: 's-2' })
+		await flush()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('false')
+
+		held.reject(new Error('offline'))
+		await flush()
+		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('false')
+	})
+
+	it('says sharing needs a connection, without a retry, while offline', async () => {
 		useOfflineStore().servedFromCache = true
 		serveWriteContext(new Error('offline'))
 		const wrapper = await mountDetail({
@@ -292,8 +413,9 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 			currentUser: 'alice',
 		})
 
-		// The offline note at the top already says sharing needs a connection.
-		expect(has(wrapper, 'secret-detail-sharing-unavailable')).toBe(true)
+		expect(
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]').text(),
+		).toBe('Sharing needs a connection')
 		expect(has(wrapper, 'secret-detail-sharing-retry')).toBe(false)
 	})
 
@@ -309,7 +431,7 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		// The answer is final, so the note says so and offers no retry.
 		expect(
 			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]').text(),
-		).toBe('This copy offers no sharing options.')
+		).toBe('Sharing is not available for this secret.')
 		expect(has(wrapper, 'secret-detail-sharing-retry')).toBe(false)
 	})
 

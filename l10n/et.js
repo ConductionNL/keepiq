@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Faile saab lisada ainult teie enda saladusele. Salvestamiseks eemaldage need.",
         "Sharing options could not be loaded.": "Jagamise valikuid ei õnnestunud laadida.",
         "Sharing options still could not be loaded.": "Jagamise valikuid ei õnnestunud ikka veel laadida.",
-        "This copy offers no sharing options.": "Sellel koopial pole jagamise valikuid."
+        "Sharing is not available for this secret.": "Jagamine pole selle saladuse jaoks saadaval."
     },
     "nplurals=2; plural=(n != 1);"
 )

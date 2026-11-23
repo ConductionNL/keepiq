@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Failus galima pridėti tik prie jums priklausančios paslapties. Pašalinkite juos, kad išsaugotumėte.",
         "Sharing options could not be loaded.": "Nepavyko įkelti bendrinimo parinkčių.",
         "Sharing options still could not be loaded.": "Bendrinimo parinkčių vis dar nepavyko įkelti.",
-        "This copy offers no sharing options.": "Ši kopija nesiūlo bendrinimo parinkčių."
+        "Sharing is not available for this secret.": "Šios paslapties bendrinti negalima."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

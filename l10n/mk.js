@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Датотеки може да се додаваат само на ваша тајна. Отстранете ги за да зачувате.",
         "Sharing options could not be loaded.": "Опциите за споделување не можеа да се вчитаат.",
         "Sharing options still could not be loaded.": "Опциите за споделување сè уште не можеа да се вчитаат.",
-        "This copy offers no sharing options.": "Оваа копија не нуди опции за споделување."
+        "Sharing is not available for this secret.": "Споделувањето не е достапно за оваа тајна."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

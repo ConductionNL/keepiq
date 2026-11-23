@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Fájlok csak a saját titkához adhatók hozzá. A mentéshez távolítsa el őket.",
         "Sharing options could not be loaded.": "A megosztási beállításokat nem sikerült betölteni.",
         "Sharing options still could not be loaded.": "A megosztási beállításokat továbbra sem sikerült betölteni.",
-        "This copy offers no sharing options.": "Ez a másolat nem kínál megosztási beállításokat."
+        "Sharing is not available for this secret.": "A megosztás nem érhető el ehhez a titokhoz."
     },
     "nplurals=2; plural=(n != 1);"
 )

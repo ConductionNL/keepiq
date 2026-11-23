@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Tiedostoja voi lisätä vain omistamaasi salaisuuteen. Poista ne tallentaaksesi.",
         "Sharing options could not be loaded.": "Jakamisen asetuksia ei voitu ladata.",
         "Sharing options still could not be loaded.": "Jakamisen asetuksia ei vieläkään voitu ladata.",
-        "This copy offers no sharing options.": "Tällä kopiolla ei ole jakamisen asetuksia."
+        "Sharing is not available for this secret.": "Jakaminen ei ole käytettävissä tälle salaisuudelle."
     },
     "nplurals=2; plural=(n != 1);"
 )

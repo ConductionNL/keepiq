@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Súbory možno pridať len k tajomstvu, ktoré vlastníte. Odoberte ich, aby ste mohli uložiť.",
         "Sharing options could not be loaded.": "Možnosti zdieľania sa nepodarilo načítať.",
         "Sharing options still could not be loaded.": "Možnosti zdieľania sa stále nepodarilo načítať.",
-        "This copy offers no sharing options.": "Táto kópia neponúka žiadne možnosti zdieľania."
+        "Sharing is not available for this secret.": "Zdieľanie nie je pre toto tajomstvo dostupné."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

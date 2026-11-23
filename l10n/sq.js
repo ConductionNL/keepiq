@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Skedarët mund të shtohen vetëm te një sekret që e zotëroni. Hiqini për të ruajtur.",
         "Sharing options could not be loaded.": "Opsionet e ndarjes nuk mund të ngarkoheshin.",
         "Sharing options still could not be loaded.": "Opsionet e ndarjes ende nuk mund të ngarkoheshin.",
-        "This copy offers no sharing options.": "Kjo kopje nuk ofron opsione ndarjeje."
+        "Sharing is not available for this secret.": "Ndarja nuk është e disponueshme për këtë sekret."
     },
     "nplurals=2; plural=(n != 1);"
 )

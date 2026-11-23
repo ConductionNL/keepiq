@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Filer kan bare legges til en hemmelighet du eier. Fjern dem for å lagre.",
         "Sharing options could not be loaded.": "Delingsalternativene kunne ikke lastes inn.",
         "Sharing options still could not be loaded.": "Delingsalternativene kunne fortsatt ikke lastes inn.",
-        "This copy offers no sharing options.": "Denne kopien har ingen delingsalternativer."
+        "Sharing is not available for this secret.": "Deling er ikke tilgjengelig for denne hemmeligheten."
     },
     "nplurals=2; plural=(n != 1);"
 )

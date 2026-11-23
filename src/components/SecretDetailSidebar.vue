@@ -1058,23 +1058,35 @@
 							<ShareVariant :size="20" />
 						</span>
 						<div class="secret-detail__row-main">
-							<h3 class="secret-detail__row-label">
+							<!-- Takes focus when a retry removes Try again. -->
+							<h3
+								ref="sharingHeading"
+								class="secret-detail__row-label"
+								tabindex="-1"
+								data-testid="secret-detail-sharing-heading">
 								{{ t('keepiq', 'Sharing') }}
 							</h3>
 							<div class="secret-detail__row-value">
 								<!-- The role or source is unknown: say so, never guess; ask again when that can help. -->
 								<div
 									v-if="sharingUnavailable"
+									ref="sharingNote"
 									class="secret-detail__sharing-unavailable">
+									<!-- Re-inserted on every retry, so even a repeated
+									     outcome is announced. -->
 									<p
 										role="status"
 										data-testid="secret-detail-sharing-unavailable">
-										{{ sharingUnavailableText }}
+										<span :key="writeContextAttempt">{{
+											sharingUnavailableText
+										}}</span>
 									</p>
+									<!-- aria-disabled, not disabled: a disabled button
+									     loses focus while the retry runs. -->
 									<NcButton
 										v-if="sharingRetryable"
 										variant="tertiary"
-										:disabled="writeContextRetrying"
+										:aria-disabled="writeContextRetrying"
 										data-testid="secret-detail-sharing-retry"
 										@click="retryWriteContext">
 										{{ t('keepiq', 'Try again') }}
@@ -1516,7 +1528,10 @@ export default {
 			writeContext: null,
 			/** Why the write-context could not be read: the server's message, or that a retry failed too. */
 			writeContextFailure: '',
-			writeContextRetrying: false,
+			/** The secret a write-context retry is reading, or null. */
+			writeContextRetryOf: null,
+			/** Counts the retries that answered, to re-announce the note. */
+			writeContextAttempt: 0,
 			/** A passkey delete is being saved. */
 			passkeySaving: false,
 			/** Per-field reveal state for the card rows (masked by default). */
@@ -2207,19 +2222,30 @@ export default {
 		},
 
 		/**
+		 * Whether a retry is reading the write-context of the secret on show.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
+		 */
+		writeContextRetrying() {
+			return (
+				this.writeContextRetryOf !== null
+				&& this.writeContextRetryOf === this.secretId
+			)
+		},
+
+		/**
 		 * Why sharing is unavailable: the server's message when it gave one.
-		 * Empty while a retry runs, so its outcome always changes the status
-		 * text and is announced, even when it repeats.
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		sharingUnavailableText() {
-			if (this.writeContextRetrying) {
-				return ''
+			if (this.offlineReadOnly) {
+				return t('keepiq', 'Sharing needs a connection')
 			}
 			if (this.managesSharing === false) {
-				return t('keepiq', 'This copy offers no sharing options.')
+				return t('keepiq', 'Sharing is not available for this secret.')
 			}
 			return (
 				this.writeContextFailure
@@ -2516,27 +2542,42 @@ export default {
 
 		/**
 		 * Read the write-context again after it could not be read. It only
-		 * asks again; the sharing role never falls back to `ownerId`.
+		 * asks again; the sharing role never falls back to `ownerId`. When
+		 * the answer removes Try again while it has focus, the Sharing
+		 * heading takes it.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		async retryWriteContext() {
+			if (this.writeContextRetrying) {
+				return
+			}
 			const id = this.secretId
-			this.writeContextRetrying = true
+			this.writeContextRetryOf = id
 			try {
 				const answer = await this.fetchWriteContext(id)
+				if (id !== this.secretId) {
+					return
+				}
 				if (answer.context === null && answer.failure === '') {
 					answer.failure = t(
 						'keepiq',
 						'Sharing options still could not be loaded.',
 					)
 				}
-				if (id === this.secretId) {
-					this.applyWriteContext(answer, id)
+				const hadFocus =
+					this.$refs.sharingNote?.contains(document.activeElement) === true
+				this.applyWriteContext(answer, id)
+				this.writeContextAttempt += 1
+				if (hadFocus && !this.sharingRetryable) {
+					await this.$nextTick()
+					this.$refs.sharingHeading?.focus()
 				}
 			} finally {
-				this.writeContextRetrying = false
+				if (this.writeContextRetryOf === id) {
+					this.writeContextRetryOf = null
+				}
 			}
 		},
 
@@ -3292,9 +3333,11 @@ h3.secret-detail__row-label {
 	color: var(--color-text-maxcontrast);
 }
 
-/* Keeps its line while the text is empty during a retry. */
-.secret-detail__sharing-unavailable p {
-	min-height: 1lh;
+/* Looks like NcButton's disabled state, which would drop focus. */
+.secret-detail__sharing-unavailable [aria-disabled='true'] {
+	filter: saturate(0.7);
+	opacity: 0.5;
+	cursor: default;
 }
 
 .secret-detail__team-badge {

@@ -2077,7 +2077,7 @@
         "Files can only be added to a secret you own. Remove them to save.": "Datoteke se mogu dodati samo tajni koju posjedujete. Uklonite ih da biste spremili.",
         "Sharing options could not be loaded.": "Opcije dijeljenja nije bilo moguće učitati.",
         "Sharing options still could not be loaded.": "Opcije dijeljenja i dalje nije bilo moguće učitati.",
-        "This copy offers no sharing options.": "Ova kopija ne nudi opcije dijeljenja."
+        "Sharing is not available for this secret.": "Dijeljenje nije dostupno za ovu tajnu."
     },
     "plurals": null
 }

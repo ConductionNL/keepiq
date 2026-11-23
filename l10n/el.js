@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Αρχεία μπορούν να προστεθούν μόνο σε μυστικό που σας ανήκει. Αφαιρέστε τα για να αποθηκεύσετε.",
         "Sharing options could not be loaded.": "Δεν ήταν δυνατή η φόρτωση των επιλογών διαμοιρασμού.",
         "Sharing options still could not be loaded.": "Ακόμα δεν ήταν δυνατή η φόρτωση των επιλογών διαμοιρασμού.",
-        "This copy offers no sharing options.": "Αυτό το αντίγραφο δεν προσφέρει επιλογές διαμοιρασμού."
+        "Sharing is not available for this secret.": "Ο διαμοιρασμός δεν είναι διαθέσιμος για αυτό το μυστικό."
     },
     "nplurals=2; plural=(n != 1);"
 )

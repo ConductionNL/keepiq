@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Dateien können nur zu einem eigenen Geheimnis hinzugefügt werden. Entfernen Sie sie, um zu speichern.",
         "Sharing options could not be loaded.": "Die Optionen zum Teilen konnten nicht geladen werden.",
         "Sharing options still could not be loaded.": "Die Optionen zum Teilen konnten weiterhin nicht geladen werden.",
-        "This copy offers no sharing options.": "Diese Kopie bietet keine Optionen zum Teilen."
+        "Sharing is not available for this secret.": "Teilen ist für dieses Geheimnis nicht verfügbar."
     },
     "nplurals=2; plural=(n != 1);"
 )

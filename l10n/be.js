@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Файлы можна дадаваць толькі да ўласнага сакрэту. Выдаліце іх, каб захаваць.",
         "Sharing options could not be loaded.": "Не ўдалося загрузіць параметры абагульвання.",
         "Sharing options still could not be loaded.": "Параметры абагульвання ўсё яшчэ не ўдалося загрузіць.",
-        "This copy offers no sharing options.": "Гэтая копія не мае параметраў абагульвання."
+        "Sharing is not available for this secret.": "Абагульванне недаступнае для гэтага сакрэту."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

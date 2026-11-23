@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Dosyalar yalnızca size ait bir gizliye eklenebilir. Kaydetmek için bunları kaldırın.",
         "Sharing options could not be loaded.": "Paylaşım seçenekleri yüklenemedi.",
         "Sharing options still could not be loaded.": "Paylaşım seçenekleri hâlâ yüklenemedi.",
-        "This copy offers no sharing options.": "Bu kopya paylaşım seçeneği sunmuyor."
+        "Sharing is not available for this secret.": "Bu gizli için paylaşım kullanılamıyor."
     },
     "nplurals=1; plural=0;"
 )

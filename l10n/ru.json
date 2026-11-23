@@ -2077,7 +2077,7 @@
         "Files can only be added to a secret you own. Remove them to save.": "Файлы можно добавлять только к собственному секрету. Удалите их, чтобы сохранить.",
         "Sharing options could not be loaded.": "Не удалось загрузить параметры общего доступа.",
         "Sharing options still could not be loaded.": "По-прежнему не удалось загрузить параметры общего доступа.",
-        "This copy offers no sharing options.": "У этой копии нет параметров общего доступа."
+        "Sharing is not available for this secret.": "Общий доступ к этому секрету недоступен."
     },
     "plurals": null
 }

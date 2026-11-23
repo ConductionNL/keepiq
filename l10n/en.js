@@ -1974,7 +1974,7 @@ OC.L10N.register(
         "Files cannot be added while you are offline. Remove them to save.": "Files cannot be added while you are offline. Remove them to save.",
         "Sharing options could not be loaded.": "Sharing options could not be loaded.",
         "Sharing options still could not be loaded.": "Sharing options still could not be loaded.",
-        "This copy offers no sharing options.": "This copy offers no sharing options."
+        "Sharing is not available for this secret.": "Sharing is not available for this secret."
     },
     "nplurals=2; plural=(n != 1);"
 )

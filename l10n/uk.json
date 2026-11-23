@@ -2077,7 +2077,7 @@
         "Files can only be added to a secret you own. Remove them to save.": "Файли можна додавати лише до власного секрету. Вилучіть їх, щоб зберегти.",
         "Sharing options could not be loaded.": "Не вдалося завантажити параметри спільного доступу.",
         "Sharing options still could not be loaded.": "Досі не вдалося завантажити параметри спільного доступу.",
-        "This copy offers no sharing options.": "Ця копія не має параметрів спільного доступу."
+        "Sharing is not available for this secret.": "Спільний доступ до цього секрету недоступний."
     },
     "plurals": null
 }
