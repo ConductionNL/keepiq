@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\DashboardSettingMapper;
 use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
@@ -48,12 +49,14 @@ use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Service\DelegateCopyKeeper;
 use OCA\Keepiq\Service\ExpiredGrantRemover;
 use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\ShareExpiryService;
 use OCA\Keepiq\Service\ShareGrantReader;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
 use OCA\Keepiq\Service\TeamFolderQueryService;
+use OCA\Keepiq\Service\TeamFolderShareService;
 use DateTime;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -62,6 +65,7 @@ use OCP\IDBConnection;
 use OCP\IGroupManager;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Tests per cascade step + idempotency + event emission.
@@ -1085,7 +1089,8 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end testAFullGrantBesideALimitedOneDetachesTheCopyAsItWas()
 
 	/**
-	 * A delegate's team-folder row whose membership is full is kept like any other unlimited row.
+	 * A delegate's team-folder row whose membership is full is kept like any other unlimited row,
+	 * and stands as a direct share: it no longer names the team folder.
 	 *
 	 * @return void
 	 *
@@ -1102,9 +1107,79 @@ class AccountDeletionServiceTest extends TestCase {
 		$this->resolver()->resolveSource(sourceSecretId: 'sec-1');
 
 		$this->assertSame(['st-dave'], array_keys($this->shareRows));
+		$this->assertNull($this->shareRows['st-dave']->getTeamFolderId());
+		$this->assertNull($this->shareRows['st-dave']->getGroupShareId());
 		$this->assertSame(['c-carol'], $this->tombstoned);
 		$this->assertSame(['useOnly' => false, 'ends' => null, 'readOnly' => false], $this->limitsOf(copy: $this->secrets['c-dave']));
 	}//end testAFullTeamFolderRowOfTheDelegateIsKept()
+
+	/**
+	 * The ways the delegate drops out of the deleted user's team folder afterwards.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function laterTeamFolderDepartures(): array {
+		return [
+			'the delegate leaves the folder or its group' => ['leave'],
+			'the delegate is removed from the folder' => ['remove'],
+		];
+	}//end laterTeamFolderDepartures()
+
+	/**
+	 * The deleted user's team-folder rows and memberships outlive her folders,
+	 * so the delegate leaving or being removed from one later must not remove the kept row or its copy.
+	 *
+	 * @param string $how How the delegate drops out of the folder
+	 *
+	 * @return void
+	 *
+	 * @dataProvider laterTeamFolderDepartures
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/gdpr-compliance/spec.md#requirement-shared-secret-semantics-on-account-deletion
+	 */
+	public function testALaterTeamFolderDepartureKeepsTheKeptCopy(string $how): void {
+		$service = $this->sharedWithTheDelegate();
+		$this->shareRows['st-dave']->setTeamFolderId('tf-1');
+		$membership = new TeamFolderMember();
+		$membership->setGrade('write');
+		$this->memberships['dave'] = [$membership];
+		$service->deleteAllFor('alice');
+
+		$bulk = $this->createMock(BulkGrantShareTargetMapper::class);
+		$bulk->method('findByTeamFolderAndTargetUser')->willReturnCallback(fn (string $teamFolderId, string $targetUserId): array => array_values(
+			array_filter(
+				$this->shareRows,
+				static fn (ShareTarget $row): bool => $row->getTeamFolderId() === $teamFolderId && $row->getTargetUserId() === $targetUserId
+			)
+		));
+		$copies = $this->createMock(RecipientSecretCopyService::class);
+		$copies->expects($this->never())->method('deleteByShare');
+		$this->m['share']->expects($this->never())->method('delete');
+		$teamShares = new TeamFolderShareService(
+			shareTargetMapper: $this->m['share'],
+			rowJudge: $this->shareRowJudge(targets: $this->m['share'], secrets: $this->m['secret'], scanner: $this->m['scan']),
+			bulkGrantMapper: $bulk,
+			copies: $copies,
+			notificationService: $this->createMock(NotificationService::class),
+			db: $this->createMock(IDBConnection::class),
+			logger: $this->createMock(LoggerInterface::class),
+		);
+
+		$revoked = match ($how) {
+			'leave' => $teamShares->releaseForMember(teamFolderId: 'tf-1', targetUserId: 'dave'),
+			default => $teamShares->revokeForMember(teamFolderId: 'tf-1', targetUserId: 'dave'),
+		};
+
+		$this->assertSame(0, $revoked);
+		$this->assertSame(['st-dave'], array_keys($this->shareRows));
+		$this->assertSame('c-dave', $this->shareRows['st-dave']->getSecretId());
+		$this->assertArrayHasKey('c-dave', $this->secrets);
+		// A later fan-out matches the pair, not the folder, so it adds no second row beside the kept one.
+		$this->assertSame(
+			[],
+			$teamShares->missingPairs(secrets: [['id' => 'sec-1', 'name' => 'x']], recipients: [['userId' => 'dave', 'certificate' => 'c']])
+		);
+	}//end testALaterTeamFolderDepartureKeepsTheKeptCopy()
 
 	/**
 	 * The kept row names the deleted account's marker as its maker instead of the deleted user,

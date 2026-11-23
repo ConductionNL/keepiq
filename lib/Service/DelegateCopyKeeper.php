@@ -59,8 +59,10 @@ class DelegateCopyKeeper {
 	 * null when the secret was not handed over, the row judge does not trust the row, or anything limits the delegate's copy,
 	 * and the copy is then detached like any other.
 	 *
-	 * A kept row no longer names a group share, as the group shares are removed with the rest,
-	 * and names the deleted account's marker instead of the deleted user as its maker.
+	 * A kept row no longer names a group share or team folder and stands as a direct share:
+	 * the group shares are removed with the rest, and the deleted user's team-folder rows and memberships outlive her folders,
+	 * so a member leaving one would otherwise remove the delegate's only readable copy.
+	 * It names the deleted account's marker instead of the deleted user as its maker.
 	 *
 	 * @param string      $secretId   The secret
 	 * @param string      $fromUserId The deleted user
@@ -81,6 +83,7 @@ class DelegateCopyKeeper {
 		}
 
 		$row->setGroupShareId(null);
+		$row->setTeamFolderId(null);
 		if ($row->getCreatedBy() === $fromUserId) {
 			$row->setCreatedBy(LinkShareMapper::DELETED_ACCOUNT_MARKER);
 		}
