@@ -393,7 +393,7 @@ class ShareSaveService implements ShareSaveServiceInterface {
 			'copies' => $copies,
 			'federatedRows' => $federatedRows,
 			'ownerOnly' => $required['ownerOnly'],
-			'notReached' => $this->scope->partnersNotReached(path: $path, copyIds: $writtenCopies),
+			'notReached' => $this->scope->partnersNotReached(path: $path, copyIds: $writtenCopies, userId: $userId),
 		];
 	}//end write()
 

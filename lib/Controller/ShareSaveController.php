@@ -83,7 +83,8 @@ class ShareSaveController extends OCSController {
 	 * A 409 with `error: partner_share_owner_mismatch` refuses a save that would write partner shares while one of them is not the secret owner's;
 	 * nothing is written until an administrator runs `occ maintenance:repair`.
 	 * The 200 body's `federated.notReached` counts the active partner shares made from a copy the save wrote,
-	 * which no save writes, and `federated.ownerOnly` says whether partner shares exist that only the owner's save reaches.
+	 * which no save writes: for the secret's owner from every copy written, for anyone else only from their own copy.
+	 * `federated.ownerOnly` says whether partner shares exist that only the owner's save reaches.
 	 *
 	 * @param string $id The caller's row: the source, or their recipient copy
 	 *

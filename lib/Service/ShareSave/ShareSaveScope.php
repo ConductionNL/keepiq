@@ -384,18 +384,25 @@ class ShareSaveScope {
 	}//end requirement()
 
 	/**
-	 * How many active partner shares hang off a row the save writes other than the source:
-	 * the caller's copy on the copy-editor path and every copy written.
+	 * How many active partner shares hang off a row the save writes other than the source.
+	 * For the source's owner, on the owner path or through their own copy: their copy and every copy written.
+	 * For a caller who does not own the source: only their own copy,
+	 * since the other copies' partner shares are other holders' to know, as the source's are (`ownerOnly`).
 	 * Such a share was made from a copy and no save writes it.
 	 *
-	 * @param ShareSavePath $path The path
+	 * @param ShareSavePath $path The path assertStillWriter() returned
 	 * @param list<string> $copyIds The copies the save wrote
+	 * @param string $userId The caller
 	 *
 	 * @return int
 	 *
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
 	 */
-	public function partnersNotReached(ShareSavePath $path, array $copyIds): int {
+	public function partnersNotReached(ShareSavePath $path, array $copyIds, string $userId): int {
+		if ($path->ownsSource(userId: $userId) === false) {
+			$copyIds = [];
+		}
+
 		$rowIds = array_diff([$path->row->getId(), ...$copyIds], [$path->source->getId()]);
 		if ($rowIds === []) {
 			return 0;
