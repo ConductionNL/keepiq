@@ -3338,6 +3338,7 @@ h3.secret-detail__row-label {
 	filter: saturate(0.7);
 	opacity: 0.5;
 	cursor: default;
+	pointer-events: none;
 }
 
 .secret-detail__team-badge {

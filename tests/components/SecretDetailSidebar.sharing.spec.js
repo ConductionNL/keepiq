@@ -74,7 +74,7 @@ function serveWriteContext(context) {
  * secret's write-context fails.
  *
  * @param {string} id The secret whose write-context waits.
- * @return {{reject: Function}} Settles the held request.
+ * @return {{resolve: Function, reject: Function}} Settles the held request.
  */
 function holdWriteContext(id) {
 	const held = {}
@@ -87,6 +87,7 @@ function holdWriteContext(id) {
 			return Promise.reject(new Error('offline'))
 		}
 		return new Promise((resolve, reject) => {
+			held.resolve = resolve
 			held.reject = reject
 		})
 	})
@@ -403,6 +404,33 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		held.reject(new Error('offline'))
 		await flush()
 		expect(retryButton(wrapper).attributes('aria-disabled')).toBe('false')
+	})
+
+	it('drops a late retry answer for a secret that is no longer shown', async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+		const held = holdWriteContext('s-1')
+		await retryButton(wrapper).trigger('click')
+		await flush()
+
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
+			id: 's-2',
+			name: 'GitLab',
+			key: 'CIPHER',
+			ownerId: 'alice',
+		})
+		await wrapper.setProps({ secretId: 's-2' })
+		await flush()
+
+		held.resolve({ data: { sourceSecretId: 's-1', effectiveGrade: 'owner' } })
+		await flush()
+		expect(has(wrapper, 'secret-detail-share-list')).toBe(false)
+		expect(
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]').text(),
+		).toContain('Sharing options could not be loaded.')
 	})
 
 	it('says sharing needs a connection, without a retry, while offline', async () => {
