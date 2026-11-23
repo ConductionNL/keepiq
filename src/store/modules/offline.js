@@ -88,7 +88,6 @@ function replayKind(e) {
 				partner_lookup_limit: 'failed',
 				view_only: 'failed',
 				partner_upgrade_required: 'failed',
-				partner_share_owner_mismatch: 'failed',
 			}[e.code] ?? 'retry'
 		)
 	}
@@ -164,10 +163,7 @@ function needsPartnerUpgrade(e) {
  * @return {boolean} Whether a partner share of the secret is not its owner's.
  */
 function isPartnerOwnerMismatch(e) {
-	return (
-		e?.code === 'partner_share_owner_mismatch'
-		|| e?.response?.data?.error === 'partner_share_owner_mismatch'
-	)
+	return e?.response?.data?.error === 'partner_share_owner_mismatch'
 }
 
 /**

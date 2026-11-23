@@ -209,10 +209,6 @@ describe('the failure a replay error stores', () => {
 			httpError(409, { error: 'share_scan_pending' }),
 			{ code: 'share_scan_pending', message: null },
 		],
-		'a partner share not the owner\'s as a share save error': [
-			new ShareSaveError('partner_share_owner_mismatch'),
-			{ code: 'partner_share_owner_mismatch' },
-		],
 		'a partner share not the owner\'s as a share save answer': [
 			httpError(
 				409,
