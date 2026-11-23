@@ -21,7 +21,6 @@ namespace OCA\Keepiq\Service\ShareSave;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederatedShare;
-use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
@@ -33,7 +32,6 @@ use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
-use Psr\Log\LoggerInterface;
 
 /**
  * Which rows a share-save must write, and whether its lists name exactly those.
@@ -41,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * @psalm-type Requirement = array{copies:array<string,array{secretId:string,holder:string,targetUserId:?string}>,ignored:array<string,bool>,federated:array<string,FederatedShare>,ownerOnly:bool}
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Reads the sharing graph from
- *   copies, share targets and partner shares, each through its mapper.
+ *   copies, share targets and partner shares.
  *
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
  */
@@ -52,10 +50,9 @@ class ShareSaveScope {
 	 *
 	 * @param ShareRowJudge $rowJudge Judged share rows (ShareRowJudge); every lookup of a share row goes through it
 	 * @param SecretMapper $secrets The secrets
-	 * @param FederatedShareMapper $federatedShares Outbound partner shares
+	 * @param ShareSavePartners $partners The source's partner shares, and whether they are its owner's
 	 * @param ShareSyncService $sync Who may write for every copy
 	 * @param ShareSyncGuards $guards Whether the source is writable, the live copies and their holders' vault keys
-	 * @param LoggerInterface|null $logger Warns about partner shares that are not the secret owner's
 	 *
 	 * @return void
 	 *
@@ -64,10 +61,9 @@ class ShareSaveScope {
 	public function __construct(
 		private ShareRowJudge $rowJudge,
 		private SecretMapper $secrets,
-		private FederatedShareMapper $federatedShares,
+		private ShareSavePartners $partners,
 		private ShareSyncService $sync,
 		private ShareSyncGuards $guards,
-		private ?LoggerInterface $logger = null,
 	) {
 	}//end __construct()
 
@@ -377,46 +373,15 @@ class ShareSaveScope {
 			$copies = [$source->getId() => ['secretId' => $source->getId(), 'holder' => 'owner', 'targetUserId' => null]] + $copies;
 		}
 
-		$federated = $this->activePartnerShares(source: $source);
+		$federated = $this->partners->active(source: $source);
 		if ($path->ownsSource(userId: $userId) === false) {
 			// Whether there are any, not how many: the copy editor never saw the partner list.
 			return ['copies' => $copies, 'ignored' => $ignored, 'federated' => [], 'ownerOnly' => $federated !== []];
 		}
 
-		$this->assertPartnersOwnedBySourceOwner(path: $path, federated: $federated);
+		$this->partners->assertOwnedBySourceOwner(path: $path, federated: $federated);
 		return ['copies' => $copies, 'ignored' => $ignored, 'federated' => $federated, 'ownerOnly' => false];
 	}//end requirement()
-
-	/**
-	 * Refuse a save that would write partner shares while one of them is not the source owner's:
-	 * an ownership transfer left it behind, and only the `ReownTransferredPartnerShares` repair step hands it over.
-	 *
-	 * @param ShareSavePath $path The path
-	 * @param array<string,FederatedShare> $federated The source's active partner shares
-	 *
-	 * @return void
-	 *
-	 * @throws ShareSaveRefusal `partner_share_owner_mismatch`
-	 *
-	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
-	 */
-	private function assertPartnersOwnedBySourceOwner(ShareSavePath $path, array $federated): void {
-		$ownerId = $path->sourceOwnerId();
-		$foreign = array_keys(array_filter($federated, static fn (FederatedShare $share): bool => $share->getOwnerId() !== $ownerId));
-		if ($foreign === []) {
-			return;
-		}
-
-		$this->logger?->warning(
-			'Share-save refused: partner shares of the secret are not its owner\'s; run occ maintenance:repair to hand them over',
-			['app' => 'keepiq', 'secretId' => $path->source->getId(), 'shareIds' => $foreign]
-		);
-		throw new ShareSaveRefusal(
-			error: 'partner_share_owner_mismatch',
-			message: 'A partner share of this secret is not its owner\'s; an administrator must repair the partner shares first',
-			status: Http::STATUS_CONFLICT
-		);
-	}//end assertPartnersOwnedBySourceOwner()
 
 	/**
 	 * How many active partner shares hang off a row the save writes other than the source:
@@ -436,26 +401,8 @@ class ShareSaveScope {
 			return 0;
 		}
 
-		return $this->federatedShares->countActiveBySourceSecrets(sourceSecretIds: array_values($rowIds));
+		return $this->partners->countActive(sourceSecretIds: array_values($rowIds));
 	}//end partnersNotReached()
-
-	/**
-	 * The source's active partner shares, keyed by id.
-	 *
-	 * @param Secret $source The source
-	 *
-	 * @return array<string,FederatedShare>
-	 */
-	private function activePartnerShares(Secret $source): array {
-		$active = [];
-		foreach ($this->federatedShares->findBySourceSecret(sourceSecretId: $source->getId()) as $share) {
-			if ($share->getStatus() === FederatedShare::STATUS_ACTIVE) {
-				$active[$share->getId()] = $share;
-			}
-		}
-
-		return $active;
-	}//end activePartnerShares()
 
 	/**
 	 * The skipped copies whose holder does have a vault key: those must be written.

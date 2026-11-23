@@ -22,6 +22,7 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareRowVerdict;
+use OCA\Keepiq\Service\ShareSave\ShareSavePartners;
 use OCA\Keepiq\Service\ShareSave\ShareSavePath;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
@@ -324,7 +325,7 @@ final class ShareSaveScopeRefusalsTest extends TestCase {
 		return new ShareSaveScope(
 			rowJudge: $this->judge,
 			secrets: $this->secrets,
-			federatedShares: $this->createMock(FederatedShareMapper::class),
+			partners: new ShareSavePartners(federatedShares: $this->createMock(FederatedShareMapper::class)),
 			sync: $this->sync,
 			guards: $this->guards,
 		);

@@ -48,6 +48,7 @@ use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSave\IncompleteShareSaveException;
+use OCA\Keepiq\Service\ShareSave\ShareSavePartners;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
 use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
@@ -362,11 +363,10 @@ class ShareSaveServiceTest extends TestCase {
 			history: new ShareSaveHistory(versions: $this->versionHistory, auditTrail: $this->audit),
 			scope: new ShareSaveScope(
 				secrets: $this->secretMapper,
-				federatedShares: $this->federatedMapper,
+				partners: new ShareSavePartners(federatedShares: $this->federatedMapper, logger: $logger),
 				sync: $sync,
 				guards: $guards,
 				rowJudge: $judge,
-				logger: $logger,
 			),
 			stages: new ShareSaveStages(mapper: $this->stageMapper),
 			db: $this->db,
