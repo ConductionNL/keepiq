@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Se está comprobando con quién se comparte este elemento. No se ha guardado nada; inténtalo más tarde.
   shareScanPendingOpen: Se está comprobando con quién se comparte este elemento y aún no se puede editar. Inténtalo más tarde.
   shareScanPendingDelete: Se está comprobando con quién se comparte este elemento. No se ha eliminado nada; inténtalo más tarde.
+  partnerShareOwnerMismatch: "No se ha guardado nada: un recurso compartido de este elemento con una organización asociada sigue perteneciendo a su propietario anterior. Un administrador debe reparar los recursos compartidos con organizaciones asociadas antes de que se pueda guardar este cambio."
   sendInvalid: Keepiq no ha aceptado este envío. No se ha enviado nada; revisa los campos y vuelve a intentarlo.
   sendOffline: No se pudo conectar con el servidor, no se ha enviado nada
   argon2Unavailable: La protección con contraseña no está disponible en este navegador
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Guardado. Los destinatarios de organizaciones asociadas recibirán este cambio cuando el propietario lo vuelva a guardar.
   suspended: Se ha pausado el uso compartido con {cloudIds}, porque no se pudo verificar su certificado o su organización ya no lo acepta. La aplicación web de Keepiq muestra el recurso compartido.
   paused: Se ha pausado el uso compartido con {cloudIds} hasta que vuelvas a compartir este elemento.
+  notReached:
+    1: Guardado, pero 1 organización asociada que recibió este elemento a partir de una copia no ha recibido este cambio.
+    n: Guardado, pero $1 organizaciones asociadas que recibieron este elemento a partir de una copia no han recibido este cambio.
 
 folders:
   add: Añadir carpeta

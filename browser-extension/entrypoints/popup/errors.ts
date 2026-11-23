@@ -115,6 +115,7 @@ const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, WriteErrorWording>([
 	['partner_lookup_limit', () => i18n.t('writeErrors.partnerLookupLimit')],
 	['federation_unavailable', () => i18n.t('writeErrors.federationUnavailable')],
 	['share_scan_pending', shareScanPendingText],
+	['partner_share_owner_mismatch', () => i18n.t('writeErrors.partnerShareOwnerMismatch')],
 ])
 
 const notFoundText = (context: WriteContext) => (context === 'folderName' || context === 'folderDelete' ? i18n.t('writeErrors.folderGone') : i18n.t('writeErrors.itemGone'))

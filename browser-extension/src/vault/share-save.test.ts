@@ -48,6 +48,10 @@ interface World {
 	/** Copies whose holder has a vault key, so the server refuses their skip. */
 	keyed: Set<string>
 	ownerOnly: boolean
+	/** On the copy-editor path: the editor owns the source, so its partner shares are required. */
+	ownsSource: boolean
+	/** The answer's count of partner shares hanging off a copy the save wrote. */
+	notReached?: unknown
 	ownerCertificate: string | null
 	effectiveGrade: string
 	/** Per user id; absent or `null` is not shareable. */
@@ -103,7 +107,7 @@ function judge(body: Body): Response {
 	if (new Set(named).size !== named.length || new Set(shareIds).size !== shareIds.length) return json({ error: 'duplicate_entry' }, 400)
 	const skipRefused = skipped.filter((skip) => world.keyed.has(skip.secretId)).map((skip) => skip.secretId)
 	const required = world.copies.map((copy) => copy.secretId)
-	const shares = world.copyPath ? [] : world.shares
+	const shares = world.copyPath && !world.ownsSource ? [] : world.shares
 	const incomplete = required.some((id) => !named.includes(id)) || named.some((id) => !required.includes(id)) || skipRefused.length > 0
 		|| shares.some((share) => !shareIds.includes(share.shareId)) || shareIds.some((id) => !shares.some((share) => share.shareId === id))
 	if (incomplete) {
@@ -114,7 +118,10 @@ function judge(body: Body): Response {
 	}
 	return json({
 		secret: secretRow(), sourceUpdatedAt: '2026-03-02T10:00:01+00:00', copies: { written: copies.length, skipped: skipped.length },
-		federated: { written: federated.length, suspended: suspend.length, notified: federated.length, queued: 0, ownerOnly: world.ownerOnly },
+		federated: {
+			written: federated.length, suspended: suspend.length, notified: federated.length, queued: 0, ownerOnly: world.ownerOnly,
+			...('notReached' in world && { notReached: world.notReached }),
+		},
 	})
 }
 
@@ -144,7 +151,7 @@ beforeEach(async () => {
 	vi.spyOn(console, 'error').mockImplementation(() => {})
 	privateKey ??= await importPrivateKey(pemToPkcs8(envelope.privateKeyPem))
 	world = {
-		copyPath: false, copies: [], shares: [], keyed: new Set(), ownerOnly: false, ownerCertificate: CERT, effectiveGrade: 'owner',
+		copyPath: false, copies: [], shares: [], keyed: new Set(), ownerOnly: false, ownsSource: false, ownerCertificate: CERT, effectiveGrade: 'owner',
 		certificates: { bob: CERT, carol: CERT, dan: CERT, erin: CERT }, lookups: {}, valueFields: [],
 	}
 	saves = []
@@ -426,6 +433,33 @@ describe('the copy-editor path', () => {
 		expect(sent()).not.toContain('POST /api/v1/federation/recipient-certificate')
 	})
 
+	describe('by the item\'s owner, as after team offboarding or account deletion', () => {
+		beforeEach(() => {
+			world.ownsSource = true
+			world.effectiveGrade = 'owner'
+			world.shares = [BOB]
+		})
+
+		it('looks up and verifies the partner shares the server requires and sends their whole value', async () => {
+			expect(await save({ opened: await openedX() })).toBeUndefined()
+			expect(bodiesOf('POST /api/v1/federation/recipient-certificate')).toEqual([{ cloudId: BOB.recipientCloudId }])
+			const body = lastFinal()
+			expect(body.sourceBaseUpdatedAt).toBe(SOURCE_AT)
+			expect(body.copies.map((copy) => copy.secretId)).toEqual(['src', 'c-carol'])
+			const [entry] = body.federated!
+			expect(entry!.shareId).toBe(BOB.shareId)
+			expect(entry!.certFingerprint).toMatch(/^[0-9a-f]{64}$/)
+			expect(body.suspend).toEqual([])
+		})
+
+		it('suspends a partner share the partner no longer knows, and names it on the note', async () => {
+			world.lookups[BOB.recipientCloudId] = () => json({ message: 'unknown_recipient' }, 404)
+			expect(await save({ opened: await openedX() })).toEqual({ suspended: [BOB.recipientCloudId] })
+			expect(lastFinal().federated).toEqual([])
+			expect(lastFinal().suspend).toEqual([{ shareId: BOB.shareId, reason: 'unknown_recipient' }])
+		})
+	})
+
 	it('skips the source when its owner has no vault key, and reads write-context again when that skip is refused', async () => {
 		world.ownerCertificate = null
 		world.keyed.add('src')
@@ -452,6 +486,33 @@ describe('the copy-editor path', () => {
 		world.effectiveGrade = grade
 		expect(await failure(save())).toEqual({ code: 'view_only' })
 		expect(sent()).toEqual(['GET /api/v1/secrets/s1/write-context'])
+	})
+})
+
+describe('what a save tells about partner shares it did not write', () => {
+	it('reads a partner share the owner does not own as its own refusal, sending nothing more', async () => {
+		world.onFinal = () => json({ error: 'partner_share_owner_mismatch', message: 'x' }, 409)
+		expect(await failure(save())).toEqual({ code: 'partner_share_owner_mismatch' })
+		expect(saves).toHaveLength(1)
+	})
+
+	it('counts the partner shares made from a copy the save wrote', async () => {
+		world.notReached = 2
+		expect(await save()).toEqual({ notReached: 2 })
+	})
+
+	it('adds the count to the copy editor\'s note', async () => {
+		world.copyPath = true
+		world.effectiveGrade = 'write'
+		world.copies = [{ secretId: 'src', holder: 'owner', targetUserId: null }]
+		world.ownerOnly = true
+		world.notReached = 1
+		expect(await save()).toEqual({ ownerOnly: true, notReached: 1 })
+	})
+
+	it.each([['none', 0], ['an older Keepiq\'s answer', undefined], ['a count that is no number', '2'], ['a negative count', -1]])('says nothing for %s', async (_, notReached) => {
+		world.notReached = notReached
+		expect(await save()).toBeUndefined()
 	})
 })
 

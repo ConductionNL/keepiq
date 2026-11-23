@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Tá an mhír seo ag fanacht ar sheiceáil dá comhroinntí nach bhfuil críochnaithe. Níor sábháladh aon rud; bain triail eile as ar ball.
   shareScanPendingOpen: Tá an mhír seo ag fanacht ar sheiceáil dá comhroinntí agus ní féidir í a chur in eagar fós. Bain triail eile as ar ball.
   shareScanPendingDelete: Tá an mhír seo ag fanacht ar sheiceáil dá comhroinntí nach bhfuil críochnaithe. Níor scriosadh aon rud; bain triail eile as ar ball.
+  partnerShareOwnerMismatch: "Níor sábháladh aon rud: is lena húinéir roimhe seo fós comhroinnt den mhír seo le heagraíocht chomhpháirtíochta. Ní mór do riarthóir na comhroinntí le heagraíochtaí comhpháirtíochta a dheisiú sular féidir an t-athrú seo a shábháil."
   sendInvalid: Níor ghlac Keepiq leis an seoladh seo. Níor seoladh aon rud; seiceáil na réimsí agus bain triail eile as.
   sendOffline: Níorbh fhéidir an freastalaí a shroicheadh, níor seoladh aon rud
   argon2Unavailable: Níl cosaint phasfhocail ar fáil sa bhrabhsálaí seo
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Sábháilte. Gheobhaidh faighteoirí in eagraíochtaí comhpháirtíochta an t-athrú seo an chéad uair eile a shábhálann an t-úinéir í.
   suspended: Tá comhroinnt le {cloudIds} curtha ar sos, toisc nárbh fhéidir a dteastas a fhíorú nó nach nglacann a n-eagraíocht leis a thuilleadh. Taispeánann aip ghréasáin Keepiq an chomhroinnt.
   paused: Tá comhroinnt le {cloudIds} curtha ar sos go dtí go gcomhroinnfidh tú an mhír seo leo arís.
+  notReached:
+    1: Sábháilte, ach níor shroich an t-athrú seo 1 eagraíocht chomhpháirtíochta a fuair an mhír seo ó chóip.
+    n: "Sábháilte, ach níor shroich an t-athrú seo eagraíochtaí comhpháirtíochta a fuair an mhír seo ó chóip: $1"
 
 folders:
   add: Cuir fillteán leis

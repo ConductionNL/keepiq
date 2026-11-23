@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Questo elemento è in attesa di un controllo delle condivisioni non ancora completato. Non è stato salvato nulla; riprova più tardi.
   shareScanPendingOpen: Questo elemento è in attesa di un controllo delle condivisioni e non può ancora essere modificato. Riprova più tardi.
   shareScanPendingDelete: Questo elemento è in attesa di un controllo delle condivisioni non ancora completato. Non è stato eliminato nulla; riprova più tardi.
+  partnerShareOwnerMismatch: "Non è stato salvato nulla: una condivisione di questo elemento con un’organizzazione partner appartiene ancora al suo proprietario precedente. Un amministratore deve riparare le condivisioni con le organizzazioni partner prima che questa modifica possa essere salvata."
   sendInvalid: Keepiq non ha accettato questo invio. Non è stato inviato nulla; controlla i campi e riprova.
   sendOffline: Impossibile raggiungere il server, non è stato inviato nulla
   argon2Unavailable: La protezione con password non è disponibile in questo browser
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Salvato. I destinatari delle organizzazioni partner riceveranno questa modifica al prossimo salvataggio del proprietario.
   suspended: La condivisione con {cloudIds} è sospesa perché non è stato possibile verificare il loro certificato o la loro organizzazione non lo accetta più. L’app web di Keepiq mostra la condivisione.
   paused: La condivisione con {cloudIds} è sospesa finché non condividerai di nuovo questo elemento con loro.
+  notReached:
+    1: Salvato, ma 1 organizzazione partner che ha ricevuto questo elemento da una copia non ha ricevuto questa modifica.
+    n: Salvato, ma $1 organizzazioni partner che hanno ricevuto questo elemento da una copia non hanno ricevuto questa modifica.
 
 folders:
   add: Aggiungi cartella

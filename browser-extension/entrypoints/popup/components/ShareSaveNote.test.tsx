@@ -47,6 +47,20 @@ describe('ShareSaveNote', () => {
 		])
 	})
 
+	it.each([
+		['en', 1, 'Saved, but 1 partner organisation that got this item from a copy didn\'t get this change.'],
+		['en', 3, 'Saved, but 3 partner organisations that got this item from a copy didn\'t get this change.'],
+		['nl', 3, 'Opgeslagen, maar 3 partnerorganisaties die dit item via een kopie kregen, hebben deze wijziging niet gekregen.'],
+	] as const)('in %s, counts %i partner organisations that got the item from a copy', (locale, notReached, text) => {
+		setLocale(locale)
+		expect(shown({ notReached })).toEqual([text])
+	})
+
+	it('shows the copy count beside the owner-only line', () => {
+		setLocale('en')
+		expect(shown({ ownerOnly: true, notReached: 2 })).toHaveLength(2)
+	})
+
 	it('shows nothing for a source save that suspended no one', () => {
 		expect(shown({suspended: [], paused: [] })).toEqual([])
 	})

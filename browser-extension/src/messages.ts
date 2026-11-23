@@ -839,6 +839,8 @@ export type WriteErrorCode =
 	| 'partner_upgrade_required'
 	/** A share row of the item waits for the server's share quarantine scan, which only background jobs finish. */
 	| 'share_scan_pending'
+	/** A partner share of the item is not its owner's; an administrator's repair hands it over. */
+	| 'partner_share_owner_mismatch'
 
 export interface VaultWriteError {
 	code: WriteErrorCode
@@ -856,6 +858,8 @@ export type WriteResult<T> = { ok: true; value: T } | { ok: false; error: VaultW
 export interface ShareSaveNote {
 	/** Copy-editor path: partner shares exist that only the owner's next save reaches. */
 	ownerOnly?: true
+	/** How many partner shares made from a copy the save wrote did not get the change. */
+	notReached?: number
 	/** Partner shares this save suspended on a verdict about the recipient, by cloud id. */
 	suspended?: string[]
 	/** Partner shares the user suspended through Save without them, by cloud id. */

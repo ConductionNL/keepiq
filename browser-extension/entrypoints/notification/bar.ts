@@ -73,6 +73,7 @@ const WRITE_ERROR_TEXTS: Record<WriteErrorCode, (mode: Mode) => string> = {
 	key_mismatch: () => i18n.t('notificationBar.errors.keyMismatch'),
 	stale_source: () => i18n.t('notificationBar.errors.staleSource'),
 	share_scan_pending: () => i18n.t('notificationBar.errors.shareScanPending'),
+	partner_share_owner_mismatch: () => i18n.t('writeErrors.partnerShareOwnerMismatch'),
 	incomplete: () => i18n.t('notificationBar.errors.incomplete'),
 	bad_certificate: () => i18n.t('notificationBar.errors.badCertificate'),
 	keepiq_outdated: () => i18n.t('notificationBar.errors.keepiqOutdated', { version: MIN_KEEPIQ_VERSION }),

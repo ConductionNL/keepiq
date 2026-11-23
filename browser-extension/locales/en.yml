@@ -286,6 +286,7 @@ writeErrors:
   shareScanPending: This item is waiting for a check of its shares that has not finished. Nothing was saved; try again later.
   shareScanPendingOpen: This item is waiting for a check of its shares and can't be edited yet. Try again later.
   shareScanPendingDelete: This item is waiting for a check of its shares that has not finished. Nothing was deleted; try again later.
+  partnerShareOwnerMismatch: "Nothing was saved: a share of this item with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved."
   sendInvalid: Keepiq did not accept this send. Nothing was sent; check the fields and try again.
   sendOffline: Could not reach the server, nothing was sent
   argon2Unavailable: Password protection is not available in this browser
@@ -295,6 +296,9 @@ shareSave:
   ownerOnly: Saved. Recipients at partner organisations get this change when the owner next saves it.
   suspended: Sharing with {cloudIds} is paused, because their certificate could not be verified or their organisation no longer accepts it. The Keepiq web app shows the share.
   paused: Sharing with {cloudIds} is paused until you share this item with them again.
+  notReached:
+    1: Saved, but 1 partner organisation that got this item from a copy didn't get this change.
+    n: Saved, but $1 partner organisations that got this item from a copy didn't get this change.
 
 folders:
   add: Add folder

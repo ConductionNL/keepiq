@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Táto položka čaká na dokončenie kontroly svojho zdieľania. Nič sa neuložilo; skúste to neskôr.
   shareScanPendingOpen: Táto položka čaká na kontrolu svojho zdieľania a zatiaľ ju nemožno upraviť. Skúste to neskôr.
   shareScanPendingDelete: Táto položka čaká na dokončenie kontroly svojho zdieľania. Nič sa neodstránilo; skúste to neskôr.
+  partnerShareOwnerMismatch: "Nič sa neuložilo: zdieľanie tejto položky s partnerskou organizáciou stále patrí jej predchádzajúcemu vlastníkovi. Skôr ako bude možné túto zmenu uložiť, musí správca opraviť zdieľania s partnerskými organizáciami."
   sendInvalid: Keepiq túto zásielku neprijal. Nič sa neodoslalo; skontrolujte polia a skúste to znova.
   sendOffline: Nedá sa spojiť so serverom, nič sa neodoslalo
   argon2Unavailable: Ochrana heslom nie je v tomto prehliadači dostupná
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Uložené. Príjemcovia v partnerských organizáciách dostanú túto zmenu, keď ju vlastník nabudúce uloží.
   suspended: Zdieľanie s {cloudIds} je pozastavené, pretože ich certifikát sa nepodarilo overiť alebo ho ich organizácia už neprijíma. Zdieľanie zobrazí webová aplikácia Keepiq.
   paused: Zdieľanie s {cloudIds} je pozastavené, kým s nimi túto položku znova nezdieľate.
+  notReached:
+    1: Uložené, ale táto zmena sa nedostala k 1 partnerskej organizácii, ktorá túto položku získala z kópie.
+    n: "Uložené, ale táto zmena sa nedostala k partnerským organizáciám, ktoré túto položku získali z kópie: $1"
 
 folders:
   add: Pridať priečinok

@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Az elem megosztásainak ellenőrzése még nem fejeződött be. Semmi sem lett mentve; próbáld újra később.
   shareScanPendingOpen: Az elem megosztásainak ellenőrzése folyamatban van, ezért még nem szerkeszthető. Próbáld újra később.
   shareScanPendingDelete: Az elem megosztásainak ellenőrzése még nem fejeződött be. Semmi sem lett törölve; próbáld újra később.
+  partnerShareOwnerMismatch: "Semmi sem lett mentve: az elem egyik partnerszervezettel való megosztása még mindig az előző tulajdonosáé. Egy rendszergazdának ki kell javítania a partnerszervezetekkel való megosztásokat, mielőtt ez a módosítás menthető lenne."
   sendInvalid: A Keepiq nem fogadta el ezt a küldeményt. Semmi sem lett elküldve; ellenőrizd a mezőket, és próbáld újra.
   sendOffline: Nem sikerült elérni a kiszolgálót, semmi sem lett elküldve
   argon2Unavailable: A jelszavas védelem ebben a böngészőben nem érhető el
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Mentve. A partnerszervezeteknél lévő címzettek akkor kapják meg a módosítást, amikor a tulajdonos legközelebb menti.
   suspended: "A megosztás szünetel velük: {cloudIds}, mert a tanúsítványuk nem ellenőrizhető, vagy a szervezetük már nem fogadja el. A Keepiq webalkalmazás mutatja a megosztást."
   paused: "A megosztás szünetel velük, amíg újra meg nem osztod velük az elemet: {cloudIds}."
+  notReached:
+    1: Mentve, de 1 partnerszervezet, amely másolatból kapta meg ezt az elemet, nem kapta meg ezt a módosítást.
+    n: Mentve, de $1 partnerszervezet, amely másolatból kapta meg ezt az elemet, nem kapta meg ezt a módosítást.
 
 folders:
   add: Mappa hozzáadása

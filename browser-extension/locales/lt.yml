@@ -281,6 +281,7 @@ writeErrors:
   shareScanPending: Šis elementas laukia bendrinimo patikros, kuri dar nebaigta. Niekas neįrašyta; bandykite vėliau.
   shareScanPendingOpen: Šis elementas laukia bendrinimo patikros, todėl jo dar negalima redaguoti. Bandykite vėliau.
   shareScanPendingDelete: Šis elementas laukia bendrinimo patikros, kuri dar nebaigta. Niekas neištrinta; bandykite vėliau.
+  partnerShareOwnerMismatch: "Niekas neįrašyta: šio elemento bendrinimas su partnerio organizacija vis dar priklauso ankstesniam jo savininkui. Administratorius turi sutvarkyti bendrinimus su partnerių organizacijomis, kad šį pakeitimą būtų galima įrašyti."
   sendInvalid: Keepiq nepriėmė šio siuntinio. Niekas neišsiųsta; patikrinkite laukus ir bandykite dar kartą.
   sendOffline: Nepavyko pasiekti serverio, niekas neišsiųsta
   argon2Unavailable: Šioje naršyklėje apsauga slaptažodžiu negalima
@@ -290,6 +291,9 @@ shareSave:
   ownerOnly: Įrašyta. Gavėjai partnerių organizacijose gaus šį pakeitimą, kai savininkas kitą kartą įrašys elementą.
   suspended: Bendrinimas su {cloudIds} pristabdytas, nes nepavyko patvirtinti jų sertifikato arba jų organizacija jo nebepriima. Bendrinimą rodo Keepiq žiniatinklio programėlė.
   paused: Bendrinimas su {cloudIds} pristabdytas, kol vėl pasidalinsite šiuo elementu su jais.
+  notReached:
+    1: Įrašyta, bet 1 partnerio organizacija, gavusi šį elementą iš kopijos, negavo šio pakeitimo.
+    n: Įrašyta, bet šio pakeitimo negavo partnerių organizacijos, gavusios šį elementą iš kopijos ($1).
 
 folders:
   add: Pridėti aplanką
