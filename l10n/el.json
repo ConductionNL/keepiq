@@ -2057,7 +2057,7 @@
             "Αποθηκεύτηκε, αλλά %n παραλήπτες σε συνεργαζόμενους οργανισμούς έλαβαν αυτό το μυστικό από αντίγραφο και δεν έλαβαν αυτή την αλλαγή."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Αυτό το μυστικό περιμένει έναν έλεγχο των κοινοποιήσεών του που δεν έχει ολοκληρωθεί ακόμη. Δεν κοινοποιήθηκε τίποτα· δοκιμάστε ξανά αργότερα ή ζητήστε από έναν διαχειριστή να ελέγξει ότι εκτελούνται οι εργασίες παρασκηνίου.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Αυτό το μυστικό κοινοποιήθηκε σε εσάς, οπότε δεν μπορεί να κοινοποιηθεί σε συνεργαζόμενο οργανισμό. Δεν κοινοποιήθηκε τίποτα."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Αυτό το μυστικό κοινοποιήθηκε σε εσάς, οπότε δεν μπορεί να κοινοποιηθεί σε συνεργαζόμενο οργανισμό. Δεν κοινοποιήθηκε τίποτα."
     },
     "plurals": null
 }

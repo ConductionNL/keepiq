@@ -2084,7 +2084,7 @@
             "Захавана, але %n атрымальнікаў у партнёрскіх арганізацыях атрымалі гэты сакрэт з копіі і не атрымалі гэтую змену."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Гэты сакрэт чакае праверкі сваіх абагульванняў, якая яшчэ не скончылася. Нічога не перададзена; паспрабуйце пазней або папрасіце адміністратара праверыць, ці працуюць фонавыя задачы.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Гэты сакрэт абагулены з вамі, таму яго нельга абагуліць з партнёрскай арганізацыяй. Доступ не нададзены."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Гэты сакрэт абагулены з вамі, таму яго нельга абагуліць з партнёрскай арганізацыяй. Доступ не нададзены."
     },
     "plurals": null
 }

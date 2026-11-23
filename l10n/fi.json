@@ -2057,7 +2057,7 @@
             "Tallennettu, mutta %n kumppaniorganisaatioiden vastaanottajaa sai tämän salaisuuden kopiosta eikä saanut tätä muutosta."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Tämä salaisuus odottaa jakojensa tarkistusta, joka ei ole vielä valmis. Mitään ei jaettu; yritä myöhemmin uudelleen tai pyydä ylläpitäjää tarkistamaan, että taustatyöt ovat käynnissä.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Tämä salaisuus on jaettu sinulle, joten sitä ei voi jakaa kumppaniorganisaatiolle. Mitään ei jaettu."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Tämä salaisuus on jaettu sinulle, joten sitä ei voi jakaa kumppaniorganisaatiolle. Mitään ei jaettu."
     },
     "plurals": null
 }

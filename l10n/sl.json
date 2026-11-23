@@ -2111,7 +2111,7 @@
             "Shranjeno, vendar je %n prejemnikov v partnerskih organizacijah to skrivnost prejelo iz kopije in te spremembe ni prejelo."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ta skrivnost čaka na preverjanje svojih skupnih rab, ki še ni končano. Nič ni bilo deljeno; poskusite znova pozneje ali prosite skrbnika, naj preveri, ali se opravila v ozadju izvajajo.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Ta skrivnost je bila deljena z vami, zato je ni mogoče deliti s partnersko organizacijo. Nič ni bilo deljeno."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ta skrivnost je bila deljena z vami, zato je ni mogoče deliti s partnersko organizacijo. Nič ni bilo deljeno."
     },
     "plurals": null
 }

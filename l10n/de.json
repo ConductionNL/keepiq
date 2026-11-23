@@ -2057,7 +2057,7 @@
             "Gespeichert, aber %n Empfänger bei Partnerorganisationen haben dieses Geheimnis über eine Kopie erhalten und diese Änderung nicht erhalten."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Dieses Geheimnis wartet auf eine Prüfung seiner Freigaben, die noch nicht abgeschlossen ist. Es wurde nichts geteilt; versuchen Sie es später erneut oder bitten Sie eine Administratorin oder einen Administrator zu prüfen, ob Hintergrundjobs laufen.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Dieses Geheimnis wurde mit Ihnen geteilt, daher kann es nicht mit einer Partnerorganisation geteilt werden. Es wurde nichts geteilt."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dieses Geheimnis wurde mit Ihnen geteilt, daher kann es nicht mit einer Partnerorganisation geteilt werden. Es wurde nichts geteilt."
     },
     "plurals": null
 }

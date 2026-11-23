@@ -2057,7 +2057,7 @@
             "Gespäichert, mee %n Empfänger bei Partnerorganisatiounen hunn dëst Geheimnis iwwer eng Kopie kritt an dës Ännerung net kritt."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Dëst Geheimnis waart op eng Kontroll vu senge Fräigaben, déi nach net fäerdeg ass. Et gouf näischt gedeelt; probéiert méi spéit nach eng Kéier, oder frot en Administrateur ze kontrolléieren, ob d'Hannergrondaufgaben lafen.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Dëst Geheimnis gouf mat Iech gedeelt, dofir kann et net mat enger Partnerorganisatioun gedeelt ginn. Et gouf näischt gedeelt."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dëst Geheimnis gouf mat Iech gedeelt, dofir kann et net mat enger Partnerorganisatioun gedeelt ginn. Et gouf näischt gedeelt."
     },
     "plurals": null
 }

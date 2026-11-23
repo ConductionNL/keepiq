@@ -2084,7 +2084,7 @@
             "Išsaugota, bet %n gavėjų partnerių organizacijose gavo šią paslaptį iš kopijos ir negavo šio pakeitimo."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ši paslaptis laukia savo bendrinimų patikros, kuri dar nebaigta. Niekas nebuvo bendrinta; bandykite vėliau arba paprašykite administratoriaus patikrinti, ar veikia foninės užduotys.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Ši paslaptis buvo bendrinta su jumis, todėl jos negalima bendrinti su partnerių organizacija. Niekas nebuvo bendrinta."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ši paslaptis buvo bendrinta su jumis, todėl jos negalima bendrinti su partnerių organizacija. Niekas nebuvo bendrinta."
     },
     "plurals": null
 }

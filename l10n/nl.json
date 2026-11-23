@@ -2070,7 +2070,7 @@
             "Opgeslagen, maar %n ontvangers bij partnerorganisaties kregen dit geheim via een kopie en hebben deze wijziging niet gekregen."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Dit geheim wacht op een controle van zijn delingen die nog niet klaar is. Er is niets gedeeld; probeer het later opnieuw, of vraag een beheerder te controleren of achtergrondtaken draaien.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Dit geheim is met je gedeeld, dus het kan niet met een partnerorganisatie worden gedeeld. Er is niets gedeeld."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dit geheim is met je gedeeld, dus het kan niet met een partnerorganisatie worden gedeeld. Er is niets gedeeld."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

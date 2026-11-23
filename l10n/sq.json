@@ -2057,7 +2057,7 @@
             "U ruajt, por %n marrës në organizata partnere e morën këtë sekret nga një kopje dhe nuk e morën këtë ndryshim."
         ],
         "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ky sekret po pret një kontroll të ndarjeve të tij që nuk ka përfunduar ende. Asgjë nuk u nda; provoni përsëri më vonë ose kërkojini një administratori të kontrollojë që punët në sfond po ekzekutohen.",
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Ky sekret u nda me ju, prandaj nuk mund të ndahet me një organizatë partnere. Nuk u nda asgjë."
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ky sekret u nda me ju, prandaj nuk mund të ndahet me një organizatë partnere. Nuk u nda asgjë."
     },
     "plurals": null
 }
