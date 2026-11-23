@@ -47,6 +47,7 @@ use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Service\DelegateCopyKeeper;
+use OCA\Keepiq\Service\DelegatedSecretTransfer;
 use OCA\Keepiq\Service\ExpiredGrantRemover;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
@@ -132,13 +133,15 @@ class AccountDeletionServiceTest extends TestCase {
 				secretMapper: $this->m['secret'],
 				shareMapper: $this->m['share'],
 				groupShareMapper: $this->m['group'],
-				delegationMapper: $this->m['delegation'],
 				stageMapper: $this->m['stage'],
-				ownerTransfer: new SecretOwnerTransferService(
-					db: $this->createMock(IDBConnection::class),
-					secretMapper: $this->m['secret'],
-					federatedShares: $this->m['federated'],
-					linkShares: $this->m['link'],
+				delegatedTransfer: new DelegatedSecretTransfer(
+					delegationMapper: $this->m['delegation'],
+					ownerTransfer: new SecretOwnerTransferService(
+						db: $this->createMock(IDBConnection::class),
+						secretMapper: $this->m['secret'],
+						federatedShares: $this->m['federated'],
+						linkShares: $this->m['link'],
+					),
 				),
 				quarantineScan: $this->m['scan'],
 				delegateCopies: new DelegateCopyKeeper(

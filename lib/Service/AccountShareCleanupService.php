@@ -29,7 +29,6 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\GroupShareMapper;
-use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
 use OCA\Keepiq\Db\ShareTarget;
@@ -54,9 +53,8 @@ class AccountShareCleanupService {
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param ShareTargetMapper $shareMapper The share-target mapper
 	 * @param GroupShareMapper $groupShareMapper The group-share mapper
-	 * @param SecretDelegationMapper $delegationMapper The delegation mapper
 	 * @param ShareSaveStageMapper $stageMapper Staged share-save chunks
-	 * @param SecretOwnerTransferService $ownerTransfer Hands a secret and its partner and link shares over
+	 * @param DelegatedSecretTransfer $delegatedTransfer Hands the user's delegated secrets to their delegates
 	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
 	 * @param DelegateCopyKeeper $delegateCopies Decides whether the delegate of a secret handed over keeps their copy linked
 	 * @param LoggerInterface|null $logger The logger (skipped cross-user tombstones)
@@ -69,9 +67,8 @@ class AccountShareCleanupService {
 		private SecretMapper $secretMapper,
 		private ShareTargetMapper $shareMapper,
 		private GroupShareMapper $groupShareMapper,
-		private SecretDelegationMapper $delegationMapper,
 		private ShareSaveStageMapper $stageMapper,
-		private SecretOwnerTransferService $ownerTransfer,
+		private DelegatedSecretTransfer $delegatedTransfer,
 		private ShareQuarantineScanner $quarantineScan,
 		private DelegateCopyKeeper $delegateCopies,
 		private ?LoggerInterface $logger = null,
@@ -98,34 +95,7 @@ class AccountShareCleanupService {
 	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function transferDelegatedSecrets(string $userId, array $ownedSecrets, DeletionReport $report): array {
-		$ownedIds = [];
-		foreach ($ownedSecrets as $secret) {
-			$ownedIds[$secret->getId()] = true;
-		}
-
-		$handedTo = [];
-		foreach ($this->delegationMapper->findByOriginalOwner(originalOwnerId: $userId) as $delegation) {
-			$secretId = $delegation->getSecretId();
-			// Only transfer secrets the departing user actually owns now.
-			if (isset($ownedIds[$secretId]) === false) {
-				continue;
-			}
-
-			$this->ownerTransfer->transfer(
-				secretId: $secretId,
-				fromOwnerId: $userId,
-				newOwnerId: $delegation->getDelegatedTo(),
-			);
-			// A second delegation of the secret hands it on again, so the last one names its owner.
-			$handedTo[$secretId] = $delegation->getDelegatedTo();
-			$report->secretsTransferred++;
-		}
-
-		// Promote every temporary delegation by this owner to permanent. The
-		// mapper call is idempotent (already-permanent rows are not matched).
-		$this->delegationMapper->makePermanentByOriginalOwner(originalOwnerId: $userId);
-
-		return $handedTo;
+		return $this->delegatedTransfer->transfer(userId: $userId, ownedSecrets: $ownedSecrets, report: $report);
 	}//end transferDelegatedSecrets()
 
 	/**
