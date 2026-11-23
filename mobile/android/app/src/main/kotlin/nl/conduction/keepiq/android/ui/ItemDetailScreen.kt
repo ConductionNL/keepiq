@@ -29,6 +29,8 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +55,7 @@ import nl.conduction.keepiq.shared.vault.DecryptedItem
 import nl.conduction.keepiq.shared.vault.FormKind
 import nl.conduction.keepiq.shared.vault.OpenResult
 import nl.conduction.keepiq.shared.vault.PasskeySummary
+import nl.conduction.keepiq.shared.vault.ShareSaveNote
 import nl.conduction.keepiq.shared.vault.VaultIndex
 import nl.conduction.keepiq.shared.vault.WriteProblem
 import nl.conduction.keepiq.shared.vault.WriteResult
@@ -91,7 +94,15 @@ fun ItemDetailScreen(
         }
     }
     val scope = rememberCoroutineScope()
+    // What the last save could not deliver to everyone; kept across a rotation, since the repository says it once.
+    var note by rememberSaveable(id, stateSaver = NoteSaver) { mutableStateOf(session.repository.takeShareSaveNote(id)) }
+    // Null until write-context says, and when it can't: Edit is then not offered.
+    var viewOnly by remember(id) { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(id) { result = io { session.repository.open(id) } }
+    LaunchedEffect(result) {
+        val opened = (result as? OpenResult.Opened)?.item
+        if (opened != null && !opened.fromCache && !opened.row.useOnly) viewOnly = io { session.repository.isViewOnly(id) }
+    }
 
     when (val r = result) {
         null -> Message(stringResource(R.string.vault_loading))
@@ -102,6 +113,8 @@ fun ItemDetailScreen(
             folderPath = VaultIndex.folderPath(session.repository.state.folders, r.item.row.folderId)
                 ?: stringResource(R.string.vault_no_folder),
             offline = session.repository.state.offline,
+            viewOnly = viewOnly,
+            note = note,
             problem = problem,
             modifier = modifier,
             onCopy = onCopy,
@@ -147,6 +160,7 @@ fun ItemDetailScreen(
                     when (val w = io { session.repository.deletePasskey(item, pk.credentialId, pk.rpId) }) {
                         is WriteResult.Saved -> {
                             problem = null
+                            session.repository.takeShareSaveNote(id)?.let { note = it }
                             result = io { session.repository.open(id) }
                             focusPasskey = index
                             passkeyDeleted = true
@@ -222,6 +236,11 @@ internal fun ItemDetail(
     onPasskeyFocused: () -> Unit = {},
     /** A passkey was just deleted: said in a polite live region, as focus alone tells a screen reader nothing. */
     passkeyDeleted: Boolean = false,
+    /** A copy shared to view only: no Edit, no passkey Delete (keepiq#1300). */
+    /** Null when write-context could not tell: Edit and passkey Delete are then not enabled. */
+    viewOnly: Boolean? = false,
+    /** What the last save could not deliver to everyone. */
+    note: ShareSaveNote? = null,
 ) {
     val row = item.row
     val editFocus = remember { FocusMove() }
@@ -230,6 +249,8 @@ internal fun ItemDetail(
         Text(row.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Text("${item.type?.label ?: item.typeName} · $folderPath", style = MaterialTheme.typography.bodyMedium)
         DetailNotes(item, problem, passkeyDeleted)
+        if (viewOnly == true && !row.readOnly) Note(stringResource(R.string.detail_view_only))
+        note?.let { Note(shareSaveNoteText(it)) }
         if (row.blocked) {
             Note(row.blockedReason ?: stringResource(R.string.detail_blocked))
             return@Column
@@ -237,7 +258,7 @@ internal fun ItemDetail(
 
         KindFields(item, onCopy)
         if (item.hasSavedKey) SavedKeyRow(item, onCopy)
-        val mayDelete = !row.useOnly && !row.readOnly && !offline
+        val mayDelete = !row.useOnly && !row.readOnly && viewOnly == false && !offline
         if (!row.useOnly) {
             PasskeyRows(item.passkeys, mayDelete, focusPasskey, onDeletePasskey, onPasskeyFocused)
             if (item.passkeysError) Text(stringResource(R.string.detail_passkeys_error), color = MaterialTheme.colorScheme.error)
@@ -252,7 +273,7 @@ internal fun ItemDetail(
         if (!row.useOnly) MoreFields(item, onCopy)
 
         HorizontalDivider()
-        if (!row.useOnly) WriteActions(item, offline, editFocus, onEdit, onMove, onSendLogin)
+        if (!row.useOnly) WriteActions(item, offline, viewOnly, editFocus, onEdit, onMove, onSendLogin)
         OutlinedButton(onClick = onTrash, enabled = !offline) { Text(stringResource(R.string.action_trash)) }
         if (offline) Text(stringResource(R.string.write_offline), style = MaterialTheme.typography.bodySmall)
     }
@@ -266,7 +287,8 @@ private fun DetailNotes(item: DecryptedItem, problem: WriteProblem?, passkeyDele
     if (row.useOnly) Note(stringResource(R.string.detail_use_only))
     if (row.readOnly && !row.useOnly) Note(stringResource(R.string.detail_read_only))
     // A refusal is announced: after a refused passkey Delete the dialog closes and focus goes nowhere.
-    problem?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+    // The detail has no Save without them: a passkey delete only says to try later.
+    problem?.let { Text(writeProblemText(it, saveWithout = false), color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
     if (passkeyDeleted) {
         Text(stringResource(R.string.detail_passkey_deleted), style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
     }
@@ -343,14 +365,18 @@ private fun MoreFields(item: DecryptedItem, onCopy: (String) -> Unit) {
 private fun WriteActions(
     item: DecryptedItem,
     offline: Boolean,
+    viewOnly: Boolean?,
     editFocus: FocusMove,
     onEdit: () -> Unit,
     onMove: () -> Unit,
     onSendLogin: () -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onEdit, enabled = !offline, modifier = Modifier.focusMove(editFocus)) { Text(stringResource(R.string.action_edit)) }
-        OutlinedButton(onClick = onMove, enabled = !offline) { Text(stringResource(R.string.action_move)) }
+        // A view-only copy still moves: a move files the holder's own copy.
+        if (viewOnly != true) {
+            OutlinedButton(onClick = onEdit, enabled = !offline && viewOnly == false, modifier = Modifier.focusMove(editFocus)) { Text(stringResource(R.string.action_edit)) }
+        }
+        OutlinedButton(onClick = onMove, enabled = !offline, modifier = if (viewOnly == true) Modifier.focusMove(editFocus) else Modifier) { Text(stringResource(R.string.action_move)) }
     }
     if (item.kind == FormKind.LOGIN) {
         OutlinedButton(onClick = onSendLogin, enabled = !offline) { Text(stringResource(R.string.cd_new_send)) }
@@ -449,3 +475,15 @@ private fun TotpRow(params: Totp.Params?, label: String, onCopy: (String) -> Uni
         }
     }
 }
+
+/** A [ShareSaveNote] in the saved state, so a rotation keeps it. */
+private val NoteSaver = listSaver<ShareSaveNote?, Any>(
+    save = { note -> if (note == null) emptyList() else listOf(note.ownerOnly, ArrayList(note.suspended), ArrayList(note.paused)) },
+    restore = { saved ->
+        if (saved.isEmpty()) {
+            null
+        } else {
+            ShareSaveNote(saved[0] as Boolean, (saved[1] as List<*>).map { it as String }, (saved[2] as List<*>).map { it as String })
+        }
+    },
+)

@@ -21,6 +21,9 @@ class RsaPublicKey private constructor(internal val spki: ByteArray) {
             val der = Encoding.fromBase64(body)
             return RsaPublicKey(if (isCertificate) Der.spkiFromCertificate(der) else der)
         }
+
+        /** A DER SubjectPublicKeyInfo, as [FederatedCertificate.verify] hands it out. */
+        fun fromSpki(spki: ByteArray): RsaPublicKey = RsaPublicKey(spki.copyOf())
     }
 }
 

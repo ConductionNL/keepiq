@@ -51,6 +51,10 @@ data class AutofillEntry(
     /** A passkey: [url] is its rpId and [key] the encrypted passkey item JSON. Never offered as a password. */
     val isPasskey: Boolean get() = typeName == PASSKEY
 
+    /** The value ciphertexts the index holds for the item, for [nl.conduction.keepiq.shared.vault.ShareSave.holds]; it has no `additionalFields`. */
+    val held: Map<String, String?> get() = mapOf("key" to key, "login" to login, "totp" to totp, "passkeys" to passkeys)
+        .mapValues { (_, ciphertext) -> ciphertext?.ifEmpty { null } }
+
     override fun toString(): String = "AutofillEntry(id=$id, type=$typeName)"
 
     companion object {
