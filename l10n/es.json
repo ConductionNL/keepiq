@@ -2056,7 +2056,8 @@
             "Guardado, pero %n destinatario de una organización asociada recibió este secreto a partir de una copia y no ha recibido este cambio.",
             "Guardado, pero %n destinatarios de organizaciones asociadas recibieron este secreto a partir de una copia y no han recibido este cambio."
         ],
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Este secreto se ha compartido contigo, así que no se puede compartir con una organización asociada. No se ha compartido nada."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Este secreto está esperando una comprobación de sus comparticiones que aún no ha terminado. No se ha compartido nada; inténtelo de nuevo más tarde o pida a un administrador que compruebe que se ejecutan las tareas en segundo plano.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Este secreto se ha compartido contigo, así que no se puede compartir con una organización asociada. No se ha compartido nada."
     },
     "plurals": null
 }

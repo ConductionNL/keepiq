@@ -2083,7 +2083,8 @@
             "Uložené, ale %n príjemcovia v partnerských organizáciách dostali toto tajomstvo z kópie a túto zmenu nedostali.",
             "Uložené, ale %n príjemcov v partnerských organizáciách dostalo toto tajomstvo z kópie a túto zmenu nedostalo."
         ],
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Toto tajomstvo bolo zdieľané s vami, preto ho nemožno zdieľať s partnerskou organizáciou. Nič sa nezdieľalo."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Toto tajomstvo čaká na kontrolu svojich zdieľaní, ktorá ešte neskončila. Nič nebolo zdieľané; skúste to neskôr alebo požiadajte správcu, aby overil, že bežia úlohy na pozadí.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Toto tajomstvo bolo zdieľané s vami, preto ho nemožno zdieľať s partnerskou organizáciou. Nič sa nezdieľalo."
     },
     "plurals": null
 }

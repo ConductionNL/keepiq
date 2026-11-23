@@ -2056,7 +2056,8 @@
             "Mentve, de %n partnerszervezetnél lévő címzett másolatból kapta meg ezt a titkot, és nem kapta meg ezt a módosítást.",
             "Mentve, de %n partnerszervezeteknél lévő címzett másolatból kapta meg ezt a titkot, és nem kapta meg ezt a módosítást."
         ],
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ezt a titkot megosztották Önnel, ezért nem osztható meg partnerszervezettel. Semmi sem lett megosztva."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ez a titok a megosztásainak ellenőrzésére vár, amely még nem fejeződött be. Semmi sem lett megosztva; próbálja újra később, vagy kérje meg a rendszergazdát, hogy ellenőrizze, futnak-e a háttérfeladatok.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Ezt a titkot megosztották Önnel, ezért nem osztható meg partnerszervezettel. Semmi sem lett megosztva."
     },
     "plurals": null
 }

@@ -2056,7 +2056,8 @@
             "Enregistré, mais %n destinataire d'une organisation partenaire a reçu ce secret à partir d'une copie et n'a pas reçu cette modification.",
             "Enregistré, mais %n destinataires d'organisations partenaires ont reçu ce secret à partir d'une copie et n'ont pas reçu cette modification."
         ],
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ce secret a été partagé avec vous, il ne peut donc pas être partagé avec une organisation partenaire. Rien n'a été partagé."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ce secret attend une vérification de ses partages qui n'est pas encore terminée. Rien n'a été partagé ; réessayez plus tard ou demandez à un administrateur de vérifier que les tâches de fond s'exécutent.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Ce secret a été partagé avec vous, il ne peut donc pas être partagé avec une organisation partenaire. Rien n'a été partagé."
     },
     "plurals": null
 }

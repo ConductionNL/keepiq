@@ -2083,7 +2083,8 @@
             "Zapisano, ale %n odbiorcy w organizacjach partnerskich otrzymali ten sekret z kopii i nie otrzymali tej zmiany.",
             "Zapisano, ale %n odbiorców w organizacjach partnerskich otrzymało ten sekret z kopii i nie otrzymało tej zmiany."
         ],
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ten sekret został Ci udostępniony, więc nie można go udostępnić organizacji partnerskiej. Nic nie zostało udostępnione."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Ten sekret czeka na sprawdzenie swoich udostępnień, które jeszcze się nie zakończyło. Niczego nie udostępniono; spróbuj ponownie później lub poproś administratora o sprawdzenie, czy działają zadania w tle.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Ten sekret został Ci udostępniony, więc nie można go udostępnić organizacji partnerskiej. Nic nie zostało udostępnione."
     },
     "plurals": null
 }

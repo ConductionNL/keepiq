@@ -291,9 +291,10 @@ describe('FederatedShareForm sharing', () => {
 		await wrapper.find('[data-testid="federated-share-submit"]').trigger('click')
 		await flushPromises()
 
-		expect(
-			wrapper.find('[data-testid="federated-share-error"]').text(),
-		).toContain('waiting for a check of its shares')
+		const error = wrapper.find('[data-testid="federated-share-error"]').text()
+		expect(error).toContain('waiting for a check of its shares')
+		expect(error).toContain('Nothing was shared')
+		expect(error).not.toContain('Nothing was saved')
 		expect(wrapper.emitted('shared')).toBeUndefined()
 	})
 })

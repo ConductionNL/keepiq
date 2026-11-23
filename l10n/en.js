@@ -1976,6 +1976,7 @@ OC.L10N.register(
         "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.",
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.","Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change."],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.",
         "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared."
     },
     "nplurals=2; plural=(n != 1);"

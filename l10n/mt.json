@@ -2110,7 +2110,8 @@
             "Issejvjat, iżda %n-il riċevitur f'organizzazzjonijiet sħab kisbu dan is-sigriet minn kopja u ma kisbux din il-bidla.",
             "Issejvjat, iżda %n riċevitur f'organizzazzjonijiet sħab kisbu dan is-sigriet minn kopja u ma kisbux din il-bidla."
         ],
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dan is-sigriet inqasam miegħek, għalhekk ma jistax jinqasam ma' organizzazzjoni sieħba. Xejn ma nqasam."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Dan is-sigriet qed jistenna verifika tal-qsim tiegħu li għadha ma ntemmitx. Xejn ma ġie maqsum; erġa' pprova aktar tard, jew staqsi lil amministratur jiċċekkja li x-xogħlijiet fl-isfond qed jaħdmu.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Dan is-sigriet inqasam miegħek, għalhekk ma jistax jinqasam ma' organizzazzjoni sieħba. Xejn ma nqasam."
     },
     "plurals": null
 }

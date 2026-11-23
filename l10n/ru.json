@@ -2083,7 +2083,8 @@
             "Сохранено, но %n получателя в партнёрских организациях получили этот секрет из копии и не получили это изменение.",
             "Сохранено, но %n получателей в партнёрских организациях получили этот секрет из копии и не получили это изменение."
         ],
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Этим секретом поделились с вами, поэтому им нельзя поделиться с партнёрской организацией. Доступ не предоставлен."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Этот секрет ожидает проверки своих общих доступов, которая ещё не завершена. Ничего не передано; повторите попытку позже или попросите администратора проверить, работают ли фоновые задания.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Этим секретом поделились с вами, поэтому им нельзя поделиться с партнёрской организацией. Доступ не предоставлен."
     },
     "plurals": null
 }

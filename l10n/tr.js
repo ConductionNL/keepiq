@@ -1976,6 +1976,7 @@ OC.L10N.register(
         "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Kaydedildi, ancak ortak kuruluşlardaki %n alıcı bu gizliyi bir kopyadan aldı ve bu değişikliği almadı.",
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Kaydedildi, ancak ortak kuruluşlardaki %n alıcı bu gizliyi bir kopyadan aldı ve bu değişikliği almadı.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Kaydedildi, ancak ortak kuruluşlardaki %n alıcı bu gizliyi bir kopyadan aldı ve bu değişikliği almadı."],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Bu gizli bilgi, paylaşımlarının henüz tamamlanmamış bir denetimini bekliyor. Hiçbir şey paylaşılmadı; daha sonra yeniden deneyin ya da bir yöneticiden arka plan görevlerinin çalıştığını denetlemesini isteyin.",
         "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Bu gizli sizinle paylaşıldı, bu nedenle bir ortak kuruluşla paylaşılamaz. Hiçbir şey paylaşılmadı."
     },
     "nplurals=1; plural=0;"

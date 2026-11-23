@@ -121,10 +121,7 @@ import {
 	useFederatedShareStore,
 } from '../../store/modules/federatedShare.js'
 import { useSecretStore } from '../../store/modules/secret.js'
-import {
-	isShareScanPending,
-	shareScanPendingText,
-} from '../../utils/shareScanPending.js'
+import { isShareScanPending } from '../../utils/shareScanPending.js'
 
 export default {
 	name: 'FederatedShareForm',
@@ -290,7 +287,10 @@ export default {
 				return tooOld
 			}
 			if (isShareScanPending(e)) {
-				return shareScanPendingText()
+				return t(
+					'keepiq',
+					'This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.',
+				)
 			}
 			if (
 				e instanceof FederatedCertificateError

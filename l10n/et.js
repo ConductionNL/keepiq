@@ -1976,6 +1976,7 @@ OC.L10N.register(
         "Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change.": "Salvestatud, kuid %n partnerorganisatsiooni saaja sai selle saladuse koopiast ega saanud seda muudatust.",
         "Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change.": "Salvestatud, kuid %n partnerorganisatsioonide saajat said selle saladuse koopiast ega saanud seda muudatust.",
         "_Saved, but %n recipient at a partner organisation got this secret from a copy and did not get this change._::_Saved, but %n recipients at partner organisations got this secret from a copy and did not get this change._": ["Salvestatud, kuid %n partnerorganisatsiooni saaja sai selle saladuse koopiast ega saanud seda muudatust.","Salvestatud, kuid %n partnerorganisatsioonide saajat said selle saladuse koopiast ega saanud seda muudatust."],
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "See saladus ootab oma jagamiste kontrolli, mis pole veel lõppenud. Midagi ei jagatud; proovige hiljem uuesti või paluge administraatoril kontrollida, kas taustatööd töötavad.",
         "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "See saladus jagati sinuga, seega ei saa seda partnerorganisatsiooniga jagada. Midagi ei jagatud."
     },
     "nplurals=2; plural=(n != 1);"

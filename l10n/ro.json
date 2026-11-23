@@ -2083,7 +2083,8 @@
             "Salvat, dar %n destinatari din organizații partenere au primit acest secret dintr-o copie și nu au primit această modificare.",
             "Salvat, dar %n de destinatari din organizații partenere au primit acest secret dintr-o copie și nu au primit această modificare."
         ],
-        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Acest secret a fost partajat cu dumneavoastră, deci nu poate fi partajat cu o organizație parteneră. Nu s-a partajat nimic."
+        "This secret is waiting for a check of its shares that has not finished yet. Nothing was shared; try again later, or ask an administrator to check that background jobs run.": "Acest secret așteaptă o verificare a partajărilor sale care nu s-a încheiat încă. Nu s-a partajat nimic; încercați din nou mai târziu sau cereți unui administrator să verifice dacă rulează sarcinile de fundal.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.":"Acest secret a fost partajat cu dumneavoastră, deci nu poate fi partajat cu o organizație parteneră. Nu s-a partajat nimic."
     },
     "plurals": null
 }
