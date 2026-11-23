@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Échec de l'envoi",
         "Folders cannot be attached. Drop the files inside them instead.": "Les dossiers ne peuvent pas être joints. Déposez plutôt les fichiers qu'ils contiennent.",
         "Files cannot be added while you are offline. Remove them to save.": "Impossible d'ajouter des fichiers hors ligne. Retirez-les pour enregistrer.",
-        "Files can only be added to a secret you own. Remove them to save.": "Les fichiers ne peuvent être ajoutés qu'à un secret qui vous appartient. Retirez-les pour enregistrer."
+        "Files can only be added to a secret you own. Remove them to save.": "Les fichiers ne peuvent être ajoutés qu'à un secret qui vous appartient. Retirez-les pour enregistrer.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Rien n'a été enregistré : un partage de ce secret avec une organisation partenaire appartient encore à son ancien propriétaire. Un administrateur doit réparer les partages avec les partenaires avant que cette modification puisse être enregistrée.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Enregistré, mais %n organisation partenaire qui a reçu ce secret à partir d'une copie n'a pas reçu cette modification.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Enregistré, mais %n organisations partenaires qui ont reçu ce secret à partir d'une copie n'ont pas reçu cette modification.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Enregistré, mais %n organisation partenaire qui a reçu ce secret à partir d'une copie n'a pas reçu cette modification.","Enregistré, mais %n organisations partenaires qui ont reçu ce secret à partir d'une copie n'ont pas reçu cette modification."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ce secret a été partagé avec vous, il ne peut donc pas être partagé avec une organisation partenaire. Rien n'a été partagé."
     },
     "nplurals=2; plural=(n > 1);"
 )

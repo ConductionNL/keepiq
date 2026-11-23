@@ -2074,7 +2074,16 @@
         "Upload failed": "Отпремање није успело",
         "Folders cannot be attached. Drop the files inside them instead.": "Фасцикле се не могу приложити. Уместо тога превуците датотеке из њих.",
         "Files cannot be added while you are offline. Remove them to save.": "Датотеке се не могу додати док сте ван мреже. Уклоните их да бисте сачували.",
-        "Files can only be added to a secret you own. Remove them to save.": "Датотеке се могу додати само тајни коју поседујете. Уклоните их да бисте сачували."
+        "Files can only be added to a secret you own. Remove them to save.": "Датотеке се могу додати само тајни коју поседујете. Уклоните их да бисте сачували.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ништа није сачувано: једно дељење ове тајне са партнерском организацијом и даље припада њеном претходном власнику. Администратор мора да поправи дељења са партнерским организацијама пре него што ова измена може да се сачува.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Сачувано, али %n партнерска организација која је добила ову тајну из копије није добила ову измену.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Сачувано, али %n партнерских организација које су добиле ову тајну из копије није добило ову измену.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Сачувано, али %n партнерска организација која је добила ову тајну из копије није добила ову измену.",
+            "Сачувано, али %n партнерске организације које су добиле ову тајну из копије нису добиле ову измену.",
+            "Сачувано, али %n партнерских организација које су добиле ову тајну из копије није добило ову измену."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ова тајна је подељена са вама, па не може да се подели са партнерском организацијом. Ништа није подељено."
     },
     "plurals": null
 }

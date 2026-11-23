@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Încărcarea a eșuat",
         "Folders cannot be attached. Drop the files inside them instead.": "Folderele nu pot fi atașate. Plasați în schimb fișierele din ele.",
         "Files cannot be added while you are offline. Remove them to save.": "Nu se pot adăuga fișiere cât timp sunteți offline. Eliminați-le pentru a salva.",
-        "Files can only be added to a secret you own. Remove them to save.": "Fișierele pot fi adăugate doar la un secret care vă aparține. Eliminați-le pentru a salva."
+        "Files can only be added to a secret you own. Remove them to save.": "Fișierele pot fi adăugate doar la un secret care vă aparține. Eliminați-le pentru a salva.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nu s-a salvat nimic: o partajare a acestui secret cu o organizație parteneră aparține încă fostului său proprietar. Un administrator trebuie să repare partajările cu organizațiile partenere înainte ca această modificare să poată fi salvată.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Salvat, dar %n organizație parteneră care a primit acest secret dintr-o copie nu a primit această modificare.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Salvat, dar %n de organizații partenere care au primit acest secret dintr-o copie nu au primit această modificare.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Salvat, dar %n organizație parteneră care a primit acest secret dintr-o copie nu a primit această modificare.","Salvat, dar %n organizații partenere care au primit acest secret dintr-o copie nu au primit această modificare.","Salvat, dar %n de organizații partenere care au primit acest secret dintr-o copie nu au primit această modificare."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Acest secret a fost partajat cu dumneavoastră, deci nu poate fi partajat cu o organizație parteneră. Nu s-a partajat nimic."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

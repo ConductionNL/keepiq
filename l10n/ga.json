@@ -2074,7 +2074,16 @@
         "Upload failed": "Theip ar an uaslódáil",
         "Folders cannot be attached. Drop the files inside them instead.": "Ní féidir fillteáin a cheangal. Scaoil na comhaid atá iontu ina ionad sin.",
         "Files cannot be added while you are offline. Remove them to save.": "Ní féidir comhaid a chur leis agus tú as líne. Bain iad chun sábháil.",
-        "Files can only be added to a secret you own. Remove them to save.": "Ní féidir comhaid a chur ach le rún atá agat féin. Bain iad chun sábháil."
+        "Files can only be added to a secret you own. Remove them to save.": "Ní féidir comhaid a chur ach le rún atá agat féin. Bain iad chun sábháil.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Níor sábháladh aon rud: is leis an úinéir roimhe seo fós comhroinnt amháin den rún seo le heagraíocht chomhpháirtíochta. Ní mór do riarthóir na comhroinntí le heagraíochtaí comhpháirtíochta a dheisiú sula bhféadfar an t-athrú seo a shábháil.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Sábháilte, ach níor tháinig an t-athrú seo chuig %n eagraíocht chomhpháirtíochta a fuair an rún seo ó chóip.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Sábháilte, ach níor tháinig an t-athrú seo chuig %n eagraíochtaí comhpháirtíochta a fuair an rún seo ó chóip.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Sábháilte, ach níor tháinig an t-athrú seo chuig %n eagraíocht chomhpháirtíochta a fuair an rún seo ó chóip.",
+            "Sábháilte, ach níor tháinig an t-athrú seo chuig %n eagraíocht chomhpháirtíochta a fuair an rún seo ó chóip.",
+            "Sábháilte, ach níor tháinig an t-athrú seo chuig %n eagraíochtaí comhpháirtíochta a fuair an rún seo ó chóip."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Roinneadh an rún seo leat, mar sin ní féidir é a chomhroinnt le heagraíocht chomhpháirtíochta. Níor comhroinneadh aon rud."
     },
     "plurals": null
 }

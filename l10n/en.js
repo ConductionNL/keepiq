@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Upload failed",
         "Folders cannot be attached. Drop the files inside them instead.": "Folders cannot be attached. Drop the files inside them instead.",
         "Files can only be added to a secret you own. Remove them to save.": "Files can only be added to a secret you own. Remove them to save.",
-        "Files cannot be added while you are offline. Remove them to save.": "Files cannot be added while you are offline. Remove them to save."
+        "Files cannot be added while you are offline. Remove them to save.": "Files cannot be added while you are offline. Remove them to save.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Saved, but %n partner organisation that got this secret from a copy did not get this change.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Saved, but %n partner organisations that got this secret from a copy did not get this change.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Saved, but %n partner organisation that got this secret from a copy did not get this change.","Saved, but %n partner organisations that got this secret from a copy did not get this change."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared."
     },
     "nplurals=2; plural=(n != 1);"
 )

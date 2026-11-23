@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Üleslaadimine ebaõnnestus",
         "Folders cannot be attached. Drop the files inside them instead.": "Kaustu ei saa manustada. Lohistage selle asemel nendes olevad failid.",
         "Files cannot be added while you are offline. Remove them to save.": "Faile ei saa võrguühenduseta lisada. Salvestamiseks eemaldage need.",
-        "Files can only be added to a secret you own. Remove them to save.": "Faile saab lisada ainult teie enda saladusele. Salvestamiseks eemaldage need."
+        "Files can only be added to a secret you own. Remove them to save.": "Faile saab lisada ainult teie enda saladusele. Salvestamiseks eemaldage need.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Midagi ei salvestatud: selle saladuse jagamine partnerorganisatsiooniga kuulub endiselt selle eelmisele omanikule. Administraator peab partnerjagamised parandama, enne kui selle muudatuse saab salvestada.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Salvestatud, kuid %n partnerorganisatsioon, kes sai selle saladuse koopiast, ei saanud seda muudatust.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Salvestatud, kuid %n partnerorganisatsiooni, kes said selle saladuse koopiast, ei saanud seda muudatust.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Salvestatud, kuid %n partnerorganisatsioon, kes sai selle saladuse koopiast, ei saanud seda muudatust.","Salvestatud, kuid %n partnerorganisatsiooni, kes said selle saladuse koopiast, ei saanud seda muudatust."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "See saladus jagati sinuga, seega ei saa seda partnerorganisatsiooniga jagada. Midagi ei jagatud."
     },
     "nplurals=2; plural=(n != 1);"
 )

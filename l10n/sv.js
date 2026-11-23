@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Uppladdningen misslyckades",
         "Folders cannot be attached. Drop the files inside them instead.": "Mappar kan inte bifogas. Släpp i stället filerna i dem.",
         "Files cannot be added while you are offline. Remove them to save.": "Filer kan inte läggas till när du är offline. Ta bort dem för att spara.",
-        "Files can only be added to a secret you own. Remove them to save.": "Filer kan bara läggas till i en hemlighet som du äger. Ta bort dem för att spara."
+        "Files can only be added to a secret you own. Remove them to save.": "Filer kan bara läggas till i en hemlighet som du äger. Ta bort dem för att spara.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Inget sparades: en delning av den här hemligheten med en partnerorganisation tillhör fortfarande dess tidigare ägare. En administratör måste reparera partnerdelningarna innan den här ändringen kan sparas.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Sparat, men %n partnerorganisation som fick den här hemligheten från en kopia fick inte den här ändringen.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Sparat, men %n partnerorganisationer som fick den här hemligheten från en kopia fick inte den här ändringen.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Sparat, men %n partnerorganisation som fick den här hemligheten från en kopia fick inte den här ändringen.","Sparat, men %n partnerorganisationer som fick den här hemligheten från en kopia fick inte den här ändringen."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Den här hemligheten delades med dig, så den kan inte delas med en partnerorganisation. Inget delades."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -2048,7 +2048,15 @@
         "Upload failed": "Lähetys epäonnistui",
         "Folders cannot be attached. Drop the files inside them instead.": "Kansioita ei voi liittää. Pudota sen sijaan niiden sisältämät tiedostot.",
         "Files cannot be added while you are offline. Remove them to save.": "Tiedostoja ei voi lisätä ollessasi offline-tilassa. Poista ne tallentaaksesi.",
-        "Files can only be added to a secret you own. Remove them to save.": "Tiedostoja voi lisätä vain omistamaasi salaisuuteen. Poista ne tallentaaksesi."
+        "Files can only be added to a secret you own. Remove them to save.": "Tiedostoja voi lisätä vain omistamaasi salaisuuteen. Poista ne tallentaaksesi.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Mitään ei tallennettu: tämän salaisuuden jako kumppaniorganisaation kanssa kuuluu yhä sen edelliselle omistajalle. Ylläpitäjän on korjattava kumppanijaot, ennen kuin tämä muutos voidaan tallentaa.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Tallennettu, mutta tämä muutos ei mennyt %n kumppaniorganisaatiolle, joka sai tämän salaisuuden kopiosta.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Tallennettu, mutta tämä muutos ei mennyt %n kumppaniorganisaatiolle, jotka saivat tämän salaisuuden kopiosta.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Tallennettu, mutta tämä muutos ei mennyt %n kumppaniorganisaatiolle, joka sai tämän salaisuuden kopiosta.",
+            "Tallennettu, mutta tämä muutos ei mennyt %n kumppaniorganisaatiolle, jotka saivat tämän salaisuuden kopiosta."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Tämä salaisuus on jaettu sinulle, joten sitä ei voi jakaa kumppaniorganisaatiolle. Mitään ei jaettu."
     },
     "plurals": null
 }

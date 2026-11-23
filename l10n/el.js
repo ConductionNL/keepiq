@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Η μεταφόρτωση απέτυχε",
         "Folders cannot be attached. Drop the files inside them instead.": "Οι φάκελοι δεν μπορούν να επισυναφθούν. Αποθέστε αντί αυτού τα αρχεία που περιέχουν.",
         "Files cannot be added while you are offline. Remove them to save.": "Δεν είναι δυνατή η προσθήκη αρχείων ενώ είστε εκτός σύνδεσης. Αφαιρέστε τα για να αποθηκεύσετε.",
-        "Files can only be added to a secret you own. Remove them to save.": "Αρχεία μπορούν να προστεθούν μόνο σε μυστικό που σας ανήκει. Αφαιρέστε τα για να αποθηκεύσετε."
+        "Files can only be added to a secret you own. Remove them to save.": "Αρχεία μπορούν να προστεθούν μόνο σε μυστικό που σας ανήκει. Αφαιρέστε τα για να αποθηκεύσετε.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Δεν αποθηκεύτηκε τίποτα: μια κοινοποίηση αυτού του μυστικού σε συνεργαζόμενο οργανισμό ανήκει ακόμη στον προηγούμενο κάτοχό του. Ένας διαχειριστής πρέπει να επιδιορθώσει τις κοινοποιήσεις σε συνεργαζόμενους οργανισμούς πριν μπορέσει να αποθηκευτεί αυτή η αλλαγή.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Αποθηκεύτηκε, αλλά %n συνεργαζόμενος οργανισμός που έλαβε αυτό το μυστικό από αντίγραφο δεν έλαβε αυτή την αλλαγή.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Αποθηκεύτηκε, αλλά %n συνεργαζόμενοι οργανισμοί που έλαβαν αυτό το μυστικό από αντίγραφο δεν έλαβαν αυτή την αλλαγή.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Αποθηκεύτηκε, αλλά %n συνεργαζόμενος οργανισμός που έλαβε αυτό το μυστικό από αντίγραφο δεν έλαβε αυτή την αλλαγή.","Αποθηκεύτηκε, αλλά %n συνεργαζόμενοι οργανισμοί που έλαβαν αυτό το μυστικό από αντίγραφο δεν έλαβαν αυτή την αλλαγή."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Αυτό το μυστικό κοινοποιήθηκε σε εσάς, οπότε δεν μπορεί να κοινοποιηθεί σε συνεργαζόμενο οργανισμό. Δεν κοινοποιήθηκε τίποτα."
     },
     "nplurals=2; plural=(n != 1);"
 )

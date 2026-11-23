@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Прикачувањето не успеа",
         "Folders cannot be attached. Drop the files inside them instead.": "Папките не можат да се приложат. Наместо тоа, спуштете ги датотеките од нив.",
         "Files cannot be added while you are offline. Remove them to save.": "Не може да се додаваат датотеки додека сте офлајн. Отстранете ги за да зачувате.",
-        "Files can only be added to a secret you own. Remove them to save.": "Датотеки може да се додаваат само на ваша тајна. Отстранете ги за да зачувате."
+        "Files can only be added to a secret you own. Remove them to save.": "Датотеки може да се додаваат само на ваша тајна. Отстранете ги за да зачувате.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ништо не е зачувано: едно споделување на оваа тајна со партнерска организација сè уште му припаѓа на нејзиниот претходен сопственик. Администратор мора да ги поправи споделувањата со партнери пред оваа промена да може да се зачува.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Зачувано, но %n партнерска организација што ја доби оваа тајна од копија не ја доби оваа промена.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Зачувано, но %n партнерски организации што ја добија оваа тајна од копија не ја добија оваа промена.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Зачувано, но %n партнерска организација што ја доби оваа тајна од копија не ја доби оваа промена.","Зачувано, но %n партнерски организации што ја добија оваа тајна од копија не ја добија оваа промена."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Оваа тајна е споделена со вас, па не може да се сподели со партнерска организација. Ништо не е споделено."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

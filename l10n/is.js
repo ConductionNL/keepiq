@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Upphleðsla mistókst",
         "Folders cannot be attached. Drop the files inside them instead.": "Ekki er hægt að hengja möppur við. Slepptu frekar skránum í þeim.",
         "Files cannot be added while you are offline. Remove them to save.": "Ekki er hægt að bæta við skrám án nettengingar. Fjarlægðu þær til að vista.",
-        "Files can only be added to a secret you own. Remove them to save.": "Aðeins er hægt að bæta skrám við leyndarmál sem þú átt. Fjarlægðu þær til að vista."
+        "Files can only be added to a secret you own. Remove them to save.": "Aðeins er hægt að bæta skrám við leyndarmál sem þú átt. Fjarlægðu þær til að vista.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ekkert var vistað: deiling þessa leyndarmáls með samstarfsfyrirtæki tilheyrir enn fyrri eiganda þess. Kerfisstjóri þarf að lagfæra deilingarnar með samstarfsfyrirtækjum áður en hægt er að vista þessa breytingu.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Vistað, en %n samstarfsfyrirtæki sem fékk þetta leyndarmál úr afriti fékk ekki þessa breytingu.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Vistað, en %n samstarfsfyrirtæki sem fengu þetta leyndarmál úr afriti fengu ekki þessa breytingu.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Vistað, en %n samstarfsfyrirtæki sem fékk þetta leyndarmál úr afriti fékk ekki þessa breytingu.","Vistað, en %n samstarfsfyrirtæki sem fengu þetta leyndarmál úr afriti fengu ekki þessa breytingu."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Þessu leyndarmáli var deilt með þér, svo ekki er hægt að deila því með samstarfsfyrirtæki. Engu var deilt."
     },
     "nplurals=2; plural=(n != 1);"
 )

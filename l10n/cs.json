@@ -2074,7 +2074,16 @@
         "Upload failed": "Nahrání se nezdařilo",
         "Folders cannot be attached. Drop the files inside them instead.": "Složky nelze připojit. Přetáhněte místo toho soubory v nich.",
         "Files cannot be added while you are offline. Remove them to save.": "Soubory nelze přidat, když jste offline. Odeberte je, abyste mohli uložit.",
-        "Files can only be added to a secret you own. Remove them to save.": "Soubory lze přidat jen k tajemství, které vlastníte. Odeberte je, abyste mohli uložit."
+        "Files can only be added to a secret you own. Remove them to save.": "Soubory lze přidat jen k tajemství, které vlastníte. Odeberte je, abyste mohli uložit.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nic nebylo uloženo: sdílení tohoto tajemství s partnerskou organizací stále patří jeho předchozímu vlastníkovi. Správce musí opravit sdílení s partnerskými organizacemi, než bude možné tuto změnu uložit.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Uloženo, ale %n partnerská organizace, která toto tajemství dostala z kopie, tuto změnu nedostala.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Uloženo, ale %n partnerských organizací, které toto tajemství dostaly z kopie, tuto změnu nedostalo.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Uloženo, ale %n partnerská organizace, která toto tajemství dostala z kopie, tuto změnu nedostala.",
+            "Uloženo, ale %n partnerské organizace, které toto tajemství dostaly z kopie, tuto změnu nedostaly.",
+            "Uloženo, ale %n partnerských organizací, které toto tajemství dostaly z kopie, tuto změnu nedostalo."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Toto tajemství s vámi bylo sdíleno, proto jej nelze sdílet s partnerskou organizací. Nic nebylo sdíleno."
     },
     "plurals": null
 }

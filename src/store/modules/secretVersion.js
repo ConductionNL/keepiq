@@ -18,7 +18,7 @@ import { defineStore } from 'pinia'
 import { rsaDecrypt } from '../../crypto/index.js'
 import {
 	encryptSparse,
-	notifyOwnerOnly,
+	notifyPartnerNotes,
 	plainOf,
 	saveShared,
 	shareSaveErrorText,
@@ -243,7 +243,7 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 					}),
 					restoredFrom: versionId,
 				})
-				await notifyOwnerOnly(result)
+				await notifyPartnerNotes(result)
 				await secretStore.fetchSecret(secretId)
 				await this.fetchVersions(secretId)
 			} catch (e) {

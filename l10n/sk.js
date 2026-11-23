@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Nahrávanie zlyhalo",
         "Folders cannot be attached. Drop the files inside them instead.": "Priečinky nemožno priložiť. Presuňte namiesto toho súbory v nich.",
         "Files cannot be added while you are offline. Remove them to save.": "Súbory nemožno pridať, keď ste offline. Odoberte ich, aby ste mohli uložiť.",
-        "Files can only be added to a secret you own. Remove them to save.": "Súbory možno pridať len k tajomstvu, ktoré vlastníte. Odoberte ich, aby ste mohli uložiť."
+        "Files can only be added to a secret you own. Remove them to save.": "Súbory možno pridať len k tajomstvu, ktoré vlastníte. Odoberte ich, aby ste mohli uložiť.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nič sa neuložilo: zdieľanie tohto tajomstva s partnerskou organizáciou stále patrí jeho predchádzajúcemu vlastníkovi. Správca musí opraviť zdieľania s partnerskými organizáciami skôr, než bude možné túto zmenu uložiť.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Uložené, ale %n partnerská organizácia, ktorá toto tajomstvo dostala z kópie, túto zmenu nedostala.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Uložené, ale %n partnerských organizácií, ktoré toto tajomstvo dostali z kópie, túto zmenu nedostalo.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Uložené, ale %n partnerská organizácia, ktorá toto tajomstvo dostala z kópie, túto zmenu nedostala.","Uložené, ale %n partnerské organizácie, ktoré toto tajomstvo dostali z kópie, túto zmenu nedostali.","Uložené, ale %n partnerských organizácií, ktoré toto tajomstvo dostali z kópie, túto zmenu nedostalo."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Toto tajomstvo bolo zdieľané s vami, preto ho nemožno zdieľať s partnerskou organizáciou. Nič sa nezdieľalo."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

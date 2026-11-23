@@ -85,6 +85,7 @@ export async function settleWithTimers(promise) {
  * @param {object} [options.posts] Other POST answers by URL suffix, or a function of the body that may throw.
  * @param {{perMinute: number, retryAfter?: string}} [options.lookupLimit] The partner lookup limit, a 429 above it.
  * @param {(body: object, n: number) => void} [options.onSave] Called with each save body; may throw.
+ * @param {number} [options.notReached] The partner shares hanging off a copy the save wrote, as the answer counts them.
  * @return {{saves: Array, lookups: Array, plainPuts: Array, partnerLookups: Array, partnerBatches: Array}}
  */
 export function shareSaveServer({
@@ -98,6 +99,7 @@ export function shareSaveServer({
 	posts = {},
 	lookupLimit = null,
 	onSave = null,
+	notReached = 0,
 }) {
 	const log = {
 		saves: [],
@@ -321,6 +323,7 @@ export function shareSaveServer({
 					written: all('federated').length,
 					suspended: all('suspend').length,
 					ownerOnly: context.ownerOnly === true,
+					notReached,
 				},
 			},
 		}

@@ -2074,7 +2074,16 @@
         "Upload failed": "Не удалось загрузить",
         "Folders cannot be attached. Drop the files inside them instead.": "Папки нельзя прикрепить. Перетащите вместо этого файлы из них.",
         "Files cannot be added while you are offline. Remove them to save.": "Нельзя добавлять файлы без подключения к сети. Удалите их, чтобы сохранить.",
-        "Files can only be added to a secret you own. Remove them to save.": "Файлы можно добавлять только к собственному секрету. Удалите их, чтобы сохранить."
+        "Files can only be added to a secret you own. Remove them to save.": "Файлы можно добавлять только к собственному секрету. Удалите их, чтобы сохранить.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ничего не сохранено: общий доступ к этому секрету для партнёрской организации всё ещё принадлежит его прежнему владельцу. Администратор должен исправить общий доступ для партнёрских организаций, прежде чем это изменение можно будет сохранить.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Сохранено, но %n партнёрская организация, получившая этот секрет из копии, не получила это изменение.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Сохранено, но %n партнёрских организаций, получивших этот секрет из копии, не получили это изменение.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Сохранено, но %n партнёрская организация, получившая этот секрет из копии, не получила это изменение.",
+            "Сохранено, но %n партнёрские организации, получившие этот секрет из копии, не получили это изменение.",
+            "Сохранено, но %n партнёрских организаций, получивших этот секрет из копии, не получили это изменение."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Этим секретом поделились с вами, поэтому им нельзя поделиться с партнёрской организацией. Доступ не предоставлен."
     },
     "plurals": null
 }

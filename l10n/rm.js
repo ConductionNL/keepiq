@@ -1947,7 +1947,11 @@ OC.L10N.register(
         "Upload failed": "Chargiar si n'è betg reussì",
         "Folders cannot be attached. Drop the files inside them instead.": "Ordinaturs na pon betg vegnir agiuntads. Tira empè las datotecas en els.",
         "Files cannot be added while you are offline. Remove them to save.": "Datotecas na pon betg vegnir agiuntadas offline. Allontanai ellas per memorisar.",
-        "Files can only be added to a secret you own. Remove them to save.": "Datotecas pon mo vegnir agiuntadas ad in secret che tutga a vus. Allontanai ellas per memorisar."
+        "Files can only be added to a secret you own. Remove them to save.": "Datotecas pon mo vegnir agiuntadas ad in secret che tutga a vus. Allontanai ellas per memorisar.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nagut n'è vegnì memorisà: ina partiziun da quest secret cun ina organisaziun partenaria tutga anc adina al proprietari precedent. In administratur sto reparar las partiziuns cun organisaziuns partenarias, avant che questa midada po vegnir memorisada.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Memorisà, ma %n organisaziun partenaria che ha survegnì quest secret d'ina copia n'ha betg survegnì questa midada.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Memorisà, ma %n organisaziuns partenarias che han survegnì quest secret d'ina copia n'han betg survegnì questa midada.",
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Quest secret è vegnì partì cun tai, perquai na po el betg vegnir partì cun ina organisaziun partenaria. Nagut n'è vegnì partì."
     },
     "nplurals=1; plural=0;"
 )

@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Неуспешно качване",
         "Folders cannot be attached. Drop the files inside them instead.": "Папки не могат да бъдат прикачени. Пуснете файловете в тях.",
         "Files cannot be added while you are offline. Remove them to save.": "Не могат да се добавят файлове, докато сте офлайн. Премахнете ги, за да запазите.",
-        "Files can only be added to a secret you own. Remove them to save.": "Файлове могат да се добавят само към ваша собствена тайна. Премахнете ги, за да запазите."
+        "Files can only be added to a secret you own. Remove them to save.": "Файлове могат да се добавят само към ваша собствена тайна. Премахнете ги, за да запазите.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Нищо не е запазено: споделяне на тази тайна с партньорска организация все още принадлежи на предишния ѝ собственик. Администратор трябва да поправи споделянията с партньори, преди тази промяна да може да бъде запазена.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Запазено, но %n партньорска организация, получила тази тайна от копие, не получи тази промяна.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Запазено, но %n партньорски организации, получили тази тайна от копие, не получиха тази промяна.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Запазено, но %n партньорска организация, получила тази тайна от копие, не получи тази промяна.","Запазено, но %n партньорски организации, получили тази тайна от копие, не получиха тази промяна."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Тази тайна е споделена с вас, затова не може да бъде споделена с партньорска организация. Нищо не е споделено."
     },
     "nplurals=2; plural=(n != 1);"
 )

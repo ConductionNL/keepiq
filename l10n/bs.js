@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Otpremanje nije uspjelo",
         "Folders cannot be attached. Drop the files inside them instead.": "Mape se ne mogu priložiti. Umjesto toga ispustite datoteke iz njih.",
         "Files cannot be added while you are offline. Remove them to save.": "Datoteke se ne mogu dodati dok ste van mreže. Uklonite ih da biste spremili.",
-        "Files can only be added to a secret you own. Remove them to save.": "Datoteke se mogu dodati samo tajni koju posjedujete. Uklonite ih da biste spremili."
+        "Files can only be added to a secret you own. Remove them to save.": "Datoteke se mogu dodati samo tajni koju posjedujete. Uklonite ih da biste spremili.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ništa nije sačuvano: jedno dijeljenje ove tajne s partnerskom organizacijom i dalje pripada njenom prethodnom vlasniku. Administrator mora popraviti dijeljenja s partnerskim organizacijama prije nego što se ova promjena može sačuvati.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Sačuvano, ali %n partnerska organizacija koja je dobila ovu tajnu iz kopije nije dobila ovu promjenu.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Sačuvano, ali %n partnerskih organizacija koje su dobile ovu tajnu iz kopije nije dobilo ovu promjenu.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Sačuvano, ali %n partnerska organizacija koja je dobila ovu tajnu iz kopije nije dobila ovu promjenu.","Sačuvano, ali %n partnerske organizacije koje su dobile ovu tajnu iz kopije nisu dobile ovu promjenu.","Sačuvano, ali %n partnerskih organizacija koje su dobile ovu tajnu iz kopije nije dobilo ovu promjenu."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ova tajna je podijeljena s vama, pa se ne može podijeliti s partnerskom organizacijom. Ništa nije podijeljeno."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

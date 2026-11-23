@@ -2048,7 +2048,15 @@
         "Upload failed": "No s'ha pogut pujar",
         "Folders cannot be attached. Drop the files inside them instead.": "No es poden adjuntar carpetes. Deixeu anar els fitxers que contenen.",
         "Files cannot be added while you are offline. Remove them to save.": "No es poden afegir fitxers mentre esteu fora de línia. Elimineu-los per desar.",
-        "Files can only be added to a secret you own. Remove them to save.": "Només es poden afegir fitxers a un secret que sigui vostre. Elimineu-los per desar."
+        "Files can only be added to a secret you own. Remove them to save.": "Només es poden afegir fitxers a un secret que sigui vostre. Elimineu-los per desar.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "No s'ha desat res: una compartició d'aquest secret amb una organització associada encara pertany al seu propietari anterior. Un administrador ha de reparar les comparticions amb organitzacions associades abans que es pugui desar aquest canvi.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Desat, però %n organització associada que va rebre aquest secret a partir d'una còpia no ha rebut aquest canvi.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Desat, però %n organitzacions associades que van rebre aquest secret a partir d'una còpia no han rebut aquest canvi.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Desat, però %n organització associada que va rebre aquest secret a partir d'una còpia no ha rebut aquest canvi.",
+            "Desat, però %n organitzacions associades que van rebre aquest secret a partir d'una còpia no han rebut aquest canvi."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Aquest secret s'ha compartit amb tu, així que no es pot compartir amb una organització associada. No s'ha compartit res."
     },
     "plurals": null
 }

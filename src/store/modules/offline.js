@@ -37,7 +37,7 @@ import {
 } from '../../offline/queue.js'
 import { decryptSnapshot, encryptSnapshot } from '../../offline/snapshot.js'
 import {
-	notifyOwnerOnly,
+	notifyPartnerNotes,
 	saveShared,
 	ShareSaveError,
 	shareSaveErrorText,
@@ -951,7 +951,7 @@ export const useOfflineStore = defineStore('offline', {
 				baseUpdatedAt,
 				sourceBaseUpdatedAt,
 			})
-			await notifyOwnerOnly(result)
+			await notifyPartnerNotes(result)
 			return result
 		},
 

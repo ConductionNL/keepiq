@@ -121,6 +121,10 @@ import {
 	useFederatedShareStore,
 } from '../../store/modules/federatedShare.js'
 import { useSecretStore } from '../../store/modules/secret.js'
+import {
+	isShareScanPending,
+	shareScanPendingText,
+} from '../../utils/shareScanPending.js'
 
 export default {
 	name: 'FederatedShareForm',
@@ -278,11 +282,15 @@ export default {
 		 * @param {Error|object} e The failure.
 		 * @return {string}
 		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
+		 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 		 */
 		explain(e) {
 			const tooOld = partnerUpgradeText(e)
 			if (tooOld !== null) {
 				return tooOld
+			}
+			if (isShareScanPending(e)) {
+				return shareScanPendingText()
 			}
 			if (
 				e instanceof FederatedCertificateError
@@ -323,6 +331,11 @@ export default {
 				already_shared: t(
 					'keepiq',
 					'This secret is already shared with that account.',
+				),
+
+				not_shareable: t(
+					'keepiq',
+					'This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.',
 				),
 
 				// The login holds a one-time code or passkeys this client does not send yet.

@@ -2074,7 +2074,16 @@
         "Upload failed": "Įkelti nepavyko",
         "Folders cannot be attached. Drop the files inside them instead.": "Aplankų pridėti negalima. Vietoj to nutempkite juose esančius failus.",
         "Files cannot be added while you are offline. Remove them to save.": "Neprisijungus failų pridėti negalima. Pašalinkite juos, kad išsaugotumėte.",
-        "Files can only be added to a secret you own. Remove them to save.": "Failus galima pridėti tik prie jums priklausančios paslapties. Pašalinkite juos, kad išsaugotumėte."
+        "Files can only be added to a secret you own. Remove them to save.": "Failus galima pridėti tik prie jums priklausančios paslapties. Pašalinkite juos, kad išsaugotumėte.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Niekas neišsaugota: šios paslapties bendrinimas su partnerių organizacija vis dar priklauso jos ankstesniam savininkui. Administratorius turi sutvarkyti bendrinimus su partnerių organizacijomis, kad šį pakeitimą būtų galima išsaugoti.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Išsaugota, bet %n partnerių organizacija, gavusi šią paslaptį iš kopijos, negavo šio pakeitimo.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Išsaugota, bet %n partnerių organizacijų, gavusių šią paslaptį iš kopijos, negavo šio pakeitimo.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Išsaugota, bet %n partnerių organizacija, gavusi šią paslaptį iš kopijos, negavo šio pakeitimo.",
+            "Išsaugota, bet %n partnerių organizacijos, gavusios šią paslaptį iš kopijos, negavo šio pakeitimo.",
+            "Išsaugota, bet %n partnerių organizacijų, gavusių šią paslaptį iš kopijos, negavo šio pakeitimo."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ši paslaptis buvo bendrinta su jumis, todėl jos negalima bendrinti su partnerių organizacija. Niekas nebuvo bendrinta."
     },
     "plurals": null
 }

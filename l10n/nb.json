@@ -2048,7 +2048,15 @@
         "Upload failed": "Opplastingen mislyktes",
         "Folders cannot be attached. Drop the files inside them instead.": "Mapper kan ikke legges ved. Slipp heller filene i dem.",
         "Files cannot be added while you are offline. Remove them to save.": "Filer kan ikke legges til mens du er frakoblet. Fjern dem for å lagre.",
-        "Files can only be added to a secret you own. Remove them to save.": "Filer kan bare legges til en hemmelighet du eier. Fjern dem for å lagre."
+        "Files can only be added to a secret you own. Remove them to save.": "Filer kan bare legges til en hemmelighet du eier. Fjern dem for å lagre.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Ingenting ble lagret: en deling av denne hemmeligheten med en partnerorganisasjon tilhører fortsatt den forrige eieren. En administrator må reparere partnerdelingene før denne endringen kan lagres.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Lagret, men %n partnerorganisasjon som fikk denne hemmeligheten fra en kopi, fikk ikke denne endringen.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Lagret, men %n partnerorganisasjoner som fikk denne hemmeligheten fra en kopi, fikk ikke denne endringen.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Lagret, men %n partnerorganisasjon som fikk denne hemmeligheten fra en kopi, fikk ikke denne endringen.",
+            "Lagret, men %n partnerorganisasjoner som fikk denne hemmeligheten fra en kopi, fikk ikke denne endringen."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Denne hemmeligheten ble delt med deg, så den kan ikke deles med en partnerorganisasjon. Ingenting ble delt."
     },
     "plurals": null
 }

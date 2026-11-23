@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "Przesyłanie nie powiodło się",
         "Folders cannot be attached. Drop the files inside them instead.": "Nie można załączać folderów. Zamiast tego upuść znajdujące się w nich pliki.",
         "Files cannot be added while you are offline. Remove them to save.": "Nie można dodawać plików w trybie offline. Usuń je, aby zapisać.",
-        "Files can only be added to a secret you own. Remove them to save.": "Pliki można dodawać tylko do własnego sekretu. Usuń je, aby zapisać."
+        "Files can only be added to a secret you own. Remove them to save.": "Pliki można dodawać tylko do własnego sekretu. Usuń je, aby zapisać.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nic nie zostało zapisane: udostępnienie tego sekretu organizacji partnerskiej nadal należy do jego poprzedniego właściciela. Administrator musi naprawić udostępnienia organizacjom partnerskim, zanim będzie można zapisać tę zmianę.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Zapisano, ale %n organizacja partnerska, która otrzymała ten sekret z kopii, nie otrzymała tej zmiany.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Zapisano, ale %n organizacji partnerskich, które otrzymały ten sekret z kopii, nie otrzymało tej zmiany.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Zapisano, ale %n organizacja partnerska, która otrzymała ten sekret z kopii, nie otrzymała tej zmiany.","Zapisano, ale %n organizacje partnerskie, które otrzymały ten sekret z kopii, nie otrzymały tej zmiany.","Zapisano, ale %n organizacji partnerskich, które otrzymały ten sekret z kopii, nie otrzymało tej zmiany."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ten sekret został Ci udostępniony, więc nie można go udostępnić organizacji partnerskiej. Nic nie zostało udostępnione."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

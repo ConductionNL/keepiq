@@ -2048,7 +2048,15 @@
         "Upload failed": "Caricamento non riuscito",
         "Folders cannot be attached. Drop the files inside them instead.": "Le cartelle non possono essere allegate. Trascina invece i file al loro interno.",
         "Files cannot be added while you are offline. Remove them to save.": "Non è possibile aggiungere file mentre sei offline. Rimuovili per salvare.",
-        "Files can only be added to a secret you own. Remove them to save.": "I file possono essere aggiunti solo a un segreto di tua proprietà. Rimuovili per salvare."
+        "Files can only be added to a secret you own. Remove them to save.": "I file possono essere aggiunti solo a un segreto di tua proprietà. Rimuovili per salvare.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Non è stato salvato nulla: una condivisione di questo segreto con un'organizzazione partner appartiene ancora al suo proprietario precedente. Un amministratore deve riparare le condivisioni con i partner prima che questa modifica possa essere salvata.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Salvato, ma %n organizzazione partner che ha ricevuto questo segreto da una copia non ha ricevuto questa modifica.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Salvato, ma %n organizzazioni partner che hanno ricevuto questo segreto da una copia non hanno ricevuto questa modifica.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Salvato, ma %n organizzazione partner che ha ricevuto questo segreto da una copia non ha ricevuto questa modifica.",
+            "Salvato, ma %n organizzazioni partner che hanno ricevuto questo segreto da una copia non hanno ricevuto questa modifica."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Questo segreto è stato condiviso con te, quindi non può essere condiviso con un'organizzazione partner. Non è stato condiviso nulla."
     },
     "plurals": null
 }

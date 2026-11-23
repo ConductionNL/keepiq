@@ -2100,7 +2100,17 @@
         "Upload failed": "Nalaganje ni uspelo",
         "Folders cannot be attached. Drop the files inside them instead.": "Map ni mogoče priložiti. Namesto tega spustite datoteke v njih.",
         "Files cannot be added while you are offline. Remove them to save.": "Datotek ni mogoče dodati, ko ste brez povezave. Odstranite jih, da shranite.",
-        "Files can only be added to a secret you own. Remove them to save.": "Datoteke je mogoče dodati le skrivnosti, ki je vaša. Odstranite jih, da shranite."
+        "Files can only be added to a secret you own. Remove them to save.": "Datoteke je mogoče dodati le skrivnosti, ki je vaša. Odstranite jih, da shranite.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Nič ni bilo shranjeno: deljenje te skrivnosti s partnersko organizacijo še vedno pripada njenemu prejšnjemu lastniku. Skrbnik mora popraviti deljenja s partnerskimi organizacijami, preden je mogoče shraniti to spremembo.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Shranjeno, vendar %n partnerska organizacija, ki je to skrivnost prejela iz kopije, te spremembe ni prejela.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Shranjeno, vendar %n partnerskih organizacij, ki so to skrivnost prejele iz kopije, te spremembe ni prejelo.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Shranjeno, vendar %n partnerska organizacija, ki je to skrivnost prejela iz kopije, te spremembe ni prejela.",
+            "Shranjeno, vendar %n partnerski organizaciji, ki sta to skrivnost prejeli iz kopije, te spremembe nista prejeli.",
+            "Shranjeno, vendar %n partnerske organizacije, ki so to skrivnost prejele iz kopije, te spremembe niso prejele.",
+            "Shranjeno, vendar %n partnerskih organizacij, ki so to skrivnost prejele iz kopije, te spremembe ni prejelo."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ta skrivnost je bila deljena z vami, zato je ni mogoče deliti s partnersko organizacijo. Nič ni bilo deljeno."
     },
     "plurals": null
 }

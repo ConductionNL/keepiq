@@ -2048,7 +2048,15 @@
         "Upload failed": "Eroplueden ass feelgeschloen",
         "Folders cannot be attached. Drop the files inside them instead.": "Dossiere kënnen net ugehaange ginn. Leet amplaz d'Fichieren dran of.",
         "Files cannot be added while you are offline. Remove them to save.": "Fichiere kënnen offline net dobäigesat ginn. Huelt se ewech fir ze späicheren.",
-        "Files can only be added to a secret you own. Remove them to save.": "Fichiere kënnen nëmmen zu engem eegene Geheimnis dobäigesat ginn. Huelt se ewech fir ze späicheren."
+        "Files can only be added to a secret you own. Remove them to save.": "Fichiere kënnen nëmmen zu engem eegene Geheimnis dobäigesat ginn. Huelt se ewech fir ze späicheren.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Et gouf näischt gespäichert: eng Fräigab vun dësem Geheimnis un eng Partnerorganisatioun gehéiert nach ëmmer dem viregte Besëtzer. En Administrateur muss d'Partnerfräigaben flécken, ier dës Ännerung gespäichert ka ginn.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Gespäichert, mee %n Partnerorganisatioun, déi dëst Geheimnis iwwer eng Kopie kritt huet, huet dës Ännerung net kritt.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Gespäichert, mee %n Partnerorganisatiounen, déi dëst Geheimnis iwwer eng Kopie kritt hunn, hunn dës Ännerung net kritt.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Gespäichert, mee %n Partnerorganisatioun, déi dëst Geheimnis iwwer eng Kopie kritt huet, huet dës Ännerung net kritt.",
+            "Gespäichert, mee %n Partnerorganisatiounen, déi dëst Geheimnis iwwer eng Kopie kritt hunn, hunn dës Ännerung net kritt."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Dëst Geheimnis gouf mat Iech gedeelt, dofir kann et net mat enger Partnerorganisatioun gedeelt ginn. Et gouf näischt gedeelt."
     },
     "plurals": null
 }

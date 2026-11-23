@@ -2074,7 +2074,16 @@
         "Upload failed": "Не вдалося завантажити",
         "Folders cannot be attached. Drop the files inside them instead.": "Теки не можна долучити. Натомість перетягніть файли з них.",
         "Files cannot be added while you are offline. Remove them to save.": "Не можна додавати файли без підключення до мережі. Вилучіть їх, щоб зберегти.",
-        "Files can only be added to a secret you own. Remove them to save.": "Файли можна додавати лише до власного секрету. Вилучіть їх, щоб зберегти."
+        "Files can only be added to a secret you own. Remove them to save.": "Файли можна додавати лише до власного секрету. Вилучіть їх, щоб зберегти.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Нічого не збережено: спільний доступ до цього секрету для партнерської організації досі належить його попередньому власнику. Адміністратор має виправити спільний доступ для партнерських організацій, перш ніж цю зміну можна буде зберегти.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Збережено, але %n партнерська організація, яка отримала цей секрет із копії, не отримала цієї зміни.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Збережено, але %n партнерських організацій, які отримали цей секрет із копії, не отримали цієї зміни.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": [
+            "Збережено, але %n партнерська організація, яка отримала цей секрет із копії, не отримала цієї зміни.",
+            "Збережено, але %n партнерські організації, які отримали цей секрет із копії, не отримали цієї зміни.",
+            "Збережено, але %n партнерських організацій, які отримали цей секрет із копії, не отримали цієї зміни."
+        ],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Цим секретом поділилися з вами, тому ним не можна поділитися з партнерською організацією. Доступ не надано."
     },
     "plurals": null
 }

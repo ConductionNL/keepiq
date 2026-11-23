@@ -1971,7 +1971,12 @@ OC.L10N.register(
         "Upload failed": "A feltöltés sikertelen",
         "Folders cannot be attached. Drop the files inside them instead.": "Mappák nem csatolhatók. Húzza ide inkább a bennük lévő fájlokat.",
         "Files cannot be added while you are offline. Remove them to save.": "Offline állapotban nem adhatók hozzá fájlok. A mentéshez távolítsa el őket.",
-        "Files can only be added to a secret you own. Remove them to save.": "Fájlok csak a saját titkához adhatók hozzá. A mentéshez távolítsa el őket."
+        "Files can only be added to a secret you own. Remove them to save.": "Fájlok csak a saját titkához adhatók hozzá. A mentéshez távolítsa el őket.",
+        "Nothing was saved: a share of this secret with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.": "Semmi sem lett mentve: a titok egyik partnerszervezettel való megosztása még mindig a korábbi tulajdonosáé. Egy rendszergazdának meg kell javítania a partnermegosztásokat, mielőtt ez a módosítás menthető lenne.",
+        "Saved, but %n partner organisation that got this secret from a copy did not get this change.": "Mentve, de %n partnerszervezet, amely másolatból kapta meg ezt a titkot, nem kapta meg ezt a módosítást.",
+        "Saved, but %n partner organisations that got this secret from a copy did not get this change.": "Mentve, de %n partnerszervezet, amelyek másolatból kapták meg ezt a titkot, nem kapta meg ezt a módosítást.",
+        "_Saved, but %n partner organisation that got this secret from a copy did not get this change._::_Saved, but %n partner organisations that got this secret from a copy did not get this change._": ["Mentve, de %n partnerszervezet, amely másolatból kapta meg ezt a titkot, nem kapta meg ezt a módosítást.","Mentve, de %n partnerszervezet, amelyek másolatból kapták meg ezt a titkot, nem kapta meg ezt a módosítást."],
+        "This secret was shared with you, so it cannot be shared with a partner organisation. Nothing was shared.": "Ezt a titkot megosztották Önnel, ezért nem osztható meg partnerszervezettel. Semmi sem lett megosztva."
     },
     "nplurals=2; plural=(n != 1);"
 )
