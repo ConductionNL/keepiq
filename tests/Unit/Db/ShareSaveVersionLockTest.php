@@ -33,6 +33,7 @@ use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCP\Federation\ICloudIdManager;
@@ -264,7 +265,7 @@ class ShareSaveVersionLockTest extends TestCase {
 	private function shareService(FederatedShareMapper $mapper, FederatedNotificationDelivery $delivery): FederatedShareService {
 		return new FederatedShareService(
 			shareMapper: $mapper,
-			secretMapper: new SecretMapper(db: $this->db),
+			sources: new FederatedShareSources(secretMapper: new SecretMapper(db: $this->db), rowJudge: $this->shareRowJudge()),
 			partners: $this->createMock(FederationPartnerService::class),
 			root: $this->createMock(FederationRootService::class),
 			cloudIdManager: $this->createMock(ICloudIdManager::class),
@@ -272,7 +273,6 @@ class ShareSaveVersionLockTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $delivery,
 			audit: $this->createMock(FederatedShareAuditTrail::class),
-			rowJudge: $this->shareRowJudge(),
 		);
 	}
 

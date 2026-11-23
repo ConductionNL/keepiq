@@ -46,6 +46,7 @@ use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedSharePuller;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederatedValueFields;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
@@ -205,7 +206,7 @@ class FederatedValueFieldsTest extends TestCase {
 
 		$this->service = new FederatedShareService(
 			shareMapper: $mapper,
-			secretMapper: $secrets,
+			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge()),
 			partners: new FederationPartnerService(
 				$partnerMapper,
 				$this->createMock(IClientService::class),
@@ -217,7 +218,6 @@ class FederatedValueFieldsTest extends TestCase {
 			random: $random,
 			delivery: new FederatedNotificationDelivery($mapper, $messenger, $audit),
 			audit: $audit,
-			rowJudge: $this->shareRowJudge(),
 			logger: $this->warningLog(),
 		);
 
