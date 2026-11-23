@@ -46,6 +46,10 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareRowJudge;
+use OCA\Keepiq\Service\ShareRowVerdict;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
+use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Http;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -188,6 +192,7 @@ class FederatedSourceDetailsTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->shareSaveRequired(shareMapper: $shareMapper),
 			federatedShares: $federated,
 		);
 
@@ -201,6 +206,23 @@ class FederatedSourceDetailsTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 
 		return (new SecretUpdateController($request, $service, $session))->update('src');
+	}
+
+	/**
+	 * The real guard on Alice's `src`: no share row of its own, no live
+	 * copies, and the partner shares of this test.
+	 *
+	 * @param FederatedShareMapper $shareMapper The partner shares
+	 *
+	 * @return ShareSaveRequiredGuard
+	 */
+	private function shareSaveRequired(FederatedShareMapper $shareMapper): ShareSaveRequiredGuard {
+		$rowJudge = $this->createStub(ShareRowJudge::class);
+		$rowJudge->method('forCopy')->willReturn(new ShareRowVerdict(state: ShareRowVerdict::NONE));
+		$guards = $this->createStub(ShareSyncGuards::class);
+		$guards->method('liveCopies')->willReturn(['copies' => [], 'ignored' => [], 'unjudged' => []]);
+
+		return new ShareSaveRequiredGuard(rowJudge: $rowJudge, guards: $guards, federatedShares: $shareMapper);
 	}
 
 	/**
@@ -243,11 +265,14 @@ class FederatedSourceDetailsTest extends TestCase {
 		$this->assertSame([], $this->sent);
 	}
 
-	public function testAValueChangeLeavesTheNotificationToTheBrowserSync(): void {
-		// The browser encrypts the new value for each recipient and its
-		// PUT /federated-shares/{id} sends SHARE_UPDATED (task 4.1).
-		$this->put(['name' => 'Supplier portal (2026)', 'key' => 'NEW-ALICE-CIPHER']);
+	public function testAValueChangeIsRefusedForTheShareSave(): void {
+		// A new value must reach the partner shares in the same write, so
+		// the plain update refuses it and tells no one (keepiq#1300).
+		$response = $this->put(['name' => 'Supplier portal (2026)', 'key' => 'NEW-ALICE-CIPHER']);
 
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('share_save_required', $response->getData()['code']);
+		$this->assertSame('ALICE-CIPHER-KEY', $this->source->getKey());
 		$this->assertSame([], $this->sent);
 	}
 

@@ -37,6 +37,7 @@ use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretSharingRevoker;
 use OCA\Keepiq\Service\SecretTrashService;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -298,6 +299,7 @@ class SecretTrashServiceTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 		);
 
 		return new SecretTrashService(

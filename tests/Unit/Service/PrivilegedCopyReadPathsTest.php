@@ -39,6 +39,7 @@ use OCA\Keepiq\Service\PrivilegedAccess\PrivilegedCopyGate;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\TwoFactorGate;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\App\IAppManager;
 use OCP\IDBConnection;
@@ -142,6 +143,7 @@ class PrivilegedCopyReadPathsTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			privilegedGate: $this->gate,
 		);
 	}//end secretService()

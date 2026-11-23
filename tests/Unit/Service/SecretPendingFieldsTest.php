@@ -29,6 +29,7 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\IRequest;
 use OCP\IUser;
@@ -102,6 +103,7 @@ class SecretPendingFieldsTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->createMock(\OCP\IDBConnection::class),
 			$this->createStub(ViewOnlyCopyGuard::class),
+			$this->createStub(ShareSaveRequiredGuard::class),
 			null,
 			null,
 			null,

@@ -277,7 +277,7 @@ class SecretControllerTest extends TestCase {
 			message: 'kept in a team folder'
 		);
 		$this->secretService->method('create')->willThrowException($refusal);
-		$this->secretService->method('update')->willThrowException($refusal);
+		$this->secretService->method('updateAlone')->willThrowException($refusal);
 		$this->request->method('getParam')->willReturnArgument(0);
 
 		$created = $this->controller->create(name: 'Bank', key: 'CIPHERTEXT-BLOB-0001', folderId: 'private');

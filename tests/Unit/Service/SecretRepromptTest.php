@@ -34,6 +34,7 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\DB\ISchemaWrapper;
 use OCP\DB\Schema\IColumn;
@@ -118,6 +119,7 @@ class SecretRepromptTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			$this->createMock(IDBConnection::class),
 			$this->createStub(ViewOnlyCopyGuard::class),
+			$this->createStub(ShareSaveRequiredGuard::class),
 			null,
 			null,
 			null,

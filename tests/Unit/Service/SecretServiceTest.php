@@ -38,6 +38,7 @@ use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
@@ -119,6 +120,7 @@ class SecretServiceTest extends TestCase {
 			logger: $logger,
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			folderOwnership: $this->folderOwnership,
 		);
 	}//end setUp()
@@ -379,6 +381,7 @@ class SecretServiceTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			versionService: $versionService,
 		);
 	}//end serviceWithVersions()
@@ -978,6 +981,7 @@ class SecretServiceTest extends TestCase {
 			logger: $logger,
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			secretRequestService: null,
 			shareService: null,
 			groupShareMapper: $groupShareMapper,
@@ -1313,6 +1317,7 @@ class SecretServiceTest extends TestCase {
 			versionService: $versions,
 			db: $db,
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 		);
 
 		try {
@@ -1488,6 +1493,7 @@ class SecretServiceTest extends TestCase {
 			db: $this->createMock(\OCP\IDBConnection::class),
 			folderOwnership: $this->folderOwnership,
 			viewOnlyCopies: $guard,
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 		);
 	}//end serviceWithViewOnlyGuard()
 
@@ -1629,6 +1635,7 @@ class SecretServiceTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			folderOwnership: $this->folderOwnership,
 			federatedShares: $federated,
 		);

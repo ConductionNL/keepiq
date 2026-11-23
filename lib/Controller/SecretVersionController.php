@@ -29,6 +29,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\PrivilegedAccessRequiredException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Kernel\AppIdentity;
 use OCA\Keepiq\Kernel\Contracts\SecretVersionServiceInterface;
@@ -42,6 +43,9 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for version history.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Each refusal a restore can
+ *   meet is an exception of its own, mapped to its own answer here.
  */
 class SecretVersionController extends OCSController {
 	/**
@@ -138,7 +142,8 @@ class SecretVersionController extends OCSController {
 	/**
 	 * Restore a version onto this one row. The web app restores through
 	 * share-save (`restoredFrom`). A copy whose holder may not write its
-	 * source is view-only and its restore is refused.
+	 * source is view-only and its restore is refused, and a restore that
+	 * changes the value of a shared secret answers 409 `share_save_required`.
 	 *
 	 * @param string $id The version UUID
 	 * @param string|null $baseUpdatedAt The head version the restore was chosen on
@@ -149,6 +154,7 @@ class SecretVersionController extends OCSController {
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-value-change-of-a-shared-secret-goes-through-the-share-save
 	 */
 	#[NoAdminRequired]
 	public function restore(string $id, ?string $baseUpdatedAt = null): JSONResponse {
@@ -164,6 +170,9 @@ class SecretVersionController extends OCSController {
 				data: ['message' => $exception->getMessage(), 'current' => $exception->getCurrent()->jsonSerialize()],
 				statusCode: Http::STATUS_CONFLICT
 			);
+		} catch (ShareSaveRequiredException $exception) {
+			$code = ShareSaveRequiredException::CODE;
+			return new JSONResponse(data: ['error' => $code, 'code' => $code, 'message' => $exception->getMessage()], statusCode: Http::STATUS_CONFLICT);
 		} catch (ForbiddenException $exception) {
 			$body = ['message' => $exception->getMessage()];
 			if ($exception->policyCode() !== null) {

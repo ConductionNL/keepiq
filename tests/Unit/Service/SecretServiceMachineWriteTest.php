@@ -34,6 +34,7 @@ use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -73,6 +74,7 @@ class SecretServiceMachineWriteTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 		);
 
 		$this->typeService->method('resolveTypeForSecret')->willReturn('api_key');
@@ -313,6 +315,7 @@ class SecretServiceMachineWriteTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			db: $this->createMock(\OCP\IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
+			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			auditService: $auditService,
 			versionService: $versionService,
 		);
