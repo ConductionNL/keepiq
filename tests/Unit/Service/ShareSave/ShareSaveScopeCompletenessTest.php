@@ -44,6 +44,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Completeness and reach of a share save.
@@ -93,20 +94,33 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 			['copy-bob' => $this->secret('copy-bob', 'bob'), 'copy-dave' => $this->secret('copy-dave', 'dave')]
 		);
 
+		$this->scope = $this->scopeWith();
+	}//end setUp()
+
+	/**
+	 * The scope over this test's mappers.
+	 *
+	 * @param LoggerInterface|null $logger The logger
+	 *
+	 * @return ShareSaveScope
+	 */
+	private function scopeWith(?LoggerInterface $logger = null): ShareSaveScope {
 		$guards = new ShareSyncGuards(
 			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			secrets: $this->secrets,
 			suites: $this->suites,
 			auth: $this->createMock(ShareAuthorizationService::class),
 		);
-		$this->scope = new ShareSaveScope(
+
+		return new ShareSaveScope(
 			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			secrets: $this->secrets,
 			federatedShares: $this->federated,
 			sync: $this->createMock(ShareSyncService::class),
 			guards: $guards,
+			logger: $logger,
 		);
-	}//end setUp()
+	}//end scopeWith()
 
 	/**
 	 * A user-owned secret.
@@ -174,12 +188,13 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 	 *
 	 * @param ShareSavePath    $path    The path
 	 * @param ShareSaveEntries $entries The entries
+	 * @param string           $userId  The caller
 	 *
 	 * @return array<string,mixed> The refusal body
 	 */
-	private function incomplete(ShareSavePath $path, ShareSaveEntries $entries): array {
+	private function incomplete(ShareSavePath $path, ShareSaveEntries $entries, string $userId = 'alice'): array {
 		try {
-			$this->scope->assertComplete(path: $path, entries: $entries, userId: 'alice');
+			$this->scope->assertComplete(path: $path, entries: $entries, userId: $userId);
 		} catch (IncompleteShareSaveException $refusal) {
 			$this->assertSame(409, $refusal->getStatus());
 			return $refusal->getBody();
@@ -188,7 +203,8 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 	}//end incomplete()
 
 	/**
-	 * Naming every copy and the owner's own active partner share is complete.
+	 * Naming every copy and the owner's active partner share is complete; a
+	 * revoked one is not required.
 	 *
 	 * @return void
 	 */
@@ -196,7 +212,6 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 		$this->federated->method('findBySourceSecret')->willReturn(
 			[
 				$this->partnerShare('f-1', 'alice'),
-				$this->partnerShare('f-2', 'erin'),
 				$this->partnerShare('f-3', 'alice', 'revoked'),
 			]
 		);
@@ -290,6 +305,107 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 		$this->assertSame([], $required['federated']);
 		$this->assertTrue($required['ownerOnly']);
 	}//end testACopyEditorNamesTheSourceButNoPartnerShares()
+
+	/**
+	 * The source's owner saving through their own copy must name the source,
+	 * every other copy and every active partner share, as on the owner path.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#scenario-the-owner-saving-through-a-copy-must-name-the-partner-shares
+	 */
+	public function testTheOwnerSavingThroughTheirCopyNamesThePartnerShares(): void {
+		$this->federated->method('findBySourceSecret')->willReturn([$this->partnerShare('f-1', 'bob')]);
+		$path = new ShareSavePath(row: $this->secret('copy-bob', 'bob'), source: $this->secret('src-1', 'bob'));
+		$copies = [['secretId' => 'src-1'], ['secretId' => 'copy-dave']];
+
+		$body = $this->incomplete(path: $path, entries: new ShareSaveEntries(copies: $copies), userId: 'bob');
+		$this->assertSame('copy', $body['path']);
+		$this->assertSame(['f-1'], $body['federated']['missing']);
+
+		$required = $this->scope->assertComplete(
+			path: $path,
+			entries: new ShareSaveEntries(copies: $copies, federated: [['shareId' => 'f-1']]),
+			userId: 'bob'
+		);
+		$this->assertSame(['f-1'], array_keys($required['federated']));
+		$this->assertFalse($required['ownerOnly']);
+	}//end testTheOwnerSavingThroughTheirCopyNamesThePartnerShares()
+
+	/**
+	 * The source's owner, read again inside the transaction, decides: a copy
+	 * editor who no longer owns the source names no partner shares.
+	 *
+	 * @return void
+	 */
+	public function testOwnershipIsReadFromTheSourceAsLastRead(): void {
+		$this->federated->method('findBySourceSecret')->willReturn([$this->partnerShare('f-1', 'bob')]);
+		$path = new ShareSavePath(
+			row: $this->secret('copy-bob', 'bob'),
+			source: $this->secret('src-1', 'bob'),
+			current: $this->secret('src-1', 'alice')
+		);
+
+		$required = $this->scope->assertComplete(
+			path: $path,
+			entries: new ShareSaveEntries(copies: [['secretId' => 'src-1'], ['secretId' => 'copy-dave']]),
+			userId: 'bob'
+		);
+
+		$this->assertSame([], $required['federated']);
+		$this->assertTrue($required['ownerOnly']);
+	}//end testOwnershipIsReadFromTheSourceAsLastRead()
+
+	/**
+	 * A partner share whose owner is not the source's owner refuses every
+	 * save that writes partner shares, staged chunks included, and is logged
+	 * with the secret and the share ids; a copy editor who does not own the
+	 * source is not refused for it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
+	 */
+	public function testAPartnerShareTheOwnerDoesNotOwnStopsEverySaveThatWritesPartners(): void {
+		$this->federated->method('findBySourceSecret')->willReturn(
+			[$this->partnerShare('f-1', 'alice'), $this->partnerShare('f-2', 'erin'), $this->partnerShare('f-3', 'erin', 'revoked')]
+		);
+		$logged = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(static function (string $message, array $context) use (&$logged): void {
+			$logged[] = $context;
+		});
+		$scope = $this->scopeWith(logger: $logger);
+		$copyEditorOwner = new ShareSavePath(row: $this->secret('copy-bob', 'alice'), source: $this->secret('src-1', 'alice'));
+		$everything = new ShareSaveEntries(
+			copies: [['secretId' => 'src-1'], ['secretId' => 'copy-bob'], ['secretId' => 'copy-dave']],
+			federated: [['shareId' => 'f-1'], ['shareId' => 'f-2']],
+		);
+
+		$saves = [
+			'owner path' => fn () => $scope->assertComplete(path: $this->ownerPath(), entries: $everything, userId: 'alice'),
+			'owner through a copy' => fn () => $scope->assertComplete(path: $copyEditorOwner, entries: $everything, userId: 'alice'),
+			'a staged chunk' => fn () => $scope->assertWithinReach(path: $this->ownerPath(), entries: $everything, chunks: 1, userId: 'alice'),
+		];
+		foreach ($saves as $label => $save) {
+			try {
+				$save();
+				$this->fail($label.' was accepted');
+			} catch (ShareSaveRefusal $refusal) {
+				$this->assertSame(['partner_share_owner_mismatch', 409], [$refusal->getError(), $refusal->getStatus()], $label);
+			}
+		}
+
+		$this->assertSame(array_fill(0, 3, ['app' => 'keepiq', 'secretId' => 'src-1', 'shareIds' => ['f-2']]), $logged);
+
+		$bob = new ShareSavePath(row: $this->secret('copy-bob', 'bob'), source: $this->secret('src-1', 'alice'), writesOn: 'bob');
+		$required = $scope->assertComplete(
+			path: $bob,
+			entries: new ShareSaveEntries(copies: [['secretId' => 'src-1'], ['secretId' => 'copy-dave']]),
+			userId: 'bob'
+		);
+		$this->assertTrue($required['ownerOnly']);
+	}//end testAPartnerShareTheOwnerDoesNotOwnStopsEverySaveThatWritesPartners()
 
 	/**
 	 * A stage may not name more rows than exist, nor use more chunks than those rows need.

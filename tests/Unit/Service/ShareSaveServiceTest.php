@@ -105,6 +105,9 @@ class ShareSaveServiceTest extends TestCase {
 	/** The holder whose share row is gone when read again under the lock */
 	private ?string $goneUnderLock = null;
 
+	/** Who owns the source when it is read again under the lock, when that changed */
+	private ?string $sourceOwnerUnderLock = null;
+
 	/** Whether the caller left the `admin` group before the lock */
 	private bool $leftGroupUnderLock = false;
 
@@ -180,11 +183,11 @@ class ShareSaveServiceTest extends TestCase {
 		return $target;
 	}
 
-	private function partnerShare(string $id, string $status): FederatedShare {
+	private function partnerShare(string $id, string $status, string $owner = 'alice', string $sourceId = 'src'): FederatedShare {
 		$share = new FederatedShare();
 		$share->setId($id);
-		$share->setSourceSecretId('src');
-		$share->setOwnerId('alice');
+		$share->setSourceSecretId($sourceId);
+		$share->setOwnerId($owner);
 		$share->setRecipientCloudId('dave@partner.example');
 		$share->setStatus($status);
 
@@ -193,7 +196,14 @@ class ShareSaveServiceTest extends TestCase {
 
 	private function wireMappers(): void {
 		$this->secretMapper->method('findById')->willReturnCallback(
-			fn (string $id): Secret => isset($this->rows[$id]) ? clone $this->rows[$id] : throw new DoesNotExistException('none')
+			function (string $id): Secret {
+				$row = isset($this->rows[$id]) ? clone $this->rows[$id] : throw new DoesNotExistException('none');
+				if ($id === 'src' && $this->sourceOwnerUnderLock !== null && in_array('begin', $this->log, true) === true) {
+					$row->setOwnerId($this->sourceOwnerUnderLock);
+				}
+
+				return $row;
+			}
 		);
 		$this->secretMapper->method('findByIds')->willReturnCallback(
 			fn (array $ids): array => array_intersect_key($this->rows, array_flip($ids))
@@ -245,7 +255,18 @@ class ShareSaveServiceTest extends TestCase {
 				throw new DoesNotExistException('no copy');
 			}
 		);
-		$this->federatedMapper->method('findBySourceSecret')->willReturnCallback(fn (): array => $this->partnerShares);
+		$this->federatedMapper->method('findBySourceSecret')->willReturnCallback(
+			fn (string $sourceId): array => array_values(
+				array_filter($this->partnerShares, static fn (FederatedShare $share): bool => $share->getSourceSecretId() === $sourceId)
+			)
+		);
+		$this->federatedMapper->method('countActiveBySourceSecrets')->willReturnCallback(
+			fn (array $sourceIds): int => count(array_filter(
+				$this->partnerShares,
+				static fn (FederatedShare $share): bool => in_array($share->getSourceSecretId(), $sourceIds, true)
+					&& $share->getStatus() === FederatedShare::STATUS_ACTIVE
+			))
+		);
 		$this->secrets->method('loadForUpdate')->willReturnCallback(fn (string $id): Secret => $this->rows[$id]);
 
 		$this->stageMapper->method('insert')->willReturnCallback(
@@ -482,7 +503,7 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame($savedAt->format(DATE_ATOM), $result['sourceUpdatedAt']);
 		$this->assertSame(['written' => 2, 'skipped' => 0], $result['copies']);
 		$this->assertSame(
-			['written' => 1, 'suspended' => 0, 'notified' => 1, 'queued' => 0, 'ownerOnly' => false],
+			['written' => 1, 'suspended' => 0, 'notified' => 1, 'queued' => 0, 'ownerOnly' => false, 'notReached' => 0],
 			$result['federated']
 		);
 		$this->assertSame('src', $result['secret']['id']);
@@ -570,7 +591,7 @@ class ShareSaveServiceTest extends TestCase {
 
 		$result = $this->service()->save(id: 'src', request: $this->ownerRequest(['federated' => $federated]), userId: 'alice');
 
-		$this->assertSame(['written' => 2, 'suspended' => 0, 'notified' => 0, 'queued' => 2, 'ownerOnly' => false], $result['federated']);
+		$this->assertSame(['written' => 2, 'suspended' => 0, 'notified' => 0, 'queued' => 2, 'ownerOnly' => false, 'notReached' => 0], $result['federated']);
 		$this->assertContains('commit', $this->log);
 	}
 
@@ -811,7 +832,7 @@ class ShareSaveServiceTest extends TestCase {
 			userId: 'alice'
 		);
 
-		$this->assertSame(['written' => 0, 'suspended' => 1, 'notified' => 0, 'queued' => 0, 'ownerOnly' => false], $result['federated']);
+		$this->assertSame(['written' => 0, 'suspended' => 1, 'notified' => 0, 'queued' => 0, 'ownerOnly' => false, 'notReached' => 0], $result['federated']);
 	}
 
 	public function testAShareAddedWhileWaitingForTheLockMakesTheSaveIncomplete(): void {
@@ -1652,5 +1673,263 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame($request->patch, $this->rowSaves[0]['data']);
 		$this->assertSame(['K-BOB', 'K-CAROL'], array_column($this->copyWrites, 'key'));
 		$this->assertSame([['key' => 'K-DAVE', 'login' => null, 'additionalFields' => null]], $sent);
+	}
+
+	/**
+	 * The secret passed to Bob, who edits it through his copy `c-bob`: the
+	 * source and its partner share are his, and the source is still encrypted
+	 * for its previous owner.
+	 *
+	 * @return void
+	 */
+	private function bobOwnsTheSecret(): void {
+		$this->rows['src']->setOwnerId('bob');
+		$this->partnerShares = [$this->partnerShare(id: 'fs-1', status: FederatedShare::STATUS_ACTIVE, owner: 'bob')];
+		$this->auth->method('isOwnerOrDelegate')->willReturn(true);
+	}
+
+	/**
+	 * Bob's partner share in his save through the copy.
+	 *
+	 * @return list<array<string,mixed>>
+	 */
+	private function bobsPartnerEntry(): array {
+		return [[
+			'shareId' => 'fs-1',
+			'certFingerprint' => str_repeat('a', 64),
+			'key' => 'K-DAVE',
+			'login' => null,
+			'additionalFields' => null,
+		]];
+	}
+
+	/**
+	 * The successor after team offboarding and the delegate after account
+	 * deletion both own the secret and save it through their own copy.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-owners-save-through-their-own-copy-reaches-partners
+	 */
+	public function testTheOwnerSavingThroughTheirCopyWritesThePartnerShares(): void {
+		$this->bobOwnsTheSecret();
+		$this->delivery->method('deliver')->willReturn(true);
+
+		$body = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob'))->getBody();
+		$this->assertSame('incomplete', $body['error']);
+		$this->assertSame('copy', $body['path']);
+		$this->assertSame([['shareId' => 'fs-1', 'recipientCloudId' => 'dave@partner.example']], $body['federated']['required']);
+		$this->assertSame(['fs-1'], $body['federated']['missing']);
+
+		$this->log = [];
+		$result = $this->service()->save(id: 'c-bob', request: $this->bobRequest(['federated' => $this->bobsPartnerEntry()]), userId: 'bob');
+
+		$this->assertSame(
+			['begin', 'lock src', 'lock c-bob', 'copy src', 'copy c-carol', 'partner fs-1', 'row c-bob', 'commit'],
+			$this->log
+		);
+		$this->assertSame(
+			['written' => 1, 'suspended' => 0, 'notified' => 1, 'queued' => 0, 'ownerOnly' => false, 'notReached' => 0],
+			$result['federated']
+		);
+	}
+
+	/**
+	 * Bob suspends a partner share his browser could not verify, through his copy.
+	 *
+	 * @return void
+	 */
+	public function testTheOwnerSavingThroughTheirCopySuspendsAPartnerShare(): void {
+		$this->bobOwnsTheSecret();
+		$this->federated->expects($this->once())->method('suspend')->with('fs-1', 'bob', 'unverified');
+
+		$result = $this->service()->save(
+			id: 'c-bob',
+			request: $this->bobRequest(['suspend' => [['shareId' => 'fs-1', 'reason' => 'unverified']]]),
+			userId: 'bob'
+		);
+
+		$this->assertSame(1, $result['federated']['suspended']);
+		$this->assertFalse($result['federated']['ownerOnly']);
+	}
+
+	/**
+	 * Copy editors who do not own the source: a delegate, and a write-grade
+	 * member.
+	 *
+	 * @return array<string,array{0:bool}>
+	 */
+	public static function copyEditorsWhoDoNotOwnTheSource(): array {
+		return [
+			'a delegate' => [true],
+			'a write-grade copy editor' => [false],
+		];
+	}
+
+	/**
+	 * @param bool $delegate Whether Bob is a delegate, otherwise he writes on a grade
+	 *
+	 * @dataProvider copyEditorsWhoDoNotOwnTheSource
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#scenario-the-owner-saving-through-a-copy-must-name-the-partner-shares
+	 */
+	public function testACopyEditorWhoDoesNotOwnTheSourceStillLeavesPartnersToTheOwner(bool $delegate): void {
+		if ($delegate === true) {
+			$this->auth->method('isOwnerOrDelegate')->willReturn(true);
+		} else {
+			$this->bobWritesOnAGrade();
+		}
+
+		foreach (['federated' => $this->bobsPartnerEntry(), 'suspend' => [['shareId' => 'fs-1', 'reason' => 'unverified']]] as $list => $entries) {
+			$refusal = $this->refusal(fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest([$list => $entries]), userId: 'bob'));
+			$this->assertSame(['federated_owner_only', 400], [$refusal->getError(), $refusal->getStatus()], $list);
+		}
+
+		$this->assertSame([], $this->log);
+		$result = $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob');
+		$this->assertTrue($result['federated']['ownerOnly']);
+		$this->assertSame(0, $result['federated']['written']);
+	}
+
+	/**
+	 * A copy editor who stopped owning the source before the lock gets the
+	 * copy-editor rules there: the partner entries they sent no longer fit.
+	 *
+	 * @return void
+	 */
+	public function testOwnershipIsReadAgainUnderTheLock(): void {
+		$this->bobOwnsTheSecret();
+		$this->sourceOwnerUnderLock = 'alice';
+
+		$refusal = $this->refusal(
+			fn () => $this->service()->save(id: 'c-bob', request: $this->bobRequest(['federated' => $this->bobsPartnerEntry()]), userId: 'bob')
+		);
+
+		$this->assertInstanceOf(IncompleteShareSaveException::class, $refusal);
+		$this->assertSame(['fs-1'], $refusal->getBody()['federated']['unexpected']);
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
+		$this->assertSame([], $this->copyWrites);
+	}
+
+	/**
+	 * A partner share an ownership transfer left with the previous owner:
+	 * on the owner path and through the owner's copy alike.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function savesThatWritePartners(): array {
+		return [
+			'the owner path' => ['owner'],
+			'the owner through their copy' => ['copy'],
+		];
+	}
+
+	/**
+	 * @param string $path Which save
+	 *
+	 * @dataProvider savesThatWritePartners
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-a-partner-share-left-with-the-previous-owner
+	 */
+	public function testAPartnerShareThePreviousOwnerKeptStopsTheSave(string $path): void {
+		$this->delivery->expects($this->never())->method('deliver');
+		$this->federated->expects($this->never())->method('writeCiphertext');
+		$this->federated->expects($this->never())->method('suspend');
+		[$id, $user, $request] = ['src', 'alice', $this->ownerRequest()];
+		$this->partnerShares[] = $this->partnerShare(id: 'fs-2', status: FederatedShare::STATUS_ACTIVE, owner: 'erin');
+		if ($path === 'copy') {
+			$this->bobOwnsTheSecret();
+			$this->partnerShares[] = $this->partnerShare(id: 'fs-2', status: FederatedShare::STATUS_ACTIVE, owner: 'alice');
+			[$id, $user, $request] = ['c-bob', 'bob', $this->bobRequest(['federated' => $this->bobsPartnerEntry()])];
+		}
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: $id, request: $request, userId: $user));
+
+		$this->assertInstanceOf(ShareSaveRefusal::class, $refusal);
+		$this->assertSame(['partner_share_owner_mismatch', 409], [$refusal->getError(), $refusal->getStatus()]);
+		$this->assertSame([], $this->log);
+		$this->assertSame([], $this->copyWrites);
+		$this->assertSame([], $this->rowSaves);
+	}
+
+	/**
+	 * The same refusal when the partner share changes owner after the
+	 * pre-check: the transaction rolls back before any row is written.
+	 *
+	 * @return void
+	 */
+	public function testAPartnerShareThatChangesOwnerBeforeTheLockRollsBack(): void {
+		$this->federatedMapper = $this->createMock(FederatedShareMapper::class);
+		$this->federatedMapper->method('findBySourceSecret')->willReturnCallback(
+			fn (): array => [$this->partnerShare(
+				id: 'fs-1',
+				status: FederatedShare::STATUS_ACTIVE,
+				owner: in_array('begin', $this->log, true) ? 'erin' : 'alice'
+			)]
+		);
+
+		$refusal = $this->refusal(fn () => $this->service()->save(id: 'src', request: $this->ownerRequest(), userId: 'alice'));
+
+		$this->assertSame('partner_share_owner_mismatch', $refusal->getError());
+		$this->assertSame(['begin', 'lock src', 'rollback'], $this->log);
+		$this->assertSame([], $this->copyWrites);
+	}
+
+	/**
+	 * Partner shares Bob and Carol made from their copies before that was
+	 * refused: one active, one revoked and one suspended on each copy.
+	 *
+	 * @return void
+	 */
+	private function partnerSharesOfTheCopies(): void {
+		foreach (['c-bob', 'c-carol'] as $copy) {
+			$this->partnerShares[] = $this->partnerShare(id: 'fs-'.$copy, status: FederatedShare::STATUS_ACTIVE, owner: substr($copy, 2), sourceId: $copy);
+			$this->partnerShares[] = $this->partnerShare(id: 'fs-r-'.$copy, status: FederatedShare::STATUS_REVOKED, owner: substr($copy, 2), sourceId: $copy);
+			$this->partnerShares[] = $this->partnerShare(id: 'fs-s-'.$copy, status: FederatedShare::STATUS_SUSPENDED, owner: substr($copy, 2), sourceId: $copy);
+		}
+	}
+
+	/**
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-a-partner-share-hanging-off-bobs-copy
+	 */
+	public function testTheOwnersSaveCountsThePartnerSharesOfTheCopiesItWrites(): void {
+		$this->partnerSharesOfTheCopies();
+
+		$result = $this->service()->save(id: 'src', request: $this->ownerRequest(), userId: 'alice');
+
+		$this->assertSame(2, $result['federated']['notReached']);
+		$this->assertSame(1, $result['federated']['written']);
+		$this->assertSame(['begin', 'lock src', 'copy c-bob', 'copy c-carol', 'partner fs-1', 'row src', 'commit'], $this->log);
+	}
+
+	public function testACopyThatIsSkippedIsNotCounted(): void {
+		$this->partnerSharesOfTheCopies();
+		$request = $this->ownerRequest([
+			'copies' => [['secretId' => 'c-bob', 'key' => 'K-BOB', 'login' => null]],
+			'skipped' => [['secretId' => 'c-carol', 'reason' => 'no_vault_key']],
+		]);
+
+		$result = $this->service()->save(id: 'src', request: $request, userId: 'alice');
+
+		$this->assertSame(1, $result['federated']['notReached']);
+	}
+
+	public function testACopyEditorsSaveCountsThePartnerSharesOfTheirOwnRowAndTheOtherCopies(): void {
+		$this->bobWritesOnAGrade();
+		$this->partnerSharesOfTheCopies();
+
+		$result = $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob');
+
+		// The source's own partner share is left to its owner, not counted.
+		$this->assertSame(2, $result['federated']['notReached']);
+		$this->assertTrue($result['federated']['ownerOnly']);
+		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'copy src', 'copy c-carol', 'row c-bob', 'commit'], $this->log);
+	}
+
+	public function testTheOwnerSavingThroughTheirCopyCountsTheCopiesPartnerShares(): void {
+		$this->bobOwnsTheSecret();
+		$this->partnerSharesOfTheCopies();
+
+		$result = $this->service()->save(id: 'c-bob', request: $this->bobRequest(['federated' => $this->bobsPartnerEntry()]), userId: 'bob');
+
+		$this->assertSame(['written' => 1, 'notReached' => 2], array_intersect_key($result['federated'], ['written' => 0, 'notReached' => 0]));
 	}
 }

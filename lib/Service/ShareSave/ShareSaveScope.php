@@ -33,6 +33,7 @@ use OCA\Keepiq\Service\ShareSyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http;
+use Psr\Log\LoggerInterface;
 
 /**
  * Which rows a share-save must write, and whether its lists name exactly those.
@@ -54,6 +55,7 @@ class ShareSaveScope {
 	 * @param FederatedShareMapper $federatedShares Outbound partner shares
 	 * @param ShareSyncService $sync Who may write for every copy
 	 * @param ShareSyncGuards $guards Whether the source is writable, the live copies and their holders' vault keys
+	 * @param LoggerInterface|null $logger Warns about partner shares that are not the secret owner's
 	 *
 	 * @return void
 	 *
@@ -65,6 +67,7 @@ class ShareSaveScope {
 		private FederatedShareMapper $federatedShares,
 		private ShareSyncService $sync,
 		private ShareSyncGuards $guards,
+		private ?LoggerInterface $logger = null,
 	) {
 	}//end __construct()
 
@@ -172,8 +175,10 @@ class ShareSaveScope {
 			refusal: 'Your access to this secret changed while saving; reload and try again'
 		);
 
-		// The source as resolve() read it: its version is what a refusal reports.
-		return new ShareSavePath(row: $path->row, source: $path->source, writesOn: $writesOn);
+		// The source as resolve() read it: its version is what a refusal
+		// reports. Its owner is read again, so who writes partner shares is
+		// decided under the lock.
+		return new ShareSavePath(row: $path->row, source: $path->source, writesOn: $writesOn, current: $source);
 	}//end assertStillWriter()
 
 	/**
@@ -216,9 +221,33 @@ class ShareSaveScope {
 	}//end writerOn()
 
 	/**
+	 * Refuse partner entries from a caller who does not own the source: only
+	 * the secret's owner writes partner shares, through the source or their
+	 * own copy.
+	 *
+	 * @param ShareSavePath $path The path
+	 * @param ShareSaveEntries $entries The request's lists
+	 * @param string $userId The caller
+	 *
+	 * @return void
+	 *
+	 * @throws ShareSaveRefusal `federated_owner_only`
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-copies-change-only-with-the-owners-share-save
+	 */
+	public function assertMayNamePartners(ShareSavePath $path, ShareSaveEntries $entries, string $userId): void {
+		if ($entries->federatedCount() > 0 && $path->ownsSource(userId: $userId) === false) {
+			throw new ShareSaveRefusal(
+				error: 'federated_owner_only',
+				message: 'Only the owner writes partner shares'
+			);
+		}
+	}//end assertMayNamePartners()
+
+	/**
 	 * Refuse lists that are not exactly the rows to write: every live copy
-	 * (on the copy-editor path the source and every other copy) and, on the
-	 * owner path, every active partner share of the caller. A copy may be
+	 * (on the copy-editor path the source and every other copy) and, when the
+	 * caller owns the source, every active partner share of it. A copy may be
 	 * left out only when its holder has no vault key.
 	 *
 	 * @param ShareSavePath $path The path
@@ -230,9 +259,11 @@ class ShareSaveScope {
 	 * @psalm-return Requirement
 	 *
 	 * @throws IncompleteShareSaveException With the current lists
-	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
+	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row,
+	 *   `partner_share_owner_mismatch` when a partner share to write is not the source owner's
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	public function assertComplete(ShareSavePath $path, ShareSaveEntries $entries, string $userId): array {
 		$required = $this->requirement(path: $path, userId: $userId);
@@ -298,7 +329,7 @@ class ShareSaveScope {
 	 *
 	 * @return void
 	 *
-	 * @throws ShareSaveRefusal `too_many_entries`, `too_many_chunks`, or `share_scan_pending`
+	 * @throws ShareSaveRefusal `too_many_entries`, `too_many_chunks`, `share_scan_pending` or `partner_share_owner_mismatch`
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
@@ -317,7 +348,8 @@ class ShareSaveScope {
 
 	/**
 	 * The rows the save must name, the copies it may name but that are not
-	 * written (access ended), and the partner shares only the owner reaches.
+	 * written (access ended), and the partner shares only the source's owner
+	 * reaches, through the source or through their own copy.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param string $userId The caller
@@ -326,7 +358,10 @@ class ShareSaveScope {
 	 *
 	 * @psalm-return Requirement
 	 *
-	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row
+	 * @throws ShareSaveRefusal `share_scan_pending` when the pending quarantine scan cannot judge a copy's row,
+	 *   `partner_share_owner_mismatch` when a partner share to write is not the source owner's
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/user-sharing/spec.md#requirement-a-share-save-names-every-copy-or-is-refused
 	 */
 	private function requirement(ShareSavePath $path, string $userId): array {
 		$source = $path->source;
@@ -340,14 +375,67 @@ class ShareSaveScope {
 		}
 
 		$federated = $this->activePartnerShares(source: $source);
-		if ($path->isCopyEditor() === true) {
+		if ($path->ownsSource(userId: $userId) === false) {
 			// Whether there are any, not how many: the copy editor never saw the partner list.
 			return ['copies' => $copies, 'ignored' => $ignored, 'federated' => [], 'ownerOnly' => $federated !== []];
 		}
 
-		$federated = array_filter($federated, static fn (FederatedShare $share): bool => $share->getOwnerId() === $userId);
+		$this->assertPartnersOwnedBySourceOwner(path: $path, federated: $federated);
 		return ['copies' => $copies, 'ignored' => $ignored, 'federated' => $federated, 'ownerOnly' => false];
 	}//end requirement()
+
+	/**
+	 * Refuse a save that would write partner shares while one of them is not
+	 * the source owner's: an ownership transfer left it behind, and only the
+	 * `ReownTransferredPartnerShares` repair step hands it over.
+	 *
+	 * @param ShareSavePath $path The path
+	 * @param array<string,FederatedShare> $federated The source's active partner shares
+	 *
+	 * @return void
+	 *
+	 * @throws ShareSaveRefusal `partner_share_owner_mismatch`
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-partner-share-the-owner-does-not-own-stops-the-save
+	 */
+	private function assertPartnersOwnedBySourceOwner(ShareSavePath $path, array $federated): void {
+		$ownerId = $path->sourceOwnerId();
+		$foreign = array_keys(array_filter($federated, static fn (FederatedShare $share): bool => $share->getOwnerId() !== $ownerId));
+		if ($foreign === []) {
+			return;
+		}
+
+		$this->logger?->warning(
+			'Share-save refused: partner shares of the secret are not its owner\'s; run occ maintenance:repair to hand them over',
+			['app' => 'keepiq', 'secretId' => $path->source->getId(), 'shareIds' => $foreign]
+		);
+		throw new ShareSaveRefusal(
+			error: 'partner_share_owner_mismatch',
+			message: 'A partner share of this secret is not its owner\'s; an administrator must repair the partner shares first',
+			status: Http::STATUS_CONFLICT
+		);
+	}//end assertPartnersOwnedBySourceOwner()
+
+	/**
+	 * How many active partner shares hang off a row the save writes other
+	 * than the source: the caller's copy on the copy-editor path and every
+	 * copy written. Such a share was made from a copy and no save writes it.
+	 *
+	 * @param ShareSavePath $path The path
+	 * @param list<string> $copyIds The copies the save wrote
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-partner-shares-made-from-a-copy-are-reported
+	 */
+	public function partnersNotReached(ShareSavePath $path, array $copyIds): int {
+		$rowIds = array_diff([$path->row->getId(), ...$copyIds], [$path->source->getId()]);
+		if ($rowIds === []) {
+			return 0;
+		}
+
+		return $this->federatedShares->countActiveBySourceSecrets(sourceSecretIds: array_values($rowIds));
+	}//end partnersNotReached()
 
 	/**
 	 * The source's active partner shares, keyed by id.
