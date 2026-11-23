@@ -138,8 +138,8 @@ class AccountShareCleanupService {
 	 * written to the recipient copy. GroupShares the user created are deleted
 	 * the same way (their per-member ShareTarget rows carry the groupShareId).
 	 *
-	 * A secret handed to a delegate keeps the delegate's own share row and copy linked when DelegateCopyKeeper keeps
-	 * it: the delegate now owns the secret and saves it through that copy.
+	 * A secret handed to a delegate keeps the delegate's own share row and copy linked when DelegateCopyKeeper keeps it:
+	 * the delegate now owns the secret and saves it through that copy.
 	 *
 	 * @param string $userId The departing user
 	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The user's secrets
@@ -175,11 +175,11 @@ class AccountShareCleanupService {
 	}//end detachGrantedShares()
 
 	/**
-	 * Tombstone a recipient's copy (display metadata only). Defence in depth:
-	 * a copy that exists but is not genuinely held by the share's target (a
-	 * poisoned or drifted `secret_id`) is left untouched, so erasing one owner
-	 * never tombstones another user's secret, and so is the copy of a row the
-	 * pending quarantine scan holds back. The link row is severed either way.
+	 * Tombstone a recipient's copy (display metadata only).
+	 * Defence in depth: a copy that exists but is not genuinely held by the share's target (a poisoned or drifted `secret_id`) is left untouched,
+	 * so erasing one owner never tombstones another user's secret,
+	 * and so is the copy of a row the pending quarantine scan holds back.
+	 * The link row is severed either way.
 	 *
 	 * @param ShareTarget $share The share row
 	 * @param DeletionReport $report The running report

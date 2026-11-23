@@ -203,8 +203,7 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 	}//end incomplete()
 
 	/**
-	 * Naming every copy and the owner's active partner share is complete; a
-	 * revoked one is not required.
+	 * Naming every copy and the owner's active partner share is complete; a revoked one is not required.
 	 *
 	 * @return void
 	 */
@@ -333,8 +332,7 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 	}//end testTheOwnerSavingThroughTheirCopyNamesThePartnerShares()
 
 	/**
-	 * The source's owner, read again inside the transaction, decides: a copy
-	 * editor who no longer owns the source names no partner shares.
+	 * The source's owner, read again inside the transaction, decides: a copy editor who no longer owns the source names no partner shares.
 	 *
 	 * @return void
 	 */
@@ -357,10 +355,9 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 	}//end testOwnershipIsReadFromTheSourceAsLastRead()
 
 	/**
-	 * A partner share whose owner is not the source's owner refuses every
-	 * save that writes partner shares, staged chunks included, and is logged
-	 * with the secret and the share ids; a copy editor who does not own the
-	 * source is not refused for it.
+	 * A partner share whose owner is not the source's owner refuses every save that writes partner shares, staged chunks included,
+	 * and is logged with the secret and the share ids;
+	 * a copy editor who does not own the source is not refused for it.
 	 *
 	 * @return void
 	 *

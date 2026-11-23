@@ -620,9 +620,8 @@ class AccountDeletionServiceTest extends TestCase {
 	private array $updated = [];
 
 	/**
-	 * Alice's `sec-1` is shared with Dave and Carol, and Dave holds an active
-	 * delegation on it. The mappers keep their rows in this test, so a second
-	 * run of the cascade sees what the first one left.
+	 * Alice's `sec-1` is shared with Dave and Carol, and Dave holds an active delegation on it.
+	 * The mappers keep their rows in this test, so a second run of the cascade sees what the first one left.
 	 *
 	 * @param string|null $daveGroupShareId The group share Dave's row came from, if any
 	 *
@@ -783,8 +782,7 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end wireShareTable()
 
 	/**
-	 * The delegate's copy stays linked and untouched; the other recipient's
-	 * copy is detached as before.
+	 * The delegate's copy stays linked and untouched; the other recipient's copy is detached as before.
 	 *
 	 * @return void
 	 *
@@ -803,9 +801,8 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end testTheDelegateKeepsTheirLinkedCopy()
 
 	/**
-	 * A delegate's row from a group share stays their link once the group
-	 * share is removed: it no longer names the group share, so no grant
-	 * reader looks for one.
+	 * A delegate's row from a group share stays their link once the group share is removed:
+	 * it no longer names the group share, so no grant reader looks for one.
 	 *
 	 * @return void
 	 *
@@ -837,8 +834,8 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end untrustedDelegateRows()
 
 	/**
-	 * A delegate's row the row judge does not trust is detached like any
-	 * other: nothing is kept, and the copy is tombstoned only as before.
+	 * A delegate's row the row judge does not trust is detached like any other:
+	 * nothing is kept, and the copy is tombstoned only as before.
 	 *
 	 * @param string $how How the row is untrusted
 	 *
@@ -882,9 +879,8 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end testAnUntrustedDelegateRowIsDetached()
 
 	/**
-	 * Running the cascade again after the delegate kept their copy changes
-	 * nothing more: the secret is the delegate's, so it is not Alice's to
-	 * detach.
+	 * Running the cascade again after the delegate kept their copy changes nothing more:
+	 * the secret is the delegate's, so it is not Alice's to detach.
 	 *
 	 * @return void
 	 *
@@ -1054,9 +1050,9 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end fullBesideLimitedGrants()
 
 	/**
-	 * A full grant beside a limited one gives the delegate a full copy, as the most generous grant wins. One grant
-	 * that is not unlimited detaches the copy anyway: it keeps the full limits it had, so it never ends up less
-	 * restricted, and it cannot end up more restricted either, as a kept row standing on its own limited fields would.
+	 * A full grant beside a limited one gives the delegate a full copy, as the most generous grant wins.
+	 * One grant that is not unlimited detaches the copy anyway: it keeps the full limits it had, so it never ends up less restricted,
+	 * and it cannot end up more restricted either, as a kept row standing on its own limited fields would.
 	 *
 	 * @param bool $rowLimited Whether the direct row is the limited grant (else the group share is)
 	 *
@@ -1111,8 +1107,9 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end testAFullTeamFolderRowOfTheDelegateIsKept()
 
 	/**
-	 * The kept row names the deleted account's marker as its maker instead of the deleted user, and the delegate
-	 * still follows it: the row judge trusts it from both the pair and the copy. A maker who is someone else stays.
+	 * The kept row names the deleted account's marker as its maker instead of the deleted user,
+	 * and the delegate still follows it: the row judge trusts it from both the pair and the copy.
+	 * A maker who is someone else stays.
 	 *
 	 * @return void
 	 *
@@ -1149,8 +1146,8 @@ class AccountDeletionServiceTest extends TestCase {
 	}//end expiringOrFullGroupCopies()
 
 	/**
-	 * An expiry run after the end date leaves the detached expiring copy with its end date, so reads refuse it; it is
-	 * not lifted to a permanent copy. The kept full copy stays linked and full.
+	 * An expiry run after the end date leaves the detached expiring copy with its end date, so reads refuse it;
+	 * it is not lifted to a permanent copy. The kept full copy stays linked and full.
 	 *
 	 * @param bool $expiring Whether the group share, and so the copy, ends
 	 *

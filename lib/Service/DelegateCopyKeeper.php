@@ -3,8 +3,7 @@
 /**
  * Keepiq Delegate Copy Keeper
  *
- * Decides, on account deletion, whether the delegate a secret was handed to keeps their share row and copy linked,
- * and readies the kept row. Split out of AccountShareCleanupService.
+ * Decides, on account deletion, whether the delegate a secret was handed to keeps their share row and copy linked, and readies the kept row.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -56,12 +55,12 @@ class DelegateCopyKeeper {
 	}//end __construct()
 
 	/**
-	 * The share row of the delegate a secret was handed to, kept linked; null when the secret was not handed over, the
-	 * row judge does not trust the row, or anything limits the delegate's copy, and the copy is then detached like any
-	 * other.
+	 * The share row of the delegate a secret was handed to, kept linked;
+	 * null when the secret was not handed over, the row judge does not trust the row, or anything limits the delegate's copy,
+	 * and the copy is then detached like any other.
 	 *
-	 * A kept row no longer names a group share, as the group shares are removed with the rest, and names the deleted
-	 * account's marker instead of the deleted user as its maker.
+	 * A kept row no longer names a group share, as the group shares are removed with the rest,
+	 * and names the deleted account's marker instead of the deleted user as its maker.
 	 *
 	 * @param string      $secretId   The secret
 	 * @param string      $fromUserId The deleted user
@@ -92,10 +91,10 @@ class DelegateCopyKeeper {
 	}//end keptRow()
 
 	/**
-	 * Whether nothing limits the copy a share row links, judged before any grant is removed: the copy is not use-only,
-	 * time-limited or read-only, the row carries no limit of its own, and every grant reaching the copy is unlimited.
-	 * Once the group shares are gone the row stands as a direct share on its own fields alone, so a limit that came
-	 * from anywhere else would be lifted, and one grant that is not unlimited is enough to detach.
+	 * Whether nothing limits the copy a share row links, judged before any grant is removed:
+	 * the copy is not use-only, time-limited or read-only, the row carries no limit of its own, and every grant reaching the copy is unlimited.
+	 * Once the group shares are gone the row stands as a direct share on its own fields alone,
+	 * so a limit that came from anywhere else would be lifted, and one grant that is not unlimited is enough to detach.
 	 *
 	 * @param ShareTarget $row The delegate's trusted row
 	 *

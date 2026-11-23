@@ -198,8 +198,8 @@ final class ShareSaveScopeRefusalsTest extends TestCase {
 	}//end testAnOwnersPathIsReadAgain()
 
 	/**
-	 * An owner's path whose source changed hands, or went away, since resolve() is refused as a save of another
-	 * user's row, or of a missing one, would be.
+	 * An owner's path whose source changed hands, or went away, since resolve() is refused as a save of another user's row,
+	 * or of a missing one, would be.
 	 *
 	 * @return void
 	 */

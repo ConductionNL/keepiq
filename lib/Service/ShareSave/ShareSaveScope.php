@@ -144,8 +144,8 @@ class ShareSaveScope {
 	 * another folder does not change its version, so the lock does not see it.
 	 * A caller who still writes, but now another way (a delegation granted or
 	 * revoked next to a write grade), saves and is audited as they write now.
-	 * On the owner path the source is read again too, and a caller who no longer owns it (an ownership transfer
-	 * committed meanwhile) is refused as a save of another user's row is.
+	 * On the owner path the source is read again too,
+	 * and a caller who no longer owns it (an ownership transfer committed meanwhile) is refused as a save of another user's row is.
 	 *
 	 * @param ShareSavePath $path The path resolve() returned
 	 * @param string $userId The caller
@@ -225,9 +225,8 @@ class ShareSaveScope {
 	}//end writerOn()
 
 	/**
-	 * Refuse partner entries from a caller who does not own the source: only
-	 * the secret's owner writes partner shares, through the source or their
-	 * own copy.
+	 * Refuse partner entries from a caller who does not own the source:
+	 * only the secret's owner writes partner shares, through the source or their own copy.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param ShareSaveEntries $entries The request's lists
@@ -249,10 +248,10 @@ class ShareSaveScope {
 	}//end assertMayNamePartners()
 
 	/**
-	 * Refuse lists that are not exactly the rows to write: every live copy
-	 * (on the copy-editor path the source and every other copy) and, when the
-	 * caller owns the source, every active partner share of it. A copy may be
-	 * left out only when its holder has no vault key.
+	 * Refuse lists that are not exactly the rows to write:
+	 * every live copy (on the copy-editor path the source and every other copy) and,
+	 * when the caller owns the source, every active partner share of it.
+	 * A copy may be left out only when its holder has no vault key.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param ShareSaveEntries $entries The lists, staged ones included
@@ -351,9 +350,8 @@ class ShareSaveScope {
 	}//end assertWithinReach()
 
 	/**
-	 * The rows the save must name, the copies it may name but that are not
-	 * written (access ended), and the partner shares only the source's owner
-	 * reaches, through the source or through their own copy.
+	 * The rows the save must name, the copies it may name but that are not written (access ended),
+	 * and the partner shares only the source's owner reaches, through the source or through their own copy.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param string $userId The caller
@@ -389,9 +387,8 @@ class ShareSaveScope {
 	}//end requirement()
 
 	/**
-	 * Refuse a save that would write partner shares while one of them is not
-	 * the source owner's: an ownership transfer left it behind, and only the
-	 * `ReownTransferredPartnerShares` repair step hands it over.
+	 * Refuse a save that would write partner shares while one of them is not the source owner's:
+	 * an ownership transfer left it behind, and only the `ReownTransferredPartnerShares` repair step hands it over.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param array<string,FederatedShare> $federated The source's active partner shares
@@ -421,9 +418,9 @@ class ShareSaveScope {
 	}//end assertPartnersOwnedBySourceOwner()
 
 	/**
-	 * How many active partner shares hang off a row the save writes other
-	 * than the source: the caller's copy on the copy-editor path and every
-	 * copy written. Such a share was made from a copy and no save writes it.
+	 * How many active partner shares hang off a row the save writes other than the source:
+	 * the caller's copy on the copy-editor path and every copy written.
+	 * Such a share was made from a copy and no save writes it.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param list<string> $copyIds The copies the save wrote

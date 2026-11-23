@@ -1682,9 +1682,8 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * The secret passed to Bob, who edits it through his copy `c-bob`: the
-	 * source and its partner share are his, and the source is still encrypted
-	 * for its previous owner.
+	 * The secret passed to Bob, who edits it through his copy `c-bob`:
+	 * the source and its partner share are his, and the source is still encrypted for its previous owner.
 	 *
 	 * @return void
 	 */
@@ -1710,8 +1709,7 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * The successor after team offboarding and the delegate after account
-	 * deletion both own the secret and save it through their own copy.
+	 * The successor after team offboarding and the delegate after account deletion both own the secret and save it through their own copy.
 	 *
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-owners-save-through-their-own-copy-reaches-partners
 	 */
@@ -1758,8 +1756,7 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * Copy editors who do not own the source: a delegate, and a write-grade
-	 * member.
+	 * Copy editors who do not own the source: a delegate, and a write-grade member.
 	 *
 	 * @return array<string,array{0:bool}>
 	 */
@@ -1796,8 +1793,8 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * A copy editor who stopped owning the source before the lock gets the
-	 * copy-editor rules there: the partner entries they sent no longer fit.
+	 * A copy editor who stopped owning the source before the lock gets the copy-editor rules there:
+	 * the partner entries they sent no longer fit.
 	 *
 	 * @return void
 	 */
@@ -1816,9 +1813,9 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * A transfer committed between the pre-check and the lock hands the source and its partner share to Bob. Alice's
-	 * save on the owner path is then refused as a save of another user's row, not as a partner share left behind, and
-	 * no drift warning is logged.
+	 * A transfer committed between the pre-check and the lock hands the source and its partner share to Bob.
+	 * Alice's save on the owner path is then refused as a save of another user's row, not as a partner share left behind,
+	 * and no drift warning is logged.
 	 *
 	 * @return void
 	 */
@@ -1886,8 +1883,7 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * The same refusal when the partner share changes owner after the
-	 * pre-check: the transaction rolls back before any row is written.
+	 * The same refusal when the partner share changes owner after the pre-check: the transaction rolls back before any row is written.
 	 *
 	 * @return void
 	 */
@@ -1909,8 +1905,7 @@ class ShareSaveServiceTest extends TestCase {
 	}
 
 	/**
-	 * Partner shares Bob and Carol made from their copies before that was
-	 * refused: one active, one revoked and one suspended on each copy.
+	 * Partner shares Bob and Carol made from their copies before that was refused: one active, one revoked and one suspended on each copy.
 	 *
 	 * @return void
 	 */

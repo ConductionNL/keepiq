@@ -34,9 +34,8 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<FederatedShare>
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
- *   A mapper's public surface is its query set; the eleventh,
- *   countActiveBySourceSecrets(), lets a share-save count the partner shares
- *   of every copy it wrote in one query.
+ *   A mapper's public surface is its query set;
+ *   the eleventh, countActiveBySourceSecrets(), lets a share-save count the partner shares of every copy it wrote in one query.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */

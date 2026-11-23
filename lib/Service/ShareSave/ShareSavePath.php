@@ -55,8 +55,8 @@ final class ShareSavePath {
 	}//end __construct()
 
 	/**
-	 * Whether the caller owns the source, so the save writes its partner
-	 * shares; on the copy-editor path as the source was last read.
+	 * Whether the caller owns the source, so the save writes its partner shares;
+	 * on the copy-editor path as the source was last read.
 	 *
 	 * @param string $userId The caller
 	 *

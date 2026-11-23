@@ -464,9 +464,9 @@ class FederatedShareSendTest extends TestCase {
 	/**
 	 * Every way a share row can name Alice's `src` as a copy she received.
 	 *
-	 * @return array<string,array{0:list<array{0:string,1:?string,2:?string}>,1:?string,2:int,3:string,4?:bool}> The rows
-	 *   (holder, group share, team folder), the scan's verdict, the status, the answer's code and whether Alice holds
-	 *   an active delegation of the source
+	 * @return array<string,array{0:list<array{0:string,1:?string,2:?string}>,1:?string,2:int,3:string,4?:bool}>
+	 *   The rows (holder, group share, team folder), the scan's verdict, the status, the answer's code,
+	 *   and whether Alice holds an active delegation of the source
 	 */
 	public static function receivedCopies(): array {
 		return [

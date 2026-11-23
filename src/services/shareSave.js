@@ -278,9 +278,9 @@ function idsOf(list, key) {
 /**
  * Save a value change of `{id}` for every holder in one transaction.
  *
- * On the copy-editor path partner shares are written only when the caller
- * owns the secret, which the server's `incomplete` answer shows by requiring
- * them; for anyone else the answer's `federated.ownerOnly` says they exist.
+ * On the copy-editor path partner shares are written only when the caller owns the secret,
+ * which the server's `incomplete` answer shows by requiring them;
+ * for anyone else the answer's `federated.ownerOnly` says they exist.
  * A copy holder without a write grade is refused before anything is sent,
  * for an edit and a restore alike.
  *
@@ -460,8 +460,7 @@ export async function saveShared({
 				.map(([key, entry]) => ({ key: prefix + key, entry }))
 		let local = [...unsent(copies, 'c:'), ...unsent(skipped, 's:')]
 		let remote = [...unsent(federated, 'f:'), ...unsent(suspend, 'p:')]
-		// A copy editor sends partner lists only when the server required
-		// them, which it does only of the secret's owner.
+		// A copy editor sends partner lists only when the server required them, which it does only of the secret's owner.
 		const listsOf = (localPart, remotePart) => {
 			const pick = (part, prefix) =>
 				part.filter((x) => x.key.startsWith(prefix)).map((x) => x.entry)
@@ -695,8 +694,7 @@ export async function saveShared({
 		await lookUpCertificates(todo)
 		await fillCopies(todo)
 
-		// The owner's partner shares, also when they save through their own
-		// copy; the server requires none of anyone else.
+		// The owner's partner shares, also when they save through their own copy; the server requires none of anyone else.
 		await fillPartners(answer.federated?.required ?? [], drop)
 		if (stageDirty) {
 			stage = { id: null, sent: new Set() }
@@ -834,8 +832,8 @@ async function encryptWhole(value, recipient) {
 
 /**
  * Tell the user which recipients at partner organisations a save did not reach.
- * Those only the owner's next save reaches, when a copy editor who does not own the secret saved, and those who got the
- * secret from a copy, which no save reaches.
+ * Those only the owner's next save reaches, when a copy editor who does not own the secret saved,
+ * and those who got the secret from a copy, which no save reaches.
  *
  * @param {object} result A share-save answer.
  * @return {Promise<void>}

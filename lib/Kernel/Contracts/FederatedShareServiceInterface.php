@@ -80,8 +80,8 @@ interface FederatedShareServiceInterface {
 	 *
 	 * @throws NotFoundException When the secret is not the user's own
 	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `unknown_recipient`, `already_shared`,
-	 *   `not_shareable` when the secret is a received copy, or `copy_fields_mismatch` when its totp or passkeys
-	 *   does not mirror the source's
+	 *   `not_shareable` when the secret is a received copy,
+	 *   or `copy_fields_mismatch` when its totp or passkeys does not mirror the source's
 	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row that may name it a copy
 	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
 	 * @throws RuntimeException `federation_unavailable`, or `delivery_failed` when the partner refused it

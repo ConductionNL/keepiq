@@ -38,11 +38,9 @@ use OCP\IDBConnection;
  * @extends QBMapper<ShareTarget>
  *
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) 12 against a threshold of 10.
- *   A mapper's public surface is its query set: findPage() lets the share
- *   quarantine scan job resolve every live copy a page at a time, and
- *   deleteBySourceSecretExcept() lets account deletion keep the delegate's
- *   row; splitting share-row queries across two mappers over one table
- *   would only move them.
+ *   A mapper's public surface is its query set: findPage() lets the share quarantine scan job resolve every live copy a page at a time,
+ *   and deleteBySourceSecretExcept() lets account deletion keep the delegate's row;
+ *   splitting share-row queries across two mappers over one table would only move them.
  */
 class ShareTargetMapper extends QBMapper {
 	use ExpiringGrantQueries;

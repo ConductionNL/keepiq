@@ -68,8 +68,8 @@ class UnknownQueueOpError extends Error {
  * them", so an unreachable partner, a partner lookup limit that outlasted the
  * wait or a malformed share save fails the entry instead of holding up every
  * later one. So does a copy without a write grade, which no retry can save.
- * A partner share that is not the owner's is a 409 but no version conflict: keeping the change would only be refused
- * again until an administrator repairs the partner shares, so it fails the entry too.
+ * A partner share that is not the owner's is a 409 but no version conflict:
+ * keeping the change would only be refused again until an administrator repairs the partner shares, so it fails the entry too.
  *
  * @param {Error|object} e The error.
  * @return {string} conflict, failed or retry.

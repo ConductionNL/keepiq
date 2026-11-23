@@ -258,9 +258,9 @@ class ShareSaveService implements ShareSaveServiceInterface {
 	}//end open()
 
 	/**
-	 * A copy editor must name the source version the edit was made from, and
-	 * writes partner shares only when they own the source. Nothing to check
-	 * for the owner saving the source itself.
+	 * A copy editor must name the source version the edit was made from,
+	 * and writes partner shares only when they own the source.
+	 * Nothing to check for the owner saving the source itself.
 	 *
 	 * @param ShareSavePath $path The path
 	 * @param ShareSaveRequest $request The request

@@ -457,8 +457,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	}//end viewOnlyGuard()
 
 	/**
-	 * Whether the received-copy check that group shares and partner shares
-	 * make (ShareRowJudge::isReceivedCopy()) calls V a received copy.
+	 * Whether the received-copy check that group shares and partner shares make (ShareRowJudge::isReceivedCopy()) calls V a received copy.
 	 *
 	 * @param string|null $verdict The scan's verdict on the row
 	 *
