@@ -932,6 +932,8 @@ class AccountDeletionServiceTest extends TestCase {
 			'a team-folder copy through a use-only membership' => ['folder use-only'],
 			'a group row use-only on its own beside a full group share' => ['group row use-only'],
 			'a group row expiring on its own beside a full group share' => ['group row expiring'],
+			'a full direct row and a use-only membership the copy does not show yet' => ['folder use-only grant only'],
+			'a full direct row and an expiring membership the copy does not show yet' => ['folder expiring'],
 		];
 	}//end limitedDelegateCopies()
 
@@ -980,6 +982,19 @@ class AccountDeletionServiceTest extends TestCase {
 				break;
 			case 'group row expiring':
 				$row->setExpiresAt($end);
+				break;
+			case 'folder use-only grant only':
+				// Only the membership limits the copy: the row is direct and full, the copy carries nothing yet.
+				$membership = new TeamFolderMember();
+				$membership->setGrade('read');
+				$membership->setUseOnly(true);
+				$this->memberships['dave'] = [$membership];
+				break;
+			case 'folder expiring':
+				$membership = new TeamFolderMember();
+				$membership->setGrade('write');
+				$membership->setExpiresAt($end);
+				$this->memberships['dave'] = [$membership];
 				break;
 			default:
 				$row->setTeamFolderId('tf-1');
