@@ -218,6 +218,14 @@ describe('the sync panel', () => {
 					message: 'This share waits for the share quarantine scan',
 				},
 			},
+			{
+				entryId: 'e5',
+				op: 'update',
+				secretId: 's5',
+				status: 'failed',
+				body: { name: 'Proxy' },
+				failure: { code: 'partner_share_owner_mismatch' },
+			},
 		]
 		offline.retryEntry = vi.fn()
 
@@ -252,6 +260,12 @@ describe('the sync panel', () => {
 		)
 		await wrapper.find('[data-testid="offline-sync-retry-e4"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e4')
+		// Translated words, never the code; tried again once an administrator repaired the partner shares.
+		const mismatch = wrapper.find('[data-testid="offline-sync-reason-e5"]').text()
+		expect(mismatch).toContain('An administrator must repair the partner shares')
+		expect(mismatch).not.toContain('partner_share_owner_mismatch')
+		await wrapper.find('[data-testid="offline-sync-retry-e5"]').trigger('click')
+		expect(offline.retryEntry).toHaveBeenCalledWith('e5')
 	})
 })
 

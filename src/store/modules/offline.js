@@ -68,6 +68,8 @@ class UnknownQueueOpError extends Error {
  * them", so an unreachable partner, a partner lookup limit that outlasted the
  * wait or a malformed share save fails the entry instead of holding up every
  * later one. So does a copy without a write grade, which no retry can save.
+ * A partner share that is not the owner's is a 409 but no version conflict: keeping the change would only be refused
+ * again until an administrator repairs the partner shares, so it fails the entry too.
  *
  * @param {Error|object} e The error.
  * @return {string} conflict, failed or retry.
@@ -86,13 +88,16 @@ function replayKind(e) {
 				partner_lookup_limit: 'failed',
 				view_only: 'failed',
 				partner_upgrade_required: 'failed',
+				partner_share_owner_mismatch: 'failed',
 			}[e.code] ?? 'retry'
 		)
 	}
 	if (
 		e?.fromShareSave === true
 		&& (e.response?.status === 400
-			|| e.response?.data?.error === 'partner_upgrade_required')
+			|| ['partner_upgrade_required', 'partner_share_owner_mismatch'].includes(
+				e.response?.data?.error,
+			))
 	) {
 		return 'failed'
 	}
@@ -152,6 +157,24 @@ function needsPartnerUpgrade(e) {
 		e?.code === 'partner_upgrade_required'
 		|| e?.response?.data?.error === 'partner_upgrade_required'
 	)
+}
+
+/**
+ * @param {Error|object} e The error.
+ * @return {boolean} Whether a partner share of the secret is not its owner's.
+ */
+function isPartnerOwnerMismatch(e) {
+	return (
+		e?.code === 'partner_share_owner_mismatch'
+		|| e?.response?.data?.error === 'partner_share_owner_mismatch'
+	)
+}
+
+/**
+ * @return {object} The stored failure of a save a partner share not the owner's stopped.
+ */
+function partnerOwnerMismatchFailure() {
+	return { code: 'partner_share_owner_mismatch' }
 }
 
 /**
@@ -239,6 +262,7 @@ const FAILURE_RULES = [
 	[needsPartnerUpgrade, upgradeFailure],
 	[isRefusedShareSave, refusedFailure],
 	[isScanPending, scanPendingFailure],
+	[isPartnerOwnerMismatch, partnerOwnerMismatchFailure],
 	[hasShareSaveText, notAllowedFailure],
 ]
 
@@ -519,6 +543,7 @@ const FAILURE_TEXTS = new Map([
 	['partner_unreachable', unreachableText],
 	['partner_lookup_limit', shareSaveCodeText],
 	['view_only', shareSaveCodeText],
+	['partner_share_owner_mismatch', shareSaveCodeText],
 	['partner_upgrade_required', upgradeText],
 	['refused', refusedText],
 	['not_allowed', notAllowedText],
