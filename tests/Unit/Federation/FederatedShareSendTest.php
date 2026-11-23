@@ -27,6 +27,8 @@ use OCA\Keepiq\Controller\FederatedShareController;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
@@ -34,6 +36,7 @@ use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -82,6 +85,12 @@ class FederatedShareSendTest extends TestCase {
 	/** The pending quarantine scan; null holds no row back */
 	private ?ShareQuarantineScanner $scanner = null;
 
+	/** @var array<string,Secret> Secrets besides Alice's `src`, by id */
+	private array $otherSecrets = [];
+
+	/** @var list<SecretDelegation> The active delegations */
+	private array $delegations = [];
+
 	protected function setUp(): void {
 		$this->skipWithoutFederation();
 		$this->source = new Secret();
@@ -103,10 +112,7 @@ class FederatedShareSendTest extends TestCase {
 	 * @return FederatedShareController
 	 */
 	private function controller(array $partners, string $uid = 'alice'): FederatedShareController {
-		$secrets = $this->createMock(SecretMapper::class);
-		$secrets->method('findById')->willReturnCallback(
-			fn (string $id): Secret => ($id === 'src') ? $this->source : throw new DoesNotExistException('none')
-		);
+		$secrets = $this->secretTable();
 
 		$mapper = $this->createMock(FederatedShareMapper::class);
 		$mapper->method('insert')->willReturnCallback(
@@ -189,12 +195,37 @@ class FederatedShareSendTest extends TestCase {
 	}
 
 	/**
-	 * The share rows, found by the copy they name from $this->copyRows.
+	 * The secrets: Alice's `src` and $this->otherSecrets.
+	 *
+	 * @return SecretMapper
+	 */
+	private function secretTable(): SecretMapper {
+		$secrets = $this->createMock(SecretMapper::class);
+		$secrets->method('findById')->willReturnCallback(
+			fn (string $id): Secret => ($id === 'src') ? $this->source : ($this->otherSecrets[$id] ?? throw new DoesNotExistException('none'))
+		);
+
+		return $secrets;
+	}
+
+	/**
+	 * The share rows, found by the copy they name or by their pair from $this->copyRows.
 	 *
 	 * @return ShareTargetMapper
 	 */
 	private function shareTargets(): ShareTargetMapper {
 		$targets = $this->createMock(ShareTargetMapper::class);
+		$targets->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			function (string $sourceId, string $targetUserId): ShareTarget {
+				foreach ($this->copyRows as $row) {
+					if ($row->getSourceSecretId() === $sourceId && $row->getTargetUserId() === $targetUserId) {
+						return $row;
+					}
+				}
+
+				throw new DoesNotExistException('no row');
+			}
+		);
 		$targets->method('findByRecipientSecret')->willReturnCallback(
 			function (string $copyId): ShareTarget {
 				$rows = array_values(array_filter($this->copyRows, static fn (ShareTarget $row): bool => $row->getSecretId() === $copyId));
@@ -218,18 +249,65 @@ class FederatedShareSendTest extends TestCase {
 	 *
 	 * @param string $holder The row's target
 	 * @param string|null $groupShareId The group share it came from, if any
+	 * @param string|null $teamFolderId The team folder it came from, if any
 	 *
 	 * @return ShareTarget
 	 */
-	private function copyRow(string $holder = 'alice', ?string $groupShareId = null): ShareTarget {
+	private function copyRow(string $holder = 'alice', ?string $groupShareId = null, ?string $teamFolderId = null): ShareTarget {
 		$row = new ShareTarget();
 		$row->setId('st-'.count($this->copyRows));
 		$row->setSourceSecretId('orig');
 		$row->setSecretId('src');
 		$row->setTargetUserId($holder);
 		$row->setGroupShareId($groupShareId);
+		$row->setTeamFolderId($teamFolderId);
 
 		return $row;
+	}
+
+	/**
+	 * Olivia owns `orig` and has an active delegation of it to Alice, whose copy `src` is.
+	 *
+	 * @return ShareAuthorizationService The authorization service over that delegation
+	 */
+	private function aliceIsOliviasDelegate(): ShareAuthorizationService {
+		$orig = new Secret();
+		$orig->setId('orig');
+		$orig->setOwnerType('user');
+		$orig->setOwnerId('olivia');
+		$this->otherSecrets['orig'] = $orig;
+
+		$delegation = new SecretDelegation();
+		$delegation->setSecretId('orig');
+		$delegation->setOriginalOwnerId('olivia');
+		$delegation->setDelegatedTo('alice');
+		$delegation->setIsPermanent(false);
+		$this->delegations[] = $delegation;
+
+		$delegations = $this->createMock(SecretDelegationMapper::class);
+		$delegations->method('findActiveBySecretAndUser')->willReturnCallback(
+			function (string $secretId, string $userId): SecretDelegation {
+				foreach ($this->delegations as $delegation) {
+					if ($delegation->getSecretId() === $secretId && $delegation->getDelegatedTo() === $userId) {
+						return $delegation;
+					}
+				}
+
+				throw new DoesNotExistException('no delegation');
+			}
+		);
+		$delegations->method('findBySecret')->willReturnCallback(
+			fn (string $secretId): array => array_values(
+				array_filter($this->delegations, static fn (SecretDelegation $delegation): bool => $delegation->getSecretId() === $secretId)
+			)
+		);
+
+		$secrets = $this->secretTable();
+		return new ShareAuthorizationService(
+			secretMapper: $secrets,
+			delegationMapper: $delegations,
+			rowJudge: $this->shareRowJudge(targets: $this->shareTargets(), secrets: $secrets),
+		);
 	}
 
 	/**
@@ -386,39 +464,49 @@ class FederatedShareSendTest extends TestCase {
 	/**
 	 * Every way a share row can name Alice's `src` as a copy she received.
 	 *
-	 * @return array<string,array{0:list<array{0:string,1:?string}>,1:?string,2:int,3:string}> The rows (holder,
-	 *   group share), the scan's verdict, the status and the answer's code
+	 * @return array<string,array{0:list<array{0:string,1:?string,2:?string}>,1:?string,2:int,3:string,4?:bool}> The rows
+	 *   (holder, group share, team folder), the scan's verdict, the status, the answer's code and whether Alice holds
+	 *   an active delegation of the source
 	 */
 	public static function receivedCopies(): array {
 		return [
-			'a plain recipient\'s copy' => [[['alice', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a plain recipient\'s copy' => [[['alice', null, null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
 			// A delegation on the source changes nothing here: partner shares are the owner's.
-			'a delegate\'s copy' => [[['alice', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
-			'a copy reached through a group share' => [[['alice', 'gs-1']], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
-			'a copy two share rows name' => [[['alice', null], ['alice', 'gs-1']], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
-			'a row whose target does not hold it' => [[['carol', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
-			'a row the pending scan cannot judge' => [[['alice', null]], ShareQuarantineScanner::HELD_UNJUDGED, Http::STATUS_CONFLICT, 'share_scan_pending'],
-			'a foreign row the pending scan cannot judge' => [[['carol', null]], ShareQuarantineScanner::HELD_UNJUDGED, Http::STATUS_CONFLICT, 'share_scan_pending'],
+			'a delegate\'s copy' => [[['alice', null, null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable', true],
+			'a copy reached through a group share' => [[['alice', 'gs-1', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a copy reached through a team folder' => [[['alice', null, 'tf-1']], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a copy two share rows name' => [[['alice', null, null], ['alice', 'gs-1', null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a row whose target does not hold it' => [[['carol', null, null]], null, Http::STATUS_BAD_REQUEST, 'not_shareable'],
+			'a row the pending scan cannot judge' => [[['alice', null, null]], ShareQuarantineScanner::HELD_UNJUDGED, Http::STATUS_CONFLICT, 'share_scan_pending'],
+			'a foreign row the pending scan cannot judge' => [[['carol', null, null]], ShareQuarantineScanner::HELD_UNJUDGED, Http::STATUS_CONFLICT, 'share_scan_pending'],
 		];
 	}
 
 	/**
-	 * @param list<array{0:string,1:?string}> $rows The share rows naming `src`
+	 * @param list<array{0:string,1:?string,2:?string}> $rows The share rows naming `src`
 	 * @param string|null $verdict What the pending scan answers for each, null when it holds none back
 	 * @param int $status The status the refusal answers
 	 * @param string $code The refusal's code
+	 * @param bool $delegated Whether Alice holds an active delegation of the source
 	 *
 	 * @dataProvider receivedCopies
 	 *
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 	 */
-	public function testAReceivedCopyIsNotSharedWithAPartner(array $rows, ?string $verdict, int $status, string $code): void {
-		foreach ($rows as [$holder, $groupShareId]) {
-			$this->copyRows[] = $this->copyRow(holder: $holder, groupShareId: $groupShareId);
+	public function testAReceivedCopyIsNotSharedWithAPartner(array $rows, ?string $verdict, int $status, string $code, bool $delegated = false): void {
+		foreach ($rows as [$holder, $groupShareId, $teamFolderId]) {
+			$this->copyRows[] = $this->copyRow(holder: $holder, groupShareId: $groupShareId, teamFolderId: $teamFolderId);
 		}
 
 		if ($verdict !== null) {
 			$this->scanner = $this->scanAnswering(verdict: $verdict);
+		}
+
+		if ($delegated === true) {
+			// The delegation is live: Alice is Olivia's delegate and may share her copy onward through other paths.
+			$auth = $this->aliceIsOliviasDelegate();
+			$this->assertTrue($auth->isOwnerOrDelegate(secret: $this->otherSecrets['orig'], userId: 'alice'));
+			$auth->assertMayShareOnward(source: $this->otherSecrets['orig'], userId: 'alice');
 		}
 
 		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
