@@ -1971,7 +1971,10 @@ OC.L10N.register(
         "Upload failed": "Üleslaadimine ebaõnnestus",
         "Folders cannot be attached. Drop the files inside them instead.": "Kaustu ei saa manustada. Lohistage selle asemel nendes olevad failid.",
         "Files cannot be added while you are offline. Remove them to save.": "Faile ei saa võrguühenduseta lisada. Salvestamiseks eemaldage need.",
-        "Files can only be added to a secret you own. Remove them to save.": "Faile saab lisada ainult teie enda saladusele. Salvestamiseks eemaldage need."
+        "Files can only be added to a secret you own. Remove them to save.": "Faile saab lisada ainult teie enda saladusele. Salvestamiseks eemaldage need.",
+        "Sharing options could not be loaded.": "Jagamise valikuid ei õnnestunud laadida.",
+        "Sharing options still could not be loaded.": "Jagamise valikuid ei õnnestunud ikka veel laadida.",
+        "Sharing is not available for this secret.": "Jagamine pole selle saladuse jaoks saadaval."
     },
     "nplurals=2; plural=(n != 1);"
 )

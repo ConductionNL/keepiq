@@ -1971,7 +1971,10 @@ OC.L10N.register(
         "Upload failed": "Неуспешно качване",
         "Folders cannot be attached. Drop the files inside them instead.": "Папки не могат да бъдат прикачени. Пуснете файловете в тях.",
         "Files cannot be added while you are offline. Remove them to save.": "Не могат да се добавят файлове, докато сте офлайн. Премахнете ги, за да запазите.",
-        "Files can only be added to a secret you own. Remove them to save.": "Файлове могат да се добавят само към ваша собствена тайна. Премахнете ги, за да запазите."
+        "Files can only be added to a secret you own. Remove them to save.": "Файлове могат да се добавят само към ваша собствена тайна. Премахнете ги, за да запазите.",
+        "Sharing options could not be loaded.": "Опциите за споделяне не можаха да се заредят.",
+        "Sharing options still could not be loaded.": "Опциите за споделяне все още не можаха да се заредят.",
+        "Sharing is not available for this secret.": "Споделянето не е достъпно за тази тайна."
     },
     "nplurals=2; plural=(n != 1);"
 )

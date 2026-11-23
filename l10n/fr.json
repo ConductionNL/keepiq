@@ -2048,7 +2048,10 @@
         "Upload failed": "Échec de l'envoi",
         "Folders cannot be attached. Drop the files inside them instead.": "Les dossiers ne peuvent pas être joints. Déposez plutôt les fichiers qu'ils contiennent.",
         "Files cannot be added while you are offline. Remove them to save.": "Impossible d'ajouter des fichiers hors ligne. Retirez-les pour enregistrer.",
-        "Files can only be added to a secret you own. Remove them to save.": "Les fichiers ne peuvent être ajoutés qu'à un secret qui vous appartient. Retirez-les pour enregistrer."
+        "Files can only be added to a secret you own. Remove them to save.": "Les fichiers ne peuvent être ajoutés qu'à un secret qui vous appartient. Retirez-les pour enregistrer.",
+        "Sharing options could not be loaded.": "Les options de partage n'ont pas pu être chargées.",
+        "Sharing options still could not be loaded.": "Les options de partage n'ont toujours pas pu être chargées.",
+        "Sharing is not available for this secret.": "Le partage n'est pas disponible pour ce secret."
     },
     "plurals": null
 }

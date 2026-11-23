@@ -1971,7 +1971,10 @@ OC.L10N.register(
         "Upload failed": "Η μεταφόρτωση απέτυχε",
         "Folders cannot be attached. Drop the files inside them instead.": "Οι φάκελοι δεν μπορούν να επισυναφθούν. Αποθέστε αντί αυτού τα αρχεία που περιέχουν.",
         "Files cannot be added while you are offline. Remove them to save.": "Δεν είναι δυνατή η προσθήκη αρχείων ενώ είστε εκτός σύνδεσης. Αφαιρέστε τα για να αποθηκεύσετε.",
-        "Files can only be added to a secret you own. Remove them to save.": "Αρχεία μπορούν να προστεθούν μόνο σε μυστικό που σας ανήκει. Αφαιρέστε τα για να αποθηκεύσετε."
+        "Files can only be added to a secret you own. Remove them to save.": "Αρχεία μπορούν να προστεθούν μόνο σε μυστικό που σας ανήκει. Αφαιρέστε τα για να αποθηκεύσετε.",
+        "Sharing options could not be loaded.": "Δεν ήταν δυνατή η φόρτωση των επιλογών διαμοιρασμού.",
+        "Sharing options still could not be loaded.": "Ακόμα δεν ήταν δυνατή η φόρτωση των επιλογών διαμοιρασμού.",
+        "Sharing is not available for this secret.": "Ο διαμοιρασμός δεν είναι διαθέσιμος για αυτό το μυστικό."
     },
     "nplurals=2; plural=(n != 1);"
 )

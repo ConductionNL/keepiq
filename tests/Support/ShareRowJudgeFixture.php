@@ -80,12 +80,27 @@ trait ShareRowJudgeFixture {
 	/**
 	 * A judge under which every user holds a trusted copy of every source,
 	 * for tests about what happens after that check: the row of (S, U) names
-	 * the copy `copy-of-U`, which U holds.
+	 * the copy `copy-of-U`, which U holds. Only a `copy-of-U` is a copy; it
+	 * was received from `sec-1`.
 	 *
 	 * @return ShareRowJudge
 	 */
 	protected function shareRowJudgeWhereEveryoneHoldsACopy(): ShareRowJudge {
 		$targets = $this->createMock(ShareTargetMapper::class);
+		$targets->method('findByRecipientSecret')->willReturnCallback(
+			static function (string $recipientSecretId): ShareTarget {
+				if (str_starts_with($recipientSecretId, 'copy-of-') === false) {
+					throw new DoesNotExistException('none');
+				}
+
+				$row = new ShareTarget();
+				$row->setId('row-sec-1-'.substr($recipientSecretId, strlen('copy-of-')));
+				$row->setSourceSecretId('sec-1');
+				$row->setTargetUserId(substr($recipientSecretId, strlen('copy-of-')));
+				$row->setSecretId($recipientSecretId);
+				return $row;
+			}
+		);
 		$targets->method('findBySourceSecretAndTargetUser')->willReturnCallback(
 			static function (string $sourceSecretId, string $targetUserId): ShareTarget {
 				$row = new ShareTarget();

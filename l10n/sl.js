@@ -1971,7 +1971,10 @@ OC.L10N.register(
         "Upload failed": "Nalaganje ni uspelo",
         "Folders cannot be attached. Drop the files inside them instead.": "Map ni mogoče priložiti. Namesto tega spustite datoteke v njih.",
         "Files cannot be added while you are offline. Remove them to save.": "Datotek ni mogoče dodati, ko ste brez povezave. Odstranite jih, da shranite.",
-        "Files can only be added to a secret you own. Remove them to save.": "Datoteke je mogoče dodati le skrivnosti, ki je vaša. Odstranite jih, da shranite."
+        "Files can only be added to a secret you own. Remove them to save.": "Datoteke je mogoče dodati le skrivnosti, ki je vaša. Odstranite jih, da shranite.",
+        "Sharing options could not be loaded.": "Možnosti souporabe ni bilo mogoče naložiti.",
+        "Sharing options still could not be loaded.": "Možnosti souporabe še vedno ni bilo mogoče naložiti.",
+        "Sharing is not available for this secret.": "Souporaba za to skrivnost ni na voljo."
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

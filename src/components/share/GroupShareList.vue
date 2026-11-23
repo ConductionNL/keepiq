@@ -106,6 +106,15 @@ export default {
 			type: String,
 			required: true,
 		},
+
+		/**
+		 * The source the group shares hang on, when secretId is a delegate's
+		 * copy: the list loads from it, the form shares from the copy.
+		 */
+		sourceSecretId: {
+			type: String,
+			default: '',
+		},
 	},
 
 	data() {
@@ -116,6 +125,18 @@ export default {
 		}
 	},
 
+	computed: {
+		/**
+		 * The secret whose group shares are listed.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+		 */
+		listedSecretId() {
+			return this.sourceSecretId || this.secretId
+		},
+	},
+
 	watch: {
 		/**
 		 * Reload the group shares when the sidebar switches secrets.
@@ -124,7 +145,7 @@ export default {
 		 * @return {void}
 		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
-		secretId(id) {
+		listedSecretId(id) {
 			this.result = null
 			this.formOpen = false
 			if (id) {
@@ -140,8 +161,8 @@ export default {
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 	 */
 	created() {
-		if (this.secretId) {
-			this.store.fetchGroupShares(this.secretId).catch(() => {})
+		if (this.listedSecretId) {
+			this.store.fetchGroupShares(this.listedSecretId).catch(() => {})
 		}
 	},
 

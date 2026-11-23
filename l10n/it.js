@@ -1971,7 +1971,10 @@ OC.L10N.register(
         "Upload failed": "Caricamento non riuscito",
         "Folders cannot be attached. Drop the files inside them instead.": "Le cartelle non possono essere allegate. Trascina invece i file al loro interno.",
         "Files cannot be added while you are offline. Remove them to save.": "Non è possibile aggiungere file mentre sei offline. Rimuovili per salvare.",
-        "Files can only be added to a secret you own. Remove them to save.": "I file possono essere aggiunti solo a un segreto di tua proprietà. Rimuovili per salvare."
+        "Files can only be added to a secret you own. Remove them to save.": "I file possono essere aggiunti solo a un segreto di tua proprietà. Rimuovili per salvare.",
+        "Sharing options could not be loaded.": "Impossibile caricare le opzioni di condivisione.",
+        "Sharing options still could not be loaded.": "Non è stato ancora possibile caricare le opzioni di condivisione.",
+        "Sharing is not available for this secret.": "La condivisione non è disponibile per questo segreto."
     },
     "nplurals=2; plural=(n != 1);"
 )

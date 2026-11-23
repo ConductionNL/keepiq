@@ -1971,7 +1971,10 @@ OC.L10N.register(
         "Upload failed": "Otpremanje nije uspjelo",
         "Folders cannot be attached. Drop the files inside them instead.": "Mape se ne mogu priložiti. Umjesto toga ispustite datoteke iz njih.",
         "Files cannot be added while you are offline. Remove them to save.": "Datoteke se ne mogu dodati dok ste van mreže. Uklonite ih da biste spremili.",
-        "Files can only be added to a secret you own. Remove them to save.": "Datoteke se mogu dodati samo tajni koju posjedujete. Uklonite ih da biste spremili."
+        "Files can only be added to a secret you own. Remove them to save.": "Datoteke se mogu dodati samo tajni koju posjedujete. Uklonite ih da biste spremili.",
+        "Sharing options could not be loaded.": "Opcije dijeljenja nije bilo moguće učitati.",
+        "Sharing options still could not be loaded.": "Opcije dijeljenja i dalje nije bilo moguće učitati.",
+        "Sharing is not available for this secret.": "Dijeljenje nije dostupno za ovu tajnu."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

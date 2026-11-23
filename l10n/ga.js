@@ -1971,7 +1971,10 @@ OC.L10N.register(
         "Upload failed": "Theip ar an uaslódáil",
         "Folders cannot be attached. Drop the files inside them instead.": "Ní féidir fillteáin a cheangal. Scaoil na comhaid atá iontu ina ionad sin.",
         "Files cannot be added while you are offline. Remove them to save.": "Ní féidir comhaid a chur leis agus tú as líne. Bain iad chun sábháil.",
-        "Files can only be added to a secret you own. Remove them to save.": "Ní féidir comhaid a chur ach le rún atá agat féin. Bain iad chun sábháil."
+        "Files can only be added to a secret you own. Remove them to save.": "Ní féidir comhaid a chur ach le rún atá agat féin. Bain iad chun sábháil.",
+        "Sharing options could not be loaded.": "Níorbh fhéidir na roghanna comhroinnte a lódáil.",
+        "Sharing options still could not be loaded.": "Níorbh fhéidir na roghanna comhroinnte a lódáil fós.",
+        "Sharing is not available for this secret.": "Níl comhroinnt ar fáil don rún seo."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )
