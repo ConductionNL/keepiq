@@ -20,8 +20,8 @@ Issue: #1263, which merges #1279 and #1280.
 - **The secret's owner writes partner shares, through whichever row they edit.** A copy editor who owns the source takes the owner's partner-share rules: share-save requires and accepts the source's partner shares, and the web app and browser extension look up and verify their certificates.
 - **A partner share that isn't the secret owner's stops the save.** share-save answers 409 `partner_share_owner_mismatch`, writes nothing and logs the share ids, until the share is handed to the secret's owner. The `ReownTransferredPartnerShares` repair step does that.
 - **A received copy can't be shared with a partner organisation.** `FederatedShareService::create` refuses a source that is a recipient's copy, as `register-batch` and group shares already do.
-- **Partner shares made from a copy before this change are reported.** share-save counts the active partner shares hanging off any copy it writes in `federated.notReached`, and the clients say that those partners didn't get the change.
-- **Account deletion keeps the delegate's own copy linked** when the secret passes to them, so their saves take the owner's path above.
+- **Partner shares made from a copy before this change are reported.** share-save counts the active partner shares hanging off any copy it writes in `federated.notReached`, and the clients say that this many recipients at partner organisations didn't get the change.
+- **Account deletion keeps the delegate's own copy linked** when the secret passes to them and nothing limits that copy, so their saves take the owner's path above.
 
 ## Capabilities
 
@@ -38,7 +38,7 @@ Issue: #1263, which merges #1279 and #1280.
 ## Impact
 
 - **Backend:** `ShareSavePath`, `ShareSaveScope`, `ShareSaveService` (the copy-editor request check and the answer), `ShareRowJudge` (the received-copy test, shared with group shares), `FederatedShareService::create`, `AccountDeletionService` and `AccountShareCleanupService`. No migration and no new route; the share-save answer gains `federated.notReached` and a 409 error code, and creating a partner share can answer 409 `share_scan_pending`.
-- **Web app:** `src/services/shareSave.js` looks up partner certificates on the copy-editor path whenever the server requires partner shares, and shows the new refusal and the not-reached count. The partner share form explains the new refusal.
+- **Web app:** `src/services/shareSave.js` looks up partner certificates on the copy-editor path whenever the server requires partner shares, and shows the new refusal and the not-reached count. A queued offline change that gets the refusal is kept as failed, with its reason, not offered as a version conflict. The partner share form explains the new refusal.
 - **Browser extension:** `browser-extension/src/vault/share-save.ts` does the same.
 - **Order:** this change modifies requirements that `sharing-atomic-share-save` adds, so it is archived after that change.
 - **Security:** the server still receives ciphertext only, and partner certificates are still verified in the browser against the pinned root. The refusal of onward partner sharing narrows who can send a secret to another organisation; nothing is widened. A copy editor learns partner share ids only when they own the source.

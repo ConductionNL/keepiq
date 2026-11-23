@@ -94,7 +94,7 @@ The system MUST refuse to create a partner share whose source is a recipient's c
 
 ### Requirement: Partner shares made from a copy are reported
 
-A partner share whose source is a copy was made before such shares were refused, and no share-save writes it. A share-save MUST answer, as `federated.notReached`, the number of active partner shares whose source is a copy the save wrote: the editor's own copy on the copy-editor path, and every copy written. The source's own partner shares MUST NOT be counted. The answer MUST NOT name those partners or shares. The web app and the browser extension MUST tell the user, when the number is above zero, that this many partner organisations got the secret from a copy and did not get the change.
+A partner share whose source is a copy was made before such shares were refused, and no share-save writes it. A share-save MUST answer, as `federated.notReached`, the number of active partner shares whose source is a copy the save wrote: the editor's own copy on the copy-editor path, and every copy written. The source's own partner shares MUST NOT be counted. The answer MUST NOT name those partners or shares. The web app and the browser extension MUST tell the user, when the number is above zero, that this many recipients at partner organisations got the secret from a copy and did not get the change.
 
 #### Scenario: A partner share hanging off Bob's copy
 
@@ -102,4 +102,4 @@ A partner share whose source is a copy was made before such shares were refused,
 - **WHEN** Alice share-saves a new password
 - **THEN** the save MUST commit and answer `federated.notReached: 1`
 - **AND** the partner share of Bob's copy MUST keep its old ciphertext
-- **AND** Alice MUST be told that one partner organisation got the secret from a copy and did not get the change
+- **AND** Alice MUST be told that one recipient at a partner organisation got the secret from a copy and did not get the change
