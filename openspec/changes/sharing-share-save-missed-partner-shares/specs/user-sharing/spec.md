@@ -64,6 +64,7 @@ The server MUST answer 409 `incomplete` with the required lists, and change noth
 - GIVEN Dave owns a secret, saves it through his own copy, and the secret has an active partner share
 - WHEN Dave's share-save names no partner shares
 - THEN the server MUST answer 409 `incomplete` naming that partner share
+
 #### Scenario: A copy editor who doesn't own the secret names partner shares
 - GIVEN Carol is a delegate or write-grade editor of a secret she doesn't own, or Dave saved through his own copy, got 409 `incomplete` naming the secret's partner shares, and the secret passed to someone else before his retry
 - WHEN their share-save, or any stage call of it, names partner shares to write or suspend
