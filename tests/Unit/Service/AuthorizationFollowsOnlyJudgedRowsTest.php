@@ -465,7 +465,7 @@ class AuthorizationFollowsOnlyJudgedRowsTest extends TestCase {
 	 * @return bool
 	 */
 	private function isReceivedCopy(?string $verdict): bool {
-		return $this->judge(verdict: $verdict)->isReceivedCopy(secret: $this->secrets['V'], refusal: 'V waits for the scan');
+		return $this->judge(verdict: $verdict)->isReceivedCopy(secret: $this->secrets['V'], pending: 'V waits for the scan');
 	}//end isReceivedCopy()
 
 	/**

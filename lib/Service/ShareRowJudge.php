@@ -209,14 +209,12 @@ class ShareRowJudge implements ShareRowJudgeInterface {
 	}//end judgeRows()
 
 	/**
-	 * Whether a share source is itself a received copy, which is never shared
-	 * onward (ShareRowVerdict::countsAsCopy()). Fails open to "original" only
-	 * when no row names it, or the pending quarantine scan quarantines the one
-	 * that does; an ambiguous match and a row its target does not hold count
-	 * as a copy, and a row the scan cannot judge refuses.
+	 * Whether a share source is itself a received copy, which is never shared onward (ShareRowVerdict::countsAsCopy()).
+	 * Fails open to "original" only when no row names it, or the pending quarantine scan quarantines the one that does;
+	 * an ambiguous match and a row its target does not hold count as a copy, and a row the scan cannot judge refuses.
 	 *
 	 * @param Secret $secret  The share source
-	 * @param string $refusal What waits for the scan, as scanPending() takes it
+	 * @param string $pending What waits for the scan, as scanPending() takes it
 	 *
 	 * @return bool
 	 *
@@ -225,10 +223,10 @@ class ShareRowJudge implements ShareRowJudgeInterface {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-runtime-paths-follow-only-judged-share-rows
 	 */
-	public function isReceivedCopy(Secret $secret, string $refusal): bool {
+	public function isReceivedCopy(Secret $secret, string $pending): bool {
 		$verdict = $this->forCopy(copy: $secret);
 		if ($verdict->awaitsTheScan() === true) {
-			throw $this->scanPending(refusal: $refusal);
+			throw $this->scanPending(refusal: $pending);
 		}
 
 		return $verdict->countsAsCopy();
@@ -249,7 +247,7 @@ class ShareRowJudge implements ShareRowJudgeInterface {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 	 */
 	public function assertNotReceivedCopy(Secret $secret, string $pending, string $refusal): void {
-		if ($this->isReceivedCopy(secret: $secret, refusal: $pending) === true) {
+		if ($this->isReceivedCopy(secret: $secret, pending: $pending) === true) {
 			throw new InvalidArgumentException(message: $refusal);
 		}
 	}//end assertNotReceivedCopy()
