@@ -930,6 +930,8 @@ class AccountDeletionServiceTest extends TestCase {
 			'a direct row whose own limit is not on the copy yet' => ['row limit only'],
 			'a copy limited without a grant saying so' => ['copy limit only'],
 			'a team-folder copy through a use-only membership' => ['folder use-only'],
+			'a group row use-only on its own beside a full group share' => ['group row use-only'],
+			'a group row expiring on its own beside a full group share' => ['group row expiring'],
 		];
 	}//end limitedDelegateCopies()
 
@@ -941,7 +943,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 * @return AccountDeletionService
 	 */
 	private function limitedDelegateCopy(string $case): AccountDeletionService {
-		$fromGroup = in_array($case, ['group use-only', 'group expiring'], true);
+		$fromGroup = in_array($case, ['group use-only', 'group expiring', 'group row use-only', 'group row expiring'], true);
 		$service   = $this->sharedWithTheDelegate(daveGroupShareId: ($fromGroup === true ? 'gs-1' : null));
 		$row  = $this->shareRows['st-dave'];
 		$copy = $this->secrets['c-dave'];
@@ -971,6 +973,13 @@ class AccountDeletionServiceTest extends TestCase {
 				break;
 			case 'copy limit only':
 				$copy->setAccessExpiresAt($end);
+				break;
+			case 'group row use-only':
+				// Linked to the full group share, so no grant carries the row's own flag.
+				$row->setUseOnly(true);
+				break;
+			case 'group row expiring':
+				$row->setExpiresAt($end);
 				break;
 			default:
 				$row->setTeamFolderId('tf-1');
