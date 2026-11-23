@@ -144,7 +144,8 @@ class ShareSaveScope {
 	 * another folder does not change its version, so the lock does not see it.
 	 * A caller who still writes, but now another way (a delegation granted or
 	 * revoked next to a write grade), saves and is audited as they write now.
-	 * The owner path has nothing to check.
+	 * On the owner path the source is read again too, and a caller who no longer owns it (an ownership transfer
+	 * committed meanwhile) is refused as a save of another user's row is.
 	 *
 	 * @param ShareSavePath $path The path resolve() returned
 	 * @param string $userId The caller
@@ -152,20 +153,26 @@ class ShareSaveScope {
 	 * @return ShareSavePath The path with the way the caller writes now
 	 *
 	 * @throws NotFoundException When the source was deleted meanwhile
-	 * @throws ForbiddenException When the source became a read-only or use-only copy
+	 * @throws ForbiddenException When the source became a read-only or use-only copy, or another user's secret
 	 * @throws ShareSaveRefusal `not_allowed` for a copy holder who lost the right to write every copy
 	 *
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function assertStillWriter(ShareSavePath $path, string $userId): ShareSavePath {
-		if ($path->isCopyEditor() === false) {
-			return $path;
-		}
-
 		try {
 			$source = $this->secrets->findById($path->source->getId());
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
 			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		// The source as resolve() read it stays the path's source: its version is what a refusal reports.
+		// Its owner is read again, so who writes partner shares is decided under the lock.
+		if ($path->isCopyEditor() === false) {
+			if ($source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
+				throw new ForbiddenException(message: 'Secret belongs to another user');
+			}
+
+			return new ShareSavePath(row: $path->row, source: $path->source, current: $source);
 		}
 
 		$this->assertWritable(source: $source);
@@ -175,9 +182,6 @@ class ShareSaveScope {
 			refusal: 'Your access to this secret changed while saving; reload and try again'
 		);
 
-		// The source as resolve() read it: its version is what a refusal
-		// reports. Its owner is read again, so who writes partner shares is
-		// decided under the lock.
 		return new ShareSavePath(row: $path->row, source: $path->source, writesOn: $writesOn, current: $source);
 	}//end assertStillWriter()
 

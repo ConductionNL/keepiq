@@ -62,6 +62,7 @@ use OCP\IGroupManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
 
@@ -331,7 +332,11 @@ class ShareSaveServiceTest extends TestCase {
 		});
 	}
 
-	private function service(?ShareAuthorizationService $auth = null, ?ShareQuarantineScanner $scanner = null): ShareSaveService {
+	private function service(
+		?ShareAuthorizationService $auth = null,
+		?ShareQuarantineScanner $scanner = null,
+		?LoggerInterface $logger = null,
+	): ShareSaveService {
 		$judge = new ShareRowJudge(targets: $this->targets, secrets: $this->secretMapper, scanner: ($scanner ?? $this->createMock(ShareQuarantineScanner::class)));
 		$guards = new ShareSyncGuards(
 			secrets: $this->secretMapper,
@@ -362,6 +367,7 @@ class ShareSaveServiceTest extends TestCase {
 				sync: $sync,
 				guards: $guards,
 				rowJudge: $judge,
+				logger: $logger,
 			),
 			stages: new ShareSaveStages(mapper: $this->stageMapper),
 			db: $this->db,
@@ -1807,6 +1813,35 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame(['fs-1'], $refusal->getBody()['federated']['unexpected']);
 		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'rollback'], $this->log);
 		$this->assertSame([], $this->copyWrites);
+	}
+
+	/**
+	 * A transfer committed between the pre-check and the lock hands the source and its partner share to Bob. Alice's
+	 * save on the owner path is then refused as a save of another user's row, not as a partner share left behind, and
+	 * no drift warning is logged.
+	 *
+	 * @return void
+	 */
+	public function testATransferBeforeTheLockRefusesTheOwnersSaveWithoutADriftWarning(): void {
+		$this->sourceOwnerUnderLock = 'bob';
+		$this->federatedMapper = $this->createMock(FederatedShareMapper::class);
+		$this->federatedMapper->method('findBySourceSecret')->willReturnCallback(
+			fn (): array => [$this->partnerShare(
+				id: 'fs-1',
+				status: FederatedShare::STATUS_ACTIVE,
+				owner: in_array('begin', $this->log, true) ? 'bob' : 'alice'
+			)]
+		);
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method('warning');
+
+		$refusal = $this->refusal(fn () => $this->service(logger: $logger)->save(id: 'src', request: $this->ownerRequest(), userId: 'alice'));
+
+		$this->assertInstanceOf(ForbiddenException::class, $refusal);
+		$this->assertSame('Secret belongs to another user', $refusal->getMessage());
+		$this->assertSame(['begin', 'lock src', 'rollback'], $this->log);
+		$this->assertSame([], $this->copyWrites);
+		$this->assertSame([], $this->rowSaves);
 	}
 
 	/**
