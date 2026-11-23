@@ -18,6 +18,7 @@ import {
 	encryptSparse,
 	forgetVerifiedPartners,
 	MAX_INCOMPLETE_ROUNDS,
+	notifyPartnerNotes,
 	notReachedText,
 	PARTNER_LIMIT_WAIT_CAP_MS,
 	saveShared,
@@ -1398,11 +1399,17 @@ describe("saveShared by the secret's owner through their own copy", () => {
 				required,
 				partners,
 				lookup: { [PARTNER]: VALID },
+				// As ShareSaveScope answers a copy editor who doesn't own the secret while partner shares exist.
+				ownerOnly: (n) => n > 1,
 			})
 
 			const result = await save()
+			await notifyPartnerNotes(result)
 
 			expect(result.federated.written).toBe(0)
+			expect(result.federated.ownerOnly).toBe(true)
+			expect(showInfo).toHaveBeenCalledTimes(1)
+			expect(showInfo.mock.calls[0][0]).toContain('when the owner next saves')
 			expect(log.saves).toHaveLength(3)
 			expect(log.saves[1].federated.map((f) => f.shareId)).toEqual(['fs-1'])
 			expect('federated' in log.saves[2]).toBe(false)
@@ -1420,6 +1427,7 @@ describe("saveShared by the secret's owner through their own copy", () => {
 				partners,
 				suites: Object.fromEntries(users.map((u) => [u, BOB_CERT])),
 				lookup: { [PARTNER]: VALID },
+				ownerOnly: (n) => n > 1,
 				onSave: (body, n) => {
 					const named = [
 						...(body.federated ?? []),
@@ -1448,8 +1456,9 @@ describe("saveShared by the secret's owner through their own copy", () => {
 				},
 			})
 
-			await save()
+			const result = await save()
 
+			expect(result.federated.ownerOnly).toBe(true)
 			expect(log.saves.map((s) => s.stage)).toEqual([
 				undefined,
 				{ final: false },
