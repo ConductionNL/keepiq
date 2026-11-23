@@ -4,7 +4,7 @@
  * Keepiq Federated Share Sources
  *
  * The secrets a partner share is made from, as FederatedShareService reads them:
- * the caller's own secret, the source a partner pulls, and whether a secret to share is a received copy.
+ * a secret by id, and whether a secret to share is a received copy.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -22,10 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -53,7 +51,7 @@ class FederatedShareSources {
 	}//end __construct()
 
 	/**
-	 * A secret by id, as a partner's pull reads its share's source.
+	 * A secret by id: the caller's own secret to share, or the source a partner pulls.
 	 *
 	 * @param string $secretId The secret
 	 *
@@ -68,32 +66,6 @@ class FederatedShareSources {
 	}//end find()
 
 	/**
-	 * The user's own secret.
-	 *
-	 * @param string $secretId The secret
-	 * @param string $userId The user
-	 *
-	 * @return Secret
-	 *
-	 * @throws NotFoundException When it does not exist or is not the user's own
-	 *
-	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
-	 */
-	public function owned(string $secretId, string $userId): Secret {
-		try {
-			$secret = $this->secretMapper->findById($secretId);
-		} catch (DoesNotExistException) {
-			throw new NotFoundException(message: 'Secret not found');
-		}
-
-		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
-			throw new NotFoundException(message: 'Secret not found');
-		}
-
-		return $secret;
-	}//end owned()
-
-	/**
 	 * Refuse to share a received copy with a partner:
 	 * partner shares hang off the original, which only its owner's save writes.
 	 *
@@ -102,7 +74,7 @@ class FederatedShareSources {
 	 * @return void
 	 *
 	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row that may name it a copy
-	 * @throws InvalidArgumentException `not_shareable` when it is a received copy
+	 * @throws \InvalidArgumentException `not_shareable` when it is a received copy
 	 *
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
 	 */

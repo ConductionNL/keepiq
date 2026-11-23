@@ -147,7 +147,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 			throw new RuntimeException('federation_unavailable');
 		}
 
-		$source = $this->sources->owned(secretId: $secretId, userId: $userId);
+		$source = $this->ownedSecret(secretId: $secretId, userId: $userId);
 		// A read-only or restricted copy never leaves (task 3.4).
 		$source->assertOnwardShareable();
 		// Nor does a full one: partner shares hang off the original, which only its owner's save writes.
@@ -231,7 +231,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 		// The same checks, in the same order, as a new share of this secret.
 		$this->valueFields->assertUpdateMirrorsSource(
 			partner: $this->partners->find(id: (string)$row->getPartnerId()),
-			source: $this->sources->owned(secretId: $row->getSourceSecretId(), userId: $userId),
+			source: $this->ownedSecret(secretId: $row->getSourceSecretId(), userId: $userId),
 			row: $row,
 			ciphertext: $ciphertext,
 			certFingerprint: $certFingerprint
@@ -529,7 +529,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function listForSecret(string $secretId, string $userId): array {
-		$this->sources->owned(secretId: $secretId, userId: $userId);
+		$this->ownedSecret(secretId: $secretId, userId: $userId);
 
 		return $this->shareMapper->findBySourceSecret(sourceSecretId: $secretId);
 	}//end listForSecret()
@@ -604,4 +604,28 @@ class FederatedShareService implements FederatedShareServiceInterface {
 		return $row->getStatus() === FederatedShare::STATUS_ACTIVE && $row->getOwnerId() === $source->getOwnerId()
 			&& $this->valueFields->servable(row: $row, payload: $payload, logger: $this->logger, partner: $partner->getBaseUrl()) === true;
 	}//end isServable()
+
+	/**
+	 * The user's own secret, or not found.
+	 *
+	 * @param string $secretId The secret
+	 * @param string $userId The user
+	 *
+	 * @return Secret
+	 *
+	 * @throws NotFoundException When it does not exist or is someone else's
+	 */
+	private function ownedSecret(string $secretId, string $userId): Secret {
+		try {
+			$secret = $this->sources->find(secretId: $secretId);
+		} catch (DoesNotExistException) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		return $secret;
+	}//end ownedSecret()
 }//end class

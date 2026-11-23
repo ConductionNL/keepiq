@@ -187,7 +187,7 @@ class FederatedShareController extends Controller {
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
 	 *
 	 * @no-admin-idor-exempt scoped in the service. FederatedShareService::update()
-	 * loads the share through ownedShare() and its source through FederatedShareSources::owned()
+	 * loads the share through ownedShare() and its source through ownedSecret()
 	 * with the session user, and answers "not found" for anyone else's.
 	 */
 	#[NoAdminRequired]
