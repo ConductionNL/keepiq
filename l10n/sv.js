@@ -1972,7 +1972,9 @@ OC.L10N.register(
         "Folders cannot be attached. Drop the files inside them instead.": "Mappar kan inte bifogas. Släpp i stället filerna i dem.",
         "Files cannot be added while you are offline. Remove them to save.": "Filer kan inte läggas till när du är offline. Ta bort dem för att spara.",
         "Files can only be added to a secret you own. Remove them to save.": "Filer kan bara läggas till i en hemlighet som du äger. Ta bort dem för att spara.",
-        "Sharing options could not be loaded.": "Delningsalternativen kunde inte läsas in."
+        "Sharing options could not be loaded.": "Delningsalternativen kunde inte läsas in.",
+        "Sharing options still could not be loaded.": "Delningsalternativen kunde fortfarande inte läsas in.",
+        "This copy offers no sharing options.": "Den här kopian har inga delningsalternativ."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1042,7 +1042,8 @@
 			    - delegate         → ShareList (of the source), no delegating;
 			    - recipient        → ShareRequestForm (request that the
 			                          owner share with a third party);
-			    - unknown          → a note with a retry.
+			    - unknown          → a note with a retry (none offline);
+			    - no source        → a note without a retry.
 			-->
 				<!-- The same grouped rows as "Advanced": one box, each part an
 				     icon + muted label with its content beneath. -->
@@ -1061,13 +1062,17 @@
 								{{ t('keepiq', 'Sharing') }}
 							</h3>
 							<div class="secret-detail__row-value">
-								<!-- The role is unknown: say so and ask again, never guess. -->
+								<!-- The role or source is unknown: say so, never guess; ask again when that can help. -->
 								<div
 									v-if="sharingUnavailable"
-									class="secret-detail__sharing-unavailable"
-									data-testid="secret-detail-sharing-unavailable">
-									<p>{{ sharingUnavailableText }}</p>
+									class="secret-detail__sharing-unavailable">
+									<p
+										role="status"
+										data-testid="secret-detail-sharing-unavailable">
+										{{ sharingUnavailableText }}
+									</p>
 									<NcButton
+										v-if="sharingRetryable"
 										variant="tertiary"
 										:disabled="writeContextRetrying"
 										data-testid="secret-detail-sharing-retry"
@@ -1509,7 +1514,7 @@ export default {
 			viewOnlyCopy: false,
 			/** The write-context read with the secret on show, or null. */
 			writeContext: null,
-			/** Why the write-context could not be read, when the server said. */
+			/** Why the write-context could not be read: the server's message, or that a retry failed too. */
 			writeContextFailure: '',
 			writeContextRetrying: false,
 			/** A passkey delete is being saved. */
@@ -2178,7 +2183,7 @@ export default {
 
 		/**
 		 * Whether the sharing section has nothing to offer because the role
-		 * or the source is unknown; it then says so and offers a retry.
+		 * or the source is unknown; it then says so.
 		 *
 		 * @return {boolean}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
@@ -2191,12 +2196,31 @@ export default {
 		},
 
 		/**
+		 * Whether asking for the write-context again can help: it could not
+		 * be read, and the vault is online.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-sharing-and-membership-actions-stay-online-only
+		 */
+		sharingRetryable() {
+			return this.managesSharing === null && !this.offlineReadOnly
+		},
+
+		/**
 		 * Why sharing is unavailable: the server's message when it gave one.
+		 * Empty while a retry runs, so its outcome always changes the status
+		 * text and is announced, even when it repeats.
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		sharingUnavailableText() {
+			if (this.writeContextRetrying) {
+				return ''
+			}
+			if (this.managesSharing === false) {
+				return t('keepiq', 'This copy offers no sharing options.')
+			}
 			return (
 				this.writeContextFailure
 				|| t('keepiq', 'Sharing options could not be loaded.')
@@ -2502,6 +2526,12 @@ export default {
 			this.writeContextRetrying = true
 			try {
 				const answer = await this.fetchWriteContext(id)
+				if (answer.context === null && answer.failure === '') {
+					answer.failure = t(
+						'keepiq',
+						'Sharing options still could not be loaded.',
+					)
+				}
 				if (id === this.secretId) {
 					this.applyWriteContext(answer, id)
 				}
@@ -3260,6 +3290,11 @@ h3.secret-detail__row-label {
 .secret-detail__sharing-unavailable {
 	margin-top: 8px;
 	color: var(--color-text-maxcontrast);
+}
+
+/* Keeps its line while the text is empty during a retry. */
+.secret-detail__sharing-unavailable p {
+	min-height: 1lh;
 }
 
 .secret-detail__team-badge {

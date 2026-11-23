@@ -2049,7 +2049,9 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Dossiere kënnen net ugehaange ginn. Leet amplaz d'Fichieren dran of.",
         "Files cannot be added while you are offline. Remove them to save.": "Fichiere kënnen offline net dobäigesat ginn. Huelt se ewech fir ze späicheren.",
         "Files can only be added to a secret you own. Remove them to save.": "Fichiere kënnen nëmmen zu engem eegene Geheimnis dobäigesat ginn. Huelt se ewech fir ze späicheren.",
-        "Sharing options could not be loaded.": "D'Optioune fir ze deelen konnten net geluede ginn."
+        "Sharing options could not be loaded.": "D'Optioune fir ze deelen konnten net geluede ginn.",
+        "Sharing options still could not be loaded.": "D'Optioune fir ze deelen konnten ëmmer nach net geluede ginn.",
+        "This copy offers no sharing options.": "Dës Kopie bitt keng Optioune fir ze deelen."
     },
     "plurals": null
 }

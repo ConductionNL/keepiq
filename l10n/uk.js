@@ -1972,7 +1972,9 @@ OC.L10N.register(
         "Folders cannot be attached. Drop the files inside them instead.": "Теки не можна долучити. Натомість перетягніть файли з них.",
         "Files cannot be added while you are offline. Remove them to save.": "Не можна додавати файли без підключення до мережі. Вилучіть їх, щоб зберегти.",
         "Files can only be added to a secret you own. Remove them to save.": "Файли можна додавати лише до власного секрету. Вилучіть їх, щоб зберегти.",
-        "Sharing options could not be loaded.": "Не вдалося завантажити параметри спільного доступу."
+        "Sharing options could not be loaded.": "Не вдалося завантажити параметри спільного доступу.",
+        "Sharing options still could not be loaded.": "Досі не вдалося завантажити параметри спільного доступу.",
+        "This copy offers no sharing options.": "Ця копія не має параметрів спільного доступу."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

@@ -1972,7 +1972,9 @@ OC.L10N.register(
         "Folders cannot be attached. Drop the files inside them instead.": "No se pueden adjuntar carpetas. Suelte los archivos que contienen.",
         "Files cannot be added while you are offline. Remove them to save.": "No se pueden añadir archivos sin conexión. Quítelos para guardar.",
         "Files can only be added to a secret you own. Remove them to save.": "Solo se pueden añadir archivos a un secreto que sea suyo. Quítelos para guardar.",
-        "Sharing options could not be loaded.": "No se pudieron cargar las opciones para compartir."
+        "Sharing options could not be loaded.": "No se pudieron cargar las opciones para compartir.",
+        "Sharing options still could not be loaded.": "Todavía no se pudieron cargar las opciones para compartir.",
+        "This copy offers no sharing options.": "Esta copia no ofrece opciones para compartir."
     },
     "nplurals=2; plural=(n != 1);"
 )

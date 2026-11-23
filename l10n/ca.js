@@ -1972,7 +1972,9 @@ OC.L10N.register(
         "Folders cannot be attached. Drop the files inside them instead.": "No es poden adjuntar carpetes. Deixeu anar els fitxers que contenen.",
         "Files cannot be added while you are offline. Remove them to save.": "No es poden afegir fitxers mentre esteu fora de línia. Elimineu-los per desar.",
         "Files can only be added to a secret you own. Remove them to save.": "Només es poden afegir fitxers a un secret que sigui vostre. Elimineu-los per desar.",
-        "Sharing options could not be loaded.": "No s'han pogut carregar les opcions de compartició."
+        "Sharing options could not be loaded.": "No s'han pogut carregar les opcions de compartició.",
+        "Sharing options still could not be loaded.": "Encara no s'han pogut carregar les opcions de compartició.",
+        "This copy offers no sharing options.": "Aquesta còpia no ofereix opcions de compartició."
     },
     "nplurals=2; plural=(n != 1);"
 )

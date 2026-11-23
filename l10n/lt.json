@@ -2075,7 +2075,9 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Aplankų pridėti negalima. Vietoj to nutempkite juose esančius failus.",
         "Files cannot be added while you are offline. Remove them to save.": "Neprisijungus failų pridėti negalima. Pašalinkite juos, kad išsaugotumėte.",
         "Files can only be added to a secret you own. Remove them to save.": "Failus galima pridėti tik prie jums priklausančios paslapties. Pašalinkite juos, kad išsaugotumėte.",
-        "Sharing options could not be loaded.": "Nepavyko įkelti bendrinimo parinkčių."
+        "Sharing options could not be loaded.": "Nepavyko įkelti bendrinimo parinkčių.",
+        "Sharing options still could not be loaded.": "Bendrinimo parinkčių vis dar nepavyko įkelti.",
+        "This copy offers no sharing options.": "Ši kopija nesiūlo bendrinimo parinkčių."
     },
     "plurals": null
 }

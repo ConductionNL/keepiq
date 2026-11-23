@@ -1972,7 +1972,9 @@ OC.L10N.register(
         "Folders cannot be attached. Drop the files inside them instead.": "Папки нельзя прикрепить. Перетащите вместо этого файлы из них.",
         "Files cannot be added while you are offline. Remove them to save.": "Нельзя добавлять файлы без подключения к сети. Удалите их, чтобы сохранить.",
         "Files can only be added to a secret you own. Remove them to save.": "Файлы можно добавлять только к собственному секрету. Удалите их, чтобы сохранить.",
-        "Sharing options could not be loaded.": "Не удалось загрузить параметры общего доступа."
+        "Sharing options could not be loaded.": "Не удалось загрузить параметры общего доступа.",
+        "Sharing options still could not be loaded.": "По-прежнему не удалось загрузить параметры общего доступа.",
+        "This copy offers no sharing options.": "У этой копии нет параметров общего доступа."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

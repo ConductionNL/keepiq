@@ -19,6 +19,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import SecretDetailSidebar from '../../src/components/SecretDetailSidebar.vue'
+import { useOfflineStore } from '../../src/store/modules/offline.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 
@@ -224,6 +225,8 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 			'[data-testid="secret-detail-sharing-unavailable"]',
 		)
 		expect(note.text()).toContain('Waits for the scan')
+		// A status message, so a retry's outcome is announced (WCAG 4.1.3).
+		expect(note.attributes('role')).toBe('status')
 		expect(has(wrapper, 'secret-detail-share-list')).toBe(false)
 
 		serveWriteContext({ sourceSecretId: 's-1', effectiveGrade: 'owner' })
@@ -248,6 +251,52 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		).toContain('Sharing options could not be loaded.')
 	})
 
+	it('changes the status text on every retry that fails again', async () => {
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+		const note = () =>
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]')
+		const retry = () =>
+			wrapper.find('[data-testid="secret-detail-sharing-retry"]')
+
+		await retry().trigger('click')
+		await flush()
+		expect(note().text()).toBe('Sharing options still could not be loaded.')
+
+		// A second failure reads the same, so the text empties while it runs.
+		let fail
+		axios.get.mockImplementation((url) =>
+			url.endsWith('/write-context')
+				? new Promise((resolve, reject) => {
+						fail = reject
+					})
+				: Promise.resolve({ data: [] }),
+		)
+		await retry().trigger('click')
+		await flush()
+		expect(note().text()).toBe('')
+
+		fail(new Error('offline'))
+		await flush()
+		expect(note().text()).toBe('Sharing options still could not be loaded.')
+	})
+
+	it('offers no retry while offline, where it can only fail', async () => {
+		useOfflineStore().servedFromCache = true
+		serveWriteContext(new Error('offline'))
+		const wrapper = await mountDetail({
+			secret: { id: 's-1', name: 'GitHub', key: 'CIPHER', ownerId: 'alice' },
+			currentUser: 'alice',
+		})
+
+		// The offline note at the top already says sharing needs a connection.
+		expect(has(wrapper, 'secret-detail-sharing-unavailable')).toBe(true)
+		expect(has(wrapper, 'secret-detail-sharing-retry')).toBe(false)
+	})
+
 	it('offers no share request when the write-context names no source', async () => {
 		serveWriteContext({ sourceSecretId: null, effectiveGrade: 'none' })
 		const wrapper = await mountDetail({
@@ -257,6 +306,11 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 
 		expect(has(wrapper, 'secret-detail-share-request')).toBe(false)
 		expect(has(wrapper, 'secret-detail-share-list')).toBe(false)
+		// The answer is final, so the note says so and offers no retry.
+		expect(
+			wrapper.find('[data-testid="secret-detail-sharing-unavailable"]').text(),
+		).toBe('This copy offers no sharing options.')
+		expect(has(wrapper, 'secret-detail-sharing-retry')).toBe(false)
 	})
 
 	it("lists the source's shares for a delegate on their copy, without delegating", async () => {

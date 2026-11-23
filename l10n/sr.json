@@ -2075,7 +2075,9 @@
         "Folders cannot be attached. Drop the files inside them instead.": "Фасцикле се не могу приложити. Уместо тога превуците датотеке из њих.",
         "Files cannot be added while you are offline. Remove them to save.": "Датотеке се не могу додати док сте ван мреже. Уклоните их да бисте сачували.",
         "Files can only be added to a secret you own. Remove them to save.": "Датотеке се могу додати само тајни коју поседујете. Уклоните их да бисте сачували.",
-        "Sharing options could not be loaded.": "Опције дељења није било могуће учитати."
+        "Sharing options could not be loaded.": "Опције дељења није било могуће учитати.",
+        "Sharing options still could not be loaded.": "Опције дељења и даље није било могуће учитати.",
+        "This copy offers no sharing options.": "Ова копија не нуди опције дељења."
     },
     "plurals": null
 }

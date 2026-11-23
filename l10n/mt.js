@@ -1972,7 +1972,9 @@ OC.L10N.register(
         "Folders cannot be attached. Drop the files inside them instead.": "Il-folders ma jistgħux jiġu mehmuża. Minflok, itfa' l-fajls li fihom.",
         "Files cannot be added while you are offline. Remove them to save.": "Ma jistgħux jiżdiedu fajls waqt li m'intix konness. Neħħihom biex issalva.",
         "Files can only be added to a secret you own. Remove them to save.": "Il-fajls jistgħu jiżdiedu biss ma' sigriet li huwa tiegħek. Neħħihom biex issalva.",
-        "Sharing options could not be loaded.": "L-għażliet tal-qsim ma setgħux jiġu mgħobbija."
+        "Sharing options could not be loaded.": "L-għażliet tal-qsim ma setgħux jiġu mgħobbija.",
+        "Sharing options still could not be loaded.": "L-għażliet tal-qsim xorta ma setgħux jiġu mgħobbija.",
+        "This copy offers no sharing options.": "Din il-kopja ma toffri l-ebda għażla tal-qsim."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

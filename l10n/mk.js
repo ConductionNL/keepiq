@@ -1972,7 +1972,9 @@ OC.L10N.register(
         "Folders cannot be attached. Drop the files inside them instead.": "Папките не можат да се приложат. Наместо тоа, спуштете ги датотеките од нив.",
         "Files cannot be added while you are offline. Remove them to save.": "Не може да се додаваат датотеки додека сте офлајн. Отстранете ги за да зачувате.",
         "Files can only be added to a secret you own. Remove them to save.": "Датотеки може да се додаваат само на ваша тајна. Отстранете ги за да зачувате.",
-        "Sharing options could not be loaded.": "Опциите за споделување не можеа да се вчитаат."
+        "Sharing options could not be loaded.": "Опциите за споделување не можеа да се вчитаат.",
+        "Sharing options still could not be loaded.": "Опциите за споделување сè уште не можеа да се вчитаат.",
+        "This copy offers no sharing options.": "Оваа копија не нуди опции за споделување."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

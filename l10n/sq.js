@@ -1972,7 +1972,9 @@ OC.L10N.register(
         "Folders cannot be attached. Drop the files inside them instead.": "Dosjet nuk mund të bashkëngjiten. Lëshoni në vend të tyre skedarët që përmbajnë.",
         "Files cannot be added while you are offline. Remove them to save.": "Skedarët nuk mund të shtohen ndërsa jeni jashtë linje. Hiqini për të ruajtur.",
         "Files can only be added to a secret you own. Remove them to save.": "Skedarët mund të shtohen vetëm te një sekret që e zotëroni. Hiqini për të ruajtur.",
-        "Sharing options could not be loaded.": "Opsionet e ndarjes nuk mund të ngarkoheshin."
+        "Sharing options could not be loaded.": "Opsionet e ndarjes nuk mund të ngarkoheshin.",
+        "Sharing options still could not be loaded.": "Opsionet e ndarjes ende nuk mund të ngarkoheshin.",
+        "This copy offers no sharing options.": "Kjo kopje nuk ofron opsione ndarjeje."
     },
     "nplurals=2; plural=(n != 1);"
 )
