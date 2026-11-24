@@ -78,13 +78,20 @@ On every share-save that writes partner shares, an active partner share of the s
 
 ### Requirement: A received copy is not shared with a partner
 
-The system MUST refuse to create a partner share whose source is a recipient's copy of another secret, with 400 `not_shareable`, the refusal `register-batch` gives a received copy. This holds for a delegate's copy too. When the pending quarantine scan cannot judge the share row that would make the secret a copy, the system MUST answer 409 with `error: share_scan_pending` and create nothing. A share row the scan quarantines MUST NOT make its secret a copy.
+The system MUST refuse to create a partner share whose source is a recipient's copy of another secret, with 400 `not_shareable`, the refusal `register-batch` gives a received copy. This holds for a delegate's copy too. When the caller asks to share their own received copy of a secret they own, as the new owner after a team offboarding or an account deletion does, the system MUST create the partner share on the source that the trusted share row names, not on the copy; it MUST NOT take that source from the request. When the pending quarantine scan cannot judge the share row that would make the secret a copy, the system MUST answer 409 with `error: share_scan_pending` and create nothing. A share row the scan quarantines MUST NOT make its secret a copy.
 
 #### Scenario: Bob may not send his copy to a partner
 
 - **GIVEN** Bob holds a full copy of Alice's secret
 - **WHEN** Bob shares that copy with a user on a partner instance
 - **THEN** the system MUST refuse it and create no partner share
+
+#### Scenario: The new owner shares their own copy with a partner
+
+- **GIVEN** Dave became the owner of Alice's secret through a transfer and works through his copy of it
+- **WHEN** Dave shares his copy with a user on a partner instance
+- **THEN** the partner share MUST be created on the source, with the source as its source secret
+- **AND** a copy holder who does not own the source MUST still be refused with `not_shareable`, and no partner share created
 
 #### Scenario: The owner's original is still shared
 

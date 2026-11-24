@@ -519,6 +519,79 @@ class FederatedShareSendTest extends TestCase {
 	}
 
 	/**
+	 * `src` is Alice's copy of `orig`, which `$owner` owns: Alice herself after a transfer made her its owner.
+	 *
+	 * @param string $owner The source's owner
+	 *
+	 * @return void
+	 */
+	private function aliceHoldsACopyOfASourceOwnedBy(string $owner): void {
+		$orig = new Secret();
+		$orig->setId('orig');
+		$orig->setName('Supplier portal');
+		$orig->setOwnerType('user');
+		$orig->setOwnerId($owner);
+		$this->otherSecrets['orig'] = $orig;
+		$this->copyRows[] = $this->copyRow();
+	}
+
+	/**
+	 * Alice owns `orig` and works through her own copy `src`, as after a transfer the new owner does: the partner share
+	 * is made on the source.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testTheSourcesOwnerSharesTheirOwnCopy(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertCount(1, $this->rows);
+		$row = array_values($this->rows)[0];
+		$this->assertSame('orig', $row->getSourceSecretId());
+		$this->assertSame('alice', $row->getOwnerId());
+		$this->assertSame(self::CIPHER_KEY, $row->getKey());
+		$this->assertSame(self::FINGERPRINT, $row->getRecipientCertFingerprint());
+		$this->assertCount(1, $this->sent);
+	}
+
+	/**
+	 * The same request from a copy holder who does not own the source is refused as before.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testACopyOfASourceTheHolderDoesNotOwnIsStillRefused(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'olivia');
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('not_shareable', $response->getData()['message']);
+		$this->assertSame([], $this->rows);
+		$this->assertSame([], $this->sent);
+	}
+
+	/**
+	 * A copy of a secret the holder owns waits for the pending scan like any copy: nothing leads to the source
+	 * until the scan has judged the row.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 */
+	public function testTheOwnersCopyTheScanCannotJudgeWaits(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
+		$this->scanner = $this->scanAnswering(verdict: ShareQuarantineScanner::HELD_UNJUDGED);
+
+		$response = $this->share($this->controller([$this->partner('cloud.partner.example', true, false)]));
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('share_scan_pending', ($data['error'] ?? $data['message']));
+		$this->assertSame([], $this->rows);
+		$this->assertSame([], $this->sent);
+	}
+
+	/**
 	 * An original, or a secret whose only row the pending scan quarantines,
 	 * is Alice's own, as register-batch and group shares judge it.
 	 *
