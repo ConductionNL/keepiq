@@ -42,7 +42,7 @@ use Ramsey\Uuid\Uuid;
 
 /**
  * Runs against the instance's real database, inside a transaction that is
- * rolled back after each test.
+ * rolled back after each test, except where a test says it commits.
  *
  * Two application writes read the same version of the row. The other one
  * commits first, through the same SecretService, between this write's read
@@ -58,6 +58,16 @@ class ApplicationWriteVersionLockTest extends TestCase {
 	private const APP = 'app-lock-test';
 
 	private ?IDBConnection $db = null;
+
+	/**
+	 * A second connection, outside the test's transaction, when a test opens one.
+	 */
+	private ?IDBConnection $second = null;
+
+	/**
+	 * @var list<string> Secrets a test committed, deleted by id in tearDown
+	 */
+	private array $committed = [];
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -79,7 +89,32 @@ class ApplicationWriteVersionLockTest extends TestCase {
 			$this->db->rollBack();
 		}
 
+		foreach ($this->committed as $id) {
+			(new SecretVersionMapper(db: $this->db))->deleteBySecret(secretId: $id);
+			$qb = $this->db->getQueryBuilder();
+			$qb->delete('keepiq_secrets')
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+				->executeStatement();
+		}
+
+		$this->second?->close();
 		parent::tearDown();
+	}
+
+	/**
+	 * A second database connection in autocommit, as a second PHP process
+	 * would have, opened the way server/tests/lib/DB does.
+	 */
+	private function secondConnection(): IDBConnection {
+		if (class_exists(\OC\DB\ConnectionFactory::class) === false || class_exists(\OC\DB\ConnectionAdapter::class) === false) {
+			$this->markTestSkipped(message: 'needs Nextcloud\'s ConnectionFactory to open a second connection');
+		}
+
+		$type = \OC::$server->get(\OCP\IConfig::class)->getSystemValueString('dbtype', 'sqlite');
+		$this->second = new \OC\DB\ConnectionAdapter(
+			\OC::$server->get(\OC\DB\ConnectionFactory::class)->getConnection($type, [])
+		);
+		return $this->second;
 	}
 
 	/**
@@ -145,13 +180,14 @@ class ApplicationWriteVersionLockTest extends TestCase {
 		};
 	}
 
-	private function service(SecretMapper $mapper): SecretService {
+	private function service(SecretMapper $mapper, ?IDBConnection $db = null): SecretService {
+		$db ??= $this->db;
 		$versions = new SecretVersionService(
-			mapper: new SecretVersionMapper(db: $this->db),
+			mapper: new SecretVersionMapper(db: $db),
 			secretMapper: $mapper,
 			accessGuard: $this->createMock(SecretVersionAccessGuard::class),
 			logger: $this->createMock(LoggerInterface::class),
-			db: $this->db,
+			db: $db,
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 		);
@@ -163,7 +199,7 @@ class ApplicationWriteVersionLockTest extends TestCase {
 			migrationService: $this->createMock(MigrationService::class),
 			linkShareService: $this->createMock(LinkShareService::class),
 			logger: $this->createMock(LoggerInterface::class),
-			db: $this->db,
+			db: $db,
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			versionService: $versions,
@@ -223,32 +259,39 @@ class ApplicationWriteVersionLockTest extends TestCase {
 
 	/**
 	 * The row moves again before the retry's lock: the write is refused
-	 * (the 409 of the machine API) and leaves no head and no version.
+	 * (the 409 of the machine API) and changes nothing, and both other
+	 * writes survive.
 	 *
-	 * The second other write runs inside this write's transaction, since
-	 * the test has one connection, so the refusal's rollback takes it back
-	 * too. What it shows is the database's answer: 0 rows on both locks.
+	 * The row and the writes are committed, outside the test's transaction:
+	 * the second other write runs on a second connection, in autocommit,
+	 * while this write's retry has its transaction open on the first. The
+	 * rows are deleted by id in tearDown.
 	 */
 	public function testAWriteThatLosesTwiceIsRefusedAndWritesNothing(): void {
+		$this->db->rollBack();
 		$mapper = $this->racingMapper();
 		$service = $this->service(mapper: $mapper);
+		$other = $this->secondConnection();
+		$otherService = $this->service(mapper: new SecretMapper($other), db: $other);
 		$id = $this->insertApplicationSecret(mapper: $mapper)->getId();
+		$this->committed[] = $id;
 		$mapper->afterRead[1] = static function () use ($service, $id): void {
 			$service->updateByApplication(id: $id, data: ['key' => 'MEANWHILE'], applicationId: self::APP);
 		};
-		$mapper->beforeLock[2] = static function () use ($service, $id): void {
-			$service->updateByApplication(id: $id, data: ['key' => 'LATEST'], applicationId: self::APP);
+		$mapper->beforeLock[2] = static function () use ($otherService, $id): void {
+			$otherService->updateByApplication(id: $id, data: ['key' => 'LATEST'], applicationId: self::APP);
 		};
 
 		try {
 			$service->updateByApplication(id: $id, data: ['key' => 'NEW'], applicationId: self::APP);
 			$this->fail('A write that loses its lock twice must be refused');
 		} catch (StaleWriteException) {
+			// The refusal this test expects.
 		}
 
 		$this->assertSame([0, 0], $mapper->locks);
-		$this->assertNotSame('NEW', $mapper->findById($id)->getKey());
-		// Only the first other write's snapshot of READ: this write kept none.
-		$this->assertSame(['READ'], $this->versionKeys(secretId: $id));
+		$this->assertSame('LATEST', $mapper->findById($id)->getKey());
+		// READ kept by MEANWHILE, MEANWHILE kept by LATEST; none by this write.
+		$this->assertSame(['MEANWHILE', 'READ'], $this->versionKeys(secretId: $id));
 	}
 }
