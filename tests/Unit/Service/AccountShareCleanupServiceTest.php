@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\DelegateCopyKeeper;
+use OCA\Keepiq\Service\DelegatedSecretTransfer;
 use OCA\Keepiq\Service\DeletionReport;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\ShareGrantReader;
@@ -80,9 +81,11 @@ class AccountShareCleanupServiceTest extends TestCase {
 			secretMapper: $this->secretMapper,
 			shareMapper: $this->shareMapper,
 			groupShareMapper: $this->groupShareMapper,
-			delegationMapper: $this->createMock(SecretDelegationMapper::class),
 			stageMapper: $this->createMock(ShareSaveStageMapper::class),
-			ownerTransfer: $this->createMock(SecretOwnerTransferService::class),
+			delegatedTransfer: new DelegatedSecretTransfer(
+				delegationMapper: $this->createMock(SecretDelegationMapper::class),
+				ownerTransfer: $this->createMock(SecretOwnerTransferService::class),
+			),
 			quarantineScan: $this->clearedQuarantineScan(),
 			delegateCopies: new DelegateCopyKeeper(
 				rowJudge: $this->shareRowJudge(targets: $this->shareMapper, secrets: $this->secretMapper),

@@ -47,6 +47,7 @@ use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Service\DelegateCopyKeeper;
+use OCA\Keepiq\Service\DelegatedSecretTransfer;
 use OCA\Keepiq\Service\ExpiredGrantRemover;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
@@ -132,13 +133,15 @@ class AccountDeletionServiceTest extends TestCase {
 				secretMapper: $this->m['secret'],
 				shareMapper: $this->m['share'],
 				groupShareMapper: $this->m['group'],
-				delegationMapper: $this->m['delegation'],
 				stageMapper: $this->m['stage'],
-				ownerTransfer: new SecretOwnerTransferService(
-					db: $this->createMock(IDBConnection::class),
-					secretMapper: $this->m['secret'],
-					federatedShares: $this->m['federated'],
-					linkShares: $this->m['link'],
+				delegatedTransfer: new DelegatedSecretTransfer(
+					delegationMapper: $this->m['delegation'],
+					ownerTransfer: new SecretOwnerTransferService(
+						db: $this->createMock(IDBConnection::class),
+						secretMapper: $this->m['secret'],
+						federatedShares: $this->m['federated'],
+						linkShares: $this->m['link'],
+					),
 				),
 				quarantineScan: $this->m['scan'],
 				delegateCopies: new DelegateCopyKeeper(
@@ -927,6 +930,10 @@ class AccountDeletionServiceTest extends TestCase {
 			'a direct row whose own limit is not on the copy yet' => ['row limit only'],
 			'a copy limited without a grant saying so' => ['copy limit only'],
 			'a team-folder copy through a use-only membership' => ['folder use-only'],
+			'a group row use-only on its own beside a full group share' => ['group row use-only'],
+			'a group row expiring on its own beside a full group share' => ['group row expiring'],
+			'a full direct row and a use-only membership the copy does not show yet' => ['folder use-only grant only'],
+			'a full direct row and an expiring membership the copy does not show yet' => ['folder expiring'],
 		];
 	}//end limitedDelegateCopies()
 
@@ -938,7 +945,7 @@ class AccountDeletionServiceTest extends TestCase {
 	 * @return AccountDeletionService
 	 */
 	private function limitedDelegateCopy(string $case): AccountDeletionService {
-		$fromGroup = in_array($case, ['group use-only', 'group expiring'], true);
+		$fromGroup = in_array($case, ['group use-only', 'group expiring', 'group row use-only', 'group row expiring'], true);
 		$service   = $this->sharedWithTheDelegate(daveGroupShareId: ($fromGroup === true ? 'gs-1' : null));
 		$row  = $this->shareRows['st-dave'];
 		$copy = $this->secrets['c-dave'];
@@ -968,6 +975,26 @@ class AccountDeletionServiceTest extends TestCase {
 				break;
 			case 'copy limit only':
 				$copy->setAccessExpiresAt($end);
+				break;
+			case 'group row use-only':
+				// Linked to the full group share, so no grant carries the row's own flag.
+				$row->setUseOnly(true);
+				break;
+			case 'group row expiring':
+				$row->setExpiresAt($end);
+				break;
+			case 'folder use-only grant only':
+				// Only the membership limits the copy: the row is direct and full, the copy carries nothing yet.
+				$membership = new TeamFolderMember();
+				$membership->setGrade('read');
+				$membership->setUseOnly(true);
+				$this->memberships['dave'] = [$membership];
+				break;
+			case 'folder expiring':
+				$membership = new TeamFolderMember();
+				$membership->setGrade('write');
+				$membership->setExpiresAt($end);
+				$this->memberships['dave'] = [$membership];
 				break;
 			default:
 				$row->setTeamFolderId('tf-1');
