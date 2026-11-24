@@ -1,7 +1,7 @@
 {
     "description": "Psalm on its own, so its PHP floor (php-64bit ~8.3.16) does not set the platform the app's own dependencies resolve against. Installed by `composer install` in the root through bamarni/composer-bin-plugin (forward-command).",
     "require": {
-        "vimeo/psalm": "~7.6.0"
+        "vimeo/psalm": "^7.6"
     },
     "config": {
         "platform": {
