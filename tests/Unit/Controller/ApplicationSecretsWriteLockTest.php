@@ -188,13 +188,20 @@ class ApplicationSecretsWriteLockTest extends TestCase {
 		$read = $this->row(key: 'OLD', version: '2026-01-01T00:00:00+00:00');
 		$this->headers['If-Match'] = $this->envelopes->etag($read);
 		$this->mapper->expects($this->once())->method('findById')->willReturn($read);
-		$this->mapper->expects($this->once())->method('advanceVersion')->willReturn(1);
+		$written = null;
+		$this->mapper->expects($this->once())->method('advanceVersion')->willReturnCallback(
+			static function (string $id, DateTime $base, DateTime $savedAt) use (&$written): int {
+				$written = clone $savedAt;
+				return 1;
+			}
+		);
 		$this->mapper->expects($this->once())->method('update')->willReturnArgument(0);
 
 		$response = $this->controller->update('s1');
 
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$stored = $this->row(key: 'NEW', version: '@'.$read->getUpdatedAt()->getTimestamp());
+		$this->assertInstanceOf(DateTime::class, $written);
+		$stored = $this->row(key: 'NEW', version: '@'.$written->getTimestamp());
 		$this->assertSame($this->envelopes->etag($stored), $this->setHeaders($response)['ETag']);
 	}//end testAMatchingTagWritesAndAnswersTheStoredEtag()
 

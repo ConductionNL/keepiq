@@ -27,6 +27,8 @@ use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\PreconditionFailedException;
 use OCA\Keepiq\Exception\StaleWriteException;
+use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Service\BrokerMintRecorder;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
@@ -57,6 +59,16 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 	 * @var SecretMapper&MockObject
 	 */
 	private SecretMapper $mapper;
+
+	/**
+	 * @var AuditService&MockObject
+	 */
+	private AuditService $audit;
+
+	/**
+	 * @var BrokerMintRecorder&MockObject
+	 */
+	private BrokerMintRecorder $mints;
 
 	/**
 	 * Every step of the writes in order: begin, advance, snapshot, update, commit, rollback.
@@ -119,6 +131,9 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 			);
 		}
 
+		$this->audit = $this->createMock(AuditService::class);
+		$this->mints = $this->createMock(BrokerMintRecorder::class);
+
 		$this->service = new SecretService(
 			mapper: $this->mapper,
 			typeService: $this->createMock(SecretTypeService::class),
@@ -129,7 +144,9 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 			db: $db,
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
+			auditService: $this->audit,
 			versionService: $versions,
+			brokerMints: $this->mints,
 		);
 	}//end setUp()
 
@@ -193,15 +210,29 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 	}//end locksAnswer()
 
 	/**
+	 * The update is audited and its broker mint recorded this many times.
+	 *
+	 * @param int $times 1 for a write that landed, 0 for a refused one
+	 *
+	 * @return void
+	 */
+	private function expectAuditedAndRecorded(int $times): void {
+		$this->audit->expects($this->exactly($times))->method('record');
+		$this->mints->expects($this->exactly($times))->method('record');
+	}//end expectAuditedAndRecorded()
+
+	/**
 	 * The version is kept only after the compare-and-set is won, and the row
 	 * is written in the same transaction at a version after the one read, in
-	 * whole seconds; the key's ciphertext age is that same version.
+	 * whole seconds; the key's ciphertext age is that same version. The
+	 * update is audited and its mint recorded once.
 	 *
 	 * @return void
 	 */
 	public function testTheVersionIsKeptOnlyAfterTheLockIsWon(): void {
 		$this->reads($this->row(key: 'OLD', version: '2026-01-01T00:00:00+00:00'));
 		$this->locksAnswer(1);
+		$this->expectAuditedAndRecorded(1);
 
 		$result = $this->service->updateByApplication(id: 's1', data: ['key' => 'NEW'], applicationId: 'app-1');
 
@@ -234,8 +265,8 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 	/**
 	 * A write that lands between the read and the write is kept as a
 	 * version, and the update is made once more on the row as it is now,
-	 * locked on that row's version. The three-argument call of an in-process
-	 * caller works unchanged.
+	 * locked on that row's version, and audited and recorded once. The
+	 * three-argument call of an in-process caller works unchanged.
 	 *
 	 * @return void
 	 */
@@ -244,6 +275,7 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 		$meanwhile = $this->row(key: 'MEANWHILE', version: '2026-01-01T00:00:05+00:00');
 		$this->reads($read, $meanwhile);
 		$this->locksAnswer(0, 1);
+		$this->expectAuditedAndRecorded(1);
 
 		$result = $this->service->updateByApplication('s1', ['key' => 'NEW'], 'app-1');
 
@@ -258,7 +290,8 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 	}//end testALostLockIsRetriedOnceOnTheRowAsItIsNow()
 
 	/**
-	 * A second lost lock refuses the update: nothing is kept or written.
+	 * A second lost lock refuses the update: nothing is kept, written,
+	 * audited or recorded.
 	 *
 	 * @return void
 	 */
@@ -270,6 +303,7 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 			$latest
 		);
 		$this->locksAnswer(0, 0);
+		$this->expectAuditedAndRecorded(0);
 
 		try {
 			$this->service->updateByApplication(id: 's1', data: ['key' => 'NEW'], applicationId: 'app-1');
@@ -350,7 +384,7 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 
 	/**
 	 * A precondition that fails on the row read refuses the write before any
-	 * lock is taken, reporting that row.
+	 * lock is taken, reporting that row; nothing is audited or recorded.
 	 *
 	 * @return void
 	 */
@@ -358,6 +392,7 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 		$read = $this->row(key: 'OLD', version: '2026-01-01T00:00:00+00:00');
 		$this->reads($read);
 		$this->locksAnswer();
+		$this->expectAuditedAndRecorded(0);
 
 		try {
 			$this->service->updateByApplication(id: 's1', data: ['key' => 'NEW'], applicationId: 'app-1', precondition: static fn (): bool => false);
@@ -372,7 +407,7 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 	/**
 	 * A precondition naming the version read that loses the lock is refused
 	 * with the row as it is now: the write is not retried over a version the
-	 * caller never saw, and nothing is kept or written.
+	 * caller never saw, and nothing is kept, written, audited or recorded.
 	 *
 	 * @return void
 	 */
@@ -381,6 +416,7 @@ class SecretServiceApplicationWriteLockTest extends TestCase {
 		$meanwhile = $this->row(key: 'MEANWHILE', version: '2026-01-01T00:00:05+00:00');
 		$this->reads($read, $meanwhile);
 		$this->locksAnswer(0);
+		$this->expectAuditedAndRecorded(0);
 
 		try {
 			$this->service->updateByApplication(
