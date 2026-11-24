@@ -871,6 +871,23 @@ export interface ShareSaveNote {
 	paused?: string[]
 }
 
+const isCloudIds = (value: unknown): value is string[] => Array.isArray(value) && value.length > 0 && value.every((cloudId) => typeof cloudId === 'string')
+
+/**
+ * The note's fields that have something to say, in their own shape; `undefined` when none has. The bar and the passkey
+ * window stay open for a note only on this, and word exactly this, so a note with nothing to show never keeps them open.
+ */
+export function shareSaveNoteOf(note: unknown): ShareSaveNote | undefined {
+	const n = (typeof note === 'object' && note !== null ? note : {}) as Partial<Record<keyof ShareSaveNote, unknown>>
+	const valid: ShareSaveNote = {
+		...(n.ownerOnly === true && { ownerOnly: true as const }),
+		...(typeof n.notReached === 'number' && Number.isInteger(n.notReached) && n.notReached > 0 && { notReached: n.notReached }),
+		...(isCloudIds(n.suspended) && { suspended: n.suspended }),
+		...(isCloudIds(n.paused) && { paused: n.paused }),
+	}
+	return Object.keys(valid).length > 0 ? valid : undefined
+}
+
 /** Popup → background requests with their own reply shapes, listed in `PopupReplies`. */
 export type PopupRequest =
 	| { kind: 'vault.sync' }

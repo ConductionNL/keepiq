@@ -4,7 +4,7 @@
  */
 import { fromBase64Url, toBase64Url } from '@/src/crypto/base64'
 import { recordLastUsed } from '@/src/last-used'
-import type { PasskeyCredentialJSON, PasskeyResult, ShareSaveNote, VaultWriteError } from '@/src/messages'
+import { shareSaveNoteOf, type PasskeyCredentialJSON, type PasskeyResult, type ShareSaveNote, type VaultWriteError } from '@/src/messages'
 import { savePasskeyCounter } from '@/src/vault/write'
 import { credentialIdKey, findPasskeys } from './match'
 import type { CeremonyRequest } from './request'
@@ -55,7 +55,7 @@ export async function signIn({ ceremony, key, itemId, credentialId, deliver }: S
 	const assertion = await getAssertion({
 		credential: entry.credential, key: signingKey, origin: ceremony.origin, challenge: fromBase64Url(ceremony.challenge), counter: saved.value.counter, verified: ceremony.verified,
 	})
-	const note = saved.value.shareSave
+	const note = shareSaveNoteOf(saved.value.shareSave)
 	if (!(await deliver({ type: 'credential', credential: toJSON(assertion) }, note !== undefined))) return 'ended'
 	await recordLastUsed(ceremony.accountId, entry.row.id)
 	return note ? { shareSave: note } : 'delivered'
