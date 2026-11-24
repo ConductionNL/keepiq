@@ -8,7 +8,7 @@
  * click on the acknowledgement is what releases it. Set GOLDEN_RECORD=1 to
  * rewrite the fixture, then run again without it.
  *
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
  */
 
 import { mount } from '@vue/test-utils'

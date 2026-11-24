@@ -105,7 +105,7 @@ function systemTypesFirst(types) {
  * @param {object} typeStore The secret type store (types, createType).
  * @return {Promise<{typeIdFor: function(object): (string|null), created: Array<{name: string, label: string}>, fallbacks: Array<{sourceRow: number, type: string}>}>}
  *   The row-to-type-id lookup, the types created and the rows that fell back.
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
  */
 export async function resolveRowTypes(rows, typeStore) {
 	const { ids, idsByName } = typeIndex(typeStore.types)
@@ -410,7 +410,7 @@ function plainRead(rows) {
  *
  * @param {Array<object>} rows The parsed rows.
  * @return {Array<string>} The left-out fields, in first-seen order.
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
  */
 function partialFieldsOf(rows) {
 	const fields = new Set()
@@ -700,7 +700,7 @@ export const useImportStore = defineStore('import', {
 		 * @return {Promise<object>} The ciphertext-only item.
 		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-import-and-export-keep-a-logins-code-and-passkeys-on-it
 		 * @spec openspec/specs/vault-custom-fields/spec.md#requirement-a-value-must-fit-its-schema
 		 */
@@ -777,7 +777,7 @@ export const useImportStore = defineStore('import', {
 		 *   below it (keepiq#749).
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
 		async commit(options = {}) {
 			const rootFolder = rootFolderName(options)

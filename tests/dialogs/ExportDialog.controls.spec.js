@@ -125,7 +125,7 @@ describe('ExportDialog controls', () => {
 	})
 
 	it('offers the whole vault, chosen folders and chosen types as scope, and exports the picked folders', async () => {
-		// @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+		// @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		const wrapper = await mountDialog()
 		const select = wrapper.findComponent({ name: 'NcSelect' })
 
