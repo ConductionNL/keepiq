@@ -1,0 +1,13 @@
+{
+	"app": "keepiq",
+	"pages": [
+		{
+			"name": "Dashboard",
+			"path": "/index.php/apps/keepiq/"
+		},
+		{
+			"name": "All secrets",
+			"path": "/index.php/apps/keepiq/secrets"
+		}
+	]
+}
