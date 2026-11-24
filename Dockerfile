@@ -57,7 +57,7 @@ RUN mkdir -p "/out/${APP_ID}" && rsync -a \
         --include='/src/' --include='/src/manifest.json' --exclude='/src/*' \
         --exclude='/tests' --exclude='/test-scenarios' --exclude='/openspec' \
         --exclude='/data' --exclude='/resources' --exclude='/phpcs-custom-sniffs' \
-        --exclude='/package*.json' --exclude='/composer.*' \
+        --exclude='/package*.json' --exclude='/composer.*' --exclude='/vendor-bin' \
         --exclude='/*.config.js' --exclude='/*.config.mjs' --exclude='/*.config.ts' \
         --exclude='/php*.xml' --exclude='/psalm.xml' --exclude='/phpstan*' \
         --exclude='/sbom.cdx.json' --exclude='/.phpunit*' \

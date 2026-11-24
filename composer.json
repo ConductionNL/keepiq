@@ -21,6 +21,7 @@
         "web-token/jwt-library": "^4.0"
     },
     "require-dev": {
+        "bamarni/composer-bin-plugin": "^1.8",
         "conduction/coding-standard": "^1.0",
         "conduction/hydra-gates": "^1.8.2",
         "cyclonedx/cyclonedx-php-composer": "^6.2",
@@ -33,11 +34,10 @@
         "phpunit/phpunit": "^10.5",
         "roave/security-advisories": "dev-latest",
         "squizlabs/php_codesniffer": "^4.0",
-        "twig/twig": "^3.27.0",
-        "vimeo/psalm": "^7.6"
+        "twig/twig": "^3.27.0"
     },
     "scripts": {
-        "lint": "find . -name \\*.php -not -path './vendor/*' -not -path './build/*' -print0 | xargs -0 -n1 php -l",
+        "lint": "find . -name \\*.php -not -path './vendor/*' -not -path './vendor-bin/*' -not -path './build/*' -print0 | xargs -0 -n1 php -l",
         "cs:check": "php-cs-fixer fix --dry-run --diff",
         "cs:fix": "php-cs-fixer fix",
         "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml",
@@ -45,7 +45,7 @@
         "phpcs:output": "./vendor/bin/phpcs --standard=phpcs.xml --report=json lib/ 2>/dev/null | tail -1 > phpcs-output.json",
         "phpmd": "E=0; php -d memory_limit=2G ./vendor/bin/phpmd lib text phpmd.xml --exclude '*/lib/Db/*' || E=$?; php -d memory_limit=2G ./vendor/bin/phpmd lib/Db text phpmd-db.xml || E=$?; php -d memory_limit=2G ./vendor/bin/phpmd lib text vendor/conduction/hydra-gates/quality-config/phpmd-unusedparams.xml || E=$?; exit $E",
         "phpmetrics": "./vendor/bin/phpmetrics --report-html=phpmetrics lib/",
-        "psalm": "./vendor/bin/psalm --threads=1 --no-cache --memory-limit=2G",
+        "psalm": "./vendor-bin/psalm/vendor/bin/psalm --threads=1 --no-cache --memory-limit=2G",
         "phpstan": "./vendor/bin/phpstan analyse --memory-limit=1G",
         "test:unit": "./vendor/bin/phpunit --colors=always --no-coverage",
         "test:all": "./vendor/bin/phpunit --colors=always --no-coverage",
@@ -83,13 +83,21 @@
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "cyclonedx/cyclonedx-php-composer": true
+            "cyclonedx/cyclonedx-php-composer": true,
+            "bamarni/composer-bin-plugin": true
         },
         "optimize-autoloader": true,
         "sort-packages": true,
         "platform": {
-            "php": "8.3.16",
+            "php": "8.3",
             "ext-xsl": "1"
+        }
+    },
+    "extra": {
+        "bamarni-bin": {
+            "bin-links": false,
+            "forward-command": true,
+            "target-directory": "vendor-bin"
         }
     }
 }

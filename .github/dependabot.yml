@@ -18,3 +18,18 @@ updates:
         - "*"
       exclude:
         - "conduction/*"
+  # Psalm has its own install (vendor-bin/psalm, bamarni/composer-bin-plugin),
+  # so its own platform PHP stays out of the app's lock. The root entry does
+  # not see it; this one keeps psalm and its dependencies updated.
+  - package-ecosystem: "composer"
+    directory: "/vendor-bin/psalm"
+    schedule:
+      interval: "weekly"
+    target-branch: "development"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 2
+      include:
+        - "*"
+      exclude:
+        - "conduction/*"

@@ -206,6 +206,34 @@ class ApplicationSecretsWriteLockTest extends TestCase {
 	}//end testAMatchingTagWritesAndAnswersTheStoredEtag()
 
 	/**
+	 * If-Match `*` matches any version (RFC 9110 13.1.1), so a lock lost to a
+	 * write that landed after the read is retried on the row as it is now,
+	 * as without the header: the answer is 200, not 412.
+	 *
+	 * @return void
+	 */
+	public function testAnyVersionTagThatLosesTheLockIsWrittenOnTheRowAsItIsNow(): void {
+		$this->headers['If-Match'] = '*';
+		$this->mapper->expects($this->exactly(2))->method('findById')->willReturnOnConsecutiveCalls(
+			$this->row(key: 'OLD', version: '2026-01-01T00:00:00+00:00'),
+			$this->row(key: 'MEANWHILE', version: '2026-01-01T00:00:05+00:00')
+		);
+		$this->mapper->expects($this->exactly(2))->method('advanceVersion')->willReturnOnConsecutiveCalls(0, 1);
+		$written = [];
+		$this->mapper->expects($this->once())->method('update')->willReturnCallback(
+			static function (Secret $secret) use (&$written): Secret {
+				$written[] = $secret->getKey();
+				return $secret;
+			}
+		);
+
+		$response = $this->controller->update('s1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['NEW'], $written);
+	}//end testAnyVersionTagThatLosesTheLockIsWrittenOnTheRowAsItIsNow()
+
+	/**
 	 * Without If-Match, a lock lost twice is a 409, not a server error.
 	 *
 	 * @return void
