@@ -46,6 +46,7 @@ use PHPUnit\Framework\TestCase;
  * @uses   \OCA\Keepiq\Db\SecretListFilter
  * @uses   \OCA\Keepiq\Db\SecretListOrganisation
  * @uses   \OCA\Keepiq\Db\SecretStateFilter
+ * @uses   \OCA\Keepiq\Db\SecretTypeMatch
  * @uses   \OCA\Keepiq\Db\StringPrimaryKey
  * @uses   \OCA\Keepiq\Db\SuiteOwnerRef
  */
@@ -280,6 +281,49 @@ class SecretMapperQueriesTest extends TestCase {
 			actual: array_slice($this->opsOf(index: 0), -4)
 		);
 	}//end testFindByOwnerKeepsAnAllowedSortColumn()
+
+	/**
+	 * A type filter looks the type up first; on Passkey the listing and its
+	 * count also take the logins holding passkeys.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 */
+	public function testThePasskeyTypeFilterAlsoListsLoginsWithPasskeys(): void {
+		$this->queueRows(rows: [['name' => 'passkey']]);
+		$this->queueRows(rows: [$this->row(id: 'pk-item'), $this->row(id: 'login-with-passkey')]);
+		$mapper = $this->mapper();
+
+		$found = $mapper->findByOwner(ownerType: 'user', ownerId: 'alice', typeId: 't-passkey');
+
+		$this->assertSame(expected: ['pk-item', 'login-with-passkey'], actual: $this->ids(secrets: $found));
+		$this->assertSame(
+			expected: ['select(name)', 'from(keepiq_secret_types)', 'where(eq(id, :p3))', 'setMaxResults(1)'],
+			actual: $this->opsOf(index: 1)
+		);
+		$this->assertSame(expected: [':p3' => 't-passkey'], actual: $this->paramsOf(index: 1));
+		$this->assertContains(
+			needle: 'andWhere(orX(eq(type_id, :p2), andX(isNotNull(passkeys), neq(passkeys, :p4))))',
+			haystack: $this->opsOf(index: 0)
+		);
+	}//end testThePasskeyTypeFilterAlsoListsLoginsWithPasskeys()
+
+	/**
+	 * Any other type filters on the type alone, for the count as for the list.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 */
+	public function testAnotherTypeFilterMatchesTheTypeOnly(): void {
+		$this->queueRows(rows: [['name' => 'login']]);
+		$this->queueRows(rows: [['cnt' => 3]]);
+
+		$this->assertSame(expected: 3, actual: $this->mapper()->countByOwner(ownerType: 'user', ownerId: 'alice', typeId: 't-login'));
+		$this->assertContains(needle: 'andWhere(eq(type_id, :p2))', haystack: $this->opsOf(index: 0));
+		$this->assertSame(expected: [], actual: preg_grep(pattern: '/passkeys/', array: $this->opsOf(index: 0)));
+	}//end testAnotherTypeFilterMatchesTheTypeOnly()
 
 	/**
 	 * The rotation scan pages user-owned rows by id.
