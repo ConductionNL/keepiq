@@ -40,6 +40,8 @@ use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
+use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\TeamFolderContributionService;
 use OCA\Keepiq\Service\TeamFolderMembershipResolver;
@@ -174,8 +176,8 @@ class TeamFolderContributionServiceTest extends TestCase {
 				bulkGrantMapper: $this->createMock(BulkGrantShareTargetMapper::class),
 				copies: new RecipientSecretCopyService(
 					secretMapper: $secretMapper,
-					suiteMapper: $suiteMapper,
-					typeService: $typeService,
+					copies: new RecipientSecretCopyFactory(secretMapper: $secretMapper, suiteMapper: $suiteMapper, typeService: $typeService),
+					partnerShares: $this->createStub(PartnerShareRevoker::class),
 				),
 				notificationService: $this->createMock(NotificationService::class),
 				db: $this->createMock(IDBConnection::class),

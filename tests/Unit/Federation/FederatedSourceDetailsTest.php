@@ -44,7 +44,6 @@ use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
-use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareRowJudge;
@@ -181,7 +180,6 @@ class FederatedSourceDetailsTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $delivery,
 			audit: $audit,
-			revoker: new PartnerShareRevoker($shareMapper, $delivery, $audit),
 		);
 
 		$typeService = $this->createMock(SecretTypeService::class);

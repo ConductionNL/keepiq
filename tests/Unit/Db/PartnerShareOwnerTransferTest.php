@@ -34,7 +34,6 @@ use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
-use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCP\Federation\ICloudIdManager;
 use OCP\IDBConnection;
@@ -120,7 +119,6 @@ class PartnerShareOwnerTransferTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $this->createMock(FederatedNotificationDelivery::class),
 			audit: $this->createMock(FederatedShareAuditTrail::class),
-			revoker: $this->createMock(PartnerShareRevoker::class),
 		);
 	}
 

@@ -108,7 +108,7 @@ The owner's browser MUST encrypt the value, login and additional fields, and the
 
 ### Requirement: Owner updates reach the remote copy and revocation removes it
 
-When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. When the shared secret is deleted for good, by purging it from the trash, by the trash retention job or by deleting the owner's account, the sending server MUST revoke each of its partner shares the same way, and keep retrying the `SHARE_UNSHARED` for at least 30 days until the partner takes it, with no more than 6 hours between attempts. Only after 30 days without success MAY it drop the share, recording the failure in the audit trail. On such a deletion, a share the recipient declined is removed without a notification. When a `SHARE_UNSHARED` arrives for a share the receiving server has already ended, for example because the answer to an earlier one was lost, the receiving server MUST answer it as taken once the shared secret and the partner's signature check out, and MUST NOT count it as a failed request; any other notification for an ended share MUST still be refused. A share whose partner was removed, whose recipient certificate no longer verifies, or whose lookup answers for another cloud id than the share's, MUST be suspended and shown to the owner.
+When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. When the shared secret is deleted for good, by purging it from the trash, by the trash retention job or by deleting the owner's account, the sending server MUST revoke each of its partner shares the same way, and keep retrying the `SHARE_UNSHARED` for at least 30 days while the partner cannot be reached (no answer, a 5xx or a 429), with no more than 6 hours between attempts. Only after 30 days without success MAY it drop the share, recording the failure in the audit trail. When the partner refuses it outright, with a 4xx other than 429, at the 6th attempt or any later one, the sending server MUST drop the share at that attempt, recording the failure in the audit trail the same way, and MUST NOT send it again. The same holds for a user's copy of a secret shared with them that is deleted for good together with its share, because the owner revokes that share, trashes or purges the secret, ends the team-folder share or the user leaves the group it came through: the partner shares that user made of the copy MUST be revoked before the copy goes, each `SHARE_UNSHARED` left to the retry job. On such a deletion, a share the recipient declined, and a share whose partner was removed, whatever its status, MUST be removed without a notification and recorded as revoked in the audit trail; a suspended share whose partner is still one is revoked and told like any other. A pending `SHARE_UNSHARED` whose partner was removed after it was queued MUST NOT be sent again: the retry job MUST drop the share and record the failure in the audit trail. When a `SHARE_UNSHARED` arrives for a share the receiving server has already ended, for example because the answer to an earlier one was lost, the receiving server MUST answer it as taken once the shared secret and the partner's signature check out, and MUST NOT count it as a failed request; any other notification for an ended share MUST still be refused. A share whose partner was removed, whose recipient certificate no longer verifies, or whose lookup answers for another cloud id than the share's, MUST be suspended and shown to the owner.
 
 #### Scenario: A password change reaches Bob
 
@@ -133,8 +133,23 @@ When the owner updates a federated shared secret, the owner's browser MUST encry
 
 - **GIVEN** a federated share accepted by Bob
 - **WHEN** Alice's secret is deleted for good, because she purges it from the trash, the retention job purges it or her account is deleted
-- **THEN** Alice's server MUST send `SHARE_UNSHARED` for Bob's share, and retry it for at least 30 days until Bob's server takes it
+- **THEN** Alice's server MUST send `SHARE_UNSHARED` for Bob's share, and retry it for at least 30 days while Bob's server cannot be reached
 - **AND** Bob's server MUST delete the copy from Bob's vault
+
+#### Scenario: A removed partner is not told
+
+- **GIVEN** a federated share to Bob, suspended or failed, whose organisation the administrator removed as a partner
+- **WHEN** Alice's secret is deleted for good
+- **THEN** Alice's server MUST remove the share and record it as revoked in the audit trail
+- **AND** Alice's server MUST NOT queue or send a `SHARE_UNSHARED` to Bob's server
+- **AND** when Bob's organisation is removed only after a `SHARE_UNSHARED` for one of its shares was queued, the retry job MUST drop that share without sending it, recording the failure in the audit trail
+
+#### Scenario: A received copy deleted for good ends its partner shares
+
+- **GIVEN** Carol shared a secret with Bob, and Bob shared his full-access copy with a partner recipient
+- **WHEN** Bob's copy is deleted for good with its share, because Carol revokes the share, trashes or purges her secret, ends the team-folder share, or Bob leaves the group the share came through
+- **THEN** Bob's partner share MUST be revoked before his copy goes, with `SHARE_UNSHARED` pending
+- **AND** the retry job MUST send it, so the partner deletes its copy
 
 #### Scenario: An unreachable partner is retried for 30 days
 
@@ -143,6 +158,13 @@ When the owner updates a federated shared secret, the owner's browser MUST encry
 - **THEN** Alice's server MUST keep retrying the `SHARE_UNSHARED`, at most 6 hours apart, and MUST NOT give it up after a fixed number of attempts
 - **AND** once Bob's server is back and takes it, Bob's copy MUST be deleted
 - **AND** only a share still not taken after 30 days MAY be dropped, with the failure recorded in the audit trail
+
+#### Scenario: A partner that refuses the unshare is not retried for 30 days
+
+- **GIVEN** a federated share accepted by Bob, whose server answers every `SHARE_UNSHARED` for it with a 400
+- **WHEN** Alice's secret is deleted for good
+- **THEN** Alice's server MUST drop the share after the 6th refused attempt, with the failure recorded in the audit trail
+- **AND** Alice's server MUST NOT send that `SHARE_UNSHARED` again
 
 #### Scenario: A repeated unshare is taken
 

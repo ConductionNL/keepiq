@@ -26,7 +26,7 @@ use OCA\Keepiq\Db\SecretTagMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
-use OCA\Keepiq\Service\PartnerShareRevoker;
+use OCA\Keepiq\Service\SecretDeleteCascade;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareSaveRequiredGuard;
@@ -67,7 +67,7 @@ class SecretServiceOrganisationTest extends TestCase {
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			tagMapper: $this->tags,
-			partnerShares: $this->createStub(PartnerShareRevoker::class),
+			deleteCascade: $this->createStub(SecretDeleteCascade::class),
 		);
 
 		$secret = new Secret();

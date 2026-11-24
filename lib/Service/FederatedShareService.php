@@ -79,6 +79,13 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	private readonly FederatedValueFields $valueFields;
 
 	/**
+	 * Ends partner shares: one its owner revokes, or all of a secret deleted for good.
+	 *
+	 * @var PartnerShareRevoker
+	 */
+	private readonly PartnerShareRevoker $revoker;
+
+	/**
 	 * Constructor for FederatedShareService.
 	 *
 	 * @param FederatedShareMapper $shareMapper Outbound share rows
@@ -90,7 +97,6 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @param ISecureRandom $random The shared secret
 	 * @param FederatedNotificationDelivery $delivery Notifications with retries
 	 * @param FederatedShareAuditTrail $audit Identifier-only audit
-	 * @param PartnerShareRevoker $revoker Revokes a share and tells the partner
 	 * @param LoggerInterface|null $logger Warns about a pull refused for the value fields it did not declare
 	 *
 	 * @return void
@@ -109,10 +115,10 @@ class FederatedShareService implements FederatedShareServiceInterface {
 		private ISecureRandom $random,
 		private FederatedNotificationDelivery $delivery,
 		private FederatedShareAuditTrail $audit,
-		private PartnerShareRevoker $revoker,
 		private ?LoggerInterface $logger = null,
 	) {
 		$this->valueFields = new FederatedValueFields();
+		$this->revoker = new PartnerShareRevoker(shareMapper: $shareMapper, delivery: $delivery, audit: $audit, partners: $partners);
 	}//end __construct()
 
 	/**

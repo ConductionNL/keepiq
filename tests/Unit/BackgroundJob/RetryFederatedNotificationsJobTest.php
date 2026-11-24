@@ -21,6 +21,7 @@ namespace OCA\Keepiq\Tests\Unit\BackgroundJob;
 
 use OCA\Keepiq\BackgroundJob\RetryFederatedNotificationsJob;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -68,6 +69,7 @@ class RetryFederatedNotificationsJobTest extends TestCase {
 			time: $this->createMock(originalClassName: ITimeFactory::class),
 			delivery: $this->delivery,
 			logger: $this->logger,
+			partnerShares: $this->createStub(PartnerShareRevoker::class),
 		);
 	}//end setUp()
 

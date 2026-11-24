@@ -325,7 +325,6 @@ class FederatedShareAcceptTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $this->createMock(\OCA\Keepiq\Service\FederatedNotificationDelivery::class),
 			audit: new \OCA\Keepiq\Service\FederatedShareAuditTrail(),
-			revoker: $this->createMock(\OCA\Keepiq\Service\PartnerShareRevoker::class),
 		);
 
 		return new FederationOcmRequestListener($this->createMock(FederatedCertificateService::class), $service);

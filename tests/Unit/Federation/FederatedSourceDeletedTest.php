@@ -24,11 +24,14 @@ namespace OCA\Keepiq\Tests\Unit\Federation;
 
 use DateTime;
 use OCA\Keepiq\BackgroundJob\PurgeTrashedSecretsJob;
+use OCA\Keepiq\BackgroundJob\RetryFederatedNotificationsJob;
 use OCA\Keepiq\Db\DashboardSettingMapper;
 use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
+use OCA\Keepiq\Db\FederationPartner;
+use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
@@ -39,7 +42,9 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Db\SecretTrashMapper;
+use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
@@ -48,19 +53,28 @@ use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Service\AccountDeletionService;
 use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\AccountSuiteCleanupService;
+use OCA\Keepiq\Service\AttachmentService;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
+use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\OwnedSecretCleanup;
 use OCA\Keepiq\Service\PartnerShareRevoker;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
+use OCA\Keepiq\Service\RecipientSecretCopyFactory;
+use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
+use OCA\Keepiq\Service\SecretDeleteCascade;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretSharingRevoker;
 use OCA\Keepiq\Service\SecretTrashService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
@@ -69,8 +83,10 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
+use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IUserManager;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -102,8 +118,14 @@ class FederatedSourceDeletedTest extends TestCase {
 	/** Whether the partner's server takes a notification */
 	private bool $reachable = true;
 
+	/** The status the partner's server answers every notification with, when set */
+	private ?int $answer = null;
+
 	/** Runs while a notification is being sent, as a concurrent change would */
 	private ?\Closure $duringSend = null;
+
+	/** @var string[] The partners an administrator removed, by id */
+	private array $removedPartners = [];
 
 	/** @var string|null A declined share its recipient accepts back just before it would be deleted */
 	private ?string $acceptedBackBeforeDelete = null;
@@ -115,6 +137,10 @@ class FederatedSourceDeletedTest extends TestCase {
 	private PurgeTrashedSecretsJob $retention;
 
 	private AccountDeletionService $accounts;
+
+	private PartnerShareRevoker $revoker;
+
+	private SecretMapper $secretMapper;
 
 	protected function setUp(): void {
 		$this->secrets = [
@@ -215,7 +241,7 @@ class FederatedSourceDeletedTest extends TestCase {
 				}
 
 				$response = $this->createMock(IResponse::class);
-				$response->method('getStatusCode')->willReturn($this->reachable ? 201 : 503);
+				$response->method('getStatusCode')->willReturn($this->answer ?? ($this->reachable ? 201 : 503));
 				return $response;
 			}
 		);
@@ -233,7 +259,8 @@ class FederatedSourceDeletedTest extends TestCase {
 		$audit = new FederatedShareAuditTrail($dispatcher);
 		$messenger = new FederatedShareMessenger($ocm, $factory, $this->cloudIdManager(), $users);
 		$this->delivery = new FederatedNotificationDelivery($shares, $messenger, $audit, $secretMapper);
-		$revoker = new PartnerShareRevoker($shares, $this->delivery, $audit);
+		$partners = $this->partners();
+		$revoker = new PartnerShareRevoker($shares, $this->delivery, $audit, $partners);
 
 		$secretService = new SecretService(
 			mapper: $secretMapper,
@@ -245,7 +272,7 @@ class FederatedSourceDeletedTest extends TestCase {
 			db: $this->createMock(IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
-			partnerShares: $revoker,
+			deleteCascade: new SecretDeleteCascade(urls: $this->createMock(SecretUrlMapper::class), partnerShares: $revoker),
 		);
 
 		$this->trash = new SecretTrashService(
@@ -271,6 +298,22 @@ class FederatedSourceDeletedTest extends TestCase {
 		);
 
 		$this->accounts = $this->accountDeletion(secretMapper: $secretMapper, shares: $shares, revoker: $revoker);
+		$this->revoker = $revoker;
+		$this->secretMapper = $secretMapper;
+	}
+
+	/**
+	 * The partner list: cloud.partner.example, until an administrator removes it.
+	 */
+	private function partners(): FederationPartnerService {
+		$mapper = $this->createMock(FederationPartnerMapper::class);
+		$mapper->method('findById')->willReturnCallback(
+			fn (string $id): FederationPartner => in_array($id, $this->removedPartners, true)
+				? throw new DoesNotExistException('removed')
+				: $this->partner('cloud.partner.example', true, true)
+		);
+
+		return new FederationPartnerService($mapper, $this->createMock(IClientService::class), $this->createMock(IConfig::class));
 	}
 
 	/**
@@ -314,8 +357,10 @@ class FederatedSourceDeletedTest extends TestCase {
 				emergencyMapper: $this->createMock(EmergencyContactMapper::class),
 				passkeyMapper: $this->createMock(PasskeyMapper::class),
 			),
-			childData: new SecretChildDataCleaner(secretMapper: $secretMapper),
-			partnerShares: $revoker,
+			ownSecretCleanup: new OwnedSecretCleanup(
+				childData: new SecretChildDataCleaner(secretMapper: $secretMapper),
+				partnerShares: $revoker,
+			),
 		);
 	}
 
@@ -463,12 +508,15 @@ class FederatedSourceDeletedTest extends TestCase {
 	/**
 	 * Every status a share can have when its secret goes, on every path that deletes the secret for good.
 	 *
-	 * @return array<string,array{0:string,1:string,2:?string,3:int,4:?string,5:string}>
+	 * @return array<string,array{0:string,1:string,2:?string,3:int,4:?string,5:string,6?:bool}>
 	 */
 	public static function statusesOnEveryPath(): array {
 		$statuses = [
 			'active' => [FederatedShare::STATUS_ACTIVE, null, 0, null, 'revoked'],
-			'suspended' => [FederatedShare::STATUS_SUSPENDED, null, 0, null, 'revoked'],
+			'suspended, its partner still one' => [FederatedShare::STATUS_SUSPENDED, null, 0, null, 'revoked'],
+			'suspended, its partner removed' => [FederatedShare::STATUS_SUSPENDED, null, 0, null, 'deleted', true],
+			'failed after an unshare, its partner removed' => [FederatedShare::STATUS_FAILED, FederatedNotificationDelivery::SHARE_UNSHARED, 6, null, 'deleted', true],
+			'active, its partner removed' => [FederatedShare::STATUS_ACTIVE, null, 0, null, 'deleted', true],
 			'failed after an update' => [FederatedShare::STATUS_FAILED, FederatedNotificationDelivery::SHARE_UPDATED, 6, null, 'revoked'],
 			'failed after an unshare' => [FederatedShare::STATUS_FAILED, FederatedNotificationDelivery::SHARE_UNSHARED, 6, null, 'revoked'],
 			'a status this code does not know' => ['paused', null, 0, null, 'revoked'],
@@ -488,10 +536,15 @@ class FederatedSourceDeletedTest extends TestCase {
 	/**
 	 * A live share, or one in any other state the partner may still hold a copy for, is revoked and the partner is told to delete it:
 	 * now on the owner's purge, by the retry job after the retention job and an account deletion.
-	 * A declined share goes without a notification, recorded as revoked, and a revoke on its way keeps its pending unshare.
+	 * A declined share, and a suspended one whose partner was removed, go without a notification, recorded as revoked;
+	 * a revoke on its way keeps its pending unshare.
 	 */
 	#[DataProvider('statusesOnEveryPath')]
-	public function testDeletingTheSecretForGoodEndsEachPartnerShare(string $path, string $status, ?string $pending, int $attempts, ?string $next, string $outcome): void {
+	public function testDeletingTheSecretForGoodEndsEachPartnerShare(string $path, string $status, ?string $pending, int $attempts, ?string $next, string $outcome, bool $partnerRemoved = false): void {
+		if ($partnerRemoved === true) {
+			$this->removedPartners[] = 'p-cloud.partner.example';
+		}
+
 		$nextAt = $next === null ? null : new DateTime($next);
 		$this->share(id: 'fs-1', sourceSecretId: 'src', status: $status, pending: $pending, attempts: $attempts, next: $nextAt);
 		$queued = $path !== 'purge';
@@ -696,6 +749,157 @@ class FederatedSourceDeletedTest extends TestCase {
 		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $failure->getMetadata()['notification']);
 		$this->assertSame('source_deleted', $failure->getMetadata()['reason']);
 		$this->assertSame([], array_diff(array_keys($failure->getMetadata()), AuditMetadataPolicy::WHITELIST[AuditEventTypes::FEDERATED_SHARE_FAILED]));
+	}
+
+	/**
+	 * A partner that refuses the unshare of a deleted secret outright, with a 400 on every try, is not asked again for 30 days:
+	 * the sixth refusal drops the share, recorded as failed with reason source_deleted, and nothing more is sent.
+	 */
+	public function testAPartnerThatRefusesTheUnshareIsDroppedAfterSixTries(): void {
+		$this->share(id: 'fs-1', sourceSecretId: 'src');
+		$this->answer = 400;
+		$this->deleteForGood(path: 'retention');
+		$revokedAt = clone $this->rows['fs-1']->getUpdatedAt();
+
+		$attempts = $this->retryUntil(until: (clone $revokedAt)->modify('+30 days'));
+
+		$this->assertCount(FederatedNotificationDelivery::MAX_ATTEMPTS, $attempts);
+		$this->assertCount(FederatedNotificationDelivery::MAX_ATTEMPTS, $this->unsharesSent());
+		$this->assertSame([], $this->rows);
+		$this->assertCount(1, $this->failures());
+		$this->assertSame(
+			['federatedShareId' => 'fs-1', 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'notification' => FederatedNotificationDelivery::SHARE_UNSHARED, 'reason' => 'source_deleted'],
+			$this->failures()[0]->getMetadata()
+		);
+	}
+
+	/**
+	 * A 429 or a 5xx is no refusal: the partner may take the unshare later, so it is still retried past the sixth attempt.
+	 *
+	 * @return array<string,array{0:int}>
+	 */
+	public static function answersThatAreNoRefusal(): array {
+		return ['too many requests' => [429], 'server error' => [500]];
+	}
+
+	#[DataProvider('answersThatAreNoRefusal')]
+	public function testAPartnerThatIsNotReadyIsStillRetriedPastTheSixthTry(int $answer): void {
+		$this->share(id: 'fs-1', sourceSecretId: 'src');
+		$this->answer = $answer;
+		$this->deleteForGood(path: 'retention');
+		$revokedAt = clone $this->rows['fs-1']->getUpdatedAt();
+
+		$attempts = $this->retryUntil(until: (clone $revokedAt)->modify('+1 day'));
+
+		$this->assertGreaterThan(FederatedNotificationDelivery::MAX_ATTEMPTS, count($attempts));
+		$this->assertArrayHasKey('fs-1', $this->rows);
+		$this->assertSame([], $this->failures());
+	}
+
+	/**
+	 * An unshare queued before the administrator removed the partner is not sent: the retry job drops the share first,
+	 * recorded as failed with reason partner_removed. While the partner is still one, the same run sends it.
+	 *
+	 * @return array<string,array{0:bool}>
+	 */
+	public static function partnerRemovedAfterTheUnshareWasQueued(): array {
+		return ['partner removed' => [true], 'partner still one' => [false]];
+	}
+
+	#[DataProvider('partnerRemovedAfterTheUnshareWasQueued')]
+	public function testTheRetryJobSendsNoUnshareToARemovedPartner(bool $removed): void {
+		$this->share(id: 'fs-1', sourceSecretId: 'src');
+		$this->deleteForGood(path: 'retention');
+		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $this->rows['fs-1']->getPendingNotification());
+		if ($removed === true) {
+			$this->removedPartners[] = 'p-cloud.partner.example';
+		}
+
+		$job = new RetryFederatedNotificationsJob(
+			time: $this->createMock(ITimeFactory::class),
+			delivery: $this->delivery,
+			logger: $this->createMock(LoggerInterface::class),
+			partnerShares: $this->revoker,
+		);
+		(fn () => $this->run(null))->call($job);
+
+		$this->assertSame([], $this->rows);
+		if ($removed === false) {
+			$this->assertSame(['fs-1'], $this->unsharesSent());
+			$this->assertSame([], $this->failures());
+			return;
+		}
+
+		$this->assertSame([], $this->sent);
+		$this->assertCount(1, $this->failures());
+		$this->assertNull($this->failures()[0]->getActorId());
+		$this->assertSame(
+			['federatedShareId' => 'fs-1', 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'notification' => FederatedNotificationDelivery::SHARE_UNSHARED, 'reason' => 'partner_removed'],
+			$this->failures()[0]->getMetadata()
+		);
+	}
+
+	/**
+	 * The paths that delete a user's copy of a shared secret for good together with its share.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function copyDeletions(): array {
+		return [
+			'the source\'s shares end (revoke, trash or purge of the source)' => ['source shares end'],
+			'a team-folder share ends' => ['team-folder share ends'],
+		];
+	}
+
+	/**
+	 * Bob shared his full-access copy of Alice's secret with a partner. When the copy is deleted for good with its share,
+	 * the partner share ends before the copy goes, revoked with SHARE_UNSHARED pending, and the retry job tells the partner.
+	 */
+	#[DataProvider('copyDeletions')]
+	public function testAPartnerSharedCopyDeletedForGoodEndsItsPartnerShare(string $path): void {
+		$copy = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$copy->setTrashedAt(null);
+		$this->secrets['copy-bob'] = $copy;
+		$this->share(id: 'fs-bob', sourceSecretId: 'copy-bob');
+		$this->rows['fs-bob']->setOwnerId('bob');
+		$target = new ShareTarget();
+		$target->setId('st-bob');
+		$target->setSourceSecretId('src');
+		$target->setSecretId('copy-bob');
+		$target->setTargetUserId('bob');
+
+		if ($path === 'source shares end') {
+			$targets = $this->createMock(ShareTargetMapper::class);
+			$targets->method('findBySourceSecret')->willReturn([$target]);
+			(new ShareRevocationService(
+				mapper: $targets,
+				secretMapper: $this->secretMapper,
+				db: $this->createMock(IDBConnection::class),
+				logger: $this->createMock(LoggerInterface::class),
+				auth: $this->createMock(ShareAuthorizationService::class),
+				quarantineScan: $this->clearedQuarantineScan(),
+				copyCleanup: new RecipientCopyCleanup(attachments: $this->createMock(AttachmentService::class), partnerShares: $this->revoker),
+			))->deleteAllForSecret(sourceSecretId: 'src');
+		} else {
+			(new RecipientSecretCopyService(
+				secretMapper: $this->secretMapper,
+				copies: $this->createStub(RecipientSecretCopyFactory::class),
+				partnerShares: $this->revoker,
+			))->deleteByShare(share: $target);
+		}
+
+		$this->assertArrayNotHasKey('copy-bob', $this->secrets);
+		// When the copy went, its partner share had ended already.
+		$this->assertSame([['sent' => 0, 'rows' => ['fs-bob' => ['status' => FederatedShare::STATUS_REVOKED, 'pending' => FederatedNotificationDelivery::SHARE_UNSHARED]]]], $this->atSourceDelete);
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->rows['fs-bob']->getStatus());
+		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $this->rows['fs-bob']->getPendingNotification());
+		$this->assertCount(1, $this->revocations());
+		$this->assertSame('copy-bob', $this->revocations()[0]->getObjectId());
+		$this->assertNull($this->revocations()[0]->getActorId());
+
+		$this->assertSame(1, $this->delivery->retryDue(new DateTime('+1 minute')));
+		$this->assertSame(['fs-bob'], $this->unsharesSent());
+		$this->assertSame([], $this->rows);
 	}
 
 	/**
