@@ -313,7 +313,7 @@ Machine secret-request creation MUST enforce the same guards as token issuance: 
 
 Every application write MUST move the row off the version it read in the same step that writes it, so a write that commits after the read is never overwritten and is kept as a version. This holds for the `PUT` and for the request fill on an application-owned secret.
 
-When the header is present, the server MUST check it against the row the write locks on. When it does not equal that row's strong ETag (and is not `*`), or the row moves on after that read, the server MUST answer 412 Precondition Failed with the current ETag and MUST NOT change the secret.
+When the header is present and is not `*`, the server MUST check it against the row the write locks on. When it does not equal that row's strong ETag, or the row moves on after that read, the server MUST answer 412 Precondition Failed with the current ETag and MUST NOT change the secret. `If-Match: *` is written as a write without the header is.
 
 When the header is absent and the row moves on after the read, the server MUST make the write once more on the row as it is now. When the row moves on a second time, the server MUST answer 409 Conflict and MUST NOT change the secret.
 
@@ -340,6 +340,14 @@ When the header is absent and the row moves on after the read, the server MUST m
 - **WHEN** another write commits after the server checked the tag and before it writes
 - **THEN** the response MUST be 412 with the new current ETag
 - **AND** the stored secret MUST be the one the other write left
+
+#### Scenario: If-Match * is written as a write without the header
+@e2e exclude Machine-to-machine API contract with no UI surface; covered by ApplicationSecretsWriteLockTest::testAnyVersionTagThatLosesTheLockIsWrittenOnTheRowAsItIsNow and SecretServiceApplicationWriteLockTest::testAPreconditionOnAnyVersionIsRetriedOnTheRowAsItIsNow.
+
+- **GIVEN** an application calls `PUT /api/v1/app/secrets/{id}` with `If-Match: *`
+- **WHEN** another write commits after the server read the row and before it writes
+- **THEN** the write MUST be made once more on the row as it is now, as without `If-Match`
+- **AND** the other write MUST be kept as a version of the secret
 
 #### Scenario: Stale write is refused
 
