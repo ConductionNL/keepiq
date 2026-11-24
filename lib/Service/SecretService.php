@@ -828,8 +828,7 @@ class SecretService implements SecretServiceInterface {
 
 		$this->writeLocked(
 			secret: $secret,
-			base: $run->base,
-			savedAt: $run->now,
+			move: new VersionMove(base: $run->base, savedAt: $run->now),
 			snapshot: function () use ($run): void {
 				if ($this->versionService?->fieldsChanged(before: $run->preUpdate, after: $run->secret) === true) {
 					$this->versionService->snapshot(preUpdate: $run->preUpdate, actorType: 'application', actorId: $run->applicationId);
@@ -1523,8 +1522,7 @@ class SecretService implements SecretServiceInterface {
 
 		$this->writeLocked(
 			secret: $secret,
-			base: $base,
-			savedAt: $savedAt,
+			move: new VersionMove(base: $base, savedAt: $savedAt),
 			snapshot: $snapshot,
 			stale: fn (): StaleWriteException => new StaleWriteException(current: $this->loadOwned(id: $secret->getId(), userId: $userId))
 		);
@@ -1549,8 +1547,7 @@ class SecretService implements SecretServiceInterface {
 	 * builds the refusal, inside the transaction, from the row as it is now.
 	 *
 	 * @param Secret $secret The row with the update applied
-	 * @param DateTime $base The version the update was read at
-	 * @param DateTime $savedAt The new version, after `$base`
+	 * @param VersionMove $move The version the update was read at and the new version
 	 * @param \Closure $snapshot Keeps the pre-update head as a version when it should be kept
 	 * @param \Closure $stale The refusal for a row that moved on; it throws itself when the row is no longer the caller's
 	 *
@@ -1561,18 +1558,18 @@ class SecretService implements SecretServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @throws StaleWriteException When the row moved on from `$base` after it was read
+	 * @throws StaleWriteException When the row moved on from the version it was read at
 	 *
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	private function writeLocked(Secret $secret, DateTime $base, DateTime $savedAt, \Closure $snapshot, \Closure $stale): void {
+	private function writeLocked(Secret $secret, VersionMove $move, \Closure $snapshot, \Closure $stale): void {
 		$this->atomic(
-			fn: function () use ($secret, $base, $savedAt, $snapshot, $stale): void {
-				if ($this->mapper->advanceVersion(id: $secret->getId(), base: $base, savedAt: $savedAt) === 0) {
+			fn: function () use ($secret, $move, $snapshot, $stale): void {
+				if ($this->mapper->advanceVersion(id: $secret->getId(), base: $move->base, savedAt: $move->savedAt) === 0) {
 					throw $stale();
 				}
 
-				$this->writeHead(secret: $secret, savedAt: $savedAt, snapshot: $snapshot);
+				$this->writeHead(secret: $secret, savedAt: $move->savedAt, snapshot: $snapshot);
 			},
 			db: $this->db
 		);
