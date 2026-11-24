@@ -536,13 +536,12 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 */
 	public function listForSecret(string $secretId, string $userId): array {
 		$secret = $this->ownedSecret(secretId: $secretId, userId: $userId);
-		$rows = $this->shareMapper->findBySourceSecret(sourceSecretId: $secretId);
-		$source = $this->sources->ownedSourceOf(copy: $secret, userId: $userId);
-		if ($source === null) {
-			return $rows;
-		}
+		$source = ($this->sources->ownedSourceOf(copy: $secret, userId: $userId) ?? $secret);
+		$ids = array_unique([$source->getId(), $secretId]);
 
-		return array_merge($this->shareMapper->findBySourceSecret(sourceSecretId: $source->getId()), $rows);
+		return array_merge(
+			...array_map(fn (string $id): array => $this->shareMapper->findBySourceSecret(sourceSecretId: $id), $ids)
+		);
 	}//end listForSecret()
 
 	/**
