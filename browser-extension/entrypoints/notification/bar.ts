@@ -233,6 +233,12 @@ export function startNotificationBar(): () => void {
 		return node
 	}
 
+	/** Shown only compact, where it grows the bar. */
+	function expandButton() {
+		return element('button', { 'type': 'button', 'class': 'icon-btn bar__expand', 'aria-label': i18n.t('notificationBar.expand'), 'aria-expanded': 'false' },
+			svg({ width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'm6 9 6 6 6-6' }]]))
+	}
+
 	function closeButton() {
 		const close = element('button', { type: 'button', class: 'icon-btn bar__close', 'aria-label': i18n.t('notificationBar.close') },
 			svg({ width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'M18 6 6 18M6 6l12 12' }]]))
@@ -284,9 +290,7 @@ export function startNotificationBar(): () => void {
 			parts.push(item)
 		}
 		// Shown only compact; the question stays whole in the DOM, so screen readers get all of it.
-		const more = element('button', { 'type': 'button', 'class': 'icon-btn bar__expand', 'aria-label': i18n.t('notificationBar.expand'), 'aria-expanded': 'false' },
-			svg({ width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'm6 9 6 6 6-6' }]]))
-		bar.replaceChildren(...parts, buttons, more, closeButton())
+		bar.replaceChildren(...parts, buttons, expandButton(), closeButton())
 		if (failure) showError(failure)
 		restartGuard()
 		scrollable()
@@ -319,7 +323,9 @@ export function startNotificationBar(): () => void {
 			text = element('div', { class: 'bar__text bar__notice', tabindex: '-1' },
 				element('p', { class: 'bar__saved' }, check, message), ...notes.map((note) => element('p', { class: 'bar__note' }, note)))
 			bar.className = 'bar bar--notice'
-			bar.replaceChildren(logo(), text, closeButton())
+			// Compact shows one line of it, so the expand control grows the bar; a note too long for it scrolls from the keyboard.
+			bar.replaceChildren(logo(), text, expandButton(), closeButton())
+			scrollable()
 		} else {
 			text = element('p', { class: 'bar__text bar__saved', tabindex: '-1' }, check, message)
 			bar.className = 'bar bar--saved'

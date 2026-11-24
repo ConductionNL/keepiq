@@ -118,3 +118,5 @@ A partner share whose source is a copy was made before such shares were refused,
 - **WHEN** Alice updates the login's password from the notification bar, saves a passkey to the login, or signs in with a passkey of the login, whose counter save is a share-save
 - **THEN** the bar or the passkey window MUST say that one recipient at a partner organisation got the login from a copy and did not get the change, in the words of the popup's item note
 - **AND** it MUST stay open until Alice closes it, instead of closing on its own
+- **AND** the bar and a passkey save to the login MUST also show the rest of the save's note: that partner recipients get the change with the owner's next save, and the partner shares the save suspended or paused
+- **AND** a passkey sign-in MUST show the partner shares it suspended or paused but MUST NOT say that partner recipients get the change with the owner's next save, since its counter save is no change of Alice's, and a sign-in whose save left nothing else MUST close the window as before

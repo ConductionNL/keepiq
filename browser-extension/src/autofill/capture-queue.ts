@@ -9,9 +9,10 @@ import { addExcludedDomain, readSettings } from '@/src/accounts/settings'
 import type { OpenSecretRow } from '@/src/api/types'
 import { onBroadcast } from '@/src/background/broadcast'
 import { rsaDecrypt } from '@/src/crypto'
-import type {
-	BackgroundToContent, CaptureRefused, CaptureStateReply, CaptureSubmitted, CaptureUpdated, NotificationReplies, NotificationToBackground, PickInput, ShareSaveNote, UriMatch,
-	VaultWriteError, WriteResult,
+import {
+	shareSaveNoteOf,
+	type BackgroundToContent, type CaptureRefused, type CaptureStateReply, type CaptureSubmitted, type CaptureUpdated, type NotificationReplies, type NotificationToBackground,
+	type PickInput, type ShareSaveNote, type UriMatch, type VaultWriteError, type WriteResult,
 } from '@/src/messages'
 import { readGlobalSettings } from '@/src/settings/global'
 import { getKey, hasKey } from '@/src/vault/key-store'
@@ -506,7 +507,8 @@ async function update(bar: AnswerRun): Promise<WriteResult<CaptureUpdated | null
 	if (!(await interact(tabId, entry))) return refused('locked')
 	const result = await writePassword(entry, itemId)
 	if (!result.ok) return updateFailed(bar, result.error)
-	const note = result.value.shareSave
+	// Kept open only for a note the bar can word, so a bar never stays without its Close.
+	const note = shareSaveNoteOf(result.value.shareSave)
 	finish(bar, itemId, note !== undefined)
 	return { ok: true, value: note ? { shareSave: note } : null }
 }
@@ -580,9 +582,11 @@ const ANSWERS: Answers = {
 	},
 }
 
-/** A bar whose capture was saved or updated still closes at once on Close. */
+/** A bar whose capture was saved or updated still closes at once on Close, and one kept for its note still expands. */
 function closeSaved(tabId: number, m: NotificationToBackground): null {
-	if (m.kind === 'capture.dismiss' && typeof m.key === 'string' && closing.get(tabId)?.delete(m.key)) hide(tabId, [m.key])
+	if (typeof m.key !== 'string') return null
+	if (m.kind === 'capture.dismiss' && closing.get(tabId)?.delete(m.key)) hide(tabId, [m.key])
+	else if (m.kind === 'capture.expand' && closing.get(tabId)?.has(m.key)) void toTop(tabId, { kind: 'capture.expand', key: m.key })
 	return null
 }
 

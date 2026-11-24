@@ -8,7 +8,7 @@ import { candidatesFor } from '@/src/autofill/matcher'
 import { rsaDecrypt } from '@/src/crypto'
 import { fromBase64Url, toBase64Url } from '@/src/crypto/base64'
 import { readLastUsed } from '@/src/last-used'
-import type { PasskeyCredentialJSON, PasskeyResult, PasskeySaveTarget, PasskeyView, ShareSaveNote, VaultWriteError } from '@/src/messages'
+import { shareSaveNoteOf, type PasskeyCredentialJSON, type PasskeyResult, type PasskeySaveTarget, type PasskeyView, type ShareSaveNote, type VaultWriteError } from '@/src/messages'
 import { flattenFolders, folderPath } from '@/src/vault/list'
 import { readSnapshot } from '@/src/vault/store'
 import { syncAfterWrite } from '@/src/vault/sync'
@@ -210,7 +210,7 @@ export async function savePasskey(save: Save): Promise<SaveOutcome> {
 		return { error: saved.error, attempt: { credentialIds: [...attempt?.credentialIds ?? [], credential.credentialId], itemId: 'itemId' in target.into ? target.into.itemId : null } }
 	}
 	// A new login has no shares; a save to an existing one may leave partner shares behind.
-	const note = 'shareSave' in saved.value ? saved.value.shareSave : undefined
+	const note = shareSaveNoteOf('shareSave' in saved.value ? saved.value.shareSave : undefined)
 	if (!(await deliver({ type: 'credential', credential: toJSON(registration, ceremony.credProps) }, note !== undefined))) return 'ended'
 	return note ? { shareSave: note } : 'delivered'
 }

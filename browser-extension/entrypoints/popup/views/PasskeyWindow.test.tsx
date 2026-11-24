@@ -93,15 +93,15 @@ describe('sign in', () => {
 			replies: {
 				'passkey.pick': () => {
 					ended = true
-					return { ok: true, shareSave: { ownerOnly: true, notReached: 1 } }
+					return { ok: true, shareSave: { notReached: 1, paused: ['bob@cloud.partner.example'] } }
 				},
 				'passkey.state': () => (ended ? { ok: false, code: 'ended' } : { ok: true, view }),
 			},
 		})
 		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
 		expect((await screen.findAllByRole('status')).map((note) => note.textContent)).toEqual([
-			'Saved. Recipients at partner organisations get this change when the owner next saves it.',
 			'Saved, but 1 recipient at a partner organisation got this item from a copy and didn\'t get this change.',
+			'Sharing with bob@cloud.partner.example is paused until you share this item with them again.',
 		])
 		await heading('Sign in with a passkey')
 		expect(screen.queryByRole('list')).toBeNull()
