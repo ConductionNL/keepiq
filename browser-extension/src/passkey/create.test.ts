@@ -265,6 +265,14 @@ describe.each(['0.3.12', '0.3.9-unstable.20261007125844', undefined])('saving on
 		expect(JSON.parse(saved)).toHaveLength(2)
 		expect(attestationOf(results[0]!.result).id).toBe(JSON.parse(saved)[1].credentialId)
 	})
+
+	it('hands the window what the save to a login left to partner shares, and leaves the window open for it', async () => {
+		server({ 'PUT /api/v1/secrets/work/share-save': () => json({ secret: rows.find((row) => row.id === 'work'), federated: { ownerOnly: false, notReached: 2 } }) })
+		const id = await start()
+		expect(await window(id, { kind: 'passkey.save', target: { itemId: 'work' } })).toEqual({ ok: true, shareSave: { notReached: 2 } })
+		expect(results.map((m) => m.result.type)).toEqual(['credential'])
+		expect(removed).toEqual([])
+	})
 })
 
 describe('Replace', () => {

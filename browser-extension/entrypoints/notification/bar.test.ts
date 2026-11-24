@@ -582,6 +582,33 @@ describe('saved', () => {
 		expect(bar().textContent).toBe('Password updated')
 	})
 
+	it('says what an update left to partner shares, as the popup words it, and keeps Close', async () => {
+		writeReply = { ok: true, value: { shareSave: { ownerOnly: true, notReached: 2 } } }
+		await open(update())
+		await click(button('Update'))
+		const notes = [...bar().querySelectorAll('.bar__note')].map((note) => note.textContent)
+		expect(notes).toEqual([
+			'Saved. Recipients at partner organisations get this change when the owner next saves it.',
+			'Saved, but 2 recipients at partner organisations got this item from a copy and didn\'t get this change.',
+		])
+		expect(bar().querySelector('.bar__saved')!.textContent).toBe('Password updated')
+		expect(bar().className).toBe('bar bar--notice')
+		expect(buttonNames()).toEqual(['Close'])
+		await wait(250)
+		expect(status().textContent).toBe(['Password updated', ...notes].join(' '))
+		await click(button('Close'))
+		expect(kinds()).toEqual(['capture.state', 'capture.update', 'capture.dismiss'])
+	})
+
+	it('reads one partner recipient left out in the singular, and leaves out a note field of the wrong shape', async () => {
+		writeReply = { ok: true, value: { shareSave: { notReached: 1, ownerOnly: 'yes', paused: [3] } } }
+		await open(update())
+		await click(button('Update'))
+		expect([...bar().querySelectorAll('.bar__note')].map((note) => note.textContent)).toEqual([
+			'Saved, but 1 recipient at a partner organisation got this item from a copy and didn\'t get this change.',
+		])
+	})
+
 	it('announces it when focus was not in the bar', async () => {
 		await open()
 		await click(button('Save'))

@@ -1106,6 +1106,15 @@ describe('capture.update', () => {
 		expect(await state()).toBeNull()
 	})
 
+	it('hands the bar what the save left to partner shares, and keeps the bar until Close', async () => {
+		routes['PUT /api/v1/secrets/a/share-save'] = () => json({ secret: row, federated: { ownerOnly: false, notReached: 1 } })
+		expect(await update()).toEqual({ ok: true, value: { shareSave: { notReached: 1 } } })
+		vi.advanceTimersByTime(SAVED_CLOSE_MS)
+		expect(kinds()).toEqual([['capture.verify', 0]])
+		expect(await ask({ kind: 'capture.dismiss', never: false })).toBeNull()
+		expect(kinds()).toEqual([['capture.verify', 0], ['capture.hide', 0]])
+	})
+
 	it('does nothing for a press the host could not confirm', async () => {
 		visible = false
 		expect(await update()).toEqual({ refused: 'not_visible' })

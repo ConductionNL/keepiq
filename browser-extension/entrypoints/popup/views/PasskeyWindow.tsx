@@ -12,7 +12,7 @@ import { Identity } from '../components/Identity'
 import { Loading } from '../components/Loading'
 import { Select } from '../components/Select'
 import { TextField } from '../components/TextField'
-import { errorText, writeErrorText } from '../errors'
+import { errorText, shareSaveNoteTexts, writeErrorText } from '../errors'
 import { useBackgroundMessage } from '../hooks/useBackgroundMessage'
 import { passkeyRequest, sendMessage } from '../hooks/useMessage'
 import { useSecretEntry } from '../hooks/useSecretEntry'
@@ -70,8 +70,14 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	 * step a failure it opens with came from, so that one shows on both.
 	 */
 	const [savedFrom, setSavedFrom] = useState<'list' | 'new' | null>(null)
+	/**
+	 * What a delivered pick or save left to partner shares (spec federated-sharing § Partner shares made from a copy are
+	 * reported). The ceremony is over, so the window only shows it until the user closes it, and a refresh the save's
+	 * own sync brings, which would read the ended ceremony and close the window, does not run.
+	 */
+	const [done, setDone] = useState<string[] | null>(null)
 	const held = heldPick(view, dismissed)
-	const saving = view !== null && !view.locked && view.kind === 'create' && !view.alreadySaved && !confirming && !held
+	const saving = view !== null && !done && !view.locked && view.kind === 'create' && !view.alreadySaved && !confirming && !held
 	const { newLogin, setNewLogin, adding, canLeaveNew } = useNewLogin(saving ? view.targets : null)
 
 	const send = useCallback((command: Command) => passkeyRequest({ ...command, ceremonyId } as PasskeyPopupRequest), [ceremonyId])
@@ -102,15 +108,20 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	}, [show])
 
 	const refresh = useCallback(() => load().then(apply), [load, apply])
+	const refreshUnlessDone = () => {
+		if (!done) void refresh()
+	}
 
 	useEffect(() => void load().then(apply), [load, apply])
-	useBackgroundMessage('vault.locked', () => void refresh())
-	useBackgroundMessage('vault.changed', () => void refresh())
+	useBackgroundMessage('vault.locked', refreshUnlessDone)
+	useBackgroundMessage('vault.changed', refreshUnlessDone)
 
 	async function settle(reply: PasskeyWindowReply | undefined, command: Command): Promise<void> {
 		if (!reply) return setNotice(i18n.t('errors.notResponding'))
 		if (reply.ok) {
+			const notes = shareSaveNoteTexts(reply.shareSave)
 			if (reply.view) show(reply.view)
+			else if (notes.length > 0) setDone(notes)
 			else window.close()
 			return
 		}
@@ -215,7 +226,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	}
 
 	const elsewhere = saving && savedFrom !== null && savedFrom !== (adding ? 'new' : 'list')
-	const showFailure = view && !view.locked && !confirming && !held && !view.alreadySaved && !elsewhere ? failure : null
+	const showFailure = view && !done && !view.locked && !confirming && !held && !view.alreadySaved && !elsewhere ? failure : null
 	// Only the server's background jobs end the share scan, and only an administrator's repair a partner share owner
 	// mismatch, so a Retry would fail the same way.
 	const retryable = showFailure !== null && !UNRETRYABLE.includes(showFailure.code)
@@ -228,7 +239,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	const confirmStep = view !== null && !view.locked && (confirming !== null || held !== null)
 	const escapeRef = useRef(() => {})
 	useEffect(() => {
-		escapeRef.current = confirmStep ? back : canLeaveNew ? leaveNew : () => void cancel()
+		escapeRef.current = done ? () => window.close() : confirmStep ? back : canLeaveNew ? leaveNew : () => void cancel()
 	})
 	useEffect(() => {
 		// The Replace question's Escape stops propagating, so it never reaches this listener.
@@ -240,7 +251,7 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 	}, [])
 
 	const { title, body, ways } = passkeyScreen({
-		view, notice, confirming, held, account, busy, retryable, adding, newLogin, name, folderId, ready, guarded,
+		view, notice, confirming, held, account, busy, retryable, adding, newLogin, name, folderId, ready, guarded, done,
 		onVerify: verify, onCancel: () => void cancel(), onPick: pick, onName: setName, onFolder: setFolderId,
 		onTarget: (target: PasskeySaveTarget) => {
 			// A later return to the list, as from "Confirm it's you", focuses its first row again.
@@ -303,6 +314,8 @@ export function PasskeyWindow({ ceremonyId }: { ceremonyId: string }) {
 
 interface ScreenState {
 	view: PasskeyView | null
+	/** The notes of a delivered pick or save, shown until the user closes the window. */
+	done: string[] | null
 	notice: string | null
 	confirming: Act | null
 	held: PasskeyRow | null
@@ -334,6 +347,7 @@ interface Screen {
 /** The step the window shows: loading, unlock or "Confirm it's you", already saved, sign in, or save. */
 function passkeyScreen(s: ScreenState): Screen {
 	const { view } = s
+	if (view && s.done) return doneScreen(view, s.done)
 	if (!view) return { title: '', body: s.notice ? <ErrorBanner>{s.notice}</ErrorBanner> : <Loading />, ways: true }
 	if (view.locked || s.confirming || s.held) return verifyScreen(view, s)
 	if (view.alreadySaved) {
@@ -352,6 +366,20 @@ function passkeyScreen(s: ScreenState): Screen {
 		return { title: i18n.t('passkey.signInTitle'), body: <SignIn view={view} busy={s.busy} focus={!s.retryable} onPick={s.guarded(s.onPick)} />, ways: true }
 	}
 	return saveScreen(view, s)
+}
+
+/** The page got its passkey; the save left partner shares behind, which the user reads before closing the window. */
+function doneScreen(view: PasskeyView, notes: string[]): Screen {
+	return {
+		title: view.kind === 'get' ? i18n.t('passkey.signInTitle') : i18n.t('passkey.saveTitle'),
+		ways: false,
+		body: (
+			<div className="stack">
+				{notes.map((note) => <Banner key={note} tone="warning" role="status">{note}</Banner>)}
+				<Button autoFocus onClick={() => window.close()}>{i18n.t('passkey.close')}</Button>
+			</div>
+		),
+	}
 }
 
 /** Unlock, or "Confirm it's you" for a pick or save, naming the login a pick signs with. */
