@@ -20,7 +20,7 @@ Issue: #1263, which merges #1279 and #1280.
 - **The secret's owner writes partner shares, through whichever row they edit.** A copy editor who owns the source takes the owner's partner-share rules: share-save requires and accepts the source's partner shares, and the web app and browser extension look up and verify their certificates.
 - **A partner share that isn't the secret owner's stops the save.** share-save answers 409 `partner_share_owner_mismatch`, writes nothing and logs the share ids, until the share is handed to the secret's owner. The `ReownTransferredPartnerShares` repair step does that.
 - **A received copy can't be shared with a partner organisation.** `FederatedShareService::create` refuses a source that is a recipient's copy, as `register-batch` and group shares already do.
-- **Partner shares made from a copy before this change are reported.** share-save counts the active partner shares hanging off any copy it writes in `federated.notReached`, and the clients say that this many recipients at partner organisations didn't get the change.
+- **Partner shares made from a copy before this change are reported.** share-save counts the active partner shares hanging off any copy it writes in `federated.notReached` (for a caller who doesn't own the secret, only those of their own copy), and the clients say that this many recipients at partner organisations didn't get the change.
 - **Account deletion keeps the delegate's own copy linked** when the secret passes to them and nothing limits that copy, so their saves take the owner's path above.
 
 ## Capabilities

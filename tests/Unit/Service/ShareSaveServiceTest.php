@@ -48,6 +48,7 @@ use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareSave\IncompleteShareSaveException;
+use OCA\Keepiq\Service\ShareSave\ShareSavePartners;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRequest;
 use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
@@ -362,11 +363,10 @@ class ShareSaveServiceTest extends TestCase {
 			history: new ShareSaveHistory(versions: $this->versionHistory, auditTrail: $this->audit),
 			scope: new ShareSaveScope(
 				secrets: $this->secretMapper,
-				federatedShares: $this->federatedMapper,
+				partners: new ShareSavePartners(federatedShares: $this->federatedMapper, logger: $logger),
 				sync: $sync,
 				guards: $guards,
 				rowJudge: $judge,
-				logger: $logger,
 			),
 			stages: new ShareSaveStages(mapper: $this->stageMapper),
 			db: $this->db,
@@ -2045,14 +2045,17 @@ class ShareSaveServiceTest extends TestCase {
 		$this->assertSame(1, $result['federated']['notReached']);
 	}
 
-	public function testACopyEditorsSaveCountsThePartnerSharesOfTheirOwnRowAndTheOtherCopies(): void {
+	/**
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-a-copy-editor-is-told-only-about-their-own-copy
+	 */
+	public function testACopyEditorsSaveCountsOnlyThePartnerSharesOfTheirOwnRow(): void {
 		$this->bobWritesOnAGrade();
 		$this->partnerSharesOfTheCopies();
 
 		$result = $this->service()->save(id: 'c-bob', request: $this->bobRequest(), userId: 'bob');
 
-		// The source's own partner share is left to its owner, not counted.
-		$this->assertSame(2, $result['federated']['notReached']);
+		// Bob's own copy only: Carol's partner share is hers to know and the source's is its owner's (ownerOnly), so neither is counted.
+		$this->assertSame(1, $result['federated']['notReached']);
 		$this->assertTrue($result['federated']['ownerOnly']);
 		$this->assertSame(['begin', 'lock src', 'lock c-bob', 'copy src', 'copy c-carol', 'row c-bob', 'commit'], $this->log);
 	}

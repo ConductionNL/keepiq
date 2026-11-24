@@ -31,6 +31,7 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareSave\IncompleteShareSaveException;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
+use OCA\Keepiq\Service\ShareSave\ShareSavePartners;
 use OCA\Keepiq\Service\ShareSave\ShareSavePath;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
@@ -115,10 +116,9 @@ class ShareSaveScopeCompletenessTest extends TestCase {
 		return new ShareSaveScope(
 			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			secrets: $this->secrets,
-			federatedShares: $this->federated,
+			partners: new ShareSavePartners(federatedShares: $this->federated, logger: $logger),
 			sync: $this->createMock(ShareSyncService::class),
 			guards: $guards,
-			logger: $logger,
 		);
 	}//end scopeWith()
 

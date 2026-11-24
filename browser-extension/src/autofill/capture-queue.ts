@@ -9,8 +9,10 @@ import { addExcludedDomain, readSettings } from '@/src/accounts/settings'
 import type { OpenSecretRow } from '@/src/api/types'
 import { onBroadcast } from '@/src/background/broadcast'
 import { rsaDecrypt } from '@/src/crypto'
-import type {
-	BackgroundToContent, CaptureRefused, CaptureStateReply, CaptureSubmitted, NotificationReplies, NotificationToBackground, PickInput, UriMatch, VaultWriteError, WriteResult,
+import {
+	shareSaveNoteOf,
+	type BackgroundToContent, type CaptureRefused, type CaptureStateReply, type CaptureSubmitted, type CaptureUpdated, type NotificationReplies, type NotificationToBackground,
+	type PickInput, type ShareSaveNote, type UriMatch, type VaultWriteError, type WriteResult,
 } from '@/src/messages'
 import { readGlobalSettings } from '@/src/settings/global'
 import { getKey, hasKey } from '@/src/vault/key-store'
@@ -56,7 +58,7 @@ interface Capture {
 	expiresAt: number
 	timer: ReturnType<typeof setTimeout>
 	/** A save or update in flight, which a second click joins instead of writing twice. */
-	writing?: Promise<WriteResult<null> | CaptureRefused>
+	writing?: Promise<WriteResult<CaptureUpdated | null> | CaptureRefused>
 }
 
 /** `username`: a change form's login's, for a form without one. */
@@ -69,7 +71,7 @@ const closing = new Map<number, Set<string>>()
 const newest = new Map<number, number>()
 let submits = 0
 
-const refused = (code: 'invalid' | 'locked' | 'unknown'): WriteResult<null> => ({ ok: false, error: { code } })
+const refused = (code: 'invalid' | 'locked' | 'unknown'): Extract<WriteResult<never>, { ok: false }> => ({ ok: false, error: { code } })
 const NOT_VISIBLE: CaptureRefused = { refused: 'not_visible' }
 
 /** The bar lives in the top frame only. */
@@ -441,12 +443,16 @@ interface AnswerRun {
 	key: string
 }
 
-/** The bar shows its confirmation, then the background closes it; a newer capture that needs a bar closes it at once. */
-function finish(bar: AnswerRun, itemId: string): void {
+/**
+ * The bar shows its confirmation, then the background closes it; a newer capture that needs a bar closes it at once.
+ * `kept`: the bar also says what the save left to partner shares, so it stays until the user closes it.
+ */
+function finish(bar: AnswerRun, itemId: string, kept = false): void {
 	const { tabId, entry, key } = bar
 	rememberItem(tabId, itemId)
 	if (pending.get(tabId) === entry) drop(tabId, false)
 	closing.set(tabId, new Set([key]))
+	if (kept) return
 	setTimeout(() => {
 		if (!closing.get(tabId)?.has(key)) return
 		closing.delete(tabId)
@@ -490,19 +496,24 @@ async function createLogin(bar: AnswerRun, folderId: string | null): Promise<Wri
 	return { ok: true, value: null }
 }
 
-/** Only `key`, through `updateItem` and so share-save, on a fresh version; with no edit form behind it, partner shares fail as `unverified`. */
-async function update(bar: AnswerRun): Promise<WriteResult<null>> {
+/**
+ * Only `key`, through `updateItem` and so share-save, on a fresh version; with no edit form behind it, partner shares fail as `unverified`.
+ * What the save left to partner shares goes to the bar (spec federated-sharing § Partner shares made from a copy are reported).
+ */
+async function update(bar: AnswerRun): Promise<WriteResult<CaptureUpdated | null>> {
 	const { tabId, entry } = bar
 	const itemId = entry.itemId
 	if (entry.mode !== 'update' || itemId === undefined) return refused('invalid')
 	if (!(await interact(tabId, entry))) return refused('locked')
 	const result = await writePassword(entry, itemId)
 	if (!result.ok) return updateFailed(bar, result.error)
-	finish(bar, itemId)
-	return { ok: true, value: null }
+	// Kept open only for a note the bar can word, so a bar never stays without its Close.
+	const note = shareSaveNoteOf(result.value.shareSave)
+	finish(bar, itemId, note !== undefined)
+	return { ok: true, value: note ? { shareSave: note } : null }
 }
 
-async function writePassword(entry: Capture, itemId: string): Promise<WriteResult<unknown>> {
+async function writePassword(entry: Capture, itemId: string): Promise<WriteResult<{ id: string; shareSave?: ShareSaveNote }>> {
 	const fetched = await run(({ client }) => client.keepiq<OpenSecretRow | null>('GET', `/api/v1/secrets/${encodeURIComponent(itemId)}`), 'reply', entry.accountId)
 	if (fetched.ok && typeof fetched.value?.updatedAt !== 'string') return refused('unknown')
 	return fetched.ok ? await updateItem(itemId, { key: entry.password }, fetched.value!.updatedAt, entry.accountId) : fetched
@@ -514,7 +525,7 @@ function updateFailed(bar: AnswerRun, error: VaultWriteError): WriteResult<null>
 	return { ok: false, error }
 }
 
-const writing = (entry: Capture, write: () => Promise<WriteResult<null> | CaptureRefused>) => {
+const writing = (entry: Capture, write: () => Promise<WriteResult<CaptureUpdated | null> | CaptureRefused>) => {
 	entry.writing ??= write().finally(() => delete entry.writing)
 	return entry.writing
 }
@@ -571,9 +582,11 @@ const ANSWERS: Answers = {
 	},
 }
 
-/** A bar whose capture was saved or updated still closes at once on Close. */
+/** A bar whose capture was saved or updated still closes at once on Close, and one kept for its note still expands. */
 function closeSaved(tabId: number, m: NotificationToBackground): null {
-	if (m.kind === 'capture.dismiss' && typeof m.key === 'string' && closing.get(tabId)?.delete(m.key)) hide(tabId, [m.key])
+	if (typeof m.key !== 'string') return null
+	if (m.kind === 'capture.dismiss' && closing.get(tabId)?.delete(m.key)) hide(tabId, [m.key])
+	else if (m.kind === 'capture.expand' && closing.get(tabId)?.has(m.key)) void toTop(tabId, { kind: 'capture.expand', key: m.key })
 	return null
 }
 

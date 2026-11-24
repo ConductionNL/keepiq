@@ -39,6 +39,7 @@ use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRowJudge;
+use OCA\Keepiq\Service\ShareSave\ShareSavePartners;
 use OCA\Keepiq\Service\ShareSave\ShareSaveRefusal;
 use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
@@ -347,7 +348,7 @@ class CopySaveFollowsOnlyAJudgedRowTest extends TestCase {
 			$contexts,
 			new ShareSaveScope(
 				secrets: $secrets,
-				federatedShares: $federated,
+				partners: new ShareSavePartners(federatedShares: $federated),
 				sync: $sync,
 				guards: $guards,
 				rowJudge: $judge,

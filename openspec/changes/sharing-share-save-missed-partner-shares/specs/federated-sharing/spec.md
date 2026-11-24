@@ -94,7 +94,7 @@ The system MUST refuse to create a partner share whose source is a recipient's c
 
 ### Requirement: Partner shares made from a copy are reported
 
-A partner share whose source is a copy was made before such shares were refused, and no share-save writes it. A share-save MUST answer, as `federated.notReached`, the number of active partner shares whose source is a copy the save wrote: the editor's own copy on the copy-editor path, and every copy written. The source's own partner shares MUST NOT be counted. The answer MUST NOT name those partners or shares. The web app and the browser extension MUST tell the user, when the number is above zero, that this many recipients at partner organisations got the secret from a copy and did not get the change.
+A partner share whose source is a copy was made before such shares were refused, and no share-save writes it. A share-save MUST answer, as `federated.notReached`, the number of active partner shares whose source is a copy the save wrote. For the source's owner, on the owner path or through their own copy, that is every copy written, their own included. For a caller who does not own the source it is only their own copy: the partner shares of the other copies MUST NOT be counted for them, because those are other holders' to know, for the same reason the source's partner shares are reported to them only as `ownerOnly`. The source's own partner shares MUST NOT be counted. The answer MUST NOT name those partners or shares. The web app and the browser extension MUST tell the user, when the number is above zero, that this many recipients at partner organisations got the secret from a copy and did not get the change.
 
 #### Scenario: A partner share hanging off Bob's copy
 
@@ -103,3 +103,26 @@ A partner share whose source is a copy was made before such shares were refused,
 - **THEN** the save MUST commit and answer `federated.notReached: 1`
 - **AND** the partner share of Bob's copy MUST keep its old ciphertext
 - **AND** Alice MUST be told that one recipient at a partner organisation got the secret from a copy and did not get the change
+
+#### Scenario: A copy editor is told only about their own copy
+
+- **GIVEN** Bob and Carol each shared their copy of Alice's secret with a partner before such shares were refused
+- **AND** Bob may write Alice's secret but does not own it
+- **WHEN** Bob share-saves a new password through his copy
+- **THEN** the save MUST commit and answer `federated.notReached: 1`, for the partner share of Bob's own copy
+- **AND** the partner share of Carol's copy MUST NOT be counted in Bob's answer
+
+#### Scenario: The extension tells the user on every path that saves an item
+
+- **GIVEN** Bob shared his copy of Alice's login with a partner before such shares were refused
+- **WHEN** Alice updates the login's password from the notification bar, saves a passkey to the login, or signs in with a passkey of the login, whose counter save is a share-save
+- **THEN** the bar or the passkey window MUST say that one recipient at a partner organisation got the login from a copy and did not get the change, in the words of the popup's item note
+- **AND** it MUST stay open until Alice closes it, instead of closing on its own
+- **AND** the bar and the passkey window MUST also show the partner shares the save suspended or paused
+
+#### Scenario: A non-owner editor hears of the owner's next save from the extension, except on a sign-in
+
+- **GIVEN** Carol is the delegate of Alice, and Alice's login is shared with a partner organisation
+- **WHEN** Carol updates the login's password from the notification bar, or saves a passkey to the login
+- **THEN** the bar or the passkey window MUST say that recipients at partner organisations get the change when the owner next saves it, and stay open until Carol closes it
+- **AND** when Carol signs in with an imported passkey of the login, the window MUST NOT say so, since the counter save is no change of hers; it MUST show only a count of recipients who got the login from a copy and the partner shares the save suspended or paused, and close as before when there are none
