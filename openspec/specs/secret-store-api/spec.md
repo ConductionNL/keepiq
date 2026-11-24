@@ -313,7 +313,7 @@ Machine secret-request creation MUST enforce the same guards as token issuance: 
 
 Every application write MUST move the row off the version it read in the same step that writes it, so a write that commits after the read is never lost: without `If-Match` it is kept as a version and the later write is made on top of it; with an `If-Match` tag other than `*` the later write is refused, as the paragraphs below say. This holds for the `PUT` and for the request fill on an application-owned secret.
 
-When the header is present and is not `*`, the server MUST check it against the row the write locks on. When it does not equal that row's strong ETag, or the row moves on after that read, the server MUST answer 412 Precondition Failed with the current ETag and MUST NOT change the secret. `If-Match: *` is written as a write without the header is.
+When the header is present and does not contain `*`, the server MUST check it against the row the write locks on. When none of its tags equals that row's strong ETag, or the row moves on after that read, the server MUST answer 412 Precondition Failed with the current ETag and MUST NOT change the secret. An `If-Match` that contains `*` (`If-Match: *`, or a list with `*` in it) is written as a write without the header is.
 
 When the header is absent and the row moves on after the read, the server MUST make the write once more on the row as it is now. When the row moves on a second time, the server MUST answer 409 Conflict and MUST NOT change the secret.
 

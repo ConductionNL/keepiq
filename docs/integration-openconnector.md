@@ -178,7 +178,7 @@ via `updatedAt` and the audit trail).
 
 A `PUT` never loses a write that lands after Keepiq read the secret: without `If-Match` that write is kept as a version and the `PUT` replaces it at the head; with an `If-Match` tag other than `*` the `PUT` is refused:
 
-- **With `If-Match`**, Keepiq checks the tag against the row it writes. When the tag is stale, or the secret changes between that check and the write, the answer is `412 Precondition Failed` with the current `ETag`, and nothing is written. Read the secret again, merge, and retry with the new tag. `If-Match: *` matches any version, so it is handled as a `PUT` without `If-Match`.
+- **With `If-Match`**, Keepiq checks the tag against the row it writes. When the tag is stale, or the secret changes between that check and the write, the answer is `412 Precondition Failed` with the current `ETag`, and nothing is written. Read the secret again, merge, and retry with the new tag. An `If-Match` that contains `*` matches any version, so it is handled as a `PUT` without `If-Match`.
 - **Without `If-Match`**, Keepiq makes the write once more on the secret as it is now. When the secret changes again during that second attempt, the answer is `409 Conflict` and nothing is written. Retry the `PUT`.
 
 The `updatedAt` and `ETag` in a successful `PUT` response are the stored ones, so the next `GET` answers the same `ETag`.
