@@ -109,7 +109,7 @@ function collectSubtree(folders, rootIds) {
  * @param {Set<string>|null} filters.typeIds The chosen type ids, or null.
  * @param {Set<string>|null} filters.secretIds The selected secret ids, or null.
  * @return {boolean}
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  */
 function isExported(secret, { folderIds, typeIds, secretIds }) {
 	if (isUseOnly(secret)) {
@@ -342,7 +342,7 @@ function typesByIdOf(types) {
  * @param {Array<string>} [options.omitFields] Fields to leave out, from OMITTABLE_FIELDS (D2).
  * @return {object} The `{ format, version, secrets, folders }` payload, with
  *   `partial: true` and `omittedFields` when fields were left out.
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  * @spec openspec/changes/portability-cxp-cross-provider-transfer/specs/portability-cxp/spec.md#requirement-choose-what-to-send
  */
 export function serializeVault(

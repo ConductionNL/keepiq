@@ -7,7 +7,7 @@
  * The scope an export dialog hands to the serializer, built from what the
  * user chose (portability-export-choice-and-restore-fidelity D1).
  *
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  */
 
 /**
@@ -32,7 +32,7 @@ export const SCOPE_KINDS = Object.freeze(['vault', 'folders', 'types', 'selectio
  * @param {Array<string>} [choice.typeIds] The chosen types.
  * @param {Array<string>} [choice.secretIds] The selected items.
  * @return {object} `{mode: 'vault'}`, `{folderIds}`, `{folderIds, typeIds}`, `{typeIds}` or `{mode: 'selection', secretIds}`.
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  */
 export function buildScope(choice) {
 	const ids = (list) => (Array.isArray(list) ? list.filter((id) => id !== null && id !== undefined && id !== '').map(String) : [])
@@ -65,7 +65,7 @@ export function buildScope(choice) {
  * @param {Array<object>} types The vault's types, so the file carries type names.
  * @param {Array<string>} omitFields The fields to leave out.
  * @return {{types: Array<object>, omitFields: Array<string>}} The options.
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
  */
 export function serializerOptions(types, omitFields) {
 	return {
