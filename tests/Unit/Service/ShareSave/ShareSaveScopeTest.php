@@ -12,6 +12,7 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareSave\ShareSaveEntries;
+use OCA\Keepiq\Service\ShareSave\ShareSavePartners;
 use OCA\Keepiq\Service\ShareSave\ShareSavePath;
 use OCA\Keepiq\Service\ShareSave\ShareSaveScope;
 use OCA\Keepiq\Service\ShareSync\ShareSyncGuards;
@@ -59,7 +60,7 @@ class ShareSaveScopeTest extends TestCase {
 		$this->scope = new ShareSaveScope(
 			rowJudge: $this->shareRowJudge(targets: $this->targets, secrets: $this->secrets),
 			secrets: $this->secrets,
-			federatedShares: $this->federated,
+			partners: new ShareSavePartners(federatedShares: $this->federated),
 			sync: $this->createMock(ShareSyncService::class),
 			guards: $guards,
 		);

@@ -39,7 +39,6 @@ use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\PartnerUpgradeRequiredException;
@@ -83,7 +82,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * Constructor for FederatedShareService.
 	 *
 	 * @param FederatedShareMapper $shareMapper Outbound share rows
-	 * @param SecretMapper $secretMapper The owner's secrets
+	 * @param FederatedShareSources $sources The owner's secrets, and whether one to share is a received copy
 	 * @param FederationPartnerService $partners The partner allowlist
 	 * @param FederationRootService $root Whether this Nextcloud can federate
 	 * @param ICloudIdManager $cloudIdManager Cloud id parsing
@@ -91,7 +90,6 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @param ISecureRandom $random The shared secret
 	 * @param FederatedNotificationDelivery $delivery Notifications with retries
 	 * @param FederatedShareAuditTrail $audit Identifier-only audit
-	 * @param ShareRowJudge $rowJudge Judged share rows: whether a secret to share is a received copy
 	 * @param LoggerInterface|null $logger Warns about a pull refused for the value fields it did not declare
 	 *
 	 * @return void
@@ -102,7 +100,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 */
 	public function __construct(
 		private FederatedShareMapper $shareMapper,
-		private SecretMapper $secretMapper,
+		private FederatedShareSources $sources,
 		private FederationPartnerService $partners,
 		private FederationRootService $root,
 		private ICloudIdManager $cloudIdManager,
@@ -110,7 +108,6 @@ class FederatedShareService implements FederatedShareServiceInterface {
 		private ISecureRandom $random,
 		private FederatedNotificationDelivery $delivery,
 		private FederatedShareAuditTrail $audit,
-		private ShareRowJudge $rowJudge,
 		private ?LoggerInterface $logger = null,
 	) {
 		$this->valueFields = new FederatedValueFields();
@@ -154,11 +151,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 		// A read-only or restricted copy never leaves (task 3.4).
 		$source->assertOnwardShareable();
 		// Nor does a full one: partner shares hang off the original, which only its owner's save writes.
-		$this->rowJudge->assertNotReceivedCopy(
-			secret: $source,
-			pending: 'This secret waits for the share quarantine scan, so it cannot be shared yet',
-			refusal: 'not_shareable'
-		);
+		$this->sources->assertNotReceivedCopy(source: $source);
 
 		$certFingerprint = $this->assertCiphertext(certFingerprint: $certFingerprint, ciphertext: $ciphertext);
 
@@ -562,7 +555,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 
 		try {
 			$row = $this->shareMapper->findById(id: $shareId);
-			$source = $this->secretMapper->findById($row->getSourceSecretId());
+			$source = $this->sources->find(secretId: $row->getSourceSecretId());
 		} catch (DoesNotExistException) {
 			return null;
 		}
@@ -624,7 +617,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 */
 	private function ownedSecret(string $secretId, string $userId): Secret {
 		try {
-			$secret = $this->secretMapper->findById($secretId);
+			$secret = $this->sources->find(secretId: $secretId);
 		} catch (DoesNotExistException) {
 			throw new NotFoundException(message: 'Secret not found');
 		}

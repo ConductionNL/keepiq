@@ -40,6 +40,7 @@ use OCA\Keepiq\Service\FederatedInboundService;
 use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedSharePuller;
 use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederatedShareSources;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\NotificationService;
@@ -319,7 +320,7 @@ class FederatedShareAcceptTest extends TestCase {
 
 		$service = new FederatedShareService(
 			shareMapper: $shares,
-			secretMapper: $secrets,
+			sources: new FederatedShareSources(secretMapper: $secrets, rowJudge: $this->shareRowJudge()),
 			partners: $partners,
 			root: new FederationRootService($this->caMapper()),
 			cloudIdManager: $this->cloudIdManager(),
@@ -327,7 +328,6 @@ class FederatedShareAcceptTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $this->createMock(\OCA\Keepiq\Service\FederatedNotificationDelivery::class),
 			audit: new \OCA\Keepiq\Service\FederatedShareAuditTrail(),
-			rowJudge: $this->shareRowJudge(),
 		);
 
 		return new FederationOcmRequestListener($this->createMock(FederatedCertificateService::class), $service);
