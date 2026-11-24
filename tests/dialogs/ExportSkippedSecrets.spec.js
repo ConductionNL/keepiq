@@ -17,7 +17,7 @@
  * specs: mounting the whole list view drags in the folder tree, search and
  * type catalogue, none of which this behaviour touches.
  *
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
  */
 
 import { mount } from '@vue/test-utils'

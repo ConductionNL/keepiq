@@ -1552,7 +1552,7 @@ export default {
 		 *
 		 * @return {Promise<{secrets: Array<object>, skipped: number}>}
 		 * @spec openspec/specs/secret-export/spec.md
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async decryptAllSecrets() {
 			const store = this.secretStore
@@ -1588,7 +1588,7 @@ export default {
 		 * @param {string|Event} [scope] `selection` when opened from the bulk strip; anything else opens on the whole vault.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secret-export/spec.md
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openExport(scope = 'vault') {
 			this.exportScope = scope === 'selection' ? 'selection' : 'vault'
@@ -1604,7 +1604,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/cxp-transfer/specs/cxp-transfer/spec.md
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openCxp() {
 			const { secrets, skipped } = await this.decryptAllSecrets()
@@ -1619,7 +1619,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/gdpr-compliance/spec.md
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openGdpr() {
 			const { secrets, skipped } = await this.decryptAllSecrets()
