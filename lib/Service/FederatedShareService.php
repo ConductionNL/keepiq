@@ -117,7 +117,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * Store the browser-made ciphertext for a federated recipient and announce
 	 * the share over OCM.
 	 *
-	 * @param string $secretId The owner's secret
+	 * @param string $secretId The owner's secret, or the owner's own received copy of it, whose source is then shared
 	 * @param string $userId The owner
 	 * @param string $recipientCloudId The recipient, `bob@cloud.partner.example`
 	 * @param string $certFingerprint SHA-256 of the certificate the browser verified and encrypted for
@@ -127,7 +127,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 *
 	 * @throws NotFoundException When the secret is not the user's own
 	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `unknown_recipient`, `already_shared`,
-	 *   `not_shareable` when the secret is a received copy,
+	 *   `not_shareable` when the secret is a received copy of a secret the user does not own,
 	 *   or `copy_fields_mismatch` when its totp or passkeys does not mirror the source's
 	 * @throws ShareScanPendingException When the pending quarantine scan cannot judge the row that may name it a copy
 	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
@@ -135,6 +135,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#requirement-a-received-copy-is-not-shared-with-a-partner
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function create(
 		string $secretId,
@@ -147,7 +148,9 @@ class FederatedShareService implements FederatedShareServiceInterface {
 			throw new RuntimeException('federation_unavailable');
 		}
 
-		$source = $this->ownedSecret(secretId: $secretId, userId: $userId);
+		$secret = $this->ownedSecret(secretId: $secretId, userId: $userId);
+		// The new owner of a secret shares it through their own copy: the partner share goes on the source.
+		$source = ($this->sources->ownedSourceOf(copy: $secret, userId: $userId) ?? $secret);
 		// A read-only or restricted copy never leaves (task 3.4).
 		$source->assertOnwardShareable();
 		// Nor does a full one: partner shares hang off the original, which only its owner's save writes.
@@ -168,13 +171,14 @@ class FederatedShareService implements FederatedShareServiceInterface {
 
 		$this->valueFields->assertPartnerStores(partner: $partner, ciphertext: $ciphertext);
 		$this->valueFields->assertMirrorsSource(partner: $partner, source: $source, ciphertext: $ciphertext);
-		$this->assertNotSharedWith(secretId: $secretId, recipientCloudId: $recipient->getId());
+		// A share made from the owner's copy before D3 counts too: they revoke it first.
+		$this->assertNotSharedWith(secretIds: array_unique([$source->getId(), $secretId]), recipientCloudId: $recipient->getId());
 
 		$sharedSecret = $this->random->generate(self::SHARED_SECRET_LENGTH, ISecureRandom::CHAR_ALPHANUMERIC);
 		$now = new DateTime();
 		$row = new FederatedShare();
 		$row->setId(Uuid::uuid4()->toString());
-		$row->setSourceSecretId($secretId);
+		$row->setSourceSecretId($source->getId());
 		$row->setOwnerId($userId);
 		$row->setRecipientCloudId($recipient->getId());
 		$row->setPartnerId($partner->getId());
@@ -497,17 +501,21 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	/**
 	 * Refuse a second live share to the same recipient. After a suspended,
 	 * failed or revoked one the owner shares again, as the share list tells
-	 * them to.
+	 * them to. The owner sharing through their own copy is checked on the
+	 * source and on that copy, whose list shows both.
 	 *
-	 * @param string $secretId The owner's secret
+	 * @param array<array-key,string> $secretIds The owner's secret, and the owner's copy it was shared through
 	 * @param string $recipientCloudId The recipient
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException `already_shared`
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
-	private function assertNotSharedWith(string $secretId, string $recipientCloudId): void {
-		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secretId) as $existing) {
+	private function assertNotSharedWith(array $secretIds, string $recipientCloudId): void {
+		$shares = array_map(fn (string $id): array => $this->shareMapper->findBySourceSecret(sourceSecretId: $id), $secretIds);
+		foreach (array_merge(...array_values($shares)) as $existing) {
 			if ($existing->getRecipientCloudId() === $recipientCloudId
 				&& $existing->getStatus() === FederatedShare::STATUS_ACTIVE
 			) {
@@ -517,7 +525,9 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	}//end assertNotSharedWith()
 
 	/**
-	 * The federated shares of one of the user's own secrets.
+	 * The federated shares of one of the user's own secrets. For the user's own received copy of a secret they own,
+	 * the source's shares, which create() makes from that copy, come first, followed by those made from the copy
+	 * before such shares were refused, which the user revokes from here.
 	 *
 	 * @param string $secretId The owner's secret
 	 * @param string $userId The owner
@@ -527,11 +537,16 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @throws NotFoundException When the secret is not the user's own
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function listForSecret(string $secretId, string $userId): array {
-		$this->ownedSecret(secretId: $secretId, userId: $userId);
+		$secret = $this->ownedSecret(secretId: $secretId, userId: $userId);
+		$source = ($this->sources->ownedSourceOf(copy: $secret, userId: $userId) ?? $secret);
+		$ids = array_unique([$source->getId(), $secretId]);
 
-		return $this->shareMapper->findBySourceSecret(sourceSecretId: $secretId);
+		return array_merge(
+			...array_map(fn (string $id): array => $this->shareMapper->findBySourceSecret(sourceSecretId: $id), $ids)
+		);
 	}//end listForSecret()
 
 	/**

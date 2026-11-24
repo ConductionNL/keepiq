@@ -69,7 +69,8 @@ class FederatedShareController extends Controller {
 	/**
 	 * Share one of the user's secrets with a user of an outbound partner.
 	 *
-	 * A secret that was shared with the user, a received copy, is refused with the message `not_shareable`.
+	 * A secret that was shared with the user, a received copy, is refused with the message `not_shareable`,
+	 * unless the user owns its source: their own copy of a secret they own is shared from that source.
 	 *
 	 * Every federated recipient is a new party, so the vault key proof of
 	 * user-sharing ("Sharing with a new party requires a verified key proof")
