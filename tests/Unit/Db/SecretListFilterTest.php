@@ -45,10 +45,11 @@ class SecretListFilterTest extends TestCase {
 	 * @param string|null $folderId The folder, or null.
 	 * @param string|null $typeId   The type, or null.
 	 * @param string|null $state    The state, or null.
+	 * @param bool        $passkeyLogins Whether the type is the Passkey type.
 	 *
 	 * @return SecretListFilter
 	 */
-	private function filter(?string $folderId=null, ?string $typeId=null, ?string $state=null): SecretListFilter {
+	private function filter(?string $folderId=null, ?string $typeId=null, ?string $state=null, bool $passkeyLogins=false): SecretListFilter {
 		return new SecretListFilter(
 			ownerType: 'user',
 			ownerId: 'alice',
@@ -56,7 +57,8 @@ class SecretListFilterTest extends TestCase {
 			typeId: $typeId,
 			state: $state,
 			favourite: null,
-			tag: null
+			tag: null,
+			passkeyLogins: $passkeyLogins
 		);
 	}//end filter()
 
@@ -89,6 +91,39 @@ class SecretListFilterTest extends TestCase {
 		);
 		$this->assertSame([':p0' => 'user', ':p1' => 'alice', ':p2' => 'f1', ':p3' => 't1'], $this->paramsOf(0));
 	}//end testNarrowWithFolderTypeAndState()
+
+	/**
+	 * On the Passkey type, rows holding passkey ciphertext match as well.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 */
+	public function testNarrowOnThePasskeyTypeAlsoMatchesLoginsWithPasskeys(): void {
+		$this->filter(typeId: 't-passkey', passkeyLogins: true)->narrow(qb: $this->recordingQueryBuilder());
+
+		$this->assertSame(
+			[
+				'where(eq(owner_type, :p0))', 'andWhere(eq(owner_id, :p1))',
+				'andWhere(orX(eq(type_id, :p2), andX(isNotNull(passkeys), neq(passkeys, :p3))))',
+			],
+			$this->opsOf(0)
+		);
+		$this->assertSame([':p0' => 'user', ':p1' => 'alice', ':p2' => 't-passkey', ':p3' => ''], $this->paramsOf(0));
+	}//end testNarrowOnThePasskeyTypeAlsoMatchesLoginsWithPasskeys()
+
+	/**
+	 * Without a type the passkey flag adds nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 */
+	public function testThePasskeyFlagNeedsAType(): void {
+		$this->filter(passkeyLogins: true)->narrow(qb: $this->recordingQueryBuilder());
+
+		$this->assertSame(['where(eq(owner_type, :p0))', 'andWhere(eq(owner_id, :p1))'], $this->opsOf(0));
+	}//end testThePasskeyFlagNeedsAType()
 
 	/**
 	 * An unknown state is refused rather than ignored.

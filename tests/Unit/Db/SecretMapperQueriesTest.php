@@ -282,6 +282,52 @@ class SecretMapperQueriesTest extends TestCase {
 	}//end testFindByOwnerKeepsAnAllowedSortColumn()
 
 	/**
+	 * A type filter looks the type up first; on Passkey the listing and its
+	 * count also take the logins holding passkeys.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 */
+	public function testThePasskeyTypeFilterAlsoListsLoginsWithPasskeys(): void {
+		$this->queueRows(rows: [['name' => 'passkey']]);
+		$this->queueRows(rows: [$this->row(id: 'pk-item'), $this->row(id: 'login-with-passkey')]);
+		$mapper = $this->mapper();
+
+		$found = $mapper->findByOwner(ownerType: 'user', ownerId: 'alice', typeId: 't-passkey');
+
+		$this->assertSame(expected: ['pk-item', 'login-with-passkey'], actual: $this->ids(secrets: $found));
+		$this->assertSame(
+			expected: ['select(name)', 'from(keepiq_secret_types)', 'where(eq(id, :p0))', 'setMaxResults(1)'],
+			actual: $this->opsOf(index: 0)
+		);
+		$this->assertSame(expected: [':p0' => 't-passkey'], actual: $this->paramsOf(index: 0));
+		$this->assertContains(
+			needle: 'andWhere(orX(eq(type_id, :p3), andX(isNotNull(passkeys), neq(passkeys, :p4))))',
+			haystack: $this->opsOf(index: 1)
+		);
+	}//end testThePasskeyTypeFilterAlsoListsLoginsWithPasskeys()
+
+	/**
+	 * Any other type filters on the type alone, for the count as for the list.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 */
+	public function testAnotherTypeFilterMatchesTheTypeOnly(): void {
+		$this->queueRows(rows: [['name' => 'login']]);
+		$this->queueRows(rows: [['cnt' => 3]]);
+
+		$this->assertSame(expected: 3, actual: $this->mapper()->countByOwner(ownerType: 'user', ownerId: 'alice', typeId: 't-login'));
+		$this->assertContains(needle: 'andWhere(eq(type_id, :p3))', haystack: $this->opsOf(index: 1));
+		$this->assertNotContains(
+			needle: 'andWhere(orX(eq(type_id, :p3), andX(isNotNull(passkeys), neq(passkeys, :p4))))',
+			haystack: $this->opsOf(index: 1)
+		);
+	}//end testAnotherTypeFilterMatchesTheTypeOnly()
+
+	/**
 	 * The rotation scan pages user-owned rows by id.
 	 *
 	 * @return void

@@ -40,8 +40,12 @@ final class SecretListFilter {
 	 * @param string|null $state One of the SecretMapper::STATE_* constants; null = every row
 	 * @param bool|null $favourite Only the holder's starred rows when true
 	 * @param string|null $tag Only rows the holder tagged with this tag
+	 * @param bool $passkeyLogins Whether $typeId is the built-in Passkey type, so
+	 *                            logins holding passkeys match it too
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function __construct(
 		public readonly string $ownerType,
@@ -51,6 +55,7 @@ final class SecretListFilter {
 		public readonly ?string $state,
 		public readonly ?bool $favourite,
 		public readonly ?string $tag,
+		public readonly bool $passkeyLogins=false,
 	) {
 	}//end __construct()
 
@@ -63,6 +68,7 @@ final class SecretListFilter {
 	 * @return void
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function narrow(IQueryBuilder $qb): void {
 		$qb->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($this->ownerType)))
@@ -73,11 +79,41 @@ final class SecretListFilter {
 		}
 
 		if ($this->typeId !== null) {
-			$qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($this->typeId)));
+			$this->narrowType(qb: $qb, typeId: $this->typeId);
 		}
 
 		(new SecretStateFilter())->apply(qb: $qb, state: $this->state);
 	}//end narrow()
+
+	/**
+	 * Narrow a secrets query to one type. On the Passkey type, rows whose
+	 * passkeys field holds ciphertext match too: the presence of ciphertext
+	 * is all the server reads, as for the vault list marker.
+	 *
+	 * @param IQueryBuilder $qb The query to narrow
+	 * @param string $typeId The secret-type ID
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 */
+	private function narrowType(IQueryBuilder $qb, string $typeId): void {
+		$ofType = $qb->expr()->eq('type_id', $qb->createNamedParameter($typeId));
+		if ($this->passkeyLogins === false) {
+			$qb->andWhere($ofType);
+			return;
+		}
+
+		$qb->andWhere(
+			$qb->expr()->orX(
+				$ofType,
+				$qb->expr()->andX(
+					$qb->expr()->isNotNull('passkeys'),
+					$qb->expr()->neq('passkeys', $qb->createNamedParameter(''))
+				)
+			)
+		);
+	}//end narrowType()
 
 	/**
 	 * Narrow a secrets query to the holder's favourite and tag, and answer
