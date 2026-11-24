@@ -1565,11 +1565,11 @@ class SecretService implements SecretServiceInterface {
 	private function writeLocked(Secret $secret, VersionMove $move, \Closure $snapshot, \Closure $stale): void {
 		$this->atomic(
 			fn: function () use ($secret, $move, $snapshot, $stale): void {
-				if ($this->mapper->advanceVersion(id: $secret->getId(), base: $move->base, savedAt: $move->savedAt) === 0) {
+				if ($this->mapper->advanceVersion(id: $secret->getId(), base: $move->base(), savedAt: $move->savedAt()) === 0) {
 					throw $stale();
 				}
 
-				$this->writeHead(secret: $secret, savedAt: $move->savedAt, snapshot: $snapshot);
+				$this->writeHead(secret: $secret, savedAt: $move->savedAt(), snapshot: $snapshot);
 			},
 			db: $this->db
 		);
