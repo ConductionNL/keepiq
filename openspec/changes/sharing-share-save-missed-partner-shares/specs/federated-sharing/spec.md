@@ -91,6 +91,8 @@ The system MUST refuse to create a partner share whose source is a recipient's c
 - **GIVEN** Dave became the owner of Alice's secret through a transfer and works through his copy of it
 - **WHEN** Dave shares his copy with a user on a partner instance
 - **THEN** the partner share MUST be created on the source, with the source as its source secret
+- **AND** the partner share MUST be listed with the partner shares of Dave's copy, next to any made from that copy before such shares were refused, and Dave MUST be able to revoke it there
+- **AND** a copy holder who does not own the source MUST see only the partner shares of their own copy
 - **AND** a copy holder who does not own the source MUST still be refused with `not_shareable`, and no partner share created
 
 #### Scenario: The owner's original is still shared

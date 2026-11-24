@@ -520,7 +520,9 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	}//end assertNotSharedWith()
 
 	/**
-	 * The federated shares of one of the user's own secrets.
+	 * The federated shares of one of the user's own secrets. For the user's own received copy of a secret they own,
+	 * the source's shares, which create() makes from that copy, come first, followed by those made from the copy
+	 * before such shares were refused, which the user revokes from here.
 	 *
 	 * @param string $secretId The owner's secret
 	 * @param string $userId The owner
@@ -530,11 +532,17 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	 * @throws NotFoundException When the secret is not the user's own
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
 	public function listForSecret(string $secretId, string $userId): array {
-		$this->ownedSecret(secretId: $secretId, userId: $userId);
+		$secret = $this->ownedSecret(secretId: $secretId, userId: $userId);
+		$rows = $this->shareMapper->findBySourceSecret(sourceSecretId: $secretId);
+		$source = $this->sources->ownedSourceOf(copy: $secret, userId: $userId);
+		if ($source === null) {
+			return $rows;
+		}
 
-		return $this->shareMapper->findBySourceSecret(sourceSecretId: $secretId);
+		return array_merge($this->shareMapper->findBySourceSecret(sourceSecretId: $source->getId()), $rows);
 	}//end listForSecret()
 
 	/**

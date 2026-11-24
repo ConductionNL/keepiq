@@ -128,7 +128,14 @@ class FederatedShareSendTest extends TestCase {
 				return $row;
 			}
 		);
-		$mapper->method('findBySourceSecret')->willReturnCallback(fn (): array => array_values($this->rows));
+		$mapper->method('findBySourceSecret')->willReturnCallback(
+			fn (string $sourceSecretId): array => array_values(
+				array_filter($this->rows, static fn (FederatedShare $row): bool => $row->getSourceSecretId() === $sourceSecretId)
+			)
+		);
+		$mapper->method('findById')->willReturnCallback(
+			fn (string $id): FederatedShare => ($this->rows[$id] ?? throw new DoesNotExistException('no share'))
+		);
 
 		$factory = $this->createMock(ICloudFederationFactory::class);
 		$factory->method('getCloudFederationShare')->willReturnCallback(
@@ -554,6 +561,51 @@ class FederatedShareSendTest extends TestCase {
 		$this->assertSame(self::CIPHER_KEY, $row->getKey());
 		$this->assertSame(self::FINGERPRINT, $row->getRecipientCertFingerprint());
 		$this->assertCount(1, $this->sent);
+	}
+
+	/**
+	 * The share the owner made through their copy shows in the list of that copy, next to one made from the copy
+	 * before such shares were refused, and the owner revokes it from there.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testTheSourcesOwnerListsAndRevokesThroughTheirOwnCopy(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
+		$old = new FederatedShare();
+		$old->setId('fs-old');
+		$old->setSourceSecretId('src');
+		$old->setOwnerId('alice');
+		$old->setRecipientCloudId('carol@cloud.partner.example');
+		$old->setStatus(FederatedShare::STATUS_ACTIVE);
+		$this->rows['fs-old'] = $old;
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+		$made = $this->share($controller)->getData();
+
+		$listed = array_column($controller->index('src')->getData(), 'id');
+
+		$this->assertEqualsCanonicalizing([$made['id'], 'fs-old'], $listed);
+		$this->assertSame(Http::STATUS_OK, $controller->destroy($made['id'])->getStatus());
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->rows[$made['id']]->getStatus());
+	}
+
+	/**
+	 * A copy holder who does not own the source sees only the partner shares of their own copy.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testACopyHolderListsOnlyTheirOwnCopysShares(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'olivia');
+		foreach (['fs-orig' => 'orig', 'fs-src' => 'src'] as $id => $sourceId) {
+			$row = new FederatedShare();
+			$row->setId($id);
+			$row->setSourceSecretId($sourceId);
+			$row->setOwnerId('olivia');
+			$this->rows[$id] = $row;
+		}
+
+		$listed = array_column($this->controller([])->index('src')->getData(), 'id');
+
+		$this->assertSame(['fs-src'], $listed);
 	}
 
 	/**
