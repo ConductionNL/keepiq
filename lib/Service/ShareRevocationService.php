@@ -82,7 +82,7 @@ class ShareRevocationService {
 	 * @param LoggerInterface $logger The logger interface
 	 * @param ShareAuthorizationService $auth The share authorization service
 	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
-	 * @param AttachmentService|null $attachmentService The attachment service (revoke cascade)
+	 * @param RecipientCopyCleanup|null $copyCleanup What goes with a deleted copy: its partner shares and attachment grants
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param QuarantinedShareTargetMapper|null $quarantined Tells an owner their revoke hit a quarantined row
 	 *
@@ -97,7 +97,7 @@ class ShareRevocationService {
 		private LoggerInterface $logger,
 		private ShareAuthorizationService $auth,
 		private ShareQuarantineScanner $quarantineScan,
-		private ?AttachmentService $attachmentService = null,
+		private ?RecipientCopyCleanup $copyCleanup = null,
 		?ShareAuditTrail $auditTrail = null,
 		private ?QuarantinedShareTargetMapper $quarantined = null,
 	) {
@@ -297,13 +297,28 @@ class ShareRevocationService {
 				return;
 			}
 
+			$this->endCopyPartnerShares(copyId: $copyId);
 			$this->secretMapper->delete($copy);
 		} catch (DoesNotExistException) {
 			// Already gone; its leftover grants go with it below.
 		}
 
-		$this->attachmentService?->deleteGrantsForSecretCopy($copyId);
+		$this->copyCleanup?->deleteAttachmentGrants(copyId: $copyId);
 	}//end deleteRecipientCopy()
+
+	/**
+	 * End the partner shares a recipient made of their copy, before the copy is deleted for good, so no partner keeps a copy of it.
+	 * Each SHARE_UNSHARED is left to the retry job: a copy can go inside a transaction.
+	 *
+	 * @param string $copyId The copy about to be deleted
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-received-copy-deleted-for-good-ends-its-partner-shares
+	 */
+	public function endCopyPartnerShares(string $copyId): void {
+		$this->copyCleanup?->endPartnerShares(copyId: $copyId);
+	}//end endCopyPartnerShares()
 
 	/**
 	 * Whether a revoke or cascade keeps a row's copy: its target does not

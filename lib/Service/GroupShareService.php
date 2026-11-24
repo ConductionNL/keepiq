@@ -569,6 +569,7 @@ class GroupShareService implements GroupShareServiceInterface {
 			return true;
 		}
 
+		$this->revocationService->endCopyPartnerShares(copyId: $copy->getId());
 		$this->secretMapper->delete($copy);
 		return true;
 	}//end deleteLeavingCopy()

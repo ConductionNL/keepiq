@@ -7,7 +7,7 @@
  *
  * - `revoke()` ends one share the owner revokes, and tells the partner now.
  * - When a secret is deleted for good, its partner shares end before its row goes: the owner's purge tells each partner now,
- *   the trash retention job and an account deletion leave every SHARE_UNSHARED to the retry job.
+ *   the trash retention job, an account deletion and the delete of a received copy with its share leave every SHARE_UNSHARED to the retry job.
  * - A declined share of a deleted secret is deleted without a notification, and a revoke whose SHARE_UNSHARED is pending keeps it.
  *
  * @category Service
@@ -129,6 +129,21 @@ class PartnerShareRevoker {
 	public function queueForRetentionPurge(string $secretId): void {
 		$this->queueAll(rows: $this->shareMapper->findBySourceSecret(sourceSecretId: $secretId), actorId: null);
 	}//end queueForRetentionPurge()
+
+	/**
+	 * A user's copy of a secret shared with them is deleted for good with its share: the share is revoked, its source is trashed or purged,
+	 * a team-folder share ends or a member leaves a group. End each partner share the holder made of the copy,
+	 * and leave every SHARE_UNSHARED to the retry job, as the copy can go inside a transaction. Runs before the copy's row goes.
+	 *
+	 * @param string $copyId The copy being deleted
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-received-copy-deleted-for-good-ends-its-partner-shares
+	 */
+	public function queueForDeletedCopy(string $copyId): void {
+		$this->queueAll(rows: $this->shareMapper->findBySourceSecret(sourceSecretId: $copyId), actorId: null);
+	}//end queueForDeletedCopy()
 
 	/**
 	 * A user's account is deleted: end the partner shares of every secret the user still owns, and leave every SHARE_UNSHARED to the retry job.

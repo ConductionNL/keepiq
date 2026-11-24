@@ -40,6 +40,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Db\SecretTrashMapper;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
+use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
@@ -48,6 +49,7 @@ use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
 use OCA\Keepiq\Service\AccountDeletionService;
 use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\AccountSuiteCleanupService;
+use OCA\Keepiq\Service\AttachmentService;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
@@ -59,12 +61,17 @@ use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\OwnedSecretCleanup;
 use OCA\Keepiq\Service\PartnerShareRevoker;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
+use OCA\Keepiq\Service\RecipientSecretCopyFactory;
+use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretSharingRevoker;
 use OCA\Keepiq\Service\SecretTrashService;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Service\ShareAuthorizationService;
+use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareSaveRequiredGuard;
 use OCA\Keepiq\Service\ViewOnlyCopyGuard;
 use OCA\Keepiq\Tests\Support\ShareRowJudgeFixture;
@@ -123,6 +130,10 @@ class FederatedSourceDeletedTest extends TestCase {
 	private PurgeTrashedSecretsJob $retention;
 
 	private AccountDeletionService $accounts;
+
+	private PartnerShareRevoker $revoker;
+
+	private SecretMapper $secretMapper;
 
 	protected function setUp(): void {
 		$this->secrets = [
@@ -289,6 +300,8 @@ class FederatedSourceDeletedTest extends TestCase {
 		);
 
 		$this->accounts = $this->accountDeletion(secretMapper: $secretMapper, shares: $shares, revoker: $revoker);
+		$this->revoker = $revoker;
+		$this->secretMapper = $secretMapper;
 	}
 
 	/**
@@ -761,6 +774,69 @@ class FederatedSourceDeletedTest extends TestCase {
 		$this->assertGreaterThan(FederatedNotificationDelivery::MAX_ATTEMPTS, count($attempts));
 		$this->assertArrayHasKey('fs-1', $this->rows);
 		$this->assertSame([], $this->failures());
+	}
+
+	/**
+	 * The paths that delete a user's copy of a shared secret for good together with its share.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function copyDeletions(): array {
+		return [
+			'the source\'s shares end (revoke, trash or purge of the source)' => ['source shares end'],
+			'a team-folder share ends' => ['team-folder share ends'],
+		];
+	}
+
+	/**
+	 * Bob shared his full-access copy of Alice's secret with a partner. When the copy is deleted for good with its share,
+	 * the partner share ends before the copy goes, revoked with SHARE_UNSHARED pending, and the retry job tells the partner.
+	 */
+	#[DataProvider('copyDeletions')]
+	public function testAPartnerSharedCopyDeletedForGoodEndsItsPartnerShare(string $path): void {
+		$copy = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$copy->setTrashedAt(null);
+		$this->secrets['copy-bob'] = $copy;
+		$this->share(id: 'fs-bob', sourceSecretId: 'copy-bob');
+		$this->rows['fs-bob']->setOwnerId('bob');
+		$target = new ShareTarget();
+		$target->setId('st-bob');
+		$target->setSourceSecretId('src');
+		$target->setSecretId('copy-bob');
+		$target->setTargetUserId('bob');
+
+		if ($path === 'source shares end') {
+			$targets = $this->createMock(ShareTargetMapper::class);
+			$targets->method('findBySourceSecret')->willReturn([$target]);
+			(new ShareRevocationService(
+				mapper: $targets,
+				secretMapper: $this->secretMapper,
+				db: $this->createMock(IDBConnection::class),
+				logger: $this->createMock(LoggerInterface::class),
+				auth: $this->createMock(ShareAuthorizationService::class),
+				quarantineScan: $this->clearedQuarantineScan(),
+				copyCleanup: new RecipientCopyCleanup(attachments: $this->createMock(AttachmentService::class), partnerShares: $this->revoker),
+			))->deleteAllForSecret(sourceSecretId: 'src');
+		} else {
+			(new RecipientSecretCopyService(
+				secretMapper: $this->secretMapper,
+				copies: $this->createStub(RecipientSecretCopyFactory::class),
+				partnerShares: $this->revoker,
+			))->deleteByShare(share: $target);
+		}
+
+		$this->assertArrayNotHasKey('copy-bob', $this->secrets);
+		// When the copy went, its partner share had ended already.
+		$this->assertSame([['sent' => 0, 'rows' => ['fs-bob' => ['status' => FederatedShare::STATUS_REVOKED, 'pending' => FederatedNotificationDelivery::SHARE_UNSHARED]]]], $this->atSourceDelete);
+		$this->assertSame(FederatedShare::STATUS_REVOKED, $this->rows['fs-bob']->getStatus());
+		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $this->rows['fs-bob']->getPendingNotification());
+		$this->assertCount(1, $this->revocations());
+		$this->assertSame('copy-bob', $this->revocations()[0]->getObjectId());
+		$this->assertNull($this->revocations()[0]->getActorId());
+
+		$this->assertSame(1, $this->delivery->retryDue(new DateTime('+1 minute')));
+		$this->assertSame(['fs-bob'], $this->unsharesSent());
+		$this->assertSame([], $this->rows);
 	}
 
 	/**

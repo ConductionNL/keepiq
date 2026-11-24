@@ -878,6 +878,43 @@ class GroupShareServiceTest extends TestCase {
 	}//end testHandleMemberLeaveRevokesGroupDerivedOnly()
 
 	/**
+	 * A departing member's copy is deleted for good, so the partner shares the member made of it end first.
+	 *
+	 * @return void
+	 */
+	public function testHandleMemberLeaveEndsThePartnerSharesOfTheCopyBeforeItGoes(): void {
+		$gs = new GroupShare();
+		$gs->setId('gs-1');
+		$gs->setSecretId('src-1');
+		$this->mapper->method('findByGroup')->willReturn([$gs]);
+
+		$bobTarget = new ShareTarget();
+		$bobTarget->setId('st-1');
+		$bobTarget->setTargetUserId('bob');
+		$bobTarget->setSecretId('copy-bob');
+		$bobTarget->setGroupShareId('gs-1');
+		$this->bulkGrantMapper->method('findByGroupShare')->willReturn([$bobTarget]);
+
+		$steps = [];
+		$this->secretMapper->method('findById')->willReturn($this->makeOwnerSecret('copy-bob', 'bob'));
+		$this->revocationService->expects($this->once())->method('endCopyPartnerShares')->with('copy-bob')->willReturnCallback(
+			static function () use (&$steps): void {
+				$steps[] = 'end partner shares';
+			}
+		);
+		$this->secretMapper->expects($this->once())->method('delete')->willReturnCallback(
+			static function (Secret $copy) use (&$steps): Secret {
+				$steps[] = 'delete '.$copy->getId();
+				return $copy;
+			}
+		);
+
+		$this->service->handleMemberLeave(userId: 'bob', groupId: 'engineering');
+
+		$this->assertSame(['end partner shares', 'delete copy-bob'], $steps);
+	}//end testHandleMemberLeaveEndsThePartnerSharesOfTheCopyBeforeItGoes()
+
+	/**
 	 * Defence in depth (GHSA-m5p9-6pw7-pf3g): when a departing member's share
 	 * row points at a secret the member does NOT own (a poisoned or drifted
 	 * `secret_id`), the secret is left untouched while the share row still

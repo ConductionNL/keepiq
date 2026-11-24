@@ -56,6 +56,7 @@ use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -1289,8 +1290,8 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 			bulkGrantMapper: new BulkGrantShareTargetMapper(db: $this->db),
 			copies: new RecipientSecretCopyService(
 				secretMapper: new SecretMapper(db: $this->db),
-				suiteMapper: $suites,
-				typeService: $types
+				copies: new RecipientSecretCopyFactory(secretMapper: new SecretMapper(db: $this->db), suiteMapper: $suites, typeService: $types),
+				partnerShares: $this->createStub(PartnerShareRevoker::class),
 			),
 			notificationService: $this->createMock(NotificationService::class),
 			db: $this->db,

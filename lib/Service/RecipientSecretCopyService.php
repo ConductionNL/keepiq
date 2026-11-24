@@ -28,7 +28,6 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
@@ -43,10 +42,9 @@ class RecipientSecretCopyService {
 	 * Constructor for RecipientSecretCopyService.
 	 *
 	 * @param SecretMapper $secretMapper The secret mapper
-	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper (recipient suite)
-	 * @param SecretTypeService $typeService The secret-type resolver (copy typing)
+	 * @param RecipientSecretCopyFactory $copies Mints a copy: its suite, type and extra website addresses
+	 * @param PartnerShareRevoker $partnerShares Ends the partner shares of a copy that is deleted
 	 * @param LoggerInterface|null $logger The logger (skipped cross-user deletes)
-	 * @param SecretUrlService|null $urls The extra website addresses a copy carries from its source
 	 *
 	 * @return void
 	 *
@@ -54,10 +52,9 @@ class RecipientSecretCopyService {
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
-		private EncryptionSuiteMapper $suiteMapper,
-		private SecretTypeService $typeService,
+		private RecipientSecretCopyFactory $copies,
+		private PartnerShareRevoker $partnerShares,
 		private ?LoggerInterface $logger = null,
-		private ?SecretUrlService $urls = null,
 	) {
 	}//end __construct()
 
@@ -88,13 +85,7 @@ class RecipientSecretCopyService {
 			return 'copy_fields_mismatch';
 		}
 
-		$copies = new RecipientSecretCopyFactory(
-			secretMapper: $this->secretMapper,
-			suiteMapper: $this->suiteMapper,
-			typeService: $this->typeService,
-			urls: $this->urls
-		);
-		return $copies->createCopy(source: $source, ciphertext: $ciphertext) ?? 'no_suite';
+		return $this->copies->createCopy(source: $source, ciphertext: $ciphertext) ?? 'no_suite';
 	}//end createCopy()
 
 	/**
@@ -108,6 +99,7 @@ class RecipientSecretCopyService {
 	 * @return void
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-received-copy-deleted-for-good-ends-its-partner-shares
 	 */
 	public function deleteByShare(ShareTarget $share): void {
 		try {
@@ -125,6 +117,8 @@ class RecipientSecretCopyService {
 			return;
 		}
 
+		// Before the copy goes: a partner share its holder made of it would otherwise outlive it.
+		$this->partnerShares->queueForDeletedCopy(copyId: $copy->getId());
 		$this->secretMapper->delete($copy);
 	}//end deleteByShare()
 }//end class
