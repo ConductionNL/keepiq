@@ -26,6 +26,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\SecretListFilter;
 use OCA\Keepiq\Db\SecretListOrganisation;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretTypeMatch;
 use OCA\Keepiq\Tests\Support\RecordingDatabase;
 use PHPUnit\Framework\TestCase;
 
@@ -35,6 +36,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\Keepiq\Db\SecretListFilter
  * @uses   \OCA\Keepiq\Db\SecretStateFilter
  * @uses   \OCA\Keepiq\Db\SecretListOrganisation
+ * @uses   \OCA\Keepiq\Db\SecretTypeMatch
  */
 class SecretListFilterTest extends TestCase {
 	use RecordingDatabase;
@@ -45,11 +47,10 @@ class SecretListFilterTest extends TestCase {
 	 * @param string|null $folderId The folder, or null.
 	 * @param string|null $typeId   The type, or null.
 	 * @param string|null $state    The state, or null.
-	 * @param bool        $passkeyLogins Whether the type is the Passkey type.
 	 *
 	 * @return SecretListFilter
 	 */
-	private function filter(?string $folderId=null, ?string $typeId=null, ?string $state=null, bool $passkeyLogins=false): SecretListFilter {
+	private function filter(?string $folderId=null, ?string $typeId=null, ?string $state=null): SecretListFilter {
 		return new SecretListFilter(
 			ownerType: 'user',
 			ownerId: 'alice',
@@ -57,8 +58,7 @@ class SecretListFilterTest extends TestCase {
 			typeId: $typeId,
 			state: $state,
 			favourite: null,
-			tag: null,
-			passkeyLogins: $passkeyLogins
+			tag: null
 		);
 	}//end filter()
 
@@ -93,37 +93,27 @@ class SecretListFilterTest extends TestCase {
 	}//end testNarrowWithFolderTypeAndState()
 
 	/**
-	 * On the Passkey type, rows holding passkey ciphertext match as well.
+	 * With a type match, the type condition is the match's own.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
-	public function testNarrowOnThePasskeyTypeAlsoMatchesLoginsWithPasskeys(): void {
-		$this->filter(typeId: 't-passkey', passkeyLogins: true)->narrow(qb: $this->recordingQueryBuilder());
+	public function testNarrowHandsTheTypeToTheTypeMatch(): void {
+		$this->queueRows(rows: [['name' => 'passkey']]);
+		$qb    = $this->recordingQueryBuilder();
+		$types = new SecretTypeMatch(db: $this->recordingConnection());
+
+		$this->filter(typeId: 't1')->narrow(qb: $qb, types: $types);
 
 		$this->assertSame(
-			[
+			expected: [
 				'where(eq(owner_type, :p0))', 'andWhere(eq(owner_id, :p1))',
-				'andWhere(orX(eq(type_id, :p2), andX(isNotNull(passkeys), neq(passkeys, :p3))))',
+				'andWhere(orX(eq(type_id, :p2), andX(isNotNull(passkeys), neq(passkeys, :p4))))',
 			],
-			$this->opsOf(0)
+			actual: $this->opsOf(index: 0)
 		);
-		$this->assertSame([':p0' => 'user', ':p1' => 'alice', ':p2' => 't-passkey', ':p3' => ''], $this->paramsOf(0));
-	}//end testNarrowOnThePasskeyTypeAlsoMatchesLoginsWithPasskeys()
-
-	/**
-	 * Without a type the passkey flag adds nothing.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
-	 */
-	public function testThePasskeyFlagNeedsAType(): void {
-		$this->filter(passkeyLogins: true)->narrow(qb: $this->recordingQueryBuilder());
-
-		$this->assertSame(['where(eq(owner_type, :p0))', 'andWhere(eq(owner_id, :p1))'], $this->opsOf(0));
-	}//end testThePasskeyFlagNeedsAType()
+	}//end testNarrowHandsTheTypeToTheTypeMatch()
 
 	/**
 	 * An unknown state is refused rather than ignored.

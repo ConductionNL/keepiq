@@ -46,6 +46,7 @@ use PHPUnit\Framework\TestCase;
  * @uses   \OCA\Keepiq\Db\SecretListFilter
  * @uses   \OCA\Keepiq\Db\SecretListOrganisation
  * @uses   \OCA\Keepiq\Db\SecretStateFilter
+ * @uses   \OCA\Keepiq\Db\SecretTypeMatch
  * @uses   \OCA\Keepiq\Db\StringPrimaryKey
  * @uses   \OCA\Keepiq\Db\SuiteOwnerRef
  */
@@ -298,13 +299,13 @@ class SecretMapperQueriesTest extends TestCase {
 
 		$this->assertSame(expected: ['pk-item', 'login-with-passkey'], actual: $this->ids(secrets: $found));
 		$this->assertSame(
-			expected: ['select(name)', 'from(keepiq_secret_types)', 'where(eq(id, :p0))', 'setMaxResults(1)'],
-			actual: $this->opsOf(index: 0)
+			expected: ['select(name)', 'from(keepiq_secret_types)', 'where(eq(id, :p3))', 'setMaxResults(1)'],
+			actual: $this->opsOf(index: 1)
 		);
-		$this->assertSame(expected: [':p0' => 't-passkey'], actual: $this->paramsOf(index: 0));
+		$this->assertSame(expected: [':p3' => 't-passkey'], actual: $this->paramsOf(index: 1));
 		$this->assertContains(
-			needle: 'andWhere(orX(eq(type_id, :p3), andX(isNotNull(passkeys), neq(passkeys, :p4))))',
-			haystack: $this->opsOf(index: 1)
+			needle: 'andWhere(orX(eq(type_id, :p2), andX(isNotNull(passkeys), neq(passkeys, :p4))))',
+			haystack: $this->opsOf(index: 0)
 		);
 	}//end testThePasskeyTypeFilterAlsoListsLoginsWithPasskeys()
 
@@ -320,11 +321,8 @@ class SecretMapperQueriesTest extends TestCase {
 		$this->queueRows(rows: [['cnt' => 3]]);
 
 		$this->assertSame(expected: 3, actual: $this->mapper()->countByOwner(ownerType: 'user', ownerId: 'alice', typeId: 't-login'));
-		$this->assertContains(needle: 'andWhere(eq(type_id, :p3))', haystack: $this->opsOf(index: 1));
-		$this->assertNotContains(
-			needle: 'andWhere(orX(eq(type_id, :p3), andX(isNotNull(passkeys), neq(passkeys, :p4))))',
-			haystack: $this->opsOf(index: 1)
-		);
+		$this->assertContains(needle: 'andWhere(eq(type_id, :p2))', haystack: $this->opsOf(index: 0));
+		$this->assertSame(expected: [], actual: preg_grep(pattern: '/passkeys/', array: $this->opsOf(index: 0)));
 	}//end testAnotherTypeFilterMatchesTheTypeOnly()
 
 	/**
