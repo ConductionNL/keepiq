@@ -107,6 +107,9 @@ class FederatedSourceDeletedTest extends TestCase {
 	/** Whether the partner's server takes a notification */
 	private bool $reachable = true;
 
+	/** The status the partner's server answers every notification with, when set */
+	private ?int $answer = null;
+
 	/** Runs while a notification is being sent, as a concurrent change would */
 	private ?\Closure $duringSend = null;
 
@@ -220,7 +223,7 @@ class FederatedSourceDeletedTest extends TestCase {
 				}
 
 				$response = $this->createMock(IResponse::class);
-				$response->method('getStatusCode')->willReturn($this->reachable ? 201 : 503);
+				$response->method('getStatusCode')->willReturn($this->answer ?? ($this->reachable ? 201 : 503));
 				return $response;
 			}
 		);
@@ -713,6 +716,51 @@ class FederatedSourceDeletedTest extends TestCase {
 		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $failure->getMetadata()['notification']);
 		$this->assertSame('source_deleted', $failure->getMetadata()['reason']);
 		$this->assertSame([], array_diff(array_keys($failure->getMetadata()), AuditMetadataPolicy::WHITELIST[AuditEventTypes::FEDERATED_SHARE_FAILED]));
+	}
+
+	/**
+	 * A partner that refuses the unshare of a deleted secret outright, with a 400 on every try, is not asked again for 30 days:
+	 * the sixth refusal drops the share, recorded as failed with reason source_deleted, and nothing more is sent.
+	 */
+	public function testAPartnerThatRefusesTheUnshareIsDroppedAfterSixTries(): void {
+		$this->share(id: 'fs-1', sourceSecretId: 'src');
+		$this->answer = 400;
+		$this->deleteForGood(path: 'retention');
+		$revokedAt = clone $this->rows['fs-1']->getUpdatedAt();
+
+		$attempts = $this->retryUntil(until: (clone $revokedAt)->modify('+30 days'));
+
+		$this->assertCount(FederatedNotificationDelivery::MAX_ATTEMPTS, $attempts);
+		$this->assertCount(FederatedNotificationDelivery::MAX_ATTEMPTS, $this->unsharesSent());
+		$this->assertSame([], $this->rows);
+		$this->assertCount(1, $this->failures());
+		$this->assertSame(
+			['federatedShareId' => 'fs-1', 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'notification' => FederatedNotificationDelivery::SHARE_UNSHARED, 'reason' => 'source_deleted'],
+			$this->failures()[0]->getMetadata()
+		);
+	}
+
+	/**
+	 * A 429 or a 5xx is no refusal: the partner may take the unshare later, so it is still retried past the sixth attempt.
+	 *
+	 * @return array<string,array{0:int}>
+	 */
+	public static function answersThatAreNoRefusal(): array {
+		return ['too many requests' => [429], 'server error' => [500]];
+	}
+
+	#[DataProvider('answersThatAreNoRefusal')]
+	public function testAPartnerThatIsNotReadyIsStillRetriedPastTheSixthTry(int $answer): void {
+		$this->share(id: 'fs-1', sourceSecretId: 'src');
+		$this->answer = $answer;
+		$this->deleteForGood(path: 'retention');
+		$revokedAt = clone $this->rows['fs-1']->getUpdatedAt();
+
+		$attempts = $this->retryUntil(until: (clone $revokedAt)->modify('+1 day'));
+
+		$this->assertGreaterThan(FederatedNotificationDelivery::MAX_ATTEMPTS, count($attempts));
+		$this->assertArrayHasKey('fs-1', $this->rows);
+		$this->assertSame([], $this->failures());
 	}
 
 	/**

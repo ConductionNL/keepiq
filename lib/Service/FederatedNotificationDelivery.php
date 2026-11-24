@@ -7,6 +7,8 @@
  * A failed notification stays on the share row with a growing wait: 1, 2, 4, 8 and 16 minutes, then the share is marked failed for the owner to see.
  * A `SHARE_UNSHARED` for a deleted secret is not given up that way, as no owner is left to act on it: its wait keeps doubling up to 6 hours.
  * Only when it still has not arrived 30 days after the revoke is the share dropped, recorded as failed in the audit trail.
+ * A partner that refuses it outright (a 4xx other than 429) at the last of those 6 attempts is not asked again: the share is dropped the same way,
+ * as every further try would only be another refused request counted against this instance.
  * A delivered `SHARE_UNSHARED` removes the row: the revocation is complete.
  *
  * @category Service
@@ -223,7 +225,8 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	private function attempt(FederatedShare $row, DateTime $now): bool {
 		$type = (string)$row->getPendingNotification();
 		$from = ['status' => $row->getStatus(), 'updatedAt' => $row->getUpdatedAt()];
-		if ($this->messenger->notify(row: $row, type: $type) === true) {
+		$outcome = $this->messenger->notify(row: $row, type: $type);
+		if ($outcome === FederatedShareMessenger::TAKEN) {
 			if ($type === self::SHARE_UNSHARED) {
 				$this->shareMapper->deleteIfPending(share: $row, pending: $type);
 				return true;
@@ -249,8 +252,8 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 			return false;
 		}
 
-		// No owner is left to revoke again: keep trying for the retry period, then drop the share.
-		if ($this->retryPeriodOver(row: $row, now: $now) === true) {
+		// No owner is left to revoke again: drop the share once the partner refuses it outright, else keep trying for the retry period.
+		if ($outcome === FederatedShareMessenger::REFUSED || $this->retryPeriodOver(row: $row, now: $now) === true) {
 			$this->drop(row: $row, type: $type, from: $from);
 			return false;
 		}
@@ -338,7 +341,7 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	}//end retryPeriodOver()
 
 	/**
-	 * Drop the share of a deleted secret whose unshare never arrived, and record that in the audit trail.
+	 * Drop the share of a deleted secret whose unshare never arrived, or that its partner refused outright, and record that in the audit trail.
 	 * A share that changed meanwhile stays.
 	 *
 	 * @param FederatedShare $row The share
@@ -348,6 +351,7 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	 * @return void
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-an-unreachable-partner-is-retried-for-30-days
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-partner-that-refuses-the-unshare-is-not-retried-for-30-days
 	 */
 	private function drop(FederatedShare $row, string $type, array $from): void {
 		$deleted = $this->shareMapper->deleteIfUnchanged(
