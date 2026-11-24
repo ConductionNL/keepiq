@@ -97,7 +97,7 @@ class SecretListFilterTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function testNarrowOnThePasskeyTypeAlsoMatchesLoginsWithPasskeys(): void {
 		$this->filter(typeId: 't-passkey', passkeyLogins: true)->narrow(qb: $this->recordingQueryBuilder());
@@ -117,7 +117,7 @@ class SecretListFilterTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function testThePasskeyFlagNeedsAType(): void {
 		$this->filter(passkeyLogins: true)->narrow(qb: $this->recordingQueryBuilder());

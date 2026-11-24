@@ -148,7 +148,7 @@ describe('SecretCreateDialog — clone', () => {
 	})
 
 	// vault-login-totp-followup task 1.1, decided: a clone carries neither.
-	// @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-a-clone-of-a-login-carries-neither-the-code-nor-the-passkeys
+	// @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-clone-of-a-login-carries-neither-the-code-nor-the-passkeys
 	it('a clone of a login with a seed and passkeys saves neither', async () => {
 		const source = {
 			...GRAFANA,

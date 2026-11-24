@@ -45,7 +45,7 @@ final class SecretListFilter {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function __construct(
 		public readonly string $ownerType,
@@ -68,7 +68,7 @@ final class SecretListFilter {
 	 * @return void
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function narrow(IQueryBuilder $qb): void {
 		$qb->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($this->ownerType)))
@@ -95,7 +95,7 @@ final class SecretListFilter {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	private function narrowType(IQueryBuilder $qb, string $typeId): void {
 		$ofType = $qb->expr()->eq('type_id', $qb->createNamedParameter($typeId));

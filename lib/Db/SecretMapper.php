@@ -239,7 +239,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	private function isPasskeyType(?string $typeId): bool {
 		if ($typeId === null) {
@@ -388,7 +388,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Each argument is one optional
 	 *   filter of the paged list; a parameter object would only rename them.
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function findByOwner(
 		string $ownerType,
@@ -536,7 +536,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function countByOwner(
 		string $ownerType,

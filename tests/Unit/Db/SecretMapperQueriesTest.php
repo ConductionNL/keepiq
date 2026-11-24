@@ -287,7 +287,7 @@ class SecretMapperQueriesTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function testThePasskeyTypeFilterAlsoListsLoginsWithPasskeys(): void {
 		$this->queueRows(rows: [['name' => 'passkey']]);
@@ -313,7 +313,7 @@ class SecretMapperQueriesTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
+	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
 	public function testAnotherTypeFilterMatchesTheTypeOnly(): void {
 		$this->queueRows(rows: [['name' => 'login']]);

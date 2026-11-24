@@ -645,7 +645,7 @@ export default {
 		 * @param {object} source The decrypted secret.
 		 * @return {void}
 		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
-		 * @spec openspec/changes/vault-login-totp-followup/specs/login-one-time-codes/spec.md#requirement-a-clone-of-a-login-carries-neither-the-code-nor-the-passkeys
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-clone-of-a-login-carries-neither-the-code-nor-the-passkeys
 		 */
 		applyPrefillPayload(source) {
 			this.value = source.key || ''
