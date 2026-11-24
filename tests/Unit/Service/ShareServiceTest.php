@@ -39,6 +39,7 @@ use OCA\Keepiq\Service\ShareAuditTrail;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareGrantReader;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareService;
 use OCA\Keepiq\Service\SecretVersionService;
@@ -193,6 +194,7 @@ class ShareServiceTest extends TestCase {
 				contexts: new ShareWriteContext(rowJudge: $this->shareRowJudge(targets: $this->mapper), suites: $this->suiteMapper, auth: $auth),
 			),
 			revocationService: new ShareRevocationService(
+				copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 				mapper: $this->mapper,
 				secretMapper: $this->secretMapper,
 				db: $this->db,

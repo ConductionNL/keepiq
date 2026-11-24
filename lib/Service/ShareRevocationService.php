@@ -82,7 +82,7 @@ class ShareRevocationService {
 	 * @param LoggerInterface $logger The logger interface
 	 * @param ShareAuthorizationService $auth The share authorization service
 	 * @param ShareQuarantineScanner $quarantineScan Holds back the rows the pending scan catches or cannot judge
-	 * @param RecipientCopyCleanup|null $copyCleanup What goes with a deleted copy: its partner shares and attachment grants
+	 * @param RecipientCopyCleanup $copyCleanup What goes with a deleted copy: its partner shares and attachment grants
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param QuarantinedShareTargetMapper|null $quarantined Tells an owner their revoke hit a quarantined row
 	 *
@@ -97,7 +97,7 @@ class ShareRevocationService {
 		private LoggerInterface $logger,
 		private ShareAuthorizationService $auth,
 		private ShareQuarantineScanner $quarantineScan,
-		private ?RecipientCopyCleanup $copyCleanup = null,
+		private RecipientCopyCleanup $copyCleanup,
 		?ShareAuditTrail $auditTrail = null,
 		private ?QuarantinedShareTargetMapper $quarantined = null,
 	) {
@@ -303,7 +303,7 @@ class ShareRevocationService {
 			// Already gone; its leftover grants go with it below.
 		}
 
-		$this->copyCleanup?->deleteAttachmentGrants(copyId: $copyId);
+		$this->copyCleanup->deleteAttachmentGrants(copyId: $copyId);
 	}//end deleteRecipientCopy()
 
 	/**
@@ -317,7 +317,7 @@ class ShareRevocationService {
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-received-copy-deleted-for-good-ends-its-partner-shares
 	 */
 	public function endCopyPartnerShares(string $copyId): void {
-		$this->copyCleanup?->endPartnerShares(copyId: $copyId);
+		$this->copyCleanup->endPartnerShares(copyId: $copyId);
 	}//end endCopyPartnerShares()
 
 	/**

@@ -64,6 +64,7 @@ use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\ShareQuarantineScanner;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionResolver;
+use OCA\Keepiq\Service\RecipientCopyCleanup;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\ShareRowJudge;
 use OCA\Keepiq\Service\ShareService;
@@ -496,6 +497,7 @@ class PendingScanHoldsBackSuspectsTest extends TestCase {
 	 */
 	private function revocation(ShareQuarantineScanner $scanner): ShareRevocationService {
 		return new ShareRevocationService(
+			copyCleanup: $this->createStub(RecipientCopyCleanup::class),
 			mapper: new ShareTargetMapper(db: $this->db),
 			secretMapper: new SecretMapper(db: $this->db),
 			db: $this->db,
