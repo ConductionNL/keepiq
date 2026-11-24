@@ -176,6 +176,13 @@ deletion is a human / administrative operation (a compromised 5-minute bearer
 token must not be able to destroy credentials; an overwrite is at least visible
 via `updatedAt` and the audit trail).
 
+A `PUT` never overwrites a write that lands after Keepiq read the secret. The earlier write is kept as a version, and the `PUT` is applied on top of it:
+
+- **With `If-Match`**, Keepiq checks the tag against the row it writes. When the tag is stale, or the secret changes between that check and the write, the answer is `412 Precondition Failed` with the current `ETag`, and nothing is written. Read the secret again, merge, and retry with the new tag.
+- **Without `If-Match`**, Keepiq makes the write once more on the secret as it is now. When the secret changes again during that second attempt, the answer is `409 Conflict` and nothing is written. Retry the `PUT`.
+
+The `updatedAt` and `ETag` in a successful `PUT` response are the stored ones, so the next `GET` answers the same `ETag`.
+
 ## Asking a human to fill in a credential
 
 A connector importing a source usually knows *which* credentials it needs and

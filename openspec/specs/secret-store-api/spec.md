@@ -309,7 +309,37 @@ Machine secret-request creation MUST enforce the same guards as token issuance: 
 
 ### Requirement: Conditional machine write-back
 
-`PUT /api/v1/app/secrets/{id}` MUST accept an `If-Match` header. When the header is present and does not equal the secret's current strong ETag, the server MUST answer 412 Precondition Failed and MUST NOT change the secret. When the header is absent, the endpoint MUST behave as before. The discovery document MUST advertise `conditionalWrite: true`.
+`PUT /api/v1/app/secrets/{id}` MUST accept an `If-Match` header. The discovery document MUST advertise `conditionalWrite: true`.
+
+Every application write MUST move the row off the version it read in the same step that writes it, so a write that commits after the read is never overwritten and is kept as a version. This holds for the `PUT` and for the request fill on an application-owned secret.
+
+When the header is present, the server MUST check it against the row the write locks on. When it does not equal that row's strong ETag (and is not `*`), or the row moves on after that read, the server MUST answer 412 Precondition Failed with the current ETag and MUST NOT change the secret.
+
+When the header is absent and the row moves on after the read, the server MUST make the write once more on the row as it is now. When the row moves on a second time, the server MUST answer 409 Conflict and MUST NOT change the secret.
+
+#### Scenario: A write after the read is kept
+@e2e exclude Machine-to-machine API contract with no UI surface; covered by SecretServiceApplicationWriteLockTest::testALostLockIsRetriedOnceOnTheRowAsItIsNow and testTheVersionIsKeptOnlyAfterTheLockIsWon.
+
+- **GIVEN** an application read its secret, and another write to that secret committed after the read
+- **WHEN** the application calls `PUT /api/v1/app/secrets/{id}` without `If-Match`
+- **THEN** the write MUST be made on the row as it is now
+- **AND** the other write MUST be kept as a version of the secret
+
+#### Scenario: A secret that keeps moving is refused
+@e2e exclude Machine-to-machine API contract with no UI surface; covered by SecretServiceApplicationWriteLockTest::testASecondLostLockRefusesTheUpdate, ApplicationSecretsWriteLockTest::testALockLostTwiceIsA409 and SecretRequestServiceTest::testAnApplicationFillThatMovesTwiceIsRefusedOnceAndStaysPending.
+
+- **GIVEN** an application's write to its secret, without `If-Match`, loses to another write twice
+- **WHEN** the second attempt finds the row moved on
+- **THEN** the response MUST be 409
+- **AND** the secret MUST NOT be changed by this write
+
+#### Scenario: A write between the tag check and the write is refused
+@e2e exclude Machine-to-machine API contract with no UI surface; covered by ApplicationSecretsWriteLockTest::testAMatchingTagThatLosesTheLockIsA412WithTheCurrentEtag and SecretServiceApplicationWriteLockTest::testANamedVersionThatLosesTheLockIsRefusedWithTheCurrentRow.
+
+- **GIVEN** an application calls `PUT /api/v1/app/secrets/{id}` with the current ETag in `If-Match`
+- **WHEN** another write commits after the server checked the tag and before it writes
+- **THEN** the response MUST be 412 with the new current ETag
+- **AND** the stored secret MUST be the one the other write left
 
 #### Scenario: Stale write is refused
 
