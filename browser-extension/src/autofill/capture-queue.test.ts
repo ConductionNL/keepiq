@@ -1117,6 +1117,15 @@ describe('capture.update', () => {
 		expect(kinds()).toEqual([['capture.verify', 0], ['capture.expand', 0], ['capture.hide', 0]])
 	})
 
+	it('relays no capture.expand for a key it no longer keeps, on a bar kept for its note', async () => {
+		routes['PUT /api/v1/secrets/a/share-save'] = () => json({ secret: row, federated: { ownerOnly: false, notReached: 1 } })
+		await update()
+		expect(await ask({ kind: 'capture.expand', key: 'f'.repeat(32) })).toBeNull()
+		expect(await ask({ kind: 'capture.dismiss', never: false })).toBeNull()
+		expect(await ask({ kind: 'capture.expand' })).toBeNull()
+		expect(kinds()).toEqual([['capture.verify', 0], ['capture.hide', 0]])
+	})
+
 	it('closes the bar after three seconds for a note with nothing the bar can word, which it then never gets', async () => {
 		vi.mocked(updateItem).mockResolvedValueOnce({ ok: true, value: { id: 'a', shareSave: { notReached: 0, suspended: [] } } })
 		expect(await update()).toEqual({ ok: true, value: null })
