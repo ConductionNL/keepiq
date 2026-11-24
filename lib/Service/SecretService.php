@@ -37,7 +37,6 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
-use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
@@ -151,9 +150,9 @@ class SecretService implements SecretServiceInterface {
 	 *                                        list rows carry them, a delete removes them
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
-	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL, and ends the partner shares
-	 *                                                   of a deleted secret; without it a delete is refused
-	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
+	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
+	 * @param SecretDeleteCascade|null $deleteCascade Ends a deleted secret's partner shares and removes its extra website addresses;
+	 *                                                without it a delete is refused
 	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 * @param BrokerMintRecorder|null $brokerMints Stores a broker mint's notAfter and who it was minted for
 	 *
@@ -184,7 +183,7 @@ class SecretService implements SecretServiceInterface {
 		private ?OrgOwnershipGuard $orgOwnership = null,
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 		private ?FederatedShareService $federatedShares = null,
-		private ?SecretUrlMapper $urlMapper = null,
+		private ?SecretDeleteCascade $deleteCascade = null,
 		private ?PrivilegedCopyGate $privilegedGate = null,
 		private ?BrokerMintRecorder $brokerMints = null,
 	) {
@@ -1519,8 +1518,8 @@ class SecretService implements SecretServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
 	 */
 	private function endPartnerShares(string $secretId, SecretDeletion $deletion): void {
-		$federatedShares = $this->federatedShares ?? throw new RuntimeException('The partner shares of a deleted secret cannot be ended');
-		$federatedShares->endForDeletedSecret(secretId: $secretId, deletion: $deletion);
+		$cascade = $this->deleteCascade ?? throw new RuntimeException('The partner shares of a deleted secret cannot be ended');
+		$cascade->endPartnerShares(secretId: $secretId, deletion: $deletion);
 	}//end endPartnerShares()
 
 	/**
@@ -1574,7 +1573,7 @@ class SecretService implements SecretServiceInterface {
 		$this->versionService?->deleteForSecret($secretId);
 		$this->rotationService?->deleteForSecret($secretId);
 		$this->tagMapper?->deleteBySecret($secretId);
-		$this->urlMapper?->deleteBySecret($secretId);
+		$this->deleteCascade?->deleteUrls(secretId: $secretId);
 	}//end deleteSecretData()
 
 	/**

@@ -56,7 +56,7 @@ use OCA\Keepiq\Service\DirectShareRegistrar;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\NotificationService;
-use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\SecretDeleteCascade;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
@@ -284,7 +284,7 @@ class UserSharingIntegrationTest extends TestCase {
 			shareService: $shareService,
 			groupShareMapper: $groupShareMapper,
 			secretDelegationMapper: $delegationMapper,
-			federatedShares: $this->createStub(FederatedShareService::class),
+			deleteCascade: $this->createStub(SecretDeleteCascade::class),
 		);
 
 		$secret = $this->makeSecret('s-1', 'alice');

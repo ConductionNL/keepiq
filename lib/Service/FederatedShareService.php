@@ -59,9 +59,6 @@ use RuntimeException;
  *   federated share joins the secret, the partner allowlist, the share row
  *   and the OCM messenger in one transaction-like step, and answers the
  *   partner's pull from the same row; each refusal is its own exception.
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10: endForDeletedSecret() is the one way
- *   a secret's delete reaches its partner shares, as SecretService has this class and no constructor slot to spare.
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) 50 against a threshold of 50, from that same one-line method.
  *
  * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
@@ -388,21 +385,6 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	public function revoke(string $shareId, string $userId): void {
 		$this->revoker->revoke(row: $this->ownedShare(shareId: $shareId, userId: $userId), actorId: $userId);
 	}//end revoke()
-
-	/**
-	 * A secret is deleted for good: end each of its partner shares before its row goes.
-	 * The owner's delete tells every partner now; the trash retention job leaves that to the retry job.
-	 *
-	 * @param string         $secretId The secret being deleted
-	 * @param SecretDeletion $deletion Who deletes it, and why when it is a purge
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
-	 */
-	public function endForDeletedSecret(string $secretId, SecretDeletion $deletion): void {
-		$this->revoker->endForDeletedSecret(secretId: $secretId, deletion: $deletion);
-	}//end endForDeletedSecret()
 
 	/**
 	 * Suspend a share whose recipient certificate no longer verifies in the

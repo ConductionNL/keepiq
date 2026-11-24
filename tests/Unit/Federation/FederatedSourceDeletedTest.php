@@ -41,6 +41,7 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Db\SecretTrashMapper;
+use OCA\Keepiq\Db\SecretUrlMapper;
 use OCA\Keepiq\Db\ShareSaveStageMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
@@ -56,9 +57,7 @@ use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
-use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
-use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\OwnedSecretCleanup;
@@ -67,6 +66,7 @@ use OCA\Keepiq\Service\RecipientCopyCleanup;
 use OCA\Keepiq\Service\RecipientSecretCopyFactory;
 use OCA\Keepiq\Service\RecipientSecretCopyService;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
+use OCA\Keepiq\Service\SecretDeleteCascade;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretSharingRevoker;
@@ -88,7 +88,6 @@ use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IUserManager;
-use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -272,17 +271,7 @@ class FederatedSourceDeletedTest extends TestCase {
 			db: $this->createMock(IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
-			federatedShares: new FederatedShareService(
-				shareMapper: $shares,
-				secretMapper: $secretMapper,
-				partners: $partners,
-				root: $this->createMock(FederationRootService::class),
-				cloudIdManager: $this->cloudIdManager(),
-				messenger: $messenger,
-				random: $this->createMock(ISecureRandom::class),
-				delivery: $this->delivery,
-				audit: $audit,
-			),
+			deleteCascade: new SecretDeleteCascade(urls: $this->createMock(SecretUrlMapper::class), partnerShares: $revoker),
 		);
 
 		$this->trash = new SecretTrashService(

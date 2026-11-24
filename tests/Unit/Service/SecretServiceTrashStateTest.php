@@ -27,7 +27,7 @@ use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
-use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\SecretDeleteCascade;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\ShareSaveRequiredGuard;
@@ -74,7 +74,7 @@ class SecretServiceTrashStateTest extends TestCase {
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
 			eventDispatcher: $dispatcher,
-			federatedShares: $this->createStub(FederatedShareService::class),
+			deleteCascade: $this->createStub(SecretDeleteCascade::class),
 		);
 
 		$secret = new Secret();
