@@ -45,7 +45,12 @@ class SecretTypeMatchTest extends TestCase {
 	 * @return void
 	 */
 	private function narrowTo(?string $name): void {
-		$this->queueRows(rows: ($name === null) ? [] : [['name' => $name]]);
+		$rows = [];
+		if ($name !== null) {
+			$rows = [['name' => $name]];
+		}
+
+		$this->queueRows(rows: $rows);
 		$qb = $this->recordingQueryBuilder();
 		(new SecretTypeMatch(db: $this->recordingConnection()))->narrow(qb: $qb, typeId: 't1');
 	}//end narrowTo()
