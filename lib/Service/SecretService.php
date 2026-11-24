@@ -151,11 +151,11 @@ class SecretService implements SecretServiceInterface {
 	 *                                        list rows carry them, a delete removes them
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
-	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
+	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL, and ends the partner shares
+	 *                                                   of a deleted secret; without it a delete is refused
 	 * @param SecretUrlMapper|null $urlMapper The extra website addresses (delete cascade)
 	 * @param PrivilegedCopyGate|null $privilegedGate Withholds a privileged copy outside its approved window
 	 * @param BrokerMintRecorder|null $brokerMints Stores a broker mint's notAfter and who it was minted for
-	 * @param PartnerShareRevoker|null $partnerShares Revokes the partner shares of a deleted secret; without it a delete is refused
 	 *
 	 * @return void
 	 */
@@ -187,7 +187,6 @@ class SecretService implements SecretServiceInterface {
 		private ?SecretUrlMapper $urlMapper = null,
 		private ?PrivilegedCopyGate $privilegedGate = null,
 		private ?BrokerMintRecorder $brokerMints = null,
-		private ?PartnerShareRevoker $partnerShares = null,
 	) {
 	}//end __construct()
 
@@ -1520,13 +1519,8 @@ class SecretService implements SecretServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
 	 */
 	private function endPartnerShares(string $secretId, SecretDeletion $deletion): void {
-		$partnerShares = $this->partnerShares ?? throw new RuntimeException('The partner shares of a deleted secret cannot be ended');
-		if ($deletion->byRetention() === true) {
-			$partnerShares->queueForRetentionPurge(secretId: $secretId);
-			return;
-		}
-
-		$partnerShares->revokeForDeletedSecret(secretId: $secretId, userId: $deletion->userId);
+		$federatedShares = $this->federatedShares ?? throw new RuntimeException('The partner shares of a deleted secret cannot be ended');
+		$federatedShares->endForDeletedSecret(secretId: $secretId, deletion: $deletion);
 	}//end endPartnerShares()
 
 	/**

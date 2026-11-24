@@ -57,7 +57,8 @@ use OCP\EventDispatcher\IEventDispatcher;
  *
  * The share-shaped steps live in AccountShareCleanupService, the key-material
  * step in AccountSuiteCleanupService and the per-secret child data (attachments,
- * grants, version history) in SecretChildDataCleaner; this class owns the ORDER
+ * grants, version history) in SecretChildDataCleaner, run with the partner shares
+ * of those secrets by OwnedSecretCleanup; this class owns the ORDER
  * of the cascade, the report and the completion event.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The cascade necessarily
@@ -83,12 +84,9 @@ class AccountDeletionService implements AccountDeletionServiceInterface {
 	 * @param IEventDispatcher $dispatcher The event dispatcher
 	 * @param AccountShareCleanupService $shareCleanup The share-cascade steps
 	 * @param AccountSuiteCleanupService $suiteCleanup The suite-cascade step
-	 * @param SecretChildDataCleaner $childData The attachment/version cascade
-	 * @param PartnerShareRevoker $partnerShares Revokes the partner shares of the user's own secrets
+	 * @param OwnedSecretCleanup $ownSecretCleanup The partner-share and attachment/version cascade of the user's own secrets
 	 *
 	 * @return void
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list, one collaborator per cascade step.
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
@@ -99,8 +97,7 @@ class AccountDeletionService implements AccountDeletionServiceInterface {
 		private IEventDispatcher $dispatcher,
 		private AccountShareCleanupService $shareCleanup,
 		private AccountSuiteCleanupService $suiteCleanup,
-		private SecretChildDataCleaner $childData,
-		private PartnerShareRevoker $partnerShares,
+		private OwnedSecretCleanup $ownSecretCleanup,
 	) {
 	}//end __construct()
 
@@ -140,8 +137,6 @@ class AccountDeletionService implements AccountDeletionServiceInterface {
 			ownedSecrets: $ownedSecrets,
 			report: $report
 		);
-		// After the delegated secrets went to their delegates and before the user's secrets go: the shares are found through those secrets.
-		$this->partnerShares->queueForDeletedAccount(userId: $userId);
 		$this->shareCleanup->detachGrantedShares(ownedSecrets: $ownedSecrets, report: $report);
 		$this->shareCleanup->removeReceivedShares(userId: $userId, report: $report);
 		$this->shareCleanup->removeShareSaveStages(userId: $userId);
@@ -151,8 +146,9 @@ class AccountDeletionService implements AccountDeletionServiceInterface {
 		// Attachments cascade (encrypted-attachments §3.2): remove every
 		// attachment of the user's remaining own secrets and every grant
 		// any of their rows hold as a copy — idempotent, before the rows
-		// themselves go.
-		$this->childData->purgeForOwnerUser(userId: $userId);
+		// themselves go. Their partner shares end first: after the delegated
+		// secrets went to their delegates, as the shares are found through the secrets.
+		$this->ownSecretCleanup->purgeForOwnerUser(userId: $userId);
 
 		// Own secrets + folders.
 		$report->secretsDeleted = $this->secretMapper->deleteByOwnerUser(ownerId: $userId);

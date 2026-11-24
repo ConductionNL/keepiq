@@ -295,12 +295,7 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 			return;
 		}
 
-		$this->audit->recordOutbound(
-			eventType: AuditEventTypes::FEDERATED_SHARE_FAILED,
-			row: $row,
-			actorId: null,
-			extra: ['notification' => $type],
-		);
+		$this->recordFailure(row: $row, extra: ['notification' => $type]);
 	}//end giveUp()
 
 	/**
@@ -365,13 +360,22 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 			return;
 		}
 
-		$this->audit->recordOutbound(
-			eventType: AuditEventTypes::FEDERATED_SHARE_FAILED,
-			row: $row,
-			actorId: null,
-			extra: ['notification' => $type, 'reason' => 'source_deleted'],
-		);
+		$this->recordFailure(row: $row, extra: ['notification' => $type, 'reason' => 'source_deleted']);
 	}//end drop()
+
+	/**
+	 * Record in the audit trail that a share's notification never arrived.
+	 *
+	 * @param FederatedShare $row The share
+	 * @param array<string,string> $extra What did not arrive, and why the share was dropped when it was
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-an-unreachable-partner-is-retried-for-30-days
+	 */
+	private function recordFailure(FederatedShare $row, array $extra): void {
+		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_FAILED, row: $row, actorId: null, extra: $extra);
+	}//end recordFailure()
 
 	/**
 	 * Store a notification on the row before it is sent, so the retry job

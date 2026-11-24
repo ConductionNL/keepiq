@@ -52,8 +52,12 @@ use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedShareMessenger;
+use OCA\Keepiq\Service\FederatedShareService;
+use OCA\Keepiq\Service\FederationPartnerService;
+use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
+use OCA\Keepiq\Service\OwnedSecretCleanup;
 use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
 use OCA\Keepiq\Service\SecretOwnerTransferService;
@@ -73,6 +77,7 @@ use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use OCP\IDBConnection;
 use OCP\IUserManager;
+use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -245,7 +250,17 @@ class FederatedSourceDeletedTest extends TestCase {
 			db: $this->createMock(IDBConnection::class),
 			viewOnlyCopies: $this->createStub(ViewOnlyCopyGuard::class),
 			shareSaveRequired: $this->createStub(ShareSaveRequiredGuard::class),
-			partnerShares: $revoker,
+			federatedShares: new FederatedShareService(
+				shareMapper: $shares,
+				secretMapper: $secretMapper,
+				partners: $this->createMock(FederationPartnerService::class),
+				root: $this->createMock(FederationRootService::class),
+				cloudIdManager: $this->cloudIdManager(),
+				messenger: $messenger,
+				random: $this->createMock(ISecureRandom::class),
+				delivery: $this->delivery,
+				audit: $audit,
+			),
 		);
 
 		$this->trash = new SecretTrashService(
@@ -314,8 +329,10 @@ class FederatedSourceDeletedTest extends TestCase {
 				emergencyMapper: $this->createMock(EmergencyContactMapper::class),
 				passkeyMapper: $this->createMock(PasskeyMapper::class),
 			),
-			childData: new SecretChildDataCleaner(secretMapper: $secretMapper),
-			partnerShares: $revoker,
+			ownSecretCleanup: new OwnedSecretCleanup(
+				childData: new SecretChildDataCleaner(secretMapper: $secretMapper),
+				partnerShares: $revoker,
+			),
 		);
 	}
 

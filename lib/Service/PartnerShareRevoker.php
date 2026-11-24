@@ -78,6 +78,26 @@ class PartnerShareRevoker {
 	}//end revoke()
 
 	/**
+	 * A secret is deleted for good: end each of its partner shares before its row goes.
+	 * The owner's delete tells every partner now; the trash retention job leaves that to the retry job.
+	 *
+	 * @param string         $secretId The secret being deleted
+	 * @param SecretDeletion $deletion Who deletes it, and why when it is a purge
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
+	 */
+	public function endForDeletedSecret(string $secretId, SecretDeletion $deletion): void {
+		if ($deletion->byRetention() === true) {
+			$this->queueForRetentionPurge(secretId: $secretId);
+			return;
+		}
+
+		$this->revokeForDeletedSecret(secretId: $secretId, userId: $deletion->userId);
+	}//end endForDeletedSecret()
+
+	/**
 	 * Its owner deletes a secret for good: end each of its partner shares, telling every partner now. Runs before the secret's row goes.
 	 *
 	 * @param string $secretId The secret being deleted

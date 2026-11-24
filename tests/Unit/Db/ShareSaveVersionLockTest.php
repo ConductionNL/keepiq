@@ -35,7 +35,6 @@ use OCA\Keepiq\Service\FederatedShareMessenger;
 use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
-use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCP\Federation\ICloudIdManager;
 use OCP\IDBConnection;
 use OCP\OCM\IOCMDiscoveryService;
@@ -273,7 +272,6 @@ class ShareSaveVersionLockTest extends TestCase {
 			random: $this->createMock(ISecureRandom::class),
 			delivery: $delivery,
 			audit: $this->createMock(FederatedShareAuditTrail::class),
-			revoker: new PartnerShareRevoker($mapper, $delivery, $this->createMock(FederatedShareAuditTrail::class)),
 		);
 	}
 
