@@ -93,6 +93,7 @@ The system MUST refuse to create a partner share whose source is a recipient's c
 - **THEN** the partner share MUST be created on the source, with the source as its source secret
 - **AND** the partner share MUST be listed with the partner shares of Dave's copy, next to any made from that copy before such shares were refused, and Dave MUST be able to revoke it there
 - **AND** a copy holder who does not own the source MUST see only the partner shares of their own copy
+- **AND** when Dave's copy still has an active partner share to that recipient, made before such shares were refused, the system MUST refuse the new one with `already_shared` until Dave revokes it
 - **AND** a copy holder who does not own the source MUST still be refused with `not_shareable`, and no partner share created
 
 #### Scenario: The owner's original is still shared

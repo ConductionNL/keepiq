@@ -171,7 +171,8 @@ class FederatedShareService implements FederatedShareServiceInterface {
 
 		$this->valueFields->assertPartnerStores(partner: $partner, ciphertext: $ciphertext);
 		$this->valueFields->assertMirrorsSource(partner: $partner, source: $source, ciphertext: $ciphertext);
-		$this->assertNotSharedWith(secretId: $source->getId(), recipientCloudId: $recipient->getId());
+		// A share made from the owner's copy before D3 counts too: they revoke it first.
+		$this->assertNotSharedWith(secretIds: array_unique([$source->getId(), $secretId]), recipientCloudId: $recipient->getId());
 
 		$sharedSecret = $this->random->generate(self::SHARED_SECRET_LENGTH, ISecureRandom::CHAR_ALPHANUMERIC);
 		$now = new DateTime();
@@ -500,17 +501,21 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	/**
 	 * Refuse a second live share to the same recipient. After a suspended,
 	 * failed or revoked one the owner shares again, as the share list tells
-	 * them to.
+	 * them to. The owner sharing through their own copy is checked on the
+	 * source and on that copy, whose list shows both.
 	 *
-	 * @param string $secretId The owner's secret
+	 * @param array<array-key,string> $secretIds The owner's secret, and the owner's copy it was shared through
 	 * @param string $recipientCloudId The recipient
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException `already_shared`
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
 	 */
-	private function assertNotSharedWith(string $secretId, string $recipientCloudId): void {
-		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secretId) as $existing) {
+	private function assertNotSharedWith(array $secretIds, string $recipientCloudId): void {
+		$shares = array_map(fn (string $id): array => $this->shareMapper->findBySourceSecret(sourceSecretId: $id), $secretIds);
+		foreach (array_merge(...array_values($shares)) as $existing) {
 			if ($existing->getRecipientCloudId() === $recipientCloudId
 				&& $existing->getStatus() === FederatedShare::STATUS_ACTIVE
 			) {

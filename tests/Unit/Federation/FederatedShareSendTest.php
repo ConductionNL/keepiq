@@ -650,6 +650,37 @@ class FederatedShareSendTest extends TestCase {
 	}
 
 	/**
+	 * A partner share made from the owner's copy before such shares were refused still counts: sharing with the same
+	 * recipient again is refused until the owner revokes that share, and then made on the source.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testTheOwnersCopyShareToTheSameRecipientRefusesASecond(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice');
+		$old = new FederatedShare();
+		$old->setId('fs-old');
+		$old->setSourceSecretId('src');
+		$old->setOwnerId('alice');
+		$old->setRecipientCloudId('bob@cloud.partner.example');
+		$old->setStatus(FederatedShare::STATUS_ACTIVE);
+		$this->rows['fs-old'] = $old;
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+
+		$response = $this->share($controller);
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('already_shared', $response->getData()['message']);
+		$this->assertSame(['fs-old'], array_keys($this->rows));
+		$this->assertSame([], $this->sent);
+
+		$this->assertSame(Http::STATUS_OK, $controller->destroy('fs-old')->getStatus());
+		$made = $this->share($controller);
+
+		$this->assertSame(Http::STATUS_CREATED, $made->getStatus());
+		$this->assertSame('orig', $this->rows[$made->getData()['id']]->getSourceSecretId());
+	}
+
+	/**
 	 * A copy of a secret the holder owns waits for the pending scan like any copy: nothing leads to the source
 	 * until the scan has judged the row.
 	 *
