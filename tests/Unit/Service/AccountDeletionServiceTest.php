@@ -44,6 +44,7 @@ use OCA\Keepiq\Service\AccountShareCleanupService;
 use OCA\Keepiq\Service\AccountSuiteCleanupService;
 use OCA\Keepiq\Service\FederatedNotificationDelivery;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
+use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\OwnedSecretCleanup;
 use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCA\Keepiq\Service\SecretChildDataCleaner;
@@ -124,6 +125,7 @@ class AccountDeletionServiceTest extends TestCase {
 					shareMapper: $this->m['federated'],
 					delivery: $this->createMock(FederatedNotificationDelivery::class),
 					audit: new FederatedShareAuditTrail(),
+					partners: $this->createStub(FederationPartnerService::class),
 				),
 			),
 		);

@@ -121,7 +121,7 @@ class FederatedShareService implements FederatedShareServiceInterface {
 		private ?LoggerInterface $logger = null,
 	) {
 		$this->valueFields = new FederatedValueFields();
-		$this->revoker = new PartnerShareRevoker(shareMapper: $shareMapper, delivery: $delivery, audit: $audit);
+		$this->revoker = new PartnerShareRevoker(shareMapper: $shareMapper, delivery: $delivery, audit: $audit, partners: $partners);
 	}//end __construct()
 
 	/**

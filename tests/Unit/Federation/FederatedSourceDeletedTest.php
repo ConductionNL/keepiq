@@ -29,6 +29,8 @@ use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
+use OCA\Keepiq\Db\FederationPartner;
+use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
@@ -80,8 +82,10 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
+use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
+use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IUserManager;
 use OCP\Security\ISecureRandom;
@@ -119,6 +123,9 @@ class FederatedSourceDeletedTest extends TestCase {
 
 	/** Runs while a notification is being sent, as a concurrent change would */
 	private ?\Closure $duringSend = null;
+
+	/** @var string[] The partners an administrator removed, by id */
+	private array $removedPartners = [];
 
 	/** @var string|null A declined share its recipient accepts back just before it would be deleted */
 	private ?string $acceptedBackBeforeDelete = null;
@@ -252,7 +259,8 @@ class FederatedSourceDeletedTest extends TestCase {
 		$audit = new FederatedShareAuditTrail($dispatcher);
 		$messenger = new FederatedShareMessenger($ocm, $factory, $this->cloudIdManager(), $users);
 		$this->delivery = new FederatedNotificationDelivery($shares, $messenger, $audit, $secretMapper);
-		$revoker = new PartnerShareRevoker($shares, $this->delivery, $audit);
+		$partners = $this->partners();
+		$revoker = new PartnerShareRevoker($shares, $this->delivery, $audit, $partners);
 
 		$secretService = new SecretService(
 			mapper: $secretMapper,
@@ -267,7 +275,7 @@ class FederatedSourceDeletedTest extends TestCase {
 			federatedShares: new FederatedShareService(
 				shareMapper: $shares,
 				secretMapper: $secretMapper,
-				partners: $this->createMock(FederationPartnerService::class),
+				partners: $partners,
 				root: $this->createMock(FederationRootService::class),
 				cloudIdManager: $this->cloudIdManager(),
 				messenger: $messenger,
@@ -302,6 +310,20 @@ class FederatedSourceDeletedTest extends TestCase {
 		$this->accounts = $this->accountDeletion(secretMapper: $secretMapper, shares: $shares, revoker: $revoker);
 		$this->revoker = $revoker;
 		$this->secretMapper = $secretMapper;
+	}
+
+	/**
+	 * The partner list: cloud.partner.example, until an administrator removes it.
+	 */
+	private function partners(): FederationPartnerService {
+		$mapper = $this->createMock(FederationPartnerMapper::class);
+		$mapper->method('findById')->willReturnCallback(
+			fn (string $id): FederationPartner => in_array($id, $this->removedPartners, true)
+				? throw new DoesNotExistException('removed')
+				: $this->partner('cloud.partner.example', true, true)
+		);
+
+		return new FederationPartnerService($mapper, $this->createMock(IClientService::class), $this->createMock(IConfig::class));
 	}
 
 	/**
@@ -496,12 +518,13 @@ class FederatedSourceDeletedTest extends TestCase {
 	/**
 	 * Every status a share can have when its secret goes, on every path that deletes the secret for good.
 	 *
-	 * @return array<string,array{0:string,1:string,2:?string,3:int,4:?string,5:string}>
+	 * @return array<string,array{0:string,1:string,2:?string,3:int,4:?string,5:string,6?:bool}>
 	 */
 	public static function statusesOnEveryPath(): array {
 		$statuses = [
 			'active' => [FederatedShare::STATUS_ACTIVE, null, 0, null, 'revoked'],
-			'suspended' => [FederatedShare::STATUS_SUSPENDED, null, 0, null, 'revoked'],
+			'suspended, its partner still one' => [FederatedShare::STATUS_SUSPENDED, null, 0, null, 'revoked'],
+			'suspended, its partner removed' => [FederatedShare::STATUS_SUSPENDED, null, 0, null, 'deleted', true],
 			'failed after an update' => [FederatedShare::STATUS_FAILED, FederatedNotificationDelivery::SHARE_UPDATED, 6, null, 'revoked'],
 			'failed after an unshare' => [FederatedShare::STATUS_FAILED, FederatedNotificationDelivery::SHARE_UNSHARED, 6, null, 'revoked'],
 			'a status this code does not know' => ['paused', null, 0, null, 'revoked'],
@@ -521,10 +544,15 @@ class FederatedSourceDeletedTest extends TestCase {
 	/**
 	 * A live share, or one in any other state the partner may still hold a copy for, is revoked and the partner is told to delete it:
 	 * now on the owner's purge, by the retry job after the retention job and an account deletion.
-	 * A declined share goes without a notification, recorded as revoked, and a revoke on its way keeps its pending unshare.
+	 * A declined share, and a suspended one whose partner was removed, go without a notification, recorded as revoked;
+	 * a revoke on its way keeps its pending unshare.
 	 */
 	#[DataProvider('statusesOnEveryPath')]
-	public function testDeletingTheSecretForGoodEndsEachPartnerShare(string $path, string $status, ?string $pending, int $attempts, ?string $next, string $outcome): void {
+	public function testDeletingTheSecretForGoodEndsEachPartnerShare(string $path, string $status, ?string $pending, int $attempts, ?string $next, string $outcome, bool $partnerRemoved = false): void {
+		if ($partnerRemoved === true) {
+			$this->removedPartners[] = 'p-cloud.partner.example';
+		}
+
 		$nextAt = $next === null ? null : new DateTime($next);
 		$this->share(id: 'fs-1', sourceSecretId: 'src', status: $status, pending: $pending, attempts: $attempts, next: $nextAt);
 		$queued = $path !== 'purge';

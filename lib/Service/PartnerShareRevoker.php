@@ -8,7 +8,8 @@
  * - `revoke()` ends one share the owner revokes, and tells the partner now.
  * - When a secret is deleted for good, its partner shares end before its row goes: the owner's purge tells each partner now,
  *   the trash retention job, an account deletion and the delete of a received copy with its share leave every SHARE_UNSHARED to the retry job.
- * - A declined share of a deleted secret is deleted without a notification, and a revoke whose SHARE_UNSHARED is pending keeps it.
+ * - A declined share of a deleted secret is deleted without a notification, and so is a suspended one whose partner was removed:
+ *   that instance is no longer trusted with what an unshare says. A revoke whose SHARE_UNSHARED is pending keeps it.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -44,6 +45,7 @@ class PartnerShareRevoker {
 	 * @param FederatedShareMapper $shareMapper Outbound share rows
 	 * @param FederatedNotificationDelivery $delivery Notifications with retries
 	 * @param FederatedShareAuditTrail $audit Identifier-only audit
+	 * @param FederationPartnerService $partners Whether a suspended share's partner is still one
 	 *
 	 * @return void
 	 *
@@ -53,6 +55,7 @@ class PartnerShareRevoker {
 		private FederatedShareMapper $shareMapper,
 		private FederatedNotificationDelivery $delivery,
 		private FederatedShareAuditTrail $audit,
+		private FederationPartnerService $partners,
 	) {
 	}//end __construct()
 
@@ -109,7 +112,7 @@ class PartnerShareRevoker {
 	 */
 	public function revokeForDeletedSecret(string $secretId, string $userId): void {
 		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secretId) as $row) {
-			$current = $this->deleteIfDeclined(row: $row, actorId: $userId);
+			$current = $this->endUntold(row: $row, actorId: $userId);
 			if ($this->needsRevoke(row: $current) === true) {
 				$this->revoke(row: $current, actorId: $userId);
 			}
@@ -172,7 +175,7 @@ class PartnerShareRevoker {
 	 */
 	private function queueAll(array $rows, ?string $actorId): void {
 		foreach ($rows as $row) {
-			$current = $this->deleteIfDeclined(row: $row, actorId: $actorId);
+			$current = $this->endUntold(row: $row, actorId: $actorId);
 			if ($this->needsRevoke(row: $current) === false) {
 				continue;
 			}
@@ -185,8 +188,9 @@ class PartnerShareRevoker {
 	}//end queueAll()
 
 	/**
-	 * Delete a declined share of a deleted secret: its recipient trashed or deleted the copy and is sent nothing more,
-	 * and a restore of a trashed copy finds the share ended either way.
+	 * Delete a share of a deleted secret that is not to be told, recorded as revoked: a declined one, whose recipient trashed or deleted
+	 * the copy and is sent nothing more (a restore of a trashed copy finds the share ended either way), and a suspended one whose partner
+	 * was removed, as that instance is no longer trusted with the share id, the shared-secret hash and the owner an unshare carries.
 	 *
 	 * @param FederatedShare $row The share as it was read
 	 * @param string|null $actorId Who deletes the secret, or null for the system
@@ -194,13 +198,14 @@ class PartnerShareRevoker {
 	 * @return FederatedShare|null Null once the share is gone; otherwise the share as it is now
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-deleting-the-secret-for-good-removes-bobs-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-removed-partner-is-not-told
 	 */
-	private function deleteIfDeclined(FederatedShare $row, ?string $actorId): ?FederatedShare {
-		if ($row->getStatus() !== FederatedShare::STATUS_DECLINED) {
+	private function endUntold(FederatedShare $row, ?string $actorId): ?FederatedShare {
+		if ($this->isUntold(row: $row) === false) {
 			return $row;
 		}
 
-		if ($this->shareMapper->deleteIfStatus(share: $row, status: FederatedShare::STATUS_DECLINED) > 0) {
+		if ($this->shareMapper->deleteIfStatus(share: $row, status: $row->getStatus()) > 0) {
 			$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_REVOKED, row: $row, actorId: $actorId);
 			return null;
 		}
@@ -211,7 +216,26 @@ class PartnerShareRevoker {
 		} catch (DoesNotExistException) {
 			return null;
 		}
-	}//end deleteIfDeclined()
+	}//end endUntold()
+
+	/**
+	 * Whether a share of a deleted secret ends without a notification: it is declined, or suspended while its partner is no longer one.
+	 * A share suspended for another reason (its recipient's certificate no longer verifies, or the lookup answers for another cloud id)
+	 * is still told: its instance is still a partner, and holds a copy only the unshare removes.
+	 *
+	 * @param FederatedShare $row The share
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-removed-partner-is-not-told
+	 */
+	private function isUntold(FederatedShare $row): bool {
+		if ($row->getStatus() === FederatedShare::STATUS_DECLINED) {
+			return true;
+		}
+
+		return $row->getStatus() === FederatedShare::STATUS_SUSPENDED && $this->partners->find(id: $row->getPartnerId()) === null;
+	}//end isUntold()
 
 	/**
 	 * Whether a share of a deleted secret still needs a revoke: every share the partner may still hold a copy for does,
