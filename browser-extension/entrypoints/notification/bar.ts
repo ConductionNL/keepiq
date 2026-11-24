@@ -163,6 +163,12 @@ export function logo(): SVGSVGElement {
 	return icon
 }
 
+/** Shown only compact, where it grows the bar. */
+function expandButton() {
+	return element('button', { 'type': 'button', 'class': 'icon-btn bar__expand', 'aria-label': i18n.t('notificationBar.expand'), 'aria-expanded': 'false' },
+		svg({ width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'm6 9 6 6 6-6' }]]))
+}
+
 /**
  * The save and update bar (design.md, Notification bar). It learns its key only from its parent's `postMessage`,
  * never from its URL, hears from the background only in replies, and never holds the password. Returns a teardown.
@@ -231,12 +237,6 @@ export function startNotificationBar(): () => void {
 		const node = element('button', { type: 'button', class: `btn btn--${variant}` }, label)
 		guarded.set(node, (input) => act(node, input))
 		return node
-	}
-
-	/** Shown only compact, where it grows the bar. */
-	function expandButton() {
-		return element('button', { 'type': 'button', 'class': 'icon-btn bar__expand', 'aria-label': i18n.t('notificationBar.expand'), 'aria-expanded': 'false' },
-			svg({ width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'm6 9 6 6 6-6' }]]))
 	}
 
 	function closeButton() {
