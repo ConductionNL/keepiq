@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\PreconditionFailedException;
 use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
@@ -348,18 +349,31 @@ interface SecretServiceInterface {
 	 * (ciphertext-age tracking, never decrypts). The server validates shape
 	 * only. Used by `PUT /api/v1/app/secrets/{id}`.
 	 *
+	 * The write is locked on the version it read. When another write lands
+	 * between the read and the write, the update is made once more on the row
+	 * as it is now, which keeps that write as a version; a second such loss
+	 * refuses the update. A precondition is checked on the row each attempt
+	 * writes.
+	 *
 	 * @param string $id The secret ID
 	 * @param array<string,mixed> $data The submitted fields (ciphertext + metadata)
 	 * @param string $applicationId The owning application ID
+	 * @param \Closure|null $precondition Whether the row as read may be written; null writes any version
+	 *
+	 * @phpstan-param (\Closure(Secret): bool)|null $precondition
+	 * @psalm-param (\Closure(Secret): bool)|null $precondition
 	 *
 	 * @return Secret
 	 *
-	 * @throws NotFoundException When the secret does not exist in this vault
+	 * @throws NotFoundException When the secret does not exist in this vault, or is gone by the write
 	 * @throws InvalidArgumentException When a submitted field is invalid, or a totp or passkeys value is sent
+	 * @throws PreconditionFailedException When the row the write would change does not meet `$precondition`
+	 * @throws StaleWriteException When the row moved between the read and the write twice
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-conditional-machine-write-back
 	 */
-	public function updateByApplication(string $id, array $data, string $applicationId): Secret;
+	public function updateByApplication(string $id, array $data, string $applicationId, ?\Closure $precondition = null): Secret;
 
 	/**
 	 * Add the holder's tags to serialised secrets (vault-favourites-tags-and-last-used).

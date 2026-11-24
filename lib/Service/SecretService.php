@@ -43,6 +43,7 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\PreconditionFailedException;
 use OCA\Keepiq\Exception\ShareSaveRequiredException;
 use OCA\Keepiq\Exception\ShareScanPendingException;
 use OCA\Keepiq\Exception\StaleWriteException;
@@ -623,33 +624,82 @@ class SecretService implements SecretServiceInterface {
 	 * (ciphertext-age tracking, never decrypts). The server validates shape
 	 * only. Used by `PUT /api/v1/app/secrets/{id}`.
 	 *
+	 * The write is locked on the version it read, as a user's update is. When
+	 * another write lands between the read and the write, the update is made
+	 * once more on the row as it is now, which keeps that write as a version;
+	 * a second such loss refuses the update. A precondition is checked on the
+	 * row each attempt writes, so a caller that names the version it read
+	 * (an `If-Match` ETag) is refused instead of written over a newer one.
+	 *
 	 * @param string $id The secret ID
 	 * @param array<string,mixed> $data The submitted fields (ciphertext + metadata)
 	 * @param string $applicationId The owning application ID
+	 * @param \Closure|null $precondition Whether the row as read may be written; null writes any version
+	 *
+	 * @phpstan-param (\Closure(Secret): bool)|null $precondition
+	 * @psalm-param (\Closure(Secret): bool)|null $precondition
 	 *
 	 * @return Secret
 	 *
-	 * @throws NotFoundException When the secret does not exist in this vault
+	 * @throws NotFoundException When the secret does not exist in this vault, or is gone by the write
 	 * @throws InvalidArgumentException When a submitted field is invalid, or a totp or passkeys value is sent
+	 * @throws PreconditionFailedException When the row the write would change does not meet `$precondition`
+	 * @throws StaleWriteException When the row moved between the read and the write twice
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-conditional-machine-write-back
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	public function updateByApplication(string $id, array $data, string $applicationId): Secret {
+	public function updateByApplication(string $id, array $data, string $applicationId, ?\Closure $precondition = null): Secret {
 		$this->refuseApplicationValueFields(data: $data);
-		$run = new ApplicationSecretUpdateRun(
-			secret: $this->findInApplicationVault(id: $id, applicationId: $applicationId),
-			data: $data,
-			applicationId: $applicationId
-		);
+		$secret = $this->findInApplicationVault(id: $id, applicationId: $applicationId);
+		try {
+			$run = $this->writeByApplication(secret: $secret, data: $data, applicationId: $applicationId, precondition: $precondition);
+		} catch (StaleWriteException $moved) {
+			$run = $this->writeByApplication(secret: $moved->getCurrent(), data: $data, applicationId: $applicationId, precondition: $precondition);
+		}
 
-		$this->applyApplicationFields(run: $run);
-		$this->applyApplicationKey(run: $run);
-		$credentials = $this->storeApplicationUpdate(run: $run);
 		$this->brokerMints?->record(secret: $run->secret, data: $data);
-		$this->auditApplicationUpdate(run: $run, credentials: $credentials);
+		$this->auditApplicationUpdate(run: $run);
 
 		return $run->secret;
 	}//end updateByApplication()
+
+	/**
+	 * One attempt at a machine write-back on the row as read: check the
+	 * precondition, apply the fields and write under the version lock.
+	 *
+	 * @param Secret $secret The row as read from the application's vault
+	 * @param array<string,mixed> $data The submitted fields
+	 * @param string $applicationId The owning application ID
+	 * @param \Closure|null $precondition Whether the row as read may be written
+	 *
+	 * @phpstan-param (\Closure(Secret): bool)|null $precondition
+	 * @psalm-param (\Closure(Secret): bool)|null $precondition
+	 *
+	 * @return ApplicationSecretUpdateRun
+	 *
+	 * @throws PreconditionFailedException When the row does not meet `$precondition`
+	 * @throws StaleWriteException When the row moved on after it was read, carrying it as it is now
+	 * @throws NotFoundException When the row left the vault after it was read
+	 */
+	private function writeByApplication(Secret $secret, array $data, string $applicationId, ?\Closure $precondition): ApplicationSecretUpdateRun {
+		if ($precondition !== null && $precondition($secret) !== true) {
+			throw new PreconditionFailedException(current: $secret);
+		}
+
+		$run = new ApplicationSecretUpdateRun(
+			secret: $secret,
+			data: $data,
+			applicationId: $applicationId,
+			now: $this->nextVersion(row: $secret)
+		);
+		$this->applyApplicationFields(run: $run);
+		$this->applyApplicationKey(run: $run);
+		$this->storeApplicationUpdate(run: $run);
+
+		return $run;
+	}//end writeByApplication()
 
 	/**
 	 * The secret with this id in the application's own vault. A row owned by
@@ -756,30 +806,39 @@ class SecretService implements SecretServiceInterface {
 
 	/**
 	 * Clear an answered compromise warning by the same rule as the owner path
-	 * in update(), snapshot the head when a field changed, and write the row
-	 * at the write-back's time.
+	 * in update(), then write the row at the write-back's time, locked on the
+	 * version it was read at. The head is snapshotted when a field changed,
+	 * only once the lock is won, so a lost write leaves no version behind.
 	 *
 	 * @param ApplicationSecretUpdateRun $run The write-back
 	 *
-	 * @return CredentialFields
+	 * @return void
+	 *
+	 * @throws StaleWriteException When the row moved on after it was read, carrying it as it is now
+	 * @throws NotFoundException When the row left the vault after it was read
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	private function storeApplicationUpdate(ApplicationSecretUpdateRun $run): CredentialFields {
+	private function storeApplicationUpdate(ApplicationSecretUpdateRun $run): void {
 		$secret = $run->secret;
-		$credentials = new CredentialFields();
-		if ($credentials->answersCompromiseWarning(after: $secret, before: $run->preUpdate) === true) {
+		if ((new CredentialFields())->answersCompromiseWarning(after: $secret, before: $run->preUpdate) === true) {
 			$secret->setPossiblyCompromisedAt(null);
 		}
 
-		if ($this->versionService?->fieldsChanged(before: $run->preUpdate, after: $secret) === true) {
-			$this->versionService->snapshot(preUpdate: $run->preUpdate, actorType: 'application', actorId: $run->applicationId);
-		}
-
-		$secret->setUpdatedAt($run->now);
-		$this->mapper->update($secret);
-
-		return $credentials;
+		$this->writeLocked(
+			secret: $secret,
+			base: $run->base,
+			savedAt: $run->now,
+			snapshot: function () use ($run): void {
+				if ($this->versionService?->fieldsChanged(before: $run->preUpdate, after: $run->secret) === true) {
+					$this->versionService->snapshot(preUpdate: $run->preUpdate, actorType: 'application', actorId: $run->applicationId);
+				}
+			},
+			stale: fn (): StaleWriteException => new StaleWriteException(
+				current: $this->findInApplicationVault(id: $secret->getId(), applicationId: $run->applicationId)
+			)
+		);
 	}//end storeApplicationUpdate()
 
 	/**
@@ -787,16 +846,15 @@ class SecretService implements SecretServiceInterface {
 	 * the key changed. An accepted empty totp or passkeys changes nothing and
 	 * is not named.
 	 *
-	 * @param ApplicationSecretUpdateRun $run         The write-back
-	 * @param CredentialFields           $credentials The credential rule that checked it
+	 * @param ApplicationSecretUpdateRun $run The write-back
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
-	private function auditApplicationUpdate(ApplicationSecretUpdateRun $run, CredentialFields $credentials): void {
+	private function auditApplicationUpdate(ApplicationSecretUpdateRun $run): void {
 		$secret = $run->secret;
-		$changedFields = array_values(array_diff(array_keys($run->data), $credentials->unchanged(after: $secret, before: $run->preUpdate)));
+		$changedFields = array_values(array_diff(array_keys($run->data), (new CredentialFields())->unchanged(after: $secret, before: $run->preUpdate)));
 		if ($run->keyChanged() === true) {
 			$changedFields = ['key'];
 		}
@@ -1453,25 +1511,90 @@ class SecretService implements SecretServiceInterface {
 	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	private function store(Secret $secret, Secret $preUpdate, string $userId, ?DateTime $base, ?DateTime $savedAt): void {
-		$savedAt ??= new DateTime('@'.max(time(), ($preUpdate->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
-		$write = function () use ($secret, $preUpdate, $userId, $base, $savedAt): void {
-			if ($base !== null && $this->mapper->advanceVersion(id: $secret->getId(), base: $base, savedAt: $savedAt) === 0) {
-				throw new StaleWriteException(current: $this->loadOwned(id: $secret->getId(), userId: $userId));
-			}
-
+		$savedAt ??= $this->nextVersion(row: $preUpdate);
+		$snapshot = function () use ($secret, $preUpdate, $userId): void {
 			$this->versionService?->snapshotIfChanged(preUpdate: $preUpdate, after: $secret, actorType: 'user', actorId: $userId);
-
-			$secret->setUpdatedAt($savedAt);
-			$this->mapper->update($secret);
 		};
 
 		if ($base === null) {
-			$write();
+			$this->writeHead(secret: $secret, savedAt: $savedAt, snapshot: $snapshot);
 			return;
 		}
 
-		$this->atomic(fn: $write, db: $this->db);
+		$this->writeLocked(
+			secret: $secret,
+			base: $base,
+			savedAt: $savedAt,
+			snapshot: $snapshot,
+			stale: fn (): StaleWriteException => new StaleWriteException(current: $this->loadOwned(id: $secret->getId(), userId: $userId))
+		);
 	}//end store()
+
+	/**
+	 * The version an update stamps a row with: now, but always after its
+	 * stored version, since the column and the stale check count whole seconds.
+	 *
+	 * @param Secret $row The row as read
+	 *
+	 * @return DateTime
+	 */
+	private function nextVersion(Secret $row): DateTime {
+		return new DateTime('@'.max(time(), ($row->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
+	}//end nextVersion()
+
+	/**
+	 * Move the row off the version it was read at by a compare-and-set, then
+	 * snapshot the head and write the row, all in one transaction. When the
+	 * row moved on (or is gone) nothing is snapshotted or written: `$stale`
+	 * builds the refusal, inside the transaction, from the row as it is now.
+	 *
+	 * @param Secret $secret The row with the update applied
+	 * @param DateTime $base The version the update was read at
+	 * @param DateTime $savedAt The new version, after `$base`
+	 * @param \Closure $snapshot Keeps the pre-update head as a version when it should be kept
+	 * @param \Closure $stale The refusal for a row that moved on; it throws itself when the row is no longer the caller's
+	 *
+	 * @phpstan-param \Closure(): void $snapshot
+	 * @phpstan-param \Closure(): StaleWriteException $stale
+	 * @psalm-param \Closure(): void $snapshot
+	 * @psalm-param \Closure(): StaleWriteException $stale
+	 *
+	 * @return void
+	 *
+	 * @throws StaleWriteException When the row moved on from `$base` after it was read
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	private function writeLocked(Secret $secret, DateTime $base, DateTime $savedAt, \Closure $snapshot, \Closure $stale): void {
+		$this->atomic(
+			fn: function () use ($secret, $base, $savedAt, $snapshot, $stale): void {
+				if ($this->mapper->advanceVersion(id: $secret->getId(), base: $base, savedAt: $savedAt) === 0) {
+					throw $stale();
+				}
+
+				$this->writeHead(secret: $secret, savedAt: $savedAt, snapshot: $snapshot);
+			},
+			db: $this->db
+		);
+	}//end writeLocked()
+
+	/**
+	 * Snapshot the head and write the updated row at its new version.
+	 *
+	 * @param Secret $secret The row with the update applied
+	 * @param DateTime $savedAt The new version
+	 * @param \Closure $snapshot Keeps the pre-update head as a version when it should be kept
+	 *
+	 * @phpstan-param \Closure(): void $snapshot
+	 * @psalm-param \Closure(): void $snapshot
+	 *
+	 * @return void
+	 */
+	private function writeHead(Secret $secret, DateTime $savedAt, \Closure $snapshot): void {
+		$snapshot();
+		$secret->setUpdatedAt($savedAt);
+		$this->mapper->update($secret);
+	}//end writeHead()
 
 	/**
 	 * Delete a secret owned by the user, cascading to its link shares.

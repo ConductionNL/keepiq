@@ -140,13 +140,17 @@ class LinkShareAuditTrailTest extends TestCase {
 	public function testAnApplicationUpdateRunTracksTheKey(): void {
 		$secret = new Secret();
 		$secret->setKey('key-1');
-		$run = new ApplicationSecretUpdateRun(secret: $secret, data: ['key' => 'key-2', 'login' => null], applicationId: 'app-1');
+		$run = new ApplicationSecretUpdateRun(secret: $secret, data: ['key' => 'key-2', 'login' => null], applicationId: 'app-1', now: new \DateTime());
 		$this->assertTrue(condition: $run->sends(field: 'login'));
 		$this->assertFalse(condition: $run->sends(field: 'totp'));
 		$this->assertFalse(condition: $run->keyChanged());
 		$secret->setKey('key-2');
 		$this->assertTrue(condition: $run->keyChanged());
 		$this->assertSame(expected: 'key-1', actual: $run->preUpdate->getKey());
-		$this->assertLessThanOrEqual(expected: time(), actual: $run->now->getTimestamp());
+		// A row without a version locks on one no stored row has, so its write is refused.
+		$this->assertSame(expected: 0, actual: $run->base->getTimestamp());
+		$secret->setUpdatedAt(new \DateTime('2026-01-01T00:00:00Z'));
+		$read = new ApplicationSecretUpdateRun(secret: $secret, data: [], applicationId: 'app-1', now: new \DateTime());
+		$this->assertEquals(expected: new \DateTime('2026-01-01T00:00:00Z'), actual: $read->base);
 	}//end testAnApplicationUpdateRunTracksTheKey()
 }//end class

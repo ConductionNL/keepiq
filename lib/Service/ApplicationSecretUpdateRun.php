@@ -35,12 +35,12 @@ use OCA\Keepiq\Db\Secret;
 final class ApplicationSecretUpdateRun {
 
 	/**
-	 * The time the write is stamped with: the row's new version and, when
-	 * the key changes, its ciphertext age.
+	 * The version the row was read at, which the write locks on. A row
+	 * without one can never match the lock, so its write is refused.
 	 *
 	 * @var DateTime
 	 */
-	public readonly DateTime $now;
+	public readonly DateTime $base;
 
 	/**
 	 * The row as loaded, before any field is applied (secret-version-history §2.2).
@@ -55,6 +55,7 @@ final class ApplicationSecretUpdateRun {
 	 * @param Secret              $secret        The row being changed, already scoped to the application's vault
 	 * @param array<string,mixed> $data          The submitted fields (ciphertext + metadata)
 	 * @param string              $applicationId The owning application ID
+	 * @param DateTime            $now           The time the write is stamped with: the row's new version and, when the key changes, its ciphertext age
 	 *
 	 * @return void
 	 */
@@ -62,8 +63,9 @@ final class ApplicationSecretUpdateRun {
 		public readonly Secret $secret,
 		public readonly array $data,
 		public readonly string $applicationId,
+		public readonly DateTime $now,
 	) {
-		$this->now = new DateTime();
+		$this->base = $secret->getUpdatedAt() ?? new DateTime('@0');
 		$this->preUpdate = clone $secret;
 	}//end __construct()
 

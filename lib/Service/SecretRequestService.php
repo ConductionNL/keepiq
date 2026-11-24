@@ -332,11 +332,12 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	 * application's, or the user's after holding back a filled extra-field
 	 * blob (keepiq#750).
 	 *
-	 * The user's update is refused when the owner's row moves between its read
-	 * and its write. The update is then made once more on the row as it is
-	 * now, which keeps the owner's change as a version. A second refusal
-	 * leaves the request pending, but the blob held back is already in the
-	 * secret's pending list.
+	 * Both updates are locked on the row as they read it. The user's update is
+	 * refused when the owner's row moves between its read and its write; it is
+	 * then made once more on the row as it is now, which keeps the owner's
+	 * change as a version. The application's update makes that second attempt
+	 * itself. A second refusal leaves the request pending; on the user's path
+	 * the blob held back is already in the secret's pending list.
 	 *
 	 * @param Secret $secret The secret the request writes to
 	 * @param array<string,mixed> $data The values to write
@@ -355,37 +356,38 @@ class SecretRequestService implements SecretRequestServiceInterface {
 	private function writeFilledValues(Secret $secret, array $data, array $schemas): void {
 		$secretService = $this->container->get(SecretService::class);
 
-		if ($secret->getOwnerType() === 'application') {
-			$secretService->updateByApplication(
-				id: $secret->getId(),
-				data: $data,
-				applicationId: $secret->getOwnerId()
-			);
-
-			return;
-		}
-
-		// Before the hold-back: it stores a filled extra-field blob on its own,
-		// and that is a value change too.
-		$this->viewOnlyCopies->assertMayChangeValue(row: $secret, fields: array_keys($data), userId: $secret->getOwnerId());
-
-		$data = $this->holdBackAdditionalFields(secret: $secret, data: $data, schemas: $schemas);
-		if ($data === []) {
-			return;
-		}
-
-		$write = fn (array $values) => $secretService->update(id: $secret->getId(), data: $values, userId: $secret->getOwnerId());
 		try {
-			$write($data);
-		} catch (StaleWriteException) {
+			if ($secret->getOwnerType() === 'application') {
+				// The application's update makes its own second attempt.
+				$secretService->updateByApplication(
+					id: $secret->getId(),
+					data: $data,
+					applicationId: $secret->getOwnerId()
+				);
+
+				return;
+			}
+
+			// Before the hold-back: it stores a filled extra-field blob on its own,
+			// and that is a value change too.
+			$this->viewOnlyCopies->assertMayChangeValue(row: $secret, fields: array_keys($data), userId: $secret->getOwnerId());
+
+			$data = $this->holdBackAdditionalFields(secret: $secret, data: $data, schemas: $schemas);
+			if ($data === []) {
+				return;
+			}
+
+			$write = fn (array $values) => $secretService->update(id: $secret->getId(), data: $values, userId: $secret->getOwnerId());
 			try {
 				$write($data);
 			} catch (StaleWriteException) {
-				throw new InvalidArgumentException(
-					message: 'The secret changed while the request was filled; please submit again',
-					code: 409
-				);
+				$write($data);
 			}
+		} catch (StaleWriteException) {
+			throw new InvalidArgumentException(
+				message: 'The secret changed while the request was filled; please submit again',
+				code: 409
+			);
 		}
 	}//end writeFilledValues()
 
