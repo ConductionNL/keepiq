@@ -311,7 +311,7 @@ Machine secret-request creation MUST enforce the same guards as token issuance: 
 
 `PUT /api/v1/app/secrets/{id}` MUST accept an `If-Match` header. The discovery document MUST advertise `conditionalWrite: true`.
 
-Every application write MUST move the row off the version it read in the same step that writes it, so a write that commits after the read is never lost: it is kept as a version, and the later write is made on top of it. This holds for the `PUT` and for the request fill on an application-owned secret.
+Every application write MUST move the row off the version it read in the same step that writes it, so a write that commits after the read is never lost: without `If-Match` it is kept as a version and the later write is made on top of it; with an `If-Match` tag other than `*` the later write is refused, as the paragraphs below say. This holds for the `PUT` and for the request fill on an application-owned secret.
 
 When the header is present and is not `*`, the server MUST check it against the row the write locks on. When it does not equal that row's strong ETag, or the row moves on after that read, the server MUST answer 412 Precondition Failed with the current ETag and MUST NOT change the secret. `If-Match: *` is written as a write without the header is.
 
