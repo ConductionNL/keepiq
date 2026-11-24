@@ -148,7 +148,10 @@ vi.mock('../../src/store/modules/federatedShare.js', async (importOriginal) => {
 					return new Map(
 						shares.map((share) => {
 							try {
-								return [share.shareId, { recipient: verified(share.recipientCloudId) }]
+								return [
+									share.shareId,
+									{ recipient: verified(share.recipientCloudId) },
+								]
 							} catch (error) {
 								return [share.shareId, { error }]
 							}

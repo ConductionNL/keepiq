@@ -134,7 +134,9 @@
 					:inputLabel="t('keepiq', 'Types')"
 					:options="typeOptions"
 					:reduce="(opt) => opt.value" />
-				<fieldset class="export-dialog__omit" data-testid="export-omit-fields">
+				<fieldset
+					class="export-dialog__omit"
+					data-testid="export-omit-fields">
 					<legend>{{ t('keepiq', 'Leave out') }}</legend>
 					<NcCheckboxRadioSwitch
 						v-for="field in omitChoices"
@@ -326,7 +328,9 @@ export default {
 			]
 			if (this.selectedIds.length > 0) {
 				opts.push({
-					label: this.t('keepiq', 'Selected items ({count})', { count: this.selectedIds.length }),
+					label: this.t('keepiq', 'Selected items ({count})', {
+						count: this.selectedIds.length,
+					}),
 					value: 'selection',
 				})
 			}
@@ -340,7 +344,10 @@ export default {
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
 		folderOptions() {
-			return this.folders.map((folder) => ({ label: folder.name, value: folder.id }))
+			return this.folders.map((folder) => ({
+				label: folder.name,
+				value: folder.id,
+			}))
 		},
 
 		/**
@@ -350,7 +357,10 @@ export default {
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-choose-what-an-export-contains
 		 */
 		typeOptions() {
-			return useSecretTypeStore().types.map((type) => ({ label: type.label || type.name, value: type.id }))
+			return useSecretTypeStore().types.map((type) => ({
+				label: type.label || type.name,
+				value: type.id,
+			}))
 		},
 
 		/**
@@ -362,7 +372,10 @@ export default {
 		omitChoices() {
 			return [
 				{ label: this.t('keepiq', 'Usernames'), value: 'login' },
-				{ label: this.t('keepiq', 'Additional fields'), value: 'additionalFields' },
+				{
+					label: this.t('keepiq', 'Additional fields'),
+					value: 'additionalFields',
+				},
 				{ label: this.t('keepiq', 'Authenticator seeds'), value: 'totp' },
 			]
 		},
@@ -445,7 +458,10 @@ export default {
 				return
 			}
 			// Opened from the bulk strip, the export starts on the selection.
-			this.scopeKind = this.initialScope === 'selection' && this.selectedIds.length > 0 ? 'selection' : 'vault'
+			this.scopeKind =
+				this.initialScope === 'selection' && this.selectedIds.length > 0
+					? 'selection'
+					: 'vault'
 			resetPolicyCache()
 			this.exportBlocked =
 				(await fetchPolicy())?.vault_export_disabled === true
@@ -542,7 +558,12 @@ export default {
 			if (this.mode === 'cxf') {
 				return this.exportCxf(scope)
 			}
-			await this.exportStore.exportCsv(this.secrets, this.folders, scope, this.exportOptions)
+			await this.exportStore.exportCsv(
+				this.secrets,
+				this.folders,
+				scope,
+				this.exportOptions,
+			)
 			return true
 		},
 

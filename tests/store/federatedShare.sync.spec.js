@@ -234,7 +234,9 @@ describe('a value change reaches federated recipients', () => {
 
 			expect(waits).toEqual([60000])
 			// The third call hit the limit and went again after the wait.
-			expect(log.partnerBatches.map((ids) => ids.length)).toEqual([100, 100, 50, 50])
+			expect(log.partnerBatches.map((ids) => ids.length)).toEqual([
+				100, 100, 50, 50,
+			])
 			expect(result.secret).toBeTruthy()
 			// Above 100 partner shares the save stages them in chunks.
 			const sent = log.saves.slice(1).flatMap((body) => body.federated ?? [])

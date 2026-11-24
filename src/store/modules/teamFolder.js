@@ -100,7 +100,10 @@ async function copySourceVersion(shareStore, copyId, sourceId) {
 function stalePairs(data) {
 	return (data?.skipped ?? [])
 		.filter((entry) => entry.reason === 'stale_source')
-		.map((entry) => ({ secretId: entry.sourceSecretId, userId: entry.targetUserId }))
+		.map((entry) => ({
+			secretId: entry.sourceSecretId,
+			userId: entry.targetUserId,
+		}))
 }
 
 /**
@@ -158,12 +161,7 @@ function fanOutError(e) {
  * @return {Promise<number>} How many copies the server created.
  * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
  */
-async function postFanOutChunk(
-	store,
-	teamFolderId,
-	chunk,
-	ctx,
-) {
+async function postFanOutChunk(store, teamFolderId, chunk, ctx) {
 	const { certByUser, refs, refused } = ctx
 	let created = 0
 	let rows = chunk
@@ -295,7 +293,9 @@ async function confirmFolder(store, folder, { secretStore, shareStore }, totals)
 	}
 
 	const post = async () => {
-		const pairs = new Map((folder.missing ?? []).map((p) => [`${p.secretId}\u0000${p.userId}`, p]))
+		const pairs = new Map(
+			(folder.missing ?? []).map((p) => [`${p.secretId}\u0000${p.userId}`, p]),
+		)
 		for (let round = 0; chunk.length > 0; round++) {
 			const result = await axios.post(
 				generateUrl(
@@ -311,10 +311,14 @@ async function confirmFolder(store, folder, { secretStore, shareStore }, totals)
 				totals.members.add(row.targetUserId)
 			}
 			await store.regrantAttachments(result.data?.rows ?? [], certByUser)
-			const stale = round < MAX_STALE_SOURCE_ROUNDS ? stalePairs(result.data) : []
+			const stale =
+				round < MAX_STALE_SOURCE_ROUNDS ? stalePairs(result.data) : []
 			chunk = []
 			for (const { secretId, userId } of stale) {
-				const pair = pairs.get(`${secretId}\u0000${userId}`) ?? { secretId, userId }
+				const pair = pairs.get(`${secretId}\u0000${userId}`) ?? {
+					secretId,
+					userId,
+				}
 				delete fieldsBySecret[pair.ownCopyId ?? pair.secretId]
 				const row = await rowFor(pair)
 				if (row !== null) {

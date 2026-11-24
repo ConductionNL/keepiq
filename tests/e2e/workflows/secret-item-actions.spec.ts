@@ -38,7 +38,8 @@ const SEED = 'JBSWY3DPEHPK3PXP'
 const WRONG = 'not-my-master-password'
 
 /** A 1×1 PNG. */
-const PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+const PNG_BASE64 =
+	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
 
 let admin: APIRequestContext
 let context: BrowserContext
@@ -53,7 +54,9 @@ let id = ''
  */
 async function openDetail(target: Page, secretId: string): Promise<void> {
 	await gotoVaultRoute(target, `secrets/${secretId}`)
-	await expect(target.getByTestId('secret-detail-sidebar')).toBeVisible({ timeout: 30_000 })
+	await expect(target.getByTestId('secret-detail-sidebar')).toBeVisible({
+		timeout: 30_000,
+	})
 }
 
 /**
@@ -114,7 +117,14 @@ test.describe('secret item actions', () => {
 			page,
 			'secret',
 			`async (store, data) => (await store.createSecret(data)).id`,
-			{ name: NAME, typeId: login!.id, key: VALUE, login: LOGIN, url: URL, totp: SEED },
+			{
+				name: NAME,
+				typeId: login!.id,
+				key: VALUE,
+				login: LOGIN,
+				url: URL,
+				totp: SEED,
+			},
 		)
 		expect(id).toBeTruthy()
 
@@ -142,7 +152,9 @@ test.describe('secret item actions', () => {
 		await openDetail(page, id)
 		await moreMenu(page, 'secret-detail-clone')
 		const dialog = page.getByRole('dialog').first()
-		await expect(dialog.getByRole('textbox', { name: /^name/i }).first()).toHaveValue(`${NAME} (copy)`, {
+		await expect(
+			dialog.getByRole('textbox', { name: /^name/i }).first(),
+		).toHaveValue(`${NAME} (copy)`, {
 			timeout: 15_000,
 		})
 		await dialog
@@ -155,20 +167,26 @@ test.describe('secret item actions', () => {
 			expect(listed.status).toBe(200)
 			return (listed.body.items as Array<{ id: string }>).map((row) => row.id)
 		}
-		await expect.poll(async () => (await listedIds()).length, { timeout: 30_000 }).toBe(2)
+		await expect
+			.poll(async () => (await listedIds()).length, { timeout: 30_000 })
+			.toBe(2)
 		const cloneId = (await listedIds()).find((row) => row !== id)
 		expect(cloneId, 'the clone has a new id').toBeTruthy()
 
 		const shares = await api(page, 'GET', `/secrets/${cloneId}/shares`)
 		expect(shares.status).toBe(200)
-		const rows = Array.isArray(shares.body) ? shares.body : (shares.body.items ?? shares.body.shares ?? [])
+		const rows = Array.isArray(shares.body)
+			? shares.body
+			: (shares.body.items ?? shares.body.shares ?? [])
 		expect(rows, 'the clone is not shared').toEqual([])
 	})
 
 	test('an image attachment previews without a download', async () => {
 		// @e2e secret-item-actions::preview-an-attachment-in-the-browser
 		const downloads: string[] = []
-		page.on('download', (download) => downloads.push(download.suggestedFilename()))
+		page.on('download', (download) =>
+			downloads.push(download.suggestedFilename()),
+		)
 
 		await openDetail(page, id)
 		await page
@@ -179,7 +197,9 @@ test.describe('secret item actions', () => {
 		await expect(image).toBeVisible({ timeout: 20_000 })
 		expect(await image.getAttribute('src')).toMatch(/^blob:/)
 
-		await page.getByTestId('attachment-preview-close').evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByTestId('attachment-preview-close')
+			.evaluate((el: HTMLElement) => el.click())
 		await expect(page.getByTestId('attachment-preview')).toHaveCount(0)
 		expect(downloads, 'files saved to the device').toEqual([])
 	})
@@ -194,13 +214,28 @@ test.describe('secret item actions', () => {
 		})
 		await openDetail(page, id)
 		await moreMenu(page, 'secret-detail-print')
-		await expect(page.getByTestId('secret-print')).toBeVisible({ timeout: 15_000 })
-		await enterMasterPassword(page, 'secret-print-password-field', 'secret-print-submit', WRONG)
+		await expect(page.getByTestId('secret-print')).toBeVisible({
+			timeout: 15_000,
+		})
+		await enterMasterPassword(
+			page,
+			'secret-print-password-field',
+			'secret-print-submit',
+			WRONG,
+		)
 
-		await expect(page.getByTestId('secret-print-error')).toBeVisible({ timeout: 15_000 })
+		await expect(page.getByTestId('secret-print-error')).toBeVisible({
+			timeout: 15_000,
+		})
 		await expect(page.getByTestId('secret-print-sheet')).toHaveCount(0)
-		expect(await page.evaluate(() => (window as unknown as { __printed: number }).__printed)).toBe(0)
-		await page.getByTestId('secret-print-close').evaluate((el: HTMLElement) => el.click())
+		expect(
+			await page.evaluate(
+				() => (window as unknown as { __printed: number }).__printed,
+			),
+		).toBe(0)
+		await page
+			.getByTestId('secret-print-close')
+			.evaluate((el: HTMLElement) => el.click())
 	})
 
 	test('the print sheet holds name, address, username and password and no key', async () => {
@@ -213,7 +248,12 @@ test.describe('secret item actions', () => {
 		})
 		await openDetail(page, id)
 		await moreMenu(page, 'secret-detail-print')
-		await enterMasterPassword(page, 'secret-print-password-field', 'secret-print-submit', owner.masterPassword)
+		await enterMasterPassword(
+			page,
+			'secret-print-password-field',
+			'secret-print-submit',
+			owner.masterPassword,
+		)
 
 		const sheet = page.getByTestId('secret-print-sheet')
 		await expect(sheet).toHaveCount(1, { timeout: 20_000 })
@@ -222,7 +262,11 @@ test.describe('secret item actions', () => {
 		await expect(sheet.getByTestId('secret-print-login')).toHaveText(LOGIN)
 		await expect(sheet.getByTestId('secret-print-password')).toHaveText(VALUE)
 		expect(await sheet.textContent()).not.toContain(SEED)
-		expect(await page.evaluate(() => (window as unknown as { __printed: number }).__printed)).toBe(1)
+		expect(
+			await page.evaluate(
+				() => (window as unknown as { __printed: number }).__printed,
+			),
+		).toBe(1)
 
 		// In print, the sheet is the only thing on the page.
 		await page.emulateMedia({ media: 'print' })
@@ -231,7 +275,9 @@ test.describe('secret item actions', () => {
 		await page.emulateMedia({ media: 'screen' })
 		await expect(sheet).toBeHidden()
 
-		await page.getByTestId('secret-print-close').evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByTestId('secret-print-close')
+			.evaluate((el: HTMLElement) => el.click())
 		await expect(page.getByTestId('secret-print-sheet')).toHaveCount(0)
 	})
 
@@ -242,13 +288,22 @@ test.describe('secret item actions', () => {
 		await expect(page.getByTestId('secret-qr')).toBeVisible({ timeout: 15_000 })
 		await expect(page.getByTestId('secret-qr-code')).toHaveCount(0)
 
-		await enterMasterPassword(page, 'secret-qr-password', 'secret-qr-show', owner.masterPassword)
+		await enterMasterPassword(
+			page,
+			'secret-qr-password',
+			'secret-qr-show',
+			owner.masterPassword,
+		)
 		const code = page.getByTestId('secret-qr-code')
 		await expect(code).toBeVisible({ timeout: 15_000 })
-		expect(await code.locator('path').getAttribute('d')).toMatch(/^M\d+ \d+h1v1h-1z/)
+		expect(await code.locator('path').getAttribute('d')).toMatch(
+			/^M\d+ \d+h1v1h-1z/,
+		)
 		await expect(page.getByTestId('secret-qr')).not.toContainText(VALUE)
 
-		await page.getByTestId('secret-qr-close').evaluate((el: HTMLElement) => el.click())
+		await page
+			.getByTestId('secret-qr-close')
+			.evaluate((el: HTMLElement) => el.click())
 		await expect(page.getByTestId('secret-qr-code')).toHaveCount(0)
 	})
 })

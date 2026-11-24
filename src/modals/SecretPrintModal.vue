@@ -18,13 +18,23 @@
 		@update:open="onUpdateOpen">
 		<div class="secret-print" data-testid="secret-print">
 			<NcNoteCard type="warning">
-				{{ t('keepiq', 'A printed sheet is outside Keepiq\'s control once it leaves the printer. Enter your master password to print the name, address, username and password.') }}
+				{{
+					t(
+						'keepiq',
+						"A printed sheet is outside Keepiq's control once it leaves the printer. Enter your master password to print the name, address, username and password.",
+					)
+				}}
 			</NcNoteCard>
 			<NcNoteCard v-if="error" type="error" data-testid="secret-print-error">
 				{{ error }}
 			</NcNoteCard>
 			<p v-if="verified" data-testid="secret-print-ready">
-				{{ t('keepiq', 'The print dialog was opened. Close this window when you are done.') }}
+				{{
+					t(
+						'keepiq',
+						'The print dialog was opened. Close this window when you are done.',
+					)
+				}}
 			</p>
 			<form v-else @submit.prevent="onVerify">
 				<NcPasswordField

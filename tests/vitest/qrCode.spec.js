@@ -25,7 +25,9 @@ describe('qrMatrix', () => {
 		const password = 'wachtwoord-€-ŝ-😀'
 		const decoded = decodeMatrix(qrMatrix(password))
 		expect(decoded).not.toBeNull()
-		expect(decoded.binaryData).toEqual(Array.from(new TextEncoder().encode(password)))
+		expect(decoded.binaryData).toEqual(
+			Array.from(new TextEncoder().encode(password)),
+		)
 		expect(decoded.data).toBe(password)
 	})
 
@@ -42,8 +44,16 @@ describe('qrMatrix', () => {
 
 describe('qrPath', () => {
 	it('draws one unit square per dark module, offset by the quiet zone', () => {
-		const matrix = { size: 2, dark: [[true, false], [false, true]] }
-		expect(qrPath(matrix)).toBe(`M${QUIET_ZONE} ${QUIET_ZONE}h1v1h-1zM${QUIET_ZONE + 1} ${QUIET_ZONE + 1}h1v1h-1z`)
+		const matrix = {
+			size: 2,
+			dark: [
+				[true, false],
+				[false, true],
+			],
+		}
+		expect(qrPath(matrix)).toBe(
+			`M${QUIET_ZONE} ${QUIET_ZONE}h1v1h-1zM${QUIET_ZONE + 1} ${QUIET_ZONE + 1}h1v1h-1z`,
+		)
 	})
 
 	it('draws as many squares as the real code has dark modules', () => {

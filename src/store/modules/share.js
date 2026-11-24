@@ -445,12 +445,19 @@ export const useShareStore = defineStore('share', {
 				const sent = await this.sendRegisterBatch(pending, password)
 				password = sent.masterPassword
 				sent.items.forEach((item, i) => {
-					outcome.set(pending[i] ? keyOf(pending[i]) : `extra-${round}-${i}`, item)
+					outcome.set(
+						pending[i] ? keyOf(pending[i]) : `extra-${round}-${i}`,
+						item,
+					)
 				})
 				const stale = pending.filter(
 					(row, i) => sent.items[i]?.status === 'stale_source',
 				)
-				if (stale.length === 0 || !rebuild || round >= MAX_STALE_SOURCE_ROUNDS) {
+				if (
+					stale.length === 0
+					|| !rebuild
+					|| round >= MAX_STALE_SOURCE_ROUNDS
+				) {
 					break
 				}
 				pending = await rebuild(stale)

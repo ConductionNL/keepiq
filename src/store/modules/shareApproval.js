@@ -59,7 +59,11 @@ export const useShareApprovalStore = defineStore('shareApproval', {
 			// from a version a save replaced meanwhile is made again (#1255).
 			const { items } = await useShareStore().registerBatch(rows, {
 				rebuild: (stale) =>
-					encryptAgain(groupShares, { secretId, groupShareId, members }, stale),
+					encryptAgain(
+						groupShares,
+						{ secretId, groupShareId, members },
+						stale,
+					),
 			})
 			return String(items[0]?.status ?? 'not_registered')
 		},
