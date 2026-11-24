@@ -8,7 +8,7 @@ import { candidatesFor } from '@/src/autofill/matcher'
 import { rsaDecrypt } from '@/src/crypto'
 import { fromBase64Url, toBase64Url } from '@/src/crypto/base64'
 import { readLastUsed } from '@/src/last-used'
-import type { PasskeyCredentialJSON, PasskeyResult, PasskeySaveTarget, PasskeyView, VaultWriteError } from '@/src/messages'
+import type { PasskeyCredentialJSON, PasskeyResult, PasskeySaveTarget, PasskeyView, ShareSaveNote, VaultWriteError } from '@/src/messages'
 import { flattenFolders, folderPath } from '@/src/vault/list'
 import { readSnapshot } from '@/src/vault/store'
 import { syncAfterWrite } from '@/src/vault/sync'
@@ -146,12 +146,15 @@ export interface Save {
 	request: SaveRequest
 	/** Retry's: the earlier try of this save. */
 	attempt?: SaveAttempt
-	/** Ends the ceremony with the result; false when it had ended already. */
-	deliver: (result: PasskeyResult) => Promise<boolean>
+	/** Ends the ceremony with the result; false when it had ended already. `keepWindow`: the window still has a note to show. */
+	deliver: (result: PasskeyResult, keepWindow?: boolean) => Promise<boolean>
 }
 
-/** `stale`: the login is no longer one to save to. `replace_required`: it holds this user's passkey and Replace was not confirmed. */
-export type SaveOutcome = 'delivered' | 'ended' | 'stale' | 'replace_required' | { error: VaultWriteError; attempt: SaveAttempt }
+/**
+ * `stale`: the login is no longer one to save to. `replace_required`: it holds this user's passkey and Replace was not confirmed.
+ * `shareSave`: delivered, and the save to the login left partner shares behind, which the window shows.
+ */
+export type SaveOutcome = 'delivered' | 'ended' | 'stale' | 'replace_required' | { error: VaultWriteError; attempt: SaveAttempt } | { shareSave: ShareSaveNote }
 
 /** The entry an earlier try wrote, read after a sync, since a lost reply does not mean nothing was stored. Each try replaced the one found before it, so there is one at most. */
 async function landed(ceremony: SaveCeremony, key: CryptoKey, attempt: SaveAttempt): Promise<{ entry: PasskeyEntry | undefined } | { error: VaultWriteError }> {
@@ -171,7 +174,7 @@ interface Destination {
 }
 
 /** Where a save goes, or why it does not: a Retry's earlier try that was stored decides first, then the chosen login. */
-async function destination({ ceremony, key, request, attempt }: Save): Promise<Destination | Exclude<SaveOutcome, 'delivered' | 'ended'>> {
+async function destination({ ceremony, key, request, attempt }: Save): Promise<Destination | Exclude<SaveOutcome, 'delivered' | 'ended' | { shareSave: ShareSaveNote }>> {
 	if (attempt) {
 		const earlier = await landed(ceremony, key, attempt)
 		if ('error' in earlier) return { error: earlier.error, attempt }
@@ -206,5 +209,8 @@ export async function savePasskey(save: Save): Promise<SaveOutcome> {
 	if (!saved.ok) {
 		return { error: saved.error, attempt: { credentialIds: [...attempt?.credentialIds ?? [], credential.credentialId], itemId: 'itemId' in target.into ? target.into.itemId : null } }
 	}
-	return (await deliver({ type: 'credential', credential: toJSON(registration, ceremony.credProps) })) ? 'delivered' : 'ended'
+	// A new login has no shares; a save to an existing one may leave partner shares behind.
+	const note = 'shareSave' in saved.value ? saved.value.shareSave : undefined
+	if (!(await deliver({ type: 'credential', credential: toJSON(registration, ceremony.credProps) }, note !== undefined))) return 'ended'
+	return note ? { shareSave: note } : 'delivered'
 }

@@ -124,7 +124,8 @@ function judge(body: Body): Response {
 	return json({
 		secret: secretRow(), sourceUpdatedAt: '2026-03-02T10:00:01+00:00', copies: { written: copies.length, skipped: skipped.length },
 		federated: {
-			written: federated.length, suspended: suspend.length, notified: federated.length, queued: 0, ownerOnly: world.ownerOnly,
+			// As ShareSaveScope: a copy editor who doesn't own the source hears whether partner shares exist.
+			written: federated.length, suspended: suspend.length, notified: federated.length, queued: 0, ownerOnly: world.ownerOnly || (world.copyPath && !world.ownsSource && world.shares.length > 0),
 			...('notReached' in world && { notReached: world.notReached }),
 		},
 	})
@@ -469,7 +470,7 @@ describe('the copy-editor path', () => {
 				world.onFinal = (attempt) => {
 					if (attempt === 2) world.ownsSource = false
 				}
-				expect(await save({ opened: await openedX() })).toBeUndefined()
+				expect(await save({ opened: await openedX() })).toEqual({ ownerOnly: true })
 				const [, named, without] = finalCalls()
 				expect(named!.federated!.map((entry) => entry.shareId)).toEqual([BOB.shareId])
 				expect(without).not.toHaveProperty('federated')
@@ -489,7 +490,7 @@ describe('the copy-editor path', () => {
 					if (unknown) return json({ message: 'unknown_recipient' }, 404)
 					return json({ cloudId: BOB.recipientCloudId, certificate: F.bob, chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint, valueFields: [] })
 				}
-				expect(await save({ opened: await openedX() })).toBeUndefined()
+				expect(await save({ opened: await openedX() })).toEqual({ ownerOnly: true })
 				const [, refused, chunk, final] = saves
 				expect(refused!.stage).toEqual({ final: false })
 				expect(refused![list]!.map((entry) => entry.shareId)).toEqual([BOB.shareId])

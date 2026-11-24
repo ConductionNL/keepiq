@@ -177,6 +177,12 @@ p {
 	font-weight: 600;
 }
 
+/* What a save left to partner shares, under its confirmation. */
+.bar__note {
+	margin-top: 4px;
+	font-size: 12px;
+}
+
 .bar__saved {
 	display: flex;
 	align-items: center;

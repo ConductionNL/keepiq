@@ -1,6 +1,6 @@
 import { i18n } from '#i18n'
 import { MIN_KEEPIQ_VERSION } from '@/src/api/keepiq-version'
-import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type NoticeCode, type VaultWriteError, type WriteErrorCode } from '@/src/messages'
+import { MAX_ACCOUNTS, type BlockReason, type ErrorCode, type NoticeCode, type ShareSaveNote, type VaultWriteError, type WriteErrorCode } from '@/src/messages'
 import type { FieldError } from '@/src/vault/fields'
 import { language } from './i18n'
 
@@ -147,6 +147,22 @@ const WRITE_ERRORS = new Map<WriteErrorCode, WriteErrorWording>([
 
 /** Partner recipients named in a sentence of the catalog's language. */
 export const cloudIdList = (cloudIds: string[]) => new Intl.ListFormat(language(), { type: 'conjunction' }).format(cloudIds)
+
+const isCloudIds = (value: unknown): value is string[] => Array.isArray(value) && value.length > 0 && value.every((cloudId) => typeof cloudId === 'string')
+
+/**
+ * What a save left to others, in the popup's own words (`ShareSaveNote`), for the notification bar and the passkey window,
+ * which have no web app link to offer. Fields of the wrong shape are left out.
+ */
+export function shareSaveNoteTexts(note: unknown): string[] {
+	const n = (typeof note === 'object' && note !== null ? note : {}) as Partial<Record<keyof ShareSaveNote, unknown>>
+	const texts: string[] = []
+	if (n.ownerOnly === true) texts.push(i18n.t('shareSave.ownerOnly'))
+	if (typeof n.notReached === 'number' && Number.isInteger(n.notReached) && n.notReached > 0) texts.push(i18n.t('shareSave.notReached', n.notReached))
+	if (isCloudIds(n.suspended)) texts.push(i18n.t('shareSave.suspended', { cloudIds: cloudIdList(n.suspended) }))
+	if (isCloudIds(n.paused)) texts.push(i18n.t('shareSave.paused', { cloudIds: cloudIdList(n.paused) }))
+	return texts
+}
 
 export function fieldErrorText(error: FieldError): string {
 	switch (error.code) {

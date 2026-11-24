@@ -111,3 +111,10 @@ A partner share whose source is a copy was made before such shares were refused,
 - **WHEN** Bob share-saves a new password through his copy
 - **THEN** the save MUST commit and answer `federated.notReached: 1`, for the partner share of Bob's own copy
 - **AND** the partner share of Carol's copy MUST NOT be counted in Bob's answer
+
+#### Scenario: The extension tells the user on every path that saves an item
+
+- **GIVEN** Bob shared his copy of Alice's login with a partner before such shares were refused
+- **WHEN** Alice updates the login's password from the notification bar, saves a passkey to the login, or signs in with a passkey of the login, whose counter save is a share-save
+- **THEN** the bar or the passkey window MUST say that one recipient at a partner organisation got the login from a copy and did not get the change, in the words of the popup's item note
+- **AND** it MUST stay open until Alice closes it, instead of closing on its own

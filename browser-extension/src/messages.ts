@@ -191,8 +191,9 @@ export interface PasskeyView {
  */
 export type PasskeyFailure = 'ended' | 'locked' | 'verify_required' | 'stale' | 'already_saved' | 'replace_required' | 'write_failed' | ErrorCode
 
+/** `shareSave`: a delivered pick or save left partner shares behind; the window shows it and stays open until closed. */
 export type PasskeyWindowReply =
-	| { ok: true; view?: PasskeyView }
+	| { ok: true; view?: PasskeyView; shareSave?: ShareSaveNote }
 	| { ok: false; code: PasskeyFailure; attemptsLeft?: number; error?: VaultWriteError }
 
 export const PASSKEY_POPUP_KINDS = kindSet<PasskeyPopupRequest['kind']>({
@@ -461,11 +462,15 @@ export type CaptureStateReply = {
 /** The host could not confirm the bar was visible at the press; nothing was done and the capture stays. */
 export type CaptureRefused = { refused: 'not_visible' }
 
+/** An update that left partner shares behind; the bar shows it and stays until closed. */
+export type CaptureUpdated = { shareSave: ShareSaveNote }
+
 /** `null`: no pending capture, or a key or frame the background did not bind. */
 export interface NotificationReplies {
 	'capture.state': CaptureStateReply | null
-	'capture.save': WriteResult<null> | CaptureRefused | null
-	'capture.update': WriteResult<null> | CaptureRefused | null
+	/** A second click joins the write in flight, so a save may answer with an update's note. */
+	'capture.save': WriteResult<CaptureUpdated | null> | CaptureRefused | null
+	'capture.update': WriteResult<CaptureUpdated | null> | CaptureRefused | null
 	'capture.dismiss': CaptureRefused | null
 	'capture.expand': null
 }

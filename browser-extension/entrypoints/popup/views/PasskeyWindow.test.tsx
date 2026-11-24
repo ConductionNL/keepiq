@@ -71,6 +71,7 @@ function renderWindow(view: PasskeyView, { replies = {}, unanswered, account: ac
 
 const heading = (name: string) => screen.findByRole('heading', { level: 1, name })
 const alertText = async () => (await screen.findByRole('alert')).textContent
+const MISMATCH_TEXT = 'Nothing was saved: a share of this item with a partner organisation still belongs to its previous owner. An administrator must repair the partner shares before this change can be saved.'
 
 describe('sign in', () => {
 	it('lists each passkey by login and user name under the request, focuses the first, and picks it', async () => {
@@ -81,6 +82,33 @@ describe('sign in', () => {
 		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice' }))
 		await user.click(screen.getByRole('button', { name: 'Work, alice.w' }))
 		expect(sentOf(sent, 'passkey.pick')).toEqual([{ kind: 'passkey.pick', ceremonyId: 'c1', itemId: 'i2', credentialId: 'cred-2' }])
+		expect(close).toHaveBeenCalled()
+	})
+
+	it('shows what the counter save left to partner shares instead of closing, through a vault change, until Close', async () => {
+		// The background ended the ceremony with the delivery, so the window's state reads as ended from then on.
+		const view = passkeyView({ rows: [row()] })
+		let ended = false
+		const { close, user, broadcast } = renderWindow(view, {
+			replies: {
+				'passkey.pick': () => {
+					ended = true
+					return { ok: true, shareSave: { ownerOnly: true, notReached: 1 } }
+				},
+				'passkey.state': () => (ended ? { ok: false, code: 'ended' } : { ok: true, view }),
+			},
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
+		expect((await screen.findAllByRole('status')).map((note) => note.textContent)).toEqual([
+			'Saved. Recipients at partner organisations get this change when the owner next saves it.',
+			'Saved, but 1 recipient at a partner organisation got this item from a copy and didn\'t get this change.',
+		])
+		await heading('Sign in with a passkey')
+		expect(screen.queryByRole('list')).toBeNull()
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close' }))
+		await broadcast({ kind: 'vault.changed' })
+		expect(close).not.toHaveBeenCalled()
+		await user.click(screen.getByRole('button', { name: 'Close' }))
 		expect(close).toHaveBeenCalled()
 	})
 
@@ -180,6 +208,16 @@ describe('sign in', () => {
 		})
 		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
 		expect(await alertText()).toBe('This login is waiting for a check of its shares that has not finished. Nothing was saved; try again later.')
+		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice' }))
+	})
+
+	it('shows a counter save refused for a partner share owner mismatch without Retry, with the first row focused', async () => {
+		const { user } = renderWindow(passkeyView({ rows: [row()] }), {
+			replies: { 'passkey.pick': { ok: false, code: 'write_failed', error: { code: 'partner_share_owner_mismatch' } } },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice' }))
+		expect(await alertText()).toBe(MISMATCH_TEXT)
 		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
 		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice' }))
 	})
@@ -489,6 +527,29 @@ describe('save', () => {
 		})
 		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
 		expect(await alertText()).toBe('This login is waiting for a check of its shares that has not finished. Nothing was saved; try again later.')
+		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice@example.test' }))
+	})
+
+	it('shows what the save to a login left to partner shares instead of closing, until Close', async () => {
+		const { close, user } = renderWindow(createView({ targets: [target()] }), {
+			replies: { 'passkey.save': { ok: true, shareSave: { notReached: 3 } } },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
+		expect((await screen.findByRole('status')).textContent).toBe('Saved, but 3 recipients at partner organisations got this item from a copy and didn\'t get this change.')
+		await heading('Save passkey')
+		expect(screen.queryByRole('button', { name: 'New login' })).toBeNull()
+		expect(close).not.toHaveBeenCalled()
+		await user.click(screen.getByRole('button', { name: 'Close' }))
+		expect(close).toHaveBeenCalled()
+	})
+
+	it('shows a save to a login refused for a partner share owner mismatch without Retry, with that login focused', async () => {
+		const { user } = renderWindow(createView({ targets: [target()] }), {
+			replies: { 'passkey.save': { ok: false, code: 'write_failed', error: { code: 'partner_share_owner_mismatch' } } },
+		})
+		await user.click(await screen.findByRole('button', { name: 'Example, alice@example.test' }))
+		expect(await alertText()).toBe(MISMATCH_TEXT)
 		expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
 		expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Example, alice@example.test' }))
 	})

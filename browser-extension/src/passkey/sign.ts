@@ -4,7 +4,7 @@
  */
 import { fromBase64Url, toBase64Url } from '@/src/crypto/base64'
 import { recordLastUsed } from '@/src/last-used'
-import type { PasskeyCredentialJSON, PasskeyResult, VaultWriteError } from '@/src/messages'
+import type { PasskeyCredentialJSON, PasskeyResult, ShareSaveNote, VaultWriteError } from '@/src/messages'
 import { savePasskeyCounter } from '@/src/vault/write'
 import { credentialIdKey, findPasskeys } from './match'
 import type { CeremonyRequest } from './request'
@@ -15,12 +15,15 @@ export interface SignIn {
 	key: CryptoKey
 	itemId: string
 	credentialId: string
-	/** Ends the ceremony with the result; false when it had ended already. */
-	deliver: (result: PasskeyResult) => Promise<boolean>
+	/** Ends the ceremony with the result; false when it had ended already. `keepWindow`: the window still has a note to show. */
+	deliver: (result: PasskeyResult, keepWindow?: boolean) => Promise<boolean>
 }
 
-/** `stale`: the pick is no longer among the passkeys the request offers. `error`: the counter save failed, nothing was signed. */
-export type SignOutcome = 'delivered' | 'ended' | 'stale' | { error: VaultWriteError }
+/**
+ * `stale`: the pick is no longer among the passkeys the request offers. `error`: the counter save failed, nothing was signed.
+ * `shareSave`: delivered, and the counter save left partner shares behind, which the window shows.
+ */
+export type SignOutcome = 'delivered' | 'ended' | 'stale' | { error: VaultWriteError } | { shareSave: ShareSaveNote }
 
 function toJSON(assertion: Assertion): PasskeyCredentialJSON {
 	const id = toBase64Url(assertion.rawId)
@@ -52,7 +55,8 @@ export async function signIn({ ceremony, key, itemId, credentialId, deliver }: S
 	const assertion = await getAssertion({
 		credential: entry.credential, key: signingKey, origin: ceremony.origin, challenge: fromBase64Url(ceremony.challenge), counter: saved.value.counter, verified: ceremony.verified,
 	})
-	if (!(await deliver({ type: 'credential', credential: toJSON(assertion) }))) return 'ended'
+	const note = saved.value.shareSave
+	if (!(await deliver({ type: 'credential', credential: toJSON(assertion) }, note !== undefined))) return 'ended'
 	await recordLastUsed(ceremony.accountId, entry.row.id)
-	return 'delivered'
+	return note ? { shareSave: note } : 'delivered'
 }

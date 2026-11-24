@@ -6,6 +6,7 @@ import {
 } from '@/src/messages'
 import { GUARD_MS } from '@/src/autofill/visibility'
 import { trackVisibility } from '@/src/autofill/visibility-tracker'
+import { shareSaveNoteTexts } from '../popup/errors'
 import { applyTheme, followMirror, mirroredTheme } from '../popup/theme'
 
 /** A status region filled at once after it appears is not announced. */
@@ -36,7 +37,7 @@ function isState(reply: unknown): reply is CaptureStateReply {
 	return typeof r === 'object' && r !== null && hasLabels(r) && THEMES.includes(r.theme as never) && hasFolders(r)
 }
 
-function isWriteResult(reply: unknown): reply is WriteResult<null> {
+function isWriteResult(reply: unknown): reply is WriteResult<unknown> {
 	const r = reply as { ok?: unknown; error?: { code?: unknown } } | null
 	return typeof r === 'object' && r !== null && (r.ok === true || (r.ok === false && typeof r.error?.code === 'string'))
 }
@@ -302,21 +303,31 @@ export function startNotificationBar(): () => void {
 		scrollable()
 	}
 
-	/** The question and its buttons go; the background removes the bar three seconds later. */
-	function renderSaved(mode: Mode) {
+	/**
+	 * The question and its buttons go; the background removes the bar three seconds later. `notes`: what the save left to
+	 * partner shares, as the popup words it; then the bar stays, with Close, until the user closes it.
+	 */
+	function renderSaved(mode: Mode, notes: string[] = []) {
 		const hadFocus = bar.contains(document.activeElement)
 		const message = mode === 'add' ? i18n.t('notificationBar.saved') : i18n.t('notificationBar.updated')
-		text = element('p', { class: 'bar__text bar__saved', tabindex: '-1' },
-			svg({ class: 'bar__check', width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'M20 6 9 17l-5-5' }]]), message)
+		const check = svg({ class: 'bar__check', width: '18', height: '18', viewBox: '0 0 24 24', ...stroke }, [['path', { d: 'M20 6 9 17l-5-5' }]])
 		guarded.clear()
 		primary = null
 		folder = null
 		item = null
-		bar.className = 'bar bar--saved'
-		bar.replaceChildren(logo(), text)
+		if (notes.length > 0) {
+			text = element('div', { class: 'bar__text bar__notice', tabindex: '-1' },
+				element('p', { class: 'bar__saved' }, check, message), ...notes.map((note) => element('p', { class: 'bar__note' }, note)))
+			bar.className = 'bar bar--notice'
+			bar.replaceChildren(logo(), text, closeButton())
+		} else {
+			text = element('p', { class: 'bar__text bar__saved', tabindex: '-1' }, check, message)
+			bar.className = 'bar bar--saved'
+			bar.replaceChildren(logo(), text)
+		}
 		// Focus would otherwise fall to the body; once moved, it reads the message out itself.
 		if (hadFocus) text.focus()
-		else announce(message)
+		else announce([message, ...notes].join(' '))
 	}
 
 	/**
@@ -366,7 +377,7 @@ export function startNotificationBar(): () => void {
 	function settleWrite(mode: Mode, reply: unknown) {
 		if (isRefusal(reply)) return showNotVisible()
 		if (!isWriteResult(reply)) return fail(reply === UNREACHABLE ? writeErrorText(undefined, mode) : i18n.t('errors.unknown'))
-		if (reply.ok) return renderSaved(mode)
+		if (reply.ok) return renderSaved(mode, shareSaveNoteTexts((reply.value as { shareSave?: unknown } | null)?.shareSave))
 		settleWriteError(mode, reply.error)
 	}
 

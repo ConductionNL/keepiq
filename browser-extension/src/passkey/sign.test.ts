@@ -188,6 +188,21 @@ describe('signIn', () => {
 		expect(await signIn(call)).toBe('stale')
 	})
 
+	it('hands on what the counter save left to partner shares, and keeps the window for it', async () => {
+		await login(41)
+		server({ [SHARE_SAVE]: () => json({ secret: row, federated: { ownerOnly: false, notReached: 1 } }) })
+		const deliver = vi.fn<(result: PasskeyResult, keepWindow?: boolean) => Promise<boolean>>(async () => true)
+		expect(await signIn(input({ deliver }))).toEqual({ shareSave: { notReached: 1 } })
+		expect(deliver).toHaveBeenCalledWith(expect.objectContaining({ type: 'credential' }), true)
+	})
+
+	it('lets the window close on a counter save that reached everyone', async () => {
+		await login(41)
+		const deliver = vi.fn<(result: PasskeyResult, keepWindow?: boolean) => Promise<boolean>>(async () => true)
+		expect(await signIn(input({ deliver }))).toBe('delivered')
+		expect(deliver).toHaveBeenCalledWith(expect.objectContaining({ type: 'credential' }), false)
+	})
+
 	it('records nothing when the ceremony ended before delivery', async () => {
 		const deliver = vi.fn(async () => false)
 		expect(await signIn(input({ deliver }))).toBe('ended')

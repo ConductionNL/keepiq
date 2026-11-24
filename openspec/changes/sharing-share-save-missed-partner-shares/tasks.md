@@ -13,10 +13,14 @@
 
 - [x] 2.1 Look up and verify partner certificates on the copy-editor path when the server requires partner shares, and send them (D1). Verify: new cases in `tests/store/shareSave.spec.js`.
 - [x] 2.2 Show `partner_share_owner_mismatch` and `federated.notReached` with translated messages. Verify: `tests/store/shareSave.spec.js`, `SecretEditDialog.shareSave.spec.js`, `npm run test:l10n`.
+- [x] 2.3 Keep a queued offline change the server refuses with `partner_share_owner_mismatch` as failed, with its reason, in `src/store/modules/offline.js`. Verify: `tests/store/offlineQueue.spec.js`, `tests/components/OfflineEdits.spec.js`.
+- [x] 2.4 Explain `not_shareable` (a received copy, D3) and `share_scan_pending` in the partner share form, `src/components/share/FederatedShareForm.vue`. Verify: `tests/components/FederatedShareForm.more.spec.js`.
 
 ## 3. Browser extension
 
 - [x] 3.1 Do 2.1 and 2.2 in `browser-extension/src/vault/share-save.ts`. Verify: the extension's share-save tests.
+- [x] 3.2 Tell the user what a save left to partner shares on every extension path that saves an item: the notification bar's password update and the passkey window's sign-in and save to a login, which stay open until closed. Verify: `src/autofill/capture-queue.test.ts`, `entrypoints/notification/bar.test.ts`, `src/passkey/sign.test.ts`, `src/passkey/create.test.ts`, `entrypoints/popup/views/PasskeyWindow.test.tsx`.
+- [x] 3.3 Describe the new answers in the extension guide, `docs/browser-extension/using.md`. Verify: read against 2.2, 3.1 and 3.2.
 
 ## Acceptance criteria
 

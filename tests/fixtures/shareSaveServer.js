@@ -86,6 +86,7 @@ export async function settleWithTimers(promise) {
  * @param {{perMinute: number, retryAfter?: string}} [options.lookupLimit] The partner lookup limit, a 429 above it.
  * @param {(body: object, n: number) => void} [options.onSave] Called with each save body; may throw.
  * @param {number} [options.notReached] The partner shares hanging off a copy the save wrote, as the answer counts them.
+ * @param {boolean|((n: number) => boolean)} [options.ownerOnly] The answer's `federated.ownerOnly`, or a function of the save number; defaults to `context.ownerOnly`.
  * @return {{saves: Array, lookups: Array, plainPuts: Array, partnerLookups: Array, partnerBatches: Array}}
  */
 export function shareSaveServer({
@@ -100,6 +101,7 @@ export function shareSaveServer({
 	lookupLimit = null,
 	onSave = null,
 	notReached = 0,
+	ownerOnly = context.ownerOnly === true,
 }) {
 	const log = {
 		saves: [],
@@ -330,7 +332,10 @@ export function shareSaveServer({
 				federated: {
 					written: all('federated').length,
 					suspended: all('suspend').length,
-					ownerOnly: context.ownerOnly === true,
+					ownerOnly:
+						(typeof ownerOnly === 'function'
+							? ownerOnly(log.saves.length)
+							: ownerOnly) === true,
 					notReached,
 				},
 			},
