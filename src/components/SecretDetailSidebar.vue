@@ -1383,7 +1383,7 @@ import {
 } from '../cardIdentity/cardIdentity.js'
 import { needsReprompt, useReprompt } from '../composables/useReprompt.js'
 import { passkeyEntries } from '../passkey/loginPasskeys.js'
-import { shareSaveErrorText } from '../services/shareSave.js'
+import { pausedPartnersText, shareSaveErrorText } from '../services/shareSave.js'
 import {
 	SSH_FINGERPRINT_MEMBER,
 	SSH_KEY_TYPE_NAME,
@@ -2946,19 +2946,31 @@ export default {
 		},
 
 		/**
-		 * The message for a failed passkey delete. An unreachable partner
-		 * gets its own wording: the shared share-save text offers to save
-		 * without them, which only the edit dialog can do.
+		 * The message for a failed passkey delete. A partner the save stopped
+		 * for gets its own wording, naming why for each: the shared share-save
+		 * text offers to save without them, which only the edit dialog can do.
 		 *
 		 * @param {Error} e The failure.
 		 * @return {string}
 		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
+		 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
 		 */
 		passkeyDeleteErrorText(e) {
 			if (e?.code === 'partner_unreachable') {
+				const reasons = pausedPartnersText(e.partners)
+				if (reasons === '') {
+					return t(
+						'keepiq',
+						'A partner organisation this secret is shared with cannot be reached, so the passkey was not deleted. Try again later.',
+					)
+				}
+				// Each sentence escaped its own partners already.
 				return t(
 					'keepiq',
-					'A partner organisation this secret is shared with cannot be reached, so the passkey was not deleted. Try again later.',
+					'{reasons} The passkey was not deleted. Try again later.',
+					{ reasons },
+					undefined,
+					{ escape: false },
 				)
 			}
 			return (

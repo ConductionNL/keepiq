@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq nosūtīja šifrēšanas atslēgu kādam, ar kuru šis vienums ir kopīgots, bet šis pārlūks to nevarēja nolasīt. Nekas netika saglabāts.
   unverified: Šis vienums ir kopīgots ar partneru organizācijām, un šis pārlūks nevar apstiprināt, ka tās to saņems tieši tādu, kādu jūs to redzējāt. Nekas netika saglabāts; veiciet šo izmaiņu Keepiq tīmekļa lietotnē.
   partnerUnreachable: "Nekas netika saglabāts: nevar sasniegt partnera organizāciju, ar kuru šis vienums ir kopīgots ({cloudIds}). Mēģiniet vēlāk vēlreiz vai saglabājiet bez tiem – tad šī vienuma kopīgošana ar viņiem tiks apturēta, līdz atkal to ar viņiem kopīgosiet."
+  partnerPaused: "Nekas netika saglabāts. {reasons} Mēģiniet vēlāk vēlreiz vai saglabājiet bez tiem – tad šī vienuma kopīgošana ar viņiem tiks apturēta, līdz atkal to ar viņiem kopīgosiet."
+  partnerPausedUnreachable: "Nevar sasniegt šīs partneru organizācijas: {cloudIds}."
+  partnerPausedRootChanged: "Šo partneru organizāciju sertificēšanas iestāde ir mainījusies, un jūsu Keepiq administratoram tas ir jāapstiprina: {cloudIds}."
+  partnerPausedSharingOff: "Administrators izslēdza kopīgošanu ar šīm partneru organizācijām: {cloudIds}."
   partnerUpgradeRequired: "Nekas netika saglabāts: saņēmēju {cloudIds} Keepiq ir pārāk vecs, lai saņemtu autentificētāja atslēgu. Noņemiet atslēgu vai lūdziet viņiem atjaunināt Keepiq."
   partnerUpgradeRequiredUnnamed: "Nekas netika saglabāts: partnera organizācijai, ar kuru šis vienums ir kopīgots, ir pārāk vecs Keepiq, lai saņemtu autentificētāja atslēgu. Noņemiet atslēgu vai lūdziet viņiem atjaunināt Keepiq."
   partnerUpgradeVersion: Viņiem nepieciešams Keepiq {version} vai jaunāks.

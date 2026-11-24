@@ -146,13 +146,30 @@ class FederatedShareControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testCreateAnswers400OnAnInvalidShare(): void {
-		$this->shares->method('create')->willThrowException(new InvalidArgumentException('not_a_partner'));
+		foreach (['not_a_partner', 'already_shared'] as $reason) {
+			$this->shares = $this->createMock(FederatedShareServiceInterface::class);
+			$this->shares->method('create')->willThrowException(new InvalidArgumentException($reason));
+
+			$response = $this->controller()->create(secretId: 's-1', recipientCloudId: 'bob@x', key: 'K');
+
+			$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus(), $reason);
+			$this->assertSame(['message' => $reason], $response->getData(), $reason);
+		}
+	}//end testCreateAnswers400OnAnInvalidShare()
+
+	/**
+	 * A recipient host whose outbound sharing is off answers 403 with its reason, as the certificate lookup does.
+	 *
+	 * @return void
+	 */
+	public function testCreateAnswers403WhenOutboundSharingIsOff(): void {
+		$this->shares->method('create')->willThrowException(new InvalidArgumentException('outbound_disabled'));
 
 		$response = $this->controller()->create(secretId: 's-1', recipientCloudId: 'bob@x', key: 'K');
 
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame(['message' => 'not_a_partner'], $response->getData());
-	}//end testCreateAnswers400OnAnInvalidShare()
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(['message' => 'outbound_disabled'], $response->getData());
+	}//end testCreateAnswers403WhenOutboundSharingIsOff()
 
 	/**
 	 * A partner too old for the share answers 409 with the code and version, without a share id.

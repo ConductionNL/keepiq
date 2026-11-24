@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Файлы можна дадаваць толькі да ўласнага сакрэту. Выдаліце іх, каб захаваць.",
         "Sharing options could not be loaded.": "Не ўдалося загрузіць параметры абагульвання.",
         "Sharing options still could not be loaded.": "Параметры абагульвання ўсё яшчэ не ўдалося загрузіць.",
-        "Sharing is not available for this secret.": "Абагульванне недаступнае для гэтага сакрэту."
+        "Sharing is not available for this secret.": "Абагульванне недаступнае для гэтага сакрэту.",
+        "An administrator turned off sharing with that organisation.": "Адміністратар выключыў абагульванне з гэтай арганізацыяй.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Адміністратар выключыў абагульванне з гэтымі партнёрскімі арганізацыямі: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Нічога не захавана. {reasons} Паспрабуйце пазней або захавайце без іх: тады абагульванне гэтага сакрэту з імі спыніцца, пакуль вы зноў не абагуліце яго з імі.",
+        "Pin the published fingerprint": "Замацаваць апублікаваны адбітак",
+        "Pinned root fingerprint": "Замацаваны каранёвы адбітак",
+        "Published root fingerprint": "Апублікаваны каранёвы адбітак",
+        "Re-pin root": "Замацаваць корань зноў",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Цэнтр сертыфікацыі гэтых партнёрскіх арганізацый змяніўся, і адміністратар тут павінен гэта пацвердзіць: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Сертыфікат партнёрскай арганізацыі, з якой абагулены гэты сакрэт, несапраўдны паводле гадзінніка гэтай прылады. Нічога не захавана; праверце дату і час на гэтай прыладзе.",
+        "These partner organisations cannot be reached: {partners}.": "Гэтыя партнёрскія арганізацыі недаступныя: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Гэты партнёр па-ранейшаму публікуе замацаваны каранёвы адбітак, таму замацоўваць зноў няма чаго.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Ключ доступу не быў выдалены. Паспрабуйце яшчэ раз пазней.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Зрабіце змену яшчэ раз онлайн, дзе можна захаваць без іх.",
+        "Another organisation's root re-pinned": "Корань іншай арганізацыі замацаваны зноў"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

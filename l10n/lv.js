@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Failus var pievienot tikai jums piederošam noslēpumam. Noņemiet tos, lai saglabātu.",
         "Sharing options could not be loaded.": "Neizdevās ielādēt koplietošanas opcijas.",
         "Sharing options still could not be loaded.": "Joprojām neizdevās ielādēt koplietošanas opcijas.",
-        "Sharing is not available for this secret.": "Koplietošana šim noslēpumam nav pieejama."
+        "Sharing is not available for this secret.": "Koplietošana šim noslēpumam nav pieejama.",
+        "An administrator turned off sharing with that organisation.": "Administrators izslēdza koplietošanu ar šo organizāciju.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Administrators izslēdza koplietošanu ar šīm partneru organizācijām: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Nekas netika saglabāts. {reasons} Mēģiniet vēlreiz vēlāk vai saglabājiet bez tām, kas pārtrauc šī noslēpuma koplietošanu ar tām, līdz jūs to atkal ar tām kopīgojat.",
+        "Pin the published fingerprint": "Piespraust publicēto pirkstu nospiedumu",
+        "Pinned root fingerprint": "Piesprausts saknes pirkstu nospiedums",
+        "Published root fingerprint": "Publicēts saknes pirkstu nospiedums",
+        "Re-pin root": "Atkārtoti piespraust sakni",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Šo partneru organizāciju sertificēšanas iestāde ir mainījusies, un šejienes administratoram tas ir jāapstiprina: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Partnera organizācijas, ar kuru koplietots šis noslēpums, sertifikāts nav derīgs pēc šīs ierīces pulksteņa. Nekas netika saglabāts; pārbaudiet šīs ierīces datumu un laiku.",
+        "These partner organisations cannot be reached: {partners}.": "Ar šīm partneru organizācijām nevar sazināties: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Šis partneris joprojām publicē piesprausto saknes pirkstu nospiedumu, tāpēc nav ko piespraust atkārtoti.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Piekļuves atslēga netika izdzēsta. Mēģiniet vēlreiz vēlāk.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Veiciet izmaiņas vēlreiz tiešsaistē, kur varat saglabāt bez viņiem.",
+        "Another organisation's root re-pinned": "Citas organizācijas sakne atkārtoti piesprausta"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

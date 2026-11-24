@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Solo se pueden añadir archivos a un secreto que sea suyo. Quítelos para guardar.",
         "Sharing options could not be loaded.": "No se pudieron cargar las opciones para compartir.",
         "Sharing options still could not be loaded.": "Todavía no se pudieron cargar las opciones para compartir.",
-        "Sharing is not available for this secret.": "Compartir no está disponible para este secreto."
+        "Sharing is not available for this secret.": "Compartir no está disponible para este secreto.",
+        "An administrator turned off sharing with that organisation.": "Un administrador ha desactivado el uso compartido con esa organización.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Un administrador ha desactivado el uso compartido con estas organizaciones asociadas: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "No se ha guardado nada. {reasons} Inténtelo de nuevo más tarde o guarde sin ellas, lo que deja de compartir este secreto con ellas hasta que vuelva a compartirlo con ellas.",
+        "Pin the published fingerprint": "Fijar la huella publicada",
+        "Pinned root fingerprint": "Huella raíz fijada",
+        "Published root fingerprint": "Huella raíz publicada",
+        "Re-pin root": "Volver a fijar la raíz",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "La autoridad de certificación de estas organizaciones asociadas ha cambiado y un administrador de aquí tiene que confirmarlo: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "El certificado de una organización asociada con la que se comparte este secreto no es válido según el reloj de este dispositivo. No se ha guardado nada; compruebe la fecha y la hora de este dispositivo.",
+        "These partner organisations cannot be reached: {partners}.": "No se puede contactar con estas organizaciones asociadas: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Este socio sigue publicando la huella raíz fijada, así que no hay nada que volver a fijar.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} La clave de acceso no se ha eliminado. Inténtelo de nuevo más tarde.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Vuelve a hacer el cambio en línea, donde puedes guardar sin ellos.",
+        "Another organisation's root re-pinned": "Se ha vuelto a fijar la raíz de otra organización"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq skickade en krypteringsnyckel för någon som det här objektet delas med som den här webbläsaren inte kunde läsa. Inget sparades.
   unverified: Det här objektet delas med partnerorganisationer, och den här webbläsaren kan inte bekräfta att de skulle få det exakt som du såg det. Inget sparades; gör ändringen i Keepiqs webbapp.
   partnerUnreachable: "Inget sparades: en partnerorganisation som det här objektet delas med kan inte nås ({cloudIds}). Försök igen senare, eller spara utan dem, vilket pausar delningen av objektet med dem tills du delar det med dem igen."
+  partnerPaused: "Inget sparades. {reasons} Försök igen senare, eller spara utan dem, vilket pausar delningen av objektet med dem tills du delar det med dem igen."
+  partnerPausedUnreachable: "Dessa partnerorganisationer kan inte nås: {cloudIds}."
+  partnerPausedRootChanged: "Certifikatutfärdaren för dessa partnerorganisationer har ändrats, och en administratör för din Keepiq måste bekräfta det: {cloudIds}."
+  partnerPausedSharingOff: "En administratör har stängt av delning med dessa partnerorganisationer: {cloudIds}."
   partnerUpgradeRequired: "Inget sparades: Keepiq hos {cloudIds} är för gammalt för att ta emot en autentiseringsnyckel. Ta bort nyckeln, eller be dem uppdatera Keepiq."
   partnerUpgradeRequiredUnnamed: "Inget sparades: en partnerorganisation som det här objektet delas med kör ett Keepiq som är för gammalt för att ta emot en autentiseringsnyckel. Ta bort nyckeln, eller be dem uppdatera Keepiq."
   partnerUpgradeVersion: De behöver Keepiq {version} eller senare.

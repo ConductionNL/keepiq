@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Súbory možno pridať len k tajomstvu, ktoré vlastníte. Odoberte ich, aby ste mohli uložiť.",
         "Sharing options could not be loaded.": "Možnosti zdieľania sa nepodarilo načítať.",
         "Sharing options still could not be loaded.": "Možnosti zdieľania sa stále nepodarilo načítať.",
-        "Sharing is not available for this secret.": "Zdieľanie nie je pre toto tajomstvo dostupné."
+        "Sharing is not available for this secret.": "Zdieľanie nie je pre toto tajomstvo dostupné.",
+        "An administrator turned off sharing with that organisation.": "Správca vypol zdieľanie s touto organizáciou.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Správca vypol zdieľanie s týmito partnerskými organizáciami: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Nič sa neuložilo. {reasons} Skúste to neskôr znova alebo uložte bez nich, čím sa zdieľanie tohto tajomstva s nimi zastaví, kým ho s nimi znova nezdieľate.",
+        "Pin the published fingerprint": "Pripnúť zverejnený odtlačok",
+        "Pinned root fingerprint": "Pripnutý koreňový odtlačok",
+        "Published root fingerprint": "Zverejnený koreňový odtlačok",
+        "Re-pin root": "Znova pripnúť koreň",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Certifikačná autorita týchto partnerských organizácií sa zmenila a tunajší správca to musí potvrdiť: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Certifikát partnerskej organizácie, s ktorou sa toto tajomstvo zdieľa, nie je podľa hodín tohto zariadenia platný. Nič sa neuložilo; skontrolujte dátum a čas tohto zariadenia.",
+        "These partner organisations cannot be reached: {partners}.": "Tieto partnerské organizácie nie sú dostupné: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Tento partner stále zverejňuje pripnutý koreňový odtlačok, takže nie je čo znova pripnúť.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Prístupový kľúč sa neodstránil. Skúste to neskôr znova.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Urobte zmenu znova online, kde ju môžete uložiť bez nich.",
+        "Another organisation's root re-pinned": "Koreň inej organizácie znova pripnutý"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

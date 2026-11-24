@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Faile saab lisada ainult teie enda saladusele. Salvestamiseks eemaldage need.",
         "Sharing options could not be loaded.": "Jagamise valikuid ei õnnestunud laadida.",
         "Sharing options still could not be loaded.": "Jagamise valikuid ei õnnestunud ikka veel laadida.",
-        "Sharing is not available for this secret.": "Jagamine pole selle saladuse jaoks saadaval."
+        "Sharing is not available for this secret.": "Jagamine pole selle saladuse jaoks saadaval.",
+        "An administrator turned off sharing with that organisation.": "Administraator on selle organisatsiooniga jagamise välja lülitanud.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Administraator on nende partnerorganisatsioonidega jagamise välja lülitanud: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Midagi ei salvestatud. {reasons} Proovi hiljem uuesti või salvesta ilma nendeta, mis lõpetab selle saladuse jagamise nendega, kuni jagad seda nendega uuesti.",
+        "Pin the published fingerprint": "Kinnita avaldatud sõrmejälg",
+        "Pinned root fingerprint": "Kinnitatud juursõrmejälg",
+        "Published root fingerprint": "Avaldatud juursõrmejälg",
+        "Re-pin root": "Kinnita juur uuesti",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Nende partnerorganisatsioonide sertifitseerimiskeskus on muutunud ja siinne administraator peab selle kinnitama: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Partnerorganisatsiooni sertifikaat, kellega seda saladust jagatakse, ei kehti selle seadme kella järgi. Midagi ei salvestatud; kontrolli selle seadme kuupäeva ja kellaaega.",
+        "These partner organisations cannot be reached: {partners}.": "Nende partnerorganisatsioonidega ei saa ühendust: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "See partner avaldab endiselt kinnitatud juursõrmejälge, seega pole midagi uuesti kinnitada.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Pääsuvõtit ei kustutatud. Proovi hiljem uuesti.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Tee muudatus uuesti võrgus olles, kus saad salvestada ilma nendeta.",
+        "Another organisation's root re-pinned": "Teise organisatsiooni juur kinnitati uuesti"
     },
     "nplurals=2; plural=(n != 1);"
 )

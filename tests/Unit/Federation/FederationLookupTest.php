@@ -311,14 +311,15 @@ class FederationLookupTest extends TestCase {
 		$this->assertSame(['message' => 'not_a_partner'], $response->getData());
 	}
 
-	public function testSendsNothingToAPartnerWithoutOutbound(): void {
+	public function testSendsNothingToAPartnerWithoutOutboundAndSaysSharingIsOff(): void {
 		$controller = $this->controller([$this->partner('cloud.partner.example', false, true)]);
 		$this->ocm->expects($this->never())->method('requestRemoteOcmEndpoint');
 
-		$this->assertSame(
-			Http::STATUS_FORBIDDEN,
-			$controller->recipientCertificate('bob@cloud.partner.example')->getStatus()
-		);
+		$response = $controller->recipientCertificate('bob@cloud.partner.example');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(['message' => 'outbound_disabled'], $response->getData());
+		$this->assertSame([], $this->partnerUpdates);
 	}
 
 	public function testReportsAnUnknownRecipientOnThePartnersRefusal(): void {

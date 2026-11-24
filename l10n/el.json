@@ -2051,7 +2051,21 @@
         "Files can only be added to a secret you own. Remove them to save.": "Αρχεία μπορούν να προστεθούν μόνο σε μυστικό που σας ανήκει. Αφαιρέστε τα για να αποθηκεύσετε.",
         "Sharing options could not be loaded.": "Δεν ήταν δυνατή η φόρτωση των επιλογών διαμοιρασμού.",
         "Sharing options still could not be loaded.": "Ακόμα δεν ήταν δυνατή η φόρτωση των επιλογών διαμοιρασμού.",
-        "Sharing is not available for this secret.": "Ο διαμοιρασμός δεν είναι διαθέσιμος για αυτό το μυστικό."
+        "Sharing is not available for this secret.": "Ο διαμοιρασμός δεν είναι διαθέσιμος για αυτό το μυστικό.",
+        "An administrator turned off sharing with that organisation.": "Ένας διαχειριστής απενεργοποίησε τον διαμοιρασμό με αυτόν τον οργανισμό.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Ένας διαχειριστής απενεργοποίησε τον διαμοιρασμό με αυτούς τους συνεργαζόμενους οργανισμούς: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Δεν αποθηκεύτηκε τίποτα. {reasons} Δοκιμάστε ξανά αργότερα ή αποθηκεύστε χωρίς αυτούς, κάτι που σταματά τον διαμοιρασμό αυτού του μυστικού μαζί τους μέχρι να το μοιραστείτε ξανά μαζί τους.",
+        "Pin the published fingerprint": "Καρφίτσωμα του δημοσιευμένου αποτυπώματος",
+        "Pinned root fingerprint": "Καρφιτσωμένο αποτύπωμα ρίζας",
+        "Published root fingerprint": "Δημοσιευμένο αποτύπωμα ρίζας",
+        "Re-pin root": "Επανακαρφίτσωμα ρίζας",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Η αρχή πιστοποίησης αυτών των συνεργαζόμενων οργανισμών άλλαξε και ένας διαχειριστής εδώ πρέπει να το επιβεβαιώσει: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Το πιστοποιητικό ενός συνεργαζόμενου οργανισμού με τον οποίο μοιράζεται αυτό το μυστικό δεν είναι έγκυρο σύμφωνα με το ρολόι αυτής της συσκευής. Δεν αποθηκεύτηκε τίποτα· ελέγξτε την ημερομηνία και την ώρα αυτής της συσκευής.",
+        "These partner organisations cannot be reached: {partners}.": "Αυτοί οι συνεργαζόμενοι οργανισμοί δεν είναι προσβάσιμοι: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Αυτός ο συνεργάτης εξακολουθεί να δημοσιεύει το καρφιτσωμένο αποτύπωμα ρίζας, οπότε δεν υπάρχει τίποτα για επανακαρφίτσωμα.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Το κλειδί πρόσβασης δεν διαγράφηκε. Δοκιμάστε ξανά αργότερα.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Κάντε ξανά την αλλαγή ενώ είστε συνδεδεμένοι, όπου μπορείτε να αποθηκεύσετε χωρίς αυτούς.",
+        "Another organisation's root re-pinned": "Επανακαρφίτσωμα ρίζας άλλου οργανισμού"
     },
     "plurals": null
 }

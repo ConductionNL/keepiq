@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Fichiere kënnen nëmmen zu engem eegene Geheimnis dobäigesat ginn. Huelt se ewech fir ze späicheren.",
         "Sharing options could not be loaded.": "D'Optioune fir ze deelen konnten net geluede ginn.",
         "Sharing options still could not be loaded.": "D'Optioune fir ze deelen konnten ëmmer nach net geluede ginn.",
-        "Sharing is not available for this secret.": "Deelen ass fir dëst Geheimnis net disponibel."
+        "Sharing is not available for this secret.": "Deelen ass fir dëst Geheimnis net disponibel.",
+        "An administrator turned off sharing with that organisation.": "En Administrateur huet d'Deele mat där Organisatioun ausgeschalt.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "En Administrateur huet d'Deele mat dëse Partnerorganisatiounen ausgeschalt: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Et gouf näischt gespäichert. {reasons} Probéiert et méi spéit nach eng Kéier, oder späichert ouni si; dëst Geheimnis gëtt dann net méi mat hinne gedeelt, bis Dir et nees mat hinne deelt.",
+        "Pin the published fingerprint": "Verëffentlechte Fangerofdrock fixéieren",
+        "Pinned root fingerprint": "Fixéierte Root-Fangerofdrock",
+        "Published root fingerprint": "Verëffentlechte Root-Fangerofdrock",
+        "Re-pin root": "Root nees fixéieren",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "D'Zertifizéierungsstell vun dëse Partnerorganisatiounen huet geännert, an en Administrateur hei muss dat bestätegen: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Den Zertifikat vun enger Partnerorganisatioun, mat där dëst Geheimnis gedeelt ass, ass no der Auer vun dësem Apparat net gëlteg. Et gouf näischt gespäichert; kontrolléiert Datum an Zäit vun dësem Apparat.",
+        "These partner organisations cannot be reached: {partners}.": "Dës Partnerorganisatioune sinn net z'erreechen: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Dëse Partner verëffentlecht nach ëmmer de fixéierte Root-Fangerofdrock, also gëtt et näischt nees ze fixéieren.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} De Passkey gouf net geläscht. Probéiert et méi spéit nach eng Kéier.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Maacht d'Ännerung online nach eng Kéier; do kënnt Dir ouni si späicheren.",
+        "Another organisation's root re-pinned": "Root vun enger anerer Organisatioun nees fixéiert"
     },
     "nplurals=2; plural=(n != 1);"
 )

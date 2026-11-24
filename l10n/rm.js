@@ -1950,7 +1950,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Datotecas pon mo vegnir agiuntadas ad in secret che tutga a vus. Allontanai ellas per memorisar.",
         "Sharing options could not be loaded.": "Las opziuns da cundivisiun n'han betg pudì vegnir chargiadas.",
         "Sharing options still could not be loaded.": "Las opziuns da cundivisiun n'han anc adina betg pudì vegnir chargiadas.",
-        "Sharing is not available for this secret.": "La cundivisiun n'è betg disponibla per quest secret."
+        "Sharing is not available for this secret.": "La cundivisiun n'è betg disponibla per quest secret.",
+        "An administrator turned off sharing with that organisation.": "In administratur ha deactivà la cundivisiun cun quella organisaziun.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "In administratur ha deactivà la cundivisiun cun questas organisaziuns partenarias: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Nagut n'è vegnì memorisà. {reasons} Emprova pli tard anc ina giada, u memorisescha senza ellas; quest secret na vegn lura betg pli cundividì cun ellas, enfin che ti al cundividas puspè cun ellas.",
+        "Pin the published fingerprint": "Fixar l'impronta publitgada",
+        "Pinned root fingerprint": "Impronta da ragisch fixada",
+        "Published root fingerprint": "Impronta da ragisch publitgada",
+        "Re-pin root": "Fixar danovamain la ragisch",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "L'autoritad da certificaziun da questas organisaziuns partenarias è sa midada, ed in administratur qua sto confermar quai: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Il certificat d'ina organisaziun partenaria cun la quala quest secret è cundividì n'è betg valaivel tenor l'ura da quest apparat. Nagut n'è vegnì memorisà; controllescha la data e l'ura da quest apparat.",
+        "These partner organisations cannot be reached: {partners}.": "Questas organisaziuns partenarias n'èn betg cuntanschiblas: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Quest partenari publitgescha anc adina l'impronta da ragisch fixada, perquai na datti nagut da fixar danovamain.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} La clav d'access n'è betg vegnida stizzada. Emprova pli tard anc ina giada.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Fa la midada danovamain online, nua che ti pos memorisar senza els.",
+        "Another organisation's root re-pinned": "Ragisch d’in’autra organisaziun fixada danovamain"
     },
     "nplurals=1; plural=0;"
 )

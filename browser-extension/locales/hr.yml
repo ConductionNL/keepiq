@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq je za nekoga s kim se dijeli ova stavka poslao ključ za šifriranje koji ovaj preglednik nije mogao pročitati. Ništa nije spremljeno.
   unverified: Ova se stavka dijeli s partnerskim organizacijama, a ovaj preglednik ne može potvrditi da bi je one primile točno onakvu kakvu ste vidjeli. Ništa nije spremljeno; napravite ovu promjenu u web-aplikaciji Keepiq.
   partnerUnreachable: "Ništa nije spremljeno: partnerska organizacija s kojom se dijeli ova stavka nije dostupna ({cloudIds}). Pokušajte ponovno kasnije ili spremite bez njih, čime se dijeljenje ove stavke s njima pauzira dok je ponovno ne podijelite s njima."
+  partnerPaused: "Ništa nije spremljeno. {reasons} Pokušajte ponovno kasnije ili spremite bez njih, čime se dijeljenje ove stavke s njima pauzira dok je ponovno ne podijelite s njima."
+  partnerPausedUnreachable: "Ove partnerske organizacije nisu dostupne: {cloudIds}."
+  partnerPausedRootChanged: "Izdavatelj certifikata ovih partnerskih organizacija se promijenio i administrator vašeg Keepiqa to mora potvrditi: {cloudIds}."
+  partnerPausedSharingOff: "Administrator je isključio dijeljenje s ovim partnerskim organizacijama: {cloudIds}."
   partnerUpgradeRequired: "Ništa nije spremljeno: Keepiq na strani {cloudIds} prestar je za primanje ključa autentifikatora. Uklonite ključ ili ih zamolite da ažuriraju Keepiq."
   partnerUpgradeRequiredUnnamed: "Ništa nije spremljeno: partnerska organizacija s kojom se dijeli ova stavka koristi Keepiq koji je prestar za primanje ključa autentifikatora. Uklonite ključ ili ih zamolite da ažuriraju Keepiq."
   partnerUpgradeVersion: Potreban im je Keepiq {version} ili noviji.

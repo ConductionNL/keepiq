@@ -299,6 +299,11 @@ export default {
 					'That organisation is not one of your partners.',
 				),
 
+				outbound_disabled: t(
+					'keepiq',
+					'An administrator turned off sharing with that organisation.',
+				),
+
 				unknown_recipient: t(
 					'keepiq',
 					'No one with that account can receive secrets from you.',

@@ -218,6 +218,25 @@ describe('the sync panel', () => {
 					message: 'This share waits for the share quarantine scan',
 				},
 			},
+			{
+				entryId: 'e5',
+				op: 'update',
+				secretId: 's5',
+				status: 'failed',
+				body: { name: 'Modem' },
+				failure: { code: 'partner_clock' },
+			},
+			{
+				entryId: 'e6',
+				op: 'update',
+				secretId: 's6',
+				status: 'failed',
+				body: { name: 'Bridge' },
+				failure: {
+					code: 'partner_unreachable',
+					partners: [{ cloudId: 'carol@partner', reason: 'untrusted_root' }],
+				},
+			},
 		]
 		offline.retryEntry = vi.fn()
 
@@ -252,6 +271,16 @@ describe('the sync panel', () => {
 		)
 		await wrapper.find('[data-testid="offline-sync-retry-e4"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e4')
+		expect(wrapper.find('[data-testid="offline-sync-reason-e5"]').text()).toContain(
+			"check this device's date and time",
+		)
+		await wrapper.find('[data-testid="offline-sync-retry-e5"]').trigger('click')
+		expect(offline.retryEntry).toHaveBeenCalledWith('e5')
+		const renewed = wrapper.find('[data-testid="offline-sync-reason-e6"]').text()
+		expect(renewed).toContain('certificate authority')
+		expect(renewed).toContain('carol@partner')
+		await wrapper.find('[data-testid="offline-sync-retry-e6"]').trigger('click')
+		expect(offline.retryEntry).toHaveBeenCalledWith('e6')
 	})
 })
 

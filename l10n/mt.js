@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Il-fajls jistgħu jiżdiedu biss ma' sigriet li huwa tiegħek. Neħħihom biex issalva.",
         "Sharing options could not be loaded.": "L-għażliet tal-qsim ma setgħux jiġu mgħobbija.",
         "Sharing options still could not be loaded.": "L-għażliet tal-qsim xorta ma setgħux jiġu mgħobbija.",
-        "Sharing is not available for this secret.": "Il-qsim mhuwiex disponibbli għal dan is-sigriet."
+        "Sharing is not available for this secret.": "Il-qsim mhuwiex disponibbli għal dan is-sigriet.",
+        "An administrator turned off sharing with that organisation.": "Amministratur itfa l-qsim ma' dik l-organizzazzjoni.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Amministratur itfa l-qsim ma' dawn l-organizzazzjonijiet sħab: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Ma ġie ssejvjat xejn. {reasons} Erġa' pprova aktar tard, jew issejvja mingħajrhom, li jwaqqaf il-qsim ta' dan is-sigriet magħhom sakemm terġa' taqsmu magħhom.",
+        "Pin the published fingerprint": "Waħħal il-marka diġitali ppubblikata",
+        "Pinned root fingerprint": "Marka diġitali tal-għerq imwaħħla",
+        "Published root fingerprint": "Marka diġitali tal-għerq ippubblikata",
+        "Re-pin root": "Erġa' waħħal l-għerq",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "L-awtorità taċ-ċertifikati ta' dawn l-organizzazzjonijiet sħab inbidlet, u amministratur hawn irid jikkonfermaha: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Iċ-ċertifikat ta' organizzazzjoni sieħba li magħha jinqasam dan is-sigriet mhuwiex validu skont l-arloġġ ta' dan it-tagħmir. Ma ġie ssejvjat xejn; iċċekkja d-data u l-ħin ta' dan it-tagħmir.",
+        "These partner organisations cannot be reached: {partners}.": "Dawn l-organizzazzjonijiet sħab ma jistgħux jintlaħqu: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Dan is-sieħeb għadu jippubblika l-marka diġitali tal-għerq imwaħħla, għalhekk m'hemm xejn x'jerġa' jitwaħħal.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Il-passkey ma tħassarx. Erġa' pprova aktar tard.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Erġa' agħmel il-bidla online, fejn tista' tissejvja mingħajrhom.",
+        "Another organisation's root re-pinned": "L-għerq ta' organizzazzjoni oħra reġa' twaħħal"
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

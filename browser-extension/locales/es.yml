@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq envió, para alguien con quien se comparte este elemento, una clave de cifrado que este navegador no pudo leer. No se ha guardado nada.
   unverified: Este elemento se comparte con organizaciones asociadas y este navegador no puede confirmar que lo recibirían tal como lo viste. No se ha guardado nada; haz este cambio en la aplicación web de Keepiq.
   partnerUnreachable: "No se ha guardado nada: no se puede conectar con una organización asociada con la que se comparte este elemento ({cloudIds}). Inténtalo más tarde o guarda sin ellas; así se pausa el uso compartido de este elemento con ellas hasta que vuelvas a compartirlo."
+  partnerPaused: "No se ha guardado nada. {reasons} Inténtalo más tarde o guarda sin ellas; así se pausa el uso compartido de este elemento con ellas hasta que vuelvas a compartirlo."
+  partnerPausedUnreachable: "No se puede conectar con estas organizaciones asociadas: {cloudIds}."
+  partnerPausedRootChanged: "La autoridad de certificación de estas organizaciones asociadas ha cambiado y un administrador de tu Keepiq tiene que confirmarlo: {cloudIds}."
+  partnerPausedSharingOff: "Un administrador ha desactivado el uso compartido con estas organizaciones asociadas: {cloudIds}."
   partnerUpgradeRequired: "No se ha guardado nada: el Keepiq de {cloudIds} es demasiado antiguo para recibir una clave de autenticación. Quita la clave o pídeles que actualicen Keepiq."
   partnerUpgradeRequiredUnnamed: "No se ha guardado nada: una organización asociada con la que se comparte este elemento usa un Keepiq demasiado antiguo para recibir una clave de autenticación. Quita la clave o pídele que actualice Keepiq."
   partnerUpgradeVersion: Necesitan Keepiq {version} o posterior.

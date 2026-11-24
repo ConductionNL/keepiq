@@ -267,6 +267,18 @@ describe('FederatedShareForm', () => {
 		).toContain('not one of your partners')
 	})
 
+	it('says when sharing with the organisation is turned off', async () => {
+		const { wrapper } = await mountWith({
+			reject: {
+				response: { status: 403, data: { message: 'outbound_disabled' } },
+			},
+		})
+
+		expect(
+			wrapper.find('[data-testid="federated-share-error"]').text(),
+		).toContain('turned off sharing with that organisation')
+	})
+
 	describe('a login with a one-time code (keepiq#1326)', () => {
 		const VERIFIED = {
 			certificate: F.bob,

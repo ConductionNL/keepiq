@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq sendte en krypteringsnøgle for en, som dette element er delt med, som denne browser ikke kunne læse. Intet blev gemt.
   unverified: Dette element er delt med partnerorganisationer, og denne browser kan ikke bekræfte, at de får det præcis, som du så det. Intet blev gemt; foretag ændringen i Keepiq-webappen.
   partnerUnreachable: "Intet blev gemt: en partnerorganisation, som dette element er delt med, kan ikke kontaktes ({cloudIds}). Prøv igen senere, eller gem uden dem, hvilket sætter delingen af elementet med dem på pause, indtil du deler det med dem igen."
+  partnerPaused: "Intet blev gemt. {reasons} Prøv igen senere, eller gem uden dem, hvilket sætter delingen af elementet med dem på pause, indtil du deler det med dem igen."
+  partnerPausedUnreachable: "Disse partnerorganisationer kan ikke kontaktes: {cloudIds}."
+  partnerPausedRootChanged: "Certifikatudstederen for disse partnerorganisationer er ændret, og en administrator af din Keepiq skal bekræfte det: {cloudIds}."
+  partnerPausedSharingOff: "En administrator har slået deling med disse partnerorganisationer fra: {cloudIds}."
   partnerUpgradeRequired: "Intet blev gemt: Keepiq hos {cloudIds} er for gammel til at modtage en godkendelsesnøgle. Fjern nøglen, eller bed dem om at opdatere Keepiq."
   partnerUpgradeRequiredUnnamed: "Intet blev gemt: en partnerorganisation, som dette element er delt med, kører en Keepiq, der er for gammel til at modtage en godkendelsesnøgle. Fjern nøglen, eller bed dem om at opdatere Keepiq."
   partnerUpgradeVersion: De skal bruge Keepiq {version} eller nyere.

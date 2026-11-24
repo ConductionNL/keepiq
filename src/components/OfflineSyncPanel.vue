@@ -55,6 +55,7 @@
 							[
 								'partner_unreachable',
 								'partner_lookup_limit',
+								'partner_clock',
 								'share_scan_pending',
 							].includes(entry.failure?.code)
 						"

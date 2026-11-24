@@ -523,6 +523,11 @@ describe('saveShared on the owner path', () => {
 			[500, 'not_a_partner'],
 			[500, 'bad_chain'],
 			[404, 'not_a_partner'],
+			// So does a reason that stops the save.
+			[500, 'outbound_disabled'],
+			[502, 'outbound_disabled'],
+			[404, 'outbound_disabled'],
+			[403, 'partner_unreachable'],
 		]) {
 			const log = shareSaveServer({
 				id: 's1',

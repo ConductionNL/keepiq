@@ -217,6 +217,10 @@ function partnerEventLabels() {
 			'keepiq',
 			'Another organisation changed the fields it stores',
 		),
+		'federation_partner.repinned': t(
+			'keepiq',
+			"Another organisation's root re-pinned",
+		),
 	}
 }
 
@@ -326,6 +330,7 @@ const AUDIT_EVENT_TYPES = [
 	'federated_share.recipient_declined',
 	'federated_share.recipient_resumed',
 	'federation_partner.value_fields_changed',
+	'federation_partner.repinned',
 	'request.created',
 	'request.fulfilled',
 	'request.re_requested',

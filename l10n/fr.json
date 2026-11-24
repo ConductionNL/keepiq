@@ -2051,7 +2051,21 @@
         "Files can only be added to a secret you own. Remove them to save.": "Les fichiers ne peuvent être ajoutés qu'à un secret qui vous appartient. Retirez-les pour enregistrer.",
         "Sharing options could not be loaded.": "Les options de partage n'ont pas pu être chargées.",
         "Sharing options still could not be loaded.": "Les options de partage n'ont toujours pas pu être chargées.",
-        "Sharing is not available for this secret.": "Le partage n'est pas disponible pour ce secret."
+        "Sharing is not available for this secret.": "Le partage n'est pas disponible pour ce secret.",
+        "An administrator turned off sharing with that organisation.": "Un administrateur a désactivé le partage avec cette organisation.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Un administrateur a désactivé le partage avec ces organisations partenaires : {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Rien n'a été enregistré. {reasons} Réessayez plus tard, ou enregistrez sans elles, ce qui arrête le partage de ce secret avec elles jusqu'à ce que vous le partagiez à nouveau avec elles.",
+        "Pin the published fingerprint": "Épingler l'empreinte publiée",
+        "Pinned root fingerprint": "Empreinte racine épinglée",
+        "Published root fingerprint": "Empreinte racine publiée",
+        "Re-pin root": "Épingler à nouveau la racine",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "L'autorité de certification de ces organisations partenaires a changé, et un administrateur d'ici doit le confirmer : {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Le certificat d'une organisation partenaire avec laquelle ce secret est partagé n'est pas valide selon l'horloge de cet appareil. Rien n'a été enregistré ; vérifiez la date et l'heure de cet appareil.",
+        "These partner organisations cannot be reached: {partners}.": "Ces organisations partenaires sont injoignables : {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ce partenaire publie toujours l'empreinte racine épinglée, il n'y a donc rien à épingler à nouveau.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} La clé d'accès n'a pas été supprimée. Réessayez plus tard.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Refaites la modification en ligne, où vous pouvez enregistrer sans elles.",
+        "Another organisation's root re-pinned": "Racine d’une autre organisation épinglée à nouveau"
     },
     "plurals": null
 }

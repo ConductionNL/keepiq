@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Ní féidir comhaid a chur ach le rún atá agat féin. Bain iad chun sábháil.",
         "Sharing options could not be loaded.": "Níorbh fhéidir na roghanna comhroinnte a lódáil.",
         "Sharing options still could not be loaded.": "Níorbh fhéidir na roghanna comhroinnte a lódáil fós.",
-        "Sharing is not available for this secret.": "Níl comhroinnt ar fáil don rún seo."
+        "Sharing is not available for this secret.": "Níl comhroinnt ar fáil don rún seo.",
+        "An administrator turned off sharing with that organisation.": "Mhúch riarthóir comhroinnt leis an eagraíocht sin.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Mhúch riarthóir comhroinnt leis na heagraíochtaí comhpháirtíochta seo: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Níor sábháladh aon rud. {reasons} Bain triail eile as ar ball, nó sábháil gan iad, rud a stopann comhroinnt an rúin seo leo go dtí go gcomhroinnfidh tú leo arís é.",
+        "Pin the published fingerprint": "Pionnáil an méarlorg foilsithe",
+        "Pinned root fingerprint": "Méarlorg fréimhe pionnáilte",
+        "Published root fingerprint": "Méarlorg fréimhe foilsithe",
+        "Re-pin root": "Pionnáil an fhréamh arís",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "D'athraigh údarás deimhnithe na n-eagraíochtaí comhpháirtíochta seo, agus caithfidh riarthóir anseo é a dhearbhú: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Níl deimhniú eagraíochta comhpháirtíochta a bhfuil an rún seo roinnte léi bailí de réir chlog an ghléis seo. Níor sábháladh aon rud; seiceáil dáta agus am an ghléis seo.",
+        "These partner organisations cannot be reached: {partners}.": "Ní féidir teacht ar na heagraíochtaí comhpháirtíochta seo: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Tá an comhpháirtí seo fós ag foilsiú an mhéarloirg fréimhe pionnáilte, mar sin níl aon rud le pionnáil arís.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Níor scriosadh an eochair rochtana. Bain triail eile as níos déanaí.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Déan an t-athrú arís ar líne, áit ar féidir leat sábháil gan iad.",
+        "Another organisation's root re-pinned": "Pionnáladh fréamh eagraíochta eile arís"
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq ha inviato, per una persona con cui è condiviso questo elemento, una chiave di crittografia che questo browser non è riuscito a leggere. Non è stato salvato nulla.
   unverified: Questo elemento è condiviso con organizzazioni partner e questo browser non può confermare che lo riceverebbero esattamente come lo hai visto. Non è stato salvato nulla; esegui la modifica nell’app web di Keepiq.
   partnerUnreachable: "Non è stato salvato nulla: una o più organizzazioni partner con cui è condiviso questo elemento non sono raggiungibili ({cloudIds}). Riprova più tardi oppure salva senza di loro: la condivisione di questo elemento con loro resterà sospesa finché non lo condividerai di nuovo."
+  partnerPaused: "Non è stato salvato nulla. {reasons} Riprova più tardi oppure salva senza di loro: la condivisione di questo elemento con loro resterà sospesa finché non lo condividerai di nuovo."
+  partnerPausedUnreachable: "Queste organizzazioni partner non sono raggiungibili: {cloudIds}."
+  partnerPausedRootChanged: "L’autorità di certificazione di queste organizzazioni partner è cambiata e un amministratore del tuo Keepiq deve confermarlo: {cloudIds}."
+  partnerPausedSharingOff: "Un amministratore ha disattivato la condivisione con queste organizzazioni partner: {cloudIds}."
   partnerUpgradeRequired: "Non è stato salvato nulla: il Keepiq di {cloudIds} è troppo vecchio per ricevere una chiave di autenticazione. Rimuovi la chiave oppure chiedi loro di aggiornare Keepiq."
   partnerUpgradeRequiredUnnamed: "Non è stato salvato nulla: un’organizzazione partner con cui è condiviso questo elemento usa un Keepiq troppo vecchio per ricevere una chiave di autenticazione. Rimuovi la chiave oppure chiedi di aggiornare Keepiq."
   partnerUpgradeVersion: Serve Keepiq {version} o successivo.

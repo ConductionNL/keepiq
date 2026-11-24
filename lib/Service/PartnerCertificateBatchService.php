@@ -72,18 +72,22 @@ class PartnerCertificateBatchService {
 	}//end __construct()
 
 	/**
-	 * The HTTP status of a refused lookup, the same for the single and the batch route: `not_a_partner` 403,
-	 * any other invalid lookup 404, `federation_unavailable` 409, anything else at the partner 502.
+	 * The HTTP status of a refused lookup, the same for the single and the batch route: `not_a_partner` and
+	 * `outbound_disabled` 403, any other invalid lookup 404, `federation_unavailable` 409, anything else at the
+	 * partner 502.
 	 *
 	 * @param Throwable $exception What the lookup threw
 	 *
 	 * @return int
+	 *
+	 * @psalm-return 403|404|409|502
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public static function refusalStatus(Throwable $exception): int {
 		$statuses = [
 			'not_a_partner'          => Http::STATUS_FORBIDDEN,
+			'outbound_disabled'      => Http::STATUS_FORBIDDEN,
 			'federation_unavailable' => Http::STATUS_CONFLICT,
 		];
 		$status   = ($statuses[$exception->getMessage()] ?? null);

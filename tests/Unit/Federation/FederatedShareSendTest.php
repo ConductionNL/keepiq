@@ -229,13 +229,24 @@ class FederatedShareSendTest extends TestCase {
 	public function testNothingIsSentToAnInstanceThatIsNoOutboundPartner(): void {
 		$this->ocm = $this->createMock(ICloudFederationProviderManager::class);
 		$cases = [
-			'stranger' => [[], 'bob@cloud.stranger.example'],
-			'inbound only' => [[$this->partner('cloud.partner.example', false, true)], 'bob@cloud.partner.example'],
+			'stranger' => [[], 'bob@cloud.stranger.example', 'not_a_partner', Http::STATUS_BAD_REQUEST],
+			'inbound only' => [
+				[$this->partner('cloud.partner.example', false, true)],
+				'bob@cloud.partner.example',
+				'outbound_disabled',
+				Http::STATUS_FORBIDDEN,
+			],
+			'outbound off while another partner is outbound' => [
+				[$this->partner('cloud.partner.example', false, true), $this->partner('cloud.other.example', true, true)],
+				'bob@cloud.partner.example',
+				'outbound_disabled',
+				Http::STATUS_FORBIDDEN,
+			],
 		];
-		foreach ($cases as $label => [$partners, $cloudId]) {
+		foreach ($cases as $label => [$partners, $cloudId, $reason, $status]) {
 			$response = $this->share($this->controller($partners), $cloudId);
-			$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus(), $label);
-			$this->assertSame('not_a_partner', $response->getData()['message'], $label);
+			$this->assertSame($status, $response->getStatus(), $label);
+			$this->assertSame($reason, $response->getData()['message'], $label);
 		}
 
 		$this->assertSame([], $this->sent);

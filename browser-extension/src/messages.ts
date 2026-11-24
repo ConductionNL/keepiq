@@ -822,7 +822,7 @@ export type WriteErrorCode =
 	| 'bad_certificate'
 	/** Partner shares get the whole value, and the edit form did not show every field of it in full. */
 	| 'unverified'
-	/** `partners` names the partner shares whose instance did not answer. */
+	/** `partners` names the partner shares whose instance did not answer, whose root is not the pinned one, or that may not be shared with now, each with its `reason`. */
 	| 'partner_unreachable'
 	/** The partner lookup's limit of 60 per minute. */
 	| 'partner_lookup_limit'
@@ -844,8 +844,8 @@ export interface VaultWriteError {
 	code: WriteErrorCode
 	/** With `blocked`, when the row's reason is a known code. */
 	reason?: BlockReason
-	/** With `partner_unreachable` and `partner_upgrade_required`. */
-	partners?: Array<{ shareId: string; cloudId: string }>
+	/** With `partner_unreachable` and `partner_upgrade_required`; `reason` with `partner_unreachable`: `partner_unreachable`, `untrusted_root` or `outbound_disabled`. */
+	partners?: Array<{ shareId: string; cloudId: string; reason?: string }>
 	/** With `partner_upgrade_required`: the release the partner needs, as the server or the background named it. */
 	requiredVersion?: string
 }

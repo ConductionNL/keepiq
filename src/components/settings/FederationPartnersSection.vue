@@ -6,7 +6,9 @@
   task 1.3). The administrator types a partner address, Keepiq reads that
   partner's root fingerprint, and the administrator compares it with the
   partner's administrator before adding it. Each partner has two
-  directions. Every change asks for the Nextcloud password again.
+  directions. Re-pin reads a listed partner's fingerprint again after it
+  renewed its root, for the same comparison. Every change asks for the
+  Nextcloud password again.
 
   @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 -->
@@ -70,10 +72,76 @@
 						</NcCheckboxRadioSwitch>
 						<NcButton
 							variant="tertiary"
+							:disabled="busy"
+							data-testid="federation-repin"
+							@click="checkRepin(partner)">
+							{{ t('keepiq', 'Re-pin root') }}
+						</NcButton>
+						<NcButton
+							variant="tertiary"
 							data-testid="federation-remove"
 							@click="removePartner(partner)">
 							{{ t('keepiq', 'Remove') }}
 						</NcButton>
+						<div
+							v-if="repin && repin.partner.id === partner.id"
+							class="federation-partners__repin"
+							data-testid="federation-repin-preview">
+							<p>
+								<span>{{
+									t('keepiq', 'Pinned root fingerprint')
+								}}</span>
+								<code data-testid="federation-repin-pinned">{{
+									formatFingerprint(repin.partner.rootFingerprint)
+								}}</code>
+							</p>
+							<p>
+								<span>{{
+									t('keepiq', 'Published root fingerprint')
+								}}</span>
+								<code data-testid="federation-repin-published">{{
+									formatFingerprint(repin.published)
+								}}</code>
+							</p>
+							<NcNoteCard
+								v-if="repinUnchanged"
+								type="info"
+								data-testid="federation-repin-unchanged">
+								{{
+									t(
+										'keepiq',
+										'This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.',
+									)
+								}}
+							</NcNoteCard>
+							<template v-else>
+								<NcCheckboxRadioSwitch
+									v-model="repinCompared"
+									data-testid="federation-repin-compared">
+									{{
+										t(
+											'keepiq',
+											"I compared this fingerprint with the partner's administrator",
+										)
+									}}
+								</NcCheckboxRadioSwitch>
+								<NcButton
+									variant="primary"
+									:disabled="busy || !repinCompared"
+									data-testid="federation-repin-confirm"
+									@click="confirmRepin">
+									{{
+										t('keepiq', 'Pin the published fingerprint')
+									}}
+								</NcButton>
+							</template>
+							<NcButton
+								variant="tertiary"
+								data-testid="federation-repin-cancel"
+								@click="cancelRepin">
+								{{ t('keepiq', 'Cancel') }}
+							</NcButton>
+						</div>
 					</li>
 				</ul>
 
@@ -166,7 +234,20 @@ export default {
 			allowInbound: true,
 			busy: false,
 			error: null,
+			/** @type {{partner: object, published: string}|null} The partner being re-pinned and the fingerprint it publishes now. */
+			repin: null,
+			repinCompared: false,
 		}
+	},
+
+	computed: {
+		/**
+		 * @return {boolean} Whether the partner still publishes the pinned fingerprint.
+		 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#scenario-nothing-to-re-pin
+		 */
+		repinUnchanged() {
+			return this.repin?.published === this.repin?.partner.rootFingerprint
+		},
 	},
 
 	/**
@@ -271,6 +352,77 @@ export default {
 		},
 
 		/**
+		 * Read the root fingerprint a listed partner publishes now, to show it
+		 * next to the pinned one.
+		 *
+		 * @param {object} partner The partner row.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#scenario-administrator-re-pins-a-renewed-partner-root
+		 */
+		async checkRepin(partner) {
+			this.error = null
+			this.repin = null
+			this.repinCompared = false
+			this.busy = true
+			try {
+				const { data } = await axios.post(generateUrl(BASE + '/preview'), {
+					url: partner.baseUrl,
+				})
+				this.repin = { partner, published: data?.rootFingerprint ?? '' }
+			} catch (e) {
+				this.fail(e)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Pin the published fingerprint the administrator compared, with the
+		 * password confirmed first. The server reads it again and refuses one
+		 * that changed since.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#scenario-the-published-root-changed-after-the-preview
+		 */
+		async confirmRepin() {
+			if (!this.repin || !this.repinCompared || this.repinUnchanged) {
+				return
+			}
+			this.error = null
+			this.busy = true
+			try {
+				await confirmPasswordFirst()
+				await axios.put(
+					generateUrl(
+						BASE
+							+ '/'
+							+ encodeURIComponent(this.repin.partner.id)
+							+ '/root',
+					),
+					{ fingerprint: this.repin.published },
+				)
+				this.repin = null
+				this.repinCompared = false
+				await this.load()
+			} catch (e) {
+				this.fail(e)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Close the re-pin comparison without pinning anything.
+		 *
+		 * @return {void}
+		 * @spec exclude Closes a panel only.
+		 */
+		cancelRepin() {
+			this.repin = null
+			this.repinCompared = false
+		},
+
+		/**
 		 * Change one direction of a partner.
 		 *
 		 * @param {object} partner The partner row.
@@ -340,7 +492,8 @@ export default {
 }
 
 .federation-partners__own,
-.federation-partners__preview p {
+.federation-partners__preview p,
+.federation-partners__repin p {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
@@ -353,7 +506,8 @@ export default {
 }
 
 .federation-partners__row,
-.federation-partners__preview {
+.federation-partners__preview,
+.federation-partners__repin {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;

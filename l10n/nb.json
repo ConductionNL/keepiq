@@ -2051,7 +2051,21 @@
         "Files can only be added to a secret you own. Remove them to save.": "Filer kan bare legges til en hemmelighet du eier. Fjern dem for å lagre.",
         "Sharing options could not be loaded.": "Delingsalternativene kunne ikke lastes inn.",
         "Sharing options still could not be loaded.": "Delingsalternativene kunne fortsatt ikke lastes inn.",
-        "Sharing is not available for this secret.": "Deling er ikke tilgjengelig for denne hemmeligheten."
+        "Sharing is not available for this secret.": "Deling er ikke tilgjengelig for denne hemmeligheten.",
+        "An administrator turned off sharing with that organisation.": "En administrator har slått av deling med den organisasjonen.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "En administrator har slått av deling med disse partnerorganisasjonene: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Ingenting ble lagret. {reasons} Prøv igjen senere, eller lagre uten dem, noe som stopper delingen av denne hemmeligheten med dem til du deler den med dem igjen.",
+        "Pin the published fingerprint": "Fest det publiserte fingeravtrykket",
+        "Pinned root fingerprint": "Festet rotfingeravtrykk",
+        "Published root fingerprint": "Publisert rotfingeravtrykk",
+        "Re-pin root": "Fest roten på nytt",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Sertifikatutstederen for disse partnerorganisasjonene er endret, og en administrator her må bekrefte det: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Sertifikatet til en partnerorganisasjon denne hemmeligheten er delt med, er ikke gyldig ifølge klokken på denne enheten. Ingenting ble lagret; kontroller dato og klokkeslett på denne enheten.",
+        "These partner organisations cannot be reached: {partners}.": "Disse partnerorganisasjonene kan ikke nås: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Denne partneren publiserer fortsatt det festede rotfingeravtrykket, så det er ingenting å feste på nytt.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Tilgangsnøkkelen ble ikke slettet. Prøv igjen senere.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Gjør endringen på nytt på nett, der du kan lagre uten dem.",
+        "Another organisation's root re-pinned": "Roten til en annen organisasjon er festet på nytt"
     },
     "plurals": null
 }

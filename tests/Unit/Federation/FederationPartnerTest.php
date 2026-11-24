@@ -32,11 +32,19 @@ use InvalidArgumentException;
 use OCA\Keepiq\Controller\DiscoveryController;
 use OCA\Keepiq\Controller\FederationPartnerController;
 use OCA\Keepiq\Db\FederationPartner;
+use OCA\Keepiq\Db\FederationPartnerMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Event\Audit\AuditMetadataPolicy;
+use OCA\Keepiq\Service\FederationPartnerAuditTrail;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired;
+use OCP\EventDispatcher\Event;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
@@ -71,10 +79,16 @@ class FederationPartnerTest extends TestCase {
 	 * @param mixed $document The partner's discovery document
 	 * @param array $partners Existing partner rows
 	 * @param bool $allowLocal Nextcloud's allow_local_remote_servers
+	 * @param FederationPartnerMapper|null $mapper The partner table, instead of one over $partners
 	 *
 	 * @return FederationPartnerService
 	 */
-	private function service(mixed $document, array $partners = [], bool $allowLocal = false): FederationPartnerService {
+	private function service(
+		mixed $document,
+		array $partners = [],
+		bool $allowLocal = false,
+		?FederationPartnerMapper $mapper = null,
+	): FederationPartnerService {
 		$response = $this->createMock(IResponse::class);
 		$response->method('getBody')->willReturn(json_encode($document));
 		$client = $this->createMock(IClient::class);
@@ -86,9 +100,21 @@ class FederationPartnerTest extends TestCase {
 		$clients->method('newClient')->willReturn($client);
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueBool')->willReturn($allowLocal);
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(function (Event $event): void {
+			$this->audited[] = $event;
+		});
 
-		return new FederationPartnerService($this->partnerMapper($partners), $clients, $config);
+		return new FederationPartnerService(
+			$mapper ?? $this->partnerMapper($partners),
+			$clients,
+			$config,
+			new FederationPartnerAuditTrail($dispatcher)
+		);
 	}
+
+	/** @var array<int,Event> Events the partner service dispatched */
+	private array $audited = [];
 
 	/**
 	 * A discovery document with a federation block.
@@ -245,13 +271,175 @@ class FederationPartnerTest extends TestCase {
 		);
 	}
 
+	/** @var array<int,FederationPartner> Partner rows written through update() */
+	private array $updated = [];
+
+	/**
+	 * A partner service over one stored partner, whose discovery document is the given one.
+	 *
+	 * @param FederationPartner $stored The stored partner
+	 * @param mixed $document The partner's discovery document now
+	 *
+	 * @return FederationPartnerService
+	 */
+	private function repinService(FederationPartner $stored, mixed $document): FederationPartnerService {
+		$mapper = $this->partnerMapper([$stored]);
+		$mapper->method('findById')->willReturnCallback(
+			static fn (string $id): FederationPartner => ($id === $stored->getId()) ? $stored : throw new DoesNotExistException('none')
+		);
+		$mapper->method('update')->willReturnCallback(
+			function (FederationPartner $partner): FederationPartner {
+				$this->updated[] = $partner;
+				return $partner;
+			}
+		);
+
+		return $this->service($document, mapper: $mapper);
+	}
+
+	public function testRepinStoresTheRenewedRootAndKeepsTheDirections(): void {
+		$stored = $this->partner('cloud.partner.example', true, false);
+		$renewed = str_repeat('cd', 32);
+
+		$result = $this->repinService($stored, $this->discovery($renewed))
+			->repin($stored->getId(), strtoupper($renewed), 'admin');
+
+		$this->assertTrue($result['changed']);
+		$this->assertSame($renewed, $result['partner']->getRootFingerprint());
+		$this->assertTrue($result['partner']->getAllowOutbound());
+		$this->assertFalse($result['partner']->getAllowInbound());
+		$this->assertSame([$stored], $this->updated);
+		$this->assertSame(
+			['https://cloud.partner.example/index.php/apps/keepiq' . DiscoveryController::CANONICAL_DISCOVERY_PATH],
+			$this->fetched
+		);
+	}
+
+	public function testAStoredRepinIsAuditedWithThePartnerBothFingerprintsAndTheAdmin(): void {
+		$stored = $this->partner('cloud.partner.example', true, false);
+		$pinned = $stored->getRootFingerprint();
+		$renewed = str_repeat('cd', 32);
+
+		$this->repinService($stored, $this->discovery($renewed))->repin($stored->getId(), $renewed, 'admin');
+
+		$this->assertCount(1, $this->audited);
+		$event = $this->audited[0];
+		$this->assertInstanceOf(AuditEvent::class, $event);
+		$this->assertSame(AuditEventTypes::FEDERATION_PARTNER_REPINNED, $event->getEventType());
+		$this->assertSame(AuditEvent::ACTOR_USER, $event->getActorType());
+		$this->assertSame('admin', $event->getActorId());
+		$this->assertSame('federation_partner', $event->getObjectType());
+		$this->assertSame($stored->getId(), $event->getObjectId());
+		$this->assertSame(
+			['partnerId' => $stored->getId(), 'oldFingerprint' => $pinned, 'newFingerprint' => $renewed],
+			$event->getMetadata()
+		);
+		// Every key survives the audit whitelist.
+		$this->assertSame(
+			array_keys($event->getMetadata()),
+			AuditMetadataPolicy::WHITELIST[AuditEventTypes::FEDERATION_PARTNER_REPINNED]
+		);
+	}
+
+	public function testRepinStoresNothingWhileThePartnerPublishesThePinnedRoot(): void {
+		$stored = $this->partner('cloud.partner.example', true, true);
+		$pinned = $stored->getRootFingerprint();
+
+		$result = $this->repinService($stored, $this->discovery($pinned))->repin($stored->getId(), $pinned, 'admin');
+
+		$this->assertFalse($result['changed']);
+		$this->assertSame($pinned, $result['partner']->getRootFingerprint());
+		$this->assertSame([], $this->updated);
+		$this->assertSame([], $this->audited);
+	}
+
+	/**
+	 * Re-pins that are refused, each with the partner's document now and the fingerprint the admin confirmed.
+	 *
+	 * @return array<string,array{0:string,1:mixed,2:string,3:string}>
+	 */
+	public static function refusedRepins(): array {
+		$pinned = str_repeat('ab', 32);
+		$renewed = str_repeat('cd', 32);
+		$federation = static fn (string $fingerprint): array => ['federation' => ['enabled' => true, 'rootFingerprint' => $fingerprint]];
+
+		return [
+			'published root changed after the preview' => ['https://cloud.partner.example', $federation(str_repeat('ee', 32)), $renewed, 'not the one you confirmed'],
+			'pinned root still published, another confirmed' => ['https://cloud.partner.example', $federation($pinned), $renewed, 'not the one you confirmed'],
+			'nothing confirmed' => ['https://cloud.partner.example', $federation($renewed), '', 'not the one you confirmed'],
+			'stored address and pinned host disagree' => ['https://cloud.elsewhere.example', $federation($renewed), $renewed, 'does not match its pinned host'],
+			'federation turned off' => ['https://cloud.partner.example', ['federation' => ['enabled' => false, 'rootFingerprint' => $renewed]], $renewed, 'does not offer Keepiq federation'],
+			'no discovery document' => ['https://cloud.partner.example', '<html>', $renewed, 'does not offer Keepiq federation'],
+		];
+	}
+
+	/**
+	 * @dataProvider refusedRepins
+	 *
+	 * @param string $baseUrl The stored partner address
+	 * @param mixed $document The partner's discovery document now
+	 * @param string $confirmed The fingerprint the administrator confirmed
+	 * @param string $refusal Part of the refusal's message
+	 */
+	public function testARefusedRepinKeepsThePin(string $baseUrl, mixed $document, string $confirmed, string $refusal): void {
+		$stored = $this->partner('cloud.partner.example', true, true);
+		$stored->setBaseUrl($baseUrl);
+		$pinned = $stored->getRootFingerprint();
+
+		try {
+			$this->repinService($stored, $document)->repin($stored->getId(), $confirmed, 'admin');
+			$this->fail('The re-pin was not refused');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertStringContainsString($refusal, $exception->getMessage());
+		}
+
+		$this->assertSame($pinned, $stored->getRootFingerprint());
+		$this->assertSame([], $this->updated);
+		$this->assertSame([], $this->audited);
+	}
+
+	public function testRepinOfAnUnknownPartnerReadsNothing(): void {
+		$stored = $this->partner('cloud.partner.example', true, true);
+
+		try {
+			$this->repinService($stored, $this->discovery(str_repeat('cd', 32)))
+				->repin('p-unknown', str_repeat('cd', 32), 'admin');
+			$this->fail('The re-pin was not refused');
+		} catch (DoesNotExistException) {
+		}
+
+		$this->assertSame([], $this->fetched);
+		$this->assertSame([], $this->updated);
+		$this->assertSame([], $this->audited);
+	}
+
+	public function testRequireOutboundPartnerNamesWhyAHostIsNoOutboundPartner(): void {
+		$service = $this->service([], [
+			$this->partner('cloud.out.example', true, false),
+			$this->partner('cloud.in.example', false, true),
+		]);
+
+		$this->assertSame('cloud.out.example', $service->requireOutboundPartner('https://cloud.out.example')->getHost());
+		foreach (['cloud.in.example' => 'outbound_disabled', 'cloud.stranger.example' => 'not_a_partner', '' => 'not_a_partner'] as $remote => $reason) {
+			try {
+				$service->requireOutboundPartner((string)$remote);
+				$this->fail("$remote was not refused");
+			} catch (InvalidArgumentException $exception) {
+				$this->assertSame($reason, $exception->getMessage(), (string)$remote);
+			}
+
+			// The other callers keep their answer: no partner to share to.
+			$this->assertNull($service->outboundPartnerForRemote((string)$remote), (string)$remote);
+		}
+	}
+
 	public function testEveryPartnerChangeIsAdminOnlyAndNeedsAPasswordConfirmation(): void {
-		foreach (['index', 'preview', 'create', 'update', 'destroy'] as $method) {
+		foreach (['index', 'preview', 'create', 'update', 'repin', 'destroy'] as $method) {
 			$reflection = new ReflectionMethod(FederationPartnerController::class, $method);
 			$this->assertNotEmpty($reflection->getAttributes(AuthorizedAdminSetting::class), "$method is not admin-guarded");
 		}
 
-		foreach (['create', 'update', 'destroy'] as $method) {
+		foreach (['create', 'update', 'repin', 'destroy'] as $method) {
 			$reflection = new ReflectionMethod(FederationPartnerController::class, $method);
 			$this->assertNotEmpty(
 				$reflection->getAttributes(PasswordConfirmationRequired::class),

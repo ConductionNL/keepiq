@@ -181,6 +181,41 @@ class FederationPartnerController extends Controller {
 	}//end update()
 
 	/**
+	 * Pin the root fingerprint the partner publishes now, after the administrator compared it again. The answer is
+	 * `{partner, changed}`; `changed` is false when the partner still publishes the pinned fingerprint.
+	 *
+	 * @param string $id The partner UUID
+	 * @param string $fingerprint The fingerprint the administrator compared
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 */
+	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[PasswordConfirmationRequired]
+	public function repin(string $id, string $fingerprint = ''): JSONResponse {
+		if ($this->root->isSupported() === false) {
+			return $this->unsupported();
+		}
+
+		try {
+			$result = $this->partners->repin(
+				id: $id,
+				confirmedFingerprint: $fingerprint,
+				adminId: (string)$this->userSession->getUser()?->getUID(),
+			);
+		} catch (DoesNotExistException) {
+			return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (InvalidArgumentException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		return new JSONResponse(
+			data: ['partner' => $result['partner']->jsonSerialize(), 'changed' => $result['changed']]
+		);
+	}//end repin()
+
+	/**
 	 * Remove a partner.
 	 *
 	 * @param string $id The partner UUID

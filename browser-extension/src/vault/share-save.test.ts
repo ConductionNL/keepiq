@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createClient } from '@/src/api/client'
-import { FederatedCertificateError, importPrivateKey, pemToPkcs8, rsaDecrypt, verifyFederatedCertificate } from '@/src/crypto'
+import { FederatedCertificateError, importPrivateKey, importSpki, pemToPkcs8, rsaDecrypt, verifyFederatedCertificate } from '@/src/crypto'
 import { decodePem, extractSpki } from '@/src/crypto/rsa'
 import { encrypt, secretRow } from '@/src/testing/vault'
 import { envelope, federationChain } from '@/src/testing/vectors'
@@ -11,7 +11,7 @@ import { writeError } from './write-error'
 
 vi.mock('@/src/crypto', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@/src/crypto')>()
-	return { ...actual, verifyFederatedCertificate: vi.fn(actual.verifyFederatedCertificate) }
+	return { ...actual, verifyFederatedCertificate: vi.fn(actual.verifyFederatedCertificate), importSpki: vi.fn(actual.importSpki) }
 })
 
 const F = federationChain()
@@ -743,7 +743,6 @@ describe('partner shares', () => {
 	})
 
 	it.each([
-		['a chain to another root', () => json({ cloudId: BOB.recipientCloudId, certificate: F.bobOtherRoot, chain: [F.intermediateB, F.rootB], partnerRootFingerprint: F.rootAFingerprint }), 'untrusted_root'],
 		['someone else\'s certificate', () => json({ cloudId: 'mallory@cloud.partner.example', certificate: F.mallory, chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint }), 'name_mismatch'],
 		['garbage', () => json({ cloudId: BOB.recipientCloudId, certificate: 'garbage', chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint }), 'malformed'],
 		['a recipient the partner does not know', () => json({ message: 'unknown_recipient' }, 404), 'unknown_recipient'],
@@ -770,8 +769,69 @@ describe('partner shares', () => {
 
 	it('stops on an unreachable partner, naming it, and sends nothing more', async () => {
 		world.lookups[BOB.recipientCloudId] = () => json({ message: 'partner_unreachable' }, 502)
-		expect(await failure(save({ opened: await openedX() }))).toEqual({ code: 'partner_unreachable', partners: [{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId }] })
+		expect(await failure(save({ opened: await openedX() }))).toEqual({ code: 'partner_unreachable', partners: [{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId, reason: 'partner_unreachable' }] })
 		expect(saves).toHaveLength(1)
+	})
+
+	describe('a refusal that may be temporary', () => {
+		const otherRoot = () => json({ cloudId: BOB.recipientCloudId, certificate: F.bobOtherRoot, chain: [F.intermediateB, F.rootB], partnerRootFingerprint: F.rootAFingerprint })
+		const sharingOff = () => json({ message: 'outbound_disabled' }, 403)
+
+		beforeEach(() => {
+			vi.mocked(importSpki).mockClear()
+		})
+
+		it('imports the key of a verified certificate to encrypt for it', async () => {
+			await save({ opened: await openedX() })
+			expect(importSpki).toHaveBeenCalledOnce()
+		})
+
+		it.each([
+			['a chain to another root than the pinned one', otherRoot, 'untrusted_root'],
+			['sharing to the partner turned off', sharingOff, 'outbound_disabled'],
+		])('stops on %s, naming Bob with the reason, and encrypts nothing for him', async (_, answer, reason) => {
+			world.lookups[BOB.recipientCloudId] = answer
+			expect(await failure(save({ opened: await openedX() }))).toEqual({ code: 'partner_unreachable', partners: [{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId, reason }] })
+			expect(saves).toHaveLength(1)
+			expect(importSpki).not.toHaveBeenCalled()
+		})
+
+		it.each([
+			['a chain to another root than the pinned one', otherRoot, 'untrusted_root'],
+			['sharing to the partner turned off', sharingOff, 'outbound_disabled'],
+		])('suspends Bob on Save without them for %s with that reason, names him as paused, and encrypts nothing for him', async (_, answer, reason) => {
+			world.lookups[BOB.recipientCloudId] = answer
+			expect(await save({ opened: await openedX(), withoutUnreachable: new Set([BOB.shareId]) })).toEqual({ paused: [BOB.recipientCloudId] })
+			expect(lastFinal().federated).toEqual([])
+			expect(lastFinal().suspend).toEqual([{ shareId: BOB.shareId, reason }])
+			expect(importSpki).not.toHaveBeenCalled()
+		})
+
+		it('names every partner a save stopped for with its own reason, and suspends each with it on Save without them', async () => {
+			const DAVE = { shareId: 'fs-dave', recipientCloudId: 'dave@cloud.off.example' }
+			world.shares = [BOB, CAROL, DAVE]
+			world.lookups[BOB.recipientCloudId] = otherRoot
+			world.lookups[CAROL.recipientCloudId] = () => json({ message: 'partner_unreachable' }, 502)
+			world.lookups[DAVE.recipientCloudId] = sharingOff
+			const stopped = await failure(save({ opened: await openedX() }))
+			expect(stopped).toEqual({
+				code: 'partner_unreachable',
+				partners: [
+					{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId, reason: 'untrusted_root' },
+					{ shareId: CAROL.shareId, cloudId: CAROL.recipientCloudId, reason: 'partner_unreachable' },
+					{ shareId: DAVE.shareId, cloudId: DAVE.recipientCloudId, reason: 'outbound_disabled' },
+				],
+			})
+			expect(await save({ opened: await openedX(), withoutUnreachable: new Set(stopped.partners!.map((partner) => partner.shareId)) })).toEqual({
+				paused: [BOB.recipientCloudId, CAROL.recipientCloudId, DAVE.recipientCloudId],
+			})
+			expect(lastFinal().suspend).toEqual([
+				{ shareId: BOB.shareId, reason: 'untrusted_root' },
+				{ shareId: CAROL.shareId, reason: 'partner_unreachable' },
+				{ shareId: DAVE.shareId, reason: 'outbound_disabled' },
+			])
+			expect(importSpki).not.toHaveBeenCalled()
+		})
 	})
 
 	it('suspends an unreachable partner the user saves without, and names it on the note as paused', async () => {
@@ -792,7 +852,7 @@ describe('partner shares', () => {
 		world.lookups[BOB.recipientCloudId] = () => json({ message: 'partner_unreachable' }, 502)
 		world.lookups[CAROL.recipientCloudId] = () => json({ message: 'partner_unreachable' }, 502)
 		expect(await failure(save({ opened: await openedX(), withoutUnreachable: new Set([BOB.shareId]) }))).toEqual({
-			code: 'partner_unreachable', partners: [{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId }, { shareId: CAROL.shareId, cloudId: CAROL.recipientCloudId }],
+			code: 'partner_unreachable', partners: [{ shareId: BOB.shareId, cloudId: BOB.recipientCloudId, reason: 'partner_unreachable' }, { shareId: CAROL.shareId, cloudId: CAROL.recipientCloudId, reason: 'partner_unreachable' }],
 		})
 		expect(saves).toHaveLength(1)
 	})
@@ -814,6 +874,8 @@ describe('partner shares', () => {
 		['another 409', () => json({ message: 'Conflict' }, 409), 'server_error'],
 		['a verdict reason with another status than its own', () => json({ message: 'not_a_partner' }, 404), 'not_found'],
 		['bad_chain with a 500', () => json({ message: 'bad_chain' }, 500), 'server_error'],
+		['outbound_disabled with a 500', () => json({ message: 'outbound_disabled' }, 500), 'server_error'],
+		['outbound_disabled with a 502', () => json({ message: 'outbound_disabled' }, 502), 'server_error'],
 		['no answer', () => Promise.reject(new TypeError('Failed to fetch')), 'offline'],
 		['a 200 without a certificate', () => json({ cloudId: BOB.recipientCloudId, chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint }), 'server_error'],
 		['a 200 with a chain of one', () => json({ cloudId: BOB.recipientCloudId, certificate: F.bob, chain: [F.intermediateA], partnerRootFingerprint: F.rootAFingerprint }), 'server_error'],
@@ -947,6 +1009,31 @@ describe('verified partner certificates', () => {
 		world.lookups[carol] = unreachable
 		await saveWithoutCarol()
 		expect(lookups()).toEqual([bob, carol, bob, carol])
+	})
+
+	describe('once the stop is lifted', () => {
+		const MALLORY = { shareId: 'fs-mallory', recipientCloudId: 'mallory@cloud.partner.example' }
+		const mallory = MALLORY.recipientCloudId
+		const malloryVerified = () => json({ cloudId: mallory, certificate: F.mallory, chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint })
+		const bobOtherRoot = (pinned: string) => () => json({ cloudId: bob, certificate: F.bobOtherRoot, chain: [F.intermediateB, F.rootB], partnerRootFingerprint: pinned })
+
+		it.each([
+			['an administrator re-pinned the renewed partner root', bobOtherRoot(F.rootAFingerprint), bobOtherRoot(F.rootBFingerprint), 'untrusted_root'],
+			['an administrator turned outbound sharing on again', () => json({ message: 'outbound_disabled' }, 403), undefined, 'outbound_disabled'],
+		])('after %s, the next save looks the stopped partner up again and encrypts for it, the other from the kept certificate', async (_, stopped, lifted, reason) => {
+			world.shares = [BOB, MALLORY]
+			world.lookups = { [bob]: stopped, [mallory]: malloryVerified }
+			expect(await failure(save({ opened: await openedX() }))).toEqual({
+				code: 'partner_unreachable', partners: [{ shareId: BOB.shareId, cloudId: bob, reason }],
+			})
+
+			world.lookups = { [mallory]: malloryVerified, ...(lifted ? { [bob]: lifted } : {}) }
+			expect(await save({ opened: await openedX() })).toBeUndefined()
+
+			expect(lookups()).toEqual([bob, mallory, bob])
+			expect(lastFinal().federated!.map((entry) => entry.shareId).sort()).toEqual([BOB.shareId, MALLORY.shareId].sort())
+			expect(lastFinal().suspend).toEqual([])
+		})
 	})
 })
 

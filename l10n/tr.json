@@ -2025,7 +2025,21 @@
         "Files can only be added to a secret you own. Remove them to save.": "Dosyalar yalnızca size ait bir gizliye eklenebilir. Kaydetmek için bunları kaldırın.",
         "Sharing options could not be loaded.": "Paylaşım seçenekleri yüklenemedi.",
         "Sharing options still could not be loaded.": "Paylaşım seçenekleri hâlâ yüklenemedi.",
-        "Sharing is not available for this secret.": "Bu gizli için paylaşım kullanılamıyor."
+        "Sharing is not available for this secret.": "Bu gizli için paylaşım kullanılamıyor.",
+        "An administrator turned off sharing with that organisation.": "Bir yönetici o kuruluşla paylaşımı kapattı.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Bir yönetici şu ortak kuruluşlarla paylaşımı kapattı: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Hiçbir şey kaydedilmedi. {reasons} Daha sonra yeniden deneyin ya da onlar olmadan kaydedin; bu durumda bu gizli, onlarla yeniden paylaşana kadar onlarla paylaşılmaz.",
+        "Pin the published fingerprint": "Yayımlanan parmak izini sabitle",
+        "Pinned root fingerprint": "Sabitlenmiş kök parmak izi",
+        "Published root fingerprint": "Yayımlanan kök parmak izi",
+        "Re-pin root": "Kökü yeniden sabitle",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Bu ortak kuruluşların sertifika yetkilisi değişti ve buradaki bir yöneticinin bunu onaylaması gerekiyor: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Bu gizlinin paylaşıldığı bir ortak kuruluşun sertifikası, bu cihazın saatine göre geçerli değil. Hiçbir şey kaydedilmedi; bu cihazın tarih ve saatini kontrol edin.",
+        "These partner organisations cannot be reached: {partners}.": "Bu ortak kuruluşlara ulaşılamıyor: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Bu ortak hâlâ sabitlenmiş kök parmak izini yayımlıyor, bu yüzden yeniden sabitlenecek bir şey yok.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Geçiş anahtarı silinmedi. Daha sonra tekrar deneyin.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Değişikliği çevrimiçiyken yeniden yapın; orada onlar olmadan kaydedebilirsiniz.",
+        "Another organisation's root re-pinned": "Başka bir kuruluşun kökü yeniden sabitlendi"
     },
     "plurals": null
 }

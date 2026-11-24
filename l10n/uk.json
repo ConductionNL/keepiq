@@ -2077,7 +2077,21 @@
         "Files can only be added to a secret you own. Remove them to save.": "Файли можна додавати лише до власного секрету. Вилучіть їх, щоб зберегти.",
         "Sharing options could not be loaded.": "Не вдалося завантажити параметри спільного доступу.",
         "Sharing options still could not be loaded.": "Досі не вдалося завантажити параметри спільного доступу.",
-        "Sharing is not available for this secret.": "Спільний доступ до цього секрету недоступний."
+        "Sharing is not available for this secret.": "Спільний доступ до цього секрету недоступний.",
+        "An administrator turned off sharing with that organisation.": "Адміністратор вимкнув спільний доступ для цієї організації.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Адміністратор вимкнув спільний доступ для цих партнерських організацій: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Нічого не збережено. {reasons} Спробуйте пізніше або збережіть без них: тоді доступ до цього секрету для них буде припинено, доки ви знову не поділитеся ним із ними.",
+        "Pin the published fingerprint": "Закріпити опублікований відбиток",
+        "Pinned root fingerprint": "Закріплений кореневий відбиток",
+        "Published root fingerprint": "Опублікований кореневий відбиток",
+        "Re-pin root": "Закріпити корінь знову",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Центр сертифікації цих партнерських організацій змінився, і адміністратор тут має це підтвердити: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Сертифікат партнерської організації, з якою поділено цей секрет, недійсний за годинником цього пристрою. Нічого не збережено; перевірте дату й час на цьому пристрої.",
+        "These partner organisations cannot be reached: {partners}.": "Ці партнерські організації недоступні: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Цей партнер досі публікує закріплений кореневий відбиток, тож закріплювати знову нічого.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Ключ доступу не було вилучено. Спробуйте ще раз пізніше.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Повторіть зміну онлайн, де можна зберегти без них.",
+        "Another organisation's root re-pinned": "Корінь іншої організації закріплено знову"
     },
     "plurals": null
 }

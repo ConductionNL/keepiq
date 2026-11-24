@@ -40,7 +40,7 @@ use Throwable;
 /**
  * Partner allowlist: add, pin, permissions, and lookups by host or id.
  *
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 13 against a threshold of 10.
  *   Each is one allowlist operation or lookup; find() lets a share write read its own partner
  *   instead of loading every partner.
  *
@@ -60,6 +60,7 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 	 * @param FederationPartnerMapper $partnerMapper The partner mapper
 	 * @param IClientService $clientService HTTP client for partner discovery
 	 * @param IConfig $config System config (allow_local_remote_servers)
+	 * @param FederationPartnerAuditTrail $audit Audits a re-pin
 	 *
 	 * @return void
 	 *
@@ -69,6 +70,7 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 		private FederationPartnerMapper $partnerMapper,
 		private IClientService $clientService,
 		private IConfig $config,
+		private FederationPartnerAuditTrail $audit = new FederationPartnerAuditTrail(),
 	) {
 	}//end __construct()
 
@@ -231,6 +233,47 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 	}//end add()
 
 	/**
+	 * Pin the root fingerprint a partner publishes now, as add() pins it: only when it is the fingerprint the
+	 * administrator confirmed. A fingerprint equal to the pin stores nothing. A stored re-pin is audited with the
+	 * administrator as the actor.
+	 *
+	 * @param string $id The partner UUID
+	 * @param string $confirmedFingerprint The fingerprint the administrator compared
+	 * @param string $adminId The administrator
+	 *
+	 * @return array{partner:FederationPartner,changed:bool}
+	 *
+	 * @throws DoesNotExistException When the partner does not exist
+	 * @throws InvalidArgumentException When the partner cannot be read, its stored address and host disagree, or its
+	 *   fingerprint is not the one the administrator confirmed
+	 *
+	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 */
+	public function repin(string $id, string $confirmedFingerprint, string $adminId): array {
+		$partner = $this->partnerMapper->findById(id: $id);
+		$preview = $this->preview(url: $partner->getBaseUrl());
+		// The previewed host comes from the stored address, so this only refuses a row whose address and host disagree.
+		if ($preview['host'] !== $partner->getHost()) {
+			throw new InvalidArgumentException('The stored partner address does not match its pinned host');
+		}
+
+		if (hash_equals($preview['rootFingerprint'], strtolower(trim($confirmedFingerprint))) === false) {
+			throw new InvalidArgumentException('The partner root fingerprint is not the one you confirmed');
+		}
+
+		$old = $partner->getRootFingerprint();
+		if (hash_equals($old, $preview['rootFingerprint']) === true) {
+			return ['partner' => $partner, 'changed' => false];
+		}
+
+		$partner->setRootFingerprint($preview['rootFingerprint']);
+		$partner = $this->partnerMapper->update(entity: $partner);
+		$this->audit->repinned(partner: $partner, oldFingerprint: $old, adminId: $adminId);
+
+		return ['partner' => $partner, 'changed' => true];
+	}//end repin()
+
+	/**
 	 * Change a partner's directions.
 	 *
 	 * @param string $id The partner UUID
@@ -337,13 +380,37 @@ class FederationPartnerService implements FederationPartnerServiceInterface {
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function outboundPartnerForRemote(string $remote): ?FederationPartner {
-		$partner = $this->findByHost(host: (string)$this->hostOf(url: $remote));
-		if ($partner === null || $partner->getAllowOutbound() !== true) {
+		try {
+			return $this->requireOutboundPartner(remote: $remote);
+		} catch (InvalidArgumentException) {
 			return null;
+		}
+	}//end outboundPartnerForRemote()
+
+	/**
+	 * The partner users here may share to, by the host of a cloud id's remote, or why there is none.
+	 *
+	 * @param string $remote The cloud id's remote (URL or host)
+	 *
+	 * @return FederationPartner
+	 *
+	 * @throws InvalidArgumentException `not_a_partner` when that host is no partner, `outbound_disabled` when it is
+	 *   one whose outbound sharing is off
+	 *
+	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#scenario-sharing-to-bobs-partner-is-turned-off
+	 */
+	public function requireOutboundPartner(string $remote): FederationPartner {
+		$partner = $this->findByHost(host: (string)$this->hostOf(url: $remote));
+		if ($partner === null) {
+			throw new InvalidArgumentException('not_a_partner');
+		}
+
+		if ($partner->getAllowOutbound() !== true) {
+			throw new InvalidArgumentException('outbound_disabled');
 		}
 
 		return $partner;
-	}//end outboundPartnerForRemote()
+	}//end requireOutboundPartner()
 
 	/**
 	 * A partner by host, or null.

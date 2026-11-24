@@ -9008,11 +9008,129 @@
                 }
             }
         },
+        "/federation/partners/{id}/root": {
+            "put": {
+                "operationId": "federation-partner-repin",
+                "summary": "Pin the root fingerprint the partner publishes now, after the administrator compared it again",
+                "description": "Pin the root fingerprint the partner publishes now, after the administrator compared it again. The answer is `{partner, changed}`; `changed` is false when the partner still publishes the pinned fingerprint.",
+                "tags": [
+                    "federation-partner"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fingerprint": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "API-Version": {
+                                "$ref": "#/components/headers/API-Version"
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request is invalid",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/federation/recipient-certificate": {
             "post": {
                 "operationId": "federation-recipient-certificate",
                 "summary": "Look up a federated recipient's certificate at their partner instance",
-                "description": "Look up a federated recipient's certificate at their partner instance. The answer is `{cloudId, certificate, chain, partnerRootFingerprint, valueFields}`, where `valueFields` lists the value fields beyond `key`, `login` and `additionalFields` the partner stores, empty for an older Keepiq.",
+                "description": "Look up a federated recipient's certificate at their partner instance. The answer is `{cloudId, certificate, chain, partnerRootFingerprint, valueFields}`, where `valueFields` lists the value fields beyond `key`, `login` and `additionalFields` the partner stores, empty for an older Keepiq. A refusal answers `{message}` with the status the batch route gives it: 403, 404, 409 or 502.",
                 "tags": [
                     "federation"
                 ],
@@ -18423,6 +18541,28 @@
                     },
                     "401": {
                         "description": "Not logged in",
+                        "content": {
+                            "application/problem+json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/components/schemas/Problem"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    ]
+                                }
+                            },
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not allowed",
                         "content": {
                             "application/problem+json": {
                                 "schema": {

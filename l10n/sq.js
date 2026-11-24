@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Skedarët mund të shtohen vetëm te një sekret që e zotëroni. Hiqini për të ruajtur.",
         "Sharing options could not be loaded.": "Opsionet e ndarjes nuk mund të ngarkoheshin.",
         "Sharing options still could not be loaded.": "Opsionet e ndarjes ende nuk mund të ngarkoheshin.",
-        "Sharing is not available for this secret.": "Ndarja nuk është e disponueshme për këtë sekret."
+        "Sharing is not available for this secret.": "Ndarja nuk është e disponueshme për këtë sekret.",
+        "An administrator turned off sharing with that organisation.": "Një administrator e ka çaktivizuar ndarjen me atë organizatë.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Një administrator e ka çaktivizuar ndarjen me këto organizata partnere: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Asgjë nuk u ruajt. {reasons} Provoni përsëri më vonë, ose ruajeni pa to, gjë që ndalon ndarjen e këtij sekreti me to derisa ta ndani përsëri me to.",
+        "Pin the published fingerprint": "Fikso shenjën e gishtit të publikuar",
+        "Pinned root fingerprint": "Shenja e gishtit e rrënjës e fiksuar",
+        "Published root fingerprint": "Shenja e gishtit e rrënjës e publikuar",
+        "Re-pin root": "Fikso përsëri rrënjën",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Autoriteti i certifikimit i këtyre organizatave partnere ka ndryshuar dhe një administrator këtu duhet ta konfirmojë: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Certifikata e një organizate partnere me të cilën ndahet ky sekret nuk është e vlefshme sipas orës së kësaj pajisjeje. Asgjë nuk u ruajt; kontrolloni datën dhe orën e kësaj pajisjeje.",
+        "These partner organisations cannot be reached: {partners}.": "Këto organizata partnere nuk mund të arrihen: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ky partner ende publikon shenjën e gishtit të fiksuar të rrënjës, kështu që nuk ka asgjë për të fiksuar përsëri.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Çelësi i hyrjes nuk u fshi. Provoni përsëri më vonë.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Bëjeni sërish ndryshimin në linjë, ku mund ta ruani pa ata.",
+        "Another organisation's root re-pinned": "Rrënja e një organizate tjetër u fiksua përsëri"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Failus galima pridėti tik prie jums priklausančios paslapties. Pašalinkite juos, kad išsaugotumėte.",
         "Sharing options could not be loaded.": "Nepavyko įkelti bendrinimo parinkčių.",
         "Sharing options still could not be loaded.": "Bendrinimo parinkčių vis dar nepavyko įkelti.",
-        "Sharing is not available for this secret.": "Šios paslapties bendrinti negalima."
+        "Sharing is not available for this secret.": "Šios paslapties bendrinti negalima.",
+        "An administrator turned off sharing with that organisation.": "Administratorius išjungė bendrinimą su ta organizacija.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Administratorius išjungė bendrinimą su šiomis partnerių organizacijomis: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Niekas neišsaugota. {reasons} Bandykite vėliau arba išsaugokite be jų – tada šios paslapties bendrinimas su jomis sustabdomas, kol vėl ja pasidalinsite su jomis.",
+        "Pin the published fingerprint": "Prisegti paskelbtą kontrolinį kodą",
+        "Pinned root fingerprint": "Prisegtas šakninis kontrolinis kodas",
+        "Published root fingerprint": "Paskelbtas šakninis kontrolinis kodas",
+        "Re-pin root": "Iš naujo prisegti šaknį",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Šių partnerių organizacijų sertifikavimo įstaiga pasikeitė, ir čia esantis administratorius turi tai patvirtinti: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Partnerio organizacijos, su kuria bendrinama ši paslaptis, sertifikatas negalioja pagal šio įrenginio laikrodį. Niekas neišsaugota; patikrinkite šio įrenginio datą ir laiką.",
+        "These partner organisations cannot be reached: {partners}.": "Su šiomis partnerių organizacijomis nepavyksta susisiekti: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Šis partneris vis dar skelbia prisegtą šakninį kontrolinį kodą, todėl nėra ką prisegti iš naujo.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Prieigos raktas nebuvo ištrintas. Bandykite dar kartą vėliau.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Pakartokite pakeitimą prisijungę, kur galite išsaugoti be jų.",
+        "Another organisation's root re-pinned": "Kitos organizacijos šaknis prisegta iš naujo"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

@@ -51,7 +51,36 @@ const FAILURES = {
 		code: 'partner_unreachable',
 		partners: ['', 'b@y'],
 	},
+	'partner unreachable by reason, all unreachable': {
+		code: 'partner_unreachable',
+		partners: [
+			{ cloudId: 'a@x', reason: 'partner_unreachable' },
+			{ cloudId: 'b@y', reason: 'partner_unreachable' },
+		],
+	},
+	'partner stopped for a renewed root': {
+		code: 'partner_unreachable',
+		partners: [{ cloudId: 'a@x', reason: 'untrusted_root' }],
+	},
+	'partner stopped for outbound off': {
+		code: 'partner_unreachable',
+		partners: [{ cloudId: 'a@x', reason: 'outbound_disabled' }],
+	},
+	'partners stopped for mixed reasons': {
+		code: 'partner_unreachable',
+		partners: [
+			{ cloudId: 'a@x', reason: 'untrusted_root' },
+			{ cloudId: 'b@y', reason: 'partner_unreachable' },
+			{ cloudId: 'c@z', reason: 'outbound_disabled' },
+			{ cloudId: 'd@w', reason: 'untrusted_root' },
+		],
+	},
+	'partner stopped for an unknown reason': {
+		code: 'partner_unreachable',
+		partners: [{ cloudId: 'a@x', reason: 'mystery' }],
+	},
 	'partner lookup limit': { code: 'partner_lookup_limit', message: 'ignored' },
+	'partner clock': { code: 'partner_clock', message: 'ignored' },
 	'view only': { code: 'view_only' },
 	'upgrade required': {
 		code: 'partner_upgrade_required',

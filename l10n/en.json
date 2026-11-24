@@ -2051,7 +2051,21 @@
         "Files cannot be added while you are offline. Remove them to save.": "Files cannot be added while you are offline. Remove them to save.",
         "Sharing options could not be loaded.": "Sharing options could not be loaded.",
         "Sharing options still could not be loaded.": "Sharing options still could not be loaded.",
-        "Sharing is not available for this secret.": "Sharing is not available for this secret."
+        "Sharing is not available for this secret.": "Sharing is not available for this secret.",
+        "An administrator turned off sharing with that organisation.": "An administrator turned off sharing with that organisation.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "An administrator turned off sharing with these partner organisations: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.",
+        "Pin the published fingerprint": "Pin the published fingerprint",
+        "Pinned root fingerprint": "Pinned root fingerprint",
+        "Published root fingerprint": "Published root fingerprint",
+        "Re-pin root": "Re-pin root",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.",
+        "These partner organisations cannot be reached: {partners}.": "These partner organisations cannot be reached: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} The passkey was not deleted. Try again later.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Make the change again online, where you can save without them.",
+        "Another organisation's root re-pinned": "Another organisation's root re-pinned"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

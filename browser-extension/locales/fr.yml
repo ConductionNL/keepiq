@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq a envoyé, pour une personne avec qui cet élément est partagé, une clé de chiffrement que ce navigateur n’a pas pu lire. Rien n’a été enregistré.
   unverified: Cet élément est partagé avec des organisations partenaires, et ce navigateur ne peut pas confirmer qu’elles le recevraient exactement tel que vous l’avez vu. Rien n’a été enregistré ; effectuez cette modification dans l’application web Keepiq.
   partnerUnreachable: "Rien n’a été enregistré : une ou plusieurs organisations partenaires avec qui cet élément est partagé sont injoignables ({cloudIds}). Réessayez plus tard, ou enregistrez sans elles, ce qui suspend le partage de cet élément avec elles jusqu’à ce que vous le leur partagiez à nouveau."
+  partnerPaused: "Rien n’a été enregistré. {reasons} Réessayez plus tard, ou enregistrez sans elles, ce qui suspend le partage de cet élément avec elles jusqu’à ce que vous le leur partagiez à nouveau."
+  partnerPausedUnreachable: "Ces organisations partenaires sont injoignables : {cloudIds}."
+  partnerPausedRootChanged: "L’autorité de certification de ces organisations partenaires a changé, et un administrateur de votre Keepiq doit le confirmer : {cloudIds}."
+  partnerPausedSharingOff: "Un administrateur a désactivé le partage avec ces organisations partenaires : {cloudIds}."
   partnerUpgradeRequired: "Rien n’a été enregistré : le Keepiq de {cloudIds} est trop ancien pour recevoir une clé d’authentification. Supprimez la clé, ou demandez-leur de mettre Keepiq à jour."
   partnerUpgradeRequiredUnnamed: "Rien n’a été enregistré : une organisation partenaire avec qui cet élément est partagé utilise une version de Keepiq trop ancienne pour recevoir une clé d’authentification. Supprimez la clé, ou demandez-lui de mettre Keepiq à jour."
   partnerUpgradeVersion: Il leur faut Keepiq {version} ou ultérieur.

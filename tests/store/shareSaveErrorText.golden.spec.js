@@ -33,6 +33,7 @@ const CODES = [
 	'version_refused',
 	'incomplete',
 	'partner_lookup_limit',
+	'partner_clock',
 	'view_only',
 	'partner_unreachable',
 	'partner_upgrade_required',
@@ -102,6 +103,28 @@ const CASES = {
 			{ recipientCloudId: '' },
 			{ recipientCloudId: 'bob@cloud.example' },
 		]),
+	'ShareSaveError partner_unreachable, each partner with its own reason': () =>
+		new ShareSaveError('partner_unreachable', [
+			{ recipientCloudId: 'bob@cloud.example', reason: 'untrusted_root' },
+			{ recipientCloudId: 'eve@other.example', reason: 'partner_unreachable' },
+			{ recipientCloudId: 'dan@off.example', reason: 'outbound_disabled' },
+			{ recipientCloudId: 'ann@off.example', reason: 'outbound_disabled' },
+		]),
+	'ShareSaveError partner_unreachable, a root changed': () =>
+		new ShareSaveError('partner_unreachable', [
+			{ recipientCloudId: 'bob@cloud.example', reason: 'untrusted_root' },
+		]),
+	'ShareSaveError partner_unreachable, sharing turned off and an unknown reason':
+		() =>
+			new ShareSaveError('partner_unreachable', [
+				{ recipientCloudId: 'dan@off.example', reason: 'outbound_disabled' },
+				{ recipientCloudId: 'eve@other.example', reason: 'constructor' },
+			]),
+	'ShareSaveError partner_unreachable, an unnamed partner whose root changed':
+		() =>
+			new ShareSaveError('partner_unreachable', [
+				{ recipientCloudId: '', reason: 'untrusted_root' },
+			]),
 	'share save forbidden, fromShareSave "true"': () =>
 		httpError(403, { error: 'forbidden' }, { fromShareSave: 'true' }),
 }

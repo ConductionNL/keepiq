@@ -252,6 +252,10 @@ describe('FederatedShareForm sharing', () => {
 			'The other organisation did not answer. Try again later.',
 		],
 		['already_shared', 'This secret is already shared with that account.'],
+		[
+			'outbound_disabled',
+			'An administrator turned off sharing with that organisation.',
+		],
 		['no_such_code', 'Something went wrong. Try again.'],
 	])('says what the %s refusal of a share means', async (message, shown) => {
 		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ key: 'pw' })

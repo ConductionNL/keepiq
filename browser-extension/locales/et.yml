@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq saatis krüpteerimisvõtme isiku jaoks, kellega see kirje on jagatud, kuid see brauser ei saanud seda lugeda. Midagi ei salvestatud.
   unverified: See kirje on jagatud partnerorganisatsioonidega ja see brauser ei saa kinnitada, et nad saavad selle täpselt sellisena, nagu sina seda nägid. Midagi ei salvestatud; tee see muudatus Keepiqi veebirakenduses.
   partnerUnreachable: "Midagi ei salvestatud: partnerorganisatsioon, kellega see kirje on jagatud, pole kättesaadav ({cloudIds}). Proovi hiljem uuesti või salvesta ilma nendeta, mis peatab selle kirje jagamise nendega, kuni jagad seda nendega uuesti."
+  partnerPaused: "Midagi ei salvestatud. {reasons} Proovi hiljem uuesti või salvesta ilma nendeta, mis peatab selle kirje jagamise nendega, kuni jagad seda nendega uuesti."
+  partnerPausedUnreachable: "Need partnerorganisatsioonid pole kättesaadavad: {cloudIds}."
+  partnerPausedRootChanged: "Nende partnerorganisatsioonide sertifitseerimiskeskus on muutunud ja sinu Keepiqi administraator peab selle kinnitama: {cloudIds}."
+  partnerPausedSharingOff: "Administraator on nende partnerorganisatsioonidega jagamise välja lülitanud: {cloudIds}."
   partnerUpgradeRequired: "Midagi ei salvestatud: saajate {cloudIds} Keepiq on autentimisvõtme vastuvõtmiseks liiga vana. Eemalda võti või palu neil Keepiq uuendada."
   partnerUpgradeRequiredUnnamed: "Midagi ei salvestatud: partnerorganisatsiooni, kellega see kirje on jagatud, Keepiq on autentimisvõtme vastuvõtmiseks liiga vana. Eemalda võti või palu neil Keepiq uuendada."
   partnerUpgradeVersion: Nad vajavad Keepiqi versiooni {version} või uuemat.

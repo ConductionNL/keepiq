@@ -1974,7 +1974,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Datoteke se mogu dodati samo tajni koju posjedujete. Uklonite ih da biste spremili.",
         "Sharing options could not be loaded.": "Opcije dijeljenja nije bilo moguće učitati.",
         "Sharing options still could not be loaded.": "Opcije dijeljenja i dalje nije bilo moguće učitati.",
-        "Sharing is not available for this secret.": "Dijeljenje nije dostupno za ovu tajnu."
+        "Sharing is not available for this secret.": "Dijeljenje nije dostupno za ovu tajnu.",
+        "An administrator turned off sharing with that organisation.": "Administrator je isključio dijeljenje s tom organizacijom.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Administrator je isključio dijeljenje s ovim partnerskim organizacijama: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Ništa nije spremljeno. {reasons} Pokušajte ponovno kasnije ili spremite bez njih, čime se dijeljenje ove tajne s njima zaustavlja dok je ponovno ne podijelite s njima.",
+        "Pin the published fingerprint": "Prikvači objavljeni otisak",
+        "Pinned root fingerprint": "Prikvačeni korijenski otisak",
+        "Published root fingerprint": "Objavljeni korijenski otisak",
+        "Re-pin root": "Ponovno prikvači korijen",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Izdavatelj certifikata ovih partnerskih organizacija se promijenio i administrator ovdje to mora potvrditi: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Certifikat partnerske organizacije s kojom se ova tajna dijeli nije valjan prema satu ovog uređaja. Ništa nije spremljeno; provjerite datum i vrijeme ovog uređaja.",
+        "These partner organisations cannot be reached: {partners}.": "Ove partnerske organizacije nisu dostupne: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Ovaj partner i dalje objavljuje prikvačeni korijenski otisak, pa nema ništa za ponovno prikvačiti.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Pristupni ključ nije izbrisan. Pokušajte ponovno kasnije.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Ponovite promjenu na mreži, gdje je možete spremiti bez njih.",
+        "Another organisation's root re-pinned": "Korijen druge organizacije ponovno je prikvačen"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

@@ -1979,7 +1979,21 @@ OC.L10N.register(
         "Files can only be added to a secret you own. Remove them to save.": "Bestanden kunnen alleen worden toegevoegd aan een geheim dat van jou is. Verwijder ze om op te slaan.",
         "Sharing options could not be loaded.": "De deelopties konden niet worden geladen.",
         "Sharing options still could not be loaded.": "De deelopties konden nog steeds niet worden geladen.",
-        "Sharing is not available for this secret.": "Delen is niet beschikbaar voor dit geheim."
+        "Sharing is not available for this secret.": "Delen is niet beschikbaar voor dit geheim.",
+        "An administrator turned off sharing with that organisation.": "Een beheerder heeft delen met die organisatie uitgeschakeld.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Een beheerder heeft delen met deze partnerorganisaties uitgeschakeld: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Er is niets opgeslagen. {reasons} Probeer het later opnieuw, of sla op zonder hen; dit geheim wordt dan niet meer met hen gedeeld totdat je het opnieuw met hen deelt.",
+        "Pin the published fingerprint": "Gepubliceerde vingerafdruk vastzetten",
+        "Pinned root fingerprint": "Vastgezette rootvingerafdruk",
+        "Published root fingerprint": "Gepubliceerde rootvingerafdruk",
+        "Re-pin root": "Root opnieuw vastzetten",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "De certificaatautoriteit van deze partnerorganisaties is gewijzigd en een beheerder hier moet dat bevestigen: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Het certificaat van een partnerorganisatie waarmee dit geheim gedeeld is, is volgens de klok van dit apparaat niet geldig. Er is niets opgeslagen; controleer de datum en tijd van dit apparaat.",
+        "These partner organisations cannot be reached: {partners}.": "Deze partnerorganisaties zijn niet bereikbaar: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Deze partner publiceert nog steeds de vastgezette rootvingerafdruk, dus er valt niets opnieuw vast te zetten.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} De passkey is niet verwijderd. Probeer het later opnieuw.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Voer de wijziging online opnieuw uit; daar kun je opslaan zonder hen.",
+        "Another organisation's root re-pinned": "Root van een andere organisatie opnieuw vastgezet"
     },
     "nplurals=2; plural=(n != 1);"
 )

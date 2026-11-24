@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq stuurde voor iemand met wie dit item gedeeld is een versleutelingssleutel die deze browser niet kon lezen. Er is niets opgeslagen.
   unverified: Dit item is gedeeld met partnerorganisaties, en deze browser kan niet bevestigen dat ze het precies zo krijgen als jij het zag. Er is niets opgeslagen; voer deze wijziging uit in de Keepiq-webapp.
   partnerUnreachable: "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, is niet bereikbaar ({cloudIds}). Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
+  partnerPaused: "Er is niets opgeslagen. {reasons} Probeer het later opnieuw, of sla op zonder hen. Dan wordt het delen van dit item met hen gepauzeerd tot je het opnieuw met hen deelt."
+  partnerPausedUnreachable: "Deze partnerorganisaties zijn niet bereikbaar: {cloudIds}."
+  partnerPausedRootChanged: "De certificaatautoriteit van deze partnerorganisaties is gewijzigd en een beheerder van je Keepiq moet dat bevestigen: {cloudIds}."
+  partnerPausedSharingOff: "Een beheerder heeft delen met deze partnerorganisaties uitgeschakeld: {cloudIds}."
   partnerUpgradeRequired: "Er is niets opgeslagen: de Keepiq van {cloudIds} is te oud om een authenticatorsleutel te ontvangen. Verwijder de sleutel, of vraag hen Keepiq bij te werken."
   partnerUpgradeRequiredUnnamed: "Er is niets opgeslagen: een partnerorganisatie waarmee dit item gedeeld is, heeft een Keepiq die te oud is om een authenticatorsleutel te ontvangen. Verwijder de sleutel, of vraag hen Keepiq bij te werken."
   partnerUpgradeVersion: Ze hebben Keepiq {version} of nieuwer nodig.

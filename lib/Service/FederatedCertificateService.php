@@ -183,7 +183,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 	 *
 	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,partnerRootFingerprint:string,valueFields:list<string>}
 	 *
-	 * @throws InvalidArgumentException `not_a_partner` or `unknown_recipient`
+	 * @throws InvalidArgumentException `not_a_partner`, `outbound_disabled` or `unknown_recipient`
 	 * @throws RuntimeException `federation_unavailable`, `partner_unreachable` or `bad_chain`
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
@@ -201,10 +201,7 @@ class FederatedCertificateService implements FederatedCertificateServiceInterfac
 			throw new InvalidArgumentException('unknown_recipient');
 		}
 
-		$partner = $this->partners->outboundPartnerForRemote(remote: $resolved->getRemote());
-		if ($partner === null) {
-			throw new InvalidArgumentException('not_a_partner');
-		}
+		$partner = $this->partners->requireOutboundPartner(remote: $resolved->getRemote());
 
 		try {
 			$response = $this->ocmDiscovery->requestRemoteOcmEndpoint(

@@ -2051,7 +2051,21 @@
         "Files can only be added to a secret you own. Remove them to save.": "Датотеки може да се додаваат само на ваша тајна. Отстранете ги за да зачувате.",
         "Sharing options could not be loaded.": "Опциите за споделување не можеа да се вчитаат.",
         "Sharing options still could not be loaded.": "Опциите за споделување сè уште не можеа да се вчитаат.",
-        "Sharing is not available for this secret.": "Споделувањето не е достапно за оваа тајна."
+        "Sharing is not available for this secret.": "Споделувањето не е достапно за оваа тајна.",
+        "An administrator turned off sharing with that organisation.": "Администратор го исклучи споделувањето со таа организација.",
+        "An administrator turned off sharing with these partner organisations: {partners}.": "Администратор го исклучи споделувањето со овие партнерски организации: {partners}.",
+        "Nothing was saved. {reasons} Try again later, or save without them, which stops sharing this secret with them until you share it with them again.": "Ништо не е зачувано. {reasons} Обидете се повторно подоцна или зачувајте без нив, со што се запира споделувањето на оваа тајна со нив додека повторно не ја споделите со нив.",
+        "Pin the published fingerprint": "Закачи го објавениот отпечаток",
+        "Pinned root fingerprint": "Закачен корен отпечаток",
+        "Published root fingerprint": "Објавен корен отпечаток",
+        "Re-pin root": "Повторно закачи го коренот",
+        "The certificate authority of these partner organisations changed, and an administrator here has to confirm it: {partners}.": "Издавачот на сертификати на овие партнерски организации се промени и администратор овде мора да го потврди тоа: {partners}.",
+        "The certificate of a partner organisation this secret is shared with is not valid by this device's clock. Nothing was saved; check this device's date and time.": "Сертификатот на партнерска организација со која е споделена оваа тајна не е важечки според часовникот на овој уред. Ништо не е зачувано; проверете ги датумот и времето на овој уред.",
+        "These partner organisations cannot be reached: {partners}.": "Овие партнерски организации не се достапни: {partners}.",
+        "This partner still publishes the pinned root fingerprint, so there is nothing to re-pin.": "Овој партнер сè уште го објавува закачениот корен отпечаток, па нема што повторно да се закачи.",
+        "{reasons} The passkey was not deleted. Try again later.": "{reasons} Клучот за пристап не беше избришан. Обидете се повторно подоцна.",
+        "{reasons} Make the change again online, where you can save without them.": "{reasons} Направете ја промената повторно на интернет, каде што можете да зачувате без нив.",
+        "Another organisation's root re-pinned": "Коренот на друга организација е повторно закачен"
     },
     "plurals": null
 }

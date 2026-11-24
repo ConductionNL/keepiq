@@ -70,7 +70,7 @@ interface FederatedCertificateServiceInterface {
 	 *
 	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,partnerRootFingerprint:string,valueFields:list<string>}
 	 *
-	 * @throws InvalidArgumentException `not_a_partner` or `unknown_recipient`
+	 * @throws InvalidArgumentException `not_a_partner`, `outbound_disabled` or `unknown_recipient`
 	 * @throws RuntimeException `federation_unavailable`, `partner_unreachable` or `bad_chain`
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser

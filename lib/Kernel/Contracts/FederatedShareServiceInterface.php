@@ -78,7 +78,7 @@ interface FederatedShareServiceInterface {
 	 * @return FederatedShare
 	 *
 	 * @throws NotFoundException When the secret is not the user's own
-	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `unknown_recipient`, `already_shared`, or
+	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `outbound_disabled`, `unknown_recipient`, `already_shared`, or
 	 *   `copy_fields_mismatch` when its totp or passkeys does not mirror the source's
 	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
 	 * @throws RuntimeException `federation_unavailable`, or `delivery_failed` when the partner refused it

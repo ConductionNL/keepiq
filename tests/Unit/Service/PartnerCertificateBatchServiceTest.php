@@ -204,6 +204,35 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	}//end testOneUnreachablePartnerDoesNotFailTheOthers()
 
 	/**
+	 * A partner whose outbound sharing is off is refused for its own shares with `outbound_disabled` and 403,
+	 * apart from a partner that is gone.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#scenario-sharing-to-bobs-partner-is-turned-off
+	 */
+	public function testAPartnerWithOutboundOffIsRefusedWithItsOwnReason(): void {
+		$this->row(id: 's1', owner: 'alice', cloudId: 'bob@off.example');
+		$this->row(id: 's2', owner: 'alice', cloudId: 'dave@gone.example');
+		$this->certificates->method('lookup')->willReturnCallback(
+			static function (string $cloudId): array {
+				throw new InvalidArgumentException($cloudId === 'bob@off.example' ? 'outbound_disabled' : 'not_a_partner');
+			}
+		);
+
+		$result = $this->service()->lookup(shareIds: ['s1', 's2'], userId: 'alice');
+
+		$this->assertSame(expected: [], actual: $result['certificates']);
+		$this->assertSame(
+			expected: [
+				's1' => ['status' => Http::STATUS_FORBIDDEN, 'message' => 'outbound_disabled'],
+				's2' => ['status' => Http::STATUS_FORBIDDEN, 'message' => 'not_a_partner'],
+			],
+			actual: $result['refused']
+		);
+	}//end testAPartnerWithOutboundOffIsRefusedWithItsOwnReason()
+
+	/**
 	 * More than 100 distinct ids are refused before any row is read.
 	 *
 	 * @return void
@@ -225,6 +254,7 @@ class PartnerCertificateBatchServiceTest extends TestCase {
 	public function testRefusalStatus(): void {
 		$cases = [
 			[Http::STATUS_FORBIDDEN, new InvalidArgumentException('not_a_partner')],
+			[Http::STATUS_FORBIDDEN, new InvalidArgumentException('outbound_disabled')],
 			[Http::STATUS_NOT_FOUND, new InvalidArgumentException('unknown_recipient')],
 			[Http::STATUS_CONFLICT, new RuntimeException('federation_unavailable')],
 			[Http::STATUS_BAD_GATEWAY, new RuntimeException('bad_chain')],

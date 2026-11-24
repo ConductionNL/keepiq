@@ -402,6 +402,7 @@ $extra = [
     ['name' => 'federationPartner#preview', 'url' => '/api/v1/federation/partners/preview', 'verb' => 'POST'],
     ['name' => 'federationPartner#create',  'url' => '/api/v1/federation/partners',         'verb' => 'POST'],
     ['name' => 'federationPartner#update',  'url' => '/api/v1/federation/partners/{id}',    'verb' => 'PUT'],
+    ['name' => 'federationPartner#repin',   'url' => '/api/v1/federation/partners/{id}/root', 'verb' => 'PUT'],
     ['name' => 'federationPartner#destroy', 'url' => '/api/v1/federation/partners/{id}',    'verb' => 'DELETE'],
     ['name' => 'federation#recipientCertificate', 'url' => '/api/v1/federation/recipient-certificate', 'verb' => 'POST'],
     ['name' => 'federation#recipientCertificates', 'url' => '/api/v1/federation/recipient-certificates', 'verb' => 'POST'],

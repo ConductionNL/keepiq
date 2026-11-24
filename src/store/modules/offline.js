@@ -38,6 +38,8 @@ import {
 import { decryptSnapshot, encryptSnapshot } from '../../offline/snapshot.js'
 import {
 	notifyOwnerOnly,
+	pausedForAnotherReason,
+	pausedPartnersText,
 	saveShared,
 	ShareSaveError,
 	shareSaveErrorText,
@@ -66,8 +68,9 @@ class UnknownQueueOpError extends Error {
 /**
  * How a replay error settles its entry. A queued entry has no "save without
  * them", so an unreachable partner, a partner lookup limit that outlasted the
- * wait or a malformed share save fails the entry instead of holding up every
- * later one. So does a copy without a write grade, which no retry can save.
+ * wait, a partner certificate this device's clock rejects or a malformed
+ * share save fails the entry instead of holding up every later one. So does a
+ * copy without a write grade, which no retry can save.
  *
  * @param {Error|object} e The error.
  * @return {string} conflict, failed or retry.
@@ -84,6 +87,7 @@ function replayKind(e) {
 				stale: 'conflict',
 				partner_unreachable: 'failed',
 				partner_lookup_limit: 'failed',
+				partner_clock: 'failed',
 				view_only: 'failed',
 				partner_upgrade_required: 'failed',
 			}[e.code] ?? 'retry'
@@ -134,12 +138,12 @@ function isUnreachablePartner(e) {
 /**
  * @param {Error|object} e The error.
  * @return {boolean} Whether a share save stopped at the partner lookup
- *   limit or at a view-only copy.
+ *   limit, at this device's clock or at a view-only copy.
  */
-function isLookupLimitOrViewOnly(e) {
+function isLookupLimitClockOrViewOnly(e) {
 	return (
 		e instanceof ShareSaveError
-		&& ['partner_lookup_limit', 'view_only'].includes(e.code)
+		&& ['partner_lookup_limit', 'partner_clock', 'view_only'].includes(e.code)
 	)
 }
 
@@ -179,11 +183,17 @@ function hasShareSaveText(e) {
 }
 
 /**
- * @param {Error|object} e A share save error naming unreachable partners.
- * @return {object} Its stored failure.
+ * @param {Error|object} e A share save error naming the partners it stopped for.
+ * @return {object} Its stored failure, with each partner's cloud id and reason.
  */
 function unreachableFailure(e) {
-	return { code: 'partner_unreachable', partners: partnerIdsOf(e) }
+	return {
+		code: 'partner_unreachable',
+		partners: (e.partners ?? []).map((p) => ({
+			cloudId: p.recipientCloudId,
+			reason: p.reason ?? 'partner_unreachable',
+		})),
+	}
 }
 
 /**
@@ -235,7 +245,7 @@ function notAllowedFailure() {
 /** The failure each kind of replay error is stored as, first match wins. */
 const FAILURE_RULES = [
 	[isUnreachablePartner, unreachableFailure],
-	[isLookupLimitOrViewOnly, codeFailure],
+	[isLookupLimitClockOrViewOnly, codeFailure],
 	[needsPartnerUpgrade, upgradeFailure],
 	[isRefusedShareSave, refusedFailure],
 	[isScanPending, scanPendingFailure],
@@ -438,14 +448,45 @@ function unknownOpText() {
 }
 
 /**
- * The text for a stored unreachable-partner failure, naming the partners
- * it recorded.
+ * The partners a stored failure names, as share-save partners. A failure
+ * stored as plain cloud ids names unreachable partners.
+ *
+ * @param {object} failure The stored failure.
+ * @return {Array<{recipientCloudId: string, reason: string}>}
+ */
+function storedPartners(failure) {
+	return (failure.partners ?? []).map((partner) =>
+		typeof partner === 'string'
+			? { recipientCloudId: partner, reason: 'partner_unreachable' }
+			: { recipientCloudId: partner?.cloudId, reason: partner?.reason },
+	)
+}
+
+/**
+ * The text for a stored failure of partners the save stopped for, naming
+ * the partners it recorded and why for each when one is not merely
+ * unreachable.
  *
  * @param {object} failure The stored failure.
  * @return {string}
+ * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  */
 function unreachableText(failure) {
-	const partners = (failure.partners ?? []).filter(Boolean).join(', ')
+	const named = storedPartners(failure)
+	if (pausedForAnotherReason(named)) {
+		// Each sentence escaped its own partners already.
+		return t(
+			'keepiq',
+			'{reasons} Make the change again online, where you can save without them.',
+			{ reasons: pausedPartnersText(named) },
+			undefined,
+			{ escape: false },
+		)
+	}
+	const partners = named
+		.map((partner) => partner.recipientCloudId)
+		.filter(Boolean)
+		.join(', ')
 	if (partners === '') {
 		return t(
 			'keepiq',
@@ -518,6 +559,7 @@ const FAILURE_TEXTS = new Map([
 	['unknown_op', unknownOpText],
 	['partner_unreachable', unreachableText],
 	['partner_lookup_limit', shareSaveCodeText],
+	['partner_clock', shareSaveCodeText],
 	['view_only', shareSaveCodeText],
 	['partner_upgrade_required', upgradeText],
 	['refused', refusedText],

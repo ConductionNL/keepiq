@@ -114,6 +114,33 @@ describe('writeErrorText', () => {
 		expect(writeErrorText({ code: 'partner_unreachable', partners: partners('bob@other.example', 'carol@third.example', 'dave@fourth.example') })).toContain(`(${list})`)
 	})
 
+	describe('partners a save stopped for a reason other than being unreachable', () => {
+		const stopped = (...partners: Array<[string, string]>) => ({
+			code: 'partner_unreachable',
+			partners: partners.map(([cloudId, reason], index) => ({ shareId: `s${index}`, cloudId, reason })),
+		}) satisfies VaultWriteError
+
+		it.each(LOCALES)('names each with why in %s, and offers to save without them', (locale) => {
+			setLocale(locale)
+			const text = writeErrorText(stopped(['bob@other.example', 'untrusted_root'], ['carol@third.example', 'partner_unreachable'], ['dave@off.example', 'outbound_disabled'], ['erin@off.example', 'outbound_disabled']))
+			const reasons = [
+				t('writeErrors.partnerPausedRootChanged', { cloudIds: 'bob@other.example' }),
+				t('writeErrors.partnerPausedUnreachable', { cloudIds: 'carol@third.example' }),
+				t('writeErrors.partnerPausedSharingOff', { cloudIds: new Intl.ListFormat(t('language'), { type: 'conjunction' }).format(['dave@off.example', 'erin@off.example']) }),
+			].join(' ')
+			expect(text).toBe(t('writeErrors.partnerPaused', { reasons }))
+		})
+
+		it('reads an unknown reason as unreachable, and keeps the plain text when every partner is unreachable', () => {
+			expect(writeErrorText(stopped(['bob@other.example', 'outbound_disabled'], ['carol@third.example', 'constructor']))).toBe(
+				t('writeErrors.partnerPaused', {
+					reasons: `${t('writeErrors.partnerPausedSharingOff', { cloudIds: 'bob@other.example' })} ${t('writeErrors.partnerPausedUnreachable', { cloudIds: 'carol@third.example' })}`,
+				}),
+			)
+			expect(writeErrorText(stopped(['bob@other.example', 'partner_unreachable']))).toBe(t('writeErrors.partnerUnreachable', { cloudIds: 'bob@other.example' }))
+		})
+	})
+
 	it('uses the passkey wording for a conflict in the passkey window only', () => {
 		expect(writeErrorText({ code: 'conflict' }, 'passkey')).toBe(t('passkey.errors.conflict'))
 		for (const context of CONTEXTS.filter((context) => context !== 'passkey')) expect(writeErrorText({ code: 'conflict' }, context)).not.toBe(t('passkey.errors.conflict'))

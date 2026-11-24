@@ -96,6 +96,25 @@ function partnerUpgradeText(error: VaultWriteError, context: WriteContext): stri
 	return error.requiredVersion ? `${text} ${i18n.t('writeErrors.partnerUpgradeVersion', { version: error.requiredVersion })}` : text
 }
 
+/** The sentence naming the partners a save stopped for, by why; a reason not listed reads as unreachable. */
+const PAUSED_SENTENCES = new Map<string, (cloudIds: string) => string>([
+	['partner_unreachable', (cloudIds) => i18n.t('writeErrors.partnerPausedUnreachable', { cloudIds })],
+	['untrusted_root', (cloudIds) => i18n.t('writeErrors.partnerPausedRootChanged', { cloudIds })],
+	['outbound_disabled', (cloudIds) => i18n.t('writeErrors.partnerPausedSharingOff', { cloudIds })],
+])
+
+/** Names why for each partner when one is not merely unreachable. */
+function partnerUnreachableText(error: VaultWriteError): string {
+	const byReason = new Map<string, string[]>()
+	for (const { cloudId, reason } of error.partners ?? []) {
+		const key = reason && PAUSED_SENTENCES.has(reason) ? reason : 'partner_unreachable'
+		byReason.set(key, [...(byReason.get(key) ?? []), cloudId])
+	}
+	if (![...byReason.keys()].some((reason) => reason !== 'partner_unreachable')) return i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList(partnerCloudIds(error)) })
+	const reasons = [...byReason].map(([reason, cloudIds]) => PAUSED_SENTENCES.get(reason)!(cloudIdList(cloudIds))).join(' ')
+	return i18n.t('writeErrors.partnerPaused', { reasons })
+}
+
 function shareScanPendingText(_: VaultWriteError, context: WriteContext): string {
 	if (context === 'open') return i18n.t('writeErrors.shareScanPendingOpen')
 	if (context === 'delete') return i18n.t('writeErrors.shareScanPendingDelete')
@@ -110,7 +129,7 @@ const SHARING_WRITE_ERRORS = new Map<WriteErrorCode, WriteErrorWording>([
 	['incomplete', () => i18n.t('writeErrors.incomplete')],
 	['bad_certificate', () => i18n.t('writeErrors.badCertificate')],
 	['unverified', () => i18n.t('writeErrors.unverified')],
-	['partner_unreachable', (error) => i18n.t('writeErrors.partnerUnreachable', { cloudIds: cloudIdList(partnerCloudIds(error)) })],
+	['partner_unreachable', partnerUnreachableText],
 	['partner_upgrade_required', partnerUpgradeText],
 	['partner_lookup_limit', () => i18n.t('writeErrors.partnerLookupLimit')],
 	['federation_unavailable', () => i18n.t('writeErrors.federationUnavailable')],

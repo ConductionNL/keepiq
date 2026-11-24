@@ -120,7 +120,13 @@ class FederatedShareController extends Controller {
 				],
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+			// A partner with outbound off answers 403, as the lookups do; any other refusal, `not_a_partner` too, 400.
+			$status = Http::STATUS_BAD_REQUEST;
+			if ($exception->getMessage() === 'outbound_disabled') {
+				$status = Http::STATUS_FORBIDDEN;
+			}
+
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: $status);
 		} catch (PartnerUpgradeRequiredException $exception) {
 			return $this->upgradeRequired(exception: $exception, shareId: null);
 		} catch (RuntimeException $exception) {

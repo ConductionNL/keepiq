@@ -271,6 +271,10 @@ writeErrors:
   badCertificate: Keepiq lähetti salausavaimen henkilölle, jonka kanssa tämä kohde on jaettu, mutta tämä selain ei voinut lukea sitä. Mitään ei tallennettu.
   unverified: Tämä kohde on jaettu kumppaniorganisaatioiden kanssa, eikä tämä selain voi varmistaa, että ne saavat sen täsmälleen sellaisena kuin näit sen. Mitään ei tallennettu; tee tämä muutos Keepiq-verkkosovelluksessa.
   partnerUnreachable: "Mitään ei tallennettu: kumppaniorganisaatioon, jonka kanssa tämä kohde on jaettu, ei saada yhteyttä ({cloudIds}). Yritä myöhemmin uudelleen tai tallenna ilman niitä, jolloin kohteen jakaminen niille keskeytyy, kunnes jaat sen niille uudelleen."
+  partnerPaused: "Mitään ei tallennettu. {reasons} Yritä myöhemmin uudelleen tai tallenna ilman niitä, jolloin kohteen jakaminen niille keskeytyy, kunnes jaat sen niille uudelleen."
+  partnerPausedUnreachable: "Näihin kumppaniorganisaatioihin ei saada yhteyttä: {cloudIds}."
+  partnerPausedRootChanged: "Näiden kumppaniorganisaatioiden varmentaja on vaihtunut, ja Keepiqisi ylläpitäjän on vahvistettava se: {cloudIds}."
+  partnerPausedSharingOff: "Ylläpitäjä on poistanut jakamisen käytöstä näiden kumppaniorganisaatioiden kanssa: {cloudIds}."
   partnerUpgradeRequired: "Mitään ei tallennettu: vastaanottajien {cloudIds} Keepiq on liian vanha vastaanottamaan todennusavainta. Poista avain tai pyydä heitä päivittämään Keepiq."
   partnerUpgradeRequiredUnnamed: "Mitään ei tallennettu: kumppaniorganisaatiolla, jonka kanssa tämä kohde on jaettu, on liian vanha Keepiq vastaanottamaan todennusavainta. Poista avain tai pyydä heitä päivittämään Keepiq."
   partnerUpgradeVersion: He tarvitsevat Keepiqin version {version} tai uudemman.
