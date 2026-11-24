@@ -582,9 +582,11 @@ const ANSWERS: Answers = {
 	},
 }
 
-/** A bar whose capture was saved or updated still closes at once on Close. */
+/** A bar whose capture was saved or updated still closes at once on Close, and one kept for its note still expands. */
 function closeSaved(tabId: number, m: NotificationToBackground): null {
-	if (m.kind === 'capture.dismiss' && typeof m.key === 'string' && closing.get(tabId)?.delete(m.key)) hide(tabId, [m.key])
+	if (typeof m.key !== 'string') return null
+	if (m.kind === 'capture.dismiss' && closing.get(tabId)?.delete(m.key)) hide(tabId, [m.key])
+	else if (m.kind === 'capture.expand' && closing.get(tabId)?.has(m.key)) void toTop(tabId, { kind: 'capture.expand', key: m.key })
 	return null
 }
 

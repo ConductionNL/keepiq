@@ -1111,8 +1111,10 @@ describe('capture.update', () => {
 		expect(await update()).toEqual({ ok: true, value: { shareSave: { notReached: 1 } } })
 		vi.advanceTimersByTime(SAVED_CLOSE_MS)
 		expect(kinds()).toEqual([['capture.verify', 0]])
+		expect(await ask({ kind: 'capture.expand' })).toBeNull()
+		expect(kinds()).toEqual([['capture.verify', 0], ['capture.expand', 0]])
 		expect(await ask({ kind: 'capture.dismiss', never: false })).toBeNull()
-		expect(kinds()).toEqual([['capture.verify', 0], ['capture.hide', 0]])
+		expect(kinds()).toEqual([['capture.verify', 0], ['capture.expand', 0], ['capture.hide', 0]])
 	})
 
 	it('closes the bar after three seconds for a note with nothing the bar can word, which it then never gets', async () => {

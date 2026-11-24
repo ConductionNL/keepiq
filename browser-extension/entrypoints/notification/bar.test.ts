@@ -600,6 +600,19 @@ describe('saved', () => {
 		expect(kinds()).toEqual(['capture.state', 'capture.update', 'capture.dismiss'])
 	})
 
+	it('lets a note longer than the bar scroll from the keyboard', async () => {
+		vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLElement) {
+			return this.classList.contains('bar__notice') ? 120 : 0
+		})
+		vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) {
+			return this.classList.contains('bar__notice') ? 80 : 0
+		})
+		writeReply = { ok: true, value: { shareSave: { ownerOnly: true, notReached: 2, paused: ['bob@cloud.partner.example'] } } }
+		await open(update())
+		await click(button('Update'))
+		expect(bar().querySelector<HTMLElement>('.bar__notice')!.tabIndex).toBe(0)
+	})
+
 	it('reads one partner recipient left out in the singular, and leaves out a note field of the wrong shape', async () => {
 		writeReply = { ok: true, value: { shareSave: { notReached: 1, ownerOnly: 'yes', paused: [3] } } }
 		await open(update())
@@ -894,6 +907,22 @@ describe('compact', () => {
 		act()
 		await flush()
 		expect(expands()).toEqual([{ kind: 'capture.expand', key: KEY }])
+	})
+
+	it('grows a bar kept for its note from the expand control, where only one line of the note shows', async () => {
+		writeReply = { ok: true, value: { shareSave: { notReached: 2 } } }
+		await open(update())
+		await click(button('Update'))
+		expect(bar().className).toBe('bar bar--notice')
+		expect(expandControl().getAttribute('aria-label')).toBe('Show options')
+		// The press on Update grew the bar; the host shrank it again once focus and the pointer left.
+		resize(128)
+		resize(40)
+		const before = expands().length
+		expandControl().focus()
+		await flush()
+		expect(expands()).toHaveLength(before + 1)
+		expect(expands().at(-1)).toEqual({ kind: 'capture.expand', key: KEY })
 	})
 
 	it('closes on Escape rather than expanding', async () => {
