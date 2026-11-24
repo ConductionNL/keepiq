@@ -529,14 +529,15 @@ class FederatedShareSendTest extends TestCase {
 	 * `src` is Alice's copy of `orig`, which `$owner` owns: Alice herself after a transfer made her its owner.
 	 *
 	 * @param string $owner The source's owner
+	 * @param string $ownerType The kind of owner: a user, or an organisation whose id may equal a user's
 	 *
 	 * @return void
 	 */
-	private function aliceHoldsACopyOfASourceOwnedBy(string $owner): void {
+	private function aliceHoldsACopyOfASourceOwnedBy(string $owner, string $ownerType = 'user'): void {
 		$orig = new Secret();
 		$orig->setId('orig');
 		$orig->setName('Supplier portal');
-		$orig->setOwnerType('user');
+		$orig->setOwnerType($ownerType);
 		$orig->setOwnerId($owner);
 		$this->otherSecrets['orig'] = $orig;
 		$this->copyRows[] = $this->copyRow();
@@ -622,6 +623,30 @@ class FederatedShareSendTest extends TestCase {
 		$this->assertSame('not_shareable', $response->getData()['message']);
 		$this->assertSame([], $this->rows);
 		$this->assertSame([], $this->sent);
+	}
+
+	/**
+	 * A source an organisation owns is not the caller's, even when the organisation's id equals the caller's user id:
+	 * the copy is refused and its list does not reach the source.
+	 *
+	 * @spec openspec/changes/sharing-share-save-missed-partner-shares/specs/federated-sharing/spec.md#scenario-the-new-owner-shares-their-own-copy-with-a-partner
+	 */
+	public function testASourceAnOrganisationOwnsUnderTheCallersIdIsNotTheirs(): void {
+		$this->aliceHoldsACopyOfASourceOwnedBy(owner: 'alice', ownerType: 'organisation');
+		$orig = new FederatedShare();
+		$orig->setId('fs-orig');
+		$orig->setSourceSecretId('orig');
+		$orig->setOwnerId('alice');
+		$this->rows['fs-orig'] = $orig;
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+
+		$response = $this->share($controller);
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('not_shareable', $response->getData()['message']);
+		$this->assertSame(['fs-orig'], array_keys($this->rows));
+		$this->assertSame([], $this->sent);
+		$this->assertSame([], $controller->index('src')->getData());
 	}
 
 	/**
