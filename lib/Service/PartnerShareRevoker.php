@@ -8,8 +8,9 @@
  * - `revoke()` ends one share the owner revokes, and tells the partner now.
  * - When a secret is deleted for good, its partner shares end before its row goes: the owner's purge tells each partner now,
  *   the trash retention job, an account deletion and the delete of a received copy with its share leave every SHARE_UNSHARED to the retry job.
- * - A declined share of a deleted secret is deleted without a notification, and so is a suspended one whose partner was removed:
+ * - A declined share of a deleted secret is deleted without a notification, and so is one whose partner was removed:
  *   that instance is no longer trusted with what an unshare says. A revoke whose SHARE_UNSHARED is pending keeps it.
+ * - `dropUnsharesToRemovedPartners()` lets the retry job drop a pending SHARE_UNSHARED whose partner was removed since it was queued.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -149,6 +150,36 @@ class PartnerShareRevoker {
 	}//end queueForDeletedCopy()
 
 	/**
+	 * The retry job, before it sends: drop every due SHARE_UNSHARED whose partner was removed since it was queued, and send it nothing,
+	 * as that instance is no longer trusted with what an unshare says. Each is recorded as failed with reason `partner_removed`.
+	 * It reads the same due rows the retry job's run sends next.
+	 *
+	 * @param DateTime $now The current time
+	 * @param int $limit The most due shares to look at, as many as one retry run sends
+	 *
+	 * @return int How many were dropped
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-removed-partner-is-not-told
+	 */
+	public function dropUnsharesToRemovedPartners(DateTime $now, int $limit = 50): int {
+		$dropped = 0;
+		$type = FederatedNotificationDelivery::SHARE_UNSHARED;
+		foreach ($this->shareMapper->findDueNotifications(now: $now, limit: $limit, ending: $type) as $row) {
+			if ($row->getPendingNotification() !== $type || $this->partners->find(id: $row->getPartnerId()) !== null) {
+				continue;
+			}
+
+			if ($this->shareMapper->deleteIfPending(share: $row, pending: $type) > 0) {
+				$extra = ['notification' => $type, 'reason' => 'partner_removed'];
+				$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_FAILED, row: $row, actorId: null, extra: $extra);
+				$dropped++;
+			}
+		}
+
+		return $dropped;
+	}//end dropUnsharesToRemovedPartners()
+
+	/**
 	 * A user's account is deleted: end the partner shares of every secret the user still owns, and leave every SHARE_UNSHARED to the retry job.
 	 * Runs after the delegated secrets went to their delegates, whose shares stay, and before the user's secrets go.
 	 * A share whose own owner is the user but whose secret someone else owns now, left behind by an earlier transfer, is that owner's and stays too.
@@ -189,8 +220,8 @@ class PartnerShareRevoker {
 
 	/**
 	 * Delete a share of a deleted secret that is not to be told, recorded as revoked: a declined one, whose recipient trashed or deleted
-	 * the copy and is sent nothing more (a restore of a trashed copy finds the share ended either way), and a suspended one whose partner
-	 * was removed, as that instance is no longer trusted with the share id, the shared-secret hash and the owner an unshare carries.
+	 * the copy and is sent nothing more (a restore of a trashed copy finds the share ended either way), and one whose partner was
+	 * removed, as that instance is no longer trusted with the share id, the shared-secret hash and the owner an unshare carries.
 	 *
 	 * @param FederatedShare $row The share as it was read
 	 * @param string|null $actorId Who deletes the secret, or null for the system
@@ -219,9 +250,10 @@ class PartnerShareRevoker {
 	}//end endUntold()
 
 	/**
-	 * Whether a share of a deleted secret ends without a notification: it is declined, or suspended while its partner is no longer one.
+	 * Whether a share of a deleted secret ends without a notification: it is declined, or its partner is no longer one, whatever its
+	 * status (a revoke already on its way is left to the retry job, which drops it for a removed partner).
 	 * A share suspended for another reason (its recipient's certificate no longer verifies, or the lookup answers for another cloud id)
-	 * is still told: its instance is still a partner, and holds a copy only the unshare removes.
+	 * is still told while its partner is one: that instance is still trusted, and holds a copy only the unshare removes.
 	 *
 	 * @param FederatedShare $row The share
 	 *
@@ -234,7 +266,7 @@ class PartnerShareRevoker {
 			return true;
 		}
 
-		return $row->getStatus() === FederatedShare::STATUS_SUSPENDED && $this->partners->find(id: $row->getPartnerId()) === null;
+		return $row->getStatus() !== FederatedShare::STATUS_REVOKED && $this->partners->find(id: $row->getPartnerId()) === null;
 	}//end isUntold()
 
 	/**

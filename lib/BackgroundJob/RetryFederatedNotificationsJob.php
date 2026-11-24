@@ -26,6 +26,7 @@ namespace OCA\Keepiq\BackgroundJob;
 
 use DateTime;
 use OCA\Keepiq\Kernel\Contracts\FederatedNotificationDeliveryInterface;
+use OCA\Keepiq\Service\PartnerShareRevoker;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
 use Psr\Log\LoggerInterface;
@@ -43,6 +44,7 @@ class RetryFederatedNotificationsJob extends TimedJob {
 	 * @param ITimeFactory $time The time factory
 	 * @param FederatedNotificationDeliveryInterface $delivery Delivers with backoff
 	 * @param LoggerInterface $logger The logger
+	 * @param PartnerShareRevoker $partnerShares Drops the unshares to partners that were removed
 	 *
 	 * @return void
 	 *
@@ -52,6 +54,7 @@ class RetryFederatedNotificationsJob extends TimedJob {
 		ITimeFactory $time,
 		private FederatedNotificationDeliveryInterface $delivery,
 		private LoggerInterface $logger,
+		private PartnerShareRevoker $partnerShares,
 	) {
 		parent::__construct(time: $time);
 		$this->setInterval(seconds: 60);
@@ -67,10 +70,14 @@ class RetryFederatedNotificationsJob extends TimedJob {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by TimedJob.
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-removed-partner-is-not-told
 	 */
 	protected function run($argument): void {
 		try {
-			$delivered = $this->delivery->retryDue(now: new DateTime());
+			$now = new DateTime();
+			// First: an instance that is no longer a partner is sent no unshare.
+			$this->partnerShares->dropUnsharesToRemovedPartners(now: $now);
+			$delivered = $this->delivery->retryDue(now: $now);
 			if ($delivered > 0) {
 				$this->logger->info('Keepiq: delivered ' . $delivered . ' federated share notification(s) on retry', ['app' => 'keepiq']);
 			}

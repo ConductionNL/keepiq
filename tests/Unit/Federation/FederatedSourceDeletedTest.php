@@ -24,6 +24,7 @@ namespace OCA\Keepiq\Tests\Unit\Federation;
 
 use DateTime;
 use OCA\Keepiq\BackgroundJob\PurgeTrashedSecretsJob;
+use OCA\Keepiq\BackgroundJob\RetryFederatedNotificationsJob;
 use OCA\Keepiq\Db\DashboardSettingMapper;
 use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
@@ -514,6 +515,8 @@ class FederatedSourceDeletedTest extends TestCase {
 			'active' => [FederatedShare::STATUS_ACTIVE, null, 0, null, 'revoked'],
 			'suspended, its partner still one' => [FederatedShare::STATUS_SUSPENDED, null, 0, null, 'revoked'],
 			'suspended, its partner removed' => [FederatedShare::STATUS_SUSPENDED, null, 0, null, 'deleted', true],
+			'failed after an unshare, its partner removed' => [FederatedShare::STATUS_FAILED, FederatedNotificationDelivery::SHARE_UNSHARED, 6, null, 'deleted', true],
+			'active, its partner removed' => [FederatedShare::STATUS_ACTIVE, null, 0, null, 'deleted', true],
 			'failed after an update' => [FederatedShare::STATUS_FAILED, FederatedNotificationDelivery::SHARE_UPDATED, 6, null, 'revoked'],
 			'failed after an unshare' => [FederatedShare::STATUS_FAILED, FederatedNotificationDelivery::SHARE_UNSHARED, 6, null, 'revoked'],
 			'a status this code does not know' => ['paused', null, 0, null, 'revoked'],
@@ -791,6 +794,49 @@ class FederatedSourceDeletedTest extends TestCase {
 		$this->assertGreaterThan(FederatedNotificationDelivery::MAX_ATTEMPTS, count($attempts));
 		$this->assertArrayHasKey('fs-1', $this->rows);
 		$this->assertSame([], $this->failures());
+	}
+
+	/**
+	 * An unshare queued before the administrator removed the partner is not sent: the retry job drops the share first,
+	 * recorded as failed with reason partner_removed. While the partner is still one, the same run sends it.
+	 *
+	 * @return array<string,array{0:bool}>
+	 */
+	public static function partnerRemovedAfterTheUnshareWasQueued(): array {
+		return ['partner removed' => [true], 'partner still one' => [false]];
+	}
+
+	#[DataProvider('partnerRemovedAfterTheUnshareWasQueued')]
+	public function testTheRetryJobSendsNoUnshareToARemovedPartner(bool $removed): void {
+		$this->share(id: 'fs-1', sourceSecretId: 'src');
+		$this->deleteForGood(path: 'retention');
+		$this->assertSame(FederatedNotificationDelivery::SHARE_UNSHARED, $this->rows['fs-1']->getPendingNotification());
+		if ($removed === true) {
+			$this->removedPartners[] = 'p-cloud.partner.example';
+		}
+
+		$job = new RetryFederatedNotificationsJob(
+			time: $this->createMock(ITimeFactory::class),
+			delivery: $this->delivery,
+			logger: $this->createMock(LoggerInterface::class),
+			partnerShares: $this->revoker,
+		);
+		(fn () => $this->run(null))->call($job);
+
+		$this->assertSame([], $this->rows);
+		if ($removed === false) {
+			$this->assertSame(['fs-1'], $this->unsharesSent());
+			$this->assertSame([], $this->failures());
+			return;
+		}
+
+		$this->assertSame([], $this->sent);
+		$this->assertCount(1, $this->failures());
+		$this->assertNull($this->failures()[0]->getActorId());
+		$this->assertSame(
+			['federatedShareId' => 'fs-1', 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'notification' => FederatedNotificationDelivery::SHARE_UNSHARED, 'reason' => 'partner_removed'],
+			$this->failures()[0]->getMetadata()
+		);
 	}
 
 	/**
