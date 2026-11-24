@@ -21,7 +21,7 @@ export interface SignIn {
 
 /**
  * `stale`: the pick is no longer among the passkeys the request offers. `error`: the counter save failed, nothing was signed.
- * `shareSave`: delivered, and the counter save left partner shares behind, which the window shows.
+ * `shareSave`: delivered, and the counter save left partner shares behind, which the window shows; never `ownerOnly`.
  */
 export type SignOutcome = 'delivered' | 'ended' | 'stale' | { error: VaultWriteError } | { shareSave: ShareSaveNote }
 
@@ -55,7 +55,9 @@ export async function signIn({ ceremony, key, itemId, credentialId, deliver }: S
 	const assertion = await getAssertion({
 		credential: entry.credential, key: signingKey, origin: ceremony.origin, challenge: fromBase64Url(ceremony.challenge), counter: saved.value.counter, verified: ceremony.verified,
 	})
-	const note = shareSaveNoteOf(saved.value.shareSave)
+	// A counter save is no change of the user's, so "the owner's next save" would describe a save they never made: only
+	// partner shares left behind for good, or paused, keep the window open.
+	const note = shareSaveNoteOf({ ...saved.value.shareSave, ownerOnly: undefined })
 	if (!(await deliver({ type: 'credential', credential: toJSON(assertion) }, note !== undefined))) return 'ended'
 	await recordLastUsed(ceremony.accountId, entry.row.id)
 	return note ? { shareSave: note } : 'delivered'
