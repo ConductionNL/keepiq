@@ -273,6 +273,19 @@ describe.each(['0.3.12', '0.3.9-unstable.20261007125844', undefined])('saving on
 		expect(results.map((m) => m.result.type)).toEqual(['credential'])
 		expect(removed).toEqual([])
 	})
+
+	it('keeps the owner\'s next save on the note of a write-grade editor\'s save to a login, unlike a sign-in', async () => {
+		const work = () => rows.find((row) => row.id === 'work')!
+		server({
+			'GET /api/v1/secrets/work/write-context': () => json({ sourceSecretId: 'src', effectiveGrade: 'write', ownerCertificate: envelope.certificatePem, sourceUpdatedAt: work().updatedAt }),
+			'PUT /api/v1/secrets/work/share-save': ({ body }) => ((body!.copies as object[]).length === 1
+				? json({ secret: work(), federated: { ownerOnly: true } })
+				: json({ error: 'incomplete', copies: { required: [{ secretId: 'src', holder: 'owner', targetUserId: null }], skipRefused: [] }, federated: { required: [] } }, 409)),
+		})
+		const id = await start()
+		expect(await window(id, { kind: 'passkey.save', target: { itemId: 'work' } })).toEqual({ ok: true, shareSave: { ownerOnly: true } })
+		expect(removed).toEqual([])
+	})
 })
 
 describe('Replace', () => {
