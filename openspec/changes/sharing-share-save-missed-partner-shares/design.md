@@ -20,6 +20,7 @@
 - Repairing delegate copies that earlier account deletions already detached.
 - The received-copy refusal on the team-folder fan-out, which the user-sharing spec lists as a separate follow-up.
 - `PUT /api/v1/secrets/{id}`, which writes no copies and no partner shares by design.
+- User, group and link shares from the new owner's own copy. They are still refused as shares of a received copy (`ShareAuthorizationService::resolveShareSource` maps only a delegate's copy); a follow-up covers them.
 
 ## Decisions
 
