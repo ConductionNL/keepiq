@@ -7,7 +7,7 @@
  * A failed notification stays on the share row with a growing wait: 1, 2, 4, 8 and 16 minutes, then the share is marked failed for the owner to see.
  * A `SHARE_UNSHARED` for a deleted secret is not given up that way, as no owner is left to act on it: its wait keeps doubling up to 6 hours.
  * Only when it still has not arrived 30 days after the revoke is the share dropped, recorded as failed in the audit trail.
- * A partner that refuses it outright (a 4xx other than 429) at the last of those 6 attempts is not asked again: the share is dropped the same way,
+ * A partner that refuses it outright (a 4xx other than 429) at the 6th attempt or any later one is not asked again: the share is dropped the same way,
  * as every further try would only be another refused request counted against this instance.
  * A delivered `SHARE_UNSHARED` removes the row: the revocation is complete.
  *
