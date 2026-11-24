@@ -76,15 +76,15 @@ final class SecretTypeMatch {
 	}//end narrow()
 
 	/**
-	 * The name of a type, false when there is no such type.
+	 * The name of a type, null when there is no such type.
 	 *
 	 * @param string $typeId The secret-type ID
 	 *
-	 * @return string|false
+	 * @return string|null
 	 *
 	 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-the-passkey-type-filter-also-finds-logins-with-passkeys
 	 */
-	private function typeName(string $typeId): string|false {
+	private function typeName(string $typeId): ?string {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('name')
 			->from('keepiq_secret_types')
@@ -93,6 +93,10 @@ final class SecretTypeMatch {
 		$result = $qb->executeQuery();
 		$name   = $result->fetchOne();
 		$result->closeCursor();
+
+		if (is_string($name) === false) {
+			return null;
+		}
 
 		return $name;
 	}//end typeName()
