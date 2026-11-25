@@ -79,6 +79,15 @@ The extension follows the browser's language; [ARCHITECTURE.md](ARCHITECTURE.md#
 5. Plurals have only `1:` and `n:`. In a language with "few" or "many" forms (Polish, Czech), word `n:` so it reads right for every count, such as "Elementy: $1".
 6. Run `npm test`; the parity test names missing keys and placeholders, and a description that is too long.
 
+## Passkeys with the server as relying party
+
+Checked 25 Nov 2026 in Chromium 158 and Firefox 161 (task 0.3 of `extension-passkey-enrolment`): an extension page ran `create()` and `get()` with `rp.id` set to a server host, against a virtual authenticator.
+
+- Without host permission for `https://<host>/*` both browsers refuse with `SecurityError`. The `*://*/*` content-script match does not count as host permission.
+- With host permission, `create()` and `get()` pass, and `authenticatorData` carries the hash of that host as rpId.
+- `clientDataJSON.origin` is the extension origin: `chrome-extension://<32-letter id>` in Chromium, and `moz-extension://<64 letters>` in Firefox.
+- The Firefox origin is not the per-install UUID. It is SHA-256 of the add-on id, hex, with 0-f written as a-p, so `keepiq@conduction.nl` is always `moz-extension://hcclglialhafopgjfjicalkojmgbjeaacnodamngpmomijnjclileppijnelllhe`.
+
 ## Releasing
 
 Bump `version` in `package.json`; WXT derives the manifest version from it. There

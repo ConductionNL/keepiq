@@ -7,8 +7,9 @@ Nothing here starts before Ruben approved the design. Each decision in design.md
 - [x] 0.1 Read the merged unlock lane (verify-before-release) and align the route names and response shape of D5 with it.
 - [ ] 0.2 Read the Chrome Web Store and Edge Add-ons ids of the published Keepiq listings, and record the Firefox origin of `keepiq@conduction.nl` from a real Firefox 150 ceremony, as the test vectors for the pinned list.
   - TODO (11 Nov 2026): no listing was reachable (addons.mozilla.org has no add-on `keepiq@conduction.nl`, the Chrome Web Store has no `keepiq` listing), so `TrustedExtensionOrigins::PINNED_STORE_ORIGINS` is empty and only admin-added origins pass. Fill it in, with a test vector per entry, once the listings are published.
-- [ ] 0.3 Confirm in Chrome 122+ and Firefox 150+ that an extension tab can run `create()` and `get()` with the paired server host as relying party id once host permission is granted, and that the client data origin is the extension origin. Record the result in `browser-extension/README.md`.
-  - TODO (11 Nov 2026): needs a real Chrome 122+ and Firefox 150+ with an authenticator; not run yet.
+  - 25 Nov 2026: the Firefox origin is known from a real Firefox 161 ceremony: `moz-extension://hcclglialhafopgjfjicalkojmgbjeaacnodamngpmomijnjclileppijnelllhe` (SHA-256 of `keepiq@conduction.nl` in a-p hex, the same on every install). It is not pinned yet: until the AMO listing reserves `keepiq@conduction.nl`, another signed add-on could take that id. The Chrome Web Store and Edge ids still wait for the listings.
+- [x] 0.3 Confirm in Chrome 122+ and Firefox 150+ that an extension tab can run `create()` and `get()` with the paired server host as relying party id once host permission is granted, and that the client data origin is the extension origin. Record the result in `browser-extension/README.md`.
+  - Done 25 Nov 2026 in Chromium 158 (Playwright, CDP virtual authenticator) and Firefox 161 (geckodriver 0.36, WebDriver virtual authenticator, soft-token prefs): refused with `SecurityError` without host permission for the host; with it, `create()` and `get()` pass with the host as rpId (rpIdHash checked), and the client data origin is the extension origin. Recorded in `browser-extension/README.md` § Passkeys with the server as relying party.
 
 ## 1. Server
 
