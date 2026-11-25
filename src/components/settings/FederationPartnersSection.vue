@@ -525,7 +525,9 @@ export default {
 			}
 			if (refused) {
 				await this.readRepin(partner)
-			} else if (!this.repin) {
+			} else if (this.repin) {
+				await this.focusRepinPanel()
+			} else {
 				await this.focusButton('repin:' + partner.id)
 			}
 		},
@@ -592,7 +594,7 @@ export default {
 		/**
 		 * Close the re-pin comparison without pinning anything.
 		 *
-		 * @return {void}
+		 * @return {Promise<void>}
 		 * @spec exclude Closes a panel only.
 		 */
 		async cancelRepin() {

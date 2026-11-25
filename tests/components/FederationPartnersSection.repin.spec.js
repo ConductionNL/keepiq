@@ -354,6 +354,23 @@ describe('re-pinning a partner root', () => {
 		expect(comparing(wrapper)).toBe(true)
 	})
 
+	it('moves focus back into the comparison when the re-pin fails for another reason', async () => {
+		const { wrapper } = await openRepin(RENEWED)
+		vi.spyOn(axios, 'put').mockRejectedValue({
+			response: { status: 502, data: { message: 'Partner unreachable' } },
+		})
+		document.activeElement.blur()
+
+		await compareAndConfirm(wrapper)
+
+		expect(comparing(wrapper)).toBe(true)
+		expect(
+			wrapper
+				.find('[data-testid="federation-repin-preview"]')
+				.element.contains(document.activeElement),
+		).toBe(true)
+	})
+
 	it('sends nothing when the password is not confirmed', async () => {
 		const { wrapper } = await openRepin(RENEWED)
 		const put = vi.spyOn(axios, 'put')
