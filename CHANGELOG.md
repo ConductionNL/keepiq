@@ -49,6 +49,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Removed
 
+- `PUT /api/v1/secrets/{id}/sync` and `PUT /api/v1/federated-shares/{id}` are gone. A value change of a shared secret saves the owner's row, every copy and every partner share in one request through `PUT /api/v1/secrets/{id}/share-save`, which the web app, the browser extension, the mobile apps, the CLI and the SDKs already use. A script that still calls one of the two routes gets a 404; move it to share-save. Revoking (`DELETE`) and suspending (`POST .../suspend`) a partner share stay. (sharing-atomic-share-save)
 - The `vault_admin` group no longer counts as the People and offboarding admin area, and the General area no longer shows a notice about it. A member of that group who holds no delegation is now refused the admin handover and team offboarding. To keep those actions for them, delegate the People and offboarding area to their group on Nextcloud's administration privileges page before you upgrade. (admin-scoped-roles, #1043)
 
 ### Security

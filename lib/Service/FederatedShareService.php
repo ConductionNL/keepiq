@@ -194,53 +194,6 @@ class FederatedShareService implements FederatedShareServiceInterface {
 	}//end create()
 
 	/**
-	 * Replace a share's ciphertext after the owner changed the secret, and
-	 * tell the recipient's instance to pull again (task 4.1). The owner's
-	 * browser made the new ciphertext for a freshly verified certificate.
-	 *
-	 * @param string $shareId The federated share
-	 * @param string $userId The owner
-	 * @param string $certFingerprint SHA-256 of the certificate the browser verified now
-	 * @param array{key:string,login:?string,additionalFields:?string,totp?:?string,passkeys?:?string} $ciphertext For the recipient,
-	 *   see writeCiphertext() for an absent `totp` or `passkeys`
-	 *
-	 * @return FederatedShare
-	 *
-	 * @throws NotFoundException When it is not the user's live share
-	 * @throws InvalidArgumentException `invalid`, or `copy_fields_mismatch` when its totp or passkeys does not mirror
-	 *   the source's
-	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
-	 *
-	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
-	 */
-	public function update(string $shareId, string $userId, string $certFingerprint, array $ciphertext): FederatedShare {
-		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
-		if ($row->getStatus() !== FederatedShare::STATUS_ACTIVE) {
-			throw new NotFoundException(message: 'Share not found');
-		}
-
-		$certFingerprint = $this->assertCiphertext(certFingerprint: $certFingerprint, ciphertext: $ciphertext);
-		// The same checks, in the same order, as a new share of this secret.
-		$this->valueFields->assertUpdateMirrorsSource(
-			partner: $this->partners->find(id: (string)$row->getPartnerId()),
-			source: $this->ownedSecret(secretId: $row->getSourceSecretId(), userId: $userId),
-			row: $row,
-			ciphertext: $ciphertext,
-			certFingerprint: $certFingerprint
-		);
-
-		$row = $this->writeCiphertext(
-			row: $row,
-			certFingerprint: $certFingerprint,
-			ciphertext: $ciphertext,
-			savedAt: new DateTime()
-		);
-		$this->delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UPDATED);
-
-		return $row;
-	}//end update()
-
-	/**
 	 * Store a share's new ciphertext and queue the SHARE_UPDATED notification
 	 * on the row itself. A share-save calls this inside its transaction and
 	 * sends after the commit; should that send never happen, the retry job

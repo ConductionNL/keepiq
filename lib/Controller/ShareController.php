@@ -211,52 +211,6 @@ class ShareController extends OCSController {
 	}//end destroy()
 
 	/**
-	 * Push an updated encrypted blob to every recipient.
-	 *
-	 * @param string $secretId The source secret ID
-	 * @param array $updates The per-recipient blobs
-	 * @param string $expectedUpdatedAt The owner-side expected ISO timestamp
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/changes/implement-user-sharing/tasks.md#9.1
-	 */
-	#[NoAdminRequired]
-	public function sync(
-		string $secretId,
-		array $updates,
-		string $expectedUpdatedAt = '',
-	): JSONResponse {
-		$user = $this->userSession->getUser();
-		if ($user === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			$written = $this->shareService->syncUpdate(
-				secretId: $secretId,
-				updates: $updates,
-				expectedUpdatedAt: $expectedUpdatedAt,
-				userId: $user->getUID()
-			);
-		} catch (ForbiddenException $exception) {
-			// A copy from another organisation (sharing-federated-recipients task 3.4).
-			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		} catch (ShareScanPendingException $exception) {
-			return new JSONResponse(
-				data: ['error' => 'share_scan_pending', 'message' => $exception->getMessage()],
-				statusCode: Http::STATUS_CONFLICT
-			);
-		} catch (InvalidArgumentException $exception) {
-			return new MessageResponse(error: $exception, status: Http::STATUS_CONFLICT);
-		}
-
-		return new JSONResponse(data: ['updated' => $written]);
-	}//end sync()
-
-	/**
 	 * Register a batch of DIRECT user shares from client-encrypted blobs
 	 * (bulk-actions §6.1/§7.1). Idempotent per (secret × recipient); the
 	 * per-item report never aborts on a skipped row.

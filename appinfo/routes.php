@@ -179,7 +179,6 @@ $extra = [
     // POST, not GET: a candidate list does not belong in a query string,
     // and the sharee-search pages these ids come from can be long.
     ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],
-    ['name' => 'share#sync',        'url' => '/api/v1/secrets/{secretId}/sync',         'verb' => 'PUT'],
     // The row, every copy and every partner share in one transaction (#1254).
     ['name' => 'shareSave#save',    'url' => '/api/v1/secrets/{id}/share-save',         'verb' => 'PUT'],
     ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',                     'verb' => 'DELETE'],
@@ -412,7 +411,6 @@ $extra = [
     // what arrived under "Incoming from other organisations".
     ['name' => 'federatedShare#index',  'url' => '/api/v1/secrets/{secretId}/federated-shares', 'verb' => 'GET'],
     ['name' => 'federatedShare#create', 'url' => '/api/v1/secrets/{secretId}/federated-shares', 'verb' => 'POST'],
-    ['name' => 'federatedShare#update',  'url' => '/api/v1/federated-shares/{id}',         'verb' => 'PUT'],
     ['name' => 'federatedShare#destroy', 'url' => '/api/v1/federated-shares/{id}',         'verb' => 'DELETE'],
     ['name' => 'federatedShare#suspend', 'url' => '/api/v1/federated-shares/{id}/suspend', 'verb' => 'POST'],
     ['name' => 'federatedInbound#index',   'url' => '/api/v1/federation/incoming',              'verb' => 'GET'],
