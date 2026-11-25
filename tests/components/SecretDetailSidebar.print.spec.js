@@ -71,15 +71,24 @@ describe('SecretDetailSidebar print and QR', () => {
 		})
 	})
 
-	it('answers a flagged item\'s re-prompt first, and opens nothing when it is refused', async () => {
-		const refused = sidebar(GUEST_WIFI, { revealGuard: true, allowedToReveal: vi.fn().mockResolvedValue(false) })
+	it("answers a flagged item's re-prompt first, and opens nothing when it is refused", async () => {
+		const refused = sidebar(GUEST_WIFI, {
+			revealGuard: true,
+			allowedToReveal: vi.fn().mockResolvedValue(false),
+		})
 		await refused.openQr()
 		expect(refused.allowedToReveal).toHaveBeenCalled()
 		expect(refused.cnOpenModal).not.toHaveBeenCalled()
 
-		const allowed = sidebar(GUEST_WIFI, { revealGuard: true, allowedToReveal: vi.fn().mockResolvedValue(true) })
+		const allowed = sidebar(GUEST_WIFI, {
+			revealGuard: true,
+			allowedToReveal: vi.fn().mockResolvedValue(true),
+		})
 		await allowed.openPrint()
-		expect(allowed.cnOpenModal).toHaveBeenCalledWith('secret-print', expect.objectContaining({ password: 'gast-wifi-2026!' }))
+		expect(allowed.cnOpenModal).toHaveBeenCalledWith(
+			'secret-print',
+			expect.objectContaining({ password: 'gast-wifi-2026!' }),
+		)
 	})
 
 	it('opens nothing when the actions are not offered', () => {
@@ -94,10 +103,24 @@ describe('SecretDetailSidebar print and QR', () => {
 		const canPrintOrShowQr = SecretDetailSidebar.computed.canPrintOrShowQr
 		expect(typeStore.typesById['t-login']).toBeDefined()
 
-		expect(canPrintOrShowQr.call({ secret: GUEST_WIFI, useOnly: false })).toBe(true)
-		expect(canPrintOrShowQr.call({ secret: GUEST_WIFI, useOnly: true })).toBe(false)
-		expect(canPrintOrShowQr.call({ secret: { ...GUEST_WIFI, typeId: 't-note' }, useOnly: false })).toBe(false)
-		expect(canPrintOrShowQr.call({ secret: { ...GUEST_WIFI, key: '' }, useOnly: false })).toBe(false)
+		expect(canPrintOrShowQr.call({ secret: GUEST_WIFI, useOnly: false })).toBe(
+			true,
+		)
+		expect(canPrintOrShowQr.call({ secret: GUEST_WIFI, useOnly: true })).toBe(
+			false,
+		)
+		expect(
+			canPrintOrShowQr.call({
+				secret: { ...GUEST_WIFI, typeId: 't-note' },
+				useOnly: false,
+			}),
+		).toBe(false)
+		expect(
+			canPrintOrShowQr.call({
+				secret: { ...GUEST_WIFI, key: '' },
+				useOnly: false,
+			}),
+		).toBe(false)
 		expect(canPrintOrShowQr.call({ secret: null, useOnly: false })).toBe(false)
 	})
 })

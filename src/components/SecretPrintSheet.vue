@@ -31,12 +31,19 @@
 						</dd>
 					</template>
 					<dt>{{ t('keepiq', 'Password') }}</dt>
-					<dd class="secret-print-sheet__password" data-testid="secret-print-password">
+					<dd
+						class="secret-print-sheet__password"
+						data-testid="secret-print-password">
 						{{ password }}
 					</dd>
 				</dl>
 				<p class="secret-print-sheet__note">
-					{{ t('keepiq', 'Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.') }}
+					{{
+						t(
+							'keepiq',
+							'Printed from Keepiq. Keep this sheet somewhere safe and destroy it when it is no longer needed.',
+						)
+					}}
 				</p>
 			</article>
 		</div>
@@ -83,7 +90,8 @@ export default {
 	.secret-print-sheet__fields {
 		display: grid;
 		grid-template-columns: max-content 1fr;
-		gap: calc(var(--default-grid-baseline) * 2) calc(var(--default-grid-baseline) * 6);
+		gap: calc(var(--default-grid-baseline) * 2)
+			calc(var(--default-grid-baseline) * 6);
 	}
 
 	.secret-print-sheet__fields dt {

@@ -80,7 +80,9 @@
 					</span>
 				</div>
 
-				<SecretPayloadFields v-bind="payloadFields" v-on="payloadFieldEvents" />
+				<SecretPayloadFields
+					v-bind="payloadFields"
+					v-on="payloadFieldEvents" />
 
 				<!-- The saved seed is never loaded into the form: the field only
 				     says one is saved and offers Replace and Remove. -->
@@ -158,9 +160,7 @@
 					<NcLoadingIcon v-if="saving" :size="20" />
 					<ContentSave v-else :size="20" />
 				</template>
-				{{
-					savedSecret ? t('keepiq', 'Retry upload') : t('keepiq', 'Save')
-				}}
+				{{ savedSecret ? t('keepiq', 'Retry upload') : t('keepiq', 'Save') }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -544,8 +544,14 @@ export default {
 				return ''
 			}
 			return useOfflineStore().readOnly
-				? t('keepiq', 'Files cannot be added while you are offline. Remove them to save.')
-				: t('keepiq', 'Files can only be added to a secret you own. Remove them to save.')
+				? t(
+						'keepiq',
+						'Files cannot be added while you are offline. Remove them to save.',
+					)
+				: t(
+						'keepiq',
+						'Files can only be added to a secret you own. Remove them to save.',
+					)
 		},
 	},
 

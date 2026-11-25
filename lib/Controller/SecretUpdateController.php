@@ -115,10 +115,12 @@ class SecretUpdateController extends OCSController {
 			$secret = $this->updateOnCurrent(id: $id, changes: $this->requestedChanges(), userId: $user->getUID());
 			// A privileged copy outside its window is returned without its
 			// ciphertext (capability-requirements-from-the-matrix 3.1).
-			$data = $this->serialised(secret: $secret, userId: $user->getUID());
-			if ($extraUrls !== null && $this->urls !== null) {
-				$data['additionalUrls'] = $this->urls->replace(secret: $secret, userId: $user->getUID(), urls: $extraUrls);
-			}
+			$data = $this->withExtraUrls(
+				data: $this->serialised(secret: $secret, userId: $user->getUID()),
+				secret: $secret,
+				userId: $user->getUID(),
+				extraUrls: $extraUrls
+			);
 		} catch (StaleWriteException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage(), 'current' => $this->serialised(secret: $e->getCurrent(), userId: $user->getUID())],
@@ -189,6 +191,27 @@ class SecretUpdateController extends OCSController {
 
 		return $list;
 	}//end extraUrls()
+
+	/**
+	 * Store the extra addresses the request carries and add them to the
+	 * returned row. Without them, the row is returned as it is.
+	 *
+	 * @param array<string,mixed> $data      The row as it is returned
+	 * @param Secret              $secret    The updated secret
+	 * @param string              $userId    The requesting user
+	 * @param list<string>|null   $extraUrls The normalised extra addresses, or null when the request carries none
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/specs/website-addresses/spec.md#requirement-a-login-carries-several-website-addresses
+	 */
+	private function withExtraUrls(array $data, Secret $secret, string $userId, ?array $extraUrls): array {
+		if ($extraUrls !== null && $this->urls !== null) {
+			$data['additionalUrls'] = $this->urls->replace(secret: $secret, userId: $userId, urls: $extraUrls);
+		}
+
+		return $data;
+	}//end withExtraUrls()
 
 	/**
 	 * Run the update. One with a base is refused at once when the secret

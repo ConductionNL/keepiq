@@ -21,13 +21,19 @@ const CUSTOM_WIFI = '0b8a1f6e-0000-4000-8000-0000000000aa'
  * @param {Function} [create] What createType answers.
  * @return {object} The store.
  */
-function typeStore(types, create = async (data) => ({ id: `new-${data.name}`, ...data })) {
+function typeStore(
+	types,
+	create = async (data) => ({ id: `new-${data.name}`, ...data }),
+) {
 	return { types, createType: vi.fn(create) }
 }
 
 describe('resolveRowTypes', () => {
-	it('takes the system type of the backup\'s name', async () => {
-		const store = typeStore([{ id: SYSTEM_LOGIN, name: 'login', scope: 'system' }, { id: 'u1', name: 'login', scope: 'user' }])
+	it("takes the system type of the backup's name", async () => {
+		const store = typeStore([
+			{ id: SYSTEM_LOGIN, name: 'login', scope: 'system' },
+			{ id: 'u1', name: 'login', scope: 'user' },
+		])
 		const row = { sourceRow: 1, typeName: 'login', type: 'other-instance-id' }
 
 		const { typeIdFor, created, fallbacks } = await resolveRowTypes([row], store)
@@ -37,8 +43,10 @@ describe('resolveRowTypes', () => {
 		expect(fallbacks).toEqual([])
 	})
 
-	it('takes the vault\'s own custom type of that name', async () => {
-		const store = typeStore([{ id: CUSTOM_WIFI, name: 'wifi', label: 'Wi-Fi', scope: 'user' }])
+	it("takes the vault's own custom type of that name", async () => {
+		const store = typeStore([
+			{ id: CUSTOM_WIFI, name: 'wifi', label: 'Wi-Fi', scope: 'user' },
+		])
 		const row = { sourceRow: 2, typeName: 'wifi', typeLabel: 'Wi-Fi' }
 
 		const { typeIdFor } = await resolveRowTypes([row], store)
@@ -57,13 +65,19 @@ describe('resolveRowTypes', () => {
 		const { typeIdFor, created } = await resolveRowTypes(rows, store)
 
 		expect(store.createType).toHaveBeenCalledTimes(1)
-		expect(store.createType).toHaveBeenCalledWith({ name: 'wifi', label: 'Wi-Fi', scope: 'user' })
+		expect(store.createType).toHaveBeenCalledWith({
+			name: 'wifi',
+			label: 'Wi-Fi',
+			scope: 'user',
+		})
 		expect(rows.map(typeIdFor)).toEqual(['new-wifi', 'new-wifi'])
 		expect(created).toEqual([{ name: 'wifi', label: 'Wi-Fi' }])
 	})
 
-	it('recovers an old backup\'s system type by its id', async () => {
-		const store = typeStore([{ id: SYSTEM_LOGIN, name: 'login', scope: 'system' }])
+	it("recovers an old backup's system type by its id", async () => {
+		const store = typeStore([
+			{ id: SYSTEM_LOGIN, name: 'login', scope: 'system' },
+		])
 		const row = { sourceRow: 5, type: SYSTEM_LOGIN }
 
 		const { typeIdFor } = await resolveRowTypes([row], store)

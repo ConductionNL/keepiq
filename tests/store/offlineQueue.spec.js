@@ -900,33 +900,36 @@ describe('replay', () => {
 			{ reject: httpError(403, { message: 'outbound_disabled' }) },
 			'An administrator turned off sharing with these partner organisations',
 		],
-	])('a partner the save stopped for with %s fails the entry naming why, and the queue goes on', async (reason, lookup, text) => {
-		await goOffline()
-		await secrets.updateSecret('s1', { key: 'new' })
-		await secrets.createSecret({ name: 'B', key: 'v' })
-		goOnline()
-		const log = shareSaveServer({
-			id: 's1',
-			partners: [{ shareId: 'fs-1', recipientCloudId: BOB }],
-			rows: { s1: { id: 's1', updatedAt: BASE } },
-			posts: { '/api/v1/secrets': { id: 'created' } },
-			lookup: { [BOB]: lookup },
-		})
+	])(
+		'a partner the save stopped for with %s fails the entry naming why, and the queue goes on',
+		async (reason, lookup, text) => {
+			await goOffline()
+			await secrets.updateSecret('s1', { key: 'new' })
+			await secrets.createSecret({ name: 'B', key: 'v' })
+			goOnline()
+			const log = shareSaveServer({
+				id: 's1',
+				partners: [{ shareId: 'fs-1', recipientCloudId: BOB }],
+				rows: { s1: { id: 's1', updatedAt: BASE } },
+				posts: { '/api/v1/secrets': { id: 'created' } },
+				lookup: { [BOB]: lookup },
+			})
 
-		const result = await offline.replayQueue()
+			const result = await offline.replayQueue()
 
-		expect(result).toEqual({ synced: 1, stopped: false })
-		expect(log.saves.flatMap((s) => s.suspend)).toEqual([])
-		const [failed] = offline.failedEntries
-		expect(failed.secretId).toBe('s1')
-		expect(failed.failure).toEqual({
-			code: 'partner_unreachable',
-			partners: [{ cloudId: BOB, reason }],
-		})
-		expect(failureText(failed.failure)).toContain(text)
-		expect(failureText(failed.failure)).toContain(BOB)
-		expect(failureText(failed.failure)).not.toContain('cannot be reached')
-	})
+			expect(result).toEqual({ synced: 1, stopped: false })
+			expect(log.saves.flatMap((s) => s.suspend)).toEqual([])
+			const [failed] = offline.failedEntries
+			expect(failed.secretId).toBe('s1')
+			expect(failed.failure).toEqual({
+				code: 'partner_unreachable',
+				partners: [{ cloudId: BOB, reason }],
+			})
+			expect(failureText(failed.failure)).toContain(text)
+			expect(failureText(failed.failure)).toContain(BOB)
+			expect(failureText(failed.failure)).not.toContain('cannot be reached')
+		},
+	)
 
 	it("a partner certificate this device's clock rejects fails the entry with the clock text, and later entries are not held", async () => {
 		await goOffline()

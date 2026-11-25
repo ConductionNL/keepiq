@@ -75,6 +75,7 @@ trails and the share authorization stay app-local:
 - `lib/Service/ApplicationAuditTrail.php` (gate 23 rules: 2)
 - `lib/Service/SiemAuditTrail.php` (gate 23 rules: 2)
 - `lib/Service/FederatedShareAuditTrail.php` (gate 23 rules: 2)
+- `lib/Service/FederationPartnerAuditTrail.php` (gate 23 rules: 2)
 - `lib/Listener/AuditListener.php` (gate 23 rules: 2)
 - `lib/Service/ShareAuthorizationService.php` (gate 23 rules: 6)
 

@@ -48,9 +48,12 @@ describe('browserEntries', () => {
 
 	it('returns an empty catalogue when every source entry is an identity', () => {
 		expect(browserEntries(SOURCE_LOCALE, { A: 'A', B: 'B' })).toEqual({})
-		expect(renderJs('keepiq', { translations: {}, pluralForm: 'nplurals=2; plural=(n != 1);' })).toContain(
-			'OC.L10N.register(',
-		)
+		expect(
+			renderJs('keepiq', {
+				translations: {},
+				pluralForm: 'nplurals=2; plural=(n != 1);',
+			}),
+		).toContain('OC.L10N.register(')
 	})
 })
 

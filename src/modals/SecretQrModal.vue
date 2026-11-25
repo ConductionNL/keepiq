@@ -20,7 +20,12 @@
 		<div class="secret-qr" data-testid="secret-qr">
 			<template v-if="!verified">
 				<NcNoteCard type="warning">
-					{{ t('keepiq', 'Anyone who can see the screen can scan this password. Enter your master password to show it.') }}
+					{{
+						t(
+							'keepiq',
+							'Anyone who can see the screen can scan this password. Enter your master password to show it.',
+						)
+					}}
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error" data-testid="secret-qr-error">
 					{{ error }}
@@ -38,7 +43,11 @@
 					class="secret-qr__code"
 					:viewBox="`0 0 ${box} ${box}`"
 					role="img"
-					:aria-label="t('keepiq', 'QR code of the password of {name}', { name: secretName })"
+					:aria-label="
+						t('keepiq', 'QR code of the password of {name}', {
+							name: secretName,
+						})
+					"
 					shape-rendering="crispEdges"
 					data-testid="secret-qr-code">
 					<rect width="100%" height="100%" fill="#ffffff" />

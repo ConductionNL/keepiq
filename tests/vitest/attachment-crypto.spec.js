@@ -136,7 +136,9 @@ describe('attachment store crypto', () => {
 
 	it('uploadFile rejects with the server reason', async () => {
 		vi.spyOn(axios, 'post').mockRejectedValue({
-			response: { data: { message: 'Attachment exceeds the per-attachment limit' } },
+			response: {
+				data: { message: 'Attachment exceeds the per-attachment limit' },
+			},
 		})
 		const store = useAttachmentStore()
 

@@ -424,7 +424,8 @@ export async function saveShared({
 		if (batched?.error) {
 			throw batched.error
 		}
-		const recipient = batched?.recipient
+		const recipient =
+			batched?.recipient
 			?? (await withinLookupLimit(() =>
 				useFederatedShareStore().lookup(share.recipientCloudId),
 			))
@@ -1032,6 +1033,8 @@ function pausedByReason(partners) {
  *
  * @param {Array<{recipientCloudId?: string, reason?: string}>} [partners] The partner shares.
  * @return {string}
+ *
+ * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  */
 export function pausedPartnersText(partners) {
 	return [...pausedByReason(partners ?? [])]
@@ -1045,6 +1048,8 @@ export function pausedPartnersText(partners) {
  *
  * @param {Array<{recipientCloudId?: string, reason?: string}>} [partners] The partner shares.
  * @return {boolean}
+ *
+ * @spec openspec/changes/partner-share-temporary-refusals/specs/federated-sharing/spec.md#requirement-an-unreachable-partner-stops-the-save-unless-the-user-saves-without-them
  */
 export function pausedForAnotherReason(partners) {
 	return [...pausedByReason(partners ?? []).keys()].some(

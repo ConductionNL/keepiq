@@ -50,7 +50,12 @@
 			v-if="droppedFolder"
 			class="attachment-dropzone__error"
 			data-testid="attachment-dropzone-folders">
-			{{ t('keepiq', 'Folders cannot be attached. Drop the files inside them instead.') }}
+			{{
+				t(
+					'keepiq',
+					'Folders cannot be attached. Drop the files inside them instead.',
+				)
+			}}
 		</p>
 
 		<ul v-if="pending.length" class="attachment-dropzone__list">
@@ -67,7 +72,11 @@
 				<NcButton
 					v-if="entry.status === 'failed' && secretId"
 					variant="tertiary"
-					:aria-label="t('keepiq', 'Retry upload of {name}', { name: entry.file.name })"
+					:aria-label="
+						t('keepiq', 'Retry upload of {name}', {
+							name: entry.file.name,
+						})
+					"
 					:disabled="disabled || busy || Boolean(unavailable)"
 					:data-testid="`attachment-pending-retry-${index}`"
 					@click="retry(entry)">
@@ -77,7 +86,9 @@
 				</NcButton>
 				<NcButton
 					variant="tertiary"
-					:aria-label="t('keepiq', 'Remove {name}', { name: entry.file.name })"
+					:aria-label="
+						t('keepiq', 'Remove {name}', { name: entry.file.name })
+					"
 					:disabled="disabled || entry.status === 'uploading'"
 					:data-testid="`attachment-pending-remove-${index}`"
 					@click="remove(entry)">
@@ -219,7 +230,9 @@ export default {
 		 */
 		async uploadPending(secretId) {
 			// A file whose own Retry is running is not sent a second time.
-			const queued = this.pending.filter((entry) => entry.status !== 'uploading')
+			const queued = this.pending.filter(
+				(entry) => entry.status !== 'uploading',
+			)
 			for (const entry of queued) {
 				await this.uploadOne(secretId, entry)
 			}

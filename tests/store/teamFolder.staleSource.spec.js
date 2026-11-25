@@ -14,7 +14,10 @@ import axios from '@nextcloud/axios'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSecretStore } from '../../src/store/modules/secret.js'
-import { MAX_STALE_SOURCE_ROUNDS, useShareStore } from '../../src/store/modules/share.js'
+import {
+	MAX_STALE_SOURCE_ROUNDS,
+	useShareStore,
+} from '../../src/store/modules/share.js'
 import { useTeamFolderStore } from '../../src/store/modules/teamFolder.js'
 
 vi.mock('@nextcloud/dialogs', () => ({ showSuccess: vi.fn(), showError: vi.fn() }))
@@ -33,8 +36,12 @@ function server(state) {
 	const posts = []
 	vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
 		posts.push(body.shares)
-		const fresh = body.shares.filter((r) => !r.sourceUpdatedAt || r.sourceUpdatedAt === state.current)
-		const stale = body.shares.filter((r) => r.sourceUpdatedAt && r.sourceUpdatedAt !== state.current)
+		const fresh = body.shares.filter(
+			(r) => !r.sourceUpdatedAt || r.sourceUpdatedAt === state.current,
+		)
+		const stale = body.shares.filter(
+			(r) => r.sourceUpdatedAt && r.sourceUpdatedAt !== state.current,
+		)
 		return {
 			data: {
 				created: fresh.length,
@@ -89,16 +96,21 @@ describe('team folder fan-outs and a source a save replaced', () => {
 
 		const result = await ownerRun().runFanOut('tf-ops')
 
-		expect(posts.map((rows) => rows.map((r) => [r.encryptedKey, r.sourceUpdatedAt]))).toEqual([
-			[['enc(old,PEM-KIM)', OLD]],
-			[['enc(new,PEM-KIM)', NEW]],
-		])
+		expect(
+			posts.map((rows) =>
+				rows.map((r) => [r.encryptedKey, r.sourceUpdatedAt]),
+			),
+		).toEqual([[['enc(old,PEM-KIM)', OLD]], [['enc(new,PEM-KIM)', NEW]]])
 		expect(result.created).toBe(1)
 	})
 
 	it('stops resending after three more rounds', async () => {
 		const posts = server({ current: NEW })
-		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ id: 's1', key: 'old', updatedAt: OLD })
+		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({
+			id: 's1',
+			key: 'old',
+			updatedAt: OLD,
+		})
 
 		const result = await ownerRun().runFanOut('tf-ops')
 
@@ -109,16 +121,20 @@ describe('team folder fan-outs and a source a save replaced', () => {
 	it("names the source's version for a manager's own copy, read before the copy", async () => {
 		const posts = server({ current: NEW })
 		const order = []
-		vi.spyOn(useShareStore(), 'fetchWriteContext').mockImplementation(async (id) => {
-			order.push(`context ${id}`)
-			return { sourceSecretId: 's1', sourceUpdatedAt: NEW }
-		})
+		vi.spyOn(useShareStore(), 'fetchWriteContext').mockImplementation(
+			async (id) => {
+				order.push(`context ${id}`)
+				return { sourceSecretId: 's1', sourceUpdatedAt: NEW }
+			},
+		)
 		vi.spyOn(useSecretStore(), 'fetchSecret').mockImplementation(async (id) => {
 			order.push(`read ${id}`)
 			return { id, key: 'pw', updatedAt: OLD }
 		})
 
-		await ownerRun({ id: 's1', name: 'Bank', copyId: 'm-copy' }).runFanOut('tf-ops')
+		await ownerRun({ id: 's1', name: 'Bank', copyId: 'm-copy' }).runFanOut(
+			'tf-ops',
+		)
 
 		expect(order).toEqual(['context m-copy', 'read m-copy'])
 		expect(posts).toHaveLength(1)
@@ -128,12 +144,23 @@ describe('team folder fan-outs and a source a save replaced', () => {
 	it('names no version when the write context names another source or fails', async () => {
 		const posts = server({ current: NEW })
 		const context = vi.spyOn(useShareStore(), 'fetchWriteContext')
-		context.mockResolvedValueOnce({ sourceSecretId: 'm-copy', sourceUpdatedAt: OLD })
-		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ id: 'm-copy', key: 'pw', updatedAt: OLD })
+		context.mockResolvedValueOnce({
+			sourceSecretId: 'm-copy',
+			sourceUpdatedAt: OLD,
+		})
+		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({
+			id: 'm-copy',
+			key: 'pw',
+			updatedAt: OLD,
+		})
 
-		await ownerRun({ id: 's1', name: 'Bank', copyId: 'm-copy' }).runFanOut('tf-ops')
+		await ownerRun({ id: 's1', name: 'Bank', copyId: 'm-copy' }).runFanOut(
+			'tf-ops',
+		)
 		context.mockRejectedValueOnce(new Error('404'))
-		await ownerRun({ id: 's1', name: 'Bank', copyId: 'm-copy' }).runFanOut('tf-ops')
+		await ownerRun({ id: 's1', name: 'Bank', copyId: 'm-copy' }).runFanOut(
+			'tf-ops',
+		)
 
 		expect(posts).toHaveLength(2)
 		expect(posts[0][0]).not.toHaveProperty('sourceUpdatedAt')
@@ -150,8 +177,16 @@ describe('team folder fan-outs and a source a save replaced', () => {
 						folders: [
 							{
 								teamFolderId: 'tf-ops',
-								missing: [{ secretId: 's1', userId: 'kim', ownCopyId: 'own-1' }],
-								recipients: [{ userId: 'kim', certificate: 'PEM-KIM' }],
+								missing: [
+									{
+										secretId: 's1',
+										userId: 'kim',
+										ownCopyId: 'own-1',
+									},
+								],
+								recipients: [
+									{ userId: 'kim', certificate: 'PEM-KIM' },
+								],
 							},
 						],
 					},
@@ -182,24 +217,35 @@ describe('team folder fan-outs and a source a save replaced', () => {
 							{
 								teamFolderId: 'tf-ops',
 								missing: [{ secretId: 's1', userId: 'kim' }],
-								recipients: [{ userId: 'kim', certificate: 'PEM-KIM' }],
+								recipients: [
+									{ userId: 'kim', certificate: 'PEM-KIM' },
+								],
 							},
 						],
 					},
 				}
 			}
 			reads++
-			return { data: { id: 's1', key: 'CIPHER', updatedAt: reads === 1 ? OLD : NEW } }
+			return {
+				data: {
+					id: 's1',
+					key: 'CIPHER',
+					updatedAt: reads === 1 ? OLD : NEW,
+				},
+			}
 		})
-		vi.spyOn(useSecretStore(), 'decryptSecret').mockImplementation(async (raw) => ({
-			key: raw.updatedAt === OLD ? 'old' : 'new',
-		}))
+		vi.spyOn(useSecretStore(), 'decryptSecret').mockImplementation(
+			async (raw) => ({
+				key: raw.updatedAt === OLD ? 'old' : 'new',
+			}),
+		)
 
 		await useTeamFolderStore().autoConfirm()
 
-		expect(posts.map((rows) => rows.map((r) => [r.encryptedKey, r.sourceUpdatedAt]))).toEqual([
-			[['enc(old,PEM-KIM)', OLD]],
-			[['enc(new,PEM-KIM)', NEW]],
-		])
+		expect(
+			posts.map((rows) =>
+				rows.map((r) => [r.encryptedKey, r.sourceUpdatedAt]),
+			),
+		).toEqual([[['enc(old,PEM-KIM)', OLD]], [['enc(new,PEM-KIM)', NEW]]])
 	})
 })

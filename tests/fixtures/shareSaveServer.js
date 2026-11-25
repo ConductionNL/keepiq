@@ -175,9 +175,15 @@ export function shareSaveServer({
 			// The batch over the owner's own partner shares: one call against
 			// the limit, each recipient asked once, a refusal per share.
 			log.partnerBatches.push(body.shareIds)
-			const byShare = new Map(partners.map((p) => [p.shareId, p.recipientCloudId]))
+			const byShare = new Map(
+				partners.map((p) => [p.shareId, p.recipientCloudId]),
+			)
 			const cloudIds = [
-				...new Set(body.shareIds.map((shareId) => byShare.get(shareId)).filter(Boolean)),
+				...new Set(
+					body.shareIds
+						.map((shareId) => byShare.get(shareId))
+						.filter(Boolean),
+				),
 			]
 			log.partnerLookups.push(...cloudIds)
 			limitLookup()
@@ -200,7 +206,10 @@ export function shareSaveServer({
 						? { status: reject.status, message: reject.data?.message }
 						: { status: 502, message: 'partner_unreachable' }
 				} else {
-					certificates[shareId] = { cloudId: echoedCloudId(cloudId), ...answer }
+					certificates[shareId] = {
+						cloudId: echoedCloudId(cloudId),
+						...answer,
+					}
 				}
 			}
 			return { data: { certificates, refused } }

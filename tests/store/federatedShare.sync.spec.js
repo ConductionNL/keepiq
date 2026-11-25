@@ -336,7 +336,9 @@ describe('a value change reaches federated recipients', () => {
 
 			expect(waits).toEqual([60000])
 			// The third call hit the limit and went again after the wait.
-			expect(log.partnerBatches.map((ids) => ids.length)).toEqual([100, 100, 50, 50])
+			expect(log.partnerBatches.map((ids) => ids.length)).toEqual([
+				100, 100, 50, 50,
+			])
 			expect(result.secret).toBeTruthy()
 			// Above 100 partner shares the save stages them in chunks.
 			const sent = log.saves.slice(1).flatMap((body) => body.federated ?? [])
@@ -511,35 +513,38 @@ describe('a follow-up save after a failed one', () => {
 			{ reject: httpError(403, { message: 'outbound_disabled' }) },
 			VALID,
 		],
-	])('once %s, the next save looks the stopped partner up again and encrypts for it, the other from the kept certificate', async (_, stopped, lifted) => {
-		const MALLORY = 'mallory@cloud.partner.example'
-		const both = [
-			{ shareId: 'fs-1', recipientCloudId: BOB },
-			{ shareId: 'fs-2', recipientCloudId: MALLORY },
-		]
-		const lookup = {
-			[BOB]: stopped,
-			[MALLORY]: { ...VALID, cloudId: MALLORY, certificate: F.mallory },
-		}
-		const log = shareSaveServer({ id: 'src', partners: both, lookup })
-		const failed = await saveShared(SAVE).catch((e) => e)
-		expect(failed.code).toBe('partner_unreachable')
-		expect(shown(failed)).toEqual(['fs-1'])
-		const first = [...log.partnerLookups]
+	])(
+		'once %s, the next save looks the stopped partner up again and encrypts for it, the other from the kept certificate',
+		async (_, stopped, lifted) => {
+			const MALLORY = 'mallory@cloud.partner.example'
+			const both = [
+				{ shareId: 'fs-1', recipientCloudId: BOB },
+				{ shareId: 'fs-2', recipientCloudId: MALLORY },
+			]
+			const lookup = {
+				[BOB]: stopped,
+				[MALLORY]: { ...VALID, cloudId: MALLORY, certificate: F.mallory },
+			}
+			const log = shareSaveServer({ id: 'src', partners: both, lookup })
+			const failed = await saveShared(SAVE).catch((e) => e)
+			expect(failed.code).toBe('partner_unreachable')
+			expect(shown(failed)).toEqual(['fs-1'])
+			const first = [...log.partnerLookups]
 
-		lookup[BOB] = lifted
-		const result = await saveShared(SAVE)
+			lookup[BOB] = lifted
+			const result = await saveShared(SAVE)
 
-		expect(first).toEqual([BOB, MALLORY])
-		expect(log.partnerLookups.slice(first.length)).toEqual([BOB])
-		expect(result.federated.written).toBe(2)
-		const final = log.saves.at(-1)
-		expect(final.federated.map((f) => f.shareId).sort()).toEqual([
-			'fs-1',
-			'fs-2',
-		])
-		expect(final.suspend).toEqual([])
-	})
+			expect(first).toEqual([BOB, MALLORY])
+			expect(log.partnerLookups.slice(first.length)).toEqual([BOB])
+			expect(result.federated.written).toBe(2)
+			const final = log.saves.at(-1)
+			expect(final.federated.map((f) => f.shareId).sort()).toEqual([
+				'fs-1',
+				'fs-2',
+			])
+			expect(final.suspend).toEqual([])
+		},
+	)
 
 	it(`keeps a certificate for ${VERIFIED_PARTNER_TTL_MS / 60000} minutes only`, async () => {
 		vi.useFakeTimers({ toFake: ['Date'] })

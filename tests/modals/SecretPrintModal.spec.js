@@ -23,15 +23,20 @@ vi.mock('../../src/crypto/reauth.js', () => ({
 
 const stubs = {
 	NcDialog: { template: '<div><slot /><slot name="actions" /></div>' },
-	NcNoteCard: { props: ['type'], template: '<div :class="`note--${type}`" v-bind="$attrs"><slot /></div>' },
+	NcNoteCard: {
+		props: ['type'],
+		template: '<div :class="`note--${type}`" v-bind="$attrs"><slot /></div>',
+	},
 	NcButton: {
 		emits: ['click'],
-		template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcPasswordField: {
 		props: ['modelValue'],
 		emits: ['update:modelValue'],
-		template: '<input v-bind="$attrs" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
+		template:
+			'<input v-bind="$attrs" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">',
 	},
 }
 
@@ -54,7 +59,9 @@ function mountPrint() {
 }
 
 async function enter(masterPassword) {
-	await wrapper.find('[data-testid="secret-print-password-field"]').setValue(masterPassword)
+	await wrapper
+		.find('[data-testid="secret-print-password-field"]')
+		.setValue(masterPassword)
 	await wrapper.find('[data-testid="secret-print-submit"]').trigger('click')
 	await vi.waitFor(() => expect(wrapper.vm.busy).toBe(false))
 	await wrapper.vm.$nextTick()
@@ -91,7 +98,9 @@ describe('SecretPrintModal', () => {
 		expect(verifyMasterPassword).toHaveBeenCalledWith('wrapped-key', 'wrong')
 		expect(sheet()).toBeNull()
 		expect(window.print).not.toHaveBeenCalled()
-		expect(wrapper.find('[data-testid="secret-print-error"]').text()).toBe('Incorrect master password')
+		expect(wrapper.find('[data-testid="secret-print-error"]').text()).toBe(
+			'Incorrect master password',
+		)
 	})
 
 	it('renders the name, address, username and password and opens the print dialog on the right one', async () => {
@@ -101,16 +110,37 @@ describe('SecretPrintModal', () => {
 
 		const printed = sheet()
 		expect(printed).not.toBeNull()
-		expect(printed.querySelector('[data-testid="secret-print-name"]').textContent.trim()).toBe(LOGIN.name)
-		expect(printed.querySelector('[data-testid="secret-print-url"]').textContent.trim()).toBe(LOGIN.url)
-		expect(printed.querySelector('[data-testid="secret-print-login"]').textContent.trim()).toBe(LOGIN.login)
-		expect(printed.querySelector('[data-testid="secret-print-password"]').textContent.trim()).toBe(LOGIN.password)
+		expect(
+			printed
+				.querySelector('[data-testid="secret-print-name"]')
+				.textContent.trim(),
+		).toBe(LOGIN.name)
+		expect(
+			printed
+				.querySelector('[data-testid="secret-print-url"]')
+				.textContent.trim(),
+		).toBe(LOGIN.url)
+		expect(
+			printed
+				.querySelector('[data-testid="secret-print-login"]')
+				.textContent.trim(),
+		).toBe(LOGIN.login)
+		expect(
+			printed
+				.querySelector('[data-testid="secret-print-password"]')
+				.textContent.trim(),
+		).toBe(LOGIN.password)
 		expect(window.print).toHaveBeenCalledTimes(1)
 		expect(wrapper.vm.masterPassword).toBe('')
 	})
 
 	it('takes no one-time code seed, so none can be printed', () => {
-		expect(Object.keys(SecretPrintModal.props)).toEqual(['name', 'url', 'login', 'password'])
+		expect(Object.keys(SecretPrintModal.props)).toEqual([
+			'name',
+			'url',
+			'login',
+			'password',
+		])
 	})
 
 	it('prints again on request and removes the sheet when closed', async () => {
@@ -135,6 +165,8 @@ describe('SecretPrintModal', () => {
 		})
 		await enter('right')
 		expect(sheet().querySelector('[data-testid="secret-print-url"]')).toBeNull()
-		expect(sheet().querySelector('[data-testid="secret-print-login"]')).toBeNull()
+		expect(
+			sheet().querySelector('[data-testid="secret-print-login"]'),
+		).toBeNull()
 	})
 })

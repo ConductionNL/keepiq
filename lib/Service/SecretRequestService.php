@@ -451,23 +451,15 @@ class SecretRequestService implements SecretRequestServiceInterface {
 		// be born locked, so refuse it with an explanation instead.
 		$this->writeLockService->assertNotWriteLocked(ownerId: $userId);
 
-		if ($secretId === '') {
-			throw new InvalidArgumentException(message: 'secretId is required');
-		}
+		$arguments = new SecretRequestArguments();
+		$arguments->requireComplete(
+			secretId: $secretId,
+			encryptionSuiteId: $encryptionSuiteId,
+			requestedFields: $requestedFields,
+			userId: $userId
+		);
 
-		if ($encryptionSuiteId === '') {
-			throw new InvalidArgumentException(message: 'encryptionSuiteId is required');
-		}
-
-		$names = $requestedFields->names;
-		if ($names === []) {
-			throw new InvalidArgumentException(message: 'requestedFields cannot be empty');
-		}
-
-		if ($userId === '') {
-			throw new InvalidArgumentException(message: 'userId is required');
-		}
-
+		$names   = $requestedFields->names;
 		$target  = $this->requireRequestableSecret(secretId: $secretId, userId: $userId);
 		$shape   = new FieldSchemaShape();
 		$schemas = $shape->normalize(schemas: $requestedFields->schemas, requestedFields: $names);

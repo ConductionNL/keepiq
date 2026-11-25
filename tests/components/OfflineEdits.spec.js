@@ -234,7 +234,9 @@ describe('the sync panel', () => {
 				body: { name: 'Bridge' },
 				failure: {
 					code: 'partner_unreachable',
-					partners: [{ cloudId: 'carol@partner', reason: 'untrusted_root' }],
+					partners: [
+						{ cloudId: 'carol@partner', reason: 'untrusted_root' },
+					],
 				},
 			},
 		]
@@ -271,9 +273,9 @@ describe('the sync panel', () => {
 		)
 		await wrapper.find('[data-testid="offline-sync-retry-e4"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e4')
-		expect(wrapper.find('[data-testid="offline-sync-reason-e5"]').text()).toContain(
-			"check this device's date and time",
-		)
+		expect(
+			wrapper.find('[data-testid="offline-sync-reason-e5"]').text(),
+		).toContain("check this device's date and time")
 		await wrapper.find('[data-testid="offline-sync-retry-e5"]').trigger('click')
 		expect(offline.retryEntry).toHaveBeenCalledWith('e5')
 		const renewed = wrapper.find('[data-testid="offline-sync-reason-e6"]').text()
