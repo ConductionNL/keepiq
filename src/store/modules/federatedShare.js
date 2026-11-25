@@ -199,7 +199,9 @@ async function encryptForVerified(secret, recipient) {
  */
 async function encryptForPartner(secret, recipient) {
 	if (
-		BLOB_FIELDS.some((field) => secret?.[field] && !partnerStores(recipient, field))
+		BLOB_FIELDS.some(
+			(field) => secret?.[field] && !partnerStores(recipient, field),
+		)
 	) {
 		throw new PartnerUpgradeRequiredError()
 	}

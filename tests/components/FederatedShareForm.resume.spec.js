@@ -82,7 +82,9 @@ function until(check) {
 async function mountWith({
 	status = 'suspended',
 	answer = VERIFIED,
-	resumeAnswers = [{ data: { id: 'fs-1', recipientCloudId: BOB, status: 'active' } }],
+	resumeAnswers = [
+		{ data: { id: 'fs-1', recipientCloudId: BOB, status: 'active' } },
+	],
 	versions = [V1],
 } = {}) {
 	vi.spyOn(axios, 'get').mockResolvedValue({
@@ -142,9 +144,9 @@ describe('FederatedShareForm: resume a suspended share', () => {
 
 		await wrapper.find('[data-testid="federated-share-resume"]').trigger('click')
 		await until(() => {
-			expect(wrapper.find('[data-testid="federated-share-state"]').text()).toBe(
-				'Shared',
-			)
+			expect(
+				wrapper.find('[data-testid="federated-share-state"]').text(),
+			).toBe('Shared')
 		})
 
 		expect(post).toHaveBeenCalledWith(
@@ -188,9 +190,9 @@ describe('FederatedShareForm: resume a suspended share', () => {
 		await wrapper.find('[data-testid="federated-share-resume"]').trigger('click')
 		await until(() => expect(resumeCalls(post)).toHaveLength(2))
 		await until(() => {
-			expect(wrapper.find('[data-testid="federated-share-state"]').text()).toBe(
-				'Shared',
-			)
+			expect(
+				wrapper.find('[data-testid="federated-share-state"]').text(),
+			).toBe('Shared')
 		})
 
 		expect(fetchSecret).toHaveBeenCalledTimes(2)
@@ -212,9 +214,9 @@ describe('FederatedShareForm: resume a suspended share', () => {
 
 		await wrapper.find('[data-testid="federated-share-resume"]').trigger('click')
 		await until(() => {
-			expect(wrapper.find('[data-testid="federated-share-error"]').exists()).toBe(
-				true,
-			)
+			expect(
+				wrapper.find('[data-testid="federated-share-error"]').exists(),
+			).toBe(true)
 		})
 
 		expect(resumeCalls(post)).toHaveLength(3)
@@ -227,9 +229,9 @@ describe('FederatedShareForm: resume a suspended share', () => {
 
 		await wrapper.find('[data-testid="federated-share-resume"]').trigger('click')
 		await until(() => {
-			expect(wrapper.find('[data-testid="federated-share-error"]').exists()).toBe(
-				true,
-			)
+			expect(
+				wrapper.find('[data-testid="federated-share-error"]').exists(),
+			).toBe(true)
 		})
 
 		expect(resumeCalls(post)).toHaveLength(0)
