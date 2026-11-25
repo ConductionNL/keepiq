@@ -376,6 +376,7 @@ webpackConfig.resolve.fallback = {
  * only, and never the service worker.
  *
  * Speed budget: hydra ADR-124.
+ *
  * @param {import('webpack').Chunk} chunk The chunk webpack asks about.
  * @return {boolean} Whether its modules may move into a shared chunk.
  */
