@@ -797,6 +797,28 @@ class FederatedSourceDeletedTest extends TestCase {
 	}
 
 	/**
+	 * Attempts far past the point where 2^(attempts-1) stops fitting an int.
+	 *
+	 * @return array<string,array{0:int}>
+	 */
+	public static function lateAttempts(): array {
+		return ['attempt 64' => [64], 'attempt 126' => [126]];
+	}
+
+	#[DataProvider('lateAttempts')]
+	public function testALateFailedAttemptWaitsTheSixHourCap(int $attempt): void {
+		$due = new DateTime('2026-10-02T00:00:00Z');
+		$this->share(id: 'fs-1', sourceSecretId: 'src', status: FederatedShare::STATUS_REVOKED, pending: FederatedNotificationDelivery::SHARE_UNSHARED, attempts: $attempt - 1, next: $due);
+		unset($this->secrets['src']);
+		$this->reachable = false;
+
+		$this->delivery->retryDue(clone $due);
+
+		$this->assertSame($attempt, $this->rows['fs-1']->getNotifyAttempts());
+		$this->assertSame(21600, $this->rows['fs-1']->getNextNotifyAt()->getTimestamp() - $due->getTimestamp());
+	}
+
+	/**
 	 * An unshare queued before the administrator removed the partner is not sent: the retry job drops the share first,
 	 * recorded as failed with reason partner_removed. While the partner is still one, the same run sends it.
 	 *
