@@ -212,6 +212,8 @@ class PartnerRootRenewalService {
 			$this->logRefusal(partner: $partner, reason: $exception->getMessage());
 		}
 
+		$this->offers->withdraw(partner: $partner);
+
 		return null;
 	}//end verifyOrWithdraw()
 

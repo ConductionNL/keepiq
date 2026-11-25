@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
-use DateTime;
+use DateTimeInterface;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\FederationPartner;
 use OCA\Keepiq\Db\FederationPartnerMapper;
@@ -98,12 +98,11 @@ class PartnerRootRenewalOffers {
 	}//end announcesNewRoot()
 
 	/**
-	 * Run every check on the partner's announcement. A failed check withdraws any offered renewal; only a document
-	 * that could not be fetched leaves it, since that may pass.
+	 * Run every check on the partner's announcement.
 	 *
 	 * @param FederationPartner $partner The partner
 	 *
-	 * @return array{fingerprint:string,windowEndsAt:DateTime} The verified renewal
+	 * @return array{fingerprint:string,windowEndsAt:\DateTime} The verified renewal
 	 *
 	 * @throws PartnerUnreachableException When the partner's discovery document could not be fetched
 	 * @throws InvalidArgumentException Naming the first check that failed
@@ -111,19 +110,24 @@ class PartnerRootRenewalOffers {
 	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
 	 */
 	public function verify(FederationPartner $partner): array {
-		try {
-			return $this->verifier->verify(partner: $partner);
-		} catch (PartnerUnreachableException $exception) {
-			throw $exception;
-		} catch (InvalidArgumentException $exception) {
-			if ($partner->getPendingRootFingerprint() !== null) {
-				$partner->withdrawRenewal();
-				$this->partnerMapper->update(entity: $partner);
-			}
-
-			throw $exception;
-		}
+		return $this->verifier->verify(partner: $partner);
 	}//end verify()
+
+	/**
+	 * Withdraw the renewal the partner offers, if any.
+	 *
+	 * @param FederationPartner $partner The partner
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-announced-renewal-is-offered-to-administrators-after-its-signature-checks-out
+	 */
+	public function withdraw(FederationPartner $partner): void {
+		if ($partner->getPendingRootFingerprint() !== null) {
+			$partner->withdrawRenewal();
+			$this->partnerMapper->update(entity: $partner);
+		}
+	}//end withdraw()
 
 	/**
 	 * The partner, when the renewal it offers now is the one with this fingerprint.
@@ -154,7 +158,7 @@ class PartnerRootRenewalOffers {
 	 * one is notified. The offer counts as the reminder its days left fall in.
 	 *
 	 * @param FederationPartner $partner The partner as the check read it
-	 * @param array{fingerprint:string,windowEndsAt:DateTime} $verified The renewal verified against its pin
+	 * @param array{fingerprint:string,windowEndsAt:\DateTime} $verified The renewal verified against its pin
 	 *
 	 * @return void
 	 *
@@ -188,13 +192,13 @@ class PartnerRootRenewalOffers {
 	 * The hourly pass: withdraw every offered renewal whose window ended, and remind the administrators 7, 5, 3 and 1
 	 * day before a window ends, each reminder once.
 	 *
-	 * @param DateTime $now The current time
+	 * @param DateTimeInterface $now The current time
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/partner-root-renewal-announcement/specs/federated-sharing/spec.md#requirement-an-offered-renewal-expires-after-30-days-with-reminders
 	 */
-	public function remindAndExpire(DateTime $now): void {
+	public function remindAndExpire(DateTimeInterface $now): void {
 		foreach ($this->partnerMapper->findWithOfferedRenewal() as $partner) {
 			$endsAt = $partner->getPendingRootWindowEndsAt();
 			if ($endsAt === null || $endsAt <= $now) {

@@ -56,7 +56,7 @@ class PartnerRootRenewalNotifier {
 	 * Notify every member of the `admin` group about the partner's renewal. A failed notification is logged and the
 	 * others still go out.
 	 *
-	 * @param string $subject PartnerRootRenewalService::SUBJECT_OFFERED or SUBJECT_REMINDER
+	 * @param string $subject PartnerRootRenewalOffers::SUBJECT_OFFERED or SUBJECT_REMINDER
 	 * @param FederationPartner $partner The partner
 	 * @param int $daysLeft Days until the offer ends
 	 *

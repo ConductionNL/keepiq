@@ -108,6 +108,12 @@ class PartnerRootRenewalTest extends TestCase {
 	/** @var FederationPartner|null The row as stored now, when it changed since the service read it */
 	private ?FederationPartner $stored = null;
 
+	/** Whether the partner row has been removed, so reading it again finds nothing. */
+	private bool $removed = false;
+
+	/** Whether writing the partner row fails. */
+	private bool $updateFails = false;
+
 	/**
 	 * A listed partner that pinned the previous root, and a clock at now.
 	 *
@@ -152,9 +158,13 @@ class PartnerRootRenewalTest extends TestCase {
 
 		$mapper = $this->partnerMapper([$this->partner]);
 		$mapper->method('findById')->willReturnCallback(
-			fn (string $id): FederationPartner => ($id === $this->partner->getId()) ? ($this->stored ?? $this->partner) : throw new DoesNotExistException('none')
+			fn (string $id): FederationPartner => ($id === $this->partner->getId() && $this->removed === false) ? ($this->stored ?? $this->partner) : throw new DoesNotExistException('none')
 		);
 		$mapper->method('update')->willReturnCallback(function (FederationPartner $partner): FederationPartner {
+			if ($this->updateFails === true) {
+				throw new RuntimeException('database gone');
+			}
+
 			$this->updated[] = $partner;
 			return $partner;
 		});
@@ -593,6 +603,35 @@ class PartnerRootRenewalTest extends TestCase {
 		$this->assertSame([], $this->notified);
 		$this->assertSame(self::fingerprintOf(self::root('previous')['pem']), $this->partner->getRootFingerprint());
 		$this->assertStringContainsString($reason, implode("\n", $this->warnings));
+	}
+
+	public function testAFailingWithdrawStillLogsTheRefusal(): void {
+		$this->partner->offerRenewal(self::fingerprintOf(self::root('older-offer')['pem']), new DateTime('-5 days'), new DateTime('+20 days'));
+		$this->document = $this->discoveryOf('new', null);
+		$this->updateFails = true;
+
+		try {
+			$this->service()->noticeReceived($this->notice());
+			$this->fail('The failing withdraw was not raised');
+		} catch (RuntimeException $exception) {
+			$this->assertSame('database gone', $exception->getMessage());
+		}
+
+		$this->assertStringContainsString('no_announcement', implode("\n", $this->warnings));
+		$this->assertSame([], $this->notified);
+	}
+
+	public function testACheckForAPartnerRemovedMeanwhileStoresNothingAndNotifiesNoOne(): void {
+		$valid = $this->validDocument();
+		$this->document = function () use ($valid): array {
+			$this->removed = true;
+			return $valid;
+		};
+
+		$this->service()->noticeReceived($this->notice());
+
+		$this->assertSame(1, $this->fetches);
+		$this->assertNothingOffered();
 	}
 
 	public function testADocumentThatCannotBeReadKeepsAnOfferedRenewal(): void {
