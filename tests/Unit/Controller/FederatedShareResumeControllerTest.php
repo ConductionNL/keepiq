@@ -94,9 +94,17 @@ class FederatedShareResumeControllerTest extends TestCase {
 		$row = new FederatedShare();
 		$row->setId('s-1');
 		$row->setStatus(FederatedShare::STATUS_ACTIVE);
+		$suspended = new FederatedShare();
+		$suspended->setId('s-1');
+		$this->resumes->expects($this->once())->method('requireOwnSuspended')->willReturnCallback(
+			callback: function (string $shareId, string $userId) use ($suspended): FederatedShare {
+				$this->assertSame(expected: ['s-1', 'alice'], actual: [$shareId, $userId]);
+				return $suspended;
+			}
+		);
 		$this->resumes->expects($this->once())->method('resume')->willReturnCallback(
-			callback: function (string $shareId, string $userId, array $body) use ($row): FederatedShare {
-				$this->assertSame(expected: ['s-1', 'alice', $this->params], actual: [$shareId, $userId, $body]);
+			callback: function (FederatedShare $share, array $body) use ($row, $suspended): FederatedShare {
+				$this->assertSame(expected: [$suspended, $this->params], actual: [$share, $body]);
 				return $row;
 			}
 		);
@@ -113,6 +121,7 @@ class FederatedShareResumeControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testASignedOutCallerIsRefused(): void {
+		$this->resumes->expects($this->never())->method('requireOwnSuspended');
 		$this->resumes->expects($this->never())->method('resume');
 
 		$this->assertSame(expected: 401, actual: $this->controller(signedIn: false)->resume(id: 's-1')->getStatus());
@@ -153,6 +162,21 @@ class FederatedShareResumeControllerTest extends TestCase {
 
 		$this->assertSame(expected: [$status, $body], actual: [$response->getStatus(), $response->getData()]);
 	}//end testARefusalKeepsItsStatus()
+
+	/**
+	 * Another user's share, or one that is not suspended, is not found and
+	 * nothing is resumed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-only-a-suspended-share-resumes
+	 */
+	public function testTheGuardStopsAnyOtherShare(): void {
+		$this->resumes->method('requireOwnSuspended')->willThrowException(exception: new NotFoundException(message: 'Share not found'));
+		$this->resumes->expects($this->never())->method('resume');
+
+		$this->assertSame(expected: 404, actual: $this->controller()->resume(id: 's-1')->getStatus());
+	}//end testTheGuardStopsAnyOtherShare()
 
 	/**
 	 * A partner too old for a field the login holds is answered as the share

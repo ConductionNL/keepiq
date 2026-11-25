@@ -35,7 +35,6 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use InvalidArgumentException;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\SecretVersionLock;
@@ -79,29 +78,55 @@ class FederatedShareResume {
 	}//end __construct()
 
 	/**
-	 * Resume one of the owner's suspended partner shares.
+	 * The caller's own suspended share: the guard before a resume. Another
+	 * user's share, one that is not suspended and one that does not exist
+	 * are answered alike, so the answer tells nothing about other people's
+	 * shares.
 	 *
 	 * @param string $shareId The federated share
-	 * @param string $userId The owner
+	 * @param string $userId The caller
+	 *
+	 * @return FederatedShare
+	 *
+	 * @throws NotFoundException When it is not the caller's suspended share
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-only-a-suspended-share-resumes
+	 */
+	public function requireOwnSuspended(string $shareId, string $userId): FederatedShare {
+		try {
+			$row = $this->shareMapper->findById(id: $shareId);
+		} catch (DoesNotExistException) {
+			throw new NotFoundException(message: 'Share not found');
+		}
+
+		if ($row->getOwnerId() !== $userId || $row->getStatus() !== FederatedShare::STATUS_SUSPENDED) {
+			throw new NotFoundException(message: 'Share not found');
+		}
+
+		return $row;
+	}//end requireOwnSuspended()
+
+	/**
+	 * Resume a suspended share that requireOwnSuspended() returned.
+	 *
+	 * @param FederatedShare $row The caller's suspended share
 	 * @param array<array-key,mixed> $body `certFingerprint`, `sourceUpdatedAt` (the version the value was encrypted
 	 *   from), and the ciphertext `key`, `login`, `additionalFields`, `totp` and `passkeys`
 	 *
 	 * @return FederatedShare The live share
 	 *
-	 * @throws NotFoundException When it is not the user's suspended share, or its partner is gone
-	 * @throws InvalidArgumentException `invalid`
-	 * @throws ShareSaveRefusal `stale_source` (409) with the current version
+	 * @throws NotFoundException When it stopped being suspended meanwhile, or its partner is gone
+	 * @throws ShareSaveRefusal `invalid` (400) without a version, or `stale_source` (409) with the current version
 	 * @throws PartnerUpgradeRequiredException When it carries a value field the partner has not advertised
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
 	 */
-	public function resume(string $shareId, string $userId, array $body): FederatedShare {
+	public function resume(FederatedShare $row, array $body): FederatedShare {
 		$sent = ($body['sourceUpdatedAt'] ?? null);
 		if (is_string($sent) === false || $sent === '' || strtotime($sent) === false) {
-			throw new InvalidArgumentException('invalid');
+			throw new ShareSaveRefusal(error: 'invalid', message: 'A resume names the version it encrypted from');
 		}
 
-		$row = $this->suspendedShare(shareId: $shareId, userId: $userId);
 		$certFingerprint = (string)($body['certFingerprint'] ?? '');
 		$ciphertext = $this->ciphertextOf(body: $body);
 
@@ -171,28 +196,4 @@ class FederatedShareResume {
 
 		return $ciphertext;
 	}//end ciphertextOf()
-
-	/**
-	 * The user's own suspended share, or not found.
-	 *
-	 * @param string $shareId The share
-	 * @param string $userId The owner
-	 *
-	 * @return FederatedShare
-	 *
-	 * @throws NotFoundException
-	 */
-	private function suspendedShare(string $shareId, string $userId): FederatedShare {
-		try {
-			$row = $this->shareMapper->findById(id: $shareId);
-		} catch (DoesNotExistException) {
-			throw new NotFoundException(message: 'Share not found');
-		}
-
-		if ($row->getOwnerId() !== $userId || $row->getStatus() !== FederatedShare::STATUS_SUSPENDED) {
-			throw new NotFoundException(message: 'Share not found');
-		}
-
-		return $row;
-	}//end suspendedShare()
 }//end class

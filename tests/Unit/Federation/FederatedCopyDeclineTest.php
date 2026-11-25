@@ -639,17 +639,27 @@ class FederatedCopyDeclineTest extends TestCase {
 		$result = $provider->notificationReceived('SHARE_DECLINED', self::SHARE_ID, ['sharedSecret' => self::SHARED_SECRET, 'providerId' => self::SHARE_ID]);
 
 		$this->assertSame([], $result);
-		$this->assertSame(FederatedShare::STATUS_DECLINED, $this->outbound->getStatus());
-		$this->assertNull($this->outbound->getKey());
-		$this->assertNull($this->outbound->getLogin());
-		$this->assertNull($this->outbound->getAdditionalFields());
-		$this->assertNull($this->outbound->getTotp());
-		$this->assertNull($this->outbound->getPasskeys());
+		$this->assertSame(
+			expected: [FederatedShare::STATUS_DECLINED, null, null, null, null, null],
+			actual: [
+				$this->outbound->getStatus(),
+				$this->outbound->getKey(),
+				$this->outbound->getLogin(),
+				$this->outbound->getAdditionalFields(),
+				$this->outbound->getTotp(),
+				$this->outbound->getPasskeys(),
+			]
+		);
 		$this->assertCount(1, $this->audit);
 		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_RECIPIENT_DECLINED, $this->audit[0]->getEventType());
 		$this->assertNull($this->audit[0]->getActorId());
 		$this->assertSame(
-			['federatedShareId' => self::SHARE_ID, 'recipientCloudId' => 'bob@cloud.partner.example', 'partnerId' => 'p-cloud.partner.example', 'was' => 'suspended'],
+			[
+				'federatedShareId' => self::SHARE_ID,
+				'recipientCloudId' => 'bob@cloud.partner.example',
+				'partnerId' => 'p-cloud.partner.example',
+				'was' => 'suspended',
+			],
 			$this->audit[0]->getMetadata()
 		);
 		$this->assertIdentifiersOnly();

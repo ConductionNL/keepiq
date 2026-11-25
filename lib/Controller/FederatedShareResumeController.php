@@ -83,7 +83,9 @@ class FederatedShareResumeController extends Controller {
 		}
 
 		try {
-			$share = $this->resumes->resume(shareId: $id, userId: $user->getUID(), body: $this->request->getParams());
+			// Only the caller's own suspended share; every other id is not found.
+			$row = $this->resumes->requireOwnSuspended(shareId: $id, userId: $user->getUID());
+			$share = $this->resumes->resume(row: $row, body: $this->request->getParams());
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		} catch (ShareSaveRefusal $refusal) {

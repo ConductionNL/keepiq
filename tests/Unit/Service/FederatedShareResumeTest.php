@@ -25,7 +25,6 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use Closure;
 use DateTime;
 use DateTimeZone;
-use InvalidArgumentException;
 use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\SecretVersionLock;
@@ -147,9 +146,11 @@ class FederatedShareResumeTest extends TestCase {
 	 * @return FederatedShare
 	 */
 	private function resume(string $version = self::VERSION, string $userId = 'alice'): FederatedShare {
-		return $this->resumes()->resume(
-			shareId: self::SHARE_ID,
-			userId: $userId,
+		$resumes = $this->resumes();
+		$row = $resumes->requireOwnSuspended(shareId: self::SHARE_ID, userId: $userId);
+
+		return $resumes->resume(
+			row: $row,
 			body: ['id' => self::SHARE_ID, 'certFingerprint' => self::FINGERPRINT, 'sourceUpdatedAt' => $version, 'key' => 'new', 'login' => 'l', 'totp' => 7],
 		);
 	}//end resume()
@@ -286,7 +287,7 @@ class FederatedShareResumeTest extends TestCase {
 	 */
 	public function testAMissingShareIsNotFound(): void {
 		$this->expectException(exception: NotFoundException::class);
-		$this->resumes()->resume(shareId: 'nope', userId: 'alice', body: ['sourceUpdatedAt' => self::VERSION, 'key' => 'k']);
+		$this->resumes()->requireOwnSuspended(shareId: 'nope', userId: 'alice');
 	}//end testAMissingShareIsNotFound()
 
 	/**
@@ -309,10 +310,10 @@ class FederatedShareResumeTest extends TestCase {
 	 */
 	public function testAResumeWithoutAVersionIsInvalid(mixed $version): void {
 		try {
-			$this->resumes()->resume(shareId: self::SHARE_ID, userId: 'alice', body: ['sourceUpdatedAt' => $version, 'key' => 'k']);
+			$this->resumes()->resume(row: $this->row, body: ['sourceUpdatedAt' => $version, 'key' => 'k']);
 			$this->fail(message: 'A resume without a version was taken');
-		} catch (InvalidArgumentException $exception) {
-			$this->assertSame(expected: 'invalid', actual: $exception->getMessage());
+		} catch (ShareSaveRefusal $refusal) {
+			$this->assertSame(expected: [400, 'invalid'], actual: [$refusal->getStatus(), $refusal->getError()]);
 			$this->assertSame(expected: [], actual: $this->steps);
 		}
 	}//end testAResumeWithoutAVersionIsInvalid()
