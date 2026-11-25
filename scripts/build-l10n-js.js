@@ -36,6 +36,13 @@
 // (`"_<singular>_::_<plural>_": [forms]`) are emitted like any other value,
 // so the .js carries the same arrays as the .json.
 //
+// The SOURCE locale (en) is the one exception to "every key": its keys ARE
+// its strings, and `t()` already falls back to the key, so an entry equal to
+// its own key costs bytes on every English page and changes nothing. Its .js
+// carries only the entries that differ from their key (a plural pair, a
+// spelling fix). l10n/en.json keeps every key, because PHP `$l->t()` and the
+// completeness checks read it (PERF-HANDOFF, all apps).
+//
 // Usage:
 //   node scripts/build-l10n-js.js            (npm run l10n:build)
 //   node scripts/build-l10n-js.js --check    exit 1 if any .js is stale
@@ -55,6 +62,9 @@ const REPO_ROOT = process.env.L10N_REPO_ROOT
 	? path.resolve(process.env.L10N_REPO_ROOT)
 	: path.resolve(__dirname, '..')
 const L10N_DIR = path.join(REPO_ROOT, 'l10n')
+
+/** The locale whose keys are its source strings; see the header note. */
+const SOURCE_LOCALE = 'en'
 
 /**
  * The app id the browser catalogue must register under. Read from
@@ -86,6 +96,28 @@ function renderEntries(translations) {
 				`        ${JSON.stringify(key)}: ${JSON.stringify(translations[key])}`,
 		)
 		.join(',\n')
+}
+
+/**
+ * The entries the browser needs from one catalogue: all of them, except for
+ * the source locale, where an entry equal to its own key is dropped.
+ *
+ * @spec PERF-HANDOFF.md (all apps: drop identity entries from the English catalogue at build time)
+ * @param {string} locale - the catalogue's locale code
+ * @param {object} translations - key -> translation
+ * @return {object} key -> translation, as served to the browser
+ */
+function browserEntries(locale, translations) {
+	if (locale !== SOURCE_LOCALE) {
+		return translations
+	}
+	const kept = {}
+	for (const key of Object.keys(translations)) {
+		if (translations[key] !== key) {
+			kept[key] = translations[key]
+		}
+	}
+	return kept
 }
 
 /**
@@ -185,11 +217,12 @@ function readIfPresent(file) {
 function syncLocale(locale, run) {
 	const doc = readCatalogue(locale)
 	const jsFile = path.join(L10N_DIR, `${locale}.js`)
+	const translations = browserEntries(locale, doc.translations)
 	const rendered = renderJs(run.id, {
-		translations: doc.translations,
+		translations,
 		pluralForm: doc.pluralForm || pluralFormFor(locale),
 	})
-	const keys = Object.keys(doc.translations).length
+	const keys = Object.keys(translations).length
 
 	if (readIfPresent(jsFile) === rendered) {
 		console.log(`  ✓ l10n/${locale}.js up to date (${keys} keys)`)
@@ -220,4 +253,8 @@ function main() {
 	}
 }
 
-main()
+if (require.main === module) {
+	main()
+}
+
+module.exports = { browserEntries, renderJs, SOURCE_LOCALE }

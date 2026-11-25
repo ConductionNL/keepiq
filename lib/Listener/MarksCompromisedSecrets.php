@@ -51,6 +51,8 @@ trait MarksCompromisedSecrets {
 	 *
 	 * @return bool True when the Secret was stamped and flagged
 	 *
+	 * @psalm-suppress UnusedReturnValue CompromiseContainmentService counts the result; SuiteCompromiseListener relies on the warning logged here.
+	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
 	private function stampAndFlag(Secret $secret): bool {

@@ -222,6 +222,8 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	 * @param DateTime $now The current time
 	 *
 	 * @return bool Whether it was delivered
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	private function attempt(FederatedShare $row, DateTime $now): bool {
 		$type = (string)$row->getPendingNotification();

@@ -147,6 +147,31 @@ describe('SecretCreateDialog — clone', () => {
 		expect(wrapper.emitted('saved')[0][0]).toEqual({ id: 'new-id' })
 	})
 
+	// vault-login-totp-followup task 1.1, decided: a clone carries neither.
+	// @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-clone-of-a-login-carries-neither-the-code-nor-the-passkeys
+	it('a clone of a login with a seed and passkeys saves neither', async () => {
+		const source = {
+			...GRAFANA,
+			totp: 'JBSWY3DPEHPK3PXP',
+			passkeys: [{ credentialId: 'cred-1', rpId: 'grafana.staging.example' }],
+		}
+		const wrapper = await mountDialog({ prefill: source })
+		vi.spyOn(wrapper.vm, 'breachBlocked').mockResolvedValue(false)
+		const create = vi
+			.spyOn(useSecretStore(), 'createSecret')
+			.mockResolvedValue({ id: 'new-id' })
+		vi.spyOn(useSecretStore(), 'setTags').mockResolvedValue()
+
+		expect(wrapper.vm.totpInput).toBe('')
+		await wrapper.vm.submit()
+
+		const body = create.mock.calls[0][0]
+		expect(body).not.toHaveProperty('totp')
+		expect(body).not.toHaveProperty('passkeys')
+		expect(JSON.stringify(body)).not.toContain('JBSWY3DPEHPK3PXP')
+		expect(JSON.stringify(body)).not.toContain('cred-1')
+	})
+
 	it('keeps the stored schema that hides a type field of the source', async () => {
 		useSecretTypeStore().types.push({
 			id: 'server',

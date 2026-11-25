@@ -122,7 +122,7 @@ export default {
 		 * while secrets are left out without the user choosing to continue.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		canDownload() {
 			if (this.loading) {

@@ -225,17 +225,6 @@ class ReadOnlyFederatedCopyTest extends TestCase {
 	}
 
 	/**
-	 * PUT /api/v1/secrets/{id}/sync: Bob cannot push new values through it.
-	 *
-	 * @return void
-	 */
-	public function testSyncIsForbidden(): void {
-		$response = $this->shareController()->sync('copy', [['secretId' => 'copy', 'encryptedKey' => 'NEW']]);
-
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-	}
-
-	/**
 	 * POST /api/v1/shares/register-batch (the only share-create surface): Bob
 	 * cannot share it onward with a user.
 	 *

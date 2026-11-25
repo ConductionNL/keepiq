@@ -3,6 +3,8 @@
 ## 1. Protocol
 
 - [ ] 1.1 Verify `createImportRequest`, `sealForRequest` and `openEnvelope` against the published CXP test vectors and fix drift. Verify: vitest with the vectors.
+  - Checked 25 Nov 2026 (fidoalliance.org/specs/cx/ reachable): CXP is still only a Working Draft (latest `cxp-v1.0-wd-20241003`), with no test vectors; only CXF has a Proposed Standard (`cxf-v1.0-ps-20250814`, errata 2026-03-09). The draft's `ExportRequest` (`version`, `hpke: [HpkeParameters with a JWK key]`, `archive`, `mode`, `importer`) and `ExportResponse` (`hpke`, `archive`, `exporter`, `payload`, a JWE archive) do not match our `doriath-cxp-v1` framing (`v`, `requesterPublicKey`, `nonce`, `enc`, `ct`), so a peer on the draft cannot read our files today.
+  - Decision (b-keepiq, 25 Nov 2026, under the 22 Nov delegation): keep `doriath-cxp-v1` and do not build the draft shapes yet. Build them as a new version string (`doriath-cxp-v2`, per the rule in `src/crypto/cxp.js`) once CXP reaches Proposed Standard or publishes vectors. A draft could change again and force a second break. Until then this task stays open.
 
 ## 2. Receive and send
 

@@ -6,7 +6,7 @@
   export or transfer: how many, and a checkbox to continue without them.
   The dialog holds its export or send until the box is ticked (keepiq#794).
 
-  @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+  @spec openspec/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 -->
 <template>
 	<div :data-testid="`${name}-skipped-warning`">

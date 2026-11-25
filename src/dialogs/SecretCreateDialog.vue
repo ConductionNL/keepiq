@@ -639,9 +639,13 @@ export default {
 		 * are loaded, so the typed fields of an administrator-defined type
 		 * come out of the blob into their own form.
 		 *
+		 * The seed and passkeys of a login are never taken over: the
+		 * authenticator key starts empty on a clone.
+		 *
 		 * @param {object} source The decrypted secret.
 		 * @return {void}
 		 * @spec openspec/specs/secret-item-actions/spec.md#requirement-clone-a-secret
+		 * @spec openspec/specs/login-one-time-codes/spec.md#requirement-a-clone-of-a-login-carries-neither-the-code-nor-the-passkeys
 		 */
 		applyPrefillPayload(source) {
 			this.value = source.key || ''

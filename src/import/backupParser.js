@@ -43,7 +43,7 @@ function toRows(payload) {
  *
  * @param {object} payload The decrypted payload.
  * @return {Array<string>} The left-out fields.
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
  */
 function omittedFieldsOf(payload) {
 	if (!payload || payload.partial !== true) {
@@ -60,7 +60,7 @@ function omittedFieldsOf(payload) {
  * @param {object} row The row.
  * @param {object} s The decrypted secret.
  * @return {object} The same row.
- * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ * @spec openspec/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
  */
 function withTypeNames(row, s) {
 	for (const field of ['typeName', 'typeLabel']) {
