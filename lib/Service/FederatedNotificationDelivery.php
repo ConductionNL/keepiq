@@ -279,7 +279,7 @@ class FederatedNotificationDelivery implements FederatedNotificationDeliveryInte
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-an-unreachable-partner-is-retried-for-30-days
 	 */
 	private function retryLater(FederatedShare $row, string $type, array $from, DateTime $now): void {
-		$wait = min(self::FIRST_WAIT * (2 ** min($row->getNotifyAttempts() - 1, 9)), self::LONGEST_WAIT);
+		$wait = min(self::FIRST_WAIT * (int)(2 ** min($row->getNotifyAttempts() - 1, 9)), self::LONGEST_WAIT);
 		$row->setNextNotifyAt((clone $now)->add(new DateInterval('PT' . $wait . 'S')));
 		$this->write(row: $row, type: $type, from: $from);
 	}//end retryLater()
