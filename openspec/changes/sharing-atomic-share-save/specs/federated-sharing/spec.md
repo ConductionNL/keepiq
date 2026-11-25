@@ -109,7 +109,7 @@ A partner share's ciphertext MUST change in the same transaction as the owner's 
 
 ### Requirement: An unreachable partner stops the save unless the user saves without them
 
-When the partner certificate lookup for an active partner share answers that the partner can't be reached, the web app MUST save nothing and MUST tell the owner which partners it couldn't reach, offering to save without them. Saving without them MUST suspend those partner shares in the same share-save; a suspended share stays suspended until the owner revokes it or shares again, and the web app MUST say so before the owner confirms. A decline or accept from the recipient's server MUST NOT change a suspended share. A local server error or a lost connection MUST abort the save with an ordinary error and MUST NOT offer to suspend anything. `unknown_recipient`, `not_a_partner` and `bad_chain` count as the share being gone only with the status this server sends them with (404, 403 and 502); with any other status they are a local server error. When the lookup is rate-limited, the web app MUST wait as long as the server asks, keep what it already encrypted and continue, and MUST abort with its own error after five minutes of waiting in total. Certificates verified during a failed save MAY be reused for up to five minutes by the save that follows it, and MUST be forgotten when the vault locks.
+When the partner certificate lookup for an active partner share answers that the partner can't be reached, the web app MUST save nothing and MUST tell the owner which partners it couldn't reach, offering to save without them. Saving without them MUST suspend those partner shares in the same share-save; a suspended share stays suspended until the owner resumes it, revokes it or shares again, and the web app MUST say before the owner confirms that the share stops. An accept from the recipient's server MUST NOT change a suspended share. A decline from the recipient's server MUST end a suspended share as declined and drop its ciphertext, so that neither a later accept nor a resume can make it live again (decision of 25 Nov 2026). A local server error or a lost connection MUST abort the save with an ordinary error and MUST NOT offer to suspend anything. `unknown_recipient`, `not_a_partner` and `bad_chain` count as the share being gone only with the status this server sends them with (404, 403 and 502); with any other status they are a local server error. When the lookup is rate-limited, the web app MUST wait as long as the server asks, keep what it already encrypted and continue, and MUST abort with its own error after five minutes of waiting in total. Certificates verified during a failed save MAY be reused for up to five minutes by the save that follows it, and MUST be forgotten when the vault locks.
 
 #### Scenario: Bob's server is down
 
@@ -122,9 +122,17 @@ When the partner certificate lookup for an active partner share answers that the
 #### Scenario: Bob's server cannot end a suspension
 
 - **GIVEN** Alice's share with Bob is suspended
-- **WHEN** Bob's server sends `SHARE_DECLINED` for it, and later `SHARE_ACCEPTED`
+- **WHEN** Bob's server sends `SHARE_ACCEPTED` for it
 - **THEN** Alice's share MUST stay suspended, and Bob's server MUST NOT be able to pull it
-- **AND** Alice's audit trail MUST record Bob's decline, marked as keeping the share suspended
+
+#### Scenario: A decline while suspended ends the share
+
+- **GIVEN** Alice's share with Bob is suspended
+- **WHEN** Bob's server sends `SHARE_DECLINED` for it, and later `SHARE_ACCEPTED`
+- **THEN** Alice's share MUST be declined and MUST hold no ciphertext any more
+- **AND** the accept MUST be answered "share not found", and Bob's server MUST NOT be able to pull the share
+- **AND** Alice MUST NOT be able to resume it; she shares again if Bob still needs it
+- **AND** Alice's audit trail MUST record Bob's decline, marked as made while the share was suspended
 
 #### Scenario: A local error never suspends a partner
 
@@ -143,6 +151,36 @@ When the partner certificate lookup for an active partner share answers that the
 - **GIVEN** a secret shared with 250 partner shares, looked up in batches of 100
 - **WHEN** Alice saves a new password and the lookup is rate-limited before the third batch
 - **THEN** the dialog MUST say it is waiting, and the save MUST go through in one share-save once the limit allows the remaining batch
+
+### Requirement: The owner resumes a suspended partner share
+
+The owner MUST be able to resume their own suspended partner share from the sharing sidebar (keepiq#1262). A resume MUST carry the current value, encrypted in the owner's browser for the recipient certificate it looked up and verified again, and the version of the secret it was encrypted from. The server MUST take it only while the share is still suspended and only for the secret's current version, checked under the secret's row lock; it MUST make the share live and store the value in one transaction, record `federated_share.resumed`, and tell the recipient's server after the commit. A resume from an older version MUST be refused as `stale_source` with the current version, and the web app MUST read and encrypt the secret again, at most three times. A share that isn't the caller's, or isn't suspended, MUST be answered "share not found". A Resume action MUST be offered only on a suspended share.
+
+#### Scenario: Alice resumes Bob's share once his server is back
+
+- **GIVEN** Alice saved without Bob while his server was down, so his share is suspended with the old value
+- **WHEN** Alice chooses Resume on Bob's share
+- **THEN** her browser MUST verify Bob's certificate again and encrypt the current value for it
+- **AND** Bob's share MUST be active with that value, and Bob's server MUST be told to pull it
+
+#### Scenario: A save that lands during the resume wins
+
+- **GIVEN** Alice resumes Bob's share
+- **WHEN** a share-save of the secret commits after her browser read it
+- **THEN** the resume MUST be refused as `stale_source` with nothing changed
+- **AND** the web app MUST read the secret again and resume with the newer value
+
+#### Scenario: A certificate that no longer verifies resumes nothing
+
+- **GIVEN** Bob's share is suspended
+- **WHEN** Alice chooses Resume and Bob's certificate does not chain to the pinned partner root
+- **THEN** nothing MUST be encrypted or sent, and Alice MUST be told why
+
+#### Scenario: Only a suspended share resumes
+
+- **GIVEN** a partner share that is active, declined, failed or revoked
+- **THEN** the sharing sidebar MUST offer no Resume for it
+- **AND** a resume request for it MUST be answered "share not found" with nothing changed
 
 ### Requirement: The owner looks up their partner shares' certificates in one request
 
