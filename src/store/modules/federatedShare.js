@@ -437,6 +437,57 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		},
 
 		/**
+		 * Resume a suspended share (keepiq#1262): encrypt the current value
+		 * for the recipient's certificate, verified again, and send it with
+		 * the version it was encrypted from. The server answers 409
+		 * `stale_source` when the secret changed meanwhile; read it again and
+		 * resume once more.
+		 *
+		 * @param {object} share The suspended federated share.
+		 * @param {object} secret The decrypted secret, with its `updatedAt`.
+		 * @param {{cloudId: string, fingerprint: string, spki: Uint8Array, valueFields?: Array<string>}} recipient From lookup() of the share's recipient.
+		 * @return {Promise<object>} The live federated share.
+		 * @throws {PartnerUpgradeRequiredError} The partner cannot store a field the login holds.
+		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+		 */
+		async resume(share, secret, recipient) {
+			if (recipient.cloudId !== share.recipientCloudId) {
+				throw new CloudIdMismatchError(share.recipientCloudId)
+			}
+			if (
+				BLOB_FIELDS.some(
+					(field) => secret?.[field] && !partnerStores(recipient, field),
+				)
+			) {
+				throw new PartnerUpgradeRequiredError()
+			}
+			const encrypted = await encryptForVerified(secret, recipient)
+			// The share names its recipient already.
+			const body = {
+				...federatedShareBody(recipient, encrypted),
+				sourceUpdatedAt: secret.updatedAt ?? '',
+			}
+			delete body.recipientCloudId
+			let row
+			try {
+				row = (
+					await axios.post(
+						generateUrl(
+							`/apps/keepiq/api/v1/federated-shares/${share.id}/resume`,
+						),
+						body,
+					)
+				).data
+			} catch (e) {
+				throw upgradeRefusal(e)
+			}
+			this.shares = this.shares.map((current) =>
+				current.id === row.id ? row : current,
+			)
+			return row
+		},
+
+		/**
 		 * Encrypt a secret for a verified recipient and send the ciphertext.
 		 *
 		 * A login with a one-time code or passkeys is refused with a
