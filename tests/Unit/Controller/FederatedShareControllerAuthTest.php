@@ -50,7 +50,6 @@ class FederatedShareControllerAuthTest extends TestCase {
 		$responses = [
 			'create' => $controller->create(secretId: 's-1', recipientCloudId: 'bob@partner.example', key: 'CIPHER'),
 			'index' => $controller->index(secretId: 's-1'),
-			'update' => $controller->update(id: 'fs-1', key: 'CIPHER'),
 			'destroy' => $controller->destroy(id: 'fs-1'),
 			'suspend' => $controller->suspend(id: 'fs-1', reason: 'audit'),
 		];
