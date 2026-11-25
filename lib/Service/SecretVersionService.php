@@ -478,7 +478,7 @@ class SecretVersionService implements SecretVersionServiceInterface {
 	 * @return void
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-restores-are-auditable
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function recordRestored(Secret $secret, SecretVersion $version, string $userId, ?string $via = null): void {
 		$metadata = ['versionNumber' => $version->getVersionNumber()];
@@ -509,7 +509,7 @@ class SecretVersionService implements SecretVersionServiceInterface {
 	 * @return void
 	 *
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-restores-are-auditable
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function logRestored(Secret $secret, SecretVersion $version, string $userId): void {
 		$this->logger->info(

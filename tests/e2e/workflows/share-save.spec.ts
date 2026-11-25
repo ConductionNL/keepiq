@@ -13,7 +13,7 @@
  *
  * A group share goes through the sidebar's group-share form instead.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
  * @spec openspec/specs/sharing-group/spec.md#requirement-a-group-member-saves-for-everyone-it-is-shared-with
  */
 import type { APIRequestContext, BrowserContext, Page } from '@playwright/test'

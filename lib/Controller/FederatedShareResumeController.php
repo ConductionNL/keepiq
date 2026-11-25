@@ -39,7 +39,7 @@ use OCP\IUserSession;
 /**
  * Resumes the user's own suspended partner shares.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
  */
 class FederatedShareResumeController extends Controller {
 	/**
@@ -77,7 +77,7 @@ class FederatedShareResumeController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) One parameter per request field, as Nextcloud binds them.
 	 */

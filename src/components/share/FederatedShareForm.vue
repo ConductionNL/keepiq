@@ -240,7 +240,7 @@ export default {
 		 *
 		 * @param {object} row The suspended federated share.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
 		 */
 		async resume(row) {
 			this.busy = true

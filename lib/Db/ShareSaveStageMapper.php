@@ -29,7 +29,7 @@ use OCP\IDBConnection;
  *
  * @extends QBMapper<ShareSaveStage>
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
  */
 class ShareSaveStageMapper extends QBMapper {
 	/**
@@ -51,7 +51,7 @@ class ShareSaveStageMapper extends QBMapper {
 	 *
 	 * @return ShareSaveStage[]
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function findLiveByStage(string $stageId, DateTime $now): array {
 		$qb = $this->db->getQueryBuilder();
@@ -71,7 +71,7 @@ class ShareSaveStageMapper extends QBMapper {
 	 *
 	 * @return int The number of chunks removed
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function deleteByStage(string $stageId): int {
 		$qb = $this->db->getQueryBuilder();
@@ -89,7 +89,7 @@ class ShareSaveStageMapper extends QBMapper {
 	 *
 	 * @return int The number of chunks removed
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function deleteByUserAndSecret(string $userId, string $secretId): int {
 		$qb = $this->db->getQueryBuilder();
@@ -107,7 +107,7 @@ class ShareSaveStageMapper extends QBMapper {
 	 *
 	 * @return int The number of chunks removed
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function deleteByUser(string $userId): int {
 		$qb = $this->db->getQueryBuilder();
@@ -124,7 +124,7 @@ class ShareSaveStageMapper extends QBMapper {
 	 *
 	 * @return int The number of chunks removed
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function deleteExpired(DateTime $now): int {
 		$qb = $this->db->getQueryBuilder();

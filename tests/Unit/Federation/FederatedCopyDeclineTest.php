@@ -622,7 +622,7 @@ class FederatedCopyDeclineTest extends TestCase {
 	 *
 	 * @dataProvider suspensions
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-a-decline-while-suspended-ends-the-share
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-decline-while-suspended-ends-the-share
 	 */
 	public function testADeclineEndsASuspendedShareForGood(bool $meanwhile): void {
 		$this->signer = 'cloud.partner.example';

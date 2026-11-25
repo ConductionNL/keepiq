@@ -7,7 +7,7 @@
  * (#1255). A member or manager reading their own copy names the source's
  * version from the write context, read before the copy.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
+ * @spec openspec/specs/user-sharing/spec.md#scenario-a-share-made-during-a-save-is-sent-again
  */
 
 import axios from '@nextcloud/axios'

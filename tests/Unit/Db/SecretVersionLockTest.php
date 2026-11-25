@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
  * The lock is a no-op UPDATE of the row, which takes its lock without moving the version, then a read of the
  * version it holds.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 #[CoversClass(SecretVersionLock::class)]
 class SecretVersionLockTest extends TestCase {

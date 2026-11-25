@@ -46,7 +46,7 @@ interface ShareSaveStagesInterface {
 	 *
 	 * @return int The number of chunks removed
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-large-share-save-is-staged-in-chunks
 	 */
 	public function dropExpired(DateTime $now): int;
 }//end interface

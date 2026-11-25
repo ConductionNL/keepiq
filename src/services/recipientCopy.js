@@ -57,7 +57,7 @@ export function copyCiphertext(blob) {
  *
  * @param {object} plain The decrypted source.
  * @return {{sourceUpdatedAt?: string}}
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 export function sourceVersion(plain) {
 	return typeof plain?.updatedAt === 'string' && plain.updatedAt !== ''

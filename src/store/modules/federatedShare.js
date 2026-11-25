@@ -267,7 +267,7 @@ async function postWithKeyProof(refusal, attempt) {
 export class PartnerLookupRefusal extends Error {
 	/**
 	 * @param {{status: number, message: string}} refusal The server's status and reason.
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
 	 */
 	constructor(refusal) {
 		super(`Partner lookup refused: ${refusal?.message ?? 'unknown'}`)
@@ -370,7 +370,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 *
 		 * @param {Array<{shareId: string, recipientCloudId: string}>} shares The partner shares.
 		 * @return {Promise<Map<string, {recipient?: object, error?: Error}>>} By share id.
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-looks-up-their-partner-shares-certificates-in-one-request
 		 */
 		async lookupShares(shares) {
 			const response = await axios.post(
@@ -448,7 +448,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * @param {{cloudId: string, fingerprint: string, spki: Uint8Array, valueFields?: Array<string>}} recipient From lookup() of the share's recipient.
 		 * @return {Promise<object>} The live federated share.
 		 * @throws {PartnerUpgradeRequiredError} The partner cannot store a field the login holds.
-		 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
 		 */
 		async resume(share, secret, recipient) {
 			if (recipient.cloudId !== share.recipientCloudId) {

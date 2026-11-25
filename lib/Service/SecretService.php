@@ -1076,7 +1076,7 @@ class SecretService implements SecretServiceInterface {
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) `$restoring` only tells the
 	 *   compromise rule that the totp and passkeys written are old values; the
 	 *   write itself is the same.
@@ -1450,7 +1450,7 @@ class SecretService implements SecretServiceInterface {
 	 * @throws NotFoundException When the row was deleted after it was read
 	 *
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	private function store(Secret $secret, Secret $preUpdate, string $userId, ?DateTime $base, ?DateTime $savedAt): void {
 		$savedAt ??= new DateTime('@'.max(time(), ($preUpdate->getUpdatedAt()?->getTimestamp() ?? 0) + 1));
@@ -1978,7 +1978,7 @@ class SecretService implements SecretServiceInterface {
 	 * @throws NotFoundException When the secret does not exist or its access ended
 	 * @throws ForbiddenException When the row is not the user's or the copy may not be edited
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	public function loadForUpdate(string $id, array $fields, string $userId): Secret {
 		$this->assertNotWriteLocked(userId: $userId);

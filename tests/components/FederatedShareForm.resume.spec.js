@@ -10,7 +10,7 @@
  * is read and encrypted again; a certificate that does not verify sends
  * nothing. Only a suspended row offers Resume.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
  */
 
 import axios from '@nextcloud/axios'

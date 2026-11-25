@@ -63,7 +63,7 @@ class FederatedShareAuditTrail {
 	 * @return void
 	 *
 	 * @spec openspec/changes/archive/2026-10-04-sharing-federated-recipients/tasks.md#task-4.3
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
 	 */
 	public function recordOutbound(string $eventType, FederatedShare $row, ?string $actorId, array $extra = []): void {
 		$metadata = array_merge(

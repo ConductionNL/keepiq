@@ -53,7 +53,7 @@ Mirrored feature: an edit of an item in a Bitwarden organisation collection, whi
 - `POST /api/v1/federation/recipient-certificate`
 - `PUT /api/v1/secrets/{id}` (a copy without a write grade, and every save without a value change)
 
-Server rules: Keepiq `user-sharing`, `federated-sharing` and `folder-permission-grades` as changed by `openspec/changes/sharing-atomic-share-save`.
+Server rules: Keepiq `user-sharing`, `federated-sharing` and `folder-permission-grades` as changed by `openspec/changes/archive/2026-11-25-sharing-atomic-share-save`.
 
 ## Impact
 

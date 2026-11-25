@@ -86,8 +86,8 @@ class FederatedDeclineReceiver implements FederatedDeclineReceiverInterface {
 	 * @throws ShareNotFound For every refusal
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-a-decline-while-suspended-ends-the-share
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bobs-server-cannot-end-a-suspension
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-decline-while-suspended-ends-the-share
 	 */
 	public function handle(string $providerId, array $notification): array {
 		$row = $this->verifiedRow(providerId: $providerId, presented: $notification['sharedSecret'] ?? null);
@@ -167,7 +167,7 @@ class FederatedDeclineReceiver implements FederatedDeclineReceiverInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#scenario-a-decline-while-suspended-ends-the-share
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-decline-while-suspended-ends-the-share
 	 */
 	private function dropCiphertext(FederatedShare $row): void {
 		$row->setKey(null);

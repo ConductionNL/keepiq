@@ -1078,7 +1078,7 @@ class SecretVersionServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-restore-reaches-every-copy-in-the-same-transaction
 	 */
 	public function testAShareSaveRestoreIsAuditedAsTheClientsClaim(): void {
 		$version = new SecretVersion();

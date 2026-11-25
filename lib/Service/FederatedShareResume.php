@@ -50,7 +50,7 @@ use Throwable;
 /**
  * Makes a suspended partner share live again with a value encrypted now.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
  */
 class FederatedShareResume {
 	/**
@@ -92,7 +92,7 @@ class FederatedShareResume {
 	 * @throws InvalidArgumentException `invalid`
 	 * @throws ShareSaveRefusal `stale_source` (409) with the current version, or `copy_fields_mismatch`
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-the-owner-resumes-a-suspended-partner-share
 	 */
 	public function resume(
 		string $shareId,

@@ -428,7 +428,7 @@ class ShareSyncService {
 	 *
 	 * @throws InvalidArgumentException When the source moved on since the read
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 */
 	private function lockSource(Secret $source, ?DateTime $base, DateTime $savedAt): void {
 		if ($base === null) {
@@ -481,7 +481,7 @@ class ShareSyncService {
 	 * @return int Number of recipient copies updated.
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-shared-secret-and-every-copy-save-in-one-transaction
 	 * @spec openspec/specs/secret-version-history/spec.md#requirement-prior-encrypted-values-are-retained-on-update
 	 */
 	public function writeCopyBlobs(

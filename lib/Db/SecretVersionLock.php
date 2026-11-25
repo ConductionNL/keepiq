@@ -29,7 +29,7 @@ use OCP\IDBConnection;
 /**
  * The version lock of `keepiq_secrets` rows.
  *
- * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+ * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
  */
 class SecretVersionLock {
 	/**
@@ -54,7 +54,7 @@ class SecretVersionLock {
 	 *
 	 * @return DateTime|null The version, in UTC; null when the row is gone
 	 *
-	 * @spec openspec/changes/sharing-atomic-share-save/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-a-share-is-made-from-the-current-version
 	 */
 	public function lock(string $id): ?DateTime {
 		$lock = $this->db->getQueryBuilder();
